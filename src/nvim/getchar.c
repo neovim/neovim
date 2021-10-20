@@ -144,10 +144,9 @@ static int KeyNoremap = 0;                  // remapping flags
 #define RM_SCRIPT       2       // tb_noremap: remap local script mappings
 #define RM_ABBR         4       // tb_noremap: don't remap, do abbrev.
 
-/* typebuf.tb_buf has three parts: room in front (for result of mappings), the
- * middle for typeahead and room for new characters (which needs to be 3 *
- * MAXMAPLEN) for the Amiga).
- */
+// typebuf.tb_buf has three parts: room in front (for result of mappings), the
+// middle for typeahead and room for new characters (which needs to be 3 *
+// MAXMAPLEN) for the Amiga).
 #define TYPELEN_INIT    (5 * (MAXMAPLEN + 3))
 static char_u typebuf_init[TYPELEN_INIT];       // initial typebuf.tb_buf
 static char_u noremapbuf_init[TYPELEN_INIT];    // initial typebuf.tb_noremap
@@ -682,7 +681,7 @@ static int read_redo(bool init, bool old_redo)
   if ((c = *p) == NUL) {
     return c;
   }
-  // Reverse the conversion done by add_char_buff() */
+  // Reverse the conversion done by add_char_buff()
   // For a multi-byte character get all the bytes and return the
   // converted character.
   if (c != K_SPECIAL || p[1] == KS_SPECIAL) {
@@ -966,9 +965,9 @@ int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent
       (char_u)((--nrm >= 0) ? val : RM_YES);
   }
 
-  /* tb_maplen and tb_silent only remember the length of mapped and/or
-   * silent mappings at the start of the buffer, assuming that a mapped
-   * sequence doesn't result in typed characters. */
+  // tb_maplen and tb_silent only remember the length of mapped and/or
+  // silent mappings at the start of the buffer, assuming that a mapped
+  // sequence doesn't result in typed characters.
   if (nottyped || typebuf.tb_maplen > offset) {
     typebuf.tb_maplen += addlen;
   }
@@ -1116,8 +1115,8 @@ void del_typebuf(int len, int offset)
     }
   }
 
-  /* Reset the flag that text received from a client or from feedkeys()
-   * was inserted in the typeahead buffer. */
+  // Reset the flag that text received from a client or from feedkeys()
+  // was inserted in the typeahead buffer.
   typebuf_was_filled = false;
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
@@ -1167,9 +1166,9 @@ static void gotchars(const char_u *chars, size_t len)
   // output "debug mode" message next time in debug mode
   debug_did_msg = false;
 
-  /* Since characters have been typed, consider the following to be in
-   * another mapping.  Search string will be kept in history. */
-  ++maptick;
+  // Since characters have been typed, consider the following to be in
+  // another mapping.  Search string will be kept in history.
+  maptick++;
 }
 
 /*
@@ -1823,8 +1822,8 @@ static int vgetorpeek(bool advance)
           flush_buffers(FLUSH_INPUT);  // flush all typeahead
 
           if (advance) {
-            /* Also record this character, it might be needed to
-             * get out of Insert mode. */
+            // Also record this character, it might be needed to
+            // get out of Insert mode.
             *typebuf.tb_buf = (char_u)c;
             gotchars(typebuf.tb_buf, 1);
           }
@@ -2311,13 +2310,13 @@ static int vgetorpeek(bool advance)
         /*
          * get a character: 3. from the user - update display
          */
-        /* In insert mode a screen update is skipped when characters
-         * are still available.  But when those available characters
-         * are part of a mapping, and we are going to do a blocking
-         * wait here.  Need to update the screen to display the
-         * changed text so far. Also for when 'lazyredraw' is set and
-         * redrawing was postponed because there was something in the
-         * input buffer (e.g., termresponse). */
+        // In insert mode a screen update is skipped when characters
+        // are still available.  But when those available characters
+        // are part of a mapping, and we are going to do a blocking
+        // wait here.  Need to update the screen to display the
+        // changed text so far. Also for when 'lazyredraw' is set and
+        // redrawing was postponed because there was something in the
+        // input buffer (e.g., termresponse).
         if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
             && advance && must_redraw != 0 && !need_wait_return) {
           update_screen(0);
