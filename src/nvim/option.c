@@ -5359,7 +5359,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, uint6
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
-      // search comma separated part of the option separately, so that it
+      // each comma separated part of the option separately, so that it
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {

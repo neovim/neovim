@@ -1237,7 +1237,7 @@ static void qf_new_list(qf_info_T *qi, const char_u *qf_title)
 
   // If the current entry is not the last entry, delete entries beyond
   // the current entry.  This makes it possible to browse in a tree-like
-  // way with ":grep'.
+  // way with ":grep".
   while (qi->qf_listcount > qi->qf_curlist + 1) {
     qf_free(&qi->qf_lists[--qi->qf_listcount]);
   }

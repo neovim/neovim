@@ -391,7 +391,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
             off = 0;
 
             if (last < line2) {
-              // 2. delete at end of of diff
+              // 2. delete at end of diff
               dp->df_count[idx] -= last - lnum_deleted + 1;
 
               if ((dp->df_next != NULL)
