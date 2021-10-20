@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildLuv(PATCH_COMMAND ... CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build luv, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run

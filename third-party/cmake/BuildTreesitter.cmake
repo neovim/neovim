@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildTreeSitter(TARGET targetname CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 function(BuildTreeSitter)
   cmake_parse_arguments(_treesitter
