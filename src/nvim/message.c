@@ -1558,7 +1558,7 @@ void msg_make(char_u *arg)
 /// the character/string -- webb
 ///
 /// @param from  true for LHS of a mapping
-/// @param maxlen  screen columns, 0 for unlimeted
+/// @param maxlen  screen columns, 0 for unlimited
 int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
 {
   if (strstart == NULL) {
