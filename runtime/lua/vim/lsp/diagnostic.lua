@@ -552,7 +552,7 @@ end
 ---@return table {popup_bufnr, win_id}
 function M.show_position_diagnostics(opts, buf_nr, position)
   opts = opts or {}
-  opts.where = "cursor"
+  opts.scope = "cursor"
   opts.pos = position
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
@@ -575,7 +575,7 @@ end
 ---@return table {popup_bufnr, win_id}
 function M.show_line_diagnostics(opts, buf_nr, line_nr, client_id)
   opts = opts or {}
-  opts.where = "line"
+  opts.scope = "line"
   opts.pos = line_nr
   if client_id then
     opts.namespace = M.get_namespace(client_id)
