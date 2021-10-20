@@ -2279,6 +2279,7 @@ theend:
 ///                 ECMD_ADDBUF: don't edit, just add to buffer list
 ///                 ECMD_ALTBUF: like ECMD_ADDBUF and also set the alternate
 ///                 file
+///                 ECMD_NOWINENTER: Do not trigger BufWinEnter
 /// @param oldwin   Should be "curwin" when editing a new buffer in the current
 ///                 window, NULL when splitting the window first.  When not NULL
 ///                 info of the previous buffer for "oldwin" is stored.
@@ -2735,7 +2736,10 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       /*
        * Open the buffer and read the file.
        */
-      if (should_abort(open_buffer(FALSE, eap, readfile_flags))) {
+      if (flags & ECMD_NOWINENTER) {
+        readfile_flags |= READ_NOWINENTER;
+      }
+      if (should_abort(open_buffer(false, eap, readfile_flags))) {
         retval = FAIL;
       }
 
@@ -2751,8 +2755,10 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
 
       apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf,
                             &retval);
-      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, FALSE, curbuf,
-                            &retval);
+      if ((flags & ECMD_NOWINENTER) == 0) {
+        apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
+                              &retval);
+      }
     }
     check_arg_idx(curwin);
 

@@ -13,6 +13,7 @@
 #define READ_DUMMY      0x10    // reading into a dummy buffer
 #define READ_KEEP_UNDO  0x20    // keep undo info
 #define READ_FIFO       0x40    // read from fifo or socket
+#define READ_NOWINENTER 0x80    // do not trigger BufWinEnter
 
 #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
 

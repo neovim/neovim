@@ -705,6 +705,23 @@ func Test_vimgreptitle()
   augroup! QfBufWinEnter
 endfunc
 
+func Test_bufwinenter_once()
+  augroup QfBufWinEnter
+    au!
+    au BufWinEnter * let g:got_afile ..= 'got ' .. expand('<afile>')
+  augroup END
+  let g:got_afile = ''
+  copen
+  call assert_equal('got quickfix', g:got_afile)
+
+  cclose
+  unlet g:got_afile
+  augroup QfBufWinEnter
+    au!
+  augroup END
+  augroup! QfBufWinEnter
+endfunc
+
 func XqfTitleTests(cchar)
   call s:setup_commands(a:cchar)
 
