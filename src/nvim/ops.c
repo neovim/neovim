@@ -391,8 +391,8 @@ static void shift_block(oparg_T *oap, int amount)
       total += incr;
       bd.start_vcol += incr;
     }
-    /* OK, now total=all the VWS reqd, and textstart points at the 1st
-     * non-ws char in the block. */
+    // OK, now total=all the VWS reqd, and textstart points at the 1st
+    // non-ws char in the block.
     if (!curbuf->b_p_et) {
       tabstop_fromto(ws_vcol, ws_vcol + total, p_ts, p_vts, &i, &j);
     } else {
@@ -459,14 +459,14 @@ static void shift_block(oparg_T *oap, int amount)
     // The column to which we will shift the text.
     destination_col = non_white_col - shift_amount;
 
-    /* Now let's find out how much of the beginning of the line we can
-     * reuse without modification.  */
+    // Now let's find out how much of the beginning of the line we can
+    // reuse without modification.
     verbatim_copy_end = bd.textstart;
     verbatim_copy_width = bd.start_vcol;
 
-    /* If "bd.startspaces" is set, "bd.textstart" points to the character
-     * preceding the block. We have to subtract its width to obtain its
-     * column number.  */
+    // If "bd.startspaces" is set, "bd.textstart" points to the character
+    // preceding the block. We have to subtract its width to obtain its
+    // column number.
     if (bd.startspaces) {
       verbatim_copy_width -= bd.start_char_vcols;
     }
@@ -482,9 +482,9 @@ static void shift_block(oparg_T *oap, int amount)
       MB_PTR_ADV(verbatim_copy_end);
     }
 
-    /* If "destination_col" is different from the width of the initial
-    * part of the line that will be copied, it means we encountered a tab
-    * character, which we will have to partly replace with spaces.  */
+    // If "destination_col" is different from the width of the initial
+    // part of the line that will be copied, it means we encountered a tab
+    // character, which we will have to partly replace with spaces.
     assert(destination_col - verbatim_copy_width >= 0);
     fill = (size_t)(destination_col - verbatim_copy_width);
 
@@ -1500,8 +1500,8 @@ int op_delete(oparg_T *oap)
       did_yank = true;
     }
 
-    /* Yank into small delete register when no named register specified
-     * and the delete is within one line. */
+    // Yank into small delete register when no named register specified
+    // and the delete is within one line.
     if (oap->regname == 0 && oap->motion_type != kMTLineWise
         && oap->line_count == 1) {
       reg = get_yank_register('-', YREG_YANK);
@@ -1659,9 +1659,8 @@ int op_delete(oparg_T *oap)
       n = oap->end.col - oap->start.col + 1 - !oap->inclusive;
 
       if (virtual_op) {
-        /* fix up things for virtualedit-delete:
-         * break the tabs which are going to get in our way
-         */
+        // fix up things for virtualedit-delete:
+        // break the tabs which are going to get in our way
         char_u *curline = get_cursor_line_ptr();
         int len = (int)STRLEN(curline);
 
@@ -1818,12 +1817,11 @@ int op_replace(oparg_T *oap, int c)
         continue;                     // nothing to replace
       }
 
-      /* n == number of extra chars required
-       * If we split a TAB, it may be replaced by several characters.
-       * Thus the number of characters may increase!
-       */
-      /* If the range starts in virtual space, count the initial
-       * coladd offset as part of "startspaces" */
+      // n == number of extra chars required
+      // If we split a TAB, it may be replaced by several characters.
+      // Thus the number of characters may increase!
+      // If the range starts in virtual space, count the initial
+      // coladd offset as part of "startspaces"
       if (virtual_op && bd.is_short && *bd.textstart == NUL) {
         pos_T vpos;
 
@@ -2255,15 +2253,15 @@ void op_insert(oparg_T *oap, long count1)
 
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
-  // might have actually been reduced, so need to adjust here. */
+  // might have actually been reduced, so need to adjust here.
   if (t1.lnum == curbuf->b_op_start_orig.lnum
       && lt(curbuf->b_op_start_orig, t1)) {
     oap->start = curbuf->b_op_start_orig;
   }
 
-  /* If user has moved off this line, we don't know what to do, so do
-   * nothing.
-   * Also don't repeat the insert when Insert mode ended with CTRL-C. */
+  // If user has moved off this line, we don't know what to do, so do
+  // nothing.
+  // Also don't repeat the insert when Insert mode ended with CTRL-C.
   if (curwin->w_cursor.lnum != oap->start.lnum || got_int) {
     return;
   }
@@ -2440,8 +2438,8 @@ int op_change(oparg_T *oap)
 
     ins_len = (long)STRLEN(firstline) - pre_textlen;
     if (ins_len > 0) {
-      /* Subsequent calls to ml_get() flush the firstline data - take a
-       * copy of the inserted text.  */
+      // Subsequent calls to ml_get() flush the firstline data - take a
+      // copy of the inserted text.
       ins_text = (char_u *)xmalloc((size_t)(ins_len + 1));
       STRLCPY(ins_text, firstline + bd.textcol, ins_len + 1);
       for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
@@ -2450,8 +2448,8 @@ int op_change(oparg_T *oap)
         if (!bd.is_short || virtual_op) {
           pos_T vpos;
 
-          /* If the block starts in virtual space, count the
-           * initial coladd offset as part of "startspaces" */
+          // If the block starts in virtual space, count the
+          // initial coladd offset as part of "startspaces"
           if (bd.is_short) {
             vpos.lnum = linenr;
             (void)getvpos(&vpos, oap->start_vcol);
@@ -3834,9 +3832,8 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
 
   *is_comment = false;
   if (leader_offset != -1) {
-    /* Let's check whether the line ends with an unclosed comment.
-     * If the last comment leader has COM_END in flags, there's no comment.
-     */
+    // Let's check whether the line ends with an unclosed comment.
+    // If the last comment leader has COM_END in flags, there's no comment.
     while (*comment_flags) {
       if (*comment_flags == COM_END
           || *comment_flags == ':') {
@@ -3859,11 +3856,10 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
     return line;
   }
 
-  /* Find:
-   * - COM_END,
-   * - colon,
-   * whichever comes first.
-   */
+  // Find:
+  // - COM_END,
+  // - colon,
+  // whichever comes first.
   while (*comment_flags) {
     if (*comment_flags == COM_END
         || *comment_flags == ':') {
@@ -4655,8 +4651,8 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool 
       bdp->endspaces = oap->end_vcol - oap->start_vcol + 1;
     }
   } else {
-    /* notice: this converts partly selected Multibyte characters to
-     * spaces, too. */
+    // notice: this converts partly selected Multibyte characters to
+    // spaces, too.
     bdp->startspaces = bdp->start_vcol - oap->start_vcol;
     if (is_del && bdp->startspaces) {
       bdp->startspaces = bdp->start_char_vcols - bdp->startspaces;
