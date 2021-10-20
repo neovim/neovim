@@ -305,8 +305,8 @@ static int add_menu_path(const char_u *const menu_path, vimmenu_T *menuarg,
   parent = NULL;
   name = path_name;
   while (*name) {
-    /* Get name of this element in the menu hierarchy, and the simplified
-     * name (without mnemonic and accelerator text). */
+    // Get name of this element in the menu hierarchy, and the simplified
+    // name (without mnemonic and accelerator text).
     next_name = menu_name_skip(name);
     map_to = menutrans_lookup(name, (int)STRLEN(name));
     if (map_to != NULL) {
@@ -481,8 +481,8 @@ erret:
   xfree(path_name);
   xfree(dname);
 
-  /* Delete any empty submenu we added before discovering the error.  Repeat
-   * for higher levels. */
+  // Delete any empty submenu we added before discovering the error.  Repeat
+  // for higher levels.
   while (parent != NULL && parent->children == NULL) {
     if (parent->parent == NULL) {
       menup = root_menu_ptr;
@@ -650,8 +650,8 @@ static void free_menu(vimmenu_T **menup)
   menu = *menup;
 
 
-  /* Don't change *menup until after calling gui_mch_destroy_menu(). The
-   * MacOS code needs the original structure to properly delete the menu. */
+  // Don't change *menup until after calling gui_mch_destroy_menu(). The
+  // MacOS code needs the original structure to properly delete the menu.
   *menup = menu->next;
   xfree(menu->name);
   xfree(menu->dname);
@@ -1122,8 +1122,8 @@ char_u *get_menu_names(expand_T *xp, int idx)
           should_advance = true;
         }
       }
-      /* hack on menu separators:  use a 'magic' char for the separator
-       * so that '.' in names gets escaped properly */
+      // hack on menu separators:  use a 'magic' char for the separator
+      // so that '.' in names gets escaped properly
       STRCAT(tbuffer, "\001");
       str = tbuffer;
     } else {
@@ -1404,10 +1404,10 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
     mode = "Visual";
     idx = MENU_INDEX_VISUAL;
 
-    /* GEDDES: This is not perfect - but it is a
-     * quick way of detecting whether we are doing this from a
-     * selection - see if the range matches up with the visual
-     * select start and end.  */
+    // GEDDES: This is not perfect - but it is a
+    // quick way of detecting whether we are doing this from a
+    // selection - see if the range matches up with the visual
+    // select start and end.
     if ((curbuf->b_visual.vi_start.lnum == eap->line1)
         && (curbuf->b_visual.vi_end.lnum) == eap->line2) {
       // Set it up for visual mode - equivalent to gv.
@@ -1434,8 +1434,8 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
 
     check_cursor();
 
-    /* Adjust the cursor to make sure it is in the correct pos
-     * for exclusive mode */
+    // Adjust the cursor to make sure it is in the correct pos
+    // for exclusive mode
     if (*p_sel == 'e' && gchar_cursor() != NUL) {
       curwin->w_cursor.col++;
     }

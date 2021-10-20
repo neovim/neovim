@@ -675,16 +675,16 @@ static int utf_safe_read_char_adv(const char_u **s, size_t *n)
   }
 
   if (k <= *n) {
-    /* We have a multibyte sequence and it isn't truncated by buffer
-     * limits so utf_ptr2char() is safe to use. Or the first byte is
-     * illegal (k=0), and it's also safe to use utf_ptr2char(). */
+    // We have a multibyte sequence and it isn't truncated by buffer
+    // limits so utf_ptr2char() is safe to use. Or the first byte is
+    // illegal (k=0), and it's also safe to use utf_ptr2char().
     c = utf_ptr2char(*s);
 
-    /* On failure, utf_ptr2char() returns the first byte, so here we
-     * check equality with the first byte. The only non-ASCII character
-     * which equals the first byte of its own UTF-8 representation is
-     * U+00C3 (UTF-8: 0xC3 0x83), so need to check that special case too.
-     * It's safe even if n=1, else we would have k=2 > n. */
+    // On failure, utf_ptr2char() returns the first byte, so here we
+    // check equality with the first byte. The only non-ASCII character
+    // which equals the first byte of its own UTF-8 representation is
+    // U+00C3 (UTF-8: 0xC3 0x83), so need to check that special case too.
+    // It's safe even if n=1, else we would have k=2 > n.
     if (c != (int)(**s) || (c == 0xC3 && (*s)[1] == 0x83)) {
       // byte sequence was successfully decoded
       *s += k;
@@ -1582,8 +1582,8 @@ void show_utf8(void)
   int clen;
   int i;
 
-  /* Get the byte length of the char under the cursor, including composing
-   * characters. */
+  // Get the byte length of the char under the cursor, including composing
+  // characters.
   line = get_cursor_pos_ptr();
   len = utfc_ptr2len(line);
   if (len == 0) {
@@ -1625,8 +1625,8 @@ int utf_head_off(const char_u *base, const char_u *p)
     return 0;
   }
 
-  /* Skip backwards over trailing bytes: 10xx.xxxx
-   * Skip backwards again if on a composing char. */
+  // Skip backwards over trailing bytes: 10xx.xxxx
+  // Skip backwards again if on a composing char.
   const char_u *q;
   for (q = p;; --q) {
     // Move s to the last byte of this char.
@@ -1915,8 +1915,8 @@ void utf_find_illegal(void)
     }
 
     while (*p != NUL) {
-      /* Illegal means that there are not enough trail bytes (checked by
-       * utf_ptr2len()) or too many of them (overlong sequence). */
+      // Illegal means that there are not enough trail bytes (checked by
+      // utf_ptr2len()) or too many of them (overlong sequence).
       len = utf_ptr2len(p);
       if (*p >= 0x80 && (len == 1
                          || utf_char2len(utf_ptr2char(p)) != len)) {

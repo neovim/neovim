@@ -1461,9 +1461,9 @@ static void create_windows(mparm_T *parmp)
             did_emsg = FALSE;               // avoid hit-enter prompt
             getout(1);
           }
-          /* We can't close the window, it would disturb what
-           * happens next.  Clear the file name and set the arg
-           * index to -1 to delete it later. */
+          // We can't close the window, it would disturb what
+          // happens next.  Clear the file name and set the arg
+          // index to -1 to delete it later.
           setfname(curbuf, NULL, NULL, false);
           curwin->w_arg_idx = -1;
           swap_exists_action = SEA_NONE;
@@ -1553,8 +1553,8 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
     // happen when vimrc contains ":sall").
     if (curbuf == firstwin->w_buffer || curbuf->b_ffname == NULL) {
       curwin->w_arg_idx = arg_idx;
-      /* Edit file from arg list, if there is one.  When "Quit" selected
-       * at the ATTENTION prompt close the window. */
+      // Edit file from arg list, if there is one.  When "Quit" selected
+      // at the ATTENTION prompt close the window.
       swap_exists_did_quit = false;
       (void)do_ecmd(0, arg_idx < GARGCOUNT
           ? alist_name(&GARGLIST[arg_idx]) : NULL,
