@@ -8,6 +8,7 @@ local highlight = require 'vim.highlight'
 local uv = vim.loop
 
 local npcall = vim.F.npcall
+local if_nil = vim.F.if_nil
 local split = vim.split
 
 local _warned = {}
@@ -628,8 +629,7 @@ end
 
 ---@private
 --- Some language servers return complementary candidates whose prefixes do not
---- match are also returned. So we exclude completion candidates whose prefix
---- does not match.
+--- match. So we exclude completion candidates whose prefix does not match.
 local function remove_unmatch_completion_items(items, prefix)
   return vim.tbl_filter(function(item)
     local word = get_completion_word(item)
@@ -651,20 +651,30 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result The result of a `textDocument/completion` call, e.g. from
+---@param result table The result of a `textDocument/completion` call, e.g. from
 ---|vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
----@param prefix (string) the prefix to filter the completion items
+---@param prefix string the prefix to filter the completion items
+-- @param opts table with options controlling returned completion items
+--              - remove_unmatched (default true) exclude completion candidates whose prefix does not match
+--              - sort_matches (default true) sort matches by sortText
 ---@returns { matches = complete-items table, incomplete = bool }
 ---@see |complete-items|
-function M.text_document_completion_list_to_complete_items(result, prefix)
+function M.text_document_completion_list_to_complete_items(result, prefix, opts)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
 
-  items = remove_unmatch_completion_items(items, prefix)
-  sort_completion_items(items)
+  opts = if_nil(opts, {})
+
+  if opts.remove_unmatched then
+    items = remove_unmatch_completion_items(items, prefix)
+  end
+
+  if opts.sort_matches then
+    sort_completion_items(items)
+  end
 
   local matches = {}
 
