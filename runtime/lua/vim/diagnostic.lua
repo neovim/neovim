@@ -537,26 +537,7 @@ end
 ---                * priority: (number, default 10) Base priority to use for signs. When
 ---                {severity_sort} is used, the priority of a sign is adjusted based on
 ---                its severity. Otherwise, all signs use the same priority.
----       - float: Options for floating windows:
----                  * severity: See |diagnostic-severity|.
----                  * header: (string or table) String to use as the header for the floating
----                            window. If a table, it is interpreted as a [text, hl_group] tuple.
----                            Defaults to "Diagnostics:".
----                  * source: (string) Include the diagnostic source in
----                            the message. One of "always" or "if_many".
----                  * format: (function) A function that takes a diagnostic as input and returns a
----                            string. The return value is the text used to display the diagnostic.
----                  * prefix: (function, string, or table) Prefix each diagnostic in the floating
----                            window. If a function, it must have the signature (diagnostic, i,
----                            total) -> (string, string), where {i} is the index of the diagnostic
----                            being evaluated and {total} is the total number of diagnostics
----                            displayed in the window. The function should return a string which
----                            is prepended to each diagnostic in the window as well as an
----                            (optional) highlight group which will be used to highlight the
----                            prefix. If {prefix} is a table, it is interpreted as a [text,
----                            hl_group] tuple as in |nvim_echo()|; otherwise, if {prefix} is a
----                            string, it is prepended to each diagnostic in the window with no
----                            highlight.
+---       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
@@ -564,6 +545,7 @@ end
 ---                         are displayed before lower severities (e.g. ERROR is displayed before WARN).
 ---                         Options:
 ---                         * reverse: (boolean) Reverse sort order
+---
 ---@param namespace number|nil Update the options for the given namespace. When omitted, update the
 ---                            global diagnostic options.
 function M.config(opts, namespace)
@@ -1173,7 +1155,17 @@ end
 ---            - format: (function) A function that takes a diagnostic as input and returns a
 ---                      string. The return value is the text used to display the diagnostic.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
----            - prefix: (function, string, or table) Prefix each diagnostic in the floating window.
+---            - prefix: (function, string, or table) Prefix each diagnostic in the floating
+---                      window. If a function, it must have the signature (diagnostic, i,
+---                      total) -> (string, string), where {i} is the index of the diagnostic
+---                      being evaluated and {total} is the total number of diagnostics
+---                      displayed in the window. The function should return a string which
+---                      is prepended to each diagnostic in the window as well as an
+---                      (optional) highlight group which will be used to highlight the
+---                      prefix. If {prefix} is a table, it is interpreted as a [text,
+---                      hl_group] tuple as in |nvim_echo()|; otherwise, if {prefix} is a
+---                      string, it is prepended to each diagnostic in the window with no
+---                      highlight.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
 ---@return tuple ({float_bufnr}, {win_id})
 function M.open_float(bufnr, opts)
