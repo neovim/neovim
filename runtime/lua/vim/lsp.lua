@@ -122,9 +122,6 @@ local active_clients = {}
 local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
--- Tracks all buffers attached to a client.
-local all_client_active_buffers = {}
-
 ---@private
 --- Invokes a function for each LSP client attached to the buffer {bufnr}.
 ---
@@ -742,7 +739,6 @@ function lsp.start_client(config)
 
     lsp.diagnostic.reset(client_id, all_buffer_active_clients)
     changetracking.reset(client_id)
-    all_client_active_buffers[client_id] = nil
     for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
     end
@@ -771,6 +767,7 @@ function lsp.start_client(config)
     rpc = rpc;
     offset_encoding = offset_encoding;
     config = config;
+    attached_buffers = {};
 
     handlers = handlers;
     -- for $/progress report
@@ -989,7 +986,6 @@ function lsp.start_client(config)
 
     lsp.diagnostic.reset(client_id, all_buffer_active_clients)
     changetracking.reset(client_id)
-    all_client_active_buffers[client_id] = nil
     for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
     end
@@ -1032,6 +1028,7 @@ function lsp.start_client(config)
       -- TODO(ashkan) handle errors.
       pcall(config.on_attach, client, bufnr)
     end
+    client.attached_buffers[bufnr] = true
   end
 
   initialize()
@@ -1142,12 +1139,6 @@ function lsp.buf_attach_client(bufnr, client_id)
     })
   end
 
-  if not all_client_active_buffers[client_id] then
-    all_client_active_buffers[client_id] = {}
-  end
-
-  table.insert(all_client_active_buffers[client_id], bufnr)
-
   if buffer_client_ids[client_id] then return end
   -- This is our first time attaching this client to this buffer.
   buffer_client_ids[client_id] = true
@@ -1172,7 +1163,7 @@ end
 --- Gets a client by id, or nil if the id is invalid.
 --- The returned client may not yet be fully initialized.
 --
----@param client_id client id number
+---@param client_id number client id
 ---
 ---@returns |vim.lsp.client| object, or nil
 function lsp.get_client_by_id(client_id)
@@ -1181,15 +1172,11 @@ end
 
 --- Returns list of buffers attached to client_id.
 --
----@param client_id client id
+---@param client_id number client id
 ---@returns list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
-  local active_client_buffers = all_client_active_buffers[client_id]
-  if active_client_buffers then
-    return active_client_buffers
-  else
-    return {}
-  end
+  local client = lsp.get_client_by_id(client_id)
+  return client and vim.tbl_keys(client.attached_buffers) or {}
 end
 
 --- Stops a client(s).
