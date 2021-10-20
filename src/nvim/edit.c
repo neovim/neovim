@@ -523,7 +523,7 @@ static int insert_check(VimState *state)
     did_cursorhold = false;
   }
 
-  // If the cursor was moved we didn't just insert a space */
+  // If the cursor was moved we didn't just insert a space
   if (arrow_used) {
     s->inserted_space = false;
   }
@@ -835,7 +835,7 @@ static int insert_handle_key(InsertState *s)
 
   case Ctrl_C:        // End input mode
     if (s->c == Ctrl_C && cmdwin_type != 0) {
-      // Close the cmdline window. */
+      // Close the cmdline window.
       cmdwin_result = K_IGNORE;
       got_int = false;         // don't stop executing autocommands et al
       s->nomove = true;
@@ -6346,8 +6346,8 @@ void auto_format(bool trailblank, bool prev_line)
     curwin->w_cursor = pos;
   }
 
-  /* With the 'c' flag in 'formatoptions' and 't' missing: only format
-   * comments. */
+  // With the 'c' flag in 'formatoptions' and 't' missing: only format
+  // comments.
   if (has_format_option(FO_WRAP_COMS) && !has_format_option(FO_WRAP)
       && get_leader_len(old, NULL, false, true) == 0) {
     return;

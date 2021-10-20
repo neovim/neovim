@@ -2026,9 +2026,9 @@ char_u *get_lval(char_u *const name, typval_T *const rettv, lval_T *const lp, co
                                                  p);
     lp->ll_name = lp->ll_exp_name;
     if (lp->ll_exp_name == NULL) {
-      /* Report an invalid expression in braces, unless the
-       * expression evaluation has been cancelled due to an
-       * aborting error, an interrupt, or an exception. */
+      // Report an invalid expression in braces, unless the
+      // expression evaluation has been cancelled due to an
+      // aborting error, an interrupt, or an exception.
       if (!aborting() && !quiet) {
         emsg_severe = true;
         EMSG2(_(e_invarg2), name);
@@ -2173,9 +2173,9 @@ char_u *get_lval(char_u *const name, typval_T *const rettv, lval_T *const lp, co
       lp->ll_dict = lp->ll_tv->vval.v_dict;
       lp->ll_di = tv_dict_find(lp->ll_dict, (const char *)key, len);
 
-      /* When assigning to a scope dictionary check that a function and
-       * variable name is valid (only variable name unless it is l: or
-       * g: dictionary). Disallow overwriting a builtin function. */
+      // When assigning to a scope dictionary check that a function and
+      // variable name is valid (only variable name unless it is l: or
+      // g: dictionary). Disallow overwriting a builtin function.
       if (rettv != NULL && lp->ll_dict->dv_scope != 0) {
         int prevval;
         int wrong;
@@ -2758,8 +2758,8 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
         xp->xp_context = EXPAND_EXPRESSION;
       }
     } else {
-      /* Doesn't look like something valid, expand as an expression
-       * anyway. */
+      // Doesn't look like something valid, expand as an expression
+      // anyway.
       xp->xp_context = EXPAND_EXPRESSION;
     }
     arg = xp->xp_pattern;
@@ -4927,9 +4927,9 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
             ++p;
             nr = (nr << 4) + hex2nr(*p);
           }
-          ++p;
-          /* For "\u" store the number according to
-           * 'encoding'. */
+          p++;
+          // For "\u" store the number according to
+          // 'encoding'.
           if (c != 'X') {
             name += utf_char2bytes(nr, name);
           } else {
@@ -8452,7 +8452,7 @@ const char_u *find_name_end(const char_u *arg, const char_u **expr_start, const 
       }
     } else if (br_nest == 0 && mb_nest == 0 && *p == ':') {
       // "s:" is start of "s:var", but "n:" is not and can be used in
-      // slice "[n:]".  Also "xx:" is not a namespace. But {ns}: is. */
+      // slice "[n:]".  Also "xx:" is not a namespace. But {ns}: is.
       len = (int)(p - arg);
       if ((len > 1 && p[-1] != '}')
           || (len == 1 && vim_strchr(namespace_char, *arg) == NULL)) {
@@ -9825,12 +9825,12 @@ void ex_echo(exarg_T *eap)
     if (!eap->skip) {
       if (atstart) {
         atstart = false;
-        /* Call msg_start() after eval1(), evaluating the expression
-         * may cause a message to appear. */
+        // Call msg_start() after eval1(), evaluating the expression
+        // may cause a message to appear.
         if (eap->cmdidx == CMD_echo) {
-          /* Mark the saved text as finishing the line, so that what
-           * follows is displayed on a new line when scrolling back
-           * at the more prompt. */
+          // Mark the saved text as finishing the line, so that what
+          // follows is displayed on a new line when scrolling back
+          // at the more prompt.
           msg_sb_eol();
           msg_start();
         }
