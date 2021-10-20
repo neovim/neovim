@@ -43,6 +43,10 @@ typedef struct {
 } StderrState;
 
 typedef struct {
+  LuaRef cb;
+} InternalState;
+
+typedef struct {
   Callback cb;
   dict_T *self;
   garray_T buffer;
@@ -74,6 +78,7 @@ struct Channel {
     Stream socket;
     StdioPair stdio;
     StderrState err;
+    InternalState internal;
   } stream;
 
   bool is_rpc;

@@ -22,6 +22,7 @@ local source = helpers.source
 local next_msg = helpers.next_msg
 local tmpname = helpers.tmpname
 local write_file = helpers.write_file
+local exec_lua = helpers.exec_lua
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -2264,6 +2265,9 @@ describe('API', function()
         [2] = {background = tonumber('0xffff40'), bg_indexed = true};
         [3] = {background = Screen.colors.Plum1, fg_indexed = true, foreground = tonumber('0x00e000')};
         [4] = {bold = true, reverse = true, background = Screen.colors.Plum1};
+        [5] = {foreground = Screen.colors.Blue, background = Screen.colors.LightMagenta, bold = true};
+        [6] = {bold = true};
+        [7] = {reverse = true, background = Screen.colors.LightMagenta};
       })
     end)
 
@@ -2310,6 +2314,74 @@ describe('API', function()
         {0:~                                                                                                   }|
                                                                                                             |
       ]]}
+    end)
+
+    it('can handle input', function()
+      screen:try_resize(50, 10)
+      eq({3, 2}, exec_lua [[
+        buf = vim.api.nvim_create_buf(1,1)
+
+        stream = ''
+        do_the_echo = false
+        function input(_,t1,b1,data)
+          stream = stream .. data
+          _G.vals = {t1, b1}
+          if do_the_echo then
+            vim.api.nvim_chan_send(t1, data)
+          end
+        end
+
+        term = vim.api.nvim_open_term(buf, {on_input=input})
+        vim.api.nvim_open_win(buf, true, {width=40, height=5, row=1, col=1, relative='editor'})
+        return {term, buf}
+      ]])
+
+      screen:expect{grid=[[
+                                                          |
+        {0:~}{1:^                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+                                                          |
+      ]]}
+
+      feed 'iba<c-x>bla'
+      screen:expect{grid=[[
+                                                          |
+        {0:~}{7: }{1:                                       }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {6:-- TERMINAL --}                                    |
+      ]]}
+
+      eq('ba\024bla', exec_lua [[ return stream ]])
+      eq({3,2}, exec_lua [[ return vals ]])
+
+      exec_lua [[ do_the_echo = true ]]
+      feed 'herrejösses!'
+
+      screen:expect{grid=[[
+                                                          |
+        {0:~}{1:herrejösses!}{7: }{1:                           }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~}{1:                                        }{0:         }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {6:-- TERMINAL --}                                    |
+      ]]}
+      eq('ba\024blaherrejösses!', exec_lua [[ return stream ]])
     end)
   end)
 
