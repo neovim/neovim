@@ -8689,11 +8689,13 @@ dictitem_T *find_var(const char *const name, const size_t name_len, hashtab_T **
   return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
 }
 
-/// Get pointer to script vars. @see script_item
+/// Get pointer to script-local vars.
+/// @param id  script ID.
+/// @return  pointer to script vars, or NULL if invalid ID or unallocated.
 static inline scriptvar_T *script_sv(const scid_T id)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
-  return id > 0 ? (scriptvar_T *)pmap_get(scid_T)(&script_vars, id) : NULL;
+  return id > 0 ? pmap_get(scid_T)(&script_vars, id) : NULL;
 }
 
 /// Find variable in hashtab.
@@ -8718,6 +8720,9 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
     // Must be something like "s:", otherwise "ht" would be NULL.
     switch (htname) {
     case 's':
+      // Must have a SID at this point, plus the "s:" hash map should've already been allocated by a
+      // prior call to find_var_ht_dict.
+      assert(script_sv(current_sctx.sc_sid) != NULL);
       return (dictitem_T *)&script_sv(current_sctx.sc_sid)->sv_var;
     case 'g':
       return (dictitem_T *)&globvars_var;
@@ -8760,8 +8765,8 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 
 /// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
 ///
-/// In Lua or anonymous scripts, allocates script item if scope is "s:"
-/// @see script_ensure_anon_item
+/// @note If the scope is "s:" and the script vars hash map isn't allocated yet, it will be
+///       allocated for Vim scripts with a SID.
 ///
 /// @param[in]  name  Variable name, possibly with scope prefix.
 /// @param[in]  name_len  Variable name length.
@@ -8849,8 +8854,12 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
         current_sctx.sc_sid = script_new_sid(NULL);
       }
     }
-    script_ensure_anon_item();
-    *d = &script_sv(current_sctx.sc_sid)->sv_dict;
+    // "s:" hash map is lazily allocated; ensure it's allocated now.
+    scriptvar_T *sv = script_sv(current_sctx.sc_sid);
+    if (sv == NULL) {
+      sv = new_script_vars(current_sctx.sc_sid);
+    }
+    *d = &sv->sv_dict;
   }
 
 end:
@@ -8888,12 +8897,15 @@ char_u *get_var_value(const char *const name)
 
 /// Allocate a new hashtab for a sourced script.  It will be used while
 /// sourcing this script and when executing functions defined in the script.
-void new_script_vars(const scid_T id)
+/// @param id  script ID.
+/// @return pointer to script vars.
+static scriptvar_T *new_script_vars(const scid_T id)
 {
   assert(id > 0 && !pmap_has(scid_T)(&script_vars, id));
   scriptvar_T *const sv = xcalloc(1, sizeof(scriptvar_T));
   init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
   pmap_put(scid_T)(&script_vars, id, sv);
+  return sv;
 }
 
 /// Initialize dictionary "dict" as a scope and set variable "dict_var" to
