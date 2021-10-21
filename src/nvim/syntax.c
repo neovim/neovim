@@ -929,9 +929,9 @@ static void syn_update_ends(bool startofline)
   stateitem_T *cur_si;
 
   if (startofline) {
-    /* Check for a match carried over from a previous line with a
-     * contained region.  The match ends as soon as the region ends. */
-    for (int i = 0; i < current_state.ga_len; ++i) {
+    // Check for a match carried over from a previous line with a
+    // contained region.  The match ends as soon as the region ends.
+    for (int i = 0; i < current_state.ga_len; i++) {
       cur_si = &CUR_STATE(i);
       if (cur_si->si_idx >= 0
           && (SYN_ITEMS(syn_block)[cur_si->si_idx]).sp_type
@@ -1335,8 +1335,8 @@ static synstate_T *store_current_state(void)
     if (syn_block->b_sst_freecount == 0) {
       sp = NULL;
     } else {
-      /* Take the first item from the free list and put it in the used
-       * list, after *sp */
+      // Take the first item from the free list and put it in the used
+      // list, after *sp
       p = syn_block->b_sst_firstfree;
       syn_block->b_sst_firstfree = p->sst_next;
       --syn_block->b_sst_freecount;
@@ -1359,8 +1359,8 @@ static synstate_T *store_current_state(void)
     clear_syn_state(sp);
     sp->sst_stacksize = current_state.ga_len;
     if (current_state.ga_len > SST_FIX_STATES) {
-      /* Need to clear it, might be something remaining from when the
-       * length was less than SST_FIX_STATES. */
+      // Need to clear it, might be something remaining from when the
+      // length was less than SST_FIX_STATES.
       ga_init(&sp->sst_union.sst_ga, (int)sizeof(bufstate_T), 1);
       ga_grow(&sp->sst_union.sst_ga, current_state.ga_len);
       sp->sst_union.sst_ga.ga_len = current_state.ga_len;
@@ -1458,24 +1458,24 @@ static bool syn_stack_equal(synstate_T *sp)
     if (bp[i].bs_extmatch == CUR_STATE(i).si_extmatch) {
       continue;
     }
-    /* When the extmatch pointers are different, the strings in
-     * them can still be the same.  Check if the extmatch
-     * references are equal. */
+    // When the extmatch pointers are different, the strings in
+    // them can still be the same.  Check if the extmatch
+    // references are equal.
     bsx = bp[i].bs_extmatch;
     six = CUR_STATE(i).si_extmatch;
-    /* If one of the extmatch pointers is NULL the states are
-     * different. */
+    // If one of the extmatch pointers is NULL the states are
+    // different.
     if (bsx == NULL || six == NULL) {
       break;
     }
     int j;
-    for (j = 0; j < NSUBEXP; ++j) {
-      /* Check each referenced match string. They must all be
-       * equal. */
+    for (j = 0; j < NSUBEXP; j++) {
+      // Check each referenced match string. They must all be
+      // equal.
       if (bsx->matches[j] != six->matches[j]) {
-        /* If the pointer is different it can still be the
-         * same text.  Compare the strings, ignore case when
-         * the start item has the sp_ic flag set. */
+        // If the pointer is different it can still be the
+        // same text.  Compare the strings, ignore case when
+        // the start item has the sp_ic flag set.
         if (bsx->matches[j] == NULL || six->matches[j] == NULL) {
           break;
         }
@@ -1749,8 +1749,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                            && (syn_block->b_keywtab.ht_used > 0
                                || syn_block->b_keywtab_ic.ht_used > 0);
 
-  /* Init the list of zero-width matches with a nextlist.  This is used to
-   * avoid matching the same item in the same position twice. */
+  // Init the list of zero-width matches with a nextlist.  This is used to
+  // avoid matching the same item in the same position twice.
   ga_init(&zero_width_next_ga, (int)sizeof(int), 10);
 
   // use syntax iskeyword option
@@ -1867,9 +1867,9 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                               : in_id_list(cur_si,
                                            cur_si->si_cont_list, &spp->sp_syn,
                                            spp->sp_flags & HL_CONTAINED)))) {
-              /* If we already tried matching in this line, and
-               * there isn't a match before next_match_col, skip
-               * this item. */
+              // If we already tried matching in this line, and
+              // there isn't a match before next_match_col, skip
+              // this item.
               if (spp->sp_line_id == current_line_id
                   && spp->sp_startcol >= next_match_col) {
                 continue;
@@ -2037,9 +2037,9 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
             keep_next_list = true;
             zero_width_next_list = true;
 
-            /* Add the index to a list, so that we can check
-             * later that we don't match it again (and cause an
-             * endless loop). */
+            // Add the index to a list, so that we can check
+            // later that we don't match it again (and cause an
+            // endless loop).
             GA_APPEND(int, &zero_width_next_ga, next_match_idx);
             next_match_idx = -1;
           } else {
@@ -2136,10 +2136,10 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
           *can_spell = !in_id_list(sip, sip->si_cont_list, &sps, 0);
         }
       } else {
-        /* The @Spell cluster is defined: Do spelling in items with
-         * the @Spell cluster.  But not when @NoSpell is also there.
-         * At the toplevel only spell check when ":syn spell toplevel"
-         * was used. */
+        // The @Spell cluster is defined: Do spelling in items with
+        // the @Spell cluster.  But not when @NoSpell is also there.
+        // At the toplevel only spell check when ":syn spell toplevel"
+        // was used.
         if (current_trans_id == 0) {
           *can_spell = (syn_block->b_syn_spell == SYNSPL_TOP);
         } else {
@@ -2216,8 +2216,8 @@ static bool did_match_already(int idx, garray_T *gap)
     }
   }
 
-  /* Zero-width matches with a nextgroup argument are not put on the syntax
-   * stack, and can only be matched once anyway. */
+  // Zero-width matches with a nextgroup argument are not put on the syntax
+  // stack, and can only be matched once anyway.
   for (int i = gap->ga_len; --i >= 0; ) {
     if (((int *)(gap->ga_data))[i] == idx) {
       return true;
@@ -2353,8 +2353,8 @@ static void check_state_ends(void)
         next_match_col = MAXCOL;
         break;
       } else {
-        /* handle next_list, unless at end of line and no "skipnl" or
-         * "skipempty" */
+        // handle next_list, unless at end of line and no "skipnl" or
+        // "skipempty"
         current_next_list = cur_si->si_next_list;
         current_next_flags = cur_si->si_flags;
         if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))

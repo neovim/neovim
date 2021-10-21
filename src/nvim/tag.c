@@ -284,17 +284,16 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
             tagstackidx = 0;
             goto end_do_tag;
           }
-          /* We weren't at the bottom of the stack, so jump all the
-           * way to the bottom now.
-           */
+          // We weren't at the bottom of the stack, so jump all the
+          // way to the bottom now.
           tagstackidx = 0;
         } else if (tagstackidx >= tagstacklen) {        // count == 0?
           EMSG(_(topmsg));
           goto end_do_tag;
         }
 
-        /* Make a copy of the fmark, autocommands may invalidate the
-         * tagstack before it's used. */
+        // Make a copy of the fmark, autocommands may invalidate the
+        // tagstack before it's used.
         saved_fmark = tagstack[tagstackidx].fmark;
         if (saved_fmark.fnum != curbuf->b_fnum) {
           /*
@@ -306,8 +305,8 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
             tagstackidx = oldtagstackidx;              // back to old posn
             goto end_do_tag;
           }
-          /* A BufReadPost autocommand may jump to the '" mark, but
-           * we don't what that here. */
+          // A BufReadPost autocommand may jump to the '" mark, but
+          // we don't what that here.
           curwin->w_cursor.lnum = saved_fmark.mark.lnum;
         } else {
           setpcmark();
@@ -488,9 +487,9 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
                                    // found: all matches found.
       }
 
-      /* If there already were some matches for the same name, move them
-       * to the start.  Avoids that the order changes when using
-       * ":tnext" and jumping to another file. */
+      // If there already were some matches for the same name, move them
+      // to the start.  Avoids that the order changes when using
+      // ":tnext" and jumping to another file.
       if (!new_tag && !other_name) {
         int j, k;
         int idx = 0;
@@ -561,9 +560,9 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
       }
 
       if (cur_match >= num_matches) {
-        /* Avoid giving this error when a file wasn't found and we're
-         * looking for a match in another file, which wasn't found.
-         * There will be an EMSG("file doesn't exist") below then. */
+        // Avoid giving this error when a file wasn't found and we're
+        // looking for a match in another file, which wasn't found.
+        // There will be an EMSG("file doesn't exist") below then.
         if ((type == DT_NEXT || type == DT_FIRST)
             && nofile_fname == NULL) {
           if (num_matches == 1) {
@@ -666,8 +665,8 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         }
         EMSG2(_("E429: File \"%s\" does not exist"), nofile_fname);
       } else {
-        /* We may have jumped to another window, check that
-         * tagstackidx is still valid. */
+        // We may have jumped to another window, check that
+        // tagstackidx is still valid.
         if (use_tagstack && tagstackidx > curwin->w_tagstacklen) {
           tagstackidx = curwin->w_tagstackidx;
         }
@@ -1584,15 +1583,15 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
             }
           }
 
-          /* When searching for a specific language skip tags files
-           * for other languages. */
+          // When searching for a specific language skip tags files
+          // for other languages.
           if (help_lang_find != NULL
               && STRICMP(help_lang, help_lang_find) != 0) {
             continue;
           }
 
-          /* For CTRL-] in a help file prefer a match with the same
-           * language. */
+          // For CTRL-] in a help file prefer a match with the same
+          // language.
           if ((flags & TAG_KEEP_LANG)
               && help_lang_find == NULL
               && curbuf->b_fname != NULL
@@ -2234,8 +2233,8 @@ parse_line:
       tagname_free(&tn);
     }
 
-    /* stop searching when already did a linear search, or when TAG_NOIC
-     * used, and 'ignorecase' not set or already did case-ignore search */
+    // stop searching when already did a linear search, or when TAG_NOIC
+    // used, and 'ignorecase' not set or already did case-ignore search
     if (stop_searching || linear || (!p_ic && noic) || orgpat.regmatch.rm_ic) {
       break;
     }
@@ -2367,8 +2366,8 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
     }
 
     if (tnp->tn_hf_idx >= tag_fnames.ga_len) {
-      /* Not found in 'runtimepath', use 'helpfile', if it exists and
-       * wasn't used yet, replacing "help.txt" with "tags". */
+      // Not found in 'runtimepath', use 'helpfile', if it exists and
+      // wasn't used yet, replacing "help.txt" with "tags".
       if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL) {
         return FAIL;
       }
@@ -2393,8 +2392,8 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
   }
 
   if (first) {
-    /* Init.  We make a copy of 'tags', because autocommands may change
-     * the value without notifying us. */
+    // Init.  We make a copy of 'tags', because autocommands may change
+    // the value without notifying us.
     tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL)
         ? curbuf->b_p_tags : p_tags);
     tnp->tn_np = tnp->tn_tags;
@@ -2431,8 +2430,8 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
       (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
       r_ptr = vim_findfile_stopdir(buf);
-      /* move the filename one char forward and truncate the
-       * filepath with a NUL */
+      // move the filename one char forward and truncate the
+      // filepath with a NUL
       filename = path_tail(buf);
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
@@ -2790,8 +2789,8 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   }
 
   if (keep_help) {
-    /* A :ta from a help file will keep the b_help flag set.  For ":ptag"
-     * we need to use the flag from the window where we came from. */
+    // A :ta from a help file will keep the b_help flag set.  For ":ptag"
+    // we need to use the flag from the window where we came from.
     if (l_g_do_tagpreview != 0) {
       keep_help_flag = curwin_save->w_buffer->b_help;
     } else {
@@ -2905,8 +2904,8 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
       p_ic = save_p_ic;  // -V519
       p_scs = save_p_scs;
 
-      /* A search command may have positioned the cursor beyond the end
-       * of the line.  May need to correct that here. */
+      // A search command may have positioned the cursor beyond the end
+      // of the line.  May need to correct that here.
       check_cursor();
     } else {
       const int save_secure = secure;
@@ -3128,9 +3127,8 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
                     TAG_MANY, curbuf->b_ffname);
   }
   if (ret == OK && !tagnames) {
-    /* Reorganize the tags for display and matching as strings of:
-     * "<tagname>\0<kind>\0<filename>\0"
-     */
+    // Reorganize the tags for display and matching as strings of:
+    // "<tagname>\0<kind>\0<filename>\0"
     for (i = 0; i < *num_file; i++) {
       size_t len;
 
@@ -3260,8 +3258,8 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
             char_u *s, *n;
             int len;
 
-            /* Add extra field as a dict entry.  Fields are
-             * separated by Tabs. */
+            // Add extra field as a dict entry.  Fields are
+            // separated by Tabs.
             n = p;
             while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':') {
               ++p;
