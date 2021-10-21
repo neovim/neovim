@@ -226,9 +226,10 @@ function M.get_progress_messages()
       table.remove(client.messages, item.idx)
     end
 
-    for _, item in ipairs(progress_remove) do
-      client.messages.progress[item.token] = nil
-    end
+  end
+
+  for _, item in ipairs(progress_remove) do
+    item.client.messages.progress[item.token] = nil
   end
 
   return new_messages
