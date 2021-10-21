@@ -260,7 +260,6 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   if (*s != NUL) {
     msg_outtrans_attr((char_u *)s, attr);
   }
-  return;
 }
 
 

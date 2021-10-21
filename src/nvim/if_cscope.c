@@ -1832,7 +1832,6 @@ static int cs_read_prompt(size_t i)
 static void sig_handler(int s)
 {
   // do nothing
-  return;
 }
 
 #endif

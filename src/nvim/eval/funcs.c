@@ -11684,7 +11684,6 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 error:
   EMSG2(_(e_invarg2), fromstr);
   ga_clear(&ga);
-  return;
 }
 
 // "trim({expr})" function

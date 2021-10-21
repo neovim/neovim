@@ -927,7 +927,6 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
 fail_and_free:
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
-  return;
 }
 
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines
