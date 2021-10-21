@@ -2689,7 +2689,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
     xp->xp_context = EXPAND_USER_VARS;
-    if (vim_strpbrk(arg, (char_u *)"\"'+-*/%.=!?~|&$([<>,#") == NULL) {
+    if (VIM_STRPBRK(arg, (char_u *)"\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
       for (p = arg + STRLEN(arg); p >= arg; ) {
         xp->xp_pattern = p;
@@ -2704,7 +2704,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
     xp->xp_context = cmdidx == CMD_call ? EXPAND_FUNCTIONS
                                         : EXPAND_EXPRESSION;
   }
-  while ((xp->xp_pattern = vim_strpbrk(arg,
+  while ((xp->xp_pattern = VIM_STRPBRK(arg,
                                        (char_u *)"\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
     c = *xp->xp_pattern;
     if (c == '&') {

@@ -2322,8 +2322,8 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   fname = sfname;
 #endif
 
-  if (buf->b_ffname != NULL && fnamecmp(ffname, buf->b_ffname) == 0) {
-    overwriting = TRUE;
+  if (buf->b_ffname != NULL && FNAMECMP(ffname, buf->b_ffname) == 0) {
+    overwriting = true;
   } else {
     overwriting = FALSE;
   }
@@ -4648,7 +4648,7 @@ int vim_rename(const char_u *from, const char_u *to)
    * to the same file (ignoring case and slash/backslash differences) but
    * the file name differs we need to go through a temp file.
    */
-  if (fnamecmp(from, to) == 0) {
+  if (FNAMECMP(from, to) == 0) {
     if (p_fic && (STRCMP(path_tail((char_u *)from), path_tail((char_u *)to))
                   != 0)) {
       use_tmp_file = true;

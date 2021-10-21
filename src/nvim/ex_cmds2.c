@@ -2174,7 +2174,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
     bool file_id_equal = file_id_ok && si->file_id_valid
                          && os_fileid_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
-        && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
+        && (file_id_equal || FNAMECMP(si->sn_name, fname_exp) == 0)) {
       break;
     }
   }

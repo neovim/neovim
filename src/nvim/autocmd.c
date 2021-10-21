@@ -2072,7 +2072,7 @@ bool au_exists(const char *const arg) FUNC_ATTR_WARN_UNUSED_RESULT
         && (group == AUGROUP_ALL || ap->group == group)
         && (pattern == NULL
             || (buflocal_buf == NULL
-                ? fnamecmp(ap->pat, (char_u *)pattern) == 0
+                ? FNAMECMP(ap->pat, (char_u *)pattern) == 0
                 : ap->buflocal_nr == buflocal_buf->b_fnum))) {
       retval = true;
       break;

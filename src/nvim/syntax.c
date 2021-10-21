@@ -5442,7 +5442,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
         /*
          * Handle full group name.
          */
-        if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL) {
+        if (VIM_STRPBRK(name + 1, (char_u *)"\\.*^$~[") == NULL) {
           id = syn_check_group((char *)(name + 1), (int)(end - p));
         } else {
           // Handle match of regexp with group names.

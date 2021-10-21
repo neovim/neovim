@@ -828,8 +828,8 @@ void set_init_3(void)
     // Default for p_sp is "| tee", for p_srr is ">".
     // For known shells it is changed here to include stderr.
     //
-    if (fnamecmp(p, "csh") == 0
-        || fnamecmp(p, "tcsh") == 0) {
+    if (FNAMECMP(p, "csh") == 0
+        || FNAMECMP(p, "tcsh") == 0) {
       if (do_sp) {
         p_sp = (char_u *)"|& tee";
         options[idx_sp].def_val = p_sp;
@@ -838,16 +838,16 @@ void set_init_3(void)
         p_srr = (char_u *)">&";
         options[idx_srr].def_val = p_srr;
       }
-    } else if (fnamecmp(p, "sh") == 0
-               || fnamecmp(p, "ksh") == 0
-               || fnamecmp(p, "mksh") == 0
-               || fnamecmp(p, "pdksh") == 0
-               || fnamecmp(p, "zsh") == 0
-               || fnamecmp(p, "zsh-beta") == 0
-               || fnamecmp(p, "bash") == 0
-               || fnamecmp(p, "fish") == 0
-               || fnamecmp(p, "ash") == 0
-               || fnamecmp(p, "dash") == 0) {
+    } else if (FNAMECMP(p, "sh") == 0
+               || FNAMECMP(p, "ksh") == 0
+               || FNAMECMP(p, "mksh") == 0
+               || FNAMECMP(p, "pdksh") == 0
+               || FNAMECMP(p, "zsh") == 0
+               || FNAMECMP(p, "zsh-beta") == 0
+               || FNAMECMP(p, "bash") == 0
+               || FNAMECMP(p, "fish") == 0
+               || FNAMECMP(p, "ash") == 0
+               || FNAMECMP(p, "dash") == 0) {
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";
@@ -2334,10 +2334,10 @@ static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
   } else if (((options[opt_idx].flags & P_NFNAME)
-              && vim_strpbrk(*varp, (char_u *)(secure ? "/\\*?[|;&<>\r\n"
-                                                      : "/\\*?[<>\r\n")) != NULL)
+              && VIM_STRPBRK(*varp,
+                             (char_u *)(secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
              || ((options[opt_idx].flags & P_NDNAME)
-                 && vim_strpbrk(*varp, (char_u *)"*?[|;&<>\r\n") != NULL)) {
+                 && VIM_STRPBRK(*varp, (char_u *)"*?[|;&<>\r\n") != NULL)) {
     // Check for a "normal" directory or file name in some options.  Disallow a
     // path separator (slash and/or backslash), wildcards and characters that
     // are often illegal in a file name. Be more permissive if "secure" is off.

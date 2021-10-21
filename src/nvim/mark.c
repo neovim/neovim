@@ -551,7 +551,7 @@ static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
 {
   if (fm->fmark.fnum == 0
       && fm->fname != NULL
-      && fnamecmp(name, fm->fname) == 0) {
+      && FNAMECMP(name, fm->fname) == 0) {
     fm->fmark.fnum = buf->b_fnum;
     XFREE_CLEAR(fm->fname);
   }

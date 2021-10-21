@@ -3023,7 +3023,7 @@ static bool otherfile_buf(buf_T *buf, char_u *ffname, FileID *file_id_p, bool fi
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
     return true;
   }
-  if (fnamecmp(ffname, buf->b_ffname) == 0) {
+  if (FNAMECMP(ffname, buf->b_ffname) == 0) {
     return false;
   }
   {

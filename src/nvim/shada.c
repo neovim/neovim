@@ -1053,7 +1053,7 @@ static buf_T *find_buffer(khash_t(fnamebufs) *const fname_bufs, const char *cons
   kh_key(fname_bufs, k) = xstrdup(fname);
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname != NULL) {
-      if (fnamecmp(fname, buf->b_ffname) == 0) {
+      if (FNAMECMP(fname, buf->b_ffname) == 0) {
         kh_val(fname_bufs, k) = buf;
         return buf;
       }

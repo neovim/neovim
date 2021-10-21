@@ -2318,7 +2318,7 @@ static int check_linecomment(const char_u *line)
     if (vim_strchr(p, ';') != NULL) {   // there may be comments
       bool in_str = false;       // inside of string
 
-      while ((p = vim_strpbrk(p, (char_u *)"\";")) != NULL) {
+      while ((p = VIM_STRPBRK(p, (char_u *)"\";")) != NULL) {
         if (*p == '"') {
           if (in_str) {
             if (*(p - 1) != '\\') {             // skip escaped quote

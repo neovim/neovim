@@ -4486,7 +4486,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
     if ((eap->usefilter
          || eap->cmdidx == CMD_bang
          || eap->cmdidx == CMD_terminal)
-        && vim_strpbrk(repl, (char_u *)"!") != NULL) {
+        && VIM_STRPBRK(repl, (char_u *)"!") != NULL) {
       char_u *l;
 
       l = vim_strsave_escaped(repl, (char_u *)"!");
