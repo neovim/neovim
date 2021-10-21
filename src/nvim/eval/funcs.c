@@ -3359,7 +3359,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   expand_T xpc;
   bool filtered = false;
   int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
-                | WILD_NO_BEEP;
+                | WILD_NO_BEEP | WILD_HOME_REPLACE;
 
   if (argvars[1].v_type != VAR_STRING) {
     EMSG2(_(e_invarg2), "type must be a string");

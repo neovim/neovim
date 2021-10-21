@@ -2915,6 +2915,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   ExpandInit(xp);
   xp->xp_pattern = (char_u *)buff;
+  xp->xp_line = (char_u *)buff;
   xp->xp_context = EXPAND_COMMANDS;  // Default until we get past command
   ea.argt = 0;
 
