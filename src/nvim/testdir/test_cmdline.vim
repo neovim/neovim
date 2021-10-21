@@ -309,7 +309,7 @@ func Test_getcompletion()
   let l = getcompletion('NoMatch', 'dir')
   call assert_equal([], l)
 
- if glob('~/*') !=# ''
+  if glob('~/*') !=# ''
     let l = getcompletion('~/', 'dir')
     call assert_true(l[0][0] ==# '~')
   endif
