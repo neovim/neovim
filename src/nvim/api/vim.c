@@ -2441,7 +2441,6 @@ static void write_msg(String message, bool to_err)
     pos = 0; \
     continue; \
   } \
- \
   line_buf[pos++] = message.data[i];
 
   ++no_wait_return;
