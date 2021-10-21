@@ -644,7 +644,9 @@ end
 --- - debounce_text_changes (number, default nil): Debounce didChange
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
----
+--- - exit_timeout (number, default 500): Milliseconds to wait for server to
+--        exit cleanly after sending the 'shutdown' request before sending kill -15.
+--        If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
 ---@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
 --- fully initialized. Use `on_init` to do any actions once
 --- the client has been initialized.
@@ -1226,9 +1228,38 @@ function lsp._vim_exit_handler()
     client.stop()
   end
 
-  if not vim.wait(500, function() return tbl_isempty(active_clients) end, 50) then
-    for _, client in pairs(active_clients) do
-      client.stop(true)
+  local timeouts = {}
+  local max_timeout = 0
+  local send_kill = false
+
+  for client_id, client in pairs(active_clients) do
+    local timeout = if_nil(client.config.flags.exit_timeout, 500)
+    if timeout then
+      send_kill = true
+      timeouts[client_id] = timeout
+      max_timeout = math.max(timeout, max_timeout)
+    else
+      active_clients[client_id] = nil
+    end
+  end
+
+  local poll_time = 50
+
+  local function check_clients_closed()
+    for client_id, _ in pairs(active_clients) do
+      timeouts[client_id] = timeouts[client_id] - poll_time
+      if timeouts[client_id] < 0 then
+        active_clients[client_id] = nil
+      end
+    end
+    return tbl_isempty(active_clients)
+  end
+
+  if send_kill then
+    if not vim.wait(max_timeout, check_clients_closed, poll_time) then
+      for _, client in pairs(active_clients) do
+        client.stop(true)
+      end
     end
   end
 end
