@@ -309,6 +309,11 @@ func Test_getcompletion()
   let l = getcompletion('NoMatch', 'dir')
   call assert_equal([], l)
 
+  if glob('~/*') !=# ''
+    let l = getcompletion('~/', 'dir')
+    call assert_true(l[0][0] ==# '~')
+  endif
+
   let l = getcompletion('exe', 'expression')
   call assert_true(index(l, 'executable(') >= 0)
   let l = getcompletion('kill', 'expression')
@@ -421,6 +426,16 @@ func Test_getcompletion()
   call assert_true(index(l, 'taglist(') >= 0)
   let l = getcompletion('call paint', 'cmdline')
   call assert_equal([], l)
+
+  func T(a, c, p)
+    return "oneA\noneB\noneC"
+  endfunc
+  command -nargs=1 -complete=custom,T MyCmd
+  let l = getcompletion('MyCmd ', 'cmdline')
+  call assert_equal(['oneA', 'oneB', 'oneC'], l)
+
+  delcommand MyCmd
+  delfunc T
 
   " For others test if the name is recognized.
   let names = ['buffer', 'environment', 'file_in_path', 'mapping', 'tag', 'tag_listfiles', 'user']
