@@ -350,14 +350,13 @@ do
     end
   end
 
-  function changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+  function changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
-      local startline =  math.min(firstline + 1, math.min(#cached_buffers[bufnr], #lines))
-      local endline =  math.min(-(#lines - new_lastline), -1)
+      -- Firstline, lastline, and newlastline are all zero indexed
       local incremental_change = vim.lsp.util.compute_diff(
-        cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or 'utf-16')
+        cached_buffers[bufnr], lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16')
       cached_buffers[bufnr] = lines
       return incremental_change
     end
@@ -1075,7 +1074,7 @@ do
       return
     end
     util.buf_versions[bufnr] = changedtick
-    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
     for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end

@@ -361,171 +361,295 @@ end
 -- end
 
 ---@private
---- Finds the first line and column of the difference between old and new lines
+local function convert_byte_to_utf(line, idx, offset_encoding)
+  -- convert to 0 based indexing
+  idx = idx - 1
+
+  local utf_idx
+  local _
+  -- Convert the byte range to utf-{8,16,32} and convert 1-based (lua) indexing to 0-based
+  if offset_encoding == "utf-16" then
+    _, utf_idx = vim.str_utfindex(line, idx)
+  elseif offset_encoding == "utf-32" then
+    utf_idx, _ = vim.str_utfindex(line, idx)
+  else
+    utf_idx = idx
+  end
+
+  -- convert to 1 based indexing
+  return utf_idx + 1
+end
+
+---@private
+--- Finds the first line and byte index of the difference between old and new lines.
+--- Normalized to the previous codepoint.
 ---@param old_lines table list of lines
 ---@param new_lines table list of lines
----@returns (int, int) start_line_idx and start_col_idx of range
-local function first_difference(old_lines, new_lines, start_line_idx)
-  local line_count = math.min(#old_lines, #new_lines)
-  if line_count == 0 then return 1, 1 end
-  if not start_line_idx then
-    for i = 1, line_count do
-      start_line_idx = i
-      if old_lines[start_line_idx] ~= new_lines[start_line_idx] then
-        break
-      end
+---@param firstline integer
+---@param offset_encoding string
+---@returns (int, int) firstline and start_byte_idx of range
+local function first_difference(old_lines, new_lines, firstline, offset_encoding)
+  local last_char
+
+  local old_line = old_lines[firstline]
+  local new_line = new_lines[firstline]
+
+  -- When either old_line or new_line are invalid
+  if not old_line or not new_line then
+    local changed_line_idx
+    -- Special case for when buffer is extended by adding lines
+    if not old_line then
+       changed_line_idx = #old_lines
+    else
+      -- Special case for when buffer is shortened by removing lines
+       changed_line_idx = #old_lines - 1
     end
+
+    local changed_line = old_lines[changed_line_idx]
+    local last_byte = #changed_line + 1
+    last_char = convert_byte_to_utf(changed_line, last_byte, offset_encoding)
+
+    -- Extending the buffer, pick the last byte of old_lines
+    return { line_idx = changed_line_idx, byte_idx = last_byte, char_idx = last_char }
   end
-  local old_line = old_lines[start_line_idx]
-  local new_line = new_lines[start_line_idx]
-  local length = math.min(#old_line, #new_line)
-  local start_col_idx = 1
-  while start_col_idx <= length do
-    if string.sub(old_line, start_col_idx, start_col_idx) ~= string.sub(new_line, start_col_idx, start_col_idx) then
+
+  local start_byte_idx = 1
+  -- Iterate across old and new line to find the first different byte
+  for idx = 1, #old_line + 1 do
+    start_byte_idx = idx
+    if string.byte(old_line, idx) ~= string.byte(new_line, idx) then
       break
     end
-    start_col_idx  = start_col_idx  + 1
   end
-  return start_line_idx, start_col_idx
+
+  -- Set the byte range to start at the last codepoint
+  if start_byte_idx == 1 or #old_line == 0 then
+  -- if start_byte is first byte, or the length of the string is 0, we are done
+    last_char = start_byte_idx
+  elseif start_byte_idx == #old_line + 1 then
+    -- If extending the line, the range will be the length of the old line + 1 and fall on a codepoint
+    start_byte_idx = start_byte_idx
+    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
+    last_char = convert_byte_to_utf(old_line, #old_line, offset_encoding) + 1
+  else
+    -- Modifying line, find the nearest utf codepoint
+    start_byte_idx = start_byte_idx + vim.str_utf_start(old_line, start_byte_idx)
+    -- Extending line, find the nearest utf codepoint for the last valid character
+    last_char = convert_byte_to_utf(old_line, start_byte_idx, offset_encoding)
+  end
+
+  -- Return the start difference (shared for new and old lines)
+  return { line_idx = firstline, byte_idx=start_byte_idx, char_idx=last_char }
 end
 
 
 ---@private
---- Finds the last line and column of the differences between old and new lines
+--- Finds the last line and byte index of the differences between old and new lines>
+--- Normalized to the next codepoint.
 ---@param old_lines table list of lines
 ---@param new_lines table list of lines
----@param start_char integer First different character idx of range
+---@param start_range table
+---@param lastline integer
+---@param new_lastline integer
+---@param offset_encoding string
 ---@returns (int, int) end_line_idx and end_col_idx of range
-local function last_difference(old_lines, new_lines, start_char, end_line_idx)
-  local line_count = math.min(#old_lines, #new_lines)
-  if line_count == 0 then return 0,0 end
-  if not end_line_idx then
-    end_line_idx = -1
+local function last_difference(old_lines, new_lines, start_range, lastline, new_lastline, offset_encoding)
+
+  local start_line_idx = start_range.line_idx
+  local start_byte_idx = start_range.byte_idx
+
+  local old_line_idx = lastline - 1
+  local new_line_idx = new_lastline - 1
+
+  -- Diff the last line in new_lines and old lines that does not match
+  local old_line = old_lines[old_line_idx]
+  local new_line = new_lines[new_line_idx]
+
+  local old_last_char
+  local old_last_byte
+  local old_changed_line
+  local old_changed_line_idx
+  local old_end_range
+
+  local new_last_char
+  local new_last_byte
+  local new_changed_line
+  local new_changed_line_idx
+  local new_end_range
+
+  -- When either old_line or new_line are invalid
+  if not old_line or not new_line then
+    -- Special case for when buffer is extended by adding lines
+    old_changed_line_idx = #old_lines
+
+    old_changed_line = old_lines[old_changed_line_idx]
+    old_last_byte = #old_changed_line + 1
+    old_last_char = convert_byte_to_utf(old_changed_line, old_last_byte, offset_encoding)
+
+    -- Extending the buffer, pick the last byte of old_lines
+    old_end_range = { line_idx = old_changed_line_idx, byte_idx = old_last_byte, char_idx = old_last_char }
+
+    new_changed_line_idx = #new_lines
+
+    new_changed_line = new_lines[new_changed_line_idx]
+    new_last_byte = #new_changed_line + 1
+    new_last_char = convert_byte_to_utf(new_changed_line, new_last_byte, offset_encoding)
+
+    new_end_range = { line_idx = new_changed_line_idx, byte_idx = new_last_byte, char_idx = new_last_char }
+
+    return old_end_range, new_end_range
   end
-  for i = end_line_idx, -line_count, -1  do
-    if old_lines[#old_lines + i + 1] ~= new_lines[#new_lines + i + 1] then
-      end_line_idx = i
-      break
-    end
-  end
-  local old_line
-  local new_line
-  if end_line_idx <= -line_count then
-    end_line_idx = -line_count
-    old_line  = string.sub(old_lines[#old_lines + end_line_idx + 1], start_char)
-    new_line  = string.sub(new_lines[#new_lines + end_line_idx + 1], start_char)
-  else
-    old_line  = old_lines[#old_lines + end_line_idx + 1]
-    new_line  = new_lines[#new_lines + end_line_idx + 1]
-  end
+
   local old_line_length = #old_line
   local new_line_length = #new_line
-  local length = math.min(old_line_length, new_line_length)
-  local end_col_idx = -1
-  while end_col_idx >= -length do
-    local old_char =  string.sub(old_line, old_line_length + end_col_idx + 1, old_line_length + end_col_idx + 1)
-    local new_char =  string.sub(new_line, new_line_length + end_col_idx + 1, new_line_length + end_col_idx + 1)
-    if old_char ~= new_char then
+
+  -- We know that the end_byte cannot be before the first change
+  local search_bound
+  if old_line_idx == start_line_idx or new_line_idx == start_line_idx then
+    search_bound  = math.min(old_line_length - start_byte_idx, new_line_length -start_byte_idx)
+  else
+    search_bound  = math.max(old_line_length, new_line_length)
+  end
+
+  local byte_offset = 0
+  -- Iterate from end to beginning of shortest line
+  for idx = 0, search_bound do
+    byte_offset = idx
+    if string.byte(old_line, old_line_length - byte_offset) ~= string.byte(new_line, new_line_length - byte_offset) then
       break
     end
-    end_col_idx = end_col_idx - 1
   end
-  return end_line_idx, end_col_idx
+
+  -- TODO: These functions are duplicates and can be unified with the each other, and the function in first_difference
+  local old_end_byte_idx = old_line_length - byte_offset + 1
+  -- Set the byte range to start at the last codepoint
+  if old_end_byte_idx == 1 or #old_line == 0 then
+  -- if start_byte is first byte, or the length of the string is 0, we are done
+    old_last_char = old_end_byte_idx
+  elseif old_end_byte_idx == #old_line + 1 then
+    -- If extending the line, the range will be the length of the old line + 1 and fall on a codepoint
+    old_end_byte_idx = old_end_byte_idx
+    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
+    old_last_char = convert_byte_to_utf(old_line, #old_line, offset_encoding) + 1
+  else
+    -- Modifying line, find the nearest utf codepoint
+    old_end_byte_idx = old_end_byte_idx + vim.str_utf_start(old_line, old_end_byte_idx)
+    -- Extending line, find the nearest utf codepoint for the last valid character
+    old_last_char = convert_byte_to_utf(old_line, old_end_byte_idx, offset_encoding)
+  end
+
+  old_end_range = { line_idx = old_line_idx, byte_idx = old_end_byte_idx, char_idx = old_last_char }
+
+  local new_end_byte_idx = new_line_length - byte_offset + 1
+  -- Set the byte range to start at the last codepoint
+  if new_end_byte_idx == 1 or #new_line == 0 then
+  -- if start_byte is first byte, or the length of the string is 0, we are done
+    new_last_char = new_end_byte_idx
+  elseif new_end_byte_idx == #new_line + 1 then
+    -- If extending the line, the range will be the length of the new line + 1 and fall on a codepoint
+    new_end_byte_idx = new_end_byte_idx
+    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
+    new_last_char = convert_byte_to_utf(new_line, #new_line, offset_encoding) + 1
+  else
+    -- Modifying line, find the nearest utf codepoint
+    new_end_byte_idx = new_end_byte_idx + vim.str_utf_start(new_line, new_end_byte_idx)
+    -- Extending line, find the nearest utf codepoint for the last valid character
+    new_last_char = convert_byte_to_utf(new_line, new_end_byte_idx, offset_encoding)
+  end
+
+  new_end_range = { line_idx = new_line_idx, byte_idx = new_end_byte_idx, char_idx = new_last_char }
+
+
+
+  return old_end_range, new_end_range
 
 end
 
 ---@private
 --- Get the text of the range defined by start and end line/column
 ---@param lines table list of lines
----@param start_char integer First different character idx of range
----@param end_char integer Last different character idx of range
----@param start_line integer First different line idx of range
----@param end_line integer Last different line idx of range
+---@param start_range table table returned by first_difference
+---@param end_range table new_end_range returned by last_difference
 ---@returns string text extracted from defined region
-local function extract_text(lines, start_line, start_char, end_line, end_char)
-  if start_line == #lines + end_line + 1 then
-    if end_line == 0 then return '' end
-    local line = lines[start_line]
-    local length = #line + end_char - start_char
-    return string.sub(line, start_char, start_char + length + 1)
+local function extract_text(lines, start_range, end_range)
+  -- Simple deletion.
+  if start_range.line_idx > end_range.line_idx then
+    return ""
   end
-  local result = string.sub(lines[start_line], start_char) .. '\n'
-  for line_idx = start_line + 1, #lines + end_line do
-    result = result .. lines[line_idx] .. '\n'
+  -- Add the fragment of the first line
+  if start_range.line_idx == end_range.line_idx then
+    return string.sub(lines[start_range.line_idx], start_range.byte_idx, end_range.byte_idx - 1)
+  else
+    local result = { string.sub(lines[start_range.line_idx], start_range.byte_idx) }
+
+    -- The first and last range of the line idx may be partial lines
+    for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
+      table.insert(result, lines[idx])
+    end
+
+    -- TODO: Join all lines with newline (should read from whatever the encoding is in the file)
+    result = table.concat(result, '\n') .. '\n'
+
+    -- Add the fragment of the last line
+    local line = lines[end_range.line_idx]
+    result = result .. string.sub(line, 1, end_range.end_byte)
+
+    return result
   end
-  if end_line ~= 0 then
-    local line = lines[#lines + end_line + 1]
-    local length = #line + end_char + 1
-    result = result .. string.sub(line, 1, length)
-  end
-  return result
 end
 
 ---@private
---- Compute the length of the substituted range
----@param lines table list of lines
----@param start_char integer First different character idx of range
----@param end_char integer Last different character idx of range
----@param start_line integer First different line idx of range
----@param end_line integer Last different line idx of range
----@returns (int, int) end_line_idx and end_col_idx of range
-local function compute_length(lines, start_line, start_char, end_line, end_char)
-  local adj_end_line = #lines + end_line + 1
-  local adj_end_char
-  if adj_end_line > #lines then
-    adj_end_char =  end_char - 1
-  else
-    adj_end_char = #lines[adj_end_line] + end_char
+local function compute_range_length(lines, start_range, end_range, offset_encoding)
+  -- Single line case
+  if start_range.line_idx == end_range.line_idx then
+    return start_range.char_idx - end_range.char_idx
   end
-  if start_line == adj_end_line then
-    return adj_end_char - start_char + 1
-  end
-  local result = #lines[start_line] - start_char + 1
-  for line = start_line + 1, adj_end_line -1 do
-    result = result + #lines[line] + 1
-  end
-  result = result + adj_end_char + 1
-  return result
-end
 
+  local start_line = lines[start_range.line_idx]
+  local range_length
+  if #start_line > 0 then
+    range_length = convert_byte_to_utf(start_line, #start_line, offset_encoding) - start_range.char_idx + 1
+  else
+    -- Length of newline character
+    range_length = 1
+  end
+
+  -- The first and last range of the line idx may be partial lines
+  for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
+      -- Length full line plus newline character
+      range_length = range_length + convert_byte_to_utf(lines[idx], #lines[idx], offset_encoding) + 1
+  end
+
+  local end_line = lines[end_range.line_idx]
+  if #end_line > 0 then
+    range_length = range_length + convert_byte_to_utf(end_line, #end_line, offset_encoding) - end_range.char_idx
+  end
+
+  return range_length
+end
 --- Returns the range table for the difference between old and new lines
 ---@param old_lines table list of lines
 ---@param new_lines table list of lines
----@param start_line_idx int line to begin search for first difference
----@param end_line_idx int line to begin search for last difference
+---@param firstline number line to begin search for first difference
+---@param lastline number line to begin search in old_lines for last difference
+---@param new_lastline number line to begin search in new_lines for last difference
 ---@param offset_encoding string encoding requested by language server
 ---@returns table start_line_idx and start_col_idx of range
-function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offset_encoding)
-  local start_line, start_char = first_difference(old_lines, new_lines, start_line_idx)
-  local end_line, end_char = last_difference(vim.list_slice(old_lines, start_line, #old_lines),
-      vim.list_slice(new_lines, start_line, #new_lines), start_char, end_line_idx)
-  local text = extract_text(new_lines, start_line, start_char, end_line, end_char)
-  local length = compute_length(old_lines, start_line, start_char, end_line, end_char)
+function M.compute_diff(old_lines, new_lines, firstline, lastline, new_lastline, offset_encoding)
+    local start_range = first_difference(old_lines, new_lines, firstline +1, offset_encoding)
+    -- -- Find the last changed line, and the last utf-8 character difference (1-indexed)
+    local old_end_range, new_end_range = last_difference(old_lines, new_lines, start_range, lastline+1, new_lastline+1, offset_encoding)
+    local text = extract_text(new_lines, start_range, new_end_range)
+    local range_length = compute_range_length(old_lines, start_range, old_end_range, offset_encoding)
 
-  local adj_end_line = #old_lines + end_line
-  local adj_end_char
-  if end_line == 0 then
-    adj_end_char = 0
-  else
-    adj_end_char = #old_lines[#old_lines + end_line + 1] + end_char + 1
-  end
-
-  local _
-  if offset_encoding == "utf-16" then
-    _, start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
-    _, end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
-  else
-    start_char = start_char - 1
-    end_char = adj_end_char
-  end
-
+  -- convert to 0 based indexing
   local result = {
     range = {
-      start = { line = start_line - 1, character = start_char},
-      ["end"] = { line = adj_end_line, character = end_char}
+      ["start"] = { line = start_range.line_idx - 1, character = start_range.char_idx - 1},
+      ["end"] = { line = old_end_range.line_idx - 1, character = old_end_range.char_idx - 1}
     },
     text = text,
-    rangeLength = length + 1,
+    rangeLength = range_length,
   }
 
   return result
