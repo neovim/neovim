@@ -567,7 +567,6 @@ function tests.basic_check_buffer_open_and_change_incremental()
               start = { line = 1; character = 3; };
               ["end"] = { line = 1; character = 3; };
             };
-            rangeLength = 0;
             text = "boop";
           };
         }
@@ -610,7 +609,6 @@ function tests.basic_check_buffer_open_and_change_incremental_editing()
               start = { line = 0; character = 0; };
               ["end"] = { line = 1; character = 0; };
             };
-            rangeLength = 4;
             text = "testing\n\n";
           };
         }
