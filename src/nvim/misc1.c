@@ -1067,12 +1067,13 @@ void trigger_modechanged(void)
     return;
   }
 
-  dict_T *v_event = get_vim_var_dict(VV_EVENT);
-
   char *mode = get_mode();
-  if (last_mode == NULL) {
-    last_mode = (char *)vim_strsave((char_u *)"n");
+  if (STRCMP(mode, last_mode) == 0) {
+    xfree(mode);
+    return;
   }
+
+  dict_T *v_event = get_vim_var_dict(VV_EVENT);
   tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
   tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
 

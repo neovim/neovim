@@ -487,6 +487,7 @@ static void normal_prepare(NormalState *s)
   if (finish_op != c) {
     ui_cursor_shape();  // may show different cursor shape
   }
+  trigger_modechanged();
 
   // When not finishing an operator and no register name typed, reset the count.
   if (!finish_op && !s->oa.regname) {
@@ -928,6 +929,7 @@ normal_end:
   // Reset finish_op, in case it was set
   s->c = finish_op;
   finish_op = false;
+  trigger_modechanged();
   // Redraw the cursor with another shape, if we were in Operator-pending
   // mode or did a replace command.
   if (s->c || s->ca.cmdchar == 'r') {
@@ -965,6 +967,7 @@ normal_end:
       && s->oa.regname == 0) {
     if (restart_VIsual_select == 1) {
       VIsual_select = true;
+      trigger_modechanged();
       showmode();
       restart_VIsual_select = 0;
     }
@@ -3050,7 +3053,6 @@ static int get_mouse_class(char_u *p)
 void end_visual_mode(void)
 {
   VIsual_active = false;
-  trigger_modechanged();
   setmouse();
   mouse_dragging = 0;
 
@@ -3067,6 +3069,7 @@ void end_visual_mode(void)
   may_clear_cmdline();
 
   adjust_cursor_eol();
+  trigger_modechanged();
 }
 
 /*
@@ -4852,6 +4855,7 @@ static void nv_ctrlg(cmdarg_T *cap)
 {
   if (VIsual_active) {  // toggle Selection/Visual mode
     VIsual_select = !VIsual_select;
+    trigger_modechanged();
     showmode();
   } else if (!checkclearop(cap->oap)) {
     // print full name if count given or :cd used
@@ -4895,6 +4899,7 @@ static void nv_ctrlo(cmdarg_T *cap)
 {
   if (VIsual_active && VIsual_select) {
     VIsual_select = false;
+    trigger_modechanged();
     showmode();
     restart_VIsual_select = 2;          // restart Select mode later
   } else {

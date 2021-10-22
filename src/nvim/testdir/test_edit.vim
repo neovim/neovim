@@ -1646,12 +1646,8 @@ endfunc
 
 " Test for ModeChanged pattern
 func Test_mode_changes()
-  let g:count = 0
-  func! DoIt()
-    let g:count += 1
-  endfunc
   let g:index = 0
-  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'n', 'V', 'v', 'n']
+  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'n', 'V', 'v', 's', 'n']
   func! TestMode()
     call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
     call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
@@ -1660,13 +1656,15 @@ func Test_mode_changes()
   endfunc
 
   au ModeChanged * :call TestMode()
-  au ModeChanged n:* :call DoIt()
-  call feedkeys("i\<esc>vV\<esc>", 'tnix')
-  call assert_equal(2, g:count)
+  let g:n_to_any = 0
+  au ModeChanged n:* let g:n_to_any += 1
+  call feedkeys("i\<esc>vVca\<CR>\<C-X>\<C-L>\<esc>ggdG", 'tnix')
 
-  au ModeChanged V:v :call DoIt()
-  call feedkeys("Vv\<esc>", 'tnix')
-  call assert_equal(4, g:count)
+  let g:V_to_v = 0
+  au ModeChanged V:v let g:V_to_v += 1
+  call feedkeys("Vv\<C-G>\<esc>", 'tnix')
+  call assert_equal(len(filter(g:mode_seq[1:], {idx, val -> val == 'n'})), g:n_to_any)
+  call assert_equal(1, g:V_to_v)
   call assert_equal(len(g:mode_seq) - 1, g:index)
 
   let g:n_to_i = 0
@@ -1695,12 +1693,32 @@ func Test_mode_changes()
   call assert_equal(2, g:i_to_any)
   call assert_equal(3, g:nori_to_any)
 
+  if has('terminal')
+    let g:mode_seq += ['c', 'n', 't', 'nt', 'c', 'nt', 'n']
+    call feedkeys(":term\<CR>\<C-W>N:bd!\<CR>", 'tnix')
+    call assert_equal(len(g:mode_seq) - 1, g:index)
+    call assert_equal(1, g:n_to_i)
+    call assert_equal(1, g:n_to_niI)
+    call assert_equal(1, g:niI_to_i)
+    call assert_equal(2, g:nany_to_i)
+    call assert_equal(1, g:i_to_n)
+    call assert_equal(2, g:i_to_any)
+    call assert_equal(5, g:nori_to_any)
+  endif
+
   au! ModeChanged
   delfunc TestMode
   unlet! g:mode_seq
   unlet! g:index
-  delfunc DoIt
-  unlet! g:count
+  unlet! g:n_to_any
+  unlet! g:V_to_v
+  unlet! g:n_to_i
+  unlet! g:n_to_niI
+  unlet! g:niI_to_i
+  unlet! g:nany_to_i
+  unlet! g:i_to_n
+  unlet! g:nori_to_any
+  unlet! g:i_to_any
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -925,6 +925,13 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, c
             return FAIL;
           }
         }
+
+        // need to initialize last_mode for the first ModeChanged autocmd
+        if (event == EVENT_MODECHANGED && !has_event(EVENT_MODECHANGED)) {
+          xfree(last_mode);
+          last_mode = get_mode();
+        }
+
         ap->cmds = NULL;
         *prev_ap = ap;
         last_autopat[(int)event] = ap;
