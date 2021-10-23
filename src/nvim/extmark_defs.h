@@ -11,10 +11,6 @@ typedef struct {
   int hl_id;
 } VirtTextChunk;
 
-typedef kvec_t(VirtTextChunk) VirtText;
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
-typedef kvec_t(VirtText) VirtLines;
-
 
 typedef struct
 {
@@ -37,5 +33,11 @@ typedef enum {
   kExtmarkNoUndo,      // Operation should not be reversible
   kExtmarkUndoNoRedo,  // Operation should be undoable, but not redoable
 } ExtmarkOp;
+
+typedef enum {
+  kDecorLevelNone = 0,
+  kDecorLevelVisible = 1,
+  kDecorLevelVirtLine = 2,
+} DecorLevel;
 
 #endif  // NVIM_EXTMARK_DEFS_H

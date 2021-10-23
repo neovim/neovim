@@ -75,4 +75,13 @@ typedef struct {
 #define MARKTREE_PAIRED_FLAG (((uint64_t)1) << 1)
 #define MARKTREE_END_FLAG (((uint64_t)1) << 0)
 
+#define DECOR_LEVELS 4
+#define DECOR_OFFSET 61
+#define DECOR_MASK (((uint64_t)(DECOR_LEVELS-1)) << DECOR_OFFSET)
+
+static inline uint8_t marktree_decor_level(uint64_t id)
+{
+  return (uint8_t)((id&DECOR_MASK) >> DECOR_OFFSET);
+}
+
 #endif  // NVIM_MARKTREE_H

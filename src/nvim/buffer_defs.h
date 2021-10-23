@@ -866,12 +866,7 @@ struct file_buffer {
   MarkTree b_marktree[1];
   Map(uint64_t, ExtmarkItem) b_extmark_index[1];
   Map(uint64_t, ExtmarkNs) b_extmark_ns[1];         // extmark namespaces
-
-  VirtLines b_virt_lines;
-  uint64_t b_virt_line_mark;
-  int b_virt_line_pos;
-  bool b_virt_line_above;
-  bool b_virt_line_leftcol;
+  size_t b_virt_line_blocks;    // number of virt_line blocks
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.

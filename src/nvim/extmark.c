@@ -83,8 +83,7 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
           ExtmarkItem it = map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                           old_mark);
           if (it.decor) {
-            decor_redraw(buf, row, row, it.decor);
-            decor_free(it.decor);
+            decor_remove(buf, row, row, it.decor);
           }
           mark = marktree_revise(buf->b_marktree, itr);
           goto revised;
@@ -96,12 +95,20 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
     }
   }
 
+  uint8_t decor_level = kDecorLevelNone;  // no decor
+  if (decor) {
+    decor_level = kDecorLevelVisible;  // decor affects redraw
+    if (kv_size(decor->virt_lines)) {
+      decor_level = kDecorLevelVirtLine;  // decor affects horizontal size
+    }
+  }
+
   if (end_row > -1) {
     mark = marktree_put_pair(buf->b_marktree,
                              row, col, right_gravity,
-                             end_row, end_col, end_right_gravity);
+                             end_row, end_col, end_right_gravity, decor_level);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
+    mark = marktree_put(buf->b_marktree, row, col, right_gravity, decor_level);
   }
 
 revised:
@@ -117,6 +124,9 @@ revised:
   }
 
   if (decor) {
+    if (kv_size(decor->virt_lines)) {
+      buf->b_virt_line_blocks++;
+    }
     decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
   }
 
@@ -170,12 +180,7 @@ bool extmark_del(buf_T *buf, uint64_t ns_id, uint64_t id)
   }
 
   if (item.decor) {
-    decor_redraw(buf, pos.row, pos2.row, item.decor);
-    decor_free(item.decor);
-  }
-
-  if (mark == buf->b_virt_line_mark) {
-    clear_virt_lines(buf, pos.row);
+    decor_remove(buf, pos.row, pos2.row, item.decor);
   }
 
   map_del(uint64_t, uint64_t)(ns->map, id);
@@ -228,17 +233,13 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id, int l_row, colnr_T l_col, int u_r
       marktree_del_itr(buf->b_marktree, itr, false);
       if (*del_status >= 0) {  // we had a decor_id
         DecorItem it = kv_A(decors, *del_status);
-        decor_redraw(buf, it.row1, mark.row, it.decor);
-        decor_free(it.decor);
+        decor_remove(buf, it.row1, mark.row, it.decor);
       }
       map_del(uint64_t, ssize_t)(&delete_set, mark.id);
       continue;
     }
 
     uint64_t start_id = mark.id & ~MARKTREE_END_FLAG;
-    if (start_id == buf->b_virt_line_mark) {
-      clear_virt_lines(buf, mark.row);
-    }
     ExtmarkItem item = map_get(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                       start_id);
 
@@ -257,8 +258,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id, int l_row, colnr_T l_col, int u_r
         }
         map_put(uint64_t, ssize_t)(&delete_set, other, decor_id);
       } else if (item.decor) {
-        decor_redraw(buf, mark.row, mark.row, item.decor);
-        decor_free(item.decor);
+        decor_remove(buf, mark.row, mark.row, item.decor);
       }
       ExtmarkNs *my_ns = all_ns ? buf_ns_ref(buf, item.ns_id, false) : ns;
       map_del(uint64_t, uint64_t)(my_ns->map, item.mark_id);
@@ -276,8 +276,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id, int l_row, colnr_T l_col, int u_r
     marktree_del_itr(buf->b_marktree, itr, false);
     if (decor_id >= 0) {
       DecorItem it = kv_A(decors, decor_id);
-      decor_redraw(buf, it.row1, pos.row, it.decor);
-      decor_free(it.decor);
+      decor_remove(buf, it.row1, pos.row, it.decor);
     }
   });
   map_clear(uint64_t, ssize_t)(&delete_set);
@@ -508,7 +507,6 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
                           kExtmarkNoUndo);
     }
   }
-  curbuf->b_virt_line_pos = -1;
 }
 
 
@@ -588,7 +586,6 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                          colnr_T new_col, bcount_t new_byte, ExtmarkOp undo)
 {
   buf->deleted_bytes2 = 0;
-  buf->b_virt_line_pos = -1;
   buf_updates_send_splice(buf, start_row, start_col, start_byte,
                           old_row, old_col, old_byte,
                           new_row, new_col, new_byte);
@@ -680,7 +677,6 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                          colnr_T new_col, bcount_t new_byte, ExtmarkOp undo)
 {
   buf->deleted_bytes2 = 0;
-  buf->b_virt_line_pos = -1;
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured
   // anyway.
