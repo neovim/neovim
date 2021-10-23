@@ -176,6 +176,29 @@ static int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 2;
 }
 
+/// return byte indices of codepoints in a string (only supports utf-8 currently).
+///
+/// Expects a string.
+///
+/// Returns a list of codepoints.
+static int nlua_str_utf_pos(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  size_t s1_len;
+  const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
+  lua_newtable(lstate);
+
+  size_t idx = 1;
+  size_t clen;
+  for (size_t i = 0; i < s1_len && s1[i] != NUL; i += clen) {
+    clen = (size_t)utf_ptr2len_len((const char_u *)(s1)+i, (int)(s1_len-i));
+    lua_pushinteger(lstate, (long)i + 1);
+    lua_rawseti(lstate, -2, (int)idx);
+    idx++;
+  }
+
+  return 1;
+}
+
 /// convert UTF-32 or UTF-16 indices to byte index.
 ///
 /// Expects up to three args: string, index and use_utf16.
@@ -435,6 +458,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // str_byteindex
   lua_pushcfunction(lstate, &nlua_str_byteindex);
   lua_setfield(lstate, -2, "str_byteindex");
+  // str_utf_pos
+  lua_pushcfunction(lstate, &nlua_str_utf_pos);
+  lua_setfield(lstate, -2, "str_utf_pos");
   // neovim version
   lua_pushcfunction(lstate, &nlua_nvim_version);
   lua_setfield(lstate, -2, "version");
