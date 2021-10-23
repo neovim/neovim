@@ -686,20 +686,14 @@ void msgmore(long n)
   }
 
   if (pn > p_report) {
-    if (pn == 1) {
-      if (n > 0) {
-        STRLCPY(msg_buf, _("1 more line"), MSG_BUF_LEN);
-      } else {
-        STRLCPY(msg_buf, _("1 line less"), MSG_BUF_LEN);
-      }
+    if (n > 0) {
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld more line", "%ld more lines", pn),
+                   pn);
     } else {
-      if (n > 0) {
-        vim_snprintf(msg_buf, MSG_BUF_LEN,
-                     _("%" PRId64 " more lines"), (int64_t)pn);
-      } else {
-        vim_snprintf(msg_buf, MSG_BUF_LEN,
-                     _("%" PRId64 " fewer lines"), (int64_t)pn);
-      }
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld line less", "%ld fewer lines", pn),
+                   pn);
     }
     if (got_int) {
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);

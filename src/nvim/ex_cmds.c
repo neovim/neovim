@@ -1015,11 +1015,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     ml_delete(line1 + extra, true);
   }
   if (!global_busy && num_lines > p_report) {
-    if (num_lines == 1) {
-      MSG(_("1 line moved"));
-    } else {
-      smsg(_("%" PRId64 " lines moved"), (int64_t)num_lines);
-    }
+    smsg(NGETTEXT("1 line moved", "%" PRId64 " lines moved", num_lines), (int64_t)num_lines);
   }
 
   extmark_move_region(curbuf, line1-1, 0, start_byte,
@@ -4456,22 +4452,20 @@ bool do_sub_msg(bool count_only)
     } else {
       *msg_buf = NUL;
     }
-    if (sub_nsubs == 1) {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       "%s", count_only ? _("1 match") : _("1 substitution"));
-    } else {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       count_only ? _("%" PRId64 " matches")
-                                  : _("%" PRId64 " substitutions"),
-                       (int64_t)sub_nsubs);
-    }
-    if (sub_nlines == 1) {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       "%s", _(" on 1 line"));
-    } else {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
-    }
+
+    char *msg_single = count_only
+                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " line",
+                                "%" PRId64 " matches on %" PRId64 " line", sub_nsubs)
+                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " line",
+                                "%" PRId64 " substitutions on %" PRId64 " line", sub_nsubs);
+    char *msg_plural = count_only
+                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " lines",
+                                "%" PRId64 " matches on %" PRId64 " lines", sub_nsubs)
+                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " lines",
+                                "%" PRId64 " substitutions on %" PRId64 " lines", sub_nsubs);
+    vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+                     NGETTEXT(msg_single, msg_plural, sub_nlines),
+                     (int64_t)sub_nsubs, (int64_t)sub_nlines);
     if (msg((char_u *)msg_buf)) {
       // save message to display it after redraw
       set_keep_msg((char_u *)msg_buf, 0);

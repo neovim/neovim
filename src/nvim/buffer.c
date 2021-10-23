@@ -1016,23 +1016,14 @@ char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int e
       errormsg = IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
-        if (deleted == 1) {
-          MSG(_("1 buffer unloaded"));
-        } else {
-          smsg(_("%d buffers unloaded"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", (unsigned long)deleted),
+             deleted);
       } else if (command == DOBUF_DEL) {
-        if (deleted == 1) {
-          MSG(_("1 buffer deleted"));
-        } else {
-          smsg(_("%d buffers deleted"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", (unsigned long)deleted),
+             deleted);
       } else {
-        if (deleted == 1) {
-          MSG(_("1 buffer wiped out"));
-        } else {
-          smsg(_("%d buffers wiped out"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", (unsigned long)deleted),
+             deleted);
       }
     }
   }
@@ -3103,12 +3094,11 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
   } else if (p_ru) {
     // Current line and column are already on the screen -- webb
-    if (curbuf->b_ml.ml_line_count == 1) {
-      vim_snprintf_add((char *)buffer, IOSIZE, _("1 line --%d%%--"), n);
-    } else {
-      vim_snprintf_add((char *)buffer, IOSIZE, _("%" PRId64 " lines --%d%%--"),
-                       (int64_t)curbuf->b_ml.ml_line_count, n);
-    }
+    vim_snprintf_add((char *)buffer, IOSIZE,
+                     NGETTEXT("%" PRId64 " line --%d%%--",
+                              "%" PRId64 " lines --%d%%--",
+                              (unsigned long)curbuf->b_ml.ml_line_count),
+                     (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
                      _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
