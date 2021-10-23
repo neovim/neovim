@@ -2,7 +2,7 @@
 " Language:             generic Changelog file
 " Maintainer:           Martin Florian <marfl@posteo.de>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2015-10-25
+" Latest Revision:      2021-10-17
 " Variables:
 "   g:changelog_timeformat (deprecated: use g:changelog_dateformat instead) -
 "       description: the timeformat used in ChangeLog entries.
@@ -55,7 +55,7 @@ if &filetype == 'changelog'
     elseif $EMAIL_ADDRESS != ""
       return $EMAIL_ADDRESS
     endif
-    
+
     let login = s:login()
     return printf('%s <%s@%s>', s:name(login), login, s:hostname())
   endfunction
@@ -223,12 +223,6 @@ if &filetype == 'changelog'
     let &paste = save_paste
   endfunction
 
-  if exists(":NewChangelogEntry") != 2
-    nnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
-    xnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
-    command! -nargs=0 NewChangelogEntry call s:new_changelog_entry('')
-  endif
-
   let b:undo_ftplugin = "setl com< fo< et< ai<"
 
   setlocal comments=
@@ -241,14 +235,26 @@ if &filetype == 'changelog'
     let b:undo_ftplugin .= " tw<"
   endif
 
+  if !exists("no_plugin_maps") && !exists("no_changelog_maps") && exists(":NewChangelogEntry") != 2
+    nnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
+    xnoremap <buffer> <silent> <Leader>o :<C-u>call <SID>new_changelog_entry('')<CR>
+    command! -buffer -nargs=0 NewChangelogEntry call s:new_changelog_entry('')
+    let b:undo_ftplugin .= " | sil! exe 'nunmap <buffer> <Leader>o'" .
+          \                " | sil! exe 'vunmap <buffer> <Leader>o'" .
+          \                " | sil! delc NewChangelogEntry"
+  endif
+
   let &cpo = s:cpo_save
   unlet s:cpo_save
 else
   let s:cpo_save = &cpo
   set cpo&vim
 
-  " Add the Changelog opening mapping
-  nnoremap <silent> <Leader>o :call <SID>open_changelog()<CR>
+  if !exists("no_plugin_maps") && !exists("no_changelog_maps")
+    " Add the Changelog opening mapping
+    nnoremap <silent> <Leader>o :call <SID>open_changelog()<CR>
+    let b:undo_ftplugin .= " | silent! exe 'nunmap <buffer> <Leader>o"
+  endif
 
   function! s:open_changelog()
     let path = expand('%:p:h')
