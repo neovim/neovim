@@ -527,6 +527,12 @@ describe('v:lua', function()
     ]]}
   end)
 
+  it('supports packages', function()
+    command('set pp+=test/functional/fixtures')
+    eq('\tbadval', eval("v:lua.require'leftpad'('badval')"))
+    eq(9003, eval("v:lua.require'bar'.doit()"))
+  end)
+
   it('throw errors for invalid use', function()
     eq('Vim(let):E15: Invalid expression: v:lua.func', pcall_err(command, "let g:Func = v:lua.func"))
     eq('Vim(let):E15: Invalid expression: v:lua', pcall_err(command, "let g:Func = v:lua"))
