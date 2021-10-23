@@ -1250,16 +1250,19 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     /*
      * If deleting the last (listed) buffer, make it empty.
      * The last (listed) buffer cannot be unloaded.
+     * If the buffer belongs to floating window, skip
      */
-    bp = NULL;
-    FOR_ALL_BUFFERS(bp2) {
-      if (bp2->b_p_bl && bp2 != buf) {
-        bp = bp2;
-        break;
+    if(!buf->b_wininfo->wi_win->w_floating) {
+      bp = NULL;
+      FOR_ALL_BUFFERS(bp2) {
+        if (bp2->b_p_bl && bp2 != buf) {
+          bp = bp2;
+          break;
+        }
       }
-    }
-    if (bp == NULL && buf == curbuf) {
-      return empty_curbuf(true, forceit, action);
+      if (bp == NULL && buf == curbuf) {
+        return empty_curbuf(true, forceit, action);
+      }
     }
 
     /*
