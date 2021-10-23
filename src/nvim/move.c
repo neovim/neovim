@@ -226,9 +226,9 @@ void update_topline(win_T *wp)
         n = wp->w_topline + *so_ptr - wp->w_cursor.lnum;
       }
 
-      /* If we weren't very close to begin with, we scroll to put the
-       * cursor in the middle of the window.  Otherwise put the cursor
-       * near the top of the window. */
+      // If we weren't very close to begin with, we scroll to put the
+      // cursor in the middle of the window.  Otherwise put the cursor
+      // near the top of the window.
       if (n >= halfheight) {
         scroll_cursor_halfway(false);
       } else {
@@ -263,9 +263,9 @@ void update_topline(win_T *wp)
              || hasAnyFolding(wp))) {
           lineoff_T loff;
 
-          /* Cursor is (a few lines) above botline, check if there are
-           * 'scrolloff' window lines below the cursor.  If not, need to
-           * scroll. */
+          // Cursor is (a few lines) above botline, check if there are
+          // 'scrolloff' window lines below the cursor.  If not, need to
+          // scroll.
           int n = wp->w_empty_rows;
           loff.lnum = wp->w_cursor.lnum;
           // In a fold go to its last line.
@@ -570,8 +570,8 @@ static void curs_rows(win_T *wp)
         continue;                       // skip changed or deleted lines
       }
       if (wp->w_lines[i].wl_lnum == lnum) {
-        /* Check for newly inserted lines below this row, in which
-         * case we need to check for folded lines. */
+        // Check for newly inserted lines below this row, in which
+        // case we need to check for folded lines.
         if (!wp->w_buffer->b_mod_set
             || wp->w_lines[i].wl_lastlnum < wp->w_cursor.lnum
             || wp->w_buffer->b_mod_top
@@ -815,8 +815,8 @@ void curs_columns(win_T *wp, int may_scroll)
     if (off_left < 0 || off_right > 0) {
       int diff = (off_left < 0) ? -off_left: off_right;
 
-      /* When far off or not enough room on either side, put cursor in
-       * middle of window. */
+      // When far off or not enough room on either side, put cursor in
+      // middle of window.
       int new_leftcol;
       if (p_ss == 0 || diff >= textwidth / 2 || off_right >= off_left) {
         new_leftcol = wp->w_wcol - extra - textwidth / 2;
@@ -848,8 +848,8 @@ void curs_columns(win_T *wp, int may_scroll)
     wp->w_wcol = 0;
   }
 
-  /* Skip over filler lines.  At the top use w_topfill, there
-   * may be some filler lines above the window. */
+  // Skip over filler lines.  At the top use w_topfill, there
+  // may be some filler lines above the window.
   if (wp->w_cursor.lnum == wp->w_topline) {
     wp->w_wrow += wp->w_topfill;
   } else {
@@ -869,12 +869,12 @@ void curs_columns(win_T *wp, int may_scroll)
       && wp->w_cursor.lnum == wp->w_topline
       && width > 0
       && wp->w_width_inner != 0) {
-    /* Cursor past end of screen.  Happens with a single line that does
-     * not fit on screen.  Find a skipcol to show the text around the
-     * cursor.  Avoid scrolling all the time. compute value of "extra":
-     * 1: Less than "p_so" lines above
-     * 2: Less than "p_so" lines below
-     * 3: both of them */
+    // Cursor past end of screen.  Happens with a single line that does
+    // not fit on screen.  Find a skipcol to show the text around the
+    // cursor.  Avoid scrolling all the time. compute value of "extra":
+    // 1: Less than "p_so" lines above
+    // 2: Less than "p_so" lines below
+    // 3: both of them
     extra = 0;
     if (wp->w_skipcol + so * width > wp->w_virtcol) {
       extra = 1;
@@ -1592,8 +1592,8 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
                       - curwin->w_filler_rows;
 
   while (loff.lnum > 1) {
-    /* Stop when scrolled nothing or at least "min_scroll", found "extra"
-     * context for 'scrolloff' and counted all lines below the window. */
+    // Stop when scrolled nothing or at least "min_scroll", found "extra"
+    // context for 'scrolloff' and counted all lines below the window.
     if ((((scrolled <= 0 || scrolled >= min_scroll)
           && extra >= (mouse_dragging > 0 ? mouse_dragging - 1 : so))
          || boff.lnum + 1 > curbuf->b_ml.ml_line_count)
@@ -1912,8 +1912,8 @@ int onepage(Direction dir, long count)
         curwin->w_topfill = 0;
         curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
       } else {
-        /* For the overlap, start with the line just below the window
-         * and go upwards. */
+        // For the overlap, start with the line just below the window
+        // and go upwards.
         loff.lnum = curwin->w_botline;
         loff.fill = win_get_fill(curwin, loff.lnum)
                     - curwin->w_filler_rows;
@@ -1948,9 +1948,9 @@ int onepage(Direction dir, long count)
         continue;
       }
 
-      /* Find the line at the top of the window that is going to be the
-       * line at the bottom of the window.  Make sure this results in
-       * the same line as before doing CTRL-F. */
+      // Find the line at the top of the window that is going to be the
+      // line at the bottom of the window.  Make sure this results in
+      // the same line as before doing CTRL-F.
       loff.lnum = curwin->w_topline - 1;
       loff.fill = win_get_fill(curwin, loff.lnum + 1) - curwin->w_topfill;
       get_scroll_overlap(&loff, 1);
@@ -1963,8 +1963,8 @@ int onepage(Direction dir, long count)
       }
       curwin->w_cursor.lnum = loff.lnum;
 
-      /* Find the line just above the new topline to get the right line
-       * at the bottom of the window. */
+      // Find the line just above the new topline to get the right line
+      // at the bottom of the window.
       n = 0;
       while (n <= curwin->w_height_inner && loff.lnum >= 1) {
         topline_back(curwin, &loff);
@@ -1987,13 +1987,13 @@ int onepage(Direction dir, long count)
         // We're at the wrong end of a fold now.
         (void)hasFoldingWin(curwin, loff.lnum, &loff.lnum, NULL, true, NULL);
 
-        /* Always scroll at least one line.  Avoid getting stuck on
-         * very long lines. */
+        // Always scroll at least one line.  Avoid getting stuck on
+        // very long lines.
         if (loff.lnum >= curwin->w_topline
             && (loff.lnum > curwin->w_topline
                 || loff.fill >= curwin->w_topfill)) {
-          /* First try using the maximum number of filler lines.  If
-           * that's not enough, backup one line. */
+          // First try using the maximum number of filler lines.  If
+          // that's not enough, backup one line.
           loff.fill = curwin->w_topfill;
           if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
             max_topfill();
@@ -2266,8 +2266,8 @@ void do_check_cursorbind(void)
       curwin->w_curswant = curswant;
       curwin->w_set_curswant = set_curswant;
 
-      /* Make sure the cursor is in a valid position.  Temporarily set
-       * "restart_edit" to allow the cursor to be beyond the EOL. */
+      // Make sure the cursor is in a valid position.  Temporarily set
+      // "restart_edit" to allow the cursor to be beyond the EOL.
       {
         int restart_edit_save = restart_edit;
         restart_edit = true;

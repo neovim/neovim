@@ -299,8 +299,8 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   }
   ++entered;
 
-  /* Add message to history (unless it's a repeated kept message or a
-   * truncated message) */
+  // Add message to history (unless it's a repeated kept message or a
+  // truncated message)
   if (s != keep_msg
       || (*s != '<'
           && last_msg_hist != NULL
@@ -1089,8 +1089,8 @@ void wait_return(int redraw)
     redraw_all_later(NOT_VALID);
   }
 
-  /* If using ":silent cmd", don't wait for a return.  Also don't set
-   * need_wait_return to do it later. */
+  // If using ":silent cmd", don't wait for a return.  Also don't set
+  // need_wait_return to do it later.
   if (msg_silent != 0) {
     return;
   }
@@ -1140,8 +1140,8 @@ void wait_return(int redraw)
     hit_return_msg();
 
     do {
-      /* Remember "got_int", if it is set vgetc() probably returns a
-       * CTRL-C, but we need to loop then. */
+      // Remember "got_int", if it is set vgetc() probably returns a
+      // CTRL-C, but we need to loop then.
       had_got_int = got_int;
 
       // Don't do mappings here, we put the character back in the
@@ -1213,8 +1213,8 @@ void wait_return(int redraw)
         || c == K_X1MOUSE || c == K_X2MOUSE) {
       (void)jump_to_mouse(MOUSE_SETPOS, NULL, 0);
     } else if (vim_strchr((char_u *)"\r\n ", c) == NULL && c != Ctrl_C) {
-      /* Put the character back in the typeahead buffer.  Don't use the
-       * stuff buffer, because lmaps wouldn't work. */
+      // Put the character back in the typeahead buffer.  Don't use the
+      // stuff buffer, because lmaps wouldn't work.
       ins_char_typebuf(c);
       do_redraw = true;             // need a redraw even though there is
                                     // typeahead
@@ -1824,8 +1824,8 @@ void msg_prt_line(char_u *s, int list)
         c_extra = NUL;
         c_final = NUL;
         c = *p_extra++;
-        /* Use special coloring to be able to distinguish <hex> from
-         * the same in plain text. */
+        // Use special coloring to be able to distinguish <hex> from
+        // the same in plain text.
         attr = HL_ATTR(HLF_0);
       } else if (c == ' ') {
         if (lead != NULL && s <= lead) {
@@ -2155,8 +2155,8 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
         }
       }
 
-      /* When we displayed a char in last column need to check if there
-       * is still more. */
+      // When we displayed a char in last column need to check if there
+      // is still more.
       if (did_last_char) {
         continue;
       }
@@ -2506,8 +2506,8 @@ void show_sb_text(void)
 {
   msgchunk_T *mp;
 
-  /* Only show something if there is more than one line, otherwise it looks
-   * weird, typing a command without output results in one line. */
+  // Only show something if there is more than one line, otherwise it looks
+  // weird, typing a command without output results in one line.
   mp = msg_sb_start(last_msgchunk);
   if (mp == NULL || mp->sb_prev == NULL) {
     vim_beep(BO_MESS);
@@ -2578,8 +2578,8 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
                 attr);
   msg_col += *t_col;
   *t_col = 0;
-  /* If the string starts with a composing character don't increment the
-   * column position for it. */
+  // If the string starts with a composing character don't increment the
+  // column position for it.
   if (utf_iscomposing(utf_ptr2char(t_s))) {
     msg_col--;
   }
@@ -2747,8 +2747,8 @@ static int do_more_prompt(int typed_char)
 
     case ':':                   // start new command line
       if (!confirm_msg_used) {
-        /* Since got_int is set all typeahead will be flushed, but we
-         * want to keep this ':', remember that in a special way. */
+        // Since got_int is set all typeahead will be flushed, but we
+        // want to keep this ':', remember that in a special way.
         typeahead_noflush(':');
         cmdline_row = Rows - 1;                 // put ':' on this line
         skip_redraw = true;                     // skip redraw once
@@ -2765,8 +2765,8 @@ static int do_more_prompt(int typed_char)
         got_int = TRUE;
         quit_more = TRUE;
       }
-      /* When there is some more output (wrapping line) display that
-       * without another prompt. */
+      // When there is some more output (wrapping line) display that
+      // without another prompt.
       lines_left = Rows - 1;
       break;
 
@@ -2972,9 +2972,9 @@ void repeat_message(void)
     ui_cursor_goto(msg_row, msg_col);     // put cursor back
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == Rows - 1) {
-      /* Avoid drawing the "hit-enter" prompt below the previous one,
-       * overwrite it.  Esp. useful when regaining focus and a
-       * FocusGained autocmd exists but didn't draw anything. */
+      // Avoid drawing the "hit-enter" prompt below the previous one,
+      // overwrite it.  Esp. useful when regaining focus and a
+      // FocusGained autocmd exists but didn't draw anything.
       msg_didout = false;
       msg_col = 0;
       msg_clr_eos();
