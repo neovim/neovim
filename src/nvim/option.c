@@ -568,12 +568,11 @@ void set_init_1(bool clean_arg)
 
   save_file_ff(curbuf);         // Buffer is unchanged
 
-  /* Detect use of mlterm.
-   * Mlterm is a terminal emulator akin to xterm that has some special
-   * abilities (bidi namely).
-   * NOTE: mlterm's author is being asked to 'set' a variable
-   *       instead of an environment variable due to inheritance.
-   */
+  // Detect use of mlterm.
+  // Mlterm is a terminal emulator akin to xterm that has some special
+  // abilities (bidi namely).
+  // NOTE: mlterm's author is being asked to 'set' a variable
+  //       instead of an environment variable due to inheritance.
   if (os_env_exists("MLTERM")) {
     set_option_value("tbidi", 1L, NULL, 0);
   }
@@ -1308,16 +1307,16 @@ int do_set(char_u *arg, int opt_flags)
             int comma;
             bool new_value_alloced = false;  // new string option was allocated
 
-            /* When using ":set opt=val" for a global option
-             * with a local value the local value will be
-             * reset, use the global value here. */
+            // When using ":set opt=val" for a global option
+            // with a local value the local value will be
+            // reset, use the global value here.
             if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
                 && ((int)options[opt_idx].indir & PV_BOTH)) {
               varp = options[opt_idx].var;
             }
 
-            /* The old value is kept until we are sure that the
-             * new value is valid. */
+            // The old value is kept until we are sure that the
+            // new value is valid.
             oldval = *(char_u **)varp;
 
             // When setting the local value of a global
@@ -1493,8 +1492,8 @@ int do_set(char_u *arg, int opt_flags)
                 }
               }
 
-              /* locate newval[] in origval[] when removing it
-               * and when adding to avoid duplicates */
+              // locate newval[] in origval[] when removing it
+              // and when adding to avoid duplicates
               i = 0;                    // init for GCC
               if (removing || (flags & P_NODUP)) {
                 i = (int)STRLEN(newval);
@@ -1724,9 +1723,9 @@ static void did_set_option(int opt_idx, int opt_flags, int new_value, int value_
 {
   options[opt_idx].flags |= P_WAS_SET;
 
-  /* When an option is set in the sandbox, from a modeline or in secure mode
-   * set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
-   * flag. */
+  // When an option is set in the sandbox, from a modeline or in secure mode
+  // set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
+  // flag.
   uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
   if (!value_checked && (secure
                          || sandbox != 0
@@ -5259,8 +5258,8 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           }
         }
 
-        /* Round 1: fresh value for window-local options.
-         * Round 2: other values */
+        // Round 1: fresh value for window-local options.
+        // Round 2: other values
         for (; round <= 2; varp = varp_local, round++) {
           if (round == 1 || (opt_flags & OPT_GLOBAL)) {
             cmd = "set";
@@ -6229,13 +6228,13 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_sua = vim_strsave(p_sua);
       buf->b_p_keymap = vim_strsave(p_keymap);
       buf->b_kmap_state |= KEYMAP_INIT;
-      /* This isn't really an option, but copying the langmap and IME
-      * state from the current buffer is better than resetting it. */
+      // This isn't really an option, but copying the langmap and IME
+      // state from the current buffer is better than resetting it.
       buf->b_p_iminsert = p_iminsert;
       buf->b_p_imsearch = p_imsearch;
 
-      /* options that are normally global but also have a local value
-       * are not copied, start using the global value */
+      // options that are normally global but also have a local value
+      // are not copied, start using the global value
       buf->b_p_ar = -1;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_option;
@@ -6486,8 +6485,8 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
     }
   }
 
-  /* For an option that is a list of file names, find the start of the
-   * last file name. */
+  // For an option that is a list of file names, find the start of the
+  // last file name.
   for (p = arg + STRLEN(arg) - 1; p > xp->xp_pattern; p--) {
     // count number of backslashes before ' ' or ','
     if (*p == ' ' || *p == ',') {
@@ -6521,10 +6520,9 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
   static char *(names[]) = { "all" };
   int ic = regmatch->rm_ic;  // remember the ignore-case flag
 
-  /* do this loop twice:
-   * loop == 0: count the number of matching options
-   * loop == 1: copy the matching options into allocated memory
-   */
+  // do this loop twice:
+  // loop == 0: count the number of matching options
+  // loop == 1: copy the matching options into allocated memory
   for (loop = 0; loop <= 1; loop++) {
     regmatch->rm_ic = ic;
     if (xp->xp_context != EXPAND_BOOL_SETTINGS) {

@@ -1720,8 +1720,8 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
     return (char_u *)xmemdupz(start, len);
   }
 
-  /* A name starting with "<SID>" or "<SNR>" is local to a script.  But
-   * don't skip over "s:", get_lval() needs it for "s:dict.func". */
+  // A name starting with "<SID>" or "<SNR>" is local to a script.  But
+  // don't skip over "s:", get_lval() needs it for "s:dict.func".
   lead = eval_fname_script((const char *)start);
   if (lead > 2) {
     start += lead;
@@ -2405,14 +2405,14 @@ void ex_function(exarg_T *eap)
     // Add the line to the function.
     ga_grow(&newlines, 1 + sourcing_lnum_off);
 
-    /* Copy the line to newly allocated memory.  get_one_sourceline()
-     * allocates 250 bytes per line, this saves 80% on average.  The cost
-     * is an extra alloc/free. */
+    // Copy the line to newly allocated memory.  get_one_sourceline()
+    // allocates 250 bytes per line, this saves 80% on average.  The cost
+    // is an extra alloc/free.
     p = vim_strsave(theline);
     ((char_u **)(newlines.ga_data))[newlines.ga_len++] = p;
 
-    /* Add NULL lines for continuation lines, so that the line count is
-     * equal to the index in the growarray.   */
+    // Add NULL lines for continuation lines, so that the line count is
+    // equal to the index in the growarray.
     while (sourcing_lnum_off-- > 0) {
       ((char_u **)(newlines.ga_data))[newlines.ga_len++] = NULL;
     }
@@ -2490,8 +2490,8 @@ void ex_function(exarg_T *eap)
       goto erret;
     }
 
-    /* Give the function a sequential number.  Can only be used with a
-     * Funcref! */
+    // Give the function a sequential number.  Can only be used with a
+    // Funcref!
     xfree(name);
     sprintf(numbuf, "%d", ++func_nr);
     name = vim_strsave((char_u *)numbuf);
@@ -3079,13 +3079,13 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     cstack->cs_pending[idx] = CSTP_RETURN;
 
     if (!is_cmd && !reanimate) {
-      /* A pending return again gets pending.  "rettv" points to an
-       * allocated variable with the rettv of the original ":return"'s
-       * argument if present or is NULL else. */
+      // A pending return again gets pending.  "rettv" points to an
+      // allocated variable with the rettv of the original ":return"'s
+      // argument if present or is NULL else.
       cstack->cs_rettv[idx] = rettv;
     } else {
-      /* When undoing a return in order to make it pending, get the stored
-       * return rettv. */
+      // When undoing a return in order to make it pending, get the stored
+      // return rettv.
       if (reanimate) {
         assert(current_funccal->rettv);
         rettv = current_funccal->rettv;
@@ -3214,8 +3214,8 @@ int func_has_ended(void *cookie)
 {
   funccall_T *fcp = (funccall_T *)cookie;
 
-  /* Ignore the "abort" flag if the abortion behavior has been changed due to
-   * an error inside a try conditional. */
+  // Ignore the "abort" flag if the abortion behavior has been changed due to
+  // an error inside a try conditional.
   return ((fcp->func->uf_flags & FC_ABORT) && did_emsg && !aborted_in_try())
          || fcp->returned;
 }

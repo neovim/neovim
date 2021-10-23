@@ -503,8 +503,8 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
           break;
         }
 
-        /* If lines have been inserted/deleted we give up.
-         * Also when the line was included in a multi-line save. */
+        // If lines have been inserted/deleted we give up.
+        // Also when the line was included in a multi-line save.
         if ((buf->b_u_newhead->uh_getbot_entry != uep
              ? (uep->ue_top + uep->ue_size + 1
                 != (uep->ue_bot == 0
@@ -520,18 +520,18 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
         // If it's the same line we can skip saving it again.
         if (uep->ue_size == 1 && uep->ue_top == top) {
           if (i > 0) {
-            /* It's not the last entry: get ue_bot for the last
-             * entry now.  Following deleted/inserted lines go to
-             * the re-used entry. */
+            // It's not the last entry: get ue_bot for the last
+            // entry now.  Following deleted/inserted lines go to
+            // the re-used entry.
             u_getbot(buf);
             buf->b_u_synced = false;
 
-            /* Move the found entry to become the last entry.  The
-             * order of undo/redo doesn't matter for the entries
-             * we move it over, since they don't change the line
-             * count and don't include this line.  It does matter
-             * for the found entry if the line count is changed by
-             * the executed command. */
+            // Move the found entry to become the last entry.  The
+            // order of undo/redo doesn't matter for the entries
+            // we move it over, since they don't change the line
+            // count and don't include this line.  It does matter
+            // for the found entry if the line count is changed by
+            // the executed command.
             prev_uep->ue_next = uep->ue_next;
             uep->ue_next = buf->b_u_newhead->uh_entry;
             buf->b_u_newhead->uh_entry = uep;
@@ -1213,8 +1213,8 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   // Strip any sticky and executable bits.
   perm = perm & 0666;
 
-  /* If the undo file already exists, verify that it actually is an undo
-   * file, and delete it. */
+  // If the undo file already exists, verify that it actually is an undo
+  // file, and delete it.
   if (os_path_exists((char_u *)file_name)) {
     if (name == NULL || !forceit) {
       // Check we can read it and it's an undo file.
@@ -1254,8 +1254,8 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
     os_remove(file_name);
   }
 
-  /* If there is no undo information at all, quit here after deleting any
-   * existing undo file. */
+  // If there is no undo information at all, quit here after deleting any
+  // existing undo file.
   if (buf->b_u_numhead == 0 && buf->b_u_line_ptr == NULL) {
     if (p_verbose > 0) {
       verb_msg(_("Skipping undo file write, nothing to undo"));
@@ -1883,10 +1883,10 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
     u_oldcount = -1;
   }
   while (count--) {
-    /* Do the change warning now, so that it triggers FileChangedRO when
-     * needed.  This may cause the file to be reloaded, that must happen
-     * before we do anything, because it may change curbuf->b_u_curhead
-     * and more. */
+    // Do the change warning now, so that it triggers FileChangedRO when
+    // needed.  This may cause the file to be reloaded, that must happen
+    // before we do anything, because it may change curbuf->b_u_curhead
+    // and more.
     change_warning(curbuf, 0);
 
     if (undo_undoes) {
@@ -1987,16 +1987,16 @@ void undo_time(long step, bool sec, bool file, bool absolute)
           uhp = curbuf->b_u_newhead;
         }
         if (uhp != NULL && uhp->uh_save_nr != 0) {
-          /* "uh_save_nr" was set in the last block, that means
-           * there were no changes since the last write */
+          // "uh_save_nr" was set in the last block, that means
+          // there were no changes since the last write
           target = curbuf->b_u_save_nr_cur + step;
         } else {
           // count the changes since the last write as one step
           target = curbuf->b_u_save_nr_cur + step + 1;
         }
         if (target <= 0) {
-          /* Go to before first write: before the oldest change. Use
-           * the sequence number for that. */
+          // Go to before first write: before the oldest change. Use
+          // the sequence number for that.
           dofile = false;
         }
       } else {
@@ -2047,11 +2047,11 @@ void undo_time(long step, bool sec, bool file, bool absolute)
    * When using the closest time we use the sequence number in the second
    * round, because there may be several entries with the same time.
    */
-  for (round = 1; round <= 2; ++round) {
-    /* Find the path from the current state to where we want to go.  The
-     * desired state can be anywhere in the undo tree, need to go all over
-     * it.  We put "nomark" in uh_walk where we have been without success,
-     * "mark" where it could possibly be. */
+  for (round = 1; round <= 2; round++) {
+    // Find the path from the current state to where we want to go.  The
+    // desired state can be anywhere in the undo tree, need to go all over
+    // it.  We put "nomark" in uh_walk where we have been without success,
+    // "mark" where it could possibly be.
     mark = ++lastmark;
     nomark = ++lastmark;
 
@@ -2519,10 +2519,10 @@ static void u_undoredo(int undo, bool do_buf_event)
       beginline(BL_SOL | BL_FIX);
     }
   } else {
-    /* We get here with the current cursor line being past the end (eg
-     * after adding lines at the end of the file, and then undoing it).
-     * check_cursor() will move the cursor to the last line.  Move it to
-     * the first column here. */
+    // We get here with the current cursor line being past the end (eg
+    // after adding lines at the end of the file, and then undoing it).
+    // check_cursor() will move the cursor to the last line.  Move it to
+    // the first column here.
     curwin->w_cursor.col = 0;
     curwin->w_cursor.coladd = 0;
   }
@@ -2533,8 +2533,8 @@ static void u_undoredo(int undo, bool do_buf_event)
   // Remember where we are for "g-" and ":earlier 10s".
   curbuf->b_u_seq_cur = curhead->uh_seq;
   if (undo) {
-    /* We are below the previous undo.  However, to make ":earlier 1s"
-     * work we compute this as being just above the just undone change. */
+    // We are below the previous undo.  However, to make ":earlier 1s"
+    // work we compute this as being just above the just undone change.
     curbuf->b_u_seq_cur = curhead->uh_next.ptr ?
                           curhead->uh_next.ptr->uh_seq : 0;
   }

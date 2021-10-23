@@ -794,8 +794,8 @@ void ex_hardcopy(exarg_T *eap)
                 break;                 // reached the end
               }
             } else if (prtpos.ff) {
-              /* Line had a formfeed in it - start new page but
-               * stay on the current line */
+              // Line had a formfeed in it - start new page but
+              // stay on the current line
               break;
             }
           }
@@ -1505,9 +1505,8 @@ static void prt_flush_buffer(void)
       prt_write_real(b / 255.0, 3);
       prt_write_string("bg\n");
     }
-    /* Draw underlines before the text as it makes it slightly easier to
-     * find the starting point.
-     */
+    // Draw underlines before the text as it makes it slightly easier to
+    // find the starting point.
     if (prt_do_underline) {
       if (prt_do_moveto) {
         prt_write_real(prt_pos_x_moveto, 2);
@@ -1696,9 +1695,8 @@ static bool prt_next_dsc(struct prt_dsc_line_S *p_dsc_line)
   return true;
 }
 
-/* Improved hand crafted parser to get the type, title, and version number of a
- * PS resource file so the file details can be added to the DSC header comments.
- */
+/// Improved hand crafted parser to get the type, title, and version number of a
+/// PS resource file so the file details can be added to the DSC header comments.
 static bool prt_open_resource(struct prt_ps_resource_S *resource)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1906,9 +1904,8 @@ static void prt_dsc_font_resource(char *resource, struct prt_ps_font_S *ps_font)
 
 static void prt_dsc_requirements(int duplex, int tumble, int collate, int color, int num_copies)
 {
-  /* Only output the comment if we need to.
-   * Note: tumble is ignored if we are not duplexing
-   */
+  // Only output the comment if we need to.
+  // Note: tumble is ignored if we are not duplexing
   if (!(duplex || collate || color || (num_copies > 1))) {
     return;
   }
@@ -1967,10 +1964,9 @@ void mch_print_cleanup(void)
   if (prt_out_mbyte) {
     int i;
 
-    /* Free off all CID font names created, but first clear duplicate
-     * pointers to the same string (when the same font is used for more than
-     * one style).
-     */
+    // Free off all CID font names created, but first clear duplicate
+    // pointers to the same string (when the same font is used for more than
+    // one style).
     for (i = PRT_PS_FONT_ROMAN; i <= PRT_PS_FONT_BOLDOBLIQUE; i++) {
       if (prt_ps_mb_font.ps_fontname[i] != NULL) {
         xfree(prt_ps_mb_font.ps_fontname[i]);
@@ -2048,9 +2044,8 @@ static int prt_get_cpl(void)
 {
   if (prt_use_number()) {
     prt_number_width = PRINT_NUMBER_WIDTH * prt_char_width;
-    /* If we are outputting multi-byte characters then line numbers will be
-     * printed with half width characters
-     */
+    // If we are outputting multi-byte characters then line numbers will be
+    // printed with half width characters
     if (prt_out_mbyte) {
       prt_number_width /= 2;
     }
@@ -2168,10 +2163,10 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     p_encoding = enc_skip(p_enc);
   }
 
-  /* Look for a multi-byte font that matches the encoding and character set.
-   * Only look if multi-byte character set is defined, or using multi-byte
-   * encoding other than Unicode.  This is because a Unicode encoding does not
-   * uniquely identify a CJK character set to use. */
+  // Look for a multi-byte font that matches the encoding and character set.
+  // Only look if multi-byte character set is defined, or using multi-byte
+  // encoding other than Unicode.  This is because a Unicode encoding does not
+  // uniquely identify a CJK character set to use.
   p_mbenc = NULL;
   props = enc_canon_props(p_encoding);
   if (!(props & ENC_8BIT) && ((*p_pmcs != NUL) || !(props & ENC_UNICODE))) {
@@ -2526,28 +2521,26 @@ int mch_print_begin(prt_settings_T *psettings)
   prt_dsc_textline("Orientation", "Portrait");
   prt_dsc_atend("Pages");
   prt_dsc_textline("PageOrder", "Ascend");
-  /* The bbox does not change with orientation - it is always in the default
-   * user coordinate system!  We have to recalculate right and bottom
-   * coordinates based on the font metrics for the bbox to be accurate. */
+  // The bbox does not change with orientation - it is always in the default
+  // user coordinate system!  We have to recalculate right and bottom
+  // coordinates based on the font metrics for the bbox to be accurate.
   prt_page_margins(prt_mediasize[prt_media].width,
                    prt_mediasize[prt_media].height,
                    &left, &right, &top, &bottom);
   bbox[0] = (int)left;
   if (prt_portrait) {
-    /* In portrait printing the fixed point is the top left corner so we
-     * derive the bbox from that point.  We have the expected cpl chars
-     * across the media and lpp lines down the media.
-     */
+    // In portrait printing the fixed point is the top left corner so we
+    // derive the bbox from that point.  We have the expected cpl chars
+    // across the media and lpp lines down the media.
     bbox[1] = (int)(top - (psettings->lines_per_page + prt_header_height())
                     * prt_line_height);
     bbox[2] = (int)(left + psettings->chars_per_line * prt_char_width
                     + 0.5);
     bbox[3] = (int)(top + 0.5);
   } else {
-    /* In landscape printing the fixed point is the bottom left corner so we
-     * derive the bbox from that point.  We have lpp chars across the media
-     * and cpl lines up the media.
-     */
+    // In landscape printing the fixed point is the bottom left corner so we
+    // derive the bbox from that point.  We have lpp chars across the media
+    // and cpl lines up the media.
     bbox[1] = (int)bottom;
     bbox[2] = (int)(left + ((psettings->lines_per_page
                              + prt_header_height()) * prt_line_height) + 0.5);
@@ -2597,11 +2590,10 @@ int mch_print_begin(prt_settings_T *psettings)
     }
   }
 
-  /* Find an encoding to use for printing.
-   * Check 'printencoding'. If not set or not found, then use 'encoding'. If
-   * that cannot be found then default to "latin1".
-   * Note: VIM specific encoding header is always skipped.
-   */
+  // Find an encoding to use for printing.
+  // Check 'printencoding'. If not set or not found, then use 'encoding'. If
+  // that cannot be found then default to "latin1".
+  // Note: VIM specific encoding header is always skipped.
   if (!prt_out_mbyte) {
     p_encoding = enc_skip(p_penc);
     if (*p_encoding == NUL
@@ -2626,8 +2618,8 @@ int mch_print_begin(prt_settings_T *psettings)
     if (!prt_open_resource(&res_encoding)) {
       return FALSE;
     }
-    /* For the moment there are no checks on encoding resource files to
-     * perform */
+    // For the moment there are no checks on encoding resource files to
+    // perform
   } else {
     p_encoding = enc_skip(p_penc);
     if (*p_encoding == NUL) {
@@ -2643,8 +2635,8 @@ int mch_print_begin(prt_settings_T *psettings)
       if (!prt_open_resource(&res_encoding)) {
         return FALSE;
       }
-      /* For the moment there are no checks on encoding resource files to
-       * perform */
+      // For the moment there are no checks on encoding resource files to
+      // perform
     }
   }
 
@@ -2742,8 +2734,8 @@ int mch_print_begin(prt_settings_T *psettings)
   }
 
   if (!prt_out_mbyte || prt_use_courier) {
-    /* There will be only one Roman font encoding to be included in the PS
-     * file. */
+    // There will be only one Roman font encoding to be included in the PS
+    // file.
     if (!prt_add_resource(&res_encoding)) {
       return FALSE;
     }
@@ -2771,8 +2763,8 @@ int mch_print_begin(prt_settings_T *psettings)
 
   // Font resource inclusion and definition
   if (!prt_out_mbyte || prt_use_courier) {
-    /* When using Courier for ASCII range when printing multi-byte, need to
-     * pick up ASCII encoding to use with it. */
+    // When using Courier for ASCII range when printing multi-byte, need to
+    // pick up ASCII encoding to use with it.
     if (prt_use_courier) {
       p_encoding = (char_u *)prt_ascii_encoding;
     }
@@ -2794,12 +2786,11 @@ int mch_print_begin(prt_settings_T *psettings)
                  prt_ps_courier_font.ps_fontname[PRT_PS_FONT_BOLDOBLIQUE]);
   }
   if (prt_out_mbyte) {
-    /* Define the CID fonts to be used in the job.      Typically CJKV fonts do
-     * not have an italic form being a western style, so where no font is
-     * defined for these faces VIM falls back to an existing face.
-     * Note: if using Courier for the ASCII range then the printout will
-     * have bold/italic/bolditalic regardless of the setting of printmbfont.
-     */
+    // Define the CID fonts to be used in the job.      Typically CJKV fonts do
+    // not have an italic form being a western style, so where no font is
+    // defined for these faces VIM falls back to an existing face.
+    // Note: if using Courier for the ASCII range then the printout will
+    // have bold/italic/bolditalic regardless of the setting of printmbfont.
     prt_dsc_resources("IncludeResource", "font",
                       prt_ps_mb_font.ps_fontname[PRT_PS_FONT_ROMAN]);
     if (!prt_custom_cmap) {
@@ -2872,8 +2863,8 @@ void mch_print_end(prt_settings_T *psettings)
 
   prt_dsc_noarg("EOF");
 
-  /* Write CTRL-D to close serial communication link if used.
-   * NOTHING MUST BE WRITTEN AFTER THIS! */
+  // Write CTRL-D to close serial communication link if used.
+  // NOTHING MUST BE WRITTEN AFTER THIS!
   prt_write_file((char_u *)"\004");
 
   if (!prt_file_error && psettings->outfile == NULL
@@ -2977,13 +2968,12 @@ int mch_print_text_out(char_u *const textp, size_t len)
   char_u *tofree = NULL;
   double char_width = prt_char_width;
 
-  /* Ideally VIM would create a rearranged CID font to combine a Roman and
-   * CJKV font to do what VIM is doing here - use a Roman font for characters
-   * in the ASCII range, and the original CID font for everything else.
-   * The problem is that GhostScript still (as of 8.13) does not support
-   * rearranged fonts even though they have been documented by Adobe for 7
-   * years!  If they ever do, a lot of this code will disappear.
-   */
+  // Ideally VIM would create a rearranged CID font to combine a Roman and
+  // CJKV font to do what VIM is doing here - use a Roman font for characters
+  // in the ASCII range, and the original CID font for everything else.
+  // The problem is that GhostScript still (as of 8.13) does not support
+  // rearranged fonts even though they have been documented by Adobe for 7
+  // years!  If they ever do, a lot of this code will disappear.
   if (prt_use_courier) {
     const bool in_ascii = (len == 1 && *p < 0x80);
     if (prt_in_ascii) {
@@ -3020,9 +3010,8 @@ int mch_print_text_out(char_u *const textp, size_t len)
     }
   }
 
-  /* Output any required changes to the graphics state, after flushing any
-   * text buffered so far.
-   */
+  // Output any required changes to the graphics state, after flushing any
+  // text buffered so far.
   if (prt_attribute_change) {
     prt_flush_buffer();
     // Reset count of number of chars that will be printed
@@ -3100,16 +3089,14 @@ int mch_print_text_out(char_u *const textp, size_t len)
       p++;
     }
   } else {
-    /* Add next character to buffer of characters to output.
-     * Note: One printed character may require several PS characters to
-     * represent it, but we only count them as one printed character.
-     */
+    // Add next character to buffer of characters to output.
+    // Note: One printed character may require several PS characters to
+    // represent it, but we only count them as one printed character.
     ch = *p;
     if (ch < 32 || ch == '(' || ch == ')' || ch == '\\') {
-      /* Convert non-printing characters to either their escape or octal
-       * sequence, ensures PS sent over a serial line does not interfere
-       * with the comms protocol.
-       */
+      // Convert non-printing characters to either their escape or octal
+      // sequence, ensures PS sent over a serial line does not interfere
+      // with the comms protocol.
       ga_append(&prt_ps_buffer, '\\');
       switch (ch) {
       case BS:

@@ -414,14 +414,14 @@ static int find_command(int cmdchar)
     return -1;
   }
 
-  /* We use the absolute value of the character.  Special keys have a
-   * negative value, but are sorted on their absolute value. */
+  // We use the absolute value of the character.  Special keys have a
+  // negative value, but are sorted on their absolute value.
   if (cmdchar < 0) {
     cmdchar = -cmdchar;
   }
 
-  /* If the character is in the first part: The character is the index into
-   * nv_cmd_idx[]. */
+  // If the character is in the first part: The character is the index into
+  // nv_cmd_idx[].
   assert(nv_max_linear < (int)NV_CMDS_SIZE);
   if (cmdchar <= nv_max_linear) {
     return nv_cmd_idx[cmdchar];
@@ -3897,8 +3897,8 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
 
   pat = xmalloc(len + 7);
 
-  /* Put "\V" before the pattern to avoid that the special meaning of "."
-   * and "~" causes trouble. */
+  // Put "\V" before the pattern to avoid that the special meaning of "."
+  // and "~" causes trouble.
   assert(len <= INT_MAX);
   sprintf((char *)pat, vim_iswordp(ptr) ? "\\V\\<%.*s\\>" : "\\V%.*s",
           (int)len, ptr);
@@ -4252,9 +4252,9 @@ void scroll_redraw(int up, long count)
     check_cursor_moved(curwin);
     curwin->w_valid |= VALID_TOPLINE;
 
-    /* If moved back to where we were, at least move the cursor, otherwise
-     * we get stuck at one position.  Don't move the cursor up if the
-     * first line of the buffer is already on the screen */
+    // If moved back to where we were, at least move the cursor, otherwise
+    // we get stuck at one position.  Don't move the cursor up if the
+    // first line of the buffer is already on the screen
     while (curwin->w_topline == prev_topline
            && curwin->w_topfill == prev_topfill) {
       if (up) {
@@ -4338,7 +4338,7 @@ static void nv_zet(cmdarg_T *cap)
 dozet:
   // "zf" and "zF" are always an operator, "zd", "zo", "zO", "zc"
   // and "zC" only in Visual mode.  "zj" and "zk" are motion
-  // commands. */
+  // commands.
   if (cap->nchar != 'f' && cap->nchar != 'F'
       && !(VIsual_active && vim_strchr((char_u *)"dcCoO", cap->nchar))
       && cap->nchar != 'j' && cap->nchar != 'k'
@@ -5003,9 +5003,9 @@ static void nv_ident(cmdarg_T *cap)
     return;
   }
 
-  /* Allocate buffer to put the command in.  Inserting backslashes can
-   * double the length of the word.  p_kp / curbuf->b_p_kp could be added
-   * and some numbers. */
+  // Allocate buffer to put the command in.  Inserting backslashes can
+  // double the length of the word.  p_kp / curbuf->b_p_kp could be added
+  // and some numbers.
   char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
@@ -5046,8 +5046,8 @@ static void nv_ident(cmdarg_T *cap)
       STRCAT(buf, kp);
       STRCAT(buf, " ");
     } else {
-      /* An external command will probably use an argument starting
-       * with "-" as an option.  To avoid trouble we skip the "-". */
+      // An external command will probably use an argument starting
+      // with "-" as an option.  To avoid trouble we skip the "-".
       while (*ptr == '-' && n > 0) {
         ++ptr;
         --n;
@@ -5058,8 +5058,8 @@ static void nv_ident(cmdarg_T *cap)
         return;
       }
 
-      /* When a count is given, turn it into a range.  Is this
-       * really what we want? */
+      // When a count is given, turn it into a range.  Is this
+      // really what we want?
       bool isman = (STRCMP(kp, "man") == 0);
       bool isman_s = (STRCMP(kp, "man -s") == 0);
       if (cap->count0 != 0 && !(isman || isman_s)) {
@@ -5141,8 +5141,8 @@ static void nv_ident(cmdarg_T *cap)
       if (vim_strchr(aux_ptr, *ptr) != NULL) {
         *p++ = '\\';
       }
-      /* When current byte is a part of multibyte character, copy all
-       * bytes of that character. */
+      // When current byte is a part of multibyte character, copy all
+      // bytes of that character.
       const size_t len = (size_t)(utfc_ptr2len(ptr) - 1);
       for (size_t i = 0; i < len && n > 0; i++, n--) {
         *p++ = *ptr++;
@@ -5415,10 +5415,9 @@ static void nv_left(cmdarg_T *cap)
   cap->oap->inclusive = false;
   for (n = cap->count1; n > 0; --n) {
     if (oneleft() == false) {
-      /* <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
-       *                 'h' wraps to previous line if 'whichwrap' has 'h'.
-       *           CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
-       */
+      // <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
+      //                 'h' wraps to previous line if 'whichwrap' has 'h'.
+      //           CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
       if ((((cap->cmdchar == K_BS || cap->cmdchar == Ctrl_H)
             && vim_strchr(p_ww, 'b') != NULL)
            || (cap->cmdchar == 'h' && vim_strchr(p_ww, 'h') != NULL)
@@ -5570,9 +5569,9 @@ static void nv_dollar(cmdarg_T *cap)
 {
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = true;
-  /* In virtual mode when off the edge of a line and an operator
-   * is pending (whew!) keep the cursor where it is.
-   * Otherwise, send it to the end of the line. */
+  // In virtual mode when off the edge of a line and an operator
+  // is pending (whew!) keep the cursor where it is.
+  // Otherwise, send it to the end of the line.
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP) {
     curwin->w_curswant = MAXCOL;        // so we stay at the end
@@ -6278,9 +6277,9 @@ static void nv_replace(cmdarg_T *cap)
         ins_char(cap->ncharC2);
       }
     }
-    --curwin->w_cursor.col;         // cursor on the last replaced char
-    /* if the character on the left of the current cursor is a multi-byte
-     * character, move two characters left */
+    curwin->w_cursor.col--;         // cursor on the last replaced char
+    // if the character on the left of the current cursor is a multi-byte
+    // character, move two characters left
     mb_adjust_cursor();
     curbuf->b_op_end = curwin->w_cursor;
     curwin->w_set_curswant = true;
@@ -6802,8 +6801,8 @@ static void n_start_visual_mode(int c)
   if (p_smd && msg_silent == 0) {
     redraw_cmdline = true;      // show visual mode later
   }
-  /* Only need to redraw this line, unless still need to redraw an old
-   * Visual area (when 'lazyredraw' is set). */
+  // Only need to redraw this line, unless still need to redraw an old
+  // Visual area (when 'lazyredraw' is set).
   if (curwin->w_redr_type < INVERTED) {
     curwin->w_old_cursor_lnum = curwin->w_cursor.lnum;
     curwin->w_old_visual_lnum = curwin->w_cursor.lnum;
@@ -7571,8 +7570,8 @@ static void nv_home(cmdarg_T *cap)
     cap->count0 = 1;
     nv_pipe(cap);
   }
-  ins_at_eol = false;       /* Don't move cursor past eol (only necessary in a
-                               one-character line). */
+  ins_at_eol = false;       // Don't move cursor past eol (only necessary in a
+                            // one-character line).
 }
 
 /*
@@ -7589,8 +7588,8 @@ static void nv_pipe(cmdarg_T *cap)
   } else {
     curwin->w_curswant = 0;
   }
-  /* keep curswant at the column where we wanted to go, not where
-   * we ended; differs if line is too short */
+  // keep curswant at the column where we wanted to go, not where
+  // we ended; differs if line is too short
   curwin->w_set_curswant = false;
 }
 
@@ -7661,8 +7660,8 @@ static void nv_wordcmd(cmdarg_T *cap)
     n = fwd_word(cap->count1, cap->arg, cap->oap->op_type != OP_NOP);
   }
 
-  /* Don't leave the cursor on the NUL past the end of line. Unless we
-   * didn't move it forward. */
+  // Don't leave the cursor on the NUL past the end of line. Unless we
+  // didn't move it forward.
   if (lt(startpos, curwin->w_cursor)) {
     adjust_cursor(cap->oap);
   }
@@ -7711,8 +7710,8 @@ static void nv_beginline(cmdarg_T *cap)
   if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
-  ins_at_eol = false;       /* Don't move cursor past eol (only necessary in a
-                               one-character line). */
+  ins_at_eol = false;       // Don't move cursor past eol (only necessary in a
+                            // one-character line).
 }
 
 /*
@@ -7857,8 +7856,8 @@ static void nv_esc(cmdarg_T *cap)
       }
     }
 
-    /* Don't reset "restart_edit" when 'insertmode' is set, it won't be
-     * set again below when halfway through a mapping. */
+    // Don't reset "restart_edit" when 'insertmode' is set, it won't be
+    // set again below when halfway through a mapping.
     if (!p_im) {
       restart_edit = 0;
     }
@@ -7885,8 +7884,8 @@ static void nv_esc(cmdarg_T *cap)
   }
   clearop(cap->oap);
 
-  /* A CTRL-C is often used at the start of a menu.  When 'insertmode' is
-   * set return to Insert mode afterwards. */
+  // A CTRL-C is often used at the start of a menu.  When 'insertmode' is
+  // set return to Insert mode afterwards.
   if (restart_edit == 0 && goto_im()
       && ex_normal_busy == 0) {
     restart_edit = 'a';
@@ -7940,8 +7939,8 @@ static void nv_edit(cmdarg_T *cap)
       break;
 
     case 'a':           // "a"ppend is like "i"nsert on the next character.
-      /* increment coladd when in virtual space, increment the
-       * column otherwise, also to append after an unprintable char */
+      // increment coladd when in virtual space, increment the
+      // column otherwise, also to append after an unprintable char
       if (virtual_active()
           && (curwin->w_cursor.coladd > 0
               || *get_cursor_pos_ptr() == NUL
@@ -8209,11 +8208,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
     }
 
     if (VIsual_active) {
-      /* Putting in Visual mode: The put text replaces the selected
-       * text.  First delete the selected text, then put the new text.
-       * Need to save and restore the registers that the delete
-       * overwrites if the old contents is being put.
-       */
+      // Putting in Visual mode: The put text replaces the selected
+      // text.  First delete the selected text, then put the new text.
+      // Need to save and restore the registers that the delete
+      // overwrites if the old contents is being put.
       was_visual = true;
       regname = cap->oap->regname;
       // '+' and '*' could be the same selection
@@ -8286,14 +8284,14 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       }
     }
 
-    /* When all lines were selected and deleted do_put() leaves an empty
-     * line that needs to be deleted now. */
+    // When all lines were selected and deleted do_put() leaves an empty
+    // line that needs to be deleted now.
     if (empty && *ml_get(curbuf->b_ml.ml_line_count) == NUL) {
       ml_delete(curbuf->b_ml.ml_line_count, true);
       deleted_lines(curbuf->b_ml.ml_line_count + 1, 1);
 
-      /* If the cursor was in that line, move it to the end of the last
-       * line. */
+      // If the cursor was in that line, move it to the end of the last
+      // line.
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
         coladvance(MAXCOL);

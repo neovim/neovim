@@ -106,8 +106,8 @@ struct pointer_block {
   uint16_t pb_id;               // ID for pointer block: PTR_ID
   uint16_t pb_count;            // number of pointers in this block
   uint16_t pb_count_max;        // maximum value for pb_count
-  PTR_EN pb_pointer[1];         /* list of pointers to blocks (actually longer)
-                                 * followed by empty space until end of page */
+  PTR_EN pb_pointer[1];         // list of pointers to blocks (actually longer)
+                                // followed by empty space until end of page
 };
 
 /*
@@ -1333,8 +1333,8 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
       if (fname == NULL) {
         names[0] = vim_strsave((char_u *)"*.sw?");
-        /* For Unix names starting with a dot are special.  MS-Windows
-         * supports this too, on some file systems. */
+        // For Unix names starting with a dot are special.  MS-Windows
+        // supports this too, on some file systems.
         names[1] = vim_strsave((char_u *)".*.sw?");
         names[2] = vim_strsave((char_u *)".sw?");
         num_names = 3;
@@ -1343,11 +1343,11 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       }
     } else {                      // check directory dir_name
       if (fname == NULL) {
-        names[0] = (char_u *)concat_fnames((char *)dir_name, "*.sw?", TRUE);
-        /* For Unix names starting with a dot are special.  MS-Windows
-         * supports this too, on some file systems. */
-        names[1] = (char_u *)concat_fnames((char *)dir_name, ".*.sw?", TRUE);
-        names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", TRUE);
+        names[0] = (char_u *)concat_fnames((char *)dir_name, "*.sw?", true);
+        // For Unix names starting with a dot are special.  MS-Windows
+        // supports this too, on some file systems.
+        names[1] = (char_u *)concat_fnames((char *)dir_name, ".*.sw?", true);
+        names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", true);
         num_names = 3;
       } else {
         int len = (int)STRLEN(dir_name);
@@ -3377,8 +3377,8 @@ static void attention_message(buf_T *buf, char_u *fname)
       MSG_PUTS(_("      NEWER than swap file!\n"));
     }
   }
-  /* Some of these messages are long to allow translation to
-   * other languages. */
+  // Some of these messages are long to allow translation to
+  // other languages.
   MSG_PUTS(_("\n(1) Another program may be editing the same file.  If this is"
              " the case,\n    be careful not to end up with two different"
              " instances of the same\n    file when making changes."
@@ -3551,7 +3551,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         }
 
         // give the ATTENTION message when there is an old swap file
-        // for the current file, and the buffer was not recovered. */
+        // for the current file, and the buffer was not recovered.
         if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;

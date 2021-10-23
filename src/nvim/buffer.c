@@ -308,8 +308,8 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     curbuf->b_flags |= BF_READERR;
   }
 
-  /* Need to update automatic folding.  Do this before the autocommands,
-   * they may use the fold info. */
+  // Need to update automatic folding.  Do this before the autocommands,
+  // they may use the fold info.
   foldUpdateAll(curwin);
 
   // need to set w_topline, unless some autocommand already did that.
@@ -863,8 +863,8 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
     swap_exists_action = SEA_NONE;
     swap_exists_did_quit = true;
 
-    /* Restore the error/interrupt/exception state if not discarded by a
-     * new aborting error, interrupt, or uncaught exception. */
+    // Restore the error/interrupt/exception state if not discarded by a
+    // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
   } else {
     handle_swap_exists(&old_curbuf);
@@ -919,8 +919,8 @@ void handle_swap_exists(bufref_T *old_curbuf)
     }
     // If "old_curbuf" is NULL we are in big trouble here...
 
-    /* Restore the error/interrupt/exception state if not discarded by a
-     * new aborting error, interrupt, or uncaught exception. */
+    // Restore the error/interrupt/exception state if not discarded by a
+    // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
   } else if (swap_exists_action == SEA_RECOVER) {
     // Reset the error/interrupt/exception state here so that
@@ -934,8 +934,8 @@ void handle_swap_exists(bufref_T *old_curbuf)
     cmdline_row = msg_row;
     do_modelines(0);
 
-    /* Restore the error/interrupt/exception state if not discarded by a
-     * new aborting error, interrupt, or uncaught exception. */
+    // Restore the error/interrupt/exception state if not discarded by a
+    // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
   }
   swap_exists_action = SEA_NONE;  // -V519
@@ -1152,8 +1152,8 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   } else {
     bp = NULL;
     while (count > 0 || (!unload && !buf->b_p_bl && bp != buf)) {
-      /* remember the buffer where we start, we come back there when all
-       * buffers are unlisted. */
+      // remember the buffer where we start, we come back there when all
+      // buffers are unlisted.
       if (bp == NULL) {
         bp = buf;
       }
@@ -1204,8 +1204,8 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     bufref_T bufref;
     set_bufref(&bufref, buf);
 
-    /* When unloading or deleting a buffer that's already unloaded and
-     * unlisted: fail silently. */
+    // When unloading or deleting a buffer that's already unloaded and
+    // unlisted: fail silently.
     if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl) {
       return FAIL;
     }
@@ -1385,8 +1385,8 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   }
 
   if (buf == NULL) {
-    /* Autocommands must have wiped out all other buffers.  Only option
-     * now is to make the current buffer empty. */
+    // Autocommands must have wiped out all other buffers.  Only option
+    // now is to make the current buffer empty.
     return empty_curbuf(false, forceit, action);
   }
 
@@ -1509,9 +1509,9 @@ void set_curbuf(buf_T *buf, int action)
       }
     }
   }
-  /* An autocommand may have deleted "buf", already entered it (e.g., when
-   * it did ":bunload") or aborted the script processing!
-   * If curwin->w_buffer is null, enter_buffer() will make it valid again */
+  // An autocommand may have deleted "buf", already entered it (e.g., when
+  // it did ":bunload") or aborted the script processing!
+  // If curwin->w_buffer is null, enter_buffer() will make it valid again
   if ((buf_valid(buf) && buf != curbuf
        && !aborting()
        ) || curwin->w_buffer == NULL) {
@@ -2226,8 +2226,8 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
               && (!diffmode || diff_mode_buf(buf))
               && buflist_match(&regmatch, buf, false) != NULL) {
             if (curtab_only) {
-              /* Ignore the match if the buffer is not open in
-               * the current tab. */
+              // Ignore the match if the buffer is not open in
+              // the current tab.
               bool found_window = false;
               FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
                 if (wp->w_buffer == buf) {
@@ -5159,9 +5159,9 @@ void ex_buffer_all(exarg_T *eap)
         swap_exists_action = SEA_NONE;
         swap_exists_did_quit = true;
 
-        /* Restore the error/interrupt/exception state if not
-         * discarded by a new aborting error, interrupt, or uncaught
-         * exception. */
+        // Restore the error/interrupt/exception state if not
+        // discarded by a new aborting error, interrupt, or uncaught
+        // exception.
         leave_cleanup(&cs);
       } else {
         handle_swap_exists(NULL);

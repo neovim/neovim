@@ -406,9 +406,9 @@ char_u *get_exception_string(void *value, except_type_T type, char_u *cmdname, i
       val = ret + 4;
     }
 
-    /* msg_add_fname may have been used to prefix the message with a file
-     * name in quotes.  In the exception value, put the file name in
-     * parentheses and move it to the end. */
+    // msg_add_fname may have been used to prefix the message with a file
+    // name in quotes.  In the exception value, put the file name in
+    // parentheses and move it to the end.
     for (p = mesg;; p++) {
       if (*p == NUL
           || (*p == 'E'
@@ -922,16 +922,14 @@ void ex_else(exarg_T *eap)
     cstack->cs_flags[cstack->cs_idx] = CSF_ACTIVE;
   }
 
-  /*
-   * When debugging or a breakpoint was encountered, display the debug prompt
-   * (if not already done).  This shows the user that an ":else" or ":elseif"
-   * is executed when the ":if" or previous ":elseif" was not TRUE.  Handle
-   * a ">quit" debug command as if an interrupt had occurred before the
-   * ":else" or ":elseif".  That is, set "skip" and throw an interrupt
-   * exception if appropriate.  Doing this here prevents that an exception
-   * for a parsing errors is discarded when throwing the interrupt exception
-   * later on.
-   */
+  // When debugging or a breakpoint was encountered, display the debug prompt
+  // (if not already done).  This shows the user that an ":else" or ":elseif"
+  // is executed when the ":if" or previous ":elseif" was not TRUE.  Handle
+  // a ">quit" debug command as if an interrupt had occurred before the
+  // ":else" or ":elseif".  That is, set "skip" and throw an interrupt
+  // exception if appropriate.  Doing this here prevents that an exception
+  // for a parsing errors is discarded when throwing the interrupt exception
+  // later on.
   if (!skip && dbg_check_skipped(eap) && got_int) {
     (void)do_intthrow(cstack);
     skip = TRUE;
@@ -1055,11 +1053,11 @@ void ex_continue(exarg_T *eap)
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = (char_u *)N_("E586: :continue without :while or :for");
   } else {
-    /* Try to find the matching ":while".  This might stop at a try
-     * conditional not in its finally clause (which is then to be executed
-     * next).  Therefore, deactivate all conditionals except the ":while"
-     * itself (if reached). */
-    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, FALSE);
+    // Try to find the matching ":while".  This might stop at a try
+    // conditional not in its finally clause (which is then to be executed
+    // next).  Therefore, deactivate all conditionals except the ":while"
+    // itself (if reached).
+    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, false);
     assert(idx >= 0);
     if (cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR)) {
       rewind_conditionals(cstack, idx, CSF_TRY, &cstack->cs_trylevel);
@@ -1070,8 +1068,8 @@ void ex_continue(exarg_T *eap)
        */
       cstack->cs_lflags |= CSL_HAD_CONT;        // let do_cmdline() handle it
     } else {
-      /* If a try conditional not in its finally clause is reached first,
-       * make the ":continue" pending for execution at the ":endtry". */
+      // If a try conditional not in its finally clause is reached first,
+      // make the ":continue" pending for execution at the ":endtry".
       cstack->cs_pending[idx] = CSTP_CONTINUE;
       report_make_pending(CSTP_CONTINUE, NULL);
     }
@@ -1092,7 +1090,7 @@ void ex_break(exarg_T *eap)
     // Deactivate conditionals until the matching ":while" or a try
     // conditional not in its finally clause (which is then to be
     // executed next) is found.  In the latter case, make the ":break"
-    // pending for execution at the ":endtry". */
+    // pending for execution at the ":endtry".
     idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, true);
     if (idx >= 0 && !(cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR))) {
       cstack->cs_pending[idx] = CSTP_BREAK;
@@ -1155,20 +1153,17 @@ void ex_endwhile(exarg_T *eap)
       // Cleanup and rewind all contained (and unclosed) conditionals.
       (void)cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, FALSE);
       rewind_conditionals(cstack, idx, CSF_TRY, &cstack->cs_trylevel);
-    }
-    /*
-     * When debugging or a breakpoint was encountered, display the debug
-     * prompt (if not already done).  This shows the user that an
-     * ":endwhile"/":endfor" is executed when the ":while" was not TRUE or
-     * after a ":break".  Handle a ">quit" debug command as if an
-     * interrupt had occurred before the ":endwhile"/":endfor".  That is,
-     * throw an interrupt exception if appropriate.  Doing this here
-     * prevents that an exception for a parsing error is discarded when
-     * throwing the interrupt exception later on.
-     */
-    else if (cstack->cs_flags[cstack->cs_idx] & CSF_TRUE
-             && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)
-             && dbg_check_skipped(eap)) {
+    } else if (cstack->cs_flags[cstack->cs_idx] & CSF_TRUE
+               && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)
+               && dbg_check_skipped(eap)) {
+      // When debugging or a breakpoint was encountered, display the debug
+      // prompt (if not already done).  This shows the user that an
+      // ":endwhile"/":endfor" is executed when the ":while" was not TRUE or
+      // after a ":break".  Handle a ">quit" debug command as if an
+      // interrupt had occurred before the ":endwhile"/":endfor".  That is,
+      // throw an interrupt exception if appropriate.  Doing this here
+      // prevents that an exception for a parsing error is discarded when
+      // throwing the interrupt exception later on.
       (void)do_intthrow(cstack);
     }
 
@@ -1354,8 +1349,8 @@ void ex_catch(exarg_T *eap)
       }
     }
     if (cstack->cs_flags[idx] & CSF_FINALLY) {
-      /* Give up for a ":catch" after ":finally" and ignore it.
-       * Just parse. */
+      // Give up for a ":catch" after ":finally" and ignore it.
+      // Just parse.
       eap->errmsg = (char_u *)N_("E604: :catch after :finally");
       give_up = TRUE;
     } else {
@@ -1395,16 +1390,16 @@ void ex_catch(exarg_T *eap)
         return;
       }
 
-      /* When debugging or a breakpoint was encountered, display the
-       * debug prompt (if not already done) before checking for a match.
-       * This is a helpful hint for the user when the regular expression
-       * matching fails.  Handle a ">quit" debug command as if an
-       * interrupt had occurred before the ":catch".  That is, discard
-       * the original exception, replace it by an interrupt exception,
-       * and don't catch it in this try block. */
+      // When debugging or a breakpoint was encountered, display the
+      // debug prompt (if not already done) before checking for a match.
+      // This is a helpful hint for the user when the regular expression
+      // matching fails.  Handle a ">quit" debug command as if an
+      // interrupt had occurred before the ":catch".  That is, discard
+      // the original exception, replace it by an interrupt exception,
+      // and don't catch it in this try block.
       if (!dbg_check_skipped(eap) || !do_intthrow(cstack)) {
-        /* Terminate the pattern and avoid the 'l' flag in 'cpoptions'
-         * while compiling it. */
+        // Terminate the pattern and avoid the 'l' flag in 'cpoptions'
+        // while compiling it.
         if (end != NULL) {
           save_char = *end;
           *end = NUL;
@@ -1440,16 +1435,16 @@ void ex_catch(exarg_T *eap)
     }
 
     if (caught) {
-      /* Make this ":catch" clause active and reset did_emsg and got_int.
-       * Put the exception on the caught stack. */
+      // Make this ":catch" clause active and reset did_emsg and got_int.
+      // Put the exception on the caught stack.
       cstack->cs_flags[idx] |= CSF_ACTIVE | CSF_CAUGHT;
       did_emsg = got_int = false;
       catch_exception((except_T *)cstack->cs_exception[idx]);
-      /* It's mandatory that the current exception is stored in the cstack
-       * so that it can be discarded at the next ":catch", ":finally", or
-       * ":endtry" or when the catch clause is left by a ":continue",
-       * ":break", ":return", ":finish", error, interrupt, or another
-       * exception. */
+      // It's mandatory that the current exception is stored in the cstack
+      // so that it can be discarded at the next ":catch", ":finally", or
+      // ":endtry" or when the catch clause is left by a ":continue",
+      // ":break", ":return", ":finish", error, interrupt, or another
+      // exception.
       if (cstack->cs_exception[cstack->cs_idx] != current_exception) {
         internal_error("ex_catch()");
       }
@@ -1576,13 +1571,13 @@ void ex_finally(exarg_T *eap)
         assert(pending >= CHAR_MIN && pending <= CHAR_MAX);
         cstack->cs_pending[cstack->cs_idx] = (char)pending;
 
-        /* It's mandatory that the current exception is stored in the
-         * cstack so that it can be rethrown at the ":endtry" or be
-         * discarded if the finally clause is left by a ":continue",
-         * ":break", ":return", ":finish", error, interrupt, or another
-         * exception.  When emsg() is called for a missing ":endif" or
-         * a missing ":endwhile"/":endfor" detected here, the
-         * exception will be discarded. */
+        // It's mandatory that the current exception is stored in the
+        // cstack so that it can be rethrown at the ":endtry" or be
+        // discarded if the finally clause is left by a ":continue",
+        // ":break", ":return", ":finish", error, interrupt, or another
+        // exception.  When emsg() is called for a missing ":endif" or
+        // a missing ":endwhile"/":endfor" detected here, the
+        // exception will be discarded.
         if (current_exception
             && cstack->cs_exception[cstack->cs_idx] != current_exception) {
           internal_error("ex_finally()");
@@ -1666,21 +1661,20 @@ void ex_endtry(exarg_T *eap)
       }
     }
 
-    /* If there was no finally clause, show the user when debugging or
-     * a breakpoint was encountered that the end of the try conditional has
-     * been reached: display the debug prompt (if not already done).  Do
-     * this on normal control flow or when an exception was thrown, but not
-     * on an interrupt or error not converted to an exception or when
-     * a ":break", ":continue", ":return", or ":finish" is pending.  These
-     * actions are carried out immediately.
-     */
+    // If there was no finally clause, show the user when debugging or
+    // a breakpoint was encountered that the end of the try conditional has
+    // been reached: display the debug prompt (if not already done).  Do
+    // this on normal control flow or when an exception was thrown, but not
+    // on an interrupt or error not converted to an exception or when
+    // a ":break", ":continue", ":return", or ":finish" is pending.  These
+    // actions are carried out immediately.
     if ((rethrow || (!skip
                      && !(cstack->cs_flags[idx] & CSF_FINALLY)
                      && !cstack->cs_pending[idx]))
         && dbg_check_skipped(eap)) {
-      /* Handle a ">quit" debug command as if an interrupt had occurred
-       * before the ":endtry".  That is, throw an interrupt exception and
-       * set "skip" and "rethrow". */
+      // Handle a ">quit" debug command as if an interrupt had occurred
+      // before the ":endtry".  That is, throw an interrupt exception and
+      // set "skip" and "rethrow".
       if (got_int) {
         skip = TRUE;
         (void)do_intthrow(cstack);
@@ -1815,13 +1809,12 @@ void enter_cleanup(cleanup_T *csp)
                    | (current_exception ? CSTP_THROW : 0)
                    | (need_rethrow ? CSTP_THROW : 0);
 
-    /* If we are currently throwing an exception, save it as well.  On an error
-     * not yet converted to an exception, update "force_abort" and reset
-     * "cause_abort" (as do_errthrow() would do).  This is needed for the
-     * do_cmdline() call that is going to be made for autocommand execution.  We
-     * need not save *msg_list because there is an extra instance for every call
-     * of do_cmdline(), anyway.
-     */
+    // If we are currently throwing an exception, save it as well.  On an error
+    // not yet converted to an exception, update "force_abort" and reset
+    // "cause_abort" (as do_errthrow() would do).  This is needed for the
+    // do_cmdline() call that is going to be made for autocommand execution.  We
+    // need not save *msg_list because there is an extra instance for every call
+    // of do_cmdline(), anyway.
     if (current_exception || need_rethrow) {
       csp->exception = current_exception;
       current_exception = NULL;
@@ -1897,13 +1890,10 @@ void leave_cleanup(cleanup_T *csp)
      */
     if (pending & CSTP_THROW) {
       current_exception = csp->exception;
-    }
-    /*
-     * If an error was about to be converted to an exception when
-     * enter_cleanup() was called, let "cause_abort" take the part of
-     * "force_abort" (as done by cause_errthrow()).
-     */
-    else if (pending & CSTP_ERROR) {
+    } else if (pending & CSTP_ERROR) {
+      // If an error was about to be converted to an exception when
+      // enter_cleanup() was called, let "cause_abort" take the part of
+      // "force_abort" (as done by cause_errthrow()).
       cause_abort = force_abort;
       force_abort = FALSE;
     }

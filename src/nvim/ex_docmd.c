@@ -340,12 +340,12 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
   int getline_is_func;
   static int call_depth = 0;            // recursiveness
 
-  /* For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
-   * location for storing error messages to be converted to an exception.
-   * This ensures that the do_errthrow() call in do_one_cmd() does not
-   * combine the messages stored by an earlier invocation of do_one_cmd()
-   * with the command name of the later one.  This would happen when
-   * BufWritePost autocommands are executed after a write error. */
+  // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
+  // location for storing error messages to be converted to an exception.
+  // This ensures that the do_errthrow() call in do_one_cmd() does not
+  // combine the messages stored by an earlier invocation of do_one_cmd()
+  // with the command name of the later one.  This would happen when
+  // BufWritePost autocommands are executed after a write error.
   saved_msg_list = msg_list;
   msg_list = &private_msg_list;
   private_msg_list = NULL;
@@ -445,12 +445,12 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
 
     // 1. If repeating, get a previous line from lines_ga.
     if (cstack.cs_looplevel > 0 && current_line < lines_ga.ga_len) {
-      /* Each '|' separated command is stored separately in lines_ga, to
-       * be able to jump to it.  Don't use next_cmdline now. */
+      // Each '|' separated command is stored separately in lines_ga, to
+      // be able to jump to it.  Don't use next_cmdline now.
       XFREE_CLEAR(cmdline_copy);
 
-      /* Check if a function has returned or, unless it has an unclosed
-       * try conditional, aborted. */
+      // Check if a function has returned or, unless it has an unclosed
+      // try conditional, aborted.
       if (getline_is_func) {
         if (do_profiling == PROF_YES) {
           func_line_end(real_cookie);
@@ -630,8 +630,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
         new_last_cmdline = NULL;
       }
     } else {
-      /* need to copy the command after the '|' to cmdline_copy, for the
-       * next do_one_cmd() */
+      // need to copy the command after the '|' to cmdline_copy, for the
+      // next do_one_cmd()
       STRMOVE(cmdline_copy, next_cmdline);
       next_cmdline = cmdline_copy;
     }
@@ -656,10 +656,10 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
       if (cstack.cs_lflags & (CSL_HAD_CONT | CSL_HAD_ENDLOOP)) {
         cstack.cs_lflags &= ~(CSL_HAD_CONT | CSL_HAD_ENDLOOP);
 
-        /* Jump back to the matching ":while" or ":for".  Be careful
-         * not to use a cs_line[] from an entry that isn't a ":while"
-         * or ":for": It would make "current_line" invalid and can
-         * cause a crash. */
+        // Jump back to the matching ":while" or ":for".  Be careful
+        // not to use a cs_line[] from an entry that isn't a ":while"
+        // or ":for": It would make "current_line" invalid and can
+        // cause a crash.
         if (!did_emsg && !got_int && !current_exception
             && cstack.cs_idx >= 0
             && (cstack.cs_flags[cstack.cs_idx]
@@ -752,9 +752,9 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
   while (!((got_int || (did_emsg && force_abort) || current_exception)
            && cstack.cs_trylevel == 0)
          && !(did_emsg
-              /* Keep going when inside try/catch, so that the error can be
-               * deal with, except when it is a syntax error, it may cause
-               * the :endtry to be missed. */
+              // Keep going when inside try/catch, so that the error can be
+              // deal with, except when it is a syntax error, it may cause
+              // the :endtry to be missed.
               && (cstack.cs_trylevel == 0 || did_emsg_syntax)
               && used_getline
               && getline_equal(fgetline, cookie, getexline))
@@ -2880,8 +2880,8 @@ int cmd_exists(const char *const name)
     }
   }
 
-  /* Check built-in commands and user defined commands.
-   * For ":2match" and ":3match" we need to skip the number. */
+  // Check built-in commands and user defined commands.
+  // For ":2match" and ":3match" we need to skip the number.
   ea.cmd = (char_u *)((*name == '2' || *name == '3') ? name + 1 : name);
   ea.cmdidx = (cmdidx_T)0;
   int full = false;
@@ -3964,8 +3964,8 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
       if (skip) {
         ++cmd;
       } else {
-        /* Only accept a mark in another file when it is
-         * used by itself: ":'M". */
+        // Only accept a mark in another file when it is
+        // used by itself: ":'M".
         fp = getmark(*cmd, to_other_file && cmd[1] == NUL);
         ++cmd;
         if (fp == (pos_T *)-1) {
@@ -4445,11 +4445,10 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       xfree(l);
     }
 
-    /* Need to escape white space et al. with a backslash.
-     * Don't do this for:
-     * - replacement that already has been escaped: "##"
-     * - shell commands (may have to use quotes instead).
-     */
+    // Need to escape white space et al. with a backslash.
+    // Don't do this for:
+    // - replacement that already has been escaped: "##"
+    // - shell commands (may have to use quotes instead).
     if (!eap->usefilter
         && !escaped
         && eap->cmdidx != CMD_bang
@@ -4795,8 +4794,8 @@ static int getargopt(exarg_T *eap)
       *p = TOLOWER_ASC(*p);
     }
   } else {
-    /* Check ++bad= argument.  Must be a single-byte character, "keep" or
-     * "drop". */
+    // Check ++bad= argument.  Must be a single-byte character, "keep" or
+    // "drop".
     if (get_bad_opt(eap->cmd + bad_char_idx, eap) == FAIL) {
       return FAIL;
     }
@@ -6773,15 +6772,15 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int h = tabline_height();
   char_u prev_idx[NUMBUFLEN];
 
-  /* Limit to 1000 windows, autocommands may add a window while we close
-   * one.  OK, so I'm paranoid... */
+  // Limit to 1000 windows, autocommands may add a window while we close
+  // one.  OK, so I'm paranoid...
   while (++done < 1000) {
     snprintf((char *)prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
     wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
-    /* Autocommands may delete the tab page under our fingers and we may
-     * fail to close a window with a modified buffer. */
+    // Autocommands may delete the tab page under our fingers and we may
+    // fail to close a window with a modified buffer.
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp) {
       break;
     }
@@ -7167,8 +7166,8 @@ void ex_splitview(exarg_T *eap)
                        || eap->cmdidx == CMD_tabfind
                        || eap->cmdidx == CMD_tabnew;
 
-  /* A ":split" in the quickfix window works like ":new".  Don't want two
-   * quickfix windows.  But it's OK when doing ":tab split". */
+  // A ":split" in the quickfix window works like ":new".  Don't want two
+  // quickfix windows.  But it's OK when doing ":tab split".
   if (bt_quickfix(curbuf) && cmdmod.tab == 0) {
     if (eap->cmdidx == CMD_split) {
       eap->cmdidx = CMD_new;
@@ -7515,18 +7514,18 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
           enter_cleanup(&cs);
           win_close(curwin, !need_hide && !buf_hide(curbuf));
 
-          /* Restore the error/interrupt/exception state if not
-           * discarded by a new aborting error, interrupt, or
-           * uncaught exception. */
+          // Restore the error/interrupt/exception state if not
+          // discarded by a new aborting error, interrupt, or
+          // uncaught exception.
           leave_cleanup(&cs);
         }
       }
     } else if (readonlymode && curbuf->b_nwindows == 1) {
-      /* When editing an already visited buffer, 'readonly' won't be set
-       * but the previous value is kept.  With ":view" and ":sview" we
-       * want the  file to be readonly, except when another window is
-       * editing the same buffer. */
-      curbuf->b_p_ro = TRUE;
+      // When editing an already visited buffer, 'readonly' won't be set
+      // but the previous value is kept.  With ":view" and ":sview" we
+      // want the  file to be readonly, except when another window is
+      // editing the same buffer.
+      curbuf->b_p_ro = true;
     }
     readonlymode = n;
   } else {
