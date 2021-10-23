@@ -1883,6 +1883,40 @@ int mb_tail_off(char_u *base, char_u *p)
   return i;
 }
 
+
+/// Return the offset from "p" to the first byte of the character it points
+/// into. Can start anywhere in a stream of bytes.
+///
+/// @param[in] base  Pointer to start of string
+/// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
+//
+/// @return 0 if invalid sequence, else offset to previous codepoint
+int mb_head_off(char_u *base, char_u *p)
+{
+  int i;
+  int j;
+
+  if (*p == NUL) {
+    return 0;
+  }
+
+  // Find the first character that is not 10xx.xxxx
+  for (i = 0; p - i > base; i--) {
+    if ((p[i] & 0xc0) != 0x80) {
+      break;
+    }
+  }
+
+  // Find the last character that is 10xx.xxxx
+  for (j = 0; (p[j + 1] & 0xc0) == 0x80; j++) {}
+
+  // Check for illegal sequence.
+  if (utf8len_tab[p[i]] == 1) {
+    return 0;
+  }
+  return i;
+}
+
 /*
  * Find the next illegal byte sequence.
  */
