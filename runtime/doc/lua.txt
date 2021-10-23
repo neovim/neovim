@@ -393,6 +393,14 @@ where the args are converted to Lua values. The expression >
 is equivalent to the Lua chunk >
     return somemod.func(...)
 
+In addition, functions of packages can be accessed like >
+    v:lua.require'mypack'.func(arg1, arg2)
+    v:lua.require'mypack.submod'.func(arg1, arg2)
+Note: only single quote form without parens is allowed. Using
+`require"mypack"` or `require('mypack')` as prefixes do NOT work (the latter
+is still valid as a function call of itself, in case require returns a useful
+value).
+
 The `v:lua` prefix may be used to call Lua functions as |method|s. For
 example: >
     arg1->v:lua.somemod.func(arg2)
@@ -409,7 +417,8 @@ For example consider the following Lua omnifunc handler: >
     end
     vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
 
-Note: the module ("mymod" in the above example) must be a Lua global.
+Note: the module ("mymod" in the above example) must either be a Lua global,
+or use the require syntax as specified above to access it from a package.
 
 Note: `v:lua` without a call is not allowed in a Vimscript expression:
 |Funcref|s cannot represent Lua functions. The following are errors: >
