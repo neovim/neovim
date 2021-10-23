@@ -1376,7 +1376,7 @@ void msg_putchar(int c)
 
 void msg_putchar_attr(int c, int attr)
 {
-  char buf[MB_MAXBYTES + 1];
+  char_u buf[MB_MAXBYTES + 1];
 
   if (IS_SPECIAL(c)) {
     buf[0] = (char)K_SPECIAL;
@@ -1384,9 +1384,9 @@ void msg_putchar_attr(int c, int attr)
     buf[2] = (char)K_THIRD(c);
     buf[3] = NUL;
   } else {
-    buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
+    buf[utf_char2bytes(c, buf)] = NUL;
   }
-  msg_puts_attr(buf, attr);
+  msg_puts_attr((const char *)buf, attr);
 }
 
 void msg_outnum(long n)
