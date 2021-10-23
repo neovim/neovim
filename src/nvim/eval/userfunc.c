@@ -1635,11 +1635,11 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 {
   msg_start();
   if (indent) {
-    MSG_PUTS("   ");
+    msg_puts("   ");
   }
-  MSG_PUTS(force ? "function! " : "function ");
+  msg_puts(force ? "function! " : "function ");
   if (fp->uf_name[0] == K_SPECIAL) {
-    MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
+    msg_puts_attr("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
   } else {
     msg_puts((const char *)fp->uf_name);

@@ -711,7 +711,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       did_title = false;
     } else {
       if (arg == NULL) {
-        MSG(_("No marks set"));
+        msg(_("No marks set"));
       } else {
         semsg(_("E283: No marks matching \"%s\""), arg);
       }
@@ -839,7 +839,7 @@ void ex_jumps(exarg_T *eap)
 
   cleanup_jumplist(curwin, true);
   // Highlight title
-  MSG_PUTS_TITLE(_("\n jump line  col file/text"));
+  msg_puts_title(_("\n jump line  col file/text"));
   for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
@@ -871,7 +871,7 @@ void ex_jumps(exarg_T *eap)
     ui_flush();
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 
@@ -891,7 +891,7 @@ void ex_changes(exarg_T *eap)
   char_u *name;
 
   // Highlight title
-  MSG_PUTS_TITLE(_("\nchange line  col text"));
+  msg_puts_title(_("\nchange line  col text"));
 
   for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
     if (curbuf->b_changelist[i].mark.lnum != 0) {
@@ -914,7 +914,7 @@ void ex_changes(exarg_T *eap)
     ui_flush();
   }
   if (curwin->w_changelistidx == curbuf->b_changelistlen) {
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 

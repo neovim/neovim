@@ -292,7 +292,7 @@ newwindow:
   // move window to new tab page
   case 'T':
     if (one_window()) {
-      MSG(_(m_onlyone));
+      msg(_(m_onlyone));
     } else {
       tabpage_T *oldtab = curtab;
       tabpage_T *newtab;
@@ -3529,7 +3529,7 @@ void close_others(int message, int forceit)
   if (one_window() && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
-      MSG(_(m_onlyone));
+      msg(_(m_onlyone));
     }
     return;
   }

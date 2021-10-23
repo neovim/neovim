@@ -2372,7 +2372,7 @@ static void abandon_cmdline(void)
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
-  MSG("");
+  msg("");
   redraw_cmdline = true;
 }
 
@@ -3764,7 +3764,7 @@ static int nextwild(expand_T *xp, int type, int options, int escape)
   }
 
   if (!(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
-    MSG_PUTS("...");  // show that we are busy
+    msg_puts("...");  // show that we are busy
     ui_flush();
   }
 
@@ -4367,10 +4367,10 @@ static int showmatches(expand_T *xp, int wildmenu)
     attr = HL_ATTR(HLF_D);      // find out highlighting for directories
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      MSG_PUTS_ATTR(_("tagname"), HL_ATTR(HLF_T));
+      msg_puts_attr(_("tagname"), HL_ATTR(HLF_T));
       msg_clr_eos();
       msg_advance(maxlen - 3);
-      MSG_PUTS_ATTR(_(" kind file\n"), HL_ATTR(HLF_T));
+      msg_puts_attr(_(" kind file\n"), HL_ATTR(HLF_T));
     }
 
     // list the files line by line
@@ -4383,7 +4383,7 @@ static int showmatches(expand_T *xp, int wildmenu)
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
           msg_advance(maxlen + 3);
-          msg_puts_long_attr(p + 2, HL_ATTR(HLF_D));
+          msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
           break;
         }
         for (j = maxlen - lastlen; --j >= 0; ) {
@@ -6222,7 +6222,7 @@ void ex_history(exarg_T *eap)
   char_u *arg = eap->arg;
 
   if (hislen == 0) {
-    MSG(_("'history' option is zero"));
+    msg(_("'history' option is zero"));
     return;
   }
 
@@ -6256,7 +6256,7 @@ void ex_history(exarg_T *eap)
     STRCPY(IObuff, "\n      #  ");
     assert(history_names[histype1] != NULL);
     STRCAT(STRCAT(IObuff, history_names[histype1]), " history");
-    MSG_PUTS_TITLE(IObuff);
+    msg_puts_title((char *)IObuff);
     idx = hisidx[histype1];
     hist = history[histype1];
     j = hisidx1;

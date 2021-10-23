@@ -830,7 +830,7 @@ static int show_menus(char_u *const path_name, int modes)
 
   // Now we have found the matching menu, and we list the mappings
   // Highlight title
-  MSG_PUTS_TITLE(_("\n--- Menus ---"));
+  msg_puts_title(_("\n--- Menus ---"));
 
   show_menus_recursive(menu->parent, modes, 0);
   return OK;
@@ -852,11 +852,11 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
       return;
     }
     for (i = 0; i < depth; i++) {
-      MSG_PUTS("  ");
+      msg_puts("  ");
     }
     if (menu->priority) {
       msg_outnum(menu->priority);
-      MSG_PUTS(" ");
+      msg_puts(" ");
     }
     // Same highlighting as for directories!?
     msg_outtrans_attr(menu->name, HL_ATTR(HLF_D));
@@ -870,7 +870,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
           return;
         }
         for (i = 0; i < depth + 2; i++) {
-          MSG_PUTS("  ");
+          msg_puts("  ");
         }
         msg_putchar(menu_mode_chars[bit]);
         if (menu->noremap[bit] == REMAP_NONE) {
@@ -890,7 +890,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         } else {
           msg_putchar(' ');
         }
-        MSG_PUTS(" ");
+        msg_puts(" ");
         if (*menu->strings[bit] == NUL) {
           msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
         } else {

@@ -88,7 +88,7 @@ void do_debug(char_u *cmd)
   debug_mode = true;
 
   if (!debug_did_msg) {
-    MSG(_("Entering Debug mode.  Type \"cont\" to continue."));
+    msg(_("Entering Debug mode.  Type \"cont\" to continue."));
   }
   if (debug_oldval != NULL) {
     smsg(_("Oldval = \"%s\""), debug_oldval);
@@ -101,7 +101,7 @@ void do_debug(char_u *cmd)
     debug_newval = NULL;
   }
   if (sourcing_name != NULL) {
-    msg(sourcing_name);
+    msg((char *)sourcing_name);
   }
   if (sourcing_lnum != 0) {
     smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
@@ -321,7 +321,7 @@ static void do_checkbacktracelevel(void)
 {
   if (debug_backtrace_level < 0) {
     debug_backtrace_level = 0;
-    MSG(_("frame is zero"));
+    msg(_("frame is zero"));
   } else {
     int max = get_maxbacktrace_level();
     if (debug_backtrace_level > max) {
@@ -696,7 +696,7 @@ void ex_breaklist(exarg_T *eap)
   struct debuggy *bp;
 
   if (GA_EMPTY(&dbg_breakp)) {
-    MSG(_("No breakpoints defined"));
+    msg(_("No breakpoints defined"));
   } else {
     for (int i = 0; i < dbg_breakp.ga_len; i++) {
       bp = &BREAKP(i);

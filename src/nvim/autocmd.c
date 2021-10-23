@@ -691,7 +691,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   // Print header when showing autocommands.
   if (!forceit && *cmd == NUL) {
     // Highlight title
-    MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
+    msg_puts_title(_("\n--- Autocommands ---"));
   }
 
   // Loop over the events.
@@ -996,7 +996,7 @@ int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
   }
 
   if (nothing_done && do_msg) {
-    MSG(_("No matching autocommands"));
+    msg(_("No matching autocommands"));
   }
   if (did_something != NULL) {
     *did_something = !nothing_done;

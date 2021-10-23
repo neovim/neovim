@@ -9927,7 +9927,7 @@ void ex_execute(exarg_T *eap)
 
     if (eap->cmdidx == CMD_echomsg) {
       msg_ext_set_kind("echomsg");
-      MSG_ATTR(ga.ga_data, echo_attr);
+      msg_attr(ga.ga_data, echo_attr);
       ui_flush();
     } else if (eap->cmdidx == CMD_echoerr) {
       // We don't want to abort following commands, restore did_emsg.
@@ -10433,10 +10433,10 @@ void option_last_set_msg(LastSet last_set)
     bool should_free;
     char_u *p = get_scriptname(last_set, &should_free);
     verbose_enter();
-    MSG_PUTS(_("\n\tLast set from "));
-    MSG_PUTS(p);
+    msg_puts(_("\n\tLast set from "));
+    msg_puts((char *)p);
     if (last_set.script_ctx.sc_lnum > 0) {
-      MSG_PUTS(_(line_msg));
+      msg_puts(_(line_msg));
       msg_outnum((long)last_set.script_ctx.sc_lnum);
     }
     if (should_free) {

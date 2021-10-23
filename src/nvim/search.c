@@ -4878,7 +4878,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               if (!got_int) {  // don't display if 'q' typed at "--more--"
                                // message
                 msg_home_replace_hl(new_fname);
-                MSG_PUTS(_(" (includes previously listed match)"));
+                msg_puts(_(" (includes previously listed match)"));
                 prev_fname = NULL;
               }
             }
@@ -4895,25 +4895,25 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
           msg_putchar('\n');  // cursor below last one
         } else {
           gotocmdline(true);  // cursor at status line
-          MSG_PUTS_TITLE(_("--- Included files "));
+          msg_puts_title(_("--- Included files "));
           if (action != ACTION_SHOW_ALL) {
-            MSG_PUTS_TITLE(_("not found "));
+            msg_puts_title(_("not found "));
           }
-          MSG_PUTS_TITLE(_("in path ---\n"));
+          msg_puts_title(_("in path ---\n"));
         }
         did_show = true;
         while (depth_displayed < depth && !got_int) {
           ++depth_displayed;
           for (i = 0; i < depth_displayed; i++) {
-            MSG_PUTS("  ");
+            msg_puts("  ");
           }
           msg_home_replace(files[depth_displayed].name);
-          MSG_PUTS(" -->\n");
+          msg_puts(" -->\n");
         }
         if (!got_int) {                     // don't display if 'q' typed
                                             // for "--more--" message
           for (i = 0; i <= depth_displayed; i++) {
-            MSG_PUTS("  ");
+            msg_puts("  ");
           }
           if (new_fname != NULL) {
             // using "new_fname" is more reliable, e.g., when
@@ -4962,9 +4962,9 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
 
           if (new_fname == NULL && action == ACTION_SHOW_ALL) {
             if (already_searched) {
-              MSG_PUTS(_("  (Already listed)"));
+              msg_puts(_("  (Already listed)"));
             } else {
-              MSG_PUTS(_("  NOT FOUND"));
+              msg_puts(_("  NOT FOUND"));
             }
           }
         }
@@ -5009,7 +5009,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             vim_snprintf((char *)IObuff, IOSIZE,
                          _("Scanning included file: %s"),
                          (char *)new_fname);
-            msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+            msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(_("Searching included file %s"),
@@ -5339,9 +5339,9 @@ exit_matched:
   if (type == CHECK_PATH) {
     if (!did_show) {
       if (action != ACTION_SHOW_ALL) {
-        MSG(_("All included files were found"));
+        msg(_("All included files were found"));
       } else {
-        MSG(_("No included files"));
+        msg(_("No included files"));
       }
     }
   } else if (!found

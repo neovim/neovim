@@ -621,7 +621,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           if (ic) {
             msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
           } else {
-            msg(IObuff);
+            msg((char *)IObuff);
           }
           msg_scroll = true;  // Don't overwrite this message.
         } else {
@@ -1038,7 +1038,7 @@ void do_tags(exarg_T *eap)
   int tagstacklen = curwin->w_tagstacklen;
 
   // Highlight title
-  MSG_PUTS_TITLE(_("\n  # TO tag         FROM line  in file/text"));
+  msg_puts_title(_("\n  # TO tag         FROM line  in file/text"));
   for (i = 0; i < tagstacklen; ++i) {
     if (tagstack[i].tagname != NULL) {
       name = fm_getname(&(tagstack[i].fmark), 30);
@@ -1061,7 +1061,7 @@ void do_tags(exarg_T *eap)
     ui_flush();                    // show one line at a time
   }
   if (tagstackidx == tagstacklen) {     // idx at top of stack
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 
@@ -2889,7 +2889,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
            * is set and match found while ignoring case.
            */
           if (found == 2 || !save_p_ic) {
-            MSG(_("E435: Couldn't find tag, just guessing!"));
+            msg(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
               os_delay(1010L, true);

@@ -1904,7 +1904,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
         curbuf->b_u_curhead = curbuf->b_u_oldhead;
         beep_flush();
         if (count == startcount - 1) {
-          MSG(_("Already at oldest change"));
+          msg(_("Already at oldest change"));
           return;
         }
         break;
@@ -1915,7 +1915,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
       if (curbuf->b_u_curhead == NULL || get_undolevel(curbuf) <= 0) {
         beep_flush();  // nothing to redo
         if (count == startcount - 1) {
-          MSG(_("Already at newest change"));
+          msg(_("Already at newest change"));
           return;
         }
         break;
@@ -2146,9 +2146,9 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
     if (closest == closest_start) {
       if (step < 0) {
-        MSG(_("Already at oldest change"));
+        msg(_("Already at oldest change"));
       } else {
-        MSG(_("Already at newest change"));
+        msg(_("Already at newest change"));
       }
       return;
     }
@@ -2730,7 +2730,7 @@ void ex_undolist(exarg_T *eap)
   }
 
   if (GA_EMPTY(&ga)) {
-    MSG(_("Nothing to undo"));
+    msg(_("Nothing to undo"));
   } else {
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
 

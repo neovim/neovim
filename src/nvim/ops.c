@@ -262,7 +262,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     vim_snprintf((char *)IObuff, IOSIZE,
                  NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
                  (int64_t)oap->line_count, op, amount);
-    msg_attr_keep(IObuff, 0, true, false);
+    msg_attr_keep((char *)IObuff, 0, true, false);
   }
 
   /*
@@ -921,7 +921,7 @@ int do_record(int c)
     if (ui_has(kUIMessages)) {
       showmode();
     } else {
-      MSG("");
+      msg("");
     }
     p = get_recorded();
     if (p == NULL) {
@@ -3694,12 +3694,12 @@ void ex_display(exarg_T *eap)
       msg_puts("  ");
       msg_putchar('"');
       msg_putchar(name);
-      MSG_PUTS("   ");
+      msg_puts("   ");
 
       int n = Columns - 11;
       for (size_t j = 0; j < yb->y_size && n > 1; j++) {
         if (j) {
-          MSG_PUTS_ATTR("^J", attr);
+          msg_puts_attr("^J", attr);
           n -= 2;
         }
         for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019 NOLINT(whitespace/line_length)
@@ -3709,7 +3709,7 @@ void ex_display(exarg_T *eap)
         }
       }
       if (n > 1 && yb->y_type == kMTLineWise) {
-        MSG_PUTS_ATTR("^J", attr);
+        msg_puts_attr("^J", attr);
       }
       ui_flush();  // show one line at a time
     }
@@ -5687,7 +5687,7 @@ void cursor_pos_info(dict_T *dict)
   // Compute the length of the file in characters.
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     if (dict == NULL) {
-      MSG(_(no_lines_msg));
+      msg(_(no_lines_msg));
       return;
     }
   } else {
@@ -5885,7 +5885,7 @@ void cursor_pos_info(dict_T *dict)
       // Don't shorten this message, the user asked for it.
       p = p_shm;
       p_shm = (char_u *)"";
-      msg(IObuff);
+      msg((char *)IObuff);
       p_shm = p;
     }
   }
@@ -5947,7 +5947,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       clipboard_didwarn = true;
       // Do NOT error (emsg()) here--if it interrupts :redir we get into
       // a weird state, stuck in "redirect mode".
-      msg((char_u *)MSG_NO_CLIP);
+      msg(MSG_NO_CLIP);
     }
     // ... else, be silent (don't flood during :while, :redir, etc.).
     goto end;

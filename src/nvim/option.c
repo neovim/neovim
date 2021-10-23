@@ -5016,11 +5016,11 @@ static void showoptions(int all, int opt_flags)
 
   // Highlight title
   if (opt_flags & OPT_GLOBAL) {
-    MSG_PUTS_TITLE(_("\n--- Global option values ---"));
+    msg_puts_title(_("\n--- Global option values ---"));
   } else if (opt_flags & OPT_LOCAL) {
-    MSG_PUTS_TITLE(_("\n--- Local option values ---"));
+    msg_puts_title(_("\n--- Local option values ---"));
   } else {
-    MSG_PUTS_TITLE(_("\n--- Options ---"));
+    msg_puts_title(_("\n--- Options ---"));
   }
 
   // Do the loop two times:
@@ -5151,13 +5151,13 @@ static void showoneopt(vimoption_T *p, int opt_flags)
   // for 'modified' we also need to check if 'ff' or 'fenc' changed.
   if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
                               ? !curbufIsChanged() : !*(int *)varp)) {
-    MSG_PUTS("no");
+    msg_puts("no");
   } else if ((p->flags & P_BOOL) && *(int *)varp < 0) {
-    MSG_PUTS("--");
+    msg_puts("--");
   } else {
-    MSG_PUTS("  ");
+    msg_puts("  ");
   }
-  MSG_PUTS(p->fullname);
+  msg_puts(p->fullname);
   if (!(p->flags & P_BOOL)) {
     msg_putchar('=');
     // put value string in NameBuff

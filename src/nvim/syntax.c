@@ -3005,7 +3005,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
   if (timed_out && !syn_win->w_s->b_syn_slow) {
     syn_win->w_s->b_syn_slow = true;
-    MSG(_("'redrawtime' exceeded, syntax highlighting disabled"));
+    msg(_("'redrawtime' exceeded, syntax highlighting disabled"));
   }
 
   if (r > 0) {
@@ -3110,9 +3110,9 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_conceal) {
-      MSG(_("syntax conceal on"));
+      msg(_("syntax conceal on"));
     } else {
-      MSG(_("syntax conceal off"));
+      msg(_("syntax conceal off"));
     }
   } else if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2) {
     curwin->w_s->b_syn_conceal = true;
@@ -3139,9 +3139,9 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_ic) {
-      MSG(_("syntax case ignore"));
+      msg(_("syntax case ignore"));
     } else {
-      MSG(_("syntax case match"));
+      msg(_("syntax case match"));
     }
   } else if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5) {
     curwin->w_s->b_syn_ic = false;
@@ -3166,9 +3166,9 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   if (*arg == NUL) {
     switch (curwin->w_s->b_syn_foldlevel) {
     case SYNFLD_START:
-      MSG(_("syntax foldlevel start"));   break;
+      msg(_("syntax foldlevel start"));   break;
     case SYNFLD_MINIMUM:
-      MSG(_("syntax foldlevel minimum")); break;
+      msg(_("syntax foldlevel minimum")); break;
     default:
       break;
     }
@@ -3207,11 +3207,11 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
-      MSG(_("syntax spell toplevel"));
+      msg(_("syntax spell toplevel"));
     } else if (curwin->w_s->b_syn_spell == SYNSPL_NOTOP) {
-      MSG(_("syntax spell notoplevel"));
+      msg(_("syntax spell notoplevel"));
     } else {
-      MSG(_("syntax spell default"));
+      msg(_("syntax spell default"));
     }
   } else if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
@@ -3241,9 +3241,9 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 
   arg = skipwhite(arg);
   if (*arg == NUL) {
-    MSG_PUTS("\n");
+    msg_puts("\n");
     if (curwin->w_s->b_syn_isk != empty_option) {
-      MSG_PUTS(_("syntax iskeyword "));
+      msg_puts(_("syntax iskeyword "));
       msg_outtrans(curwin->w_s->b_syn_isk);
     } else {
       msg_outtrans((char_u *)_("syntax iskeyword not set"));
@@ -3566,41 +3566,41 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
   }
 
   if (!syntax_present(curwin)) {
-    MSG(_(msg_no_items));
+    msg(_(msg_no_items));
     return;
   }
 
   if (syncing) {
     if (curwin->w_s->b_syn_sync_flags & SF_CCOMMENT) {
-      MSG_PUTS(_("syncing on C-style comments"));
+      msg_puts(_("syncing on C-style comments"));
       syn_lines_msg();
       syn_match_msg();
       return;
     } else if (!(curwin->w_s->b_syn_sync_flags & SF_MATCH)) {
       if (curwin->w_s->b_syn_sync_minlines == 0) {
-        MSG_PUTS(_("no syncing"));
+        msg_puts(_("no syncing"));
       } else {
         if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
-          MSG_PUTS(_("syncing starts at the first line"));
+          msg_puts(_("syncing starts at the first line"));
         } else {
-          MSG_PUTS(_("syncing starts "));
+          msg_puts(_("syncing starts "));
           msg_outnum(curwin->w_s->b_syn_sync_minlines);
-          MSG_PUTS(_(" lines before top line"));
+          msg_puts(_(" lines before top line"));
         }
         syn_match_msg();
       }
       return;
     }
-    MSG_PUTS_TITLE(_("\n--- Syntax sync items ---"));
+    msg_puts_title(_("\n--- Syntax sync items ---"));
     if (curwin->w_s->b_syn_sync_minlines > 0
         || curwin->w_s->b_syn_sync_maxlines > 0
         || curwin->w_s->b_syn_sync_linebreaks > 0) {
-      MSG_PUTS(_("\nsyncing on items"));
+      msg_puts(_("\nsyncing on items"));
       syn_lines_msg();
       syn_match_msg();
     }
   } else {
-    MSG_PUTS_TITLE(_("\n--- Syntax items ---"));
+    msg_puts_title(_("\n--- Syntax items ---"));
   }
   if (ends_excmd(*arg)) {
     /*
@@ -3643,22 +3643,22 @@ static void syn_lines_msg(void)
 {
   if (curwin->w_s->b_syn_sync_maxlines > 0
       || curwin->w_s->b_syn_sync_minlines > 0) {
-    MSG_PUTS("; ");
+    msg_puts("; ");
     if (curwin->w_s->b_syn_sync_minlines == MAXLNUM) {
-      MSG_PUTS(_("from the first line"));
+      msg_puts(_("from the first line"));
     } else {
       if (curwin->w_s->b_syn_sync_minlines > 0) {
-        MSG_PUTS(_("minimal "));
+        msg_puts(_("minimal "));
         msg_outnum(curwin->w_s->b_syn_sync_minlines);
         if (curwin->w_s->b_syn_sync_maxlines) {
-          MSG_PUTS(", ");
+          msg_puts(", ");
         }
       }
       if (curwin->w_s->b_syn_sync_maxlines > 0) {
-        MSG_PUTS(_("maximal "));
+        msg_puts(_("maximal "));
         msg_outnum(curwin->w_s->b_syn_sync_maxlines);
       }
-      MSG_PUTS(_(" lines before top line"));
+      msg_puts(_(" lines before top line"));
     }
   }
 }
@@ -3666,9 +3666,9 @@ static void syn_lines_msg(void)
 static void syn_match_msg(void)
 {
   if (curwin->w_s->b_syn_sync_linebreaks > 0) {
-    MSG_PUTS(_("; match "));
+    msg_puts(_("; match "));
     msg_outnum(curwin->w_s->b_syn_sync_linebreaks);
-    MSG_PUTS(_(" line breaks"));
+    msg_puts(_(" line breaks"));
   }
 }
 
@@ -3767,7 +3767,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
                                 [spp->sp_sync_idx].sp_syn.id - 1].sg_name);
       } else {
-        MSG_PUTS("NONE");
+        msg_puts("NONE");
       }
       msg_putchar(' ');
     }
@@ -6022,7 +6022,7 @@ static void syntime_clear(void)
   synpat_T *spp;
 
   if (!syntax_present(curwin)) {
-    MSG(_(msg_no_items));
+    msg(_(msg_no_items));
     return;
   }
   for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
@@ -6064,7 +6064,7 @@ static int syn_compare_syntime(const void *v1, const void *v2)
 static void syntime_report(void)
 {
   if (!syntax_present(curwin)) {
-    MSG(_(msg_no_items));
+    msg(_(msg_no_items));
     return;
   }
 
@@ -6098,28 +6098,28 @@ static void syntime_report(void)
           syn_compare_syntime);
   }
 
-  MSG_PUTS_TITLE(_("  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
-  MSG_PUTS("\n");
+  msg_puts_title(_("  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
+  msg_puts("\n");
   for (int idx = 0; idx < ga.ga_len && !got_int; ++idx) {
     p = ((time_entry_T *)ga.ga_data) + idx;
 
-    MSG_PUTS(profile_msg(p->total));
-    MSG_PUTS(" ");     // make sure there is always a separating space
+    msg_puts(profile_msg(p->total));
+    msg_puts(" ");     // make sure there is always a separating space
     msg_advance(13);
     msg_outnum(p->count);
-    MSG_PUTS(" ");
+    msg_puts(" ");
     msg_advance(20);
     msg_outnum(p->match);
-    MSG_PUTS(" ");
+    msg_puts(" ");
     msg_advance(26);
-    MSG_PUTS(profile_msg(p->slowest));
-    MSG_PUTS(" ");
+    msg_puts(profile_msg(p->slowest));
+    msg_puts(" ");
     msg_advance(38);
-    MSG_PUTS(profile_msg(p->average));
-    MSG_PUTS(" ");
+    msg_puts(profile_msg(p->average));
+    msg_puts(" ");
     msg_advance(50);
     msg_outtrans(HL_TABLE()[p->id - 1].sg_name);
-    MSG_PUTS(" ");
+    msg_puts(" ");
 
     msg_advance(69);
     int len;
@@ -6132,15 +6132,15 @@ static void syntime_report(void)
       len = (int)STRLEN(p->pattern);
     }
     msg_outtrans_len(p->pattern, len);
-    MSG_PUTS("\n");
+    msg_puts("\n");
   }
   ga_clear(&ga);
   if (!got_int) {
-    MSG_PUTS("\n");
-    MSG_PUTS(profile_msg(total_total));
+    msg_puts("\n");
+    msg_puts(profile_msg(total_total));
     msg_advance(13);
     msg_outnum(total_count);
-    MSG_PUTS("\n");
+    msg_puts("\n");
   }
 }
 
@@ -7416,8 +7416,8 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
-        MSG_PUTS_ATTR(name, HL_ATTR(HLF_D));
-        MSG_PUTS_ATTR("=", HL_ATTR(HLF_D));
+        msg_puts_attr(name, HL_ATTR(HLF_D));
+        msg_puts_attr("=", HL_ATTR(HLF_D));
       }
       msg_outtrans((char_u *)ts);
     }
@@ -7705,7 +7705,7 @@ static int syn_add_group(char_u *name)
       /* This is an error, but since there previously was no check only
        * give a warning. */
       msg_source(HL_ATTR(HLF_W));
-      MSG(_("W18: Invalid character in group name"));
+      msg(_("W18: Invalid character in group name"));
       break;
     }
   }

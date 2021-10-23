@@ -519,10 +519,10 @@ static void nlua_print_event(void **argv)
       }
       break;
     }
-    msg((char_u *)str + start);
+    msg(str + start);
   }
   if (len && str[len - 1] == NUL) {  // Last was newline
-    msg((char_u *)"");
+    msg("");
   }
   xfree(str);
 }

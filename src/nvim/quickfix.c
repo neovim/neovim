@@ -2790,7 +2790,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(IObuff, 0, true, false);
+  msg_attr_keep((char *)IObuff, 0, true, false);
   msg_scroll = (int)i;
 }
 
@@ -3234,7 +3234,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     xstrlcat((char *)buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
-  msg(buf);
+  msg((char *)buf);
 }
 
 /// ":colder [count]": Up in the quickfix stack.
@@ -3300,7 +3300,7 @@ void qf_history(exarg_T *eap)
   }
 
   if (qf_stack_empty(qi)) {
-    MSG(_("No entries"));
+    msg(_("No entries"));
   } else {
     for (i = 0; i < qi->qf_listcount; i++) {
       qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");
@@ -4273,7 +4273,7 @@ static char *make_get_fullcmd(const char_u *makecmd, const char_u *fname)
     msg_didout = false;
   }
   msg_start();
-  MSG_PUTS(":!");
+  msg_puts(":!");
   msg_outtrans((char_u *)cmd);  // show what we are doing
 
   return cmd;

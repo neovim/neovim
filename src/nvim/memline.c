@@ -823,7 +823,7 @@ void ml_recover(bool checkext)
       // list the names of the swap files
       (void)recover_names(fname, TRUE, 0, NULL);
       msg_putchar('\n');
-      MSG_PUTS(_("Enter number of swap file to use (0 to quit): "));
+      msg_puts(_("Enter number of swap file to use (0 to quit): "));
       i = get_number(FALSE, NULL);
       if (i < 1 || i > len) {
         goto theend;
@@ -883,9 +883,9 @@ void ml_recover(bool checkext)
    */
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
-    MSG_PUTS_ATTR(_("Unable to read block 0 from "), attr | MSG_HIST);
+    msg_puts_attr(_("Unable to read block 0 from "), attr | MSG_HIST);
     msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
-    MSG_PUTS_ATTR(_("\nMaybe no changes were made or Vim did not update the swap file."),
+    msg_puts_attr(_("\nMaybe no changes were made or Vim did not update the swap file."),
                   attr | MSG_HIST);
     msg_end();
     goto theend;
@@ -894,9 +894,9 @@ void ml_recover(bool checkext)
   if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
-    MSG_PUTS_ATTR(_(" cannot be used with this version of Vim.\n"),
+    msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
                   MSG_HIST);
-    MSG_PUTS_ATTR(_("Use Vim version 3.0.\n"), MSG_HIST);
+    msg_puts_attr(_("Use Vim version 3.0.\n"), MSG_HIST);
     msg_end();
     goto theend;
   }
@@ -907,13 +907,13 @@ void ml_recover(bool checkext)
   if (b0_magic_wrong(b0p)) {
     msg_start();
     msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
-    MSG_PUTS_ATTR(_(" cannot be used on this computer.\n"),
+    msg_puts_attr(_(" cannot be used on this computer.\n"),
                   attr | MSG_HIST);
-    MSG_PUTS_ATTR(_("The file was created on "), attr | MSG_HIST);
+    msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
     // avoid going past the end of a corrupted hostname
     b0p->b0_fname[0] = NUL;
-    MSG_PUTS_ATTR(b0p->b0_hname, attr | MSG_HIST);
-    MSG_PUTS_ATTR(_(",\nor the file has been damaged."), attr | MSG_HIST);
+    msg_puts_attr((char *)b0p->b0_hname, attr | MSG_HIST);
+    msg_puts_attr(_(",\nor the file has been damaged."), attr | MSG_HIST);
     msg_end();
     goto theend;
   }
@@ -929,7 +929,7 @@ void ml_recover(bool checkext)
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
       msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
-      MSG_PUTS_ATTR(_(" has been damaged (page size is smaller than minimum value).\n"),
+      msg_puts_attr(_(" has been damaged (page size is smaller than minimum value).\n"),
                     attr | MSG_HIST);
       msg_end();
       goto theend;
@@ -1235,20 +1235,20 @@ void ml_recover(bool checkext)
     emsg(_("E311: Recovery Interrupted"));
   } else if (error) {
     ++no_wait_return;
-    MSG(">>>>>>>>>>>>>");
+    msg(">>>>>>>>>>>>>");
     emsg(_( "E312: Errors detected while recovering; look for lines starting with ???"));
     --no_wait_return;
-    MSG(_("See \":help E312\" for more information."));
-    MSG(">>>>>>>>>>>>>");
+    msg(_("See \":help E312\" for more information."));
+    msg(">>>>>>>>>>>>>");
   } else {
     if (curbuf->b_changed) {
-      MSG(_("Recovery completed. You should check if everything is OK."));
-      MSG_PUTS(_("\n(You might want to write out this file under another name\n"));
-      MSG_PUTS(_("and run diff with the original file to check for changes)"));
+      msg(_("Recovery completed. You should check if everything is OK."));
+      msg_puts(_("\n(You might want to write out this file under another name\n"));
+      msg_puts(_("and run diff with the original file to check for changes)"));
     } else {
-      MSG(_("Recovery completed. Buffer contents equals file contents."));
+      msg(_("Recovery completed. Buffer contents equals file contents."));
     }
-    MSG_PUTS(_("\nYou may want to delete the .swp file now.\n\n"));
+    msg_puts(_("\nYou may want to delete the .swp file now.\n\n"));
     cmdline_row = msg_row;
   }
   redraw_curbuf_later(NOT_VALID);
@@ -1316,7 +1316,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 
   if (list) {
     // use msg() to start the scrolling properly
-    msg((char_u *)_("Swap files found:"));
+    msg(_("Swap files found:"));
     msg_putchar('\n');
   }
 
@@ -1424,14 +1424,14 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     } else if (list) {
       if (dir_name[0] == '.' && dir_name[1] == NUL) {
         if (fname == NULL) {
-          MSG_PUTS(_("   In current directory:\n"));
+          msg_puts(_("   In current directory:\n"));
         } else {
-          MSG_PUTS(_("   Using specified name:\n"));
+          msg_puts(_("   Using specified name:\n"));
         }
       } else {
-        MSG_PUTS(_("   In directory "));
+        msg_puts(_("   In directory "));
         msg_home_replace(dir_name);
-        MSG_PUTS(":\n");
+        msg_puts(":\n");
       }
 
       if (num_files) {
@@ -1444,7 +1444,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
           (void)swapfile_info(files[i]);
         }
       } else {
-        MSG_PUTS(_("      -- none --\n"));
+        msg_puts(_("      -- none --\n"));
       }
       ui_flush();
     } else {
@@ -1542,15 +1542,15 @@ static time_t swapfile_info(char_u *fname)
 #ifdef UNIX
     // print name of owner of the file
     if (os_get_uname(file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
-      MSG_PUTS(_("          owned by: "));
+      msg_puts(_("          owned by: "));
       msg_outtrans((char_u *)uname);
-      MSG_PUTS(_("   dated: "));
+      msg_puts(_("   dated: "));
     } else
 #endif
-    MSG_PUTS(_("             dated: "));
+    msg_puts(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[50];
-    MSG_PUTS(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
+    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
   }
 
   /*
@@ -1560,55 +1560,55 @@ static time_t swapfile_info(char_u *fname)
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (STRNCMP(b0.b0_version, "VIM 3.0", 7) == 0) {
-        MSG_PUTS(_("         [from Vim version 3.0]"));
+        msg_puts(_("         [from Vim version 3.0]"));
       } else if (ml_check_b0_id(&b0) == FAIL) {
-        MSG_PUTS(_("         [does not look like a Vim swap file]"));
+        msg_puts(_("         [does not look like a Vim swap file]"));
       } else if (!ml_check_b0_strings(&b0)) {
-        MSG_PUTS(_("         [garbled strings (not nul terminated)]"));
+        msg_puts(_("         [garbled strings (not nul terminated)]"));
       } else {
-        MSG_PUTS(_("         file name: "));
+        msg_puts(_("         file name: "));
         if (b0.b0_fname[0] == NUL) {
-          MSG_PUTS(_("[No Name]"));
+          msg_puts(_("[No Name]"));
         } else {
           msg_outtrans(b0.b0_fname);
         }
 
-        MSG_PUTS(_("\n          modified: "));
-        MSG_PUTS(b0.b0_dirty ? _("YES") : _("no"));
+        msg_puts(_("\n          modified: "));
+        msg_puts(b0.b0_dirty ? _("YES") : _("no"));
 
         if (*(b0.b0_uname) != NUL) {
-          MSG_PUTS(_("\n         user name: "));
+          msg_puts(_("\n         user name: "));
           msg_outtrans(b0.b0_uname);
         }
 
         if (*(b0.b0_hname) != NUL) {
           if (*(b0.b0_uname) != NUL) {
-            MSG_PUTS(_("   host name: "));
+            msg_puts(_("   host name: "));
           } else {
-            MSG_PUTS(_("\n         host name: "));
+            msg_puts(_("\n         host name: "));
           }
           msg_outtrans(b0.b0_hname);
         }
 
         if (char_to_long(b0.b0_pid) != 0L) {
-          MSG_PUTS(_("\n        process ID: "));
+          msg_puts(_("\n        process ID: "));
           msg_outnum(char_to_long(b0.b0_pid));
           if (os_proc_running((int)char_to_long(b0.b0_pid))) {
-            MSG_PUTS(_(" (STILL RUNNING)"));
+            msg_puts(_(" (STILL RUNNING)"));
             process_still_running = true;
           }
         }
 
         if (b0_magic_wrong(&b0)) {
-          MSG_PUTS(_("\n         [not usable on this computer]"));
+          msg_puts(_("\n         [not usable on this computer]"));
         }
       }
     } else {
-      MSG_PUTS(_("         [cannot be read]"));
+      msg_puts(_("         [cannot be read]"));
     }
     close(fd);
   } else {
-    MSG_PUTS(_("         [cannot be opened]"));
+    msg_puts(_("         [cannot be opened]"));
   }
   msg_putchar('\n');
 
@@ -1807,7 +1807,7 @@ theend:
 
   if (message) {
     if (status == OK) {
-      MSG(_("File preserved"));
+      msg(_("File preserved"));
     } else {
       emsg(_("E314: Preserve failed"));
     }
@@ -3357,38 +3357,38 @@ static void attention_message(buf_T *buf, char_u *fname)
 
   ++no_wait_return;
   (void)emsg(_("E325: ATTENTION"));
-  MSG_PUTS(_("\nFound a swap file by the name \""));
+  msg_puts(_("\nFound a swap file by the name \""));
   msg_home_replace(fname);
-  MSG_PUTS("\"\n");
+  msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
-  MSG_PUTS(_("While opening file \""));
+  msg_puts(_("While opening file \""));
   msg_outtrans(buf->b_fname);
-  MSG_PUTS("\"\n");
+  msg_puts("\"\n");
   FileInfo file_info;
   if (!os_fileinfo((char *)buf->b_fname, &file_info)) {
-    MSG_PUTS(_("      CANNOT BE FOUND"));
+    msg_puts(_("      CANNOT BE FOUND"));
   } else {
-    MSG_PUTS(_("             dated: "));
+    msg_puts(_("             dated: "));
     time_t x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[50];
-    MSG_PUTS(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
+    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf)));
     if (swap_mtime != 0 && x > swap_mtime) {
-      MSG_PUTS(_("      NEWER than swap file!\n"));
+      msg_puts(_("      NEWER than swap file!\n"));
     }
   }
   // Some of these messages are long to allow translation to
   // other languages.
-  MSG_PUTS(_("\n(1) Another program may be editing the same file.  If this is"
+  msg_puts(_("\n(1) Another program may be editing the same file.  If this is"
              " the case,\n    be careful not to end up with two different"
              " instances of the same\n    file when making changes."
              "  Quit, or continue with caution.\n"));
-  MSG_PUTS(_("(2) An edit session for this file crashed.\n"));
-  MSG_PUTS(_("    If this is the case, use \":recover\" or \"vim -r "));
+  msg_puts(_("(2) An edit session for this file crashed.\n"));
+  msg_puts(_("    If this is the case, use \":recover\" or \"vim -r "));
   msg_outtrans(buf->b_fname);
-  MSG_PUTS(_("\"\n    to recover the changes (see \":help recovery\").\n"));
-  MSG_PUTS(_("    If you did this already, delete the swap file \""));
+  msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
+  msg_puts(_("    If you did this already, delete the swap file \""));
   msg_outtrans(fname);
-  MSG_PUTS(_("\"\n    to avoid this message.\n"));
+  msg_puts(_("\"\n    to avoid this message.\n"));
   cmdline_row = msg_row;
   --no_wait_return;
 }
@@ -3647,7 +3647,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               break;
             }
           } else {
-            MSG_PUTS("\n");
+            msg_puts("\n");
             if (msg_silent == 0) {
               // call wait_return() later
               need_wait_return = true;

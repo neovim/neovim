@@ -1586,7 +1586,7 @@ void show_utf8(void)
   line = get_cursor_pos_ptr();
   len = utfc_ptr2len(line);
   if (len == 0) {
-    MSG("NUL");
+    msg("NUL");
     return;
   }
 
@@ -1609,7 +1609,7 @@ void show_utf8(void)
     }
   }
 
-  msg(IObuff);
+  msg((char *)IObuff);
 }
 
 /// Return offset from "p" to the first byte of the character it points into.

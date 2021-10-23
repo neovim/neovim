@@ -184,7 +184,7 @@ static void do_cscope_general(exarg_T *eap, int make_split)
 
   if (make_split) {
     if (!cmdp->cansplit) {
-      (void)MSG_PUTS(_("This cscope command does not support splitting the window.\n"));
+      (void)msg_puts(_("This cscope command does not support splitting the window.\n"));
       return;
     }
     postponed_split = -1;
@@ -1106,7 +1106,7 @@ static int cs_help(exarg_T *eap)
 {
   cscmd_T *cmdp = cs_cmds;
 
-  (void)MSG_PUTS(_("cscope commands:\n"));
+  (void)msg_puts(_("cscope commands:\n"));
   while (cmdp->name != NULL) {
     char *help = _(cmdp->help);
     int space_cnt = 30 - vim_strsize((char_u *)help);
@@ -1120,7 +1120,7 @@ static int cs_help(exarg_T *eap)
                help, space_cnt, " ",
                cmdp->usage);
     if (strcmp(cmdp->name, "find") == 0) {
-      MSG_PUTS(_("\n"
+      msg_puts(_("\n"
                  "       a: Find assignments to this symbol\n"
                  "       c: Find functions calling this function\n"
                  "       d: Find functions called by this function\n"
@@ -1653,16 +1653,16 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   char *buf = xmalloc(newsize);
   size_t bufsize = newsize;  // Track available bufsize
   (void)snprintf(buf, bufsize, cstag_msg, ptag);
-  MSG_PUTS_ATTR(buf, HL_ATTR(HLF_T));
+  msg_puts_attr(buf, HL_ATTR(HLF_T));
   msg_clr_eos();
 
   // restore matches[0]
   *ptag_end = '\t';
 
   // Column headers for match number, line number and filename.
-  MSG_PUTS_ATTR(_("\n   #   line"), HL_ATTR(HLF_T));
+  msg_puts_attr(_("\n   #   line"), HL_ATTR(HLF_T));
   msg_advance(msg_col + 2);
-  MSG_PUTS_ATTR(_("filename / context / line\n"), HL_ATTR(HLF_T));
+  msg_puts_attr(_("filename / context / line\n"), HL_ATTR(HLF_T));
 
   for (size_t i = 0; i < num_matches; i++) {
     assert(strcnt(matches[i], '\t') >= 2);
@@ -1689,8 +1689,8 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       bufsize = newsize;
     }
     (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
-    MSG_PUTS_ATTR(buf, HL_ATTR(HLF_CM));
-    MSG_PUTS_LONG_ATTR(cs_pathcomponents(fname), HL_ATTR(HLF_CM));
+    msg_puts_attr(buf, HL_ATTR(HLF_CM));
+    msg_outtrans_long_attr((char_u *)cs_pathcomponents(fname), HL_ATTR(HLF_CM));
 
     // compute the required space for the context
     char *context = cntxts[i] ? cntxts[i] : globalcntx;
@@ -1712,11 +1712,11 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       msg_putchar('\n');
     }
     msg_advance(12);
-    MSG_PUTS_LONG(buf);
+    msg_outtrans_long_attr((char_u *)buf, 0);
     msg_putchar('\n');
     if (extra != NULL) {
       msg_advance(13);
-      MSG_PUTS_LONG(extra);
+      msg_outtrans_long_attr((char_u *)extra, 0);
     }
 
     // restore matches[i]
@@ -1986,7 +1986,7 @@ static int cs_reset(exarg_T *eap)
         // connection number in the same line as
         // "Added cscope database..."
         snprintf(buf, ARRAY_SIZE(buf), " (#%zu)", i);
-        MSG_PUTS_ATTR(buf, HL_ATTR(HLF_R));
+        msg_puts_attr(buf, HL_ATTR(HLF_R));
       }
     }
     xfree(dblist[i]);
@@ -2059,9 +2059,9 @@ static char *cs_resolve_file(size_t i, char *name)
 static int cs_show(exarg_T *eap)
 {
   if (cs_cnt_connections() == 0) {
-    MSG_PUTS(_("no cscope connections\n"));
+    msg_puts(_("no cscope connections\n"));
   } else {
-    MSG_PUTS_ATTR(_(" # pid    database name                       prepend path\n"),
+    msg_puts_attr(_(" # pid    database name                       prepend path\n"),
                   HL_ATTR(HLF_T));
     for (size_t i = 0; i < csinfo_size; i++) {
       if (csinfo[i].fname == NULL) {

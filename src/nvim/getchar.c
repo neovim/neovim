@@ -1689,7 +1689,7 @@ void vungetc(int c)
   old_mouse_col = mouse_col;
 }
 
-/// Gets a character:
+/// Gets a byte:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
 ///    Also used to redo a command for ".".
@@ -3090,9 +3090,9 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   if (!has_lhs || !has_rhs) {  // print entries
     if (!did_it && !did_local) {
       if (is_abbrev) {
-        MSG(_("No abbreviation found"));
+        msg(_("No abbreviation found"));
       } else {
-        MSG(_("No mapping found"));
+        msg(_("No mapping found"));
       }
     }
     goto theend;  // listing finished

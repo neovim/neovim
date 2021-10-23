@@ -7848,10 +7848,10 @@ static void nv_esc(cmdarg_T *cap)
         && !VIsual_active
         && no_reason) {
       if (anyBufIsChanged()) {
-        MSG(_("Type  :qa!  and press <Enter> to abandon all changes"
+        msg(_("Type  :qa!  and press <Enter> to abandon all changes"
               " and exit Nvim"));
       } else {
-        MSG(_("Type  :qa  and press <Enter> to exit Nvim"));
+        msg(_("Type  :qa  and press <Enter> to exit Nvim"));
       }
     }
 

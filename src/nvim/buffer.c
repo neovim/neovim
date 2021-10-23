@@ -918,7 +918,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
     // User selected Recover at ATTENTION prompt.
     msg_scroll = true;
     ml_recover(false);
-    MSG_PUTS("\n");     // don't overwrite the last message
+    msg_puts("\n");     // don't overwrite the last message
     cmdline_row = msg_row;
     do_modelines(0);
 
@@ -3039,14 +3039,14 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
 {
   char_u *name;
   int n;
-  char_u *p;
-  char_u *buffer;
+  char *p;
+  char *buffer;
   size_t len;
 
   buffer = xmalloc(IOSIZE);
 
   if (fullname > 1) {       // 2 CTRL-G: include buffer number
-    vim_snprintf((char *)buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
+    vim_snprintf(buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
     p = buffer + STRLEN(buffer);
   } else {
     p = buffer;
@@ -3061,12 +3061,12 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     } else {
       name = curbuf->b_ffname;
     }
-    home_replace(shorthelp ? curbuf : NULL, name, p,
+    home_replace(shorthelp ? curbuf : NULL, name, (char_u *)p,
                  (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   bool dontwrite = bt_dontwrite(curbuf);
-  vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
+  vim_snprintf_add(buffer, IOSIZE, "\"%s%s%s%s%s%s",
                    curbufIsChanged()
                    ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
                    (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
@@ -3091,27 +3091,27 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
               (long)curbuf->b_ml.ml_line_count);
   }
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-    vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
+    vim_snprintf_add(buffer, IOSIZE, "%s", _(no_lines_msg));
   } else if (p_ru) {
     // Current line and column are already on the screen -- webb
-    vim_snprintf_add((char *)buffer, IOSIZE,
+    vim_snprintf_add(buffer, IOSIZE,
                      NGETTEXT("%" PRId64 " line --%d%%--",
                               "%" PRId64 " lines --%d%%--",
                               (unsigned long)curbuf->b_ml.ml_line_count),
                      (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
-    vim_snprintf_add((char *)buffer, IOSIZE,
+    vim_snprintf_add(buffer, IOSIZE,
                      _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
                      (int64_t)curwin->w_cursor.lnum,
                      (int64_t)curbuf->b_ml.ml_line_count,
                      n);
     validate_virtcol();
     len = STRLEN(buffer);
-    col_print(buffer + len, IOSIZE - len,
+    col_print((char_u *)buffer + len, IOSIZE - len,
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
-  (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
+  (void)append_arg_number(curwin, (char_u *)buffer, IOSIZE, !shortmess(SHM_FILE));
 
   if (dont_truncate) {
     // Temporarily set msg_scroll to avoid the message being truncated.
@@ -3129,7 +3129,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
       //   before redrawing).
       // - When the screen was scrolled but there is no wait-return
       //   prompt.
-      set_keep_msg(p, 0);
+      set_keep_msg((char_u *)p, 0);
     }
   }
 

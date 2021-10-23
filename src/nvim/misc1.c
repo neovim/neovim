@@ -589,7 +589,7 @@ int get_number(int colon, int *mouse_used)
       ++typed;
     } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
       if (typed > 0) {
-        MSG_PUTS("\b \b");
+        msg_puts("\b \b");
         --typed;
       }
       n /= 10;
@@ -629,10 +629,10 @@ int prompt_for_number(int *mouse_used)
 
   // When using ":silent" assume that <CR> was entered.
   if (mouse_used != NULL) {
-    MSG_PUTS(_("Type number and <Enter> or click with the mouse "
+    msg_puts(_("Type number and <Enter> or click with the mouse "
                "(q or empty cancels): "));
   } else {
-    MSG_PUTS(_("Type number and <Enter> (q or empty cancels): "));
+    msg_puts(_("Type number and <Enter> (q or empty cancels): "));
   }
 
   /* Set the state such that text can be selected/copied/pasted and we still
@@ -698,7 +698,7 @@ void msgmore(long n)
     if (got_int) {
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
-    if (msg((char_u *)msg_buf)) {
+    if (msg(msg_buf)) {
       set_keep_msg((char_u *)msg_buf, 0);
       keep_msg_more = true;
     }

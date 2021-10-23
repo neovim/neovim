@@ -120,7 +120,7 @@ void do_ascii(const exarg_T *const eap)
   int cc[MAX_MCO];
   int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
-    MSG("NUL");
+    msg("NUL");
     return;
   }
 
@@ -222,7 +222,7 @@ void do_ascii(const exarg_T *const eap)
     xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
-  msg(IObuff);
+  msg((char *)IObuff);
 }
 
 /*
@@ -1438,7 +1438,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
       if (do_in) {
         vim_snprintf(msg_buf, sizeof(msg_buf),
                      _("%" PRId64 " lines filtered"), (int64_t)linecount);
-        if (msg((char_u *)msg_buf) && !msg_scroll) {
+        if (msg(msg_buf) && !msg_scroll) {
           // save message to display it after redraw
           set_keep_msg((char_u *)msg_buf, 0);
         }
@@ -1497,7 +1497,7 @@ void do_shell(char_u *cmd, int flags)
       && msg_silent == 0) {
     FOR_ALL_BUFFERS(buf) {
       if (bufIsChanged(buf)) {
-        MSG_PUTS(_("[No write since last change]\n"));
+        msg_puts(_("[No write since last change]\n"));
         break;
       }
     }
@@ -4366,7 +4366,7 @@ skip:
         }
       }
       if (!preview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
-        MSG("");
+        msg("");
       }
     } else {
       global_need_beginline = true;
@@ -4380,7 +4380,7 @@ skip:
       emsg(_(e_interr));
     } else if (got_match) {
       // did find something but nothing substituted
-      MSG("");
+      msg("");
     } else if (subflags.do_error) {
       // nothing found
       semsg(_(e_patnotf2), get_search_pat());
@@ -4466,7 +4466,7 @@ bool do_sub_msg(bool count_only)
     vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
                      NGETTEXT(msg_single, msg_plural, sub_nlines),
                      (int64_t)sub_nsubs, (int64_t)sub_nlines);
-    if (msg((char_u *)msg_buf)) {
+    if (msg(msg_buf)) {
       // save message to display it after redraw
       set_keep_msg((char_u *)msg_buf, 0);
     }
@@ -4598,7 +4598,7 @@ void ex_global(exarg_T *eap)
 
     // pass 2: execute the command for each line that has been marked
     if (got_int) {
-      MSG(_(e_interr));
+      msg(_(e_interr));
     } else if (ndone == 0) {
       if (type == 'v') {
         smsg(_("Pattern found in every line: %s"), pat);
@@ -6125,7 +6125,7 @@ void ex_oldfiles(exarg_T *eap)
   long nr = 0;
 
   if (l == NULL) {
-    msg((char_u *)_("No old files"));
+    msg(_("No old files"));
   } else {
     msg_start();
     msg_scroll = true;
@@ -6137,7 +6137,7 @@ void ex_oldfiles(exarg_T *eap)
       const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
       if (!message_filtered((char_u *)fname)) {
         msg_outnum(nr);
-        MSG_PUTS(": ");
+        msg_puts(": ");
         msg_outtrans((char_u *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');

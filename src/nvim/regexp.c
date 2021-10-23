@@ -7302,8 +7302,8 @@ static void report_re_switch(char_u *pat)
 {
   if (p_verbose > 0) {
     verbose_enter();
-    MSG_PUTS(_("Switching to backtracking RE engine for pattern: "));
-    MSG_PUTS(pat);
+    msg_puts(_("Switching to backtracking RE engine for pattern: "));
+    msg_puts((char *)pat);
     verbose_leave();
   }
 }

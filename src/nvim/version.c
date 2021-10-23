@@ -2138,32 +2138,32 @@ void list_lua_version(void)
   Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
   assert(!ERROR_SET(&err));
   assert(ret.type == kObjectTypeString);
-  MSG(ret.data.string.data);
+  msg(ret.data.string.data);
   api_free_object(ret);
 }
 
 void list_version(void)
 {
-  MSG(longVersion);
-  MSG(version_buildtype);
+  msg(longVersion);
+  msg(version_buildtype);
   list_lua_version();
 #ifndef NDEBUG
-  MSG(version_cflags);
+  msg(version_cflags);
 #endif
 
 #ifdef HAVE_PATHDEF
 
   if ((*compiled_user != NUL) || (*compiled_sys != NUL)) {
-    MSG_PUTS(_("\nCompiled "));
+    msg_puts(_("\nCompiled "));
 
     if (*compiled_user != NUL) {
-      MSG_PUTS(_("by "));
-      MSG_PUTS(compiled_user);
+      msg_puts(_("by "));
+      msg_puts((const char *)compiled_user);
     }
 
     if (*compiled_sys != NUL) {
-      MSG_PUTS("@");
-      MSG_PUTS(compiled_sys);
+      msg_puts("@");
+      msg_puts((const char *)compiled_sys);
     }
   }
 #endif  // ifdef HAVE_PATHDEF

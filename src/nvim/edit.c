@@ -3005,7 +3005,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
       msg_hist_off = true;  // reset in msg_trunc_attr()
       vim_snprintf((char *)IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), (char *)files[i]);
-      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+      (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
     }
 
     if (fp == NULL) {
@@ -4209,7 +4209,7 @@ static int ins_compl_get_exp(pos_T *ini)
                      : ins_buf->b_sfname == NULL
                      ? ins_buf->b_fname
                      : ins_buf->b_sfname);
-        (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+        (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
       } else if (*e_cpt == NUL) {
         break;
       } else {
@@ -4233,7 +4233,7 @@ static int ins_compl_get_exp(pos_T *ini)
           msg_hist_off = true;  // reset in msg_trunc_attr()
           type = CTRL_X_TAGS;
           vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
-          (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+          (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
         } else {
           type = -1;
         }
@@ -4836,7 +4836,7 @@ static int ins_compl_next(int allow_get_expansion, int count, int insert_match, 
       msg_hist_off = true;
       vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
                    s > compl_shown_match->cp_fname ? "<" : "", s);
-      msg(IObuff);
+      msg((char *)IObuff);
       msg_hist_off = false;
       redraw_cmdline = false;     // don't overwrite!
     }
@@ -7966,7 +7966,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   if (reg_recording != 0 || restart_edit != NUL) {
     showmode();
   } else if (p_smd) {
-    MSG("");
+    msg("");
   }
   // Exit Insert mode
   return true;

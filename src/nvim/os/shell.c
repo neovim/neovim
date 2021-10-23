@@ -341,7 +341,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
     if (!(flags & EW_SILENT)) {
       msg_putchar('\n');                // clear bottom line quickly
       cmdline_row = Rows - 1;           // continue on last line
-      MSG(_(e_wildexpand));
+      msg(_(e_wildexpand));
       msg_start();                    // don't overwrite this message
     }
 
@@ -358,7 +358,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
-      MSG(_(e_wildexpand));
+      msg(_(e_wildexpand));
       msg_start();                      // don't overwrite this message
     }
     xfree(tempname);
@@ -670,7 +670,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
-    MSG_PUTS(_("\nshell returned "));
+    msg_puts(_("\nshell returned "));
     msg_outnum(exitcode);
     msg_putchar('\n');
   }
@@ -742,9 +742,9 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
     if (!silent) {
-      MSG_PUTS(_("\nshell failed to start: "));
+      msg_puts(_("\nshell failed to start: "));
       msg_outtrans((char_u *)os_strerror(status));
-      MSG_PUTS(": ");
+      msg_puts(": ");
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }

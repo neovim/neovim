@@ -1847,7 +1847,7 @@ failed:
       msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
-        p = msg_trunc_attr(IObuff, FALSE, 0);
+        p = (char_u *)msg_trunc_attr((char *)IObuff, FALSE, 0);
       }
 
       if (read_stdin || read_buffer || restart_edit != 0
@@ -2109,27 +2109,27 @@ static char_u *next_fenc(char_u **pp, bool *alloced)
 static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
 {
   char_u *tmpname;
-  char_u *errmsg = NULL;
+  char *errmsg = NULL;
 
   tmpname = vim_tempname();
   if (tmpname == NULL) {
-    errmsg = (char_u *)_("Can't find temp file for conversion");
+    errmsg = _("Can't find temp file for conversion");
   } else {
     close(*fdp);                // close the input file, ignore errors
     *fdp = -1;
     if (eval_charconvert((char *)fenc, "utf-8",
                          (char *)fname, (char *)tmpname) == FAIL) {
-      errmsg = (char_u *)_("Conversion with 'charconvert' failed");
+      errmsg = _("Conversion with 'charconvert' failed");
     }
     if (errmsg == NULL && (*fdp = os_open((char *)tmpname, O_RDONLY, 0)) < 0) {
-      errmsg = (char_u *)_("can't read output of 'charconvert'");
+      errmsg = _("can't read output of 'charconvert'");
     }
   }
 
   if (errmsg != NULL) {
     // Don't use emsg(), it breaks mappings, the retry with
     // another type of conversion might still work.
-    MSG(errmsg);
+    msg(errmsg);
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
       XFREE_CLEAR(tmpname);
@@ -3471,7 +3471,7 @@ restore_backup:
         // This may take a while, if we were interrupted let the user
         // know we got the message.
         if (got_int) {
-          MSG(_(e_interr));
+          msg(_(e_interr));
           ui_flush();
         }
 
@@ -3536,7 +3536,7 @@ restore_backup:
       }
     }
 
-    set_keep_msg(msg_trunc_attr(IObuff, FALSE, 0), 0);
+    set_keep_msg((char_u *)msg_trunc_attr((char *)IObuff, FALSE, 0), 0);
   }
 
   /* When written everything correctly: reset 'modified'.  Unless not
@@ -3676,9 +3676,9 @@ nofail:
     retval = FAIL;
     if (end == 0) {
       const int attr = HL_ATTR(HLF_E);  // Set highlight for error messages.
-      MSG_PUTS_ATTR(_("\nWARNING: Original file may be lost or damaged\n"),
+      msg_puts_attr(_("\nWARNING: Original file may be lost or damaged\n"),
                     attr | MSG_HIST);
-      MSG_PUTS_ATTR(_("don't quit the editor until the file is successfully written!"),
+      msg_puts_attr(_("don't quit the editor until the file is successfully written!"),
                     attr | MSG_HIST);
 
       /* Update the timestamp to avoid an "overwrite changed file"
