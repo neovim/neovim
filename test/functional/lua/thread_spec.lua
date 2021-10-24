@@ -1,0 +1,256 @@
+local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
+local clear = helpers.clear
+local feed = helpers.feed
+local eq = helpers.eq
+local exec_lua = helpers.exec_lua
+local next_msg = helpers.next_msg
+local NIL = helpers.NIL
+local pcall_err = helpers.pcall_err
+
+describe('thread', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {bold = true},
+    })
+  end)
+
+  it('entry func is executed in protected mode', function()
+    local code = [[
+      local thread = vim.loop.new_thread(function()
+        error('Error in thread entry func')
+      end)
+      vim.loop.thread_join(thread)
+    ]]
+    exec_lua(code)
+
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:Error in luv thread:}                              |
+      {3:[string "<nvim>"]:2: Error in thread entry func}   |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    assert_alive()
+  end)
+
+  it('callback is executed in protected mode', function()
+    local code = [[
+      local thread = vim.loop.new_thread(function()
+        local timer = vim.loop.new_timer()
+        local function ontimeout()
+          timer:stop()
+          timer:close()
+          error('Error in thread callback')
+        end
+        timer:start(10, 0, ontimeout)
+        vim.loop.run()
+      end)
+      vim.loop.thread_join(thread)
+    ]]
+    exec_lua(code)
+
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:Error in luv callback, thread:}                    |
+      {3:[string "<nvim>"]:6: Error in thread callback}     |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    assert_alive()
+  end)
+
+  describe('print', function()
+    it('work', function()
+    local code = [[
+      local thread = vim.loop.new_thread(function()
+        print('print in thread')
+      end)
+      vim.loop.thread_join(thread)
+    ]]
+    exec_lua(code)
+
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      print in thread                                   |
+    ]])
+
+    end)
+  end)
+end)
+
+describe('threadpool', function()
+  before_each(clear)
+
+  it('is_thread', function()
+    eq(false, exec_lua('return vim.is_thread()'))
+
+    local code = [[
+      local work_fn = function()
+        return vim.is_thread()
+      end
+      local after_work_fn = function(ret)
+        vim.rpcnotify(1, 'result', ret)
+      end
+      local work = vim.loop.new_work(work_fn, after_work_fn)
+      work:queue()
+    ]]
+    exec_lua(code)
+
+    eq({'notification', 'result', {true}}, next_msg())
+  end)
+
+  it('with invalid argument', function()
+    local code = [[
+      local work = vim.loop.new_thread(function() end, function() end)
+      work:queue({})
+    ]]
+
+    eq([[Error executing lua: [string "<nvim>"]:0: Error: thread arg not support type 'function' at 1]],
+      pcall_err(exec_lua, code))
+  end)
+
+  it('with invalid return value', function()
+    local screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {bold = true},
+    })
+
+    local code = [[
+      local work = vim.loop.new_work(function() return {} end, function() end)
+      work:queue()
+    ]]
+    exec_lua(code)
+
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:Error in luv thread:}                              |
+      {3:Error: thread arg not support type 'table' at 1}   |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+  end)
+
+  describe('vim.loop', function()
+    it('version', function()
+      local code = [[
+        local work_fn = function()
+          return vim.loop.version()
+        end
+        local after_work_fn = function(ret)
+          vim.rpcnotify(1, ret)
+        end
+        local work = vim.loop.new_work(work_fn, after_work_fn)
+        work:queue()
+      ]]
+      exec_lua(code)
+
+      local msg = next_msg()
+      eq(msg[1], 'notification')
+      assert(tonumber(msg[2]) >= 72961)
+    end)
+  end)
+
+  describe('vim.mpack', function()
+    it('work', function()
+      local code = [[
+        local work_fn = function()
+          local var = vim.mpack.pack({33, vim.NIL, 'text'})
+          return var
+        end
+        local after_work_fn = function(ret)
+          vim.rpcnotify(1, 'result', vim.mpack.unpack(ret))
+        end
+        local work = vim.loop.new_work(work_fn, after_work_fn)
+        work:queue()
+      ]]
+      exec_lua(code)
+
+      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+    end)
+  end)
+
+  describe('vim.json', function()
+    it('work', function()
+      local code = [[
+        local work_fn = function()
+          local var = vim.json.encode({33, vim.NIL, 'text'})
+          return var
+        end
+        local after_work_fn = function(ret)
+          vim.rpcnotify(1, 'result', vim.json.decode(ret))
+        end
+        local work = vim.loop.new_work(work_fn, after_work_fn)
+        work:queue()
+      ]]
+      exec_lua(code)
+
+      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+    end)
+  end)
+
+  describe('vim.diff', function()
+    it('work', function()
+      local code = [[
+        local work_fn = function()
+          return vim.diff('Hello\n', 'Helli\n')
+        end
+        local after_work_fn = function(ret)
+          vim.rpcnotify(1, 'result', ret)
+        end
+        local work = vim.loop.new_work(work_fn, after_work_fn)
+        work:queue()
+      ]]
+      exec_lua(code)
+
+      eq({'notification', 'result',
+          {table.concat({
+            '@@ -1 +1 @@',
+            '-Hello',
+            '+Helli',
+            ''
+          }, '\n')}},
+        next_msg())
+    end)
+  end)
+end)
