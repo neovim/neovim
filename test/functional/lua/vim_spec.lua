@@ -179,6 +179,12 @@ describe('lua stdlib', function()
     end
   end)
 
+  it("vim.str_utf_pos", function()
+    exec_lua([[_G.test_text = "xy åäö ɧ 汉语 ↥ 🤦x🦄 å بِيَّ"]])
+    local expected_positions = { 1,2,3,4,6,8,10,11,13,14,17,20,21,24,25,29,30,34,35,36,38,39,41,43,45,47 }
+    eq(expected_positions, exec_lua("return vim.str_utf_pos(_G.test_text)"))
+  end)
+
   it("vim.schedule", function()
     exec_lua([[
       test_table = {}
