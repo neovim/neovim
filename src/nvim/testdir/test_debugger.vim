@@ -976,7 +976,7 @@ func Test_debug_backtrace_level()
         \ 'line 1: let s:file1_var = ''file1'''
         \ ])
 
-  " step throught the initial declarations
+  " step through the initial declarations
   call RunDbgCmd(buf, 'step', [ 'line 2: let g:global_var = ''global''' ] )
   call RunDbgCmd(buf, 'step', [ 'line 4: func s:File1Func( arg )' ] )
   call RunDbgCmd(buf, 'echo s:file1_var', [ 'file1' ] )
