@@ -403,12 +403,8 @@ static int cs_add(exarg_T *eap)
 
 static void cs_stat_emsg(char *fname)
 {
-  char *stat_emsg = _("E563: stat(%s) error: %d");
-  char *buf = xmalloc(strlen(stat_emsg) + MAXPATHL + 10);
-
-  (void)sprintf(buf, stat_emsg, fname, errno);
-  (void)emsg(buf);
-  xfree(buf);
+  int err = errno;
+  (void)semsg(_("E563: stat(%s) error: %d"), fname, err);
 }
 
 
@@ -970,13 +966,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     qfpos++;
     // next symbol must be + or -
     if (strchr(CSQF_FLAGS, *qfpos) == NULL) {
-      char *nf = _("E469: invalid cscopequickfix flag %c for %c");
-      // strlen will be enough because we use chars
-      char *buf = xmalloc(strlen(nf));
-
-      sprintf(buf, nf, *qfpos, *(qfpos-1));
-      (void)emsg(buf);
-      xfree(buf);
+      (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));;
       return FALSE;
     }
 
@@ -1025,18 +1015,9 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
   xfree(cmd);
 
   if (totmatches == 0) {
-    char *nf = _("E259: no matches found for cscope query %s of %s");
-    char *buf;
-
-    if (!verbose) {
-      xfree(nummatches);
-      return FALSE;
+    if (verbose) {
+      (void)semsg(_("E259: no matches found for cscope query %s of %s"), opt, pat);
     }
-
-    buf = xmalloc(strlen(opt) + strlen(pat) + strlen(nf));
-    sprintf(buf, nf, opt, pat);
-    (void)emsg(buf);
-    xfree(buf);
     xfree(nummatches);
     return FALSE;
   }
