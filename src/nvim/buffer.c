@@ -325,8 +325,10 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     do_modelines(0);
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
-    apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                          &retval);
+    if ((flags & READ_NOWINENTER) == 0) {
+      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
+                            &retval);
+    }
 
     // restore curwin/curbuf and a few other things
     aucmd_restbuf(&aco);
