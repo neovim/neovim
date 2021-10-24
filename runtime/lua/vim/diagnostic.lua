@@ -24,6 +24,16 @@ local global_diagnostic_options = {
   severity_sort = false,
 }
 
+M.handlers = setmetatable({}, {
+  __newindex = function(t, name, handler)
+    vim.validate { handler = {handler, "t" } }
+    rawset(t, name, handler)
+    if not global_diagnostic_options[name] then
+      global_diagnostic_options[name] = true
+    end
+  end,
+})
+
 -- Local functions {{{
 
 ---@private
@@ -97,30 +107,8 @@ end
 local all_namespaces = {}
 
 ---@private
-local function get_namespace(ns)
-  if not all_namespaces[ns] then
-    local name
-    for k, v in pairs(vim.api.nvim_get_namespaces()) do
-      if ns == v then
-        name = k
-        break
-      end
-    end
-
-    assert(name, "namespace does not exist or is anonymous")
-
-    all_namespaces[ns] = {
-      name = name,
-      sign_group = string.format("vim.diagnostic.%s", name),
-      opts = {}
-    }
-  end
-  return all_namespaces[ns]
-end
-
----@private
 local function enabled_value(option, namespace)
-  local ns = namespace and get_namespace(namespace) or {}
+  local ns = namespace and M.get_namespace(namespace) or {}
   if ns.opts and type(ns.opts[option]) == "table" then
     return ns.opts[option]
   end
@@ -154,7 +142,7 @@ end
 
 ---@private
 local function get_resolved_options(opts, namespace, bufnr)
-  local ns = namespace and get_namespace(namespace) or {}
+  local ns = namespace and M.get_namespace(namespace) or {}
   -- Do not use tbl_deep_extend so that an empty table can be used to reset to default values
   local resolved = vim.tbl_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
   for k in pairs(global_diagnostic_options) do
@@ -343,7 +331,7 @@ local registered_autocmds = {}
 
 ---@private
 local function make_augroup_key(namespace, bufnr)
-  local ns = get_namespace(namespace)
+  local ns = M.get_namespace(namespace)
   return string.format("DiagnosticInsertLeave:%s:%s", bufnr, ns.name)
 end
 
@@ -566,7 +554,7 @@ function M.config(opts, namespace)
 
   local t
   if namespace then
-    local ns = get_namespace(namespace)
+    local ns = M.get_namespace(namespace)
     t = ns.opts
   else
     t = global_diagnostic_options
@@ -631,6 +619,32 @@ function M.set(namespace, bufnr, diagnostics, opts)
   end
 
   vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
+end
+
+--- Get namespace metadata.
+---
+---@param ns number Diagnostic namespace
+---@return table Namespace metadata
+function M.get_namespace(namespace)
+  vim.validate { namespace = { namespace, 'n' } }
+  if not all_namespaces[namespace] then
+    local name
+    for k, v in pairs(vim.api.nvim_get_namespaces()) do
+      if namespace == v then
+        name = k
+        break
+      end
+    end
+
+    assert(name, "namespace does not exist or is anonymous")
+
+    all_namespaces[namespace] = {
+      name = name,
+      opts = {},
+      user_data = {},
+    }
+  end
+  return all_namespaces[namespace]
 end
 
 --- Get current diagnostic namespaces.
@@ -782,156 +796,167 @@ function M.goto_next(opts)
   )
 end
 
--- Diagnostic Setters {{{
+M.handlers.signs = {
+  show = function(namespace, bufnr, diagnostics, opts)
+    vim.validate {
+      namespace = {namespace, 'n'},
+      bufnr = {bufnr, 'n'},
+      diagnostics = {diagnostics, 't'},
+      opts = {opts, 't', true},
+    }
 
---- Set signs for given diagnostics.
----
----@param namespace number The diagnostic namespace
----@param bufnr number Buffer number
----@param diagnostics table A list of diagnostic items |diagnostic-structure|. When omitted the
----                       current diagnostics in the given buffer are used.
----@param opts table Configuration table with the following keys:
----            - priority: Set the priority of the signs |sign-priority|.
----@private
-function M._set_signs(namespace, bufnr, diagnostics, opts)
-  vim.validate {
-    namespace = {namespace, 'n'},
-    bufnr = {bufnr, 'n'},
-    diagnostics = {diagnostics, 't'},
-    opts = {opts, 't', true},
-  }
+    bufnr = get_bufnr(bufnr)
 
-  bufnr = get_bufnr(bufnr)
-  opts = get_resolved_options({ signs = opts }, namespace, bufnr)
+    if opts.signs and opts.signs.severity then
+      diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
+    end
 
-  if opts.signs and opts.signs.severity then
-    diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
-  end
+    define_default_signs()
 
-  local ns = get_namespace(namespace)
-
-  define_default_signs()
-
-  -- 10 is the default sign priority when none is explicitly specified
-  local priority = opts.signs and opts.signs.priority or 10
-  local get_priority
-  if opts.severity_sort then
-    if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
-      get_priority = function(severity)
-        return priority + (severity - vim.diagnostic.severity.ERROR)
+    -- 10 is the default sign priority when none is explicitly specified
+    local priority = opts.signs and opts.signs.priority or 10
+    local get_priority
+    if opts.severity_sort then
+      if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
+        get_priority = function(severity)
+          return priority + (severity - vim.diagnostic.severity.ERROR)
+        end
+      else
+        get_priority = function(severity)
+          return priority + (vim.diagnostic.severity.HINT - severity)
+        end
       end
     else
-      get_priority = function(severity)
-        return priority + (vim.diagnostic.severity.HINT - severity)
+      get_priority = function()
+        return priority
       end
     end
-  else
-    get_priority = function()
-      return priority
-    end
-  end
 
-  for _, diagnostic in ipairs(diagnostics) do
-    vim.fn.sign_place(
-      0,
-      ns.sign_group,
-      sign_highlight_map[diagnostic.severity],
-      bufnr,
-      {
-        priority = get_priority(diagnostic.severity),
-        lnum = diagnostic.lnum + 1
-      }
-    )
-  end
-end
-
---- Set underline for given diagnostics.
----
----@param namespace number The diagnostic namespace
----@param bufnr number Buffer number
----@param diagnostics table A list of diagnostic items |diagnostic-structure|. When omitted the
----                       current diagnostics in the given buffer are used.
----@param opts table Configuration table. Currently unused.
----@private
-function M._set_underline(namespace, bufnr, diagnostics, opts)
-  vim.validate {
-    namespace = {namespace, 'n'},
-    bufnr = {bufnr, 'n'},
-    diagnostics = {diagnostics, 't'},
-    opts = {opts, 't', true},
-  }
-
-  bufnr = get_bufnr(bufnr)
-  opts = get_resolved_options({ underline = opts }, namespace, bufnr).underline
-
-  if opts and opts.severity then
-    diagnostics = filter_by_severity(opts.severity, diagnostics)
-  end
-
-  for _, diagnostic in ipairs(diagnostics) do
-    local higroup = underline_highlight_map[diagnostic.severity]
-
-    if higroup == nil then
-      -- Default to error if we don't have a highlight associated
-      higroup = underline_highlight_map.Error
+    local ns = M.get_namespace(namespace)
+    if not ns.user_data.sign_group then
+      ns.user_data.sign_group = string.format("vim.diagnostic.%s", ns.name)
     end
 
-    vim.highlight.range(
-      bufnr,
-      namespace,
-      higroup,
-      { diagnostic.lnum, diagnostic.col },
-      { diagnostic.end_lnum, diagnostic.end_col }
-    )
-  end
-end
-
---- Set virtual text for given diagnostics.
----
----@param namespace number The diagnostic namespace
----@param bufnr number Buffer number
----@param diagnostics table A list of diagnostic items |diagnostic-structure|. When omitted the
----                       current diagnostics in the given buffer are used.
----@param opts table|nil Configuration table with the following keys:
----            - prefix: (string) Prefix to display before virtual text on line.
----            - spacing: (number) Number of spaces to insert before virtual text.
----            - source: (string) Include the diagnostic source in virtual text. One of "always" or
----                      "if_many".
----@private
-function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
-  vim.validate {
-    namespace = {namespace, 'n'},
-    bufnr = {bufnr, 'n'},
-    diagnostics = {diagnostics, 't'},
-    opts = {opts, 't', true},
-  }
-
-  bufnr = get_bufnr(bufnr)
-  opts = get_resolved_options({ virtual_text = opts }, namespace, bufnr).virtual_text
-
-  if opts and opts.format then
-    diagnostics = reformat_diagnostics(opts.format, diagnostics)
-  end
-
-  if opts and opts.source then
-    diagnostics = prefix_source(opts.source, diagnostics)
-  end
-
-  local buffer_line_diagnostics = diagnostic_lines(diagnostics)
-  for line, line_diagnostics in pairs(buffer_line_diagnostics) do
-    if opts and opts.severity then
-      line_diagnostics = filter_by_severity(opts.severity, line_diagnostics)
+    local sign_group = ns.user_data.sign_group
+    for _, diagnostic in ipairs(diagnostics) do
+      vim.fn.sign_place(
+        0,
+        sign_group,
+        sign_highlight_map[diagnostic.severity],
+        bufnr,
+        {
+          priority = get_priority(diagnostic.severity),
+          lnum = diagnostic.lnum + 1
+        }
+      )
     end
-    local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
+  end,
+  hide = function(namespace, bufnr)
+    local ns = M.get_namespace(namespace)
+    if ns.user_data.sign_group then
+      vim.fn.sign_unplace(ns.user_data.sign_group, {buffer=bufnr})
+    end
+  end,
+}
 
-    if virt_texts then
-      vim.api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
-        hl_mode = "combine",
-        virt_text = virt_texts,
-      })
+M.handlers.underline = {
+  show = function(namespace, bufnr, diagnostics, opts)
+    vim.validate {
+      namespace = {namespace, 'n'},
+      bufnr = {bufnr, 'n'},
+      diagnostics = {diagnostics, 't'},
+      opts = {opts, 't', true},
+    }
+
+    bufnr = get_bufnr(bufnr)
+
+    if opts.underline and opts.underline.severity then
+      diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
+    end
+
+    local ns = M.get_namespace(namespace)
+    if not ns.user_data.underline_ns then
+      ns.user_data.underline_ns = vim.api.nvim_create_namespace("")
+    end
+
+    local underline_ns = ns.user_data.underline_ns
+    for _, diagnostic in ipairs(diagnostics) do
+      local higroup = underline_highlight_map[diagnostic.severity]
+
+      if higroup == nil then
+        -- Default to error if we don't have a highlight associated
+        higroup = underline_highlight_map.Error
+      end
+
+      vim.highlight.range(
+        bufnr,
+        underline_ns,
+        higroup,
+        { diagnostic.lnum, diagnostic.col },
+        { diagnostic.end_lnum, diagnostic.end_col }
+      )
+    end
+  end,
+  hide = function(namespace, bufnr)
+    local ns = M.get_namespace(namespace)
+    if ns.user_data.underline_ns then
+      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.underline_ns, 0, -1)
     end
   end
-end
+}
+
+M.handlers.virtual_text = {
+  show = function(namespace, bufnr, diagnostics, opts)
+    vim.validate {
+      namespace = {namespace, 'n'},
+      bufnr = {bufnr, 'n'},
+      diagnostics = {diagnostics, 't'},
+      opts = {opts, 't', true},
+    }
+
+    bufnr = get_bufnr(bufnr)
+
+    local severity
+    if opts.virtual_text then
+      if opts.virtual_text.format then
+        diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+      end
+      if opts.virtual_text.source then
+        diagnostics = prefix_source(opts.virtual_text.source, diagnostics)
+      end
+      if opts.virtual_text.severity then
+        severity = opts.virtual_text.severity
+      end
+    end
+
+    local ns = M.get_namespace(namespace)
+    if not ns.user_data.virt_text_ns then
+      ns.user_data.virt_text_ns = vim.api.nvim_create_namespace("")
+    end
+
+    local virt_text_ns = ns.user_data.virt_text_ns
+    local buffer_line_diagnostics = diagnostic_lines(diagnostics)
+    for line, line_diagnostics in pairs(buffer_line_diagnostics) do
+      if severity then
+        line_diagnostics = filter_by_severity(severity, line_diagnostics)
+      end
+      local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
+
+      if virt_texts then
+        vim.api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
+          hl_mode = "combine",
+          virt_text = virt_texts,
+        })
+      end
+    end
+  end,
+  hide = function(namespace, bufnr)
+    local ns = M.get_namespace(namespace)
+    if ns.user_data.virt_text_ns then
+      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
+    end
+  end,
+}
 
 --- Get virtual text chunks to display using |nvim_buf_set_extmark()|.
 ---
@@ -1011,19 +1036,16 @@ function M.hide(namespace, bufnr)
   bufnr = get_bufnr(bufnr)
   diagnostic_cache_extmarks[bufnr][namespace] = {}
 
-  local ns = get_namespace(namespace)
-
-  -- clear sign group
-  vim.fn.sign_unplace(ns.sign_group, {buffer=bufnr})
-
-  -- clear virtual text namespace
-  vim.api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+  for _, handler in pairs(M.handlers) do
+    if handler.hide then
+      handler.hide(namespace, bufnr)
+    end
+  end
 end
-
 
 --- Display diagnostics for the given namespace and buffer.
 ---
----@param namespace number Diagnostic namespace
+---@param namespace number Diagnostic namespace.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param diagnostics table|nil The diagnostics to display. When omitted, use the
 ---                             saved diagnostics for the given namespace and
@@ -1074,16 +1096,10 @@ function M.show(namespace, bufnr, diagnostics, opts)
 
   clamp_line_numbers(bufnr, diagnostics)
 
-  if opts.underline then
-    M._set_underline(namespace, bufnr, diagnostics, opts.underline)
-  end
-
-  if opts.virtual_text then
-    M._set_virtual_text(namespace, bufnr, diagnostics, opts.virtual_text)
-  end
-
-  if opts.signs then
-    M._set_signs(namespace, bufnr, diagnostics, opts.signs)
+  for handler_name, handler in pairs(M.handlers) do
+    if handler.show and opts[handler_name] then
+      handler.show(namespace, bufnr, diagnostics, opts)
+    end
   end
 
   save_extmarks(namespace, bufnr)

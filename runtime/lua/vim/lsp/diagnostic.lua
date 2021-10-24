@@ -146,7 +146,8 @@ local _client_namespaces = {}
 function M.get_namespace(client_id)
   vim.validate { client_id = { client_id, 'n' } }
   if not _client_namespaces[client_id] then
-    local name = string.format("vim.lsp.client-%d", client_id)
+    local client = vim.lsp.get_client_by_id(client_id)
+    local name = string.format("vim.lsp.%s.%d", client.name, client_id)
     _client_namespaces[client_id] = vim.api.nvim_create_namespace(name)
   end
   return _client_namespaces[client_id]
