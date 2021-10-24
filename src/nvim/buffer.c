@@ -1452,7 +1452,7 @@ void set_curbuf(buf_T *buf, int action)
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
 
-  // Autocommands may delete the curren buffer and/or the buffer we want to go
+  // Autocommands may delete the current buffer and/or the buffer we want to go
   // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
       || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
@@ -1465,6 +1465,7 @@ void set_curbuf(buf_T *buf, int action)
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
       win_T *previouswin = curwin;
+
       if (prevbuf == curbuf) {
         u_sync(false);
       }

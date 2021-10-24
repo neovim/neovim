@@ -5,7 +5,7 @@ func CheckFileTime(doSleep)
   let times = []
   let result = 0
 
-  " Use three files istead of localtim(), with a network filesystem the file
+  " Use three files instead of localtim(), with a network filesystem the file
   " times may differ at bit
   let fl = ['Hello World!']
   for fname in fnames

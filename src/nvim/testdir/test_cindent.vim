@@ -131,9 +131,12 @@ endfunc
 " this was going beyond the end of the line.
 func Test_cindent_case()
   new
-  call setline(1, "case x: // x")
+  call setline(1, 'case x: // x')
   set cindent
   norm! f:a:
+  call assert_equal('case x:: // x', getline(1))
+
+  set cindent&
   bwipe!
 endfunc
 

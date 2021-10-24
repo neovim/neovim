@@ -1,7 +1,7 @@
 " Test for breakindent
 "
 " Note: if you get strange failures when adding new tests, it might be that
-" while the test is run, the breakindent cacheing gets in its way.
+" while the test is run, the breakindent caching gets in its way.
 " It helps to change the tabstop setting and force a redraw (e.g. see
 " Test_breakindent08())
 if !exists('+breakindent')

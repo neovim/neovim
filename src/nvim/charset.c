@@ -1587,7 +1587,7 @@ vim_str2nr_hex:
 #undef PARSE_NUMBER
 
 vim_str2nr_proceed:
-  // Check for an alpha-numeric character immediately following, that is
+  // Check for an alphanumeric character immediately following, that is
   // most likely a typo.
   if (strict && ptr - (const char *)start != maxlen && ASCII_ISALNUM(*ptr)) {
     return;
