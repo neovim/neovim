@@ -129,7 +129,7 @@ jobs:
         run: ./ci/before_cache.sh
 
   windows:
-    runs-on: windows-2016
+    runs-on: windows-2019
     if: github.event.pull_request.draft == false
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}

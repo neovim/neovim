@@ -114,7 +114,7 @@ jobs:
           retention-days: 1
 
   windows:
-    runs-on: windows-2016
+    runs-on: windows-2019
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
