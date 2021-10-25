@@ -59,17 +59,6 @@
 # include "api/vim.c.generated.h"
 #endif
 
-void api_vim_free_all_mem(void)
-{
-  String name;
-  handle_T id;
-  map_foreach(&namespace_ids, name, id, {
-    (void)id;
-    xfree(name.data);
-  })
-  map_destroy(String, handle_T)(&namespace_ids);
-}
-
 /// Executes Vimscript (multiline block of Ex-commands), like anonymous
 /// |:source|.
 ///
@@ -1414,49 +1403,6 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   }
 }
 
-/// Creates a new \*namespace\* or gets an existing one.
-///
-/// Namespaces are used for buffer highlights and virtual text, see
-/// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
-///
-/// Namespaces can be named or anonymous. If `name` matches an existing
-/// namespace, the associated id is returned. If `name` is an empty string
-/// a new, anonymous namespace is created.
-///
-/// @param name Namespace name or empty string
-/// @return Namespace id
-Integer nvim_create_namespace(String name)
-  FUNC_API_SINCE(5)
-{
-  handle_T id = map_get(String, handle_T)(&namespace_ids, name);
-  if (id > 0) {
-    return id;
-  }
-  id = next_namespace_id++;
-  if (name.size > 0) {
-    String name_alloc = copy_string(name);
-    map_put(String, handle_T)(&namespace_ids, name_alloc, id);
-  }
-  return (Integer)id;
-}
-
-/// Gets existing, non-anonymous namespaces.
-///
-/// @return dict that maps from names to namespace ids.
-Dictionary nvim_get_namespaces(void)
-  FUNC_API_SINCE(5)
-{
-  Dictionary retval = ARRAY_DICT_INIT;
-  String name;
-  handle_T id;
-
-  map_foreach(&namespace_ids, name, id, {
-    PUT(retval, name.data, INTEGER_OBJ(id));
-  })
-
-  return retval;
-}
-
 /// Pastes at cursor, in any mode.
 ///
 /// Invokes the `vim.paste` handler, which handles each mode appropriately.
@@ -2745,96 +2691,6 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
-/// Set or change decoration provider for a namespace
-///
-/// This is a very general purpose interface for having lua callbacks
-/// being triggered during the redraw code.
-///
-/// The expected usage is to set extmarks for the currently
-/// redrawn buffer. |nvim_buf_set_extmark| can be called to add marks
-/// on a per-window or per-lines basis. Use the `ephemeral` key to only
-/// use the mark for the current screen redraw (the callback will be called
-/// again for the next redraw ).
-///
-/// Note: this function should not be called often. Rather, the callbacks
-/// themselves can be used to throttle unneeded callbacks. the `on_start`
-/// callback can return `false` to disable the provider until the next redraw.
-/// Similarly, return `false` in `on_win` will skip the `on_lines` calls
-/// for that window (but any extmarks set in `on_win` will still be used).
-/// A plugin managing multiple sources of decoration should ideally only set
-/// one provider, and merge the sources internally. You can use multiple `ns_id`
-/// for the extmarks set/modified inside the callback anyway.
-///
-/// Note: doing anything other than setting extmarks is considered experimental.
-/// Doing things like changing options are not expliticly forbidden, but is
-/// likely to have unexpected consequences (such as 100% CPU consumption).
-/// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
-/// for the moment.
-///
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param opts   Callbacks invoked during redraw:
-///             - on_start: called first on each screen redraw
-///                 ["start", tick]
-///             - on_buf: called for each buffer being redrawn (before window
-///                 callbacks)
-///                 ["buf", bufnr, tick]
-///             - on_win: called when starting to redraw a specific window.
-///                 ["win", winid, bufnr, topline, botline_guess]
-///             - on_line: called for each buffer line being redrawn. (The
-///                 interation with fold lines is subject to change)
-///                 ["win", winid, bufnr, row]
-///             - on_end: called at the end of a redraw cycle
-///                 ["end", tick]
-void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Error *err)
-  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
-{
-  DecorProvider *p = get_decor_provider((NS)ns_id, true);
-  assert(p != NULL);
-  decor_provider_clear(p);
-
-  // regardless of what happens, it seems good idea to redraw
-  redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
-
-  struct {
-    const char *name;
-    LuaRef *dest;
-  } cbs[] = {
-    { "on_start", &p->redraw_start },
-    { "on_buf", &p->redraw_buf },
-    { "on_win", &p->redraw_win },
-    { "on_line", &p->redraw_line },
-    { "on_end", &p->redraw_end },
-    { "_on_hl_def", &p->hl_def },
-    { NULL, NULL },
-  };
-
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    size_t j;
-    for (j = 0; cbs[j].name && cbs[j].dest; j++) {
-      if (strequal(cbs[j].name, k.data)) {
-        if (v->type != kObjectTypeLuaRef) {
-          api_set_error(err, kErrorTypeValidation,
-                        "%s is not a function", cbs[j].name);
-          goto error;
-        }
-        *(cbs[j].dest) = v->data.luaref;
-        v->data.luaref = LUA_NOREF;
-        break;
-      }
-    }
-    if (!cbs[j].name) {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      goto error;
-    }
-  }
-
-  p->active = true;
-  return;
-error:
-  decor_provider_clear(p);
-}
 
 /// Deletes a uppercase/file named mark. See |mark-motions|.
 ///
