@@ -1078,7 +1078,7 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                     Array of maparg()-like dictionaries describing mappings.
                     The "buffer" key is always zero.
 
-nvim_get_mark({name})                                        *nvim_get_mark()*
+nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
                 Return a tuple (row, col, buffer, buffername) representing the
                 position of the uppercase/file named mark. See |mark-motions|.
 
@@ -1090,6 +1090,7 @@ nvim_get_mark({name})                                        *nvim_get_mark()*
 
                 Parameters: ~
                     {name}  Mark name
+                    {opts}  Optional parameters. Reserved for future use.
 
                 Return: ~
                     4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if
@@ -2420,7 +2421,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
                     {replacement}      Array of lines to use as replacement
 
                                                          *nvim_buf_set_mark()*
-nvim_buf_set_mark({buffer}, {name}, {line}, {col})
+nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
                 Sets a named mark in the given buffer, all marks are allowed
                 file/uppercase, visual, last change, etc. See |mark-motions|.
 
@@ -2434,6 +2435,7 @@ nvim_buf_set_mark({buffer}, {name}, {line}, {col})
                     {name}    Mark name
                     {line}    Line number
                     {col}     Column/row number
+                    {opts}    Optional parameters. Reserved for future use.
 
                 Return: ~
                     true if the mark was set, else false.

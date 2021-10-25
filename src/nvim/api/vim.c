@@ -2871,11 +2871,12 @@ Boolean nvim_del_mark(String name, Error *err)
 ///
 /// @note fails with error if a lowercase or buffer local named mark is used.
 /// @param name       Mark name
+/// @param opts       Optional parameters. Reserved for future use.
 /// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
 /// not set.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_del_mark()|
-Array nvim_get_mark(String name, Error *err)
+Array nvim_get_mark(String name, Dictionary opts, Error *err)
   FUNC_API_SINCE(8)
 {
   Array rv = ARRAY_DICT_INIT;
