@@ -3,6 +3,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/decoration.h"
 #include "nvim/marktree.h"
 #include "nvim/pos.h"
 
@@ -15,7 +16,7 @@ typedef struct {
   colnr_T col;
   int end_row;
   colnr_T end_col;
-  Decoration *decor;
+  Decoration decor;  // TODO(bfredl): CHONKY
 } ExtmarkInfo;
 
 typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;

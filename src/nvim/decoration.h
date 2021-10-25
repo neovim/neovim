@@ -42,7 +42,6 @@ struct Decoration {
   // TODO(bfredl): at some point turn this into FLAGS
   bool virt_text_hide;
   bool hl_eol;
-  bool shared;  // shared decoration, don't free
   bool virt_lines_above;
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
@@ -50,7 +49,7 @@ struct Decoration {
   int virt_text_width;  // width of virt_text
 };
 #define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, \
-                          false, false, false, false, DECOR_PRIORITY_BASE, 0, 0 }
+                          false, false, false, DECOR_PRIORITY_BASE, 0, 0 }
 
 typedef struct {
   int start_row;

@@ -32,4 +32,6 @@ typedef enum {
   kTrue  = 1,
 } TriState;
 
+typedef struct Decoration Decoration;
+
 #endif  // NVIM_TYPES_H
