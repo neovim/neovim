@@ -55,6 +55,14 @@ has a major bug:
     - The [nightly job](https://github.com/neovim/bot-ci/blob/master/ci/nightly.sh)
       will update the release assets based on the `stable` tag.
 
+The neovim repository includes a backport [github action](https://github.com/zeebe-io/backport-action).
+In order to trigger the action, a PR must be labeled with a label matching the
+form `backport release-0.X`. If the label is applied before the PR is merged,
+the backport will be filed automatically against the target branch. Otherwise,
+comment `\backport` on the merged PR *after* the label has been applied to trigger
+a backport. Note, the PR must have a description in the issue body, or the backport
+will fail.
+
 Third-party dependencies
 --------------
 
