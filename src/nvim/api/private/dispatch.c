@@ -15,6 +15,7 @@
 #include "nvim/api/tabpage.h"
 #include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/api/win_config.h"
 #include "nvim/api/window.h"
 #include "nvim/log.h"
