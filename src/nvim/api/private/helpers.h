@@ -1,8 +1,6 @@
 #ifndef NVIM_API_PRIVATE_HELPERS_H
 #define NVIM_API_PRIVATE_HELPERS_H
 
-#include <stdbool.h>
-
 #include "nvim/api/private/defs.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval.h"

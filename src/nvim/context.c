@@ -3,6 +3,7 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/context.h"
