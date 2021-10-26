@@ -63,7 +63,6 @@ comment `\backport` on the merged PR *after* the label has been applied to trigg
 a backport. Note, the PR must have a description in the issue body, or the backport
 will fail.
 
-=======
 Third-party dependencies
 --------------
 
