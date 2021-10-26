@@ -59,7 +59,12 @@ describe('has()', function()
   end)
 
   it('"wsl"', function()
-    if 1 == funcs.has('win32') or 1 == funcs.has('mac') then
+    local luv = require('luv')
+    local is_wsl =
+      luv.os_uname()['release']:lower():match('microsoft') and true or false
+    if is_wsl then
+      eq(1, funcs.has('wsl'))
+    else
       eq(0, funcs.has('wsl'))
     end
   end)

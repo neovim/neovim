@@ -39,7 +39,6 @@
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_TERMIOS_H
 #cmakedefine HAVE_WORKING_LIBINTL
-#cmakedefine HAVE_WSL
 #cmakedefine UNIX
 #cmakedefine CASE_INSENSITIVE_FILENAME
 #cmakedefine USE_FNAME_CASE
