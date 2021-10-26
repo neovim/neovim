@@ -71,6 +71,9 @@ describe('autocommands that delete and unload buffers:', function()
       au BufUnload * call CloseAll()
       au VimLeave * call WriteToOut()
     ]])
+    -- Must disable 'hidden' so that the BufUnload autocmd is triggered between
+    -- each :edit
+    command('set nohidden')
     command('silent! edit Xxx2')
     command('silent! edit Xxx1')
     command('silent! edit Makefile') -- an existing file

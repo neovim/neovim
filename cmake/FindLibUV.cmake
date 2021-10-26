@@ -75,6 +75,14 @@ if(WIN32)
   list(APPEND LIBUV_LIBRARIES ws2_32)
 endif()
 
+find_package(Threads)
+if(Threads_FOUND)
+  # TODO: Fix the cmake file to properly handle static deps for bundled builds.
+  # Meanwhile just include the threads library if CMake tells us there's one to
+  # use.
+  list(APPEND LIBUV_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 # handle the QUIETLY and REQUIRED arguments and set LIBUV_FOUND to TRUE

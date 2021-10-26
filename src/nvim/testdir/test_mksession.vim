@@ -170,7 +170,7 @@ func Test_mksession_rtp()
     return
   endif
   new
-  set sessionoptions&vi
+  set sessionoptions+=options
   let _rtp=&rtp
   " Make a real long (invalid) runtimepath value,
   " that should exceed PATH_MAX (hopefully)
@@ -287,10 +287,33 @@ func Test_mksession_blank_windows()
   call delete('Xtest_mks.out')
 endfunc
 
+func Test_mksession_buffer_count()
+  set hidden
+
+  " Edit exactly three files in the current session.
+  %bwipe!
+  e Xfoo | tabe Xbar | tabe Xbaz
+  tabdo write
+  mksession! Xtest_mks.out
+
+  " Verify that loading the session does not create additional buffers.
+  %bwipe!
+  source Xtest_mks.out
+  call assert_equal(3, len(getbufinfo()))
+
+  " Clean up.
+  call delete('Xfoo')
+  call delete('Xbar')
+  call delete('Xbaz')
+  call delete('Xtest_mks.out')
+  %bwipe!
+  set nohidden
+endfunc
+
 if has('extra_search')
 
 func Test_mksession_hlsearch()
-  set sessionoptions&vi
+  set sessionoptions+=options
   set hlsearch
   mksession! Xtest_mks.out
   nohlsearch
@@ -630,7 +653,7 @@ endfunc
 
 " Test for mksession with a named scratch buffer
 func Test_mksession_scratch()
-  set sessionoptions&vi
+  set sessionoptions+=options
   enew | only
   file Xscratch
   set buftype=nofile

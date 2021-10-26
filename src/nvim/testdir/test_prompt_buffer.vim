@@ -110,11 +110,8 @@ func Test_prompt_garbage_collect()
 
   new
   set buftype=prompt
-  " Nvim doesn't support method call syntax yet.
-  " eval bufnr('')->prompt_setcallback(function('MyPromptCallback', [{}]))
-  " eval bufnr('')->prompt_setinterrupt(function('MyPromptInterrupt', [{}]))
-  eval prompt_setcallback(bufnr(''), function('MyPromptCallback', [{}]))
-  eval prompt_setinterrupt(bufnr(''), function('MyPromptInterrupt', [{}]))
+  eval bufnr('')->prompt_setcallback(function('MyPromptCallback', [{}]))
+  eval bufnr('')->prompt_setinterrupt(function('MyPromptInterrupt', [{}]))
   call test_garbagecollect_now()
   " Must not crash
   call feedkeys("\<CR>\<C-C>", 'xt')

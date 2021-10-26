@@ -11,8 +11,9 @@ local meths = helpers.meths
 local iswin = helpers.iswin
 local command = helpers.command
 local write_file = helpers.write_file
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local exec_lua = helpers.exec_lua
+local pcall_err = helpers.pcall_err
 
 local screen
 
@@ -36,11 +37,11 @@ describe('print', function()
     write_file(fname, 'print("abc")')
     eq('\nabc', funcs.execute('luafile ' .. fname))
 
-    eq('\nabc', redir_exec('lua print("abc")'))
-    eq('\nabc', redir_exec('luado print("abc")'))
-    eq('\nabc', redir_exec('call luaeval("print(\'abc\')")'))
+    eq('abc', exec_capture('lua print("abc")'))
+    eq('abc', exec_capture('luado print("abc")'))
+    eq('abc', exec_capture('call luaeval("print(\'abc\')")'))
     write_file(fname, 'print("abc")')
-    eq('\nabc', redir_exec('luafile ' .. fname))
+    eq('abc', exec_capture('luafile ' .. fname))
   end)
   it('handles errors in __tostring', function()
     write_file(fname, [[
@@ -51,30 +52,30 @@ describe('print', function()
       v_abcerr = setmetatable({}, meta_abcerr)
       v_tblout = setmetatable({}, meta_tblout)
     ]])
-    eq('', redir_exec('luafile ' .. fname))
+    eq('', exec_capture('luafile ' .. fname))
     -- TODO(bfredl): these look weird, print() should not use "E5114:" style errors..
-    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: [NULL]',
-       redir_exec('lua print("foo", v_nilerr, "bar")'))
-    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
-       redir_exec('lua print("foo", v_abcerr, "bar")'))
-    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
-       redir_exec('lua print("foo", v_tblout, "bar")'))
+    eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: [NULL]',
+       pcall_err(command, 'lua print("foo", v_nilerr, "bar")'))
+    eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:0: abc',
+       pcall_err(command, 'lua print("foo", v_abcerr, "bar")'))
+    eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
+       pcall_err(command, 'lua print("foo", v_tblout, "bar")'))
   end)
   it('prints strings with NULs and NLs correctly', function()
     meths.set_option('more', true)
-    eq('\nabc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
-       redir_exec([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]]))
-    eq('\nabc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT^@',
-       redir_exec([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\0")]]))
-    eq('\nT^@', redir_exec([[lua print("T\0")]]))
-    eq('\nT\n', redir_exec([[lua print("T\n")]]))
+    eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',
+       exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\n")]]))
+    eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT^@',
+       exec_capture([[lua print("abc \0 def\nghi\0\0\0jkl\nTEST\n\n\nT\0")]]))
+    eq('T^@', exec_capture([[lua print("T\0")]]))
+    eq('T\n', exec_capture([[lua print("T\n")]]))
   end)
   it('prints empty strings correctly', function()
     -- Regression: first test used to crash
-    eq('', redir_exec('lua print("")'))
-    eq('\n def', redir_exec('lua print("", "def")'))
-    eq('\nabc ', redir_exec('lua print("abc", "")'))
-    eq('\nabc  def', redir_exec('lua print("abc", "", "def")'))
+    eq('', exec_capture('lua print("")'))
+    eq(' def', exec_capture('lua print("", "def")'))
+    eq('abc ', exec_capture('lua print("abc", "")'))
+    eq('abc  def', exec_capture('lua print("abc", "", "def")'))
   end)
   it('defers printing in luv event handlers', function()
     exec_lua([[
@@ -97,7 +98,7 @@ describe('print', function()
         vim.api.nvim_command("sleep 1m") -- force deferred event processing
       end
     ]], (iswin() and "timeout 1") or "sleep 0.1")
-    eq('\nvery slow\nvery fast',redir_exec('lua test()'))
+    eq('very slow\nvery fast', exec_capture('lua test()'))
   end)
 end)
 

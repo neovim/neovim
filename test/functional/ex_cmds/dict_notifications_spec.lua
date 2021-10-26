@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_alive = helpers.assert_alive
 local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
 local insert = helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
@@ -325,7 +326,7 @@ describe('VimL dictionary notifications', function()
       ]])
 
       command('call MakeWatch()')
-      eq(2, eval('1+1')) -- Still alive?
+      assert_alive()
     end)
   end)
 
@@ -354,7 +355,7 @@ describe('VimL dictionary notifications', function()
 
     command([[call dictwatcherdel(b:, 'changedtick', 'OnTickChanged')]])
     insert('t');
-    eq(2, eval('1+1')) -- Still alive?
+    assert_alive()
   end)
 
   it('does not cause use-after-free when unletting from callback', function()

@@ -13,6 +13,7 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
 
 # Build on the oldest supported images, so we have broader compatibility
+# Upgrade to gcc-11 to prevent it from using its builtins (#14150)
 jobs:
   linux:
     runs-on: ubuntu-18.04
@@ -26,11 +27,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gcc-11 gettext gperf libtool-bin locales ninja-build pkg-config unzip
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
       - name: Build release
         id: build
         run: |
-          make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
+          CC=gcc-11 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
           printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
           printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
@@ -51,11 +56,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gcc-11 gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: make appimage-latest
+        run: CC=gcc-11 make appimage-latest
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: make appimage-nightly
+        run: CC=gcc-11 make appimage-nightly
       - uses: actions/upload-artifact@v2
         with:
           name: appimage
@@ -79,9 +84,13 @@ jobs:
           brew update >/dev/null
           brew upgrade
           brew install automake ninja
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
       - name: Build release
         run: |
-          make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
+          make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-osx64" install
       - name: Create package
         run: |
@@ -159,6 +168,38 @@ jobs:
         with:
           delete_release: true
           tag_name: nightly
+      # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
+      # containing folder from the output.
+      - name: Generate Linux64 SHA256 checksums
+        run: |
+          cd ./nvim-linux64
+          sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
+          echo "SHA_LINUX_64=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage > nvim.appimage.sha256sum
+          echo "SHA_APP_IMAGE=$(cat nvim.appimage.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image Zsync SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage.zsync > nvim.appimage.zsync.sha256sum
+          echo "SHA_APP_IMAGE_ZSYNC=$(cat nvim.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+      - name: Generate macOS SHA256 checksums
+        run: |
+          cd ./nvim-macos
+          sha256sum nvim-macos.tar.gz > nvim-macos.tar.gz.sha256sum
+          echo "SHA_MACOS=$(cat nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Win32 SHA256 checksums
+        run: |
+          cd ./nvim-win32
+          sha256sum nvim-win32.zip > nvim-win32.zip.sha256sum
+          echo "SHA_WIN_32=$(cat nvim-win32.zip.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Win64 SHA256 checksums
+        run: |
+          cd ./nvim-win64
+          sha256sum nvim-win64.zip > nvim-win64.zip.sha256sum
+          echo "SHA_WIN_64=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
       - uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -170,11 +211,17 @@ jobs:
           allow_override: ${{ env.TAG_NAME == 'nightly' }}
           files: |
             nvim-macos.tar.gz:./nvim-macos/nvim-macos.tar.gz
+            nvim-macos.tar.gz.sha256sum:./nvim-macos/nvim-macos.tar.gz.sha256sum
             nvim-linux64.tar.gz:./nvim-linux64/nvim-linux64.tar.gz
+            nvim-linux64.tar.gz.sha256sum:./nvim-linux64/nvim-linux64.tar.gz.sha256sum
             nvim.appimage:./appimage/nvim.appimage
+            nvim.appimage.sha256sum:./appimage/nvim.appimage.sha256sum
             nvim.appimage.zsync:./appimage/nvim.appimage.zsync
+            nvim.appimage.zsync.sha256sum:./appimage/nvim.appimage.zsync.sha256sum
             nvim-win32.zip:./nvim-win32/nvim-win32.zip
+            nvim-win32.zip.sha256sum:./nvim-win32/nvim-win32.zip.sha256sum
             nvim-win64.zip:./nvim-win64/nvim-win64.zip
+            nvim-win64.zip.sha256sum:./nvim-win64/nvim-win64.zip.sha256sum
           body: |
             ${{ env.SUBJECT }}
             ```
@@ -206,3 +253,14 @@ jobs:
             ### Other
 
             - Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+
+            ## SHA256 Checksums
+
+            ```
+            ${{ env.SHA_LINUX_64 }}
+            ${{ env.SHA_APP_IMAGE }}
+            ${{ env.SHA_APP_IMAGE_ZSYNC }}
+            ${{ env.SHA_MACOS }}
+            ${{ env.SHA_WIN_64 }}
+            ${{ env.SHA_WIN_32 }}
+            ```

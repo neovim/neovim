@@ -41,7 +41,7 @@ typedef struct _queue {
   while((q) != (h)) { \
     QUEUE *next = q->next; \
     code \
-    (q) = next; \
+      (q) = next; \
   }
 
 

@@ -25,6 +25,12 @@ func Test_move_cursor()
   call cursor(9, 1)
   call assert_equal([4, 1, 0, 1], getcurpos()[1:])
 
+  call setline(1, ["\<TAB>"])
+  call cursor(1, 1, 1)
+  call assert_equal([1, 1, 1], getcurpos()[1:3])
+
+  call assert_equal(-1, cursor(-1, -1))
+
   quit!
 endfunc
 

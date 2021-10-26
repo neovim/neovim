@@ -1,9 +1,9 @@
 #ifndef NVIM_REGEXP_H
 #define NVIM_REGEXP_H
 
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/types.h"
 
 // Second argument for vim_regcomp().
 #define RE_MAGIC        1       ///< 'magic' option

@@ -435,13 +435,13 @@ sign_getdefined([{name}])				*sign_getdefined()*
 			" Get the attribute of the sign named mySign
 			echo sign_getdefined("mySign")
 <
-sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
+sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		Return a list of signs placed in a buffer or all the buffers.
 		This is similar to the |:sign-place-list| command.
 
-		If the optional buffer name {expr} is specified, then only the
+		If the optional buffer name {buf} is specified, then only the
 		list of signs placed in that buffer is returned.  For the use
-		of {expr}, see |bufname()|. The optional {dict} can contain
+		of {buf}, see |bufname()|. The optional {dict} can contain
 		the following entries:
 		   group	select only signs in this group
 		   id		select sign with this identifier
@@ -496,12 +496,12 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			echo sign_getplaced()
 <
 							*sign_jump()*
-sign_jump({id}, {group}, {expr})
-		Open the buffer {expr} or jump to the window that contains
-		{expr} and position the cursor at sign {id} in group {group}.
+sign_jump({id}, {group}, {buf})
+		Open the buffer {buf} or jump to the window that contains
+		{buf} and position the cursor at sign {id} in group {group}.
 		This is similar to the |:sign-jump| command.
 
-		For the use of {expr}, see |bufname()|.
+		For the use of {buf}, see |bufname()|.
 
 		Returns the line number of the sign. Returns -1 if the
 		arguments are invalid.
@@ -512,9 +512,9 @@ sign_jump({id}, {group}, {expr})
 <
 
 							*sign_place()*
-sign_place({id}, {group}, {name}, {expr} [, {dict}])
+sign_place({id}, {group}, {name}, {buf} [, {dict}])
 		Place the sign defined as {name} at line {lnum} in file or
-		buffer {expr} and assign {id} and {group} to sign.  This is
+		buffer {buf} and assign {id} and {group} to sign.  This is
 		similar to the |:sign-place| command.
 
 		If the sign identifier {id} is zero, then a new identifier is
@@ -525,12 +525,12 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 		and |sign-group| for more information.
 
 		{name} refers to a defined sign.
-		{expr} refers to a buffer name or number. For the accepted
+		{buf} refers to a buffer name or number. For the accepted
 		values, see |bufname()|.
 
 		The optional {dict} argument supports the following entries:
 			lnum		line number in the file or buffer
-					{expr} where the sign is to be placed.
+					{buf} where the sign is to be placed.
 					For the accepted values, see |line()|.
 			priority	priority of the sign. See
 					|sign-priority| for more information.
@@ -578,7 +578,7 @@ sign_placelist({list})
 				then a new unique identifier is allocated.
 				Otherwise the specified number is used. See
 				|sign-identifier| for more information.
-		    lnum	line number in the buffer {expr} where the
+		    lnum	line number in the buffer {buf} where the
 				sign is to be placed. For the accepted values,
 				see |line()|.
 		    name	name of the sign to place. See |sign_define()|

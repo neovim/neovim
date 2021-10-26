@@ -34,7 +34,7 @@ func Test_client_server()
   " When using valgrind it takes much longer.
   call WaitForAssert({-> assert_match(name, serverlist())})
 
-  call remote_foreground(name)
+  eval name->remote_foreground()
 
   call remote_send(name, ":let testvar = 'yes'\<CR>")
   call WaitFor('remote_expr("' . name . '", "exists(\"testvar\") ? testvar : \"\"", "", 1) == "yes"')
@@ -53,7 +53,7 @@ func Test_client_server()
     endif
     " Wait for the server to be up and answering requests.
     sleep 100m
-    call WaitForAssert({-> assert_true(remote_expr(name, "v:version", "", 1) != "")})
+    call WaitForAssert({-> assert_true(name->remote_expr("v:version", "", 1) != "")})
 
     call remote_send(name, ":let testvar = 'maybe'\<CR>")
     call WaitForAssert({-> assert_equal('maybe', remote_expr(name, "testvar", "", 2))})
@@ -72,7 +72,7 @@ func Test_client_server()
 
   " Expression evaluated locally.
   if v:servername == ''
-    call remote_startserver('MYSELF')
+    eval 'MYSELF'->remote_startserver()
     " May get MYSELF1 when running the test again.
     call assert_match('MYSELF', v:servername)
   endif
@@ -80,11 +80,11 @@ func Test_client_server()
   call assert_equal('myself', remote_expr(v:servername, 'testvar'))
 
   call remote_send(name, ":call server2client(expand('<client>'), 'got it')\<CR>", 'g:myserverid')
-  call assert_equal('got it', remote_read(g:myserverid, 2))
+  call assert_equal('got it', g:myserverid->remote_read(2))
 
   call remote_send(name, ":call server2client(expand('<client>'), 'another')\<CR>", 'g:myserverid')
   let peek_result = 'nothing'
-  let r = remote_peek(g:myserverid, 'peek_result')
+  let r = g:myserverid->remote_peek('peek_result')
   " unpredictable whether the result is already available.
   if r > 0
     call assert_equal('another', peek_result)
@@ -98,7 +98,7 @@ func Test_client_server()
   call assert_equal('another', g:peek_result)
   call assert_equal('another', remote_read(g:myserverid, 2))
 
-  call remote_send(name, ":qa!\<CR>")
+  eval name->remote_send(":qa!\<CR>")
   try
     call WaitForAssert({-> assert_equal("dead", job_status(job))})
   finally

@@ -13,6 +13,7 @@ compile_commands.json
 /tmp/
 /.clangd/
 /.cache/clangd/
+/.ccls-cache/
 
 .DS_Store
 *.mo

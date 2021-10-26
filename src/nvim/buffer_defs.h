@@ -6,14 +6,14 @@
 // for FILE
 #include <stdio.h>
 
-typedef struct file_buffer buf_T; // Forward declaration
+typedef struct file_buffer buf_T;  // Forward declaration
 
 // Reference to a buffer that stores the value of buf_free_count.
 // bufref_valid() only needs to check "buf" when the count differs.
 typedef struct {
   buf_T *br_buf;
-  int    br_fnum;
-  int    br_buf_free_count;
+  int br_fnum;
+  int br_buf_free_count;
 } bufref_T;
 
 // for garray_T
@@ -111,16 +111,15 @@ typedef uint16_t disptick_T;  // display tick type
 // for synstate_T (needs reg_extmatch_T, win_T, buf_T)
 #include "nvim/syntax_defs.h"
 // for sign_entry_T
-#include "nvim/sign_defs.h"
-
 #include "nvim/os/fs_defs.h"    // for FileID
+#include "nvim/sign_defs.h"
 #include "nvim/terminal.h"      // for Terminal
 
 /*
  * The taggy struct is used to store the information about a :tag command.
  */
 typedef struct taggy {
-  char_u      *tagname;         // tag name
+  char_u *tagname;         // tag name
   fmark_T fmark;                // cursor position BEFORE ":tag"
   int cur_match;                // match number
   int cur_fnum;                 // buffer number used for cur_match
@@ -161,45 +160,45 @@ typedef struct
  */
 typedef struct {
   int wo_arab;
-# define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
+#define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
   int wo_bri;
-# define w_p_bri w_onebuf_opt.wo_bri    // 'breakindent'
+#define w_p_bri w_onebuf_opt.wo_bri    // 'breakindent'
   char_u *wo_briopt;
-# define w_p_briopt w_onebuf_opt.wo_briopt  // 'breakindentopt'
+#define w_p_briopt w_onebuf_opt.wo_briopt  // 'breakindentopt'
   int wo_diff;
-# define w_p_diff w_onebuf_opt.wo_diff  // 'diff'
+#define w_p_diff w_onebuf_opt.wo_diff  // 'diff'
   char_u *wo_fdc;
-# define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
+#define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
   char_u *wo_fdc_save;
-# define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode
+#define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode
   int wo_fen;
-# define w_p_fen w_onebuf_opt.wo_fen    // 'foldenable'
+#define w_p_fen w_onebuf_opt.wo_fen    // 'foldenable'
   int wo_fen_save;
   // 'foldenable' saved for diff mode
-# define w_p_fen_save w_onebuf_opt.wo_fen_save
-  char_u      *wo_fdi;
-# define w_p_fdi w_onebuf_opt.wo_fdi    // 'foldignore'
+#define w_p_fen_save w_onebuf_opt.wo_fen_save
+  char_u *wo_fdi;
+#define w_p_fdi w_onebuf_opt.wo_fdi    // 'foldignore'
   long wo_fdl;
-# define w_p_fdl w_onebuf_opt.wo_fdl    // 'foldlevel'
+#define w_p_fdl w_onebuf_opt.wo_fdl    // 'foldlevel'
   int wo_fdl_save;
   // 'foldlevel' state saved for diff mode
-# define w_p_fdl_save w_onebuf_opt.wo_fdl_save
-  char_u      *wo_fdm;
-# define w_p_fdm w_onebuf_opt.wo_fdm    // 'foldmethod'
-  char_u      *wo_fdm_save;
-# define w_p_fdm_save w_onebuf_opt.wo_fdm_save  // 'fdm' saved for diff mode
+#define w_p_fdl_save w_onebuf_opt.wo_fdl_save
+  char_u *wo_fdm;
+#define w_p_fdm w_onebuf_opt.wo_fdm    // 'foldmethod'
+  char_u *wo_fdm_save;
+#define w_p_fdm_save w_onebuf_opt.wo_fdm_save  // 'fdm' saved for diff mode
   long wo_fml;
-# define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
+#define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
   long wo_fdn;
-# define w_p_fdn w_onebuf_opt.wo_fdn    // 'foldnestmax'
-  char_u      *wo_fde;
-# define w_p_fde w_onebuf_opt.wo_fde    // 'foldexpr'
-  char_u      *wo_fdt;
-#  define w_p_fdt w_onebuf_opt.wo_fdt   // 'foldtext'
-  char_u      *wo_fmr;
-# define w_p_fmr w_onebuf_opt.wo_fmr    // 'foldmarker'
+#define w_p_fdn w_onebuf_opt.wo_fdn    // 'foldnestmax'
+  char_u *wo_fde;
+#define w_p_fde w_onebuf_opt.wo_fde    // 'foldexpr'
+  char_u *wo_fdt;
+#define w_p_fdt w_onebuf_opt.wo_fdt   // 'foldtext'
+  char_u *wo_fmr;
+#define w_p_fmr w_onebuf_opt.wo_fmr    // 'foldmarker'
   int wo_lbr;
-# define w_p_lbr w_onebuf_opt.wo_lbr    // 'linebreak'
+#define w_p_lbr w_onebuf_opt.wo_lbr    // 'linebreak'
   int wo_list;
 #define w_p_list w_onebuf_opt.wo_list   // 'list'
   int wo_nu;
@@ -207,60 +206,64 @@ typedef struct {
   int wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     // 'relativenumber'
   long wo_nuw;
-# define w_p_nuw w_onebuf_opt.wo_nuw    // 'numberwidth'
+#define w_p_nuw w_onebuf_opt.wo_nuw    // 'numberwidth'
   int wo_wfh;
-# define w_p_wfh w_onebuf_opt.wo_wfh    // 'winfixheight'
+#define w_p_wfh w_onebuf_opt.wo_wfh    // 'winfixheight'
   int wo_wfw;
-# define w_p_wfw w_onebuf_opt.wo_wfw    // 'winfixwidth'
+#define w_p_wfw w_onebuf_opt.wo_wfw    // 'winfixwidth'
   int wo_pvw;
-# define w_p_pvw w_onebuf_opt.wo_pvw    // 'previewwindow'
+#define w_p_pvw w_onebuf_opt.wo_pvw    // 'previewwindow'
   int wo_rl;
-# define w_p_rl w_onebuf_opt.wo_rl      // 'rightleft'
-  char_u      *wo_rlc;
-# define w_p_rlc w_onebuf_opt.wo_rlc    // 'rightleftcmd'
+#define w_p_rl w_onebuf_opt.wo_rl      // 'rightleft'
+  char_u *wo_rlc;
+#define w_p_rlc w_onebuf_opt.wo_rlc    // 'rightleftcmd'
   long wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     // 'scroll'
   int wo_spell;
-# define w_p_spell w_onebuf_opt.wo_spell  // 'spell'
+#define w_p_spell w_onebuf_opt.wo_spell  // 'spell'
   int wo_cuc;
-# define w_p_cuc w_onebuf_opt.wo_cuc    // 'cursorcolumn'
+#define w_p_cuc w_onebuf_opt.wo_cuc    // 'cursorcolumn'
   int wo_cul;
-# define w_p_cul w_onebuf_opt.wo_cul    // 'cursorline'
-  char_u      *wo_cc;
-# define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
-  char_u      *wo_stl;
+#define w_p_cul w_onebuf_opt.wo_cul    // 'cursorline'
+  char_u *wo_culopt;
+#define w_p_culopt w_onebuf_opt.wo_culopt  // 'cursorlineopt'
+  char_u *wo_cc;
+#define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
+  char_u *wo_sbr;
+#define w_p_sbr w_onebuf_opt.wo_sbr    // 'showbreak'
+  char_u *wo_stl;
 #define w_p_stl w_onebuf_opt.wo_stl     // 'statusline'
   int wo_scb;
-# define w_p_scb w_onebuf_opt.wo_scb    // 'scrollbind'
+#define w_p_scb w_onebuf_opt.wo_scb    // 'scrollbind'
   int wo_diff_saved;           // options were saved for starting diff mode
-# define w_p_diff_saved w_onebuf_opt.wo_diff_saved
+#define w_p_diff_saved w_onebuf_opt.wo_diff_saved
   int wo_scb_save;              // 'scrollbind' saved for diff mode
-# define w_p_scb_save w_onebuf_opt.wo_scb_save
+#define w_p_scb_save w_onebuf_opt.wo_scb_save
   int wo_wrap;
 #define w_p_wrap w_onebuf_opt.wo_wrap   // 'wrap'
   int wo_wrap_save;             // 'wrap' state saved for diff mode
-# define w_p_wrap_save w_onebuf_opt.wo_wrap_save
-  char_u      *wo_cocu;                 // 'concealcursor'
-# define w_p_cocu w_onebuf_opt.wo_cocu
+#define w_p_wrap_save w_onebuf_opt.wo_wrap_save
+  char_u *wo_cocu;                 // 'concealcursor'
+#define w_p_cocu w_onebuf_opt.wo_cocu
   long wo_cole;                         // 'conceallevel'
-# define w_p_cole w_onebuf_opt.wo_cole
+#define w_p_cole w_onebuf_opt.wo_cole
   int wo_crb;
-# define w_p_crb w_onebuf_opt.wo_crb    // 'cursorbind'
+#define w_p_crb w_onebuf_opt.wo_crb    // 'cursorbind'
   int wo_crb_save;              // 'cursorbind' state saved for diff mode
-# define w_p_crb_save w_onebuf_opt.wo_crb_save
+#define w_p_crb_save w_onebuf_opt.wo_crb_save
   char_u *wo_scl;
-# define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+#define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
   char_u *wo_winhl;
-# define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
+#define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
   char_u *wo_fcs;
-# define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
+#define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
   char_u *wo_lcs;
-# define w_p_lcs w_onebuf_opt.wo_lcs    // 'listchars'
+#define w_p_lcs w_onebuf_opt.wo_lcs    // 'listchars'
   long wo_winbl;
-# define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
+#define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
 
   LastSet wo_script_ctx[WV_COUNT];        // SCTXs for window-local options
-# define w_p_script_ctx w_onebuf_opt.wo_script_ctx
+#define w_p_script_ctx w_onebuf_opt.wo_script_ctx
 } winopt_T;
 
 /*
@@ -274,9 +277,9 @@ typedef struct {
  * most-recently-used order.
  */
 struct wininfo_S {
-  wininfo_T   *wi_next;         // next entry or NULL for last entry
-  wininfo_T   *wi_prev;         // previous entry or NULL for first entry
-  win_T       *wi_win;          // pointer to window that did set wi_fpos
+  wininfo_T *wi_next;         // next entry or NULL for last entry
+  wininfo_T *wi_prev;         // previous entry or NULL for first entry
+  win_T *wi_win;          // pointer to window that did set wi_fpos
   pos_T wi_fpos;                // last cursor position in the file
   bool wi_optset;               // true when wi_opt has useful values
   winopt_T wi_opt;              // local window options
@@ -302,11 +305,11 @@ typedef struct arglist {
 //
 // TODO(Felipe): move aentry_T to another header
 typedef struct argentry {
-  char_u      *ae_fname;        // file name as specified
+  char_u *ae_fname;        // file name as specified
   int ae_fnum;                  // buffer number with expanded file name
 } aentry_T;
 
-# define ALIST(win) (win)->w_alist
+#define ALIST(win) (win)->w_alist
 #define GARGLIST        ((aentry_T *)global_alist.al_ga.ga_data)
 #define ARGLIST         ((aentry_T *)ALIST(curwin)->al_ga.ga_data)
 #define WARGLIST(wp)    ((aentry_T *)ALIST(wp)->al_ga.ga_data)
@@ -319,8 +322,8 @@ typedef struct argentry {
  * Used for the typeahead buffer: typebuf.
  */
 typedef struct {
-  char_u      *tb_buf;          // buffer for typed characters
-  char_u      *tb_noremap;      // mapping flags for characters in tb_buf[]
+  char_u *tb_buf;          // buffer for typed characters
+  char_u *tb_noremap;      // mapping flags for characters in tb_buf[]
   int tb_buflen;                // size of tb_buf[]
   int tb_off;                   // current position in tb_buf[]
   int tb_len;                   // number of valid bytes in tb_buf[]
@@ -346,10 +349,10 @@ typedef struct {
  */
 typedef struct mapblock mapblock_T;
 struct mapblock {
-  mapblock_T  *m_next;          // next mapblock in list
-  char_u      *m_keys;          // mapped from, lhs
-  char_u      *m_str;           // mapped to, rhs
-  char_u      *m_orig_str;      // rhs as entered by the user
+  mapblock_T *m_next;          // next mapblock in list
+  char_u *m_keys;          // mapped from, lhs
+  char_u *m_str;           // mapped to, rhs
+  char_u *m_orig_str;      // rhs as entered by the user
   int m_keylen;                 // strlen(m_keys)
   int m_mode;                   // valid mode
   int m_noremap;                // if non-zero no re-mapping for m_str
@@ -362,7 +365,7 @@ struct mapblock {
 /// Used for highlighting in the status line.
 typedef struct stl_hlrec stl_hlrec_t;
 struct stl_hlrec {
-  char_u      *start;
+  char_u *start;
   int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
 };
 
@@ -399,7 +402,7 @@ struct stl_item {
 #define SYNFLD_MINIMUM  1       // use lowest local minimum level on line
 
 // avoid #ifdefs for when b_spell is not available
-# define B_SPELL(buf)  ((buf)->b_spell)
+#define B_SPELL(buf)  ((buf)->b_spell)
 
 typedef struct qf_info_S qf_info_T;
 
@@ -436,8 +439,8 @@ typedef struct {
   long b_syn_sync_minlines;             // minimal sync lines offset
   long b_syn_sync_maxlines;             // maximal sync lines offset
   long b_syn_sync_linebreaks;           // offset for multi-line pattern
-  char_u      *b_syn_linecont_pat;      // line continuation pattern
-  regprog_T   *b_syn_linecont_prog;     // line continuation program
+  char_u *b_syn_linecont_pat;      // line continuation pattern
+  regprog_T *b_syn_linecont_prog;     // line continuation program
   syn_time_T b_syn_linecont_time;
   int b_syn_linecont_ic;                // ignore-case flag for above
   int b_syn_topgrp;                     // for ":syntax include"
@@ -456,10 +459,10 @@ typedef struct {
   // b_sst_freecount    number of free entries in b_sst_array[]
   // b_sst_check_lnum   entries after this lnum need to be checked for
   //                    validity (MAXLNUM means no check needed)
-  synstate_T  *b_sst_array;
+  synstate_T *b_sst_array;
   int b_sst_len;
-  synstate_T  *b_sst_first;
-  synstate_T  *b_sst_firstfree;
+  synstate_T *b_sst_first;
+  synstate_T *b_sst_firstfree;
   int b_sst_freecount;
   linenr_T b_sst_check_lnum;
   disptick_T b_sst_lasttick;    // last display tick
@@ -467,12 +470,12 @@ typedef struct {
   // for spell checking
   garray_T b_langp;             // list of pointers to slang_T, see spell.c
   bool b_spell_ismw[256];       // flags: is midword char
-  char_u      *b_spell_ismw_mb;  // multi-byte midword chars
-  char_u      *b_p_spc;         // 'spellcapcheck'
-  regprog_T   *b_cap_prog;      // program for 'spellcapcheck'
-  char_u      *b_p_spf;         // 'spellfile'
-  char_u      *b_p_spl;         // 'spelllang'
-  char_u      *b_p_spo;         // 'spelloptions'
+  char_u *b_spell_ismw_mb;  // multi-byte midword chars
+  char_u *b_p_spc;         // 'spellcapcheck'
+  regprog_T *b_cap_prog;      // program for 'spellcapcheck'
+  char_u *b_p_spf;         // 'spellfile'
+  char_u *b_p_spl;         // 'spelllang'
+  char_u *b_p_spo;         // 'spelloptions'
   int b_cjk;                    // all CJK letters as OK
   char_u b_syn_chartab[32];     // syntax iskeyword option
   char_u *b_syn_isk;            // iskeyword option
@@ -517,14 +520,16 @@ struct file_buffer {
 
   memline_T b_ml;               // associated memline (also contains line count
 
-  buf_T       *b_next;          // links in list of buffers
-  buf_T       *b_prev;
+  buf_T *b_next;          // links in list of buffers
+  buf_T *b_prev;
 
   int b_nwindows;               // nr of windows open on this buffer
 
   int b_flags;                  // various BF_ flags
   int b_locked;                 // Buffer is being closed or referenced, don't
                                 // let autocommands wipe it out.
+  int b_ro_locked;              // Non-zero when the buffer can't be changed.
+                                // Used for FileChangedRO
 
   //
   // b_ffname   has the full path of the file (NULL for no name).
@@ -532,11 +537,11 @@ struct file_buffer {
   // b_fname    is the same as b_sfname, unless ":cd" has been done,
   //            then it is the same as b_ffname (NULL for no name).
   //
-  char_u      *b_ffname;        // full path file name, allocated
-  char_u      *b_sfname;        // short file name, allocated, may be equal to
-                                // b_ffname
-  char_u      *b_fname;         // current file name, points to b_ffname or
-                                // b_sfname
+  char_u *b_ffname;        // full path file name, allocated
+  char_u *b_sfname;        // short file name, allocated, may be equal to
+                           // b_ffname
+  char_u *b_fname;         // current file name, points to b_ffname or
+                           // b_sfname
 
   bool file_id_valid;
   FileID file_id;
@@ -571,7 +576,7 @@ struct file_buffer {
                                 // change
   long b_mod_xlines;            // number of extra buffer lines inserted;
                                 // negative when lines were deleted
-  wininfo_T   *b_wininfo;       // list of last used info for each window
+  wininfo_T *b_wininfo;       // list of last used info for each window
   int b_mod_tick_syn;           // last display tick syntax was updated
   int b_mod_tick_decor;         // last display tick decoration providers
                                 // where invoked
@@ -608,10 +613,10 @@ struct file_buffer {
   uint64_t b_chartab[4];
 
   // Table used for mappings local to a buffer.
-  mapblock_T  *(b_maphash[MAX_MAPHASH]);
+  mapblock_T *(b_maphash[MAX_MAPHASH]);
 
   // First abbreviation local to a buffer.
-  mapblock_T  *b_first_abbr;
+  mapblock_T *b_first_abbr;
   // User commands local to the buffer.
   garray_T b_ucmds;
   /*
@@ -626,10 +631,10 @@ struct file_buffer {
   /*
    * The following only used in undo.c.
    */
-  u_header_T  *b_u_oldhead;     // pointer to oldest header
-  u_header_T  *b_u_newhead;     // pointer to newest header; may not be valid
-                                // if b_u_curhead is not NULL
-  u_header_T  *b_u_curhead;     // pointer to current header
+  u_header_T *b_u_oldhead;     // pointer to oldest header
+  u_header_T *b_u_newhead;     // pointer to newest header; may not be valid
+                               // if b_u_curhead is not NULL
+  u_header_T *b_u_curhead;     // pointer to current header
   int b_u_numhead;              // current number of headers
   bool b_u_synced;              // entry lists are synced
   long b_u_seq_last;            // last used undo sequence number
@@ -641,7 +646,7 @@ struct file_buffer {
   /*
    * variables for "U" command in undo.c
    */
-  char_u      *b_u_line_ptr;    // saved line for "U" command
+  char_u *b_u_line_ptr;    // saved line for "U" command
   linenr_T b_u_line_lnum;       // line number of line in u_line
   colnr_T b_u_line_colnr;       // optional column number
 
@@ -653,11 +658,11 @@ struct file_buffer {
 #define B_IMODE_USE_INSERT -1   //  Use b_p_iminsert value for search
 #define B_IMODE_NONE 0          //  Input via none
 #define B_IMODE_LMAP 1          //  Input via langmap
-# define B_IMODE_LAST 1
+#define B_IMODE_LAST 1
 
   int16_t b_kmap_state;         // using "lmap" mappings
-# define KEYMAP_INIT    1       // 'keymap' was set, call keymap_init()
-# define KEYMAP_LOADED  2       // 'keymap' mappings have been loaded
+#define KEYMAP_INIT    1       // 'keymap' was set, call keymap_init()
+#define KEYMAP_LOADED  2       // 'keymap' mappings have been loaded
   garray_T b_kmap_ga;           // the keymap table
 
   /*
@@ -812,7 +817,7 @@ struct file_buffer {
 
   int b_start_eol;              // last line had eol when it was read
   int b_start_ffc;              // first char of 'ff' when edit started
-  char_u      *b_start_fenc;    // 'fileencoding' when edit started or NULL
+  char_u *b_start_fenc;    // 'fileencoding' when edit started or NULL
   int b_bad_char;               // "++bad=" argument when edit started or 0
   int b_start_bomb;             // 'bomb' when it was read
 
@@ -849,8 +854,8 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   sign_entry_T *b_signlist;     // list of placed signs
-  int b_signcols_max;           // cached maximum number of sign columns
   int b_signcols;               // last calculated number of sign columns
+  bool b_signcols_valid;        // calculated sign columns is valid
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
@@ -859,8 +864,9 @@ struct file_buffer {
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
   MarkTree b_marktree[1];
-  Map(uint64_t, ExtmarkItem) *b_extmark_index;
-  Map(uint64_t, ExtmarkNs) *b_extmark_ns;         // extmark namespaces
+  Map(uint64_t, ExtmarkItem) b_extmark_index[1];
+  Map(uint64_t, ExtmarkNs) b_extmark_ns[1];         // extmark namespaces
+  size_t b_virt_line_blocks;    // number of virt_line blocks
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
@@ -889,7 +895,7 @@ struct file_buffer {
 /*
  * Stuff for diff mode.
  */
-# define DB_COUNT 8     // up to four buffers can be diff'ed
+#define DB_COUNT 8     // up to four buffers can be diff'ed
 
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
@@ -907,14 +913,14 @@ struct file_buffer {
  */
 typedef struct diffblock_S diff_T;
 struct diffblock_S {
-  diff_T      *df_next;
+  diff_T *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
 };
 
 #define SNAP_HELP_IDX   0
-# define SNAP_AUCMD_IDX 1
-# define SNAP_COUNT     2
+#define SNAP_AUCMD_IDX 1
+#define SNAP_COUNT     2
 
 /// Tab pages point to the top frame of each tab page.
 /// Note: Most values are NOT valid for the current tab page!  Use "curwin",
@@ -923,25 +929,26 @@ struct diffblock_S {
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
   handle_T handle;
-  tabpage_T       *tp_next;         ///< next tabpage or NULL
-  frame_T         *tp_topframe;     ///< topframe for the windows
-  win_T           *tp_curwin;       ///< current window in this Tab page
-  win_T           *tp_prevwin;      ///< previous window in this Tab page
-  win_T           *tp_firstwin;     ///< first window in this Tab page
-  win_T           *tp_lastwin;      ///< last window in this Tab page
+  tabpage_T *tp_next;         ///< next tabpage or NULL
+  frame_T *tp_topframe;     ///< topframe for the windows
+  win_T *tp_curwin;       ///< current window in this Tab page
+  win_T *tp_prevwin;      ///< previous window in this Tab page
+  win_T *tp_firstwin;     ///< first window in this Tab page
+  win_T *tp_lastwin;      ///< last window in this Tab page
   long tp_old_Rows;                 ///< Rows when Tab page was left
   long tp_old_Columns;              ///< Columns when Tab page was left
   long tp_ch_used;                  ///< value of 'cmdheight' when frame size
                                     ///< was set
 
-  diff_T          *tp_first_diff;
-  buf_T           *(tp_diffbuf[DB_COUNT]);
+  diff_T *tp_first_diff;
+  buf_T *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;              ///< list of diffs is outdated
   int tp_diff_update;               ///< update diffs before redrawing
-  frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
+  frame_T *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
   ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
-  dict_T          *tp_vars;         ///< Internal variables, local to tab page.
-  char_u          *tp_localdir;     ///< Absolute path of local cwd or NULL.
+  dict_T *tp_vars;         ///< Internal variables, local to tab page.
+  char_u *tp_localdir;     ///< Absolute path of local cwd or NULL.
+  char_u *tp_prevdir;      ///< Previous directory.
 };
 
 /*
@@ -974,14 +981,14 @@ struct frame_S {
   int fr_newwidth;              // new width used in win_equal_rec()
   int fr_height;
   int fr_newheight;             // new height used in win_equal_rec()
-  frame_T     *fr_parent;       // containing frame or NULL
-  frame_T     *fr_next;         // frame right or below in same parent, NULL
-                                // for last
-  frame_T     *fr_prev;         // frame left or above in same parent, NULL
-                                // for first
+  frame_T *fr_parent;       // containing frame or NULL
+  frame_T *fr_next;         // frame right or below in same parent, NULL
+                            // for last
+  frame_T *fr_prev;         // frame left or above in same parent, NULL
+                            // for first
   // fr_child and fr_win are mutually exclusive
-  frame_T     *fr_child;        // first contained frame
-  win_T       *fr_win;          // window that fills this frame
+  frame_T *fr_child;        // first contained frame
+  win_T *fr_win;          // window that fills this frame
 };
 
 #define FR_LEAF 0       // frame is a leaf
@@ -997,7 +1004,7 @@ struct frame_S {
 typedef struct {
   regmmatch_T rm;       // points to the regexp program; contains last found
                         // match (may continue in next line)
-  buf_T       *buf;     // the buffer to search for a match
+  buf_T *buf;     // the buffer to search for a match
   linenr_T lnum;        // the line to search for a match
   int attr;             // attributes to be used for a match
   int attr_cur;         // attributes currently active in win_line()
@@ -1014,9 +1021,9 @@ typedef struct {
 /// Same as lpos_T, but with additional field len.
 typedef struct
 {
-    linenr_T    lnum;   ///< line number
-    colnr_T     col;    ///< column number
-    int         len;    ///< length: 0 - to the end of line
+  linenr_T lnum;   ///< line number
+  colnr_T col;    ///< column number
+  int len;    ///< length: 0 - to the end of line
 } llpos_T;
 
 /// posmatch_T provides an array for storing match items for matchaddpos()
@@ -1024,10 +1031,10 @@ typedef struct
 typedef struct posmatch posmatch_T;
 struct posmatch
 {
-    llpos_T     pos[MAXPOSMATCH];   ///< array of positions
-    int         cur;                ///< internal position counter
-    linenr_T    toplnum;            ///< top buffer line
-    linenr_T    botlnum;            ///< bottom buffer line
+  llpos_T pos[MAXPOSMATCH];   ///< array of positions
+  int cur;                ///< internal position counter
+  linenr_T toplnum;            ///< top buffer line
+  linenr_T botlnum;            ///< bottom buffer line
 };
 
 /*
@@ -1132,20 +1139,20 @@ typedef struct VimMenu vimmenu_T;
 struct VimMenu {
   int modes;                         ///< Which modes is this menu visible for
   int enabled;                       ///< for which modes the menu is enabled
-  char_u      *name;                 ///< Name of menu, possibly translated
-  char_u      *dname;                ///< Displayed Name ("name" without '&')
-  char_u      *en_name;              ///< "name" untranslated, NULL when
-                                     ///< was not translated
-  char_u      *en_dname;             ///< NULL when "dname" untranslated
+  char_u *name;                 ///< Name of menu, possibly translated
+  char_u *dname;                ///< Displayed Name ("name" without '&')
+  char_u *en_name;              ///< "name" untranslated, NULL when
+                                ///< was not translated
+  char_u *en_dname;             ///< NULL when "dname" untranslated
   int mnemonic;                      ///< mnemonic key (after '&')
-  char_u      *actext;               ///< accelerator text (after TAB)
+  char_u *actext;               ///< accelerator text (after TAB)
   long priority;                     ///< Menu order priority
-  char_u      *strings[MENU_MODES];  ///< Mapped string for each mode
+  char_u *strings[MENU_MODES];  ///< Mapped string for each mode
   int noremap[MENU_MODES];           ///< A \ref REMAP_VALUES flag for each mode
   bool silent[MENU_MODES];           ///< A silent flag for each mode
-  vimmenu_T   *children;             ///< Children of sub-menu
-  vimmenu_T   *parent;               ///< Parent of menu
-  vimmenu_T   *next;                 ///< Next item in menu
+  vimmenu_T *children;             ///< Children of sub-menu
+  vimmenu_T *parent;               ///< Parent of menu
+  vimmenu_T *next;                 ///< Next item in menu
 };
 
 /// Structure which contains all information that belongs to a window.
@@ -1154,10 +1161,10 @@ struct VimMenu {
 struct window_S {
   handle_T handle;                  ///< unique identifier for the window
 
-  buf_T       *w_buffer;            ///< buffer we are a window into (used
-                                    ///< often, keep it the first item!)
+  buf_T *w_buffer;            ///< buffer we are a window into (used
+                              ///< often, keep it the first item!)
 
-  synblock_T  *w_s;                 ///< for :ownsyntax
+  synblock_T *w_s;                 ///< for :ownsyntax
 
   int w_hl_id_normal;               ///< 'winhighlight' normal id
   int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
@@ -1167,12 +1174,12 @@ struct window_S {
 
   int w_hl_needs_update;            ///< attrs need to be recalculated
 
-  win_T       *w_prev;              ///< link to previous window
-  win_T       *w_next;              ///< link to next window
+  win_T *w_prev;              ///< link to previous window
+  win_T *w_next;              ///< link to next window
   bool w_closing;                   ///< window is being closed, don't let
                                     ///  autocommands close it too.
 
-  frame_T     *w_frame;             ///< frame containing this window
+  frame_T *w_frame;             ///< frame containing this window
 
   pos_T w_cursor;                   ///< cursor position in buffer
 
@@ -1208,6 +1215,7 @@ struct window_S {
     int tab3;                       ///< third tab character
     int lead;
     int trail;
+    int *multispace;
     int conceal;
   } w_p_lcs_chars;
 
@@ -1294,7 +1302,7 @@ struct window_S {
 
   /*
    * w_cline_height is the number of physical lines taken by the buffer line
-   * that the cursor is on.  We use this to avoid extra calls to plines().
+   * that the cursor is on.  We use this to avoid extra calls to plines_win().
    */
   int w_cline_height;               // current size of cursor line
   bool w_cline_folded;              // cursor line is folded
@@ -1332,7 +1340,7 @@ struct window_S {
    * This is used for efficient redrawing.
    */
   int w_lines_valid;                // number of valid entries
-  wline_T     *w_lines;
+  wline_T *w_lines;
 
   garray_T w_folds;                 // array of nested folds
   bool w_fold_manual;               // when true: some folds are opened/closed
@@ -1364,13 +1372,13 @@ struct window_S {
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 
-  alist_T     *w_alist;             // pointer to arglist for this window
+  alist_T *w_alist;             // pointer to arglist for this window
   int w_arg_idx;                    // current index in argument list (can be
                                     // out of range!)
   int w_arg_idx_invalid;            // editing another file than w_arg_idx
 
-  char_u      *w_localdir;          /* absolute path of local directory or
-                                       NULL */
+  char_u *w_localdir;          // absolute path of local directory or NULL
+  char_u *w_prevdir;           // previous directory
   // Options local to a window.
   // They are local because they influence the layout of the window or
   // depend on the window layout.
@@ -1383,13 +1391,15 @@ struct window_S {
   uint32_t w_p_stl_flags;           // flags for 'statusline'
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
-  int         *w_p_cc_cols;         // array of columns to highlight or NULL
-  long        w_p_siso;             // 'sidescrolloff' local value
-  long        w_p_so;               // 'scrolloff' local value
+  int *w_p_cc_cols;         // array of columns to highlight or NULL
+  char_u w_p_culopt_flags;     // flags for cursorline highlighting
+  long w_p_siso;             // 'sidescrolloff' local value
+  long w_p_so;               // 'scrolloff' local value
 
   int w_briopt_min;                 // minimum width for breakindent
   int w_briopt_shift;               // additional shift for breakindent
   bool w_briopt_sbr;                // sbr in 'briopt'
+  int w_briopt_list;                // additional indent for lists
 
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
@@ -1448,10 +1458,10 @@ struct window_S {
                                          * was computed. */
   int w_nrwidth_width;                  // nr of chars to print line count.
 
-  qf_info_T   *w_llist;                 // Location list for this window
+  qf_info_T *w_llist;                 // Location list for this window
   // Location list reference used in the location list window.
   // In a non-location list window, w_llist_ref is NULL.
-  qf_info_T   *w_llist_ref;
+  qf_info_T *w_llist_ref;
 };
 
 static inline int win_hl_attr(win_T *wp, int hlf)
@@ -1461,6 +1471,6 @@ static inline int win_hl_attr(win_T *wp, int hlf)
 
 /// Macros defined in Vim, but not in Neovim
 #define CHANGEDTICK(buf) \
-    (=== Include buffer.h & use buf_(get|set|inc)_changedtick ===)
+  (=== Include buffer.h & use buf_(get|set|inc) _changedtick ===)
 
 #endif // NVIM_BUFFER_DEFS_H

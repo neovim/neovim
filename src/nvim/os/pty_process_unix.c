@@ -5,11 +5,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <termios.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/ioctl.h>
+#include <termios.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -26,15 +25,14 @@
 
 #include <uv.h>
 
-#include "nvim/lib/klist.h"
-
 #include "nvim/event/loop.h"
+#include "nvim/event/process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/event/process.h"
-#include "nvim/os/pty_process_unix.h"
+#include "nvim/lib/klist.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
+#include "nvim/os/pty_process_unix.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_unix.c.generated.h"
@@ -159,7 +157,7 @@ static void init_child(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
 #if defined(HAVE__NSGETENVIRON)
-#define environ (*_NSGetEnviron())
+# define environ (*_NSGetEnviron())
 #else
   extern char **environ;
 #endif

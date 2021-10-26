@@ -3,7 +3,7 @@
 " Maintainer:           Derek Wyatt
 " URL:                  https://github.com/derekwyatt/vim-scala
 " License:              Same as Vim
-" Last Change:          02 August 2016
+" Last Change:          11 August 2021
 " ----------------------------------------------------------------------------
 
 if exists('b:did_ftplugin') || &cp
@@ -26,8 +26,8 @@ setlocal commentstring=//\ %s
 
 setlocal shiftwidth=2 softtabstop=2 expandtab
 
-setlocal include='^\s*import'
-setlocal includeexpr='substitute(v:fname,"\\.","/","g")'
+setlocal include=^\\s*import
+setlocal includeexpr=substitute(v:fname,'\\.','/','g')
 
 setlocal path+=src/main/scala,src/test/scala
 setlocal suffixesadd=.scala

@@ -8,9 +8,10 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - [Merge a Vim patch].
-- Try a [good first issue](../../labels/good%20first%20issue) or [complexity:low] issue.
+- Try a [good first issue](../../labels/good-first-issue) or [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
+- [Improve documentation][wiki-contribute-help]
 
 Reporting problems
 ------------------
@@ -18,31 +19,32 @@ Reporting problems
 - [Check the FAQ][wiki-faq].
 - [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
-- Disable plugins incrementally, to narrow down the cause of the issue.
+- Try to reproduce with `nvim --clean` ("factory defaults").
+- [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
+- [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
-- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
-- Check `$NVIM_LOG_FILE`, if it exists.
+- Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
+- Check the logs. `:edit $NVIM_LOG_FILE`
 - Include `cmake --system-information` for build-related issues.
 
 Developer guidelines
 --------------------
 
-- Nvim contributors should read `:help dev`.
-- External UI developers should read `:help dev-ui`.
-- API client developers should read `:help dev-api-client`.
-- Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
+- Read `:help dev` if you are working on Nvim core.
+- Read `:help dev-ui` if you are developing a UI.
+- Read `:help dev-api-client` if you are developing an API client.
+- Install `ninja` for faster builds of Nvim.
   ```
   sudo apt-get install ninja-build
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
-- [Improve documentation][wiki-contribute-help]
 
 Pull requests (PRs)
 ---------------------
 
-- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
-- Your PR must include **test coverage.** See [test/README.md][run-tests].
+- To avoid duplicate work, create a draft pull request.
+- Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
 - Use a **rebase workflow** for small PRs.
@@ -61,21 +63,25 @@ Pull requests (PRs)
 - During a squash/fixup, use `exec make -C build unittest` between each
   pick/edit/reword.
 
-### Stages: WIP, RFC, RDY
+### Stages: Draft and Ready for review
 
-Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
-For Comment) and `[RDY]` (Ready).
+Pull requests have two stages: Draft and Ready for review.
 
-1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
-   noise to merge commit messages).
-2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-   is still in flux.
-3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
+1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback as
+  you are still working on the PR.
+    - You can skip this if your PR is ready for review.
+2. [Change your PR to ready][pr-ready] when the PR is ready for review.
+    - You can convert back to Draft at any time.
+
+Do __not__ add labels like `[RFC]` or `[WIP]` in the title to indicate the
+state of your PR: this just adds noise. Non-Draft PRs are assumed to be open
+for comments; if you want feedback from specific people, `@`-mention them in
+a comment.
 
 ### Commit messages
 
-Follow the [convential commits guidelines][conventional_commits] to *make reviews easier* and to make
-the VCS/git logs more valuable. The general structure of a commit message is as follows:
+Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
+the VCS/git logs more valuable. The general structure of a commit message is:
 
 ```
 <type>([optional scope]): <description>
@@ -85,21 +91,27 @@ the VCS/git logs more valuable. The general structure of a commit message is as 
 [optional footer(s)]
 ```
 
-- **Prefix the commit subject with a _type_:** `doc:`, `test:`
-  `runtime:`, ...
-    - Subject line for commits with only style/lint changes can be a single
-      word: `style` or `lint`.
-- **Add the optional scope following <type> if possible:** `(lsp)`, `(treesitter)`, `(multigrid)`, ...
-- Try to keep the first line under 72 characters.
-- A blank line must separate the subject from the description.
-- Breaking changes must be indicated at the very beginning of the footer or body section of a commit. A breaking change must consist of the uppercase text BREAKING CHANGE, followed by a colon, a space, and a description of what has changed about the API.
-- Check your commit message for spelling and grammatical mistakes.
+- Prefix the commit subject with one of these [_types_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
+    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`, `chore`
+    - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
+- Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
+- _Description_ shouldn't start with a capital letter or end in a period.
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
+- Try to keep the first line under 72 characters.
+- A blank line must follow the subject.
+- Breaking API changes must be indicated by
+    1. "!" after the type/scope, and
+    2. a "BREAKING CHANGE" footer describing the change.
+       Example:
+       ```
+       refactor(provider)!: drop support for Python 2
+
+       BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
+       ```
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [Travis CI], [sourcehut]
-and [AppVeyor].
+Each pull request must pass the automated builds on [sourcehut] and [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -150,7 +162,7 @@ see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
 
 - Use this format for commit messages (where `{id}` is the PVS warning-id)):
   ```
-  PVS/V{id}: {description}
+  fix(PVS/V{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
   ```
@@ -166,12 +178,26 @@ master build. To view the defects, just request access; you will be approved.
 - Use this format for commit messages (where `{id}` is the CID (Coverity ID);
   ([example](https://github.com/neovim/neovim/pull/804))):
   ```
-  coverity/{id}: {description}
+  fix(coverity/{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
   ```
   git log --oneline --no-merges --grep coverity
   ```
+
+### Clang sanitizers (ASAN and UBSAN)
+
+  ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
+
+- To build Neovim with sanitizers enabled, use
+  ```
+  rm -rf build && CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN=1" make
+  ```
+- When running Neovim, use
+  ```
+  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
+  ```
+- If Neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
 
 
 Coding
@@ -192,16 +218,28 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Style
 
-The repo includes a `.clang-format` config file which (mostly) matches the
-[style-guide].  You can use `clang-format` to format code with the `gq`
-operator in Nvim:
-
-    if !empty(findfile('.clang-format', ';'))
-      setlocal formatprg=clang-format\ -style=file
-    endif
+- Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
+  the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
+  ```
+  if !empty(findfile('src/uncrustify.cfg', ';'))
+    setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
+  endif
+  ```
+  The required version of `uncrustify` is specified in `uncrustify.cfg`.
+- There is also `.clang-format` which has drifted from the [style-guide], but
+  is available for reference. To use the Nvim `gq` command with `clang-format`:
+  ```
+  if !empty(findfile('.clang-format', ';'))
+    setlocal formatprg=clang-format\ -style=file
+  endif
+  ```
 
 ### Navigate
 
+- Set `blame.ignoreRevsFile` to ignore [noise commits](https://github.com/neovim/neovim/commit/2d240024acbd68c2d3f82bc72cb12b1a4928c6bf) in git blame:
+  ```
+  git config blame.ignoreRevsFile .git-blame-ignore-revs
+  ```
 - Use **[universal-ctags](https://github.com/universal-ctags/ctags).**
   ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
   unmaintained and won't recognize many function signatures in Neovim source.)
@@ -234,17 +272,19 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
 [conventional_commits]: https://www.conventionalcommits.org
-[style-guide]: http://neovim.io/develop/style-guide.xml
+[style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174
-[Travis CI]: https://travis-ci.org/neovim/neovim
 [sourcehut]: https://builds.sr.ht/~jmk
-[AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
+[GitHub Actions]: https://github.com/neovim/neovim/actions
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
+[pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
+[pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
+[uncrustify]: https://formulae.brew.sh/formula/uncrustify

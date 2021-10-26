@@ -1,36 +1,36 @@
 #ifndef NVIM_CURSOR_SHAPE_H
 #define NVIM_CURSOR_SHAPE_H
 
-#include "nvim/types.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/types.h"
 
 /// struct to store values from 'guicursor' and 'mouseshape'
 /// Indexes in shape_table[]
 typedef enum {
-SHAPE_IDX_N      = 0,       ///< Normal mode
-SHAPE_IDX_V      = 1,       ///< Visual mode
-SHAPE_IDX_I      = 2,       ///< Insert mode
-SHAPE_IDX_R      = 3,       ///< Replace mode
-SHAPE_IDX_C      = 4,       ///< Command line Normal mode
-SHAPE_IDX_CI     = 5,       ///< Command line Insert mode
-SHAPE_IDX_CR     = 6,       ///< Command line Replace mode
-SHAPE_IDX_O      = 7,       ///< Operator-pending mode
-SHAPE_IDX_VE     = 8,       ///< Visual mode with 'selection' exclusive
-SHAPE_IDX_CLINE  = 9,       ///< On command line
-SHAPE_IDX_STATUS = 10,      ///< On status line
-SHAPE_IDX_SDRAG  = 11,      ///< dragging a status line
-SHAPE_IDX_VSEP   = 12,      ///< On vertical separator line
-SHAPE_IDX_VDRAG  = 13,      ///< dragging a vertical separator line
-SHAPE_IDX_MORE   = 14,      ///< Hit-return or More
-SHAPE_IDX_MOREL  = 15,      ///< Hit-return or More in last line
-SHAPE_IDX_SM     = 16,      ///< showing matching paren
-SHAPE_IDX_COUNT  = 17
+  SHAPE_IDX_N      = 0,       ///< Normal mode
+  SHAPE_IDX_V      = 1,       ///< Visual mode
+  SHAPE_IDX_I      = 2,       ///< Insert mode
+  SHAPE_IDX_R      = 3,       ///< Replace mode
+  SHAPE_IDX_C      = 4,       ///< Command line Normal mode
+  SHAPE_IDX_CI     = 5,       ///< Command line Insert mode
+  SHAPE_IDX_CR     = 6,       ///< Command line Replace mode
+  SHAPE_IDX_O      = 7,       ///< Operator-pending mode
+  SHAPE_IDX_VE     = 8,       ///< Visual mode with 'selection' exclusive
+  SHAPE_IDX_CLINE  = 9,       ///< On command line
+  SHAPE_IDX_STATUS = 10,      ///< On status line
+  SHAPE_IDX_SDRAG  = 11,      ///< dragging a status line
+  SHAPE_IDX_VSEP   = 12,      ///< On vertical separator line
+  SHAPE_IDX_VDRAG  = 13,      ///< dragging a vertical separator line
+  SHAPE_IDX_MORE   = 14,      ///< Hit-return or More
+  SHAPE_IDX_MOREL  = 15,      ///< Hit-return or More in last line
+  SHAPE_IDX_SM     = 16,      ///< showing matching paren
+  SHAPE_IDX_COUNT  = 17
 } ModeShape;
 
 typedef enum {
-SHAPE_BLOCK     = 0,       ///< block cursor
-SHAPE_HOR       = 1,       ///< horizontal bar cursor
-SHAPE_VER       = 2        ///< vertical bar cursor
+  SHAPE_BLOCK     = 0,       ///< block cursor
+  SHAPE_HOR       = 1,       ///< horizontal bar cursor
+  SHAPE_VER       = 2        ///< vertical bar cursor
 } CursorShape;
 
 #define MSHAPE_NUMBERED 1000    // offset for shapes identified by number

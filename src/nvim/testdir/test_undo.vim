@@ -368,7 +368,6 @@ endfunc
 
 " Check that reading a truncted undo file doesn't hang.
 func Test_undofile_truncated()
-  throw 'skipped: TODO: '
   new
   call setline(1, 'hello')
   set ul=100

@@ -3,19 +3,18 @@
 
 #include <assert.h>
 
-#include "nvim/lib/kvec.h"
-
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/state.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/getchar.h"
-#include "nvim/option_defs.h"
-#include "nvim/ui.h"
-#include "nvim/os/input.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/edit.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/getchar.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/input.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
@@ -144,6 +143,9 @@ char *get_mode(void)
       buf[0] = (char)(VIsual_mode + 's' - 'v');
     } else {
       buf[0] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[1] = 's';
+      }
     }
   } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
              || State == CONFIRM) {
@@ -159,6 +161,11 @@ char *get_mode(void)
     if (State & VREPLACE_FLAG) {
       buf[0] = 'R';
       buf[1] = 'v';
+      if (ins_compl_active()) {
+        buf[2] = 'c';
+      } else if (ctrl_x_mode_not_defined_yet()) {
+        buf[2] = 'x';
+      }
     } else {
       if (State & REPLACE_FLAG) {
         buf[0] = 'R';
@@ -171,12 +178,10 @@ char *get_mode(void)
         buf[1] = 'x';
       }
     }
-  } else if ((State & CMDLINE) || exmode_active) {
+  } else if (State & CMDLINE) {
     buf[0] = 'c';
-    if (exmode_active == EXMODE_VIM) {
+    if (exmode_active) {
       buf[1] = 'v';
-    } else if (exmode_active == EXMODE_NORMAL) {
-      buf[1] = 'e';
     }
   } else if (State & TERM_FOCUS) {
     buf[0] = 't';
@@ -190,6 +195,8 @@ char *get_mode(void)
                || restart_edit == 'V') {
       buf[1] = 'i';
       buf[2] = (char)restart_edit;
+    } else if (curbuf->terminal) {
+      buf[1] = 't';
     }
   }
 

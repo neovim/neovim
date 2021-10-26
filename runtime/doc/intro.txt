@@ -55,7 +55,7 @@ Nvim on the interwebs					*internet*
 	Nvim home page:	  https://neovim.io/
 	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
 	Downloads:	  https://github.com/neovim/neovim/releases
-	Vim FAQ:	  https://vimhelp.appspot.com/vim_faq.txt.html
+	Vim FAQ:	  https://vimhelp.org/vim_faq.txt.html
 
 
 			*bugs* *bug-report*
@@ -312,7 +312,6 @@ notation	meaning		    equivalent	decimal value(s)	~
 <Tab>		tab			CTRL-I	  9	*tab* *Tab*
 							*linefeed*
 <NL>		linefeed		CTRL-J	 10 (used for <Nul>)
-<FF>		formfeed		CTRL-L	 12	*formfeed*
 <CR>		carriage return		CTRL-M	 13	*carriage-return*
 <Return>	same as <CR>				*<Return>*
 <Enter>		same as <CR>				*<Enter>*
@@ -454,9 +453,10 @@ Ex mode			Like Command-line mode, but after entering a command
 			command line.  |Ex-mode|
 
 							*Terminal-mode*
-Terminal mode		In Terminal mode all input (except |c_CTRL-\_CTRL-N|)
-			is sent to the process running in the current
-			|terminal| buffer.
+Terminal mode		In Terminal mode all input (except CTRL-\) is sent to
+			the process running in the current |terminal| buffer.
+			If CTRL-\ is pressed, the next key is sent unless it
+			is CTRL-N (|CTRL-\_CTRL-N|).
 			If the 'showmode' option is on "-- TERMINAL --" is shown
 			at the bottom of the window.
 

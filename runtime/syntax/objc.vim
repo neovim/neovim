@@ -64,7 +64,7 @@ syn keyword objcStorageClass nullable nonnull null_unspecified
 " ObjC type specifier
 syn keyword objcTypeSpecifier __kindof __covariant
 
-" ObjC Type Infomation Parameters
+" ObjC Type Information Parameters
 syn keyword objcTypeInfoParams ObjectType KeyType
 
 " shorthand

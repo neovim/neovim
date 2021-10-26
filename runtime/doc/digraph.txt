@@ -165,7 +165,7 @@ ROUBLE
 The rouble sign was added in 2014 as 0x20bd.  Vim supports the digraphs =R and
 =P for this.  Note that R= and P= are other characters.
 
-							*digraph-table*
+						*digraph-table* *digraph-table-mbyte*
 char  digraph	hex	dec	official name ~
 ^@	NU	0x00	  0	NULL (NUL)
 ^A	SH	0x01	  1	START OF HEADING (SOH)
@@ -341,12 +341,6 @@ $	DO	0x24	 36	DOLLAR SIGN
 ý	y'	0xfd	253	LATIN SMALL LETTER Y WITH ACUTE
 þ	th	0xfe	254	LATIN SMALL LETTER THORN (Icelandic)
 ÿ	y:	0xff	255	LATIN SMALL LETTER Y WITH DIAERESIS
-
-If your Vim is compiled with |multibyte| support and you are using a multibyte
-'encoding', Vim provides this enhanced set of additional digraphs:
-
-							*digraph-table-mbyte*
-char  digraph	hex	dec	official name ~
 Ā	A-	0100	0256	LATIN CAPITAL LETTER A WITH MACRON
 ā	a-	0101	0257	LATIN SMALL LETTER A WITH MACRON
 Ă	A(	0102	0258	LATIN CAPITAL LETTER A WITH BREVE

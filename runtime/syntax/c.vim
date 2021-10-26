@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 11
+" Last Change:	2021 May 24
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -413,6 +413,9 @@ if exists("c_autodoc")
   syn cluster cCommentGroup add=cAutodocReal
   syn cluster cPreProcGroup add=cAutodocReal
 endif
+
+" be able to fold #pragma regions
+syn region	cPragma		start="^\s*#pragma\s\+region\>" end="^\s*#pragma\s\+endregion\>" transparent keepend extend fold
 
 " Highlight User Labels
 syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserCont,cUserLabel,cBitField,cOctalZero,cCppOutWrapper,cCppInWrapper,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cCppParen,cCppBracket,cCppString

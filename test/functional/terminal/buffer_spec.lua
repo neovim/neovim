@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local assert_alive = helpers.assert_alive
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
@@ -7,6 +8,7 @@ local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 local command= helpers.command
 local exc_exec = helpers.exc_exec
+local matches = helpers.matches
 
 describe(':terminal buffer', function()
   local screen
@@ -20,14 +22,28 @@ describe(':terminal buffer', function()
 
   it('terminal-mode forces various options', function()
     feed([[<C-\><C-N>]])
-    command('setlocal cursorline cursorcolumn scrolloff=4 sidescrolloff=7')
-    eq({ 1, 1, 4, 7 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
-    eq('n', eval('mode()'))
+    command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
+    eq({ 'both', 1, 1, 4, 7 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq('nt', eval('mode(1)'))
 
     -- Enter terminal-mode ("insert" mode in :terminal).
     feed('i')
-    eq('t', eval('mode()'))
-    eq({ 0, 0, 0, 0 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq('t', eval('mode(1)'))
+    eq({ 'number', 1, 0, 0, 0 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+  end)
+
+  it('terminal-mode does not change cursorlineopt if cursorline is disabled', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal nocursorline cursorlineopt=both')
+    feed('i')
+    eq({ 0, 'both' }, eval('[&l:cursorline, &l:cursorlineopt]'))
+  end)
+
+  it('terminal-mode disables cursorline when cursorlineopt is only set to "line', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline cursorlineopt=line')
+    feed('i')
+    eq({ 0, 'line' }, eval('[&l:cursorline, &l:cursorlineopt]'))
   end)
 
   describe('when a new file is edited', function()
@@ -255,8 +271,23 @@ describe(':terminal buffer', function()
     command('bdelete!')
   end)
 
-  it('handles wqall', function()
+  it('requires bang (!) to close a running job #15402', function()
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
+      matches('^Vim%('..cmd:gsub('%%', '')..'%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',
+        exc_exec(cmd))
+    end
+    command('call jobstop(&channel)')
+    assert(0 >= eval('jobwait([&channel], 1000)[0]'))
+    command('bdelete')
+  end)
+
+  it('stops running jobs with :quit', function()
+    -- Open in a new window to avoid terminating the nvim instance
+    command('split')
+    command('terminal')
+    command('set nohidden')
+    command('quit')
   end)
 
   it('does not segfault when pasting empty buffer #13955', function()
@@ -284,7 +315,7 @@ describe('No heap-buffer-overflow when using', function()
     feed('$')
     -- Let termopen() modify the buffer
     feed_command('call termopen("echo")')
-    eq(2, eval('1+1')) -- check nvim still running
+    assert_alive()
     feed_command('bdelete!')
   end)
 end)
@@ -294,6 +325,6 @@ describe('No heap-buffer-overflow when', function()
     feed_command('set nowrap')
     feed_command('autocmd TermOpen * startinsert')
     feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 end)

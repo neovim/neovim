@@ -43,6 +43,9 @@ func Test_lisp_indent()
 	      \ ',@body',
 	      \ '(princ "</a>")))'
 	      \ ])
+  call assert_equal(7, lispindent(2))
+  call assert_equal(5, 6->lispindent())
+
   set lisp
   set lispwords&
   let save_copt = &cpoptions

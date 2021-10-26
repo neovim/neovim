@@ -50,7 +50,7 @@ However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
 ]]
 
-function class(BaseClass, ClassInitialiser)
+local function class(BaseClass, ClassInitialiser)
   local newClass = {}    -- a new class newClass
   if not ClassInitialiser and type(BaseClass) == 'function' then
     ClassInitialiser = BaseClass
@@ -68,15 +68,14 @@ function class(BaseClass, ClassInitialiser)
 
   -- expose a constructor which can be called by <classname>(<args>)
   local classMetatable = {}
-  classMetatable.__call = 
-  function(class_tbl, ...)
+  classMetatable.__call = function(class_tbl, ...)
     local newInstance = {}
     setmetatable(newInstance,newClass)
     --if init then
     --  init(newInstance,...)
     if class_tbl.init then
       class_tbl.init(newInstance,...)
-    else 
+    else
       -- make sure that any stuff from the base class is initialized!
       if BaseClass and BaseClass.init then
         BaseClass.init(newInstance, ...)
@@ -85,10 +84,9 @@ function class(BaseClass, ClassInitialiser)
     return newInstance
   end
   newClass.init = ClassInitialiser
-  newClass.is_a = 
-  function(this, klass)
+  newClass.is_a = function(this, klass)
     local thisMetatable = getmetatable(this)
-    while thisMetatable do 
+    while thisMetatable do
       if thisMetatable == klass then
         return true
       end
@@ -102,12 +100,13 @@ end
 
 --! \class TCore_Clock
 --! \brief a clock
-TCore_Clock = class()
+local TCore_Clock = class()
 
 --! \brief get the current time
 function TCore_Clock.GetTimeNow()
-  if os.gettimeofday then
-    return os.gettimeofday()
+  local gettimeofday = os.gettimeofday  -- luacheck: ignore 143 Accessing an undefined field of a global variable.
+  if gettimeofday then
+    return gettimeofday()
   else
     return os.time()
   end
@@ -134,20 +133,15 @@ function TCore_Clock.getTimeStamp(this,T0)
 end
 
 
---! \brief io to console
---! 
---! pseudo class (no methods, just to keep documentation tidy)
-TCore_IO = class()
--- 
 --! \brief write to stdout
-function TCore_IO_write(Str)
+local function TCore_IO_write(Str)
   if (Str) then
     io.write(Str)
   end
 end
 
 --! \brief write to stdout
-function TCore_IO_writeln(Str)
+local function TCore_IO_writeln(Str)
   if (Str) then
     io.write(Str)
   end
@@ -156,16 +150,16 @@ end
 
 
 --! \brief trims a string
-function string_trim(Str)
+local function string_trim(Str)
   return Str:match("^%s*(.-)%s*$")
 end
 
 --! \brief split a string
---! 
+--!
 --! \param Str
 --! \param Pattern
 --! \returns table of string fragments
-function string_split(Str, Pattern)
+local function string_split(Str, Pattern)
   local splitStr = {}
   local fpat = "(.-)" .. Pattern
   local last_end = 1
@@ -187,7 +181,7 @@ end
 
 --! \class TCore_Commandline
 --! \brief reads/parses commandline
-TCore_Commandline = class()
+local TCore_Commandline = class()
 
 --! \brief constructor
 function TCore_Commandline.init(this)
@@ -207,29 +201,21 @@ end
 
 -------------------------------
 --! \brief file buffer
---! 
+--!
 --! an input file buffer
-TStream_Read = class()
+local TStream_Read = class()
 
 --! \brief get contents of file
---! 
+--!
 --! \param Filename name of file to read (or nil == stdin)
 function    TStream_Read.getContents(this,Filename)
+  assert(Filename)
   -- get lines from file
-  local filecontents
-  if Filename then
-    -- syphon lines to our table
-    --TCore_Debug_show_var('Filename',Filename)
-    filecontents={}
-    for line in io.lines(Filename) do
-      table.insert(filecontents,line)
-    end
-  else
-    -- get stuff from stdin as a long string (with crlfs etc)
-    filecontents=io.read('*a')
-    --  make it a table of lines
-    filecontents = TString_split(filecontents,'[\n]') -- note this only works for unix files.
-    Filename = 'stdin'
+  -- syphon lines to our table
+  --TCore_Debug_show_var('Filename',Filename)
+  local filecontents={}
+  for line in io.lines(Filename) do
+    table.insert(filecontents,line)
   end
 
   if filecontents then
@@ -278,7 +264,7 @@ function TStream_Read.eof(this)
 end
 
 --! \brief output stream
-TStream_Write = class()
+local TStream_Write = class()
 
 --! \brief constructor
 function TStream_Write.init(this)
@@ -286,17 +272,17 @@ function TStream_Write.init(this)
 end
 
 --! \brief write immediately
-function TStream_Write.write(this,Str)
+function TStream_Write.write(_,Str)
   TCore_IO_write(Str)
 end
 
 --! \brief write immediately
-function TStream_Write.writeln(this,Str)
+function TStream_Write.writeln(_,Str)
   TCore_IO_writeln(Str)
 end
 
 --! \brief write immediately
-function TStream_Write.writelnComment(this,Str)
+function TStream_Write.writelnComment(_,Str)
   TCore_IO_write('// ZZ: ')
   TCore_IO_writeln(Str)
 end
@@ -311,14 +297,14 @@ end
 
 --! \brief outout tail lines
 function TStream_Write.write_tailLines(this)
-  for k,line in ipairs(this.tailLine) do
+  for _,line in ipairs(this.tailLine) do
     TCore_IO_writeln(line)
   end
   TCore_IO_write('// Lua2DoX new eof')
 end
 
 --! \brief input filter
-TLua2DoX_filter = class()
+local TLua2DoX_filter = class()
 
 --! \brief allow us to do errormessages
 function TLua2DoX_filter.warning(this,Line,LineNo,Legend)
@@ -371,12 +357,12 @@ local function checkComment4fn(Fn_magic,MagicLines)
 
   local macro,tail
 
-  for k,line in ipairs(magicLines) do
+  for _, line in ipairs(magicLines) do
     macro,tail = getMagicDirective(line)
     if macro == 'fn' then
       fn_magic = tail
       --    TCore_IO_writeln('// found fn "' .. fn_magic .. '"')
-    else
+      --else
       --TCore_IO_writeln('// not found fn "' .. line .. '"')
     end
   end
@@ -385,8 +371,6 @@ local function checkComment4fn(Fn_magic,MagicLines)
 end
 --! \brief run the filter
 function TLua2DoX_filter.readfile(this,AppStamp,Filename)
-  local err
-
   local inStream = TStream_Read()
   local outStream = TStream_Write()
   this.outStream = outStream -- save to this obj
@@ -401,8 +385,9 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
     outStream:writelnTail('// #######################')
     outStream:writelnTail()
 
-    local state, offset = '', 0
-    while not (err or inStream:eof()) do
+    local state = ''  -- luacheck: ignore 231 variable is set but never accessed.
+    local offset = 0
+    while not (inStream:eof()) do
       line = string_trim(inStream:getLine())
       --            TCore_Debug_show_var('inStream',inStream)
       --            TCore_Debug_show_var('line',line )
@@ -427,7 +412,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           line = string.sub(line,5) -- nibble head
           local comment = ''
           local closeSquare,hitend,thisComment
-          while (not err) and (not hitend) and (not inStream:eof()) do
+          while (not hitend) and (not inStream:eof()) do
             closeSquare = string.find(line,']]')
             if not closeSquare then -- need to look on another line
               thisComment = line .. '\n'
@@ -544,7 +529,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
 end
 
 --! \brief this application
-TApp = class()
+local TApp = class()
 
 --! \brief constructor
 function TApp.init(this)
@@ -556,16 +541,16 @@ function TApp.init(this)
 end
 
 function TApp.getRunStamp(this)
-  return this.name .. ' (' .. this.version .. ') ' 
+  return this.name .. ' (' .. this.version .. ') '
   .. this.timestamp
 end
 
 function TApp.getVersion(this)
-  return this.name .. ' (' .. this.version .. ') ' 
+  return this.name .. ' (' .. this.version .. ') '
 end
 
 function TApp.getCopyright(this)
-  return this.copyright 
+  return this.copyright
 end
 
 local This_app = TApp()

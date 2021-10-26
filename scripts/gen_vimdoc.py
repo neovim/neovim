@@ -91,6 +91,7 @@ CONFIG = {
             'vim.c',
             'buffer.c',
             'window.c',
+            'win_config.c',
             'tabpage.c',
             'ui.c',
         ],
@@ -123,11 +124,13 @@ CONFIG = {
             'vim.lua',
             'shared.lua',
             'uri.lua',
+            'ui.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/ui.lua'),
         ]),
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
@@ -141,6 +144,7 @@ CONFIG = {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
             'uri': 'vim',
+            'ui': 'vim.ui',
         },
         'append_only': [
             'shared.lua',
@@ -154,6 +158,7 @@ CONFIG = {
             'lsp.lua',
             'buf.lua',
             'diagnostic.lua',
+            'codelens.lua',
             'handlers.lua',
             'util.lua',
             'log.lua',
@@ -186,6 +191,23 @@ CONFIG = {
         'module_override': {},
         'append_only': [],
     },
+    'diagnostic': {
+        'mode': 'lua',
+        'filename': 'diagnostic.txt',
+        'section_start_token': '*diagnostic-api*',
+        'section_order': [
+            'diagnostic.lua',
+        ],
+        'files': os.path.join(base_dir, 'runtime/lua/vim/diagnostic.lua'),
+        'file_patterns': '*.lua',
+        'fn_name_prefix': '',
+        'section_name': {'diagnostic.lua': 'diagnostic'},
+        'section_fmt': lambda _: 'Lua module: vim.diagnostic',
+        'helptag_fmt': lambda _: '*diagnostic-api*',
+        'fn_helptag_fmt': lambda fstem, name: f'*vim.{fstem}.{name}()*',
+        'module_override': {},
+        'append_only': [],
+    },
     'treesitter': {
         'mode': 'lua',
         'filename': 'treesitter.txt',
@@ -196,7 +218,6 @@ CONFIG = {
             'query.lua',
             'highlighter.lua',
             'languagetree.lua',
-            'health.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
@@ -485,6 +506,11 @@ def render_node(n, text, prefix='', indent='', width=62):
             text += indent + prefix + result
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
+            if (is_inline(c)
+                    and '' != get_text(c).strip()
+                    and text
+                    and ' ' != text[-1]):
+                text += ' '
             text += render_node(c, text, indent=indent, width=width)
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
@@ -949,6 +975,8 @@ def main(config, args):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(target=target)
+        log.info("Generating documentation for %s in folder %s",
+                 target, output_dir)
         debug = args.log_level >= logging.DEBUG
         p = subprocess.Popen(
                 ['doxygen', '-'],
@@ -1104,7 +1132,8 @@ def filter_source(filename):
 
 def parse_args():
     targets = ', '.join(CONFIG.keys())
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        description="Generate helpdoc from source code")
     ap.add_argument(
         "--log-level", "-l", choices=LOG_LEVELS.keys(),
         default=logging.getLevelName(logging.ERROR), help="Set log verbosity"
@@ -1127,7 +1156,7 @@ Doxyfile = textwrap.dedent('''
     INPUT_FILTER           = "{filter}"
     EXCLUDE                =
     EXCLUDE_SYMLINKS       = NO
-    EXCLUDE_PATTERNS       = */private/*
+    EXCLUDE_PATTERNS       = */private/* */health.lua */_*.lua
     EXCLUDE_SYMBOLS        =
     EXTENSION_MAPPING      = lua=C
     EXTRACT_PRIVATE        = NO
@@ -1158,6 +1187,7 @@ if __name__ == "__main__":
     print("Setting log level to %s" % args.log_level)
     args.log_level = LOG_LEVELS[args.log_level]
     log.setLevel(args.log_level)
+    log.addHandler(logging.StreamHandler())
 
     if len(args.source_filter) > 0:
         filter_source(args.source_filter[0])

@@ -2,8 +2,8 @@ local F = {}
 
 --- Returns {a} if it is not nil, otherwise returns {b}.
 ---
---@param a
---@param b
+---@param a
+---@param b
 function F.if_nil(a, b)
   if a == nil then return b end
   return a
@@ -27,5 +27,14 @@ function F.nil_wrap(fn)
   end
 end
 
+--- like {...} except preserve the lenght explicitly
+function F.pack_len(...)
+  return {n=select('#', ...), ...}
+end
+
+--- like unpack() but use the length set by F.pack_len if present
+function F.unpack_len(t)
+  return unpack(t, 1, t.n)
+end
 
 return F

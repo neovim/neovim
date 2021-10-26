@@ -85,7 +85,7 @@ describe("folded lines", function()
     end)
 
     it("highlighting with relative line numbers", function()
-      command("set relativenumber foldmethod=marker")
+      command("set relativenumber cursorline cursorlineopt=number foldmethod=marker")
       feed_command("set foldcolumn=2")
       funcs.setline(1, '{{{1')
       funcs.setline(2, 'line 1')

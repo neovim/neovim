@@ -22,15 +22,15 @@
 /// memory).
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <inttypes.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/hashtab.h"
-#include "nvim/message.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/vim.h"
 
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5
@@ -102,8 +102,7 @@ hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
 ///
 ///         @warning Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key,
-                          const size_t len)
+hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key, const size_t len)
 {
   return hash_lookup(ht, key, len, hash_hash_len(key, len));
 }
@@ -119,8 +118,7 @@ hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key,
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_lookup(const hashtab_T *const ht,
-                        const char *const key, const size_t key_len,
+hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const size_t key_len,
                         const hash_T hash)
 {
 #ifdef HT_DEBUG
@@ -336,7 +334,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
   bool keep_smallarray = newarray_is_small
-    && ht->ht_array == ht->ht_smallarray;
+                         && ht->ht_array == ht->ht_smallarray;
 
   // Make sure that oldarray and newarray do not overlap,
   // so that copying is possible.
@@ -387,7 +385,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 }
 
 #define HASH_CYCLE_BODY(hash, p) \
-    hash = hash * 101 + *p++
+  hash = hash * 101 + *p++
 
 /// Get the hash number for a key.
 ///

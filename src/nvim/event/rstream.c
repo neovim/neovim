@@ -2,19 +2,18 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
-
 #include <uv.h>
 
-#include "nvim/event/rstream.h"
 #include "nvim/ascii.h"
-#include "nvim/vim.h"
-#include "nvim/memory.h"
-#include "nvim/log.h"
-#include "nvim/misc1.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
+#include "nvim/log.h"
+#include "nvim/memory.h"
+#include "nvim/misc1.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/rstream.c.generated.h"
@@ -160,14 +159,13 @@ static void fread_idle_cb(uv_idle_t *handle)
   }
 
   // Synchronous read
-  uv_fs_read(
-      handle->loop,
-      &req,
-      stream->fd,
-      &stream->uvbuf,
-      1,
-      (int64_t) stream->fpos,
-      NULL);
+  uv_fs_read(handle->loop,
+             &req,
+             stream->fd,
+             &stream->uvbuf,
+             1,
+             (int64_t)stream->fpos,
+             NULL);
 
   uv_fs_req_cleanup(&req);
 
@@ -178,7 +176,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   }
 
   // no errors (req.result (ssize_t) is positive), it's safe to cast.
-  size_t nread = (size_t) req.result;
+  size_t nread = (size_t)req.result;
   rbuffer_produced(stream->buffer, nread);
   stream->fpos += nread;
   invoke_read_cb(stream, nread, false);

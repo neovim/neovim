@@ -147,7 +147,7 @@ function Test_printf_spec_s()
   call assert_equal(string(value), printf('%s', value))
 
   " funcref
-  call assert_equal('printf', printf('%s', function('printf')))
+  call assert_equal('printf', printf('%s', 'printf'->function()))
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
@@ -477,7 +477,7 @@ func Test_funcref()
   endfunc
   call assert_equal(2, OneByName())
   call assert_equal(1, OneByRef())
-  let OneByRef = funcref('One')
+  let OneByRef = 'One'->funcref()
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))
@@ -500,6 +500,17 @@ endfunc
 func Test_empty_concatenate()
   call assert_equal('b', 'a'[4:0] . 'b')
   call assert_equal('b', 'b' . 'a'[4:0])
+endfunc
+
+func Test_broken_number()
+  let X = 'bad'
+  call assert_fails('echo 1X', 'E15:')
+  call assert_fails('echo 0b1X', 'E15:')
+  call assert_fails('echo 0b12', 'E15:')
+  call assert_fails('echo 0x1X', 'E15:')
+  call assert_fails('echo 011X', 'E15:')
+  call assert_equal(2, str2nr('2a'))
+  call assert_fails('inoremap <Char-0b1z> b', 'E474:')
 endfunc
 
 func Test_eval_after_if()

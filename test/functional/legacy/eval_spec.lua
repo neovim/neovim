@@ -1,6 +1,7 @@
 -- Test for various eval features.
 
 local helpers = require('test.functional.helpers')(after_each)
+local assert_alive = helpers.assert_alive
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
@@ -506,7 +507,7 @@ describe('eval', function()
     command("call setreg('0',x)")
 
     -- nvim didn't crash and "0 was emptied
-    eq(2, eval("1+1"))
+    assert_alive()
     eq({}, eval("getreg('0',1,1)"))
 
     -- x is a mutable list
@@ -599,7 +600,6 @@ describe('eval', function()
     command([[call ErrExe('call setreg(1)')]])
     command([[call ErrExe('call setreg(1, 2, 3, 4)')]])
     command([=[call ErrExe('call setreg([], 2)')]=])
-    command([[call ErrExe('call setreg(1, {})')]])
     command([=[call ErrExe('call setreg(1, 2, [])')]=])
     command([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
     command([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
@@ -614,8 +614,6 @@ describe('eval', function()
       Vim(call):E118: Too many arguments for function: setreg
       Executing call setreg([], 2)
       Vim(call):E730: using List as a String
-      Executing call setreg(1, {})
-      Vim(call):E731: using Dictionary as a String
       Executing call setreg(1, 2, [])
       Vim(call):E730: using List as a String
       Executing call setreg("/", ["1", "2"])

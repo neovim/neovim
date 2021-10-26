@@ -486,7 +486,7 @@ function! htmlcomplete#CompleteTags(findstart, base)
 			endif
 		endif
 		" Value of attribute completion {{{
-		" If attr contains =\s*[\"'] we catched value of attribute
+		" If attr contains =\s*[\"'] we match value of attribute
 		if attr =~ "=\s*[\"']" || attr =~ "=\s*$"
 			" Let do attribute specific completion
 			let attrname = matchstr(attr, '.*\ze\s*=')

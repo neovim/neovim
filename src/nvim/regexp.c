@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+// uncrustify:off
+
 /*
  * Handling of regular expressions: vim_regcomp(), vim_regexec(), vim_regsub()
  *
@@ -63,6 +65,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/garray.h"
 #include "nvim/strings.h"
 
@@ -458,8 +461,8 @@ static int toggle_Magic(int x)
  */
 #define UCHARAT(p)      ((int)*(char_u *)(p))
 
-/* Used for an error (down from) vim_regcomp(): give the error message, set
- * rc_did_emsg and return NULL */
+// Used for an error (down from) vim_regcomp(): give the error message, set
+// rc_did_emsg and return NULL
 #define EMSG_RET_NULL(m) return (EMSG(m), rc_did_emsg = true, (void *)NULL)
 #define IEMSG_RET_NULL(m) return (IEMSG(m), rc_did_emsg = true, (void *)NULL)
 #define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = true, FAIL)
@@ -712,9 +715,9 @@ static int reg_magic;           /* magicness of the pattern: */
 #define MAGIC_ON        3       /* "\m" or 'magic' */
 #define MAGIC_ALL       4       /* "\v" very magic */
 
-static int reg_string;          /* matching with a string instead of a buffer
-                                   line */
-static int reg_strict;          /* "[abc" is illegal */
+static int reg_string;          // matching with a string instead of a buffer
+                                // line
+static int reg_strict;          // "[abc" is illegal
 
 /*
  * META contains all characters that may be magic, except '^' and '$'.
@@ -738,10 +741,10 @@ static char_u META_flags[] = {
   1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1
 };
 
-static int curchr;              /* currently parsed character */
-/* Previous character.  Note: prevchr is sometimes -1 when we are not at the
- * start, eg in /[ ^I]^ the pattern was never found even if it existed,
- * because ^ was taken to be magic -- webb */
+static int curchr;              // currently parsed character
+// Previous character.  Note: prevchr is sometimes -1 when we are not at the
+// start, eg in /[ ^I]^ the pattern was never found even if it existed,
+// because ^ was taken to be magic -- webb
 static int prevchr;
 static int prevprevchr;         /* previous-previous character */
 static int nextchr;             /* used for ungetchr() */
@@ -2832,21 +2835,22 @@ static int peekchr(void)
       curchr = Magic(curchr);
     break;
   case '*':
-    /* * is not magic as the very first character, eg "?*ptr", when
-     * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
-     * "\(\*" is not magic, thus must be magic if "after_slash" */
+    // * is not magic as the very first character, eg "?*ptr", when
+    // after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
+    // "\(\*" is not magic, thus must be magic if "after_slash"
     if (reg_magic >= MAGIC_ON
         && !at_start
         && !(prev_at_start && prevchr == Magic('^'))
         && (after_slash
             || (prevchr != Magic('(')
                 && prevchr != Magic('&')
-                && prevchr != Magic('|'))))
+                && prevchr != Magic('|')))) {
       curchr = Magic('*');
+    }
     break;
   case '^':
-    /* '^' is only magic as the very first character and if it's after
-     * "\(", "\|", "\&' or "\n" */
+    // '^' is only magic as the very first character and if it's after
+    // "\(", "\|", "\&' or "\n"
     if (reg_magic >= MAGIC_OFF
         && (at_start
             || reg_magic == MAGIC_ALL
@@ -2862,8 +2866,8 @@ static int peekchr(void)
     }
     break;
   case '$':
-    /* '$' is only magic as the very last char and if it's in front of
-     * either "\|", "\)", "\&", or "\n" */
+    // '$' is only magic as the very last char and if it's in front of
+    // either "\|", "\)", "\&", or "\n"
     if (reg_magic >= MAGIC_OFF) {
       char_u *p = regparse + 1;
       bool is_magic_all = (reg_magic == MAGIC_ALL);
@@ -3002,8 +3006,8 @@ static void ungetchr(void)
   at_start = prev_at_start;
   prev_at_start = false;
 
-  /* Backup regparse, so that it's at the same position as before the
-   * getchr(). */
+  // Backup regparse, so that it's at the same position as before the
+  // getchr().
   regparse -= prevchr_len;
 }
 
@@ -5808,8 +5812,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   if (bytelen != NULL)
     *bytelen = 0;
   for (;; ) {
-    /* Since getting one line may invalidate the other, need to make copy.
-     * Slow! */
+    // Since getting one line may invalidate the other, need to make copy.
+    // Slow!
     if (rex.line != reg_tofree) {
       len = (int)STRLEN(rex.line);
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
@@ -6411,8 +6415,8 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
     int c1, c2, c11, c12;
     int junk;
 
-    /* we have to handle the strcmp ourselves, since it is necessary to
-     * deal with the composing characters by ignoring them: */
+    // we have to handle the strcmp ourselves, since it is necessary to
+    // deal with the composing characters by ignoring them:
     str1 = s1;
     str2 = s2;
     c1 = c2 = 0;
@@ -6442,9 +6446,9 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
   return result;
 }
 
-/***************************************************************
-*		      regsub stuff			       *
-***************************************************************/
+////////////////////////////////////////////////////////////////
+//                    regsub stuff                            //
+////////////////////////////////////////////////////////////////
 
 /* This stuff below really confuses cc on an SGI -- webb */
 
@@ -6509,9 +6513,10 @@ char_u *regtilde(char_u *source, int magic)
         memmove(tmpsub, newsub, (size_t)len);
         /* interpret tilde */
         memmove(tmpsub + len, reg_prev_sub, (size_t)prevlen);
-        /* copy postfix */
-        if (!magic)
-          ++p;                                /* back off \ */
+        // copy postfix
+        if (!magic) {
+          p++;                                // back off backslash
+        }
         STRCPY(tmpsub + len + prevlen, p + 1);
 
         if (newsub != source)                 /* already allocated newsub */
@@ -6725,26 +6730,24 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
 
       if (expr != NULL) {
         typval_T argv[2];
-        int dummy;
         typval_T rettv;
         staticList10_T matchList = TV_LIST_STATIC10_INIT;
-
         rettv.v_type = VAR_STRING;
         rettv.vval.v_string = NULL;
         argv[0].v_type = VAR_LIST;
         argv[0].vval.v_list = &matchList.sl_list;
+        funcexe_T funcexe = FUNCEXE_INIT;
+        funcexe.argv_func = fill_submatch_list;
+        funcexe.evaluate = true;
         if (expr->v_type == VAR_FUNC) {
           s = expr->vval.v_string;
-          call_func(s, -1, &rettv, 1, argv,
-                    fill_submatch_list, 0L, 0L, &dummy,
-                    true, NULL, NULL);
+          call_func(s, -1, &rettv, 1, argv, &funcexe);
         } else if (expr->v_type == VAR_PARTIAL) {
           partial_T *partial = expr->vval.v_partial;
 
           s = partial_name(partial);
-          call_func(s, -1, &rettv, 1, argv,
-                    fill_submatch_list, 0L, 0L, &dummy,
-                    true, partial, NULL);
+          funcexe.partial = partial;
+          call_func(s, -1, &rettv, 1, argv, &funcexe);
         }
         if (tv_list_len(&matchList.sl_list) > 0) {
           // fill_submatch_list() was called.
@@ -7185,8 +7188,8 @@ static regengine_T nfa_regengine =
   (char_u *)""
 };
 
-/* Which regexp engine to use? Needed for vim_regcomp().
- * Must match with 'regexpengine'. */
+// Which regexp engine to use? Needed for vim_regcomp().
+// Must match with 'regexpengine'.
 static int regexp_engine = 0;
 
 #ifdef REGEXP_DEBUG

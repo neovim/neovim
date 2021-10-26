@@ -27,8 +27,8 @@ func Test_after_comes_later()
     set guioptions+=M
     let $HOME = "/does/not/exist"
     set loadplugins
-    set rtp=Xhere,Xafter,Xanother
-    set packpath=Xhere,Xafter
+    set rtp=Xhere,Xdir/after,Xanother
+    set packpath=Xhere,Xdir/after
     set nomore
     let g:sequence = ""
   [CODE]
@@ -50,8 +50,8 @@ func Test_after_comes_later()
   call mkdir('Xhere/pack/foo/start/foobar/plugin', 'p')
   call writefile(['let g:sequence .= "pack "'], 'Xhere/pack/foo/start/foobar/plugin/foo.vim')
 
-  call mkdir('Xafter/plugin', 'p')
-  call writefile(['let g:sequence .= "after "'], 'Xafter/plugin/later.vim')
+  call mkdir('Xdir/after/plugin', 'p')
+  call writefile(['let g:sequence .= "after "'], 'Xdir/after/plugin/later.vim')
 
   if RunVim(before, after, '')
 
@@ -74,7 +74,7 @@ func Test_after_comes_later()
   call delete('Xsequence')
   call delete('Xhere', 'rf')
   call delete('Xanother', 'rf')
-  call delete('Xafter', 'rf')
+  call delete('Xdir', 'rf')
 endfunc
 
 func Test_pack_in_rtp_when_plugins_run()
@@ -102,7 +102,7 @@ func Test_pack_in_rtp_when_plugins_run()
   if RunVim(before, after, '')
 
     let lines = filter(readfile('Xtestout'), '!empty(v:val)')
-    call assert_match('Xhere[/\\]pack[/\\]foo[/\\]start[/\\]foobar', get(lines, 0))
+    call assert_match('runtimepath=Xhere', get(lines, 0))
     call assert_match('autoloaded foo', get(lines, 1))
   endif
 

@@ -2,14 +2,13 @@
 #define NVIM_EVENT_LOOP_H
 
 #include <stdint.h>
-
 #include <uv.h>
 
+#include "nvim/event/multiqueue.h"
 #include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
-#include "nvim/event/multiqueue.h"
 
-typedef void * WatcherPtr;
+typedef void *WatcherPtr;
 
 #define _noop(x)
 KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
@@ -65,7 +64,7 @@ typedef struct loop {
         break; \
       } else if (remaining > 0) { \
         uint64_t now = os_hrtime(); \
-        remaining -= (int) ((now - before) / 1000000); \
+        remaining -= (int)((now - before) / 1000000); \
         before = now; \
         if (remaining <= 0) { \
           break; \

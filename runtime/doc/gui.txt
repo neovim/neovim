@@ -175,7 +175,6 @@ system.  To do this, put these commands in your vimrc file: >
 	:map <F4> :emenu <C-Z>
 Pressing <F4> will start the menu.  You can now use the cursor keys to select
 a menu entry.  Hit <Enter> to execute it.  Hit <Esc> if you want to cancel.
-This does require the |+menu| feature enabled at compile time.
 
 Creating New Menus					*creating-menus*
 
@@ -473,9 +472,8 @@ Executing Menus						*execute-menus*
 				insert-mode menu Eg: >
 	:emenu File.Exit
 
-If the console-mode vim has been compiled with WANT_MENU defined, you can
-use :emenu to access useful menu items you may have got used to from GUI
-mode.  See 'wildmenu' for an option that works well with this.  See
+You can use :emenu to access useful menu items you may have got used to from
+GUI mode.  See 'wildmenu' for an option that works well with this.  See
 |console-menus| for an example.
 
 When using a range, if the lines match with '<,'>, then the menu is executed

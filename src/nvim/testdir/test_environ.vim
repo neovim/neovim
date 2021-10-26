@@ -15,7 +15,7 @@ endfunc
 
 func Test_getenv()
   unlet! $TESTENV
-  call assert_equal(v:null, getenv('TESTENV'))
+  call assert_equal(v:null, 'TESTENV'->getenv())
   let $TESTENV = 'foo'
   call assert_equal('foo', getenv('TESTENV'))
 endfunc

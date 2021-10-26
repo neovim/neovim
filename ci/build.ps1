@@ -72,7 +72,7 @@ if ($compiler -eq 'MINGW') {
   & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {

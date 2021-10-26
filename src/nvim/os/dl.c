@@ -7,10 +7,10 @@
 #include <stdint.h>
 #include <uv.h>
 
-#include "nvim/os/dl.h"
-#include "nvim/os/os.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/dl.h"
+#include "nvim/os/os.h"
 
 /// possible function prototypes that can be called by os_libcall()
 /// int -> int
@@ -38,12 +38,8 @@ typedef int (*int_int_fn)(int i);
 ///             not NULL. NULL when using `int_out`.
 /// @param[out] int_out the output integer param
 /// @return true on success, false on failure
-bool os_libcall(const char *libname,
-                const char *funcname,
-                const char *argv,
-                int argi,
-                char **str_out,
-                int *int_out)
+bool os_libcall(const char *libname, const char *funcname, const char *argv, int argi,
+                char **str_out, int *int_out)
 {
   if (!libname || !funcname) {
     return false;
@@ -53,17 +49,17 @@ bool os_libcall(const char *libname,
 
   // open the dynamic loadable library
   if (uv_dlopen(libname, &lib)) {
-      EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
-      uv_dlclose(&lib);
-      return false;
+    EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+    uv_dlclose(&lib);
+    return false;
   }
 
   // find and load the requested function in the library
   gen_fn fn;
-  if (uv_dlsym(&lib, funcname, (void **) &fn)) {
-      EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
-      uv_dlclose(&lib);
-      return false;
+  if (uv_dlsym(&lib, funcname, (void **)&fn)) {
+    EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+    uv_dlclose(&lib);
+    return false;
   }
 
   // call the library and save the result
@@ -71,17 +67,17 @@ bool os_libcall(const char *libname,
   // exceptions. jmp's on Unix seem to interact trickily with signals as
   // well. So for now we only support those libraries that are well-behaved.
   if (str_out) {
-    str_str_fn sfn = (str_str_fn) fn;
-    int_str_fn ifn = (int_str_fn) fn;
+    str_str_fn sfn = (str_str_fn)fn;
+    int_str_fn ifn = (int_str_fn)fn;
 
     const char *res = argv ? sfn(argv) : ifn(argi);
 
     // assume that ptr values of NULL, 1 or -1 are illegal
-    *str_out = (res && (intptr_t) res != 1 && (intptr_t) res != -1)
+    *str_out = (res && (intptr_t)res != 1 && (intptr_t)res != -1)
         ? xstrdup(res) : NULL;
   } else {
-    str_int_fn sfn = (str_int_fn) fn;
-    int_int_fn ifn = (int_int_fn) fn;
+    str_int_fn sfn = (str_int_fn)fn;
+    int_int_fn ifn = (int_int_fn)fn;
     *int_out = argv ? sfn(argv) : ifn(argi);
   }
 

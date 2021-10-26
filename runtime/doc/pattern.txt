@@ -977,7 +977,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 		/.*\%17v
 <	Column 17 is highlighted by 'hlsearch' because there is another match
 	where ".*" matches zero characters.
-<
+
 
 Character classes:
 \i	identifier character (see 'isident' option)	*/\i*
@@ -1204,7 +1204,7 @@ x	A single character, with no special meaning, matches itself
 
 \%d123	Matches the character specified with a decimal number.  Must be
 	followed by a non-digit.
-\%o40	Matches the character specified with an octal number up to 0377.
+\%o40	Matches the character specified with an octal number up to 0o377.
 	Numbers below 0o40 must be followed by a non-octal digit or a
 	non-digit.
 \%x2a	Matches the character specified with up to two hexadecimal characters.

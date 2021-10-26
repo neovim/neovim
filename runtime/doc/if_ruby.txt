@@ -32,10 +32,6 @@ downloading Ruby there.
 			This form of the |:ruby| command is mainly useful for
 			including ruby code in vim scripts.
 
-			Note: This command doesn't work when the Ruby feature
-			wasn't compiled in.  To avoid errors, see
-			|script-here|.
-
 Example Vim script: >
 
 	function! RedGem()

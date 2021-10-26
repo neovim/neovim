@@ -5,14 +5,14 @@ local if_nil = vim.F.if_nil
 local protocol = {}
 
 --[=[
---@private
+---@private
 --- Useful for interfacing with:
 --- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
   nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
 end
---@private
+---@private
 function transform_schema_to_table()
   transform_schema_comments()
   nvim.command [[silent! '<,'>s/: \S\+//]]
@@ -645,6 +645,10 @@ function protocol.make_client_capabilities()
             end)();
           };
         };
+        dataSupport = true;
+        resolveSupport = {
+          properties = { 'edit', }
+        };
       };
       completion = {
         dynamicRegistration = false;
@@ -691,10 +695,11 @@ function protocol.make_client_capabilities()
       signatureHelp = {
         dynamicRegistration = false;
         signatureInformation = {
+          activeParameterSupport = true;
           documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-          -- parameterInformation = {
-          --   labelOffsetSupport = false;
-          -- };
+          parameterInformation = {
+            labelOffsetSupport = true;
+          };
         };
       };
       references = {
@@ -1002,8 +1007,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.declarationProvider) == 'boolean' then
     general_properties.declaration = server_capabilities.declarationProvider
   elseif type(server_capabilities.declarationProvider) == 'table' then
-    -- TODO: support more detailed declarationProvider options.
-    general_properties.declaration = false
+    general_properties.declaration = server_capabilities.declarationProvider
   else
     error("The server sent invalid declarationProvider")
   end
@@ -1013,8 +1017,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
     general_properties.type_definition = server_capabilities.typeDefinitionProvider
   elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
-    -- TODO: support more detailed typeDefinitionProvider options.
-    general_properties.type_definition = false
+    general_properties.type_definition = server_capabilities.typeDefinitionProvider
   else
     error("The server sent invalid typeDefinitionProvider")
   end
@@ -1024,8 +1027,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.implementationProvider) == 'boolean' then
     general_properties.implementation = server_capabilities.implementationProvider
   elseif type(server_capabilities.implementationProvider) == 'table' then
-    -- TODO(ashkan) support more detailed implementation options.
-    general_properties.implementation = false
+    general_properties.implementation = server_capabilities.implementationProvider
   else
     error("The server sent invalid implementationProvider")
   end

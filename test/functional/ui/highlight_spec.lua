@@ -789,7 +789,7 @@ describe("'listchars' highlight", function()
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {background=Screen.colors.Grey90},
       [2] = {foreground=Screen.colors.Red},
-      [3] = {foreground=Screen.colors.Green1},
+      [3] = {foreground=Screen.colors.X11Green, background=Screen.colors.Red1},
     })
     feed_command('highlight clear ModeMsg')
     feed_command('highlight Whitespace guifg=#FF0000')
@@ -909,6 +909,97 @@ describe('CursorLine highlight', function()
       aaaaaaaaaaaaaaaaaaaa|
       {4:>>>}aaaaaaaaaa       |
       :set nocursorline   |
+    ]])
+  end)
+
+  it("'cursorlineopt' screenline", function()
+    local screen = Screen.new(20,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Black, background = Screen.colors.White};
+      [2] = {foreground = Screen.colors.Yellow};
+      [3] = {foreground = Screen.colors.Red, background = Screen.colors.Green};
+      [4] = {foreground = Screen.colors.Green, background = Screen.colors.Red};
+    })
+    screen:attach()
+
+    feed_command('set wrap cursorline cursorlineopt=screenline')
+    feed_command('set showbreak=>>>')
+    feed_command('highlight clear NonText')
+    feed_command('highlight clear CursorLine')
+    feed_command('highlight NonText guifg=Yellow gui=NONE')
+    feed_command('highlight LineNr guifg=Red guibg=Green gui=NONE')
+    feed_command('highlight CursorLine guifg=Black guibg=White gui=NONE')
+    feed_command('highlight CursorLineNr guifg=Green guibg=Red gui=NONE')
+
+    feed('30iø<esc>o<esc>30ia<esc>')
+
+    -- CursorLine should not apply to 'showbreak' when 'cursorlineopt' contains "screenline"
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {2:>>>}øøøøøøøøøø       |
+      aaaaaaaaaaaaaaaaaaaa|
+      {2:>>>}{1:aaaaaaaaa^a       }|
+                          |
+    ]])
+    feed('gk')
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {2:>>>}øøøøøøøøøø       |
+      {1:aaaaaaaaaaaa^aaaaaaaa}|
+      {2:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+    feed('k')
+    screen:expect([[
+      {1:øøøøøøøøøøøø^øøøøøøøø}|
+      {2:>>>}øøøøøøøøøø       |
+      aaaaaaaaaaaaaaaaaaaa|
+      {2:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+
+    -- CursorLineNr should not apply to line number when 'cursorlineopt' does not contain "number"
+    feed_command('set relativenumber numberwidth=2')
+    screen:expect([[
+      {3:0 }{1:øøøøøøøøøøøø^øøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+
+    -- CursorLineNr should apply to line number when 'cursorlineopt' contains "number"
+    feed_command('set cursorlineopt+=number')
+    screen:expect([[
+      {4:0 }{1:øøøøøøøøøøøø^øøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {4:0 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}{1:øøøøøøøøø^øøø   }|
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {3:1 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {4:0 }{1:aaaaaaaaaaaa^aaaaaa}|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {3:1 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {4:0 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}{1:aaaaaaaaa^aaa   }|
+                          |
     ]])
   end)
 
@@ -1198,6 +1289,75 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
       {11:~ }{10:1}{11: }{10:%a}{11:   }{10:"[No}{11: }{10:Name]"}{11:                    }{10:line}{11: }{10:1}{11:    }|
       {12:Press}{9: }{12:ENTER}{9: }{12:or}{9: }{12:type}{9: }{12:command}{9: }{12:to}{9: }{12:continue}{9:^           }|
     ]]}
+  end)
+end)
+
+describe("'number' and 'relativenumber' highlight", function()
+  before_each(clear)
+
+  it('LineNr, LineNrAbove and LineNrBelow', function()
+    local screen = Screen.new(20,10)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Red},
+      [2] = {foreground = Screen.colors.Blue},
+      [3] = {foreground = Screen.colors.Green},
+    })
+    screen:attach()
+    command('set number relativenumber')
+    command('call setline(1, range(50))')
+    command('highlight LineNr guifg=Red')
+    feed('4j')
+    screen:expect([[
+      {1:  4 }0               |
+      {1:  3 }1               |
+      {1:  2 }2               |
+      {1:  1 }3               |
+      {1:5   }^4               |
+      {1:  1 }5               |
+      {1:  2 }6               |
+      {1:  3 }7               |
+      {1:  4 }8               |
+                          |
+    ]])
+    command('highlight LineNrAbove guifg=Blue')
+    screen:expect([[
+      {2:  4 }0               |
+      {2:  3 }1               |
+      {2:  2 }2               |
+      {2:  1 }3               |
+      {1:5   }^4               |
+      {1:  1 }5               |
+      {1:  2 }6               |
+      {1:  3 }7               |
+      {1:  4 }8               |
+                          |
+    ]])
+    command('highlight LineNrBelow guifg=Green')
+    screen:expect([[
+      {2:  4 }0               |
+      {2:  3 }1               |
+      {2:  2 }2               |
+      {2:  1 }3               |
+      {1:5   }^4               |
+      {3:  1 }5               |
+      {3:  2 }6               |
+      {3:  3 }7               |
+      {3:  4 }8               |
+                          |
+    ]])
+    feed('3j')
+    screen:expect([[
+      {2:  7 }0               |
+      {2:  6 }1               |
+      {2:  5 }2               |
+      {2:  4 }3               |
+      {2:  3 }4               |
+      {2:  2 }5               |
+      {2:  1 }6               |
+      {1:8   }^7               |
+      {3:  1 }8               |
+                          |
+    ]])
   end)
 end)
 

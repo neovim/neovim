@@ -1,9 +1,9 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
+local assert_alive = helpers.assert_alive
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 local eq = helpers.eq
-local eval = helpers.eval
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local iswin = helpers.iswin
@@ -86,12 +86,12 @@ describe("shell command :!", function()
 
   it("cat a binary file #4142", function()
     feed(":exe 'silent !cat '.shellescape(v:progpath)<CR>")
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
   it([[display \x08 char #4142]], function()
     feed(":silent !echo \08<CR>")
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
   it('handles control codes', function()

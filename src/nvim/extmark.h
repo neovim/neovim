@@ -1,10 +1,10 @@
 #ifndef NVIM_EXTMARK_H
 #define NVIM_EXTMARK_H
 
-#include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/marktree.h"
+#include "nvim/pos.h"
 
 EXTERN int extmark_splice_pending INIT(= 0);
 

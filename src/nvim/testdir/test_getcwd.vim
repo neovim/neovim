@@ -17,7 +17,7 @@ func GetCwdInfo(win, tab)
     let lflag = haslocaldir(a:win)
   else
     let dirname = fnamemodify(getcwd(a:win, a:tab), mod)
-    let lflag = haslocaldir(a:win, a:tab)
+    let lflag = a:win->haslocaldir(a:tab)
   endif
   return bufname . ' ' . dirname . ' ' . lflag
 endfunc
@@ -35,7 +35,7 @@ function SetUp()
   " we start from a clean state.
   call delete("Xtopdir", "rf")
   new
-  call mkdir('Xtopdir')
+  eval 'Xtopdir'->mkdir()
   cd Xtopdir
   let g:topdir = getcwd()
   call mkdir('Xdir1')
@@ -46,7 +46,7 @@ endfunction
 let g:cwd=getcwd()
 function TearDown()
   q
-  exec "cd " . g:cwd
+  call chdir(g:cwd)
   call delete("Xtopdir", "rf")
 endfunction
 

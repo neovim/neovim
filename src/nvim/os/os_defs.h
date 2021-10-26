@@ -16,7 +16,7 @@
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
-# define DEFAULT_MAXPATHL 4096
+#define DEFAULT_MAXPATHL 4096
 #if defined(PATH_MAX) && (PATH_MAX > DEFAULT_MAXPATHL)
 # define MAXPATHL PATH_MAX
 #else

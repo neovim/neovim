@@ -855,7 +855,7 @@ Here is an example that counts the number of spaces with <F4>: >
 	    set clipboard= selection=inclusive
 	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
 	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
-	    echom getreg('"')->count(' ')
+	    echom count(getreg('"'), ' ')
 	  finally
 	    call setreg('"', reg_save)
 	    call setpos("'<", visual_marks_save[0])
@@ -876,6 +876,9 @@ mark.
 Also note that the 'clipboard' option is temporarily emptied to avoid
 clobbering the `"*` or `"+` registers, if its value contains the item `unnamed`
 or `unnamedplus`.
+
+The `mode()` function will return the state as it will be after applying the
+operator.
 
 ==============================================================================
 2. Abbreviations			*abbreviations* *Abbreviations*
@@ -1306,6 +1309,7 @@ completion can be enabled:
 	-complete=highlight	highlight groups
 	-complete=history	:history suboptions
 	-complete=locale	locale names (as output of locale -a)
+	-complete=lua		Lua expression
 	-complete=mapclear	buffer argument
 	-complete=mapping	mapping name
 	-complete=menu		menus

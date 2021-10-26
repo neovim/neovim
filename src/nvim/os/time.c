@@ -3,15 +3,14 @@
 
 #include <assert.h>
 #include <limits.h>
-
 #include <uv.h>
 
 #include "nvim/assert.h"
-#include "nvim/os/time.h"
-#include "nvim/os/input.h"
 #include "nvim/event/loop.h"
-#include "nvim/os/os.h"
 #include "nvim/main.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/time.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
@@ -169,8 +168,7 @@ struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 /// @param result[out] Pointer to a 'char' where the result should be placed
 /// @param result_len length of result buffer
 /// @return human-readable string of current local time
-char *os_ctime_r(const time_t *restrict clock, char *restrict result,
-                 size_t result_len)
+char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t result_len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   struct tm clock_local;
@@ -219,5 +217,5 @@ char *os_strptime(const char *str, const char *format, struct tm *tm)
 Timestamp os_time(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (Timestamp) time(NULL);
+  return (Timestamp)time(NULL);
 }

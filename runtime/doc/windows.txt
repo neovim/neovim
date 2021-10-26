@@ -271,7 +271,7 @@ Closing a window
 ----------------
 
 :q[uit]
-:{count}q[uit]
+:{count}q[uit]						*:count_quit*
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		Without {count}: Quit the current window. If {count} is
@@ -363,7 +363,8 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 CTRL-W o						*CTRL-W_o* *E445*
 CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
 		Make the current window the only one on the screen. All other
-		windows are closed. For {count} see |:quit|.
+		windows are closed.  For {count} see the `:quit` command
+ 		above |:count_quit|.
 
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.

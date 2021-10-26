@@ -1,4 +1,4 @@
-" DoxyGen syntax hilighting extension for c/c++/idl/java
+" DoxyGen syntax highlighting extension for c/c++/idl/java
 " Language:     doxygen on top of c, cpp, idl, java, php
 " Maintainer:   Michael Geddes <vimmer@frog.wheelycreek.net>
 " Author:       Michael Geddes
@@ -54,7 +54,7 @@ let s:cpo_save = &cpo
 try
   set cpo&vim
 
-  " Start of Doxygen syntax hilighting:
+  " Start of Doxygen syntax highlighting:
   "
 
   " C/C++ Style line comments
@@ -256,7 +256,7 @@ endif
   syn match doxygenLinkRest +[^*@\\]\|\*/\@!\|[@\\]\(endlink\>\)\@!+ contained skipnl nextgroup=doxygenLinkRest,doxygenContinueLinkComment
   syn match doxygenContinueLinkComment contained +^\s*\*\=[^/]+me=e-1 nextgroup=doxygenLinkRest
   syn match doxygenLinkError "\*/" contained
-  " #Link hilighting.
+  " #Link highlighting.
   syn match doxygenHashLink /\(\h\w*\)\?#\(\.\w\@=\|\w\+\|::\|()\)\+/ contained contains=doxygenHashSpecial
   syn match doxygenHashSpecial /#/ contained
   syn match doxygenHyperLink /\(\s\|^\s*\*\?\)\@<=\(http\|https\|ftp\):\/\/[-0-9a-zA-Z_?&=+#%/.!':;@~]\+/ contained
@@ -306,7 +306,7 @@ endif
   syn region doxygenFormula contained matchgroup=doxygenFormulaEnds start=+f\[+ end=+[@\\]f]+ contains=doxygenFormulaSpecial,doxygenFormulaOperator,doxygenAtom
   syn region doxygenAtom contained transparent matchgroup=doxygenFormulaOperator start=+{+ end=+}+ contains=doxygenAtom,doxygenFormulaSpecial,doxygenFormulaOperator
 
-  " Add TODO hilighting.
+  " Add TODO highlighting.
   syn keyword doxygenTODO contained TODO README XXX FIXME
 
   " Supported HTML subset.  Not perfect, but okay.

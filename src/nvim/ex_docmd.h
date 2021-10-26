@@ -11,21 +11,18 @@
 #define DOCMD_KEYTYPED  0x08      // don't reset KeyTyped
 #define DOCMD_EXCRESET  0x10      // reset exception environment (for debugging
 #define DOCMD_KEEPLINE  0x20      // keep typed line for repeating with "."
+#define DOCMD_PREVIEW   0x40      // during 'inccommand' preview
 
-/* defines for eval_vars() */
+// defines for eval_vars()
 #define VALID_PATH              1
 #define VALID_HEAD              2
-
-/* Values for exmode_active (0 is no exmode) */
-#define EXMODE_NORMAL           1
-#define EXMODE_VIM              2
 
 // Structure used to save the current state.  Used when executing Normal mode
 // commands while in any other mode.
 typedef struct {
   int save_msg_scroll;
   int save_restart_edit;
-  int save_msg_didout;
+  bool save_msg_didout;
   int save_State;
   int save_insertmode;
   bool save_finish_op;

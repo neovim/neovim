@@ -663,7 +663,7 @@ This file explains what characters are available in UTF-8 and CP1255 encodings,
 and what the keymaps are to get those characters:
 
 glyph   encoding	   keymap ~
-Char   utf-8 cp1255  hebrew  hebrewp  name ~
+Char UTF-8 cp1255  hebrew  hebrewp  name ~
 א    0x5d0  0xe0     t	      a     'alef
 ב    0x5d1  0xe1     c	      b     bet
 ג    0x5d2  0xe2     d	      g     gimel
@@ -716,11 +716,11 @@ Vowel marks and special punctuation:
 ױ    0x5f1  0xd5     VY      VY   vav-yod
 ײ    0x5f2  0xd6     YY      YY   yod-yod
 
-The following are only available in utf-8
+The following are only available in UTF-8
 
 Cantillation marks:
 glyph
-Char utf-8 hebrew name
+Char UTF-8 hebrew name
 ב֑    0x591   C:   etnahta
 ב֒    0x592   Cs   segol
 ב֓    0x593   CS   shalshelet
@@ -803,7 +803,7 @@ ASCII.   On MS-Windows UTF-16 is also used (previously UCS-2), which uses
 internally.
 
 Vim has comprehensive UTF-8 support.  It works well in:
-- xterm with utf-8 support enabled
+- xterm with UTF-8 support enabled
 - MS-Windows GUI
 - several other platforms
 
@@ -814,14 +814,14 @@ a space to fill the gap.
 							*bom-bytes*
 When reading a file a BOM (Byte Order Mark) can be used to recognize the
 Unicode encoding:
-	EF BB BF     utf-8
-	FE FF        utf-16 big endian
-	FF FE        utf-16 little endian
-	00 00 FE FF  utf-32 big endian
-	FF FE 00 00  utf-32 little endian
+	EF BB BF     UTF-8
+	FE FF        UTF-16 big endian
+	FF FE        UTF-16 little endian
+	00 00 FE FF  UTF-32 big endian
+	FF FE 00 00  UTF-32 little endian
 
-Utf-8 is the recommended encoding.  Note that it's difficult to tell utf-16
-and utf-32 apart.  Utf-16 is often used on MS-Windows, utf-32 is not
+UTF-8 is the recommended encoding.  Note that it's difficult to tell UTF-16
+and UTF-32 apart.  UTF-16 is often used on MS-Windows, UTF-32 is not
 widespread as file format.
 
 
@@ -888,10 +888,10 @@ Motif.  Use the ":hi Menu font={fontname}" command for this. |:highlight|
 TYPING UTF-8						*utf-8-typing*
 
 If you are using X-Windows, you should find an input method that supports
-utf-8.
+UTF-8.
 
-If your system does not provide support for typing utf-8, you can use the
-'keymap' feature.  This allows writing a keymap file, which defines a utf-8
+If your system does not provide support for typing UTF-8, you can use the
+'keymap' feature.  This allows writing a keymap file, which defines a UTF-8
 character as a sequence of ASCII characters.  See |mbyte-keymap|.
 
 If everything else fails, you can type any character as four hex bytes: >

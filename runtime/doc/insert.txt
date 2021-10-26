@@ -68,12 +68,18 @@ CTRL-A		Insert previously inserted text.
 CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
 		|word-motions|, for the definition of a word.
+						*i_CTRL-W-default*
+		By default, sets a new undo point before deleting.
+		|default-mappings|
 						*i_CTRL-U*
 CTRL-U		Delete all entered characters before the cursor in the current
 		line.  If there are no newly entered characters and
 		'backspace' is not empty, delete all characters before the
 		cursor in the current line.
 		See |i_backspacing| about joining lines.
+						*i_CTRL-U-default*
+		By default, sets a new undo point before deleting.
+		|default-mappings|
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> or CTRL-I Insert a tab.  If the 'expandtab' option is on, the
 		equivalent number of spaces is inserted (use CTRL-V <Tab> to
@@ -616,6 +622,8 @@ Completion can be done for:
 12. Spelling suggestions				|i_CTRL-X_s|
 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
 
+Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
+
 All these, except CTRL-N and CTRL-P, are done in CTRL-X mode.  This is a
 sub-mode of Insert and Replace modes.  You enter CTRL-X mode by typing CTRL-X
 and one of the CTRL-X commands.  You exit CTRL-X mode by typing a key that is
@@ -1016,6 +1024,12 @@ CTRL-P			Find previous match for words that start with the
 			other contexts unless a double CTRL-X is used.
 
 
+Stop completion						*compl-stop*
+
+							*i_CTRL-X_CTRL-Z*
+CTRL-X CTRL-Z		Stop completion without changing the text.
+
+
 FUNCTIONS FOR FINDING COMPLETIONS			*complete-functions*
 
 This applies to 'completefunc' and 'omnifunc'.
@@ -1047,7 +1061,8 @@ On the second invocation the arguments are:
 
 The function must return a List with the matching words.  These matches
 usually include the "a:base" text.  When there are no matches return an empty
-List.
+List.  Note that the cursor may have moved since the first invocation, the
+text may have been changed.
 
 In order to return more information than the matching words, return a Dict
 that contains the List.  The Dict can have these items:
@@ -1118,7 +1133,7 @@ match to the total list.  These matches should then not appear in the returned
 list!  Call |complete_check()| now and then to allow the user to press a key
 while still searching for matches.  Stop searching when it returns non-zero.
 
-							*E839* *E840*
+							*E840*
 The function is allowed to move the cursor, it is restored afterwards.
 The function is not allowed to move to another window or delete text.
 

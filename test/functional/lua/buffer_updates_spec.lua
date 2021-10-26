@@ -978,6 +978,22 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("visual paste", function()
+      local check_events= setup_eventcheck(verify, { "aaa {", "b", "}" })
+      -- Setting up
+      feed[[jdd]]
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 6, 1, 0, 2, 0, 0, 0 };
+      }
+
+      -- Actually testing
+      feed[[v%p]]
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 4, 4, 1, 1, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 8, 0, 4, 4, 0, 0, 0, 2, 0, 3 };
+      }
+    end)
+
     it("nvim_buf_set_lines", function()
       local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
 
@@ -1000,6 +1016,135 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 5, 2, 0, 10 };
       }
     end)
+
+    it("flushes delbytes on substitute", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0")
+      command("s/AAA/GGG/")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 3, 3 };
+      }
+
+      -- check that byte updates for :delete (which uses curbuf->deleted_bytes2)
+      -- are correct
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
+    it("flushes delbytes on join", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0J")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 0, 1, 0, 1, 1 };
+      }
+
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 8, 0, 0, 0 };
+      }
+    end)
+
+    it("sends updates on U", function()
+      feed("ggiAAA<cr>BBB")
+      feed("<esc>gg$a CCC")
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      feed("ggU")
+
+      check_events {
+         { "test1", "bytes", 1, 6, 0, 7, 7, 0, 0, 0, 0, 3, 3 };
+      }
+    end)
+
+    it("delete in completely empty buffer", function()
+      local check_events = setup_eventcheck(verify, nil)
+
+      command "delete"
+      check_events { }
+    end)
+
+    it("delete the only line of a buffer", function()
+      local check_events = setup_eventcheck(verify, {"AAA"})
+
+      command "delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 4, 1, 0, 1 };
+      }
+    end)
+
+    it("delete the last line of a buffer with two lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      command "2delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 4, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
+    it(":sort lines", function()
+      local check_events = setup_eventcheck(verify, {"CCC", "BBB", "AAA"})
+
+      command "%sort"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 3, 0, 12 };
+      }
+    end)
+
+    it("handles already sorted lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      command "%sort"
+      check_events { }
+    end)
+
+    local function test_lockmarks(mode)
+      local description = (mode ~= "") and mode or "(baseline)"
+      it("test_lockmarks " .. description .. " %delete _", function()
+        local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+        command(mode .. " %delete _")
+        check_events {
+          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 1, 0, 1 };
+        }
+      end)
+
+      it("test_lockmarks " .. description .. " append()", function()
+        local check_events = setup_eventcheck(verify)
+
+        command(mode .. " call append(0, 'CCC')")
+        check_events {
+          { "test1", "bytes", 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 4 };
+        }
+
+        command(mode .. " call append(1, 'BBBB')")
+        check_events {
+          { "test1", "bytes", 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 5 };
+        }
+
+        command(mode .. " call append(2, '')")
+        check_events {
+          { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 1, 0, 1 };
+        }
+
+        command(mode .. " $delete _")
+        check_events {
+          { "test1", "bytes", 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 };
+        }
+
+        eq("CCC|BBBB|", table.concat(meths.buf_get_lines(0, 0, -1, true), "|"))
+      end)
+    end
+
+    -- check that behavior is identical with and without "lockmarks"
+    test_lockmarks ""
+    test_lockmarks "lockmarks"
 
     teardown(function()
       os.remove "Xtest-reload"

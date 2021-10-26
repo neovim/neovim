@@ -2,28 +2,27 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <string.h>
 #include <stdbool.h>
-
+#include <string.h>
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/os/input.h"
+#include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/ascii.h"
-#include "nvim/vim.h"
-#include "nvim/ui.h"
-#include "nvim/memory.h"
-#include "nvim/keymap.h"
-#include "nvim/mbyte.h"
-#include "nvim/fileio.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/keymap.h"
 #include "nvim/main.h"
+#include "nvim/mbyte.h"
+#include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/state.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/os/input.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -102,8 +101,7 @@ static void create_cursorhold_event(bool events_enabled)
 ///
 /// wait until either the input buffer is non-empty or , if `events` is not NULL
 /// until `events` is non-empty.
-int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt,
-              MultiQueue *events)
+int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
   if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -192,7 +190,7 @@ void os_breakcheck(void)
 /// @return `true` if file descriptor refers to a terminal.
 bool os_isatty(int fd)
 {
-    return uv_guess_handle(fd) == UV_TTY;
+  return uv_guess_handle(fd) == UV_TTY;
 }
 
 size_t input_enqueue(String keys)
@@ -208,8 +206,8 @@ size_t input_enqueue(String keys)
     // K_SPECIAL(0x80) or CSI(0x9B).
     uint8_t buf[19] = { 0 };
     unsigned int new_size
-        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                        false);
+      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
+                      false);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);
@@ -234,13 +232,13 @@ size_t input_enqueue(String keys)
 
     // copy the character, escaping CSI and K_SPECIAL
     if ((uint8_t)*ptr == CSI) {
-      rbuffer_write(input_buffer, (char *)&(uint8_t){K_SPECIAL}, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){KS_EXTRA}, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){KE_CSI}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ K_SPECIAL }, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ KS_EXTRA }, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ KE_CSI }, 1);
     } else if ((uint8_t)*ptr == K_SPECIAL) {
-      rbuffer_write(input_buffer, (char *)&(uint8_t){K_SPECIAL}, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){KS_SPECIAL}, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){KE_FILLER}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ K_SPECIAL }, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ KS_SPECIAL }, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){ KE_FILLER }, 1);
     } else {
       rbuffer_write(input_buffer, ptr, 1);
     }
@@ -301,8 +299,7 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
 
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)
-static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
-                                       unsigned int bufsize)
+static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bufsize)
 {
   int mouse_code = 0;
   int type = 0;
@@ -318,7 +315,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
 
   if (type != KS_EXTRA
       || !((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
-        || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
+           || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
     return bufsize;
   }
 
@@ -364,8 +361,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   return bufsize;
 }
 
-size_t input_enqueue_mouse(int code, uint8_t modifier,
-                           int grid, int row, int col)
+size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int col)
 {
   modifier |= check_multiclick(code, grid, row, col);
   uint8_t buf[7], *p = buf;
@@ -437,8 +433,7 @@ bool input_available(void)
   return rbuffer_size(input_buffer) != 0;
 }
 
-static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
-                          bool at_eof)
+static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data, bool at_eof)
 {
   if (at_eof) {
     input_done();

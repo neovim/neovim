@@ -31,13 +31,6 @@ this command: >
 If it replies with "C", this means the default is being used, which is
 English.
 
-	Note:
-	Using different languages only works when Vim was compiled to handle
-	it.  To find out if it works, use the ":version" command and check the
-	output for "+gettext" and "+multi_lang".  If they are there, you are
-	OK.  If you see "-gettext" or "-multi_lang" you will have to find
-	another Vim.
-
 What if you would like your messages in a different language?  There are
 several ways.  Which one you should use depends on the capabilities of your
 system.

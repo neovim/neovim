@@ -256,7 +256,14 @@ Number; !must be defined to function properly):
 
 - `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
 
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner.
+
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
+
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
+
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 
 - `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
   to `build/bin/nvim`).

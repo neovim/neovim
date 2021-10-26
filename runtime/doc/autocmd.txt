@@ -232,7 +232,7 @@ BufDelete			Before deleting a buffer from the buffer list.
 							*BufEnter*
 BufEnter			After entering a buffer.  Useful for setting
 				options for a file type.  Also executed when
-				starting to edit a buffer, after the
+				starting to edit a buffer.
 				After |BufAdd|.
 				After |BufReadPost|.
 							*BufFilePost*
@@ -499,8 +499,10 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				mode or to another window.  Also when the text
 				of the cursor line has been changed, e.g. with
 				"x", "rx" or "p".
-				Not triggered when there is typeahead or when
-				an operator is pending.
+				Not triggered when there is typeahead, while
+				executing a script file, when an operator is
+				pending, or when moving to another window while
+				remaining at the same cursor position.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
@@ -517,11 +519,17 @@ DiffUpdated			After diffs have been updated.  Depending on
 				change or when doing |:diffupdate|.
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
+				The pattern can be:
+					"window"  to trigger on `:lcd`
+					"tabpage" to trigger on `:tcd`
+					"global"  to trigger on `:cd`
+					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
 				    scope: "global", "tab", "window"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
+				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
@@ -628,7 +636,7 @@ FilterReadPre			Before reading a file from a filter command.
 							*FilterWritePost*
 FilterWritePost			After writing a file for a filter command or
 				making a diff with an external diff (see
-				DiffUpdated for internal diff).
+				|DiffUpdated| for internal diff).
 				Vim checks the pattern against the name of
 				the current buffer as with FilterWritePre.
 				Not triggered when 'shelltemp' is off.
@@ -681,23 +689,6 @@ InsertCharPre			When a character is typed in Insert mode,
 
 				Cannot change the text. |textlock|
 				Not triggered when 'paste' is set.
-							*TextYankPost*
-TextYankPost			Just after a |yank| or |deleting| command, but not
-				if the black hole register |quote_| is used nor
-				for |setreg()|. Pattern must be *.
-				Sets these |v:event| keys:
-				    inclusive
-				    operator
-				    regcontents
-				    regname
-				    regtype
-				    visual
-				The `inclusive` flag combined with the |'[|
-				and |']| marks can be used to calculate the
-				precise region of the operation.
-
-				Non-recursive (event cannot trigger itself).
-				Cannot change the text. |textlock|
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -798,9 +789,10 @@ QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 							*QuitPre*
 QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				deciding whether it closes the current window
-				or quits Vim.  Can be used to close any
-				non-essential window if the current window is
-				the last ordinary window.
+				or quits Vim.  For `:wq` the buffer is written
+				before QuitPre is triggered.  Can be used to
+				close any non-essential window if the current
+				window is the last ordinary window.
 				See also |ExitPre|, ||WinClosed|.
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
@@ -831,16 +823,16 @@ ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
 				Can be used to check for any changed files.
 							*SourcePre*
-SourcePre			Before sourcing a Vim script. |:source|
+SourcePre			Before sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 							*SourcePost*
-SourcePost			After sourcing a Vim script. |:source|
+SourcePost			After sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 				Not triggered when sourcing was interrupted.
 				Also triggered after a SourceCmd autocommand
 				was triggered.
 							*SourceCmd*
-SourceCmd			When sourcing a Vim script. |:source|
+SourceCmd			When sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 				The autocommand must source this file.
 				|Cmd-event|
@@ -914,6 +906,8 @@ TermLeave			After leaving |Terminal-mode|.
 				After TermClose.
 							*TermClose*
 TermClose			When a |terminal| job ends.
+				Sets these |v:event| keys:
+				    status
 							*TermResponse*
 TermResponse			After the response to t_RV is received from
 				the terminal.  The value of |v:termresponse|
@@ -943,6 +937,23 @@ TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+							*TextYankPost*
+TextYankPost			Just after a |yank| or |deleting| command, but not
+				if the black hole register |quote_| is used nor
+				for |setreg()|. Pattern must be *.
+				Sets these |v:event| keys:
+				    inclusive
+				    operator
+				    regcontents
+				    regname
+				    regtype
+				    visual
+				The `inclusive` flag combined with the |'[|
+				and |']| marks can be used to calculate the
+				precise region of the operation.
+
+				Non-recursive (event cannot trigger itself).
+				Cannot change the text. |textlock|
 							*User*
 User				Not executed automatically.  Use |:doautocmd|
 				to trigger this, typically for "custom events"
@@ -1226,6 +1237,13 @@ Example: >
 
 This prevents having the autocommands defined twice (e.g., after sourcing the
 vimrc file again).
+
+						*FileExplorer*
+There is one group that is recognized by Vim: FileExplorer.  If this group
+exists Vim assumes that editing a directory is possible and will trigger a
+plugin that lists the files in that directory.  This is used by the |netrw|
+plugin.  This allows you to do: >
+	browse edit
 
 ==============================================================================
 9. Executing autocommands				*autocmd-execute*

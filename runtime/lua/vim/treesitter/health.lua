@@ -9,7 +9,7 @@ function M.list_parsers()
 end
 
 --- Performs a healthcheck for treesitter integration
-function M.check_health()
+function M.check()
   local report_info = vim.fn['health#report_info']
   local report_ok = vim.fn['health#report_ok']
   local report_error = vim.fn['health#report_error']

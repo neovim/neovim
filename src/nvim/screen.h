@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/grid_defs.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 /*
  * flags for update_screen()
@@ -14,12 +14,12 @@
  */
 #define VALID                   10  /* buffer not changed, or changes marked
                                        with b_mod_* */
-#define INVERTED                20  /* redisplay inverted part that changed */
-#define INVERTED_ALL            25  /* redisplay whole inverted part */
-#define REDRAW_TOP              30  /* display first w_upd_rows screen lines */
-#define SOME_VALID              35  /* like NOT_VALID but may scroll */
-#define NOT_VALID               40  /* buffer needs complete redraw */
-#define CLEAR                   50  /* screen messed up, clear it */
+#define INVERTED                20  // redisplay inverted part that changed
+#define INVERTED_ALL            25  // redisplay whole inverted part
+#define REDRAW_TOP              30  // display first w_upd_rows screen lines
+#define SOME_VALID              35  // like NOT_VALID but may scroll
+#define NOT_VALID               40  // buffer needs complete redraw
+#define CLEAR                   50  // screen messed up, clear it
 
 /// By default, all widows are draw on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own

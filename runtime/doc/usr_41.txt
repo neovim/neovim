@@ -99,8 +99,6 @@ and the value of the variable i.  Since i is one, this will print:
 Then there is the ":let i += 1" command.  This does the same thing as
 ":let i = i + 1".  This adds one to the variable i and assigns the new value
 to the same variable.
-Note: this is how it works in legacy Vim script, which is what we discuss in
-this file.
 
 The example was given to explain the commands, but would you really want to
 make such a loop, it can be written much more compact: >
@@ -121,12 +119,12 @@ A hexadecimal number starts with "0x" or "0X".  For example "0x1f" is decimal
 31.
 
 An octal number starts with "0o", "0O" or a zero and another digit.  "0o17" is
-decimal 15.  Using just a zero prefix is not supported in Vim9 script.
+decimal 15.
 
 A binary number starts with "0b" or "0B".  For example "0b101" is decimal 5.
 
 A decimal number is just digits.  Careful: don't put a zero before a decimal
-number, it will be interpreted as an octal number in legacy script!
+number, it will be interpreted as an octal number!
 
 The ":echo" command always prints decimal numbers.  Example: >
 
@@ -746,6 +744,8 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	diff_filler()		get the number of filler lines above a line
 	screenattr()		get attribute at a screen line/row
 	screenchar()		get character code at a screen line/row
+	screenchars()		get character codes at a screen line/row
+	screenstring()		get string of characters at a screen line/row
 
 Working with text in the current buffer:		*text-functions*
 	getline()		get a line or list of lines from the buffer
@@ -785,9 +785,10 @@ System functions and manipulation of files:
 	isdirectory()		check if a directory exists
 	getfsize()		get the size of a file
 	getcwd()		get the current working directory
-	haslocaldir()		check if current window used |:lcd|
+	haslocaldir()		check if current window used |:lcd| or |:tcd|
 	tempname()		get the name of a temporary file
 	mkdir()			create a new directory
+	chdir()			change current working directory
 	delete()		delete a file
 	rename()		rename a file
 	system()		get the result of a shell command as a string
@@ -1025,6 +1026,7 @@ Various:					*various-functions*
 	undotree()		return the state of the undo tree
 
 	getreg()		get contents of a register
+	getreginfo()		get information about a register
 	getregtype()		get type of a register
 	setreg()		set contents and type of a register
 	reg_executing()		return the name of the register being executed
@@ -1803,7 +1805,7 @@ First of all you must choose a name for your plugin.  The features provided
 by the plugin should be clear from its name.  And it should be unlikely that
 someone else writes a plugin with the same name but which does something
 different.  And please limit the name to 8 characters, to avoid problems on
-old Windows systems.
+old MS-Windows systems.
 
 A script that corrects typing mistakes could be called "typecorr.vim".  We
 will use it here as an example.

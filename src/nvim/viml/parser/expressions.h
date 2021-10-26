@@ -1,13 +1,13 @@
 #ifndef NVIM_VIML_PARSER_EXPRESSIONS_H
 #define NVIM_VIML_PARSER_EXPRESSIONS_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/types.h"
 #include "nvim/viml/parser/parser.h"
-#include "nvim/eval/typval.h"
 
 // Defines whether to ignore case:
 //    ==   kCCStrategyUseOption
@@ -80,7 +80,7 @@ typedef enum {
 } ExprAssignmentType;
 
 #define EXPR_OPT_SCOPE_LIST \
-    ((char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
+  ((char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
 
 /// All possible variable scopes
 typedef enum {
@@ -96,11 +96,11 @@ typedef enum {
 } ExprVarScope;
 
 #define EXPR_VAR_SCOPE_LIST \
-    ((char[]) { \
-        kExprVarScopeScript, kExprVarScopeGlobal, kExprVarScopeVim, \
-        kExprVarScopeBuffer, kExprVarScopeWindow, kExprVarScopeTabpage, \
-        kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments, \
-    })
+  ((char[]) { \
+    kExprVarScopeScript, kExprVarScopeGlobal, kExprVarScopeVim, \
+    kExprVarScopeBuffer, kExprVarScopeWindow, kExprVarScopeTabpage, \
+    kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments, \
+  })
 
 /// Lexer token
 typedef struct {

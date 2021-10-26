@@ -7,7 +7,7 @@
 #include "nvim/os/time.h"
 #include "nvim/regexp_defs.h"
 
-/* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
+// Values for nextwild() and ExpandOne().  See ExpandOne() for meaning.
 #define WILD_FREE               1
 #define WILD_EXPAND_FREE        2
 #define WILD_EXPAND_KEEP        3

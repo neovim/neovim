@@ -17,6 +17,8 @@ func Test_writefile()
   call assert_equal("morning", l[3])
   call assert_equal("vimmers", l[4])
   call delete(f)
+
+  call assert_fails('call writefile("text", "Xfile")', 'E475: Invalid argument: writefile() first argument must be a List or a Blob')
 endfunc
 
 func Test_writefile_ignore_regexp_error()
@@ -189,6 +191,14 @@ func Test_saveas()
   close!
   enew | only
   call delete('Xfile')
+
+  " :saveas should detect and set the file type.
+  syntax on
+  saveas! Xsaveas.pl
+  call assert_equal('perl', &filetype)
+  syntax off
+  %bw!
+  call delete('Xsaveas.pl')
 endfunc
 
 func Test_write_errors()

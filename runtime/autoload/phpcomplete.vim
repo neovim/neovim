@@ -9,7 +9,7 @@
 "
 "		let g:phpcomplete_relax_static_constraint = 1/0  [default 0]
 "			Enables completion for non-static methods when completing for static context (::).
-"			This generates E_STRICT level warning, but php calls these methods nontheless.
+"			This generates E_STRICT level warning, but php calls these methods nonetheless.
 "
 "		let g:phpcomplete_complete_for_unknown_classes = 1/0 [default 0]
 "			Enables completion of variables and functions in "everything under the sun" fashion
@@ -28,7 +28,7 @@
 "			This option controls the number of characters the user needs to type before
 "			the tags will be searched for namespaces and classes in typed out namespaces in
 "			"use ..." context. Setting this to 0 is not recommended because that means the code
-"			have to scan every tag, and vim's taglist() function runs extremly slow with a
+"			have to scan every tag, and vim's taglist() function runs extremely slow with a
 "			"match everything" pattern.
 "
 "		let g:phpcomplete_parse_docblock_comments = 1/0 [default 0]
@@ -268,7 +268,7 @@ function! phpcomplete#CompleteUse(base) " {{{
 				call add(no_namespace_matches, {'word': namespace_for_class.'\'.tag.name, 'kind': tag.kind, 'menu': tag.filename, 'info': tag.filename })
 			endif
 		endfor
-		" if it seems that the tags file have namespace informations we can safely throw
+		" if it seems that the tags file have namespace information we can safely throw
 		" away namespaceless tag matches since we can be sure they are invalid
 		if patched_ctags_detected
 			no_namespace_matches = []
@@ -810,7 +810,7 @@ function! phpcomplete#CompleteClassName(base, kinds, current_namespace, imports)
 		endif
 	endfor
 
-	" resolve the typed in part with namespaces (if theres a \ in it)
+	" resolve the typed in part with namespaces (if there's a \ in it)
 	let [tag_match_pattern, namespace_for_class] = phpcomplete#ExpandClassName(a:base, a:current_namespace, a:imports)
 
 	let tags = []
@@ -926,11 +926,11 @@ function! s:getNextCharWithPos(filelines, current_pos) " {{{
 endfunction " }}}
 
 function! phpcomplete#EvaluateModifiers(modifiers, required_modifiers, prohibited_modifiers) " {{{
-	" if theres no modifier, and no modifier is allowed and no modifier is required
+	" if there's no modifier, and no modifier is allowed and no modifier is required
 	if len(a:modifiers) == 0 && len(a:required_modifiers) == 0
 		return 1
 	else
-		" check if every requred modifier is present
+		" check if every required modifier is present
 		for required_modifier in a:required_modifiers
 			if index(a:modifiers, required_modifier) == -1
 				return 0
@@ -1258,7 +1258,7 @@ function! phpcomplete#GetCurrentInstruction(line_number, col_number, phpbegin) "
 				endif
 			endif
 
-			" save the coma position for later use if theres a "naked" , possibly separating a parameter and it is not in a parented part
+			" save the coma position for later use if there's a "naked" , possibly separating a parameter and it is not in a parented part
 			if first_coma_break_pos == -1 && current_char == ','
 				let first_coma_break_pos = len(instruction)
 			endif
@@ -1304,7 +1304,7 @@ function! phpcomplete#GetCurrentInstruction(line_number, col_number, phpbegin) "
 
 	" there were a "naked" coma in the instruction
 	if first_coma_break_pos != -1
-		if instruction !~? '^use' && instruction !~? '^class' " use ... statements and class delcarations should not be broken up by comas
+		if instruction !~? '^use' && instruction !~? '^class' " use ... statements and class declarations should not be broken up by comas
 			let pos = (-1 * first_coma_break_pos) + 1
 			let instruction = instruction[pos :]
 		endif
@@ -1316,7 +1316,7 @@ function! phpcomplete#GetCurrentInstruction(line_number, col_number, phpbegin) "
 		" clear everything up until the first (
 		let instruction = substitute(instruction, '^\(if\|while\|foreach\|for\)\s*(\s*', '', '')
 
-		" lets iterate trough the instruction until we can find the pair for the opening (
+		" lets iterate through the instruction until we can find the pair for the opening (
 		let i = 0
 		let depth = 1
 		while i < len(instruction)
@@ -1424,7 +1424,7 @@ function! phpcomplete#GetCallChainReturnType(classname_candidate, class_candidat
 						let parts = split(substitute(type, '^\\', '', ''), '\')
 						let class_candidate_namespace = join(parts[0:-2], '\')
 						let classname_candidate = parts[-1]
-						" check for renamed namepsace in imports
+						" check for renamed namespace in imports
 						if has_key(classstructure.imports, class_candidate_namespace)
 							let class_candidate_namespace = classstructure.imports[class_candidate_namespace].name
 						endif
@@ -2023,7 +2023,7 @@ function! phpcomplete#GetCachedClassContents(classlocation, class_name) " {{{
 			if getftime(classstructure.file) != classstructure.mtime
 				let valid = 0
 				" we could break here, but the time required for checking probably worth
-				" the the memory we can free by checking every file in the cached hirearchy
+				" the memory we can free by checking every file in the cached hierarchy
 				call phpcomplete#ClearCachedClassContents(classstructure.file)
 			endif
 		endfor
@@ -2037,7 +2037,7 @@ function! phpcomplete#GetCachedClassContents(classlocation, class_name) " {{{
 			call remove(s:cache_classstructures, cache_key)
 			call phpcomplete#ClearCachedClassContents(full_file_path)
 
-			" fall trough for the read from files path
+			" fall through for the read from files path
 		endif
 	else
 		call phpcomplete#ClearCachedClassContents(full_file_path)
@@ -2590,7 +2590,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 				let search_line = line
 				let use_line = line
 
-				" add lines from the file until theres no ';' in them
+				" add lines from the file until there's no ';' in them
 				while search_line !~? ';' && l > 0
 					" file lines are reversed so we need to go backwards
 					let l -= 1
@@ -2622,7 +2622,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 			" find kind flags from tags or built in methods for the objects we extracted
 			" they can be either classes, interfaces or namespaces, no other thing is importable in php
 			for [key, import] in items(imports)
-				" if theres a \ in the name we have it's definitely not a built in thing, look for tags
+				" if there's a \ in the name we have it's definitely not a built in thing, look for tags
 				if import.name =~ '\\'
 					let patched_ctags_detected = 0
 					let [classname, namespace_for_classes] = phpcomplete#ExpandClassName(import.name, '\', {})
@@ -2679,10 +2679,10 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 						let import['kind'] = 'i'
 						let import['builtin'] = 1
 					else
-						" or can be a tag with exactly matchign name
+						" or can be a tag with exactly matching name
 						let tags = phpcomplete#GetTaglist('^'.import['name'].'$')
 						for tag in tags
-							" search for the first matchin namespace, class, interface with no namespace
+							" search for the first matching namespace, class, interface with no namespace
 							if !has_key(tag, 'namespace') && (tag.kind == 'n' || tag.kind == 'c' || tag.kind == 'i' || tag.kind == 't')
 								call extend(import, tag)
 								let import['builtin'] = 0
@@ -2900,7 +2900,7 @@ for [ext, data] in items(php_builtin['functions'])
 	call extend(g:php_builtin_functions, data)
 endfor
 
-" Built in classs
+" Built in class
 let g:php_builtin_classes = {}
 for [ext, data] in items(php_builtin['classes'])
 	call extend(g:php_builtin_classes, data)
@@ -2918,10 +2918,10 @@ for [ext, data] in items(php_builtin['constants'])
 	call extend(g:php_constants, data)
 endfor
 
-" When the classname not found or found but the tags dosen't contain that
-" class we will try to complate any method of any builtin class. To speed up
+" When the classname not found or found but the tags doesn't contain that
+" class we will try to complete any method of any builtin class. To speed up
 " that lookup we compile a 'ClassName::MethodName':'info' dictionary from the
-" builtin class informations
+" builtin class information
 let g:php_builtin_object_functions = {}
 
 " When completing for 'everyting imaginable' (no class context, not a

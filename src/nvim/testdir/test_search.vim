@@ -1338,7 +1338,7 @@ func Test_search_display_pattern()
 
   call cursor(1, 1)
   let @/ = 'foo'
-  let pat = escape(@/, '()*?'. '\s\+')
+  let pat = @/->escape('()*?'. '\s\+')
   let g:a = execute(':unsilent :norm! n')
   call assert_match(pat, g:a)
 

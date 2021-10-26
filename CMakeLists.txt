@@ -2,8 +2,8 @@
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-# Version should match the tested CMAKE_URL in .travis.yml.
-cmake_minimum_required(VERSION 2.8.12)
+# Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
+cmake_minimum_required(VERSION 3.10)
 project(nvim C)
 
 if(POLICY CMP0065)
@@ -23,9 +23,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
+    # *contain* system include paths. To avoid this, we prefix what would be
+    # "/usr/include" as "/_usr/include".
+    # This check is also performed in the third-party/CMakeLists.txt and in the
+    # else clause following here.
+    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
 else()
-  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
@@ -122,12 +136,12 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 5)
+set(NVIM_VERSION_MINOR 6)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 7)         # Bump this after any API change.
+set(NVIM_API_LEVEL 8)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -379,6 +393,22 @@ include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 find_package(TreeSitter REQUIRED)
 include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
 
+list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
+check_c_source_compiles("
+#include <tree_sitter/api.h>
+int
+main(void)
+{
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_set_match_limit(cursor, 32);
+  return 0;
+}
+" TS_HAS_SET_MATCH_LIMIT)
+if(TS_HAS_SET_MATCH_LIMIT)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_MATCH_LIMIT")
+endif()
+
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 
@@ -560,9 +590,7 @@ if(BUSTED_PRG)
   # console pool: to do so we need to use the USES_TERMINAL
   # option, but this is only available in CMake 3.2
   set(TEST_TARGET_ARGS)
-  if(NOT (${CMAKE_VERSION} VERSION_LESS 3.2.0))
-    list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
-  endif()
+  list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
@@ -661,7 +689,7 @@ endif()
 
 if(LUACHECK_PRG)
   add_custom_target(lualint
-    COMMAND ${LUACHECK_PRG} -q runtime/ src/ test/ --exclude-files test/functional/fixtures/lua/syntax_error.lua
+    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 else()
   add_custom_target(lualint false

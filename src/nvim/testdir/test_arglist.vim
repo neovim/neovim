@@ -88,10 +88,10 @@ func Test_argadd_empty_curbuf()
   argadd Xargadd
   call assert_equal(curbuf, bufnr('%'))
   call assert_equal('', bufname('%'))
-  call assert_equal(1, line('$'))
+  call assert_equal(1, '$'->line())
   rew
-  call assert_notequal(curbuf, bufnr('%'))
-  call assert_equal('Xargadd', bufname('%'))
+  call assert_notequal(curbuf, '%'->bufnr())
+  call assert_equal('Xargadd', '%'->bufname())
   call assert_equal(2, line('$'))
 
   %argd

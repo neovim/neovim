@@ -171,6 +171,13 @@ o  Enable Arabic settings [short-cut]
 	 and its support is preferred due to its level of offerings.
 	 'arabic' when 'termbidi' is enabled only sets the keymap.
 
+	 For vertical window isolation while setting 'termbidi' an LTR
+	 vertical separator like "l" or "𝖨" may be used.  It may also be
+	 hidden by changing its color to the foreground color: >
+		:set fillchars=vert:l
+		:hi VertSplit ctermbg=White
+<	Note that this is a workaround, not a proper solution.
+
    If, on the other hand, you'd like to be verbose and explicit and
    are opting not to use the 'arabic' short-cut command, here's what
    is needed (i.e. if you use ':set arabic' you can skip this section) -

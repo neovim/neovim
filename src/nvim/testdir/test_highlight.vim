@@ -426,6 +426,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
 
   call NewWindow('topleft 5', 10)
+  set showbreak=xxx
   setlocal breakindent breakindentopt=min:0,shift:1 showbreak=>
   call setline(1, ' ' . repeat('a', 9) . 'bcd')
   call matchadd('Search', '\n')
@@ -483,6 +484,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
 
   call CloseWindow()
   set showbreak=
+  setlocal showbreak=
   exe hiCursorLine
 endfunc
 

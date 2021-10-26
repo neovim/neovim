@@ -58,6 +58,7 @@ function! man#open_page(count, mods, ...) abort
     else
       execute 'silent keepalt' a:mods 'stag' l:target
     endif
+    call s:set_options(v:false)
   finally
     call setbufvar(l:buf, '&tagfunc', l:save_tfu)
   endtry
@@ -65,6 +66,7 @@ function! man#open_page(count, mods, ...) abort
   let b:man_sect = sect
 endfunction
 
+" Called when a man:// buffer is opened.
 function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
@@ -121,6 +123,15 @@ function! s:system(cmd, ...) abort
   return opts.stdout
 endfunction
 
+function! s:set_options(pager) abort
+  setlocal filetype=man
+  setlocal noswapfile buftype=nofile bufhidden=hide
+  setlocal nomodified readonly nomodifiable
+  if a:pager
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
+  endif
+endfunction
+
 function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
@@ -134,9 +145,7 @@ function! s:get_page(path) abort
 endfunction
 
 function! s:put_page(page) abort
-  setlocal modifiable
-  setlocal noreadonly
-  setlocal noswapfile
+  setlocal modifiable noreadonly noswapfile
   silent keepjumps %delete _
   silent put =a:page
   while getline(1) =~# '^\s*$'
@@ -148,7 +157,7 @@ function! s:put_page(page) abort
   silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
   1
   lua require("man").highlight_man_page()
-  setlocal filetype=man
+  call s:set_options(v:false)
 endfunction
 
 function! man#show_toc() abort
@@ -188,13 +197,21 @@ function! s:extract_sect_and_name_ref(ref) abort
     if empty(name)
       throw 'manpage reference cannot contain only parentheses'
     endif
-    return ['', name]
+    return ['', s:spaces_to_underscores(name)]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
   " TODO(nhooyr) Not sure if this is portable across OSs
   " but I have not seen a single uppercase section.
-  return [tolower(split(left[1], ')')[0]), left[0]]
+  return [tolower(split(left[1], ')')[0]), s:spaces_to_underscores(left[0])]
+endfunction
+
+" replace spaces in a man page name with underscores
+" intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
+" while editing SQL source code, it's nice to visually select 'CREATE TABLE'
+" and hit 'K', which requires this transformation
+function! s:spaces_to_underscores(str)
+  return substitute(a:str, ' ', '_', 'g')
 endfunction
 
 function! s:get_path(sect, name) abort
@@ -397,6 +414,7 @@ function! s:format_candidate(path, psect) abort
   endif
 endfunction
 
+" Called when Nvim is invoked as $MANPAGER.
 function! man#init_pager() abort
   " https://github.com/neovim/neovim/issues/6828
   let og_modifiable = &modifiable
@@ -420,6 +438,7 @@ function! man#init_pager() abort
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
 
+  call s:set_options(v:true)
   let &l:modifiable = og_modifiable
 endfunction
 

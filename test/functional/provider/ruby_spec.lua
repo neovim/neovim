@@ -1,10 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
-local eval = helpers.eval
 local exc_exec = helpers.exc_exec
 local expect = helpers.expect
 local feed = helpers.feed
@@ -107,7 +107,7 @@ describe('ruby provider', function()
     helpers.add_builddir_to_rtp()
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
     feed_command('help help')
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 end)
 

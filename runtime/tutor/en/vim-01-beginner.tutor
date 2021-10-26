@@ -1,4 +1,4 @@
-#             Welcome   to   the   VIM   Tutor
+# Welcome to the VIM Tutor
 
 Vim is a very powerful editor that has many commands, too many to explain in
 a tutor such as this. This tutor is designed to describe enough of the
@@ -21,7 +21,9 @@ This tutorial is interactive, and there are a few things you should know.
 - Type [<Enter>](<Enter>) on links [like this](holy-grail    ) to open the linked help section.
 - Or simply type [K](K) on any word to find its documentation!
 - Sometimes you will be required to modify text like
-this here
+
+    this here
+
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Vim can be. ;)
 Other times, you'll be prompted to run a command (I'll explain this later):
@@ -32,7 +34,6 @@ or press a sequence of keys
 ~~~ normal
     <Esc>0f<Space>d3wP$P
 ~~~
-
 Text within <'s and >'s (like `<Enter>`{normal}) describes a key to press
 instead of text to type.
 
@@ -48,12 +49,12 @@ Now, move to the next lesson (use the `j`{normal} key to scroll down).
          j                The `j`{normal} key looks like a down arrow.
          ↓
 
-  1. Move the cursor around the screen until you are comfortable.
+ 1. Move the cursor around the screen until you are comfortable.
 
-  2. Hold down the down key (`j`{normal}) until it repeats.
-     Now you know how to move to the next lesson.
+ 2. Hold down the down key (`j`{normal}) until it repeats.
+    Now you know how to move to the next lesson.
 
-  3. Using the down key, move to Lesson 1.2.
+ 3. Using the down key, move to Lesson 1.2.
 
 NOTE: If you are ever unsure about something you typed, press <Esc> to place
       you in Normal mode. Then retype the command you wanted.
@@ -63,8 +64,7 @@ NOTE: The cursor keys should also work. But using hjkl you will be able to
 
 # Lesson 1.2: EXITING VIM
 
-!! NOTE: Before executing any of the steps below,
-read this entire lesson !!
+!! NOTE: Before executing any of the steps below, read this entire lesson !!
 
  1. Press the <Esc> key (to make sure you are in Normal mode).
 
@@ -72,18 +72,18 @@ read this entire lesson !!
 
     `:q!`{vim} `<Enter>`{normal}.
 
-     This exits the editor, DISCARDING any changes you have made.
+    This exits the editor, DISCARDING any changes you have made.
 
  3. Open vim and get back here by executing the command that got you into
-     this tutor. That might be:
+    this tutor. That might be:
 
-     :Tutor <Enter>
+    :Tutor <Enter>
 
  4. If you have these steps memorized and are confident, execute steps
-     1 through 3 to exit and re-enter the editor.
+    1 through 3 to exit and re-enter the editor.
 
 NOTE: [:q!](:q) <Enter> discards any changes you made. In a few lessons you
-       will learn how to save the changes to a file.
+      will learn how to save the changes to a file.
 
  5. Move the cursor down to Lesson 1.3.
 
@@ -94,7 +94,7 @@ NOTE: [:q!](:q) <Enter> discards any changes you made. In a few lessons you
  1. Move the cursor to the line below marked ✗.
 
  2. To fix the errors, move the cursor until it is on top of the
-     character to be deleted.
+    character to be deleted.
 
  3. Press [the x key](x) to delete the unwanted character.
 
@@ -104,8 +104,9 @@ The ccow jumpedd ovverr thhe mooon.
 
  5. Now that the line is correct, go on to Lesson 1.4.
 
-NOTE: As you go through this tutor, do not try to memorize, learn by
-      usage.
+NOTE: As you go through this tutor, do not try to memorize everything,
+      your Vim vocabulary will expand with usage. Consider returning to
+      this tutor periodically for a refresher.
 
 # Lesson 1.4: TEXT EDITING: INSERTION
 
@@ -114,12 +115,12 @@ NOTE: As you go through this tutor, do not try to memorize, learn by
  1. Move the cursor to the first line below marked ✗.
 
  2. To make the first line the same as the second, move the cursor on top
-     of the first character AFTER where the text is to be inserted.
+    of the first character AFTER where the text is to be inserted.
 
  3. Press `i`{normal} and type in the necessary additions.
 
  4. As each error is fixed press `<Esc>`{normal} to return to Normal mode.
-     Repeat steps 2 through 4 to correct the sentence.
+    Repeat steps 2 through 4 to correct the sentence.
 
 There is text misng this .
 There is some text missing from this line.
@@ -136,7 +137,7 @@ There is some text missing from this line.
  2. Press [A](A) and type in the necessary additions.
 
  3. As the text has been appended press `<Esc>`{normal} to return to Normal
-     mode.
+    mode.
 
  4. Move the cursor to the second line marked ✗ and repeat
     steps 2 and 3 to correct this sentence.
@@ -159,7 +160,7 @@ There is also some text missing here.
 
  2. At the shell prompt type this command:
 ~~~ sh
-     $ nvim tutor
+    $ nvim tutor
 ~~~
     'nvim' is the command to start the Nvim editor, 'tutor' is the name of
     the file you wish to edit. Use a file that may be changed.
@@ -168,13 +169,12 @@ There is also some text missing here.
 
  4. Save the file with changes and exit Vim with:
 ~~~ cmd
-     :wq
+    :wq
 ~~~
-
     Note you'll need to press `<Enter>` to execute the command.
 
  5. If you have quit vimtutor in step 1 restart the vimtutor and move down
-     to the following summary.
+    to the following summary.
 
  6. After reading the above steps and understanding them: do it.
 
@@ -184,15 +184,11 @@ There is also some text missing here.
      h (left)   j (down)       k (up)       l (right)
 
  2. To start Vim from the shell prompt type:
-
 ~~~ sh
     $ nvim FILENAME
 ~~~
-
- 3. To exit Vim type: `<Esc>`{normal} `:q!`{vim} `<Enter>`{normal} to trash
-    all changes.
-              OR type: `<Esc>`{normal} `:wq`{vim} `<Enter>`{normal} to save
-    the changes.
+ 3. To exit Vim type: `<Esc>`{normal} `:q!`{vim} `<Enter>`{normal} to trash all changes.
+             OR type: `<Esc>`{normal} `:wq`{vim} `<Enter>`{normal} to save the changes.
 
  4. To delete the character at the cursor type: `x`{normal}
 
@@ -239,8 +235,7 @@ Somebody typed the end of this line twice. end of this line twice.
 
 # Lesson 2.3: ON OPERATORS AND MOTIONS
 
-Many commands that change text are made from an [operator](operator) and
-a [motion](navigation).
+Many commands that change text are made from an [operator](operator) and a [motion](navigation).
 The format for a delete command with the [d](d) delete operator is as follows:
 
     d   motion
@@ -318,16 +313,13 @@ it would be easier to simply type two d's to delete a line.
 
 ** Press `u`{normal} to undo the last commands, `U`{normal} to fix a whole line. **
 
- 1. Move the cursor to the line below marked ✗ and place it on the
-    first error.
+ 1. Move the cursor to the line below marked ✗ and place it on the first error.
  2. Type `x`{normal} to delete the first unwanted character.
  3. Now type `u`{normal} to undo the last command executed.
  4. This time fix all the errors on the line using the `x`{normal} command.
  5. Now type a capital `U`{normal} to return the line to its original state.
- 6. Now type `u`{normal} a few times to undo the `U`{normal} and preceding
-    commands.
- 7. Now type `<C-r>`{normal} (Control + R) a few times to redo the commands
-     (undo the undos).
+ 6. Now type `u`{normal} a few times to undo the `U`{normal} and preceding commands.
+ 7. Now type `<C-r>`{normal} (Control + R) a few times to redo the commands.
 
 Fiix the errors oon thhis line and reeplace them witth undo.
 
@@ -341,11 +333,14 @@ Fiix the errors oon thhis line and reeplace them witth undo.
  4. To repeat a motion prepend it with a number:           `2w`{normal}
 
  5. The format for a change command is:
-               operator   [number]   motion
+
+        operator   [number]   motion
+
     where:
-       operator -   is what to do, such as [d](d) for delete
-       [number] -   is an optional count to repeat the motion
-       motion   -   moves over the text to operate on, such as:
+
+        operator -   is what to do, such as [d](d) for delete
+        [number] -   is an optional count to repeat the motion
+        motion   -   moves over the text to operate on, such as:
                         [w](w) (word),
                         [$]($) (to the end of line), etc.
 
@@ -403,8 +398,7 @@ NOTE: Remember that you should be learning by doing, not memorization.
 
  3. Type `ce`{normal} and the correct word (in this case, type "ine" ).
 
- 4. Press `<Esc>`{normal} and move to the next character that needs to be
-     changed.
+ 4. Press `<Esc>`{normal} and move to the next character that needs to be changed.
 
  5. Repeat steps 3 and 4 until the first sentence is the same as the second.
 
@@ -419,7 +413,7 @@ Notice that [c](c)e deletes the word and places you in Insert mode.
 
  1. The change operator works in the same way as delete. The format is:
 
-         c    [number]   motion
+        c    [number]   motion
 
  2. The motions are the same, such as `w`{normal} (word) and `$`{normal} (end of line).
 
@@ -449,7 +443,7 @@ NOTE: You can use the Backspace key to correct mistakes while typing.
 
  4. The format for change is:
 
-     c   [number]   motion
+        c   [number]   motion
 
 Now go on to the next lesson.
 
@@ -460,13 +454,13 @@ Now go on to the next lesson.
 
 NOTE: Read this entire lesson before executing any of the steps!!
 
- 1. Hold down the `<Ctrl>`{normal} key and press `g`{normal}. We call this
-    `<C-g>`{normal}. A message will appear at the bottom of the page with the
-    filename and the position in the file. Remember the line number for
-    Step 3.
+ 1. Hold down the `<Ctrl>`{normal} key and press `g`{normal}. We call this `<C-g>`{normal}.
+    A message will appear at the bottom of the page with the filename and
+    the position in the file. Remember the line number for Step 3.
 
 NOTE: You may see the cursor position in the lower right corner of the
       screen. This happens when the ['ruler']('ruler') option is set.
+
  2. Press [G](G) to move you to the bottom of the file.
     Type [gg](gg) to move you to the start of the file.
 
@@ -482,17 +476,16 @@ NOTE: You may see the cursor position in the lower right corner of the
  1. In Normal mode type the `/`{normal} character. Notice that it and the
     cursor appear at the bottom of the screen as with the `:`{normal} command.
 
- 2. Now type 'errroor' `<Enter>`{normal}. This is the word you want to search
-    for.
+ 2. Now type 'errroor' `<Enter>`{normal}. This is the word you want to search for.
 
  3. To search for the same phrase again, simply type [n](n).
     To search for the same phrase in the opposite direction, type [N](N).
 
- 4. To search for a phrase in the backward direction, use [?](?) instead
-    of `/`{normal}.
+ 4. To search for a phrase in the backward direction, use [?](?) instead of `/`{normal}.
 
- 5. To go back to where you came from press `<C-o>`{normal} (keep `<Ctrl>`{normal}    pressed down while pressing the letter `o`{normal}). Repeat to go back
-    further. `<C-i>`{normal} goes forward.
+ 5. To go back to where you came from press `<C-o>`{normal}.
+    (keep `<Ctrl>`{normal} pressed down while pressing the letter `o`{normal}).
+    Repeat to go back further. `<C-i>`{normal} goes forward.
 
 "errroor" is not the way to spell error; errroor is an error.
 
@@ -525,16 +518,14 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
 
  2. Type
 ~~~ cmd
-    :s/thee/the/
+        :s/thee/the/
 ~~~
-
-    NOTE that the [:s](:s) command only changed the first occurrence of "thee" in the line.
+    NOTE: the [:s](:s) command only changed the first match of "thee" in the line.
 
  3. Now type
 ~~~ cmd
-     :s/thee/the/g
+        :s/thee/the/g
 ~~~
-
     Adding the g [flag](:s_flags) means to substitute globally in the line,
     change all occurrences of "thee" in the line.
 
@@ -542,20 +533,20 @@ Usually thee best time to see thee flowers is in thee spring.
 
  4. To change every occurrence of a character string between two lines, type
 ~~~ cmd
-     :#,#s/old/new/g
+        :#,#s/old/new/g
 ~~~
     where #,# are the line numbers of the range of lines where the
     substitution is to be done.
 
     Type
 ~~~ cmd
-    :%s/old/new/g
+        :%s/old/new/g
 ~~~
     to change every occurrence in the whole file.
 
     Type
 ~~~ cmd
-    :%s/old/new/gc
+        :%s/old/new/gc
 ~~~
     to find every occurrence in the whole file, with a prompt whether to
     substitute or not.
@@ -564,7 +555,7 @@ Usually thee best time to see thee flowers is in thee spring.
 
  1. `<C-g>`{normal}     displays your location and the file status.
     `G`{normal}         moves to the end of the file.
-     number `G`{normal} moves to that line number.
+    number `G`{normal} moves to that line number.
     `gg`{normal}        moves to the first line.
 
  2. Typing `/`{normal} followed by a phrase searches FORWARD for the phrase.
@@ -643,7 +634,6 @@ NOTE: If you were to exit Vim and start it again with `nvim TEST`, the file
 ~~~ cmd
         :!rm TEST
 ~~~
-
 # Lesson 5.3: SELECTING TEXT TO WRITE
 
 ** To save part of the file, type `v`{normal} motion `:w FILENAME`{vim}. **
@@ -655,7 +645,7 @@ NOTE: If you were to exit Vim and start it again with `nvim TEST`, the file
 
  3. Press the `:`{normal} character. At the bottom of the screen
 
-        :'<,'>
+        `:'<,'>`{vim}
 
     will appear.
 
@@ -669,12 +659,12 @@ NOTE: If you were to exit Vim and start it again with `nvim TEST`, the file
 
     before you press `<Enter>`{normal}.
 
- 5. Vim will write the selected lines to the file TEST. Use `:!ls`{vim} to see    it. Do not remove it yet! We will use it in the next lesson.
+ 5. Vim will write the selected lines to the file TEST. Use `:!ls`{vim} to see it.
+    Do not remove it yet! We will use it in the next lesson.
 
-NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move
-      the cursor around to make the selection bigger or smaller. Then you can
-      use an operator to do something with the text. For example, `d`{normal}
-      deletes the text.
+NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move the cursor around to
+      make the selection bigger or smaller. Then you can use an operator to
+      do something with the text. For example, `d`{normal} deletes the text.
 
 # Lesson 5.4: RETRIEVING AND MERGING FILES
 
@@ -689,8 +679,8 @@ NOTE:  After executing Step 2 you will see text from Lesson 5.3. Then move
 
         `:r TEST`{vim}
 
-     where TEST is the name of the file you used.
-     The file you retrieve is placed below the cursor line.
+    where TEST is the name of the file you used.
+    The file you retrieve is placed below the cursor line.
 
  3. To verify that a file was retrieved, cursor back and notice that there
     are now two copies of Lesson 5.3, the original and the file version.
@@ -706,20 +696,20 @@ NOTE: You can also read the output of an external command. For example,
  1. [:!command](:!cmd) executes an external command.
 
      Some useful examples are:
-     `:!ls`{vim}              -  shows a directory listing
-     `:!rm FILENAME`{vim}     -  removes file FILENAME
+     `:!ls`{vim}                    - shows a directory listing
+     `:!rm FILENAME`{vim}           - removes file FILENAME
 
- 2. [:w](:w) FILENAME             writes the current Vim file to disk with
-                            name FILENAME.
+ 2. [:w](:w) FILENAME              writes the current Vim file to disk with
+                             name FILENAME.
 
  3. [v](v)  motion  :w FILENAME   saves the Visually selected lines in file
                              FILENAME.
 
- 4. [:r](:r) FILENAME             retrieves disk file FILENAME and puts it
-                            below the cursor position.
+ 4. [:r](:r) FILENAME              retrieves disk file FILENAME and puts it
+                             below the cursor position.
 
- 5. [:r !dir](:r!)                reads the output of the dir command and
-                           puts it below the cursor position.
+ 5. [:r !dir](:r!)                  reads the output of the dir command and
+                             puts it below the cursor position.
 
 # Lesson 6.1: THE OPEN COMMAND
 
@@ -747,14 +737,11 @@ Open up a line above this by typing O while the cursor is on this line.
 
  2. Press `e`{normal} until the cursor is on the end of "li".
 
- 3. Type the lowercase letter `a`{normal} to [append](a) text AFTER the
-     cursor.
+ 3. Type the lowercase letter `a`{normal} to [append](a) text AFTER the cursor.
 
- 4. Complete the word like the line below it. Press `<Esc>`{normal} to exit
-     Insert mode.
+ 4. Complete the word like the line below it. Press `<Esc>`{normal} to exit Insert mode.
 
- 5. Use `e`{normal} to move to the next incomplete word and repeat steps 3
-     and 4.
+ 5. Use `e`{normal} to move to the next incomplete word and repeat steps 3 and 4.
 
 This li will allow you to pract appendi text to a line.
 This line will allow you to practice appending text to a line.
@@ -767,21 +754,21 @@ NOTE: [a](a), [i](i) and [A](A) all go to the same Insert mode, the only
 ** Type a capital `R`{normal} to replace more than one character. **
 
  1. Move the cursor to the first line below marked ✗. Move the cursor to
-     the beginning of the first "xxx".
+    the beginning of the first "xxx".
 
  2. Now press `R`{normal} ([capital R](R)) and type the number below it in the
- second line, so that it replaces the "xxx".
+    second line, so that it replaces the "xxx".
 
  3. Press `<Esc>`{normal} to leave [Replace mode](mode-replace). Notice that
-     the rest of the line remains unmodified.
+    the rest of the line remains unmodified.
 
  4. Repeat the steps to replace the remaining "xxx".
 
 Adding 123 to xxx gives you xxx.
 Adding 123 to 456 gives you 579.
 
-NOTE: Replace mode is like Insert mode, but every typed character deletes an
-      existing character.
+NOTE: Replace mode is like Insert mode, but every typed character
+      deletes an existing character.
 
 # Lesson 6.4: COPY AND PASTE TEXT
 
@@ -875,17 +862,17 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
 ~~~ cmd
         :set invic
 ~~~
-
 # Lesson 7.1: GETTING HELP
 
 ** Use the on-line help system. **
 
-Vim has a comprehensive on-line help system. To get started, try one of
-these three:
-    - press the `<HELP>`{normal} key (if you have one)
-    - press the `<F1>`{normal} key (if you have one)
-    - type
-        `:help`{vim}
+Vim has a comprehensive on-line help system.
+
+To get started, try one of these three:
+
+  - press the `<HELP>`{normal} key (if you have one)
+  - press the `<F1>`{normal} key (if you have one)
+  - type `:help`{vim}
 
 Read the text in the help window to find out how the help works.
 Type `<C-w><C-w>`{normal} to jump from one window to another.
@@ -907,10 +894,12 @@ Vim has many more features than Vi, but most of them are disabled by
 default. To start using more features you have to create a "vimrc" file.
 
  1. Start editing the "vimrc" file.
+
     `:call mkdir(stdpath('config'),'p')`{vim}
     `:exe 'edit' stdpath('config').'/init.vim'`{vim}
 
  2. Write the file with:
+
     `:w`{vim}
 
   You can add all your preferred settings to this "vimrc" file.
@@ -924,17 +913,15 @@ default. To start using more features you have to create a "vimrc" file.
 
  2. Type the start of a command: `:e`{vim}
 
- 3. Press `<C-d>`{normal} and Vim will show a list of commands that start
-     with "e".
+ 3. Press `<C-d>`{normal} and Vim will show a list of commands beginning with "e".
 
  4. Press `<Tab>`{normal} and Vim will complete the command name to ":edit".
 
  5. Now add a space and the start of an existing file name: `:edit FIL`{vim}
 
- 6. Press `<Tab>`{normal}. Vim will complete the name (if it is unique).
+ 6. Press `<Tab>`{normal}. Vim will complete the name ("FIL" -> "FILE", if it is unique).
 
-NOTE: Completion works for many commands. It is especially useful for
-      `:help`{vim}.
+NOTE: Completion works for many commands. It is especially useful for `:help`{vim}.
 
 # Lesson 7 SUMMARY
 
@@ -950,7 +937,7 @@ NOTE: Completion works for many commands. It is especially useful for
  5. Create a vimrc startup script to keep your preferred settings.
 
  6. While in command mode, press `<C-d>`{normal} to see possible completions.
-     Press `<Tab>`{normal} to use one completion.
+    Press `<Tab>`{normal} to use one completion.
 
 # CONCLUSION
 
@@ -961,13 +948,20 @@ many many more commands. Consult the help often.
 There are many resources online to learn more about vim. Here's a bunch of
 them:
 
-- *Learn Vim Progressively*: http://yannesposito.com/Scratch/en/blog/Learn-Vim-Progressively/
-- *Learning Vim in 2014*: http://benmccormick.org/learning-vim-in-2014/
-- *Vimcasts*: http://vimcasts.org/
-- *Vim Video-Tutorials by Derek Wyatt*: http://derekwyatt.org/vim/tutorials/
-- *Learn Vimscript the Hard Way*: http://learnvimscriptthehardway.stevelosh.com/
-- *7 Habits of Effective Text Editing*: http://www.moolenaar.net/habits.html
-- *vim-galore*: https://github.com/mhinz/vim-galore
+- *Learn Vim Progressively*:
+  http://yannesposito.com/Scratch/en/blog/Learn-Vim-Progressively/
+- *Learning Vim in 2013*:
+  http://benmccormick.org/learning-vim-in-2014/
+- *Vimcasts*:
+  http://vimcasts.org/
+- *Vim Video-Tutorials by Derek Wyatt*:
+  http://derekwyatt.org/vim/tutorials/
+- *Learn Vimscript the Hard Way*:
+  http://learnvimscriptthehardway.stevelosh.com/
+- *7 Habits of Effective Text Editing*:
+  http://www.moolenaar.net/habits.html
+- *vim-galore*:
+  https://github.com/mhinz/vim-galore
 
 If you prefer a book, *Practical Vim* by Drew Neil is recommended often
 (the sequel, *Modern Vim*, includes material specific to nvim).
@@ -978,3 +972,5 @@ University. E-mail: bware@mines.colorado.edu.
 
 Modified for Vim by Bram Moolenaar.
 Modified for vim-tutor-mode by Felipe Morales.
+
+// vim: nowrap

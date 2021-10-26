@@ -26,8 +26,8 @@ enum { MINCOL = 1 };
  * position in file or buffer
  */
 typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
+  linenr_T lnum;        // line number
+  colnr_T col;          // column number
   colnr_T coladd;
 } pos_T;
 
@@ -36,8 +36,8 @@ typedef struct {
  * Same, but without coladd.
  */
 typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
+  linenr_T lnum;        // line number
+  colnr_T col;          // column number
 } lpos_T;
 
 #endif  // NVIM_POS_H

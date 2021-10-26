@@ -8,7 +8,7 @@ func Test_missing_attr()
   call assert_equal('1', synIDattr(hlID("Mine"), "inverse", 'cterm'))
   hi Mine cterm=standout gui=undercurl
   call assert_equal('1', synIDattr(hlID("Mine"), "standout", 'cterm'))
-  call assert_equal('1', synIDattr(hlID("Mine"), "undercurl", 'gui'))
+  call assert_equal('1', synIDattr("Mine"->hlID(), "undercurl", 'gui'))
   hi Mine gui=strikethrough
   call assert_equal('1', synIDattr(hlID("Mine"), "strikethrough", 'gui'))
   hi Mine cterm=NONE gui=NONE

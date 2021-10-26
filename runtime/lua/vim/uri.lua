@@ -9,7 +9,7 @@ do
   local schar = string.char
 
   --- Convert hex to char
-  --@private
+  ---@private
   local function hex_to_char(hex)
     return schar(tonumber(hex, 16))
   end
@@ -38,7 +38,7 @@ do
     tohex = function(b) return string.format("%02x", b) end
   end
 
-  --@private
+  ---@private
   local function percent_encode_char(char)
     return "%"..tohex(sbyte(char), 2)
   end
@@ -50,14 +50,14 @@ do
 end
 
 
---@private
+---@private
 local function is_windows_file_uri(uri)
-  return uri:match('^file:///[a-zA-Z]:') ~= nil
+  return uri:match('^file:/+[a-zA-Z]:') ~= nil
 end
 
 --- Get a URI from a file path.
---@param path (string): Path to file
---@return URI
+---@param path (string): Path to file
+---@return URI
 local function uri_from_fname(path)
   local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
   local is_windows = volume_path ~= nil
@@ -74,14 +74,23 @@ local function uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
-local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*)://.*'
+local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
+local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):[a-zA-Z]:.*'
 
 --- Get a URI from a bufnr
---@param bufnr (number): Buffer number
---@return URI
+---@param bufnr (number): Buffer number
+---@return URI
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local scheme = fname:match(URI_SCHEME_PATTERN)
+  local volume_path = fname:match("^([a-zA-Z]:).*")
+  local is_windows = volume_path ~= nil
+  local scheme
+  if is_windows then
+    fname = fname:gsub("\\", "/")
+    scheme = fname:match(WINDOWS_URI_SCHEME_PATTERN)
+  else
+    scheme = fname:match(URI_SCHEME_PATTERN)
+  end
   if scheme then
     return fname
   else
@@ -90,8 +99,8 @@ local function uri_from_bufnr(bufnr)
 end
 
 --- Get a filename from a URI
---@param uri (string): The URI
---@return Filename
+---@param uri (string): The URI
+---@return Filename
 local function uri_to_fname(uri)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
@@ -100,18 +109,18 @@ local function uri_to_fname(uri)
   uri = uri_decode(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
-    uri = uri:gsub('^file:///', '')
+    uri = uri:gsub('^file:/+', '')
     uri = uri:gsub('/', '\\')
   else
-    uri = uri:gsub('^file://', '')
+    uri = uri:gsub('^file:/+', '/')
   end
   return uri
 end
 
 --- Return or create a buffer for a uri.
---@param uri (string): The URI
---@return bufnr.
---@note Creates buffer but does not load it
+---@param uri (string): The URI
+---@return bufnr.
+---@note Creates buffer but does not load it
 local function uri_to_bufnr(uri)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme == 'file' then

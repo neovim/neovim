@@ -155,6 +155,7 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_CTRL-Y|	CTRL-X CTRL-Y	scroll down
 |i_CTRL-X_CTRL-U|	CTRL-X CTRL-U	complete with 'completefunc'
 |i_CTRL-X_CTRL-V|	CTRL-X CTRL-V	complete like in : command line
+|i_CTRL-X_CTRL-Z|	CTRL-X CTRL-Z	stop completion, keeping the text as-is
 |i_CTRL-X_CTRL-]|	CTRL-X CTRL-]	complete tags
 |i_CTRL-X_s|		CTRL-X s	spelling suggestions
 
@@ -699,8 +700,7 @@ tag		char	      note action in Normal mode	~
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
-|g_CTRL-A|	g CTRL-A	   only when compiled with MEM_PROFILE
-				   defined: dump a memory profile
+|g_CTRL-A|	g CTRL-A	   dump a memory profile
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
 |g_CTRL-H|	g CTRL-H	   start Select block mode
@@ -865,6 +865,7 @@ tag		char	      note action in Normal mode	~
 |zv|		zv		   open enough folds to view the cursor line
 |zw|		zw		   permanently mark word as incorrectly spelled
 |zx|		zx		   re-apply 'foldlevel' and do "zv"
+|zy|		zy		   yank without trailing spaces
 |zz|		zz		   redraw, cursor line at center of window
 |z<Left>|	z<Left>		   same as "zh"
 |z<Right>|	z<Right>	   same as "zl"
@@ -1096,8 +1097,9 @@ tag		command		action in Command-line editing mode	~
 ==============================================================================
 5. Terminal mode				*terminal-mode-index*
 
-In a |terminal| buffer all keys except |CTRL-\_CTRL-N| are forwarded to the
-terminal job.  Use CTRL-\_CTRL-N to go to Normal mode.
+In a |terminal| buffer all keys except CTRL-\ are forwarded to the terminal
+job.  If CTRL-\ is pressed, the next key is forwarded unless it is CTRL-N.
+Use |CTRL-\_CTRL-N| to go to Normal mode.
 
 
 You found it, Arthur!				*holy-grail*
@@ -1200,6 +1202,7 @@ tag		command		action ~
 |:cgetfile|	:cg[etfile]	read file with error messages
 |:changes|	:changes	print the change list
 |:chdir|	:chd[ir]	change directory
+|:checkhealth|	:checkh[ealth]	run healthchecks
 |:checkpath|	:che[ckpath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
 |:chistory|	:chi[story]	list the error lists
@@ -1277,6 +1280,7 @@ tag		command		action ~
 |:endtry|	:endt[ry]	end previous :try
 |:endwhile|	:endw[hile]	end previous :while
 |:enew|		:ene[w]		edit a new, unnamed buffer
+|:eval|		:ev[al]		evaluate an expression and discard the result
 |:ex|		:ex		same as ":edit"
 |:execute|	:exe[cute]	execute result of expressions
 |:exit|		:exi[t]		same as ":xit"
@@ -1450,14 +1454,12 @@ tag		command		action ~
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
-|:perl|		:perl		execute perl command
-|:perldo|	:perldo		execute perl command for each line
-|:perfile|	:perlfile	execute perl script file
+|:perl|		:pe[rl]		execute perl command
+|:perldo|	:perld[o]	execute perl command for each line
+|:perlfile|	:perlf[ile]	execute perl script file
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
-|:promptfind|	:pro[mptfind]	open GUI dialog for searching
-|:promptrepl|	:promptr[epl]	open GUI dialog for search/replace
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window
@@ -1536,7 +1538,6 @@ tag		command		action ~
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
-|:scriptversion|  :scriptv[ersion]   version of Vim script used
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
@@ -1548,8 +1549,6 @@ tag		command		action ~
 |:sign|		:sig[n]		manipulate signs
 |:silent|	:sil[ent]	run a command silently
 |:sleep|	:sl[eep]	do nothing for a few seconds
-|:sleep!|	:sl[eep]!	do nothing for a few seconds, without the
-				cursor visible
 |:slast|	:sla[st]	split window and go to last file in the
 				argument list
 |:smagic|	:sm[agic]	:substitute with 'magic'
@@ -1611,7 +1610,7 @@ tag		command		action ~
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
-|:tcd|		:tcd		change directory for tab page
+|:tcd|		:tc[d]		change directory for tab page
 |:tchdir|	:tch[dir]	change directory for tab page
 |:terminal|	:te[rminal]	open a terminal buffer
 |:tfirst|	:tf[irst]	jump to first matching tag

@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 May 16
+" Last Change: 2021 Aug 23
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -127,6 +127,10 @@ func s:StartDebug_internal(dict)
   let s:pid = 0
   let s:asmwin = 0
 
+  if exists('#User#TermdebugStartPre')
+    doauto <nomodeline> User TermdebugStartPre
+  endif
+
   " Uncomment this line to write logging in "debuglog".
   " call ch_logfile('debuglog', 'w')
 
@@ -173,12 +177,25 @@ func s:StartDebug_internal(dict)
       call win_gotoid(curwinid)
     endif
   endif
+
+  if exists('#User#TermdebugStartPost')
+    doauto <nomodeline> User TermdebugStartPost
+  endif
 endfunc
 
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
   exe 'bwipe! ' . s:ptybuf
   unlet! s:gdbwin
+endfunc
+
+func s:CheckGdbRunning()
+  if nvim_get_chan_info(s:gdb_job_id) == {}
+      echoerr string(g:termdebugger) . ' exited unexpectedly'
+      call s:CloseBuffers()
+      return ''
+  endif
+  return 'ok'
 endfunc
 
 func s:StartDebug_term(dict)
@@ -229,7 +246,7 @@ func s:StartDebug_term(dict)
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let cmd = [g:termdebugger, '-quiet', '-tty', pty] + gdb_args
+  let cmd = [g:termdebugger, '-quiet', '-tty', pty, '--eval-command', 'echo startupdone\n'] + gdb_args
   "call ch_log('executing "' . join(cmd) . '"')
   execute 'new'
   let s:gdb_job_id = termopen(cmd, {'on_exit': function('s:EndTermDebug')})
@@ -246,9 +263,28 @@ func s:StartDebug_term(dict)
   let s:gdbbuf = gdb_job_info['buffer']
   let s:gdbwin = win_getid(winnr())
 
-  " Set arguments to be run.  First wait a bit to make detecting gdb a bit
-  " more reliable.
-  sleep 200m
+  " Wait for the "startupdone" message before sending any commands.
+  let try_count = 0
+  while 1
+    if s:CheckGdbRunning() != 'ok'
+      return
+    endif
+
+    for lnum in range(1, 200)
+      if get(getbufline(s:gdbbuf, lnum), 0, '') =~ 'startupdone'
+    let try_count = 9999
+    break
+      endif
+    endfor
+    let try_count += 1
+    if try_count > 300
+      " done or give up after five seconds
+      break
+    endif
+    sleep 10m
+  endwhile
+
+  " Set arguments to be run.
   if len(proc_args)
     call chansend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
   endif
@@ -260,9 +296,7 @@ func s:StartDebug_term(dict)
   " why the debugger doesn't work.
   let try_count = 0
   while 1
-    if nvim_get_chan_info(s:gdb_job_id) == {}
-      echoerr string(g:termdebugger) . ' exited unexpectedly'
-      call s:CloseBuffers()
+    if s:CheckGdbRunning() != 'ok'
       return
     endif
 
@@ -308,6 +342,9 @@ func s:StartDebug_term(dict)
   " Disable pagination, it causes everything to stop at the gdb
   " "Type <return> to continue" prompt.
   call s:SendCommand('set pagination off')
+
+  " Set the filetype, this can be used to add mappings.
+  set filetype=termdebug
 
   call s:StartDebugCommon(a:dict)
 endfunc
@@ -597,6 +634,10 @@ func s:GetAsmAddr(msg)
 endfunc
 
 function s:EndTermDebug(job_id, exit_code, event)
+  if exists('#User#TermdebugStopPre')
+    doauto <nomodeline> User TermdebugStopPre
+  endif
+
   unlet s:gdbwin
 
   call s:EndDebugCommon()
@@ -631,10 +672,18 @@ func s:EndDebugCommon()
     let &columns = s:save_columns
   endif
 
+  if exists('#User#TermdebugStopPost')
+    doauto <nomodeline> User TermdebugStopPost
+  endif
+
   au! TermDebug
 endfunc
 
 func s:EndPromptDebug(job_id, exit_code, event)
+  if exists('#User#TermdebugStopPre')
+    doauto <nomodeline> User TermdebugStopPre
+  endif
+
   let curwinid = win_getid(winnr())
   call win_gotoid(s:gdbwin)
   close
@@ -777,7 +826,14 @@ func s:InstallCommands()
   command Winbar call s:InstallWinbar()
 
   if !exists('g:termdebug_map_K') || g:termdebug_map_K
-    let s:k_map_saved = maparg('K', 'n', 0, 1)
+    " let s:k_map_saved = maparg('K', 'n', 0, 1)
+    let s:k_map_saved = {}
+    for map in nvim_get_keymap('n')
+      if map.lhs ==# 'K'
+        let s:k_map_saved = map
+        break
+      endif
+    endfor
     nnoremap K :Evaluate<CR>
   endif
 
@@ -821,7 +877,15 @@ func s:DeleteCommands()
     if empty(s:k_map_saved)
       nunmap K
     else
-      call mapset('n', 0, s:k_map_saved)
+      " call mapset('n', 0, s:k_map_saved)
+      let mode = s:k_map_saved.mode !=# ' ' ? s:k_map_saved.mode : ''
+      call nvim_set_keymap(mode, 'K', s:k_map_saved.rhs, {
+        \ 'expr': s:k_map_saved.expr ? v:true : v:false,
+        \ 'noremap': s:k_map_saved.noremap ? v:true : v:false,
+        \ 'nowait': s:k_map_saved.nowait ? v:true : v:false,
+        \ 'script': s:k_map_saved.script ? v:true : v:false,
+        \ 'silent': s:k_map_saved.silent ? v:true : v:false,
+        \ })
     endif
     unlet s:k_map_saved
   endif

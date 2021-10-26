@@ -3,25 +3,24 @@
 
 #include <assert.h>
 #include <stdbool.h>
-
 #include <uv.h>
 #ifndef WIN32
 # include <signal.h>  // for sigset_t
 #endif
 
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/globals.h"
-#include "nvim/memline.h"
 #include "nvim/eval.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/signal.h"
 #include "nvim/fileio.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/event/signal.h"
 #include "nvim/os/signal.h"
-#include "nvim/event/loop.h"
+#include "nvim/vim.h"
 
 static SignalWatcher spipe, shup, squit, sterm, susr1;
 #ifdef SIGPWR
@@ -120,31 +119,31 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-static char * signal_name(int signum)
+static char *signal_name(int signum)
 {
   switch (signum) {
 #ifdef SIGPWR
-    case SIGPWR:
-      return "SIGPWR";
+  case SIGPWR:
+    return "SIGPWR";
 #endif
 #ifdef SIGPIPE
-    case SIGPIPE:
-      return "SIGPIPE";
+  case SIGPIPE:
+    return "SIGPIPE";
 #endif
-    case SIGTERM:
-      return "SIGTERM";
+  case SIGTERM:
+    return "SIGTERM";
 #ifdef SIGQUIT
-    case SIGQUIT:
-      return "SIGQUIT";
+  case SIGQUIT:
+    return "SIGQUIT";
 #endif
-    case SIGHUP:
-      return "SIGHUP";
+  case SIGHUP:
+    return "SIGHUP";
 #ifdef SIGUSR1
-    case SIGUSR1:
-      return "SIGUSR1";
+  case SIGUSR1:
+    return "SIGUSR1";
 #endif
-    default:
-      return "Unknown";
+  default:
+    return "Unknown";
   }
 }
 
@@ -173,34 +172,34 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
   assert(signum >= 0);
   switch (signum) {
 #ifdef SIGPWR
-    case SIGPWR:
-      // Signal of a power failure(eg batteries low), flush the swap files to
-      // be safe
-      ml_sync_all(false, false, true);
-      break;
+  case SIGPWR:
+    // Signal of a power failure(eg batteries low), flush the swap files to
+    // be safe
+    ml_sync_all(false, false, true);
+    break;
 #endif
 #ifdef SIGPIPE
-    case SIGPIPE:
-      // Ignore
-      break;
+  case SIGPIPE:
+    // Ignore
+    break;
 #endif
-    case SIGTERM:
+  case SIGTERM:
 #ifdef SIGQUIT
-    case SIGQUIT:
+  case SIGQUIT:
 #endif
-    case SIGHUP:
-      if (!rejecting_deadly) {
-        deadly_signal(signum);
-      }
-      break;
+  case SIGHUP:
+    if (!rejecting_deadly) {
+      deadly_signal(signum);
+    }
+    break;
 #ifdef SIGUSR1
-    case SIGUSR1:
-      apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGUSR1", curbuf->b_fname, true,
-                     curbuf);
-      break;
+  case SIGUSR1:
+    apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGUSR1", curbuf->b_fname, true,
+                   curbuf);
+    break;
 #endif
-    default:
-      ELOG("invalid signal: %d", signum);
-      break;
+  default:
+    ELOG("invalid signal: %d", signum);
+    break;
   }
 }

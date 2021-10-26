@@ -44,7 +44,7 @@ syn match  stCharacter	"$."
 
 syn case ignore
 
-" the symols prefixed by a '#'
+" the symbols prefixed by a '#'
 syn match  stSymbol	"\(#\<[a-z_][a-z0-9_]*\>\)"
 syn match  stSymbol	"\(#'[^']*'\)"
 
@@ -58,7 +58,7 @@ syn match  stFloat	"\<\d\+e[-+]\=\d\+[fl]\=\>"
 
 syn case match
 
-" a try to higlight paren mismatches
+" a try to highlight paren mismatches
 syn region stParen	transparent start='(' end=')' contains=ALLBUT,stParenError
 syn match  stParenError	")"
 syn region stBlock	transparent start='\[' end='\]' contains=ALLBUT,stBlockError

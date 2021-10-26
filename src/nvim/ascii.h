@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/func_attr.h"
+#include "nvim/macros.h"
 #include "nvim/os/os_defs.h"
 
 // Definitions of various common control characters.
@@ -31,9 +31,7 @@
 #define CSI             0x9b    // Control Sequence Introducer
 #define CSI_STR         "\233"
 #define DCS             0x90    // Device Control String
-#define DCS_STR         "\033P"
 #define STERM           0x9c    // String Terminator
-#define STERM_STR       "\033\\"
 
 #define POUND           0xA3
 
@@ -169,6 +167,14 @@ static inline bool ascii_isident(int c)
 static inline bool ascii_isbdigit(int c)
 {
   return (c == '0' || c == '1');
+}
+
+/// Checks if `c` is an octal digit, that is, 0-7.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isodigit(int c)
+{
+  return (c >= '0' && c <= '7');
 }
 
 /// Checks if `c` is a white-space character, that is,

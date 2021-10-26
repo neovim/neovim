@@ -1,10 +1,10 @@
 #ifndef NVIM_GETCHAR_H
 #define NVIM_GETCHAR_H
 
-#include "nvim/os/fileio.h"
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/os/fileio.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 /// Values for "noremap" argument of ins_typebuf()
@@ -56,6 +56,8 @@ struct map_arguments {
   size_t orig_rhs_len;
 };
 typedef struct map_arguments MapArguments;
+#define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, \
+                             { 0 }, 0, NULL, 0, false, NULL, 0 }
 
 #define KEYLEN_PART_KEY -1  // keylen value for incomplete key-code
 #define KEYLEN_PART_MAP -2  // keylen value for incomplete mapping
