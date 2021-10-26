@@ -393,6 +393,7 @@ where the args are converted to Lua values. The expression >
 is equivalent to the Lua chunk >
     return somemod.func(...)
 
+                                                        *E921* *E5108*
 In addition, functions of packages can be accessed like >
     v:lua.require'mypack'.func(arg1, arg2)
     v:lua.require'mypack.submod'.func(arg1, arg2)
