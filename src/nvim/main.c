@@ -81,7 +81,7 @@
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
-#include "nvim/api/vim.h"
+#include "nvim/api/extmark.h"
 
 // values for "window_layout"
 #define WIN_HOR     1       // "-o" horizontally split windows

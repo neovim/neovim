@@ -1410,15 +1410,6 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   return mappings;
 }
 
-// Is the Namespace in use?
-bool ns_initialized(uint64_t ns)
-{
-  if (ns < 1) {
-    return false;
-  }
-  return ns < (uint64_t)next_namespace_id;
-}
-
 /// Gets the line and column of an extmark.
 ///
 /// Extmarks may be queried by position, name or even special names
@@ -1605,18 +1596,6 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
 free_exit:
   clear_hl_msg(&hl_msg);
   return hl_msg;
-}
-
-const char *describe_ns(NS ns_id)
-{
-  String name;
-  handle_T id;
-  map_foreach(&namespace_ids, name, id, {
-    if ((NS)id == ns_id && name.size) {
-      return name.data;
-    }
-  })
-  return "(UNKNOWN PLUGIN)";
 }
 
 bool api_dict_to_keydict(void *rv, field_hash hashy, Dictionary dict, Error *err)

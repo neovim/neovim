@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/api/vim.h"
+#include "nvim/api/extmark.h"
 #include "nvim/context.h"
 #include "nvim/decoration.h"
 #include "nvim/eval.h"
@@ -679,7 +679,7 @@ void free_all_mem(void)
   }
 
   eval_clear();
-  api_vim_free_all_mem();
+  api_extmark_free_all_mem();
   ctx_free_all();
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that

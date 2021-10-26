@@ -30,7 +30,7 @@
 
 #include <assert.h>
 
-#include "nvim/api/vim.h"
+#include "nvim/api/extmark.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/charset.h"
@@ -715,16 +715,3 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                                   .data.move = move }));
   }
 }
-
-uint64_t src2ns(Integer *src_id)
-{
-  if (*src_id == 0) {
-    *src_id = nvim_create_namespace((String)STRING_INIT);
-  }
-  if (*src_id < 0) {
-    return UINT64_MAX;
-  } else {
-    return (uint64_t)(*src_id);
-  }
-}
-
