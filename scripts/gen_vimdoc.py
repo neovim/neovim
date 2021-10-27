@@ -94,6 +94,7 @@ CONFIG = {
             'win_config.c',
             'tabpage.c',
             'ui.c',
+            'extmark.c',
         ],
         # List of files/directories for doxygen to read, separated by blanks
         'files': os.path.join(base_dir, 'src/nvim/api'),
