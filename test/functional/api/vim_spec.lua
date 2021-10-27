@@ -1690,7 +1690,7 @@ describe('API', function()
     end)
 
     local it_maybe_pending = it
-    if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
+    if helpers.isCI() and os.getenv('CONFIGURATION') == 'MSVC_32' then
       -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
       it_maybe_pending = pending
     end
