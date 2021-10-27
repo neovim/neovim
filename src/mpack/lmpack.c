@@ -320,6 +320,7 @@ static void lmpack_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
       lua_pushnumber(L, mpack_unpack_number(node->tok)); break;
     case MPACK_TOKEN_CHUNK:
       assert(unpacker->string_buffer);
+      assert(((node)-1)->pos != (size_t)-1);
       memcpy(unpacker->string_buffer + MPACK_PARENT_NODE(node)->pos,
           node->tok.data.chunk_ptr, node->tok.length);
       break;
