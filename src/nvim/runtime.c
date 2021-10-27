@@ -172,6 +172,23 @@ RuntimeSearchPath runtime_search_path_get_cached(int *ref)
   return runtime_search_path;
 }
 
+void copy_runtime_search_path(RuntimeSearchPath *dst)
+{
+  runtime_search_path_validate();
+
+  copy_runtime_search_path_common(runtime_search_path, dst);
+}
+
+void copy_runtime_search_path_common(const RuntimeSearchPath src, RuntimeSearchPath *dst)
+{
+  for (size_t j = 0; j < kv_size(src); j++) {
+    SearchPathItem src_item = kv_A(src, j);
+    kv_push(*dst, ((SearchPathItem){ xstrdup(src_item.path), src_item.after, src_item.has_lua }));
+  }
+
+  return;
+}
+
 void runtime_search_path_unref(RuntimeSearchPath path, int *ref)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -305,12 +322,23 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
   ArrayOf(String) rv = ARRAY_DICT_INIT;
   static char buf[MAXPATHL];
 
+  runtime_get_named_common(lua, pat, all, path, &rv, buf, sizeof(buf), NULL);
+
+  runtime_search_path_unref(path, &ref);
+  return rv;
+}
+
+void runtime_get_named_common(bool lua, Array pat, bool all,
+                              RuntimeSearchPath path, Array *rv,
+                              char *buf, size_t buf_len, uv_loop_t *loop)
+{
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     if (lua) {
       if (item->has_lua == kNone) {
-        size_t size = (size_t)snprintf(buf, sizeof buf, "%s/lua/", item->path);
-        item->has_lua = (size < sizeof buf && os_isdir((char_u *)buf)) ? kTrue : kFalse;
+        size_t size = (size_t)snprintf(buf, buf_len, "%s/lua/", item->path);
+        item->has_lua = (size < buf_len && os_isdir_th((char_u *)buf,
+                                                       loop)) ? kTrue : kFalse;
       }
       if (item->has_lua == kFalse) {
         continue;
@@ -320,23 +348,19 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
     for (size_t j = 0; j < pat.size; j++) {
       Object pat_item = pat.items[j];
       if (pat_item.type == kObjectTypeString) {
-        size_t size = (size_t)snprintf(buf, sizeof buf, "%s/%s",
+        size_t size = (size_t)snprintf(buf, buf_len, "%s/%s",
                                        item->path, pat_item.data.string.data);
-        if (size < sizeof buf) {
-          if (os_file_is_readable(buf)) {
-            ADD(rv, STRING_OBJ(cstr_to_string(buf)));
+        if (size < buf_len) {
+          if (os_file_is_readable_th(buf, loop)) {
+            ADD(*rv, STRING_OBJ(cstr_to_string(buf)));
             if (!all) {
-              goto done;
+              return;
             }
           }
         }
       }
     }
   }
-
-done:
-  runtime_search_path_unref(path, &ref);
-  return rv;
 }
 
 /// Find "name" in "path".  When found, invoke the callback function for

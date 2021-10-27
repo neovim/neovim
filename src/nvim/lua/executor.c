@@ -49,13 +49,15 @@ typedef struct {
 } LuaError;
 
 typedef struct {
-  LuaRef         nil_ref;
-  LuaRef         empty_dict_ref;
-  int            ref_count;
+  LuaRef            nil_ref;
+  LuaRef            empty_dict_ref;
+  int               ref_count;
+  uv_loop_t         *fs_loop;
+  RuntimeSearchPath cached_path;
 #if __has_feature(address_sanitizer)
   PMap(handle_T) ref_markers;
 #endif
-} nlua_ref_state_t;
+} nlua_thr_state_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.c.generated.h"
@@ -251,6 +253,47 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
   return retval;
 }
 
+static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
+{
+  if (lua_gettop(lstate) != 3) {
+    return luaL_error(lstate, "Expected 3 arguments");
+  }
+
+  luaL_checktype(lstate, -1, LUA_TTABLE);
+  lua_getfield(lstate, -1, "is_lua");
+  if (!lua_isboolean(lstate, -1)) {
+    return luaL_error(lstate, "is_lua is not a boolean");
+  }
+  bool is_lua = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 2);
+
+  luaL_checktype(lstate, -1, LUA_TBOOLEAN);
+  bool all = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+
+  Error err = ERROR_INIT;
+  const Array pat = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    luaL_where(lstate, 1);
+    lua_pushstring(lstate, err.msg);
+    api_clear_error(&err);
+    lua_concat(lstate, 2);
+    return lua_error(lstate);
+  }
+
+  ArrayOf(String) ret = ARRAY_DICT_INIT;
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
+  char *buf = xmalloc(MAXPATHL);
+  runtime_get_named_common(is_lua, pat, all, thr_state->cached_path, &ret, buf,
+                           MAXPATHL, thr_state->fs_loop);
+  xfree(buf);
+  nlua_push_Array(lstate, ret, true);
+  api_free_array(ret);
+  api_free_array(pat);
+
+  return 1;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
@@ -391,45 +434,50 @@ static int nlua_wait(lua_State *lstate)
   return 2;
 }
 
-static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate)
+static nlua_thr_state_t *nlua_new_thr_state(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_ref_state_t *ref_state = lua_newuserdata(lstate, sizeof(*ref_state));
-  memset(ref_state, 0, sizeof(*ref_state));
-  ref_state->nil_ref = LUA_NOREF;
-  ref_state->empty_dict_ref = LUA_NOREF;
-  return ref_state;
+  nlua_thr_state_t *thr_state = lua_newuserdata(lstate, sizeof(*thr_state));
+  memset(thr_state, 0, sizeof(*thr_state));
+  thr_state->nil_ref = LUA_NOREF;
+  thr_state->empty_dict_ref = LUA_NOREF;
+  if (is_thread) {
+    thr_state->fs_loop = xmalloc(sizeof(*thr_state->fs_loop));
+    uv_loop_init(thr_state->fs_loop);
+    copy_runtime_search_path(&thr_state->cached_path);
+  }
+  return thr_state;
 }
 
-static nlua_ref_state_t *nlua_get_ref_state(lua_State *lstate)
+static nlua_thr_state_t *nlua_get_thr_state(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
-  nlua_ref_state_t *ref_state = lua_touserdata(lstate, -1);
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.thr_state");
+  nlua_thr_state_t *thr_state = lua_touserdata(lstate, -1);
   lua_pop(lstate, 1);
 
-  return ref_state;
+  return thr_state;
 }
 
 LuaRef nlua_get_nil_ref(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
-  return ref_state->nil_ref;
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
+  return thr_state->nil_ref;
 }
 
 LuaRef nlua_get_empty_dict_ref(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
-  return ref_state->empty_dict_ref;
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
+  return thr_state->empty_dict_ref;
 }
 
 static int nlua_get_ref_count(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
-  return ref_state->ref_count;
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
+  return thr_state->ref_count;
 }
 
 int nlua_get_global_ref_count(void)
@@ -441,8 +489,8 @@ int nlua_get_global_ref_count(void)
 static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  nlua_ref_state_t *ref_state = nlua_new_ref_state(lstate);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
+  nlua_thr_state_t *thr_state = nlua_new_thr_state(lstate, is_thread);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.thr_state");
 
   // vim.is_thread
   lua_pushboolean(lstate, is_thread);
@@ -456,7 +504,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_pushcfunction(lstate, &nlua_nil_tostring);
   lua_setfield(lstate, -2, "__tostring");
   lua_setmetatable(lstate, -2);
-  ref_state->nil_ref = nlua_ref(lstate, -1);
+  thr_state->nil_ref = nlua_ref(lstate, -1);
   lua_pushvalue(lstate, -1);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
   lua_setfield(lstate, -2, "NIL");
@@ -465,7 +513,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_createtable(lstate, 0, 0);
   lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
   lua_setfield(lstate, -2, "__tostring");
-  ref_state->empty_dict_ref = nlua_ref(lstate, -1);
+  thr_state->empty_dict_ref = nlua_ref(lstate, -1);
   lua_pushvalue(lstate, -1);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
   lua_setfield(lstate, -2, "_empty_dict_mt");
@@ -690,6 +738,13 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_setfield(lstate, -4, "inspect");
   lua_pop(lstate, 3);
 
+  lua_getglobal(lstate, "vim");
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, nlua_thr_api_nvim__get_runtime);
+  lua_setfield(lstate, -2, "nvim__get_runtime");
+  lua_setfield(lstate, -2, "api");
+  lua_pop(lstate, 1);
+
   return lstate;
 }
 
@@ -708,16 +763,25 @@ static void nlua_common_free_all_mem(lua_State *lstate)
   nlua_unref(lstate, nlua_get_nil_ref(lstate));
   nlua_unref(lstate, nlua_get_empty_dict_ref(lstate));
 
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  bool is_thread = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
+  if (is_thread) {
+    uv_loop_close(thr_state->fs_loop);
+    xfree(thr_state->fs_loop);
+    runtime_search_path_free(thr_state->cached_path);
+  }
+
 #ifdef NLUA_TRACK_REFS
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
-  if (ref_state->ref_count) {
-    fprintf(stderr, "%d lua references were leaked!", ref_state->ref_count);
+  if (thr_state->ref_count) {
+    fprintf(stderr, "%d lua references were leaked!", thr_state->ref_count);
   }
 
   if (nlua_track_refs) {
     // in case there are leaked luarefs, leak the associated memory
     // to get LeakSanitizer stacktraces on exit
-    pmap_destroy(handle_T)(&ref_state->ref_markers);
+    pmap_destroy(handle_T)(&thr_state->ref_markers);
   }
 #endif
 
@@ -1018,16 +1082,16 @@ static int nlua_getenv(lua_State *lstate)
 /// The current implementation does not support calls from threads.
 LuaRef nlua_ref(lua_State *lstate, int index)
 {
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
 
   lua_pushvalue(lstate, index);
   LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
   if (ref > 0) {
-    ref_state->ref_count++;
+    thr_state->ref_count++;
 #ifdef NLUA_TRACK_REFS
     if (nlua_track_refs) {
       // dummy allocation to make LeakSanitizer track our luarefs
-      pmap_put(handle_T)(&ref_state->ref_markers, ref, xmalloc(3));
+      pmap_put(handle_T)(&thr_state->ref_markers, ref, xmalloc(3));
     }
 #endif
   }
@@ -1037,14 +1101,14 @@ LuaRef nlua_ref(lua_State *lstate, int index)
 /// remove the value from the registry
 void nlua_unref(lua_State *lstate, LuaRef ref)
 {
-  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
+  nlua_thr_state_t *thr_state = nlua_get_thr_state(lstate);
 
   if (ref > 0) {
-    ref_state->ref_count--;
+    thr_state->ref_count--;
 #ifdef NLUA_TRACK_REFS
     // NB: don't remove entry from map to track double-unref
     if (nlua_track_refs) {
-      xfree(pmap_get(handle_T)(&ref_state->ref_markers, ref));
+      xfree(pmap_get(handle_T)(&thr_state->ref_markers, ref));
     }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);

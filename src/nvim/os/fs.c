@@ -35,6 +35,20 @@
 # include "os/fs.c.generated.h"
 #endif
 
+#define RUN_UV_FS_FUNC_TH(ret, func, loop, ...) \
+  do { \
+    bool did_try_to_free = false; \
+uv_call_start: {} \
+    uv_fs_t req; \
+    ret = func(loop, &req, __VA_ARGS__); \
+    uv_fs_req_cleanup(&req); \
+    if (ret == UV_ENOMEM && !did_try_to_free) { \
+      try_to_free_memory(); \
+      did_try_to_free = true; \
+      goto uv_call_start; \
+    } \
+  } while (0)
+
 #define RUN_UV_FS_FUNC(ret, func, ...) \
   do { \
     bool did_try_to_free = false; \
@@ -114,7 +128,14 @@ bool os_isrealdir(const char *name)
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((const char *)name);
+  return os_isdir_th(name, &fs_loop);
+}
+
+bool os_isdir_th(const char_u *name, uv_loop_t *loop)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  int32_t mode = os_getperm_th((const char *)name,
+                               loop == NULL ? &fs_loop : loop);
   if (mode < 0) {
     return false;
   }
@@ -734,11 +755,17 @@ int os_fsync(int fd)
 static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  return os_stat_th(name, statbuf, &fs_loop);
+}
+
+static int os_stat_th(const char *name, uv_stat_t *statbuf, uv_loop_t *loop)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
   if (!name) {
     return UV_EINVAL;
   }
   uv_fs_t request;
-  int result = uv_fs_stat(&fs_loop, &request, name, NULL);
+  int result = uv_fs_stat(loop, &request, name, NULL);
   if (result == kLibuvSuccess) {
     *statbuf = request.statbuf;
   }
@@ -751,8 +778,13 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 /// @return libuv error code on error.
 int32_t os_getperm(const char *name)
 {
+  return os_getperm_th(name, &fs_loop);
+}
+
+int32_t os_getperm_th(const char *name, uv_loop_t *loop)
+{
   uv_stat_t statbuf;
-  int stat_result = os_stat(name, &statbuf);
+  int stat_result = os_stat_th(name, &statbuf, loop);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
@@ -825,10 +857,16 @@ int os_file_settime(const char *path, double atime, double mtime)
 ///
 /// @return true if `name` is readable, otherwise false.
 bool os_file_is_readable(const char *name)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return os_file_is_readable_th(name, &fs_loop);
+}
+
+bool os_file_is_readable_th(const char *name, uv_loop_t *loop)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_access, name, R_OK, NULL);
+  RUN_UV_FS_FUNC_TH(r, uv_fs_access, loop == NULL ? &fs_loop : loop,
+                    name, R_OK, NULL);
   return (r == 0);
 }
 
