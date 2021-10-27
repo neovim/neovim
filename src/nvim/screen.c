@@ -5655,7 +5655,9 @@ static void win_redr_border(win_T *wp)
       int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
       grid_put_schar(grid, irow+adj[0], i+adj[3], chars[ic], attrs[ic]);
     }
-    grid_put_schar(grid, irow+adj[0], icol+adj[3], chars[4], attrs[4]);
+    if (adj[1]) {
+      grid_put_schar(grid, irow+adj[0], icol+adj[3], chars[4], attrs[4]);
+    }
     grid_puts_line_flush(false);
   }
 }
