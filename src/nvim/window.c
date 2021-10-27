@@ -725,8 +725,11 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   bool has_border = wp->w_floating && wp->w_float_config.border;
   for (int i = 0; i < 4; i++) {
-    wp->w_border_adj[i] =
-      has_border && wp->w_float_config.border_chars[2 * i+1][0];
+    int new_adj = has_border && wp->w_float_config.border_chars[2 * i + 1][0];
+    if (new_adj != wp->w_border_adj[i]) {
+      change_border = true;
+      wp->w_border_adj[i] = new_adj;
+    }
   }
 
   if (!ui_has(kUIMultigrid)) {

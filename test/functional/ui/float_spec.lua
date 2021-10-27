@@ -1196,7 +1196,6 @@ describe('float window', function()
 
       meths.win_set_config(win, {border={"", "_", "", "", "", "-", "", ""}})
       if multigrid then
-        command('redraw!') -- TODO: without a redraw this test fails, which should be fixed
         screen:expect{grid=[[
         ## grid 1
           [2:----------------------------------------]|
