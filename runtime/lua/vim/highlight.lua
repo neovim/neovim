@@ -76,11 +76,11 @@ function highlight.on_yank(opts)
   local bufnr = api.nvim_get_current_buf()
   api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
 
-  local pos1 = vim.fn.getpos("'[")
-  local pos2 = vim.fn.getpos("']")
+  local pos1 = api.nvim_buf_get_mark(bufnr, '[')
+  local pos2 = api.nvim_buf_get_mark(bufnr, ']')
 
-  pos1 = {pos1[2] - 1, pos1[3] - 1 + pos1[4]}
-  pos2 = {pos2[2] - 1, pos2[3] - 1 + pos2[4]}
+  pos1[1] = pos1[1] - 1
+  pos2[1] = pos2[1] - 1
 
   highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive)
 
