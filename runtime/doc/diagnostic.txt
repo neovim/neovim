@@ -105,10 +105,11 @@ Nvim provides these handlers by default: "virtual_text", "signs", and
 The example below creates a new handler that notifies the user of diagnostics
 with |vim.notify()|: >
 
-	vim.diagnostic.handlers.notify = {
+	-- It's good practice to namespace custom handlers to avoid collisions
+	vim.diagnostic.handlers["my/notify"] = {
 	  show = function(namespace, bufnr, diagnostics, opts)
 	    -- In our example, the opts table has a "log_level" option
-	    local level = opts.notify.log_level
+	    local level = opts["my/notify"].log_level
 
 	    local name = vim.diagnostic.get_namespace(namespace).name
 	    local msg = string.format("%d diagnostics in buffer %d from %s",
@@ -121,7 +122,7 @@ with |vim.notify()|: >
 
 	-- Users can configure the handler
 	vim.diagnostic.config({
-	  notify = {
+	  ["my/notify"] = {
 	    log_level = vim.log.levels.INFO
 	  }
 	})
