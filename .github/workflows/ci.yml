@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: '**'
+    branches: ['**']
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
@@ -33,11 +33,6 @@ jobs:
           - cc: clang
             runner: macos-11.0
             os: osx
-          - flavor: functionaltest-lua
-            cc: gcc
-            runner: ubuntu-20.04
-            os: linux
-            cmake: minimum_required
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     if: github.event.pull_request.draft == false
@@ -47,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup commom environment variables
+      - name: Setup common environment variables
         run: ./.github/workflows/env.sh ${{ matrix.flavor }}
 
       - name: Install apt packages
@@ -55,24 +50,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
-
-      - name: Install minimum required version of cmake
-        if: matrix.cmake == 'minimum_required'
-        env:
-          CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
-          CMAKE_VERSION: '3.10.0'
-        shell: bash
-        run: |
-          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
-          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
-          chmod a+x /tmp/cmake-installer.sh
-          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
-          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
-          cmake_version="$(cmake --version | head -1)"
-          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
-            echo "Unexpected CMake version: $cmake_version"
-            exit 1
-          }
 
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
@@ -138,3 +115,69 @@ jobs:
         run: powershell ci\build.ps1
         env:
           CONFIGURATION: ${{ matrix.config }}
+
+  functionaltest:
+    name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: functionaltest-lua
+            cc: gcc
+            runner: ubuntu-20.04
+            os: linux
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      CC: ${{ matrix.cc }}
+      CI_OS_NAME: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup commom environment variables
+        run: ./.github/workflows/env.sh ${{ matrix.flavor }}
+
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext gperf language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+
+      - name: Install minimum required version of cmake
+        env:
+          CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
+          CMAKE_VERSION: '3.10.0'
+        shell: bash
+        run: |
+          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
+          chmod a+x /tmp/cmake-installer.sh
+          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
+          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
+          cmake_version="$(cmake --version | head -1)"
+          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
+            echo "Unexpected CMake version: $cmake_version"
+            exit 1
+          }
+
+      - name: Setup interpreter packages
+        run: |
+          ./ci/before_install.sh
+          ./ci/install.sh
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.CACHE_NVIM_DEPS_DIR }}
+            ~/.ccache
+          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
+
+      - name: Build third-party
+        run: ./ci/before_script.sh
+
+      - name: Build and test
+        run: ./ci/script.sh
+
+      - name: Cache dependencies
+        if: ${{ success() }}
+        run: ./ci/before_cache.sh
