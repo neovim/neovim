@@ -2479,7 +2479,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 Parameters: ~
                     {buffer}        Buffer handle, or 0 for current buffer
                     {start_row}     First line index
-                    {start_column}  Last column
+                    {start_column}  First column
                     {end_row}       Last line index
                     {end_column}    Last column
                     {replacement}   Array of lines to use as replacement

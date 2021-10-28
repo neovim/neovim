@@ -535,7 +535,7 @@ end:
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_column     Last column
+/// @param start_column     First column
 /// @param end_row          Last line index
 /// @param end_column       Last column
 /// @param replacement      Array of lines to use as replacement
