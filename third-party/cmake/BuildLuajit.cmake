@@ -53,12 +53,12 @@ else()
 endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUA_USE_APICHECK
-                                CFLAGS+=-DLUA_USE_ASSERT
+                                CFLAGS+=-funwind-tables
                                 ${NO_STACK_CHECK}
                                 ${AMD64_ABI}
                                 CCDEBUG+=-g
                                 Q=
-                                install)
+                                amalg install)
 
 if(UNIX)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -109,7 +109,7 @@ elseif(MINGW)
   BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS+=-DLUA_USE_APICHECK
-                                CFLAGS+=-DLUA_USE_ASSERT
+                                CFLAGS+=-funwind-tables
                                 CCDEBUG+=-g
                                 BUILDMODE=static
                       # Build a DLL too
