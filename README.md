@@ -25,6 +25,8 @@ Neovim is a project that seeks to aggressively refactor Vim in order to:
 See the [Introduction](https://github.com/neovim/neovim/wiki/Introduction) wiki page and [Roadmap]
 for more information.
 
+Hi all
+
 Features
 --------
 
@@ -74,6 +76,8 @@ Transitioning from Vim
 --------------------
 
 See [`:help nvim-from-vim`](https://neovim.io/doc/user/nvim.html#nvim-from-vim) for instructions.
+
+Thanks Prime & TJ & ABD
 
 Project layout
 --------------
