@@ -89,7 +89,9 @@ CONFIG = {
         # Section ordering.
         'section_order': [
             'vim.c',
+            'vimscript.c',
             'buffer.c',
+            'extmark.c',
             'window.c',
             'win_config.c',
             'tabpage.c',
