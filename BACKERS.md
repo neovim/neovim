@@ -54,12 +54,14 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Gabriele Lana http://github.com/gabrielelana
 - Gavin Rogers http://praxeology.co.uk
 - Geoff Greer https://floobits.com/
+- foo
 - Glenn Strauss https://github.com/gstrauss/
 - Gustav Buchholtz http://grod.se
 - Henri Bourcereau http://bourcereau.fr
 - http://jaredforsyth.com
 - http://www.1bsyl.com
 - Johann Dahm (http://johanndahm.com)
+- bar
 - Ian Farmer http://farmernet.net
 - iauns - http://www.noobtube.com
 - Jacob Jewell www.immersiveapplications.com
@@ -610,6 +612,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Tim Matthews
 - Timo Kröger
 - Tolstyak
+- asdfqwerty
 - Tom Panning
 - Tom Wadley
 - Tony Kemp
@@ -641,6 +644,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Yusuke Kanda(@uskanda)
 - Yuval Langer
 - zerowidth
+- asdf
 - Ziling Zhao
 - Zsolt Botykai
 
