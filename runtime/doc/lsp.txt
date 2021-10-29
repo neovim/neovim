@@ -452,6 +452,22 @@ LspSignatureActiveParameter
    |vim.lsp.handlers.signature_help()|.
 
 ==============================================================================
+EVENTS                                                            *lsp-events*
+
+LspProgressUpdate                                          *LspProgressUpdate*
+   Upon receipt of a progress notification from the server. See
+   |vim.lsp.util.get_progress_messages()|.
+
+LspRequest                                                        *LspRequest*
+   After a change to the active set of pending LSP requests. See {requests}
+   in |vim.lsp.client|.
+
+Example: >
+   autocmd User LspProgressUpdate redrawstatus
+   autocmd User LspRequest redrawstatus
+<
+
+==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
@@ -608,6 +624,11 @@ client()                                                      *vim.lsp.client*
                     server.
                   • {handlers} (table): The handlers used by the client as
                     described in |lsp-handler|.
+                  • {requests} (table): The current pending requests in flight
+                    to the server. Entries are key-value pairs with the key
+                    being the request ID while the value is a table with `type`,
+                    `bufnr`, and `method` key-value pairs. `type` is either "pending"
+                    for an active request, or "cancel" for a cancel request.
                   • {config} (table): copy of the table that was passed by the
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server

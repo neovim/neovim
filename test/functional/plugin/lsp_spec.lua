@@ -3,9 +3,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local assert_log = helpers.assert_log
 local clear = helpers.clear
 local buf_lines = helpers.buf_lines
+local command = helpers.command
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local eval = helpers.eval
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
@@ -272,7 +274,7 @@ describe('LSP', function()
         return
       end
       local expected_handlers = {
-        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="shutdown", bufnr=1, client_id=1}};
         {NIL, {}, {method="test", client_id=1}};
       }
       test_rpc_server {
@@ -486,7 +488,7 @@ describe('LSP', function()
     it('should forward ContentModified to callback', function()
       local expected_handlers = {
         {NIL, {}, {method="finish", client_id=1}};
-        {{code = -32801}, NIL, {method = "error_code_test", client_id=1}};
+        {{code = -32801}, NIL, {method = "error_code_test", bufnr=1, client_id=1}};
       }
       local client
       test_rpc_server {
@@ -504,6 +506,140 @@ describe('LSP', function()
           eq(table.remove(expected_handlers), {err, _, ctx}, "expected handler")
           -- if ctx.method == 'error_code_test' then client.notify("finish") end
           if ctx.method ~= 'finish' then client.notify('finish') end
+          if ctx.method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
+    it('should track pending requests to the language server', function()
+      local expected_handlers = {
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {method="slow_request", bufnr=1, client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_pending_request_tracked";
+        on_init = function(_client)
+          client = _client
+          client.request("slow_request")
+          local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+          eq("slow_request", request.method)
+          eq("pending", request.type)
+          client.notify("release")
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+        end;
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, {}, ctx}, "expected handler")
+          if ctx.method == 'slow_request' then
+            local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+            eq(NIL, request)
+            client.notify("finish")
+          end
+          if ctx.method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
+    it('should track cancel requests to the language server', function()
+      local expected_handlers = {
+        {NIL, {}, {method="finish", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_cancel_request_tracked";
+        on_init = function(_client)
+          client = _client
+          client.request("slow_request")
+          client.cancel_request(2)
+          local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+          eq("slow_request", request.method)
+          eq("cancel", request.type)
+          client.notify("release")
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+        end;
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, {}, ctx}, "expected handler")
+          local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+          eq(NIL, request)
+          if ctx.method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
+    it('should clear pending and cancel requests on reply', function()
+      local expected_handlers = {
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {method="slow_request", bufnr=1, client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_tracked_requests_cleared";
+        on_init = function(_client)
+          client = _client
+          client.request("slow_request")
+          local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+          eq("slow_request", request.method)
+          eq("pending", request.type)
+          client.cancel_request(2)
+          request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+          eq("slow_request", request.method)
+          eq("cancel", request.type)
+          client.notify("release")
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+        end;
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, {}, ctx}, "expected handler")
+          if ctx.method == 'slow_request' then
+            local request = exec_lua([=[ return TEST_RPC_CLIENT.requests[2] ]=])
+            eq(NIL, request)
+            client.notify("finish")
+          end
+          if ctx.method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
+    it('should trigger LspRequest autocmd when requests table changes', function()
+      local expected_handlers = {
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {method="slow_request", bufnr=1, client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_tracked_requests_cleared";
+        on_init = function(_client)
+          command('let g:requests = 0')
+          command('autocmd User LspRequest let g:requests+=1')
+          client = _client
+          client.request("slow_request")
+          eq(1, eval('g:requests'))
+          client.cancel_request(2)
+          eq(2, eval('g:requests'))
+          client.notify("release")
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+          eq(3, eval('g:requests'))
+        end;
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, {}, ctx}, "expected handler")
+          if ctx.method == 'slow_request' then
+            client.notify("finish")
+          end
           if ctx.method == 'finish' then client.stop() end
         end;
       }
@@ -790,7 +926,7 @@ describe('LSP', function()
     -- TODO(askhan) we don't support full for now, so we can disable these tests.
     pending('should check the body and didChange incremental normal mode editing', function()
       local expected_handlers = {
-        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="shutdown", bufnr=1, client_id=1}};
         {NIL, {}, {method="finish", client_id=1}};
         {NIL, {}, {method="start", client_id=1}};
       }
