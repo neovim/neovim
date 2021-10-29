@@ -984,6 +984,9 @@ func Test_diff_with_scroll_and_change()
   call term_sendkeys(buf, "ax\<Esc>")
   call VerifyScreenDump(buf, 'Test_diff_scroll_change_02', {})
 
+  call term_sendkeys(buf, "\<C-W>lay\<Esc>")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_03', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_scroll_change')
