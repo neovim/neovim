@@ -4,6 +4,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 
 ### Your name and URL in BACKERS.md.
 
+- cool backer 1
 - [Bob Breznak](http://brez.io)
 - [Tim Uruski](http://timuruski.net)
 - @mikker (http://brnbw.com)
@@ -23,6 +24,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Benedikt Böhm http://bb.xnull.de
 - bfredl, http://bfredl.github.io
 - Brandon Smith, http://reardencode.com
+- tpope
 - Brandon Wang, http://brandonwang.me
 - Brennen Bearnes http://p1k3.com
 - Brock Wilcox (awwaiid) http://thelackthereof.org/
@@ -41,6 +43,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - David Gabriel http://wiki.dest-unreachable.net
 - Deepak Kumar www.kreatio.com
 - Derek Rodger http://devslant.com
+- bob 
 - ebene fünf GmbH www.ebenefuenf.de
 - Ehtesh Choudhury
 - Emil Hernvall http://emilhernvall.github.io/
