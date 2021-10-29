@@ -127,6 +127,5 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
-[Homebrew]: https://formulae.brew.sh/formula/neovim
 
 <!-- vim: set tw=80: -->
