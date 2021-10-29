@@ -4553,9 +4553,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "windows",
     "winaltkeys",
     "writebackup",
-#if defined(HAVE_WSL)
-    "wsl",
-#endif
     "nvim",
   };
 
@@ -4602,6 +4599,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = syntax_present(curwin);
     } else if (STRICMP(name, "clipboard_working") == 0) {
       n = eval_has_provider("clipboard");
+    } else if (STRICMP(name, "wsl") == 0) {
+      n = has_wsl();
 #ifdef UNIX
     } else if (STRICMP(name, "unnamedplus") == 0) {
       n = eval_has_provider("clipboard");
@@ -4616,9 +4615,24 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = n;
 }
 
-/*
- * "has_key()" function
- */
+static bool has_wsl(void)
+{
+  static TriState has_wsl = kNone;
+  if (has_wsl == kNone) {
+    Error err = ERROR_INIT;
+    Object o = nlua_exec(
+        STATIC_CSTR_AS_STRING("return vim.loop.os_uname()['release']:lower()"
+                              ":match('microsoft') and true or false"),
+        (Array)ARRAY_DICT_INIT, &err);
+    assert(!ERROR_SET(&err));
+    assert(o.type == kObjectTypeBoolean);
+    has_wsl = o.data.boolean ? kTrue : kFalse;
+    api_free_object(o);
+  }
+  return has_wsl == kTrue;
+}
+
+/// "has_key()" function
 static void f_has_key(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
