@@ -553,6 +553,15 @@ static void nlua_common_package_init(lua_State *lstate)
   }
 
   {
+    const char *code = (char *)&lua_load_package_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/_load_package.lua")
+        || lua_pcall(lstate, 0, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating _load_package module: %.*s"));
+      return;
+    }
+  }
+
+  {
     lua_getglobal(lstate, "package");  // [package]
     lua_getfield(lstate, -1, "loaded");  // [package, loaded]
 
