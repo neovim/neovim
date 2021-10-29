@@ -2201,7 +2201,7 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "exepath()" function
 static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (tv_check_for_string(&argvars[0]) == FAIL) {
+  if (tv_check_for_nonempty_string(&argvars[0]) == FAIL) {
     return;
   }
 
@@ -2661,9 +2661,9 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char buf[NUMBUFLEN];
   const char *fname = tv_get_string_chk(&argvars[0]);
   const char *const mods = tv_get_string_buf_chk(&argvars[1], buf);
-  if (fname == NULL || mods == NULL) {
+  if (fname == NULL) {
     fname = NULL;
-  } else {
+  } else if (mods != NULL && *mods != NUL) {
     len = strlen(fname);
     size_t usedlen = 0;
     if (*mods != NUL) {

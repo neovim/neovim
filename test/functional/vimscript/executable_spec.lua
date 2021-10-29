@@ -18,13 +18,17 @@ describe('executable()', function()
   end)
 
   it('fails for invalid values', function()
-    for _, input in ipairs({'""', 'v:null', 'v:true', 'v:false', '{}', '[]'}) do
+    for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
       eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
     end
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
       eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
     end
+  end)
+
+  it('returns 0 for empty strings', function()
+    eq(0, call('executable', '""'))
   end)
 
   it('returns 0 for non-existent files', function()
