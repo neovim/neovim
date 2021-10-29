@@ -71,3 +71,6 @@ tags
 
 # vim patches
 /vim-*.patch
+
+# uncrustify repository
+/.uncrustify

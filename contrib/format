@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+for i in "$@"; do
+case $i in
+    -h|--help)
+    echo "Usage:   $0 file1 file2..."
+    echo ""
+    echo "Example: $0 arabic.c api/vim.c vim.h"
+    exit 1
+    ;;
+esac
+done
+
+root_path="$(git rev-parse --show-toplevel)"
+uncrustify_path="$root_path/.uncrustify"
+uncrustify_build_path="$uncrustify_path/build"
+uncrustify_executable="$uncrustify_build_path/uncrustify"
+uncrustify_config_path="$root_path/src/uncrustify.cfg"
+commit="$(head -n1 "$uncrustify_config_path" | awk -F'-' '{print $NF}')"
+
+[[ -d $uncrustify_path ]] || git clone https://github.com/uncrustify/uncrustify.git "$uncrustify_path"
+
+(
+  mkdir -p "$uncrustify_build_path"
+  cd "$uncrustify_build_path"
+
+  git reset --hard "$commit"
+
+  cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release ..
+  cmake --build .
+)
+
+"$uncrustify_executable" -c "$uncrustify_config_path" --replace --no-backup "$@"
