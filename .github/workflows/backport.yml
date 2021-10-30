@@ -2,6 +2,8 @@ name: Backport
 on:
   pull_request_target:
     types: [closed, labeled]
+  issue_comment:
+    types: [created]
 jobs:
   backport:
     permissions:
