@@ -183,7 +183,7 @@ assign_commit_details() {
 # Patch surgery
 preprocess_patch() {
   local file="$1"
-  local nvim="nvim -u NORC -i NONE --headless"
+  local nvim="nvim -u NONE -n -i NONE --headless"
 
   # Remove Filelist, README
   local na_files='Filelist\|README.*'
@@ -683,7 +683,7 @@ review_commit() {
   msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
-  local nvim="nvim -u NORC -n -i NONE --headless"
+  local nvim="nvim -u NONE -n -i NONE --headless"
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'1,/^$/g/^ /-1join' +w +q "${NVIM_SOURCE_DIR}/n${patch_file}"
 
   local expected_commit_message
