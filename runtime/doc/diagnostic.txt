@@ -75,6 +75,100 @@ Functions that take a severity as an optional parameter (e.g.
 The latter form allows users to specify a range of severities.
 
 ==============================================================================
+HANDLERS						*diagnostic-handlers*
+
+Diagnostics are shown to the user with |vim.diagnostic.show()|. The display of
+diagnostics is managed through handlers. A handler is a table with a "show"
+and (optionally) a "hide" function. The "show" function has the signature
+>
+	function(namespace, bufnr, diagnostics, opts)
+<
+and is responsible for displaying or otherwise handling the given
+diagnostics. The "hide" function takes care of "cleaning up" any actions taken
+by the "show" function and has the signature
+>
+	function(namespace, bufnr)
+<
+Handlers can be configured with |vim.diagnostic.config()| and added by
+creating a new key in `vim.diagnostic.handlers` (see
+|diagnostic-handlers-example|).
+
+The {opts} table passed to a handler is the full set of configuration options
+(that is, it is not limited to just the options for the handler itself). The
+values in the table are already resolved (i.e. if a user specifies a
+function for a config option, the function has already been evaluated).
+
+Nvim provides these handlers by default: "virtual_text", "signs", and
+"underline".
+
+						*diagnostic-handlers-example*
+The example below creates a new handler that notifies the user of diagnostics
+with |vim.notify()|: >
+
+	-- It's good practice to namespace custom handlers to avoid collisions
+	vim.diagnostic.handlers["my/notify"] = {
+	  show = function(namespace, bufnr, diagnostics, opts)
+	    -- In our example, the opts table has a "log_level" option
+	    local level = opts["my/notify"].log_level
+
+	    local name = vim.diagnostic.get_namespace(namespace).name
+	    local msg = string.format("%d diagnostics in buffer %d from %s",
+	                              #diagnostics,
+	                              bufnr,
+	                              name)
+	    vim.notify(msg, level)
+	  end,
+	}
+
+	-- Users can configure the handler
+	vim.diagnostic.config({
+	  ["my/notify"] = {
+	    log_level = vim.log.levels.INFO
+	  }
+	})
+<
+In this example, there is nothing to do when diagnostics are hidden, so we
+omit the "hide" function.
+
+Existing handlers can be overriden. For example, use the following to only
+show a sign for the highest severity diagnostic on a given line: >
+
+	-- Create a custom namespace. This will aggregate signs from all other
+	-- namespaces and only show the one with the highest severity on a
+	-- given line
+	local ns = vim.api.nvim_create_namespace("my_namespace")
+
+	-- Get a reference to the original signs handler
+	local orig_signs_handler = vim.diagnostic.handlers.signs
+
+	-- Override the built-in signs handler
+	vim.diagnostic.handlers.signs = {
+	  show = function(_, bufnr, _, opts)
+	    -- Get all diagnostics from the whole buffer rather than just the
+	    -- diagnostics passed to the handler
+	    local diagnostics = vim.diagnostic.get(bufnr)
+
+	    -- Find the "worst" diagnostic per line
+	    local max_severity_per_line = {}
+	    for _, d in pairs(diagnostics) do
+	      local m = max_severity_per_line[d.lnum]
+	      if not m or d.severity < m.severity then
+	        max_severity_per_line[d.lnum] = d
+	      end
+	    end
+
+	    -- Pass the filtered diagnostics (with our custom namespace) to
+	    -- the original handler
+	    local filtered_diagnostics = vim.tbl_values(max_severity_per_line)
+	    orig_signs_handler.show(ns, bufnr, filtered_diagnostics, opts)
+	  end,
+	  hide = function(_, bufnr)
+	    orig_signs_handler.hide(ns, bufnr)
+	  end,
+	}
+<
+
+==============================================================================
 HIGHLIGHTS						*diagnostic-highlights*
 
 All highlights defined for diagnostics begin with `Diagnostic` followed by
@@ -202,51 +296,6 @@ Example: >
 	autocmd User DiagnosticsChanged lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
-CUSTOMIZATION						*diagnostic-config*
-
-If you need more customization over the way diagnostics are displayed than the
-built-in configuration options provide, you can override the display handler
-explicitly. For example, use the following to only show a sign for the highest
-severity diagnostic on a given line: >
-
-	-- Disable the default signs handler
-	vim.diagnostic.config({signs = false})
-
-	-- Create a namespace. This won't be used to add any diagnostics,
-	-- only to display them.
-	local ns = vim.api.nvim_create_namespace("my_namespace")
-
-	-- Create a reference to the original function
-	local orig_show = vim.diagnostic.show
-
-	local function set_signs(bufnr)
-	  -- Get all diagnostics from the current buffer
-	  local diagnostics = vim.diagnostic.get(bufnr)
-
-	  -- Find the "worst" diagnostic per line
-	  local max_severity_per_line = {}
-	  for _, d in pairs(diagnostics) do
-	    local m = max_severity_per_line[d.lnum]
-	    if not m or d.severity < m.severity then
-	      max_severity_per_line[d.lnum] = d
-	    end
-	  end
-
-	  -- Show the filtered diagnostics using the custom namespace. Use the
-	  -- reference to the original function to avoid a loop.
-	  local filtered_diagnostics = vim.tbl_values(max_severity_per_line)
-	  orig_show(ns, bufnr, filtered_diagnostics, {
-	    virtual_text=false,
-	    underline=false,
-	    signs=true
-	  })
-	end
-
-	function vim.diagnostic.show(namespace, bufnr, ...)
-	  orig_show(namespace, bufnr, ...)
-	  set_signs(bufnr)
-	end
-<
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
@@ -393,6 +442,15 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
 
                 Return: ~
                     table A list of diagnostic items |diagnostic-structure|.
+
+get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
+                Get namespace metadata.
+
+                Parameters: ~
+                    {ns}  number Diagnostic namespace
+
+                Return: ~
+                    table Namespace metadata
 
 get_namespaces()                             *vim.diagnostic.get_namespaces()*
                 Get current diagnostic namespaces.
@@ -619,7 +677,7 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                 Display diagnostics for the given namespace and buffer.
 
                 Parameters: ~
-                    {namespace}    number Diagnostic namespace
+                    {namespace}    number Diagnostic namespace.
                     {bufnr}        number|nil Buffer number. Defaults to the
                                    current buffer.
                     {diagnostics}  table|nil The diagnostics to display. When
