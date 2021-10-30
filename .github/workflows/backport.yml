@@ -4,6 +4,9 @@ on:
     types: [closed, labeled]
 jobs:
   backport:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Backport Pull Request
     if: >
       github.repository_owner == 'neovim' && (
