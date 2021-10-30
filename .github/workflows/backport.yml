@@ -4,6 +4,9 @@ on:
     types: [closed, labeled]
 jobs:
   backport:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Backport Pull Request
     if: >
       github.repository_owner == 'neovim' && (
@@ -22,7 +25,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create backport PRs
-        uses: zeebe-io/backport-action@v0.0.6
+        uses: zeebe-io/backport-action@v0.0.7
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_workspace: ${{ github.workspace }}
