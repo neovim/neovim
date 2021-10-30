@@ -1484,7 +1484,6 @@ static void unibi_goto(UI *ui, int row, int col)
     if (str) { \
       unibi_var_t vars[26 + 26]; \
       size_t orig_pos = data->bufpos; \
-      \
       memset(&vars, 0, sizeof(vars)); \
       data->cork = true; \
 retry: \

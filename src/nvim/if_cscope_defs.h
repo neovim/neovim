@@ -52,13 +52,13 @@ typedef struct csi {
   FILE *to_fp;        // to cscope: FILE.
 } csinfo_T;
 
-typedef enum { Add, Find, Help, Kill, Reset, Show } csid_e;
+typedef enum { Add, Find, Help, Kill, Reset, Show, } csid_e;
 
 typedef enum {
   Store,
   Get,
   Free,
-  Print
+  Print,
 } mcmd_e;
 
 #endif  // NVIM_IF_CSCOPE_DEFS_H

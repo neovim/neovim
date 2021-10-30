@@ -245,7 +245,7 @@ enum key_extra {
   KE_MOUSEMOVE = 100,        // mouse moved with no button down
   // , KE_CANCEL = 101        // return from vgetc
   KE_EVENT = 102,           // event
-  KE_COMMAND = 104          // <Cmd> special key
+  KE_COMMAND = 104,  // <Cmd> special key
 };
 
 /*

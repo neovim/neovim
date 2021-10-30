@@ -5868,7 +5868,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
     ct_MODS,
     ct_REGISTER,
     ct_LT,
-    ct_NONE
+    ct_NONE,
   } type = ct_NONE;
 
   if ((vim_strchr((char_u *)"qQfF", *p) != NULL) && p[1] == '-') {

@@ -230,7 +230,7 @@ typedef enum {
   STATE_REP_INI,        // Prepare for using REP items.
   STATE_REP,            // Use matching REP items from the .aff file.
   STATE_REP_UNDO,       // Undo a REP item replacement.
-  STATE_FINAL           // End of this node.
+  STATE_FINAL,  // End of this node.
 } state_T;
 
 // Struct to keep the state at each level in suggest_try_change().

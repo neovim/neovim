@@ -29,7 +29,7 @@
                                                      : ((rb)->next > \
                                                         (rb)->first) ? (size_t)((rb)->next - \
                                                                                 (rb)->first) \
-                                                                     : (size_t)((rb)->\
+                                                                     : (size_t)((rb)-> \
                                                                                 next - (rb)->buf + \
                                                                                 (rb)->buf_end - \
                                                                                 (rb)->first + 1))
@@ -130,7 +130,6 @@
       .buf_end = buf + size - 1, \
     }; \
   } \
-\
   static inline void funcprefix##_rb_free(TypeName##RingBuffer *const rb) \
   REAL_FATTR_UNUSED; \
   static inline void funcprefix##_rb_free(TypeName##RingBuffer *const rb) \
@@ -143,14 +142,12 @@
     } \
     XFREE_CLEAR(rb->buf); \
   } \
-\
   static inline void funcprefix##_rb_dealloc(TypeName##RingBuffer *const rb) \
   REAL_FATTR_UNUSED; \
   static inline void funcprefix##_rb_dealloc(TypeName##RingBuffer *const rb) \
   { \
     XFREE_CLEAR(rb->buf); \
   } \
-\
   static inline void funcprefix##_rb_push(TypeName##RingBuffer *const rb, \
                                           RBType item) \
   REAL_FATTR_NONNULL_ARG(1); \
@@ -166,7 +163,6 @@
     *rb->next = item; \
     rb->next = _RINGBUF_NEXT(rb, rb->next); \
   } \
-\
   static inline ptrdiff_t funcprefix##_rb_find_idx(const TypeName##RingBuffer *const rb, \
                                                    const RBType *const item_p) \
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_UNUSED; \
@@ -183,21 +179,18 @@
       return item_p - rb->buf + rb->buf_end - rb->first + 1; \
     } \
   } \
-\
   static inline size_t funcprefix##_rb_size(const TypeName##RingBuffer *const rb) \
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE; \
   static inline size_t funcprefix##_rb_size(const TypeName##RingBuffer *const rb) \
   { \
     return (size_t)(rb->buf_end - rb->buf) + 1; \
   } \
-\
   static inline size_t funcprefix##_rb_length(const TypeName##RingBuffer *const rb) \
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE; \
   static inline size_t funcprefix##_rb_length(const TypeName##RingBuffer *const rb) \
   { \
     return _RINGBUF_LENGTH(rb); \
   } \
-\
   static inline RBType *funcprefix##_rb_idx_p(const TypeName##RingBuffer *const rb, \
                                               const size_t idx) \
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE; \
@@ -212,7 +205,6 @@
       return rb->first + idx; \
     } \
   } \
-\
   static inline RBType funcprefix##_rb_idx(const TypeName##RingBuffer *const rb, \
                                            const size_t idx) \
   REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_UNUSED; \
@@ -221,7 +213,6 @@
   { \
     return *funcprefix##_rb_idx_p(rb, idx); \
   } \
-\
   static inline void funcprefix##_rb_insert(TypeName##RingBuffer *const rb, \
                                             const size_t idx, \
                                             RBType item) \
@@ -263,7 +254,6 @@
     } \
     rb->next = _RINGBUF_NEXT(rb, rb->next); \
   } \
-\
   static inline void funcprefix##_rb_remove(TypeName##RingBuffer *const rb, \
                                             const size_t idx) \
   REAL_FATTR_NONNULL_ARG(1) REAL_FATTR_UNUSED; \

@@ -14,13 +14,13 @@ typedef int colnr_T;
 #define PRIdCOLNR "d"
 
 /// Maximal (invalid) line number
-enum { MAXLNUM = 0x7fffffff };
+enum { MAXLNUM = 0x7fffffff, };
 /// Maximal column number
-enum { MAXCOL = INT_MAX };
+enum { MAXCOL = INT_MAX, };
 // Minimum line number
-enum { MINLNUM = 1 };
+enum { MINLNUM = 1, };
 // minimum column number
-enum { MINCOL = 1 };
+enum { MINCOL = 1, };
 
 /*
  * position in file or buffer

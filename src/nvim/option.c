@@ -105,7 +105,7 @@
 // WV_ and BV_ values get typecasted to this for the "indir" field
 typedef enum {
   PV_NONE = 0,
-  PV_MAXVAL = 0xffff      // to avoid warnings for value out of range
+  PV_MAXVAL = 0xffff,  // to avoid warnings for value out of range
 } idopt_T;
 
 /*

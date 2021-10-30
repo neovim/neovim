@@ -19,7 +19,7 @@ typedef enum {
   kMTCharWise = 0,     ///< character-wise movement/register
   kMTLineWise = 1,     ///< line-wise movement/register
   kMTBlockWise = 2,    ///< block-wise movement/register
-  kMTUnknown = -1      ///< Unknown or invalid motion type
+  kMTUnknown = -1,  ///< Unknown or invalid motion type
 } MotionType;
 
 /*

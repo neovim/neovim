@@ -24,7 +24,7 @@
 #include "nvim/os/os_defs.h"       // bring lots of system header files
 
 /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
-enum { NUMBUFLEN = 65 };
+enum { NUMBUFLEN = 65, };
 
 #define MAX_TYPENR 65535
 
@@ -199,7 +199,7 @@ enum {
 
 #define DIALOG_MSG_SIZE 1000    // buffer size for dialog_msg()
 
-enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
+enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 
 
 // Maximum length of key sequence to be mapped.

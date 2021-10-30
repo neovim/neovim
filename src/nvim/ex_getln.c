@@ -2655,7 +2655,7 @@ void free_arshape_buf(void)
 
 #endif
 
-enum { MAX_CB_ERRORS = 1 };
+enum { MAX_CB_ERRORS = 1, };
 
 /// Color expression cmdline using built-in expressions parser
 ///

@@ -24,7 +24,7 @@ enum getf_retvalues {
   GETFILE_NOT_WRITTEN = 2,    // "not written" error
   GETFILE_SAME_FILE   = 0,    // success, same file
   GETFILE_OPEN_OTHER  = -1,   // success, opened another file
-  GETFILE_UNUSED      = 8
+  GETFILE_UNUSED      = 8,
 };
 
 // Values for buflist_new() flags

@@ -1536,7 +1536,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   enum {
     DIFF_ED,
     DIFF_UNIFIED,
-    DIFF_NONE
+    DIFF_NONE,
   } diffstyle = DIFF_NONE;
 
   if (dout->dout_fname == NULL) {
@@ -1708,7 +1708,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     notset = false;  // "*dp" has been set
   }
 
-  // for remaining diff blocks orig and new are equal
+// for remaining diff blocks orig and new are equal
   while (dp != NULL) {
     if (notset) {
       diff_copy_entry(dprev, dp, idx_orig, idx_new);

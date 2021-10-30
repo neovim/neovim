@@ -1728,7 +1728,6 @@ static void write_msg(String message, bool to_err)
     pos = 0; \
     continue; \
   } \
-  \
   line_buf[pos++] = message.data[i];
 
   ++no_wait_return;
@@ -2182,16 +2181,15 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int p_crb_save = ewp->w_p_crb;
   ewp->w_p_crb = false;
 
-  int width = build_stl_str_hl(
-      ewp,
-      (char_u *)buf,
-      sizeof(buf),
-      (char_u *)str.data,
-      false,
-      (char_u)fillchar,
-      maxwidth,
-      hltab_ptr,
-      NULL);
+  int width = build_stl_str_hl(ewp,
+                               (char_u *)buf,
+                               sizeof(buf),
+                               (char_u *)str.data,
+                               false,
+                               (char_u)fillchar,
+                               maxwidth,
+                               hltab_ptr,
+                               NULL);
 
   PUT(result, "width", INTEGER_OBJ(width));
 

@@ -388,7 +388,7 @@ struct stl_item {
     Highlight,
     TabPage,
     ClickFunc,
-    Trunc
+    Trunc,
   } type;
 };
 

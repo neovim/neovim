@@ -8,7 +8,7 @@
 
 typedef enum {
   kProcessTypeUv,
-  kProcessTypePty
+  kProcessTypePty,
 } ProcessType;
 
 typedef struct process Process;

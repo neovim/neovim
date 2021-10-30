@@ -7621,7 +7621,7 @@ int hkmap(int c)
     enum {
       hALEF = 0, BET, GIMEL, DALET, HEI, VAV, ZAIN, HET, TET, IUD,
       KAFsofit, hKAF, LAMED, MEMsofit, MEM, NUNsofit, NUN, SAMEH, AIN,
-      PEIsofit, PEI, ZADIsofit, ZADI, KOF, RESH, hSHIN, TAV
+      PEIsofit, PEI, ZADIsofit, ZADI, KOF, RESH, hSHIN, TAV,
     };
     static char_u map[26] =
     { (char_u)hALEF  /*a*/, (char_u)BET  /*b*/, (char_u)hKAF  /*c*/,

@@ -204,11 +204,11 @@
 ///
 #if defined(__clang__) && __clang__ == 1
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
-  _Pragma("clang diagnostic push")\
+  _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
 # ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("clang diagnostic push")\
+  _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wimplicit-fallthrough\"")
 # else
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
@@ -218,11 +218,11 @@
   _Pragma("clang diagnostic pop")
 #elif defined(__GNUC__)
 # define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
-  _Pragma("GCC diagnostic push")\
+  _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
 # ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("GCC diagnostic push")\
+  _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
 # else
 #  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \

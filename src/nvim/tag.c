@@ -1404,7 +1404,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
     TS_LINEAR,                  // linear searching forward, till EOF
     TS_BINARY,                // binary searching
     TS_SKIP_BACK,               // skipping backwards
-    TS_STEP_FORWARD             // stepping forwards
+    TS_STEP_FORWARD,  // stepping forwards
   }   state;                    // Current search state
 
   int cmplen;

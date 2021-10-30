@@ -51,36 +51,28 @@
 #define MAP_IMPL(T, U, ...) \
   INITIALIZER_DECLARE(T, U, __VA_ARGS__); \
   __KHASH_IMPL(T##_##U##_map, , T, U, 1, T##_hash, T##_eq) \
-  \
   void map_##T##_##U##_destroy(Map(T, U) *map) \
   { \
     kh_dealloc(T##_##U##_map, &map->table); \
   } \
-  \
   U map_##T##_##U##_get(Map(T, U) *map, T key) \
   { \
     khiter_t k; \
-    \
     if ((k = kh_get(T##_##U##_map, &map->table, key)) == kh_end(&map->table)) { \
       return INITIALIZER(T, U); \
     } \
-    \
     return kh_val(&map->table, k); \
   } \
-  \
   bool map_##T##_##U##_has(Map(T, U) *map, T key) \
   { \
     return kh_get(T##_##U##_map, &map->table, key) != kh_end(&map->table); \
   } \
-  \
   T map_##T##_##U##_key(Map(T, U) *map, T key) \
   { \
     khiter_t k; \
-    \
     if ((k = kh_get(T##_##U##_map, &map->table, key)) == kh_end(&map->table)) { \
       abort();  /* Caller must check map_has(). */ \
     } \
-    \
     return kh_key(&map->table, k); \
   } \
   U map_##T##_##U##_put(Map(T, U) *map, T key, U value) \
@@ -88,15 +80,12 @@
     int ret; \
     U rv = INITIALIZER(T, U); \
     khiter_t k = kh_put(T##_##U##_map, &map->table, key, &ret); \
-    \
     if (!ret) { \
       rv = kh_val(&map->table, k); \
     } \
-    \
     kh_val(&map->table, k) = value; \
     return rv; \
   } \
-  \
   U *map_##T##_##U##_ref(Map(T, U) *map, T key, bool put) \
   { \
     int ret; \
@@ -112,23 +101,18 @@
         return NULL; \
       } \
     } \
-    \
     return &kh_val(&map->table, k); \
   } \
-  \
   U map_##T##_##U##_del(Map(T, U) *map, T key) \
   { \
     U rv = INITIALIZER(T, U); \
     khiter_t k; \
-    \
     if ((k = kh_get(T##_##U##_map, &map->table, key)) != kh_end(&map->table)) { \
       rv = kh_val(&map->table, k); \
       kh_del(T##_##U##_map, &map->table, k); \
     } \
-    \
     return rv; \
   } \
-  \
   void map_##T##_##U##_clear(Map(T, U) *map) \
   { \
     kh_clear(T##_##U##_map, &map->table); \

@@ -33,7 +33,7 @@ typedef enum file_comparison {
   kDifferentFiles = 2,    ///< Both exist and are different files.
   kBothFilesMissing = 4,  ///< Both don't exist.
   kOneFileMissing = 6,    ///< One of them doesn't exist.
-  kEqualFileNames = 7     ///< Both don't exist and file names are same.
+  kEqualFileNames = 7,  ///< Both don't exist and file names are same.
 } FileComparison;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

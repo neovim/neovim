@@ -82,7 +82,7 @@ typedef enum
 {
   QFLT_QUICKFIX,  ///< Quickfix list - global list
   QFLT_LOCATION,  ///< Location list - per window list
-  QFLT_INTERNAL   ///< Internal - Temporary list used by
+  QFLT_INTERNAL,  ///< Internal - Temporary list used by
   //   getqflist()/getloclist()
 } qfltype_T;
 

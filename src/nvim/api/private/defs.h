@@ -26,7 +26,7 @@
 typedef enum {
   kErrorTypeNone = -1,
   kErrorTypeException,
-  kErrorTypeValidation
+  kErrorTypeValidation,
 } ErrorType;
 
 typedef enum {

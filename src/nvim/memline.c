@@ -235,7 +235,7 @@ static linenr_T lowest_marked = 0;
 // argument for ml_upd_block0()
 typedef enum {
   UB_FNAME = 0,         // update timestamp and filename
-  UB_SAME_DIR         // update the B0_SAME_DIR flag
+  UB_SAME_DIR,  // update the B0_SAME_DIR flag
 } upd_block0_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

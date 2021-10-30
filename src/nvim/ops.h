@@ -77,7 +77,7 @@ typedef int (*Indenter)(void);
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
   kGRegExprSrc = 2,  ///< Return expression itself for "=" register.
-  kGRegList    = 4   ///< Return list.
+  kGRegList    = 4,  ///< Return list.
 };
 
 /// Definition of one register

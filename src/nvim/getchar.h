@@ -21,7 +21,7 @@ enum RemapValues {
 typedef enum {
   FLUSH_MINIMAL,
   FLUSH_TYPEAHEAD,  // flush current typebuf contents
-  FLUSH_INPUT       // flush typebuf and inchar() input
+  FLUSH_INPUT,  // flush typebuf and inchar() input
 } flush_buffers_T;
 
 /// All possible |:map-arguments| usable in a |:map| command.
@@ -63,7 +63,7 @@ typedef struct map_arguments MapArguments;
 #define KEYLEN_PART_MAP -2  // keylen value for incomplete mapping
 
 /// Maximum number of streams to read script from
-enum { NSCRIPT = 15 };
+enum { NSCRIPT = 15, };
 
 /// Streams to read script from
 extern FileDescriptor *scriptin[NSCRIPT];

@@ -1025,7 +1025,7 @@ EXTERN bool headless_mode INIT(= false);
 typedef enum {
   kUnknown,
   kWorking,
-  kBroken
+  kBroken,
 } WorkingStatus;
 
 /// The scope of a working-directory command like `:cd`.

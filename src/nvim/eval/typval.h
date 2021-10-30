@@ -30,7 +30,7 @@ typedef uint64_t uvarnumber_T;
 typedef double float_T;
 
 /// Refcount for dict or list that should not be freed
-enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
+enum { DO_NOT_FREE_CNT = (INT_MAX / 2), };
 
 /// Additional values for tv_list_alloc() len argument
 enum ListLenSpecials {

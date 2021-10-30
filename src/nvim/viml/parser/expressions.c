@@ -1525,7 +1525,6 @@ static inline void east_set_error(const ParserState *const pstate, ExprASTError 
     assert(want_node == kENodeOperator); \
     /* Operator: may only be curly braces name, but only under certain */ \
     /* conditions. */ \
-\
     /* First condition is that there is no space before a part of complex */ \
     /* identifier. */ \
     if (prev_token.type == kExprLexSpacing) { \
@@ -1534,7 +1533,6 @@ static inline void east_set_error(const ParserState *const pstate, ExprASTError 
     switch ((*top_node_p)->type) { \
     /* Second is that previous node is one of the identifiers: */ \
     /* complex, plain, curly braces. */ \
-\
     /* TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to */ \
     /* handle environment variables like those bash uses for */ \
     /* `export -f`: their names consist not only of alphanumeric */ \

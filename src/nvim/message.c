@@ -2408,7 +2408,7 @@ typedef enum {
   SB_CLEAR_NONE = 0,
   SB_CLEAR_ALL,
   SB_CLEAR_CMDLINE_BUSY,
-  SB_CLEAR_CMDLINE_DONE
+  SB_CLEAR_CMDLINE_DONE,
 } sb_clear_T;
 
 // When to clear text on next msg.

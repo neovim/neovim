@@ -836,7 +836,7 @@ enum {
   BV_WM,
   BV_VSTS,
   BV_VTS,
-  BV_COUNT        // must be the last one
+  BV_COUNT,  // must be the last one
 };
 
 /*
@@ -889,7 +889,7 @@ enum {
   WV_FCS,
   WV_LCS,
   WV_WINBL,
-  WV_COUNT        // must be the last one
+  WV_COUNT,  // must be the last one
 };
 
 // Value for b_p_ul indicating the global value must be used.

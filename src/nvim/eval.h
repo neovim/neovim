@@ -70,7 +70,7 @@ typedef struct lval_S {
 typedef enum {
   VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
   VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
-  VAR_FLAVOUR_SHADA   = 4    // all uppercase
+  VAR_FLAVOUR_SHADA   = 4,  // all uppercase
 } var_flavour_T;
 
 /// Defines for Vim variables

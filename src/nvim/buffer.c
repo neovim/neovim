@@ -3399,7 +3399,7 @@ void free_titles(void)
 /// be used when printing numbers in the status line.
 typedef enum {
   kNumBaseDecimal = 10,
-  kNumBaseHexadecimal = 16
+  kNumBaseHexadecimal = 16,
 } NumberBase;
 
 
