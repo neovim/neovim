@@ -185,7 +185,7 @@ local function response_to_list(map_result, entity)
           title = 'Language Server';
           items = map_result(result, ctx.bufnr);
         })
-        api.nvim_command("copen")
+        api.nvim_command("botright copen")
       end
     end
   end
