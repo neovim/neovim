@@ -698,15 +698,14 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
 ------------------------------------------------------------------------------
 VIM.MPACK                                                          *lua-mpack*
 
-The *vim.mpack* module provides packing and unpacking of lua objects to
-msgpack encoded strings. |vim.NIL| and |vim.empty_dict()| are supported.
+The *vim.mpack* module provides encoding and decoding of Lua objects to and
+from msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
-vim.mpack.pack({obj})                                   *vim.mpack.pack*
-        Packs a lua object {obj} and returns the msgpack representation as
-        a string
+vim.mpack.encode({obj})                                 *vim.mpack.encode*
+        Encodes (or "packs") Lua object {obj} as msgpack in a Lua string.
 
-vim.mpack.unpack({str})                                 *vim.mpack.unpack*
-        Unpacks the msgpack encoded {str} and returns a lua object
+vim.mpack.decode({str})                                 *vim.mpack.decode*
+        Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
 ------------------------------------------------------------------------------
 VIM                                                     *lua-builtin*
