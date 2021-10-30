@@ -35,27 +35,15 @@
 # include "os/fs.c.generated.h"
 #endif
 
-#define RUN_UV_FS_FUNC_TH(ret, func, loop, ...) \
-  do { \
-    bool did_try_to_free = false; \
-uv_call_start: {} \
-    uv_fs_t req; \
-    ret = func(loop, &req, __VA_ARGS__); \
-    uv_fs_req_cleanup(&req); \
-    if (ret == UV_ENOMEM && !did_try_to_free) { \
-      try_to_free_memory(); \
-      did_try_to_free = true; \
-      goto uv_call_start; \
-    } \
-  } while (0)
-
 #define RUN_UV_FS_FUNC(ret, func, ...) \
   do { \
     bool did_try_to_free = false; \
 uv_call_start: {} \
     uv_fs_t req; \
+    fs_loop_lock(); \
     ret = func(&fs_loop, &req, __VA_ARGS__); \
     uv_fs_req_cleanup(&req); \
+    fs_loop_unlock(); \
     if (ret == UV_ENOMEM && !did_try_to_free) { \
       try_to_free_memory(); \
       did_try_to_free = true; \
@@ -66,12 +54,24 @@ uv_call_start: {} \
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
 static uv_loop_t fs_loop;
+static uv_mutex_t fs_loop_mutex;
 
 
 // Initialize the fs module
 void fs_init(void)
 {
   uv_loop_init(&fs_loop);
+  uv_mutex_init_recursive(&fs_loop_mutex);
+}
+
+void fs_loop_lock(void)
+{
+  uv_mutex_lock(&fs_loop_mutex);
+}
+
+void fs_loop_unlock(void)
+{
+  uv_mutex_unlock(&fs_loop_mutex);
 }
 
 
@@ -112,9 +112,12 @@ bool os_isrealdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
+  fs_loop_lock();
   if (uv_fs_lstat(&fs_loop, &request, name, NULL) != kLibuvSuccess) {
+    fs_loop_unlock();
     return false;
   }
+  fs_loop_unlock();
   if (S_ISLNK(request.statbuf.st_mode)) {
     return false;
   } else {
@@ -128,14 +131,7 @@ bool os_isrealdir(const char *name)
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return os_isdir_th(name, &fs_loop);
-}
-
-bool os_isdir_th(const char_u *name, uv_loop_t *loop)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  int32_t mode = os_getperm_th((const char *)name,
-                               loop == NULL ? &fs_loop : loop);
+  int32_t mode = os_getperm((const char *)name);
   if (mode < 0) {
     return false;
   }
@@ -755,17 +751,13 @@ int os_fsync(int fd)
 static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  return os_stat_th(name, statbuf, &fs_loop);
-}
-
-static int os_stat_th(const char *name, uv_stat_t *statbuf, uv_loop_t *loop)
-  FUNC_ATTR_NONNULL_ARG(2)
-{
   if (!name) {
     return UV_EINVAL;
   }
   uv_fs_t request;
-  int result = uv_fs_stat(loop, &request, name, NULL);
+  fs_loop_lock();
+  int result = uv_fs_stat(&fs_loop, &request, name, NULL);
+  fs_loop_unlock();
   if (result == kLibuvSuccess) {
     *statbuf = request.statbuf;
   }
@@ -778,13 +770,8 @@ static int os_stat_th(const char *name, uv_stat_t *statbuf, uv_loop_t *loop)
 /// @return libuv error code on error.
 int32_t os_getperm(const char *name)
 {
-  return os_getperm_th(name, &fs_loop);
-}
-
-int32_t os_getperm_th(const char *name, uv_loop_t *loop)
-{
   uv_stat_t statbuf;
-  int stat_result = os_stat_th(name, &statbuf, loop);
+  int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
@@ -857,16 +844,10 @@ int os_file_settime(const char *path, double atime, double mtime)
 ///
 /// @return true if `name` is readable, otherwise false.
 bool os_file_is_readable(const char *name)
-{
-  return os_file_is_readable_th(name, &fs_loop);
-}
-
-bool os_file_is_readable_th(const char *name, uv_loop_t *loop)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int r;
-  RUN_UV_FS_FUNC_TH(r, uv_fs_access, loop == NULL ? &fs_loop : loop,
-                    name, R_OK, NULL);
+  RUN_UV_FS_FUNC(r, uv_fs_access, name, R_OK, NULL);
   return (r == 0);
 }
 
@@ -973,9 +954,11 @@ int os_mkdtemp(const char *template, char *path)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
+  fs_loop_lock();
   int result = uv_fs_mkdtemp(&fs_loop, &request, template, NULL);
+  fs_loop_unlock();
   if (result == kLibuvSuccess) {
-    STRNCPY(path, request.path, TEMP_FILE_PATH_MAXLEN);
+    xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);
   }
   uv_fs_req_cleanup(&request);
   return result;
@@ -1000,7 +983,9 @@ int os_rmdir(const char *path)
 bool os_scandir(Directory *dir, const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
+  fs_loop_lock();
   int r = uv_fs_scandir(&fs_loop, &dir->request, path, 0, NULL);
+  fs_loop_unlock();
   if (r < 0) {
     os_closedir(dir);
   }
@@ -1061,7 +1046,9 @@ bool os_fileinfo_link(const char *path, FileInfo *file_info)
     return false;
   }
   uv_fs_t request;
+  fs_loop_lock();
   bool ok = uv_fs_lstat(&fs_loop, &request, path, NULL) == kLibuvSuccess;
+  fs_loop_unlock();
   if (ok) {
     file_info->stat = request.statbuf;
   }
@@ -1079,6 +1066,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;
   memset(file_info, 0, sizeof(*file_info));
+  fs_loop_lock();
   bool ok = uv_fs_fstat(&fs_loop,
                         &request,
                         file_descriptor,
@@ -1087,6 +1075,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
     file_info->stat = request.statbuf;
   }
   uv_fs_req_cleanup(&request);
+  fs_loop_unlock();
   return ok;
 }
 
@@ -1203,6 +1192,7 @@ char *os_realpath(const char *name, char *buf)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   uv_fs_t request;
+  fs_loop_lock();
   int result = uv_fs_realpath(&fs_loop, &request, name, NULL);
   if (result == kLibuvSuccess) {
     if (buf == NULL) {
@@ -1211,6 +1201,7 @@ char *os_realpath(const char *name, char *buf)
     xstrlcpy(buf, request.ptr, MAXPATHL + 1);
   }
   uv_fs_req_cleanup(&request);
+  fs_loop_unlock();
   return result == kLibuvSuccess ? buf : NULL;
 }
 

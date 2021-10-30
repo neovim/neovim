@@ -158,6 +158,7 @@ void early_init(mparm_T *paramp)
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
+  runtime_search_path_init();
   highlight_init();
 
 #ifdef WIN32

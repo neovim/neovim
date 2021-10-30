@@ -24,6 +24,23 @@
 static bool runtime_search_path_valid = false;
 static int *runtime_search_path_ref = NULL;
 static RuntimeSearchPath runtime_search_path;
+static RuntimeSearchPath runtime_search_path_thread;
+static uv_mutex_t runtime_search_path_mutex;
+
+void runtime_search_path_init(void)
+{
+  uv_mutex_init(&runtime_search_path_mutex);
+}
+
+void runtime_search_path_lock(void)
+{
+  uv_mutex_lock(&runtime_search_path_mutex);
+}
+
+void runtime_search_path_unlock(void)
+{
+  uv_mutex_unlock(&runtime_search_path_mutex);
+}
 
 /// ":runtime [what] {name}"
 void ex_runtime(exarg_T *eap)
@@ -172,21 +189,15 @@ RuntimeSearchPath runtime_search_path_get_cached(int *ref)
   return runtime_search_path;
 }
 
-void copy_runtime_search_path(RuntimeSearchPath *dst)
+RuntimeSearchPath copy_runtime_search_path(const RuntimeSearchPath src)
 {
-  runtime_search_path_validate();
-
-  copy_runtime_search_path_common(runtime_search_path, dst);
-}
-
-void copy_runtime_search_path_common(const RuntimeSearchPath src, RuntimeSearchPath *dst)
-{
+  RuntimeSearchPath dst = KV_INITIAL_VALUE;
   for (size_t j = 0; j < kv_size(src); j++) {
     SearchPathItem src_item = kv_A(src, j);
-    kv_push(*dst, ((SearchPathItem){ xstrdup(src_item.path), src_item.after, src_item.has_lua }));
+    kv_push(dst, ((SearchPathItem){ xstrdup(src_item.path), src_item.after, src_item.has_lua }));
   }
 
-  return;
+  return dst;
 }
 
 void runtime_search_path_unref(RuntimeSearchPath path, int *ref)
@@ -319,26 +330,33 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
 {
   int ref;
   RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
-  ArrayOf(String) rv = ARRAY_DICT_INIT;
-  static char buf[MAXPATHL];
 
-  runtime_get_named_common(lua, pat, all, path, &rv, buf, sizeof(buf), NULL);
+  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, path);
 
   runtime_search_path_unref(path, &ref);
   return rv;
 }
 
-void runtime_get_named_common(bool lua, Array pat, bool all,
-                              RuntimeSearchPath path, Array *rv,
-                              char *buf, size_t buf_len, uv_loop_t *loop)
+ArrayOf(String) runtime_get_named_thread(bool lua, Array pat, bool all)
 {
+  runtime_search_path_lock();
+  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, runtime_search_path_thread);
+  runtime_search_path_unlock();
+  return rv;
+}
+
+ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
+                                         RuntimeSearchPath path)
+{
+  ArrayOf(String) rv = ARRAY_DICT_INIT;
+  size_t buf_len = MAXPATHL;
+  char *buf = xmalloc(MAXPATHL);
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     if (lua) {
       if (item->has_lua == kNone) {
         size_t size = (size_t)snprintf(buf, buf_len, "%s/lua/", item->path);
-        item->has_lua = (size < buf_len && os_isdir_th((char_u *)buf,
-                                                       loop)) ? kTrue : kFalse;
+        item->has_lua = (size < buf_len && os_isdir((char_u *)buf));
       }
       if (item->has_lua == kFalse) {
         continue;
@@ -351,16 +369,19 @@ void runtime_get_named_common(bool lua, Array pat, bool all,
         size_t size = (size_t)snprintf(buf, buf_len, "%s/%s",
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
-          if (os_file_is_readable_th(buf, loop)) {
-            ADD(*rv, STRING_OBJ(cstr_to_string(buf)));
+          if (os_file_is_readable(buf)) {
+            ADD(rv, STRING_OBJ(cstr_to_string(buf)));
             if (!all) {
-              return;
+              goto done;
             }
           }
         }
       }
     }
   }
+done:
+  xfree(buf);
+  return rv;
 }
 
 /// Find "name" in "path".  When found, invoke the callback function for
@@ -593,6 +614,10 @@ void runtime_search_path_validate(void)
     runtime_search_path = runtime_search_path_build();
     runtime_search_path_valid = true;
     runtime_search_path_ref = NULL;  // initially unowned
+    runtime_search_path_lock();
+    runtime_search_path_free(runtime_search_path_thread);
+    runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
+    runtime_search_path_unlock();
   }
 }
 
