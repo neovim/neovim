@@ -34,7 +34,9 @@
 #include "rpc.h"
 
 #define UNPACKER_META_NAME "mpack.Unpacker"
+#define UNPACK_FN_NAME "decode"
 #define PACKER_META_NAME "mpack.Packer"
+#define PACK_FN_NAME "encode"
 #define SESSION_META_NAME "mpack.Session"
 #define NIL_NAME "mpack.NIL"
 #define EMPTY_DICT_NAME "mpack.empty_dict"
@@ -432,8 +434,8 @@ static int lmpack_unpacker_unpack_str(lua_State *L, Unpacker *unpacker,
 
   if (unpacker->unpacking) {
     return luaL_error(L, "Unpacker instance already working. Use another "
-                         "Unpacker or the module's \"unpack\" function if you "
-                         "need to unpack from the ext handler");
+                         "Unpacker or mpack." UNPACK_FN_NAME "() if you "
+                         "need to " UNPACK_FN_NAME " from the ext handler");
   }
   
   do {
@@ -784,8 +786,8 @@ static int lmpack_packer_pack(lua_State *L)
 
   if (packer->packing) {
     return luaL_error(L, "Packer instance already working. Use another Packer "
-                         "or the module's \"pack\" function if you need to "
-                         "pack from the ext handler");
+                         "or mpack." PACK_FN_NAME "() if you need to "
+                         PACK_FN_NAME " from the ext handler");
   }
 
   do {
@@ -1161,8 +1163,8 @@ static const luaL_reg mpack_functions[] = {
   {"Unpacker", lmpack_unpacker_new},
   {"Packer", lmpack_packer_new},
   {"Session", lmpack_session_new},
-  {"unpack", lmpack_unpack},
-  {"pack", lmpack_pack},
+  {UNPACK_FN_NAME, lmpack_unpack},
+  {PACK_FN_NAME, lmpack_pack},
   {NULL, NULL}
 };
 
