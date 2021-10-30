@@ -58,7 +58,7 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 ${AMD64_ABI}
                                 CCDEBUG+=-g
                                 Q=
-                                amalg install)
+                                install)
 
 if(UNIX)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
