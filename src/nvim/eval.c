@@ -5128,7 +5128,8 @@ failret:
 }
 
 /// @param ic  ignore case
-bool func_equal(typval_T *tv1, typval_T *tv2, bool ic) {
+bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
+{
   char_u *s1, *s2;
   dict_T *d1, *d2;
   int a1, a2;

@@ -7369,7 +7369,8 @@ void fixthisline(IndentGetter get_the_indent)
   }
 }
 
-void fix_indent(void) {
+void fix_indent(void)
+{
   if (p_paste) {
     return;
   }

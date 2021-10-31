@@ -5697,7 +5697,8 @@ void ex_comclear(exarg_T *eap)
   uc_clear(&curbuf->b_ucmds);
 }
 
-static void free_ucmd(ucmd_T *cmd) {
+static void free_ucmd(ucmd_T *cmd)
+{
   xfree(cmd->uc_name);
   xfree(cmd->uc_rep);
   xfree(cmd->uc_compl_arg);

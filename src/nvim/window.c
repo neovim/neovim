@@ -4998,7 +4998,6 @@ void do_autocmd_winscrolled(win_T *wp)
  * Save the size of all windows in "gap".
  */
 void win_size_save(garray_T *gap)
-
 {
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2 + 1);
@@ -7151,7 +7150,8 @@ void win_ui_flush(void)
   }
 }
 
-win_T *lastwin_nofloating(void) {
+win_T *lastwin_nofloating(void)
+{
   win_T *res = lastwin;
   while (res->w_floating) {
     res = res->w_prev;

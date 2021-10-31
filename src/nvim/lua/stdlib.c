@@ -311,7 +311,8 @@ int nlua_regex(lua_State *lstate)
   return 1;
 }
 
-static dict_T *nlua_get_var_scope(lua_State *lstate) {
+static dict_T *nlua_get_var_scope(lua_State *lstate)
+{
   const char *scope = luaL_checkstring(lstate, 1);
   handle_T handle = (handle_T)luaL_checkinteger(lstate, 2);
   dict_T *dict = NULL;

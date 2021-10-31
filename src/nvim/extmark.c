@@ -48,7 +48,8 @@
 # include "extmark.c.generated.h"
 #endif
 
-static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
+static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put)
+{
   return map_ref(uint64_t, ExtmarkNs)(buf->b_extmark_ns, ns_id, put);
 }
 

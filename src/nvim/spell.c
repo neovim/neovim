@@ -1758,7 +1758,8 @@ void slang_free(slang_T *lp)
 }
 
 /// Frees a salitem_T
-static void free_salitem(salitem_T *smp) {
+static void free_salitem(salitem_T *smp)
+{
   xfree(smp->sm_lead);
   // Don't free sm_oneof and sm_rules, they point into sm_lead.
   xfree(smp->sm_to);
@@ -1768,7 +1769,8 @@ static void free_salitem(salitem_T *smp) {
 }
 
 /// Frees a fromto_T
-static void free_fromto(fromto_T *ftp) {
+static void free_fromto(fromto_T *ftp)
+{
   xfree(ftp->ft_from);
   xfree(ftp->ft_to);
 }

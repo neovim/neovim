@@ -738,7 +738,8 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 }
 
 /// "bufwinid(nr)" function
-static void f_bufwinid(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+static void f_bufwinid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
   buf_win_common(argvars, rettv, false);
 }
 

@@ -2461,7 +2461,8 @@ char *getcmdline_prompt(const char firstc, const char *const prompt, const int a
  * Return TRUE when the text must not be changed and we can't switch to
  * another window or buffer.  Used when editing the command line etc.
  */
-int text_locked(void) {
+int text_locked(void)
+{
   if (cmdwin_type != 0) {
     return TRUE;
   }
@@ -2477,7 +2478,8 @@ void text_locked_msg(void)
   EMSG(_(get_text_locked_msg()));
 }
 
-char_u *get_text_locked_msg(void) {
+char_u *get_text_locked_msg(void)
+{
   if (cmdwin_type != 0) {
     return e_cmdwin;
   } else {
@@ -5914,7 +5916,8 @@ int get_history_idx(int histype)
  * Get pointer to the command line info to use. cmdline_paste() may clear
  * ccline and put the previous value in prev_ccline.
  */
-static struct cmdline_info *get_ccline_ptr(void){
+static struct cmdline_info *get_ccline_ptr(void)
+{
   if ((State & CMDLINE) == 0) {
     return NULL;
   } else if (ccline.cmdbuff != NULL) {

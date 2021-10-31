@@ -135,7 +135,8 @@ static int seen_b_u_curhead;
 static int seen_b_u_newhead;
 static int header_count;
 
-static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *exp_uh_alt_prev) {
+static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *exp_uh_alt_prev)
+{
   u_entry_T *uep;
 
   if (uhp == NULL) {
@@ -182,7 +183,8 @@ static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *e
   }
 }
 
-static void u_check(int newhead_may_be_NULL)                 {
+static void u_check(int newhead_may_be_NULL)
+{
   seen_b_u_newhead = 0;
   seen_b_u_curhead = 0;
   header_count = 0;
