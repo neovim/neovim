@@ -947,7 +947,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
       && !wp->w_p_lbr
       && *get_showbreak_value(wp) == NUL
-      && !wp->w_p_bri ) {
+      && !wp->w_p_bri) {
     for (;;) {
       head = 0;
       c = *ptr;

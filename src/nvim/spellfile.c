@@ -5164,13 +5164,13 @@ static int offset2bytes(int nr, char_u *buf)
     buf[3] = b1;
     return 4;
   }
-  if (b3 > 1 || b2 > 0x3f ) {   // 3 bytes
+  if (b3 > 1 || b2 > 0x3f) {   // 3 bytes
     buf[0] = 0xc0 + b3;
     buf[1] = b2;
     buf[2] = b1;
     return 3;
   }
-  if (b2 > 1 || b1 > 0x7f ) {   // 2 bytes
+  if (b2 > 1 || b1 > 0x7f) {   // 2 bytes
     buf[0] = 0x80 + b2;
     buf[1] = b1;
     return 2;
