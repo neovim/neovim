@@ -171,7 +171,7 @@ if (-not $NoTests) {
 }
 
 # Ensure choco's cpack is not in PATH otherwise, it conflicts with CMake's
-if (Get-Item -Path $env:ChocolateyInstall\bin\cpack.exe) {
+if (Test-Path -Path $env:ChocolateyInstall\bin\cpack.exe) {
   Remove-Item -Path $env:ChocolateyInstall\bin\cpack.exe -Force
 }
 
