@@ -1,0 +1,3 @@
+test/functional/legacy/044_099_regexp_multibyte_magic_spec.lua
+test/functional/legacy/093_mksession_cursor_cols_latin1_spec.lua
+test/functional/fixtures/lua/syntax_error.lua

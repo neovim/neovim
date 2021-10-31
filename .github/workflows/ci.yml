@@ -50,6 +50,12 @@ jobs:
       - name: Run lint
         run: ./ci/script.sh
 
+      - name: Enforce code style (lua)
+        uses: JohnnyMorganz/stylua-action@1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check .
+
       - name: Cache dependencies
         if: ${{ success() }}
         run: ./ci/before_cache.sh
