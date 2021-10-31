@@ -23,8 +23,7 @@
 /// Struct to hold the sign properties.
 typedef struct sign sign_T;
 
-struct sign
-{
+struct sign {
   sign_T *sn_next;       // next sign in list
   int sn_typenr;      // type number of sign
   char_u *sn_name;       // name of sign

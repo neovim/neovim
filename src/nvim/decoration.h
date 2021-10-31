@@ -31,8 +31,7 @@ typedef kvec_t(VirtTextChunk) VirtText;
 typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
 
 
-struct Decoration
-{
+struct Decoration {
   VirtText virt_text;
   VirtLines virt_lines;
 

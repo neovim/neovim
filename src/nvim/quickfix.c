@@ -322,8 +322,7 @@ int qf_init(win_T *wp, const char_u *restrict efile, char_u *restrict errorforma
 // Maximum number of bytes allowed per line while reading an errorfile.
 static const size_t LINE_MAXLEN = 4096;
 
-static struct fmtpattern
-{
+static struct fmtpattern {
   char_u convchar;
   char *pattern;
 } fmt_pat[FMT_PATTERNS] =

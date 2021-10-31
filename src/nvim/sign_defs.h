@@ -9,8 +9,7 @@
 // signs: line annotations
 
 // Sign group
-typedef struct signgroup_S
-{
+typedef struct signgroup_S {
   uint16_t sg_refcount;      // number of signs in this group
   int sg_next_sign_id;  // next sign id for this group
   char_u sg_name[1];       // sign group name

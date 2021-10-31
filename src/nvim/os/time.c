@@ -121,8 +121,7 @@ static char tz_cache[64];
 ///
 /// @return NULL in case of error
 struct tm *os_localtime_r(const time_t *restrict clock,
-                          struct tm *restrict result) FUNC_ATTR_NONNULL_ALL
-{
+                          struct tm *restrict result) FUNC_ATTR_NONNULL_ALL{
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
   //
@@ -156,8 +155,7 @@ struct tm *os_localtime_r(const time_t *restrict clock,
 /// @param result Pointer to a 'struct tm' where the result should be placed
 /// @return A pointer to a 'struct tm' in the current time zone (the 'result'
 ///         argument) or NULL in case of error
-struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
-{
+struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL{
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
 }

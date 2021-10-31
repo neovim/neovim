@@ -12,8 +12,7 @@ typedef struct {
 } VirtTextChunk;
 
 
-typedef struct
-{
+typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
   // TODO(bfredl): a lot of small allocations. Should probably use

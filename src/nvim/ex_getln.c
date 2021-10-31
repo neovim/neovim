@@ -5914,8 +5914,7 @@ int get_history_idx(int histype)
  * Get pointer to the command line info to use. cmdline_paste() may clear
  * ccline and put the previous value in prev_ccline.
  */
-static struct cmdline_info *get_ccline_ptr(void)
-{
+static struct cmdline_info *get_ccline_ptr(void){
   if ((State & CMDLINE) == 0) {
     return NULL;
   } else if (ccline.cmdbuff != NULL) {
