@@ -1255,27 +1255,30 @@ function lsp._vim_exit_handler()
       send_kill = true
       timeouts[client_id] = timeout
       max_timeout = math.max(timeout, max_timeout)
-    else
-      active_clients[client_id] = nil
     end
   end
 
   local poll_time = 50
 
   local function check_clients_closed()
+    for client_id, timeout in pairs(timeouts) do
+      timeouts[client_id] = timeout - poll_time
+    end
+
     for client_id, _ in pairs(active_clients) do
-      timeouts[client_id] = timeouts[client_id] - poll_time
-      if timeouts[client_id] < 0 then
-        active_clients[client_id] = nil
+      if timeouts[client_id] ~= nil and timeouts[client_id] > 0 then
+        return false
       end
     end
-    return tbl_isempty(active_clients)
+    return true
   end
 
   if send_kill then
     if not vim.wait(max_timeout, check_clients_closed, poll_time) then
-      for _, client in pairs(active_clients) do
-        client.stop(true)
+      for client_id, client in pairs(active_clients) do
+        if timeouts[client_id] ~= nil then
+          client.stop(true)
+        end
       end
     end
   end
