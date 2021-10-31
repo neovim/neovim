@@ -303,8 +303,9 @@ void ex_align(exarg_T *eap)
                * Now try to move the line as much as possible to
                * the right.  Stop when it moves too far.
                */
-              do
+              do{
                 (void)set_indent(++new_indent, 0);
+              }
               while (linelen(NULL) <= width);
               --new_indent;
               break;

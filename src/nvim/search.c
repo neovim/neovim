@@ -2530,10 +2530,11 @@ int findsent(Direction dir, long count)
       }
       if (c == '.' || c == '!' || c == '?') {
         tpos = pos;
-        do
+        do{
           if ((c = inc(&tpos)) == -1) {
             break;
           }
+        }
         while (vim_strchr((char_u *)")]\"'", c = gchar_pos(&tpos))
                != NULL);
         if (c == -1 || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL

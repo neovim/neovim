@@ -1628,8 +1628,9 @@ void ex_endtry(exarg_T *eap)
       eap->errmsg = get_end_emsg(cstack);
       // Find the matching ":try" and report what's missing.
       idx = cstack->cs_idx;
-      do
+      do{
         --idx;
+      }
       while (idx > 0 && !(cstack->cs_flags[idx] & CSF_TRY));
       rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,
                           &cstack->cs_looplevel);
