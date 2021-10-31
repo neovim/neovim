@@ -1317,7 +1317,7 @@ function lsp.buf_request(bufnr, method, params, handler)
   if not tbl_isempty(all_buffer_active_clients[resolve_bufnr(bufnr)] or {}) and not method_supported then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.ERROR)
     vim.api.nvim_command("redraw")
-    return
+    return {}, function() end
   end
 
   local client_request_ids = {}
