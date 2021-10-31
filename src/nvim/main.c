@@ -674,8 +674,7 @@ void getout(int exitval)
 
   profile_dump();
 
-  if (did_emsg
-      ) {
+  if (did_emsg) {
     // give the user a chance to read the (error) message
     no_wait_return = FALSE;
     wait_return(FALSE);

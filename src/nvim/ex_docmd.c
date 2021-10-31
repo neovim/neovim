@@ -7207,8 +7207,7 @@ void ex_splitview(exarg_T *eap)
                        *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
     // Reset 'scrollbind' when editing another file, but keep it when
     // doing ":split" without arguments.
-    if (*eap->arg != NUL
-        ) {
+    if (*eap->arg != NUL) {
       RESET_BINDING(curwin);
     } else {
       do_check_scrollbind(false);
@@ -8052,8 +8051,7 @@ static void ex_operators(exarg_T *eap)
 
   default:          // CMD_rshift or CMD_lshift
     if (
-        (eap->cmdidx == CMD_rshift) ^ curwin->w_p_rl
-        ) {
+        (eap->cmdidx == CMD_rshift) ^ curwin->w_p_rl) {
       oa.op_type = OP_RSHIFT;
     } else {
       oa.op_type = OP_LSHIFT;

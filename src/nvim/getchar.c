@@ -1560,8 +1560,7 @@ int vgetc(void)
         buf[0] = (char_u)c;
         for (i = 1; i < n; i++) {
           buf[i] = (char_u)vgetorpeek(true);
-          if (buf[i] == K_SPECIAL
-              ) {
+          if (buf[i] == K_SPECIAL) {
             // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
             // which represents a K_SPECIAL (0x80),
             // or a CSI - KS_EXTRA - KE_CSI sequence, which represents
