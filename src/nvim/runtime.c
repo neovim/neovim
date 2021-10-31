@@ -574,7 +574,6 @@ void runtime_search_path_validate(void)
 }
 
 
-
 /// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
 int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {

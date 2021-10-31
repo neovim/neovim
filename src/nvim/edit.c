@@ -8578,7 +8578,6 @@ static void ins_mousescroll(int dir)
 }
 
 
-
 static void ins_left(void)
 {
   pos_T tpos;

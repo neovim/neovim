@@ -55,5 +55,4 @@ typedef enum {
 } SignType;
 
 
-
 #endif // NVIM_SIGN_DEFS_H

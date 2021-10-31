@@ -4723,7 +4723,6 @@ bool prepare_tagpreview(bool undo_sync)
 }
 
 
-
 /*
  * ":help": open a read-only window on a help file
  */

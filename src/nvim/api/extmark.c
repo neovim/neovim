@@ -94,7 +94,6 @@ static bool ns_initialized(uint64_t ns)
 }
 
 
-
 static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 {
   Array rv = ARRAY_DICT_INIT;

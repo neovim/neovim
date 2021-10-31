@@ -4250,7 +4250,6 @@ abort_search:
 }
 
 
-
 /// Find next search match under cursor, cursor at end.
 /// Used while an operator is pending, and in Visual mode.
 ///

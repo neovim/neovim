@@ -7561,7 +7561,6 @@ static void ex_nogui(exarg_T *eap)
 }
 
 
-
 static void ex_swapname(exarg_T *eap)
 {
   if (curbuf->b_ml.ml_mfp == NULL || curbuf->b_ml.ml_mfp->mf_fname == NULL) {

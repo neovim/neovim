@@ -2036,7 +2036,6 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
 
-
   case K_SELECT:          // end of Select mode mapping - ignore
     return command_line_not_changed(s);
 
@@ -5604,7 +5603,6 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
 
   xfree(buf);
 }
-
 
 
 /*********************************

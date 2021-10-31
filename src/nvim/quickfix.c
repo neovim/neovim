@@ -7168,4 +7168,3 @@ void ex_helpgrep(exarg_T *eap)
   }
 }
 
-

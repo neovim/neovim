@@ -463,7 +463,6 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 }
 
 
-
 void nlua_state_add_stdlib(lua_State *const lstate)
 {
   // stricmp

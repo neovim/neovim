@@ -1066,7 +1066,6 @@ void do_tags(exarg_T *eap)
 }
 
 
-
 /*
  * Compare two strings, for length "len", ignoring case the ASCII way.
  * return 0 for match, < 0 for smaller, > 0 for bigger
@@ -1755,7 +1754,6 @@ line_read_in:
             }
           }
         }
-
 
 
         /*

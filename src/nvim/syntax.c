@@ -7770,8 +7770,6 @@ int syn_id2attr(int hl_id)
 }
 
 
-
-
 /*
  * Translate a group ID to the final group ID (following links).
  */

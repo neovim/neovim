@@ -11244,7 +11244,6 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-
 /*
  * Common code for tabpagewinnr() and winnr().
  */

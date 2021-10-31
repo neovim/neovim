@@ -5631,7 +5631,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
 }
 
 
-
 /// Mark all lists and dicts referenced in given mark
 ///
 /// @returns true if setting references failed somehow.

@@ -6725,7 +6725,6 @@ bool grid_invalid_row(ScreenGrid *grid, int row)
 }
 
 
-
 /// Copy part of a grid line for vertically split window.
 static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
 {

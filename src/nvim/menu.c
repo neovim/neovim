@@ -38,8 +38,6 @@
 #endif
 
 
-
-
 /// The character for each menu mode
 static char_u menu_mode_chars[] = { 'n', 'v', 's', 'o', 'i', 'c', 't' };
 

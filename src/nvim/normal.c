@@ -4772,7 +4772,6 @@ dozet:
 }
 
 
-
 /*
  * "Q" command.
  */

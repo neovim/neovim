@@ -1042,7 +1042,6 @@ char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int e
 }
 
 
-
 /*
  * Make the current buffer empty.
  * Used when it is wiped out and it's the last buffer.
@@ -5170,7 +5169,6 @@ void ex_buffer_all(exarg_T *eap)
     }
   }
 }
-
 
 
 /*
