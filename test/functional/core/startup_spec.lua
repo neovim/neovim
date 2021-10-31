@@ -414,6 +414,11 @@ describe('startup', function()
     eq({'ordinary', 'funky!', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
     eq({'ordinary', 'funky!', 'mittel', 'ordinary after'}, exec_lua [[ return _G.nested_order ]])
   end)
+
+  it("handles the correct order when prepending packpath", function()
+    clear{args={'--cmd', 'set packpath^=test/functional/fixtures',  '--cmd', [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
 end)
 
 describe('sysinit', function()

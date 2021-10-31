@@ -439,16 +439,16 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_
 }
 
 static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
-                              CharVec *after_path, char_u *pack_entry)
+                              CharVec *after_path, char_u *pack_entry, size_t pack_entry_len)
 {
   static char buf[MAXPATHL];
   char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
   for (int i = 0; i < 2; i++) {
-    if (STRLEN(pack_entry) + STRLEN(start_pat[i]) + 1 > MAXPATHL) {
+    if (pack_entry_len + STRLEN(start_pat[i]) + 1 > sizeof buf) {
       continue;
     }
-    STRLCPY(buf, pack_entry, MAXPATHL);
-    xstrlcat(buf, start_pat[i], sizeof buf);
+    STRLCPY(buf, pack_entry, sizeof buf);
+    STRLCPY(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
     expand_rtp_entry(search_path, rtp_used, buf, false);
     size_t after_size = STRLEN(buf)+7;
     char *after = xmallocz(after_size);
@@ -507,14 +507,15 @@ RuntimeSearchPath runtime_search_path_build(void)
     handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string((char *)buf), false);
     if (h) {
       (*h)++;
-      expand_pack_entry(&search_path, &rtp_used, &after_path, buf);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, buf, buflen);
     }
   }
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
-    handle_T h = map_get(String, handle_T)(&pack_used, kv_A(pack_entries, i));
+    String item = kv_A(pack_entries, i);
+    handle_T h = map_get(String, handle_T)(&pack_used, item);
     if (h == 0) {
-      expand_pack_entry(&search_path, &rtp_used, &after_path, (char_u *)kv_A(pack_entries, i).data);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, (char_u *)item.data, item.size);
     }
   }
 
