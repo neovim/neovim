@@ -3904,7 +3904,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
     assert(wp);
     while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
            && wp->w_buffer->b_scanned) {
-      ;
     }
     buf = wp->w_buffer;
   } else {
@@ -3917,7 +3916,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
                 : (!buf->b_p_bl
                    || (buf->b_ml.ml_mfp == NULL) != (flag == 'u')))
                || buf->b_scanned)) {
-      ;
     }
   }
   return buf;
@@ -5100,7 +5098,6 @@ static int ins_complete(int c, bool enable_pum)
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (!(compl_cont_status & CONT_ADDING)) {
           while (--startcol >= 0 && vim_isIDc(line[startcol])) {
-            ;
           }
           compl_col += ++startcol;
           compl_length = curs_col - startcol;
@@ -5788,7 +5785,6 @@ void insertchar(int c, int flags, int second_indent)
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
       while (--i >= 0 && ascii_iswhite(line[i])) {
-        ;
       }
       i++;
 

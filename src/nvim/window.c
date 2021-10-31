@@ -1773,7 +1773,6 @@ static void win_rotate(bool upwards, int count)
 
       // find last frame and append removed window/frame after it
       for (; frp->fr_next != NULL; frp = frp->fr_next) {
-        ;
       }
       win_append(frp->fr_win, wp1);
       frame_append(frp, wp1->w_frame);
@@ -1783,7 +1782,6 @@ static void win_rotate(bool upwards, int count)
       // find last window/frame in the list and remove it
       for (frp = curwin->w_frame; frp->fr_next != NULL;
            frp = frp->fr_next) {
-        ;
       }
       wp1 = frp->fr_win;
       wp2 = wp1->w_prev;                    // will become last window
@@ -2707,7 +2705,6 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   // Careful: Autocommands may have closed the tab page or made it the
   // current tab page.
   for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {
-    ;
   }
   if (ptp == NULL || tp == curtab) {
     return;
@@ -3045,7 +3042,6 @@ static tabpage_T *alt_tabpage(void)
 
   // Find the last but one tab page.
   for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {
-    ;
   }
   return tp;
 }
@@ -4120,14 +4116,12 @@ void goto_tabpage(int n)
     for (i = n; i < 0; ++i) {
       for (tp = first_tabpage; tp->tp_next != ttp && tp->tp_next != NULL;
            tp = tp->tp_next) {
-        ;
       }
       ttp = tp;
     }
   } else if (n == 9999) {
     // Go to last tab page.
     for (tp = first_tabpage; tp->tp_next != NULL; tp = tp->tp_next) {
-      ;
     }
   } else {
     // Go to tab page "n".
@@ -6300,7 +6294,6 @@ static void last_status_rec(frame_T *fr, bool statusline)
   } else {
     // horizontally split window, set status line for last one
     for (fp = fr->fr_child; fp->fr_next != NULL; fp = fp->fr_next) {
-      ;
     }
     last_status_rec(fp, statusline);
   }

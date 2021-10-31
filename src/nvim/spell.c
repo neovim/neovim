@@ -3420,7 +3420,6 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
     if (STRICMP(su->su_badword, line) == 0) {
       // Match!  Isolate the good word, until CR or NL.
       for (len = 0; p[len] >= ' '; ++len) {
-        ;
       }
       p[len] = NUL;
 
@@ -3813,7 +3812,6 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (sp->ts_prefixdepth == PFD_PREFIXTREE) {
         // Skip over the NUL bytes, we use them later.
         for (n = 0; n < len && byts[arridx + n] == 0; ++n) {
-          ;
         }
         sp->ts_curi += n;
 
@@ -3888,7 +3886,6 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         n = stack[sp->ts_prefixdepth].ts_arridx;
         len = pbyts[n++];
         for (c = 0; c < len && pbyts[n + c] == 0; ++c) {
-          ;
         }
         if (c > 0) {
           c = valid_word_prefix(c, n, flags,

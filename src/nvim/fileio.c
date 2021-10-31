@@ -1519,7 +1519,6 @@ rewind_retry:
             try_mac = 1;
             try_unix = 1;
             for (; p >= ptr && *p != CAR; p--) {
-              ;
             }
             if (p >= ptr) {
               for (p = ptr; p < ptr + size; ++p) {

@@ -1463,7 +1463,6 @@ retry:
   // If the line's too long for the buffer, discard it.
   if ((p = strchr(buf, '\n')) == NULL) {
     while ((ch = getc(csinfo[cnumber].fr_fp)) != EOF && ch != '\n') {
-      ;
     }
     return NULL;
   }

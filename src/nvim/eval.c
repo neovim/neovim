@@ -4524,7 +4524,6 @@ static int eval_index(char_u **arg, typval_T *rettv, int evaluate, int verbose)
      */
     key = *arg + 1;
     for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; ++len) {
-      ;
     }
     if (len == 0) {
       return FAIL;

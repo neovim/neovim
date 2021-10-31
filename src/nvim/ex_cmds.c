@@ -3135,7 +3135,6 @@ void ex_z(exarg_T *eap)
   // the number of '-' and '+' multiplies the distance
   if (*kind == '-' || *kind == '+') {
     for (x = kind + 1; *x == *kind; ++x) {
-      ;
     }
   }
 

@@ -4934,10 +4934,8 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               // find the file name after the end of the match
               for (p = incl_regmatch.endp[0];
                    *p && !vim_isfilec(*p); p++) {
-                ;
               }
               for (i = 0; vim_isfilec(p[i]); i++) {
-                ;
               }
             }
 

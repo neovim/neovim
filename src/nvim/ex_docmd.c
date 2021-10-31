@@ -7369,7 +7369,6 @@ static void ex_resize(exarg_T *eap)
   if (eap->addr_count > 0) {
     n = eap->line2;
     for (wp = firstwin; wp->w_next != NULL && --n > 0; wp = wp->w_next) {
-      ;
     }
   }
 
