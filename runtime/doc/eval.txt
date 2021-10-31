@@ -3397,8 +3397,8 @@ complete({startcol}, {matches})			*complete()* *E785*
 <		This isn't very useful, but it shows how it works.  Note that
 		an empty string is returned to avoid a zero being inserted.
 
-		Can also be used as a |method|, the second argument is passed
-		in: >
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
 			GetMatches()->complete(col('.'))
 
 complete_add({expr})				*complete_add()*
@@ -3535,7 +3535,7 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 
 		Can also be used as a |method|in: >
 			BuildMessage()->confirm("&Yes\n&No")
-
+<
 							*copy()*
 copy({expr})	Make a copy of {expr}.  For Numbers and Strings this isn't
 		different from using {expr} directly.
@@ -3746,7 +3746,7 @@ deletebufline({buf}, {first}[, {last}])		*deletebufline()*
 
 		Can also be used as a |method|: >
 			GetBuffer()->deletebufline(1)
-
+<
 dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		Adds a watcher to a dictionary. A dictionary watcher is
 		identified by three components:
@@ -3941,7 +3941,7 @@ exepath({expr})						*exepath()*
 
 		Can also be used as a |method|: >
 			GetCommand()->exepath()
-
+<
 							*exists()*
 exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 		defined, zero otherwise.
@@ -4487,7 +4487,7 @@ foldlevel({lnum})					*foldlevel()*
 
 		Can also be used as a |method|: >
 			GetLnum()->foldlevel()
-
+<
 							*foldtext()*
 foldtext()	Returns a String, to be displayed for a closed fold.  This is
 		the default function used for the 'foldtext' option and should
@@ -5861,7 +5861,7 @@ histadd({history}, {item})				*histadd()*
 			:let date=input("Enter date: ")
 <		This function is not available in the |sandbox|.
 
-		Can also be used as a |method|, the base is used for the
+		Can also be used as a |method|, the base is passed as the
 		second argument: >
 			GetHistory()->histadd('search')
 
@@ -6508,8 +6508,8 @@ libcall({libname}, {funcname}, {argument})
 		Examples: >
 			:echo libcall("libc.so", "getenv", "HOME")
 
-<		Can also be used as a |method|, where the base is passed as
-		the argument to the called function: >
+<		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetValue()->libcall("libc.so", "getenv")
 <
 							*libcallnr()*
@@ -6521,8 +6521,8 @@ libcallnr({libname}, {funcname}, {argument})
 			:call libcallnr("libc.so", "printf", "Hello World!\n")
 			:call libcallnr("libc.so", "sleep", 10)
 <
-		Can also be used as a |method|, where the base is passed as
-		the argument to the called function: >
+		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetValue()->libcallnr("libc.so", "printf")
 <
 line({expr} [, {winid}])				*line()*
@@ -7046,7 +7046,7 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 
 		Can also be used as a |method|: >
 			GetText()->matchstrpos('word')
-
+<
 							*max()*
 max({expr})	Return the maximum value of all items in {expr}.
 		{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
@@ -8594,7 +8594,8 @@ setbufline({buf}, {lnum}, {text})			*setbufline()*
 		If {buf} is not a valid buffer or {lnum} is not valid, an
 		error message is given.
 
-		Can also be used as a |method|: >
+		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetText()->setbufline(buf, lnum)
 
 setbufvar({buf}, {varname}, {val})			*setbufvar()*
@@ -8611,7 +8612,8 @@ setbufvar({buf}, {varname}, {val})			*setbufvar()*
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
 
-		Can also be used as a |method|: >
+		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetValue()->setbufvar(buf, varname)
 
 setcharsearch({dict})					*setcharsearch()*
@@ -8662,7 +8664,8 @@ setenv({name}, {val})						*setenv()*
 <		When {val} is |v:null| the environment variable is deleted.
 		See also |expr-env|.
 
-		Can also be used as a |method|, passing the value as the base: >
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
 			GetPath()->setenv('PATH')
 
 setfperm({fname}, {mode})				*setfperm()* *chmod*
@@ -8710,7 +8713,8 @@ setline({lnum}, {text})					*setline()*
 
 <		Note: The '[ and '] marks are not set.
 
-		Can also be used as a |method|, passing the text as the base: >
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
 			GetText()->setline(lnum)
 
 setloclist({nr}, {list} [, {action} [, {what}]])		*setloclist()*
@@ -8977,7 +8981,8 @@ settabvar({tabnr}, {varname}, {val})			*settabvar()*
 		Tabs are numbered starting with one.
 		This function is not available in the |sandbox|.
 
-		Can also be used as a |method|, the base is used as the value: >
+		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetValue()->settabvar(tab, name)
 
 settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
@@ -8996,7 +9001,8 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 			:call settabwinvar(3, 2, "myvar", "foobar")
 <		This function is not available in the |sandbox|.
 
-		Can also be used as a |method|, the base is used as the value: >
+		Can also be used as a |method|, the base is passed as the
+		fourth argument: >
 			GetValue()->settabwinvar(tab, winnr, name)
 
 settagstack({nr}, {dict} [, {action}])			*settagstack()*
@@ -9032,7 +9038,8 @@ settagstack({nr}, {dict} [, {action}])			*settagstack()*
 			call settagstack(1003, stack)
 			unlet stack
 <
-		Can also be used as a |method|, the base is used as the Dict: >
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
 			GetStack()->settagstack(winnr)
 
 setwinvar({nr}, {varname}, {val})			*setwinvar()*
@@ -9041,7 +9048,8 @@ setwinvar({nr}, {varname}, {val})			*setwinvar()*
 			:call setwinvar(1, "&list", 0)
 			:call setwinvar(2, "myvar", "foobar")
 
-<		Can also be used as a |method|, the base is used as the value: >
+<		Can also be used as a |method|, the base is passed as the
+		third argument: >
 			GetValue()->setwinvar(winnr, name)
 
 sha256({string})						*sha256()*
@@ -9439,7 +9447,7 @@ str2nr({string} [, {base}])			*str2nr()*
 		When {base} is omitted base 10 is used.  This also means that
 		a leading zero doesn't cause octal conversion to be used, as
 		with the default String to Number conversion.  Example: >
-			let nr = str2nr('123')
+			let nr = str2nr('0123')
 <
 		When {base} is 16 a leading "0x" or "0X" is ignored.  With a
 		different base the result will be zero. Similarly, when
@@ -10475,8 +10483,8 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 		Example: >
 			call win_execute(winid, 'syntax enable')
 <
-		Can also be used as a |method|, the base is used for the
-		command: >
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
 			GetCommand()->win_execute(winid)
 
 win_findbuf({bufnr})					*win_findbuf()*
@@ -10818,10 +10826,10 @@ xor({expr}, {expr})					*xor()*
 		to a number.  A List, Dict or Float argument causes an error.
 		Example: >
 			:let bits = xor(bits, 0x80)
-<		Can also be used as a |method|: >
+<
+		Can also be used as a |method|: >
 			:let bits = bits->xor(0x80)
 <
-
 
 							*string-match*
 Matching a pattern in a String
