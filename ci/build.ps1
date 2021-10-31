@@ -171,7 +171,9 @@ if (-not $NoTests) {
 }
 
 # Ensure choco's cpack is not in PATH otherwise, it conflicts with CMake's
-Remove-Item -Path $env:ChocolateyInstall\bin\cpack.exe -Force
+if (Get-Item -Path $env:ChocolateyInstall\bin\cpack.exe) {
+  Remove-Item -Path $env:ChocolateyInstall\bin\cpack.exe -Force
+}
 
 # Build artifacts
 cpack -G ZIP -C RelWithDebInfo
