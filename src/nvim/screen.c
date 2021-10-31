@@ -1952,7 +1952,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
     first_level = 1;
   }
 
-  for (i = 0; i  < MIN(fdc, level); i++) {
+  for (i = 0; i < MIN(fdc, level); i++) {
     if (foldinfo.fi_lnum == lnum
         && first_level + i >= foldinfo.fi_low_level) {
       symbol = wp->w_p_fcs_chars.foldopen;

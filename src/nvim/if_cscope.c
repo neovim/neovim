@@ -1520,7 +1520,7 @@ static void cs_file_results(FILE *f, int *nummatches_a)
 
       context = xmalloc(strlen(cntx) + 5);
 
-      if (strcmp(cntx, "<global>")==0) {
+      if (strcmp(cntx, "<global>") == 0) {
         strcpy(context, "<<global>>");
       } else {
         sprintf(context, "<<%s>>", cntx);

@@ -4425,7 +4425,7 @@ static int ins_compl_get_exp(pos_T *ini)
         // when ADDING, the text before the cursor matches, skip it
         if ((compl_cont_status & CONT_ADDING) && ins_buf == curbuf
             && ini->lnum == pos->lnum
-            && ini->col  == pos->col) {
+            && ini->col == pos->col) {
           continue;
         }
         ptr = ml_get_buf(ins_buf, pos->lnum, false) + pos->col;

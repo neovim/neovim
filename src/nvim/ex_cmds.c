@@ -5173,7 +5173,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
 
         // If tag contains "({" or "([", tag terminates at the "(".
         // This is for help on functions, e.g.: abs({expr}).
-        if (*s == '(' && (s[1] == '{' || s[1] =='[')) {
+        if (*s == '(' && (s[1] == '{' || s[1] == '[')) {
           break;
         }
 

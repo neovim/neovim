@@ -2932,7 +2932,7 @@ ambw_end:
     // When changing the 'signcolumn' to or from 'number', recompute the
     // width of the number column if 'number' or 'relativenumber' is set.
     if (((*oldval == 'n' && *(oldval + 1) == 'u')
-         || (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) =='u'))
+         || (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) == 'u'))
         && (curwin->w_p_nu || curwin->w_p_rnu)) {
       curwin->w_nrwidth_line_count = 0;
     }
@@ -7330,7 +7330,7 @@ bool tabstop_set(char_u *var, long **array)
   t = 1;
   for (cp = var; *cp != NUL;) {
     (*array)[t++] = atoi((char *)cp);
-    while (*cp  != NUL && *cp != ',') {
+    while (*cp != NUL && *cp != ',') {
       cp++;
     }
     if (*cp != NUL) {

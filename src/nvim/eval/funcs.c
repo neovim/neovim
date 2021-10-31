@@ -1812,7 +1812,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (wp->w_buffer == buf) {
         if (wp->w_cursor.lnum > last) {
           wp->w_cursor.lnum -= count;
-        } else if (wp->w_cursor.lnum> first) {
+        } else if (wp->w_cursor.lnum > first) {
           wp->w_cursor.lnum = first;
         }
         if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {

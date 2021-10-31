@@ -96,7 +96,7 @@ conpty_t *os_conpty_init(char **in_name, char **out_name, uint16_t width, uint16
     goto failed;
   }
   assert(width <= SHRT_MAX);
-  assert(height <=  SHRT_MAX);
+  assert(height <= SHRT_MAX);
   COORD size = { (int16_t)width, (int16_t)height };
   HRESULT hr;
   hr = pCreatePseudoConsole(size, in_read, out_write, 0, &conpty_object->pty);
