@@ -37,7 +37,7 @@ endfunc
 " Very short version of what matchparen does.
 function s:Highlight_Matching_Pair()
   let save_cursor = getcurpos()
-  call setpos('.', save_cursor)
+  eval save_cursor->setpos('.')
 endfunc
 
 func Test_curswant_with_autocommand()

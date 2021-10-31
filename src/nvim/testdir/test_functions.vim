@@ -1219,7 +1219,7 @@ func Test_shellescape()
   let save_shell = &shell
   set shell=bash
   call assert_equal("'text'", shellescape('text'))
-  call assert_equal("'te\"xt'", shellescape('te"xt'))
+  call assert_equal("'te\"xt'", 'te"xt'->shellescape())
   call assert_equal("'te'\\''xt'", shellescape("te'xt"))
 
   call assert_equal("'te%xt'", shellescape("te%xt"))

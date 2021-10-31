@@ -39,7 +39,7 @@ func Test_put_lines()
   call assert_equal(['Line 3', '', 'Line 1', 'Line2'], getline(1, '$'))
   " clean up
   bw!
-  call setreg('a', a[0], a[1])
+  eval a[0]->setreg('a', a[1])
 endfunc
 
 func Test_put_expr()

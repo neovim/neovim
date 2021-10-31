@@ -48,7 +48,7 @@ function Test_getbufwintabinfo()
   tabnew | let w3_id = win_getid()
   new | let w4_id = win_getid()
   vert new | let w5_id = win_getid()
-  call setwinvar(0, 'signal', 'green')
+  eval 'green'->setwinvar(0, 'signal')
   tabfirst
   let winlist = getwininfo()
   call assert_equal(5, len(winlist))

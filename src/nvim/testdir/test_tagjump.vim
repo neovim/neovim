@@ -351,7 +351,7 @@ func Test_getsettagstack()
   " Try to set current index to invalid values
   call settagstack(1, {'curidx' : -1})
   call assert_equal(1, gettagstack().curidx)
-  call settagstack(1, {'curidx' : 50})
+  eval {'curidx' : 50}->settagstack(1)
   call assert_equal(4, gettagstack().curidx)
 
   " Try pushing invalid items onto the stack

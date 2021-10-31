@@ -493,7 +493,7 @@ func Test_setmatches()
     let set[0]['conceal'] = 5
     let exp[0]['conceal'] = '5'
   endif
-  call setmatches(set)
+  eval set->setmatches()
   call assert_equal(exp, getmatches())
 endfunc
 
