@@ -82,7 +82,7 @@ func Test_client_server()
   call remote_send(name, ":call server2client(expand('<client>'), 'got it')\<CR>", 'g:myserverid')
   call assert_equal('got it', g:myserverid->remote_read(2))
 
-  call remote_send(name, ":call server2client(expand('<client>'), 'another')\<CR>", 'g:myserverid')
+  call remote_send(name, ":eval expand('<client>')->server2client('another')\<CR>", 'g:myserverid')
   let peek_result = 'nothing'
   let r = g:myserverid->remote_peek('peek_result')
   " unpredictable whether the result is already available.

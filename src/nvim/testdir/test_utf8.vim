@@ -69,7 +69,7 @@ func Test_screenchar_utf8()
   call setline(1, ["ABC\u0308"])
   redraw
   call assert_equal([0x0041], screenchars(1, 1))
-  call assert_equal([0x0042], screenchars(1, 2))
+  call assert_equal([0x0042], 1->screenchars(2))
   call assert_equal([0x0043, 0x0308], screenchars(1, 3))
   call assert_equal("A", screenstring(1, 1))
   call assert_equal("B", screenstring(1, 2))

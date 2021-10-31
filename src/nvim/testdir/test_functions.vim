@@ -346,7 +346,7 @@ func Test_setbufvar_options()
   wincmd h
   let wh = winheight(0)
   let dummy_buf = bufnr('dummy_buf2', v:true)
-  call setbufvar(dummy_buf, '&buftype', 'nofile')
+  eval 'nofile'->setbufvar(dummy_buf, '&buftype')
   execute 'belowright vertical split #' . dummy_buf
   call assert_equal(wh, winheight(0))
 
@@ -1330,7 +1330,7 @@ func Test_func_range_with_edit()
   " is invalid in that buffer.
   call writefile(['just one line'], 'Xfuncrange2')
   new
-  call setline(1, 10->range())
+  eval 10->range()->setline(1)
   write Xfuncrange1
   call assert_fails('5,8call EditAnotherFile()', 'E16:')
 

@@ -5854,7 +5854,7 @@ histadd({history}, {item})				*histadd()*
 
 		Can also be used as a |method|, the base is used for the
 		second argument: >
-			GetPattern()->histadd('search')
+			GetHistory()->histadd('search')
 
 histdel({history} [, {item}])				*histdel()*
 		Clear {history}, i.e. delete all its entries.  See |hist-names|
@@ -8072,6 +8072,9 @@ screenattr({row}, {col})					*screenattr()*
 		arbitrary number that can only be used to compare to the
 		attribute at other positions.
 
+		Can also be used as a |method|: >
+			GetRow()->screenattr(col)
+
 screenchar({row}, {col})					*screenchar()*
 		The result is a Number, which is the character at position
 		[row, col] on the screen.  This works for every possible
@@ -8082,12 +8085,18 @@ screenchar({row}, {col})					*screenchar()*
 		This is mainly to be used for testing.
 		Returns -1 when row or col is out of range.
 
+		Can also be used as a |method|: >
+			GetRow()->screenchar(col)
+
 screenchars({row}, {col})					*screenchars()*
 		The result is a List of Numbers.  The first number is the same
 		as what |screenchar()| returns.  Further numbers are
 		composing characters on top of the base character.
 		This is mainly to be used for testing.
 		Returns an empty List when row or col is out of range.
+
+		Can also be used as a |method|: >
+			GetRow()->screenchars(col)
 
 screencol()							*screencol()*
 		The result is a Number, which is the current screen column of
@@ -8124,6 +8133,9 @@ screenpos({winid}, {lnum}, {col})				*screenpos()*
  		right position and use |screencol()| to get the value with
  		|conceal| taken into account.
 
+		Can also be used as a |method|: >
+			GetWinid()->screenpos(lnum, col)
+
 screenrow()							*screenrow()*
 		The result is a Number, which is the current screen row of the
 		cursor.  The top line has number one.
@@ -8139,6 +8151,9 @@ screenstring({row}, {col})					*screenstring()*
 		characters.
 		This is mainly to be used for testing.
 		Returns an empty String when row or col is out of range.
+
+		Can also be used as a |method|: >
+			GetRow()->screenstring(col)
 
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 		Search for regexp pattern {pattern}.  The search starts at the
@@ -8230,6 +8245,8 @@ search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 		without the 'e' flag if the cursor is on the "f" of "if".
 		The 'n' flag tells the function not to move the cursor.
 
+		Can also be used as a |method|: >
+			GetPattern()->search()
 
 searchcount([{options}])					*searchcount()*
 		Get or update the last search count, like what is displayed
@@ -8369,6 +8386,9 @@ searchdecl({name} [, {global} [, {thisblock}]])			*searchdecl()*
 			   echo getline('.')
 			endif
 <
+		Can also be used as a |method|: >
+			GetName()->searchdecl()
+<
 							*searchpair()*
 searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 				[, {stopline} [, {timeout}]]]])
@@ -8483,6 +8503,9 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*searchpos()*
 <		In this example "submatch" is 2 when a lowercase letter is
 		found |/\l|, 3 when an uppercase letter is found |/\u|.
 
+		Can also be used as a |method|: >
+			GetPattern()->searchpos()
+
 server2client({clientid}, {string})			*server2client()*
 		Send a reply string to {clientid}.  The most recent {clientid}
 		that sent a string can be retrieved with expand("<client>").
@@ -8494,6 +8517,9 @@ server2client({clientid}, {string})			*server2client()*
 		See also |clientserver|.
 		Example: >
 			:echo server2client(expand("<client>"), "HELLO")
+
+<		Can also be used as a |method|: >
+			GetClientId()->server2client(string)
 <
 serverlist()						*serverlist()*
 		Returns a list of server addresses, or empty if all servers
@@ -8559,6 +8585,9 @@ setbufline({buf}, {lnum}, {text})			*setbufline()*
 		If {buf} is not a valid buffer or {lnum} is not valid, an
 		error message is given.
 
+		Can also be used as a |method|: >
+			GetText()->setbufline(buf, lnum)
+
 setbufvar({buf}, {varname}, {val})			*setbufvar()*
 		Set option or local variable {varname} in buffer {buf} to
 		{val}.
@@ -8572,6 +8601,9 @@ setbufvar({buf}, {varname}, {val})			*setbufvar()*
 			:call setbufvar(1, "&mod", 1)
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
+
+		Can also be used as a |method|: >
+			GetValue()->setbufvar(buf, varname)
 
 setcharsearch({dict})					*setcharsearch()*
 		Set the current character search information to {dict},
@@ -8593,6 +8625,9 @@ setcharsearch({dict})					*setcharsearch()*
 			:call setcharsearch(prevsearch)
 <		Also see |getcharsearch()|.
 
+		Can also be used as a |method|: >
+			SavedSearch()->setcharsearch()
+
 setcmdpos({pos})					*setcmdpos()*
 		Set the cursor position in the command line to byte position
 		{pos}.  The first position is 1.
@@ -8608,12 +8643,18 @@ setcmdpos({pos})					*setcmdpos()*
 		Returns FALSE when successful, TRUE when not editing the
 		command line.
 
+		Can also be used as a |method|: >
+			GetPos()->setcmdpos()
+
 setenv({name}, {val})						*setenv()*
 		Set environment variable {name} to {val}.  Example: >
 			call setenv('HOME', '/home/myhome')
 
 <		When {val} is |v:null| the environment variable is deleted.
 		See also |expr-env|.
+
+		Can also be used as a |method|, passing the value as the base: >
+			GetPath()->setenv('PATH')
 
 setfperm({fname}, {mode})				*setfperm()* *chmod*
 		Set the file permissions for {fname} to {mode}.
@@ -8659,6 +8700,9 @@ setline({lnum}, {text})					*setline()*
 			:endfor
 
 <		Note: The '[ and '] marks are not set.
+
+		Can also be used as a |method|, passing the text as the base: >
+			GetText()->setline(lnum)
 
 setloclist({nr}, {list}[, {action}[, {what}]])		*setloclist()*
 		Create or replace or add to the location list for window {nr}.
