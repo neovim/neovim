@@ -1199,11 +1199,11 @@ void wait_return(int redraw)
       }
     } while ((had_got_int && c == Ctrl_C)
              || c == K_IGNORE
-             || c == K_LEFTDRAG   || c == K_LEFTRELEASE
+             || c == K_LEFTDRAG || c == K_LEFTRELEASE
              || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE
-             || c == K_RIGHTDRAG  || c == K_RIGHTRELEASE
-             || c == K_MOUSELEFT  || c == K_MOUSERIGHT
-             || c == K_MOUSEDOWN  || c == K_MOUSEUP
+             || c == K_RIGHTDRAG || c == K_RIGHTRELEASE
+             || c == K_MOUSELEFT || c == K_MOUSERIGHT
+             || c == K_MOUSEDOWN || c == K_MOUSEUP
              || c == K_MOUSEMOVE);
     os_breakcheck();
     /*

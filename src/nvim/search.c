@@ -2536,7 +2536,7 @@ int findsent(Direction dir, long count)
           }
         while (vim_strchr((char_u *)")]\"'", c = gchar_pos(&tpos))
                != NULL);
-        if (c == -1  || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL
+        if (c == -1 || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL
             || (cpo_J && (c == ' ' && inc(&tpos) >= 0
                           && gchar_pos(&tpos) == ' '))) {
           pos = tpos;

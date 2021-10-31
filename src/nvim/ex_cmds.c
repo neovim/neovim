@@ -4408,7 +4408,7 @@ skip:
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct("icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
-    } else if (*p_icm != NUL &&  pat != NULL) {
+    } else if (*p_icm != NUL && pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
         pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);

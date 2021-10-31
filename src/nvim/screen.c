@@ -6081,7 +6081,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
                                         || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
                        shl == &search_hl ? NULL : cur);
-        pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
+        pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
         if (shl->lnum != 0) {
           shl->first_lnum = shl->lnum
                             + shl->rm.endpos[0].lnum

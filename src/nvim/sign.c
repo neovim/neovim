@@ -434,9 +434,9 @@ sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int m
   int nr_matches = 0;
 
   for (int i = 0; i < SIGN_SHOW_MAX; i++) {
-    if (   (type == SIGN_TEXT   && sattrs[i].sat_text   != NULL)
+    if (   (type == SIGN_TEXT && sattrs[i].sat_text   != NULL)
            || (type == SIGN_LINEHL && sattrs[i].sat_linehl != 0)
-           || (type == SIGN_NUMHL  && sattrs[i].sat_numhl  != 0)) {
+           || (type == SIGN_NUMHL && sattrs[i].sat_numhl  != 0)) {
       matches[nr_matches] = &sattrs[i];
       nr_matches++;
       // attr list is sorted with most important (priority, id), thus we

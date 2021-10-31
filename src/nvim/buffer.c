@@ -501,7 +501,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
   // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
-  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+  if (is_curwin && curwin != the_curwin && win_valid_any_tab(the_curwin)) {
     block_autocmds();
     goto_tabpage_win(the_curtab, the_curwin);
     unblock_autocmds();
@@ -698,7 +698,7 @@ void buf_freeall(buf_T *buf, int flags)
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
   // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
-  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+  if (is_curwin && curwin != the_curwin && win_valid_any_tab(the_curwin)) {
     block_autocmds();
     goto_tabpage_win(the_curtab, the_curwin);
     unblock_autocmds();

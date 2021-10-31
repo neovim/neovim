@@ -10835,7 +10835,7 @@ bool common_job_callbacks(dict_T *vopts, CallbackReader *on_stdout, CallbackRead
                           Callback *on_exit)
 {
   if (tv_dict_get_callback(vopts, S_LEN("on_stdout"), &on_stdout->cb)
-      &&tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
+      && tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
       && tv_dict_get_callback(vopts, S_LEN("on_exit"), on_exit)) {
     on_stdout->buffered = tv_dict_get_number(vopts, "stdout_buffered");
     on_stderr->buffered = tv_dict_get_number(vopts, "stderr_buffered");

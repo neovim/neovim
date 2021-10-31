@@ -1638,7 +1638,7 @@ static time_t swapfile_unchanged(char *fname)
   }
 
   // the ID and magic number must be correct
-  if (ml_check_b0_id(&b0) == FAIL|| b0_magic_wrong(&b0)) {
+  if (ml_check_b0_id(&b0) == FAIL || b0_magic_wrong(&b0)) {
     ret = false;
   }
 
