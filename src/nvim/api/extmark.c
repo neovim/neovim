@@ -503,7 +503,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
 #define OPTION_TO_BOOL(target, name, val) \
-  target = api_object_to_bool(opts-> name, #name, val, err); \
+  target = api_object_to_bool(opts->name, #name, val, err); \
   if (ERROR_SET(err)) { \
     goto error; \
   }
