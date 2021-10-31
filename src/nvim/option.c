@@ -419,7 +419,7 @@ void set_init_1(bool clean_arg)
         }
         xfree(item);
       }
-      if(mustfree) {
+      if (mustfree) {
         xfree(p);
       }
     }
