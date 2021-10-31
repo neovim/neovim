@@ -17,7 +17,7 @@ func Test_strchars()
   let exp = [[1, 1, 1], [3, 3, 3], [2, 2, 1], [3, 3, 1], [1, 1, 1]]
   for i in range(len(inp))
     call assert_equal(exp[i][0], strchars(inp[i]))
-    call assert_equal(exp[i][1], strchars(inp[i], 0))
+    call assert_equal(exp[i][1], inp[i]->strchars(0))
     call assert_equal(exp[i][2], strchars(inp[i], 1))
   endfor
 endfunc

@@ -9254,6 +9254,9 @@ soundfold({word})
 		This can be used for making spelling suggestions.  Note that
 		the method can be quite slow.
 
+		Can also be used as a |method|: >
+			GetWord()->soundfold()
+<
 							*spellbadword()*
 spellbadword([{sentence}])
 		Without argument: The result is the badly spelled word under
@@ -9279,6 +9282,9 @@ spellbadword([{sentence}])
 		The spelling information for the current window and the value
 		of 'spelllang' are used.
 
+		Can also be used as a |method|: >
+			GetText()->spellbadword()
+<
 							*spellsuggest()*
 spellsuggest({word} [, {max} [, {capital}]])
 		Return a |List| with spelling suggestions to replace {word}.
@@ -9301,6 +9307,8 @@ spellsuggest({word} [, {max} [, {capital}]])
 		The spelling information for the current window is used.  The
 		values of 'spelllang' and 'spellsuggest' are used.
 
+		Can also be used as a |method|: >
+			GetWord()->spellsuggest()
 
 split({string} [, {pattern} [, {keepempty}]])			*split()*
 		Make a |List| out of {string}.  When {pattern} is omitted or
@@ -9432,6 +9440,20 @@ str2nr({string} [, {base}])			*str2nr()*
 		{base} is 2 a leading "0b" or "0B" is ignored.
 		Text after the number is silently ignored.
 
+		Can also be used as a |method|: >
+			GetText()->str2nr()
+
+strcharpart({src}, {start} [, {len}])			*strcharpart()*
+		Like |strpart()| but using character index and length instead
+		of byte index and length.  Composing characters are counted
+		separately.
+		When a character index is used where a character does not
+		exist it is assumed to be one character.  For example: >
+			strcharpart('abc', -1, 2)
+<		results in 'a'.
+
+		Can also be used as a |method|: >
+			GetText()->strcharpart(5)
 
 strchars({string} [, {skipcc}])					*strchars()*
 		The result is a Number, which is the number of characters
@@ -9457,14 +9479,8 @@ strchars({string} [, {skipcc}])					*strchars()*
 		      endfunction
 		    endif
 <
-strcharpart({src}, {start} [, {len}])			*strcharpart()*
-		Like |strpart()| but using character index and length instead
-		of byte index and length.  Composing characters are counted
-		separately.
-		When a character index is used where a character does not
-		exist it is assumed to be one character.  For example: >
-			strcharpart('abc', -1, 2)
-<		results in 'a'.
+		Can also be used as a |method|: >
+			GetText()->strchars()
 
 strdisplaywidth({string} [, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells
@@ -9478,6 +9494,9 @@ strdisplaywidth({string} [, {col}])			*strdisplaywidth()*
 		When {string} contains characters with East Asian Width Class
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strwidth()| and |strchars()|.
+
+		Can also be used as a |method|: >
+			GetText()->strdisplaywidth()
 
 strftime({format} [, {time}])				*strftime()*
 		The result is a String, which is a formatted date and time, as
@@ -9496,11 +9515,17 @@ strftime({format} [, {time}])				*strftime()*
 		  :echo strftime("%c", getftime("file.c"))
 						   Show mod time of file.c.
 
+<		Can also be used as a |method|: >
+			GetFormat()->strftime()
+
 strgetchar({str}, {index})				*strgetchar()*
 		Get character {index} from {str}.  This uses a character
 		index, not a byte index.  Composing characters are considered
 		separate characters here.
 		Also see |strcharpart()| and |strchars()|.
+
+		Can also be used as a |method|: >
+			GetText()->strgetchar(5)
 
 stridx({haystack}, {needle} [, {start}])		*stridx()*
 		The result is a Number, which gives the byte index in
@@ -9520,6 +9545,9 @@ stridx({haystack}, {needle} [, {start}])		*stridx()*
 <						*strstr()* *strchr()*
 		stridx() works similar to the C function strstr().  When used
 		with a single character it works similar to strchr().
+
+		Can also be used as a |method|: >
+			GetHaystack()->stridx(needle)
 
 							*string()*
 string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
@@ -9583,6 +9611,9 @@ strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		example, to get the character under the cursor: >
 			strpart(getline("."), col(".") - 1, 1, v:true)
 <
+		Can also be used as a |method|: >
+			GetText()->strpart(5)
+
 strptime({format}, {timestring})				*strptime()*
 		The result is a Number, which is a unix timestamp representing
 		the date and time in {timestring}, which is expected to match
@@ -9625,6 +9656,9 @@ strridx({haystack}, {needle} [, {start}])			*strridx()*
 <							*strrchr()*
 		When used with a single character it works similar to the C
 		function strrchr().
+
+		Can also be used as a |method|: >
+			GetHaystack()->strridx(needle)
 
 strtrans({string})					*strtrans()*
 		The result is a String, which is {string} with all unprintable
@@ -9673,6 +9707,9 @@ submatch({nr} [, {list}])			*submatch()* *E935*
 			:echo substitute(text, '\d\+', '\=submatch(0) + 1', '')
 <		This finds the first number in the line and adds one to it.
 		A line break is included as a newline character.
+
+		Can also be used as a |method|: >
+			GetNr()->submatch()
 
 substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 		The result is a String, which is a copy of {string}, in which
@@ -9736,12 +9773,18 @@ swapinfo({fname})					*swapinfo()*
 			Not a swap file: does not contain correct block ID
 			Magic number mismatch: Info in first block is invalid
 
+		Can also be used as a |method|: >
+			GetFilename()->swapinfo()
+
 swapname({buf})						*swapname()*
 		The result is the swap file path of the buffer {buf}.
 		For the use of {buf}, see |bufname()| above.
 		If buffer {buf} is the current buffer, the result is equal to
 		|:swapname| (unless there is no swap file).
 		If buffer {buf} has no swap file, returns an empty string.
+
+		Can also be used as a |method|: >
+			GetBufname()->swapname()
 
 synID({lnum}, {col}, {trans})				*synID()*
 		The result is a Number, which is the syntax ID at the position
