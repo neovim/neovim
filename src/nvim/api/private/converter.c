@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "nvim/assert.h"
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/converter.h"
+#include "nvim/assert.h"
 #include "nvim/eval/typval.h"
 
 /// Helper structure for vim_to_object

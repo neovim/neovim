@@ -5,11 +5,11 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "nvim/ascii.h"
-#include "nvim/api/vimscript.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vimscript.h"
+#include "nvim/ascii.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"

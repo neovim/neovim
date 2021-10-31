@@ -65,8 +65,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/api/private/helpers.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"

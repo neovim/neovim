@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -28,7 +29,6 @@
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/api/private/converter.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"

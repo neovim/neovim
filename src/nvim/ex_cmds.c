@@ -14,8 +14,8 @@
 #include <string.h>
 
 #include "nvim/api/buffer.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
