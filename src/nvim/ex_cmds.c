@@ -1859,11 +1859,11 @@ int do_write(exarg_T *eap)
     /*
      * Not writing the whole file is only allowed with '!'.
      */
-    if (       (eap->line1 != 1
-                || eap->line2 != curbuf->b_ml.ml_line_count)
-               && !eap->forceit
-               && !eap->append
-               && !p_wa) {
+    if ((eap->line1 != 1
+         || eap->line2 != curbuf->b_ml.ml_line_count)
+        && !eap->forceit
+        && !eap->append
+        && !p_wa) {
       if (p_confirm || cmdmod.confirm) {
         if (vim_dialog_yesno(VIM_QUESTION, NULL,
                              (char_u *)_("Write partial file?"), 2) != VIM_YES) {
