@@ -1787,7 +1787,7 @@ int op_replace(oparg_T *oap, int c)
   char_u *after_p = NULL;
   int had_ctrl_v_cr = false;
 
-  if ((curbuf->b_ml.ml_flags & ML_EMPTY ) || oap->empty) {
+  if ((curbuf->b_ml.ml_flags & ML_EMPTY) || oap->empty) {
     return OK;              // nothing to do
   }
   if (c == REPLACE_CR_NCHAR) {
