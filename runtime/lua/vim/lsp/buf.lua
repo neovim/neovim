@@ -484,7 +484,7 @@ local function on_code_action_results(results, ctx)
       if fn then
         local enriched_ctx = vim.deepcopy(ctx)
         enriched_ctx.client_id = client.id
-        fn(command, ctx)
+        fn(command, enriched_ctx)
       else
         M.execute_command(command)
       end
