@@ -2686,7 +2686,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
   viml_parser_destroy(&pstate);
   kv_resize(ret_ccline_colors->colors, kv_size(colors));
   size_t prev_end = 0;
-  for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+  for (size_t i = 0; i < kv_size(colors); i++) {
     const ParserHighlightChunk chunk = kv_A(colors, i);
     assert(chunk.start.col < INT_MAX);
     assert(chunk.end_col < INT_MAX);

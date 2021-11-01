@@ -6520,7 +6520,7 @@ const char *const highlight_init_cmdline[] = {
 /// Create default links for Nvim* highlight groups used for cmdline coloring
 void syn_init_cmdline_highlight(bool reset, bool init)
 {
-  for (size_t i = 0 ; highlight_init_cmdline[i] != NULL ; i++) {
+  for (size_t i = 0; highlight_init_cmdline[i] != NULL; i++) {
     do_highlight(highlight_init_cmdline[i], reset, init);
   }
 }
