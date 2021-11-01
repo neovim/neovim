@@ -239,7 +239,7 @@ func FeedAndPeek(timer)
 endfunc
 
 func Interrupt(timer)
-  " call test_feedinput("\<C-C>")
+  " eval "\<C-C>"->test_feedinput()
   call nvim_input("\<C-C>")
 endfunc
 

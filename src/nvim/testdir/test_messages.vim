@@ -87,7 +87,7 @@ func Test_echoerr()
   if has('float')
     call assert_equal("\n1.23 IgNoRe", execute(':echoerr 1.23 "IgNoRe"'))
   endif
-  call test_ignore_error('<lambda>')
+  eval '<lambda>'->test_ignore_error()
   call assert_match("function('<lambda>\\d*')", execute(':echoerr {-> 1234}'))
   call test_ignore_error('RESET')
 endfunc
