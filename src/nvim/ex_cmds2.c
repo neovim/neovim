@@ -550,7 +550,6 @@ bool check_changed(buf_T *buf, int flags)
 }
 
 
-
 /// Ask the user what to do when abandoning a changed buffer.
 /// Must check 'write' option first!
 ///

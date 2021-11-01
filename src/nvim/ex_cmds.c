@@ -14,8 +14,8 @@
 #include <string.h>
 
 #include "nvim/api/buffer.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
@@ -303,8 +303,9 @@ void ex_align(exarg_T *eap)
                * Now try to move the line as much as possible to
                * the right.  Stop when it moves too far.
                */
-              do
+              do{
                 (void)set_indent(++new_indent, 0);
+              }
               while (linelen(NULL) <= width);
               --new_indent;
               break;
@@ -1859,11 +1860,11 @@ int do_write(exarg_T *eap)
     /*
      * Not writing the whole file is only allowed with '!'.
      */
-    if (       (eap->line1 != 1
-                || eap->line2 != curbuf->b_ml.ml_line_count)
-               && !eap->forceit
-               && !eap->append
-               && !p_wa) {
+    if ((eap->line1 != 1
+         || eap->line2 != curbuf->b_ml.ml_line_count)
+        && !eap->forceit
+        && !eap->append
+        && !p_wa) {
       if (p_confirm || cmdmod.confirm) {
         if (vim_dialog_yesno(VIM_QUESTION, NULL,
                              (char_u *)_("Write partial file?"), 2) != VIM_YES) {
@@ -3135,7 +3136,6 @@ void ex_z(exarg_T *eap)
   // the number of '-' and '+' multiplies the distance
   if (*kind == '-' || *kind == '+') {
     for (x = kind + 1; *x == *kind; ++x) {
-      ;
     }
   }
 
@@ -4409,7 +4409,7 @@ skip:
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct("icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
-    } else if (*p_icm != NUL &&  pat != NULL) {
+    } else if (*p_icm != NUL && pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
         pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
@@ -4722,7 +4722,6 @@ bool prepare_tagpreview(bool undo_sync)
   }
   return false;
 }
-
 
 
 /*
@@ -5175,7 +5174,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
 
         // If tag contains "({" or "([", tag terminates at the "(".
         // This is for help on functions, e.g.: abs({expr}).
-        if (*s == '(' && (s[1] == '{' || s[1] =='[')) {
+        if (*s == '(' && (s[1] == '{' || s[1] == '[')) {
           break;
         }
 

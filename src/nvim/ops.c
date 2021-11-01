@@ -1787,7 +1787,7 @@ int op_replace(oparg_T *oap, int c)
   char_u *after_p = NULL;
   int had_ctrl_v_cr = false;
 
-  if ((curbuf->b_ml.ml_flags & ML_EMPTY ) || oap->empty) {
+  if ((curbuf->b_ml.ml_flags & ML_EMPTY) || oap->empty) {
     return OK;              // nothing to do
   }
   if (c == REPLACE_CR_NCHAR) {
@@ -4141,7 +4141,6 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    */
   line1 = vim_strsave(ml_get(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); ++idx1) {
-    ;
   }
   line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; ++idx2) {

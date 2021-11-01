@@ -2349,7 +2349,7 @@ void ex_function(exarg_T *eap)
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
       arg = skipwhite(skiptowhite(p));
-      if (arg[0] == '<' && arg[1] =='<'
+      if (arg[0] == '<' && arg[1] == '<'
           && ((p[0] == 'p' && p[1] == 'y'
                && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
                    || ((p[2] == '3' || p[2] == 'x')
@@ -2383,7 +2383,7 @@ void ex_function(exarg_T *eap)
         arg = skipwhite(skiptowhite(arg));
         if (arg[0] == '='
             && arg[1] == '<'
-            && arg[2] =='<'
+            && arg[2] == '<'
             && (p[0] == 'l'
                 && p[1] == 'e'
                 && (!ASCII_ISALNUM(p[2])

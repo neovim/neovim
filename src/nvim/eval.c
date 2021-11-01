@@ -4524,7 +4524,6 @@ static int eval_index(char_u **arg, typval_T *rettv, int evaluate, int verbose)
      */
     key = *arg + 1;
     for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; ++len) {
-      ;
     }
     if (len == 0) {
       return FAIL;
@@ -5129,7 +5128,8 @@ failret:
 }
 
 /// @param ic  ignore case
-bool func_equal(typval_T *tv1, typval_T *tv2, bool ic) {
+bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
+{
   char_u *s1, *s2;
   dict_T *d1, *d2;
   int a1, a2;
@@ -5630,7 +5630,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
   }
   return abort;
 }
-
 
 
 /// Mark all lists and dicts referenced in given mark
@@ -10837,7 +10836,7 @@ bool common_job_callbacks(dict_T *vopts, CallbackReader *on_stdout, CallbackRead
                           Callback *on_exit)
 {
   if (tv_dict_get_callback(vopts, S_LEN("on_stdout"), &on_stdout->cb)
-      &&tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
+      && tv_dict_get_callback(vopts, S_LEN("on_stderr"), &on_stderr->cb)
       && tv_dict_get_callback(vopts, S_LEN("on_exit"), on_exit)) {
     on_stdout->buffered = tv_dict_get_number(vopts, "stdout_buffered");
     on_stderr->buffered = tv_dict_get_number(vopts, "stderr_buffered");

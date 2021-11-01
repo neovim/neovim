@@ -1992,7 +1992,8 @@ bool has_vim_patch(int n)
   return false;
 }
 
-Dictionary version_dict(void) {
+Dictionary version_dict(void)
+{
   Dictionary d = ARRAY_DICT_INIT;
   PUT(d, "major", INTEGER_OBJ(NVIM_VERSION_MAJOR));
   PUT(d, "minor", INTEGER_OBJ(NVIM_VERSION_MINOR));

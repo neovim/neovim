@@ -725,7 +725,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 
     int attr_id = 0;
 
-    if (hl_attrs ||!fg_default || !bg_default) {
+    if (hl_attrs || !fg_default || !bg_default) {
       attr_id = hl_get_term_attr(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,

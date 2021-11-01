@@ -4772,7 +4772,6 @@ dozet:
 }
 
 
-
 /*
  * "Q" command.
  */
@@ -5780,10 +5779,10 @@ static void nv_brackets(cmdarg_T *cap)
    * "[m" or "]m" search for prev/next start of (Java) method.
    * "[M" or "]M" search for prev/next end of (Java) method.
    */
-  if (  (cap->cmdchar == '['
-         && vim_strchr((char_u *)"{(*/#mM", cap->nchar) != NULL)
-        || (cap->cmdchar == ']'
-            && vim_strchr((char_u *)"})*/#mM", cap->nchar) != NULL)) {
+  if ((cap->cmdchar == '['
+       && vim_strchr((char_u *)"{(*/#mM", cap->nchar) != NULL)
+      || (cap->cmdchar == ']'
+          && vim_strchr((char_u *)"})*/#mM", cap->nchar) != NULL)) {
     if (cap->nchar == '*') {
       cap->nchar = '/';
     }

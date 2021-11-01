@@ -65,8 +65,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/api/private/helpers.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"
@@ -1952,7 +1952,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
     first_level = 1;
   }
 
-  for (i = 0; i  < MIN(fdc, level); i++) {
+  for (i = 0; i < MIN(fdc, level); i++) {
     if (foldinfo.fi_lnum == lnum
         && first_level + i >= foldinfo.fi_low_level) {
       symbol = wp->w_p_fcs_chars.foldopen;
@@ -6081,7 +6081,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
                                         || (cur != NULL && pos_inprogress))) {
         next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
                        shl == &search_hl ? NULL : cur);
-        pos_inprogress = !(cur == NULL ||  cur->pos.cur == 0);
+        pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
         if (shl->lnum != 0) {
           shl->first_lnum = shl->lnum
                             + shl->rm.endpos[0].lnum
@@ -6723,7 +6723,6 @@ bool grid_invalid_row(ScreenGrid *grid, int row)
 {
   return grid->attrs[grid->line_offset[row]] < 0;
 }
-
 
 
 /// Copy part of a grid line for vertically split window.

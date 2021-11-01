@@ -831,7 +831,7 @@ extern bool tv_in_free_unref_items;
 /// @param  li  Name of the variable with current listitem_T entry.
 /// @param  code  Cycle body.
 #define TV_LIST_ITER(l, li, code) \
-  _TV_LIST_ITER_MOD(, l, li, code)
+  _TV_LIST_ITER_MOD( , l, li, code)
 
 /// Iterate over a list
 ///

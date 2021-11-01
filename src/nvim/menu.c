@@ -38,8 +38,6 @@
 #endif
 
 
-
-
 /// The character for each menu mode
 static char_u menu_mode_chars[] = { 'n', 'v', 's', 'o', 'i', 'c', 't' };
 
@@ -951,7 +949,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char_u *arg, bool
 
   if (!ascii_iswhite(*p)) {
     if (STRNCMP(arg, "enable", 6) == 0
-        && (arg[6] == NUL ||  ascii_iswhite(arg[6]))) {
+        && (arg[6] == NUL || ascii_iswhite(arg[6]))) {
       p = arg + 6;
     } else if (STRNCMP(arg, "disable", 7) == 0
                && (arg[7] == NUL || ascii_iswhite(arg[7]))) {

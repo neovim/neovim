@@ -2036,7 +2036,6 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
 
-
   case K_SELECT:          // end of Select mode mapping - ignore
     return command_line_not_changed(s);
 
@@ -2462,7 +2461,8 @@ char *getcmdline_prompt(const char firstc, const char *const prompt, const int a
  * Return TRUE when the text must not be changed and we can't switch to
  * another window or buffer.  Used when editing the command line etc.
  */
-int text_locked(void) {
+int text_locked(void)
+{
   if (cmdwin_type != 0) {
     return TRUE;
   }
@@ -2478,7 +2478,8 @@ void text_locked_msg(void)
   EMSG(_(get_text_locked_msg()));
 }
 
-char_u *get_text_locked_msg(void) {
+char_u *get_text_locked_msg(void)
+{
   if (cmdwin_type != 0) {
     return e_cmdwin;
   } else {
@@ -5604,7 +5605,6 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
 
   xfree(buf);
 }
-
 
 
 /*********************************

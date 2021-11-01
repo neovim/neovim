@@ -84,8 +84,7 @@ typedef struct {
   int sa_wrapped;    ///< search wrapped around
 } searchit_arg_T;
 
-typedef struct searchstat
-{
+typedef struct searchstat {
   int cur;      // current position of found words
   int cnt;      // total count of found words
   bool exact_match;    // true if matched exactly on specified position

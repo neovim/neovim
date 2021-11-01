@@ -5697,7 +5697,8 @@ void ex_comclear(exarg_T *eap)
   uc_clear(&curbuf->b_ucmds);
 }
 
-static void free_ucmd(ucmd_T *cmd) {
+static void free_ucmd(ucmd_T *cmd)
+{
   xfree(cmd->uc_name);
   xfree(cmd->uc_rep);
   xfree(cmd->uc_compl_arg);
@@ -7207,8 +7208,7 @@ void ex_splitview(exarg_T *eap)
                        *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
     // Reset 'scrollbind' when editing another file, but keep it when
     // doing ":split" without arguments.
-    if (*eap->arg != NUL
-        ) {
+    if (*eap->arg != NUL) {
       RESET_BINDING(curwin);
     } else {
       do_check_scrollbind(false);
@@ -7369,7 +7369,6 @@ static void ex_resize(exarg_T *eap)
   if (eap->addr_count > 0) {
     n = eap->line2;
     for (wp = firstwin; wp->w_next != NULL && --n > 0; wp = wp->w_next) {
-      ;
     }
   }
 
@@ -7560,7 +7559,6 @@ static void ex_nogui(exarg_T *eap)
 {
   eap->errmsg = (char_u *)N_("E25: Nvim does not have a built-in GUI");
 }
-
 
 
 static void ex_swapname(exarg_T *eap)
@@ -8054,8 +8052,7 @@ static void ex_operators(exarg_T *eap)
 
   default:          // CMD_rshift or CMD_lshift
     if (
-        (eap->cmdidx == CMD_rshift) ^ curwin->w_p_rl
-        ) {
+        (eap->cmdidx == CMD_rshift) ^ curwin->w_p_rl) {
       oa.op_type = OP_RSHIFT;
     } else {
       oa.op_type = OP_LSHIFT;

@@ -346,7 +346,6 @@ static int enc_canon_search(const char_u *name)
 }
 
 
-
 /*
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
@@ -2430,8 +2429,6 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
 }
 
 #endif  // HAVE_ICONV
-
-
 
 
 /*

@@ -1195,7 +1195,8 @@ int tslua_parse_query(lua_State *L)
 }
 
 
-static const char *query_err_string(TSQueryError err) {
+static const char *query_err_string(TSQueryError err)
+{
   switch (err) {
   case TSQueryErrorSyntax:
     return "invalid syntax";

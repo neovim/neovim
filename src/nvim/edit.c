@@ -3329,7 +3329,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 // Return Insert completion mode name string
 static char_u *ins_compl_mode(void)
 {
-  if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || ctrl_x_mode == CTRL_X_SCROLL ||  compl_started) {
+  if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || ctrl_x_mode == CTRL_X_SCROLL || compl_started) {
     return (char_u *)ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
   }
   return (char_u *)"";
@@ -3904,7 +3904,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
     assert(wp);
     while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
            && wp->w_buffer->b_scanned) {
-      ;
     }
     buf = wp->w_buffer;
   } else {
@@ -3917,7 +3916,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
                 : (!buf->b_p_bl
                    || (buf->b_ml.ml_mfp == NULL) != (flag == 'u')))
                || buf->b_scanned)) {
-      ;
     }
   }
   return buf;
@@ -4427,7 +4425,7 @@ static int ins_compl_get_exp(pos_T *ini)
         // when ADDING, the text before the cursor matches, skip it
         if ((compl_cont_status & CONT_ADDING) && ins_buf == curbuf
             && ini->lnum == pos->lnum
-            && ini->col  == pos->col) {
+            && ini->col == pos->col) {
           continue;
         }
         ptr = ml_get_buf(ins_buf, pos->lnum, false) + pos->col;
@@ -5100,7 +5098,6 @@ static int ins_complete(int c, bool enable_pum)
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (!(compl_cont_status & CONT_ADDING)) {
           while (--startcol >= 0 && vim_isIDc(line[startcol])) {
-            ;
           }
           compl_col += ++startcol;
           compl_length = curs_col - startcol;
@@ -5788,7 +5785,6 @@ void insertchar(int c, int flags, int second_indent)
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
       while (--i >= 0 && ascii_iswhite(line[i])) {
-        ;
       }
       i++;
 
@@ -7373,7 +7369,8 @@ void fixthisline(IndentGetter get_the_indent)
   }
 }
 
-void fix_indent(void) {
+void fix_indent(void)
+{
   if (p_paste) {
     return;
   }
@@ -8580,7 +8577,6 @@ static void ins_mousescroll(int dir)
     can_cindent = true;
   }
 }
-
 
 
 static void ins_left(void)

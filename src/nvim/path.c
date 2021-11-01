@@ -1011,8 +1011,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       //     /file.txt             /             /file.txt
       //     c:\file.txt           c:\           .\file.txt
       short_name = path_shorten_fname(path, curdir);
-      if (short_name != NULL && short_name > path + 1
-          ) {
+      if (short_name != NULL && short_name > path + 1) {
         STRCPY(path, ".");
         add_pathsep((char *)path);
         STRMOVE(path + STRLEN(path), short_name);
@@ -1506,8 +1505,9 @@ void simplify_filename(char_u *filename)
 
   if (vim_ispathsep(*p)) {
     relative = false;
-    do
+    do{
       ++p;
+    }
     while (vim_ispathsep(*p));
   }
   start = p;        // remember start after "c:/" or "/" or "///"

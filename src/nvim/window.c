@@ -59,8 +59,6 @@
 #endif
 
 
-
-
 #define NOWIN           (win_T *)-1     // non-existing window
 
 #define ROWS_AVAIL (Rows - p_ch - tabline_height())
@@ -1773,7 +1771,6 @@ static void win_rotate(bool upwards, int count)
 
       // find last frame and append removed window/frame after it
       for (; frp->fr_next != NULL; frp = frp->fr_next) {
-        ;
       }
       win_append(frp->fr_win, wp1);
       frame_append(frp, wp1->w_frame);
@@ -1783,7 +1780,6 @@ static void win_rotate(bool upwards, int count)
       // find last window/frame in the list and remove it
       for (frp = curwin->w_frame; frp->fr_next != NULL;
            frp = frp->fr_next) {
-        ;
       }
       wp1 = frp->fr_win;
       wp2 = wp1->w_prev;                    // will become last window
@@ -2707,7 +2703,6 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   // Careful: Autocommands may have closed the tab page or made it the
   // current tab page.
   for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {
-    ;
   }
   if (ptp == NULL || tp == curtab) {
     return;
@@ -3045,7 +3040,6 @@ static tabpage_T *alt_tabpage(void)
 
   // Find the last but one tab page.
   for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {
-    ;
   }
   return tp;
 }
@@ -3150,12 +3144,14 @@ static void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wf
           break;
         }
         if (topfirst) {
-          do
+          do{
             frp = frp->fr_next;
+          }
           while (wfh && frp != NULL && frame_fixed_height(frp));
         } else {
-          do
+          do{
             frp = frp->fr_prev;
+          }
           while (wfh && frp != NULL && frame_fixed_height(frp));
         }
         // Increase "height" if we could not reduce enough frames.
@@ -3348,12 +3344,14 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
           break;
         }
         if (leftfirst) {
-          do
+          do{
             frp = frp->fr_next;
+          }
           while (wfw && frp != NULL && frame_fixed_width(frp));
         } else {
-          do
+          do{
             frp = frp->fr_prev;
+          }
           while (wfw && frp != NULL && frame_fixed_width(frp));
         }
         // Increase "width" if we could not reduce enough frames.
@@ -4120,14 +4118,12 @@ void goto_tabpage(int n)
     for (i = n; i < 0; ++i) {
       for (tp = first_tabpage; tp->tp_next != ttp && tp->tp_next != NULL;
            tp = tp->tp_next) {
-        ;
       }
       ttp = tp;
     }
   } else if (n == 9999) {
     // Go to last tab page.
     for (tp = first_tabpage; tp->tp_next != NULL; tp = tp->tp_next) {
-      ;
     }
   } else {
     // Go to tab page "n".
@@ -5006,7 +5002,6 @@ void do_autocmd_winscrolled(win_T *wp)
  * Save the size of all windows in "gap".
  */
 void win_size_save(garray_T *gap)
-
 {
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2 + 1);
@@ -6300,7 +6295,6 @@ static void last_status_rec(frame_T *fr, bool statusline)
   } else {
     // horizontally split window, set status line for last one
     for (fp = fr->fr_child; fp->fr_next != NULL; fp = fp->fr_next) {
-      ;
     }
     last_status_rec(fp, statusline);
   }
@@ -7160,7 +7154,8 @@ void win_ui_flush(void)
   }
 }
 
-win_T *lastwin_nofloating(void) {
+win_T *lastwin_nofloating(void)
+{
   win_T *res = lastwin;
   while (res->w_floating) {
     res = res->w_prev;

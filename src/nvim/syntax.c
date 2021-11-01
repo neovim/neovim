@@ -1082,7 +1082,6 @@ static void syn_stack_alloc(void)
       // Make sure that all valid entries fit in the new array.
       while (syn_block->b_sst_len - syn_block->b_sst_freecount + 2 > len
              && syn_stack_cleanup()) {
-        ;
       }
       if (len < syn_block->b_sst_len - syn_block->b_sst_freecount + 2) {
         len = syn_block->b_sst_len - syn_block->b_sst_freecount + 2;
@@ -7769,8 +7768,6 @@ int syn_id2attr(int hl_id)
   }
   return sgp->sg_attr;
 }
-
-
 
 
 /*

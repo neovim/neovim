@@ -147,8 +147,7 @@ struct buffheader {
   size_t bh_space;          // space in bh_curr for appending
 };
 
-typedef struct
-{
+typedef struct {
   buffheader_T sr_redobuff;
   buffheader_T sr_old_redobuff;
 } save_redo_T;
@@ -1019,8 +1018,7 @@ typedef struct {
 #define MAXPOSMATCH 8
 
 /// Same as lpos_T, but with additional field len.
-typedef struct
-{
+typedef struct {
   linenr_T lnum;   ///< line number
   colnr_T col;    ///< column number
   int len;    ///< length: 0 - to the end of line
@@ -1029,8 +1027,7 @@ typedef struct
 /// posmatch_T provides an array for storing match items for matchaddpos()
 /// function.
 typedef struct posmatch posmatch_T;
-struct posmatch
-{
+struct posmatch {
   llpos_T pos[MAXPOSMATCH];   ///< array of positions
   int cur;                ///< internal position counter
   linenr_T toplnum;            ///< top buffer line
@@ -1111,8 +1108,7 @@ typedef struct {
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().
-typedef struct
-{
+typedef struct {
   int w_topline_save;   // original topline value
   int w_topline_corr;   // corrected topline value
   pos_T w_cursor_save;  // original cursor position

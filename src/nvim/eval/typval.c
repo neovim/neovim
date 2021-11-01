@@ -3162,7 +3162,7 @@ int tv_check_for_nonempty_string(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (tv_check_for_string(tv) == FAIL) {
-      return FAIL;
+    return FAIL;
   }
   if (tv->vval.v_string == NULL || *tv->vval.v_string == NUL) {
     EMSG(_(e_non_empty_string_required));

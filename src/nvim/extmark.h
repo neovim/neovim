@@ -8,8 +8,7 @@
 
 EXTERN int extmark_splice_pending INIT(= 0);
 
-typedef struct
-{
+typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
   int row;

@@ -145,7 +145,6 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
         }
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j) {
-        ;
       }
       if (string[j] != NUL) {
         continue;          // string doesn't match
@@ -276,7 +275,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         }
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j) {
-        /* do nothing */;
+        // do nothing
       }
       if (string[j] != NUL) {
         continue;

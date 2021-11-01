@@ -832,7 +832,6 @@ retry:
     }
 
 
-
 #ifdef HAVE_ICONV
     // Try using iconv() if we can't convert internally.
     if (fio_flags == 0
@@ -1519,7 +1518,6 @@ rewind_retry:
             try_mac = 1;
             try_unix = 1;
             for (; p >= ptr && *p != CAR; p--) {
-              ;
             }
             if (p >= ptr) {
               for (p = ptr; p < ptr + size; ++p) {
@@ -3083,7 +3081,6 @@ nobackup:
   }
 
 
-
   if (converted && wb_flags == 0) {
 #ifdef HAVE_ICONV
     // Use iconv() conversion when conversion is needed and it's not done
@@ -4248,7 +4245,6 @@ static int get_fio_flags(const char_u *name)
   // must be ENC_DBCS, requires iconv()
   return 0;
 }
-
 
 
 /*
@@ -5434,7 +5430,6 @@ char_u *vim_tempname(void)
            "%s%" PRIu64, tempdir, temp_count++);
   return vim_strsave(template);
 }
-
 
 
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the

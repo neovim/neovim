@@ -1184,7 +1184,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
             zero_padding_insertion_ind++;
           }
           if (zero_padding_insertion_ind + 1 < str_arg_l
-              && tmp[zero_padding_insertion_ind]   == '0'
+              && tmp[zero_padding_insertion_ind] == '0'
               && (tmp[zero_padding_insertion_ind + 1] == 'x'
                   || tmp[zero_padding_insertion_ind + 1] == 'X'
                   || tmp[zero_padding_insertion_ind + 1] == 'b'

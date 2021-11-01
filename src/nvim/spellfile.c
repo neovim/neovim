@@ -549,7 +549,7 @@ static inline int spell_check_magic_string(FILE *const fd)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   char buf[VIMSPELLMAGICL];
-  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd, ;);
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd, ; );
   if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
     return SP_FORMERROR;
   }
@@ -1030,7 +1030,7 @@ static int read_region_section(FILE *fd, slang_T *lp, int len)
   if (len > MAXREGIONS * 2) {
     return SP_FORMERROR;
   }
-  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd, ;);
+  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd, ; );
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -1097,7 +1097,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     if (n > 0) {
       char buf[MAXWLEN + 1];
       buf[0] = '^';  // always match at one position only
-      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd, ;);
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd, ; );
       buf[n + 1] = NUL;
       lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
     }
@@ -5164,13 +5164,13 @@ static int offset2bytes(int nr, char_u *buf)
     buf[3] = b1;
     return 4;
   }
-  if (b3 > 1 || b2 > 0x3f ) {   // 3 bytes
+  if (b3 > 1 || b2 > 0x3f) {   // 3 bytes
     buf[0] = 0xc0 + b3;
     buf[1] = b2;
     buf[2] = b1;
     return 3;
   }
-  if (b2 > 1 || b1 > 0x7f ) {   // 2 bytes
+  if (b2 > 1 || b1 > 0x7f) {   // 2 bytes
     buf[0] = 0x80 + b2;
     buf[1] = b1;
     return 2;

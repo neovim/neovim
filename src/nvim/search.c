@@ -2530,13 +2530,14 @@ int findsent(Direction dir, long count)
       }
       if (c == '.' || c == '!' || c == '?') {
         tpos = pos;
-        do
+        do{
           if ((c = inc(&tpos)) == -1) {
             break;
           }
+        }
         while (vim_strchr((char_u *)")]\"'", c = gchar_pos(&tpos))
                != NULL);
-        if (c == -1  || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL
+        if (c == -1 || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL
             || (cpo_J && (c == ' ' && inc(&tpos) >= 0
                           && gchar_pos(&tpos) == ' '))) {
           pos = tpos;
@@ -2662,12 +2663,12 @@ static int inmacro(char_u *opt, char_u *s)
     // Accept two characters in the option being equal to two characters
     // in the line.  A space in the option matches with a space in the
     // line or the line having ended.
-    if (       (macro[0] == s[0]
-                || (macro[0] == ' '
-                    && (s[0] == NUL || s[0] == ' ')))
-               && (macro[1] == s[1]
-                   || ((macro[1] == NUL || macro[1] == ' ')
-                       && (s[0] == NUL || s[1] == NUL || s[1] == ' ')))) {
+    if ((macro[0] == s[0]
+         || (macro[0] == ' '
+             && (s[0] == NUL || s[0] == ' ')))
+        && (macro[1] == s[1]
+            || ((macro[1] == NUL || macro[1] == ' ')
+                && (s[0] == NUL || s[1] == NUL || s[1] == ' ')))) {
       break;
     }
     ++macro;
@@ -4250,7 +4251,6 @@ abort_search:
 }
 
 
-
 /// Find next search match under cursor, cursor at end.
 /// Used while an operator is pending, and in Visual mode.
 ///
@@ -4934,10 +4934,8 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               // find the file name after the end of the match
               for (p = incl_regmatch.endp[0];
                    *p && !vim_isfilec(*p); p++) {
-                ;
               }
               for (i = 0; vim_isfilec(p[i]); i++) {
-                ;
               }
             }
 

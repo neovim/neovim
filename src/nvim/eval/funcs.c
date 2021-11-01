@@ -738,7 +738,8 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 }
 
 /// "bufwinid(nr)" function
-static void f_bufwinid(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+static void f_bufwinid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
   buf_win_common(argvars, rettv, false);
 }
 
@@ -1812,7 +1813,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (wp->w_buffer == buf) {
         if (wp->w_cursor.lnum > last) {
           wp->w_cursor.lnum -= count;
-        } else if (wp->w_cursor.lnum> first) {
+        } else if (wp->w_cursor.lnum > first) {
           wp->w_cursor.lnum = first;
         }
         if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
@@ -4620,10 +4621,9 @@ static bool has_wsl(void)
   static TriState has_wsl = kNone;
   if (has_wsl == kNone) {
     Error err = ERROR_INIT;
-    Object o = nlua_exec(
-        STATIC_CSTR_AS_STRING("return vim.loop.os_uname()['release']:lower()"
-                              ":match('microsoft') and true or false"),
-        (Array)ARRAY_DICT_INIT, &err);
+    Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim.loop.os_uname()['release']:lower()"
+                                               ":match('microsoft') and true or false"),
+                         (Array)ARRAY_DICT_INIT, &err);
     assert(!ERROR_SET(&err));
     assert(o.type == kObjectTypeBoolean);
     has_wsl = o.data.boolean ? kTrue : kFalse;
@@ -11243,7 +11243,6 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   rettv->vval.v_number = nr;
 }
-
 
 
 /*

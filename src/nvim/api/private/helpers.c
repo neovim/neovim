@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -28,7 +29,6 @@
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/api/private/converter.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
@@ -607,7 +607,7 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
 #define KEY_TO_BOOL(name) \
-  parsed_args. name = api_object_to_bool(opts-> name, #name, false, err); \
+  parsed_args.name = api_object_to_bool(opts->name, #name, false, err); \
   if (ERROR_SET(err)) { \
     goto fail_and_free; \
   }

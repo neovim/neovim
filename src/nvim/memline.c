@@ -1638,7 +1638,7 @@ static time_t swapfile_unchanged(char *fname)
   }
 
   // the ID and magic number must be correct
-  if (ml_check_b0_id(&b0) == FAIL|| b0_magic_wrong(&b0)) {
+  if (ml_check_b0_id(&b0) == FAIL || b0_magic_wrong(&b0)) {
     ret = false;
   }
 
@@ -2563,8 +2563,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
    * If the file becomes empty the last line is replaced by an empty line.
    */
   if (buf->b_ml.ml_line_count == 1) {       // file becomes empty
-    if (message
-        ) {
+    if (message) {
       set_keep_msg((char_u *)_(no_lines_msg), 0);
     }
 
