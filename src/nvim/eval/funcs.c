@@ -3447,7 +3447,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
   int scope_number[] = {
-    [kCdScopeWindow ] = 0,  // Number of window to look at.
+    [kCdScopeWindow] = 0,  // Number of window to look at.
     [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
@@ -4667,7 +4667,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
   int scope_number[] = {
-    [kCdScopeWindow ] = 0,  // Number of window to look at.
+    [kCdScopeWindow] = 0,  // Number of window to look at.
     [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
