@@ -137,7 +137,7 @@ return {
     ['function']={args={1, 3}, base=1},
     garbagecollect={args={0, 1}},
     get={args={2, 3}, base=1},
-    getbufinfo={args={0, 1}},
+    getbufinfo={args={0, 1}, base=1},
     getbufline={args={2, 3}, base=1},
     getbufvar={args={2, 3}, base=1},
     getchangelist={args={0, 1}, base=1},

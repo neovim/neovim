@@ -4701,7 +4701,9 @@ getbufinfo([{dict}])
 <
 		To get buffer-local options use: >
 			getbufvar({bufnr}, '&option_name')
-
+<
+		Can also be used as a |method|: >
+			GetBufnr()->getbufinfo()
 <
 							*getbufline()*
 getbufline({buf}, {lnum} [, {end}])
