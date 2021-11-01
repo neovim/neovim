@@ -1,7 +1,9 @@
 name: CI
 on:
   push:
-    branches: ['**']
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches:
