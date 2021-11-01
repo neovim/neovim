@@ -82,7 +82,7 @@ func Test_screenpos()
   call assert_equal({'row': winrow,
     \ 'col': wincol + 0,
     \ 'curscol': wincol + 7,
-    \ 'endcol': wincol + 7}, screenpos(winid, 1, 1))
+    \ 'endcol': wincol + 7}, winid->screenpos(1, 1))
   call assert_equal({'row': winrow,
     \ 'col': wincol + 13,
     \ 'curscol': wincol + 13,

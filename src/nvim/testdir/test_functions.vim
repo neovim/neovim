@@ -307,6 +307,12 @@ func Test_resolve_unix()
   call assert_equal('/', resolve('/'))
 endfunc
 
+func s:normalize_fname(fname)
+  let ret = substitute(a:fname, '\', '/', 'g')
+  let ret = substitute(ret, '//', '/', 'g')
+  return ret->tolower()
+endfunc
+
 func Test_simplify()
   call assert_equal('',            simplify(''))
   call assert_equal('/',           simplify('/'))
@@ -469,7 +475,7 @@ func Test_toupper()
           \ toupper(' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'))
 
   " Test with a few lowercase diacritics.
-  call assert_equal("AÀÁÂÃÄÅĀĂĄǍǞǠẢ", toupper("aàáâãäåāăąǎǟǡả"))
+  call assert_equal("AÀÁÂÃÄÅĀĂĄǍǞǠẢ", "aàáâãäåāăąǎǟǡả"->toupper())
   call assert_equal("BḂḆ", toupper("bḃḇ"))
   call assert_equal("CÇĆĈĊČ", toupper("cçćĉċč"))
   call assert_equal("DĎĐḊḎḐ", toupper("dďđḋḏḑ"))
@@ -530,6 +536,11 @@ func Test_toupper()
   " invalid memory.
   call toupper("\xC0\x80\xC0")
   call toupper("123\xC0\x80\xC0")
+endfunc
+
+func Test_tr()
+  call assert_equal('foo', tr('bar', 'bar', 'foo'))
+  call assert_equal('zxy', 'cab'->tr('abc', 'xyz'))
 endfunc
 
 " Tests for the mode() function
@@ -1293,7 +1304,7 @@ endfunc
 
 func Test_trim()
   call assert_equal("Testing", trim("  \t\r\r\x0BTesting  \t\n\r\n\t\x0B\x0B"))
-  call assert_equal("Testing", trim("  \t  \r\r\n\n\x0BTesting  \t\n\r\n\t\x0B\x0B"))
+  call assert_equal("Testing", "  \t  \r\r\n\n\x0BTesting  \t\n\r\n\t\x0B\x0B"->trim())
   call assert_equal("RESERVE", trim("xyz \twwRESERVEzyww \t\t", " wxyz\t"))
   call assert_equal("wRE    \tSERVEzyww", trim("wRE    \tSERVEzyww"))
   call assert_equal("abcd\t     xxxx   tail", trim(" \tabcd\t     xxxx   tail"))
@@ -1560,7 +1571,7 @@ func Test_bufadd_bufload()
   call assert_equal([''], getbufline(buf, 1, '$'))
 
   let curbuf = bufnr('')
-  call writefile(['some', 'text'], 'XotherName')
+  eval ['some', 'text']->writefile('XotherName')
   let buf = 'XotherName'->bufadd()
   call assert_notequal(0, buf)
   eval 'XotherName'->bufexists()->assert_equal(1)

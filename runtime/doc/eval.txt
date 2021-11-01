@@ -10131,6 +10131,9 @@ timer_info([{id}])
 				    -1 means forever
 		    "callback"	    the callback
 
+		Can also be used as a |method|: >
+			GetTimer()->timer_info()
+<
 timer_pause({timer}, {paused})				*timer_pause()*
 		Pause or unpause a timer.  A paused timer does not invoke its
 		callback when its time expires.  Unpausing a timer may cause
@@ -10144,6 +10147,9 @@ timer_pause({timer}, {paused})				*timer_pause()*
 		String, then the timer is paused, otherwise it is unpaused.
 		See |non-zero-arg|.
 
+		Can also be used as a |method|: >
+			GetTimer()->timer_pause(1)
+<
 						*timer_start()* *timer* *timers*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
@@ -10171,13 +10177,19 @@ timer_start({time}, {callback} [, {options}])
 				\ {'repeat': 3})
 <		This invokes MyHandler() three times at 500 msec intervals.
 
-		Not available in the |sandbox|.
+		Can also be used as a |method|: >
+			GetMsec()->timer_start(callback)
+
+<		Not available in the |sandbox|.
 
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
 		{timer} is an ID returned by timer_start(), thus it must be a
 		Number.  If {timer} does not exist there is no error.
 
+		Can also be used as a |method|: >
+			GetTimer()->timer_stop()
+<
 timer_stopall()						*timer_stopall()*
 		Stop all timers.  The timer callbacks will no longer be
 		invoked.  Useful if some timers is misbehaving.  If there are
@@ -10188,10 +10200,16 @@ tolower({expr})						*tolower()*
 		characters turned into lowercase (just like applying |gu| to
 		the string).
 
+		Can also be used as a |method|: >
+			GetText()->tolower()
+
 toupper({expr})						*toupper()*
 		The result is a copy of the String given, with all lowercase
 		characters turned into uppercase (just like applying |gU| to
 		the string).
+
+		Can also be used as a |method|: >
+			GetText()->toupper()
 
 tr({src}, {fromstr}, {tostr})				*tr()*
 		The result is a copy of the {src} string with all characters
@@ -10206,6 +10224,9 @@ tr({src}, {fromstr}, {tostr})				*tr()*
 <		returns "Hello THere" >
 			echo tr("<blob>", "<>", "{}")
 <		returns "{blob}"
+
+		Can also be used as a |method|: >
+			GetText()->tr(from, to)
 
 trim({text} [, {mask} [, {dir}]])				*trim()*
 		Return {text} as a String where any character in {mask} is
@@ -10229,6 +10250,9 @@ trim({text} [, {mask} [, {dir}]])				*trim()*
 <		returns "Xrm<>X" (characters in the middle are not removed) >
 			echo trim("  vim  ", " ", 2)
 <		returns "  vim"
+
+		Can also be used as a |method|: >
+			GetText()->trim()
 
 trunc({expr})							*trunc()*
 		Return the largest integral value with magnitude less than or
@@ -10285,6 +10309,9 @@ undofile({name})					*undofile()*
 		If {name} is empty undofile() returns an empty string, since a
 		buffer without a file name will not write an undo file.
 		Useful in combination with |:wundo| and |:rundo|.
+
+		Can also be used as a |method|: >
+			GetFilename()->undofile()
 
 undotree()						*undotree()*
 		Return the current state of the undo tree in a dictionary with
@@ -10384,8 +10411,10 @@ virtcol({expr})						*virtcol()*
 		all lines: >
 		    echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
 
+<		Can also be used as a |method|: >
+			GetPos()->virtcol()
 
-visualmode([expr])						*visualmode()*
+visualmode([{expr}])						*visualmode()*
 		The result is a String, which describes the last Visual mode
 		used in the current buffer.  Initially it returns an empty
 		string, but once Visual mode has been used, it returns "v",
@@ -10399,7 +10428,7 @@ visualmode([expr])						*visualmode()*
 		Visual mode that was used.
 		If Visual mode is active, use |mode()| to get the Visual mode
 		(e.g., in a |:vmap|).
-		If [expr] is supplied and it evaluates to a non-zero Number or
+		If {expr} is supplied and it evaluates to a non-zero Number or
 		a non-empty String, then the Visual mode will be cleared and
 		the old value is returned.  See |non-zero-arg|.
 
@@ -10438,10 +10467,17 @@ win_execute({id}, {command} [, {silent}])		*win_execute()*
 		have unexpected side effects.  Use |:noautocmd| if needed.
 		Example: >
 			call win_execute(winid, 'syntax enable')
+<
+		Can also be used as a |method|, the base is used for the
+		command: >
+			GetCommand()->win_execute(winid)
 
 win_findbuf({bufnr})					*win_findbuf()*
 		Returns a |List| with |window-ID|s for windows that contain
 		buffer {bufnr}.  When there is none the list is empty.
+
+		Can also be used as a |method|: >
+			GetBufnr()->win_findbuf()
 
 win_getid([{win} [, {tab}]])				*win_getid()*
 		Get the |window-ID| for the specified window.
@@ -10451,6 +10487,9 @@ win_getid([{win} [, {tab}]])				*win_getid()*
 		Without {tab} use the current tab, otherwise the tab with
 		number {tab}.  The first tab has number one.
 		Return zero if the window cannot be found.
+
+		Can also be used as a |method|: >
+			GetWinnr()->win_getid()
 
 win_gettype([{nr}])					*win_gettype()*
 		Return the type of the window:
@@ -10477,14 +10516,23 @@ win_gotoid({expr})					*win_gotoid()*
 		tabpage.
 		Return TRUE if successful, FALSE if the window cannot be found.
 
-win_id2tabwin({expr}					*win_id2tabwin()*
+		Can also be used as a |method|: >
+			GetWinid()->win_gotoid()
+
+win_id2tabwin({expr})					*win_id2tabwin()*
 		Return a list with the tab number and window number of window
 		with ID {expr}: [tabnr, winnr].
 		Return [0, 0] if the window cannot be found.
 
+		Can also be used as a |method|: >
+			GetWinid()->win_id2tabwin()
+
 win_id2win({expr})					*win_id2win()*
 		Return the window number of window with ID {expr}.
 		Return 0 if the window cannot be found in the current tabpage.
+
+		Can also be used as a |method|: >
+			GetWinid()->win_id2win()
 
 win_screenpos({nr})					*win_screenpos()*
 		Return the screen position of window {nr} as a list with two
@@ -10495,6 +10543,9 @@ win_screenpos({nr})					*win_screenpos()*
 		Returns [0, 0] if the window cannot be found in the current
 		tabpage.
 
+		Can also be used as a |method|: >
+			GetWinid()->win_screenpos()
+<
 win_splitmove({nr}, {target} [, {options}])		*win_splitmove()*
 		Move the window {nr} to a new split of the window {target}.
 		This is similar to moving to {target}, creating a new window
@@ -10549,6 +10600,9 @@ winheight({nr})						*winheight()*
 		This excludes any window toolbar line.
 		Examples: >
   :echo "The current window has " . winheight(0) . " lines."
+
+<		Can also be used as a |method|: >
+			GetWinid()->winheight()
 <
 winlayout([{tabnr}])					*winlayout()*
 		The result is a nested List containing the layout of windows
@@ -10579,6 +10633,9 @@ winlayout([{tabnr}])					*winlayout()*
 			:echo winlayout(2)
 			['col', [['leaf', 1002], ['row', [['leaf', 1003],
 					    ['leaf', 1001]]], ['leaf', 1000]]]
+<
+		Can also be used as a |method|: >
+			GetTabnr()->winlayout()
 <
 							*winline()*
 winline()	The result is a Number, which is the screen line of the cursor
@@ -10614,6 +10671,9 @@ winnr([{arg}])	The result is a Number, which is the number of the current
 			let window_count = winnr('$')
 			let prev_window = winnr('#')
 			let wnum = winnr('3k')
+
+<		Can also be used as a |method|: >
+			GetWinval()->winnr()
 <
 							*winrestcmd()*
 winrestcmd()	Returns a sequence of |:resize| commands that should restore
@@ -10642,6 +10702,9 @@ winrestview({dict})
 		If you have changed the values the result is unpredictable.
 		If the window size changed the result won't be the same.
 
+		Can also be used as a |method|: >
+			GetView()->winrestview()
+<
 							*winsaveview()*
 winsaveview()	Returns a |Dictionary| that contains information to restore
 		the view of the current window.  Use |winrestview()| to
@@ -10680,6 +10743,8 @@ winwidth({nr})						*winwidth()*
 <		For getting the terminal or screen size, see the 'columns'
 		option.
 
+		Can also be used as a |method|: >
+			GetWinid()->winwidth()
 
 wordcount()						*wordcount()*
 		The result is a dictionary of byte/chars/word statistics for
@@ -10738,6 +10803,8 @@ writefile({object}, {fname} [, {flags}])
 			:let fl = readfile("foo", "b")
 			:call writefile(fl, "foocopy", "b")
 
+<		Can also be used as a |method|: >
+			GetText()->writefile("thefile")
 
 xor({expr}, {expr})					*xor()*
 		Bitwise XOR on the two arguments.  The arguments are converted

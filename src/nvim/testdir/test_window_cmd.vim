@@ -72,7 +72,7 @@ endfunc
 func Test_window_quit()
   e Xa
   split Xb
-  call assert_equal(2, winnr('$'))
+  call assert_equal(2, '$'->winnr())
   call assert_equal('Xb', bufname(winbufnr(1)))
   call assert_equal('Xa', bufname(winbufnr(2)))
 
@@ -88,7 +88,7 @@ func Test_window_horizontal_split()
   3wincmd s
   call assert_equal(2, winnr('$'))
   call assert_equal(3, winheight(0))
-  call assert_equal(winwidth(1), winwidth(2))
+  call assert_equal(winwidth(1), 2->winwidth())
 
   call assert_fails('botright topleft wincmd s', 'E442:')
   bw
@@ -267,7 +267,7 @@ func Test_window_height()
 
   wincmd +
   call assert_equal(wh1, winheight(1))
-  call assert_equal(wh2, winheight(2))
+  call assert_equal(wh2, 2->winheight())
 
   2wincmd _
   call assert_equal(2, winheight(1))
@@ -822,6 +822,18 @@ func Test_winnr()
   call assert_equal(6, tabpagewinnr(1, 'l'))
 
   only | tabonly
+endfunc
+
+func Test_winrestview()
+  split runtest.vim
+  normal 50%
+  let view = winsaveview()
+  close
+  split runtest.vim
+  eval view->winrestview()
+  call assert_equal(view, winsaveview())
+
+  bwipe!
 endfunc
 
 func Test_win_splitmove()
