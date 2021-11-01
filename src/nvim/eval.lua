@@ -161,7 +161,7 @@ return {
     getjumplist={args={0, 2}, base=1},
     getline={args={1, 2}, base=1},
     getloclist={args={1, 2}},
-    getmarklist={args={0, 1}},
+    getmarklist={args={0, 1}, base=1},
     getmatches={args={0, 1}},
     getmousepos={},
     getpid={},
