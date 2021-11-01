@@ -48,9 +48,10 @@ end
 ---     - highlight (function)
 ---               Function that will be used for highlighting
 ---               user inputs.
----@param on_confirm function ((input) -> ())
----               Called once the user confirms the input.
+---@param on_confirm function ((input|nil) -> ())
+---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed.
+---               `nil` if the user aborted the dialog.
 function M.input(opts, on_confirm)
   vim.validate {
     on_confirm = { on_confirm, 'function', false },
@@ -58,8 +59,11 @@ function M.input(opts, on_confirm)
 
   opts = opts or {}
   local input = vim.fn.input(opts)
-
-  on_confirm(input)
+  if #input > 0 then
+    on_confirm(input)
+  else
+    on_confirm(nil)
+  end
 end
 
 return M

@@ -1702,9 +1702,10 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                                     |:command-completion|
                                   • highlight (function) Function that will be
                                     used for highlighting user inputs.
-                    {on_confirm}  function ((input) -> ()) Called once the
-                                  user confirms the input. `input` is what the
-                                  user typed.
+                    {on_confirm}  function ((input|nil) -> ()) Called once the
+                                  user confirms or abort the input. `input` is
+                                  what the user typed. `nil` if the user
+                                  aborted the dialog.
 
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                 Prompts the user to pick a single item from a collection of
