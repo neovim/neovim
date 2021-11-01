@@ -3262,7 +3262,7 @@ char2nr({string} [, {utf8}])					*char2nr()*
 
 		Can also be used as a |method|: >
 			GetChar()->char2nr()
-
+<
 							*charidx()*
 charidx({string}, {idx} [, {countcc}])
 		Return the character index of the byte at {idx} in {string}.
@@ -3285,6 +3285,9 @@ charidx({string}, {idx} [, {countcc}])
 			echo charidx('áb́ć', 3)		returns 1
 			echo charidx('áb́ć', 6, 1)	returns 4
 			echo charidx('áb́ć', 16)		returns -1
+<
+		Can also be used as a |method|: >
+			GetName()->charidx(idx)
 
 chdir({dir})						*chdir()*
 		Change the current working directory to {dir}.  The scope of
@@ -4364,6 +4367,9 @@ flatten({list} [, {maxdepth}])					*flatten()*
 			:echo flatten([1, [2, [3, 4]], 5], 1)
 <			[1, 2, [3, 4], 5]
 
+		Can also be used as a |method|: >
+			mylist->flatten()
+<
 float2nr({expr})					*float2nr()*
 		Convert {expr} to a Number by omitting the part after the
 		decimal point.
@@ -7596,6 +7602,9 @@ prompt_getprompt({buf})					*prompt_getprompt()*
 		If the buffer doesn't exist or isn't a prompt buffer, an empty
 		string is returned.
 
+		Can also be used as a |method|: >
+			GetBuffer()->prompt_getprompt()
+
 prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		Set prompt callback for buffer {buf} to {expr}.  When {expr}
 		is an empty string the callback is removed.  This has only
@@ -8376,7 +8385,9 @@ searchcount([{options}])					*searchcount()*
 						value. see |cursor()|, |getpos()
 						(default: cursor's position)
 
-
+		Can also be used as a |method|: >
+			GetSearchOpts()->searchcount()
+<
 searchdecl({name} [, {global} [, {thisblock}]])			*searchdecl()*
 		Search for the declaration of {name}.
 
@@ -9653,7 +9664,9 @@ strptime({format}, {timestring})				*strptime()*
 		  :echo strftime("%c", strptime("%Y%m%d%H%M%S", "19970427115355") + 3600)
 <		  Sun Apr 27 12:53:55 1997
 
-
+		Can also be used as a |method|: >
+			GetFormat()->strptime(timestring)
+<
 strridx({haystack}, {needle} [, {start}])			*strridx()*
 		The result is a Number, which gives the byte index in
 		{haystack} of the last occurrence of the String {needle}.
@@ -10526,6 +10539,9 @@ win_gettype([{nr}])					*win_gettype()*
 		popup window then 'buftype' is "terminal" and win_gettype()
 		returns "popup".
 
+		Can also be used as a |method|: >
+			GetWinid()->win_gettype()
+<
 win_gotoid({expr})					*win_gotoid()*
 		Go to window with ID {expr}.  This may also change the current
 		tabpage.
@@ -10581,6 +10597,9 @@ win_splitmove({nr}, {target} [, {options}])		*win_splitmove()*
 				present, the values of 'splitbelow' and
 				'splitright' are used.
 
+		Can also be used as a |method|: >
+			GetWinid()->win_splitmove(target)
+<
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
 		associated with window {nr}.  {nr} can be the window number or

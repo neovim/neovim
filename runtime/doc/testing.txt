@@ -157,6 +157,9 @@ assert_nobeep({cmd})					*assert_nobeep()*
 		produces a beep or visual bell.
 		Also see |assert_beeps()|.
 
+		Can also be used as a |method|: >
+			GetCmd()->assert_nobeep()
+<
 							*assert_notequal()*
 assert_notequal({expected}, {actual} [, {msg}])
 		The opposite of `assert_equal()`: add an error message to

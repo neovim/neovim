@@ -165,9 +165,7 @@ func Test_prompt_buffer_getbufinfo()
   call assert_equal('This is a test: ', prompt_getprompt('%'))
 
   call prompt_setprompt( bufnr( '%' ), '' )
-  " Nvim doesn't support method call syntax yet.
-  " call assert_equal('', '%'->prompt_getprompt())
-  call assert_equal('', prompt_getprompt('%'))
+  call assert_equal('', '%'->prompt_getprompt())
 
   call prompt_setprompt( bufnr( '%' ), 'Another: ' )
   call assert_equal('Another: ', prompt_getprompt('%'))
