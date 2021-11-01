@@ -17,7 +17,7 @@ end
 
 -- Usable with the base key: use the last function argument as the method base.
 -- Value is from funcs.h file. "BASE_" prefix is omitted.
-local LAST = "BASE_LAST"
+-- local LAST = "BASE_LAST" (currently unused after port of v8.2.1168)
 
 return {
   funcs={
@@ -26,8 +26,8 @@ return {
     add={args=2, base=1},
     ['and']={args=2, base=1},
     api_info={},
-    append={args=2, base=LAST},
-    appendbufline={args=3, base=LAST},
+    append={args=2, base=2},
+    appendbufline={args=3, base=3},
     argc={args={0, 1}},
     argidx={},
     arglistid={args={0, 2}},
