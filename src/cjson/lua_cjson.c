@@ -1549,7 +1549,15 @@ int lua_cjson_new(lua_State *l)
     };
 
     /* Initialise number conversions */
-    fpconv_init();
+    lua_getfield(l, LUA_REGISTRYINDEX, "nvim.thread");
+    bool is_thread = lua_toboolean(l, -1);
+    lua_pop(l, 1);
+
+    // Since fpconv_init does not need to be called multiple times and is not
+    // thread safe, it should only be called in the main thread.
+    if (!is_thread) {
+        fpconv_init();
+    }
 
     /* Test if array metatables are in registry */
     lua_pushlightuserdata(l, json_lightudata_mask(&json_empty_array));
