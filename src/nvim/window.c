@@ -7010,7 +7010,7 @@ int win_getid(typval_T *argvars)
         wp = tp->tp_firstwin;
       }
     }
-    for ( ; wp != NULL; wp = wp->w_next) {
+    for (; wp != NULL; wp = wp->w_next) {
       if (--winnr == 0) {
         return wp->handle;
       }
