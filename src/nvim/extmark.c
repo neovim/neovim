@@ -68,6 +68,14 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
   uint64_t mark = 0;
   uint64_t id = idp ? *idp : 0;
 
+  uint8_t decor_level = kDecorLevelNone;  // no decor
+  if (decor) {
+    decor_level = kDecorLevelVisible;  // decor affects redraw
+    if (kv_size(decor->virt_lines)) {
+      decor_level = kDecorLevelVirtLine;  // decor affects horizontal size
+    }
+  }
+
   if (id == 0) {
     id = ns->free_id++;
   } else {
@@ -76,7 +84,6 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
       if (old_mark & MARKTREE_PAIRED_FLAG || end_row > -1) {
         extmark_del(buf, ns_id, id);
       } else {
-        // TODO(bfredl): we need to do more if "revising" a decoration mark.
         MarkTreeIter itr[1] = { 0 };
         old_pos = marktree_lookup(buf->b_marktree, old_mark, itr);
         assert(itr->node);
@@ -86,21 +93,13 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
           if (it.decor) {
             decor_remove(buf, row, row, it.decor);
           }
-          mark = marktree_revise(buf->b_marktree, itr);
+          mark = marktree_revise(buf->b_marktree, itr, decor_level);
           goto revised;
         }
         marktree_del_itr(buf->b_marktree, itr, false);
       }
     } else {
       ns->free_id = MAX(ns->free_id, id+1);
-    }
-  }
-
-  uint8_t decor_level = kDecorLevelNone;  // no decor
-  if (decor) {
-    decor_level = kDecorLevelVisible;  // decor affects redraw
-    if (kv_size(decor->virt_lines)) {
-      decor_level = kDecorLevelVirtLine;  // decor affects horizontal size
     }
   }
 

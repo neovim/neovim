@@ -570,11 +570,11 @@ void marktree_free_node(mtnode_t *x)
 }
 
 /// NB: caller must check not pair!
-uint64_t marktree_revise(MarkTree *b, MarkTreeIter *itr)
+uint64_t marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level)
 {
   uint64_t old_id = rawkey(itr).id;
   pmap_del(uint64_t)(b->id2node, ANTIGRAVITY(old_id));
-  uint64_t new_id = (b->next_id += ID_INCR);
+  uint64_t new_id = (b->next_id += ID_INCR) + ((uint64_t)decor_level << DECOR_OFFSET);
   rawkey(itr).id = new_id + (RIGHT_GRAVITY&old_id);
   refkey(b, itr->node, itr->i);
   return new_id;
