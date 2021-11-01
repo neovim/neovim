@@ -264,7 +264,7 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
     buf->bh_space = 0;
     buf->bh_curr = &(buf->bh_first);
   } else if (buf->bh_curr == NULL) {  // buffer has already been read
-    IEMSG(_("E222: Add to read buffer"));
+    iemsg(_("E222: Add to read buffer"));
     return;
   } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
@@ -899,7 +899,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent
     newoff = MAXMAPLEN + 4;
     newlen = typebuf.tb_len + addlen + newoff + 4 * (MAXMAPLEN + 4);
     if (newlen < 0) {               // string is getting too long
-      EMSG(_(e_toocompl));          // also calls flush_buffers
+      emsg(_(e_toocompl));          // also calls flush_buffers
       setcursor();
       return FAIL;
     }
@@ -1286,7 +1286,7 @@ void restore_typeahead(tasave_T *tp)
 void openscript(char_u *name, bool directly)
 {
   if (curscript + 1 == NSCRIPT) {
-    EMSG(_(e_nesting));
+    emsg(_(e_nesting));
     return;
   }
 
@@ -1309,7 +1309,7 @@ void openscript(char_u *name, bool directly)
   int error;
   if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
                                            kFileReadOnly, 0)) == NULL) {
-    emsgf(_(e_notopen_2), name, os_strerror(error));
+    semsg(_(e_notopen_2), name, os_strerror(error));
     if (curscript) {
       curscript--;
     }
@@ -1689,7 +1689,7 @@ void vungetc(int c)
   old_mouse_col = mouse_col;
 }
 
-/// Gets a character:
+/// Gets a byte:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
 ///    Also used to redo a command for ".".
@@ -2074,7 +2074,7 @@ static int vgetorpeek(bool advance)
              * The depth check catches ":map x y" and ":map y x".
              */
             if (++mapdepth >= p_mmd) {
-              EMSG(_("E223: recursive mapping"));
+              emsg(_("E223: recursive mapping"));
               if (State & CMDLINE) {
                 redrawcmdline();
               } else {
@@ -2930,10 +2930,10 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
             && args->unique
             && STRNCMP(mp->m_keys, lhs, (size_t)len) == 0) {
           if (is_abbrev) {
-            EMSG2(_("E224: global abbreviation already exists for %s"),
+            semsg(_("E224: global abbreviation already exists for %s"),
                   mp->m_keys);
           } else {
-            EMSG2(_("E225: global mapping already exists for %s"), mp->m_keys);
+            semsg(_("E225: global mapping already exists for %s"), mp->m_keys);
           }
           retval = 5;
           goto theend;
@@ -3029,9 +3029,9 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
               continue;
             } else if (args->unique) {
               if (is_abbrev) {
-                EMSG2(_("E226: abbreviation already exists for %s"), p);
+                semsg(_("E226: abbreviation already exists for %s"), p);
               } else {
-                EMSG2(_("E227: mapping already exists for %s"), p);
+                semsg(_("E227: mapping already exists for %s"), p);
               }
               retval = 5;
               goto theend;
@@ -3090,9 +3090,9 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   if (!has_lhs || !has_rhs) {  // print entries
     if (!did_it && !did_local) {
       if (is_abbrev) {
-        MSG(_("No abbreviation found"));
+        msg(_("No abbreviation found"));
       } else {
-        MSG(_("No mapping found"));
+        msg(_("No mapping found"));
       }
     }
     goto theend;  // listing finished
@@ -3291,7 +3291,7 @@ void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
 
   local = (STRCMP(arg, "<buffer>") == 0);
   if (!local && *arg != NUL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -4167,7 +4167,7 @@ int makemap(FILE *fd, buf_T *buf)
           c1 = 't';
           break;
         default:
-          IEMSG(_("E228: makemap: Illegal mode"));
+          iemsg(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
         do {
@@ -4530,7 +4530,7 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     if (vgetorpeek(false) == NUL) {
       // incomplete <Cmd> is an error, because there is not much the user
       // could do in this state.
-      EMSG(e_cmdmap_err);
+      emsg(e_cmdmap_err);
       aborted = true;
       break;
     }
@@ -4557,13 +4557,13 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       aborted = true;
     } else if (c1 == K_COMMAND) {
       // special case to give nicer error message
-      EMSG(e_cmdmap_repeated);
+      emsg(e_cmdmap_repeated);
       aborted = true;
     } else if (IS_SPECIAL(c1)) {
       if (c1 == K_SNR) {
         ga_concat(&line_ga, "<SNR>");
       } else {
-        EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
+        semsg(e_cmdmap_key, get_special_key_name(c1, cmod));
         aborted = true;
       }
     } else {

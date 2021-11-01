@@ -823,11 +823,11 @@ static void command_line_scan(mparm_T *parmp)
           msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
 
           if (fof_ret != 0) {
-            emsgf(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
+            semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
           }
 
           if (p == NULL) {
-            EMSG(_(e_outofmem));
+            emsg(_(e_outofmem));
           }
 
           Object md = DICTIONARY_OBJ(api_metadata());
@@ -1742,7 +1742,7 @@ static bool do_user_initialization(void)
   if (os_path_exists(init_lua_path)
       && do_source((char *)init_lua_path, true, DOSO_VIMRC)) {
     if (os_path_exists(user_vimrc)) {
-      EMSG3(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
+      semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
             user_vimrc);
     }
 
@@ -1814,7 +1814,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE) != OK) {
-        EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
+        semsg(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
       }
     }
   } else if (!silent_mode) {

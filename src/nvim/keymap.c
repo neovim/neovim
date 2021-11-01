@@ -647,7 +647,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
       vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
       if (l == 0) {
-        EMSG(_(e_invarg));
+        emsg(_(e_invarg));
         return 0;
       }
       bp += l + 5;
@@ -677,7 +677,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         // <Char-123> or <Char-033> or <Char-0x33>
         vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
         if (l == 0) {
-          EMSG(_(e_invarg));
+          emsg(_(e_invarg));
           return 0;
         }
         key = (int)n;
@@ -891,7 +891,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
         if (current_sctx.sc_sid <= 0) {
-          EMSG(_(e_usingsid));
+          emsg(_(e_usingsid));
         } else {
           src += 5;
           result[dlen++] = K_SPECIAL;

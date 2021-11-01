@@ -49,7 +49,7 @@ bool os_libcall(const char *libname, const char *funcname, const char *argv, int
 
   // open the dynamic loadable library
   if (uv_dlopen(libname, &lib)) {
-    EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+    semsg(_("dlerror = \"%s\""), uv_dlerror(&lib));
     uv_dlclose(&lib);
     return false;
   }
@@ -57,7 +57,7 @@ bool os_libcall(const char *libname, const char *funcname, const char *argv, int
   // find and load the requested function in the library
   gen_fn fn;
   if (uv_dlsym(&lib, funcname, (void **)&fn)) {
-    EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+    semsg(_("dlerror = \"%s\""), uv_dlerror(&lib));
     uv_dlclose(&lib);
     return false;
   }

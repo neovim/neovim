@@ -418,7 +418,7 @@ void opFoldRange(pos_T firstpos, pos_T lastpos, int opening, int recurse, int ha
     }
   }
   if (done == DONE_NOTHING) {
-    EMSG(_(e_nofold));
+    emsg(_(e_nofold));
   }
   // Force a redraw to remove the Visual highlighting.
   if (had_visual) {
@@ -551,9 +551,9 @@ int foldManualAllowed(bool create)
     return TRUE;
   }
   if (create) {
-    EMSG(_("E350: Cannot create fold with current 'foldmethod'"));
+    emsg(_("E350: Cannot create fold with current 'foldmethod'"));
   } else {
-    EMSG(_("E351: Cannot delete fold with current 'foldmethod'"));
+    emsg(_("E351: Cannot delete fold with current 'foldmethod'"));
   }
   return FALSE;
 }
@@ -764,7 +764,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
     }
   }
   if (!did_one) {
-    EMSG(_(e_nofold));
+    emsg(_(e_nofold));
     // Force a redraw to remove the Visual highlighting.
     if (had_visual) {
       redraw_buf_later(wp->w_buffer, INVERTED);
@@ -1196,7 +1196,7 @@ static void setFoldRepeat(pos_T pos, long count, int do_open)
     if (!(done & DONE_ACTION)) {
       // Only give an error message when no fold could be opened.
       if (n == 0 && !(done & DONE_FOLD)) {
-        EMSG(_(e_nofold));
+        emsg(_(e_nofold));
       }
       break;
     }
@@ -1333,7 +1333,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
     }
     done |= DONE_FOLD;
   } else if (donep == NULL && wp == curwin) {
-    EMSG(_(e_nofold));
+    emsg(_(e_nofold));
   }
 
   if (donep != NULL) {
@@ -1651,7 +1651,7 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
 {
   buf_T *buf = wp->w_buffer;
   if (!MODIFIABLE(buf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return;
   }
   parseMarker(wp);

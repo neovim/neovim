@@ -419,7 +419,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
     len = 0;
     while (*wc_part != NUL) {
       if (len + 5 >= MAXPATHL) {
-        EMSG(_(e_pathtoolong));
+        emsg(_(e_pathtoolong));
         break;
       }
       if (STRNCMP(wc_part, "**", 2) == 0) {
@@ -437,7 +437,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
         }
         wc_part = (char_u *)errpt;
         if (*wc_part != NUL && !vim_ispathsep(*wc_part)) {
-          EMSG2(_(
+          semsg(_(
                  "E343: Invalid path: '**[number]' must be at the end of the path or be followed by '%s'."),
                 PATHSEPSTR);
           goto error_return;
@@ -463,7 +463,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
   // create an absolute path
   if (STRLEN(search_ctx->ffsc_start_dir)
       + STRLEN(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
-    EMSG(_(e_pathtoolong));
+    emsg(_(e_pathtoolong));
     goto error_return;
   }
   STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
@@ -1570,18 +1570,18 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == TRUE) {
       if (find_what == FINDFILE_DIR) {
-        EMSG2(_("E344: Can't find directory \"%s\" in cdpath"),
+        semsg(_("E344: Can't find directory \"%s\" in cdpath"),
               ff_file_to_find);
       } else {
-        EMSG2(_("E345: Can't find file \"%s\" in path"),
+        semsg(_("E345: Can't find file \"%s\" in path"),
               ff_file_to_find);
       }
     } else {
       if (find_what == FINDFILE_DIR) {
-        EMSG2(_("E346: No more directory \"%s\" found in cdpath"),
+        semsg(_("E346: No more directory \"%s\" found in cdpath"),
               ff_file_to_find);
       } else {
-        EMSG2(_("E347: No more file \"%s\" found in path"),
+        semsg(_("E347: No more file \"%s\" found in path"),
               ff_file_to_find);
       }
     }

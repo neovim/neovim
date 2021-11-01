@@ -6961,7 +6961,7 @@ int showmode(void)
     lines_left = 0;
 
     if (do_mode) {
-      MSG_PUTS_ATTR("--", attr);
+      msg_puts_attr("--", attr);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
         // These messages can get long, avoid a wrap in a narrow window.
@@ -6986,7 +6986,7 @@ int showmode(void)
             msg_puts_attr((const char *)edit_submode, attr);
           }
           if (edit_submode_extra != NULL) {
-            MSG_PUTS_ATTR(" ", attr);  // Add a space in between.
+            msg_puts_attr(" ", attr);  // Add a space in between.
             if ((int)edit_submode_highl < HLF_COUNT) {
               sub_attr = win_hl_attr(curwin, edit_submode_highl);
             } else {
@@ -6997,37 +6997,37 @@ int showmode(void)
         }
       } else {
         if (State & TERM_FOCUS) {
-          MSG_PUTS_ATTR(_(" TERMINAL"), attr);
+          msg_puts_attr(_(" TERMINAL"), attr);
         } else if (State & VREPLACE_FLAG) {
-          MSG_PUTS_ATTR(_(" VREPLACE"), attr);
+          msg_puts_attr(_(" VREPLACE"), attr);
         } else if (State & REPLACE_FLAG) {
-          MSG_PUTS_ATTR(_(" REPLACE"), attr);
+          msg_puts_attr(_(" REPLACE"), attr);
         } else if (State & INSERT) {
           if (p_ri) {
-            MSG_PUTS_ATTR(_(" REVERSE"), attr);
+            msg_puts_attr(_(" REVERSE"), attr);
           }
-          MSG_PUTS_ATTR(_(" INSERT"), attr);
+          msg_puts_attr(_(" INSERT"), attr);
         } else if (restart_edit == 'I' || restart_edit == 'i'
                    || restart_edit == 'a') {
-          MSG_PUTS_ATTR(_(" (insert)"), attr);
+          msg_puts_attr(_(" (insert)"), attr);
         } else if (restart_edit == 'R') {
-          MSG_PUTS_ATTR(_(" (replace)"), attr);
+          msg_puts_attr(_(" (replace)"), attr);
         } else if (restart_edit == 'V') {
-          MSG_PUTS_ATTR(_(" (vreplace)"), attr);
+          msg_puts_attr(_(" (vreplace)"), attr);
         }
         if (p_hkmap) {
-          MSG_PUTS_ATTR(_(" Hebrew"), attr);
+          msg_puts_attr(_(" Hebrew"), attr);
         }
         if (State & LANGMAP) {
           if (curwin->w_p_arab) {
-            MSG_PUTS_ATTR(_(" Arabic"), attr);
+            msg_puts_attr(_(" Arabic"), attr);
           } else if (get_keymap_str(curwin, (char_u *)" (%s)",
                                     NameBuff, MAXPATHL)) {
-            MSG_PUTS_ATTR(NameBuff, attr);
+            msg_puts_attr((char *)NameBuff, attr);
           }
         }
         if ((State & INSERT) && p_paste) {
-          MSG_PUTS_ATTR(_(" (paste)"), attr);
+          msg_puts_attr(_(" (paste)"), attr);
         }
 
         if (VIsual_active) {
@@ -7051,9 +7051,9 @@ int showmode(void)
           default:
             p = N_(" SELECT BLOCK"); break;
           }
-          MSG_PUTS_ATTR(_(p), attr);
+          msg_puts_attr(_(p), attr);
         }
-        MSG_PUTS_ATTR(" --", attr);
+        msg_puts_attr(" --", attr);
       }
 
       need_clear = TRUE;
@@ -7142,11 +7142,11 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  MSG_PUTS_ATTR(_("recording"), attr);
+  msg_puts_attr(_("recording"), attr);
   if (!shortmess(SHM_RECORDING)) {
-    char_u s[4];
-    snprintf((char *)s, ARRAY_SIZE(s), " @%c", reg_recording);
-    MSG_PUTS_ATTR(s, attr);
+    char s[4];
+    snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
+    msg_puts_attr(s, attr);
   }
 }
 

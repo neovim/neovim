@@ -209,7 +209,7 @@ void msg_grid_validate(void)
  * When terminal not initialized (yet) mch_errmsg(..) is used.
  * return TRUE if wait_return not called
  */
-int msg(char_u *s)
+int msg(char *s)
 {
   return msg_attr_keep(s, 0, false, false);
 }
@@ -218,7 +218,7 @@ int msg(char_u *s)
 int verb_msg(char *s)
 {
   verbose_enter();
-  int n = msg_attr_keep((char_u *)s, 0, false, false);
+  int n = msg_attr_keep(s, 0, false, false);
   verbose_leave();
 
   return n;
@@ -227,7 +227,7 @@ int verb_msg(char *s)
 int msg_attr(const char *s, const int attr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_attr_keep((char_u *)s, attr, false, false);
+  return msg_attr_keep(s, attr, false, false);
 }
 
 /// similar to msg_outtrans_attr, but support newlines and tabs.
@@ -265,7 +265,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
 
 
 /// @param keep set keep_msg if it doesn't scroll
-bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
+bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
@@ -281,12 +281,12 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
 
   // Skip messages not match ":filter pattern".
   // Don't filter when there is an error.
-  if (!emsg_on_display && message_filtered(s)) {
+  if (!emsg_on_display && message_filtered((char_u *)s)) {
     return true;
   }
 
   if (attr == 0) {
-    set_vim_var_string(VV_STATUSMSG, (char *)s, -1);
+    set_vim_var_string(VV_STATUSMSG, s, -1);
   }
 
   /*
@@ -301,35 +301,35 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
 
   // Add message to history (unless it's a repeated kept message or a
   // truncated message)
-  if (s != keep_msg
+  if ((const char_u *)s != keep_msg
       || (*s != '<'
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
           && STRCMP(s, last_msg_hist->msg))) {
-    add_msg_hist((const char *)s, -1, attr, multiline);
+    add_msg_hist(s, -1, attr, multiline);
   }
 
   // Truncate the message if needed.
   msg_start();
-  buf = msg_strtrunc(s, FALSE);
+  buf = msg_strtrunc((char_u *)s, FALSE);
   if (buf != NULL) {
-    s = buf;
+    s = (const char *)buf;
   }
 
   bool need_clear = true;
   if (multiline) {
-    msg_multiline_attr((char *)s, attr, false, &need_clear);
+    msg_multiline_attr(s, attr, false, &need_clear);
   } else {
-    msg_outtrans_attr(s, attr);
+    msg_outtrans_attr((char_u *)s, attr);
   }
   if (need_clear) {
     msg_clr_eos();
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
+  if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row - 1)
       * Columns + sc_col) {
-    set_keep_msg(s, 0);
+    set_keep_msg((char_u *)s, 0);
   }
 
   xfree(buf);
@@ -453,11 +453,11 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
 }
 
 /*
- * Note: Caller of smgs() and smsg_attr() must check the resulting string is
+ * Note: Caller of smsg() and smsg_attr() must check the resulting string is
  * shorter than IOSIZE!!!
  */
 
-int smsg(char *s, ...)
+int smsg(const char *s, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   va_list arglist;
@@ -465,10 +465,10 @@ int smsg(char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg(IObuff);
+  return msg((char *)IObuff);
 }
 
-int smsg_attr(int attr, char *s, ...)
+int smsg_attr(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -479,7 +479,7 @@ int smsg_attr(int attr, char *s, ...)
   return msg_attr((const char *)IObuff, attr);
 }
 
-int smsg_attr_keep(int attr, char *s, ...)
+int smsg_attr_keep(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -487,7 +487,7 @@ int smsg_attr_keep(int attr, char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg_attr_keep(IObuff, attr, true, false);
+  return msg_attr_keep((const char *)IObuff, attr, true, false);
 }
 
 /*
@@ -721,7 +721,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_attr_keep((char_u *)s, attr, false, multiline);
+  return msg_attr_keep(s, attr, false, multiline);
 }
 
 /// emsg() - display an error message
@@ -730,25 +730,25 @@ static bool emsg_multiline(const char *s, bool multiline)
 /// When terminal not initialized (yet) mch_errmsg(..) is used.
 ///
 /// @return true if wait_return not called
-bool emsg(const char_u *s)
+bool emsg(const char *s)
 {
   return emsg_multiline((const char *)s, false);
 }
 
 void emsg_invreg(int name)
 {
-  EMSG2(_("E354: Invalid register name: '%s'"), transchar(name));
+  semsg(_("E354: Invalid register name: '%s'"), transchar(name));
 }
 
 /// Print an error message with unknown number of arguments
-bool emsgf(const char *const fmt, ...)
+bool semsg(const char *const fmt, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   bool ret;
 
   va_list ap;
   va_start(ap, fmt);
-  ret = emsgfv(fmt, ap);
+  ret = semsgv(fmt, ap);
   va_end(ap);
 
   return ret;
@@ -756,7 +756,7 @@ bool emsgf(const char *const fmt, ...)
 
 #define MULTILINE_BUFSIZE 8192
 
-bool emsgf_multiline(const char *const fmt, ...)
+bool semsg_multiline(const char *const fmt, ...)
 {
   bool ret;
   va_list ap;
@@ -777,7 +777,7 @@ bool emsgf_multiline(const char *const fmt, ...)
 }
 
 /// Print an error message with unknown number of arguments
-static bool emsgfv(const char *fmt, va_list ap)
+static bool semsgv(const char *fmt, va_list ap)
 {
   static char errbuf[IOSIZE];
   if (emsg_not_now()) {
@@ -786,7 +786,7 @@ static bool emsgfv(const char *fmt, va_list ap)
 
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
 
-  return emsg((const char_u *)errbuf);
+  return emsg(errbuf);
 }
 
 /// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
@@ -794,20 +794,20 @@ static bool emsgfv(const char *fmt, va_list ap)
 /// detected when fuzzing vim.
 void iemsg(const char *s)
 {
-  emsg((char_u *)s);
+  emsg(s);
 #ifdef ABORT_ON_INTERNAL_ERROR
   abort();
 #endif
 }
 
-/// Same as emsgf(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// Same as semsg(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
 /// defined. It is used for internal errors only, so that they can be
 /// detected when fuzzing vim.
-void iemsgf(const char *s, ...)
+void siemsg(const char *s, ...)
 {
   va_list ap;
   va_start(ap, s);
-  (void)emsgfv(s, ap);
+  (void)semsgv(s, ap);
   va_end(ap);
 #ifdef ABORT_ON_INTERNAL_ERROR
   abort();
@@ -817,17 +817,17 @@ void iemsgf(const char *s, ...)
 /// Give an "Internal error" message.
 void internal_error(char *where)
 {
-  IEMSG2(_(e_intern2), where);
+  siemsg(_(e_intern2), where);
 }
 
-static void msg_emsgf_event(void **argv)
+static void msg_semsg_event(void **argv)
 {
   char *s = argv[0];
-  (void)emsg((char_u *)s);
+  (void)emsg(s);
   xfree(s);
 }
 
-void msg_schedule_emsgf(const char *const fmt, ...)
+void msg_schedule_semsg(const char *const fmt, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   va_list ap;
@@ -836,7 +836,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  multiqueue_put(main_loop.events, msg_emsgf_event, 1, s);
+  multiqueue_put(main_loop.events, msg_semsg_event, 1, s);
 }
 
 /*
@@ -845,21 +845,21 @@ void msg_schedule_emsgf(const char *const fmt, ...)
  * Careful: The string may be changed by msg_may_trunc()!
  * Returns a pointer to the printed message, if wait_return() not called.
  */
-char_u *msg_trunc_attr(char_u *s, int force, int attr)
+char *msg_trunc_attr(char *s, int force, int attr)
 {
   int n;
 
   // Add message to history before truncating.
-  add_msg_hist((const char *)s, -1, attr, false);
+  add_msg_hist(s, -1, attr, false);
 
-  s = msg_may_trunc(force, s);
+  char *ts = (char *)msg_may_trunc(force, (char_u *)s);
 
   msg_hist_off = true;
-  n = msg_attr((const char *)s, attr);
+  n = msg_attr(ts, attr);
   msg_hist_off = false;
 
   if (n) {
-    return s;
+    return ts;
   }
   return NULL;
 }
@@ -1009,7 +1009,7 @@ void ex_messages(void *const eap_p)
   }
 
   if (*eap->arg != NUL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1050,7 +1050,7 @@ void ex_messages(void *const eap_p)
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
       if (p->msg != NULL) {
-        msg_attr_keep(p->msg, p->attr, false, p->multiline);
+        msg_attr_keep((char *)p->msg, p->attr, false, p->multiline);
       }
     }
     msg_hist_off = false;
@@ -1072,11 +1072,11 @@ void msg_end_prompt(void)
   lines_left = -1;
 }
 
-/// wait for the user to hit a key (normally a return)
+/// Wait for the user to hit a key (normally Enter)
 ///
-/// if 'redraw' is true, redraw the entire screen NOT_VALID
-/// if 'redraw' is false, do a normal redraw
-/// if 'redraw' is -1, don't redraw at all
+/// If 'redraw' is true, redraw the entire screen NOT_VALID
+/// If 'redraw' is false, do a normal redraw
+/// If 'redraw' is -1, don't redraw at all
 void wait_return(int redraw)
 {
   int c;
@@ -1119,7 +1119,7 @@ void wait_return(int redraw)
     quit_more = FALSE;
     got_int = FALSE;
   } else if (exmode_active) {
-    MSG_PUTS(" ");              // make sure the cursor is on the right line
+    msg_puts(" ");              // make sure the cursor is on the right line
     c = CAR;                    // no need for a return in ex mode
     got_int = FALSE;
   } else {
@@ -1275,10 +1275,10 @@ static void hit_return_msg(void)
   }
   msg_ext_set_kind("return_prompt");
   if (got_int) {
-    MSG_PUTS(_("Interrupt: "));
+    msg_puts(_("Interrupt: "));
   }
 
-  MSG_PUTS_ATTR(_("Press ENTER or type command to continue"), HL_ATTR(HLF_R));
+  msg_puts_attr(_("Press ENTER or type command to continue"), HL_ATTR(HLF_R));
   if (!msg_use_printf()) {
     msg_clr_eos();
   }
@@ -1376,7 +1376,7 @@ void msg_putchar(int c)
 
 void msg_putchar_attr(int c, int attr)
 {
-  char buf[MB_MAXBYTES + 1];
+  char_u buf[MB_MAXBYTES + 1];
 
   if (IS_SPECIAL(c)) {
     buf[0] = (char)K_SPECIAL;
@@ -1384,9 +1384,9 @@ void msg_putchar_attr(int c, int attr)
     buf[2] = (char)K_THIRD(c);
     buf[3] = NUL;
   } else {
-    buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
+    buf[utf_char2bytes(c, buf)] = NUL;
   }
-  msg_puts_attr(buf, attr);
+  msg_puts_attr((const char *)buf, attr);
 }
 
 void msg_outnum(long n)
@@ -1569,22 +1569,22 @@ int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
   int attr = HL_ATTR(HLF_8);
 
   while (*str != NUL) {
-    const char *string;
+    const char *text;
     // Leading and trailing spaces need to be displayed in <> form.
     if ((str == strstart || str[1] == NUL) && *str == ' ') {
-      string = "<Space>";
+      text = "<Space>";
       str++;
     } else {
-      string = str2special((const char **)&str, from, false);
+      text = str2special((const char **)&str, from, false);
     }
-    const int len = vim_strsize((char_u *)string);
+    const int len = vim_strsize((char_u *)text);
     if (maxlen > 0 && retval + len >= maxlen) {
       break;
     }
     // Highlight special keys
-    msg_puts_attr(string, (len > 1
-                           && (*mb_ptr2len)((char_u *)string) <= 1
-                           ? attr : 0));
+    msg_puts_attr(text, (len > 1
+                         && (*mb_ptr2len)((char_u *)text) <= 1
+                         ? attr : 0));
     retval += len;
   }
   return retval;
@@ -1909,12 +1909,12 @@ void msg_puts_title(const char *s)
  * part in the middle and replace it with "..." when necessary.
  * Does not handle multi-byte characters!
  */
-void msg_puts_long_attr(char_u *longstr, int attr)
+void msg_outtrans_long_attr(char_u *longstr, int attr)
 {
-  msg_puts_long_len_attr(longstr, (int)STRLEN(longstr), attr);
+  msg_outtrans_long_len_attr(longstr, (int)STRLEN(longstr), attr);
 }
 
-void msg_puts_long_len_attr(char_u *longstr, int len, int attr)
+void msg_outtrans_long_len_attr(char_u *longstr, int len, int attr)
 {
   int slen = len;
   int room;
@@ -3308,7 +3308,7 @@ int verbose_open(void)
 
     verbose_fd = os_fopen((char *)p_vfile, "a");
     if (verbose_fd == NULL) {
-      EMSG2(_(e_notopen), p_vfile);
+      semsg(_(e_notopen), p_vfile);
       return FAIL;
     }
   }

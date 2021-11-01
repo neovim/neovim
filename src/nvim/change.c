@@ -63,7 +63,7 @@ void change_warning(buf_T *buf, int col)
     }
     msg_source(HL_ATTR(HLF_W));
     msg_ext_set_kind("wmsg");
-    MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
+    msg_puts_attr(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
@@ -759,7 +759,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
   // If "count" is negative the caller must be doing something wrong.
   if (count < 1) {
-    IEMSGN("E292: Invalid count for del_bytes(): %ld", count);
+    siemsg("E292: Invalid count for del_bytes(): %ld", (int64_t)count);
     return FAIL;
   }
 

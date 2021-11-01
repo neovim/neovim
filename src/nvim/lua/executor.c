@@ -80,7 +80,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   const char *const str = lua_tolstring(lstate, -1, &len);
 
   msg_ext_set_kind("lua_error");
-  emsgf_multiline(msg, (int)len, str);
+  semsg_multiline(msg, (int)len, str);
 
   lua_pop(lstate, 1);
 }
@@ -101,7 +101,7 @@ static void nlua_luv_error_event(void **argv)
 {
   char *error = (char *)argv[0];
   msg_ext_set_kind("lua_error");
-  emsgf_multiline("Error executing luv callback:\n%s", error);
+  semsg_multiline("Error executing luv callback:\n%s", error);
   xfree(error);
 }
 
@@ -458,7 +458,7 @@ void nlua_init(void)
 
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
-    EMSG(_("E970: Failed to initialize lua interpreter"));
+    emsg(_("E970: Failed to initialize lua interpreter"));
     preserve_exit();
   }
   luaL_openlibs(lstate);
@@ -519,10 +519,10 @@ static void nlua_print_event(void **argv)
       }
       break;
     }
-    msg((char_u *)str + start);
+    msg(str + start);
   }
   if (len && str[len - 1] == NUL) {  // Last was newline
-    msg((char_u *)"");
+    msg("");
   }
   xfree(str);
 }
@@ -1091,7 +1091,7 @@ void ex_luado(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
   if (u_save(eap->line1 - 1, eap->line2 + 1) == FAIL) {
-    EMSG(_("cannot save undo information"));
+    emsg(_("cannot save undo information"));
     return;
   }
   const char *const cmd = (const char *)eap->arg;

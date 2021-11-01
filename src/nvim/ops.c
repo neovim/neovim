@@ -210,7 +210,6 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
 {
   long i;
   int first_char;
-  char_u *s;
   int block_col = 0;
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
@@ -249,27 +248,21 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   foldOpenCursor();
 
   if (oap->line_count > p_report) {
+    char *op;
     if (oap->op_type == OP_RSHIFT) {
-      s = (char_u *)">";
+      op = ">";
     } else {
-      s = (char_u *)"<";
+      op = "<";
     }
-    if (oap->line_count == 1) {
-      if (amount == 1) {
-        sprintf((char *)IObuff, _("1 line %sed 1 time"), s);
-      } else {
-        sprintf((char *)IObuff, _("1 line %sed %d times"), s, amount);
-      }
-    } else {
-      if (amount == 1) {
-        sprintf((char *)IObuff, _("%" PRId64 " lines %sed 1 time"),
-                (int64_t)oap->line_count, s);
-      } else {
-        sprintf((char *)IObuff, _("%" PRId64 " lines %sed %d times"),
-                (int64_t)oap->line_count, s, amount);
-      }
-    }
-    msg_attr_keep(IObuff, 0, true, false);
+
+    char *msg_line_single = NGETTEXT("%" PRId64 " line %sed %d time",
+                                     "%" PRId64 " line %sed %d times", amount);
+    char *msg_line_plural = NGETTEXT("%" PRId64 " lines %sed %d time",
+                                     "%" PRId64 " lines %sed %d times", amount);
+    vim_snprintf((char *)IObuff, IOSIZE,
+                 NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
+                 (int64_t)oap->line_count, op, amount);
+    msg_attr_keep((char *)IObuff, 0, true, false);
   }
 
   /*
@@ -640,7 +633,7 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   // Don't even try when 'modifiable' is off.
   if (!MODIFIABLE(curbuf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return;
   }
 
@@ -695,11 +688,9 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    if (i == 1) {
-      MSG(_("1 line indented "));
-    } else {
-      smsg(_("%" PRId64 " lines indented "), (int64_t)i);
-    }
+    smsg(NGETTEXT("%" PRId64 " line indented ",
+                  "%" PRId64 " lines indented ", i),
+         (int64_t)i);
   }
   // set '[ and '] marks
   curbuf->b_op_start = oap->start;
@@ -930,7 +921,7 @@ int do_record(int c)
     if (ui_has(kUIMessages)) {
       showmode();
     } else {
-      MSG("");
+      msg("");
     }
     p = get_recorded();
     if (p == NULL) {
@@ -1018,7 +1009,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 
   if (regname == '@') {                 // repeat previous one
     if (execreg_lastc == NUL) {
-      EMSG(_("E748: No previously used register"));
+      emsg(_("E748: No previously used register"));
       return FAIL;
     }
     regname = execreg_lastc;
@@ -1036,7 +1027,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 
   if (regname == ':') {                 // use last command line
     if (last_cmdline == NULL) {
-      EMSG(_(e_nolastcmd));
+      emsg(_(e_nolastcmd));
       return FAIL;
     }
     // don't keep the cmdline containing @:
@@ -1066,7 +1057,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
   } else if (regname == '.') {        // use last inserted text
     p = get_last_insert_save();
     if (p == NULL) {
-      EMSG(_(e_noinstext));
+      emsg(_(e_noinstext));
       return FAIL;
     }
     retval = put_in_typebuf(p, false, colon, silent);
@@ -1291,14 +1282,14 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
 
   case ':':                     // last command line
     if (last_cmdline == NULL && errmsg) {
-      EMSG(_(e_nolastcmd));
+      emsg(_(e_nolastcmd));
     }
     *argp = last_cmdline;
     return true;
 
   case '/':                     // last search-pattern
     if (last_search_pat() == NULL && errmsg) {
-      EMSG(_(e_noprevre));
+      emsg(_(e_noprevre));
     }
     *argp = last_search_pat();
     return true;
@@ -1307,7 +1298,7 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
     *argp = get_last_insert_save();
     *allocated = true;
     if (*argp == NULL && errmsg) {
-      EMSG(_(e_noinstext));
+      emsg(_(e_noinstext));
     }
     return true;
 
@@ -1424,7 +1415,7 @@ int op_delete(oparg_T *oap)
   }
 
   if (!MODIFIABLE(curbuf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return FAIL;
   }
 
@@ -2073,11 +2064,9 @@ void op_tilde(oparg_T *oap)
   curbuf->b_op_end = oap->end;
 
   if (oap->line_count > p_report) {
-    if (oap->line_count == 1) {
-      MSG(_("1 line changed"));
-    } else {
-      smsg(_("%" PRId64 " lines changed"), (int64_t)oap->line_count);
-    }
+    smsg(NGETTEXT("%" PRId64 " line changed",
+                  "%" PRId64 " lines changed", oap->line_count),
+         (int64_t)oap->line_count);
   }
 }
 
@@ -2732,17 +2721,14 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
       // redisplay now, so message is not deleted
       update_topline_redraw();
-      if (yanklines == 1) {
-        if (yank_type == kMTBlockWise) {
-          smsg(_("block of 1 line yanked%s"), namebuf);
-        } else {
-          smsg(_("1 line yanked%s"), namebuf);
-        }
-      } else if (yank_type == kMTBlockWise) {
-        smsg(_("block of %" PRId64 " lines yanked%s"),
+      if (yank_type == kMTBlockWise) {
+        smsg(NGETTEXT("block of %" PRId64 " line yanked%s",
+                      "block of %" PRId64 " lines yanked%s", yanklines),
              (int64_t)yanklines, namebuf);
       } else {
-        smsg(_("%" PRId64 " lines yanked%s"), (int64_t)yanklines, namebuf);
+        smsg(NGETTEXT("%" PRId64 " line yanked%s",
+                      "%" PRId64 " lines yanked%s", yanklines),
+             (int64_t)yanklines, namebuf);
       }
     }
   }
@@ -3089,7 +3075,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (y_size == 0 || y_array == NULL) {
-    EMSG2(_("E353: Nothing in register %s"),
+    semsg(_("E353: Nothing in register %s"),
           regname == 0 ? (char_u *)"\"" : transchar(regname));
     goto end;
   }
@@ -3708,12 +3694,12 @@ void ex_display(exarg_T *eap)
       msg_puts("  ");
       msg_putchar('"');
       msg_putchar(name);
-      MSG_PUTS("   ");
+      msg_puts("   ");
 
       int n = Columns - 11;
       for (size_t j = 0; j < yb->y_size && n > 1; j++) {
         if (j) {
-          MSG_PUTS_ATTR("^J", attr);
+          msg_puts_attr("^J", attr);
           n -= 2;
         }
         for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019 NOLINT(whitespace/line_length)
@@ -3723,7 +3709,7 @@ void ex_display(exarg_T *eap)
         }
       }
       if (n > 1 && yb->y_type == kMTLineWise) {
-        MSG_PUTS_ATTR("^J", attr);
+        msg_puts_attr("^J", attr);
       }
       ui_flush();  // show one line at a time
     }
@@ -4808,11 +4794,9 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
 
     if (change_cnt > p_report) {
-      if (change_cnt == 1) {
-        MSG(_("1 line changed"));
-      } else {
-        smsg(_("%" PRId64 " lines changed"), (int64_t)change_cnt);
-      }
+      smsg(NGETTEXT("%" PRId64 " lines changed",
+                    "%" PRId64 " lines changed", change_cnt),
+           (int64_t)change_cnt);
     }
   }
 }
@@ -5399,7 +5383,7 @@ void write_reg_contents_lst(int name, char_u **strings, bool must_append, Motion
     if (strings[0] == NULL) {
       s = (char_u *)"";
     } else if (strings[1] != NULL) {
-      EMSG(_("E883: search pattern and expression register may not "
+      emsg(_("E883: search pattern and expression register may not "
              "contain two or more lines"));
       return;
     }
@@ -5461,7 +5445,7 @@ void write_reg_contents_ex(int name, const char_u *str, ssize_t len, bool must_a
 
       buf = buflist_findnr(num);
       if (buf == NULL) {
-        EMSGN(_(e_nobufnr), (long)num);
+        semsg(_(e_nobufnr), (int64_t)num);
       }
     } else {
       buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
@@ -5703,7 +5687,7 @@ void cursor_pos_info(dict_T *dict)
   // Compute the length of the file in characters.
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     if (dict == NULL) {
-      MSG(_(no_lines_msg));
+      msg(_(no_lines_msg));
       return;
     }
   } else {
@@ -5901,7 +5885,7 @@ void cursor_pos_info(dict_T *dict)
       // Don't shorten this message, the user asked for it.
       p = p_shm;
       p_shm = (char_u *)"";
-      msg(IObuff);
+      msg((char *)IObuff);
       p_shm = p;
     }
   }
@@ -5963,7 +5947,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       clipboard_didwarn = true;
       // Do NOT error (emsg()) here--if it interrupts :redir we get into
       // a weird state, stuck in "redirect mode".
-      msg((char_u *)MSG_NO_CLIP);
+      msg(MSG_NO_CLIP);
     }
     // ... else, be silent (don't flood during :while, :redir, etc.).
     goto end;
@@ -6201,7 +6185,7 @@ err:
   reg->additional_data = NULL;
   reg->timestamp = 0;
   if (errmsg) {
-    EMSG("clipboard: provider returned invalid data");
+    emsg("clipboard: provider returned invalid data");
   }
   *target = reg;
   return false;

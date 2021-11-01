@@ -634,7 +634,7 @@ static void find_word(matchinf_T *mip, int mode)
     if (byts[arridx] == 0) {
       if (endidxcnt == MAXWLEN) {
         // Must be a corrupted spell file.
-        EMSG(_(e_format));
+        emsg(_(e_format));
         return;
       }
       endlen[endidxcnt] = wlen;
@@ -1386,7 +1386,7 @@ static bool no_spell_checking(win_T *wp)
 {
   if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
       || GA_EMPTY(&wp->w_s->b_langp)) {
-    EMSG(_(e_no_spell));
+    emsg(_(e_no_spell));
     return true;
   }
   return false;
@@ -2038,7 +2038,7 @@ static int count_syllables(slang_T *slang, const char_u *word)
 
 // Parse 'spelllang' and set w_s->b_langp accordingly.
 // Returns NULL if it's OK, an error message otherwise.
-char_u *did_set_spelllang(win_T *wp)
+char *did_set_spelllang(win_T *wp)
 {
   garray_T ga;
   char_u *splp;
@@ -2059,7 +2059,7 @@ char_u *did_set_spelllang(win_T *wp)
   bool nobreak = false;
   langp_T *lp, *lp2;
   static bool recursive = false;
-  char_u *ret_msg = NULL;
+  char *ret_msg = NULL;
   char_u *spl_copy;
 
   bufref_T bufref;
@@ -2157,8 +2157,7 @@ char_u *did_set_spelllang(win_T *wp)
         // SpellFileMissing autocommands may do anything, including
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
-          ret_msg =
-            (char_u *)N_("E797: SpellFileMissing autocommand deleted buffer");
+          ret_msg = N_("E797: SpellFileMissing autocommand deleted buffer");
           goto theend;
         }
       }
@@ -2872,7 +2871,7 @@ void spell_suggest(int count)
   }
 
   if (*curwin->w_s->b_p_spl == NUL) {
-    EMSG(_(e_no_spell));
+    emsg(_(e_no_spell));
     return;
   }
 
@@ -2935,7 +2934,7 @@ void spell_suggest(int count)
                      true, need_cap, true);
 
   if (GA_EMPTY(&sug.su_ga)) {
-    MSG(_("Sorry, no suggestions"));
+    msg(_("Sorry, no suggestions"));
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
       smsg(_("Sorry, only %" PRId64 " suggestions"),
@@ -3151,7 +3150,7 @@ void ex_spellrepall(exarg_T *eap)
   linenr_T prev_lnum = 0;
 
   if (repl_from == NULL || repl_to == NULL) {
-    EMSG(_("E752: No previous spell replacement"));
+    emsg(_("E752: No previous spell replacement"));
     return;
   }
   addlen = (int)(STRLEN(repl_to) - STRLEN(repl_from));
@@ -3195,7 +3194,7 @@ void ex_spellrepall(exarg_T *eap)
   xfree(frompat);
 
   if (sub_nsubs == 0) {
-    EMSG2(_("E753: Not found: %s"), repl_from);
+    semsg(_("E753: Not found: %s"), repl_from);
   } else {
     do_sub_msg(false);
   }
@@ -3406,7 +3405,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
   // Open the file.
   fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
-    EMSG2(_(e_notopen), fname);
+    semsg(_(e_notopen), fname);
     return;
   }
 

@@ -120,7 +120,7 @@ void do_ascii(const exarg_T *const eap)
   int cc[MAX_MCO];
   int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
-    MSG("NUL");
+    msg("NUL");
     return;
   }
 
@@ -222,7 +222,7 @@ void do_ascii(const exarg_T *const eap)
     xstrlcpy((char *)IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
-  msg(IObuff);
+  msg((char *)IObuff);
 }
 
 /*
@@ -523,14 +523,14 @@ void ex_sort(exarg_T *eap)
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
       s = skip_regexp(p + 1, *p, true, NULL);
       if (*s != *p) {
-        EMSG(_(e_invalpat));
+        emsg(_(e_invalpat));
         goto sortend;
       }
       *s = NUL;
       // Use last search pattern if sort pattern is empty.
       if (s == p + 1) {
         if (last_search_pat() == NULL) {
-          EMSG(_(e_noprevre));
+          emsg(_(e_noprevre));
           goto sortend;
         }
         regmatch.regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
@@ -543,14 +543,14 @@ void ex_sort(exarg_T *eap)
       p = s;                    // continue after the regexp
       regmatch.rm_ic = p_ic;
     } else {
-      EMSG2(_(e_invarg2), p);
+      semsg(_(e_invarg2), p);
       goto sortend;
     }
   }
 
   // Can only have one of 'n', 'b', 'o' and 'x'.
   if (format_found > 1) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     goto sortend;
   }
 
@@ -720,7 +720,7 @@ sortend:
   xfree(sortbuf2);
   vim_regfree(regmatch.regprog);
   if (got_int) {
-    EMSG(_(e_interr));
+    emsg(_(e_interr));
   }
 }
 
@@ -856,7 +856,7 @@ void ex_retab(exarg_T *eap)
     line_breakcheck();
   }
   if (got_int) {
-    EMSG(_(e_interr));
+    emsg(_(e_interr));
   }
 
   // If a single value was given then it can be considered equal to
@@ -914,7 +914,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   linenr_T last_line;  // Last line in file after adding new text
 
   if (dest >= line1 && dest < line2) {
-    EMSG(_("E134: Cannot move a range of lines into itself"));
+    emsg(_("E134: Cannot move a range of lines into itself"));
     return FAIL;
   }
 
@@ -1015,11 +1015,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     ml_delete(line1 + extra, true);
   }
   if (!global_busy && num_lines > p_report) {
-    if (num_lines == 1) {
-      MSG(_("1 line moved"));
-    } else {
-      smsg(_("%" PRId64 " lines moved"), (int64_t)num_lines);
-    }
+    smsg(NGETTEXT("1 line moved", "%" PRId64 " lines moved", num_lines), (int64_t)num_lines);
   }
 
   extmark_move_region(curbuf, line1-1, 0, start_byte,
@@ -1164,7 +1160,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     }
     if (ins_prevcmd) {
       if (prevcmd == NULL) {
-        EMSG(_(e_noprev));
+        emsg(_(e_noprev));
         xfree(newcmd);
         return;
       }
@@ -1323,7 +1319,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
     curwin->w_cursor.lnum = line2;
   } else if ((do_in && (itmp = vim_tempname()) == NULL)
              || (do_out && (otmp = vim_tempname()) == NULL)) {
-    EMSG(_(e_notmp));
+    emsg(_(e_notmp));
     goto filterend;
   }
 
@@ -1337,7 +1333,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
     msg_putchar('\n');  // Keep message from buf_write().
     no_wait_return--;
     if (!aborting()) {
-      EMSG2(_("E482: Can't create file %s"), itmp);  // Will call wait_return.
+      semsg(_("E482: Can't create file %s"), itmp);  // Will call wait_return.
     }
     goto filterend;
   }
@@ -1381,7 +1377,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
                    READ_FILTER) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
-          EMSG2(_(e_notread), otmp);
+          semsg(_(e_notread), otmp);
         }
         goto error;
       }
@@ -1442,7 +1438,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
       if (do_in) {
         vim_snprintf(msg_buf, sizeof(msg_buf),
                      _("%" PRId64 " lines filtered"), (int64_t)linecount);
-        if (msg((char_u *)msg_buf) && !msg_scroll) {
+        if (msg(msg_buf) && !msg_scroll) {
           // save message to display it after redraw
           set_keep_msg((char_u *)msg_buf, 0);
         }
@@ -1462,7 +1458,7 @@ filterend:
 
   if (curbuf != old_curbuf) {
     --no_wait_return;
-    EMSG(_("E135: *Filter* Autocommands must not change current buffer"));
+    emsg(_("E135: *Filter* Autocommands must not change current buffer"));
   }
   if (itmp != NULL) {
     os_remove((char *)itmp);
@@ -1501,7 +1497,7 @@ void do_shell(char_u *cmd, int flags)
       && msg_silent == 0) {
     FOR_ALL_BUFFERS(buf) {
       if (bufIsChanged(buf)) {
-        MSG_PUTS(_("[No write since last change]\n"));
+        msg_puts(_("[No write since last change]\n"));
         break;
       }
     }
@@ -1740,7 +1736,7 @@ void ex_file(exarg_T *eap)
       && (*eap->arg != NUL
           || eap->line2 > 0
           || eap->addr_count > 1)) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1810,7 +1806,7 @@ int do_write(exarg_T *eap)
   ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
-      EMSG(_(e_argreq));
+      emsg(_(e_argreq));
       goto theend;
     }
     other = FALSE;
@@ -1840,7 +1836,7 @@ int do_write(exarg_T *eap)
     if (alt_buf != NULL && alt_buf->b_ml.ml_mfp != NULL) {
       // Overwriting a file that is loaded in another buffer is not a
       // good idea.
-      EMSG(_(e_bufloaded));
+      emsg(_(e_bufloaded));
       goto theend;
     }
   }
@@ -1872,7 +1868,7 @@ int do_write(exarg_T *eap)
         }
         eap->forceit = TRUE;
       } else {
-        EMSG(_("E140: Use ! to write partial buffer"));
+        emsg(_("E140: Use ! to write partial buffer"));
         goto theend;
       }
     }
@@ -1980,7 +1976,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
 #ifdef UNIX
       // It is possible to open a directory on Unix.
       if (os_isdir(ffname)) {
-        EMSG2(_(e_isadir2), ffname);
+        semsg(_(e_isadir2), ffname);
         return FAIL;
       }
 #endif
@@ -1993,7 +1989,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
         }
         eap->forceit = TRUE;
       } else {
-        EMSG(_(e_exists));
+        emsg(_(e_exists));
         return FAIL;
       }
     }
@@ -2033,7 +2029,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
           }
           eap->forceit = TRUE;
         } else {
-          EMSG2(_("E768: Swap file exists: %s (:silent! overrides)"),
+          semsg(_("E768: Swap file exists: %s (:silent! overrides)"),
                 swapname);
           xfree(swapname);
           return FAIL;
@@ -2097,7 +2093,7 @@ void do_wqall(exarg_T *eap)
       break;
     }
     if (buf->b_ffname == NULL) {
-      EMSGN(_("E141: No file name for buffer %" PRId64), buf->b_fnum);
+      semsg(_("E141: No file name for buffer %" PRId64), (int64_t)buf->b_fnum);
       ++error;
     } else if (check_readonly(&eap->forceit, buf)
                || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
@@ -2133,7 +2129,7 @@ int not_writing(void)
   if (p_write) {
     return FALSE;
   }
-  EMSG(_("E142: File not written: Writing is disabled by 'write' option"));
+  emsg(_("E142: File not written: Writing is disabled by 'write' option"));
   return TRUE;
 }
 
@@ -2171,9 +2167,9 @@ static int check_readonly(int *forceit, buf_T *buf)
         return TRUE;
       }
     } else if (buf->b_p_ro) {
-      EMSG(_(e_readonly));
+      emsg(_(e_readonly));
     } else {
-      EMSG2(_("E505: \"%s\" is read-only (add ! to override)"),
+      semsg(_("E505: \"%s\" is read-only (add ! to override)"),
             buf->b_fname);
     }
     return TRUE;
@@ -2902,7 +2898,7 @@ theend:
 
 static void delbuf_msg(char_u *name)
 {
-  EMSG2(_("E143: Autocommands unexpectedly deleted new buffer %s"),
+  semsg(_("E143: Autocommands unexpectedly deleted new buffer %s"),
         name == NULL ? (char_u *)"" : name);
   xfree(name);
   au_new_curbuf.br_buf = NULL;
@@ -3117,7 +3113,7 @@ void ex_z(exarg_T *eap)
 
   if (*x != 0) {
     if (!ascii_isdigit(*x)) {
-      EMSG(_("E144: non-numeric argument to :z"));
+      emsg(_("E144: non-numeric argument to :z"));
       return;
     }
     bigness = atol((char *)x);
@@ -3227,14 +3223,14 @@ int check_secure(void)
 {
   if (secure) {
     secure = 2;
-    EMSG(_(e_curdir));
+    emsg(_(e_curdir));
     return TRUE;
   }
 
   // In the sandbox more things are not allowed, including the things
   // disallowed in secure mode.
   if (sandbox != 0) {
-    EMSG(_(e_sandbox));
+    emsg(_(e_sandbox));
     return TRUE;
   }
   return FALSE;
@@ -3430,7 +3426,7 @@ static int check_regexp_delim(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (isalpha(c)) {
-    EMSG(_("E146: Regular expressions can't be delimited by letters"));
+    emsg(_("E146: Regular expressions can't be delimited by letters"));
     return FAIL;
   }
   return OK;
@@ -3509,7 +3505,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     if (*cmd == '\\') {
       ++cmd;
       if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
-        EMSG(_(e_backslash));
+        emsg(_(e_backslash));
         return NULL;
       }
       if (*cmd != '&') {
@@ -3555,7 +3551,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     }
   } else if (!eap->skip) {    // use previous pattern and substitution
     if (old_sub.sub == NULL) {      // there is no previous command
-      EMSG(_(e_nopresub));
+      emsg(_(e_nopresub));
       return NULL;
     }
     pat = NULL;                 // search_regcomp() will use previous pattern
@@ -3580,7 +3576,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   if (ascii_isdigit(*cmd)) {
     i = getdigits_long(&cmd, true, 0);
     if (i <= 0 && !eap->skip && subflags.do_error) {
-      EMSG(_(e_zerocount));
+      emsg(_(e_zerocount));
       return NULL;
     }
     eap->line1 = eap->line2;
@@ -3597,7 +3593,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   if (*cmd && *cmd != '"') {        // if not end-of-line or comment
     eap->nextcmd = check_nextcmd(cmd);
     if (eap->nextcmd == NULL) {
-      EMSG(_(e_trailing));
+      emsg(_(e_trailing));
       return NULL;
     }
   }
@@ -3608,14 +3604,14 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
   if (!subflags.do_count && !MODIFIABLE(curbuf)) {
     // Substitution is not allowed in non-'modifiable' buffer
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return NULL;
   }
 
   if (search_regcomp(pat, RE_SUBST, which_pat, (preview ? 0 : SEARCH_HIS),
                      &regmatch) == FAIL) {
     if (subflags.do_error) {
-      EMSG(_(e_invcmd));
+      emsg(_(e_invcmd));
     }
     return NULL;
   }
@@ -4370,7 +4366,7 @@ skip:
         }
       }
       if (!preview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
-        MSG("");
+        msg("");
       }
     } else {
       global_need_beginline = true;
@@ -4381,13 +4377,13 @@ skip:
   } else if (!global_busy) {
     if (got_int) {
       // interrupted
-      EMSG(_(e_interr));
+      emsg(_(e_interr));
     } else if (got_match) {
       // did find something but nothing substituted
-      MSG("");
+      msg("");
     } else if (subflags.do_error) {
       // nothing found
-      EMSG2(_(e_patnotf2), get_search_pat());
+      semsg(_(e_patnotf2), get_search_pat());
     }
   }
 
@@ -4456,30 +4452,28 @@ bool do_sub_msg(bool count_only)
     } else {
       *msg_buf = NUL;
     }
-    if (sub_nsubs == 1) {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       "%s", count_only ? _("1 match") : _("1 substitution"));
-    } else {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       count_only ? _("%" PRId64 " matches")
-                                  : _("%" PRId64 " substitutions"),
-                       (int64_t)sub_nsubs);
-    }
-    if (sub_nlines == 1) {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       "%s", _(" on 1 line"));
-    } else {
-      vim_snprintf_add(msg_buf, sizeof(msg_buf),
-                       _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
-    }
-    if (msg((char_u *)msg_buf)) {
+
+    char *msg_single = count_only
+                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " line",
+                                "%" PRId64 " matches on %" PRId64 " line", sub_nsubs)
+                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " line",
+                                "%" PRId64 " substitutions on %" PRId64 " line", sub_nsubs);
+    char *msg_plural = count_only
+                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " lines",
+                                "%" PRId64 " matches on %" PRId64 " lines", sub_nsubs)
+                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " lines",
+                                "%" PRId64 " substitutions on %" PRId64 " lines", sub_nsubs);
+    vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+                     NGETTEXT(msg_single, msg_plural, sub_nlines),
+                     (int64_t)sub_nsubs, (int64_t)sub_nlines);
+    if (msg(msg_buf)) {
       // save message to display it after redraw
       set_keep_msg((char_u *)msg_buf, 0);
     }
     return true;
   }
   if (got_int) {
-    EMSG(_(e_interr));
+    emsg(_(e_interr));
     return true;
   }
   return false;
@@ -4530,7 +4524,7 @@ void ex_global(exarg_T *eap)
   if (global_busy && (eap->line1 != 1
                       || eap->line2 != curbuf->b_ml.ml_line_count)) {
     // will increment global_busy to break out of the loop
-    EMSG(_("E147: Cannot do :global recursive with a range"));
+    emsg(_("E147: Cannot do :global recursive with a range"));
     return;
   }
 
@@ -4550,7 +4544,7 @@ void ex_global(exarg_T *eap)
   if (*cmd == '\\') {
     ++cmd;
     if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
-      EMSG(_(e_backslash));
+      emsg(_(e_backslash));
       return;
     }
     if (*cmd == '&') {
@@ -4561,7 +4555,7 @@ void ex_global(exarg_T *eap)
     ++cmd;
     pat = (char_u *)"";
   } else if (*cmd == NUL) {
-    EMSG(_("E148: Regular expression missing from global"));
+    emsg(_("E148: Regular expression missing from global"));
     return;
   } else if (check_regexp_delim(*cmd) == FAIL) {
     return;
@@ -4578,7 +4572,7 @@ void ex_global(exarg_T *eap)
   }
 
   if (search_regcomp(pat, RE_BOTH, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
-    EMSG(_(e_invcmd));
+    emsg(_(e_invcmd));
     return;
   }
 
@@ -4604,7 +4598,7 @@ void ex_global(exarg_T *eap)
 
     // pass 2: execute the command for each line that has been marked
     if (got_int) {
-      MSG(_(e_interr));
+      msg(_(e_interr));
     } else if (ndone == 0) {
       if (type == 'v') {
         smsg(_("Pattern found in every line: %s"), pat);
@@ -4761,7 +4755,7 @@ void ex_help(exarg_T *eap)
     arg = eap->arg;
 
     if (eap->forceit && *arg == NUL && !curbuf->b_help) {
-      EMSG(_("E478: Don't panic!"));
+      emsg(_("E478: Don't panic!"));
       return;
     }
 
@@ -4805,9 +4799,9 @@ void ex_help(exarg_T *eap)
   }
   if (i >= num_matches || n == FAIL) {
     if (lang != NULL) {
-      EMSG3(_("E661: Sorry, no '%s' help for %s"), lang, arg);
+      semsg(_("E661: Sorry, no '%s' help for %s"), lang, arg);
     } else {
-      EMSG2(_("E149: Sorry, no help for %s"), arg);
+      semsg(_("E149: Sorry, no help for %s"), arg);
     }
     if (n != FAIL) {
       FreeWild(num_matches, matches);
@@ -5349,7 +5343,7 @@ void fix_help_buffer(void)
           if (!add_pathsep((char *)NameBuff)
               || STRLCAT(NameBuff, "doc/*.??[tx]",
                          sizeof(NameBuff)) >= MAXPATHL) {
-            EMSG(_(e_fnametoolong));
+            emsg(_(e_fnametoolong));
             continue;
           }
 
@@ -5510,7 +5504,7 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
   if (dirlen >= MAXPATHL
       || STRLCAT(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
       || STRLCAT(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_fnametoolong));
+    emsg(_(e_fnametoolong));
     return;
   }
 
@@ -5521,7 +5515,7 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
                            EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
     if (!got_int) {
-      EMSG2(_("E151: No match: %s"), NameBuff);
+      semsg(_("E151: No match: %s"), NameBuff);
     }
     return;
   }
@@ -5533,14 +5527,14 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
   memcpy(NameBuff, dir, dirlen + 1);
   if (!add_pathsep((char *)NameBuff)
       || STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_fnametoolong));
+    emsg(_(e_fnametoolong));
     return;
   }
 
   FILE *const fd_tags = os_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     if (!ignore_writeerr) {
-      EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
+      semsg(_("E152: Cannot open %s for writing"), NameBuff);
     }
     FreeWild(filecount, files);
     return;
@@ -5562,7 +5556,7 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
   for (int fi = 0; fi < filecount && !got_int; fi++) {
     FILE *const fd = os_fopen((char *)files[fi], "r");
     if (fd == NULL) {
-      EMSG2(_("E153: Unable to open %s for reading"), files[fi]);
+      semsg(_("E153: Unable to open %s for reading"), files[fi]);
       continue;
     }
     const char_u *const fname = files[fi] + dirlen + 1;
@@ -5590,7 +5584,7 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
         if (utf8 == kNone) {                // first file
           utf8 = this_utf8;
         } else if (utf8 != this_utf8) {
-          EMSG2(_("E670: Mix of help file encodings within a language: %s"),
+          semsg(_("E670: Mix of help file encodings within a language: %s"),
                 files[fi]);
           mix = !got_int;
           got_int = TRUE;
@@ -5649,7 +5643,7 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
           vim_snprintf((char *)NameBuff, MAXPATHL,
                        _("E154: Duplicate tag \"%s\" in file %s/%s"),
                        ((char_u **)ga.ga_data)[i], dir, p2 + 1);
-          EMSG(NameBuff);
+          emsg((char *)NameBuff);
           *p2 = '\t';
           break;
         }
@@ -5705,7 +5699,7 @@ static void do_helptags(char_u *dirname, bool add_help_tags, bool ignore_writeer
   STRLCPY(NameBuff, dirname, sizeof(NameBuff));
   if (!add_pathsep((char *)NameBuff)
       || STRLCAT(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
-    EMSG(_(e_fnametoolong));
+    emsg(_(e_fnametoolong));
     return;
   }
 
@@ -5715,7 +5709,7 @@ static void do_helptags(char_u *dirname, bool add_help_tags, bool ignore_writeer
   if (gen_expand_wildcards(1, buff_list, &filecount, &files,
                            EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
-    EMSG2(_("E151: No match: %s"), NameBuff);
+    semsg(_("E151: No match: %s"), NameBuff);
     return;
   }
 
@@ -5810,7 +5804,7 @@ void ex_helptags(exarg_T *eap)
     dirname = ExpandOne(&xpc, eap->arg, NULL,
                         WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (dirname == NULL || !os_isdir(dirname)) {
-      EMSG2(_("E150: Not a directory: %s"), eap->arg);
+      semsg(_("E150: Not a directory: %s"), eap->arg);
     } else {
       do_helptags(dirname, add_help_tags, false);
     }
@@ -6131,7 +6125,7 @@ void ex_oldfiles(exarg_T *eap)
   long nr = 0;
 
   if (l == NULL) {
-    msg((char_u *)_("No old files"));
+    msg(_("No old files"));
   } else {
     msg_start();
     msg_scroll = true;
@@ -6143,7 +6137,7 @@ void ex_oldfiles(exarg_T *eap)
       const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
       if (!message_filtered((char_u *)fname)) {
         msg_outnum(nr);
-        MSG_PUTS(": ");
+        msg_puts(": ");
         msg_outtrans((char_u *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');

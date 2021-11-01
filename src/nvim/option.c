@@ -949,8 +949,8 @@ void set_title_defaults(void)
 int do_set(char_u *arg, int opt_flags)
 {
   int opt_idx;
-  char_u *errmsg;
-  char_u errbuf[80];
+  char *errmsg;
+  char errbuf[80];
   char_u *startarg;
   int prefix;           // 1: nothing, 0: "no", 2: "inv" in front of name
   char_u nextchar;                  // next non-white char after option name
@@ -1071,7 +1071,7 @@ int do_set(char_u *arg, int opt_flags)
       nextchar = arg[len];
 
       if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
-        errmsg = (char_u *)N_("E518: Unknown option");
+        errmsg = N_("E518: Unknown option");
         goto skip;
       }
 
@@ -1082,7 +1082,7 @@ int do_set(char_u *arg, int opt_flags)
           if (vim_strchr((char_u *)"=:!&<", nextchar) == NULL
               && (!(options[opt_idx].flags & P_BOOL)
                   || nextchar == '?')) {
-            errmsg = (char_u *)_(e_unsupportedoption);
+            errmsg = _(e_unsupportedoption);
           }
           goto skip;
         }
@@ -1109,11 +1109,11 @@ int do_set(char_u *arg, int opt_flags)
       // Disallow changing some options from modelines.
       if (opt_flags & OPT_MODELINE) {
         if (flags & (P_SECURE | P_NO_ML)) {
-          errmsg = (char_u *)N_("E520: Not allowed in a modeline");
+          errmsg = N_("E520: Not allowed in a modeline");
           goto skip;
         }
         if ((flags & P_MLE) && !p_mle) {
-          errmsg = (char_u *)N_("E992: Not allowed in a modeline when 'modelineexpr' is off");
+          errmsg = N_("E992: Not allowed in a modeline when 'modelineexpr' is off");
           goto skip;
         }
         // In diff mode some options are overruled.  This avoids that
@@ -1181,7 +1181,7 @@ int do_set(char_u *arg, int opt_flags)
             }
           }
         } else {
-          errmsg = (char_u *)N_("E846: Key code not set");
+          errmsg = N_("E846: Key code not set");
           goto skip;
         }
         if (nextchar != '?'
@@ -1232,7 +1232,7 @@ int do_set(char_u *arg, int opt_flags)
             }
           }
 
-          errmsg = (char_u *)set_bool_option(opt_idx, varp, (int)value,
+          errmsg = set_bool_option(opt_idx, varp, (int)value,
                                              opt_flags);
         } else {  // Numeric or string.
           if (vim_strchr((const char_u *)"=:&<", nextchar) == NULL
@@ -1275,11 +1275,11 @@ int do_set(char_u *arg, int opt_flags)
               // Allow negative, octal and hex numbers.
               vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
               if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
-                errmsg = (char_u *)N_("E521: Number required after =");
+                errmsg = N_("E521: Number required after =");
                 goto skip;
               }
             } else {
-              errmsg = (char_u *)N_("E521: Number required after =");
+              errmsg = N_("E521: Number required after =");
               goto skip;
             }
 
@@ -1292,9 +1292,9 @@ int do_set(char_u *arg, int opt_flags)
             if (removing) {
               value = *(long *)varp - value;
             }
-            errmsg = (char_u *)set_num_option(opt_idx, varp, (long)value,
-                                              errbuf, sizeof(errbuf),
-                                              opt_flags);
+            errmsg = set_num_option(opt_idx, varp, (long)value,
+                                    errbuf, sizeof(errbuf),
+                                    opt_flags);
           } else if (opt_idx >= 0) {  // String.
             char_u *save_arg = NULL;
             char_u *s = NULL;
@@ -1361,7 +1361,7 @@ int do_set(char_u *arg, int opt_flags)
                   && (*arg == NUL || *arg == ' ')) {
                 STRCPY(errbuf, ":help");
                 save_arg = arg;
-                arg = errbuf;
+                arg = (char_u *)errbuf;
               }
               /*
                * Convert 'backspace' number to string, for
@@ -1415,7 +1415,7 @@ int do_set(char_u *arg, int opt_flags)
                   STRLCAT(errbuf, "[,],", sizeof(errbuf));
                 }
                 save_arg = arg;
-                arg = errbuf;
+                arg = (char_u *)errbuf;
               }
               /*
                * Remove '>' before 'dir' and 'bdir', for
@@ -1690,7 +1690,7 @@ skip:
       trans_characters(IObuff, IOSIZE);
 
       no_wait_return++;         // wait_return done later
-      emsg(IObuff);             // show error highlighted
+      emsg((char *)IObuff);     // show error highlighted
       no_wait_return--;
 
       return FAIL;
@@ -1736,10 +1736,10 @@ static void did_set_option(int opt_idx, int opt_flags, int new_value, int value_
   }
 }
 
-static char_u *illegal_char(char_u *errbuf, size_t errbuflen, int c)
+static char *illegal_char(char *errbuf, size_t errbuflen, int c)
 {
   if (errbuf == NULL) {
-    return (char_u *)"";
+    return "";
   }
   vim_snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
                (char *)transchar(c));
@@ -1761,7 +1761,7 @@ static int string_to_key(char_u *arg)
 
 /// Check value of 'cedit' and set cedit_key.
 /// Returns NULL if value is OK, error message otherwise.
-static char_u *check_cedit(void)
+static char *check_cedit(void)
 {
   int n;
 
@@ -2141,7 +2141,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char_u *val, 
     idx = findoption(name);
     if (idx < 0) {  // Not found (should not happen).
       internal_error("set_string_option_direct()");
-      IEMSG2(_("For option %s"), name);
+      siemsg(_("For option %s"), name);
       return;
     }
   }
@@ -2238,9 +2238,9 @@ static char *set_string_option(const int opt_idx, const char *const value, const
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  char *const r = (char *)did_set_string_option(opt_idx, (char_u **)varp, (int)true,
-                                                (char_u *)oldval,
-                                                NULL, 0, opt_flags, &value_checked);
+  char *const r = did_set_string_option(opt_idx, (char_u **)varp, (int)true,
+                                        (char_u *)oldval,
+                                        NULL, 0, opt_flags, &value_checked);
   if (r == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
@@ -2313,11 +2313,11 @@ static bool valid_spellfile(const char_u *val)
 /// @param errbuflen  length of errors buffer
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_alloced,
-                                     char_u *oldval, char_u *errbuf, size_t errbuflen,
-                                     int opt_flags, int *value_checked)
+static char *did_set_string_option(int opt_idx, char_u **varp, bool new_value_alloced,
+                                   char_u *oldval, char *errbuf, size_t errbuflen,
+                                   int opt_flags, int *value_checked)
 {
-  char_u *errmsg = NULL;
+  char *errmsg = NULL;
   char_u *s, *p;
   int did_chartab = false;
   char_u **gvarp;
@@ -2369,7 +2369,7 @@ static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
     if (STRCMP(*p_bex == '.' ? p_bex + 1 : p_bex,
                *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
-      errmsg = (char_u *)N_("E589: 'backupext' and 'patchmode' are equal");
+      errmsg = N_("E589: 'backupext' and 'patchmode' are equal");
     }
   } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
     if (briopt_check(curwin) == FAIL) {
@@ -2457,11 +2457,11 @@ static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_
     } else {
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
-          errmsg = (char_u *)_("E834: Conflicts with value of 'listchars'");
+          errmsg = _("E834: Conflicts with value of 'listchars'");
           goto ambw_end;
         }
         if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
-          errmsg = (char_u *)_("E835: Conflicts with value of 'fillchars'");
+          errmsg = _("E835: Conflicts with value of 'fillchars'");
           goto ambw_end;
         }
       }
@@ -2634,9 +2634,9 @@ ambw_end:
         s++;
       }
       if (*s++ == NUL) {
-        errmsg = (char_u *)N_("E524: Missing colon");
+        errmsg = N_("E524: Missing colon");
       } else if (*s == ',' || *s == NUL) {
-        errmsg = (char_u *)N_("E525: Zero length string");
+        errmsg = N_("E525: Zero length string");
       }
       if (errmsg != NULL) {
         break;
@@ -2714,7 +2714,7 @@ ambw_end:
                          transchar_byte(*(s - 1)));
             errmsg = errbuf;
           } else {
-            errmsg = (char_u *)"";
+            errmsg = "";
           }
           break;
         }
@@ -2723,20 +2723,20 @@ ambw_end:
         s++;
       } else if (*s) {
         if (errbuf != NULL) {
-          errmsg = (char_u *)N_("E527: Missing comma");
+          errmsg = N_("E527: Missing comma");
         } else {
-          errmsg = (char_u *)"";
+          errmsg = "";
         }
         break;
       }
     }
     if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0) {
-      errmsg = (char_u *)N_("E528: Must specify a ' value");
+      errmsg = N_("E528: Must specify a ' value");
     }
   } else if (gvarp == &p_sbr) {  // 'showbreak'
     for (s = *varp; *s; ) {
       if (ptr2cells(s) != 1) {
-        errmsg = (char_u *)N_("E595: 'showbreak' contains unprintable or wide character");
+        errmsg = N_("E595: 'showbreak' contains unprintable or wide character");
       }
       MB_PTR_ADV(s);
     }
@@ -2905,7 +2905,7 @@ ambw_end:
                          *--s);
             errmsg = errbuf;
           } else {
-            errmsg = (char_u *)"";
+            errmsg = "";
           }
           break;
         }
@@ -3009,7 +3009,7 @@ ambw_end:
   } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
     p = vim_strchr(*varp, ',');
     if (p == NULL) {
-      errmsg = (char_u *)N_("E536: comma required");
+      errmsg = N_("E536: comma required");
     } else if (p == *varp || p[1] == NUL) {
       errmsg = e_invarg;
     } else if (foldmethodIsMarker(curwin)) {
@@ -3017,7 +3017,7 @@ ambw_end:
     }
   } else if (gvarp == &p_cms) {  // 'commentstring'
     if (**varp != NUL && strstr((char *)(*varp), "%s") == NULL) {
-      errmsg = (char_u *)N_("E537: 'commentstring' must be empty or contain %s");
+      errmsg = N_("E537: 'commentstring' must be empty or contain %s");
     }
   } else if (varp == &p_fdo) {  // 'foldopen'
     if (opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true) != OK) {
@@ -3342,7 +3342,7 @@ int check_signcolumn(char_u *val)
 /// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
 ///
 /// @return error message, NULL if it's OK.
-char_u *check_colorcolumn(win_T *wp)
+char *check_colorcolumn(win_T *wp)
 {
   char_u *s;
   int col;
@@ -3427,7 +3427,7 @@ void check_blending(win_T *wp)
 ///
 /// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
+static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
   int round, i, len, entries;
   char_u *p, *s;
@@ -3614,10 +3614,10 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
 
 /// Check validity of options with the 'statusline' format.
 /// Return error message or NULL.
-char_u *check_stl_option(char_u *s)
+char *check_stl_option(char_u *s)
 {
   int groupdepth = 0;
-  static char_u errbuf[80];
+  static char errbuf[80];
 
   while (*s) {
     // Check for valid keys after % sequences
@@ -3668,19 +3668,19 @@ char_u *check_stl_option(char_u *s)
         s++;
       }
       if (*s != '}') {
-        return (char_u *)N_("E540: Unclosed expression sequence");
+        return N_("E540: Unclosed expression sequence");
       }
     }
   }
   if (groupdepth != 0) {
-    return (char_u *)N_("E542: unbalanced groups");
+    return N_("E542: unbalanced groups");
   }
   return NULL;
 }
 
-static char_u *did_set_spell_option(bool is_spellfile)
+static char *did_set_spell_option(bool is_spellfile)
 {
-  char_u *errmsg = NULL;
+  char *errmsg = NULL;
 
   if (is_spellfile) {
     int l = (int)STRLEN(curwin->w_s->b_p_spf);
@@ -3704,7 +3704,7 @@ static char_u *did_set_spell_option(bool is_spellfile)
 
 /// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
 /// Return error message when failed, NULL when OK.
-static char_u *compile_cap_prog(synblock_T *synblock)
+static char *compile_cap_prog(synblock_T *synblock)
   FUNC_ATTR_NONNULL_ALL
 {
   regprog_T *rp = synblock->b_cap_prog;
@@ -3831,7 +3831,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   // Ensure that options set to p_force_on cannot be disabled.
   if ((int *)varp == &p_force_on && p_force_on == false) {
     p_force_on = true;
-    return (char *)e_unsupportedoption;
+    return e_unsupportedoption;
     // Ensure that options set to p_force_off cannot be enabled.
   } else if ((int *)varp == &p_force_off && p_force_off == true) {
     p_force_off = false;
@@ -4017,9 +4017,9 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     }
   } else if ((int *)varp == &curwin->w_p_spell) {  // 'spell'
     if (curwin->w_p_spell) {
-      char_u *errmsg = did_set_spelllang(curwin);
+      char *errmsg = did_set_spelllang(curwin);
       if (errmsg != NULL) {
-        EMSG(_(errmsg));
+        emsg(_(errmsg));
       }
     }
   }
@@ -4136,10 +4136,10 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
 /// @param[in]  opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
 ///
 /// @return NULL on success, error message on error.
-static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbuf, size_t errbuflen,
+static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf, size_t errbuflen,
                             int opt_flags)
 {
-  char_u *errmsg = NULL;
+  char *errmsg = NULL;
   long old_value = *(long *)varp;
   long old_Rows = Rows;                 // remember old Rows
   long *pp = (long *)varp;
@@ -4147,12 +4147,12 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
   // Disallow changing some options from secure mode.
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
-    return (char *)e_secure;
+    return e_secure;
   }
 
   // Many number options assume their value is in the signed int range.
   if (value < INT_MIN || value > INT_MAX) {
-    return (char *)e_invarg;
+    return e_invarg;
   }
 
   // Options that need some validation.
@@ -4921,12 +4921,12 @@ char *set_option_value(const char *const name, const long number, const char *co
 
   opt_idx = findoption(name);
   if (opt_idx < 0) {
-    EMSG2(_("E355: Unknown option: %s"), name);
+    semsg(_("E355: Unknown option: %s"), name);
   } else {
     uint32_t flags = options[opt_idx].flags;
     // Disallow changing some options in the sandbox
     if (sandbox > 0 && (flags & P_SECURE)) {
-      EMSG(_(e_sandbox));
+      emsg(_(e_sandbox));
       return NULL;
     }
     if (flags & P_STRING) {
@@ -4948,7 +4948,7 @@ char *set_option_value(const char *const name, const long number, const char *co
             // There's another character after zeros or the string
             // is empty.  In both cases, we are trying to set a
             // num option using a string.
-            EMSG3(_("E521: Number required: &%s = '%s'"),
+            semsg(_("E521: Number required: &%s = '%s'"),
                   name, string);
             return NULL;  // do nothing as we hit an error
           }
@@ -5016,11 +5016,11 @@ static void showoptions(int all, int opt_flags)
 
   // Highlight title
   if (opt_flags & OPT_GLOBAL) {
-    MSG_PUTS_TITLE(_("\n--- Global option values ---"));
+    msg_puts_title(_("\n--- Global option values ---"));
   } else if (opt_flags & OPT_LOCAL) {
-    MSG_PUTS_TITLE(_("\n--- Local option values ---"));
+    msg_puts_title(_("\n--- Local option values ---"));
   } else {
-    MSG_PUTS_TITLE(_("\n--- Options ---"));
+    msg_puts_title(_("\n--- Options ---"));
   }
 
   // Do the loop two times:
@@ -5151,13 +5151,13 @@ static void showoneopt(vimoption_T *p, int opt_flags)
   // for 'modified' we also need to check if 'ff' or 'fenc' changed.
   if ((p->flags & P_BOOL) && ((int *)varp == &curbuf->b_changed
                               ? !curbufIsChanged() : !*(int *)varp)) {
-    MSG_PUTS("no");
+    msg_puts("no");
   } else if ((p->flags & P_BOOL) && *(int *)varp < 0) {
-    MSG_PUTS("--");
+    msg_puts("--");
   } else {
-    MSG_PUTS("  ");
+    msg_puts("  ");
   }
-  MSG_PUTS(p->fullname);
+  msg_puts(p->fullname);
   if (!(p->flags & P_BOOL)) {
     msg_putchar('=');
     // put value string in NameBuff
@@ -5487,7 +5487,7 @@ void unset_global_local_option(char *name, void *from)
 
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
-    EMSG2(_("E355: Unknown option: %s"), name);
+    semsg(_("E355: Unknown option: %s"), name);
     return;
   }
   p = &(options[opt_idx]);
@@ -5935,7 +5935,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_WINBL:
     return (char_u *)&(curwin->w_p_winbl);
   default:
-    IEMSG(_("E356: get_varp ERROR"));
+    iemsg(_("E356: get_varp ERROR"));
   }
   // always return a valid pointer to avoid a crash!
   return (char_u *)&(curbuf->b_p_wm);
@@ -6808,7 +6808,7 @@ static void langmap_set(void)
         }
       }
       if (to == NUL) {
-        EMSG2(_("E357: 'langmap': Matching character missing for %s"),
+        semsg(_("E357: 'langmap': Matching character missing for %s"),
               transchar(from));
         return;
       }
@@ -6828,7 +6828,7 @@ static void langmap_set(void)
           p = p2;
           if (p[0] != NUL) {
             if (p[0] != ',') {
-              EMSG2(_("E358: 'langmap': Extra characters after semicolon: %s"),
+              semsg(_("E358: 'langmap': Extra characters after semicolon: %s"),
                     p);
               return;
             }
@@ -7305,9 +7305,9 @@ bool tabstop_set(char_u *var, long **array)
 
       if (strtol((char *)cp, (char **)&end, 10) <= 0) {
         if (cp != end) {
-          EMSG(_(e_positive));
+          emsg(_(e_positive));
         } else {
-          EMSG(_(e_invarg));
+          emsg(_(e_invarg));
         }
         return false;
       }
@@ -7320,7 +7320,7 @@ bool tabstop_set(char_u *var, long **array)
       valcount++;
       continue;
     }
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return false;
   }
 

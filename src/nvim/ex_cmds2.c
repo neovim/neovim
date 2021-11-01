@@ -110,7 +110,7 @@ void ex_profile(exarg_T *eap)
     profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1L);
   } else if (do_profiling == PROF_NONE) {
-    EMSG(_("E750: First use \":profile start {fname}\""));
+    emsg(_("E750: First use \":profile start {fname}\""));
   } else if (STRCMP(eap->arg, "stop") == 0) {
     profile_dump();
     do_profiling = PROF_NONE;
@@ -256,7 +256,7 @@ void profile_dump(void)
   if (profile_fname != NULL) {
     fd = os_fopen((char *)profile_fname, "w");
     if (fd == NULL) {
-      EMSG2(_(e_notopen), profile_fname);
+      semsg(_(e_notopen), profile_fname);
     } else {
       script_dump_profile(fd);
       func_dump_profile(fd);
@@ -748,8 +748,8 @@ bool check_changed_any(bool hidden, bool unload)
       msg_didout = false;
     }
     if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
-        ? EMSG2(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
-        : EMSG2(_("E162: No write since last change for buffer \"%s\""),
+        ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
+        : semsg(_("E162: No write since last change for buffer \"%s\""),
                 buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
       save = no_wait_return;
       no_wait_return = false;
@@ -790,7 +790,7 @@ theend:
 int check_fname(void)
 {
   if (curbuf->b_ffname == NULL) {
-    EMSG(_(e_noname));
+    emsg(_(e_noname));
     return FAIL;
   }
   return OK;
@@ -809,7 +809,7 @@ int buf_write_all(buf_T *buf, int forceit)
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
     msg_source(HL_ATTR(HLF_W));
-    MSG(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
+    msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
   }
   return retval;
 }
@@ -964,7 +964,7 @@ static int do_arglist(char_u *str, int what, int after, bool will_edit)
       vim_regfree(regmatch.regprog);
       xfree(p);
       if (!didone) {
-        EMSG2(_(e_nomatch2), ((char_u **)new_ga.ga_data)[i]);
+        semsg(_(e_nomatch2), ((char_u **)new_ga.ga_data)[i]);
       }
     }
     ga_clear(&new_ga);
@@ -974,7 +974,7 @@ static int do_arglist(char_u *str, int what, int after, bool will_edit)
                              EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
     if (i == FAIL || exp_count == 0) {
-      EMSG(_(e_nomatch));
+      emsg(_(e_nomatch));
       return FAIL;
     }
 
@@ -1135,11 +1135,11 @@ void do_argfile(exarg_T *eap, int argn)
 
   if (argn < 0 || argn >= ARGCOUNT) {
     if (ARGCOUNT <= 1) {
-      EMSG(_("E163: There is only one file to edit"));
+      emsg(_("E163: There is only one file to edit"));
     } else if (argn < 0) {
-      EMSG(_("E164: Cannot go before first file"));
+      emsg(_("E164: Cannot go before first file"));
     } else {
-      EMSG(_("E165: Cannot go beyond last file"));
+      emsg(_("E165: Cannot go beyond last file"));
     }
   } else {
     setpcmark();
@@ -1252,7 +1252,7 @@ void ex_argdelete(exarg_T *eap)
     // ":argdel" works like ":.argdel"
     if (eap->addr_count == 0) {
       if (curwin->w_arg_idx >= ARGCOUNT) {
-        EMSG(_("E610: No argument to delete"));
+        emsg(_("E610: No argument to delete"));
         return;
       }
       eap->line1 = eap->line2 = curwin->w_arg_idx + 1;
@@ -1263,11 +1263,11 @@ void ex_argdelete(exarg_T *eap)
     linenr_T n = eap->line2 - eap->line1 + 1;
     if (*eap->arg != NUL) {
       // Can't have both a range and an argument.
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
     } else if (n <= 0) {
       // Don't give an error for ":%argdel" if the list is empty.
       if (eap->line1 != 1 || eap->line2 != 0) {
-        EMSG(_(e_invrange));
+        emsg(_(e_invrange));
       }
     } else {
       for (linenr_T i = eap->line1; i <= eap->line2; i++) {
@@ -1617,7 +1617,7 @@ void ex_compiler(exarg_T *eap)
       // Try lua compiler
       snprintf((char *)buf, bufsize, "compiler/%s.lua", eap->arg);
       if (source_runtime((char *)buf, DIP_ALL) == FAIL) {
-        EMSG2(_("E666: compiler not supported: %s"), eap->arg);
+        semsg(_("E666: compiler not supported: %s"), eap->arg);
       }
     }
     xfree(buf);
@@ -1797,7 +1797,7 @@ static void cmd_source(char_u *fname, exarg_T *eap)
 
     // ":source" read ex commands
   } else if (do_source((char *)fname, false, DOSO_NONE) == FAIL) {
-    EMSG2(_(e_notopen), fname);
+    semsg(_(e_notopen), fname);
   }
 }
 
@@ -2251,7 +2251,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
 
   if (got_int) {
-    EMSG(_(e_interr));
+    emsg(_(e_interr));
   }
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
@@ -2307,7 +2307,7 @@ void ex_scriptnames(exarg_T *eap)
   if (eap->addr_count > 0) {
     // :script {scriptId}: edit the script
     if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
     } else {
       eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
       do_exedit(eap, NULL);
@@ -2553,7 +2553,7 @@ retry:
         } else {          // lines like ":map xx yy^M" will have failed
           if (!sp->error) {
             msg_source(HL_ATTR(HLF_W));
-            EMSG(_("W15: Warning: Wrong line separator, ^M may be missing"));
+            emsg(_("W15: Warning: Wrong line separator, ^M may be missing"));
           }
           sp->error = true;
           sp->fileformat = EOL_UNIX;
@@ -2667,7 +2667,7 @@ void ex_scriptencoding(exarg_T *eap)
   char_u *name;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    EMSG(_("E167: :scriptencoding used outside of a sourced file"));
+    emsg(_("E167: :scriptencoding used outside of a sourced file"));
     return;
   }
 
@@ -2692,7 +2692,7 @@ void ex_finish(exarg_T *eap)
   if (getline_equal(eap->getline, eap->cookie, getsourceline)) {
     do_finish(eap, false);
   } else {
-    EMSG(_("E168: :finish used outside of a sourced file"));
+    emsg(_("E168: :finish used outside of a sourced file"));
   }
 }
 
@@ -2939,7 +2939,7 @@ void ex_language(exarg_T *eap)
   }
 # endif
     if (loc == NULL) {
-      EMSG2(_("E197: Cannot set language to \"%s\""), name);
+      semsg(_("E197: Cannot set language to \"%s\""), name);
     } else {
 # ifdef HAVE_NL_MSG_CAT_CNTR
       // Need to do this for GNU gettext, otherwise cached translations

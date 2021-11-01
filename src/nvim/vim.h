@@ -254,9 +254,9 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 
 #include "nvim/message.h"
 
-// Prefer using emsgf(), because perror() may send the output to the wrong
+// Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.
-#define PERROR(msg) (void)emsgf("%s: %s", msg, strerror(errno))
+#define PERROR(msg) (void)semsg("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 

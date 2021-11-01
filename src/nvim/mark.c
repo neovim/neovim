@@ -564,19 +564,19 @@ static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
 int check_mark(pos_T *pos)
 {
   if (pos == NULL) {
-    EMSG(_(e_umark));
+    emsg(_(e_umark));
     return FAIL;
   }
   if (pos->lnum <= 0) {
     // lnum is negative if mark is in another file can can't get that
     // file, error message already give then.
     if (pos->lnum == 0) {
-      EMSG(_(e_marknotset));
+      emsg(_(e_marknotset));
     }
     return FAIL;
   }
   if (pos->lnum > curbuf->b_ml.ml_line_count) {
-    EMSG(_(e_markinval));
+    emsg(_(e_markinval));
     return FAIL;
   }
   return OK;
@@ -711,9 +711,9 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       did_title = false;
     } else {
       if (arg == NULL) {
-        MSG(_("No marks set"));
+        msg(_("No marks set"));
       } else {
-        EMSG2(_("E283: No marks matching \"%s\""), arg);
+        semsg(_("E283: No marks matching \"%s\""), arg);
       }
     }
   } else if (!got_int
@@ -762,9 +762,9 @@ void ex_delmarks(exarg_T *eap)
     // clear all marks
     clrallmarks(curbuf);
   } else if (eap->forceit) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else if (*eap->arg == NUL) {
-    EMSG(_(e_argreq));
+    emsg(_(e_argreq));
   } else {
     // clear specified marks only
     for (p = eap->arg; *p != NUL; ++p) {
@@ -779,7 +779,7 @@ void ex_delmarks(exarg_T *eap)
                       : (digit ? ascii_isdigit(p[2])
                                : ASCII_ISUPPER(p[2])))
               || to < from) {
-            EMSG2(_(e_invarg2), p);
+            semsg(_(e_invarg2), p);
             return;
           }
           p += 2;
@@ -821,7 +821,7 @@ void ex_delmarks(exarg_T *eap)
         case ' ':
           break;
         default:
-          EMSG2(_(e_invarg2), p);
+          semsg(_(e_invarg2), p);
           return;
         }
       }
@@ -839,7 +839,7 @@ void ex_jumps(exarg_T *eap)
 
   cleanup_jumplist(curwin, true);
   // Highlight title
-  MSG_PUTS_TITLE(_("\n jump line  col file/text"));
+  msg_puts_title(_("\n jump line  col file/text"));
   for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
@@ -871,7 +871,7 @@ void ex_jumps(exarg_T *eap)
     ui_flush();
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 
@@ -891,7 +891,7 @@ void ex_changes(exarg_T *eap)
   char_u *name;
 
   // Highlight title
-  MSG_PUTS_TITLE(_("\nchange line  col text"));
+  msg_puts_title(_("\nchange line  col text"));
 
   for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
     if (curbuf->b_changelist[i].mark.lnum != 0) {
@@ -914,7 +914,7 @@ void ex_changes(exarg_T *eap)
     ui_flush();
   }
   if (curwin->w_changelistidx == curbuf->b_changelistlen) {
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 

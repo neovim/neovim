@@ -207,7 +207,7 @@ void do_exmode(void)
   RedrawingDisabled++;  // don't redisplay the window
   no_wait_return++;  // don't wait for return
 
-  MSG(_("Entering Ex mode.  Type \"visual\" to go to Normal mode."));
+  msg(_("Entering Ex mode.  Type \"visual\" to go to Normal mode."));
   while (exmode_active) {
     // Check for a ":normal" command and no more characters left.
     if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
@@ -228,7 +228,7 @@ void do_exmode(void)
     if ((prev_line != curwin->w_cursor.lnum
          || changedtick != buf_get_changedtick(curbuf)) && !ex_no_reprint) {
       if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        EMSG(_(e_emptybuf));
+        emsg(_(e_emptybuf));
       } else {
         if (ex_pressedreturn) {
           // go up one line, to overwrite the ":<CR>" line, so the
@@ -244,9 +244,9 @@ void do_exmode(void)
       }
     } else if (ex_pressedreturn && !ex_no_reprint) {  // must be at EOF
       if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        EMSG(_(e_emptybuf));
+        emsg(_(e_emptybuf));
       } else {
-        EMSG(_("E501: At end-of-file"));
+        emsg(_("E501: At end-of-file"));
       }
     }
   }
@@ -354,7 +354,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
   // here.  The value of 200 allows nested function calls, ":source", etc.
   // Allow 200 or 'maxfuncdepth', whatever is larger.
   if (call_depth >= 200 && call_depth >= p_mfd) {
-    EMSG(_("E169: Command too recursive"));
+    emsg(_("E169: Command too recursive"));
     // When converting to an exception, we do not include the command name
     // since this is not an error of the specific command.
     do_errthrow((cstack_T *)NULL, (char_u *)NULL);
@@ -777,13 +777,13 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
             || (getline_equal(fgetline, cookie, get_func_line)
                 && !func_has_ended(real_cookie)))) {
       if (cstack.cs_flags[cstack.cs_idx] & CSF_TRY) {
-        EMSG(_(e_endtry));
+        emsg(_(e_endtry));
       } else if (cstack.cs_flags[cstack.cs_idx] & CSF_WHILE) {
-        EMSG(_(e_endwhile));
+        emsg(_(e_endwhile));
       } else if (cstack.cs_flags[cstack.cs_idx] & CSF_FOR) {
-        EMSG(_(e_endfor));
+        emsg(_(e_endfor));
       } else {
-        EMSG(_(e_endif));
+        emsg(_(e_endif));
       }
     }
 
@@ -1256,7 +1256,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   char_u *p;
   linenr_T lnum;
   long n;
-  char_u *errormsg = NULL;  // error message
+  char *errormsg = NULL;  // error message
   char_u *after_modifier = NULL;
   exarg_T ea;
   const int save_msg_scroll = msg_scroll;
@@ -1435,7 +1435,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
       }
 
       if (ea.line2 < 0) {
-        errormsg = (char_u *)_(e_invrange);
+        errormsg = _(e_invrange);
       } else {
         if (ea.line2 == 0) {
           curwin->w_cursor.lnum = 1;
@@ -1467,7 +1467,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
 
   if (p == NULL) {
     if (!ea.skip) {
-      errormsg = (char_u *)_("E464: Ambiguous use of user-defined command");
+      errormsg = _("E464: Ambiguous use of user-defined command");
     }
     goto doend;
   }
@@ -1481,7 +1481,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
       if (!(flags & DOCMD_VERBOSE)) {
         append_command(cmdname);
       }
-      errormsg = IObuff;
+      errormsg = (char *)IObuff;
       did_emsg_syntax = true;
       verify_command(cmdname);
     }
@@ -1511,21 +1511,21 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   if (!ea.skip) {
     if (sandbox != 0 && !(ea.argt & EX_SBOXOK)) {
       // Command not allowed in sandbox.
-      errormsg = (char_u *)_(e_sandbox);
+      errormsg = _(e_sandbox);
       goto doend;
     }
     if (!MODIFIABLE(curbuf) && (ea.argt & EX_MODIFY)
         // allow :put in terminals
         && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
       // Command not allowed in non-'modifiable' buffer
-      errormsg = (char_u *)_(e_modifiable);
+      errormsg = _(e_modifiable);
       goto doend;
     }
 
     if (text_locked() && !(ea.argt & EX_CMDWIN)
         && !IS_USER_CMDIDX(ea.cmdidx)) {
       // Command not allowed when editing the command line.
-      errormsg = (char_u *)_(get_text_locked_msg());
+      errormsg = _(get_text_locked_msg());
       goto doend;
     }
 
@@ -1544,13 +1544,13 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
 
     if (!ni && !(ea.argt & EX_RANGE) && ea.addr_count > 0) {
       // no range allowed
-      errormsg = (char_u *)_(e_norange);
+      errormsg = _(e_norange);
       goto doend;
     }
   }
 
   if (!ni && !(ea.argt & EX_BANG) && ea.forceit) {  // no <!> allowed
-    errormsg = (char_u *)_(e_nobang);
+    errormsg = _(e_nobang);
     goto doend;
   }
 
@@ -1565,7 +1565,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
     if (!global_busy && ea.line1 > ea.line2) {
       if (msg_silent == 0) {
         if ((flags & DOCMD_VERBOSE) || exmode_active) {
-          errormsg = (char_u *)_("E493: Backwards range given");
+          errormsg = _("E493: Backwards range given");
           goto doend;
         }
         if (ask_yesno(_("Backwards range given, OK to swap"), false) != 'y') {
@@ -1627,7 +1627,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   if (ea.argt & EX_ARGOPT) {
     while (ea.arg[0] == '+' && ea.arg[1] == '+') {
       if (getargopt(&ea) == FAIL && !ni) {
-        errormsg = (char_u *)_(e_invarg);
+        errormsg = _(e_invarg);
         goto doend;
       }
     }
@@ -1636,7 +1636,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   if (ea.cmdidx == CMD_write || ea.cmdidx == CMD_update) {
     if (*ea.arg == '>') {                       // append
       if (*++ea.arg != '>') {                   // typed wrong
-        errormsg = (char_u *)_("E494: Use w or w>>");
+        errormsg = _("E494: Use w or w>>");
         goto doend;
       }
       ea.arg = skipwhite(ea.arg + 1);
@@ -1755,7 +1755,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
     case ADDR_NONE:
     case ADDR_UNSIGNED:
     case ADDR_QUICKFIX:
-      IEMSG(_("INTERNAL: Cannot use EX_DFLALL "
+      iemsg(_("INTERNAL: Cannot use EX_DFLALL "
               "with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"));
       break;
     }
@@ -1789,7 +1789,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
     n = getdigits_long(&ea.arg, false, -1);
     ea.arg = skipwhite(ea.arg);
     if (n <= 0 && !ni && (ea.argt & EX_ZEROR) == 0) {
-      errormsg = (char_u *)_(e_zerocount);
+      errormsg = _(e_zerocount);
       goto doend;
     }
     if (ea.addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
@@ -1817,12 +1817,12 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   if (!ni && !(ea.argt & EX_EXTRA) && *ea.arg != NUL
       && *ea.arg != '"' && (*ea.arg != '|' || (ea.argt & EX_TRLBAR) == 0)) {
     // no arguments allowed but there is something
-    errormsg = (char_u *)_(e_trailing);
+    errormsg = _(e_trailing);
     goto doend;
   }
 
   if (!ni && (ea.argt & EX_NEEDARG) && *ea.arg == NUL) {
-    errormsg = (char_u *)_(e_argreq);
+    errormsg = _(e_argreq);
     goto doend;
   }
 
@@ -1982,7 +1982,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
     ea.errmsg = NULL;
     (cmdnames[ea.cmdidx].cmd_func)(&ea);
     if (ea.errmsg != NULL) {
-      errormsg = (char_u *)_(ea.errmsg);
+      errormsg = _(ea.errmsg);
     }
   }
 
@@ -2014,9 +2014,9 @@ doend:
 
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
-      if (errormsg != IObuff) {
+      if (errormsg != (char *)IObuff) {
         STRCPY(IObuff, errormsg);
-        errormsg = IObuff;
+        errormsg = (char *)IObuff;
       }
       append_command(*cmdlinep);
     }
@@ -2056,7 +2056,7 @@ doend:
 // "cmdmod".
 // Return FAIL when the command is not to be executed.
 // May set "errormsg" to an error message.
-int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
+int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
 {
   char_u *p;
 
@@ -2260,7 +2260,7 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
             cmdmod.tab = tabpage_index(curtab) + 1;
           } else {
             if (tabnr < 0 || tabnr > LAST_TAB_NR) {
-              *errormsg = (char_u *)_(e_invrange);
+              *errormsg = _(e_invrange);
               return false;
             }
             cmdmod.tab = tabnr + 1;
@@ -2356,7 +2356,7 @@ static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
 // Parse the address range, if any, in "eap".
 // May set the last search pattern, unless "silent" is true.
 // Return FAIL and set "errormsg" or return OK.
-int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
+int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
   FUNC_ATTR_NONNULL_ALL
 {
   int address_count = 1;
@@ -2443,14 +2443,14 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
           } else {
             // there is no Vim command which uses '%' and
             // ADDR_WINDOWS or ADDR_TABS
-            *errormsg = (char_u *)_(e_invrange);
+            *errormsg = _(e_invrange);
             return FAIL;
           }
           break;
         case ADDR_TABS_RELATIVE:
         case ADDR_UNSIGNED:
         case ADDR_QUICKFIX:
-          *errormsg = (char_u *)_(e_invrange);
+          *errormsg = _(e_invrange);
           return FAIL;
         case ADDR_ARGUMENTS:
           if (ARGCOUNT == 0) {
@@ -2475,7 +2475,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
       } else if (*eap->cmd == '*') {
         // '*' - visual area
         if (eap->addr_type != ADDR_LINES) {
-          *errormsg = (char_u *)_(e_invrange);
+          *errormsg = _(e_invrange);
           return FAIL;
         }
 
@@ -3829,9 +3829,9 @@ char_u *skip_range(const char_u *cmd, int *ctx)
 static void addr_error(cmd_addr_T addr_type)
 {
   if (addr_type == ADDR_NONE) {
-    EMSG(_(e_norange));
+    emsg(_(e_norange));
   } else {
-    EMSG(_(e_invrange));
+    emsg(_(e_invrange));
   }
 }
 
@@ -4042,7 +4042,7 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
       } else if (*cmd == '?' || *cmd == '/') {
         i = RE_SEARCH;
       } else {
-        EMSG(_(e_backslash));
+        emsg(_(e_backslash));
         cmd = NULL;
         goto error;
       }
@@ -4125,7 +4125,7 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
       }
 
       if (addr_type == ADDR_TABS_RELATIVE) {
-        EMSG(_(e_invrange));
+        emsg(_(e_invrange));
         cmd = NULL;
         goto error;
       } else if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
@@ -4172,7 +4172,7 @@ static void get_flags(exarg_T *eap)
 void ex_ni(exarg_T *eap)
 {
   if (!eap->skip) {
-    eap->errmsg = (char_u *)N_("E319: The command is not available in this version");
+    eap->errmsg = N_("E319: The command is not available in this version");
   }
 }
 
@@ -4192,11 +4192,11 @@ static void ex_script_ni(exarg_T *eap)
  * Check range in Ex command for validity.
  * Return NULL when valid, error message when invalid.
  */
-static char_u *invalid_range(exarg_T *eap)
+static char *invalid_range(exarg_T *eap)
 {
   buf_T *buf;
   if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2) {
-    return (char_u *)_(e_invrange);
+    return _(e_invrange);
   }
 
   if (eap->argt & EX_RANGE) {
@@ -4204,51 +4204,51 @@ static char_u *invalid_range(exarg_T *eap)
     case ADDR_LINES:
       if (eap->line2 > (curbuf->b_ml.ml_line_count
                         + (eap->cmdidx == CMD_diffget))) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_ARGUMENTS:
       // add 1 if ARGCOUNT is 0
       if (eap->line2 > ARGCOUNT + (!ARGCOUNT)) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_BUFFERS:
       if (eap->line1 < firstbuf->b_fnum
           || eap->line2 > lastbuf->b_fnum) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_LOADED_BUFFERS:
       buf = firstbuf;
       while (buf->b_ml.ml_mfp == NULL) {
         if (buf->b_next == NULL) {
-          return (char_u *)_(e_invrange);
+          return _(e_invrange);
         }
         buf = buf->b_next;
       }
       if (eap->line1 < buf->b_fnum) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       buf = lastbuf;
       while (buf->b_ml.ml_mfp == NULL) {
         if (buf->b_prev == NULL) {
-          return (char_u *)_(e_invrange);
+          return _(e_invrange);
         }
         buf = buf->b_prev;
       }
       if (eap->line2 > buf->b_fnum) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_WINDOWS:
       if (eap->line2 > LAST_WIN_NR) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_TABS:
       if (eap->line2 > LAST_TAB_NR) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_TABS_RELATIVE:
@@ -4259,13 +4259,13 @@ static char_u *invalid_range(exarg_T *eap)
       assert(eap->line2 >= 0);
       // No error for value that is too big, will use the last entry.
       if (eap->line2 <= 0) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_QUICKFIX_VALID:
       if ((eap->line2 != 1 && (size_t)eap->line2 > qf_get_valid_size(eap))
           || eap->line2 < 0) {
-        return (char_u *)_(e_invrange);
+        return _(e_invrange);
       }
       break;
     case ADDR_UNSIGNED:
@@ -4387,7 +4387,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
 // Expand file name in Ex command argument.
 // When an error is detected, "errormsgp" is set to a non-NULL pointer.
 // Return FAIL for failure, OK otherwise.
-int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
+int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
 {
   int has_wildcards;            // need to expand wildcards
   char_u *repl;
@@ -5116,23 +5116,16 @@ static int check_more(int message, bool forceit)
       if ((p_confirm || cmdmod.confirm) && curbuf->b_fname != NULL) {
         char_u buff[DIALOG_MSG_SIZE];
 
-        if (n == 1) {
-          STRLCPY(buff, _("1 more file to edit.  Quit anyway?"),
-                  DIALOG_MSG_SIZE);
-        } else {
-          vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
-                       _("%d more files to edit.  Quit anyway?"), n);
-        }
+        vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
+                     NGETTEXT("%d more file to edit.  Quit anyway?",
+                              "%d more files to edit.  Quit anyway?", (unsigned long)n), n);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
           return OK;
         }
         return FAIL;
       }
-      if (n == 1) {
-        EMSG(_("E173: 1 more file to edit"));
-      } else {
-        EMSGN(_("E173: %" PRId64 " more files to edit"), n);
-      }
+      semsg(NGETTEXT("E173: %" PRId64 " more file to edit",
+                     "E173: %" PRId64 " more files to edit", (unsigned long)n), (int64_t)n);
       quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;
@@ -5199,7 +5192,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, uint32_t a
       if (!force
           && (cmd->uc_script_ctx.sc_sid != current_sctx.sc_sid
               || cmd->uc_script_ctx.sc_seq == current_sctx.sc_seq)) {
-        EMSG2(_("E174: Command already exists: add ! to replace it: %s"),
+        semsg(_("E174: Command already exists: add ! to replace it: %s"),
               name);
         goto fail;
       }
@@ -5347,7 +5340,7 @@ static void uc_list(char_u *name, size_t name_len)
 
       // Put out the title first time
       if (!found) {
-        MSG_PUTS_TITLE(_("\n    Name              Args Address "
+        msg_puts_title(_("\n    Name              Args Address "
                          "Complete    Definition"));
       }
       found = true;
@@ -5482,7 +5475,7 @@ static void uc_list(char_u *name, size_t name_len)
   }
 
   if (!found) {
-    MSG(_("No user-defined commands found"));
+    msg(_("No user-defined commands found"));
   }
 }
 
@@ -5493,7 +5486,7 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int
   char_u *p;
 
   if (len == 0) {
-    EMSG(_("E175: No attribute specified"));
+    emsg(_("E175: No attribute specified"));
     return FAIL;
   }
 
@@ -5539,7 +5532,7 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int
         }
       } else {
 wrong_nargs:
-        EMSG(_("E176: Invalid number of arguments"));
+        emsg(_("E176: Invalid number of arguments"));
         return FAIL;
       }
     } else if (STRNICMP(attr, "range", attrlen) == 0) {
@@ -5550,7 +5543,7 @@ wrong_nargs:
         p = val;
         if (*def >= 0) {
 two_count:
-          EMSG(_("E177: Count cannot be specified twice"));
+          emsg(_("E177: Count cannot be specified twice"));
           return FAIL;
         }
 
@@ -5559,7 +5552,7 @@ two_count:
 
         if (p != val + vallen || vallen == 0) {
 invalid_count:
-          EMSG(_("E178: Invalid default value for count"));
+          emsg(_("E178: Invalid default value for count"));
           return FAIL;
         }
       }
@@ -5592,7 +5585,7 @@ invalid_count:
       }
     } else if (STRNICMP(attr, "complete", attrlen) == 0) {
       if (val == NULL) {
-        EMSG(_("E179: argument required for -complete"));
+        emsg(_("E179: argument required for -complete"));
         return FAIL;
       }
 
@@ -5603,7 +5596,7 @@ invalid_count:
     } else if (STRNICMP(attr, "addr", attrlen) == 0) {
       *argt |= EX_RANGE;
       if (val == NULL) {
-        EMSG(_("E179: argument required for -addr"));
+        emsg(_("E179: argument required for -addr"));
         return FAIL;
       }
       if (parse_addr_type_arg(val, (int)vallen, addr_type_arg) == FAIL) {
@@ -5615,7 +5608,7 @@ invalid_count:
     } else {
       char_u ch = attr[len];
       attr[len] = '\0';
-      EMSG2(_("E181: Invalid attribute: %s"), attr);
+      semsg(_("E181: Invalid attribute: %s"), attr);
       attr[len] = ch;
       return FAIL;
     }
@@ -5664,7 +5657,7 @@ static void ex_command(exarg_T *eap)
     }
   }
   if (!ends_excmd(*p) && !ascii_iswhite(*p)) {
-    EMSG(_("E182: Invalid command name"));
+    emsg(_("E182: Invalid command name"));
     return;
   }
   end = p;
@@ -5676,11 +5669,11 @@ static void ex_command(exarg_T *eap)
   if (!has_attr && ends_excmd(*p)) {
     uc_list(name, end - name);
   } else if (!ASCII_ISUPPER(*name)) {
-    EMSG(_("E183: User defined commands must start with an uppercase letter"));
+    emsg(_("E183: User defined commands must start with an uppercase letter"));
   } else if (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0) {
-    EMSG(_("E841: Reserved name, cannot be used for user defined command"));
+    emsg(_("E841: Reserved name, cannot be used for user defined command"));
   } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
-    EMSG(_(e_complete_used_without_nargs));
+    emsg(_(e_complete_used_without_nargs));
   } else {
     uc_add_command(name, end - name, p, argt, def, flags, compl, compl_arg,
                    addr_type_arg, eap->forceit);
@@ -5735,7 +5728,7 @@ static void ex_delcommand(exarg_T *eap)
   }
 
   if (cmp != 0) {
-    EMSG2(_("E184: No such user-defined command: %s"), eap->arg);
+    semsg(_("E184: No such user-defined command: %s"), eap->arg);
     return;
   }
 
@@ -6340,7 +6333,7 @@ int parse_addr_type_arg(char_u *value, int vallen, cmd_addr_T *addr_type_arg)
 
     for (i = 0; err[i] != NUL && !ascii_iswhite(err[i]); i++) {}
     err[i] = NUL;
-    EMSG2(_("E180: Invalid address type value: %s"), err);
+    semsg(_("E180: Invalid address type value: %s"), err);
     return FAIL;
   }
 
@@ -6390,19 +6383,19 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp, uint32_t *argt
   }
 
   if (i == (int)ARRAY_SIZE(command_complete)) {
-    EMSG2(_("E180: Invalid complete value: %s"), value);
+    semsg(_("E180: Invalid complete value: %s"), value);
     return FAIL;
   }
 
   if (*complp != EXPAND_USER_DEFINED && *complp != EXPAND_USER_LIST
       && arg != NULL) {
-    EMSG(_("E468: Completion argument only allowed for custom completion"));
+    emsg(_("E468: Completion argument only allowed for custom completion"));
     return FAIL;
   }
 
   if ((*complp == EXPAND_USER_DEFINED || *complp == EXPAND_USER_LIST)
       && arg == NULL) {
-    EMSG(_("E467: Custom completion requires a function argument"));
+    emsg(_("E467: Custom completion requires a function argument"));
     return FAIL;
   }
 
@@ -6439,20 +6432,20 @@ static void ex_colorscheme(exarg_T *eap)
     xfree(expr);
 
     if (p != NULL) {
-      MSG(p);
+      msg((char *)p);
       xfree(p);
     } else {
-      MSG("default");
+      msg("default");
     }
   } else if (load_colors(eap->arg) == FAIL) {
-    EMSG2(_("E185: Cannot find color scheme '%s'"), eap->arg);
+    semsg(_("E185: Cannot find color scheme '%s'"), eap->arg);
   }
 }
 
 static void ex_highlight(exarg_T *eap)
 {
   if (*eap->arg == NUL && eap->cmd[2] == '!') {
-    MSG(_("Greetings, Vim user!"));
+    msg(_("Greetings, Vim user!"));
   }
   do_highlight((const char *)eap->arg, eap->forceit, false);
 }
@@ -6649,7 +6642,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 
   // Never close the autocommand window.
   if (win == aucmd_win) {
-    EMSG(_(e_autocmd_close));
+    emsg(_(e_autocmd_close));
     return;
   }
 
@@ -6689,7 +6682,7 @@ static void ex_tabclose(exarg_T *eap)
   if (cmdwin_type != 0) {
     cmdwin_result = K_IGNORE;
   } else if (first_tabpage->tp_next == NULL) {
-    EMSG(_("E784: Cannot close last tab page"));
+    emsg(_("E784: Cannot close last tab page"));
   } else {
     int tab_number = get_tabpage_arg(eap);
     if (eap->errmsg == NULL) {
@@ -6714,7 +6707,7 @@ static void ex_tabonly(exarg_T *eap)
   if (cmdwin_type != 0) {
     cmdwin_result = K_IGNORE;
   } else if (first_tabpage->tp_next == NULL) {
-    MSG(_("Already only one tab page"));
+    msg(_("Already only one tab page"));
   } else {
     int tab_number = get_tabpage_arg(eap);
     if (eap->errmsg == NULL) {
@@ -6919,7 +6912,7 @@ static void ex_exit(exarg_T *eap)
 static void ex_print(exarg_T *eap)
 {
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-    EMSG(_(e_emptybuf));
+    emsg(_(e_emptybuf));
   } else {
     for (; !got_int; os_breakcheck()) {
       print_line(eap->line1,
@@ -7033,7 +7026,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
   static int recursive = 0;
 
   if (recursive) {
-    EMSG(_(e_au_recursive));
+    emsg(_(e_au_recursive));
     return;
   }
   recursive++;
@@ -7353,7 +7346,7 @@ static void ex_mode(exarg_T *eap)
     must_redraw = CLEAR;
     ex_redraw(eap);
   } else {
-    EMSG(_(e_screenmode));
+    emsg(_(e_screenmode));
   }
 }
 
@@ -7557,16 +7550,16 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
 /// ":gui" and ":gvim" when there is no GUI.
 static void ex_nogui(exarg_T *eap)
 {
-  eap->errmsg = (char_u *)N_("E25: Nvim does not have a built-in GUI");
+  eap->errmsg = N_("E25: Nvim does not have a built-in GUI");
 }
 
 
 static void ex_swapname(exarg_T *eap)
 {
   if (curbuf->b_ml.ml_mfp == NULL || curbuf->b_ml.ml_mfp->mf_fname == NULL) {
-    MSG(_("No swap file"));
+    msg(_("No swap file"));
   } else {
-    msg(curbuf->b_ml.ml_mfp->mf_fname);
+    msg((char *)curbuf->b_ml.ml_mfp->mf_fname);
   }
 }
 
@@ -7669,7 +7662,7 @@ static void ex_read(exarg_T *eap)
     }
     if (i != OK) {
       if (!aborting()) {
-        EMSG2(_(e_notopen), eap->arg);
+        semsg(_(e_notopen), eap->arg);
       }
     } else {
       if (empty && exmode_active) {
@@ -7785,7 +7778,7 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   if (STRCMP(new_dir, "-") == 0) {
     pdir = get_prevdir(scope);
     if (pdir == NULL) {
-      EMSG(_("E186: No previous directory"));
+      emsg(_("E186: No previous directory"));
       return false;
     }
     new_dir = pdir;
@@ -7825,7 +7818,7 @@ bool changedir_func(char_u *new_dir, CdScope scope)
     post_chdir(scope, dir_differs);
     retval = true;
   } else {
-    EMSG(_(e_failed));
+    emsg(_(e_failed));
   }
   xfree(tofree);
 
@@ -7884,10 +7877,10 @@ static void ex_pwd(exarg_T *eap)
       }
       smsg("[%s] %s", context, (char *)NameBuff);
     } else {
-      msg(NameBuff);
+      msg((char *)NameBuff);
     }
   } else {
-    EMSG(_("E187: Unknown"));
+    emsg(_("E187: Unknown"));
   }
 }
 
@@ -7919,7 +7912,7 @@ static void ex_sleep(exarg_T *eap)
   case NUL:
     len *= 1000L; break;
   default:
-    EMSG2(_(e_invarg2), eap->arg); return;
+    semsg(_(e_invarg2), eap->arg); return;
   }
   do_sleep(len);
 }
@@ -7954,10 +7947,10 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   switch (do_map((*cmdp == 'n') ? 2 : (*cmdp == 'u'),
                  eap->arg, mode, isabbrev)) {
   case 1:
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     break;
   case 2:
-    EMSG(isabbrev ? _(e_noabbr) : _(e_nomap));
+    emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
     break;
   }
 }
@@ -7970,7 +7963,7 @@ static void ex_winsize(exarg_T *eap)
   char_u *arg = eap->arg;
 
   if (!ascii_isdigit(*arg)) {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
     return;
   }
   int w = getdigits_int(&arg, false, 10);
@@ -7980,7 +7973,7 @@ static void ex_winsize(exarg_T *eap)
   if (*p != NUL && *arg == NUL) {
     screen_resize(w, h);
   } else {
-    EMSG(_("E465: :winsize requires two number arguments"));
+    emsg(_("E465: :winsize requires two number arguments"));
   }
 }
 
@@ -7992,7 +7985,7 @@ static void ex_wincmd(exarg_T *eap)
   if (*eap->arg == 'g' || *eap->arg == Ctrl_G) {
     // CTRL-W g and CTRL-W CTRL-G  have an extra command character
     if (eap->arg[1] == NUL) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     xchar = eap->arg[1];
@@ -8004,7 +7997,7 @@ static void ex_wincmd(exarg_T *eap)
   eap->nextcmd = check_nextcmd(p);
   p = skipwhite(p);
   if (*p != NUL && *p != '"' && eap->nextcmd == NULL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else if (!eap->skip) {
     // Pass flags on for ":vertical wincmd ]".
     postponed_split_flags = cmdmod.split;
@@ -8095,7 +8088,7 @@ static void ex_copymove(exarg_T *eap)
    * move or copy lines from 'eap->line1'-'eap->line2' to below line 'n'
    */
   if (n == MAXLNUM || n < 0 || n > curbuf->b_ml.ml_line_count) {
-    EMSG(_(e_invrange));
+    emsg(_(e_invrange));
     return;
   }
 
@@ -8261,7 +8254,7 @@ static void ex_later(exarg_T *eap)
   }
 
   if (*p != NUL) {
-    EMSG2(_(e_invarg2), eap->arg);
+    semsg(_(e_invarg2), eap->arg);
   } else {
     undo_time(eap->cmdidx == CMD_earlier ? -count : count,
               sec, file, false);
@@ -8322,7 +8315,7 @@ static void ex_redir(exarg_T *eap)
       }
       if (*arg != NUL) {
         redir_reg = 0;
-        EMSG2(_(e_invarg2), eap->arg);
+        semsg(_(e_invarg2), eap->arg);
       }
     } else if (*arg == '=' && arg[1] == '>') {
       int append;
@@ -8344,7 +8337,7 @@ static void ex_redir(exarg_T *eap)
     }
     // TODO: redirect to a buffer
     else {
-      EMSG2(_(e_invarg2), eap->arg);
+      semsg(_(e_invarg2), eap->arg);
     }
   }
 
@@ -8453,7 +8446,7 @@ int vim_mkdir_emsg(const char *const name, const int prot)
 {
   int ret;
   if ((ret = os_mkdir(name, prot)) != 0) {
-    EMSG3(_(e_mkdir), name, os_strerror(ret));
+    semsg(_(e_mkdir), name, os_strerror(ret));
     return FAIL;
   }
   return OK;
@@ -8471,17 +8464,17 @@ FILE *open_exfile(char_u *fname, int forceit, char *mode)
 #ifdef UNIX
   // with Unix it is possible to open a directory
   if (os_isdir(fname)) {
-    EMSG2(_(e_isadir2), fname);
+    semsg(_(e_isadir2), fname);
     return NULL;
   }
 #endif
   if (!forceit && *mode != 'a' && os_path_exists(fname)) {
-    EMSG2(_("E189: \"%s\" exists (add ! to override)"), fname);
+    semsg(_("E189: \"%s\" exists (add ! to override)"), fname);
     return NULL;
   }
 
   if ((fd = os_fopen((char *)fname, mode)) == NULL) {
-    EMSG2(_("E190: Cannot open \"%s\" for writing"), fname);
+    semsg(_("E190: Cannot open \"%s\" for writing"), fname);
   }
 
   return fd;
@@ -8495,15 +8488,15 @@ static void ex_mark(exarg_T *eap)
   pos_T pos;
 
   if (*eap->arg == NUL) {               // No argument?
-    EMSG(_(e_argreq));
+    emsg(_(e_argreq));
   } else if (eap->arg[1] != NUL) {         // more than one character?
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
   } else {
     pos = curwin->w_cursor;             // save curwin->w_cursor
     curwin->w_cursor.lnum = eap->line2;
     beginline(BL_WHITE | BL_FIX);
     if (setmark(*eap->arg) == FAIL) {   // set mark
-      EMSG(_("E191: Argument must be a letter or forward/backward quote"));
+      emsg(_("E191: Argument must be a letter or forward/backward quote"));
     }
     curwin->w_cursor = pos;             // restore curwin->w_cursor
   }
@@ -8581,7 +8574,7 @@ void restore_current_state(save_state_T *sst)
 static void ex_normal(exarg_T *eap)
 {
   if (curbuf->terminal && State & TERM_FOCUS) {
-    EMSG("Can't re-enter normal mode from terminal mode");
+    emsg("Can't re-enter normal mode from terminal mode");
     return;
   }
   save_state_T save_state;
@@ -8590,11 +8583,11 @@ static void ex_normal(exarg_T *eap)
   char_u *p;
 
   if (ex_normal_lock > 0) {
-    EMSG(_(e_secure));
+    emsg(_(e_secure));
     return;
   }
   if (ex_normal_busy >= p_mmd) {
-    EMSG(_("E192: Recursive use of :normal too deep"));
+    emsg(_("E192: Recursive use of :normal too deep"));
     return;
   }
 
@@ -8991,7 +8984,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
 char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump,
-                  char_u **errormsg, int *escaped)
+                  char **errormsg, int *escaped)
 {
   int i;
   char_u *s;
@@ -9041,7 +9034,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
            ? (FIND_IDENT | FIND_STRING | FIND_EVAL)
            : FIND_STRING));
     if (resultlen == 0) {
-      *errormsg = (char_u *)"";
+      *errormsg = "";
       return NULL;
     }
     //
@@ -9094,7 +9087,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         result = (char_u *)tv_list_find_str(get_vim_var_list(VV_OLDFILES),
                                             i - 1);
         if (result == NULL) {
-          *errormsg = (char_u *)"";
+          *errormsg = "";
           return NULL;
         }
       } else {
@@ -9103,7 +9096,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         }
         buf = buflist_findnr(i);
         if (buf == NULL) {
-          *errormsg = (char_u *)_("E194: No alternate file name to substitute for '#'");
+          *errormsg = _("E194: No alternate file name to substitute for '#'");
           return NULL;
         }
         if (lnump != NULL) {
@@ -9122,7 +9115,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     case SPEC_CFILE:            // file name under cursor
       result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1L, NULL);
       if (result == NULL) {
-        *errormsg = (char_u *)"";
+        *errormsg = "";
         return NULL;
       }
       resultbuf = result;                   // remember allocated string
@@ -9142,7 +9135,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       }
       result = autocmd_fname;
       if (result == NULL) {
-        *errormsg = (char_u *)_("E495: no autocommand file name to substitute for \"<afile>\"");
+        *errormsg = _("E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
       }
       result = path_try_shorten_fname(result);
@@ -9150,7 +9143,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_ABUF:             // buffer number for autocommand
       if (autocmd_bufnr <= 0) {
-        *errormsg = (char_u *)_("E496: no autocommand buffer number to substitute for \"<abuf>\"");
+        *errormsg = _("E496: no autocommand buffer number to substitute for \"<abuf>\"");
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%d", autocmd_bufnr);
@@ -9160,7 +9153,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     case SPEC_AMATCH:           // match name for autocommand
       result = autocmd_match;
       if (result == NULL) {
-        *errormsg = (char_u *)_("E497: no autocommand match name to substitute for \"<amatch>\"");
+        *errormsg = _("E497: no autocommand match name to substitute for \"<amatch>\"");
         return NULL;
       }
       break;
@@ -9168,14 +9161,14 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     case SPEC_SFILE:            // file name for ":so" command
       result = sourcing_name;
       if (result == NULL) {
-        *errormsg = (char_u *)_("E498: no :source file name to substitute for \"<sfile>\"");
+        *errormsg = _("E498: no :source file name to substitute for \"<sfile>\"");
         return NULL;
       }
       break;
 
     case SPEC_SLNUM:            // line in file for ":so" command
       if (sourcing_name == NULL || sourcing_lnum == 0) {
-        *errormsg = (char_u *)_("E842: no line number to use for \"<slnum>\"");
+        *errormsg = _("E842: no line number to use for \"<slnum>\"");
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, sourcing_lnum);
@@ -9184,7 +9177,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_SFLNUM:  // line in script file
       if (current_sctx.sc_lnum + sourcing_lnum == 0) {
-        *errormsg = (char_u *)_("E961: no line number to use for \"<sflnum>\"");
+        *errormsg = _("E961: no line number to use for \"<sflnum>\"");
         return NULL;
       }
       snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
@@ -9194,7 +9187,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_SID:
       if (current_sctx.sc_sid <= 0) {
-        *errormsg = (char_u *)_(e_usingsid);
+        *errormsg = _(e_usingsid);
         return NULL;
       }
       snprintf(strbuf, sizeof(strbuf), "<SNR>%" PRIdSCID "_",
@@ -9204,7 +9197,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
 
     default:
       // should not happen
-      *errormsg = (char_u *)"";
+      *errormsg = "";
       result = (char_u *)"";    // avoid gcc warning
       break;
     }
@@ -9221,7 +9214,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       valid |= modify_fname(src, tilde_file, usedlen, &result,
                             &resultbuf, &resultlen);
       if (result == NULL) {
-        *errormsg = (char_u *)"";
+        *errormsg = "";
         return NULL;
       }
     }
@@ -9230,9 +9223,9 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
   if (resultlen == 0 || valid != VALID_HEAD + VALID_PATH) {
     if (valid != VALID_HEAD + VALID_PATH) {
       // xgettext:no-c-format
-      *errormsg = (char_u *)_("E499: Empty file name for '%' or '#', only works with \":p:h\"");
+      *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
     } else {
-      *errormsg = (char_u *)_("E500: Evaluates to an empty string");
+      *errormsg = _("E500: Evaluates to an empty string");
     }
     result = NULL;
   } else {
@@ -9312,7 +9305,7 @@ static char_u *arg_all(void)
  */
 char_u *expand_sfile(char_u *arg)
 {
-  char_u *errormsg;
+  char *errormsg;
   size_t len;
   char_u *result;
   char_u *newres;
@@ -9402,7 +9395,7 @@ static void ex_behave(exarg_T *eap)
     set_option_value("mousemodel", 0L, "extend", 0);
     set_option_value("keymodel", 0L, "", 0);
   } else {
-    EMSG2(_(e_invarg2), eap->arg);
+    semsg(_(e_invarg2), eap->arg);
   }
 }
 
@@ -9513,7 +9506,7 @@ static void ex_filetype(exarg_T *eap)
       filetype_detect = kFalse;
     }
   } else {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
   }
 }
 
@@ -9601,7 +9594,7 @@ static void ex_match(exarg_T *eap)
   if (eap->line2 <= 3) {
     id = eap->line2;
   } else {
-    EMSG(e_invcmd);
+    emsg(e_invcmd);
     return;
   }
 
@@ -9624,7 +9617,7 @@ static void ex_match(exarg_T *eap)
     if (*p == NUL) {
       // There must be two arguments.
       xfree(g);
-      EMSG2(_(e_invarg2), eap->arg);
+      semsg(_(e_invarg2), eap->arg);
       return;
     }
     end = skip_regexp(p + 1, *p, true, NULL);
@@ -9636,7 +9629,7 @@ static void ex_match(exarg_T *eap)
       }
       if (*end != *p) {
         xfree(g);
-        EMSG2(_(e_invarg2), p);
+        semsg(_(e_invarg2), p);
         return;
       }
 
@@ -9714,7 +9707,7 @@ static void ex_terminal(exarg_T *eap)
     xfree(name);
   } else {  // No {cmd}: run the job with tokenized 'shell'.
     if (*p_sh == NUL) {
-      EMSG(_(e_shellempty));
+      emsg(_(e_shellempty));
       return;
     }
 
@@ -9871,287 +9864,287 @@ void verify_command(char_u *cmd)
   if (strcmp("smile", (char *)cmd)) {
     return;  // acceptable non-existing command
   }
-  MSG(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"
+  msg(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"
       "xxxxxxnz+,      znnnnnnnnnnnnnnnn.");
-  MSG(" n###z          x####`      :x##########W+`      ,###"
+  msg(" n###z          x####`      :x##########W+`      ,###"
       "##########M;    W################.");
-  MSG(" n####;         x####`    `z##############W:     ,###"
+  msg(" n####;         x####`    `z##############W:     ,###"
       "#############   W################.");
-  MSG(" n####W.        x####`   ,W#################+    ,###"
+  msg(" n####W.        x####`   ,W#################+    ,###"
       "##############  W################.");
-  MSG(" n#####n        x####`   @###################    ,###"
+  msg(" n#####n        x####`   @###################    ,###"
       "##############i W################.");
-  MSG(" n######i       x####`  .#########@W@########*   ,###"
+  msg(" n######i       x####`  .#########@W@########*   ,###"
       "##############W`W################.");
-  MSG(" n######@.      x####`  x######W*.  `;n#######:  ,###"
+  msg(" n######@.      x####`  x######W*.  `;n#######:  ,###"
       "#x,,,,:*M######iW###@:,,,,,,,,,,,`");
-  MSG(" n#######n      x####` *######+`       :M#####M  ,###"
+  msg(" n#######n      x####` *######+`       :M#####M  ,###"
       "#n      `x#####xW###@`");
-  MSG(" n########*     x####``@####@;          `x#####i ,###"
+  msg(" n########*     x####``@####@;          `x#####i ,###"
       "#n       ,#####@W###@`");
-  MSG(" n########@     x####`*#####i            `M####M ,###"
+  msg(" n########@     x####`*#####i            `M####M ,###"
       "#n        x#########@`");
-  MSG(" n#########     x####`M####z              :#####:,###"
+  msg(" n#########     x####`M####z              :#####:,###"
       "#n        z#########@`");
-  MSG(" n#########*    x####,#####.               n####+,###"
+  msg(" n#########*    x####,#####.               n####+,###"
       "#n        n#########@`");
-  MSG(" n####@####@,   x####i####x                ;####x,###"
+  msg(" n####@####@,   x####i####x                ;####x,###"
       "#n       `W#####@####+++++++++++i");
-  MSG(" n####*#####M`  x#########*                `####@,###"
+  msg(" n####*#####M`  x#########*                `####@,###"
       "#n       i#####MW###############W");
-  MSG(" n####.######+  x####z####;                 W####,###"
+  msg(" n####.######+  x####z####;                 W####,###"
       "#n      i@######W###############W");
-  MSG(" n####.`W#####: x####n####:                 M####:###"
+  msg(" n####.`W#####: x####n####:                 M####:###"
       "#@nnnnnW#######,W###############W");
-  MSG(" n####. :#####M`x####z####;                 W####,###"
+  msg(" n####. :#####M`x####z####;                 W####,###"
       "##############z W###############W");
-  MSG(" n####.  #######x#########*                `####W,###"
+  msg(" n####.  #######x#########*                `####W,###"
       "#############W` W###############W");
-  MSG(" n####.  `M#####W####i####x                ;####x,###"
+  msg(" n####.  `M#####W####i####x                ;####x,###"
       "############W,  W####+**********i");
-  MSG(" n####.   ,##########,#####.               n####+,###"
+  msg(" n####.   ,##########,#####.               n####+,###"
       "###########n.   W###@`");
-  MSG(" n####.    ##########`M####z              :#####:,###"
+  msg(" n####.    ##########`M####z              :#####:,###"
       "########Wz:     W###@`");
-  MSG(" n####.    x#########`*#####i            `M####M ,###"
+  msg(" n####.    x#########`*#####i            `M####M ,###"
       "#x.....`        W###@`");
-  MSG(" n####.    ,@########``@####@;          `x#####i ,###"
+  msg(" n####.    ,@########``@####@;          `x#####i ,###"
       "#n              W###@`");
-  MSG(" n####.     *########` *#####@+`       ,M#####M  ,###"
+  msg(" n####.     *########` *#####@+`       ,M#####M  ,###"
       "#n              W###@`");
-  MSG(" n####.      x#######`  x######W*.  `;n######@:  ,###"
+  msg(" n####.      x#######`  x######W*.  `;n######@:  ,###"
       "#n              W###@,,,,,,,,,,,,`");
-  MSG(" n####.      .@######`  .#########@W@########*   ,###"
+  msg(" n####.      .@######`  .#########@W@########*   ,###"
       "#n              W################,");
-  MSG(" n####.       i######`   @###################    ,###"
+  msg(" n####.       i######`   @###################    ,###"
       "#n              W################,");
-  MSG(" n####.        n#####`   ,W#################+    ,###"
+  msg(" n####.        n#####`   ,W#################+    ,###"
       "#n              W################,");
-  MSG(" n####.        .@####`    .n##############W;     ,###"
+  msg(" n####.        .@####`    .n##############W;     ,###"
       "#n              W################,");
-  MSG(" n####.         i####`      :x##########W+`      ,###"
+  msg(" n####.         i####`      :x##########W+`      ,###"
       "#n              W################,");
-  MSG(" +nnnn`          +nnn`        ,+x@##@Mz;`        .nnn"
+  msg(" +nnnn`          +nnn`        ,+x@##@Mz;`        .nnn"
       "n+              zxxxxxxxxxxxxxxxx.");
-  MSG(" ");
-  MSG("                                                     "
+  msg(" ");
+  msg("                                                     "
       "                              ,+M@#Mi");
-  MSG("                                 "
+  msg("                                 "
       "                                                .z########");
-  MSG("                                 "
+  msg("                                 "
       "                                               i@#########i");
-  MSG("                                 "
+  msg("                                 "
       "                                             `############W`");
-  MSG("                                 "
+  msg("                                 "
       "                                            `n#############i");
-  MSG("                                 "
+  msg("                                 "
       "                                           `n##############n");
-  MSG("     ``                          "
+  msg("     ``                          "
       "                                           z###############@`");
-  MSG("    `W@z,                        "
+  msg("    `W@z,                        "
       "                                          ##################,");
-  MSG("    *#####`                      "
+  msg("    *#####`                      "
       "                                         i############@x@###i");
-  MSG("    ######M.                     "
+  msg("    ######M.                     "
       "                                        :#############n`,W##+");
-  MSG("    +######@:                    "
+  msg("    +######@:                    "
       "                                       .W#########M@##+  *##z");
-  MSG("    :#######@:                   "
+  msg("    :#######@:                   "
       "                                      `x########@#x###*  ,##n");
-  MSG("    `@#######@;                  "
+  msg("    `@#######@;                  "
       "                                      z#########M*@nW#i  .##x");
-  MSG("     z########@i                 "
+  msg("     z########@i                 "
       "                                     *###########WM#@#,  `##x");
-  MSG("     i##########+                "
+  msg("     i##########+                "
       "                                    ;###########*n###@   `##x");
-  MSG("     `@#MM#######x,              "
+  msg("     `@#MM#######x,              "
       "                                   ,@#########zM,`z##M   `@#x");
-  MSG("      n##M#W#######n.            "
+  msg("      n##M#W#######n.            "
       "   `.:i*+#zzzz##+i:.`             ,W#########Wii,`n@#@` n@##n");
-  MSG("      ;###@#x#######n         `,i"
+  msg("      ;###@#x#######n         `,i"
       "#nW@#####@@WWW@@####@Mzi.        ,W##########@z.. ;zM#+i####z");
-  MSG("       x####nz########    .;#x@##"
+  msg("       x####nz########    .;#x@##"
       "@Wn#*;,.`      ``,:*#x@##M+,    ;@########xz@WM+#` `n@#######");
-  MSG("       ,@####M########xi#@##@Mzi,"
+  msg("       ,@####M########xi#@##@Mzi,"
       "`                     .+x###Mi:n##########Mz```.:i  *@######*");
-  MSG("        *#####W#########ix+:`    "
+  msg("        *#####W#########ix+:`    "
       "                         :n#############z:       `*.`M######i");
-  MSG("        i#W##nW@+@##@#M@;        "
+  msg("        i#W##nW@+@##@#M@;        "
       "                           ;W@@##########W,        i`x@#####,");
-  MSG("        `@@n@Wn#@iMW*#*:         "
+  msg("        `@@n@Wn#@iMW*#*:         "
       "                            `iz#z@######x.           M######`");
-  MSG("         z##zM###x`*, .`         "
+  msg("         z##zM###x`*, .`         "
       "                                 `iW#####W;:`        +#####M");
-  MSG("         ,###nn##n`              "
+  msg("         ,###nn##n`              "
       "                                  ,#####x;`        ,;@######");
-  MSG("          x###xz#.               "
+  msg("          x###xz#.               "
       "                                    in###+        `:######@.");
-  MSG("          ;####n+                "
+  msg("          ;####n+                "
       "                                    `Mnx##xi`   , zM#######");
-  MSG("          `W####+                "
+  msg("          `W####+                "
       "i.                                   `.+x###@#. :n,z######:");
-  MSG("           z####@`              ;"
+  msg("           z####@`              ;"
       "#:                                     .ii@###@;.*M*z####@`");
-  MSG("           i####M         `   `i@"
+  msg("           i####M         `   `i@"
       "#,           ::                           +#n##@+@##W####n");
-  MSG("           :####x    ,i. ##xzM###"
+  msg("           :####x    ,i. ##xzM###"
       "@`     i.   .@@,                           .z####x#######*");
-  MSG("           ,###W;   i##Wz########"
+  msg("           ,###W;   i##Wz########"
       "#     :##   z##n                           ,@########x###:");
-  MSG("            n##n   `W###########M"
+  msg("            n##n   `W###########M"
       "`;n,  i#x  ,###@i                           *W########W#@`");
-  MSG("           .@##+  `x###########@."
+  msg("           .@##+  `x###########@."
       " z#+ .M#W``x#####n`                         `;#######@z#x");
-  MSG("           n###z :W############@ "
+  msg("           n###z :W############@ "
       " z#*  @##xM#######@n;                        `########nW+");
-  MSG("          ;####nW##############W "
+  msg("          ;####nW##############W "
       ":@#* `@#############*                        :########z@i`");
-  MSG("          M##################### "
+  msg("          M##################### "
       "M##:  @#############@:                       *W########M#");
-  MSG("         ;#####################i."
+  msg("         ;#####################i."
       "##x`  W#############W,                       :n########zx");
-  MSG("         x####################@.`"
+  msg("         x####################@.`"
       "x;    @#############z.                       .@########W#");
-  MSG("        ,######################` "
+  msg("        ,######################` "
       "      W###############x*,`                    W######zM#i");
-  MSG("        #######################: "
+  msg("        #######################: "
       "      z##################@x+*#zzi            `@#########.");
-  MSG("        W########W#z#M#########; "
+  msg("        W########W#z#M#########; "
       "      *##########################z            :@#######@`");
-  MSG("       `@#######x`;#z ,x#######; "
+  msg("       `@#######x`;#z ,x#######; "
       "      z###########M###xnM@########*            :M######@");
-  MSG("       i########, x#@`  z######; "
+  msg("       i########, x#@`  z######; "
       "      *##########i *#@`  `+########+`            n######.");
-  MSG("       n#######@` M##,  `W#####. "
+  msg("       n#######@` M##,  `W#####. "
       "      *#########z  ###;    z########M:           :W####n");
-  MSG("       M#######M  n##.   x####x  "
+  msg("       M#######M  n##.   x####x  "
       "      `x########:  z##+    M#########@;           .n###+");
-  MSG("       W#######@` :#W   `@####:  "
+  msg("       W#######@` :#W   `@####:  "
       "       `@######W   i###   ;###########@.            n##n");
-  MSG("       W########z` ,,  .x####z   "
+  msg("       W########z` ,,  .x####z   "
       "        @######@`  `W#;  `W############*            *###;");
-  MSG("      `@#########Mi,:*n@####W`   "
+  msg("      `@#########Mi,:*n@####W`   "
       "        W#######*   ..  `n#############i            i###x");
-  MSG("      .#####################z    "
+  msg("      .#####################z    "
       "       `@#######@*`    .x############n:`            ;####.");
-  MSG("      :####################x`,,` "
+  msg("      :####################x`,,` "
       "       `W#########@x#+#@#############i              ,####:");
-  MSG("      ;###################x#@###x"
+  msg("      ;###################x#@###x"
       "i`      *############################:              `####i");
-  MSG("      i##################+#######"
+  msg("      i##################+#######"
       "#M,      x##########################@`               W###i");
-  MSG("      *################@; @######"
+  msg("      *################@; @######"
       "##@,     .W#########################@                x###:");
-  MSG("      .+M#############z.  M######"
+  msg("      .+M#############z.  M######"
       "###x      ,W########################@`               ####.");
-  MSG("      *M*;z@########x:    :W#####"
+  msg("      *M*;z@########x:    :W#####"
       "##i        .M########################i               i###:");
-  MSG("      *##@z;#@####x:        :z###"
+  msg("      *##@z;#@####x:        :z###"
       "@i          `########################x               .###;");
-  MSG("      *#####n;#@##            ;##"
+  msg("      *#####n;#@##            ;##"
       "*             ,x#####################@`               W##*");
-  MSG("      *#######n;*            :M##"
+  msg("      *#######n;*            :M##"
       "W*,             *W####################`               n##z");
-  MSG("      i########@.         ,*n####"
+  msg("      i########@.         ,*n####"
       "###M*`           `###################M                *##M");
-  MSG("      i########n        `z#####@@"
+  msg("      i########n        `z#####@@"
       "#####Wi            ,M################;                ,##@`");
-  MSG("      ;WMWW@###*       .x##@ni.``"
+  msg("      ;WMWW@###*       .x##@ni.``"
       ".:+zW##z`           `n##############z                  @##,");
-  MSG("      .*++*i;;;.      .M#@+`     "
+  msg("      .*++*i;;;.      .M#@+`     "
       "     .##n            `x############x`                  n##i");
-  MSG("      :########*      x#W,       "
+  msg("      :########*      x#W,       "
       "       *#+            *###########M`                   +##+");
-  MSG("      ,#########     :#@:        "
+  msg("      ,#########     :#@:        "
       "        ##:           #nzzzzzzzzzz.                    :##x");
-  MSG("      .#####Wz+`     ##+         "
+  msg("      .#####Wz+`     ##+         "
       "        `MM`          .znnnnnnnnn.                     `@#@`");
-  MSG("      `@@ni;*nMz`    @W`         "
+  msg("      `@@ni;*nMz`    @W`         "
       "         :#+           .x#######n                       x##,");
-  MSG("       i;z@#####,   .#*          "
+  msg("       i;z@#####,   .#*          "
       "          z#:           ;;;*zW##;                       ###i");
-  MSG("       z########:   :#;          "
+  msg("       z########:   :#;          "
       "          `Wx          +###Wni;n.                       ;##z");
-  MSG("       n########W:  .#*          "
+  msg("       n########W:  .#*          "
       "           ,#,        ;#######@+                        `@#M");
-  MSG("      .###########n;.MM          "
+  msg("      .###########n;.MM          "
       "            n*        ;iM#######*                        x#@`");
-  MSG("      :#############@;;          "
+  msg("      :#############@;;          "
       "            .n`      ,#W*iW#####W`                       +##,");
-  MSG("      ,##############.           "
+  msg("      ,##############.           "
       "             ix.    `x###M;#######                       ,##i");
-  MSG("      .#############@`           "
+  msg("      .#############@`           "
       "              x@n**#W######z;M###@.                       W##");
-  MSG("      .##############W:          "
+  msg("      .##############W:          "
       "              .x############@*;zW#;                       z#x");
-  MSG("      ,###############@;         "
+  msg("      ,###############@;         "
       "               `##############@n*;.                       i#@");
-  MSG("      ,#################i        "
+  msg("      ,#################i        "
       "                 :n##############W`                       .##,");
-  MSG("      ,###################`      "
+  msg("      ,###################`      "
       "                   .+W##########W,                        `##i");
-  MSG("      :###################@zi,`  "
+  msg("      :###################@zi,`  "
       "                      ;zM@@@WMn*`                          @#z");
-  MSG("      :#######################@x+"
+  msg("      :#######################@x+"
       "*i;;:i#M,                 ``                               M#W");
-  MSG("      ;##########################"
+  msg("      ;##########################"
       "######@x.                                                  n##,");
-  MSG("      i#####################@W@@@"
+  msg("      i#####################@W@@@"
       "@Wxz*:`                                                    *##+");
-  MSG("      *######################+```"
+  msg("      *######################+```"
       "                                                           :##M");
-  MSG("      ########################M; "
+  msg("      ########################M; "
       "                                                           `@##,");
-  MSG("      z#########################x"
+  msg("      z#########################x"
       ",                                                           z###");
-  MSG("      n##########################"
+  msg("      n##########################"
       "#n:                                                         ;##W`");
-  MSG("      x##########################"
+  msg("      x##########################"
       "###Mz#++##*                                                 `W##i");
-  MSG("      M##########################"
+  msg("      M##########################"
       "##########@`                                                 ###x");
-  MSG("      W##########################"
+  msg("      W##########################"
       "###########`                                                 .###,");
-  MSG("      @##########################"
+  msg("      @##########################"
       "##########M                                                   n##z");
-  MSG("      @##################z*i@WMMM"
+  msg("      @##################z*i@WMMM"
       "x#x@#####,.                                                   :##@.");
-  MSG("     `#####################@xi`  "
+  msg("     `#####################@xi`  "
       "   `::,*                                                       x##+");
-  MSG("     .#####################@#M.  "
+  msg("     .#####################@#M.  "
       "                                                               ;##@`");
-  MSG("     ,#####################:.    "
+  msg("     ,#####################:.    "
       "                                                                M##i");
-  MSG("     ;###################ni`     "
+  msg("     ;###################ni`     "
       "                                                                i##M");
-  MSG("     *#################W#`       "
+  msg("     *#################W#`       "
       "                                                                `W##,");
-  MSG("     z#################@Wx+.     "
+  msg("     z#################@Wx+.     "
       "                                                                 +###");
-  MSG("     x######################z.   "
+  msg("     x######################z.   "
       "                                                                 .@#@`");
-  MSG("    `@#######################@;  "
+  msg("    `@#######################@;  "
       "                                                                  z##;");
-  MSG("    :##########################: "
+  msg("    :##########################: "
       "                                                                  :##z");
-  MSG("    +#########################W# "
+  msg("    +#########################W# "
       "                                                                   M#W");
-  MSG("    W################@n+*i;:,`                                "
+  msg("    W################@n+*i;:,`                                "
       "                                      +##,");
-  MSG("   :##################WMxz+,                                  "
+  msg("   :##################WMxz+,                                  "
       "                                      ,##i");
-  MSG("   n#######################W..,                               "
+  msg("   n#######################W..,                               "
       "                                       W##");
-  MSG("  +#########################WW@+. .:.                         "
+  msg("  +#########################WW@+. .:.                         "
       "                                       z#x");
-  MSG(" `@#############################@@###:                        "
+  msg(" `@#############################@@###:                        "
       "                                       *#W");
-  MSG(" #################################Wz:                         "
+  msg(" #################################Wz:                         "
       "                                       :#@");
-  MSG(",@###############################i                            "
+  msg(",@###############################i                            "
       "                                       .##");
-  MSG("n@@@@@@@#########################+                            "
+  msg("n@@@@@@@#########################+                            "
       "                                       `##");
-  MSG("`      `.:.`.,:iii;;;;;;;;iii;;;:`       `.``                 "
+  msg("`      `.:.`.,:iii;;;;;;;;iii;;;:`       `.``                 "
       "                                       `nW");
 }

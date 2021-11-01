@@ -278,12 +278,12 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = fn(VIML_INTERNAL_CALL, args, &err);
 
   if (ERROR_SET(&err)) {
-    emsgf_multiline((const char *)e_api_error, err.msg);
+    semsg_multiline((const char *)e_api_error, err.msg);
     goto end;
   }
 
   if (!object_to_vim(result, rettv, &err)) {
-    EMSG2(_("Error converting the call result: %s"), err.msg);
+    semsg(_("Error converting the call result: %s"), err.msg);
   }
 
 end:
@@ -340,7 +340,7 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    EMSG(_(e_listblobreq));
+    emsg(_(e_listblobreq));
   }
 }
 
@@ -814,7 +814,7 @@ buf_T *get_buf_arg(typval_T *arg)
   buf = tv_get_buf(arg, false);
   emsg_off--;
   if (buf == NULL) {
-    EMSG2(_("E158: Invalid buffer name: %s"), tv_get_string(arg));
+    semsg(_("E158: Invalid buffer name: %s"), tv_get_string(arg));
   }
   return buf;
 }
@@ -876,7 +876,7 @@ static void f_byteidxcomp(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[1].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
   if (argvars[1].vval.v_list == NULL) {
@@ -905,7 +905,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT) {
-      EMSG(_(e_dictreq));
+      emsg(_(e_dictreq));
       return;
     }
     selfdict = argvars[2].vval.v_dict;
@@ -937,7 +937,7 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
                                           && argvars[1].v_type != VAR_UNKNOWN)) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -953,14 +953,14 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else if (!strcmp(stream, "rpc")) {
       part = kChannelPartRpc;
     } else {
-      EMSG2(_("Invalid channel stream \"%s\""), stream);
+      semsg(_("Invalid channel stream \"%s\""), stream);
       return;
     }
   }
   const char *error;
   rettv->vval.v_number = channel_close(argvars[0].vval.v_number, part, &error);
   if (!rettv->vval.v_number) {
-    EMSG(error);
+    emsg(error);
   }
 }
 
@@ -976,7 +976,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
     // First argument is the channel id and second is the data to write
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1001,7 +1001,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *error = NULL;
   rettv->vval.v_number = channel_send(id, input, input_len, true, &error);
   if (error) {
-    EMSG(error);
+    emsg(error);
   }
 }
 
@@ -1028,7 +1028,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       || argvars[1].v_type != VAR_NUMBER
       || (argvars[2].v_type != VAR_UNKNOWN
           && argvars[2].v_type != VAR_NUMBER)) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1042,7 +1042,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     countcc = (int)tv_get_number(&argvars[2]);
   }
   if (countcc < 0 || countcc > 1) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1130,7 +1130,7 @@ static win_T *get_optional_window(typval_T *argvars, int idx)
   if (argvars[idx].v_type != VAR_UNKNOWN) {
     win = find_win_by_nr_or_id(&argvars[idx]);
     if (win == NULL) {
-      EMSG(_(e_invalwindow));
+      emsg(_(e_invalwindow));
       return NULL;
     }
   }
@@ -1196,7 +1196,7 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if ((State & INSERT) == 0) {
-    EMSG(_("E785: complete() can only be used in Insert mode"));
+    emsg(_("E785: complete() can only be used in Insert mode"));
     return;
   }
 
@@ -1207,7 +1207,7 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[1].v_type != VAR_LIST) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1249,7 +1249,7 @@ static void f_complete_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_LIST) {
-      EMSG(_(e_listreq));
+      emsg(_(e_listreq));
       return;
     }
     what_list = argvars[0].vval.v_list;
@@ -1372,7 +1372,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           if (!error) {
             li = tv_list_find(l, idx);
             if (li == NULL) {
-              EMSGN(_(e_listidx), idx);
+              semsg(_(e_listidx), (int64_t)idx);
             }
           }
         }
@@ -1395,7 +1395,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if ((d = argvars[0].vval.v_dict) != NULL) {
       if (argvars[2].v_type != VAR_UNKNOWN) {
         if (argvars[3].v_type != VAR_UNKNOWN) {
-          EMSG(_(e_invarg));
+          emsg(_(e_invarg));
         }
       }
 
@@ -1410,7 +1410,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    EMSG2(_(e_listdictarg), "count()");
+    semsg(_(e_listdictarg), "count()");
   }
   rettv->vval.v_number = n;
 }
@@ -1447,13 +1447,13 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_NUMBER) {
     index = argvars[0].vval.v_number;
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    semsg(_(e_invarg2), "expected nothing or a Number as an argument");
     return;
   }
 
   Context *ctx = ctx_get(index);
   if (ctx == NULL) {
-    EMSG3(_(e_invargNval), "index", "out of bounds");
+    semsg(_(e_invargNval), "index", "out of bounds");
     return;
   }
 
@@ -1468,7 +1468,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (!ctx_restore(NULL, kCtxAll)) {
-    EMSG(_("Context stack is empty"));
+    emsg(_("Context stack is empty"));
   }
 }
 
@@ -1497,7 +1497,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    semsg(_(e_invarg2), "expected nothing or a List as an argument");
     return;
   }
   ctx_save(NULL, types);
@@ -1507,7 +1507,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    semsg(_(e_invarg2), "expected dictionary as first argument");
     return;
   }
 
@@ -1515,13 +1515,13 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type == VAR_NUMBER) {
     index = argvars[1].vval.v_number;
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    semsg(_(e_invarg2), "expected nothing or a Number as second argument");
     return;
   }
 
   Context *ctx = ctx_get(index);
   if (ctx == NULL) {
-    EMSG3(_(e_invargNval), "index", "out of bounds");
+    semsg(_(e_invargNval), "index", "out of bounds");
     return;
   }
 
@@ -1568,7 +1568,7 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     colnr_T curswant = -1;
 
     if (list2fpos(argvars, &pos, NULL, &curswant) == FAIL) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
 
@@ -1615,7 +1615,7 @@ static void f_debugbreak(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = FAIL;
   pid = (int)tv_get_number(&argvars[0]);
   if (pid == 0) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else {
 #ifdef WIN32
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
@@ -1640,7 +1640,7 @@ static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     noref = tv_get_number_chk(&argvars[1], NULL);
   }
   if (noref < 0 || noref > 1) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else {
     var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
                                                    ? get_copyID()
@@ -1658,7 +1658,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   const char *const name = tv_get_string(&argvars[0]);
   if (*name == NUL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -1680,7 +1680,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // delete a directory recursively
     rettv->vval.v_number = delete_recursive(name);
   } else {
-    emsgf(_(e_invexpr2), flags);
+    semsg(_(e_invexpr2), flags);
   }
 }
 
@@ -1692,17 +1692,17 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_DICT) {
-    emsgf(_(e_invarg2), "dict");
+    semsg(_(e_invarg2), "dict");
     return;
   } else if (argvars[0].vval.v_dict == NULL) {
     const char *const arg_errmsg = _("dictwatcheradd() argument");
     const size_t arg_errmsg_len = strlen(arg_errmsg);
-    emsgf(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
+    semsg(_(e_readonlyvar), (int)arg_errmsg_len, arg_errmsg);
     return;
   }
 
   if (argvars[1].v_type != VAR_STRING && argvars[1].v_type != VAR_NUMBER) {
-    emsgf(_(e_invarg2), "key");
+    semsg(_(e_invarg2), "key");
     return;
   }
 
@@ -1714,7 +1714,7 @@ static void f_dictwatcheradd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Callback callback;
   if (!callback_from_typval(&callback, &argvars[2])) {
-    emsgf(_(e_invarg2), "funcref");
+    semsg(_(e_invarg2), "funcref");
     return;
   }
 
@@ -1730,12 +1730,12 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_DICT) {
-    emsgf(_(e_invarg2), "dict");
+    semsg(_(e_invarg2), "dict");
     return;
   }
 
   if (argvars[2].v_type != VAR_FUNC && argvars[2].v_type != VAR_STRING) {
-    emsgf(_(e_invarg2), "funcref");
+    semsg(_(e_invarg2), "funcref");
     return;
   }
 
@@ -1751,7 +1751,7 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!tv_dict_watcher_remove(argvars[0].vval.v_dict, key_pattern,
                               strlen(key_pattern), callback)) {
-    EMSG("Couldn't find a watcher matching key and callback");
+    emsg("Couldn't find a watcher matching key and callback");
   }
 
   callback_free(&callback);
@@ -2039,13 +2039,13 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const expr_start = s;
   if (s == NULL || eval1((char_u **)&s, rettv, true) == FAIL) {
     if (expr_start != NULL && !aborting()) {
-      EMSG2(_(e_invexpr2), expr_start);
+      semsg(_(e_invexpr2), expr_start);
     }
     need_clr_eos = false;
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   } else if (*s != NUL) {
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
   }
 }
 
@@ -2263,7 +2263,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   size_t len;
-  char_u *errormsg;
+  char *errormsg;
   int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
   expand_T xpc;
   bool error = false;
@@ -2348,7 +2348,7 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // Expand all the special characters in a command string.
 static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u *errormsg = NULL;
+  char *errormsg = NULL;
 
   rettv->v_type = VAR_STRING;
   char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
@@ -2364,7 +2364,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   expand_filename(&eap, &cmdstr, &errormsg);
   if (errormsg != NULL && *errormsg != NUL) {
-    EMSG(errormsg);
+    emsg(errormsg);
   }
   rettv->vval.v_string = cmdstr;
 }
@@ -2378,7 +2378,7 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool error = false;
 
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "flatten()");
+    semsg(_(e_listarg), "flatten()");
     return;
   }
 
@@ -2390,7 +2390,7 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
     if (maxdepth < 0) {
-      EMSG(_("E900: maxdepth must be non-negative number"));
+      emsg(_("E900: maxdepth must be non-negative number"));
       return;
     }
   }
@@ -2432,7 +2432,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         } else {
           item = tv_list_find(l1, before);
           if (item == NULL) {
-            EMSGN(_(e_listidx), before);
+            semsg(_(e_listidx), (int64_t)before);
             return;
           }
         }
@@ -2471,7 +2471,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           }
         }
         if (i == 3) {
-          EMSG2(_(e_invarg2), action);
+          semsg(_(e_invarg2), action);
           return;
         }
       }
@@ -2481,7 +2481,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       tv_copy(&argvars[0], rettv);
     }
   } else {
-    EMSG2(_(e_listdictarg), "extend()");
+    semsg(_(e_listdictarg), "extend()");
   }
 }
 
@@ -2928,7 +2928,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           tv_list_append_tv(rettv->vval.v_list, &pt->pt_argv[i]);
         }
       } else {
-        EMSG2(_(e_invarg2), what);
+        semsg(_(e_invarg2), what);
       }
 
       // When {what} == "dict" and pt->pt_dict == NULL, evaluate the
@@ -2938,7 +2938,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else {
-    EMSG2(_(e_listdictblobarg), "get()");
+    semsg(_(e_listdictblobarg), "get()");
   }
 
   if (tv == NULL) {
@@ -3364,7 +3364,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                 | WILD_NO_BEEP | WILD_HOME_REPLACE;
 
   if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "type must be a string");
+    semsg(_(e_invarg2), "type must be a string");
     return;
   }
   const char *const type = tv_get_string(&argvars[1]);
@@ -3383,7 +3383,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_STRING) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -3398,7 +3398,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
-    EMSG2(_(e_invarg2), type);
+    semsg(_(e_invarg2), type);
     return;
   }
 
@@ -3467,13 +3467,13 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     if (argvars[i].v_type != VAR_NUMBER) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     scope_number[i] = argvars[i].vval.v_number;
     // It is an error for the scope number to be less than `-1`.
     if (scope_number[i] < -1) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     // Use the narrowest scope the user requested
@@ -3494,7 +3494,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (scope_number[kCdScopeTabpage] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTabpage]);
     if (!tp) {
-      EMSG(_("E5000: Cannot find tab number."));
+      emsg(_("E5000: Cannot find tab number."));
       return;
     }
   }
@@ -3502,14 +3502,14 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Find the window in `tp` by number, `NULL` if none.
   if (scope_number[kCdScopeWindow] >= 0) {
     if (scope_number[kCdScopeTabpage] < 0) {
-      EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
+      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
       win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
-        EMSG(_("E5002: Cannot find window number."));
+        emsg(_("E5002: Cannot find window number."));
         return;
       }
     }
@@ -4150,12 +4150,12 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = -1;
 
   if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG2(_(e_invargval), "1");
+    semsg(_(e_invargval), "1");
     return;
   }
   if ((argvars[2].v_type != VAR_NUMBER && argvars[2].v_type != VAR_UNKNOWN)
       || (argvars[2].v_type == VAR_NUMBER && argvars[2].vval.v_number <= 0)) {
-    EMSG2(_(e_invargval), "3");
+    semsg(_(e_invargval), "3");
     return;
   }
 
@@ -4262,7 +4262,7 @@ static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (wp == NULL || targetwin == NULL || wp == targetwin
       || !win_valid(wp) || !win_valid(targetwin)
       || win_valid_floating(wp) || win_valid_floating(targetwin)) {
-    EMSG(_(e_invalwindow));
+    emsg(_(e_invalwindow));
     rettv->vval.v_number = -1;
     return;
   }
@@ -4272,7 +4272,7 @@ static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     dictitem_T *di;
 
     if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
 
@@ -4636,7 +4636,7 @@ static bool has_wsl(void)
 static void f_has_key(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
   if (argvars[0].vval.v_dict == NULL) {
@@ -4683,12 +4683,12 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     if (argvars[i].v_type != VAR_NUMBER) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     scope_number[i] = argvars[i].vval.v_number;
     if (scope_number[i] < -1) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     // Use the narrowest scope the user requested
@@ -4709,7 +4709,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (scope_number[kCdScopeTabpage] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTabpage]);
     if (!tp) {
-      EMSG(_("E5000: Cannot find tab number."));
+      emsg(_("E5000: Cannot find tab number."));
       return;
     }
   }
@@ -4717,14 +4717,14 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Find the window in `tp` by number, `NULL` if none.
   if (scope_number[kCdScopeWindow] >= 0) {
     if (scope_number[kCdScopeTabpage] < 0) {
-      EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
+      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
 
     if (scope_number[kCdScopeWindow] > 0) {
       win = find_win_by_nr(&argvars[0], tp);
       if (!win) {
-        EMSG(_("E5002: Cannot find window number."));
+        emsg(_("E5002: Cannot find window number."));
         return;
       }
     }
@@ -4973,7 +4973,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     return;
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listblobreq));
+    emsg(_(e_listblobreq));
     return;
   }
   list_T *const l = argvars[0].vval.v_list;
@@ -5035,7 +5035,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int mouse_used;
 
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "inputlist()");
+    semsg(_(e_listarg), "inputlist()");
     return;
   }
 
@@ -5120,7 +5120,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;  // type error; errmsg already given
       }
       if (before < 0 || before > len) {
-        EMSG2(_(e_invarg2), tv_get_string(&argvars[2]));
+        semsg(_(e_invarg2), tv_get_string(&argvars[2]));
         return;
       }
     }
@@ -5129,7 +5129,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
     if (val < 0 || val > 255) {
-      EMSG2(_(e_invarg2), tv_get_string(&argvars[1]));
+      semsg(_(e_invarg2), tv_get_string(&argvars[1]));
       return;
     }
 
@@ -5141,7 +5141,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     tv_copy(&argvars[0], rettv);
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listblobarg), "insert()");
+    semsg(_(e_listblobarg), "insert()");
   } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                              N_("insert() argument"), TV_TRANSLATE)) {
     long before = 0;
@@ -5157,7 +5157,7 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (before != tv_list_len(l)) {
       item = tv_list_find(l, before);
       if (item == NULL) {
-        EMSGN(_(e_listidx), before);
+        semsg(_(e_listidx), (int64_t)before);
         l = NULL;
       }
     }
@@ -5207,7 +5207,7 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                      FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL) {
-      EMSG(_(e_trailing));
+      emsg(_(e_trailing));
     } else {
       if (lv.ll_tv == NULL) {
         di = find_var(lv.ll_name, lv.ll_name_len, NULL, true);
@@ -5220,9 +5220,9 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                   || tv_islocked(&di->di_tv));
         }
       } else if (lv.ll_range) {
-        EMSG(_("E786: Range not allowed"));
+        emsg(_("E786: Range not allowed"));
       } else if (lv.ll_newkey != NULL) {
-        EMSG2(_(e_dictkey), lv.ll_newkey);
+        semsg(_(e_dictkey), lv.ll_newkey);
       } else if (lv.ll_list != NULL) {
         // List item.
         rettv->vval.v_number = tv_islocked(TV_LIST_ITEM_TV(lv.ll_li));
@@ -5282,7 +5282,7 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -5308,7 +5308,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_NUMBER
       || argvars[2].v_type != VAR_NUMBER) {
     // job id, width, height
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -5319,7 +5319,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (data->stream.proc.type != kProcessTypePty) {
-    EMSG(_(e_channotpty));
+    emsg(_(e_channotpty));
     return;
   }
 
@@ -5462,7 +5462,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
     // Wrong argument types
-    EMSG2(_(e_invarg2), "expected dictionary");
+    semsg(_(e_invarg2), "expected dictionary");
     shell_free_argv(argv);
     return;
   }
@@ -5496,19 +5496,19 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
         // Nothing to do, default value
       } else {
-        EMSG3(_(e_invargNval), "stdin", s);
+        semsg(_(e_invargNval), "stdin", s);
       }
     }
 
     if (pty && rpc) {
-      EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
+      semsg(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
       shell_free_argv(argv);
       return;
     }
 
 #ifdef WIN32
     if (pty && overlapped) {
-      EMSG2(_(e_invarg2),
+      semsg(_(e_invarg2),
             "job cannot have both 'pty' and 'overlapped' options set");
       shell_free_argv(argv);
       return;
@@ -5520,7 +5520,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       cwd = new_cwd;
       // The new cwd must be a directory.
       if (!os_isdir_executable((const char *)cwd)) {
-        EMSG2(_(e_invarg2), "expected valid directory");
+        semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
       }
@@ -5528,7 +5528,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     job_env = tv_dict_find(job_opts, S_LEN("env"));
     if (job_env && job_env->di_tv.v_type != VAR_DICT) {
-      EMSG2(_(e_invarg2), "env");
+      semsg(_(e_invarg2), "env");
       shell_free_argv(argv);
       return;
     }
@@ -5575,7 +5575,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_NUMBER) {
     // Only argument is the job id
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -5592,7 +5592,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   process_stop(&data->stream.proc);
   rettv->vval.v_number = 1;
   if (error) {
-    EMSG(error);
+    emsg(error);
   }
 }
 
@@ -5607,7 +5607,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
                                         && argvars[1].v_type != VAR_UNKNOWN)) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -5701,7 +5701,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_join(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
   const char *const sep = (argvars[1].v_type == VAR_UNKNOWN
@@ -5730,7 +5730,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   size_t len;
   if (argvars[0].v_type == VAR_LIST) {
     if (!encode_vim_list_to_buf(argvars[0].vval.v_list, &len, &tofree)) {
-      EMSG(_("E474: Failed to convert list to string"));
+      emsg(_("E474: Failed to convert list to string"));
       return;
     }
     s = tofree;
@@ -5747,7 +5747,7 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (json_decode_string(s, len, rettv) == FAIL) {
-    emsgf(_("E474: Failed to parse %.*s"), (int)len, s);
+    semsg(_("E474: Failed to parse %.*s"), (int)len, s);
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   }
@@ -5811,7 +5811,7 @@ static void f_len(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   case VAR_FLOAT:
   case VAR_PARTIAL:
   case VAR_FUNC:
-    EMSG(_("E701: Invalid type for len()"));
+    emsg(_("E701: Invalid type for len()"));
     break;
   }
 }
@@ -5852,7 +5852,7 @@ static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
                             str_out, &int_out);
 
   if (!success) {
-    EMSG2(_(e_libcall), funcname);
+    semsg(_(e_libcall), funcname);
     return;
   }
 
@@ -5950,7 +5950,7 @@ static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -6338,7 +6338,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (id >= 1 && id <= 3) {
-    EMSGN(_("E798: ID is reserved for \":match\": %" PRId64), id);
+    semsg(_("E798: ID is reserved for \":match\": %" PRId64), (int64_t)id);
     return;
   }
 
@@ -6356,7 +6356,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[1].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "matchaddpos()");
+    semsg(_(e_listarg), "matchaddpos()");
     return;
   }
 
@@ -6388,7 +6388,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // id == 3 is ok because matchaddpos() is supposed to substitute :3match
   if (id == 1 || id == 2) {
-    EMSGN(_("E798: ID is reserved for \"match\": %" PRId64), id);
+    semsg(_("E798: ID is reserved for \"match\": %" PRId64), (int64_t)id);
     return;
   }
 
@@ -6507,7 +6507,7 @@ static void max_min(const typval_T *const tv, typval_T *const rettv, const bool 
       }
     });
   } else {
-    EMSG2(_(e_listdictarg), domax ? "max()" : "min()");
+    semsg(_(e_listdictarg), domax ? "max()" : "min()");
     return;
   }
   rettv->vval.v_number = n;
@@ -6563,7 +6563,7 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       char *failed_dir;
       int ret = os_mkdir_recurse(dir, prot, &failed_dir);
       if (ret != 0) {
-        EMSG3(_(e_mkdir), failed_dir, os_strerror(ret));
+        semsg(_(e_mkdir), failed_dir, os_strerror(ret));
         xfree(failed_dir);
         rettv->vval.v_number = FAIL;
         return;
@@ -6596,7 +6596,7 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "msgpackdump()");
+    semsg(_(e_listarg), "msgpackdump()");
     return;
   }
   list_T *const list = argvars[0].vval.v_list;
@@ -6629,21 +6629,21 @@ static int msgpackparse_convert_item(const msgpack_object data, const msgpack_un
 {
   switch (result) {
   case MSGPACK_UNPACK_PARSE_ERROR:
-    EMSG2(_(e_invarg2), "Failed to parse msgpack string");
+    semsg(_(e_invarg2), "Failed to parse msgpack string");
     return FAIL;
   case MSGPACK_UNPACK_NOMEM_ERROR:
-    EMSG(_(e_outofmem));
+    emsg(_(e_outofmem));
     return FAIL;
   case MSGPACK_UNPACK_CONTINUE:
     if (fail_if_incomplete) {
-      EMSG2(_(e_invarg2), "Incomplete msgpack string");
+      semsg(_(e_invarg2), "Incomplete msgpack string");
       return FAIL;
     }
     return NOTDONE;
   case MSGPACK_UNPACK_SUCCESS: {
     typval_T tv = { .v_type = VAR_UNKNOWN };
     if (msgpack_to_vim(data, &tv) == FAIL) {
-      EMSG2(_(e_invarg2), "Failed to convert msgpack string");
+      semsg(_(e_invarg2), "Failed to convert msgpack string");
       return FAIL;
     }
     tv_list_append_owned_tv(ret_list, tv);
@@ -6661,27 +6661,27 @@ static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret
     return;
   }
   if (TV_LIST_ITEM_TV(tv_list_first(list))->v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "List item is not a string");
+    semsg(_(e_invarg2), "List item is not a string");
     return;
   }
   ListReaderState lrstate = encode_init_lrstate(list);
   msgpack_unpacker *const unpacker = msgpack_unpacker_new(IOSIZE);
   if (unpacker == NULL) {
-    EMSG(_(e_outofmem));
+    emsg(_(e_outofmem));
     return;
   }
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
   do {
     if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
-      EMSG(_(e_outofmem));
+      emsg(_(e_outofmem));
       goto end;
     }
     size_t read_bytes;
     const int rlret = encode_read_from_list(&lrstate, msgpack_unpacker_buffer(unpacker), IOSIZE,
                                             &read_bytes);
     if (rlret == FAIL) {
-      EMSG2(_(e_invarg2), "List item is not a string");
+      semsg(_(e_invarg2), "List item is not a string");
       goto end;
     }
     msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
@@ -6735,7 +6735,7 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
   if (argvars[0].v_type != VAR_LIST && argvars[0].v_type != VAR_BLOB) {
-    EMSG2(_(e_listblobarg), "msgpackparse()");
+    semsg(_(e_listblobarg), "msgpackparse()");
     return;
   }
   list_T *const ret_list = tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -6782,11 +6782,11 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (num < 0) {
-    EMSG(_("E5070: Character number must not be less than zero"));
+    emsg(_("E5070: Character number must not be less than zero"));
     return;
   }
   if (num > INT_MAX) {
-    emsgf(_("E5071: Character number must not be greater than INT_MAX (%i)"),
+    semsg(_("E5071: Character number must not be greater than INT_MAX (%i)"),
           INT_MAX);
     return;
   }
@@ -7048,9 +7048,9 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;  // Type error; errmsg already given.
   }
   if (stride == 0) {
-    EMSG(_("E726: Stride is zero"));
+    emsg(_("E726: Stride is zero"));
   } else if (stride > 0 ? end + 1 < start : end - 1 > start) {
-    EMSG(_("E727: Start past end"));
+    emsg(_("E727: Start past end"));
   } else {
     tv_list_alloc_ret(rettv, (end - start) / stride);
     for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
@@ -7178,18 +7178,18 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const fname = tv_get_string(&argvars[0]);
 
   if (os_isdir((const char_u *)fname)) {
-    EMSG2(_(e_isadir2), fname);
+    semsg(_(e_isadir2), fname);
     return;
   }
   if (*fname == NUL || (fd = os_fopen(fname, READBIN)) == NULL) {
-    EMSG2(_(e_notopen), *fname == NUL ? _("<empty>") : fname);
+    semsg(_(e_notopen), *fname == NUL ? _("<empty>") : fname);
     return;
   }
 
   if (blob) {
     tv_blob_alloc_ret(rettv);
     if (!read_blob(fd, rettv->vval.v_blob)) {
-      EMSG2(_(e_notread), fname);
+      semsg(_(e_notread), fname);
       // An empty blob is returned on error.
       tv_blob_free(rettv->vval.v_blob);
       rettv->vval.v_blob = NULL;
@@ -7507,14 +7507,14 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      EMSG2(_(e_toomanyarg), "remove()");
+      semsg(_(e_toomanyarg), "remove()");
     } else if ((d = argvars[0].vval.v_dict) != NULL
                && !var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE)) {
       const char *key = tv_get_string_chk(&argvars[1]);
       if (key != NULL) {
         di = tv_dict_find(d, key, -1);
         if (di == NULL) {
-          EMSG2(_(e_dictkey), key);
+          semsg(_(e_dictkey), key);
         } else if (!var_check_fixed(di->di_flags, arg_errmsg, TV_TRANSLATE)
                    && !var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE)) {
           *rettv = di->di_tv;
@@ -7544,7 +7544,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         idx = len + idx;
       }
       if (idx < 0 || idx >= len) {
-        EMSGN(_(e_blobidx), idx);
+        semsg(_(e_blobidx), (int64_t)idx);
         return;
       }
       if (argvars[2].v_type == VAR_UNKNOWN) {
@@ -7564,7 +7564,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           end = len + end;
         }
         if (end >= len || idx > end) {
-          EMSGN(_(e_blobidx), end);
+          semsg(_(e_blobidx), (int64_t)end);
           return;
         }
         blob_T *const blob = tv_blob_alloc();
@@ -7583,7 +7583,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listdictblobarg), "remove()");
+    semsg(_(e_listdictblobarg), "remove()");
   } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                              arg_errmsg, TV_TRANSLATE)) {
     bool error = false;
@@ -7592,7 +7592,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (error) {
       // Type error: do nothing, errmsg already given.
     } else if ((item = tv_list_find(l, idx)) == NULL) {
-      EMSGN(_(e_listidx), idx);
+      semsg(_(e_listidx), (int64_t)idx);
     } else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
         // Remove one item, return its value.
@@ -7605,7 +7605,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (error) {
           // Type error: do nothing.
         } else if ((item2 = tv_list_find(l, end)) == NULL) {
-          EMSGN(_(e_listidx), end);
+          semsg(_(e_listidx), (int64_t)end);
         } else {
           int cnt = 0;
 
@@ -7616,7 +7616,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             }
           }
           if (li == NULL) {  // Didn't find "item2" after "item".
-            EMSG(_(e_invrange));
+            emsg(_(e_invrange));
           } else {
             tv_list_move_items(l, item, item2, tv_list_alloc_ret(rettv, cnt),
                                cnt);
@@ -7738,7 +7738,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (limit-- == 0) {
           xfree(p);
           xfree(remain);
-          EMSG(_("E655: Too many symbolic links (cycle?)"));
+          emsg(_("E655: Too many symbolic links (cycle?)"));
           rettv->vval.v_string = NULL;
           xfree(buf);
           return;
@@ -7867,7 +7867,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     tv_blob_set_ret(rettv, b);
   } else if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listblobarg), "reverse()");
+    semsg(_(e_listblobarg), "reverse()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
     if (!var_check_lock(tv_list_locked(l), N_("reverse() argument"),
@@ -7934,7 +7934,7 @@ static int get_search_arg(typval_T *varp, int *flagsp)
           }
         }
         if (mask == 0) {
-          emsgf(_(e_invarg2), flags);
+          semsg(_(e_invarg2), flags);
           dir = 0;
         } else {
           *flagsp |= mask;
@@ -8006,7 +8006,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
    */
   if (((flags & (SP_REPEAT | SP_RETCOUNT)) != 0)
       || ((flags & SP_NOMOVE) && (flags & SP_SETPCMARK))) {
-    EMSG2(_(e_invarg2), tv_get_string(&argvars[1]));
+    semsg(_(e_invarg2), tv_get_string(&argvars[1]));
     goto theend;
   }
 
@@ -8059,12 +8059,12 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number < 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    semsg(_(e_invarg2), "Channel id must be a positive integer");
     return;
   }
 
   if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Event type must be a string");
+    semsg(_(e_invarg2), "Event type must be a string");
     return;
   }
 
@@ -8076,7 +8076,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!rpc_send_event((uint64_t)argvars[0].vval.v_number,
                       tv_get_string(&argvars[1]), args)) {
-    EMSG2(_(e_invarg2), "Channel doesn't exist");
+    semsg(_(e_invarg2), "Channel doesn't exist");
     return;
   }
 
@@ -8095,12 +8095,12 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    semsg(_(e_invarg2), "Channel id must be a positive integer");
     return;
   }
 
   if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Method name must be a string");
+    semsg(_(e_invarg2), "Method name must be a string");
     return;
   }
 
@@ -8162,10 +8162,10 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     msg_ext_set_kind("rpc_error");
     if (name) {
-      emsgf_multiline("Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
+      semsg_multiline("Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
                       method, chan_id, name, err.msg);
     } else {
-      emsgf_multiline("Error invoking '%s' on channel %" PRIu64 ":\n%s",
+      semsg_multiline("Error invoking '%s' on channel %" PRIu64 ":\n%s",
                       method, chan_id, err.msg);
     }
 
@@ -8173,7 +8173,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (!object_to_vim(result, rettv, &err)) {
-    EMSG2(_("Error converting the call result: %s"), err.msg);
+    semsg(_("Error converting the call result: %s"), err.msg);
   }
 
 end:
@@ -8194,7 +8194,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_STRING
       || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -8207,7 +8207,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     int i = 0;
     TV_LIST_ITER_CONST(args, arg, {
       if (TV_LIST_ITEM_TV(arg)->v_type != VAR_STRING) {
-        emsgf(_("E5010: List item %d of the second argument is not a string"),
+        semsg(_("E5010: List item %d of the second argument is not a string"),
               i);
         return;
       }
@@ -8216,7 +8216,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
-    EMSG(_(e_api_spawn_failed));
+    emsg(_(e_api_spawn_failed));
     return;
   }
 
@@ -8260,7 +8260,7 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_NUMBER) {
     // Wrong argument types
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -8273,7 +8273,7 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = channel_close(argvars[0].vval.v_number,
                                          kChannelPartRpc, &error);
     if (!rettv->vval.v_number) {
-      EMSG(error);
+      emsg(error);
     }
   }
 }
@@ -8460,7 +8460,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   // Only one of the SP_NOMOVE or SP_SETPCMARK flags can be set.
   if ((flags & (SP_END | SP_SUBPAT)) != 0
       || ((flags & SP_NOMOVE) && (flags & SP_SETPCMARK))) {
-    EMSG2(_(e_invarg2), tv_get_string(&argvars[3]));
+    semsg(_(e_invarg2), tv_get_string(&argvars[3]));
     goto theend;
   }
 
@@ -8479,19 +8479,19 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
     if (skip->v_type != VAR_FUNC
         && skip->v_type != VAR_PARTIAL
         && skip->v_type != VAR_STRING) {
-      emsgf(_(e_invarg2), tv_get_string(&argvars[4]));
+      semsg(_(e_invarg2), tv_get_string(&argvars[4]));
       goto theend;  // Type error.
     }
     if (argvars[5].v_type != VAR_UNKNOWN) {
       lnum_stop = tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
-        emsgf(_(e_invarg2), tv_get_string(&argvars[5]));
+        semsg(_(e_invarg2), tv_get_string(&argvars[5]));
         goto theend;
       }
       if (argvars[6].v_type != VAR_UNKNOWN) {
         time_limit = tv_get_number_chk(&argvars[6], NULL);
         if (time_limit < 0) {
-          emsgf(_(e_invarg2), tv_get_string(&argvars[6]));
+          semsg(_(e_invarg2), tv_get_string(&argvars[6]));
           goto theend;
         }
       }
@@ -8756,7 +8756,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // If the user supplied an address, use it, otherwise use a temp.
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_STRING) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     } else {
       address = xstrdup(tv_get_string(argvars));
@@ -8769,7 +8769,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   xfree(address);
 
   if (result != 0) {
-    EMSG2("Failed to start server: %s",
+    semsg("Failed to start server: %s",
           result > 0 ? "Unknown system error" : uv_strerror(result));
     return;
   }
@@ -8795,7 +8795,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_STRING) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -8874,7 +8874,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T *di;
 
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
 
@@ -8941,7 +8941,7 @@ static void f_setfperm(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (strlen(mode_str) != 9) {
-    EMSG2(_(e_invarg2), mode_str);
+    semsg(_(e_invarg2), mode_str);
     return;
   }
 
@@ -8992,10 +8992,10 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
 
   typval_T *list_arg = &args[0];
   if (list_arg->v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   } else if (recursive != 0) {
-    EMSG(_(e_au_recursive));
+    emsg(_(e_au_recursive));
     return;
   }
 
@@ -9004,7 +9004,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     // Option argument was not given.
     goto skip_args;
   } else if (action_arg->v_type != VAR_STRING) {
-    EMSG(_(e_stringreq));
+    emsg(_(e_stringreq));
     return;
   }
   const char *const act = tv_get_string_chk(action_arg);
@@ -9012,7 +9012,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
       && act[1] == NUL) {
     action = *act;
   } else {
-    EMSG2(_(e_invact), act);
+    semsg(_(e_invact), act);
     return;
   }
 
@@ -9029,7 +9029,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   } else if (what_arg->v_type == VAR_DICT && what_arg->vval.v_dict != NULL) {
     what = what_arg->vval.v_dict;
   } else {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
 
@@ -9072,7 +9072,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
   if (win == NULL) {
@@ -9086,7 +9086,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   TV_LIST_ITER_CONST(l, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
         || (d = TV_LIST_ITEM_TV(li)->vval.v_dict) == NULL) {
-      emsgf(_("E474: List item %d is either not a dictionary "
+      semsg(_("E474: List item %d is either not a dictionary "
               "or an empty one"), li_idx);
       return;
     }
@@ -9095,7 +9095,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
               || tv_dict_find(d, S_LEN("pos1")) != NULL)
           && tv_dict_find(d, S_LEN("priority")) != NULL
           && tv_dict_find(d, S_LEN("id")) != NULL)) {
-      emsgf(_("E474: List item %d is missing one of the required keys"),
+      semsg(_("E474: List item %d is missing one of the required keys"),
             li_idx);
       return;
     }
@@ -9197,7 +9197,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           rettv->vval.v_number = 0;
         }
       } else {
-        EMSG(_(e_invarg));
+        emsg(_(e_invarg));
       }
     }
   }
@@ -9287,7 +9287,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       const int ret = get_yank_type((char_u **)&stropt, &yank_type, &block_len);
 
       if (ret == FAIL || *(++stropt) != NUL) {
-        EMSG2(_(e_invargval), "value");
+        semsg(_(e_invargval), "value");
         return;
       }
     }
@@ -9308,7 +9308,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool set_unnamed = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (yank_type != kMTUnknown) {
-      EMSG2(_(e_toomanyarg), "setreg");
+      semsg(_(e_toomanyarg), "setreg");
       return;
     }
 
@@ -9448,7 +9448,7 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // second argument: dict with items to set in the tag stack
   if (argvars[1].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
   d = argvars[1].vval.v_dict;
@@ -9470,11 +9470,11 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         && actstr[1] == NUL) {
       action = *actstr;
     } else {
-      EMSG2(_(e_invact2), actstr);
+      semsg(_(e_invact2), actstr);
       return;
     }
   } else {
-    EMSG(_(e_stringreq));
+    emsg(_(e_stringreq));
     return;
   }
 
@@ -9557,7 +9557,7 @@ static void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_DICT) {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
 
@@ -9603,7 +9603,7 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (argvars[1].v_type != VAR_UNKNOWN) {
       if (argvars[1].v_type != VAR_DICT
           || ((dict = argvars[1].vval.v_dict) == NULL)) {
-        EMSG(_(e_dictreq));
+        emsg(_(e_dictreq));
         return;
       }
       if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
@@ -9654,7 +9654,7 @@ static void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (sign_id <= 0) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -9691,7 +9691,7 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[4].v_type != VAR_UNKNOWN
       && (argvars[4].v_type != VAR_DICT
           || ((dict = argvars[4].vval.v_dict) == NULL))) {
-    EMSG(_(e_dictreq));
+    emsg(_(e_dictreq));
     return;
   }
 
@@ -9707,7 +9707,7 @@ static void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
 
@@ -9717,7 +9717,7 @@ static void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT) {
       sign_id = sign_place_from_dict(NULL, NULL, NULL, NULL, TV_LIST_ITEM_TV(li)->vval.v_dict);
     } else {
-      EMSG(_(e_dictreq));
+      emsg(_(e_dictreq));
     }
     tv_list_append_number(rettv->vval.v_list, sign_id);
   });
@@ -9763,13 +9763,13 @@ static void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = -1;
 
   if (argvars[0].v_type != VAR_STRING) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (argvars[1].v_type != VAR_DICT) {
-      EMSG(_(e_dictreq));
+      emsg(_(e_dictreq));
       return;
     }
     dict = argvars[1].vval.v_dict;
@@ -9786,7 +9786,7 @@ static void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
 
@@ -9795,7 +9795,7 @@ static void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT) {
       retval = sign_unplace_from_dict(NULL, TV_LIST_ITEM_TV(li)->vval.v_dict);
     } else {
-      EMSG(_(e_dictreq));
+      emsg(_(e_dictreq));
     }
     tv_list_append_number(rettv->vval.v_list, retval);
   });
@@ -9816,12 +9816,12 @@ static void f_simplify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
   if (argvars[2].v_type != VAR_DICT && argvars[2].v_type != VAR_UNKNOWN) {
     // Wrong argument types
-    EMSG2(_(e_invarg2), "expected dictionary");
+    semsg(_(e_invarg2), "expected dictionary");
     return;
   }
 
@@ -9834,7 +9834,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if (strcmp(mode, "pipe") == 0) {
     tcp = false;
   } else {
-    EMSG2(_(e_invarg2), "invalid mode");
+    semsg(_(e_invarg2), "invalid mode");
     return;
   }
 
@@ -9857,7 +9857,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   uint64_t id = channel_connect(tcp, address, rpc, on_data, 50, &error);
 
   if (error) {
-    EMSG2(_("connection failed: %s"), error);
+    semsg(_("connection failed: %s"), error);
   }
 
   rettv->vval.v_number = (varnumber_T)id;
@@ -10066,7 +10066,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
                                   : N_("uniq() argument"));
 
   if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
+    semsg(_(e_listarg), sort ? "sort()" : "uniq()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
     if (var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
@@ -10106,7 +10106,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         } else if (argvars[1].v_type != VAR_NUMBER) {
           info.item_compare_func = tv_get_string(&argvars[1]);
         } else if (i != 0) {
-          EMSG(_(e_invarg));
+          emsg(_(e_invarg));
           goto theend;
         }
         if (info.item_compare_func != NULL) {
@@ -10135,7 +10135,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       if (argvars[2].v_type != VAR_UNKNOWN) {
         // optional third argument: {dict}
         if (argvars[2].v_type != VAR_DICT) {
-          EMSG(_(e_dictreq));
+          emsg(_(e_dictreq));
           goto theend;
         }
         info.item_compare_selfdict = argvars[2].vval.v_dict;
@@ -10154,7 +10154,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
                          : item_compare2_not_keeping_zero),
                         &info.item_compare_func_err);
       if (info.item_compare_func_err) {
-        EMSG(_("E702: Sort compare function failed"));
+        emsg(_("E702: Sort compare function failed"));
       }
     } else {
       ListSorter item_compare_func_ptr;
@@ -10174,7 +10174,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
           if (info.item_compare_func_err) {  // -V547
-            EMSG(_("E882: Uniq compare function failed"));
+            emsg(_("E882: Uniq compare function failed"));
             break;
           }
           li = tv_list_item_remove(l, li);
@@ -10202,7 +10202,7 @@ static void f_sort(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -10223,7 +10223,7 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *error;
   uint64_t id = channel_from_stdio(rpc, on_stdin, &error);
   if (!id) {
-    EMSG2(e_stdiochan2, error);
+    semsg(e_stdiochan2, error);
   }
 
 
@@ -10276,7 +10276,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (*curwin->w_s->b_p_spl == NUL) {
-    EMSG(_(e_no_spell));
+    emsg(_(e_no_spell));
     curwin->w_p_spell = wo_spell_save;
     return;
   }
@@ -10338,7 +10338,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (*curwin->w_s->b_p_spl == NUL) {
-    EMSG(_(e_no_spell));
+    emsg(_(e_no_spell));
     curwin->w_p_spell = wo_spell_save;
     return;
   }
@@ -10474,7 +10474,7 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else if (strequal(p, "data_dirs")) {
     get_xdg_var_list(kXDGDataDirs, rettv);
   } else {
-    EMSG2(_("E6100: \"%s\" is not a valid stdpath"), p);
+    semsg(_("E6100: \"%s\" is not a valid stdpath"), p);
   }
 }
 
@@ -10517,7 +10517,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type != VAR_UNKNOWN) {
     base = tv_get_number(&argvars[1]);
     if (base != 2 && base != 8 && base != 10 && base != 16) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
     if (argvars[2].v_type != VAR_UNKNOWN && tv_get_number(&argvars[2])) {
@@ -10697,7 +10697,7 @@ static void f_strchars(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     skipcc = tv_get_number_chk(&argvars[1], NULL);
   }
   if (skipcc < 0 || skipcc > 1) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else {
     func_mb_ptr2char_adv = skipcc ? mb_ptr2char_adv : mb_cptr2char_adv;
     while (*s != NUL) {
@@ -10933,7 +10933,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (no < 0 || no >= NSUBEXP) {
-    emsgf(_("E935: invalid submatch number: %d"), no);
+    semsg(_("E935: invalid submatch number: %d"), no);
     return;
   }
   int retList = 0;
@@ -11235,7 +11235,7 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
              ? tabpage_index(lastused_tabpage)
              : nr;
       } else {
-        EMSG2(_(e_invexpr2), arg);
+        semsg(_(e_invexpr2), arg);
       }
     }
   } else {
@@ -11293,7 +11293,7 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
     }
 
     if (invalid_arg) {
-      EMSG2(_(e_invexpr2), arg);
+      semsg(_(e_invexpr2), arg);
       nr = 0;
     }
   }
@@ -11385,7 +11385,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (curbuf->b_changed) {
-    EMSG(_("Can only call this function in an unmodified buffer"));
+    emsg(_("Can only call this function in an unmodified buffer"));
     return;
   }
 
@@ -11399,7 +11399,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
     // Wrong argument type
-    EMSG2(_(e_invarg2), "expected dictionary");
+    semsg(_(e_invarg2), "expected dictionary");
     shell_free_argv(argv);
     return;
   }
@@ -11422,7 +11422,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       cwd = new_cwd;
       // The new cwd must be a directory.
       if (!os_isdir_executable(cwd)) {
-        EMSG2(_(e_invarg2), "expected valid directory");
+        semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
       }
@@ -11430,7 +11430,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     job_env = tv_dict_find(job_opts, S_LEN("env"));
     if (job_env && job_env->di_tv.v_type != VAR_DICT) {
-      EMSG2(_(e_invarg2), "env");
+      semsg(_(e_invarg2), "env");
       shell_free_argv(argv);
       return;
     }
@@ -11513,7 +11513,7 @@ static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_NUMBER) {
-      EMSG(_(e_number_exp));
+      emsg(_(e_number_exp));
       return;
     }
     tv_list_alloc_ret(rettv, 1);
@@ -11530,7 +11530,7 @@ static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG(_(e_number_exp));
+    emsg(_(e_number_exp));
     return;
   }
   int paused = (bool)tv_get_number(&argvars[1]);
@@ -11557,7 +11557,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT
         || (dict = argvars[2].vval.v_dict) == NULL) {
-      EMSG2(_(e_invarg2), tv_get_string(&argvars[2]));
+      semsg(_(e_invarg2), tv_get_string(&argvars[2]));
       return;
     }
     dictitem_T *const di = tv_dict_find(dict, S_LEN("repeat"));
@@ -11582,7 +11582,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG(_(e_number_exp));
+    emsg(_(e_number_exp));
     return;
   }
 
@@ -11696,7 +11696,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = ga.ga_data;
   return;
 error:
-  EMSG2(_(e_invarg2), fromstr);
+  semsg(_(e_invarg2), fromstr);
   ga_clear(&ga);
   return;
 }
@@ -11730,7 +11730,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
       }
       if (dir < 0 || dir > 2) {
-        emsgf(_(e_invarg2), tv_get_string(&argvars[2]));
+        semsg(_(e_invarg2), tv_get_string(&argvars[2]));
         return;
       }
     }
@@ -12090,7 +12090,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_DICT
       || (dict = argvars[0].vval.v_dict) == NULL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
   } else {
     dictitem_T *di;
     if ((di = tv_dict_find(dict, S_LEN("lnum"))) != NULL) {
@@ -12197,7 +12197,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_BLOB) {
-    EMSG2(_(e_invarg2),
+    semsg(_(e_invarg2),
           _("writefile() first argument must be a List or a Blob"));
     return;
   }
@@ -12222,7 +12222,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         do_fsync = false; break;
       default:
         // Using %s, p and not %c, *p to preserve multibyte characters
-        emsgf(_("E5060: Unknown flag: %s"), p);
+        semsg(_("E5060: Unknown flag: %s"), p);
         return;
       }
     }
@@ -12236,11 +12236,11 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FileDescriptor fp;
   int error;
   if (*fname == NUL) {
-    EMSG(_("E482: Can't open file with an empty name"));
+    emsg(_("E482: Can't open file with an empty name"));
   } else if ((error = file_open(&fp, fname,
                                 ((append ? kFileAppend : kFileTruncate)
                                  | kFileCreate), 0666)) != 0) {
-    emsgf(_("E482: Can't open file %s for writing: %s"),
+    semsg(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
   } else {
     bool write_ok;
@@ -12253,7 +12253,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_number = 0;
     }
     if ((error = file_close(&fp, do_fsync)) != 0) {
-      emsgf(_("E80: Error when closing file %s: %s"),
+      semsg(_("E80: Error when closing file %s: %s"),
             fname, os_strerror(error));
     }
   }

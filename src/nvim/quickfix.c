@@ -345,23 +345,19 @@ static struct fmtpattern {
 /// pattern specifier is supplied in "efmpat".  The converted pattern is stored
 /// in "regpat".  Returns a pointer to the location after the pattern.
 static char_u *efmpat_to_regpat(const char_u *efmpat, char_u *regpat, efm_T *efminfo, int idx,
-                                int round, char_u *errmsg, size_t errmsglen)
+                                int round)
   FUNC_ATTR_NONNULL_ALL
 {
   if (efminfo->addr[idx]) {
     // Each errorformat pattern can occur only once
-    snprintf((char *)errmsg, errmsglen,
-             _("E372: Too many %%%c in format string"), *efmpat);
-    EMSG(errmsg);
+    semsg(_("E372: Too many %%%c in format string"), *efmpat);
     return NULL;
   }
   if ((idx && idx < 6
        && vim_strchr((char_u *)"DXOPQ", efminfo->prefix) != NULL)
       || (idx == 6
           && vim_strchr((char_u *)"OPQ", efminfo->prefix) == NULL)) {
-    snprintf((char *)errmsg, errmsglen,
-             _("E373: Unexpected %%%c in format string"), *efmpat);
-    EMSG(errmsg);
+    semsg(_("E373: Unexpected %%%c in format string"), *efmpat);
     return NULL;
   }
   efminfo->addr[idx] = (char_u)++ round;
@@ -405,8 +401,7 @@ static char_u *efmpat_to_regpat(const char_u *efmpat, char_u *regpat, efm_T *efm
 
 /// Convert a scanf like format in 'errorformat' to a regular expression.
 /// Returns a pointer to the location after the pattern.
-static char_u *scanf_fmt_to_regpat(const char_u **pefmp, const char_u *efm, int len, char_u *regpat,
-                                   char_u *errmsg, size_t errmsglen)
+static char_u *scanf_fmt_to_regpat(const char_u **pefmp, const char_u *efm, int len, char_u *regpat)
   FUNC_ATTR_NONNULL_ALL
 {
   const char_u *efmp = *pefmp;
@@ -421,7 +416,7 @@ static char_u *scanf_fmt_to_regpat(const char_u **pefmp, const char_u *efm, int 
         while (efmp < efm + len && (*regpat++ = *++efmp) != ']') {
         }
         if (efmp == efm + len) {
-          EMSG(_("E374: Missing ] in format string"));
+          emsg(_("E374: Missing ] in format string"));
           return NULL;
         }
       }
@@ -431,10 +426,7 @@ static char_u *scanf_fmt_to_regpat(const char_u **pefmp, const char_u *efm, int 
     *regpat++ = '\\';
     *regpat++ = '+';
   } else {
-    // TODO(vim): scanf()-like: %*ud, %*3c, %*f, ... ?
-    snprintf((char *)errmsg, errmsglen,
-             _("E375: Unsupported %%%c in format string"), *efmp);
-    EMSG(errmsg);
+    semsg(_("E375: Unsupported %%%c in format string"), *efmp);
     return NULL;
   }
 
@@ -444,8 +436,7 @@ static char_u *scanf_fmt_to_regpat(const char_u **pefmp, const char_u *efm, int 
 }
 
 /// Analyze/parse an errorformat prefix.
-static const char_u *efm_analyze_prefix(const char_u *efmp, efm_T *efminfo, char_u *errmsg,
-                                        size_t errmsglen)
+static const char_u *efm_analyze_prefix(const char_u *efmp, efm_T *efminfo)
   FUNC_ATTR_NONNULL_ALL
 {
   if (vim_strchr((char_u *)"+-", *efmp) != NULL) {
@@ -454,9 +445,7 @@ static const char_u *efm_analyze_prefix(const char_u *efmp, efm_T *efminfo, char
   if (vim_strchr((char_u *)"DXAEWINCZGOPQ", *efmp) != NULL) {
     efminfo->prefix = *efmp;
   } else {
-    snprintf((char *)errmsg, errmsglen,
-             _("E376: Invalid %%%c in format string prefix"), *efmp);
-    EMSG(errmsg);
+    semsg(_("E376: Invalid %%%c in format string prefix"), *efmp);
     return NULL;
   }
 
@@ -465,8 +454,7 @@ static const char_u *efm_analyze_prefix(const char_u *efmp, efm_T *efminfo, char
 
 
 // Converts a 'errorformat' string to regular expression pattern
-static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr, char_u *regpat, char_u *errmsg,
-                         size_t errmsglen)
+static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr, char_u *regpat)
   FUNC_ATTR_NONNULL_ALL
 {
   // Build regexp pattern from current 'errorformat' option
@@ -483,15 +471,14 @@ static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr, char_u *reg
         }
       }
       if (idx < FMT_PATTERNS) {
-        ptr = efmpat_to_regpat(efmp, ptr, fmt_ptr, idx, round, errmsg,
-                               errmsglen);
+        ptr = efmpat_to_regpat(efmp, ptr, fmt_ptr, idx, round);
         if (ptr == NULL) {
           return FAIL;
         }
         round++;
       } else if (*efmp == '*') {
         efmp++;
-        ptr = scanf_fmt_to_regpat(&efmp, efm, len, ptr, errmsg, errmsglen);
+        ptr = scanf_fmt_to_regpat(&efmp, efm, len, ptr);
         if (ptr == NULL) {
           return FAIL;
         }
@@ -504,14 +491,12 @@ static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr, char_u *reg
       } else if (efmp == efm + 1) {             // analyse prefix
         // prefix is allowed only at the beginning of the errorformat
         // option part
-        efmp = efm_analyze_prefix(efmp, fmt_ptr, errmsg, errmsglen);
+        efmp = efm_analyze_prefix(efmp, fmt_ptr);
         if (efmp == NULL) {
           return FAIL;
         }
       } else {
-        snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                 _("E377: Invalid %%%c in format string"), *efmp);
-        EMSG(errmsg);
+        semsg(_("E377: Invalid %%%c in format string"), *efmp);
         return FAIL;
       }
     } else {                    // copy normal character
@@ -590,9 +575,6 @@ static efm_T *parse_efm_option(char_u *efm)
   efm_T *fmt_last = NULL;
   int len;
 
-  size_t errmsglen = CMDBUFFSIZE + 1;
-  char_u *errmsg = xmalloc(errmsglen);
-
   // Get some space to modify the format string into.
   size_t sz = efm_regpat_bufsz(efm);
   char_u *fmtstr = xmalloc(sz);
@@ -610,7 +592,7 @@ static efm_T *parse_efm_option(char_u *efm)
     // Isolate one part in the 'errorformat' option
     len = efm_option_part_len(efm);
 
-    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr, errmsg, errmsglen) == FAIL) {
+    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr) == FAIL) {
       goto parse_efm_error;
     }
     if ((fmt_ptr->prog = vim_regcomp(fmtstr, RE_MAGIC + RE_STRING)) == NULL) {
@@ -621,7 +603,7 @@ static efm_T *parse_efm_option(char_u *efm)
   }
 
   if (fmt_first == NULL) {      // nothing found
-    EMSG(_("E378: 'errorformat' contains no pattern"));
+    emsg(_("E378: 'errorformat' contains no pattern"));
   }
 
   goto parse_efm_end;
@@ -631,7 +613,6 @@ parse_efm_error:
 
 parse_efm_end:
   xfree(fmtstr);
-  xfree(errmsg);
 
   return fmt_first;
 }
@@ -1026,7 +1007,7 @@ static int qf_setup_state(qfstate_T *pstate, char_u *restrict enc, const char_u 
 
   if (efile != NULL
       && (pstate->fd = os_fopen((const char *)efile, "r")) == NULL) {
-    EMSG2(_(e_openerrf), efile);
+    semsg(_(e_openerrf), efile);
     return FAIL;
   }
 
@@ -1170,7 +1151,7 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char_u *restrict efile, 
     retval = qfl->qf_count;
     goto qf_init_end;
   }
-  EMSG(_(e_readerrf));
+  emsg(_(e_readerrf));
 error2:
   if (!adding) {
     // Error when creating a new list. Free the new list
@@ -1563,7 +1544,7 @@ static int qf_parse_dir_pfx(int idx, qffields_T *fields, qf_list_T *qfl)
 {
   if (idx == 'D') {  // enter directory
     if (*fields->namebuf == NUL) {
-      EMSG(_("E379: Missing or empty directory name"));
+      emsg(_("E379: Missing or empty directory name"));
       return QF_FAIL;
     }
     qfl->qf_directory = qf_push_dir(fields->namebuf, &qfl->qf_dir_stack, false);
@@ -1747,7 +1728,7 @@ static void decr_quickfix_busy(void)
   }
 #ifdef ABORT_ON_INTERNAL_ERROR
   if (quickfix_busy < 0) {
-    EMSG("quickfix_busy has become negative");
+    emsg("quickfix_busy has become negative");
     abort();
   }
 #endif
@@ -1757,7 +1738,7 @@ static void decr_quickfix_busy(void)
 void check_quickfix_busy(void)
 {
   if (quickfix_busy != 0) {
-    EMSGN("quickfix_busy not zero on exit: %" PRId64, (int64_t)quickfix_busy);
+    semsg("quickfix_busy not zero on exit: %" PRId64, (int64_t)quickfix_busy);
 # ifdef ABORT_ON_INTERNAL_ERROR
     abort();
 # endif
@@ -1893,7 +1874,7 @@ static qf_info_T *qf_cmd_get_stack(exarg_T *eap, int print_emsg)
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       if (print_emsg) {
-        EMSG(_(e_loclist));
+        emsg(_(e_loclist));
       }
       return NULL;
     }
@@ -2360,7 +2341,7 @@ static qfline_T *get_nth_valid_entry(qf_list_T *qfl, int errornr, int dir, int *
       qf_ptr = prev_qf_ptr;
       qf_idx = prev_index;
       if (err != NULL) {
-        EMSG(_(err));
+        emsg(_(err));
         return NULL;
       }
       break;
@@ -2721,13 +2702,13 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, win
   // If a location list, check whether the associated window is still
   // present.
   if (qfl_type == QFLT_LOCATION && !win_valid_any_tab(oldwin)) {
-    EMSG(_("E924: Current window was closed"));
+    emsg(_("E924: Current window was closed"));
     *opened_window = false;
     return NOTDONE;
   }
 
   if (qfl_type == QFLT_QUICKFIX && !qflist_valid(NULL, save_qfid)) {
-    EMSG(_(e_current_quickfix_list_was_changed));
+    emsg(_(e_current_quickfix_list_was_changed));
     return NOTDONE;
   }
 
@@ -2735,9 +2716,9 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, win
       || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
-      EMSG(_(e_current_quickfix_list_was_changed));
+      emsg(_(e_current_quickfix_list_was_changed));
     } else {
-      EMSG(_(e_current_location_list_was_changed));
+      emsg(_(e_current_location_list_was_changed));
     }
     return NOTDONE;
   }
@@ -2809,7 +2790,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(IObuff, 0, true, false);
+  msg_attr_keep((char *)IObuff, 0, true, false);
   msg_scroll = (int)i;
 }
 
@@ -2836,9 +2817,9 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
       || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
-      EMSG(_(e_current_quickfix_list_was_changed));
+      emsg(_(e_current_quickfix_list_was_changed));
     } else {
-      EMSG(_(e_current_location_list_was_changed));
+      emsg(_(e_current_location_list_was_changed));
     }
     return FAIL;
   }
@@ -2861,9 +2842,9 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
       || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
-      EMSG(_(e_current_quickfix_list_was_changed));
+      emsg(_(e_current_quickfix_list_was_changed));
     } else {
-      EMSG(_(e_current_location_list_was_changed));
+      emsg(_(e_current_location_list_was_changed));
     }
     return FAIL;
   }
@@ -2950,7 +2931,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
   }
 
   if (qf_stack_empty(qi) || qf_list_empty(qf_get_curlist(qi))) {
-    EMSG(_(e_quickfix));
+    emsg(_(e_quickfix));
     return;
   }
 
@@ -3123,7 +3104,7 @@ void qf_list(exarg_T *eap)
   }
 
   if (qf_stack_empty(qi) || qf_list_empty(qf_get_curlist(qi))) {
-    EMSG(_(e_quickfix));
+    emsg(_(e_quickfix));
     return;
   }
 
@@ -3133,7 +3114,7 @@ void qf_list(exarg_T *eap)
     plus = true;
   }
   if (!get_list_range(&arg, &idx1, &idx2) || *arg != NUL) {
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
     return;
   }
   qfl = qf_get_curlist(qi);
@@ -3253,7 +3234,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     xstrlcat((char *)buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
-  msg(buf);
+  msg((char *)buf);
 }
 
 /// ":colder [count]": Up in the quickfix stack.
@@ -3278,13 +3259,13 @@ void qf_age(exarg_T *eap)
   while (count--) {
     if (eap->cmdidx == CMD_colder || eap->cmdidx == CMD_lolder) {
       if (qi->qf_curlist == 0) {
-        EMSG(_("E380: At bottom of quickfix stack"));
+        emsg(_("E380: At bottom of quickfix stack"));
         break;
       }
       --qi->qf_curlist;
     } else {
       if (qi->qf_curlist >= qi->qf_listcount - 1) {
-        EMSG(_("E381: At top of quickfix stack"));
+        emsg(_("E381: At top of quickfix stack"));
         break;
       }
       ++qi->qf_curlist;
@@ -3302,7 +3283,7 @@ void qf_history(exarg_T *eap)
 
   if (eap->addr_count > 0) {
     if (qi == NULL) {
-      EMSG(_(e_loclist));
+      emsg(_(e_loclist));
       return;
     }
 
@@ -3312,14 +3293,14 @@ void qf_history(exarg_T *eap)
       qf_msg(qi, qi->qf_curlist, "");
       qf_update_buffer(qi, NULL);
     } else {
-      EMSG(_(e_invrange));
+      emsg(_(e_invrange));
     }
 
     return;
   }
 
   if (qf_stack_empty(qi)) {
-    MSG(_("No entries"));
+    msg(_("No entries"));
   } else {
     for (i = 0; i < qi->qf_listcount; i++) {
       qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");
@@ -3488,7 +3469,7 @@ void qf_view_result(bool split)
     qi = GET_LOC_LIST(curwin);
   }
   if (qf_list_empty(qf_get_curlist(qi))) {
-    EMSG(_(e_quickfix));
+    emsg(_(e_quickfix));
     return;
   }
 
@@ -4292,7 +4273,7 @@ static char *make_get_fullcmd(const char_u *makecmd, const char_u *fname)
     msg_didout = false;
   }
   msg_start();
-  MSG_PUTS(":!");
+  msg_puts(":!");
   msg_outtrans((char_u *)cmd);  // show what we are doing
 
   return cmd;
@@ -4383,7 +4364,7 @@ static char_u *get_mef_name(void)
   if (*p_mef == NUL) {
     name = vim_tempname();
     if (name == NULL) {
-      EMSG(_(e_notmp));
+      emsg(_(e_notmp));
     }
     return name;
   }
@@ -4957,7 +4938,7 @@ void ex_cbelow(exarg_T *eap)
   int buf_has_flag;
 
   if (eap->addr_count > 0 && eap->line2 <= 0) {
-    EMSG(_(e_invrange));
+    emsg(_(e_invrange));
     return;
   }
 
@@ -4969,7 +4950,7 @@ void ex_cbelow(exarg_T *eap)
     buf_has_flag = BUF_HAS_LL_ENTRY;
   }
   if (!(curbuf->b_has_qf_entry & buf_has_flag)) {
-    EMSG(_(e_quickfix));
+    emsg(_(e_quickfix));
     return;
   }
 
@@ -4980,7 +4961,7 @@ void ex_cbelow(exarg_T *eap)
   qfl = qf_get_curlist(qi);
   // check if the list has valid errors
   if (!qf_list_has_valid_entries(qfl)) {
-    EMSG(_(e_quickfix));
+    emsg(_(e_quickfix));
     return;
   }
 
@@ -5011,7 +4992,7 @@ void ex_cbelow(exarg_T *eap)
   if (errornr > 0) {
     qf_jump(qi, 0, errornr, false);
   } else {
-    EMSG(_(e_no_more_items));
+    emsg(_(e_no_more_items));
   }
 }
 
@@ -5135,7 +5116,7 @@ static void vgr_init_regmatch(regmmatch_T *regmatch, char_u *s)
   if (s == NULL || *s == NUL) {
     // Pattern is empty, use last search pattern.
     if (last_search_pat() == NULL) {
-      EMSG(_(e_noprevre));
+      emsg(_(e_noprevre));
       return;
     }
     regmatch->regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
@@ -5195,7 +5176,7 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid, char_u *ti
   if (!qflist_valid(wp, qfid)) {
     if (wp != NULL) {
       // An autocmd has freed the location list
-      EMSG(_(e_current_location_list_was_changed));
+      emsg(_(e_current_location_list_was_changed));
       return false;
     } else {
       // Quickfix list is not found, create a new one.
@@ -5354,7 +5335,7 @@ void ex_vimgrep(exarg_T *eap)
   char_u *title = vim_strsave(qf_cmdtitle(*eap->cmdlinep));
   p = skip_vimgrep_pat(eap->arg, &s, &flags);
   if (p == NULL) {
-    EMSG(_(e_invalpat));
+    emsg(_(e_invalpat));
     goto theend;
   }
 
@@ -5365,7 +5346,7 @@ void ex_vimgrep(exarg_T *eap)
 
   p = skipwhite(p);
   if (*p == NUL) {
-    EMSG(_("E683: File name missing or invalid pattern"));
+    emsg(_("E683: File name missing or invalid pattern"));
     goto theend;
   }
 
@@ -5381,7 +5362,7 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
   if (fcount == 0) {
-    EMSG(_(e_nomatch));
+    emsg(_(e_nomatch));
     goto theend;
   }
 
@@ -5527,7 +5508,7 @@ void ex_vimgrep(exarg_T *eap)
                         target_dir);
     }
   } else {
-    EMSG2(_(e_nomatch2), s);
+    semsg(_(e_nomatch2), s);
   }
 
   decr_quickfix_busy();
@@ -6251,7 +6232,7 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
   if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
     if (!did_bufnr_emsg) {
       did_bufnr_emsg = true;
-      EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
+      semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)bufnum);
     }
     valid = false;
     bufnum = 0;
@@ -6659,7 +6640,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title, dict_T *wh
 
   // A dict argument cannot be specified with a non-empty list argument
   if (list != NULL && tv_list_len(list) != 0 && what != NULL) {
-    EMSG2(_(e_invarg2), _("cannot have both a list and a \"what\" argument"));
+    semsg(_(e_invarg2), _("cannot have both a list and a \"what\" argument"));
     return FAIL;
   }
 
@@ -6760,12 +6741,12 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
   }
 
   if (buf == NULL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return FAIL;
   }
 
   if (buf->b_ml.ml_mfp == NULL) {
-    EMSG(_("E681: Buffer is not loaded"));
+    emsg(_("E681: Buffer is not loaded"));
     return FAIL;
   }
 
@@ -6776,7 +6757,7 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
 
   if (eap->line1 < 1 || eap->line1 > buf->b_ml.ml_line_count
       || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count) {
-    EMSG(_(e_invrange));
+    emsg(_(e_invrange));
     return FAIL;
   }
 
@@ -6936,7 +6917,7 @@ void ex_cexpr(exarg_T *eap)
       }
       decr_quickfix_busy();
     } else {
-      EMSG(_("E777: String or List expected"));
+      emsg(_("E777: String or List expected"));
     }
 cleanup:
     tv_clear(&tv);
@@ -7149,7 +7130,7 @@ void ex_helpgrep(exarg_T *eap)
   if (!qf_list_empty(qf_get_curlist(qi))) {
     qf_jump(qi, 0, 0, false);
   } else {
-    EMSG2(_(e_nomatch2), eap->arg);
+    semsg(_(e_nomatch2), eap->arg);
   }
 
   decr_quickfix_busy();

@@ -62,7 +62,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   LuaTableProps ret;
   memset(&ret, 0, sizeof(ret));
   if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
-    emsgf(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 2);
+    semsg(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 2);
     ret.type = kObjectTypeNil;
     return ret;
   }
@@ -198,7 +198,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
   kvi_push(stack, ((TVPopStackItem) { ret_tv, false, false, 0 }));
   while (ret && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
-      emsgf(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
+      semsg(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
       ret = false;
       break;
     }
@@ -376,7 +376,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         cur.tv->vval.v_float = (float_T)table_props.val;
         break;
       case kObjectTypeNil:
-        EMSG(_("E5100: Cannot convert given lua table: table "
+        emsg(_("E5100: Cannot convert given lua table: table "
                "should either have a sequence of positive integer keys "
                "or contain only string keys"));
         ret = false;
@@ -408,13 +408,13 @@ nlua_pop_typval_table_processing_end:
         cur.tv->v_type = VAR_SPECIAL;
         cur.tv->vval.v_special = kSpecialVarNull;
       } else {
-        EMSG(_("E5101: Cannot convert given lua type"));
+        emsg(_("E5101: Cannot convert given lua type"));
         ret = false;
       }
       break;
     }
     default:
-      EMSG(_("E5101: Cannot convert given lua type"));
+      emsg(_("E5101: Cannot convert given lua type"));
       ret = false;
       break;
     }
@@ -503,7 +503,7 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
   do { \
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
-      emsgf(_("E5102: Lua failed to grow stack to %i"), \
+      semsg(_("E5102: Lua failed to grow stack to %i"), \
             lua_gettop(lstate) + 3); \
       return false; \
     } \
@@ -526,7 +526,7 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
   do { \
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
-      emsgf(_("E5102: Lua failed to grow stack to %i"), \
+      semsg(_("E5102: Lua failed to grow stack to %i"), \
             lua_gettop(lstate) + 3); \
       return false; \
     } \
@@ -614,7 +614,7 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
   const int initial_size = lua_gettop(lstate);
 
   if (!lua_checkstack(lstate, initial_size + 2)) {
-    emsgf(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
+    semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;
   }
   if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {

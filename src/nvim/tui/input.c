@@ -151,7 +151,7 @@ static void tinput_paste_event(void **argv)
   Error err = ERROR_INIT;
   nvim_paste(keys, true, phase, &err);
   if (ERROR_SET(&err)) {
-    emsgf("paste: %s", err.msg);
+    semsg("paste: %s", err.msg);
     api_clear_error(&err);
   }
 

@@ -361,7 +361,7 @@ typedef struct {
 typedef struct {
   /// When AST is not correct this message will be printed.
   ///
-  /// Uses `emsgf(msg, arg_len, arg);`, `msg` is assumed to contain only `%.*s`.
+  /// Uses `semsg(msg, arg_len, arg);`, `msg` is assumed to contain only `%.*s`.
   ExprASTError err;
   /// Root node of the AST.
   ExprASTNode *root;

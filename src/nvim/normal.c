@@ -2170,7 +2170,7 @@ static void op_function(const oparg_T *oap)
   const bool save_finish_op = finish_op;
 
   if (*p_opfunc == NUL) {
-    EMSG(_("E774: 'operatorfunc' is empty"));
+    emsg(_("E774: 'operatorfunc' is empty"));
   } else {
     // Set '[ and '] marks to text to be operated on.
     curbuf->b_op_start = oap->start;
@@ -3225,9 +3225,9 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **te
   if (ptr[col] == NUL || (i == 0 && this_class != 2)) {
     // Didn't find an identifier or text.
     if (find_type & FIND_STRING) {
-      EMSG(_("E348: No string under cursor"));
+      emsg(_("E348: No string under cursor"));
     } else {
-      EMSG(_(e_noident));
+      emsg(_(e_noident));
     }
     return 0;
   }
@@ -4546,7 +4546,7 @@ dozet:
     } else if (foldmethodIsMarker(curwin)) {
       deleteFold(curwin, (linenr_T)1, curbuf->b_ml.ml_line_count, true, false);
     } else {
-      EMSG(_("E352: Cannot erase folds with current 'foldmethod'"));
+      emsg(_("E352: Cannot erase folds with current 'foldmethod'"));
     }
     break;
 
@@ -5010,7 +5010,7 @@ static void nv_ident(cmdarg_T *cap)
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
   bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
   if (kp_help && *skipwhite(ptr) == NUL) {
-    EMSG(_(e_noident));   // found white space only
+    emsg(_(e_noident));   // found white space only
     return;
   }
   size_t buf_size = n * 2 + 30 + STRLEN(kp);
@@ -5052,7 +5052,7 @@ static void nv_ident(cmdarg_T *cap)
         --n;
       }
       if (n == 0) {
-        EMSG(_(e_noident));              // found dashes only
+        emsg(_(e_noident));              // found dashes only
         xfree(buf);
         return;
       }
@@ -6348,7 +6348,7 @@ static void nv_Replace(cmdarg_T *cap)
     nv_operator(cap);
   } else if (!checkclearopq(cap->oap)) {
     if (!MODIFIABLE(curbuf)) {
-      EMSG(_(e_modifiable));
+      emsg(_(e_modifiable));
     } else {
       if (virtual_active()) {
         coladvance(getviscol());
@@ -6369,7 +6369,7 @@ static void nv_vreplace(cmdarg_T *cap)
     nv_replace(cap);            // Do same as "r" in Visual mode for now
   } else if (!checkclearopq(cap->oap)) {
     if (!MODIFIABLE(curbuf)) {
-      EMSG(_(e_modifiable));
+      emsg(_(e_modifiable));
     } else {
       if (cap->extra_char == Ctrl_V) {          // get another character
         cap->extra_char = get_literal();
@@ -6614,11 +6614,11 @@ static void nv_pcmark(cmdarg_T *cap)
       nv_cursormark(cap, false, pos);
     } else if (cap->cmdchar == 'g') {
       if (curbuf->b_changelistlen == 0) {
-        EMSG(_("E664: changelist is empty"));
+        emsg(_("E664: changelist is empty"));
       } else if (cap->count1 < 0) {
-        EMSG(_("E662: At start of changelist"));
+        emsg(_("E662: At start of changelist"));
       } else {
-        EMSG(_("E663: At end of changelist"));
+        emsg(_("E663: At end of changelist"));
       }
     } else {
       clearopbeep(cap->oap);
@@ -7848,10 +7848,10 @@ static void nv_esc(cmdarg_T *cap)
         && !VIsual_active
         && no_reason) {
       if (anyBufIsChanged()) {
-        MSG(_("Type  :qa!  and press <Enter> to abandon all changes"
+        msg(_("Type  :qa!  and press <Enter> to abandon all changes"
               " and exit Nvim"));
       } else {
-        MSG(_("Type  :qa  and press <Enter> to exit Nvim"));
+        msg(_("Type  :qa  and press <Enter> to exit Nvim"));
       }
     }
 
@@ -7925,7 +7925,7 @@ static void nv_edit(cmdarg_T *cap)
     nv_object(cap);
   } else if (!curbuf->b_p_ma && !p_im && !curbuf->terminal) {
     // Only give this error when 'insertmode' is off.
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     clearop(cap->oap);
   } else if (!checkclearopq(cap->oap)) {
     switch (cap->cmdchar) {

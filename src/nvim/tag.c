@@ -178,7 +178,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
   static int flags;
 
   if (tfu_in_use) {
-    EMSG(_(recurmsg));
+    emsg(_(recurmsg));
     return false;
   }
 
@@ -271,14 +271,14 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           g_do_tagpreview != 0 ? ptag_entry.tagname == NULL :
           tagstacklen == 0) {
         // empty stack
-        EMSG(_(e_tagstack));
+        emsg(_(e_tagstack));
         goto end_do_tag;
       }
 
       if (type == DT_POP) {             // go to older position
         const bool old_KeyTyped = KeyTyped;
         if ((tagstackidx -= count) < 0) {
-          EMSG(_(bottommsg));
+          emsg(_(bottommsg));
           if (tagstackidx + count == 0) {
             // We did [num]^T from the bottom of the stack
             tagstackidx = 0;
@@ -288,7 +288,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           // way to the bottom now.
           tagstackidx = 0;
         } else if (tagstackidx >= tagstacklen) {        // count == 0?
-          EMSG(_(topmsg));
+          emsg(_(topmsg));
           goto end_do_tag;
         }
 
@@ -342,10 +342,10 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
              * position.
              */
             tagstackidx = tagstacklen - 1;
-            EMSG(_(topmsg));
+            emsg(_(topmsg));
             save_pos = false;
           } else if (tagstackidx < 0) {         // must have been count == 0
-            EMSG(_(bottommsg));
+            emsg(_(bottommsg));
             tagstackidx = 0;
             goto end_do_tag;
           }
@@ -383,7 +383,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         if (cur_match >= MAXCOL) {
           cur_match = MAXCOL - 1;
         } else if (cur_match < 0) {
-          EMSG(_("E425: Cannot go before first matching tag"));
+          emsg(_("E425: Cannot go before first matching tag"));
           skip_msg = true;
           cur_match = 0;
           cur_fnum = curbuf->b_fnum;
@@ -519,7 +519,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
 
     if (num_matches <= 0) {
       if (verbose) {
-        EMSG2(_("E426: tag not found: %s"), name);
+        semsg(_("E426: tag not found: %s"), name);
       }
       g_do_tagpreview = 0;
     } else {
@@ -562,13 +562,13 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
       if (cur_match >= num_matches) {
         // Avoid giving this error when a file wasn't found and we're
         // looking for a match in another file, which wasn't found.
-        // There will be an EMSG("file doesn't exist") below then.
+        // There will be an emsg("file doesn't exist") below then.
         if ((type == DT_NEXT || type == DT_FIRST)
             && nofile_fname == NULL) {
           if (num_matches == 1) {
-            EMSG(_("E427: There is only one matching tag"));
+            emsg(_("E427: There is only one matching tag"));
           } else {
-            EMSG(_("E428: Cannot go beyond last matching tag"));
+            emsg(_("E428: Cannot go beyond last matching tag"));
           }
           skip_msg = true;
         }
@@ -596,7 +596,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
 
       /*
        * Only when going to try the next match, report that the previous
-       * file didn't exist.  Otherwise an EMSG() is given below.
+       * file didn't exist.  Otherwise an emsg() is given below.
        */
       if (nofile_fname != NULL && error_cur_match != cur_match) {
         smsg(_("File \"%s\" does not exist"), nofile_fname);
@@ -621,7 +621,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           if (ic) {
             msg_attr((const char *)IObuff, HL_ATTR(HLF_W));
           } else {
-            msg(IObuff);
+            msg((char *)IObuff);
           }
           msg_scroll = true;  // Don't overwrite this message.
         } else {
@@ -663,7 +663,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           }
           continue;
         }
-        EMSG2(_("E429: File \"%s\" does not exist"), nofile_fname);
+        semsg(_("E429: File \"%s\" does not exist"), nofile_fname);
       } else {
         // We may have jumped to another window, check that
         // tagstackidx is still valid.
@@ -1038,7 +1038,7 @@ void do_tags(exarg_T *eap)
   int tagstacklen = curwin->w_tagstacklen;
 
   // Highlight title
-  MSG_PUTS_TITLE(_("\n  # TO tag         FROM line  in file/text"));
+  msg_puts_title(_("\n  # TO tag         FROM line  in file/text"));
   for (i = 0; i < tagstacklen; ++i) {
     if (tagstack[i].tagname != NULL) {
       name = fm_getname(&(tagstack[i].fmark), 30);
@@ -1061,7 +1061,7 @@ void do_tags(exarg_T *eap)
     ui_flush();                    // show one line at a time
   }
   if (tagstackidx == tagstacklen) {     // idx at top of stack
-    MSG_PUTS("\n>");
+    msg_puts("\n>");
   }
 }
 
@@ -1196,7 +1196,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
   }
   if (rettv.v_type != VAR_LIST || !rettv.vval.v_list) {
     tv_clear(&rettv);
-    EMSG(_(tfu_inv_ret_msg));
+    emsg(_(tfu_inv_ret_msg));
     return FAIL;
   }
   taglist = rettv.vval.v_list;
@@ -1210,7 +1210,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
     int name_only = flags & TAG_NAMES;
 
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT) {
-      EMSG(_(tfu_inv_ret_msg));
+      emsg(_(tfu_inv_ret_msg));
       break;
     }
 
@@ -1256,7 +1256,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
     }
 
     if (!res_name || !res_fname || !res_cmd) {
-      EMSG(_(tfu_inv_ret_msg));
+      emsg(_(tfu_inv_ret_msg));
       break;
     }
 
@@ -2193,9 +2193,9 @@ parse_line:
       }   // forever
 
       if (line_error) {
-        EMSG2(_("E431: Format error in tags file \"%s\""), tag_fname);
+        semsg(_("E431: Format error in tags file \"%s\""), tag_fname);
         if (!use_cscope) {
-          EMSGN(_("Before byte %" PRId64), vim_ftell(fp));
+          semsg(_("Before byte %" PRId64), (int64_t)vim_ftell(fp));
         }
         stop_searching = true;
         line_error = false;
@@ -2210,7 +2210,7 @@ parse_line:
 
       tag_file_sorted = NUL;
       if (sort_error) {
-        EMSG2(_("E432: Tags file not sorted: %s"), tag_fname);
+        semsg(_("E432: Tags file not sorted: %s"), tag_fname);
         sort_error = false;
       }
 
@@ -2244,7 +2244,7 @@ parse_line:
 
   if (!stop_searching) {
     if (!did_open && verbose) {         // never opened any tags file
-      EMSG(_("E433: No tags file"));
+      emsg(_("E433: No tags file"));
     }
     retval = OK;                // It's OK even when no tag found
   }
@@ -2881,7 +2881,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
           *tagp.tagname_end = cc;
         }
         if (found == 0) {
-          EMSG(_("E434: Can't find tag pattern"));
+          emsg(_("E434: Can't find tag pattern"));
           curwin->w_cursor.lnum = save_lnum;
         } else {
           /*
@@ -2889,7 +2889,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
            * is set and match found while ignoring case.
            */
           if (found == 2 || !save_p_ic) {
-            MSG(_("E435: Couldn't find tag, just guessing!"));
+            msg(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
               os_delay(1010L, true);
@@ -3454,13 +3454,13 @@ int set_tagstack(win_T *wp, const dict_T *d, int action)
 
   // not allowed to alter the tag stack entries from inside tagfunc
   if (tfu_in_use) {
-    EMSG(_(recurmsg));
+    emsg(_(recurmsg));
     return FAIL;
   }
 
   if ((di = tv_dict_find(d, "items", -1)) != NULL) {
     if (di->di_tv.v_type != VAR_LIST) {
-      EMSG(_(e_listreq));
+      emsg(_(e_listreq));
       return FAIL;
     }
     l = di->di_tv.vval.v_list;

@@ -144,25 +144,25 @@ static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *e
   }
   ++header_count;
   if (uhp == curbuf->b_u_curhead && ++seen_b_u_curhead > 1) {
-    EMSG("b_u_curhead found twice (looping?)");
+    emsg("b_u_curhead found twice (looping?)");
     return;
   }
   if (uhp == curbuf->b_u_newhead && ++seen_b_u_newhead > 1) {
-    EMSG("b_u_newhead found twice (looping?)");
+    emsg("b_u_newhead found twice (looping?)");
     return;
   }
 
   if (uhp->uh_magic != UH_MAGIC) {
-    EMSG("uh_magic wrong (may be using freed memory)");
+    emsg("uh_magic wrong (may be using freed memory)");
   } else {
     // Check pointers back are correct.
     if (uhp->uh_next.ptr != exp_uh_next) {
-      EMSG("uh_next wrong");
+      emsg("uh_next wrong");
       smsg("expected: 0x%x, actual: 0x%x",
            exp_uh_next, uhp->uh_next.ptr);
     }
     if (uhp->uh_alt_prev.ptr != exp_uh_alt_prev) {
-      EMSG("uh_alt_prev wrong");
+      emsg("uh_alt_prev wrong");
       smsg("expected: 0x%x, actual: 0x%x",
            exp_uh_alt_prev, uhp->uh_alt_prev.ptr);
     }
@@ -170,7 +170,7 @@ static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *e
     // Check the undo tree at this header.
     for (uep = uhp->uh_entry; uep != NULL; uep = uep->ue_next) {
       if (uep->ue_magic != UE_MAGIC) {
-        EMSG("ue_magic wrong (may be using freed memory)");
+        emsg("ue_magic wrong (may be using freed memory)");
         break;
       }
     }
@@ -193,13 +193,13 @@ static void u_check(int newhead_may_be_NULL)
 
   if (seen_b_u_newhead == 0 && curbuf->b_u_oldhead != NULL
       && !(newhead_may_be_NULL && curbuf->b_u_newhead == NULL)) {
-    EMSGN("b_u_newhead invalid: 0x%x", curbuf->b_u_newhead);
+    semsg("b_u_newhead invalid: 0x%x", curbuf->b_u_newhead);
   }
   if (curbuf->b_u_curhead != NULL && seen_b_u_curhead == 0) {
-    EMSGN("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
+    semsg("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
   }
   if (header_count != curbuf->b_u_numhead) {
-    EMSG("b_u_numhead invalid");
+    emsg("b_u_numhead invalid");
     smsg("expected: %" PRId64 ", actual: %" PRId64,
          (int64_t)header_count, (int64_t)curbuf->b_u_numhead);
   }
@@ -283,20 +283,20 @@ bool undo_allowed(buf_T *buf)
 {
   // Don't allow changes when 'modifiable' is off.
   if (!MODIFIABLE(buf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return false;
   }
 
   // In the sandbox it's not allowed to change the text.
   if (sandbox != 0) {
-    EMSG(_(e_sandbox));
+    emsg(_(e_sandbox));
     return false;
   }
 
   // Don't allow changes in the buffer while editing the cmdline.  The
   // caller of getcmdline() may get confused.
   if (textlock != 0) {
-    EMSG(_(e_secure));
+    emsg(_(e_secure));
     return false;
   }
 
@@ -357,7 +357,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
     if (bot > buf->b_ml.ml_line_count + 1) {
       //  This happens when the FileChangedRO autocommand changes the
       //  file in a way it becomes shorter.
-      EMSG(_("E881: Line count changed unexpectedly"));
+      emsg(_("E881: Line count changed unexpectedly"));
       return FAIL;
     }
   }
@@ -721,7 +721,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         int ret;
         char *failed_dir;
         if ((ret = os_mkdir_recurse(dir_name, 0755, &failed_dir)) != 0) {
-          EMSG3(_("E5003: Unable to create directory \"%s\" for undo file: %s"),
+          semsg(_("E5003: Unable to create directory \"%s\" for undo file: %s"),
                 failed_dir, os_strerror(ret));
           xfree(failed_dir);
         } else {
@@ -760,7 +760,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 static void corruption_error(const char *const mesg, const char *const file_name)
   FUNC_ATTR_NONNULL_ALL
 {
-  EMSG3(_("E825: Corrupted undo file (%s): %s"), mesg, file_name);
+  semsg(_("E825: Corrupted undo file (%s): %s"), mesg, file_name);
 }
 
 static void u_free_uhp(u_header_T *uhp)
@@ -1267,7 +1267,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
 
   fd = os_open(file_name, O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
   if (fd < 0) {
-    EMSG2(_(e_not_open), file_name);
+    semsg(_(e_not_open), file_name);
     goto theend;
   }
   (void)os_setperm(file_name, perm);
@@ -1301,7 +1301,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
 
   fp = fdopen(fd, "w");
   if (fp == NULL) {
-    EMSG2(_(e_not_open), file_name);
+    semsg(_(e_not_open), file_name);
     close(fd);
     os_remove(file_name);
     goto theend;
@@ -1357,15 +1357,15 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   }
 #ifdef U_DEBUG
   if (headers_written != buf->b_u_numhead) {
-    EMSGN("Written %" PRId64 " headers, ...", headers_written);
-    EMSGN("... but numhead is %" PRId64, buf->b_u_numhead);
+    semsg("Written %" PRId64 " headers, ...", (int64_t)headers_written);
+    semsg("... but numhead is %" PRId64, (int64_t)buf->b_u_numhead);
   }
 #endif
 
 write_error:
   fclose(fp);
   if (!write_ok) {
-    EMSG2(_("E829: write error in undo file: %s"), file_name);
+    semsg(_("E829: write error in undo file: %s"), file_name);
   }
 
 #ifdef HAVE_ACL
@@ -1434,7 +1434,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
   FILE *fp = os_fopen(file_name, "r");
   if (fp == NULL) {
     if (name != NULL || p_verbose > 0) {
-      EMSG2(_("E822: Cannot open undo file for reading: %s"), file_name);
+      semsg(_("E822: Cannot open undo file for reading: %s"), file_name);
     }
     goto error;
   }
@@ -1447,12 +1447,12 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
   char_u magic_buf[UF_START_MAGIC_LEN];
   if (fread(magic_buf, UF_START_MAGIC_LEN, 1, fp) != 1
       || memcmp(magic_buf, UF_START_MAGIC, UF_START_MAGIC_LEN) != 0) {
-    EMSG2(_("E823: Not an undo file: %s"), file_name);
+    semsg(_("E823: Not an undo file: %s"), file_name);
     goto error;
   }
   int version = get2c(fp);
   if (version != UF_VERSION) {
-    EMSG2(_("E824: Incompatible undo file: %s"), file_name);
+    semsg(_("E824: Incompatible undo file: %s"), file_name);
     goto error;
   }
 
@@ -1655,7 +1655,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
 #ifdef U_DEBUG
   for (int i = 0; i < num_head; i++) {
     if (uhp_table_used[i] == 0) {
-      EMSGN("uhp_table entry %" PRId64 " not used, leaking memory", i);
+      semsg("uhp_table entry %" PRId64 " not used, leaking memory", (int64_t)i);
     }
   }
   xfree(uhp_table_used);
@@ -1904,7 +1904,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
         curbuf->b_u_curhead = curbuf->b_u_oldhead;
         beep_flush();
         if (count == startcount - 1) {
-          MSG(_("Already at oldest change"));
+          msg(_("Already at oldest change"));
           return;
         }
         break;
@@ -1915,7 +1915,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
       if (curbuf->b_u_curhead == NULL || get_undolevel(curbuf) <= 0) {
         beep_flush();  // nothing to redo
         if (count == startcount - 1) {
-          MSG(_("Already at newest change"));
+          msg(_("Already at newest change"));
           return;
         }
         break;
@@ -2140,15 +2140,15 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     }
 
     if (absolute) {
-      EMSGN(_("E830: Undo number %" PRId64 " not found"), step);
+      semsg(_("E830: Undo number %" PRId64 " not found"), (int64_t)step);
       return;
     }
 
     if (closest == closest_start) {
       if (step < 0) {
-        MSG(_("Already at oldest change"));
+        msg(_("Already at oldest change"));
       } else {
-        MSG(_("Already at newest change"));
+        msg(_("Already at newest change"));
       }
       return;
     }
@@ -2331,7 +2331,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     if (top > curbuf->b_ml.ml_line_count || top >= bot
         || bot > curbuf->b_ml.ml_line_count + 1) {
       unblock_autocmds();
-      IEMSG(_("E438: u_undo: line numbers wrong"));
+      iemsg(_("E438: u_undo: line numbers wrong"));
       changed();                // don't want UNCHANGED now
       return;
     }
@@ -2730,7 +2730,7 @@ void ex_undolist(exarg_T *eap)
   }
 
   if (GA_EMPTY(&ga)) {
-    MSG(_("Nothing to undo"));
+    msg(_("Nothing to undo"));
   } else {
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
 
@@ -2759,7 +2759,7 @@ void ex_undojoin(exarg_T *eap)
     return;                 // nothing changed before
   }
   if (curbuf->b_u_curhead != NULL) {
-    EMSG(_("E790: undojoin is not allowed after undo"));
+    emsg(_("E790: undojoin is not allowed after undo"));
     return;
   }
   if (!curbuf->b_u_synced) {
@@ -2856,7 +2856,7 @@ static void u_unch_branch(u_header_T *uhp)
 static u_entry_T *u_get_headentry(buf_T *buf)
 {
   if (buf->b_u_newhead == NULL || buf->b_u_newhead->uh_entry == NULL) {
-    IEMSG(_("E439: undo list corrupt"));
+    iemsg(_("E439: undo list corrupt"));
     return NULL;
   }
   return buf->b_u_newhead->uh_entry;
@@ -2886,7 +2886,7 @@ static void u_getbot(buf_T *buf)
     extra = buf->b_ml.ml_line_count - uep->ue_lcount;
     uep->ue_bot = uep->ue_top + uep->ue_size + 1 + extra;
     if (uep->ue_bot < 1 || uep->ue_bot > buf->b_ml.ml_line_count) {
-      IEMSG(_("E440: undo line missing"));
+      iemsg(_("E440: undo line missing"));
       uep->ue_bot = uep->ue_top + 1;        // assume all lines deleted, will
                                             // get all the old lines back
                                             // without deleting the current

@@ -313,9 +313,9 @@ static void au_del_group(char_u *name)
 {
   int i = au_find_group(name);
   if (i == AUGROUP_ERROR) {  // the group doesn't exist
-    EMSG2(_("E367: No such group: \"%s\""), name);
+    semsg(_("E367: No such group: \"%s\""), name);
   } else if (i == current_augroup) {
-    EMSG(_("E936: Cannot delete the current group"));
+    emsg(_("E936: Cannot delete the current group"));
   } else {
     event_T event;
     AutoPat *ap;
@@ -372,7 +372,7 @@ void do_augroup(char_u *arg, int del_group)
 {
   if (del_group) {
     if (*arg == NUL) {
-      EMSG(_(e_argreq));
+      emsg(_(e_argreq));
     } else {
       au_del_group(arg);
     }
@@ -469,7 +469,7 @@ static char_u *find_end_event(char_u *arg, int have_group)
 
   if (*arg == '*') {
     if (arg[1] && !ascii_iswhite(arg[1])) {
-      EMSG2(_("E215: Illegal character after *: %s"), arg);
+      semsg(_("E215: Illegal character after *: %s"), arg);
       return NULL;
     }
     pat = arg + 1;
@@ -477,9 +477,9 @@ static char_u *find_end_event(char_u *arg, int have_group)
     for (pat = arg; *pat && *pat != '|' && !ascii_iswhite(*pat); pat = p) {
       if ((int)event_name2nr(pat, &p) >= NUM_EVENTS) {
         if (have_group) {
-          EMSG2(_("E216: No such event: %s"), pat);
+          semsg(_("E216: No such event: %s"), pat);
         } else {
-          EMSG2(_("E216: No such group or event: %s"), pat);
+          semsg(_("E216: No such group or event: %s"), pat);
         }
         return NULL;
       }
@@ -651,7 +651,7 @@ void do_autocmd(char_u *arg_in, int forceit)
         // Check for "++once" flag.
         if (STRNCMP(cmd, "++once", 6) == 0 && ascii_iswhite(cmd[6])) {
           if (once) {
-            EMSG2(_(e_duparg2), "++once");
+            semsg(_(e_duparg2), "++once");
           }
           once = true;
           cmd = skipwhite(cmd + 6);
@@ -660,7 +660,7 @@ void do_autocmd(char_u *arg_in, int forceit)
         // Check for "++nested" flag.
         if ((STRNCMP(cmd, "++nested", 8) == 0 && ascii_iswhite(cmd[8]))) {
           if (nested) {
-            EMSG2(_(e_duparg2), "++nested");
+            semsg(_(e_duparg2), "++nested");
           }
           nested = true;
           cmd = skipwhite(cmd + 8);
@@ -669,7 +669,7 @@ void do_autocmd(char_u *arg_in, int forceit)
         // Check for the old (deprecated) "nested" flag.
         if (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])) {
           if (nested) {
-            EMSG2(_(e_duparg2), "nested");
+            semsg(_(e_duparg2), "nested");
           }
           nested = true;
           cmd = skipwhite(cmd + 6);
@@ -691,7 +691,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   // Print header when showing autocommands.
   if (!forceit && *cmd == NUL) {
     // Highlight title
-    MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
+    msg_puts_title(_("\n--- Autocommands ---"));
   }
 
   // Loop over the events.
@@ -699,7 +699,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   last_group = AUGROUP_ERROR;  // for listing the group name
   if (*arg == '*' || *arg == NUL || *arg == '|') {
     if (!forceit && *cmd != NUL) {
-      EMSG(_(e_cannot_define_autocommands_for_all_events));
+      emsg(_(e_cannot_define_autocommands_for_all_events));
     } else {
       for (event_T event = (event_T)0; event < NUM_EVENTS;
            event = (event_T)(event + 1)) {
@@ -899,7 +899,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, c
         // refuse to add buffer-local ap if buffer number is invalid
         if (is_buflocal
             && (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL)) {
-          emsgf(_("E680: <buffer=%d>: invalid buffer number "), buflocal_nr);
+          semsg(_("E680: <buffer=%d>: invalid buffer number "), buflocal_nr);
           return FAIL;
         }
 
@@ -974,7 +974,7 @@ int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
   group = au_get_grouparg(&arg);
 
   if (*arg == '*') {
-    EMSG(_("E217: Can't execute autocommands for ALL events"));
+    emsg(_("E217: Can't execute autocommands for ALL events"));
     return FAIL;
   }
 
@@ -996,7 +996,7 @@ int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
   }
 
   if (nothing_done && do_msg) {
-    MSG(_("No matching autocommands"));
+    msg(_("No matching autocommands"));
   }
   if (did_something != NULL) {
     *did_something = !nothing_done;
@@ -1414,7 +1414,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   // Allow nesting of autocommands, but restrict the depth, because it's
   // possible to create an endless loop.
   if (nesting == 10) {
-    EMSG(_("E218: autocommand nesting too deep"));
+    emsg(_("E218: autocommand nesting too deep"));
     goto BYPASS_AU;
   }
 

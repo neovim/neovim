@@ -860,7 +860,7 @@ void ex_loadview(exarg_T *eap)
   char *fname = get_view_file(*eap->arg);
   if (fname != NULL) {
     if (do_source(fname, false, DOSO_NONE) == FAIL) {
-      EMSG2(_(e_notopen), fname);
+      semsg(_(e_notopen), fname);
     }
     xfree(fname);
   }
@@ -980,7 +980,7 @@ void ex_mkrc(exarg_T *eap)
                                || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                    NULL))) {
           if (os_chdir((char *)dirnow) != 0) {
-            EMSG(_(e_prev_dir));
+            emsg(_(e_prev_dir));
           }
           shorten_fnames(true);
           // restore original dir
@@ -988,7 +988,7 @@ void ex_mkrc(exarg_T *eap)
                                  || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                      NULL))) {
             if (os_chdir((char *)dirnow) != 0) {
-              EMSG(_(e_prev_dir));
+              emsg(_(e_prev_dir));
             }
             shorten_fnames(true);
           }
@@ -1025,7 +1025,7 @@ void ex_mkrc(exarg_T *eap)
     failed |= fclose(fd);
 
     if (failed) {
-      EMSG(_(e_write));
+      emsg(_(e_write));
     } else if (eap->cmdidx == CMD_mksession) {
       // successful session write - set v:this_session
       char *const tbuf = xmalloc(MAXPATHL);
@@ -1043,7 +1043,7 @@ void ex_mkrc(exarg_T *eap)
 static char *get_view_file(int c)
 {
   if (curbuf->b_ffname == NULL) {
-    EMSG(_(e_noname));
+    emsg(_(e_noname));
     return NULL;
   }
   char *sname = (char *)home_replace_save(NULL, curbuf->b_ffname);

@@ -426,6 +426,6 @@ int msgpack_file_write(void *data, const char *buf, size_t len)
 /// @return -1 (error return for msgpack_packer callbacks).
 int msgpack_file_write_error(const int error)
 {
-  emsgf(_("E5420: Failed to write to file: %s"), os_strerror(error));
+  semsg(_("E5420: Failed to write to file: %s"), os_strerror(error));
   return -1;
 }

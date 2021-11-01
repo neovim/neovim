@@ -1701,7 +1701,7 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
     if (file_name == NULL && (options & FNAME_MESS)) {
       char_u c = ptr[len];
       ptr[len] = NUL;
-      EMSG2(_("E447: Can't find file \"%s\" in path"), ptr);
+      semsg(_("E447: Can't find file \"%s\" in path"), ptr);
       ptr[len] = c;
     }
 
@@ -2081,7 +2081,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file, int flags
   int ret = FAIL;
   char_u *eval_pat = NULL;
   char_u *exp_pat = *pat;
-  char_u *ignored_msg;
+  char *ignored_msg;
   size_t usedlen;
 
   if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
@@ -2257,7 +2257,7 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
   if (os_chdir(old_dir) != SUCCESS) {
     // That shouldn't happen, since we've tested if it works.
     retval = FAIL;
-    EMSG(_(e_prev_dir));
+    emsg(_(e_prev_dir));
   }
 
   return retval;

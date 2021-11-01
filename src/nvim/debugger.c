@@ -88,7 +88,7 @@ void do_debug(char_u *cmd)
   debug_mode = true;
 
   if (!debug_did_msg) {
-    MSG(_("Entering Debug mode.  Type \"cont\" to continue."));
+    msg(_("Entering Debug mode.  Type \"cont\" to continue."));
   }
   if (debug_oldval != NULL) {
     smsg(_("Oldval = \"%s\""), debug_oldval);
@@ -101,7 +101,7 @@ void do_debug(char_u *cmd)
     debug_newval = NULL;
   }
   if (sourcing_name != NULL) {
-    msg(sourcing_name);
+    msg((char *)sourcing_name);
   }
   if (sourcing_lnum != 0) {
     smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
@@ -321,7 +321,7 @@ static void do_checkbacktracelevel(void)
 {
   if (debug_backtrace_level < 0) {
     debug_backtrace_level = 0;
-    MSG(_("frame is zero"));
+    msg(_("frame is zero"));
   } else {
     int max = get_maxbacktrace_level();
     if (debug_backtrace_level > max) {
@@ -496,7 +496,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
     bp->dbg_type = DBG_FILE;
   } else if (gap != &prof_ga && STRNCMP(p, "here", 4) == 0) {
     if (curbuf->b_ffname == NULL) {
-      EMSG(_(e_noname));
+      emsg(_(e_noname));
       return FAIL;
     }
     bp->dbg_type = DBG_FILE;
@@ -504,7 +504,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   } else if (gap != &prof_ga && STRNCMP(p, "expr", 4) == 0) {
     bp->dbg_type = DBG_EXPR;
   } else {
-    EMSG2(_(e_invarg2), p);
+    semsg(_(e_invarg2), p);
     return FAIL;
   }
   p = skipwhite(p + 4);
@@ -523,7 +523,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   if ((!here && *p == NUL)
       || (here && *p != NUL)
       || (bp->dbg_type == DBG_FUNC && strstr((char *)p, "()") != NULL)) {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
     return FAIL;
   }
 
@@ -661,7 +661,7 @@ void ex_breakdel(exarg_T *eap)
   }
 
   if (todel < 0) {
-    EMSG2(_("E161: Breakpoint not found: %s"), eap->arg);
+    semsg(_("E161: Breakpoint not found: %s"), eap->arg);
   } else {
     while (!GA_EMPTY(gap)) {
       xfree(DEBUGGY(gap, todel).dbg_name);
@@ -696,7 +696,7 @@ void ex_breaklist(exarg_T *eap)
   struct debuggy *bp;
 
   if (GA_EMPTY(&dbg_breakp)) {
-    MSG(_("No breakpoints defined"));
+    msg(_("No breakpoints defined"));
   } else {
     for (int i = 0; i < dbg_breakp.ga_len; i++) {
       bp = &BREAKP(i);

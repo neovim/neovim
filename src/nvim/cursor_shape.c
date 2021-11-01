@@ -93,7 +93,7 @@ Array mode_style_array(void)
 /// @param what SHAPE_CURSOR or SHAPE_MOUSE ('mouseshape')
 ///
 /// @returns error message for an illegal option, NULL otherwise.
-char_u *parse_shape_opt(int what)
+char *parse_shape_opt(int what)
 {
   char_u *modep;
   char_u *colonp;
@@ -126,10 +126,10 @@ char_u *parse_shape_opt(int what)
       commap = vim_strchr(modep, ',');
 
       if (colonp == NULL || (commap != NULL && commap < colonp)) {
-        return (char_u *)N_("E545: Missing colon");
+        return N_("E545: Missing colon");
       }
       if (colonp == modep) {
-        return (char_u *)N_("E546: Illegal mode");
+        return N_("E546: Illegal mode");
       }
 
       // Repeat for all modes before the colon.
@@ -154,7 +154,7 @@ char_u *parse_shape_opt(int what)
             }
             if (idx == SHAPE_IDX_COUNT
                 || (shape_table[idx].used_for & what) == 0) {
-              return (char_u *)N_("E546: Illegal mode");
+              return N_("E546: Illegal mode");
             }
             if (len == 2 && modep[0] == 'v' && modep[1] == 'e') {
               found_ve = true;
@@ -189,12 +189,12 @@ char_u *parse_shape_opt(int what)
             if (len != 0) {
               p += len;
               if (!ascii_isdigit(*p)) {
-                return (char_u *)N_("E548: digit expected");
+                return N_("E548: digit expected");
               }
               int n = getdigits_int(&p, false, 0);
               if (len == 3) {               // "ver" or "hor"
                 if (n == 0) {
-                  return (char_u *)N_("E549: Illegal percentage");
+                  return N_("E549: Illegal percentage");
                 }
                 if (round == 2) {
                   if (TOLOWER_ASC(i) == 'v') {

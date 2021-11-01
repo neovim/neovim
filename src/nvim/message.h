@@ -30,53 +30,6 @@
 #define VIM_ALL         5
 #define VIM_DISCARDALL  6
 
-/// Show plain message
-#define MSG(s)                      msg((char_u *)(s))
-
-/// Show message highlighted according to the attr
-#define MSG_ATTR(s, attr)           msg_attr((const char *)(s), (attr))
-
-/// Display error message
-///
-/// Sets error flag in process, can be transformed into an exception.
-#define EMSG(s)                     emsg((char_u *)(s))
-
-/// Like #EMSG, but for messages with one "%s" inside
-#define EMSG2(s, p)                 emsgf((const char *)(s), (p))
-
-/// Like #EMSG, but for messages with two "%s" inside
-#define EMSG3(s, p, q)              emsgf((const char *)(s), (p), (q))
-
-/// Like #EMSG, but for messages with one "%" PRId64 inside
-#define EMSGN(s, n)                 emsgf((const char *)(s), (int64_t)(n))
-
-/// Like #EMSG, but for messages with one "%" PRIu64 inside
-#define EMSGU(s, n)                 emsgf((const char *)(s), (uint64_t)(n))
-
-/// Like #EMSG, but for internal messages
-#define IEMSG(s)                    iemsg((const char *)(s))
-
-/// Like #EMSG2, but for internal messages
-#define IEMSG2(s, p)                iemsgf((const char *)(s), (p))
-
-/// Like #EMSGN, but for internal messages
-#define IEMSGN(s, n)                iemsgf((const char *)(s), (int64_t)(n))
-
-/// Display message at the recorded position
-#define MSG_PUTS(s)                 msg_puts((const char *)(s))
-
-/// Display message at the recorded position, highlighted
-#define MSG_PUTS_ATTR(s, a)         msg_puts_attr((const char *)(s), (a))
-
-/// Like #MSG_PUTS, but highlight like title
-#define MSG_PUTS_TITLE(s)           msg_puts_title((const char *)(s))
-
-/// Like #MSG_PUTS, but if middle part of too long messages it will be replaced
-#define MSG_PUTS_LONG(s)            msg_puts_long_attr((char_u *)(s), 0)
-
-/// Like #MSG_PUTS_ATTR, but if middle part of long messages will be replaced
-#define MSG_PUTS_LONG_ATTR(s, a)    msg_puts_long_attr((char_u *)(s), (a))
-
 typedef struct {
   String text;
   int attr;

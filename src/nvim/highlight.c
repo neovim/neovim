@@ -76,7 +76,7 @@ static int get_attr_entry(HlEntry entry)
     // compute new ones for all groups.
     // When called recursively, we are really out of numbers.
     if (recursive) {
-      EMSG(_("E424: Too many different highlighting attributes in use"));
+      emsg(_("E424: Too many different highlighting attributes in use"));
       return 0;
     }
     recursive = true;

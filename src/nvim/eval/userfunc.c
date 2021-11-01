@@ -103,7 +103,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
           || (p - arg == 9 && STRNCMP(arg, "firstline", 9) == 0)
           || (p - arg == 8 && STRNCMP(arg, "lastline", 8) == 0)) {
         if (!skip) {
-          EMSG2(_("E125: Illegal argument: %s"), arg);
+          semsg(_("E125: Illegal argument: %s"), arg);
         }
         break;
       }
@@ -116,7 +116,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
         // Check for duplicate argument name.
         for (i = 0; i < newargs->ga_len; i++) {
           if (STRCMP(((char_u **)(newargs->ga_data))[i], arg) == 0) {
-            EMSG2(_("E853: Duplicate argument name: %s"), arg);
+            semsg(_("E853: Duplicate argument name: %s"), arg);
             xfree(arg);
             goto err_ret;
           }
@@ -151,7 +151,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
           mustend = true;
         }
       } else if (any_default) {
-        EMSG(_("E989: Non-default argument follows default argument"));
+        emsg(_("E989: Non-default argument follows default argument"));
         mustend = true;
       }
       if (*p == ',') {
@@ -163,7 +163,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
     p = skipwhite(p);
     if (mustend && *p != endchar) {
       if (!skip) {
-        EMSG2(_(e_invarg2), *argp);
+        semsg(_(e_invarg2), *argp);
       }
       break;
     }
@@ -395,7 +395,7 @@ void emsg_funcname(char *ermsg, const char_u *name)
     p = (char_u *)name;
   }
 
-  EMSG2(_(ermsg), p);
+  semsg(_(ermsg), p);
 
   if (p != name) {
     xfree(p);
@@ -829,7 +829,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   // If depth of calling is getting too high, don't execute the function
   if (depth >= p_mfd) {
-    EMSG(_("E132: Function call depth is higher than 'maxfuncdepth'"));
+    emsg(_("E132: Function call depth is higher than 'maxfuncdepth'"));
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = -1;
     return;
@@ -1244,7 +1244,7 @@ void save_funccal(funccal_entry_T *entry)
 void restore_funccal(void)
 {
   if (funccal_stack == NULL) {
-    IEMSG("INTERNAL: restore_funccal()");
+    iemsg("INTERNAL: restore_funccal()");
   } else {
     current_funccal = funccal_stack->top_funccal;
     funccal_stack = funccal_stack->next;
@@ -1360,7 +1360,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial, dict_T *selfdict
 
   TV_LIST_ITER(args->vval.v_list, item, {
     if (argc == MAX_FUNC_ARGS - (partial == NULL ? 0 : partial->pt_argc)) {
-      EMSG(_("E699: Too many arguments"));
+      emsg(_("E699: Too many arguments"));
       goto func_call_skip_call;
     }
     // Make a copy of each argument.  This is needed to be able to set
@@ -1635,11 +1635,11 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 {
   msg_start();
   if (indent) {
-    MSG_PUTS("   ");
+    msg_puts("   ");
   }
-  MSG_PUTS(force ? "function! " : "function ");
+  msg_puts(force ? "function! " : "function ");
   if (fp->uf_name[0] == K_SPECIAL) {
-    MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
+    msg_puts_attr("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
   } else {
     msg_puts((const char *)fp->uf_name);
@@ -1732,7 +1732,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
                  lead > 2 ? 0 : FNE_CHECK_START);
   if (end == start) {
     if (!skip) {
-      EMSG(_("E129: Function name required"));
+      emsg(_("E129: Function name required"));
     }
     goto theend;
   }
@@ -1744,7 +1744,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
      */
     if (!aborting()) {
       if (end != NULL) {
-        emsgf(_(e_invarg2), start);
+        semsg(_(e_invarg2), start);
       }
     } else {
       *pp = (char_u *)find_name_end(start, NULL, NULL, FNE_INCL_BR);
@@ -1767,7 +1767,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       if (is_luafunc(lv.ll_tv->vval.v_partial) && *end == '.') {
         len = check_luafunc_name((const char *)end+1, true);
         if (len == 0) {
-          EMSG2(e_invexpr2, "v:lua");
+          semsg(e_invexpr2, "v:lua");
           goto theend;
         }
         name = xmallocz(len);
@@ -1784,7 +1784,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       if (!skip && !(flags & TFN_QUIET) && (fdp == NULL
                                             || lv.ll_dict == NULL
                                             || fdp->fd_newkey == NULL)) {
-        EMSG(_(e_funcref));
+        emsg(_(e_funcref));
       } else {
         *pp = (char_u *)end;
       }
@@ -1862,7 +1862,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
         || eval_fname_sid((const char *)(*pp))) {
       // It's "s:" or "<SID>".
       if (current_sctx.sc_sid <= 0) {
-        EMSG(_(e_usingsid));
+        emsg(_(e_usingsid));
         goto theend;
       }
       sid_buf_len = snprintf(sid_buf, sizeof(sid_buf),
@@ -1871,7 +1871,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
     }
   } else if (!(flags & TFN_INT)
              && builtin_function(lv.ll_name, lv.ll_name_len)) {
-    EMSG2(_("E128: Function name must start with a capital or \"s:\": %s"),
+    semsg(_("E128: Function name must start with a capital or \"s:\": %s"),
           start);
     goto theend;
   }
@@ -1880,7 +1880,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
     char_u *cp = xmemrchr(lv.ll_name, ':', lv.ll_name_len);
 
     if (cp != NULL && cp < end) {
-      EMSG2(_("E884: Function name cannot contain a colon: %s"), start);
+      semsg(_("E884: Function name cannot contain a colon: %s"), start);
       goto theend;
     }
   }
@@ -2025,7 +2025,7 @@ void ex_function(exarg_T *eap)
      */
     if (!aborting()) {
       if (fudi.fd_newkey != NULL) {
-        EMSG2(_(e_dictkey), fudi.fd_newkey);
+        semsg(_(e_dictkey), fudi.fd_newkey);
       }
       xfree(fudi.fd_newkey);
       return;
@@ -2047,7 +2047,7 @@ void ex_function(exarg_T *eap)
   //
   if (!paren) {
     if (!ends_excmd(*skipwhite(p))) {
-      EMSG(_(e_trailing));
+      emsg(_(e_trailing));
       goto ret_free;
     }
     eap->nextcmd = check_nextcmd(p);
@@ -2093,7 +2093,7 @@ void ex_function(exarg_T *eap)
   p = skipwhite(p);
   if (*p != '(') {
     if (!eap->skip) {
-      EMSG2(_("E124: Missing '(': %s"), eap->arg);
+      semsg(_("E124: Missing '(': %s"), eap->arg);
       goto ret_free;
     }
     // attempt to continue by skipping some text
@@ -2126,7 +2126,7 @@ void ex_function(exarg_T *eap)
     }
     // Disallow using the g: dict.
     if (fudi.fd_dict != NULL && fudi.fd_dict->dv_scope == VAR_DEF_SCOPE) {
-      EMSG(_("E862: Cannot use g: here"));
+      emsg(_("E862: Cannot use g: here"));
     }
   }
 
@@ -2171,7 +2171,7 @@ void ex_function(exarg_T *eap)
   if (*p == '\n') {
     line_arg = p + 1;
   } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
   }
 
   /*
@@ -2183,7 +2183,7 @@ void ex_function(exarg_T *eap)
     // need to skip the body to be able to find what follows.
     if (!eap->skip && !eap->forceit) {
       if (fudi.fd_dict != NULL && fudi.fd_newkey == NULL) {
-        EMSG(_(e_funcdict));
+        emsg(_(e_funcdict));
       } else if (name != NULL && find_func(name) != NULL) {
         emsg_funcname(e_funcexts, name);
       }
@@ -2234,7 +2234,7 @@ void ex_function(exarg_T *eap)
       lines_left = Rows - 1;
     }
     if (theline == NULL) {
-      EMSG(_("E126: Missing :endfunction"));
+      emsg(_("E126: Missing :endfunction"));
       goto erret;
     }
     if (show_block) {
@@ -2475,7 +2475,7 @@ void ex_function(exarg_T *eap)
 
     fp = NULL;
     if (fudi.fd_newkey == NULL && !eap->forceit) {
-      EMSG(_(e_funcdict));
+      emsg(_(e_funcdict));
       goto erret;
     }
     if (fudi.fd_di == NULL) {
@@ -2516,7 +2516,7 @@ void ex_function(exarg_T *eap)
         xfree(scriptname);
       }
       if (j == FAIL) {
-        EMSG2(_("E746: Function name does not match script file name: %s"),
+        semsg(_("E746: Function name does not match script file name: %s"),
               name);
         goto erret;
       }
@@ -2709,13 +2709,13 @@ void ex_delfunction(exarg_T *eap)
   xfree(fudi.fd_newkey);
   if (name == NULL) {
     if (fudi.fd_dict != NULL && !eap->skip) {
-      EMSG(_(e_funcref));
+      emsg(_(e_funcref));
     }
     return;
   }
   if (!ends_excmd(*skipwhite(p))) {
     xfree(name);
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
     return;
   }
   eap->nextcmd = check_nextcmd(p);
@@ -2731,18 +2731,18 @@ void ex_delfunction(exarg_T *eap)
   if (!eap->skip) {
     if (fp == NULL) {
       if (!eap->forceit) {
-        EMSG2(_(e_nofunc), eap->arg);
+        semsg(_(e_nofunc), eap->arg);
       }
       return;
     }
     if (fp->uf_calls > 0) {
-      EMSG2(_("E131: Cannot delete function %s: It is in use"), eap->arg);
+      semsg(_("E131: Cannot delete function %s: It is in use"), eap->arg);
       return;
     }
     // check `uf_refcount > 2` because deleting a function should also reduce
     // the reference count, and 1 is the initial refcount.
     if (fp->uf_refcount > 2) {
-      EMSG2(_("Cannot delete function %s: It is being used internally"),
+      semsg(_("Cannot delete function %s: It is being used internally"),
             eap->arg);
       return;
     }
@@ -2878,7 +2878,7 @@ void ex_return(exarg_T *eap)
   int returning = FALSE;
 
   if (current_funccal == NULL) {
-    EMSG(_("E133: :return not inside a function"));
+    emsg(_("E133: :return not inside a function"));
     return;
   }
 
@@ -2953,7 +2953,7 @@ void ex_call(exarg_T *eap)
   tofree = trans_function_name(&arg, false, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
     // Still need to give an error message for missing key.
-    EMSG2(_(e_dictkey), fudi.fd_newkey);
+    semsg(_(e_dictkey), fudi.fd_newkey);
     xfree(fudi.fd_newkey);
   }
   if (tofree == NULL) {
@@ -2979,7 +2979,7 @@ void ex_call(exarg_T *eap)
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
   if (*startarg != '(') {
-    EMSG2(_(e_missingparen), eap->arg);
+    semsg(_(e_missingparen), eap->arg);
     goto end;
   }
 
@@ -2989,7 +2989,7 @@ void ex_call(exarg_T *eap)
       if (lnum > curbuf->b_ml.ml_line_count) {
         // If the function deleted lines or switched to another buffer
         // the line number may become invalid.
-        EMSG(_(e_invrange));
+        emsg(_(e_invrange));
         break;
       }
       curwin->w_cursor.lnum = lnum;
@@ -3038,7 +3038,7 @@ void ex_call(exarg_T *eap)
     if (!ends_excmd(*arg)) {
       if (!failed) {
         emsg_severe = true;
-        EMSG(_(e_trailing));
+        emsg(_(e_trailing));
       }
     } else {
       eap->nextcmd = check_nextcmd(arg);

@@ -589,7 +589,7 @@ int get_number(int colon, int *mouse_used)
       ++typed;
     } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
       if (typed > 0) {
-        MSG_PUTS("\b \b");
+        msg_puts("\b \b");
         --typed;
       }
       n /= 10;
@@ -629,10 +629,10 @@ int prompt_for_number(int *mouse_used)
 
   // When using ":silent" assume that <CR> was entered.
   if (mouse_used != NULL) {
-    MSG_PUTS(_("Type number and <Enter> or click with the mouse "
+    msg_puts(_("Type number and <Enter> or click with the mouse "
                "(q or empty cancels): "));
   } else {
-    MSG_PUTS(_("Type number and <Enter> (q or empty cancels): "));
+    msg_puts(_("Type number and <Enter> (q or empty cancels): "));
   }
 
   /* Set the state such that text can be selected/copied/pasted and we still
@@ -686,25 +686,19 @@ void msgmore(long n)
   }
 
   if (pn > p_report) {
-    if (pn == 1) {
-      if (n > 0) {
-        STRLCPY(msg_buf, _("1 more line"), MSG_BUF_LEN);
-      } else {
-        STRLCPY(msg_buf, _("1 line less"), MSG_BUF_LEN);
-      }
+    if (n > 0) {
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld more line", "%ld more lines", pn),
+                   pn);
     } else {
-      if (n > 0) {
-        vim_snprintf(msg_buf, MSG_BUF_LEN,
-                     _("%" PRId64 " more lines"), (int64_t)pn);
-      } else {
-        vim_snprintf(msg_buf, MSG_BUF_LEN,
-                     _("%" PRId64 " fewer lines"), (int64_t)pn);
-      }
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld line less", "%ld fewer lines", pn),
+                   pn);
     }
     if (got_int) {
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
-    if (msg((char_u *)msg_buf)) {
+    if (msg(msg_buf)) {
       set_keep_msg((char_u *)msg_buf, 0);
       keep_msg_more = true;
     }
@@ -926,7 +920,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   }
 
   if (*p_sh == NUL) {
-    EMSG(_(e_shellempty));
+    emsg(_(e_shellempty));
     retval = -1;
   } else {
     // The external command may update a tags file, clear cached tags.
@@ -964,7 +958,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   // get a name for the temp file
   char_u *tempname = vim_tempname();
   if (tempname == NULL) {
-    EMSG(_(e_notmp));
+    emsg(_(e_notmp));
     return NULL;
   }
 
@@ -985,7 +979,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   FILE *fd = os_fopen((char *)tempname, READBIN);
 
   if (fd == NULL) {
-    EMSG2(_(e_notopen), tempname);
+    semsg(_(e_notopen), tempname);
     goto done;
   }
 
@@ -998,7 +992,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   fclose(fd);
   os_remove((char *)tempname);
   if (i != len) {
-    EMSG2(_(e_notread), tempname);
+    semsg(_(e_notread), tempname);
     XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
     // Change NUL into SOH, otherwise the string is truncated.

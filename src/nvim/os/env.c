@@ -250,7 +250,7 @@ void os_copy_fullenv(char **env, size_t env_size)
     char *utf8_str;
     int conversion_result = utf16_to_utf8(p, -1, &utf8_str);
     if (conversion_result != 0) {
-      EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+      semsg("utf16_to_utf8 failed: %d", conversion_result);
       break;
     }
     p += l + 1;
@@ -297,7 +297,7 @@ char *os_getenvname_at_index(size_t index)
       char *utf8_str;
       int conversion_result = utf16_to_utf8(p, -1, &utf8_str);
       if (conversion_result != 0) {
-        EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+        semsg("utf16_to_utf8 failed: %d", conversion_result);
         break;
       }
 
@@ -375,7 +375,7 @@ void os_get_hostname(char *hostname, size_t size)
   if (GetComputerNameW(host_utf16, &host_wsize) == 0) {
     *hostname = '\0';
     DWORD err = GetLastError();
-    EMSG2("GetComputerNameW failed: %d", err);
+    semsg("GetComputerNameW failed: %d", err);
     return;
   }
   host_utf16[host_wsize] = '\0';
@@ -383,13 +383,13 @@ void os_get_hostname(char *hostname, size_t size)
   char *host_utf8;
   int conversion_result = utf16_to_utf8(host_utf16, -1, &host_utf8);
   if (conversion_result != 0) {
-    EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+    semsg("utf16_to_utf8 failed: %d", conversion_result);
     return;
   }
   xstrlcpy(hostname, host_utf8, size);
   xfree(host_utf8);
 #else
-  EMSG("os_get_hostname failed: missing uname()");
+  emsg("os_get_hostname failed: missing uname()");
   *hostname = '\0';
 #endif
 }
@@ -481,7 +481,7 @@ void init_homedir(void)
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
-        EMSG(_(e_prev_dir));
+        emsg(_(e_prev_dir));
       }
     }
   }

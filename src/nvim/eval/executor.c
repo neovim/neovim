@@ -144,6 +144,6 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
     }
   }
 
-  EMSG2(_(e_letwrong), op);
+  semsg(_(e_letwrong), op);
   return FAIL;
 }

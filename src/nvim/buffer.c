@@ -186,7 +186,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     // If there is no memfile at all, exit.
     // This is OK, since there are no changes to lose.
     if (curbuf == NULL) {
-      EMSG(_("E82: Cannot allocate any buffer, exiting..."));
+      emsg(_("E82: Cannot allocate any buffer, exiting..."));
 
       // Don't try to do any saving, with "curbuf" NULL almost nothing
       // will work.
@@ -194,7 +194,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
       getout(2);
     }
 
-    EMSG(_("E83: Cannot allocate buffer, using other one..."));
+    emsg(_("E83: Cannot allocate buffer, using other one..."));
     enter_buffer(curbuf);
     if (old_tw != curbuf->b_p_tw) {
       check_colorcolumn(curwin);
@@ -439,7 +439,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   // Disallow deleting the buffer when it is locked (already being closed or
   // halfway a command that relies on it). Unloading is allowed.
   if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
-    EMSG(_("E937: Attempt to delete a buffer that is in use"));
+    emsg(_("E937: Attempt to delete a buffer that is in use"));
     return false;
   }
 
@@ -466,13 +466,13 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
                        buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
-      EMSG(_(e_auabort));
+      emsg(_(e_auabort));
       return false;
     }
     buf->b_locked--;
     if (abort_if_last && last_nonfloat(win)) {
       // Autocommands made this the only window.
-      EMSG(_(e_auabort));
+      emsg(_(e_auabort));
       return false;
     }
 
@@ -483,13 +483,13 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
                          buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
-        EMSG(_(e_auabort));
+        emsg(_(e_auabort));
         return false;
       }
       buf->b_locked--;
       if (abort_if_last && last_nonfloat(win)) {
         // Autocommands made this the only window.
-        EMSG(_(e_auabort));
+        emsg(_(e_auabort));
         return false;
       }
     }
@@ -918,7 +918,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
     // User selected Recover at ATTENTION prompt.
     msg_scroll = true;
     ml_recover(false);
-    MSG_PUTS("\n");     // don't overwrite the last message
+    msg_puts("\n");     // don't overwrite the last message
     cmdline_row = msg_row;
     do_modelines(0);
 
@@ -944,11 +944,11 @@ void handle_swap_exists(bufref_T *old_curbuf)
 /// @param end_bnr  buffer nr or last buffer nr in a range
 ///
 /// @return  error message or NULL
-char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int end_bnr, int forceit)
+char *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int end_bnr, int forceit)
 {
   int do_current = 0;             // delete current buffer?
   int deleted = 0;                // number of buffers deleted
-  char_u *errormsg = NULL;   // return value
+  char *errormsg = NULL;   // return value
   int bnr;                        // buffer number
   char_u *p;
 
@@ -957,7 +957,7 @@ char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int e
   } else {
     if (addr_count == 2) {
       if (*arg) {               // both range and argument is not allowed
-        return (char_u *)_(e_trailing);
+        return _(e_trailing);
       }
       bnr = start_bnr;
     } else {    // addr_count == 1
@@ -1013,26 +1013,17 @@ char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int e
       } else {
         STRCPY(IObuff, _("E517: No buffers were wiped out"));
       }
-      errormsg = IObuff;
+      errormsg = (char *)IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
-        if (deleted == 1) {
-          MSG(_("1 buffer unloaded"));
-        } else {
-          smsg(_("%d buffers unloaded"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", (unsigned long)deleted),
+             deleted);
       } else if (command == DOBUF_DEL) {
-        if (deleted == 1) {
-          MSG(_("1 buffer deleted"));
-        } else {
-          smsg(_("%d buffers deleted"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", (unsigned long)deleted),
+             deleted);
       } else {
-        if (deleted == 1) {
-          MSG(_("1 buffer wiped out"));
-        } else {
-          smsg(_("%d buffers wiped out"), deleted);
-        }
+        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", (unsigned long)deleted),
+             deleted);
       }
     }
   }
@@ -1052,7 +1043,7 @@ static int empty_curbuf(int close_others, int forceit, int action)
   buf_T *buf = curbuf;
 
   if (action == DOBUF_UNLOAD) {
-    EMSG(_("E90: Cannot unload last buffer"));
+    emsg(_("E90: Cannot unload last buffer"));
     return FAIL;
   }
 
@@ -1125,7 +1116,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       } while (buf != curbuf && !bufIsChanged(buf));
     }
     if (!bufIsChanged(buf)) {
-      EMSG(_("E84: No modified buffer found"));
+      emsg(_("E84: No modified buffer found"));
       return FAIL;
     }
   } else if (start == DOBUF_FIRST && count) {  // find specified buffer number
@@ -1158,7 +1149,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       }
       if (bp == buf) {
         // back where we started, didn't find anything.
-        EMSG(_("E85: There is no listed buffer"));
+        emsg(_("E85: There is no listed buffer"));
         return FAIL;
       }
     }
@@ -1168,12 +1159,12 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (start == DOBUF_FIRST) {
       // don't warn when deleting
       if (!unload) {
-        EMSGN(_(e_nobufnr), count);
+        semsg(_(e_nobufnr), (int64_t)count);
       }
     } else if (dir == FORWARD) {
-      EMSG(_("E87: Cannot go beyond last buffer"));
+      emsg(_("E87: Cannot go beyond last buffer"));
     } else {
-      EMSG(_("E88: Cannot go before first buffer"));
+      emsg(_("E88: Cannot go before first buffer"));
     }
     return FAIL;
   }
@@ -1204,9 +1195,9 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
           return FAIL;
         }
       } else {
-        EMSGN(_("E89: No write since last change for buffer %" PRId64
+        semsg(_("E89: No write since last change for buffer %" PRId64
                 " (add ! to override)"),
-              buf->b_fnum);
+              (int64_t)buf->b_fnum);
         return FAIL;
       }
     }
@@ -1217,7 +1208,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
           return FAIL;
         }
       } else {
-        EMSG2(_("E89: %s will be killed (add ! to override)"),
+        semsg(_("E89: %s will be killed (add ! to override)"),
               (char *)buf->b_fname);
         return FAIL;
       }
@@ -1606,9 +1597,9 @@ void no_write_message(void)
 {
   if (curbuf->terminal
       && channel_job_running((uint64_t)curbuf->b_p_channel)) {
-    EMSG(_("E948: Job still running (add ! to end the job)"));
+    emsg(_("E948: Job still running (add ! to end the job)"));
   } else {
-    EMSG(_("E37: No write since last change (add ! to override)"));
+    emsg(_("E37: No write since last change (add ! to override)"));
   }
 }
 
@@ -1617,9 +1608,9 @@ void no_write_message_nobang(const buf_T *const buf)
 {
   if (buf->terminal
       && channel_job_running((uint64_t)buf->b_p_channel)) {
-    EMSG(_("E948: Job still running"));
+    emsg(_("E948: Job still running"));
   } else {
-    EMSG(_("E37: No write since last change"));
+    emsg(_("E37: No write since last change"));
   }
 }
 
@@ -1802,7 +1793,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf->b_fnum = top_file_num++;
     pmap_put(handle_T)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
-      EMSG(_("W14: Warning: List of file names overflow"));
+      emsg(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         ui_flush();
         os_delay(3001L, true);  // make sure it is noticed
@@ -1971,9 +1962,9 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   buf = buflist_findnr(n);
   if (buf == NULL) {
     if ((options & GETF_ALT) && n == 0) {
-      EMSG(_(e_noalt));
+      emsg(_(e_noalt));
     } else {
-      EMSGN(_("E92: Buffer %" PRId64 " not found"), n);
+      semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)n);
     }
     return FAIL;
   }
@@ -2233,9 +2224,9 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
   }
 
   if (match == -2) {
-    EMSG2(_("E93: More than one match for %s"), pattern);
+    semsg(_("E93: More than one match for %s"), pattern);
   } else if (match < 0) {
-    EMSG2(_("E94: No matching buffer for %s"), pattern);
+    semsg(_("E94: No matching buffer for %s"), pattern);
   }
   return match;
 }
@@ -2804,7 +2795,7 @@ int setfname(buf_T *buf, char_u *ffname_arg, char_u *sfname_arg, bool message)
     if (obuf != NULL && obuf != buf) {
       if (obuf->b_ml.ml_mfp != NULL) {          // it's loaded, fail
         if (message) {
-          EMSG(_("E95: Buffer with this name already exists"));
+          emsg(_("E95: Buffer with this name already exists"));
         }
         xfree(ffname);
         return FAIL;
@@ -2909,7 +2900,7 @@ char_u *getaltfname(bool errmsg)
 
   if (buflist_name_nr(0, &fname, &dummy) == FAIL) {
     if (errmsg) {
-      EMSG(_(e_noalt));
+      emsg(_(e_noalt));
     }
     return NULL;
   }
@@ -3048,14 +3039,14 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
 {
   char_u *name;
   int n;
-  char_u *p;
-  char_u *buffer;
+  char *p;
+  char *buffer;
   size_t len;
 
   buffer = xmalloc(IOSIZE);
 
   if (fullname > 1) {       // 2 CTRL-G: include buffer number
-    vim_snprintf((char *)buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
+    vim_snprintf(buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
     p = buffer + STRLEN(buffer);
   } else {
     p = buffer;
@@ -3070,12 +3061,12 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     } else {
       name = curbuf->b_ffname;
     }
-    home_replace(shorthelp ? curbuf : NULL, name, p,
+    home_replace(shorthelp ? curbuf : NULL, name, (char_u *)p,
                  (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   bool dontwrite = bt_dontwrite(curbuf);
-  vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
+  vim_snprintf_add(buffer, IOSIZE, "\"%s%s%s%s%s%s",
                    curbufIsChanged()
                    ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
                    (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
@@ -3100,28 +3091,27 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
               (long)curbuf->b_ml.ml_line_count);
   }
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-    vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
+    vim_snprintf_add(buffer, IOSIZE, "%s", _(no_lines_msg));
   } else if (p_ru) {
     // Current line and column are already on the screen -- webb
-    if (curbuf->b_ml.ml_line_count == 1) {
-      vim_snprintf_add((char *)buffer, IOSIZE, _("1 line --%d%%--"), n);
-    } else {
-      vim_snprintf_add((char *)buffer, IOSIZE, _("%" PRId64 " lines --%d%%--"),
-                       (int64_t)curbuf->b_ml.ml_line_count, n);
-    }
+    vim_snprintf_add(buffer, IOSIZE,
+                     NGETTEXT("%" PRId64 " line --%d%%--",
+                              "%" PRId64 " lines --%d%%--",
+                              (unsigned long)curbuf->b_ml.ml_line_count),
+                     (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
-    vim_snprintf_add((char *)buffer, IOSIZE,
+    vim_snprintf_add(buffer, IOSIZE,
                      _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
                      (int64_t)curwin->w_cursor.lnum,
                      (int64_t)curbuf->b_ml.ml_line_count,
                      n);
     validate_virtcol();
     len = STRLEN(buffer);
-    col_print(buffer + len, IOSIZE - len,
+    col_print((char_u *)buffer + len, IOSIZE - len,
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
-  (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
+  (void)append_arg_number(curwin, (char_u *)buffer, IOSIZE, !shortmess(SHM_FILE));
 
   if (dont_truncate) {
     // Temporarily set msg_scroll to avoid the message being truncated.
@@ -3139,7 +3129,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
       //   before redrawing).
       // - When the screen was scrolled but there is no wait-return
       //   prompt.
-      set_keep_msg(p, 0);
+      set_keep_msg((char_u *)p, 0);
     }
   }
 
@@ -5396,7 +5386,7 @@ bool bt_dontwrite_msg(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (bt_dontwrite(buf)) {
-    EMSG(_("E382: Cannot write, 'buftype' option is set"));
+    emsg(_("E382: Cannot write, 'buftype' option is set"));
     return true;
   }
   return false;
