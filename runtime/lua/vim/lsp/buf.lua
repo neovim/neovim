@@ -529,6 +529,7 @@ local function on_code_action_results(results, ctx)
 
   vim.ui.select(action_tuples, {
     prompt = 'Code actions:',
+    kind = 'codeaction',
     format_item = function(action_tuple)
       local title = action_tuple[2].title:gsub('\r\n', '\\r\\n')
       return title:gsub('\n', '\\n')
