@@ -526,8 +526,7 @@ func Test_autocmd_blast_badd()
 
   call writefile(content, 'XblastBall')
   call system(GetVimCommand() .. ' --clean -S XblastBall')
-  " call assert_match('OK', readfile('Xerrors')->join())
-  call assert_match('OK', join(readfile('Xerrors')))
+  call assert_match('OK', readfile('Xerrors')->join())
 
   call delete('XblastBall')
   call delete('Xerrors')

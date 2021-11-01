@@ -752,8 +752,7 @@ endfunc
 func Test_submatch_list_concatenate()
   let pat = 'A\(.\)'
   let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}
-  " call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
-  call assert_equal(substitute('A1', pat, Rep, ''), "[['A1'], ['1']]")
+  call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
 endfunc
 
 func Test_substitute_skipped_range()
