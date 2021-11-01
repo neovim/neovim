@@ -2530,7 +2530,7 @@ int findsent(Direction dir, long count)
       }
       if (c == '.' || c == '!' || c == '?') {
         tpos = pos;
-        do{
+        do {
           if ((c = inc(&tpos)) == -1) {
             break;
           }

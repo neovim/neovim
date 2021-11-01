@@ -3147,12 +3147,12 @@ static void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wf
           break;
         }
         if (topfirst) {
-          do{
+          do {
             frp = frp->fr_next;
           }
           while (wfh && frp != NULL && frame_fixed_height(frp));
         } else {
-          do{
+          do {
             frp = frp->fr_prev;
           }
           while (wfh && frp != NULL && frame_fixed_height(frp));
@@ -3347,12 +3347,12 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
           break;
         }
         if (leftfirst) {
-          do{
+          do {
             frp = frp->fr_next;
           }
           while (wfw && frp != NULL && frame_fixed_width(frp));
         } else {
-          do{
+          do {
             frp = frp->fr_prev;
           }
           while (wfw && frp != NULL && frame_fixed_width(frp));

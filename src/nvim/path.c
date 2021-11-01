@@ -1505,7 +1505,7 @@ void simplify_filename(char_u *filename)
 
   if (vim_ispathsep(*p)) {
     relative = false;
-    do{
+    do {
       ++p;
     }
     while (vim_ispathsep(*p));
