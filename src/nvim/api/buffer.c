@@ -1161,10 +1161,12 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
 /// @param name       Mark name
 /// @param line       Line number
 /// @param col        Column/row number
+/// @param opts       Optional parameters. Reserved for future use.
 /// @return true if the mark was set, else false.
 /// @see |nvim_buf_del_mark()|
 /// @see |nvim_buf_get_mark()|
-Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Error *err)
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dictionary opts,
+                          Error *err)
   FUNC_API_SINCE(8)
 {
   bool res = false;
