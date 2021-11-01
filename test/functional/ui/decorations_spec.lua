@@ -992,7 +992,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
   end)
 
-  it('works with text et the end of the buffer', function()
+  it('works with text at the end of the buffer', function()
     insert(example_text)
     feed 'G'
 
@@ -1213,7 +1213,7 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]]}
 
-    meths.buf_set_extmark(0, ns, 2, 0, {
+    local markid = meths.buf_set_extmark(0, ns, 2, 0, {
       virt_lines={
         {{"Some special", "Special"}};
         {{"remark about codes", "Comment"}};
@@ -1235,13 +1235,13 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]]}
 
-    meths.buf_clear_namespace(0, ns, 0, -1)
     meths.buf_set_extmark(0, ns, 2, 0, {
       virt_lines={
         {{"Some special", "Special"}};
         {{"remark about codes", "Comment"}};
       };
       virt_lines_leftcol=true;
+      id=markid;
     })
     screen:expect{grid=[[
       {8:  }{9:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
