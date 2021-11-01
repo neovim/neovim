@@ -5219,7 +5219,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file, int 
   ga_init(&ga, (int)sizeof(char *), 10);
   hashtab_T found_ht;
   hash_init(&found_ht);
-  for (s = path; ; s = e) {
+  for (s = path;; s = e) {
     e = vim_strchr(s, ENV_SEPCHAR);
     if (e == NULL) {
       e = s + STRLEN(s);

@@ -5032,7 +5032,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
     // is recognized as a wildcard.
     for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
       if (STRCMP(arg + 5, expr_table[i]) == 0) {
-        for (int si = 0, di = 0; ; si++) {
+        for (int si = 0, di = 0;; si++) {
           if (arg[si] == '~') {
             d[di++] = '\\';
           }

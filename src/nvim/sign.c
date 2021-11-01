@@ -774,7 +774,7 @@ static int sign_cmd_idx(char_u *begin_cmd, char_u *end_cmd)
   char_u save = *end_cmd;
 
   *end_cmd = (char_u)NUL;
-  for (idx = 0; ; idx++) {
+  for (idx = 0;; idx++) {
     if (cmds[idx] == NULL || STRCMP(begin_cmd, cmds[idx]) == 0) {
       break;
     }

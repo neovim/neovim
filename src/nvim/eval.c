@@ -6086,7 +6086,7 @@ int assert_equalfile(typval_T *argvars)
       snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
     } else {
       int64_t linecount = 1;
-      for (int64_t count = 0; ; count++) {
+      for (int64_t count = 0;; count++) {
         const int c1 = fgetc(fd1);
         const int c2 = fgetc(fd2);
         if (c1 == EOF) {

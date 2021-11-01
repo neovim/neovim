@@ -3125,7 +3125,7 @@ nobackup:
   // If conversion is taking place, we may first pretend to write and check
   // for conversion errors.  Then loop again to write for real.
   // When not doing conversion this writes for real right away.
-  for (checking_conversion = true; ; checking_conversion = false) {
+  for (checking_conversion = true;; checking_conversion = false) {
     // There is no need to check conversion when:
     // - there is no conversion
     // - we make a backup file, that can be restored in case of conversion
