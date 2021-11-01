@@ -10171,6 +10171,8 @@ timer_start({time}, {callback} [, {options}])
 				\ {'repeat': 3})
 <		This invokes MyHandler() three times at 500 msec intervals.
 
+		Not available in the |sandbox|.
+
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
 		{timer} is an ID returned by timer_start(), thus it must be a
