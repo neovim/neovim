@@ -851,8 +851,7 @@ EXTERN char e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
 EXTERN char e_cmdwin[] INIT(=
-                              N_(
-                                "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
+                              N_("E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
 EXTERN char e_curdir[] INIT(=
                               N_(
                                 "E12: Command not allowed from exrc/vimrc in current dir or tag search"));
@@ -940,8 +939,7 @@ EXTERN char e_listreq[] INIT(= N_("E714: List required"));
 EXTERN char e_listblobreq[] INIT(= N_("E897: List or Blob required"));
 EXTERN char e_listdictarg[] INIT(= N_("E712: Argument of %s must be a List or Dictionary"));
 EXTERN char e_listdictblobarg[] INIT(=
-                                       N_(
-                                         "E896: Argument of %s must be a List, Dictionary or Blob"));
+                                       N_("E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN char e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char e_secure[] INIT(= N_("E523: Not allowed here"));
@@ -990,8 +988,8 @@ EXTERN char e_api_error[] INIT(=N_("E5555: API call: %s"));
 
 EXTERN char e_luv_api_disabled[] INIT(=N_("E5560: %s must not be called in a lua loop callback"));
 
-EXTERN char e_floatonly[] INIT(=N_(
-                                  "E5601: Cannot close window, only floating window would remain"));
+EXTERN char e_floatonly[] INIT(=
+                                 N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN char e_floatexchange[] INIT(=N_("E5602: Cannot exchange or rotate float"));
 
 EXTERN char e_non_empty_string_required[] INIT(= N_("E1142: Non-empty string required"));

@@ -1233,7 +1233,7 @@ int do_set(char_u *arg, int opt_flags)
           }
 
           errmsg = set_bool_option(opt_idx, varp, (int)value,
-                                             opt_flags);
+                                   opt_flags);
         } else {  // Numeric or string.
           if (vim_strchr((const char_u *)"=:&<", nextchar) == NULL
               || prefix != 1) {
@@ -2315,8 +2315,8 @@ static bool valid_spellfile(const char_u *val)
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
 static char *did_set_string_option(int opt_idx, char_u **varp, bool new_value_alloced,
-                                   char_u *oldval, char *errbuf, size_t errbuflen,
-                                   int opt_flags, int *value_checked)
+                                   char_u *oldval, char *errbuf, size_t errbuflen, int opt_flags,
+                                   int *value_checked)
 {
   char *errmsg = NULL;
   char_u *s, *p;

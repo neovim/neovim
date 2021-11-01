@@ -966,7 +966,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     qfpos++;
     // next symbol must be + or -
     if (strchr(CSQF_FLAGS, *qfpos) == NULL) {
-      (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));;
+      (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));
       return FALSE;
     }
 

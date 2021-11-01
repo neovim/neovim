@@ -8983,8 +8983,8 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
-char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump,
-                  char **errormsg, int *escaped)
+char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
+                  int *escaped)
 {
   int i;
   char_u *s;

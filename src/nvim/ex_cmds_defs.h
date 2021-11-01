@@ -135,10 +135,10 @@ typedef struct {
 
 // Flags for the cs_lflags item in cstack_T.
 enum {
-  CSL_HAD_LOOP =    1,  // just found ":while" or ":for"
+  CSL_HAD_LOOP = 1,  // just found ":while" or ":for"
   CSL_HAD_ENDLOOP = 2,  // just found ":endwhile" or ":endfor"
-  CSL_HAD_CONT =    4,  // just found ":continue"
-  CSL_HAD_FINA =    8,  // just found ":finally"
+  CSL_HAD_CONT = 4,  // just found ":continue"
+  CSL_HAD_FINA = 8,  // just found ":finally"
 };
 
 /// Arguments used for Ex commands.
