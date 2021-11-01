@@ -5020,8 +5020,8 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
-          && !(wp->w_closing ||
-               wp->w_buffer->b_locked > 0)) {
+          && !(wp->w_closing
+               || wp->w_buffer->b_locked > 0)) {
         win_close(wp, false);
         wpnext = firstwin;              // just in case an autocommand does
                                         // something strange with windows

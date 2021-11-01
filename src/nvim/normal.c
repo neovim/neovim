@@ -570,8 +570,8 @@ static bool normal_need_additional_char(NormalState *s)
                             //
                             // TODO(tarruda): Visual state needs to be refactored into a
                             // separate state that "inherits" from normal state.
-                            || ((cmdchar == 'a' || cmdchar == 'i') &&
-                                (pending_op || VIsual_active)));
+                            || ((cmdchar == 'a' || cmdchar == 'i')
+                                && (pending_op || VIsual_active)));
 }
 
 static bool normal_need_redraw_mode_message(NormalState *s)
@@ -5341,8 +5341,8 @@ static void nv_right(cmdarg_T *cap)
 
   for (n = cap->count1; n > 0; --n) {
     if ((!PAST_LINE && oneright() == false)
-        || (PAST_LINE &&
-            *get_cursor_pos_ptr() == NUL)) {
+        || (PAST_LINE
+            && *get_cursor_pos_ptr() == NUL)) {
       //          <Space> wraps to next line if 'whichwrap' has 's'.
       //              'l' wraps to next line if 'whichwrap' has 'l'.
       // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
@@ -7688,8 +7688,8 @@ static void adjust_cursor(oparg_T *oap)
   // - 'virtualedit' is not "all" and not "onemore".
   if (curwin->w_cursor.col > 0 && gchar_cursor() == NUL
       && (!VIsual_active || *p_sel == 'o')
-      && !virtual_active() &&
-      (ve_flags & VE_ONEMORE) == 0) {
+      && !virtual_active()
+      && (ve_flags & VE_ONEMORE) == 0) {
     curwin->w_cursor.col--;
     // prevent cursor from moving on the trail byte
     mb_adjust_cursor();

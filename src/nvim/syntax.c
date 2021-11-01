@@ -1788,9 +1788,9 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         line = syn_getcurline();
         const char_u *cur_pos = line + current_col;
         if (vim_iswordp_buf(cur_pos, syn_buf)
-            && (current_col == 0 ||
-                !vim_iswordp_buf(cur_pos - 1 - utf_head_off(line, cur_pos - 1),
-                                 syn_buf))) {
+            && (current_col == 0
+                || !vim_iswordp_buf(cur_pos - 1 - utf_head_off(line, cur_pos - 1),
+                                    syn_buf))) {
           syn_id = check_keyword_id(line, (int)current_col, &endcol, &flags,
                                     &next_list, cur_si, &cchar);
           if (syn_id != 0) {

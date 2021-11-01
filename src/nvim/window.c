@@ -1958,8 +1958,8 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
     // Set the width/height of this frame.
     // Redraw when size or position changes
     if (topfr->fr_height != height || topfr->fr_win->w_winrow != row
-        || topfr->fr_width != width ||
-        topfr->fr_win->w_wincol != col) {
+        || topfr->fr_width != width
+        || topfr->fr_win->w_wincol != col) {
       topfr->fr_win->w_winrow = row;
       frame_new_height(topfr, height, false, false);
       topfr->fr_win->w_wincol = col;
@@ -5827,8 +5827,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   //   is visible.
   if (height > 0
       && (!wp->w_p_scb || wp == curwin)
-      && (height < wp->w_buffer->b_ml.ml_line_count ||
-          wp->w_topline > 1)) {
+      && (height < wp->w_buffer->b_ml.ml_line_count
+          || wp->w_topline > 1)) {
     /*
      * Find a value for w_topline that shows the cursor at the same
      * relative position in the window as before (more or less).

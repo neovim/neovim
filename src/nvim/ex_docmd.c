@@ -432,8 +432,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     if (next_cmdline == NULL
         && !force_abort
         && cstack.cs_idx < 0
-        && !(getline_is_func &&
-             func_has_abort(real_cookie))) {
+        && !(getline_is_func
+             && func_has_abort(real_cookie))) {
       did_emsg = FALSE;
     }
 

@@ -345,8 +345,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     // Load the file.
     //
     if (wp->w_buffer->b_ffname != NULL
-        && (!bt_nofile(wp->w_buffer) ||
-            wp->w_buffer->terminal)) {
+        && (!bt_nofile(wp->w_buffer)
+            || wp->w_buffer->terminal)) {
       // Editing a file in this buffer: use ":edit file".
       // This may have side effects! (e.g., compressed or network file).
       //
@@ -431,8 +431,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   //
   if ((*flagp & SSOP_FOLDS)
       && wp->w_buffer->b_ffname != NULL
-      && (bt_normal(wp->w_buffer) ||
-          bt_help(wp->w_buffer))) {
+      && (bt_normal(wp->w_buffer)
+          || bt_help(wp->w_buffer))) {
     if (put_folds(fd, wp) == FAIL) {
       return FAIL;
     }

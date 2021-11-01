@@ -3936,8 +3936,8 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
               || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
-              || (endcurr1 < 0x100 &&
-                  !utf_eat_space(utf_ptr2char(curr))))) {
+              || (endcurr1 < 0x100
+                  && !utf_eat_space(utf_ptr2char(curr))))) {
         // don't add a space if the line is ending in a space
         if (endcurr1 == ' ') {
           endcurr1 = endcurr2;

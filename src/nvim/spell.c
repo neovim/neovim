@@ -4352,8 +4352,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // just deleted this byte, accepting it is always cheaper than
         // delete + substitute.
         if (c == fword[sp->ts_fidx]
-            || (sp->ts_tcharlen > 0 &&
-                sp->ts_isdiff != DIFF_NONE)) {
+            || (sp->ts_tcharlen > 0
+                && sp->ts_isdiff != DIFF_NONE)) {
           newscore = 0;
         } else {
           newscore = SCORE_SUBST;

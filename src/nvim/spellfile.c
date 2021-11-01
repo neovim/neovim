@@ -3248,9 +3248,9 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
       // Extract flags from the affix list.
       flags |= get_affix_flags(affile, afflist);
 
-      if (affile->af_needaffix != 0 &&
-          flag_in_afflist(affile->af_flagtype, afflist,
-                          affile->af_needaffix)) {
+      if (affile->af_needaffix != 0
+          && flag_in_afflist(affile->af_flagtype, afflist,
+                             affile->af_needaffix)) {
         need_affix = true;
       }
 
@@ -3311,32 +3311,32 @@ static int get_affix_flags(afffile_T *affile, char_u *afflist)
 {
   int flags = 0;
 
-  if (affile->af_keepcase != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist,
-                      affile->af_keepcase)) {
+  if (affile->af_keepcase != 0
+      && flag_in_afflist(affile->af_flagtype, afflist,
+                         affile->af_keepcase)) {
     flags |= WF_KEEPCAP | WF_FIXCAP;
   }
-  if (affile->af_rare != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist, affile->af_rare)) {
+  if (affile->af_rare != 0
+      && flag_in_afflist(affile->af_flagtype, afflist, affile->af_rare)) {
     flags |= WF_RARE;
   }
-  if (affile->af_bad != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist, affile->af_bad)) {
+  if (affile->af_bad != 0
+      && flag_in_afflist(affile->af_flagtype, afflist, affile->af_bad)) {
     flags |= WF_BANNED;
   }
-  if (affile->af_needcomp != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist,
-                      affile->af_needcomp)) {
+  if (affile->af_needcomp != 0
+      && flag_in_afflist(affile->af_flagtype, afflist,
+                         affile->af_needcomp)) {
     flags |= WF_NEEDCOMP;
   }
-  if (affile->af_comproot != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist,
-                      affile->af_comproot)) {
+  if (affile->af_comproot != 0
+      && flag_in_afflist(affile->af_flagtype, afflist,
+                         affile->af_comproot)) {
     flags |= WF_COMPROOT;
   }
-  if (affile->af_nosuggest != 0 &&
-      flag_in_afflist(affile->af_flagtype, afflist,
-                      affile->af_nosuggest)) {
+  if (affile->af_nosuggest != 0
+      && flag_in_afflist(affile->af_flagtype, afflist,
+                         affile->af_nosuggest)) {
     flags |= WF_NOSUGGEST;
   }
   return flags;

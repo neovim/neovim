@@ -382,8 +382,8 @@ static bool check_top_offset(void)
       topline_back(curwin, &loff);
       // Stop when included a line above the window.
       if (loff.lnum < curwin->w_topline
-          || (loff.lnum == curwin->w_topline &&
-              loff.fill > 0)) {
+          || (loff.lnum == curwin->w_topline
+              && loff.fill > 0)) {
         break;
       }
       n += loff.height;

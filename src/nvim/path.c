@@ -1289,8 +1289,8 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
             && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
-                     || (p[1] == '.' &&
-                         vim_ispathsep(p[2]))))) {
+                     || (p[1] == '.'
+                         && vim_ispathsep(p[2]))))) {
           /* :find completion where 'path' is used.
            * Recursiveness is OK here. */
           recursive = false;
@@ -1517,8 +1517,8 @@ void simplify_filename(char_u *filename)
      * or "p" is at the "start" of the (absolute or relative) path name. */
     if (vim_ispathsep(*p)) {
       STRMOVE(p, p + 1);                // remove duplicate "/"
-    } else if (p[0] == '.' &&
-               (vim_ispathsep(p[1]) || p[1] == NUL)) {
+    } else if (p[0] == '.'
+               && (vim_ispathsep(p[1]) || p[1] == NUL)) {
       if (p == start && relative) {
         p += 1 + (p[1] != NUL);         // keep single "." or leading "./"
       } else {

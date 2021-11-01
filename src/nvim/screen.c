@@ -4413,8 +4413,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             || filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && p_extra != at_end_str)
-            || (n_extra != 0 &&
-                (c_extra != NUL || *p_extra != NUL)))) {
+            || (n_extra != 0
+                && (c_extra != NUL || *p_extra != NUL)))) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
                   && filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
@@ -5011,8 +5011,8 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
            || xp->xp_context == EXPAND_MENUNAMES)
-          && (s[0] == '\t' ||
-              (s[0] == '\\' && s[1] != NUL)))) {
+          && (s[0] == '\t'
+              || (s[0] == '\\' && s[1] != NUL)))) {
 #ifndef BACKSLASH_IN_FILENAME
     if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!') {
       return 2;

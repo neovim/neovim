@@ -4265,8 +4265,8 @@ static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
       len = 4;
     } else if (flags == (FIO_UCS2 | FIO_ENDIAN_L)) {
       name = "ucs-2le";         // FF FE
-    } else if (flags == FIO_ALL ||
-               flags == (FIO_UTF16 | FIO_ENDIAN_L)) {
+    } else if (flags == FIO_ALL
+               || flags == (FIO_UTF16 | FIO_ENDIAN_L)) {
       // utf-16le is preferred, it also works for ucs-2le text
       name = "utf-16le";        // FF FE
     }
@@ -4811,8 +4811,8 @@ int check_timestamps(int focus)
   }
 
   if (!stuff_empty() || global_busy || !typebuf_typed()
-      || autocmd_busy || curbuf->b_ro_locked > 0 ||
-      allbuf_lock > 0) {
+      || autocmd_busy || curbuf->b_ro_locked > 0
+      || allbuf_lock > 0) {
     need_check_timestamps = true;               // check later
   } else {
     no_wait_return++;
