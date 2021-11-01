@@ -335,7 +335,7 @@ return {
     sign_undefine={args={0, 1}, base=1},
     sign_unplace={args={1, 2}, base=1},
     sign_unplacelist={args=1, base=1},
-    simplify={args=1},
+    simplify={args=1, base=1},
     sin={args=1, base=1, func="float_op_wrapper", data="&sin"},
     sinh={args=1, base=1, func="float_op_wrapper", data="&sinh"},
     sockconnect={args={2,3}},
