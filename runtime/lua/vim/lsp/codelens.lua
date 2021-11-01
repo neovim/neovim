@@ -31,15 +31,15 @@ local function execute_lens(lens, bufnr, client_id)
   local line = lens.range.start.line
   api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
 
+  local client = vim.lsp.get_client_by_id(client_id)
+  assert(client, 'Client is required to execute lens, client_id=' .. client_id)
   local command = lens.command
-  local fn = vim.lsp.commands[command.command]
+  local fn = client.commands[command.command] or vim.lsp.commands[command.command]
   if fn then
     fn(command, { bufnr = bufnr, client_id = client_id })
     return
   end
   -- Need to use the client that returned the lens → must not use buf_request
-  local client = vim.lsp.get_client_by_id(client_id)
-  assert(client, 'Client is required to execute lens, client_id=' .. client_id)
   local command_provider = client.server_capabilities.executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
   if not vim.tbl_contains(commands, command.command) then

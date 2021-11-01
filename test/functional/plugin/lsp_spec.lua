@@ -2531,4 +2531,57 @@ describe('LSP', function()
       )
     end)
   end)
+  describe('vim.lsp.codelens', function()
+    it('uses client commands', function()
+      local client
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      test_rpc_server {
+        test_name = 'clientside_commands',
+        on_init = function(client_)
+          client = client_
+        end,
+        on_setup = function()
+        end,
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end,
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), {err, result, ctx})
+          if ctx.method == 'start' then
+            local fake_uri = "file:///fake/uri"
+            local cmd = exec_lua([[
+              fake_uri = ...
+              local bufnr = vim.uri_to_bufnr(fake_uri)
+              vim.fn.bufload(bufnr)
+              vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {'One line'})
+              local lenses = {
+                {
+                  range = {
+                    start = { line = 0, character = 0, },
+                    ['end'] = { line = 0, character = 8 }
+                  },
+                  command = { title = 'Lens1', command = 'Dummy' }
+                },
+              }
+              vim.lsp.codelens.on_codelens(nil, lenses, {method='textDocument/codeLens', client_id=1, bufnr=bufnr})
+              local cmd_called = nil
+              vim.lsp.commands['Dummy'] = function(command)
+                cmd_called = command
+              end
+              vim.api.nvim_set_current_buf(bufnr)
+              vim.lsp.codelens.run()
+              return cmd_called
+            ]], fake_uri)
+         eq({ command = 'Dummy', title = 'Lens1' }, cmd)
+         elseif ctx.method == 'shutdown' then
+           client.stop()
+          end
+        end
+      }
+    end)
+  end)
 end)

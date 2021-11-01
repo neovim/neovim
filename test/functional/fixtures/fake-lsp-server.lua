@@ -671,6 +671,20 @@ function tests.code_action_with_resolve()
   }
 end
 
+function tests.clientside_commands()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {}
+      }
+    end;
+    body = function()
+      notify('start')
+      notify('shutdown')
+    end;
+  }
+end
+
 -- Tests will be indexed by TEST_NAME
 
 local kill_timer = vim.loop.new_timer()
