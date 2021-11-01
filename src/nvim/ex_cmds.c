@@ -2150,7 +2150,7 @@ static int check_readonly(int *forceit, buf_T *buf)
 
       if (buf->b_p_ro) {
         dialog_msg(buff,
-                   _(  "'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
+                   _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
                    buf->b_fname);
       } else {
         dialog_msg(buff,

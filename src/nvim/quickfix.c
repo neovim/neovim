@@ -2028,7 +2028,7 @@ void copy_loclist_stack(win_T *from, win_T *to)
 
 /// Get buffer number for file "directory/fname".
 /// Also sets the b_has_qf_entry flag.
-static int qf_get_fnum(qf_list_T *qfl, char_u *directory, char_u *fname )
+static int qf_get_fnum(qf_list_T *qfl, char_u *directory, char_u *fname)
 {
   char_u *ptr = NULL;
   char_u *bufname;

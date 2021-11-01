@@ -1236,7 +1236,7 @@ void ml_recover(bool checkext)
   } else if (error) {
     ++no_wait_return;
     msg(">>>>>>>>>>>>>");
-    emsg(_( "E312: Errors detected while recovering; look for lines starting with ???"));
+    emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
     --no_wait_return;
     msg(_("See \":help E312\" for more information."));
     msg(">>>>>>>>>>>>>");

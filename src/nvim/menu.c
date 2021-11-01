@@ -449,7 +449,7 @@ static int add_menu_path(const char_u *const menu_path, vimmenu_T *menuarg,
         }
 
         if (c != 0) {
-          menu->strings[i] = xmalloc(STRLEN(call_data) + 5 );
+          menu->strings[i] = xmalloc(STRLEN(call_data) + 5);
           menu->strings[i][0] = c;
           if (d == 0) {
             STRCPY(menu->strings[i] + 1, call_data);
