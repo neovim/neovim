@@ -2283,7 +2283,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   save_cursor = curwin->w_cursor;
 
-  for (;; ) {
+  for (;;) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
     if (is_drag) {
       /* If the next character is the same mouse event then use that
@@ -3928,7 +3928,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
 
   // Search forward for the identifier, ignore comment lines.
   clearpos(&found_pos);
-  for (;; ) {
+  for (;;) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
                  pat, 1L, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
@@ -4307,7 +4307,7 @@ static void nv_zet(cmdarg_T *cap)
       return;
     }
     n = nchar - '0';
-    for (;; ) {
+    for (;;) {
       no_mapping++;
       nchar = plain_vgetc();
       LANGMAP_ADJUST(nchar, true);
@@ -5838,7 +5838,7 @@ static void nv_brackets(cmdarg_T *cap)
         pos = NULL;
       }
       while (n > 0) {
-        for (;; ) {
+        for (;;) {
           if ((findc == '{' ? dec_cursor() : inc_cursor()) < 0) {
             // if not found anything, that's an error
             if (pos == NULL) {

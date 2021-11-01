@@ -109,7 +109,7 @@ void do_debug(char_u *cmd)
     smsg(_("cmd: %s"), cmd);
   }
   // Repeat getting a command and executing it.
-  for (;; ) {
+  for (;;) {
     msg_scroll = true;
     need_wait_return = false;
     // Save the current typeahead buffer and replace it with an empty one.

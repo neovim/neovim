@@ -1079,7 +1079,7 @@ const char *gettail_dir(const char *const fname)
   const char *next_dir_end = fname;
   bool look_for_sep = true;
 
-  for (const char *p = fname; *p != NUL; ) {
+  for (const char *p = fname; *p != NUL;) {
     if (vim_ispathsep(*p)) {
       if (look_for_sep) {
         next_dir_end = p;
@@ -2198,7 +2198,7 @@ int match_suffix(char_u *fname)
 
   size_t fnamelen = STRLEN(fname);
   size_t setsuflen = 0;
-  for (char_u *setsuf = p_su; *setsuf; ) {
+  for (char_u *setsuf = p_su; *setsuf;) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
       char_u *tail = path_tail(fname);

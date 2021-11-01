@@ -2625,7 +2625,7 @@ ambw_end:
       }
     }
   } else if (gvarp == &p_com) {  // 'comments'
-    for (s = *varp; *s; ) {
+    for (s = *varp; *s;) {
       while (*s && *s != ':') {
         if (vim_strchr((char_u *)COM_ALL, *s) == NULL
             && !ascii_isdigit(*s) && *s != '-') {
@@ -2690,7 +2690,7 @@ ambw_end:
     // there would be a disconnect between the check for P_ALLOCED at the start
     // of the function and the set of P_ALLOCED at the end of the function.
     free_oldval = (options[opt_idx].flags & P_ALLOCED);
-    for (s = p_shada; *s; ) {
+    for (s = p_shada; *s;) {
       // Check it's a valid character
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
         errmsg = illegal_char(errbuf, errbuflen, *s);
@@ -2735,7 +2735,7 @@ ambw_end:
       errmsg = N_("E528: Must specify a ' value");
     }
   } else if (gvarp == &p_sbr) {  // 'showbreak'
-    for (s = *varp; *s; ) {
+    for (s = *varp; *s;) {
       if (ptr2cells(s) != 1) {
         errmsg = N_("E595: 'showbreak' contains unprintable or wide character");
       }
@@ -2879,7 +2879,7 @@ ambw_end:
     }
   } else if (gvarp == &p_cpt) {
     // check if it is a valid value for 'complete' -- Acevedo
-    for (s = *varp; *s; ) {
+    for (s = *varp; *s;) {
       while (*s == ',' || *s == ' ') {
         s++;
       }
@@ -3355,7 +3355,7 @@ char *check_colorcolumn(win_T *wp)
     return NULL;      // buffer was closed
   }
 
-  for (s = wp->w_p_cc; *s != NUL && count < 255; ) {
+  for (s = wp->w_p_cc; *s != NUL && count < 255;) {
     if (*s == '-' || *s == '+') {
       // -N and +N: add to 'textwidth'
       col = (*s == '-') ? -1 : 1;
@@ -6804,7 +6804,7 @@ static void langmap_set(void)
   ga_clear(&langmap_mapga);                 // clear the previous map first
   langmap_init();                           // back to one-to-one map
 
-  for (p = p_langmap; p[0] != NUL; ) {
+  for (p = p_langmap; p[0] != NUL;) {
     for (p2 = p; p2[0] != NUL && p2[0] != ',' && p2[0] != ';';
          MB_PTR_ADV(p2)) {
       if (p2[0] == '\\' && p2[1] != NUL) {

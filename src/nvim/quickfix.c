@@ -539,7 +539,7 @@ static size_t efm_regpat_bufsz(char_u *efm)
   size_t sz;
 
   sz = (FMT_PATTERNS * 3) + (STRLEN(efm) << 2);
-  for (int i = FMT_PATTERNS - 1; i >= 0; ) {
+  for (int i = FMT_PATTERNS - 1; i >= 0;) {
     sz += STRLEN(fmt_pat[i--].pattern);
   }
 #ifdef BACKSLASH_IN_FILENAME
@@ -4380,7 +4380,7 @@ static char_u *get_mef_name(void)
   }
 
   // Keep trying until the name doesn't exist yet.
-  for (;; ) {
+  for (;;) {
     if (start == -1) {
       start = (int)os_get_pid();
     } else {

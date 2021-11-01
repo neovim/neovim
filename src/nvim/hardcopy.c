@@ -571,7 +571,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
   // Use a negative line number to indicate printing in the top margin.
   int page_line = 0 - prt_header_height();
   mch_print_start_line(true, page_line);
-  for (char_u *p = tbuf; *p != NUL; ) {
+  for (char_u *p = tbuf; *p != NUL;) {
     const int l = utfc_ptr2len(p);
     assert(l >= 0);
     if (mch_print_text_out(p, (size_t)l)) {
@@ -2455,7 +2455,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
 
-  for (;; ) {
+  for (;;) {
     bytes_read = fread((char *)resource_buffer, sizeof(char_u),
                        sizeof(resource_buffer), fd_resource);
     if (ferror(fd_resource)) {

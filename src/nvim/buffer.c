@@ -1305,7 +1305,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (buf == NULL) {          // No previous buffer, Try 2'nd approach
       forward = true;
       buf = curbuf->b_next;
-      for (;; ) {
+      for (;;) {
         if (buf == NULL) {
           if (!forward) {               // tried both directions
             break;
@@ -2163,7 +2163,7 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
     // First try finding a listed buffer.  If not found and "unlisted"
     // is true, try finding an unlisted buffer.
     find_listed = true;
-    for (;; ) {
+    for (;;) {
       for (attempt = 0; attempt <= 3; attempt++) {
         // may add '^' and '$'
         if (toggledollar) {
@@ -3511,7 +3511,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
   // Proceed character by character through the statusline format string
   // fmt_p is the current position in the input buffer
-  for (char_u *fmt_p = usefmt; *fmt_p; ) {
+  for (char_u *fmt_p = usefmt; *fmt_p;) {
     if (curitem == (int)stl_items_len) {
       size_t new_len = stl_items_len * 3 / 2;
 
@@ -4407,7 +4407,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
       // string to find the last character that will fit.
       trunc_p = out;
       width = 0;
-      for (;; ) {
+      for (;;) {
         width += ptr2cells(trunc_p);
         if (width >= maxwidth) {
           break;
@@ -4758,7 +4758,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
   if (had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
-  for (;; ) {
+  for (;;) {
     win_T *wpnext = NULL;
     tpnext = curtab->tp_next;
     for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
@@ -5009,7 +5009,7 @@ void ex_buffer_all(exarg_T *eap)
   if (had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
-  for (;; ) {
+  for (;;) {
     tpnext = curtab->tp_next;
     for (wp = firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_next;
@@ -5138,7 +5138,7 @@ void ex_buffer_all(exarg_T *eap)
   /*
    * Close superfluous windows.
    */
-  for (wp = lastwin; open_wins > count; ) {
+  for (wp = lastwin; open_wins > count;) {
     r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
          || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {

@@ -764,7 +764,7 @@ int utfc_ptr2char(const char_u *p, int *pcc)
       && p[len] >= 0x80
       && utf_composinglike(p, p + len)) {
     cc = utf_ptr2char(p + len);
-    for (;; ) {
+    for (;;) {
       pcc[i++] = cc;
       if (i == MAX_MCO) {
         break;
@@ -1322,7 +1322,7 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
   int c1, c2, cdiff;
   char_u buffer[6];
 
-  for (;; ) {
+  for (;;) {
     c1 = utf_safe_read_char_adv(&s1, &n1);
     c2 = utf_safe_read_char_adv(&s2, &n2);
 
@@ -1933,7 +1933,7 @@ void utf_find_illegal(void)
   }
 
   curwin->w_cursor.coladd = 0;
-  for (;; ) {
+  for (;;) {
     p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
@@ -2363,7 +2363,7 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
 
   from = (char *)str;
   fromlen = slen;
-  for (;; ) {
+  for (;;) {
     if (len == 0 || ICONV_ERRNO == ICONV_E2BIG) {
       // Allocate enough room for most conversions.  When re-allocating
       // increase the buffer size.

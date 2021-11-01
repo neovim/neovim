@@ -922,7 +922,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
   uhp->uh_time = undo_read_time(bi);
 
   // Unserialize optional fields.
-  for (;; ) {
+  for (;;) {
     int len = undo_read_byte(bi);
 
     if (len == EOF) {
@@ -1504,7 +1504,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
 
   // Optional header fields.
   long last_save_nr = 0;
-  for (;; ) {
+  for (;;) {
     int len = undo_read_byte(&bi);
 
     if (len == 0 || len == EOF) {

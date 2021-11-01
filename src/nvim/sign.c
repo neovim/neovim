@@ -816,7 +816,7 @@ static sign_T *alloc_new_sign(char_u *name)
   // Check that next_sign_typenr is not already being used.
   // This only happens after wrapping around.  Hopefully
   // another one got deleted and we can use its number.
-  for (lp = first_sign; lp != NULL; ) {
+  for (lp = first_sign; lp != NULL;) {
     if (lp->sn_typenr == next_sign_typenr) {
       next_sign_typenr++;
       if (next_sign_typenr == MAX_TYPENR) {

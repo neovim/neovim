@@ -739,7 +739,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 
   len = 0;
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    for (s = ml_get_buf(buf, lnum, false); *s != NUL; ) {
+    for (s = ml_get_buf(buf, lnum, false); *s != NUL;) {
       if (diff_flags & DIFF_ICASE) {
         char_u cbuf[MB_MAXBYTES + 1];
 

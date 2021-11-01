@@ -2065,7 +2065,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
   eap->save_msg_silent = -1;
 
   // Repeat until no more command modifiers are found.
-  for (;; ) {
+  for (;;) {
     while (*eap->cmd == ' '
            || *eap->cmd == '\t'
            || *eap->cmd == ':') {
@@ -2715,7 +2715,7 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
    * Look for buffer-local user commands first, then global ones.
    */
   gap = &curbuf->b_ucmds;
-  for (;; ) {
+  for (;;) {
     for (j = 0; j < gap->ga_len; ++j) {
       uc = USER_CMD_GA(gap, j);
       cp = eap->cmd;
@@ -4071,7 +4071,7 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
       }
     }
 
-    for (;; ) {
+    for (;;) {
       cmd = skipwhite(cmd);
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
@@ -5326,7 +5326,7 @@ static void uc_list(char_u *name, size_t name_len)
   garray_T *gap = (cmdwin_type != 0 && get_cmdline_type() == NUL)
     ? &prevwin->w_buffer->b_ucmds
     : &curbuf->b_ucmds;
-  for (;; ) {
+  for (;;) {
     for (i = 0; i < gap->ga_len; ++i) {
       cmd = USER_CMD_GA(gap, i);
       a = cmd->uc_argt;
@@ -5713,7 +5713,7 @@ static void ex_delcommand(exarg_T *eap)
   garray_T *gap;
 
   gap = &curbuf->b_ucmds;
-  for (;; ) {
+  for (;;) {
     for (i = 0; i < gap->ga_len; ++i) {
       cmd = USER_CMD_GA(gap, i);
       cmp = STRCMP(eap->arg, cmd->uc_name);
@@ -6153,12 +6153,12 @@ static void do_ucmd(exarg_T *eap)
    * Second round: copy result into "buf".
    */
   buf = NULL;
-  for (;; ) {
+  for (;;) {
     p = cmd->uc_rep;        // source
     q = buf;                // destination
     totlen = 0;
 
-    for (;; ) {
+    for (;;) {
       start = vim_strchr(p, '<');
       if (start != NULL) {
         end = vim_strchr(start + 1, '>');
@@ -9252,7 +9252,7 @@ static char_u *arg_all(void)
    * first time: compute the total length
    * second time: concatenate the names
    */
-  for (;; ) {
+  for (;;) {
     len = 0;
     for (idx = 0; idx < ARGCOUNT; ++idx) {
       p = alist_name(&ARGLIST[idx]);
@@ -9315,7 +9315,7 @@ char_u *expand_sfile(char_u *arg)
 
   result = vim_strsave(arg);
 
-  for (p = result; *p; ) {
+  for (p = result; *p;) {
     if (STRNCMP(p, "<sfile>", 7) != 0) {
       ++p;
     } else {
@@ -9461,7 +9461,7 @@ static void ex_filetype(exarg_T *eap)
   }
 
   // Accept "plugin" and "indent" in any order.
-  for (;; ) {
+  for (;;) {
     if (STRNCMP(arg, "plugin", 6) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);

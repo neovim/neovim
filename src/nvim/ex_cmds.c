@@ -774,7 +774,7 @@ void ex_retab(exarg_T *eap)
     col = 0;
     vcol = 0;
     did_undo = false;
-    for (;; ) {
+    for (;;) {
       if (ascii_iswhite(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
           // First consecutive white-space
@@ -2944,7 +2944,7 @@ void ex_append(exarg_T *eap)
     State |= LANGMAP;
   }
 
-  for (;; ) {
+  for (;;) {
     msg_scroll = TRUE;
     need_wait_return = false;
     if (curbuf->b_p_ai) {
@@ -3719,7 +3719,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
        * 4. if subflags.do_all is set, find next match
        * 5. break if there isn't another match in this line
        */
-      for (;; ) {
+      for (;;) {
         SubResult current_match = {
           .start = { 0, 0 },
           .end   = { 0, 0 },
@@ -5030,7 +5030,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
     // When the string starting with "expr-" and containing '?' and matches
     // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
     // is recognized as a wildcard.
-    for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
+    for (i = (int)ARRAY_SIZE(expr_table); --i >= 0;) {
       if (STRCMP(arg + 5, expr_table[i]) == 0) {
         for (int si = 0, di = 0;; si++) {
           if (arg[si] == '~') {
@@ -5047,7 +5047,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
   } else {
     // Recognize a few exceptions to the rule.  Some strings that contain
     // '*' with "star".  Otherwise '*' is recognized as a wildcard.
-    for (i = (int)ARRAY_SIZE(mtable); --i >= 0; ) {
+    for (i = (int)ARRAY_SIZE(mtable); --i >= 0;) {
       if (STRCMP(arg, mtable[i]) == 0) {
         STRCPY(d, rtable[i]);
         break;

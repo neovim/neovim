@@ -995,7 +995,7 @@ retry:
             long tlen;
 
             tlen = 0;
-            for (;; ) {
+            for (;;) {
               p = ml_get(read_buf_lnum) + read_buf_col;
               n = (int)STRLEN(p);
               if ((int)tlen + n + 1 > size) {
@@ -5727,7 +5727,7 @@ long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
 
-  for (;; ) {
+  for (;;) {
     ret = read(fd, buf, bufsize);
     if (ret >= 0 || errno != EINTR) {
       break;

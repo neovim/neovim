@@ -3174,7 +3174,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   bool error = false;
 
   no_mapping++;
-  for (;; ) {
+  for (;;) {
     // Position the cursor.  Needed after a message that ends in a space,
     // or if event processing caused a redraw.
     ui_cursor_goto(msg_row, msg_col);
@@ -6182,7 +6182,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = p_ic;
 
-    for (;; ) {
+    for (;;) {
       if (l != NULL) {
         if (li == NULL) {
           match = false;
@@ -7727,8 +7727,8 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     char *const buf = xmallocz(MAXPATHL);
 
     char *cpy;
-    for (;; ) {
-      for (;; ) {
+    for (;;) {
+      for (;;) {
         len = readlink(p, buf, MAXPATHL);
         if (len <= 0) {
           break;
@@ -8603,7 +8603,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   clearpos(&firstpos);
   clearpos(&foundpos);
   pat = pat3;
-  for (;; ) {
+  for (;;) {
     searchit_arg_T sia;
     memset(&sia, 0, sizeof(sia));
     sia.sa_stop_lnum = lnum_stop;

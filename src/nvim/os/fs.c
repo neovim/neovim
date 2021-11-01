@@ -369,7 +369,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
   // is an executable file.
   char *p = path;
   bool rv = false;
-  for (;; ) {
+  for (;;) {
     char *e = xstrchrnul(p, ENV_SEPCHAR);
 
     // Combine the $PATH segment with `name`.

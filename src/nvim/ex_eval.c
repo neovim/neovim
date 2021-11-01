@@ -2091,7 +2091,7 @@ int has_loop_cmd(char_u *p)
   int len;
 
   // skip modifiers, white space and ':'
-  for (;; ) {
+  for (;;) {
     while (*p == ' ' || *p == '\t' || *p == ':') {
       ++p;
     }

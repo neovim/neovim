@@ -224,7 +224,7 @@ newwindow:
       beep_flush();
     } else {
       if (Prenum) {  // go to specified window
-        for (wp = firstwin; --Prenum > 0; ) {
+        for (wp = firstwin; --Prenum > 0;) {
           if (wp->w_next == NULL) {
             break;
           } else {
@@ -2239,7 +2239,7 @@ void close_windows(buf_T *buf, int keep_curwin)
 
   ++RedrawingDisabled;
 
-  for (win_T *wp = firstwin; wp != NULL && !ONE_WINDOW; ) {
+  for (win_T *wp = firstwin; wp != NULL && !ONE_WINDOW;) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false) == FAIL) {
@@ -2582,7 +2582,7 @@ int win_close(win_T *win, bool free_buf)
        * If the cursor goes to the preview or the quickfix window, try
        * finding another window to go to.
        */
-      for (;; ) {
+      for (;;) {
         if (wp->w_next == NULL) {
           wp = firstwin;
         } else {
@@ -4316,7 +4316,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
      * downwards neighbor.
      */
     fr = foundfr;
-    for (;; ) {
+    for (;;) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4334,7 +4334,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
     /*
      * Now go downwards to find the bottom or top frame in it.
      */
-    for (;; ) {
+    for (;;) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -4399,7 +4399,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
      * right neighbor.
      */
     fr = foundfr;
-    for (;; ) {
+    for (;;) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4417,7 +4417,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
     /*
      * Now go downwards to find the leftmost or rightmost frame in it.
      */
-    for (;; ) {
+    for (;;) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -6084,7 +6084,7 @@ void command_height(void)
 static void frame_add_height(frame_T *frp, int n)
 {
   frame_new_height(frp, frp->fr_height + n, false, false);
-  for (;; ) {
+  for (;;) {
     frp = frp->fr_parent;
     if (frp == NULL) {
       break;

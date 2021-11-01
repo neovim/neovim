@@ -557,7 +557,7 @@ static int cs_cnt_matches(size_t idx)
   int nlines = 0;
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
-  for (;; ) {
+  for (;;) {
     errno = 0;
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
       if (errno == EINTR) {
