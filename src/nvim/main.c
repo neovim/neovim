@@ -154,7 +154,6 @@ bool event_teardown(void)
 void early_init(mparm_T *paramp)
 {
   env_init();
-  fs_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
@@ -230,6 +229,10 @@ int main(int argc, char **argv)
   // Many variables are in `params` so that we can pass them around easily.
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);
+
+  // Since os_open is called during the init_startuptime, we need to call
+  // fs_init before it.
+  fs_init();
 
   init_startuptime(&params);
 
