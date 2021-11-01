@@ -141,7 +141,7 @@ typedef struct {
     dict_T *v_dict;  ///< Dictionary for VAR_DICT, can be NULL.
     partial_T *v_partial;  ///< Closure: function with args.
     blob_T *v_blob;  ///< Blob for VAR_BLOB, can be NULL.
-  }           vval;  ///< Actual value.
+  } vval;  ///< Actual value.
 } typval_T;
 
 /// Values for (struct dictvar_S).dv_scope
