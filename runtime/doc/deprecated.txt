@@ -85,6 +85,9 @@ For each of the functions below, use the corresponding function in
 *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
 *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
 *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
+
+The following have been replaced by |vim.diagnostic.open_float()|.
+
 *vim.lsp.diagnostic.show_line_diagnostics()*
 *vim.lsp.diagnostic.show_position_diagnostics()*
 
