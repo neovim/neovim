@@ -1541,9 +1541,9 @@ end
 
 --- Provides an interface between the built-in client and a `formatexpr` function.
 ---
---- Currently only supports a single client. This can be set via
---- `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in `on_attach`
---- via `vim.api.nvim_buf_set_option(bufnr, 'formatexpr', 'v:lua.vim.lsp.formatexpr()')`.
+--- This can be set via `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` but
+--- will typically or in `on_attach` via
+--- `vim.api.nvim_buf_set_option(bufnr, 'formatexpr', 'v:lua.vim.lsp.formatexpr()')`.
 ---
 --- Can additionally be wrapped with a function that passes an optional table for customization.
 ---
@@ -1572,13 +1572,16 @@ function lsp.formatexpr(opts)
       };
     };
     params.options = util.make_formatting_params().options
-    local client_results = vim.lsp.buf_request_sync(0, "textDocument/rangeFormatting", params, timeout_ms)
 
-    -- Apply the text edits from one and only one of the clients.
-    for _, response in pairs(client_results) do
-      if response.result then
-        vim.lsp.util.apply_text_edits(response.result, 0)
-        return 0
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    for _, client in ipairs(vim.lsp.buf_get_clients(bufnr)) do
+      if client.resolved_capabilities.document_formatting then
+        local result, _ = client.request_sync("textDocument/rangeFormatting", params, timeout_ms, bufnr)
+
+        if result and result.result then
+          vim.lsp.util.apply_text_edits(result.result, 0)
+        end
       end
     end
   end
