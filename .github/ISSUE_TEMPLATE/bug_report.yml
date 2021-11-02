@@ -16,15 +16,16 @@ body:
       required: true
   - type: input
     attributes:
-      label: "Vim (not Nvim) behaves the same?"
+      label: "Vim Parity"
       description: "Does `vim -u DEFAULTS` have the same issue? Note the exact Vim version (`8.x.yyyy`)."
       placeholder: "no, vim 7.3.432"
     validations:
       required: true
   - type: input
     attributes:
-      label: "Operating system/version"
-      placeholder: "macOS 11.5"
+      label: "Operating system version & Installation"
+      description: "Where did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (describe)?"
+      placeholder: "macOS 11.5, homebrew"
     validations:
       required: true
   - type: input
@@ -37,14 +38,6 @@ body:
     attributes:
       label: "$TERM environment variable"
       placeholder: "xterm-256color"
-    validations:
-      required: true
-
-  - type: input
-    attributes:
-      label: "Installation"
-      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (describe)?"
-      placeholder: "Arch User Repository (AUR)"
     validations:
       required: true
 
