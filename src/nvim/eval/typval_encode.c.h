@@ -391,11 +391,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     }
     break;
   case VAR_SPECIAL:
-    switch (tv->vval.v_special) {
-    case kSpecialVarNull:
-      TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
-      break;
-    }
+    TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
     break;
   case VAR_DICT: {
     if (tv->vval.v_dict == NULL

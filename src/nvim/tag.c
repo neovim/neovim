@@ -1190,7 +1190,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
   if (result == FAIL) {
     return FAIL;
   }
-  if (rettv.v_type == VAR_SPECIAL && rettv.vval.v_special == kSpecialVarNull) {
+  if (rettv.v_type == VAR_SPECIAL) {
     tv_clear(&rettv);
     return NOTDONE;
   }

@@ -1082,15 +1082,13 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Return the current directory
   cwd = xmalloc(MAXPATHL);
-  if (cwd != NULL) {
-    if (os_dirname(cwd, MAXPATHL) != FAIL) {
+  if (os_dirname(cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
-      slash_adjust(cwd);
+    slash_adjust(cwd);
 #endif
-      rettv->vval.v_string = vim_strsave(cwd);
-    }
-    xfree(cwd);
+    rettv->vval.v_string = vim_strsave(cwd);
   }
+  xfree(cwd);
 
   if (curwin->w_localdir != NULL) {
     scope = kCdScopeWindow;
@@ -1940,7 +1938,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     break;
   case VAR_SPECIAL:
-    n = argvars[0].vval.v_special == kSpecialVarNull;
+    n = true;
     break;
   case VAR_BLOB:
     n = (tv_blob_len(argvars[0].vval.v_blob) == 0);
@@ -7345,7 +7343,7 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     strregname = (const char *)get_vim_var_str(VV_REG);
   }
 
-  int regname = (strregname == NULL ? '"' : *strregname);
+  int regname = *strregname;
   if (regname == 0 || regname == '@') {
     regname = '"';
   }
@@ -8917,8 +8915,7 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char valbuf[NUMBUFLEN];
   const char *name = tv_get_string_buf(&argvars[0], namebuf);
 
-  if (argvars[1].v_type == VAR_SPECIAL
-      && argvars[1].vval.v_special == kSpecialVarNull) {
+  if (argvars[1].v_type == VAR_SPECIAL) {
     os_unsetenv(name);
   } else {
     os_setenv(name, tv_get_string_buf(&argvars[1], valbuf), 1);
