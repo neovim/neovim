@@ -940,10 +940,12 @@ function lsp.start_client(config)
   --- This is a thin wrapper around {client.rpc.request} with some additional
   --- checks for capabilities and handler availability.
   ---
-  ---@param method (string) LSP method name.
-  ---@param params (table) LSP request params.
-  ---@param handler (function, optional) Response |lsp-handler| for this method.
-  ---@param bufnr (number) Buffer handle (0 for current).
+  ---@param method string LSP method name.
+  ---@param params table LSP request params.
+  ---@param handler function|nil Response |lsp-handler| for this method.
+  ---@param bufnr number Buffer handle (0 for current).
+  ---@param on_complete function|nil Callback function to be called after completion of the
+  -- request.
   ---@returns ({status}, [request_id]): {status} is a bool indicating
   ---whether the request was successful. If it is `false`, then it will
   ---always be `false` (the client has shutdown). If it was
@@ -951,7 +953,7 @@ function lsp.start_client(config)
   ---second result. You can use this with `client.cancel_request(request_id)`
   ---to cancel the-request.
   ---@see |vim.lsp.buf_request()|
-  function client.request(method, params, handler, bufnr)
+  function client.request(method, params, handler, bufnr, on_complete)
     if not handler then
       handler = resolve_handler(method)
         or error(string.format("not found: %q request handler for client %q.", method, client.name))
@@ -965,6 +967,9 @@ function lsp.start_client(config)
     end, function(request_id)
       client.requests[request_id] = nil
       nvim_command("doautocmd <nomodeline> User LspRequest")
+      if on_complete then
+        on_complete(client, bufnr)
+      end
     end)
 
     if success then
@@ -1334,6 +1339,19 @@ function lsp._vim_exit_handler()
   if tbl_isempty(active_clients) then
     return
   end
+
+  local function await_blocking_requests()
+    for _, client in pairs(active_clients) do
+      for _, request in pairs(client.requests) do
+        if request.type == 'blocking' then
+          return false
+        end
+      end
+    end
+    return true
+  end
+  vim.wait(2000, await_blocking_requests, 50)
+
   for _, client in pairs(active_clients) do
     client.stop()
   end

@@ -116,144 +116,91 @@ end
 --- asks the user to select one.
 --
 ---@returns The client that the user selected or nil
-local function select_client(method, on_choice)
-  validate {
-    on_choice = { on_choice, 'function', false },
-  }
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients())
-  clients = vim.tbl_filter(function(client)
+--- Performs |vim.lsp.buf.formatting()|
+local function select_client(method)
+  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
+  clients = vim.tbl_filter(function (client)
     return client.supports_method(method)
   end, clients)
   -- better UX when choices are always in the same order (between restarts)
-  table.sort(clients, function(a, b)
-    return a.name < b.name
-  end)
+  table.sort(clients, function (a, b) return a.name < b.name end)
 
   if #clients > 1 then
-    vim.ui.select(clients, {
-      prompt = 'Select a language server:',
-      format_item = function(client)
-        return client.name
-      end,
-    }, on_choice)
+    local choices = {}
+    for k,v in pairs(clients) do
+      table.insert(choices, string.format("%d %s", k, v.name))
+    end
+    local user_choice = vim.fn.confirm(
+      "Select a language server:",
+      table.concat(choices, "\n"),
+      0,
+      "Question"
+    )
+    if user_choice == 0 then return nil end
+    return clients[user_choice]
   elseif #clients < 1 then
-    on_choice(nil)
+    return nil
   else
-    on_choice(clients[1])
+    return clients[1]
   end
 end
 
---- Formats the current buffer.
+--- <pre>
+--- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting({save = true})]]
+--- </pre>
 ---
----@param options (optional, table) Can be used to specify FormattingOptions.
---- Some unspecified options will be automatically derived from the current
---- Neovim options.
---
+---@param opts|nil
+---        * formatting_options table with valid `FormattingOptions` entries
+---        * client_id number restrict formatting to client_id
+---        * timeout_ms number Request timeout
+---        * save bool save buffer after formatting
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
-function M.formatting(options)
-  local params = util.make_formatting_params(options)
-  local bufnr = vim.api.nvim_get_current_buf()
-  select_client('textDocument/formatting', function(client)
-    if client == nil then
-      return
-    end
+function M.formatting(opts)
+  opts = opts or {}
+  local client = vim.lsp.get_client_by_id(opts.client_id) or select_client("textDocument/formatting")
+  if client == nil then return end
 
-    return client.request('textDocument/formatting', params, nil, bufnr)
-  end)
-end
+  local request_buf = vim.api.nvim_get_current_buf()
+  vim.api.nvim_buf_set_option(request_buf, 'modifiable', false)
+  vim.notify(string.format("Locking buffer (id: %d) while formatting.", request_buf))
 
---- Performs |vim.lsp.buf.formatting()| synchronously.
----
---- Useful for running on save, to make sure buffer is formatted prior to being
---- saved. {timeout_ms} is passed on to |vim.lsp.buf_request_sync()|. Example:
----
---- <pre>
---- autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()
---- </pre>
----
----@param options Table with valid `FormattingOptions` entries
----@param timeout_ms (number) Request timeout
----@see |vim.lsp.buf.formatting_seq_sync|
-function M.formatting_sync(options, timeout_ms)
-  local params = util.make_formatting_params(options)
-  local bufnr = vim.api.nvim_get_current_buf()
-  select_client('textDocument/formatting', function(client)
-    if client == nil then
-      return
-    end
-
-    local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, bufnr)
-    if result and result.result then
-      util.apply_text_edits(result.result, bufnr)
-    elseif err then
-      vim.notify('vim.lsp.buf.formatting_sync: ' .. err, vim.log.levels.WARN)
-    end
-  end)
-end
-
---- Formats the current buffer by sequentially requesting formatting from attached clients.
----
---- Useful when multiple clients with formatting capability are attached.
----
---- Since it's synchronous, can be used for running on save, to make sure buffer is formatted
---- prior to being saved. {timeout_ms} is passed on to the |vim.lsp.client| `request_sync` method.
---- Example:
---- <pre>
---- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
---- </pre>
----
----@param options (optional, table) `FormattingOptions` entries
----@param timeout_ms (optional, number) Request timeout
----@param order (optional, table) List of client names. Formatting is requested from clients
----in the following order: first all clients that are not in the `order` list, then
----the remaining clients in the order as they occur in the `order` list.
-function M.formatting_seq_sync(options, timeout_ms, order)
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
-  local bufnr = vim.api.nvim_get_current_buf()
-
-  -- sort the clients according to `order`
-  for _, client_name in pairs(order or {}) do
-    -- if the client exists, move to the end of the list
-    for i, client in pairs(clients) do
-      if client.name == client_name then
-        table.insert(clients, table.remove(clients, i))
-        break
-      end
+  local formatting_handler = function(_, result, ctx, _)
+    vim.api.nvim_buf_set_option(request_buf, 'modifiable', true)
+    if not result then return end
+    util.apply_text_edits(result, ctx.bufnr)
+    if opts.save then
+      vim.api.nvim_buf_call(request_buf, function() vim.api.nvim_command("noautocmd write!") end)
     end
   end
 
-  -- loop through the clients and make synchronous formatting requests
-  for _, client in pairs(clients) do
-    if client.resolved_capabilities.document_formatting then
-      local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
-      if result and result.result then
-        util.apply_text_edits(result.result, bufnr)
-      elseif err then
-        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
-      end
-    end
+  local on_complete = function()
+    vim.api.nvim_buf_set_option(request_buf, 'modifiable', true)
+  end
+
+  local params = util.make_formatting_params(opts.formatting_options)
+  local success, request_id = client.request("textDocument/formatting", params, formatting_handler, request_buf, on_complete)
+
+  if success then
+    client.requests[request_id].type = "blocking"
   end
 end
 
 --- Formats a given range.
 ---
----@param options Table with valid `FormattingOptions` entries.
----@param start_pos ({number, number}, optional) mark-indexed position.
+---@param options table with valid `FormattingOptions` entries.
+---@param start_pos table | nil (number, number) mark-indexed position.
 ---Defaults to the start of the last visual selection.
----@param end_pos ({number, number}, optional) mark-indexed position.
+---@param end_pos table | nil (number, number) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
+  local client = select_client("textDocument/rangeFormatting")
+  if client == nil then return end
+
   local params = util.make_given_range_params(start_pos, end_pos)
   params.options = util.make_formatting_params(options).options
-  select_client('textDocument/rangeFormatting', function(client)
-    if client == nil then
-      return
-    end
-
-    return client.request('textDocument/rangeFormatting', params)
-  end)
+  return client.request("textDocument/rangeFormatting", params)
 end
+
 
 --- Renames all references to the symbol under the cursor.
 ---
