@@ -137,9 +137,13 @@ M['client/registerCapability'] = function(_, result, ctx)
 end
 
 
-M['client/unregisterCapability'] = function(_, result, ctx)
-  -- TODO: implement
-  PL('unregister', result)
+M['client/unregisterCapability'] = function(_, result)
+  -- unregisterations typo is part of the spec
+  for _, unregistration in pairs(result.unregisterations) do
+    if unregistration.method == 'workspace/didChangeWatchedFiles' then
+      require('vim.lsp._fs_watch').unregister(unregistration.id)
+    end
+  end
   return vim.NIL
 end
 
