@@ -176,6 +176,7 @@ jobs:
           (echo 'SUBJECT=Nvim development (prerelease) build';
            echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
           gh release delete nightly --yes || true
+          git push origin :nightly || true
       - if: env.TAG_NAME != 'nightly'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,6 +184,7 @@ jobs:
           (echo 'SUBJECT=Nvim release build';
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
+          git push origin :stable || true
       # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
       # containing folder from the output.
       - name: Generate Linux64 SHA256 checksums
