@@ -98,17 +98,51 @@ M['window/showMessageRequest'] = function(_, result)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
-M['client/registerCapability'] = function(_, _, ctx)
+M['client/registerCapability'] = function(_, result, ctx)
+  -- result is
+  --  RegistrationParams:
+  --    registrations: Registration[]
+  --
+  --  Registration:
+  --    id: string
+  --    method: string
+  --    registerOptions?: any    <- depends on concrete dynamic capability
+  --
   local client_id = ctx.client_id
-  local warning_tpl = "The language server %s triggers a registerCapability "..
+  local client = vim.lsp.get_client_by_id(client_id)
+  local unsupported = {}
+  assert(client, 'Client who registers a capability must exist ' .. client_id)
+
+  for _, registration in pairs(result.registrations) do
+    if registration.method == 'workspace/didChangeWatchedFiles' then
+      require('vim.lsp._fs_watch').register(
+        client,
+        registration.id,
+        registration.registerOptions.watchers
+      )
+    else
+      table.insert(unsupported, registration.method)
+    end
+  end
+
+  local warning_tpl = "The language server %s triggers a registerCapability (%s) "..
                       "handler despite dynamicRegistration set to false. "..
                       "Report upstream, this warning is harmless"
-  local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
-  local warning = string.format(warning_tpl, client_name)
-  log.warn(warning)
+  if next(unsupported) then
+    local warning = string.format(warning_tpl, client_name, table.concat(unsupported, ', '))
+    log.warn(warning)
+  end
   return vim.NIL
 end
+
+
+M['client/unregisterCapability'] = function(_, result, ctx)
+  -- TODO: implement
+  PL('unregister', result)
+  return vim.NIL
+end
+
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 M['workspace/applyEdit'] = function(_, workspace_edit, ctx)
