@@ -455,27 +455,9 @@ local function first_difference(old_lines, new_lines, firstline, offset_encoding
     end
   end
 
-  print('first difference')
-  print(byte_to_codepoint(old_line, start_byte_idx, 'start', offset_encoding))
-  -- Set the byte range to start at the last codepoint
-  if start_byte_idx == 1 or #old_line == 0 then
-  -- if start_byte is first byte, or the length of the string is 0, we are done
-    last_char = start_byte_idx
-  elseif start_byte_idx == #old_line + 1 then
-    -- If extending the line, the range will be the length of the old line + 1 and fall on a codepoint
-    start_byte_idx = start_byte_idx
-    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
-    last_char = convert_byte_to_utf(old_line, #old_line, offset_encoding) + 1
-  else
-    -- Modifying line, find the nearest utf codepoint
-    start_byte_idx = start_byte_idx + vim.str_utf_start(old_line, start_byte_idx)
-    -- Extending line, find the nearest utf codepoint for the last valid character
-    last_char = convert_byte_to_utf(old_line, start_byte_idx, offset_encoding)
-  end
-
-  print(start_byte_idx, last_char)
+  local byte_idx, char_idx = byte_to_codepoint(old_line, start_byte_idx, 'start', offset_encoding)
   -- Return the start difference (shared for new and old lines)
-  return { line_idx = firstline, byte_idx=start_byte_idx, char_idx=last_char }
+  return { line_idx = firstline, byte_idx=byte_idx, char_idx=char_idx }
 end
 
 ---@private
@@ -555,50 +537,13 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
     end
   end
 
-  print('old last difference')
-  -- TODO: These functions are duplicates and can be unified with the each other, and the function in first_difference
   local old_end_byte_idx = old_line_length - byte_offset + 1
-  print(byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding))
-  -- Set the byte range to start at the last codepoint
-  if old_end_byte_idx == 1 or #old_line == 0 then
-  -- if start_byte is first byte, or the length of the string is 0, we are done
-    old_last_char = old_end_byte_idx
-  elseif old_end_byte_idx == #old_line + 1 then
-    -- If extending the line, the range will be the length of the old line + 1 and fall on a codepoint
-    old_end_byte_idx = old_end_byte_idx
-    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
-    old_last_char = convert_byte_to_utf(old_line, #old_line, offset_encoding) + 1
-  else
-    -- Modifying line, find the nearest utf codepoint
-    old_end_byte_idx = old_end_byte_idx + vim.str_utf_start(old_line, old_end_byte_idx)
-    -- Extending line, find the nearest utf codepoint for the last valid character
-    old_last_char = convert_byte_to_utf(old_line, old_end_byte_idx, offset_encoding)
-  end
+  local old_byte_idx, old_char_idx = byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding)
+  old_end_range = { line_idx = old_line_idx, byte_idx = old_byte_idx, char_idx = old_char_idx }
 
-  print(old_end_byte_idx, old_last_char)
-  old_end_range = { line_idx = old_line_idx, byte_idx = old_end_byte_idx, char_idx = old_last_char }
-
-  print('new last difference')
   local new_end_byte_idx = new_line_length - byte_offset + 1
-  print(byte_to_codepoint(new_line, new_end_byte_idx, 'end', offset_encoding))
-  -- Set the byte range to start at the last codepoint
-  if new_end_byte_idx == 1 or #new_line == 0 then
-  -- if start_byte is first byte, or the length of the string is 0, we are done
-    new_last_char = new_end_byte_idx
-  elseif new_end_byte_idx == #new_line + 1 then
-    -- If extending the line, the range will be the length of the new line + 1 and fall on a codepoint
-    new_end_byte_idx = new_end_byte_idx
-    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
-    new_last_char = convert_byte_to_utf(new_line, #new_line, offset_encoding) + 1
-  else
-    -- Modifying line, find the nearest utf codepoint
-    new_end_byte_idx = new_end_byte_idx + vim.str_utf_start(new_line, new_end_byte_idx)
-    -- Extending line, find the nearest utf codepoint for the last valid character
-    new_last_char = convert_byte_to_utf(new_line, new_end_byte_idx, offset_encoding)
-  end
-
-  print(new_end_byte_idx, new_last_char)
-  new_end_range = { line_idx = new_line_idx, byte_idx = new_end_byte_idx, char_idx = new_last_char }
+  local new_byte_idx, new_char_idx = byte_to_codepoint(new_line, new_end_byte_idx, 'end', offset_encoding)
+  new_end_range = { line_idx = new_line_idx, byte_idx = new_byte_idx, char_idx = new_char_idx }
 
   return old_end_range, new_end_range
 
