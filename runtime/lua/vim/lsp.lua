@@ -12,6 +12,8 @@ local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
 local uv = vim.loop
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
+-- Cache variable for LSP sync (see comment in function omnifunc_sync)
+local omnifunc_cache
 
 local lsp = {
   protocol = protocol;
@@ -1537,6 +1539,59 @@ function lsp.omnifunc(findstart, base)
   -- Return -2 to signal that we should continue completion so that we can
   -- async complete.
   return -2
+end
+
+--- Implements 'omnifunc' compatible sync LSP completion.
+---
+---@param findstart 0 or 1, decides behavior
+---@param base If findstart=0, text to match against
+---
+---@returns (number) Decided by {findstart}:
+--- - findstart=0: column where the completion starts, or -2 or -3
+--- - findstart=1: list of matches (actually just calls |complete()|)
+function lsp.omnifunc_sync(findstart, base)
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local line = vim.api.nvim_get_current_line()
+
+  if findstart == 1 then
+    -- Cache state of cursor line and position due to the fact that it will
+    -- change at the second call to this function (with `findstart = 0`). See:
+    -- https://github.com/vim/vim/issues/8510.
+    -- This is needed because request to LSP server is made on second call.
+    -- If not done, server's completion mechanics will operate on different
+    -- document and position.
+    omnifunc_cache = {pos = pos, line = line}
+
+    -- On first call return column of completion start
+    local line_to_cursor = line:sub(1, pos[2])
+    return vim.fn.match(line_to_cursor, '\\k*$')
+  end
+
+  -- Restore cursor line and position to the state of first call
+  vim.api.nvim_set_current_line(omnifunc_cache.line)
+  vim.api.nvim_win_set_cursor(0, omnifunc_cache.pos)
+
+  -- Make request
+  local bufnr = vim.api.nvim_get_current_buf()
+  local params = util.make_position_params()
+  local result = lsp.buf_request_sync(bufnr, 'textDocument/completion', params, 2000)
+  if not result then return {} end
+
+  -- Transform request answer to list of completion matches
+  local items = {}
+  for _, item in pairs(result) do
+    if not item.err then
+      local matches = util.text_document_completion_list_to_complete_items(item.result, base)
+      vim.list_extend(items, matches)
+    end
+  end
+
+  -- Restore back cursor line and position to the state of this call's start
+  -- (avoids outcomes of Vim's internal line postprocessing)
+  vim.api.nvim_set_current_line(line)
+  vim.api.nvim_win_set_cursor(0, pos)
+
+  return items
 end
 
 --- Provides an interface between the built-in client and a `formatexpr` function.
