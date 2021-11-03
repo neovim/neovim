@@ -1697,8 +1697,11 @@ static void do_system_initialization(void)
       }
       char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
       memcpy(vimrc, dir, dir_len);
-      vimrc[dir_len] = PATHSEP;
-      memcpy(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      if (vimrc[dir_len - 1] != PATHSEP) {
+        vimrc[dir_len] = PATHSEP;
+        dir_len += 1;
+      }
+      memcpy(vimrc + dir_len, path_tail, sizeof(path_tail));
       if (do_source(vimrc, false, DOSO_NONE) != FAIL) {
         xfree(vimrc);
         xfree(config_dirs);
