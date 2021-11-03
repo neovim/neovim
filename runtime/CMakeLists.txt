@@ -21,12 +21,12 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${FUNCS_DATA}
 )
 
-file(GLOB PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
+glob_wrapper(PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
 
 set(GENERATED_PACKAGE_TAGS)
 foreach(PACKAGE ${PACKAGES})
   get_filename_component(PACKNAME ${PACKAGE} NAME)
-  file(GLOB "${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
+  glob_wrapper("${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
   if(${PACKNAME}_DOC_FILES)
     file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
@@ -54,7 +54,7 @@ foreach(PACKAGE ${PACKAGES})
   endif()
 endforeach()
 
-file(GLOB DOCFILES ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
+glob_wrapper(DOCFILES ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
 
 set(BUILDDOCFILES)
 foreach(DF ${DOCFILES})
@@ -114,9 +114,7 @@ if(NOT APPLE)
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 endif()
 
-file(GLOB_RECURSE RUNTIME_PROGRAMS
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  *.awk *.sh *.bat)
+globrecurse_wrapper(RUNTIME_PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR} *.awk *.sh *.bat)
 
 foreach(PROG ${RUNTIME_PROGRAMS})
   get_filename_component(BASEDIR ${PROG} PATH)
@@ -124,10 +122,8 @@ foreach(PROG ${RUNTIME_PROGRAMS})
                  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/${BASEDIR})
 endforeach()
 
-file(GLOB_RECURSE RUNTIME_FILES
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  rgb.txt
-  *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
+globrecurse_wrapper(RUNTIME_FILES ${CMAKE_CURRENT_SOURCE_DIR}
+  rgb.txt *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)
