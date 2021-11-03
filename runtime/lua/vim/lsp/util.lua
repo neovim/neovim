@@ -1481,6 +1481,25 @@ function M.open_floating_preview(contents, syntax, opts)
   return floating_bufnr, floating_winnr
 end
 
+local function convert_utf_to_byte(line, idx, offset_encoding)
+  -- convert to 0 based indexing
+  idx = idx - 1
+  P(offset_encoding)
+
+  local byte_idx
+  -- Convert utf-{8,16,32} range to byte index and convert 1-based (lua) indexing to 0-based
+  if offset_encoding == "utf-16" then
+    byte_idx = vim.str_byteindex(line, idx, true)
+  elseif offset_encoding == "utf-32" then
+    byte_idx  = vim.str_byteindex(line, idx, false)
+  else
+    byte_idx = idx
+  end
+
+  -- convert to 1 based indexing
+  return byte_idx + 1
+end
+
 do --[[ References ]]
   local reference_ns = api.nvim_create_namespace("vim_lsp_references")
 
@@ -1497,14 +1516,17 @@ do --[[ References ]]
   ---@param bufnr buffer id
   ---@param references List of `DocumentHighlight` objects to highlight
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
-  function M.buf_highlight_references(bufnr, references)
+  function M.buf_highlight_references(bufnr, references, client_id)
     validate { bufnr = {bufnr, 'n', true} }
+    local client = vim.lsp.get_client_by_id(client_id)
+
     for _, reference in ipairs(references) do
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
 
-      local start_idx = vim.str_byteindex(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or '', start_char)
-      local end_idx = vim.str_byteindex(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or '', end_char)
+      local line = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or ''
+      local start_idx = convert_utf_to_byte(line, start_char, client.offset_encoding)
+      local end_idx = convert_utf_to_byte(line, end_char, client.offset_encoding)
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
