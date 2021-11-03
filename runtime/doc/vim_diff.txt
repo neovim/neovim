@@ -85,6 +85,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
 	inoremap <C-U> <C-G>u<C-U>
 	inoremap <C-W> <C-G>u<C-W>
+	nnoremap ]g <Cmd>lua vim.diagnostic.goto_next {float=false}<CR>
+	nnoremap [g <Cmd>lua vim.diagnostic.goto_prev {float=false}<CR>
 <
 Default Autocommands ~
 							*default-autocmds*

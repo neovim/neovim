@@ -296,6 +296,12 @@ Example: >
 	autocmd User DiagnosticsChanged lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
+MAPS							*diagnostic-maps*
+
+]g			Goto the next diagnostic in the buffer.
+			|vim.diagnostic.goto_next()|
+[g			Goto the previous diagnostic in the buffer.
+			|vim.diagnostic.goto_prev()|
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
