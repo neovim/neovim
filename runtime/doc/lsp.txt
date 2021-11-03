@@ -63,7 +63,7 @@ Example config (in init.vim): >
 
       -- Use LSP as the handler for formatexpr.
       --    See `:help formatexpr` for more information.
-      vim.api.nvim_buf_set_option(0, 'formatexpr', 'v:lua.vim.lsp.formatexpr')
+      vim.api.nvim_buf_set_option(0, 'formatexpr', 'v:lua.vim.lsp.formatexpr()')
 
       -- For plugins with an `on_attach` callback, call them here. For example:
       -- require('completion').on_attach()
