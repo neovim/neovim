@@ -421,11 +421,16 @@ end
 ---@param firstline integer
 ---@param offset_encoding string
 ---@returns (int, int) firstline and start_byte_idx of range
-local function first_difference(old_lines, new_lines, firstline, offset_encoding)
+local function first_difference(old_lines, new_lines, firstline, lastline, new_lastline, offset_encoding)
   local last_char
 
   local old_line = old_lines[firstline]
   local new_line = new_lines[firstline]
+
+  if new_lastline == (lastline - 1) then
+    -- Extending the buffer, pick the last byte of old_lines
+    return { line_idx = firstline, byte_idx = 1, char_idx = 1 }
+  end
 
   -- When either old_line or new_line are invalid
   if not old_line or not new_line then
@@ -446,6 +451,7 @@ local function first_difference(old_lines, new_lines, firstline, offset_encoding
     return { line_idx = changed_line_idx, byte_idx = last_byte, char_idx = last_char }
   end
 
+  print(old_line, new_line)
   local start_byte_idx = 1
   -- Iterate across old and new line to find the first different byte
   for idx = 1, #old_line + 1 do
@@ -454,6 +460,7 @@ local function first_difference(old_lines, new_lines, firstline, offset_encoding
       break
     end
   end
+  print(start_byte_idx)
 
   local byte_idx, char_idx = byte_to_codepoint(old_line, start_byte_idx, 'start', offset_encoding)
   -- Return the start difference (shared for new and old lines)
@@ -494,6 +501,14 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
   local new_changed_line_idx
   local new_end_range
 
+  -- Handle joining of lines
+  if new_lastline == (lastline - 1) then
+    -- Extending the buffer, pick the last byte of old_lines
+    old_end_range = { line_idx = old_line_idx, byte_idx = #old_lines[old_line_idx] + 1, char_idx =  #old_lines[old_line_idx] + 1 }
+    new_end_range = { line_idx = new_line_idx, byte_idx = 1, char_idx = 1 }
+    return old_end_range, new_end_range
+  end
+
   -- When either old_line or new_line are invalid
   if not old_line or not new_line then
     -- Special case for when buffer is extended by adding lines
@@ -523,7 +538,7 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
   -- We know that the end_byte cannot be before the first change
   local search_bound
   if old_line_idx == start_line_idx or new_line_idx == start_line_idx then
-    search_bound  = math.min(old_line_length - start_byte_idx, new_line_length -start_byte_idx)
+    search_bound  = math.min(old_line_length - start_byte_idx, new_line_length)
   else
     search_bound  = math.max(old_line_length, new_line_length)
   end
@@ -620,7 +635,7 @@ end
 ---@param offset_encoding string encoding requested by language server
 ---@returns table start_line_idx and start_col_idx of range
 function M.compute_diff(old_lines, new_lines, firstline, lastline, new_lastline, offset_encoding)
-    local start_range = first_difference(old_lines, new_lines, firstline +1, offset_encoding)
+    local start_range = first_difference(old_lines, new_lines, firstline +1, lastline + 1, new_lastline + 1, offset_encoding)
     -- -- Find the last changed line, and the last utf-8 character difference (1-indexed)
     local old_end_range, new_end_range = last_difference(old_lines, new_lines, start_range, lastline+1, new_lastline+1, offset_encoding)
     local text = extract_text(new_lines, start_range, new_end_range)
