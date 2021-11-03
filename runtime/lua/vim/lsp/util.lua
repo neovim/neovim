@@ -1500,15 +1500,23 @@ do --[[ References ]]
   function M.buf_highlight_references(bufnr, references)
     validate { bufnr = {bufnr, 'n', true} }
     for _, reference in ipairs(references) do
-      local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
-      local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
+      local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
+      local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
+
+      local start_idx = vim.str_byteindex(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or '', start_char)
+      local end_idx = vim.str_byteindex(vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or '', end_char)
+
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
         [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
         [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
-      highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
+      highlight.range(bufnr,
+                      reference_ns,
+                      document_highlight_kind[kind],
+                      { start_line, start_idx },
+                      { end_line, end_idx })
     end
   end
 end
