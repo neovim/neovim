@@ -136,6 +136,10 @@ struct terminal {
   int pressed_button;               // which mouse button is pressed
   bool pending_resize;              // pending width/height
 
+#ifdef NVIM_VTERM_HAS_STR_FRAGMENT
+  kvec_t(char) title;
+#endif
+
   bool color_set[16];
 
   size_t refcount;                  // reference count
@@ -214,7 +218,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   if (buf->b_ffname != NULL) {
-    buf_set_term_title(buf, (char *)buf->b_ffname);
+    buf_set_term_title(buf, (char *)buf->b_ffname,
+                       strlen((char *)buf->b_ffname));
   }
   RESET_BINDING(curwin);
   // Reset cursor in current window.
@@ -554,6 +559,9 @@ void terminal_destroy(Terminal *term)
     }
     xfree(term->sb_buffer);
     vterm_free(term->vt);
+#ifdef NVIM_VTERM_HAS_STR_FRAGMENT
+    kv_destroy(term->title);
+#endif
     xfree(term);
   }
 }
@@ -786,13 +794,13 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible, void *data)
   return 1;
 }
 
-static void buf_set_term_title(buf_T *buf, char *title)
+static void buf_set_term_title(buf_T *buf, char *title, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
-               STRING_OBJ(cstr_as_string(title)),
+               STRING_OBJ(((String){ .data = title, .size = len })),
                false,
                false,
                &err);
@@ -815,7 +823,29 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
   case VTERM_PROP_TITLE: {
     buf_T *buf = handle_get_buffer(term->buf_handle);
-    buf_set_term_title(buf, val->string);
+#ifdef NVIM_VTERM_HAS_STR_FRAGMENT
+    if (val->string.initial && val->string.final) {
+      buf_set_term_title(buf, (char *)val->string.str, val->string.len);
+    } else  {
+      if (val->string.initial) {
+        kv_size(term->title) = 0;
+      }
+      size_t len = kv_size(term->title) + val->string.len;
+      if (len > kv_max(term->title)) {
+        kv_resize(term->title, len);
+      }
+      for (size_t i = 0; i < val->string.len; i++) {
+        kv_push(term->title, *(val->string.str + i));
+      }
+      if (val->string.final) {
+        buf_set_term_title(buf, term->title.items, kv_size(term->title));
+        kv_destroy(term->title);
+        kv_init(term->title);
+      }
+    }
+#else
+    buf_set_term_title(buf, val->string, strlen(val->string));
+#endif
     break;
   }
 

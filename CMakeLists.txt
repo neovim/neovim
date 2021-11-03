@@ -466,8 +466,26 @@ if(FEAT_TUI)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
-find_package(LIBVTERM 0.1 REQUIRED)
+find_package(LIBVTERM 0.1.4 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
+
+list(APPEND CMAKE_REQUIRED_INCLUDES "${LIBVTERM_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${LIBVTER_LIBRARIES}")
+check_c_source_compiles("
+#include <vterm.h>
+
+int
+main(void)
+{
+  VTermStringFragment frag;
+  return 0;
+}
+" VTERM_HAS_STR_FRAGMENT)
+list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${LIBVTERM_INCLUDE_DIRS}")
+list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${LIBVTER_LIBRARIES}")
+if(VTERM_HAS_STR_FRAGMENT)
+  add_definitions(-DNVIM_VTERM_HAS_STR_FRAGMENT)
+endif()
 
 if(WIN32)
   find_package(Winpty 0.4.3 REQUIRED)

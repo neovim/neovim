@@ -36,14 +36,6 @@ index 84299df..f9aabb3 100644
  
      for( ; i < glyph_ends; i++) {
        chars[i - glyph_starts] = codepoints[i];
-@@ -512,7 +513,7 @@ static int settermprop_int(VTermState *state, VTermProp prop, int v)
- 
- static int settermprop_string(VTermState *state, VTermProp prop, const char *str, size_t len)
- {
--  char strvalue[len+1];
-+  char* strvalue = _alloca(len+1);
-   strncpy(strvalue, str, len);
-   strvalue[len] = 0;
  
 -- 
 2.16.1.windows.4
