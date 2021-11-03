@@ -380,6 +380,39 @@ local function convert_byte_to_utf(line, idx, offset_encoding)
   return utf_idx + 1
 end
 
+local function byte_to_codepoint(line, byte, align, offset_encoding)
+  local char
+  -- Set the byte range to start at the last codepoint
+  if byte == 1 or #line == 0 then
+  -- if start_byte is first byte, or the length of the string is 0, we are done
+    char = byte
+  elseif byte == #line + 1 then
+    -- If extending the line, the range will be the length of the old line + 1 and fall on a codepoint
+    byte = byte
+    -- Extending line, find the nearest utf codepoint for the last valid character then add 1
+    char = convert_byte_to_utf(line, #line, offset_encoding) + 1
+  else
+    -- Modifying line, find the nearest utf codepoint
+    if align == 'start' then
+      byte = byte + vim.str_utf_start(line, byte)
+      char = convert_byte_to_utf(line, byte, offset_encoding)
+    elseif align == 'end' then
+      local offset = vim.str_utf_end(line, byte)
+      if offset > 0 then
+        char = convert_byte_to_utf(line, byte, offset_encoding) + 1
+        byte = byte + offset
+      else
+        char = convert_byte_to_utf(line, byte, offset_encoding)
+        byte = byte + offset
+      end
+    else
+      assert(false, "`align` must be start or end.")
+    end
+    -- Extending line, find the nearest utf codepoint for the last valid character
+  end
+  return byte, char
+end
+
 ---@private
 --- Finds the first line and byte index of the difference between old and new lines.
 --- Normalized to the previous codepoint.
@@ -422,6 +455,8 @@ local function first_difference(old_lines, new_lines, firstline, offset_encoding
     end
   end
 
+  print('first difference')
+  print(byte_to_codepoint(old_line, start_byte_idx, 'start', offset_encoding))
   -- Set the byte range to start at the last codepoint
   if start_byte_idx == 1 or #old_line == 0 then
   -- if start_byte is first byte, or the length of the string is 0, we are done
@@ -438,10 +473,10 @@ local function first_difference(old_lines, new_lines, firstline, offset_encoding
     last_char = convert_byte_to_utf(old_line, start_byte_idx, offset_encoding)
   end
 
+  print(start_byte_idx, last_char)
   -- Return the start difference (shared for new and old lines)
   return { line_idx = firstline, byte_idx=start_byte_idx, char_idx=last_char }
 end
-
 
 ---@private
 --- Finds the last line and byte index of the differences between old and new lines>
@@ -520,8 +555,10 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
     end
   end
 
+  print('old last difference')
   -- TODO: These functions are duplicates and can be unified with the each other, and the function in first_difference
   local old_end_byte_idx = old_line_length - byte_offset + 1
+  print(byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding))
   -- Set the byte range to start at the last codepoint
   if old_end_byte_idx == 1 or #old_line == 0 then
   -- if start_byte is first byte, or the length of the string is 0, we are done
@@ -538,9 +575,12 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
     old_last_char = convert_byte_to_utf(old_line, old_end_byte_idx, offset_encoding)
   end
 
+  print(old_end_byte_idx, old_last_char)
   old_end_range = { line_idx = old_line_idx, byte_idx = old_end_byte_idx, char_idx = old_last_char }
 
+  print('new last difference')
   local new_end_byte_idx = new_line_length - byte_offset + 1
+  print(byte_to_codepoint(new_line, new_end_byte_idx, 'end', offset_encoding))
   -- Set the byte range to start at the last codepoint
   if new_end_byte_idx == 1 or #new_line == 0 then
   -- if start_byte is first byte, or the length of the string is 0, we are done
@@ -557,9 +597,8 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
     new_last_char = convert_byte_to_utf(new_line, new_end_byte_idx, offset_encoding)
   end
 
+  print(new_end_byte_idx, new_last_char)
   new_end_range = { line_idx = new_line_idx, byte_idx = new_end_byte_idx, char_idx = new_last_char }
-
-
 
   return old_end_range, new_end_range
 
