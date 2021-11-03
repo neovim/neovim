@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
+local exec_lua = helpers.exec_lua
+local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
 local eq = helpers.eq
@@ -60,5 +62,31 @@ describe('meta-keys #8226 #13042', function()
     expect('hellohello')
     feed('u')
     expect('hello')
+  end)
+
+  it('ALT/META terminal-mode', function()
+    exec_lua([[
+      _G.input_data = ''
+      vim.api.nvim_open_term(0, { on_input = function(_, _, _, data)
+        _G.input_data = _G.input_data .. vim.fn.strtrans(data)
+      end })
+    ]])
+    -- Mapped ALT-chord behaves as mapped.
+    command('tnoremap <M-l> meta-l')
+    command('tnoremap <A-j> alt-j')
+    feed('i<M-l> xxx <A-j>')
+    eq('meta-l xxx alt-j', exec_lua([[return _G.input_data]]))
+    -- Unmapped ALT-chord is sent to terminal as-is. #16220
+    exec_lua([[_G.input_data = '']])
+    command('tunmap <M-l>')
+    feed('<M-l>')
+    local meta_l_seq = exec_lua([[return _G.input_data]])
+    command('tnoremap <Esc> <C-\\><C-N>')
+    feed('yyy<M-l><A-j>')
+    eq(meta_l_seq .. 'yyy' .. meta_l_seq .. 'alt-j', exec_lua([[return _G.input_data]]))
+    eq('t', eval('mode(1)'))
+    feed('<Esc>j')
+    eq({ 0, 2, 1, 0, }, funcs.getpos('.'))
+    eq('nt', eval('mode(1)'))
   end)
 end)

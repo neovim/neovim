@@ -1579,7 +1579,8 @@ int vgetc(void)
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
       // something with a meta- or alt- modifier that was not mapped, interpret
       // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
-      if (!no_mapping && KeyTyped
+      // In Terminal mode, however, this is not desirable. #16220
+      if (!no_mapping && KeyTyped && !(State & TERM_FOCUS)
           && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
         mod_mask = 0;
         ins_char_typebuf(c);
