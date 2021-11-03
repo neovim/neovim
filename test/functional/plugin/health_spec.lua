@@ -134,7 +134,7 @@ describe('health.vim', function()
       command("checkhealth test_plug*")
       local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
       -- avoid dealing with path separators
-      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 2)
+      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
       local expected = helpers.dedent([[
 
         test_plug: require("test_plug.health").check()
@@ -175,10 +175,10 @@ describe('health.vim', function()
     it("gracefully handles broken lua healthcheck", function()
       command("checkhealth test_plug.submodule_failed")
       local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
-      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 2)
+      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
       -- avoid dealing with path separators
       local lua_err = "attempt to perform arithmetic on a nil value"
-      local last_line = buf_lines[#buf_lines - 1]
+      local last_line = buf_lines[#buf_lines - 4]
       assert(string.find(last_line, lua_err) ~= nil, "Lua error not present")
 
       local expected = global_helpers.dedent([[

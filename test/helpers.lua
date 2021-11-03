@@ -155,10 +155,18 @@ function module.pcall_err_withfile(fn, ...)
   return errmsg
 end
 
-function module.pcall_err(fn, ...)
+function module.pcall_err_withtrace(fn, ...)
   local errmsg = module.pcall_err_withfile(fn, ...)
 
   return errmsg:gsub('.../helpers.lua:0: ', '')
+end
+
+function module.pcall_err(...)
+  return module.remove_trace(module.pcall_err_withtrace(...))
+end
+
+function module.remove_trace(s)
+  return (s:gsub("\n%s*stack traceback:.*", ""))
 end
 
 -- initial_path:  directory to recurse into

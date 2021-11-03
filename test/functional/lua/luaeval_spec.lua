@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local pcall_err = helpers.pcall_err
 local exc_exec = helpers.exc_exec
+local remove_trace = helpers.remove_trace
 local exec_lua = helpers.exec_lua
 local command = helpers.command
 local meths = helpers.meths
@@ -424,11 +425,11 @@ describe('luaeval()', function()
   it('errors out correctly when doing incorrect things in lua', function()
     -- Conversion errors
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
-       exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
+       remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]])))
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: ERROR',
-       exc_exec([[call luaeval("error('ERROR')")]]))
+       remove_trace(exc_exec([[call luaeval("error('ERROR')")]])))
     eq('Vim(call):E5108: Error executing lua [NULL]',
-       exc_exec([[call luaeval("error(nil)")]]))
+       remove_trace(exc_exec([[call luaeval("error(nil)")]])))
   end)
 
   it('does not leak memory when called with too long line',

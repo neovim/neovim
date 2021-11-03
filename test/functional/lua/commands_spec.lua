@@ -17,6 +17,7 @@ local pcall_err = helpers.pcall_err
 local write_file = helpers.write_file
 local exec_capture = helpers.exec_capture
 local curbufmeths = helpers.curbufmeths
+local remove_trace = helpers.remove_trace
 
 before_each(clear)
 
@@ -46,9 +47,9 @@ describe(':lua command', function()
     eq([[Vim(lua):E5107: Error loading lua [string ":lua"]:0: unexpected symbol near ')']],
        pcall_err(command, 'lua ()'))
     eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: TEST]],
-       exc_exec('lua error("TEST")'))
+       remove_trace(exc_exec('lua error("TEST")')))
     eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id: -10]],
-       exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
+       remove_trace(exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})')))
     eq({''}, curbufmeths.get_lines(0, 100, false))
   end)
   it('works with NULL errors', function()
@@ -95,15 +96,15 @@ describe(':lua command', function()
 
     feed(':lua error("fail\\nmuch error\\nsuch details")<cr>')
     screen:expect{grid=[[
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
       {2:                                        }|
       {3:E5108: Error executing lua [string ":lua}|
       {3:"]:1: fail}                              |
       {3:much error}                              |
       {3:such details}                            |
+      {3:stack traceback:}                        |
+      {3:        [C]: in function 'error'}        |
+      {3:        [string ":lua"]:1: in main chunk}|
+                                              |
       {4:Press ENTER or type command to continue}^ |
     ]]}
     feed('<cr>')
@@ -119,24 +120,24 @@ describe(':lua command', function()
       {1:~                                       }|
                                               |
     ]]}
-    eq('E5108: Error executing lua [string ":lua"]:1: fail\nmuch error\nsuch details', eval('v:errmsg'))
+    eq('E5108: Error executing lua [string ":lua"]:1: fail\nmuch error\nsuch details', remove_trace(eval('v:errmsg')))
 
     local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
     local expected = 'Vim(lua):E5108: Error executing lua [string ":lua"]:1: some error\nin a\nAPI command'
     eq(false, status)
-    eq(expected, string.sub(err, -string.len(expected)))
+    eq(expected, string.sub(remove_trace(err), -string.len(expected)))
 
     feed(':messages<cr>')
     screen:expect{grid=[[
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
       {2:                                        }|
       {3:E5108: Error executing lua [string ":lua}|
       {3:"]:1: fail}                              |
       {3:much error}                              |
       {3:such details}                            |
+      {3:stack traceback:}                        |
+      {3:        [C]: in function 'error'}        |
+      {3:        [string ":lua"]:1: in main chunk}|
+                                              |
       {4:Press ENTER or type command to continue}^ |
     ]]}
   end)
@@ -219,7 +220,7 @@ describe(':luafile', function()
        exc_exec('luafile ' .. fname))
     write_file(fname, 'vimm.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})')
     eq(("Vim(luafile):E5113: Error while calling lua chunk: %s:1: attempt to index global 'vimm' (a nil value)"):format(fname),
-       exc_exec('luafile ' .. fname))
+        remove_trace(exc_exec('luafile ' .. fname)))
   end)
   it('works with NULL errors', function()
     write_file(fname, 'error(nil)')

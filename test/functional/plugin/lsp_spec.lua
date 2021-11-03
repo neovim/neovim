@@ -1153,15 +1153,9 @@ describe('LSP', function()
     end)
 
     it('should invalid cmd argument', function()
-      eq(dedent([[
-          Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim
-          stack traceback:
-              .../lsp.lua:0: in function <.../lsp.lua:0>]]),
+      eq('Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim',
         pcall_err(_cmd_parts, 'nvim'))
-      eq(dedent([[
-          Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number
-          stack traceback:
-              .../lsp.lua:0: in function <.../lsp.lua:0>]]),
+      eq('Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number',
         pcall_err(_cmd_parts, {'nvim', 1}))
     end)
   end)
