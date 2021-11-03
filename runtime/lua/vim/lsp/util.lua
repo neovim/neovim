@@ -1484,7 +1484,6 @@ end
 local function convert_utf_to_byte(line, idx, offset_encoding)
   -- convert to 0 based indexing
   idx = idx - 1
-  P(offset_encoding)
 
   local byte_idx
   -- Convert utf-{8,16,32} range to byte index and convert 1-based (lua) indexing to 0-based
