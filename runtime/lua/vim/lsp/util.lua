@@ -151,7 +151,7 @@ end
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
-local function get_line_byte_from_position(bufnr, position)
+local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- TODO handle offset_encoding
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
@@ -166,7 +166,13 @@ local function get_line_byte_from_position(bufnr, position)
     local line = position.line
     local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
     if #lines > 0 then
-      local ok, result = pcall(vim.str_byteindex, lines[1], col, true)
+      local ok, result
+
+      if offset_encoding == "utf-16" or not offset_encoding then
+        ok, result = pcall(vim.str_byteindex, lines[1], col, true)
+      elseif offset_encoding == "utf-32" then
+        ok, result = pcall(vim.str_byteindex, lines[1], col, false)
+      end
 
       if ok then
         return result
@@ -1481,24 +1487,6 @@ function M.open_floating_preview(contents, syntax, opts)
   return floating_bufnr, floating_winnr
 end
 
-local function convert_utf_to_byte(line, idx, offset_encoding)
-  -- convert to 0 based indexing
-  idx = idx - 1
-
-  local byte_idx
-  -- Convert utf-{8,16,32} range to byte index and convert 1-based (lua) indexing to 0-based
-  if offset_encoding == "utf-16" then
-    byte_idx = vim.str_byteindex(line, idx, true)
-  elseif offset_encoding == "utf-32" then
-    byte_idx  = vim.str_byteindex(line, idx, false)
-  else
-    byte_idx = idx
-  end
-
-  -- convert to 1 based indexing
-  return byte_idx + 1
-end
-
 do --[[ References ]]
   local reference_ns = api.nvim_create_namespace("vim_lsp_references")
 
@@ -1525,9 +1513,8 @@ do --[[ References ]]
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
 
-      local line = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)[1] or ''
-      local start_idx = convert_utf_to_byte(line, start_char, client.offset_encoding)
-      local end_idx = convert_utf_to_byte(line, end_char, client.offset_encoding)
+      local start_idx = get_line_byte_from_position(bufnr, { line = start_line, character = start_char }, client.offset_encoding)
+      local end_idx = get_line_byte_from_position(bufnr, { line = start_line, character = end_char }, client.offset_encoding)
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
