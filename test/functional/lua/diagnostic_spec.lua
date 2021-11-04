@@ -1242,6 +1242,67 @@ describe('vim.diagnostic', function()
     end)
   end)
 
+  describe('goto', function()
+    before_each(function()
+      exec_lua [[
+        vim.diagnostic.config({ float = false })
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error("Syntax error", 0, 1, 0, 3),
+          make_error('Error', 1, 2, 1, 2),
+          make_info('Info', 1, 3, 1, 4),
+          make_warning('Warning', 2, 0, 2, 1),
+        })
+      ]]
+    end)
+
+    it('can move to the next diagnostic', function()
+      eq({2, 2}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {1, 4})
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+    end)
+
+    it('can move to the previous diagnostic', function()
+      eq({1, 1}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {1, 4})
+        vim.diagnostic.goto_prev()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+    end)
+
+    it('can move to the first diagnostic', function()
+      eq({1, 1}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {3, 3})
+        vim.diagnostic.goto_first()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+    end)
+
+    it('can move to the last diagnostic', function()
+      eq({3, 0}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+        vim.diagnostic.goto_last()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+    end)
+
+    it('can wrap around the buffer', function()
+      eq({3, 0}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+        vim.diagnostic.goto_prev()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+
+      eq({1, 1}, exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {3, 3})
+        vim.diagnostic.goto_next()
+        return vim.api.nvim_win_get_cursor(0)
+      ]])
+    end)
+  end)
+
   describe('setloclist()', function()
     it('sets diagnostics in lnum order', function()
       local loc_list = exec_lua [[

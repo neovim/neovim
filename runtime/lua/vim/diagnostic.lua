@@ -62,6 +62,11 @@ local function filter_by_severity(severity, diagnostics)
 end
 
 ---@private
+local function sort_by_position(diagnostics)
+  table.sort(diagnostics, function(a, b) return a.lnum < b.lnum or (a.lnum == b.lnum and a.col < b.col) end)
+end
+
+---@private
 local function prefix_source(source, diagnostics)
   vim.validate { source = {source, function(v)
     return v == "always" or v == "if_many"
@@ -750,6 +755,21 @@ function M.goto_prev(opts)
   )
 end
 
+--- Move to the first diagnostic in the current buffer.
+---@param opts table See |vim.diagnostic.goto_next()|
+function M.goto_first(opts)
+  opts = opts or {}
+  local win_id = opts.win_id or vim.api.nvim_get_current_win()
+  local bufnr = vim.api.nvim_win_get_buf(win_id)
+  local diagnostics = M.get(bufnr)
+  local pos
+  if #diagnostics > 0 then
+    sort_by_position(diagnostics)
+    pos = {diagnostics[1].lnum, diagnostics[1].col}
+  end
+  return diagnostic_move_pos(opts, pos)
+end
+
 --- Get the next diagnostic closest to the cursor position.
 ---
 ---@param opts table See |vim.diagnostic.goto_next()|
@@ -794,6 +814,21 @@ function M.goto_next(opts)
     opts,
     M.get_next_pos(opts)
   )
+end
+
+--- Move to the last diagnostic in the current buffer.
+---@param opts table See |vim.diagnostic.goto_next()|
+function M.goto_last(opts)
+  opts = opts or {}
+  local win_id = opts.win_id or vim.api.nvim_get_current_win()
+  local bufnr = vim.api.nvim_win_get_buf(win_id)
+  local diagnostics = M.get(bufnr)
+  local pos
+  if #diagnostics > 0 then
+    sort_by_position(diagnostics)
+    pos = {diagnostics[#diagnostics].lnum, diagnostics[#diagnostics].col}
+  end
+  return diagnostic_move_pos(opts, pos)
 end
 
 M.handlers.signs = {
