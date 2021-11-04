@@ -1240,6 +1240,41 @@ describe('vim.diagnostic', function()
         return lines
       ]])
     end)
+
+    it('can filter by severity', function()
+      local count_diagnostics_with_severity = function(min_severity, max_severity)
+        return exec_lua([[
+          local min_severity, max_severity = ...
+          vim.diagnostic.config({
+            float = {
+              severity = {min=min_severity, max=max_severity},
+            },
+          })
+
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Syntax error", 0, 1, 0, 3),
+            make_info('Info', 0, 3, 0, 4),
+            make_error('Error', 0, 2, 0, 2),
+            make_warning('Warning', 0, 0, 0, 1),
+          })
+
+          local float_bufnr, winnr = vim.diagnostic.open_float(diagnostic_bufnr, { show_header = false })
+          if not float_bufnr then
+            return 0
+          end
+
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return #lines
+        ]], min_severity, max_severity)
+      end
+
+      eq(2, count_diagnostics_with_severity("ERROR"))
+      eq(3, count_diagnostics_with_severity("WARN"))
+      eq(1, count_diagnostics_with_severity("WARN", "WARN"))
+      eq(4, count_diagnostics_with_severity("HINT"))
+      eq(0, count_diagnostics_with_severity("HINT", "HINT"))
+    end)
   end)
 
   describe('setloclist()', function()
