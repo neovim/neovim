@@ -592,7 +592,10 @@ local function extract_text(lines, start_range, end_range)
 
     -- Add the fragment of the last line
     local line = lines[end_range.line_idx]
-    result = result .. string.sub(line, 1, end_range.byte_idx)
+    -- byte index 1 indicates rollover from previous line
+    if end_range.byte_idx > 1 then
+      result = result .. string.sub(line, 1, end_range.byte_idx)
+    end
 
     return result
   end
