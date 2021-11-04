@@ -416,42 +416,42 @@ end
 ---@private
 --- Finds the first line and byte index of the difference between old and new lines.
 --- Normalized to the previous codepoint.
----@param old_lines table list of lines
----@param new_lines table list of lines
----@param firstline integer
----@param offset_encoding string
----@returns (int, int) firstline and start_byte_idx of range
+---@param old_lines table list of lines from previous buffer
+---@param new_lines table list of lines from current buffer
+---@param firstline integer firstline from on_lines, adjusted to 1-index
+---@param lastline integer lastline from on_lines, adjusted to 1-index
+---@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
+---@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
+---@returns table<int, int> line_idx, byte_idx, and char_idx of first change position
 local function first_difference(old_lines, new_lines, firstline, lastline, new_lastline, offset_encoding)
-  local last_char
-
-  local old_line = old_lines[firstline]
-  local new_line = new_lines[firstline]
-
-  if new_lastline == (lastline - 1) then
-    -- Extending the buffer, pick the last byte of old_lines
+  -- This handles whole line operations (line wiped or added)
+  -- Join operation (2 op): extends line 1 with the contents of line 2, delete line 2
+  -- lastline = 3
+  -- test 1    test 1 test 2    test 1 test 2
+  -- test 2 -> test 2        -> test 3
+  -- test 3    test 3
+  --
+  -- Deleting (and undoing) two middle lines (1 op)
+  -- test 1    test 1
+  -- test 2 -> test 4
+  -- test 3
+  -- test 4
+  --
+  -- Delete between asterisks (5 op)
+  -- test *1   test *    test *     test *    test *4    test *4*
+  -- test 2 -> test 2 -> test *4 -> *4     -> *4      ->
+  -- test 3    test 3
+  -- test *4   test 4
+  if firstline == new_lastline or firstline == lastline then
+    -- NOT SURE ABOUT THIS
     return { line_idx = firstline, byte_idx = 1, char_idx = 1 }
   end
 
-  -- When either old_line or new_line are invalid
-  if not old_line or not new_line then
-    local changed_line_idx
-    -- Special case for when buffer is extended by adding lines
-    if not old_line then
-       changed_line_idx = #old_lines
-    else
-      -- Special case for when buffer is shortened by removing lines
-       changed_line_idx = #old_lines - 1
-    end
+  -- Fallback to empty string in case firstline is out of range of old lines (adding lines to buffer)
+  -- or out of range of new lines (deleting lines of buffer). The first changed byte will be at idx 1.
+  local old_line = old_lines[firstline] or ""
+  local new_line = new_lines[firstline] or ""
 
-    local changed_line = old_lines[changed_line_idx]
-    local last_byte = #changed_line + 1
-    last_char = convert_byte_to_utf(changed_line, last_byte, offset_encoding)
-
-    -- Extending the buffer, pick the last byte of old_lines
-    return { line_idx = changed_line_idx, byte_idx = last_byte, char_idx = last_char }
-  end
-
-  print(old_line, new_line)
   local start_byte_idx = 1
   -- Iterate across old and new line to find the first different byte
   for idx = 1, #old_line + 1 do
@@ -460,9 +460,10 @@ local function first_difference(old_lines, new_lines, firstline, lastline, new_l
       break
     end
   end
-  print(start_byte_idx)
 
+  -- Convert byte to codepoint if applicable
   local byte_idx, char_idx = byte_to_codepoint(old_line, start_byte_idx, 'start', offset_encoding)
+
   -- Return the start difference (shared for new and old lines)
   return { line_idx = firstline, byte_idx=byte_idx, char_idx=char_idx }
 end
