@@ -502,14 +502,6 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
   local new_changed_line_idx
   local new_end_range
 
-  -- Handle joining of lines
-  if new_lastline == (lastline - 1) then
-    -- Extending the buffer, pick the last byte of old_lines
-    old_end_range = { line_idx = old_line_idx, byte_idx = #old_lines[old_line_idx] + 1, char_idx =  #old_lines[old_line_idx] + 1 }
-    new_end_range = { line_idx = new_line_idx, byte_idx = 1, char_idx = 1 }
-    return old_end_range, new_end_range
-  end
-
   -- When either old_line or new_line are invalid
   if not old_line or not new_line then
     -- Special case for when buffer is extended by adding lines
@@ -539,7 +531,7 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
   -- We know that the end_byte cannot be before the first change
   local search_bound
   if old_line_idx == start_line_idx or new_line_idx == start_line_idx then
-    search_bound  = math.min(old_line_length - start_byte_idx, new_line_length)
+    search_bound  = math.min(old_line_length - start_byte_idx, new_line_length) + 1
   else
     search_bound  = math.max(old_line_length, new_line_length)
   end
@@ -548,23 +540,37 @@ local function last_difference(old_lines, new_lines, start_range, lastline, new_
   -- Iterate from end to beginning of shortest line
   for idx = 0, search_bound do
     byte_offset = idx
+    -- print(idx, string.char(string.byte(old_line, old_line_length - byte_offset)), string.char(string.byte(new_line, new_line_length - byte_offset)))
     if string.byte(old_line, old_line_length - byte_offset) ~= string.byte(new_line, new_line_length - byte_offset) then
       break
     end
   end
 
   local old_end_byte_idx = old_line_length - byte_offset + 1
-  local old_byte_idx, old_char_idx = byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding)
+  local old_byte_idx
+  local old_char_idx
+  if old_line_length > 0 and byte_offset == old_line_length then
+    old_end_byte_idx = old_line_length
+    old_byte_idx, old_char_idx = byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding)
+  else
+    old_byte_idx, old_char_idx = byte_to_codepoint(old_line, old_end_byte_idx, 'end', offset_encoding)
+  end
   old_end_range = { line_idx = old_line_idx, byte_idx = old_byte_idx, char_idx = old_char_idx }
 
   local new_end_byte_idx = new_line_length - byte_offset + 1
-  local new_byte_idx, new_char_idx = byte_to_codepoint(new_line, new_end_byte_idx, 'end', offset_encoding)
+  local new_byte_idx
+  local new_char_idx
+  if byte_offset == old_line_length and new_line_length == 0 then
+    new_byte_idx = 1
+    new_char_idx = 1
+  else
+    new_byte_idx, new_char_idx = byte_to_codepoint(new_line, new_end_byte_idx, 'end', offset_encoding)
+  end
   new_end_range = { line_idx = new_line_idx, byte_idx = new_byte_idx, char_idx = new_char_idx }
 
   return old_end_range, new_end_range
 
 end
-
 ---@private
 --- Get the text of the range defined by start and end line/column
 ---@param lines table list of lines
@@ -643,7 +649,7 @@ function M.compute_diff(old_lines, new_lines, firstline, lastline, new_lastline,
     -- -- Find the last changed line, and the last utf-8 character difference (1-indexed)
     local old_end_range, new_end_range = last_difference(old_lines, new_lines, start_range, lastline+1, new_lastline+1, offset_encoding)
     local text = extract_text(new_lines, start_range, new_end_range)
-    local range_length = compute_range_length(old_lines, start_range, old_end_range, offset_encoding)
+    -- local range_length = compute_range_length(old_lines, start_range, old_end_range, offset_encoding)
 
   -- convert to 0 based indexing
   local result = {
@@ -652,7 +658,7 @@ function M.compute_diff(old_lines, new_lines, firstline, lastline, new_lastline,
       ["end"] = { line = old_end_range.line_idx - 1, character = old_end_range.char_idx - 1}
     },
     text = text,
-    rangeLength = range_length,
+    -- rangeLength = range_length,
   }
 
   return result
