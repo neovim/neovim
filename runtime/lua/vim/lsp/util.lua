@@ -1518,7 +1518,9 @@ do --[[ References ]]
   function M.buf_highlight_references(bufnr, references, client_id)
     validate { bufnr = {bufnr, 'n', true} }
     local client = vim.lsp.get_client_by_id(client_id)
-
+    if not client then
+      return
+    end
     for _, reference in ipairs(references) do
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
