@@ -842,6 +842,7 @@ EXTERN disptick_T display_tick INIT(= 0);
 // cursor position in Insert mode.
 EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 
+// uncrustify:off
 
 // The error messages that can be shared are included here.
 // Excluded are errors that are only used once and debugging messages.
@@ -850,11 +851,8 @@ EXTERN char e_afterinit[] INIT(= N_("E905: Cannot set this option after startup"
 EXTERN char e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
-EXTERN char e_cmdwin[] INIT(=
-                              N_("E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
-EXTERN char e_curdir[] INIT(=
-                              N_(
-                                "E12: Command not allowed from exrc/vimrc in current dir or tag search"));
+EXTERN char e_cmdwin[] INIT(= N_("E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
+EXTERN char e_curdir[] INIT(= N_( "E12: Command not allowed from exrc/vimrc in current dir or tag search"));
 EXTERN char e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN char e_endtry[] INIT(= N_("E600: Missing :endtry"));
 EXTERN char e_endwhile[] INIT(= N_("E170: Missing :endwhile"));
@@ -884,10 +882,7 @@ EXTERN char e_channotpty[] INIT(= N_("E904: channel is not a pty"));
 EXTERN char e_stdiochan2[] INIT(= N_("E905: Couldn't open stdio channel: %s"));
 EXTERN char e_invstream[] INIT(= N_("E906: invalid stream for channel"));
 EXTERN char e_invstreamrpc[] INIT(= N_("E906: invalid stream for rpc channel, use 'rpc'"));
-EXTERN char e_streamkey[] INIT(=
-                                 N_(
-                                   "E5210: dict key '%s' already set for buffered stream in channel %"
-                                   PRIu64));
+EXTERN char e_streamkey[] INIT(= N_("E5210: dict key '%s' already set for buffered stream in channel %" PRIu64));
 EXTERN char e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char e_fsync[] INIT(= N_("E667: Fsync failed: %s"));
 EXTERN char e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
@@ -938,8 +933,7 @@ EXTERN char e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: \"%s\"")
 EXTERN char e_listreq[] INIT(= N_("E714: List required"));
 EXTERN char e_listblobreq[] INIT(= N_("E897: List or Blob required"));
 EXTERN char e_listdictarg[] INIT(= N_("E712: Argument of %s must be a List or Dictionary"));
-EXTERN char e_listdictblobarg[] INIT(=
-                                       N_("E896: Argument of %s must be a List, Dictionary or Blob"));
+EXTERN char e_listdictblobarg[] INIT(= N_("E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN char e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char e_secure[] INIT(= N_("E523: Not allowed here"));
@@ -978,25 +972,21 @@ EXTERN char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
-EXTERN char e_autocmd_err[] INIT(=N_("E5500: autocmd has thrown an exception: %s"));
-EXTERN char e_cmdmap_err[] INIT(=N_("E5520: <Cmd> mapping must end with <CR>"));
-EXTERN char
-e_cmdmap_repeated[] INIT(=N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
-EXTERN char e_cmdmap_key[] INIT(=N_("E5522: <Cmd> mapping must not include %s key"));
+EXTERN char e_autocmd_err[] INIT(= N_("E5500: autocmd has thrown an exception: %s"));
+EXTERN char e_cmdmap_err[] INIT(= N_("E5520: <Cmd> mapping must end with <CR>"));
+EXTERN char e_cmdmap_repeated[] INIT(= N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char e_cmdmap_key[] INIT(= N_("E5522: <Cmd> mapping must not include %s key"));
 
-EXTERN char e_api_error[] INIT(=N_("E5555: API call: %s"));
+EXTERN char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
-EXTERN char e_luv_api_disabled[] INIT(=N_("E5560: %s must not be called in a lua loop callback"));
+EXTERN char e_luv_api_disabled[] INIT(= N_("E5560: %s must not be called in a lua loop callback"));
 
-EXTERN char e_floatonly[] INIT(=
-                                 N_("E5601: Cannot close window, only floating window would remain"));
-EXTERN char e_floatexchange[] INIT(=N_("E5602: Cannot exchange or rotate float"));
+EXTERN char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
+EXTERN char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
 
 EXTERN char e_non_empty_string_required[] INIT(= N_("E1142: Non-empty string required"));
 
-EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(=
-                                                                 N_(
-                                                                   "E1155: Cannot define autocommands for ALL events"));
+EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
@@ -1017,6 +1007,8 @@ EXTERN int vim_ignored;
 EXTERN bool embedded_mode INIT(= false);
 // Do not start a UI nor read/write to stdio (unless embedding).
 EXTERN bool headless_mode INIT(= false);
+
+// uncrustify:on
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().
