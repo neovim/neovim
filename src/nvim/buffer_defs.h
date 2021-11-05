@@ -99,7 +99,7 @@ typedef struct {
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
-typedef uint16_t disptick_T;  // display tick type
+typedef uint64_t disptick_T;  // display tick type
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -576,8 +576,8 @@ struct file_buffer {
   long b_mod_xlines;            // number of extra buffer lines inserted;
                                 // negative when lines were deleted
   wininfo_T *b_wininfo;       // list of last used info for each window
-  int b_mod_tick_syn;           // last display tick syntax was updated
-  int b_mod_tick_decor;         // last display tick decoration providers
+  disptick_T b_mod_tick_syn;    // last display tick syntax was updated
+  disptick_T b_mod_tick_decor;  // last display tick decoration providers
                                 // where invoked
 
   long b_mtime;                 // last change time of original file
