@@ -5,6 +5,7 @@ local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
+local sync = require 'vim.lsp.sync'
 
 local vim = vim
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
@@ -351,14 +352,12 @@ do
     end
   end
 
-  function changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+  function changetracking.prepare(bufnr, byte_change, changedtick)
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
-      local startline =  math.min(firstline + 1, math.min(#cached_buffers[bufnr], #lines))
-      local endline =  math.min(-(#lines - new_lastline), -1)
-      local incremental_change = vim.lsp.util.compute_diff(
-        cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or 'utf-16')
+      local incremental_change = vim.lsp.sync.compute_diff(
+        cached_buffers[bufnr], lines, byte_change, client.offset_encoding or 'utf-16')
       cached_buffers[bufnr] = lines
       return incremental_change
     end
@@ -1068,21 +1067,21 @@ end
 local text_document_did_change_handler
 do
   text_document_did_change_handler = function(_, bufnr, changedtick,
-      firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
-      old_utf16_size)
-
-    local _ = log.debug() and log.debug(
-      string.format("on_lines bufnr: %s, changedtick: %s, firstline: %s, lastline: %s, new_lastline: %s, old_byte_size: %s, old_utf32_size: %s, old_utf16_size: %s",
-      bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size),
-      nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-    )
-
+    start_row, start_col, _, prev_end_row, prev_end_col, _, curr_end_row, curr_end_col)
     -- Don't do anything if there are no clients attached.
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
       return
     end
+    local byte_change = {
+      start_row = start_row,
+      start_col = start_col,
+      prev_end_row = prev_end_row,
+      prev_end_col = prev_end_col,
+      curr_end_row = curr_end_row,
+      curr_end_col = curr_end_col,
+    }
     util.buf_versions[bufnr] = changedtick
-    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    local compute_change_and_notify = changetracking.prepare(bufnr, byte_change, changedtick)
     for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end
@@ -1137,7 +1136,7 @@ function lsp.buf_attach_client(bufnr, client_id)
     vim.api.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
-      on_lines = text_document_did_change_handler;
+      on_bytes = text_document_did_change_handler;
       on_reload = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
