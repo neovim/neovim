@@ -1663,6 +1663,14 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
         ILOG("Disabling smglr with TERM=xterm for non-xterm.");
         unibi_set_str(ut, unibi_set_lr_margin, NULL);
       }
+      if (unibi_get_str(ut, unibi_set_left_margin_parm)) {
+        ILOG("Disabling smglp with TERM=xterm for non-xterm.");
+        unibi_set_str(ut, unibi_set_left_margin_parm, NULL);
+      }
+      if (unibi_get_str(ut, unibi_set_right_margin_parm)) {
+        ILOG("Disabling smgrp with TERM=xterm for non-xterm.");
+        unibi_set_str(ut, unibi_set_right_margin_parm, NULL);
+      }
     }
 
 #ifdef WIN32
@@ -1686,6 +1694,14 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
     if (unibi_get_str(ut, unibi_set_lr_margin)) {
       ILOG("Disabling smglr with TERM=screen.xterm for screen.");
       unibi_set_str(ut, unibi_set_lr_margin, NULL);
+    }
+    if (unibi_get_str(ut, unibi_set_left_margin_parm)) {
+      ILOG("Disabling smglp with TERM=screen.xterm for screen.");
+      unibi_set_str(ut, unibi_set_left_margin_parm, NULL);
+    }
+    if (unibi_get_str(ut, unibi_set_right_margin_parm)) {
+      ILOG("Disabling smgrp with TERM=screen.xterm for screen.");
+      unibi_set_str(ut, unibi_set_right_margin_parm, NULL);
     }
   } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
