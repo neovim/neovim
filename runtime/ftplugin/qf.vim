@@ -37,5 +37,6 @@ endfunction
 
 augroup qf_toc
   autocmd!
+  autocmd BufReadPost <buffer> call s:setup_toc()
   autocmd Syntax <buffer> call s:setup_toc()
 augroup END

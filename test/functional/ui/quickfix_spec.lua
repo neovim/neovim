@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, command = helpers.insert, helpers.command
-
+local eq = helpers.eq
 
 describe('quickfix selection highlight', function()
   local screen
@@ -13,7 +13,7 @@ describe('quickfix selection highlight', function()
     screen = Screen.new(25, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = {bold = true, foreground = Screen.colors.Blue},
       [2] = {reverse = true},
       [3] = {foreground = Screen.colors.Brown},
       [4] = {bold = true, reverse = true},
@@ -192,5 +192,45 @@ describe('quickfix selection highlight', function()
       {4:[Quickfix List]          }|
                                |
     ]])
+  end)
+end)
+
+describe('quickfix toc', function()
+  local toc = {
+    '1. Motions and operators',
+    '2. Left-right motions',
+    '3. Up-down motions',
+    '4. Word motions',
+    '5. Text object motions',
+    '6. Text object selection',
+    '7. Marks',
+    '8. Jumps',
+    '  CHANGE LIST JUMPS',
+    '9. Various motions',
+  }
+
+  before_each(function()
+    clear()
+    helpers.add_builddir_to_rtp()
+  end)
+
+  it('generates TOC with syntax before filetype', function()
+    command('syntax enable')
+    command('filetype plugin on')
+    command('h h')
+    command('normal gO')
+    command('only')
+
+    eq(helpers.call('getline', '1', '$'), toc)
+  end)
+
+  it('generates TOC with filetype before syntax', function()
+    command('filetype plugin on')
+    command('syntax enable')
+    command('h h')
+    command('normal gO')
+    command('only')
+
+    eq(helpers.call('getline', '1', '$'), toc)
   end)
 end)
