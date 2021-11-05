@@ -109,6 +109,12 @@ local valid_encodings = {
   UTF8      = 'utf-8'; UTF16      = 'utf-16'; UTF32      = 'utf-32';
 }
 
+local format_line_ending = {
+  ["unix"] = '\n',
+  ["dos"] = '\r\n',
+  ["mac"] = '\r',
+}
+
 local client_index = 0
 ---@private
 --- Returns a new, unused client id.
@@ -356,9 +362,11 @@ do
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
-      local incremental_change = vim.lsp.sync.compute_diff(
-        cached_buffers[bufnr], lines, byte_change, client.offset_encoding or 'utf-16')
+      local line_ending = format_line_ending[vim.api.nvim_buf_get_option(0, 'fileformat')]
+      local incremental_change = sync.compute_diff(
+        cached_buffers[bufnr], lines, byte_change, client.offset_encoding or 'utf-16', line_ending or '\n')
       cached_buffers[bufnr] = lines
+      print(vim.inspect(incremental_change))
       return incremental_change
     end
     local full_changes = once(function()
