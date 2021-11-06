@@ -6,7 +6,7 @@ ${NVIM_VERSION}
 
 ### Windows
 
-1. Extract **nvim-win64.zip** (or **nvim-win32.zip**)
+1. Extract **nvim-win64.zip**
 2. Run `nvim-qt.exe`
 
 ### macOS
@@ -37,5 +37,4 @@ ${SHA_APP_IMAGE}
 ${SHA_APP_IMAGE_ZSYNC}
 ${SHA_MACOS}
 ${SHA_WIN_64}
-${SHA_WIN_32}
 ```

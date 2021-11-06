@@ -125,8 +125,6 @@ jobs:
         include:
           - config: MSVC_64
             archive: nvim-win64
-          - config: MSVC_32
-            archive: nvim-win32
     name: windows (${{ matrix.config }})
     steps:
       - uses: actions/checkout@v2
@@ -207,11 +205,6 @@ jobs:
           cd ./nvim-macos
           sha256sum nvim-macos.tar.gz > nvim-macos.tar.gz.sha256sum
           echo "SHA_MACOS=$(cat nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
-      - name: Generate Win32 SHA256 checksums
-        run: |
-          cd ./nvim-win32
-          sha256sum nvim-win32.zip > nvim-win32.zip.sha256sum
-          echo "SHA_WIN_32=$(cat nvim-win32.zip.sha256sum)" >> $GITHUB_ENV
       - name: Generate Win64 SHA256 checksums
         run: |
           cd ./nvim-win64
@@ -223,7 +216,7 @@ jobs:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win32/* nvim-win64/*
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win32/* nvim-win64/*
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
           fi
