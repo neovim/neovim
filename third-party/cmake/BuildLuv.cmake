@@ -57,8 +57,16 @@ set(LUV_INCLUDE_FLAGS
 
 # Replace luv default rockspec with the alternate one under the "rockspecs"
 # directory
-set(LUV_PATCH_COMMAND
-    ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
+if (WIN32)
+  set(LUV_PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luv init
+    COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/luv apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/luv-fix-lib.patch)
+else()
+  set(LUV_PATCH_COMMAND patch -d ${DEPS_BUILD_DIR}/src/luv -Np1 --input
+    ${CMAKE_CURRENT_SOURCE_DIR}/patches/luv-fix-lib.patch)
+endif()
+set(LUV_PATCH_COMMAND ${LUV_PATCH_COMMAND}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
 
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}

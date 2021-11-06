@@ -1,0 +1,35 @@
+diff --git a/cmake/Modules/FindLibuv.cmake b/cmake/Modules/FindLibuv.cmake
+index 7b09848..50f8b73 100644
+--- a/cmake/Modules/FindLibuv.cmake
++++ b/cmake/Modules/FindLibuv.cmake
+@@ -20,7 +20,7 @@
+ #  LIBUV_INCLUDE_DIR, where to find uv.h
+ 
+ FIND_PATH(LIBUV_INCLUDE_DIR NAMES uv.h)
+-FIND_LIBRARY(LIBUV_LIBRARIES NAMES uv libuv)
++FIND_LIBRARY(LIBUV_LIBRARIES NAMES uv_a uv libuv_a libuv)
+ 
+ if(WIN32)
+   list(APPEND LIBUV_LIBRARIES iphlpapi)
+diff --git a/rockspecs/luv-scm-0.rockspec b/rockspecs/luv-scm-0.rockspec
+index be743f9..68cbf2f 100644
+--- a/rockspecs/luv-scm-0.rockspec
++++ b/rockspecs/luv-scm-0.rockspec
+@@ -24,7 +24,7 @@ dependencies = {
+ external_dependencies = {
+   LIBUV = {
+     header = 'uv.h',
+-    library = 'uv',
++    library = 'uv_a',
+   },
+   LUA_COMPAT53 = {
+     header = "compat-5.3.h"
+@@ -37,7 +37,7 @@ build = {
+   modules = {
+     ['luv'] = {
+       sources = {'src/luv.c'},
+-      libraries = {'uv'},
++      libraries = {'uv_a'},
+       incdirs = {"$(LIBUV_INCDIR)","$(LUA_COMPAT53_INCDIR)"},
+       libdirs = {"$(LIBUV_LIBDIR)"}
+     }
