@@ -750,8 +750,13 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={{
-        content = {{'E5108: Error executing lua [string ":lua"]:1: such\nmultiline\nerror', 2}},
-        kind = "lua_error"
+        content = {{[[E5108: Error executing lua [string ":lua"]:1: such
+multiline
+error
+stack traceback:
+	[C]: in function 'error'
+	[string ":lua"]:1: in main chunk]], 2}},
+        kind = "lua_error",
      }}}
   end)
 
@@ -1048,12 +1053,12 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     -- edge case: just covers statusline
     feed(':set colorcolumn=5 | lua error("x\\n\\nx")<cr>')
     screen:expect{grid=[[
-                                                                  |
-      {1:~                                                           }|
-      {3:                                                            }|
       {2:E5108: Error executing lua [string ":lua"]:1: x}             |
                                                                   |
       {2:x}                                                           |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {2:        [string ":lua"]:1: in main chunk}                    |
       {4:Press ENTER or type command to continue}^                     |
     ]]}
 
@@ -1071,24 +1076,24 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     -- edge case: just covers lowest window line
     feed(':set colorcolumn=5 | lua error("x\\n\\n\\nx")<cr>')
     screen:expect{grid=[[
-                                                                  |
-      {3:                                                            }|
       {2:E5108: Error executing lua [string ":lua"]:1: x}             |
                                                                   |
                                                                   |
       {2:x}                                                           |
-      {4:Press ENTER or type command to continue}^                     |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {4:-- More --}^                                                  |
     ]]}
 
     feed('<cr>')
     screen:expect{grid=[[
                                                                   |
-      {1:~                                                           }|
-      {8:[No Name]                                                   }|
-      ^    {9: }                                                       |
-      {1:~                                                           }|
-      {3:[No Name]                                                   }|
                                                                   |
+      {2:x}                                                           |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {2:        [string ":lua"]:1: in main chunk}                    |
+      {4:Press ENTER or type command to continue}^                     |
     ]]}
   end)
 end)
@@ -1360,14 +1365,14 @@ aliquip ex ea commodo consequat.]])
     ]]}
     feed('d')
     screen:expect{grid=[[
+      {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
       {2:a aliqua.}                          |
       {2:Ut enim ad minim veniam, quis nostr}|
       {2:ud xercitation}                     |
       {2:ullamco laboris nisi ut}            |
       {2:aliquip ex ea commodo consequat.}   |
-      {4:Press ENTER or type command to cont}|
-      {4:inue}^                               |
+      {4:-- More --}^                         |
     ]]}
     feed('u')
     screen:expect{grid=[[
@@ -1460,14 +1465,14 @@ aliquip ex ea commodo consequat.]])
     ]]}
     feed('d')
     screen:expect{grid=[[
+      {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
       {3:a aliqua.}{5:                          }|
       {3:Ut enim ad minim veniam, quis nostr}|
       {3:ud xercitation}{5:                     }|
       {3:ullamco laboris nisi ut}{5:            }|
       {3:aliquip ex ea commodo consequat.}{5:   }|
-      {6:Press ENTER or type command to cont}|
-      {6:inue}{5:^                               }|
+      {6:-- More --}{5:^                         }|
     ]]}
     feed('u')
     screen:expect{grid=[[
@@ -1667,6 +1672,7 @@ aliquip ex ea commodo consequat.]])
     -- wrapped at the new screen size.
     feed('<cr>')
     screen:expect{grid=[[
+      {2:":lua"]:1: Lorem ipsum dolor s}|
       {2:et, consectetur}               |
       {2:adipisicing elit, sed do eiusm}|
       {2:mpore}                         |
@@ -1677,8 +1683,7 @@ aliquip ex ea commodo consequat.]])
       {2:ullamco laboris nisi ut}       |
       {2:aliquip ex ea commodo consequa}|
       {2:t.}                            |
-      {4:Press ENTER or type command to}|
-      {4: continue}^                     |
+      {4:-- More --}^                    |
     ]]}
 
     feed('q')

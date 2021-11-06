@@ -605,7 +605,7 @@ do
   function vim.validate(opt)
     local ok, err_msg = is_valid(opt)
     if not ok then
-      error(debug.traceback(err_msg, 2), 2)
+      error(err_msg, 2)
     end
   end
 end

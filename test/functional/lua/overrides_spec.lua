@@ -161,15 +161,15 @@ describe('debug.debug', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       nil                                                  |
       lua_debug> print("TEST")                             |
       TEST                                                 |
                                                            |
       {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
       {E: to perform arithmetic on local 'a' (a nil value)}    |
+      {E:stack traceback:}                                     |
+      {E:        [string ":lua"]:5: in function 'Test'}        |
+      {E:        [string ":lua"]:1: in main chunk}             |
       Interrupt: {cr:Press ENTER or type command to continue}^   |
     ]]}
     feed('<C-l>:lua Test()\n')
@@ -197,13 +197,13 @@ describe('debug.debug', function()
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       nil                                                  |
       lua_debug>                                           |
       {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
       {E: to perform arithmetic on local 'a' (a nil value)}    |
+      {E:stack traceback:}                                     |
+      {E:        [string ":lua"]:5: in function 'Test'}        |
+      {E:        [string ":lua"]:1: in main chunk}             |
       {cr:Press ENTER or type command to continue}^              |
     ]]}
   end)
