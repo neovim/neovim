@@ -152,7 +152,6 @@ end
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
-  -- TODO handle offset_encoding
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
   local col = position.character
