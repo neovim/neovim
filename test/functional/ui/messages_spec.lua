@@ -737,7 +737,6 @@ describe('ui/ext_messages', function()
     ]])
     eq(0, eval('&cmdheight'))
 
-    -- normally this would be an error
     feed(':set cmdheight=0')
     screen:expect{grid=[[
       ^                         |

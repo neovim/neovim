@@ -907,7 +907,7 @@ void ui_ext_win_position(win_T *wp)
       int comp_col = (int)col - (east ? wp->w_width_outer : 0);
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - 1), 0);
+      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - (p_ch > 0 ? 1 : 0)), 0);
       comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
@@ -1143,6 +1143,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     needed = wmh1 + STATUS_HEIGHT;
     if (flags & WSP_ROOM) {
       needed += p_wh - wmh1 + oldwin->w_winbar_height;
+    }
+    if (p_ch < 1) {
+      // add the command line height
+      needed += 1;
     }
     if (flags & (WSP_BOT | WSP_TOP)) {
       minheight = frame_minheight(topframe, NOWIN) + need_status;
@@ -5501,7 +5505,7 @@ void win_setheight_win(int height, win_T *win)
       }
     }
     cmdline_row = row;
-    p_ch = MAX(Rows - cmdline_row, ui_has(kUIMessages) ? 0 : 1);
+    p_ch = MAX(Rows - cmdline_row, 0);
     curtab->tp_ch_used = p_ch;
     msg_row = row;
     msg_col = 0;
@@ -5949,9 +5953,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     up = false;
     // Only dragging the last status line can reduce p_ch.
     room = Rows - cmdline_row;
-    if (curfr->fr_next == NULL) {
-      room -= 1;
-    } else {
+    if (curfr->fr_next != NULL) {
       room -= p_ch + global_stl_height();
     }
     if (room < 0) {
@@ -6008,7 +6010,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     clear_cmdline = true;
   }
   cmdline_row = row;
-  p_ch = MAX(Rows - cmdline_row, ui_has(kUIMessages) ? 0 : 1);
+  p_ch = MAX(Rows - cmdline_row, 0);
   curtab->tp_ch_used = p_ch;
   redraw_all_later(SOME_VALID);
   showmode();

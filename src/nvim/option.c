@@ -4365,7 +4365,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
       errmsg = e_positive;
     }
   } else if (pp == &p_ch) {
-    int minval = ui_has(kUIMessages) ? 0 : 1;
+    int minval = 0;
     if (value < minval) {
       errmsg = e_positive;
     }

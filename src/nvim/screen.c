@@ -6132,6 +6132,10 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
+  if (p_ch <= 0 && !ui_has(kUIMessages)) {
+    return;
+  }
+
   const int save_msg_row = msg_row;
   const int save_msg_col = msg_col;
 
@@ -6500,7 +6504,6 @@ static void win_redr_ruler(win_T *wp, bool always)
 
   if (*p_ruf) {
     int save_called_emsg = called_emsg;
-
     called_emsg = false;
     win_redr_custom(wp, false, true);
     if (called_emsg) {
@@ -6556,6 +6559,10 @@ static void win_redr_ruler(win_T *wp, bool always)
       attr = HL_ATTR(HLF_MSG);
       width = Columns;
       off = 0;
+    }
+
+    if (!part_of_status && p_ch < 1 && !ui_has(kUIMessages)) {
+      return;
     }
 
     // In list mode virtcol needs to be recomputed
@@ -6770,7 +6777,7 @@ void screen_resize(int width, int height)
   Columns = width;
   check_shellsize();
   int max_p_ch = Rows - min_rows() + 1;
-  if (!ui_has(kUIMessages) && p_ch > max_p_ch) {
+  if (!ui_has(kUIMessages) && p_ch > 0 && p_ch > max_p_ch) {
     p_ch = max_p_ch ? max_p_ch : 1;
   }
   height = Rows;
