@@ -3886,10 +3886,13 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   linenr_T t;
   colnr_T col = 0;
   int ret = OK;
-  int *comments = NULL;
-  int remove_comments = (use_formatoptions == TRUE)
+  int remove_comments = (use_formatoptions == true)
                         && has_format_option(FO_REMOVE_COMS);
   bool prev_was_comment = false;
+
+  char_u **lines = xcalloc(count, sizeof(curr));
+  colnr_T *offsets = xcalloc(count, sizeof(col));
+  int *sizes = xcalloc(count, sizeof(currsize));
   assert(count >= 1);
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
@@ -3900,9 +3903,6 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   // line.  We will use it to pre-compute the length of the new line and the
   // proper placement of each original line in the new one.
   spaces = xcalloc(count, 1);
-  if (remove_comments) {
-    comments = xcalloc(count, sizeof(*comments));
-  }
 
   // Don't move anything, just compute the final line length
   // and setup the array of space strings lengths
@@ -3919,7 +3919,6 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
       if (t > 0 && prev_was_comment) {
         char_u *new_curr = skip_comment(curr, true, insert_space,
                                         &prev_was_comment);
-        comments[t] = (int)(new_curr - curr);
         curr = new_curr;
       } else {
         curr = skip_comment(curr, false, insert_space, &prev_was_comment);
@@ -3951,13 +3950,6 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
       }
     }
 
-    if (t > 0 && curbuf_splice_pending == 0) {
-      colnr_T removed = (int)(curr- curr_start);
-      extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
-                     1, removed, removed + 1,
-                     0, spaces[t], spaces[t],
-                     kExtmarkUndo);
-    }
     currsize = (int)STRLEN(curr);
     sumsize += currsize + spaces[t];
     endcurr1 = endcurr2 = NUL;
@@ -3970,6 +3962,10 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
         endcurr2 = utf_ptr2char(cend);
       }
     }
+
+    lines[t] = curr_start;
+    offsets[t] = (int)(curr - curr_start);
+    sizes[t] = currsize;
     line_breakcheck();
     if (got_int) {
       ret = FAIL;
@@ -3981,9 +3977,11 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   col = sumsize - currsize - spaces[count - 1];
 
   // allocate the space for the new line
-  newp = (char_u *)xmalloc((size_t)sumsize + 1);
-  cend = newp + sumsize;
-  *cend = 0;
+  newp = (char_u *)xcalloc((size_t)sumsize + 1, sizeof(char_u));
+  cend = newp;
+
+  memmove(cend, lines[0], (size_t)sizes[0]);
+  cend += sizes[0];
 
   /*
    * Move affected lines to the new long one.
@@ -3995,17 +3993,22 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
   curbuf_splice_pending++;
 
-  for (t = (linenr_T)count - 1;; t--) {
-    cend -= currsize;
-    memmove(cend, curr, (size_t)currsize);
-    if (spaces[t] > 0) {
-      cend -= spaces[t];
-      memset(cend, ' ', (size_t)(spaces[t]));
-    }
+  sumsize = sizes[0] + spaces[0];
+  for (t = 1; t < (linenr_T)count; t++) {
+    curr_start = lines[t];
+    curr = curr_start + offsets[t];
+    currsize = sizes[t];
 
-    // If deleting more spaces than adding, the cursor moves no more than
-    // what is added if it is inside these spaces.
-    const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
+    if (spaces[t] > 0) {
+      memset(cend, ' ', (size_t)(spaces[t]));
+      cend += spaces[t];
+    }
+    memmove(cend, curr, (size_t)currsize);
+    cend += currsize;
+
+    ml_replace(curwin->w_cursor.lnum, newp, true);
+
+    const int spaces_removed = offsets[t] - spaces[t];
     linenr_T lnum = curwin->w_cursor.lnum + t;
     colnr_T mincol = (colnr_T)0;
     long lnum_amount = -t;
@@ -4013,21 +4016,15 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
     mark_col_adjust(lnum, mincol, lnum_amount, col_amount, spaces_removed);
 
-    if (t == 0) {
-      break;
-    }
-
-    curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
-    if (remove_comments) {
-      curr += comments[t - 1];
-    }
-    if (insert_space && t > 1) {
-      curr = skipwhite(curr);
-    }
-    currsize = (int)STRLEN(curr);
+    colnr_T removed = offsets[t];
+    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
+                   1, removed, removed + 1,
+                   0, spaces[t], spaces[t],
+                   kExtmarkUndo);
+    sumsize += sizes[t] + spaces[t];
   }
 
-  ml_replace(curwin->w_cursor.lnum, newp, false);
+  xfree(newp);
 
   if (setmark) {
     // Set the '] mark.
@@ -4037,7 +4034,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
   // Only report the change in the first line here, del_lines() will report
   // the deleted line.
-  changed_lines(curwin->w_cursor.lnum, currsize,
+  changed_lines(curwin->w_cursor.lnum, sizes[0],
                 curwin->w_cursor.lnum + 1, 0L, true);
 
   /*
@@ -4058,7 +4055,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
    * vim:             use the column of the last join
    */
   curwin->w_cursor.col =
-    (vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? currsize : col);
+    (vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? sizes[0] : col);
   check_cursor_col();
 
   curwin->w_cursor.coladd = 0;
@@ -4066,9 +4063,9 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
 theend:
   xfree(spaces);
-  if (remove_comments) {
-    xfree(comments);
-  }
+  xfree(lines);
+  xfree(offsets);
+  xfree(sizes);
   return ret;
 }
 
@@ -4126,7 +4123,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * The first line has to be saved, only one line can be locked at a time.
    */
   line1 = vim_strsave(ml_get(lnum));
-  for (idx1 = 0; ascii_iswhite(line1[idx1]); ++idx1) {
+  for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {
   }
   line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; ++idx2) {
@@ -4306,8 +4303,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
     is_not_par = true;
   }
   next_is_not_par = fmt_check_par(curwin->w_cursor.lnum,
-                                  &next_leader_len, &next_leader_flags, do_comments
-                                  );
+                                  &next_leader_len, &next_leader_flags, do_comments);
   is_end_par = (is_not_par || next_is_not_par);
   if (!is_end_par && do_trail_white) {
     is_end_par = !ends_in_white(curwin->w_cursor.lnum - 1);
@@ -4338,8 +4334,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
                                       &next_leader_len, &next_leader_flags, do_comments
                                       );
       if (do_number_indent) {
-        next_is_start_par =
-          (get_number_indent(curwin->w_cursor.lnum + 1) > 0);
+        next_is_start_par = (get_number_indent(curwin->w_cursor.lnum + 1) > 0);
       }
     }
     advance = true;
