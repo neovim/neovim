@@ -151,8 +151,7 @@ end
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
-local function get_line_byte_from_position(bufnr, position)
-  -- TODO handle offset_encoding
+local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
   local col = position.character
@@ -166,7 +165,13 @@ local function get_line_byte_from_position(bufnr, position)
     local line = position.line
     local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
     if #lines > 0 then
-      local ok, result = pcall(vim.str_byteindex, lines[1], col, true)
+      local ok, result
+
+      if offset_encoding == "utf-16" or not offset_encoding then
+        ok, result = pcall(vim.str_byteindex, lines[1], col, true)
+      elseif offset_encoding == "utf-32" then
+        ok, result = pcall(vim.str_byteindex, lines[1], col, false)
+      end
 
       if ok then
         return result
@@ -1497,18 +1502,30 @@ do --[[ References ]]
   ---@param bufnr buffer id
   ---@param references List of `DocumentHighlight` objects to highlight
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
-  function M.buf_highlight_references(bufnr, references)
+  function M.buf_highlight_references(bufnr, references, client_id)
     validate { bufnr = {bufnr, 'n', true} }
+    local client = vim.lsp.get_client_by_id(client_id)
+    if not client then
+      return
+    end
     for _, reference in ipairs(references) do
-      local start_pos = {reference["range"]["start"]["line"], reference["range"]["start"]["character"]}
-      local end_pos = {reference["range"]["end"]["line"], reference["range"]["end"]["character"]}
+      local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
+      local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
+
+      local start_idx = get_line_byte_from_position(bufnr, { line = start_line, character = start_char }, client.offset_encoding)
+      local end_idx = get_line_byte_from_position(bufnr, { line = start_line, character = end_char }, client.offset_encoding)
+
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
         [protocol.DocumentHighlightKind.Read] = "LspReferenceRead";
         [protocol.DocumentHighlightKind.Write] = "LspReferenceWrite";
       }
       local kind = reference["kind"] or protocol.DocumentHighlightKind.Text
-      highlight.range(bufnr, reference_ns, document_highlight_kind[kind], start_pos, end_pos)
+      highlight.range(bufnr,
+                      reference_ns,
+                      document_highlight_kind[kind],
+                      { start_line, start_idx },
+                      { end_line, end_idx })
     end
   end
 end

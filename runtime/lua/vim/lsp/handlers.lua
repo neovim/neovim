@@ -349,7 +349,7 @@ M['textDocument/signatureHelp'] = M.signature_help
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
 M['textDocument/documentHighlight'] = function(_, result, ctx, _)
   if not result then return end
-  util.buf_highlight_references(ctx.bufnr, result)
+  util.buf_highlight_references(ctx.bufnr, result, ctx.client_id)
 end
 
 ---@private
