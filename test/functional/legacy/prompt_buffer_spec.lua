@@ -125,9 +125,22 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
+    feed("<C-O>lz")
+    screen:expect([[
+      % -hz^el                  |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
     feed("<End>x")
     screen:expect([[
-      % -helx^                  |
+      % -hzelx^                 |
       ~                        |
       ~                        |
       ~                        |
