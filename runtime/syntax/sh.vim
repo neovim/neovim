@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Feb 18, 2021
-" Version:		198
+" Last Change:		Oct 26, 2021
+" Version:		199
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
@@ -147,7 +147,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 endif
 syn cluster shCommandSubList	contains=shAlias,shArithmetic,shCmdParenRegion,shCommandSub,shComment,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shHereDoc,shNumber,shOperator,shOption,shPosnParm,shHereString,shRedir,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shCurlyList	contains=shNumber,shComma,shDeref,shDerefSimple,shDerefSpecial
-" COMBAK: removing shEscape fromshDblQuoteList fails ksh04:43
+" COMBAK: removing shEscape from shDblQuoteList fails ksh04:43
 syn cluster shDblQuoteList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shDeref,shDerefSimple,shPosnParm,shCtrlSeq,shSpecial,shSpecialDQ
 syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial,shDerefWordError,shDerefPSR,shDerefPPS
 syn cluster shDerefVarList	contains=shDerefOffset,shDerefOp,shDerefVarArray,shDerefOpError
@@ -401,7 +401,7 @@ endif
 syn match	shComment		"^\s*\zs#.*$"	contains=@shCommentGroup
 syn match	shComment		"\s\zs#.*$"	contains=@shCommentGroup
 syn match	shComment	contained	"#.*$"	contains=@shCommentGroup
-syn match	shQuickComment	contained	"#.*$"
+syn match	shQuickComment	contained	"#.*$"          contains=@shCommentGroup
 syn match	shBQComment	contained	"#.\{-}\ze`"	contains=@shCommentGroup
 
 " Here Documents: {{{1

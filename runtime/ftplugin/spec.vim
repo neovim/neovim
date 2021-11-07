@@ -18,8 +18,8 @@ if !exists("no_plugin_maps") && !exists("no_spec_maps")
 	endif
 endif
 
-if !hasmapto("call SpecChangelog(\"\")<CR>")
-       noremap <buffer> <unique> <script> <Plug>SpecChangelog :call SpecChangelog("")<CR>
+if !hasmapto("call <SID>SpecChangelog(\"\")<CR>")
+       noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
 endif
 
 if !exists("*s:GetRelVer")

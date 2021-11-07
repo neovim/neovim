@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Aug 23
+" Last Change: 2021 Oct 26
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -550,7 +550,7 @@ func s:GdbOutCallback(job_id, msgs, event)
   let index = 0
 
   for msg in a:msgs
-    if msg =~ '^^error,msg='
+    if msg =~ '^\^error,msg='
       if exists('s:evalexpr')
             \ && s:DecodeMessage(msg[11:])
             \    =~ 'A syntax error in expression, near\|No symbol .* in current context'
@@ -746,8 +746,8 @@ func s:HandleDisasmMsg(msg)
   else
     let value = substitute(a:msg, '^\~\"[ ]*', '', '')
     let value = substitute(value, '^=>[ ]*', '', '')
-    let value = substitute(value, '\\n\"$', '', '')
-    let value = substitute(value, '', '', '')
+    let value = substitute(value, '\\n\"\r$', '', '')
+    let value = substitute(value, '\r', '', '')
     let value = substitute(value, '\\t', ' ', 'g')
 
     if value != '' || !empty(s:asm_lines)
@@ -965,8 +965,22 @@ func s:Run(args)
 endfunc
 
 func s:SendEval(expr)
-  call s:SendCommand('-data-evaluate-expression "' . a:expr . '"')
-  let s:evalexpr = a:expr
+  " clean up expression that may got in because of range
+  " (newlines and surrounding spaces)
+  let expr = a:expr
+  if &filetype ==# 'cobol'
+    " extra cleanup for COBOL: _every: expression ends with a period,
+    " a trailing comma is ignored as it commonly separates multiple expr.
+    let expr = substitute(expr, '\..*', '', '')
+    let expr = substitute(expr, '[;\n]', ' ', 'g')
+    let expr = substitute(expr, ',*$', '', '')
+  else
+    let expr = substitute(expr, '\n', ' ', 'g')
+  endif
+  let expr = substitute(expr, '^ *\(.*\) *', '\1', '')
+
+  call s:SendCommand('-data-evaluate-expression "' . expr . '"')
+  let s:evalexpr = expr
 endfunc
 
 " :Evaluate - evaluate what is under the cursor
@@ -1151,7 +1165,8 @@ func s:HandleError(msg)
     let s:evalFromBalloonExpr = 0
     return
   endif
-  echoerr substitute(a:msg, '.*msg="\(.*\)"', '\1', '')
+  let msgVal = substitute(a:msg, '.*msg="\(.*\)"', '\1', '')
+  echoerr substitute(msgVal, '\\"', '"', 'g')
 endfunc
 
 func s:GotoSourcewinOrCreateIt()
