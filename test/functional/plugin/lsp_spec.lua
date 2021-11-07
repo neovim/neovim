@@ -2435,9 +2435,9 @@ describe('LSP', function()
             local bufnr = vim.api.nvim_get_current_buf()
             lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
             vim.lsp._stubs = {}
-            vim.fn.input = function(prompt, text)
-              vim.lsp._stubs.input_prompt = prompt
-              vim.lsp._stubs.input_text = text
+            vim.fn.input = function(opts, on_confirm)
+              vim.lsp._stubs.input_prompt = opts.prompt
+              vim.lsp._stubs.input_text = opts.default
               return 'renameto' -- expect this value in fake lsp
             end
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {'', 'this is line two'})

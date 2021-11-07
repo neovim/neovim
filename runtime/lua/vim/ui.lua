@@ -37,5 +37,38 @@ function M.select(items, opts, on_choice)
   end
 end
 
+--- Prompts the user for input
+---
+---@param opts table Additional options. See |input()|
+---     - prompt (string|nil)
+---               Text of the prompt. Defaults to `Input: `.
+---     - default (string|nil)
+---               Default reply to the input
+---     - completion (string|nil)
+---               Specifies type of completion supported
+---               for input. Supported types are the same
+---               that can be supplied to a user-defined
+---               command using the "-complete=" argument.
+---               See |:command-completion|
+---     - highlight (function)
+---               Function that will be used for highlighting
+---               user inputs.
+---@param on_confirm function ((input|nil) -> ())
+---               Called once the user confirms or abort the input.
+---               `input` is what the user typed.
+---               `nil` if the user aborted the dialog.
+function M.input(opts, on_confirm)
+  vim.validate {
+    on_confirm = { on_confirm, 'function', false },
+  }
+
+  opts = opts or {}
+  local input = vim.fn.input(opts)
+  if #input > 0 then
+    on_confirm(input)
+  else
+    on_confirm(nil)
+  end
+end
 
 return M

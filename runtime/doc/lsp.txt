@@ -1100,7 +1100,8 @@ rename({new_name})                                      *vim.lsp.buf.rename()*
 
                 Parameters: ~
                     {new_name}  (string) If not provided, the user will be
-                                prompted for a new name using |input()|.
+                                prompted for a new name using
+                                |vim.ui.input()|.
 
 server_ready()                                    *vim.lsp.buf.server_ready()*
                 Checks whether the language servers attached to the current

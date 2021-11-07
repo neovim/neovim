@@ -1697,6 +1697,28 @@ uri_to_fname({uri})                                       *vim.uri_to_fname()*
 ==============================================================================
 Lua module: ui                                                        *lua-ui*
 
+input({opts}, {on_confirm})                                   *vim.ui.input()*
+                Prompts the user for input
+
+                Parameters: ~
+                    {opts}        table Additional options. See |input()|
+                                  • prompt (string|nil) Text of the prompt.
+                                    Defaults to `Input:` .
+                                  • default (string|nil) Default reply to the
+                                    input
+                                  • completion (string|nil) Specifies type of
+                                    completion supported for input. Supported
+                                    types are the same that can be supplied to
+                                    a user-defined command using the
+                                    "-complete=" argument. See
+                                    |:command-completion|
+                                  • highlight (function) Function that will be
+                                    used for highlighting user inputs.
+                    {on_confirm}  function ((input|nil) -> ()) Called once the
+                                  user confirms or abort the input. `input` is
+                                  what the user typed. `nil` if the user
+                                  aborted the dialog.
+
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                 Prompts the user to pick a single item from a collection of
                 entries
