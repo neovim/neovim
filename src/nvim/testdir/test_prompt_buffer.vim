@@ -126,6 +126,14 @@ func Test_prompt_garbage_collect()
   bwipe!
 endfunc
 
+func Test_prompt_backspace()
+  new
+  set buftype=prompt
+  call feedkeys("A123456\<Left>\<BS>\<Esc>", 'xt')
+  call assert_equal('% 12346', getline(1))
+  bwipe!
+endfunc
+
 " Test for editing the prompt buffer
 func Test_prompt_buffer_edit()
   new

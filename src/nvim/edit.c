@@ -227,6 +227,7 @@ typedef struct insert_state {
   cmdarg_T *ca;
   int mincol;
   int cmdchar;
+  int cmdchar_todo;                  // cmdchar to handle once in init_prompt
   int startln;
   long count;
   int c;
@@ -290,6 +291,7 @@ static void insert_enter(InsertState *s)
   s->did_backspace = true;
   s->old_topfill = -1;
   s->replaceState = REPLACE;
+  s->cmdchar_todo = s->cmdchar;
   // Remember whether editing was restarted after CTRL-O
   did_restart_edit = restart_edit;
   // sleep before redrawing, needed for "CTRL-O :" that results in an
@@ -585,7 +587,8 @@ static int insert_check(VimState *state)
   }
 
   if (bt_prompt(curbuf)) {
-    init_prompt(s->cmdchar);
+    init_prompt(s->cmdchar_todo);
+    s->cmdchar_todo = NUL;
   }
 
   // If we inserted a character at the last position of the last line in the
@@ -8268,7 +8271,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
-                  && (arrow_used
+                  && ((arrow_used && !bt_prompt(curbuf))
                       || (curwin->w_cursor.lnum == Insstart_orig.lnum
                           && curwin->w_cursor.col <= Insstart_orig.col)))
               || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
