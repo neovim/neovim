@@ -1115,6 +1115,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Also see |win_gettype()|, which returns the type of the window.
 
 	Be careful with changing this option, it can have many side effects!
+	One such effect is that Vim will not check the timestamp of the file,
+	if the file is changed by another program this will not be noticed.
 
 	A "quickfix" buffer is only used for the error list and the location
 	list.  This value is set by the |:cwindow| and |:lwindow| commands and
@@ -3703,9 +3705,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'list'* *'nolist'*
 'list'			boolean	(default off)
 			local to window
-	List mode: Show tabs as CTRL-I is displayed, display $ after end of
-	line.  Useful to see the difference between tabs and spaces and for
-	trailing blanks.  Further changed by the 'listchars' option.
+	List mode: By default show tabs as CTRL-I is displayed, display $
+	after end of line.  Useful to see the difference between tabs and
+	spaces and for trailing blanks.  Further changed by the 'listchars'
+	option.
 
 	The cursor is displayed at the start of the space a Tab character
 	occupies, not at the end as usual in Normal mode.  To get this cursor

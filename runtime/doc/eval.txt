@@ -4933,7 +4933,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		behave		:behave suboptions
 		cmdline		|cmdline-completion| result
 		color		color schemes
-		command		Ex command (and arguments)
+		command		Ex command
 		compiler	compilers
 		cscope		|:cscope| suboptions
 		diff_buffer     |:diffget| and |:diffput| completion
@@ -6833,6 +6833,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		further down in the text.
 
 		Can also be used as a |method|: >
+			GetText()->match('word')
 			GetList()->match('word')
 <
 				*matchadd()* *E798* *E799* *E801* *E957*
@@ -6992,8 +6993,10 @@ matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 <		Results in: ['acd', 'a', '', 'c', 'd', '', '', '', '', '']
 		When there is no match an empty list is returned.
 
+		You can pass in a List, but that is not very useful.
+
 		Can also be used as a |method|: >
-			GetList()->matchlist('word')
+			GetText()->matchlist('word')
 
 matchstr({expr}, {pat} [, {start} [, {count}]])			*matchstr()*
 		Same as |match()|, but return the matched string.  Example: >

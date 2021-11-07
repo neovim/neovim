@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Apr 18
+" Last Change:	2021 Nov 03
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -107,7 +107,7 @@ function GetVimIndentIntern()
       if i >= 0
 	let ind += shiftwidth()
 	if strpart(prev_text, i, 1) == '|' && has('syntax_items')
-	      \ && synIDattr(synID(lnum, i, 1), "name") =~ '\(Comment\|String\)$'
+	      \ && synIDattr(synID(lnum, i, 1), "name") =~ '\(Comment\|String\|PatSep\)$'
 	  let ind -= shiftwidth()
 	endif
       endif

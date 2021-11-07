@@ -5793,9 +5793,6 @@ msgstr ""
 "\n"
 "--- Eochracha teirminéil ---"
 
-msgid "Cannot open $VIMRUNTIME/rgb.txt"
-msgstr "Ní féidir $VIMRUNTIME/rgb.txt a oscailt"
-
 msgid "new shell started\n"
 msgstr "tosaíodh blaosc nua\n"
 

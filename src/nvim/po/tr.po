@@ -5563,9 +5563,6 @@ msgstr ""
 "\n"
 "--- Uçbirim düğmeleri ---"
 
-msgid "Cannot open $VIMRUNTIME/rgb.txt"
-msgstr "$VIMRUNTIME/rgb.txt açılamıyor"
-
 #, c-format
 msgid "E181: Invalid attribute: %s"
 msgstr "E181: Geçersiz öznitelik: %s"

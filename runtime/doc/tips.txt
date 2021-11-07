@@ -464,6 +464,7 @@ the current window, try this custom `:HelpCurwin` command:
 	  endif
 	  if !empty(getcompletion(a:subject, 'help'))
 	    execute mods .. ' edit ' .. &helpfile
+	    set buftype=help
 	  endif
 	  return 'help ' .. a:subject
 	endfunction
