@@ -186,4 +186,38 @@ func Test_prompt_buffer_getbufinfo()
   %bwipe!
 endfunc
 
+function! Test_prompt_while_writing_to_hidden_buffer()
+  throw 'skipped: TODO'
+  call CanTestPromptBuffer()
+  CheckUnix
+
+  " Make a job continuously write to a hidden buffer, check that the prompt
+  " buffer is not affected.
+  let scriptName = 'XpromptscriptHiddenBuf'
+  let script =<< trim END
+    set buftype=prompt
+    call prompt_setprompt( bufnr(), 'cmd:' )
+    let job = job_start(['/bin/sh', '-c',
+        \ 'while true;
+        \   do echo line;
+        \   sleep 0.1;
+        \ done'], #{out_io: 'buffer', out_name: ''})
+    startinsert
+  END
+  eval script->writefile(scriptName)
+
+  let buf = RunVimInTerminal('-S ' .. scriptName, {})
+  call WaitForAssert({-> assert_equal('cmd:', term_getline(buf, 1))})
+
+  call term_sendkeys(buf, 'test')
+  call WaitForAssert({-> assert_equal('cmd:test', term_getline(buf, 1))})
+  call term_sendkeys(buf, 'test')
+  call WaitForAssert({-> assert_equal('cmd:testtest', term_getline(buf, 1))})
+  call term_sendkeys(buf, 'test')
+  call WaitForAssert({-> assert_equal('cmd:testtesttest', term_getline(buf, 1))})
+
+  call StopVimInTerminal(buf)
+  call delete(scriptName)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

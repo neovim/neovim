@@ -1,9 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed= helpers.feed
+local feed = helpers.feed
 local source = helpers.source
 local clear = helpers.clear
 local feed_command = helpers.feed_command
+local poke_eventloop = helpers.poke_eventloop
+local meths = helpers.meths
+local eq = helpers.eq
 
 describe('prompt buffer', function()
   local screen
@@ -150,4 +153,13 @@ describe('prompt buffer', function()
     ]])
   end)
 
+  it('keeps insert mode after aucmd_restbuf in callback', function()
+    source [[
+      let s:buf = nvim_create_buf(1, 1)
+      call timer_start(0, {-> nvim_buf_set_lines(s:buf, -1, -1, 0, ['walrus'])})
+      startinsert
+    ]]
+    poke_eventloop()
+    eq({ mode = "i", blocking = false }, meths.get_mode())
+  end)
 end)

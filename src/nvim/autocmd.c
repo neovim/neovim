@@ -1208,7 +1208,7 @@ win_found:
 
     win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
     if (save_curwin != NULL) {
-      curwin = save_curwin;
+      win_enter(save_curwin, true);
     } else {
       // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
