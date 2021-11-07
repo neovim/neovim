@@ -2256,7 +2256,7 @@ static void leaving_window(win_T *const win)
   }
 }
 
-static void entering_window(win_T *const win)
+void entering_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
   // Only matters for a prompt window.

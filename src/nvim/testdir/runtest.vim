@@ -197,7 +197,12 @@ func RunTheTest(test)
 
   " Close any extra tab pages and windows and make the current one not modified.
   while tabpagenr('$') > 1
+    let winid = win_getid()
     quit!
+    if winid == win_getid()
+      echoerr 'Could not quit window'
+      break
+    endif
   endwhile
 
   while 1

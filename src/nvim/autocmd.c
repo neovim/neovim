@@ -1208,15 +1208,18 @@ win_found:
 
     win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
     if (save_curwin != NULL) {
-      win_enter(save_curwin, true);
+      curwin = save_curwin;
     } else {
       // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
     }
+    curbuf = curwin->w_buffer;
+    // May need to restore insert mode for a prompt buffer.
+    entering_window(curwin);
+
     prevwin = win_find_by_handle(aco->save_prevwin_handle);
     vars_clear(&aucmd_win->w_vars->dv_hashtab);         // free all w: variables
     hash_init(&aucmd_win->w_vars->dv_hashtab);          // re-use the hashtab
-    curbuf = curwin->w_buffer;
 
     xfree(globaldir);
     globaldir = aco->globaldir;
