@@ -2240,6 +2240,9 @@ static void leaving_window(win_T *const win)
   // When leaving a prompt window stop Insert mode and perhaps restart
   // it when entering that window again.
   win->w_buffer->b_prompt_insert = restart_edit;
+  if (restart_edit != NUL && mode_displayed) {
+    clear_cmdline = true;  // unshow mode later
+  }
   restart_edit = NUL;
 
   // When leaving the window (or closing the window) was done from a

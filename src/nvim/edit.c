@@ -995,7 +995,7 @@ static int insert_handle_key(InsertState *s)
       // In a prompt window CTRL-W is used for window commands.
       // Use Shift-CTRL-W to delete a word.
       stuffcharReadbuff(Ctrl_W);
-      restart_edit = 'i';
+      restart_edit = 'A';
       s->nomove = true;
       s->count = 0;
       return 0;
