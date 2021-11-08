@@ -466,7 +466,11 @@ local function text_document_did_open_handler(bufnr, client)
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()
-    vim.lsp.diagnostic.redraw(bufnr, client.id)
+    -- Protect against a race where the buffer disappears
+    -- between `did_open_handler` and the scheduled function firing.
+    if vim.api.nvim_buf_is_valid(bufnr) then
+      vim.lsp.diagnostic.redraw(bufnr, client.id)
+    end
   end)
 end
 

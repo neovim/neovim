@@ -1735,6 +1735,7 @@ describe('LSP', function()
 
         -- after rename the target file must have the contents of the source file
         local bufnr = vim.fn.bufadd(new)
+        vim.fn.bufload(new)
         return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
       ]], old, new)
       eq({'Test content'}, lines)
