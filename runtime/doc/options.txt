@@ -3705,10 +3705,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'list'* *'nolist'*
 'list'			boolean	(default off)
 			local to window
-	List mode: By default show tabs as CTRL-I is displayed, display $
-	after end of line.  Useful to see the difference between tabs and
-	spaces and for trailing blanks.  Further changed by the 'listchars'
-	option.
+	List mode: By default, show tabs as ">", trailing spaces as "-", and
+	non-breakable space characters as "+". Useful to see the difference
+	between tabs and spaces and for trailing blanks. Further changed by
+	the 'listchars' option.
 
 	The cursor is displayed at the start of the space a Tab character
 	occupies, not at the end as usual in Normal mode.  To get this cursor

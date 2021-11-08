@@ -116,9 +116,9 @@ g8			Print the hex values of the bytes used in the
 
 							*:l* *:list*
 :[range]l[ist] [count] [flags]
-			Same as :print, but display unprintable characters
-			with '^' and put $ after the line.  This can be
-			further changed with the 'listchars' option.
+			Same as :print, but show tabs as ">", trailing spaces
+			as "-", and non-breakable space characters as "+" by
+			default.  Further changed by the 'listchars' option.
 			See |ex-flags| for [flags].
 
 							*:nu* *:number*
