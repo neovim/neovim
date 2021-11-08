@@ -268,6 +268,56 @@ describe('vim.diagnostic', function()
     ]])
   end)
 
+  describe('show() and hide()', function()
+    it('works', function()
+      local result = exec_lua [[
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+
+        local result = {}
+
+        vim.diagnostic.config({ underline = false, virtual_text = true })
+
+        local ns_1_diags = {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 5),
+        }
+        local ns_2_diags = {
+          make_warning("Warning 1", 2, 1, 2, 5),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
+
+        -- Both
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+
+        -- Hide one namespace
+        vim.diagnostic.hide(diagnostic_ns)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns))
+
+        -- Show one namespace
+        vim.diagnostic.show(diagnostic_ns)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns))
+
+        -- Hide all namespaces
+        vim.diagnostic.hide()
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+
+        -- Show all namespaces
+        vim.diagnostic.show()
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+
+        return result
+      ]]
+
+      eq(3, result[1])
+      eq(0, result[2])
+      eq(2, result[3])
+      eq(0, result[4])
+      eq(3, result[5])
+    end)
+  end)
+
   describe('reset()', function()
     it('diagnostic count is 0 and displayed diagnostics are 0 after call', function()
       -- 1 Error (1)

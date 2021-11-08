@@ -536,7 +536,9 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                 |vim.diagnostic.disable()|.
 
                 Parameters: ~
-                    {namespace}  number The diagnostic namespace
+                    {namespace}  number|nil Diagnostic namespace. When
+                                 omitted, hide diagnostics from all
+                                 namespaces.
                     {bufnr}      number|nil Buffer number. Defaults to the
                                  current buffer.
 
@@ -626,7 +628,9 @@ reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
                 |vim.diagnostic.hide()|.
 
                 Parameters: ~
-                    {namespace}  number
+                    {namespace}  number|nil Diagnostic namespace. When
+                                 omitted, remove diagnostics from all
+                                 namespaces.
                     {bufnr}      number|nil Remove diagnostics for the given
                                  buffer. When omitted, diagnostics are removed
                                  for all buffers.
@@ -677,7 +681,9 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                 Display diagnostics for the given namespace and buffer.
 
                 Parameters: ~
-                    {namespace}    number Diagnostic namespace.
+                    {namespace}    number|nil Diagnostic namespace. When
+                                   omitted, show diagnostics from all
+                                   namespaces.
                     {bufnr}        number|nil Buffer number. Defaults to the
                                    current buffer.
                     {diagnostics}  table|nil The diagnostics to display. When
@@ -685,7 +691,8 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                                    given namespace and buffer. This can be
                                    used to display a list of diagnostics
                                    without saving them or to display only a
-                                   subset of diagnostics.
+                                   subset of diagnostics. May not be used when
+                                   {namespace} is nil.
                     {opts}         table|nil Display options. See
                                    |vim.diagnostic.config()|.
 
