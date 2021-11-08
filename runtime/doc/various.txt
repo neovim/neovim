@@ -117,7 +117,7 @@ g8			Print the hex values of the bytes used in the
 							*:l* *:list*
 :[range]l[ist] [count] [flags]
 			Same as :print, but show tabs as ">", trailing spaces
-			as "-" and non-breakable space characters as "+" by
+			as "-", and non-breakable space characters as "+" by
 			default.  Further changed by the 'listchars' option.
 			See |ex-flags| for [flags].
 
