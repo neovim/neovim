@@ -262,6 +262,9 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
 void terminal_close(Terminal *term, int status)
 {
   if (term->closed) {
+    if (status == -1 && !term->refcount) {
+      terminal_destroy(term);
+    }
     return;
   }
 
