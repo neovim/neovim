@@ -55,7 +55,7 @@ local str_utf_end = vim.str_utf_end
 ---@param byte integer the byte idx
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 --@returns integer the utf idx for the given encoding
-local function M.byte_to_utf(line, byte, offset_encoding)
+local function byte_to_utf(line, byte, offset_encoding)
   -- convert to 0 based indexing for str_utfindex
   byte = byte - 1
 
@@ -84,7 +84,7 @@ end
 --        Used for incremental sync for start/end range respectively
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 ---@returns table<string, int> byte_idx and char_idx of first change position
-local function M.align_position(line, byte, align, offset_encoding)
+local function align_position(line, byte, align, offset_encoding)
   local char
   -- If on the first byte, or an empty string: the trivial case
   if byte == 1 or #line == 0 then
@@ -92,21 +92,21 @@ local function M.align_position(line, byte, align, offset_encoding)
   -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
     byte = byte + str_utf_end(line, #line)
-    char = M.byte_to_utf(line, byte, offset_encoding)
+    char = byte_to_utf(line, byte, offset_encoding)
   else
     -- Modifying line, find the nearest utf codepoint
     if align == 'start' then
       byte = byte + str_utf_start(line, byte)
-      char = M.byte_to_utf(line, byte, offset_encoding)
+      char = byte_to_utf(line, byte, offset_encoding)
     elseif align == 'end' then
       local offset = str_utf_end(line, byte)
       -- If the byte does not fall on the start of the character, then
       -- align to the start of the next character.
       if offset > 0 then
-        char = M.byte_to_utf(line, byte, offset_encoding) + 1
+        char = byte_to_utf(line, byte, offset_encoding) + 1
         byte = byte + offset
       else
-        char = M.byte_to_utf(line, byte, offset_encoding)
+        char = byte_to_utf(line, byte, offset_encoding)
         byte = byte + offset
       end
     else
@@ -126,7 +126,7 @@ end
 ---@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
 ---@returns table<int, int> line_idx, byte_idx, and char_idx of first change position
-local function M.compute_start_range(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding)
+local function compute_start_range(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding)
   -- If firstline == lastline, no existing text is changed. All edit operations
   -- occur on a new line pointed to by lastline. This occurs during insertion of
   -- new lines(O), the new newline is inserted at the line indicated by
@@ -154,7 +154,7 @@ local function M.compute_start_range(prev_lines, curr_lines, firstline, lastline
   end
 
   -- Convert byte to codepoint if applicable
-  local byte_idx, char_idx = M.align_position(prev_line, start_byte_idx, 'start', offset_encoding)
+  local byte_idx, char_idx = align_position(prev_line, start_byte_idx, 'start', offset_encoding)
 
   -- Return the start difference (shared for new and prev lines)
   return { line_idx = firstline, byte_idx = byte_idx, char_idx = char_idx }
@@ -173,7 +173,7 @@ end
 ---@param new_lastline integer
 ---@param offset_encoding string
 ---@returns (int, int) end_line_idx and end_col_idx of range
-local function M.compute_end_range(prev_lines, curr_lines, start_range, firstline, lastline, new_lastline, offset_encoding)
+local function compute_end_range(prev_lines, curr_lines, start_range, firstline, lastline, new_lastline, offset_encoding)
   -- If firstline == new_lastline, the first change occured on a line that was deleted.
   -- In this case, the last_byte...
   if firstline == new_lastline then
@@ -219,7 +219,7 @@ local function M.compute_end_range(prev_lines, curr_lines, start_range, firstlin
 
   -- Iterate from end to beginning of shortest line
   local prev_end_byte_idx = prev_line_length - byte_offset + 1
-  local prev_byte_idx, prev_char_idx = M.align_position(prev_line, prev_end_byte_idx, 'start', offset_encoding)
+  local prev_byte_idx, prev_char_idx = align_position(prev_line, prev_end_byte_idx, 'start', offset_encoding)
   local prev_end_range = { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
   local curr_end_range
@@ -228,7 +228,7 @@ local function M.compute_end_range(prev_lines, curr_lines, start_range, firstlin
     curr_end_range = { line_idx = start_line_idx, byte_idx = 1, char_idx = 1 }
   else
     local curr_end_byte_idx = curr_line_length - byte_offset + 1
-    local curr_byte_idx, curr_char_idx = M.align_position(curr_line, curr_end_byte_idx, 'start', offset_encoding)
+    local curr_byte_idx, curr_char_idx = align_position(curr_line, curr_end_byte_idx, 'start', offset_encoding)
     curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
   end
 
@@ -241,7 +241,7 @@ end
 ---@param start_range table table returned by first_difference
 ---@param end_range table new_end_range returned by last_difference
 ---@returns string text extracted from defined region
-local function M.extract_text(lines, start_range, end_range, line_ending)
+local function extract_text(lines, start_range, end_range, line_ending)
     if not lines[start_range.line_idx] then
       return ""
     end
@@ -272,7 +272,7 @@ local function M.extract_text(lines, start_range, end_range, line_ending)
   end
 end
 
-local function M.compute_line_length(line, offset_encoding)
+local function compute_line_length(line, offset_encoding)
   local length
   local _
   if offset_encoding == 'utf-16' then
@@ -291,7 +291,7 @@ end
 -- codeunits for utf-32
 -- Line endings count here as 2 chars for \r\n (dos), 1 char for \n (unix), and 1 char for \r (mac)
 -- These correspond to Windows, Linux/macOS (OSX and newer), and macOS (version 9 and prior)
-local function M.compute_range_length(lines, start_range, end_range, offset_encoding, line_ending)
+local function compute_range_length(lines, start_range, end_range, offset_encoding, line_ending)
   local line_ending_length = #line_ending
   -- Single line case
   if start_range.line_idx == end_range.line_idx then
@@ -301,7 +301,7 @@ local function M.compute_range_length(lines, start_range, end_range, offset_enco
   local start_line = lines[start_range.line_idx]
   local range_length
   if start_line and #start_line > 0 then
-    range_length = M.compute_line_length(start_line, offset_encoding) - start_range.char_idx + 1 + line_ending_length
+    range_length = compute_line_length(start_line, offset_encoding) - start_range.char_idx + 1 + line_ending_length
   else
     -- Length of newline character
     range_length = line_ending_length
@@ -311,7 +311,7 @@ local function M.compute_range_length(lines, start_range, end_range, offset_enco
   for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
     -- Length full line plus newline character
     if #lines[idx] > 0 then
-      range_length = range_length + M.compute_line_length(lines[idx], offset_encoding) + #line_ending
+      range_length = range_length + compute_line_length(lines[idx], offset_encoding) + #line_ending
     else
       range_length = range_length + line_ending_length
     end
@@ -337,7 +337,7 @@ function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastlin
   -- Find the start of changes between the previous and current buffer. Common between both.
   -- Sent to the server as the start of the changed range.
   -- Used to grab the changed text from the latest buffer.
-  local start_range = M.compute_start_range(
+  local start_range = compute_start_range(
     prev_lines,
     curr_lines,
     firstline + 1,
@@ -348,7 +348,7 @@ function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastlin
   -- Find the last position changed in the previous and current buffer.
   -- prev_end_range is sent to the server as as the end of the changed range.
   -- curr_end_range is used to grab the changed text from the latest buffer.
-  local prev_end_range, curr_end_range = M.compute_end_range(
+  local prev_end_range, curr_end_range = compute_end_range(
     prev_lines,
     curr_lines,
     start_range,
@@ -360,10 +360,10 @@ function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastlin
 
   -- Grab the changed text of from start_range to curr_end_range in the current buffer.
   -- The text range is "" if entire range is deleted.
-  local text = M.extract_text(curr_lines, start_range, curr_end_range, line_ending)
+  local text = extract_text(curr_lines, start_range, curr_end_range, line_ending)
 
   -- Compute the range of the replaced text. Deprecated but still required for certain language servers
-  local range_length = M.compute_range_length(prev_lines, start_range, prev_end_range, offset_encoding, line_ending)
+  local range_length = compute_range_length(prev_lines, start_range, prev_end_range, offset_encoding, line_ending)
 
   -- convert to 0 based indexing
   local result = {
