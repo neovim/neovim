@@ -6,6 +6,8 @@ local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
 local command = helpers.command
+local insert = helpers.insert
+local expect = helpers.expect
 local exc_exec = helpers.exc_exec
 local iswin = helpers.iswin
 local os_kill = helpers.os_kill
@@ -629,4 +631,30 @@ describe('systemlist()', function()
     eq({iswin() and '?\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
   end)
 
+end)
+
+it(':{range}! works with powershell for filter and redirection #16271', function()
+  clear()
+  if not helpers.has_powershell() then
+    pending("not tested; powershell was not found", function() end)
+    return
+  end
+  local screen = Screen.new(500, 8)
+  screen:attach()
+  helpers.set_shell_powershell()
+  insert([[
+    3
+    1
+    4
+    2]])
+  feed(':4verbose %!sort<cr>')
+  screen:expect{
+    any=[[Executing command: "Start%-Process sort %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait".*4 lines filtered.*Press ENTER or type command to continue]]
+  }
+  feed('<CR>')
+  expect([[
+    1
+    2
+    3
+    4]])
 end)
