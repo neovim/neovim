@@ -43,8 +43,10 @@ local M = {}
 
 -- local string.byte, unclear if this is necessary for JIT compilation
 local str_byte = string.byte
-local vim = vim
-local math = math
+local min = math.min
+local str_utfindex = vim.str_utfindex
+local str_utf_start = vim.str_utf_start
+local str_utf_end = vim.str_utf_end
 
 ---@private
 -- Given a line, byte idx, and offset_encoding convert to the
@@ -61,9 +63,9 @@ local function M.byte_to_utf(line, byte, offset_encoding)
   local _
   -- Convert the byte range to utf-{8,16,32} and convert 1-based (lua) indexing to 0-based
   if offset_encoding == 'utf-16' then
-    _, utf_idx = vim.str_utfindex(line, byte)
+    _, utf_idx = str_utfindex(line, byte)
   elseif offset_encoding == 'utf-32' then
-    utf_idx, _ = vim.str_utfindex(line, byte)
+    utf_idx, _ = str_utfindex(line, byte)
   else
     utf_idx = byte
   end
@@ -89,15 +91,15 @@ local function M.align_position(line, byte, align, offset_encoding)
     char = byte
   -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
-    byte = byte + vim.str_utf_end(line, #line)
+    byte = byte + str_utf_end(line, #line)
     char = M.byte_to_utf(line, byte, offset_encoding)
   else
     -- Modifying line, find the nearest utf codepoint
     if align == 'start' then
-      byte = byte + vim.str_utf_start(line, byte)
+      byte = byte + str_utf_start(line, byte)
       char = M.byte_to_utf(line, byte, offset_encoding)
     elseif align == 'end' then
-      local offset = vim.str_utf_end(line, byte)
+      local offset = str_utf_end(line, byte)
       -- If the byte does not fall on the start of the character, then
       -- align to the start of the next character.
       if offset > 0 then
@@ -201,9 +203,9 @@ local function M.compute_end_range(prev_lines, curr_lines, start_range, firstlin
     local max_length
     if start_line_idx == prev_line_idx then
       -- Search until beginning of difference
-      max_length = math.min(prev_line_length - start_range.byte_idx, curr_line_length - start_range.byte_idx) + 1
+      max_length = min(prev_line_length - start_range.byte_idx, curr_line_length - start_range.byte_idx) + 1
     else
-      max_length = math.min(prev_line_length, curr_line_length) + 1
+      max_length = min(prev_line_length, curr_line_length) + 1
     end
     for idx = 0, max_length do
       byte_offset = idx
@@ -274,9 +276,9 @@ local function M.compute_line_length(line, offset_encoding)
   local length
   local _
   if offset_encoding == 'utf-16' then
-     _, length = vim.str_utfindex(line)
+     _, length = str_utfindex(line)
   elseif offset_encoding == 'utf-32' then
-    length, _ = vim.str_utfindex(line)
+    length, _ = str_utfindex(line)
   else
     length = #line
   end
