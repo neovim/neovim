@@ -28,6 +28,7 @@ local function progress_handler(_, result, ctx, _)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
     err_message("LSP[", client_name, "] client has shut down after sending the message")
+    return
   end
   local val = result.value    -- unspecified yet
   local token = result.token  -- string or number
