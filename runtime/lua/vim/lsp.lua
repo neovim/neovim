@@ -324,6 +324,7 @@ do
   --                       Only set if incremental_sync is used
   ---     use_incremental_sync: bool
   ---     buffers?: table (bufnr → lines); for incremental sync only
+  ---     buffers_tmp?: table (bufnr → lines); for incremental sync only
   ---     timer?: uv_timer
   local state_by_client = {}
 
@@ -336,23 +337,23 @@ do
           if_nil(client.config.flags.allow_incremental_sync, true)
           and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
         );
+        buffers = {};
+        buffers_tmp = {};
       }
       state_by_client[client.id] = state
     end
-    if not state.use_incremental_sync then
-      return
+    if state.use_incremental_sync then
+      state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
+      state.buffers_tmp[bufnr] = {}
     end
-    if not state.buffers then
-      state.buffers = {}
-    end
-    state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
   end
 
   function changetracking.reset_buf(client, bufnr)
     changetracking.flush(client)
     local state = state_by_client[client.id]
-    if state and state.buffers then
+    if state then
       state.buffers[bufnr] = nil
+      state.buffers_tmp[bufnr] = nil
     end
   end
 
@@ -364,16 +365,47 @@ do
     end
   end
 
-  function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
+  function changetracking.prepare(bufnr, firstline, old_lastline, new_lastline)
     local incremental_changes = function(client)
-      local cached_buffers = state_by_client[client.id].buffers
-      local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+      local state = state_by_client[client.id]
+      local prev_lines = state.buffers[bufnr]
+      -- See the comment below for why the curr_lines table is pulled out of buffers_tmp
+      -- instead of making a brand new table.
+      local curr_lines = state.buffers_tmp[bufnr]
+
+      local changed_lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+      for i = 1, firstline do
+        curr_lines[i] = prev_lines[i]
+      end
+      for i = firstline + 1, new_lastline do
+        curr_lines[i] = changed_lines[i - firstline]
+      end
+      for i = old_lastline + 1, #prev_lines do
+        curr_lines[i - old_lastline + new_lastline] = prev_lines[i]
+      end
+      if tbl_isempty(curr_lines) then
+        -- Can happen when deleting the entire contents of a buffer, see https://github.com/neovim/neovim/issues/16259.
+        curr_lines[1] = ''
+      end
+
       local line_ending = buf_get_line_ending(bufnr)
       local incremental_change = sync.compute_diff(
-        cached_buffers[bufnr], curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
-      cached_buffers[bufnr] = curr_lines
+        prev_lines, curr_lines, firstline, old_lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
+
+      -- Double-buffering of lines tables is used to reduce the load on the garbage collector.
+      -- At this point the prev_lines table is useless, but its internal storage has already been allocated,
+      -- so let's keep it around for the next didChange event, in which it will become the next
+      -- curr_lines table. Note that setting elements to nil doesn't actually deallocate slots in the
+      -- internal storage - it merely marks them as free, for the GC to deallocate them.
+      for i in ipairs(prev_lines) do
+        prev_lines[i] = nil
+      end
+      state.buffers[bufnr] = curr_lines
+      state.buffers_tmp[bufnr] = prev_lines
+
       return incremental_change
     end
+
     local full_changes = once(function()
       return {
         text = buf_get_full_text(bufnr);
@@ -1100,20 +1132,15 @@ function lsp.start_client(config)
 end
 
 ---@private
----@fn text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 --- Notify all attached clients that a buffer has changed.
-local text_document_did_change_handler
-do
-  text_document_did_change_handler = function(_, bufnr, changedtick, firstline, lastline, new_lastline)
-
-    -- Don't do anything if there are no clients attached.
-    if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
-      return
-    end
-    util.buf_versions[bufnr] = changedtick
-    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline)
-    for_each_buffer_client(bufnr, compute_change_and_notify)
+local function text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline)
+  -- Don't do anything if there are no clients attached.
+  if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
+    return
   end
+  util.buf_versions[bufnr] = changedtick
+  local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline)
+  for_each_buffer_client(bufnr, compute_change_and_notify)
 end
 
 -- Buffer lifecycle handler for textDocument/didSave
