@@ -124,7 +124,9 @@ struct terminal {
   // no way to know if the memory was reused.
   handle_T buf_handle;
   // program exited
-  bool closed, destroy;
+  bool closed;
+  // when true, the terminal's destruction is already enqueued.
+  bool destroy;
 
   // some vterm properties
   bool forward_mouse;
@@ -261,38 +263,64 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
 
 void terminal_close(Terminal *term, int status)
 {
-  if (term->closed) {
+  if (term->destroy) {
     return;
   }
 
-  term->forward_mouse = false;
+#ifdef EXITFREE
+  if (entered_free_all_mem) {
+    // If called from close_buffer() inside free_all_mem(), the main loop has
+    // already been freed, so it is not safe to call the close callback here.
+    terminal_destroy(term);
+    return;
+  }
+#endif
 
-  // flush any pending changes to the buffer
-  if (!exiting) {
-    block_autocmds();
-    refresh_terminal(term);
-    unblock_autocmds();
+  bool only_destroy = false;
+
+  if (term->closed) {
+    // If called from close_buffer() after the process has already exited, we
+    // only need to call the close callback to clean up the terminal object.
+    only_destroy = true;
+  } else {
+    term->forward_mouse = false;
+    // flush any pending changes to the buffer
+    if (!exiting) {
+      block_autocmds();
+      refresh_terminal(term);
+      unblock_autocmds();
+    }
+    term->closed = true;
   }
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  term->closed = true;
 
   if (status == -1 || exiting) {
-    // If status is -1, this was called by close_buffer(buffer.c).  Or if
-    // exiting, we must inform the buffer the terminal no longer exists so that
-    // close_buffer() doesn't call this again.
+    // If this was called by close_buffer() (status is -1), or if exiting, we
+    // must inform the buffer the terminal no longer exists so that
+    // close_buffer() won't call this again.
+    // If inside Terminal mode K_EVENT handling, setting buf_handle to 0 also
+    // informs terminal_enter() to call the close callback before returning.
     term->buf_handle = 0;
     if (buf) {
       buf->terminal = NULL;
     }
     if (!term->refcount) {
+      // Not inside Terminal mode K_EVENT handling.
       // We should not wait for the user to press a key.
+      term->destroy = true;
       term->opts.close_cb(term->opts.data);
     }
-  } else {
+  } else if (!only_destroy) {
+    // This was called by channel_process_exit_cb() not in process_teardown().
+    // Do not call the close callback now. Wait for the user to press a key.
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
     terminal_receive(term, msg, strlen(msg));
+  }
+
+  if (only_destroy) {
+    return;
   }
 
   if (buf && !is_autocmd_blocked()) {
@@ -417,6 +445,7 @@ void terminal_enter(void)
   ui_busy_stop();
   if (s->close) {
     bool wipe = s->term->buf_handle != 0;
+    s->term->destroy = true;
     s->term->opts.close_cb(s->term->opts.data);
     if (wipe) {
       do_cmdline_cmd("bwipeout!");
