@@ -1006,7 +1006,6 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   Terminal *term = terminal_open(buf, topts);
   terminal_check_size(term);
   chan->term = term;
-  channel_incref(chan);
   return (Integer)chan->id;
 }
 
@@ -1036,6 +1035,8 @@ static void term_close(void *data)
   Channel *chan = data;
   terminal_destroy(chan->term);
   chan->term = NULL;
+  api_free_luaref(chan->stream.internal.cb);
+  chan->stream.internal.cb = LUA_NOREF;
   channel_decref(chan);
 }
 
