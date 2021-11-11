@@ -43,3 +43,13 @@ describe('associated channel is closed and later freed for terminal', function()
     eq("Vim(call):E900: Invalid channel id", pcall_err(command, [[call chansend(id, 'test')]]))
   end)
 end)
+
+describe('channel created by nvim_open_term', function()
+  before_each(clear)
+
+  it('can close', function()
+    command('let id = nvim_open_term(0, {})')
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
+  end)
+end)
