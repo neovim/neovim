@@ -315,7 +315,11 @@ void terminal_close(Terminal *term, int status)
     // This was called by channel_process_exit_cb() not in process_teardown().
     // Do not call the close callback now. Wait for the user to press a key.
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    if (((Channel *)term->opts.data)->streamtype == kChannelStreamInternal) {
+      snprintf(msg, sizeof msg, "\r\n[Terminal closed]");
+    } else {
+      snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    }
     terminal_receive(term, msg, strlen(msg));
   }
 

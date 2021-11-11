@@ -44,6 +44,7 @@ typedef struct {
 
 typedef struct {
   LuaRef cb;
+  bool closed;
 } InternalState;
 
 typedef struct {
