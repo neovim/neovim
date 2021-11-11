@@ -2578,4 +2578,91 @@ describe('LSP', function()
       }
     end)
   end)
+
+  describe('lsp.util.split_lines', function()
+    local function test_split_lines(expected_lines, ...)
+      eq(expected_lines, exec_lua('return vim.lsp.util.split_lines(...)', ...))
+    end
+
+    it('handles empty strings', function()
+      test_split_lines({''}, '')
+    end)
+
+    it('handles strings without line ending characters', function()
+      test_split_lines({'hi!'}, 'hi!')
+    end)
+
+    it('handles strings without a final EOL', function()
+      test_split_lines({'abcdef', 'ghijkl'}, 'abcdef\nghijkl')
+      test_split_lines({'a', 'b', 'd'}, 'a\r\nb\nd')
+    end)
+
+    local test_text = table.concat({
+      '#include <stdio.h>\n',
+      'int main() {\r\n',
+      '  printf(\r"привет мир");\r\n\r',  -- Let's throw in some multibyte because why not
+      '  return 0;\n\r',
+      '}\n',
+    })
+
+    it('handles text with mixed newlines', function()
+      test_split_lines({
+        '#include <stdio.h>',
+        'int main() {',
+        '  printf(',
+        '"привет мир");',
+        '',
+        '  return 0;',
+        '',
+        '}',
+      }, test_text)
+    end)
+
+    it('handles keep_line_endings', function()
+      test_split_lines({
+        '#include <stdio.h>\n',
+        'int main() {\r\n',
+        '  printf(\r',
+        '"привет мир");\r\n',
+        '\r',
+        '  return 0;\n',
+        '\r',
+        '}\n',
+      }, test_text, { keep_line_endings = true })
+    end)
+
+    it('handles keep_final_eol', function()
+      test_split_lines({ 'абв',   'где',   '' }, 'абв\nгде\n', { keep_final_eol = true                           })
+      test_split_lines({ 'абв',   'где'       }, 'абв\nгде',   { keep_final_eol = true                           })
+      test_split_lines({ 'абв\n', 'где\n', '' }, 'абв\nгде\n', { keep_final_eol = true, keep_line_endings = true })
+      test_split_lines({ 'абв\n', 'где'       }, 'абв\nгде',   { keep_final_eol = true, keep_line_endings = true })
+    end)
+
+    it('handles a final CRLF', function()
+      test_split_lines({ 'test' }, 'test\r\n')
+    end)
+
+    it('handles the no_carrige_returns_left optimization correctly', function()
+      test_split_lines({ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }, 'a\r\nb\r\nc\rd\ne\nf\ng\nh\n')
+    end)
+
+    it('the iterator returns correct line start indexes', function()
+      eq({
+        { 1, '#include <stdio.h>' },
+        { 20, 'int main() {' },
+        { 34, '  printf(' },
+        { 44, '"привет мир");' },
+        { 69, '' },
+        { 70, '  return 0;' },
+        { 82, '' },
+        { 83, '}' },
+      }, exec_lua([[
+        local results = {}
+        for start_idx, line in vim.lsp.util.split_lines_iter(...) do
+          table.insert(results, { start_idx, line })
+        end
+        return results
+      ]], test_text))
+    end)
+  end)
 end)

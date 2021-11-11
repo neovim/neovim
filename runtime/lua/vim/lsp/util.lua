@@ -85,9 +85,95 @@ local function get_border_size(opts)
   return { height = height, width = width }
 end
 
----@private
-local function split_lines(value)
-  return split(value, '\n', true)
+--- Splits the given text into lines according to LSP's definition of text
+--- lines. Quoting the specification: "To ensure that both client and server
+--- split the string into the same line representation the protocol specifies
+--- the following end-of-line sequences: '\n', '\r\n' and '\r'."
+---
+---@see |vim.lsp.util.split_lines_iter()|
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocuments
+function M.split_lines(text, opts)
+  local lines = {}
+  local i = 1
+  for _, line in M.split_lines_iter(text, opts) do
+    lines[i] = line
+    i = i + 1
+  end
+  return lines
+end
+
+--- Same as |vim.lsp.util.split_lines()|, but returns an iterator instead of a
+--- list of lines.
+function M.split_lines_iter(text, opts)
+  validate {
+    text = { text, 's' };
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+  validate {
+    ['opts.keep_line_endings'] = { opts.keep_line_endings, 'b', true };
+    ['opts.keep_final_eol'] = { opts.keep_final_eol, 'b', true };
+  }
+  local keep_line_endings = opts.keep_line_endings
+  local keep_final_eol = opts.keep_final_eol
+
+  local string_find = string.find
+  local string_sub = string.sub
+  local math_min = math.min
+
+  -- Most text will be LF-separated anyway, so needless \r lookups which would
+  -- have to scan the whole string can be skipped. There is no such flag for \n
+  -- because in the CRLF case the \n lookup still must be performed, and let's
+  -- face it - nobody uses CR linebreaks anymore.
+  local no_carrige_returns_left = false
+
+  -- NOTE: string.find is implemented using memchr in LuaJIT, which will most
+  -- likely be faster than running our own loops.
+  local function find_curr_line_ending(start_idx)
+    local lf_idx = string_find(text, '\n', start_idx, true)
+    local cr_idx = nil
+    if not no_carrige_returns_left then
+      cr_idx = string_find(text, '\r', start_idx, true)
+      no_carrige_returns_left = not cr_idx
+    end
+    if lf_idx and cr_idx then
+      if cr_idx + 1 == lf_idx then
+        return cr_idx, 2
+      else
+        return math_min(lf_idx, cr_idx), 1
+      end
+    else
+      return lf_idx or cr_idx, 1
+    end
+  end
+
+  local line_start_idx = 1
+  local done = false
+  return function()
+    if done then
+      return
+    end
+
+    local line_ending_idx, line_ending_len = find_curr_line_ending(line_start_idx)
+    if not line_ending_idx then
+      done = true
+      local line = string_sub(text, line_start_idx)
+      return line_start_idx, line
+    end
+
+    local line_end_idx = line_ending_idx - 1
+    if keep_line_endings then
+      line_end_idx = line_end_idx + line_ending_len
+    end
+    local line = string_sub(text, line_start_idx, line_end_idx)
+
+    local prev_line_start_idx = line_start_idx
+    line_start_idx = line_ending_idx + line_ending_len
+    if line_start_idx > #text and not keep_final_eol then
+      done = true
+    end
+    return prev_line_start_idx, line
+  end
 end
 
 --- Replaces text in a range with new text.
