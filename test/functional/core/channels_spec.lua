@@ -3,8 +3,6 @@ local uname = helpers.uname
 local clear, eq, eval, next_msg, ok, source = helpers.clear, helpers.eq,
    helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths
-local exc_exec = helpers.exc_exec
-local poke_eventloop = helpers.poke_eventloop
 local sleep = helpers.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
@@ -282,17 +280,5 @@ describe('channels', function()
 
     -- works correctly with no output
     eq({"notification", "exit", {id, 1, {''}}}, next_msg())
-  end)
-
-  it('should throw error when writing to a channel associated with a deleted terminal', function()
-    command('let id = nvim_open_term(0, {})')
-    local err = exc_exec([[bdelete! | call chansend(id, 'test')]])
-    -- channel hasn't been freed yet
-    eq("Vim(call):Can't send data to closed stream", err)
-    -- process free_channel_event
-    poke_eventloop()
-    err = exc_exec([[call chansend(id, 'test')]])
-    -- channel has ben freed
-    eq("Vim(call):E900: Invalid channel id", err)
   end)
 end)
