@@ -166,6 +166,7 @@ CONFIG = {
             'util.lua',
             'log.lua',
             'rpc.lua',
+            'sync.lua',
             'protocol.lua',
         ],
         'files': ' '.join([
