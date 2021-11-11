@@ -369,7 +369,7 @@ end
 function M.list_workspace_folders()
   local workspace_folders = {}
   for _, client in pairs(vim.lsp.buf_get_clients()) do
-    for _, folder in pairs(client.workspaceFolders) do
+    for _, folder in pairs(client.workspaceFolders or {}) do
       table.insert(workspace_folders, folder.name)
     end
   end
@@ -389,7 +389,7 @@ function M.add_workspace_folder(workspace_folder)
   local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
   for _, client in pairs(vim.lsp.buf_get_clients()) do
     local found = false
-    for _, folder in pairs(client.workspaceFolders) do
+    for _, folder in pairs(client.workspaceFolders or {}) do
       if folder.name == workspace_folder then
         found = true
         print(workspace_folder, "is already part of this workspace")
@@ -398,6 +398,9 @@ function M.add_workspace_folder(workspace_folder)
     end
     if not found then
       vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      if not client.workspaceFolders then
+        client.workspaceFolders = {}
+      end
       table.insert(client.workspaceFolders, params.event.added[1])
     end
   end
