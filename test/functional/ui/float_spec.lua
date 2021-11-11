@@ -1,11 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local global_helpers = require('test.helpers')
 local os = require('os')
 local clear, feed = helpers.clear, helpers.feed
 local assert_alive = helpers.assert_alive
 local command, feed_command = helpers.command, helpers.feed_command
 local eval = helpers.eval
 local eq = helpers.eq
+local neq = helpers.neq
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local meths = helpers.meths
@@ -13,6 +15,7 @@ local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
+local tbl_contains = global_helpers.tbl_contains
 
 describe('float window', function()
   before_each(function()
@@ -294,6 +297,125 @@ describe('float window', function()
     eq(12, pos[2])
   end)
 
+  it('is not operated on by windo when non-focusable #15374', function()
+    command([[
+      let winids = []
+      windo call add(winids, win_getid())
+    ]])
+    local windo_count_before = eval('len(winids)')
+    local winid = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = false,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      return vim.api.nvim_open_win(bufnr, false, opts)
+    ]])
+    command([[
+      let winids = []
+      windo call add(winids, win_getid())
+    ]])
+    local windo_count_after = eval('len(winids)')
+    eq(windo_count_before, windo_count_after)
+    eq(false, tbl_contains(eval('winids'), winid))
+  end)
+
+  it('is operated on by windo when focusable', function()
+    command([[
+      let winids = []
+      windo call add(winids, win_getid())
+    ]])
+    local windo_count_before = eval('len(winids)')
+    local winid = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = true,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      return vim.api.nvim_open_win(bufnr, false, opts)
+    ]])
+    command([[
+      let winids = []
+      windo call add(winids, win_getid())
+    ]])
+    local windo_count_after = eval('len(winids)')
+    eq(windo_count_before + 1, windo_count_after)
+    eq(true, tbl_contains(eval('winids'), winid))
+  end)
+
+  it('is not active after windo when non-focusable #15374', function()
+    local winid = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = false,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      return vim.api.nvim_open_win(bufnr, false, opts)
+    ]])
+    command('windo echo')
+    neq(eval('win_getid()'), winid)
+  end)
+
+  it('is active after windo when focusable', function()
+    local winid = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = true,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      return vim.api.nvim_open_win(bufnr, false, opts)
+    ]])
+    command('windo echo')
+    eq(eval('win_getid()'), winid)
+  end)
+
+  it('supports windo with focusable and non-focusable floats', function()
+    local winids = exec_lua([[
+      local result = {vim.api.nvim_get_current_win()}
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local opts = {
+        relative = 'editor',
+        focusable = false,
+        height = 5,
+        width = 5,
+        col = 5,
+        row = 5,
+      }
+      vim.api.nvim_open_win(bufnr, false, opts)
+      opts.focusable = true
+      table.insert(result, vim.api.nvim_open_win(bufnr, false, opts))
+      opts.focusable = false
+      vim.api.nvim_open_win(bufnr, false, opts)
+      opts.focusable = true
+      table.insert(result, vim.api.nvim_open_win(bufnr, false, opts))
+      opts.focusable = false
+      vim.api.nvim_open_win(bufnr, false, opts)
+      return result
+    ]])
+    table.sort(winids)
+    command([[
+      let winids = []
+      windo call add(winids, win_getid())
+      call sort(winids)
+    ]])
+    eq(winids, eval('winids'))
+  end)
 
   local function with_ext_multigrid(multigrid)
     local screen

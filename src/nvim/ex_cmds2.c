@@ -1381,6 +1381,7 @@ void ex_listdo(exarg_T *eap)
     listcmd_busy = true;            // avoids setting pcmark below
 
     while (!got_int && buf != NULL) {
+      bool execute = true;
       if (eap->cmdidx == CMD_argdo) {
         // go to argument "i"
         if (i == ARGCOUNT) {
@@ -1406,11 +1407,14 @@ void ex_listdo(exarg_T *eap)
           break;
         }
         assert(wp);
-        win_goto(wp);
-        if (curwin != wp) {
-          break;    // something must be wrong
+        execute = !wp->w_floating || wp->w_float_config.focusable;
+        if (execute) {
+          win_goto(wp);
+          if (curwin != wp) {
+            break;    // something must be wrong
+          }
         }
-        wp = curwin->w_next;
+        wp = wp->w_next;
       } else if (eap->cmdidx == CMD_tabdo) {
         // go to window "tp"
         if (!valid_tabpage(tp)) {
@@ -1433,8 +1437,10 @@ void ex_listdo(exarg_T *eap)
 
       i++;
       // execute the command
-      do_cmdline(eap->arg, eap->getline, eap->cookie,
-                 DOCMD_VERBOSE + DOCMD_NOWAIT);
+      if (execute) {
+        do_cmdline(eap->arg, eap->getline, eap->cookie,
+                   DOCMD_VERBOSE + DOCMD_NOWAIT);
+      }
 
       if (eap->cmdidx == CMD_bufdo) {
         // Done?
@@ -1485,7 +1491,7 @@ void ex_listdo(exarg_T *eap)
         }
       }
 
-      if (eap->cmdidx == CMD_windo) {
+      if (eap->cmdidx == CMD_windo && execute) {
         validate_cursor();              // cursor may have moved
         // required when 'scrollbind' has been set
         if (curwin->w_p_scb) {
