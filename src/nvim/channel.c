@@ -535,7 +535,11 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
     goto retfree;
   }
 
-  if (chan->streamtype == kChannelStreamInternal && chan->term) {
+  if (chan->streamtype == kChannelStreamInternal) {
+    if (!chan->term) {
+      *error = _("Can't send data to closed stream");
+      goto retfree;
+    }
     terminal_receive(chan->term, data, len);
     written = len;
     goto retfree;

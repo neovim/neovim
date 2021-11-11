@@ -281,4 +281,14 @@ describe('channels', function()
     -- works correctly with no output
     eq({"notification", "exit", {id, 1, {''}}}, next_msg())
   end)
+
+  it('should throw error when writing to a channel associated with a deleted terminal', function()
+    source([[
+      let id = nvim_open_term(0, {})
+      bdelete!
+      let v:errmsg = ''
+      silent! call chansend(id, 'test')
+    ]])
+    eq("Can't send data to closed stream", eval('v:errmsg'))
+  end)
 end)
