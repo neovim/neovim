@@ -14,9 +14,7 @@ describe('associated channel is closed and later freed for terminal', function()
     command([[let id = nvim_open_term(0, {})]])
     -- channel hasn't been freed yet
     eq("Vim(call):Can't send data to closed stream", exc_exec([[bdelete! | call chansend(id, 'test')]]))
-    -- process free_channel_event
-    poke_eventloop()
-    -- channel has been freed
+    -- channel has been freed after one main loop iteration
     eq("Vim(call):E900: Invalid channel id", exc_exec([[call chansend(id, 'test')]]))
   end)
 
@@ -27,9 +25,9 @@ describe('associated channel is closed and later freed for terminal', function()
     eq("Vim(call):Can't send data to closed stream", exc_exec([[call chansend(id, 'test')]]))
     -- delete terminal
     feed('i<CR>')
-    -- process term_delayed_free and free_channel_event
+    -- process input in one main loop iteration
     poke_eventloop()
-    -- channel has been freed
+    -- channel has been freed after another main loop iteration
     eq("Vim(call):E900: Invalid channel id", exc_exec([[call chansend(id, 'test')]]))
   end)
 
@@ -41,9 +39,7 @@ describe('associated channel is closed and later freed for terminal', function()
     eq("Vim(call):Can't send data to closed stream", exc_exec([[call chansend(id, 'test')]]))
     -- channel hasn't been freed yet
     eq("Vim(call):Can't send data to closed stream", exc_exec([[bdelete | call chansend(id, 'test')]]))
-    -- process term_delayed_free and free_channel_event
-    poke_eventloop()
-    -- channel has been freed
+    -- channel has been freed after one main loop iteration
     eq("Vim(call):E900: Invalid channel id", exc_exec([[call chansend(id, 'test')]]))
   end)
 end)
