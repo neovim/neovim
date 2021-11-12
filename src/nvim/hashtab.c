@@ -57,7 +57,7 @@ void hash_init(hashtab_T *ht)
 void hash_clear(hashtab_T *ht)
 {
   if (ht->ht_array != ht->ht_smallarray) {
-    xfree(ht->ht_array);
+    XFREE_CLEAR(ht->ht_array);
   }
 }
 
