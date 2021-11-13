@@ -793,7 +793,7 @@ QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				before QuitPre is triggered.  Can be used to
 				close any non-essential window if the current
 				window is the last ordinary window.
-				See also |ExitPre|, ||WinClosed|.
+				See also |ExitPre|, |WinClosed|.
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
 				server was received |server2client()|.  The
