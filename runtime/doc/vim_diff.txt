@@ -186,7 +186,6 @@ Events:
   |TermOpen|
   |UIEnter|
   |UILeave|
-  |WinClosed|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified

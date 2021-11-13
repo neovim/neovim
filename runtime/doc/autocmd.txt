@@ -1002,8 +1002,9 @@ VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
 							*WinClosed*
-WinClosed			After closing a window. <afile> expands to the
-				|window-ID|.
+WinClosed			After closing a window.  The pattern is
+				matched against the |window-ID|.  Both
+				<amatch> and <afile> are set to the |window-ID|.
 				After WinLeave.
 				Non-recursive (event cannot trigger itself).
 				See also |ExitPre|, |QuitPre|.
