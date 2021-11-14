@@ -7167,7 +7167,7 @@ void replace_push(int c)
  */
 int replace_push_mb(char_u *p)
 {
-  int l = (*mb_ptr2len)(p);
+  int l = utfc_ptr2len(p);
   int j;
 
   for (j = l - 1; j >= 0; --j) {
@@ -7323,7 +7323,7 @@ static void replace_do_bs(int limit_col)
       vcol = start_vcol;
       for (i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
-        i += (*mb_ptr2len)(p) - 1;
+        i += utfc_ptr2len(p) - 1;
       }
       vcol -= start_vcol;
 

@@ -1583,7 +1583,7 @@ int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
     }
     // Highlight special keys
     msg_puts_attr(text, (len > 1
-                         && (*mb_ptr2len)((char_u *)text) <= 1
+                         && utfc_ptr2len((char_u *)text) <= 1
                          ? attr : 0));
     retval += len;
   }

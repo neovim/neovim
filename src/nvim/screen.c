@@ -2671,7 +2671,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
         if (line[shl->endcol] != NUL) {
-          shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+          shl->endcol += utfc_ptr2len(line + shl->endcol);
         } else {
           ++shl->endcol;
         }
@@ -3145,7 +3145,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
                 if (shl->startcol == shl->endcol) {
                   // highlight empty match, try again after it
-                  shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+                  shl->endcol += utfc_ptr2len(line + shl->endcol);
                 }
 
                 // Loop to check if the match starts at the
@@ -3244,7 +3244,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // represent special characters (non-printable stuff) and other
     // things.  When all characters are the same, c_extra is used.
     // If c_final is set, it will compulsorily be used at the end.
-    // "p_extra" must end in a NUL to avoid mb_ptr2len() reads past
+    // "p_extra" must end in a NUL to avoid utfc_ptr2len() reads past
     // "p_extra[n_extra]".
     // For the '$' of the 'list' option, n_extra == 1, p_extra == "".
     if (n_extra > 0) {
@@ -3279,7 +3279,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
         // If a double-width char doesn't fit display a '>' in the last column.
         if ((wp->w_p_rl ? (col <= 0) : (col >= grid->Columns - 1))
-            && (*mb_char2cells)(mb_c) == 2) {
+            && utf_char2cells(mb_c) == 2) {
           c = '>';
           mb_c = c;
           mb_l = 1;
@@ -3393,7 +3393,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // next line.
       if ((wp->w_p_rl ? (col <= 0) :
            (col >= grid->Columns - 1))
-          && (*mb_char2cells)(mb_c) == 2) {
+          && utf_char2cells(mb_c) == 2) {
         c = '>';
         mb_c = c;
         mb_utf8 = false;
@@ -3705,7 +3705,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             // if n_extra > 0, it gives the number of chars
             // to use for a tab, else we need to calculate the width
             // for a tab
-            int len = (tab_len * mb_char2len(wp->w_p_lcs_chars.tab2));
+            int len = (tab_len * utf_char2len(wp->w_p_lcs_chars.tab2));
             if (n_extra > 0) {
               len += n_extra - tab_len;
             }
@@ -3728,8 +3728,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                 lcs = wp->w_p_lcs_chars.tab3;
               }
               utf_char2bytes(lcs, p);
-              p += mb_char2len(lcs);
-              n_extra += mb_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
+              p += utf_char2len(lcs);
+              n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
             }
             p_extra = p_extra_free;
 
@@ -3964,7 +3964,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         && c != NUL) {
       c = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
-      if ((*mb_char2cells)(mb_c) > 1) {
+      if (utf_char2cells(mb_c) > 1) {
         // Double-width character being overwritten by the "precedes"
         // character, need to fill up half the character.
         c_extra = MB_FILLER_CHAR;
@@ -4275,7 +4275,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       //
       // Store the character.
       //
-      if (wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
+      if (wp->w_p_rl && utf_char2cells(mb_c) > 1) {
         // A double-wide character is: put first halve in left cell.
         off--;
         col--;
@@ -4292,7 +4292,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         linebuf_attr[off] = char_attr;
       }
 
-      if ((*mb_char2cells)(mb_c) > 1) {
+      if (utf_char2cells(mb_c) > 1) {
         // Need to fill two screen columns.
         off++;
         col++;
@@ -4353,7 +4353,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
 
 
-        if ((*mb_char2cells)(mb_c) > 1) {
+        if (utf_char2cells(mb_c) > 1) {
           // Need to fill two screen columns.
           if (wp->w_p_rl) {
             --boguscols;
@@ -5134,7 +5134,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
       for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
-        if ((l = (*mb_ptr2len)(s)) > 1) {
+        if ((l = utfc_ptr2len(s)) > 1) {
           STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
@@ -6169,7 +6169,7 @@ static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum, colnr_T minc
         shl->lnum = 0;
         break;
       }
-      matchcol += mb_ptr2len(ml);
+      matchcol += utfc_ptr2len(ml);
     } else {
       matchcol = shl->rm.endpos[0].col;
     }

@@ -2504,7 +2504,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             // be empty or start with the same letter.
             if (aff_entry->ae_chop != NULL
                 && aff_entry->ae_add != NULL
-                && aff_entry->ae_chop[(*mb_ptr2len)(aff_entry->ae_chop)] ==
+                && aff_entry->ae_chop[utfc_ptr2len(aff_entry->ae_chop)] ==
                 NUL) {
               int c, c_up;
 
@@ -5858,8 +5858,8 @@ static void set_map_str(slang_T *lp, char_u *map)
       // the hash table.  Each entry is the char, a NUL the headchar and
       // a NUL.
       if (c >= 256) {
-        int cl = mb_char2len(c);
-        int headcl = mb_char2len(headc);
+        int cl = utf_char2len(c);
+        int headcl = utf_char2len(headc);
         char_u *b;
         hash_T hash;
         hashitem_T *hi;

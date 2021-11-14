@@ -8598,8 +8598,8 @@ static void ex_normal(exarg_T *eap)
     int len = 0;
 
     // Count the number of characters to be escaped.
-    for (p = eap->arg; *p != NUL; ++p) {
-      for (l = (*mb_ptr2len)(p) - 1; l > 0; --l) {
+    for (p = eap->arg; *p != NUL; p++) {
+      for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
         if (*++p == K_SPECIAL             // trailbyte K_SPECIAL or CSI
             ) {
           len += 2;
@@ -8611,7 +8611,7 @@ static void ex_normal(exarg_T *eap)
       len = 0;
       for (p = eap->arg; *p != NUL; ++p) {
         arg[len++] = *p;
-        for (l = (*mb_ptr2len)(p) - 1; l > 0; --l) {
+        for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
           arg[len++] = *++p;
           if (*p == K_SPECIAL) {
             arg[len++] = KS_SPECIAL;

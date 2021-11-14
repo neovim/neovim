@@ -870,7 +870,7 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
   }
   // Count cells and check for non-printable chars
   cells = 0;
-  for (s = text; s < endp; s += (*mb_ptr2len)(s)) {
+  for (s = text; s < endp; s += utfc_ptr2len(s)) {
     if (!vim_isprintc(utf_ptr2char(s))) {
       break;
     }

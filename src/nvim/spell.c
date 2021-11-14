@@ -2024,7 +2024,7 @@ static int count_syllables(slang_T *slang, const char_u *word)
     } else {
       // No recognized syllable item, at least a syllable char then?
       c = utf_ptr2char(p);
-      len = (*mb_ptr2len)(p);
+      len = utfc_ptr2len(p);
       if (vim_strchr(slang->sl_syllable, c) == NULL) {
         skip = false;               // No, search for next syllable
       } else if (!skip) {
@@ -4008,7 +4008,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         c = su->su_badflags;
         if ((c & WF_ALLCAP)
             && su->su_badlen ==
-            (*mb_ptr2len)(su->su_badptr)) {
+            utfc_ptr2len(su->su_badptr)) {
           c = WF_ONECAP;
         }
         c |= flags;
@@ -4644,7 +4644,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
         depth++;
-        fl = mb_char2len(c2);
+        fl = utf_char2len(c2);
         memmove(p, p + n, fl);
         utf_char2bytes(c, p + fl);
         stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
@@ -4700,7 +4700,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP3;
         depth++;
-        tl = mb_char2len(c3);
+        tl = utf_char2len(c3);
         memmove(p, p + n + fl, tl);
         utf_char2bytes(c2, p + tl);
         utf_char2bytes(c, p + fl + tl);
@@ -6936,7 +6936,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
       if (n == WF_ONECAP) {
         dumpflags |= DUMPFLAG_ONECAP;
       } else if (n == WF_ALLCAP
-                 && (int)STRLEN(pat) > mb_ptr2len(pat)) {
+                 && (int)STRLEN(pat) > utfc_ptr2len(pat)) {
         dumpflags |= DUMPFLAG_ALLCAP;
       }
     }

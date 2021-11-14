@@ -1180,7 +1180,7 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                          - curwin->w_cursor.coladd))) {
           int l;
 
-          if (*p != NUL && p[(l = (*mb_ptr2len)(p))] == NUL) {
+          if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
             col += l;
           }
         }
@@ -6211,7 +6211,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         idx++;
       } else {
         startcol = (colnr_T)(regmatch.startp[0]
-                             + (*mb_ptr2len)(regmatch.startp[0]) - str);
+                             + utfc_ptr2len(regmatch.startp[0]) - str);
         if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
           match = false;
           break;
@@ -10440,7 +10440,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         col = 0;
       } else {
         // Don't get stuck at the same match.
-        col = (*mb_ptr2len)(regmatch.endp[0]);
+        col = utfc_ptr2len(regmatch.endp[0]);
       }
       str = (const char *)regmatch.endp[0];
     }

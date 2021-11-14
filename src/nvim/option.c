@@ -3529,7 +3529,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
           // TODO(bfredl): use schar_T representation and utfc_ptr2len
           int c1len = utf_ptr2len(s);
           c1 = mb_cptr2char_adv((const char_u **)&s);
-          if (mb_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
+          if (utf_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
             return e_invarg;
           }
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
@@ -3538,13 +3538,13 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             }
             int c2len = utf_ptr2len(s);
             c2 = mb_cptr2char_adv((const char_u **)&s);
-            if (mb_char2cells(c2) > 1 || (c2len == 1 && c2 > 127)) {
+            if (utf_char2cells(c2) > 1 || (c2len == 1 && c2 > 127)) {
               return e_invarg;
             }
             if (!(*s == ',' || *s == NUL)) {
               int c3len = utf_ptr2len(s);
               c3 = mb_cptr2char_adv((const char_u **)&s);
-              if (mb_char2cells(c3) > 1 || (c3len == 1 && c3 > 127)) {
+              if (utf_char2cells(c3) > 1 || (c3len == 1 && c3 > 127)) {
                 return e_invarg;
               }
             }
@@ -3579,7 +3579,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             while (*s != NUL && *s != ',') {
               int c1len = utf_ptr2len(s);
               c1 = mb_cptr2char_adv((const char_u **)&s);
-              if (mb_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
+              if (utf_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
                 return e_invarg;
               }
               multispace_len++;

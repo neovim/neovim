@@ -3771,7 +3771,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             skip_match = true;
           } else {
             // search for a match at next column
-            matchcol += mb_ptr2len(sub_firstline + matchcol);
+            matchcol += utfc_ptr2len(sub_firstline + matchcol);
           }
           // match will be pushed to preview_lines, bring it into a proper state
           current_match.start.col = matchcol;

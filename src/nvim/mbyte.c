@@ -564,7 +564,7 @@ size_t mb_string2cells(const char_u *str)
 {
   size_t clen = 0;
 
-  for (const char_u *p = str; *p != NUL; p += (*mb_ptr2len)(p)) {
+  for (const char_u *p = str; *p != NUL; p += utfc_ptr2len(p)) {
     clen += utf_ptr2cells(p);
   }
 
@@ -705,7 +705,7 @@ int mb_ptr2char_adv(const char_u **const pp)
   int c;
 
   c = utf_ptr2char(*pp);
-  *pp += (*mb_ptr2len)(*pp);
+  *pp += utfc_ptr2len(*pp);
   return c;
 }
 
@@ -2054,7 +2054,7 @@ int mb_charlen(char_u *str)
   }
 
   for (count = 0; *p != NUL; count++) {
-    p += (*mb_ptr2len)(p);
+    p += utfc_ptr2len(p);
   }
 
   return count;
@@ -2069,7 +2069,7 @@ int mb_charlen_len(char_u *str, int len)
   int count;
 
   for (count = 0; *p != NUL && p < str + len; count++) {
-    p += (*mb_ptr2len)(p);
+    p += utfc_ptr2len(p);
   }
 
   return count;
