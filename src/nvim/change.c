@@ -778,7 +778,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
         col = n;
         count = utf_ptr2len(oldp + n);
         n += count;
-      } while (UTF_COMPOSINGLIKE(oldp + col, oldp + n));
+      } while (utf_composinglike(oldp + col, oldp + n));
       fixpos = false;
     }
   }

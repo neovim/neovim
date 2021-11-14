@@ -92,14 +92,11 @@
 
 #define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
 
-#define UTF_COMPOSINGLIKE(p1, p2)  utf_composinglike((p1), (p2))
-
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed.
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
 // multi-byte characters if needed.
 // MB_COPY_CHAR(f, t): copy one char from "f" to "t" and advance the pointers.
-// PTR2CHAR(): get character from pointer.
 
 // Advance multi-byte pointer, skip over composing chars.
 #define MB_PTR_ADV(p)      (p += utfc_ptr2len((char_u *)p))
@@ -108,13 +105,8 @@
 // Backup multi-byte pointer. Only use with "p" > "s" !
 #define MB_PTR_BACK(s, p) \
   (p -= utf_head_off((char_u *)s, (char_u *)p - 1) + 1)
-// get length of multi-byte char, not including composing chars
-#define MB_CPTR2LEN(p)     utf_ptr2len(p)
 
 #define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
-
-#define MB_CHARLEN(p)      mb_charlen(p)
-#define PTR2CHAR(p)        utf_ptr2char(p)
 
 #define RESET_BINDING(wp) \
   do { \

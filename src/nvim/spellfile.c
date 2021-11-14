@@ -2508,15 +2508,15 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                 NUL) {
               int c, c_up;
 
-              c = PTR2CHAR(aff_entry->ae_chop);
+              c = utf_ptr2char(aff_entry->ae_chop);
               c_up = SPELL_TOUPPER(c);
               if (c_up != c
                   && (aff_entry->ae_cond == NULL
-                      || PTR2CHAR(aff_entry->ae_cond) == c)) {
+                      || utf_ptr2char(aff_entry->ae_cond) == c)) {
                 p = aff_entry->ae_add
                     + STRLEN(aff_entry->ae_add);
                 MB_PTR_BACK(aff_entry->ae_add, p);
-                if (PTR2CHAR(p) == c_up) {
+                if (utf_ptr2char(p) == c_up) {
                   upper = true;
                   aff_entry->ae_chop = NULL;
                   *p = NUL;
@@ -3501,7 +3501,7 @@ static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist, afff
               if (ae->ae_chop != NULL) {
                 // Remove chop string.
                 p = newword + STRLEN(newword);
-                i = (int)MB_CHARLEN(ae->ae_chop);
+                i = (int)mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_BACK(newword, p);
                 }

@@ -1310,9 +1310,10 @@ static int nfa_regatom(void)
       return FAIL;
     }
     for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
-      EMIT(PTR2CHAR(lp));
-      if (lp != reg_prev_sub)
+      EMIT(utf_ptr2char(lp));
+      if (lp != reg_prev_sub) {
         EMIT(NFA_CONCAT);
+      }
     }
     EMIT(NFA_NOPEN);
     break;
@@ -1722,9 +1723,10 @@ collection:
           }
         }
 
-        /* Normal printable char */
-        if (startc == -1)
-          startc = PTR2CHAR(regparse);
+        // Normal printable char
+        if (startc == -1) {
+          startc = utf_ptr2char(regparse);
+        }
 
         /* Previous char was '-', so this char is end of range. */
         if (emit_range) {
@@ -4996,9 +4998,9 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     char_u *s2 = rex.line + col + regstart_len;  // skip regstart
     while (*s1) {
       int c1_len = PTR2LEN(s1);
-      int c1 = PTR2CHAR(s1);
+      int c1 = utf_ptr2char(s1);
       int c2_len = PTR2LEN(s2);
-      int c2 = PTR2CHAR(s2);
+      int c2 = utf_ptr2char(s2);
 
       if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
           || c1_len != c2_len) {
@@ -5010,7 +5012,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     }
     if (match
         // check that no composing char follows
-        && !utf_iscomposing(PTR2CHAR(s2))) {
+        && !utf_iscomposing(utf_ptr2char(s2))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         rex.reg_startpos[0].lnum = rex.lnum;
@@ -5808,12 +5810,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         break;
 
       case NFA_PRINT:           //  \p
-        result = vim_isprintc(PTR2CHAR(rex.input));
+        result = vim_isprintc(utf_ptr2char(rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SPRINT:          //  \P
-        result = !ascii_isdigit(curc) && vim_isprintc(PTR2CHAR(rex.input));
+        result = !ascii_isdigit(curc) && vim_isprintc(utf_ptr2char(rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -6306,7 +6308,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           } else {
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
-            const int c = PTR2CHAR(rex.input + clen);
+            const int c = utf_ptr2char(rex.input + clen);
             if (c != prog->regstart
                 && (!rex.reg_ic
                     || utf_fold(c) != utf_fold(prog->regstart))) {

@@ -1113,8 +1113,8 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
   }
 
   for (i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
-    c1 = PTR2CHAR(s1 + i);
-    c2 = PTR2CHAR(s2 + j);
+    c1 = utf_ptr2char(s1 + i);
+    c2 = utf_ptr2char(s2 + j);
 
     if ((p_fic ? mb_tolower(c1) != mb_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {

@@ -1871,7 +1871,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           --pos.col;
         }
         for (;; ) {
-          initc = PTR2CHAR(linep + pos.col);
+          initc = utf_ptr2char(linep + pos.col);
           if (initc == NUL) {
             break;
           }
@@ -2197,7 +2197,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
      *   inquote if the number of quotes in a line is even, unless this
      *   line or the previous one ends in a '\'.  Complicated, isn't it?
      */
-    const int c = PTR2CHAR(linep + pos.col);
+    const int c = utf_ptr2char(linep + pos.col);
     switch (c) {
     case NUL:
       // at end of line without trailing backslash, reset inquote
@@ -2378,12 +2378,12 @@ void showmatch(int c)
    * Only show match for chars in the 'matchpairs' option.
    */
   // 'matchpairs' is "x:y,x:y"
-  for (p = curbuf->b_p_mps; *p != NUL; ++p) {
-    if (PTR2CHAR(p) == c && (curwin->w_p_rl ^ p_ri)) {
+  for (p = curbuf->b_p_mps; *p != NUL; p++) {
+    if (utf_ptr2char(p) == c && (curwin->w_p_rl ^ p_ri)) {
       break;
     }
     p += utfc_ptr2len(p) + 1;
-    if (PTR2CHAR(p) == c && !(curwin->w_p_rl ^ p_ri)) {
+    if (utf_ptr2char(p) == c && !(curwin->w_p_rl ^ p_ri)) {
       break;
     }
     p += utfc_ptr2len(p);

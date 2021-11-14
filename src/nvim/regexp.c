@@ -2509,8 +2509,9 @@ do_multibyte:
           /* Need to get composing character too. */
           for (;; ) {
             l = utf_ptr2len(regparse);
-            if (!UTF_COMPOSINGLIKE(regparse, regparse + l))
+            if (!utf_composinglike(regparse, regparse + l)) {
               break;
+            }
             regmbc(utf_ptr2char(regparse));
             skipchr();
           }
@@ -4127,7 +4128,7 @@ static bool regmatch(
           break;
 
         case PRINT:
-          if (!vim_isprintc(PTR2CHAR(rex.input))) {
+          if (!vim_isprintc(utf_ptr2char(rex.input))) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -4135,7 +4136,7 @@ static bool regmatch(
           break;
 
         case SPRINT:
-          if (ascii_isdigit(*rex.input) || !vim_isprintc(PTR2CHAR(rex.input))) {
+          if (ascii_isdigit(*rex.input) || !vim_isprintc(utf_ptr2char(rex.input))) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -4294,7 +4295,7 @@ static bool regmatch(
             // Check for following composing character, unless %C
             // follows (skips over all composing chars).
             if (status != RA_NOMATCH
-                && UTF_COMPOSINGLIKE(rex.input, rex.input + len)
+                && utf_composinglike(rex.input, rex.input + len)
                 && !rex.reg_icombine
                 && OP(next) != RE_COMPOSING) {
               // raaron: This code makes a composing character get
@@ -5269,7 +5270,7 @@ regrepeat (
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
-      if (vim_isIDc(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
+      if (vim_isIDc(utf_ptr2char(scan)) && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || rex.lnum > rex.reg_maxline
@@ -5326,7 +5327,7 @@ regrepeat (
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
-      if (vim_isfilec(PTR2CHAR(scan)) && (testval || !ascii_isdigit(*scan))) {
+      if (vim_isfilec(utf_ptr2char(scan)) && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || rex.lnum > rex.reg_maxline
@@ -5364,7 +5365,7 @@ regrepeat (
         if (got_int) {
           break;
         }
-      } else if (vim_isprintc(PTR2CHAR(scan)) == 1
+      } else if (vim_isprintc(utf_ptr2char(scan)) == 1
                  && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {

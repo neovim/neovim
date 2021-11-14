@@ -762,7 +762,7 @@ int utfc_ptr2char(const char_u *p, int *pcc)
   // Only accept a composing char when the first char isn't illegal.
   if ((len > 1 || *p < 0x80)
       && p[len] >= 0x80
-      && UTF_COMPOSINGLIKE(p, p + len)) {
+      && utf_composinglike(p, p + len)) {
     cc = utf_ptr2char(p + len);
     for (;; ) {
       pcc[i++] = cc;
@@ -792,7 +792,7 @@ int utfc_ptr2char(const char_u *p, int *pcc)
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
 #define IS_COMPOSING(s1, s2, s3) \
-  (i == 0 ? UTF_COMPOSINGLIKE((s1), (s2)) : utf_iscomposing((s3)))
+  (i == 0 ? utf_composinglike((s1), (s2)) : utf_iscomposing((s3)))
 
   assert(maxlen > 0);
 
@@ -914,7 +914,7 @@ int utfc_ptr2len(const char_u *const p)
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
   for (;;) {
-    if (p[len] < 0x80 || !UTF_COMPOSINGLIKE(p + prevlen, p + len)) {
+    if (p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
       return len;
     }
 
@@ -964,14 +964,14 @@ int utfc_ptr2len_len(const char_u *p, int size)
 
     /*
      * Next character length should not go beyond size to ensure that
-     * UTF_COMPOSINGLIKE(...) does not read beyond size.
+     * utf_composinglike(...) does not read beyond size.
      */
     len_next_char = utf_ptr2len_len(p + len, size - len);
     if (len_next_char > size - len) {
       break;
     }
 
-    if (!UTF_COMPOSINGLIKE(p + prevlen, p + len)) {
+    if (!utf_composinglike(p + prevlen, p + len)) {
       break;
     }
 

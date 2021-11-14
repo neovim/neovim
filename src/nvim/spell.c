@@ -397,7 +397,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     bool this_upper = false;  // init for gcc
 
     if (use_camel_case) {
-      c = PTR2CHAR(mi.mi_fend);
+      c = utf_ptr2char(mi.mi_fend);
       this_upper = SPELL_ISUPPER(c);
     }
 
@@ -405,7 +405,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
       MB_PTR_ADV(mi.mi_fend);
       if (use_camel_case) {
         const bool prev_upper = this_upper;
-        c = PTR2CHAR(mi.mi_fend);
+        c = utf_ptr2char(mi.mi_fend);
         this_upper = SPELL_ISUPPER(c);
         camel_case = !prev_upper && this_upper;
       }
@@ -414,7 +414,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     if (capcol != NULL && *capcol == 0 && wp->w_s->b_cap_prog != NULL) {
       // Check word starting with capital letter.
-      c = PTR2CHAR(ptr);
+      c = utf_ptr2char(ptr);
       if (!SPELL_ISUPPER(c)) {
         wrongcaplen = (size_t)(mi.mi_fend - ptr);
       }
@@ -2423,7 +2423,7 @@ int captype(char_u *word, char_u *end)
   // But a word with an upper char only at start is a ONECAP.
   for (; end == NULL ? *p != NUL : p < end; MB_PTR_ADV(p)) {
     if (spell_iswordp_nmw(p, curwin)) {
-      c = PTR2CHAR(p);
+      c = utf_ptr2char(p);
       if (!SPELL_ISUPPER(c)) {
         // UUl -> KEEPCAP
         if (past_second && allcap) {
@@ -2464,7 +2464,7 @@ static int badword_captype(char_u *word, char_u *end)
     l = u = 0;
     first = false;
     for (p = word; p < end; MB_PTR_ADV(p)) {
-      c = PTR2CHAR(p);
+      c = utf_ptr2char(p);
       if (SPELL_ISUPPER(c)) {
         ++u;
         if (p == word) {
@@ -3314,7 +3314,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // If the word is not capitalised and spell_check() doesn't consider the
   // word to be bad then it might need to be capitalised.  Add a suggestion
   // for that.
-  c = PTR2CHAR(su->su_badptr);
+  c = utf_ptr2char(su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
     make_case_word(su->su_badword, buf, WF_ONECAP);
     add_suggestion(su, &su->su_ga, buf, su->su_badlen, SCORE_ICASE,
@@ -4609,7 +4609,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         break;
       }
 
-      n = MB_CPTR2LEN(p);
+      n = utf_ptr2len(p);
       c = utf_ptr2char(p);
       if (p[n] == NUL) {
         c2 = NUL;
@@ -4669,9 +4669,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Swap two bytes, skipping one: "123" -> "321".  We change
       // "fword" here, it's changed back afterwards at STATE_UNSWAP3.
       p = fword + sp->ts_fidx;
-      n = MB_CPTR2LEN(p);
+      n = utf_ptr2len(p);
       c = utf_ptr2char(p);
-      fl = MB_CPTR2LEN(p + n);
+      fl = utf_ptr2len(p + n);
       c2 = utf_ptr2char(p + n);
       if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
         c3 = c;  // don't swap non-word char
@@ -4746,10 +4746,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         sp->ts_state = STATE_UNROT3L;
         ++depth;
         p = fword + sp->ts_fidx;
-        n = MB_CPTR2LEN(p);
+        n = utf_ptr2len(p);
         c = utf_ptr2char(p);
-        fl = MB_CPTR2LEN(p + n);
-        fl += MB_CPTR2LEN(p + n + fl);
+        fl = utf_ptr2len(p + n);
+        fl += utf_ptr2len(p + n + fl);
         memmove(p, p + n, fl);
         utf_char2bytes(c, p + fl);
         stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
@@ -4783,10 +4783,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         sp->ts_state = STATE_UNROT3R;
         ++depth;
         p = fword + sp->ts_fidx;
-        n = MB_CPTR2LEN(p);
-        n += MB_CPTR2LEN(p + n);
+        n = utf_ptr2len(p);
+        n += utf_ptr2len(p + n);
         c = utf_ptr2char(p + n);
-        tl = MB_CPTR2LEN(p + n);
+        tl = utf_ptr2len(p + n);
         memmove(p + tl, p, n);
         utf_char2bytes(c, p);
         stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
@@ -5021,8 +5021,8 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
     } else {
       // round[depth] == 1: Try using the folded-case character.
       // round[depth] == 2: Try using the upper-case character.
-      flen = MB_CPTR2LEN(fword + fwordidx[depth]);
-      ulen = MB_CPTR2LEN(uword + uwordidx[depth]);
+      flen = utf_ptr2len(fword + fwordidx[depth]);
+      ulen = utf_ptr2len(uword + uwordidx[depth]);
       if (round[depth] == 1) {
         p = fword + fwordidx[depth];
         l = flen;
@@ -5512,9 +5512,9 @@ badword:
         // lower to upper case.  Helps for "tath" -> "Kath", which is
         // less common than "tath" -> "path".  Don't do it when the
         // letter is the same, that has already been counted.
-        gc = PTR2CHAR(p);
+        gc = utf_ptr2char(p);
         if (SPELL_ISUPPER(gc)) {
-          bc = PTR2CHAR(su->su_badword);
+          bc = utf_ptr2char(su->su_badword);
           if (!SPELL_ISUPPER(bc)
               && SPELL_TOFOLD(bc) != SPELL_TOFOLD(gc)) {
             goodscore += SCORE_ICASE / 2;
@@ -7185,7 +7185,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
 
   // If the word starts with a lower-case letter make the word with an
   // upper-case letter in word_up[].
-  c = PTR2CHAR(word);
+  c = utf_ptr2char(word);
   if (SPELL_TOUPPER(c) != c) {
     onecap_copy(word, word_up, true);
     has_word_up = true;

@@ -708,7 +708,7 @@ static int insert_execute(VimState *state, int key)
 
         if (str != NULL) {
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            ins_compl_addleader(PTR2CHAR(p));
+            ins_compl_addleader(utf_ptr2char(p));
           }
           xfree(str);
         } else {
@@ -1283,7 +1283,7 @@ normalchar:
         if (*str != NUL && stop_arrow() != FAIL) {
           // Insert the new value of v:char literally.
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            s->c = PTR2CHAR(p);
+            s->c = utf_ptr2char(p);
             if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
               ins_eol(s->c);
             } else {
@@ -3547,7 +3547,7 @@ static void ins_compl_addfrommatch(void)
     }
   }
   p += len;
-  c = PTR2CHAR(p);
+  c = utf_ptr2char(p);
   ins_compl_addleader(c);
 }
 
@@ -5177,10 +5177,10 @@ static int ins_complete(int c, bool enable_pum)
         char_u *p = line + startcol;
 
         MB_PTR_BACK(line, p);
-        while (p > line && vim_isfilec(PTR2CHAR(p))) {
+        while (p > line && vim_isfilec(utf_ptr2char(p))) {
           MB_PTR_BACK(line, p);
         }
-        if (p == line && vim_isfilec(PTR2CHAR(p))) {
+        if (p == line && vim_isfilec(utf_ptr2char(p))) {
           startcol = 0;
         } else {
           startcol = (int)(p - line) + 1;
