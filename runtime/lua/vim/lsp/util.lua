@@ -549,18 +549,29 @@ end
 --         ignoreIfExists? bool
 function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
-  local bufnr = vim.fn.bufadd(old_fname)
-  vim.fn.bufload(bufnr)
   local target_exists = vim.loop.fs_stat(new_fname) ~= nil
   if target_exists and not opts.overwrite or opts.ignoreIfExists then
     vim.notify('Rename target already exists. Skipping rename.')
     return
   end
+  local oldbuf = vim.fn.bufadd(old_fname)
+  vim.fn.bufload(oldbuf)
+
+  -- The there may be pending changes in the buffer
+  api.nvim_buf_call(oldbuf, function()
+    vim.cmd('w!')
+  end)
+
   local ok, err = os.rename(old_fname, new_fname)
   assert(ok, err)
-  api.nvim_buf_call(bufnr, function()
-    vim.cmd('saveas! ' .. vim.fn.fnameescape(new_fname))
-  end)
+
+  local newbuf = vim.fn.bufadd(new_fname)
+  for _, win in pairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(win) == oldbuf then
+      api.nvim_win_set_buf(win, newbuf)
+    end
+  end
+  api.nvim_buf_delete(oldbuf, { force = true })
 end
 
 
