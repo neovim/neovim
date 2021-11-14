@@ -4969,11 +4969,11 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         FALLTHROUGH;
 
       default:
-        MB_COPY_CHAR(p, name);
+        mb_copy_char((const char_u **)&p, &name);
         break;
       }
     } else {
-      MB_COPY_CHAR(p, name);
+      mb_copy_char((const char_u **)&p, &name);
     }
   }
   *name = NUL;
@@ -5033,7 +5033,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
       }
       ++p;
     }
-    MB_COPY_CHAR(p, str);
+    mb_copy_char((const char_u **)&p, &str);
   }
   *str = NUL;
   *arg = p + 1;

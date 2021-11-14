@@ -2565,7 +2565,7 @@ static void append_command(char_u *cmd)
       STRCPY(d, "<a0>");
       d += 4;
     } else {
-      MB_COPY_CHAR(s, d);
+      mb_copy_char((const char_u **)&s, &d);
     }
   }
   *d = NUL;
@@ -5806,7 +5806,7 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
       *q++ = ',';
       *q++ = '"';
     } else {
-      MB_COPY_CHAR(p, q);
+      mb_copy_char((const char_u **)&p, &q);
     }
   }
   *q++ = '"';

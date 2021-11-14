@@ -92,21 +92,18 @@
 
 #define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
 
-// MB_PTR_ADV(): advance a pointer to the next character, taking care of
-// multi-byte characters if needed.
-// MB_PTR_BACK(): backup a pointer to the previous character, taking care of
-// multi-byte characters if needed.
-// MB_COPY_CHAR(f, t): copy one char from "f" to "t" and advance the pointers.
 
-// Advance multi-byte pointer, skip over composing chars.
+// MB_PTR_ADV(): advance a pointer to the next character, taking care of
+// multi-byte characters if needed. Skip over composing chars.
 #define MB_PTR_ADV(p)      (p += utfc_ptr2len((char_u *)p))
+
 // Advance multi-byte pointer, do not skip over composing chars.
 #define MB_CPTR_ADV(p)     (p += utf_ptr2len(p))
-// Backup multi-byte pointer. Only use with "p" > "s" !
+
+// MB_PTR_BACK(): backup a pointer to the previous character, taking care of
+// multi-byte characters if needed. Only use with "p" > "s" !
 #define MB_PTR_BACK(s, p) \
   (p -= utf_head_off((char_u *)s, (char_u *)p - 1) + 1)
-
-#define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
 
 #define RESET_BINDING(wp) \
   do { \

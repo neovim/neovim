@@ -3501,7 +3501,7 @@ static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist, afff
               if (ae->ae_chop != NULL) {
                 // Remove chop string.
                 p = newword + STRLEN(newword);
-                i = (int)mb_charlen(ae->ae_chop);
+                i = mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_BACK(newword, p);
                 }

@@ -283,7 +283,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
       continue;
     }
 
-    MB_COPY_CHAR(p, d);
+    mb_copy_char(&p, &d);
   }
 
   // add terminating quote and finish with a NUL

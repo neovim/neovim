@@ -10761,7 +10761,7 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (off < 0) {
         len += 1;
       } else {
-        len += (size_t)utf_ptr2len((const char_u *)p + off);
+        len += utf_ptr2len((const char_u *)p + off);
       }
       charlen--;
     }

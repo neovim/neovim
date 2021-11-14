@@ -791,9 +791,6 @@ int utfc_ptr2char(const char_u *p, int *pcc)
  */
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
-#define IS_COMPOSING(s1, s2, s3) \
-  (i == 0 ? utf_composinglike((s1), (s2)) : utf_iscomposing((s3)))
-
   assert(maxlen > 0);
 
   int i = 0;
@@ -809,7 +806,7 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
       int len_cc = utf_ptr2len_len(p + len, maxlen - len);
       safe = len_cc > 1 && len_cc <= maxlen - len;
       if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
-          || !IS_COMPOSING(p, p + len, pcc[i])) {
+          || !(i == 0 ? utf_composinglike(p, p+len) : utf_iscomposing(pcc[i]))) {
         break;
       }
       len += len_cc;
