@@ -744,7 +744,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
         char_u cbuf[MB_MAXBYTES + 1];
 
         // xdiff doesn't support ignoring case, fold-case the text.
-        int c = PTR2CHAR(s);
+        int c = utf_ptr2char(s);
         c = utf_fold(c);
         const int orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {

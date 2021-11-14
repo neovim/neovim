@@ -359,8 +359,8 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   const char *p1 = fname1;
   const char *p2 = fname2;
   while (len > 0) {
-    c1 = PTR2CHAR((const char_u *)p1);
-    c2 = PTR2CHAR((const char_u *)p2);
+    c1 = utf_ptr2char((const char_u *)p1);
+    c2 = utf_ptr2char((const char_u *)p2);
     if ((c1 == NUL || c2 == NUL
          || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
         && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
@@ -631,7 +631,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
                && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
 #ifndef WIN32
                    || (!p_fic && (flags & EW_ICASE)
-                       && isalpha(PTR2CHAR(path_end)))
+                       && isalpha(utf_ptr2char(path_end)))
 #endif
                    )) {
       e = p;
@@ -1937,8 +1937,8 @@ int pathcmp(const char *p, const char *q, int maxlen)
   const char *s = NULL;
 
   for (i = 0, j = 0; maxlen < 0 || (i < maxlen && j < maxlen);) {
-    c1 = PTR2CHAR((char_u *)p + i);
-    c2 = PTR2CHAR((char_u *)q + j);
+    c1 = utf_ptr2char((char_u *)p + i);
+    c2 = utf_ptr2char((char_u *)q + j);
 
     // End of "p": check if "q" also ends or just has a slash.
     if (c1 == NUL) {
@@ -1980,8 +1980,8 @@ int pathcmp(const char *p, const char *q, int maxlen)
     return 0;
   }
 
-  c1 = PTR2CHAR((char_u *)s + i);
-  c2 = PTR2CHAR((char_u *)s + i + utfc_ptr2len((char_u *)s + i));
+  c1 = utf_ptr2char((char_u *)s + i);
+  c2 = utf_ptr2char((char_u *)s + i + utfc_ptr2len((char_u *)s + i));
   // ignore a trailing slash, but not "//" or ":/"
   if (c2 == NUL
       && i > 0

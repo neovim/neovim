@@ -3996,8 +3996,8 @@ char_u *vim_strsave_escape_csi(char_u *p)
     } else {
       // Add character, possibly multi-byte to destination, escaping
       // CSI and K_SPECIAL. Be careful, it can be an illegal byte!
-      d = add_char2buf(PTR2CHAR(s), d);
-      s += MB_CPTR2LEN(s);
+      d = add_char2buf(utf_ptr2char(s), d);
+      s += utf_ptr2len(s);
     }
   }
   *d = NUL;

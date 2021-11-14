@@ -424,7 +424,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
         col %= numberextra;
       }
       if (*sbr != NUL) {
-        sbrlen = (colnr_T)MB_CHARLEN(sbr);
+        sbrlen = (colnr_T)mb_charlen(sbr);
         if (col >= sbrlen) {
           col -= sbrlen;
         }
