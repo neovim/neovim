@@ -1837,7 +1837,7 @@ int op_replace(oparg_T *oap, int c)
 
       // A double-wide character can be replaced only up to half the
       // times.
-      if ((*mb_char2cells)(c) > 1) {
+      if (utf_char2cells(c) > 1) {
         if ((numc & 1) && !bd.is_short) {
           ++bd.endspaces;
           ++n;

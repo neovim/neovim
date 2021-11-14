@@ -41,7 +41,6 @@
 // TODO(bfredl): eventually we should keep only one of the namings
 #define mb_ptr2len utfc_ptr2len
 #define mb_char2len utf_char2len
-#define mb_char2cells utf_char2cells
 
 /// Flags for vimconv_T
 typedef enum {
