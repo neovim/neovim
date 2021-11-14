@@ -1,3 +1,5 @@
+local if_nil = vim.F.if_nil
+
 local M = {}
 
 M.severity = {
@@ -65,7 +67,7 @@ end
 local function prefix_source(source, diagnostics)
   vim.validate { source = {source, function(v)
     return v == "always" or v == "if_many"
-  end, "Invalid value for option 'source'" } }
+  end, "'always' or 'if_many'" } }
 
   if source == "if_many" then
     local sources = {}
@@ -537,6 +539,12 @@ end
 ---                            the message. One of "always" or "if_many".
 ---                  * format: (function) A function that takes a diagnostic as input and returns a
 ---                            string. The return value is the text used to display the diagnostic.
+---                  * prefix: (function or string) Prefix each diagnostic in the floating window. If
+---                            a function, it must have the signature (diagnostic, i, total) -> string,
+---                            where {i} is the index of the diagnostic being evaluated and {total} is
+---                            the total number of diagnostics displayed in the window. The returned
+---                            string is prepended to each diagnostic in the window. Otherwise,
+---                            if {prefix} is a string, it is prepended to each diagnostic.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
@@ -1140,6 +1148,8 @@ end
 ---            - format: (function) A function that takes a diagnostic as input and returns a
 ---                      string. The return value is the text used to display the diagnostic.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
+---            - prefix: (function or string) Prefix each diagnostic in the floating window.
+---                      Overrides the setting from |vim.diagnostic.config()|.
 ---@return tuple ({float_bufnr}, {win_id})
 function M.open_float(bufnr, opts)
   vim.validate {
@@ -1224,8 +1234,17 @@ function M.open_float(bufnr, opts)
     diagnostics = prefix_source(opts.source, diagnostics)
   end
 
+  local prefix_opt = if_nil(opts.prefix, (scope == "cursor" and #diagnostics <= 1) and "" or function(_, i)
+      return string.format("%d. ", i)
+  end)
+  if prefix_opt then
+    vim.validate { prefix = { prefix_opt, function(v)
+      return type(v) == "string" or type(v) == "function"
+    end, "'string' or 'function'" } }
+  end
+
   for i, diagnostic in ipairs(diagnostics) do
-    local prefix = string.format("%d. ", i)
+    local prefix = type(prefix_opt) == "string" and prefix_opt or prefix_opt(diagnostic, i, #diagnostics)
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
     table.insert(lines, prefix..message_lines[1])
