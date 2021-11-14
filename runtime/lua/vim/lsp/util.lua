@@ -1341,19 +1341,21 @@ do --[[ References ]]
   ---
   ---@param bufnr buffer id
   ---@param references List of `DocumentHighlight` objects to highlight
+  ---@param client_id number client id
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references, client_id)
     validate { bufnr = {bufnr, 'n', true} }
     local client = vim.lsp.get_client_by_id(client_id)
-    if not client then
-      return
+    local offset_encoding = "utf-16"
+    if client then
+      offset_encoding = client.offset_encoding
     end
     for _, reference in ipairs(references) do
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
 
-      local start_idx = get_line_byte_from_position(bufnr, { line = start_line, character = start_char }, client.offset_encoding)
-      local end_idx = get_line_byte_from_position(bufnr, { line = start_line, character = end_char }, client.offset_encoding)
+      local start_idx = get_line_byte_from_position(bufnr, { line = start_line, character = start_char }, offset_encoding)
+      local end_idx = get_line_byte_from_position(bufnr, { line = start_line, character = end_char }, offset_encoding)
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = "LspReferenceText";
