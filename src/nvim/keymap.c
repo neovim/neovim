@@ -477,7 +477,7 @@ char_u *get_special_key_name(int c, int modifiers)
    * extract modifiers.
    */
   if (c > 0
-      && (*mb_char2len)(c) == 1) {
+      && utf_char2len(c) == 1) {
     if (table_idx < 0
         && (!vim_isprintc(c) || (c & 0x7f) == ' ')
         && (c & 0x80)) {

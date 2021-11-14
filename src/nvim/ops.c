@@ -1847,7 +1847,7 @@ int op_replace(oparg_T *oap, int c)
 
       // Compute bytes needed, move character count to num_chars.
       num_chars = numc;
-      numc *= (*mb_char2len)(c);
+      numc *= utf_char2len(c);
 
       oldp = get_cursor_line_ptr();
       oldlen = (int)STRLEN(oldp);
@@ -1926,11 +1926,11 @@ int op_replace(oparg_T *oap, int c)
     while (ltoreq(curwin->w_cursor, oap->end)) {
       n = gchar_cursor();
       if (n != NUL) {
-        if ((*mb_char2len)(c) > 1 || (*mb_char2len)(n) > 1) {
+        if (utf_char2len(c) > 1 || utf_char2len(n) > 1) {
           // This is slow, but it handles replacing a single-byte
           // with a multi-byte and the other way around.
           if (curwin->w_cursor.lnum == oap->end.lnum) {
-            oap->end.col += (*mb_char2len)(c) - (*mb_char2len)(n);
+            oap->end.col += utf_char2len(c) - utf_char2len(n);
           }
           replace_character(c);
         } else {

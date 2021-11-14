@@ -4644,7 +4644,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP;
         depth++;
-        fl = mb_char2len(c2);
+        fl = utf_char2len(c2);
         memmove(p, p + n, fl);
         utf_char2bytes(c, p + fl);
         stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
@@ -4700,7 +4700,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         PROF_STORE(sp->ts_state)
         sp->ts_state = STATE_UNSWAP3;
         depth++;
-        tl = mb_char2len(c3);
+        tl = utf_char2len(c3);
         memmove(p, p + n + fl, tl);
         utf_char2bytes(c2, p + tl);
         utf_char2bytes(c, p + fl + tl);

@@ -2255,8 +2255,8 @@ collection:
               if (startc > endc) {
                 EMSG_RET_NULL(_(e_reverse_range));
               }
-              if ((*mb_char2len)(startc) > 1
-                  || (*mb_char2len)(endc) > 1) {
+              if (utf_char2len(startc) > 1
+                  || utf_char2len(endc) > 1) {
                 // Limit to a range of 256 chars
                 if (endc > startc + 256) {
                   EMSG_RET_NULL(_(e_large_class));

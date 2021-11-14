@@ -3461,7 +3461,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
   if (fillchar == 0) {
     fillchar = ' ';
-  } else if (mb_char2len(fillchar) > 1) {
+  } else if (utf_char2len(fillchar) > 1) {
     // Can't handle a multi-byte fill character yet.
     fillchar = '-';
   }

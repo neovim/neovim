@@ -543,7 +543,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
     return NULL;     /* just in case */
   p = p->out;
   while (p->c > 0) {
-    len += MB_CHAR2LEN(p->c);
+    len += utf_char2len(p->c);
     p = p->out;
   }
   if (p->c != NFA_MCLOSE || p->out->c != NFA_MATCH)
@@ -1746,8 +1746,8 @@ collection:
             EMIT(endc);
             EMIT(NFA_RANGE);
             EMIT(NFA_CONCAT);
-          } else if ((*mb_char2len)(startc) > 1
-                     || (*mb_char2len)(endc) > 1) {
+          } else if (utf_char2len(startc) > 1
+                     || utf_char2len(endc) > 1) {
             // Emit the characters in the range.
             // "startc" was already emitted, so skip it.
             for (c = startc + 1; c <= endc; c++) {
@@ -1828,7 +1828,7 @@ collection:
 
 nfa_do_multibyte:
     // plen is length of current char with composing chars
-    if ((*mb_char2len)(c) != (plen = utfc_ptr2len(old_regparse))
+    if (utf_char2len(c) != (plen = utfc_ptr2len(old_regparse))
         || utf_iscomposing(c)) {
       int i = 0;
 
@@ -2972,8 +2972,8 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
       if (state->c < 0)
         /* don't know what this is */
         return -1;
-      /* normal character */
-      len += MB_CHAR2LEN(state->c);
+      // normal character
+      len += utf_char2len(state->c);
       break;
     }
 
@@ -5620,7 +5620,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // Only match composing character(s), ignore base
           // character.  Used for ".{composing}" and "{composing}"
           // (no preceding character).
-          len += mb_char2len(mc);
+          len += utf_char2len(mc);
         }
         if (rex.reg_icombine && len == 0) {
           // If \Z was present, then ignore composing characters.
@@ -5636,7 +5636,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         } else if (len > 0 || mc == sta->c) {
           // Check base character matches first, unless ignored.
           if (len == 0) {
-            len += mb_char2len(mc);
+            len += utf_char2len(mc);
             sta = sta->out;
           }
 
@@ -5645,9 +5645,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           while (len < clen) {
             mc = utf_ptr2char(rex.input + len);
             cchars[ccount++] = mc;
-            len += mb_char2len(mc);
-            if (ccount == MAX_MCO)
+            len += utf_char2len(mc);
+            if (ccount == MAX_MCO) {
               break;
+            }
           }
 
           // Check that each composing char in the pattern matches a

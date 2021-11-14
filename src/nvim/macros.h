@@ -114,7 +114,6 @@
 #define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
 
 #define MB_CHARLEN(p)      mb_charlen(p)
-#define MB_CHAR2LEN(c)     mb_char2len(c)
 #define PTR2CHAR(p)        utf_ptr2char(p)
 
 #define RESET_BINDING(wp) \
