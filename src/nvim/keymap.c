@@ -689,7 +689,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
           // Special case for a double-quoted string
           off = l = 2;
         } else {
-          l = mb_ptr2len(last_dash + 1);
+          l = utfc_ptr2len(last_dash + 1);
         }
         if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = PTR2CHAR(last_dash + off);

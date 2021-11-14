@@ -102,7 +102,7 @@
 // PTR2CHAR(): get character from pointer.
 
 // Advance multi-byte pointer, skip over composing chars.
-#define MB_PTR_ADV(p)      (p += mb_ptr2len((char_u *)p))
+#define MB_PTR_ADV(p)      (p += utfc_ptr2len((char_u *)p))
 // Advance multi-byte pointer, do not skip over composing chars.
 #define MB_CPTR_ADV(p)     (p += utf_ptr2len(p))
 // Backup multi-byte pointer. Only use with "p" > "s" !

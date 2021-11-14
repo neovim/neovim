@@ -572,7 +572,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
   int page_line = 0 - prt_header_height();
   mch_print_start_line(true, page_line);
   for (char_u *p = tbuf; *p != NUL; ) {
-    const int l = (*mb_ptr2len)(p);
+    const int l = utfc_ptr2len(p);
     assert(l >= 0);
     if (mch_print_text_out(p, (size_t)l)) {
       page_line++;
@@ -879,7 +879,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
    * Loop over the columns until the end of the file line or right margin.
    */
   for (col = ppos->column; line[col] != NUL && !need_break; col += outputlen) {
-    if ((outputlen = (*mb_ptr2len)(line + col)) < 1) {
+    if ((outputlen = utfc_ptr2len(line + col)) < 1) {
       outputlen = 1;
     }
     // syntax highlighting stuff.

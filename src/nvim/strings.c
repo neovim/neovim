@@ -999,7 +999,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
               size_t i = 0;
 
               for (p1 = (char_u *)str_arg; *p1;
-                   p1 += mb_ptr2len(p1)) {
+                   p1 += utfc_ptr2len(p1)) {
                 i += (size_t)utf_ptr2cells(p1);
                 if (i > precision) {
                   break;

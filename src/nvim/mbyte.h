@@ -39,7 +39,6 @@
 #define ENC_MACROMAN   0x800       // Mac Roman (not Macro Man! :-)
 
 // TODO(bfredl): eventually we should keep only one of the namings
-#define mb_ptr2len utfc_ptr2len
 #define mb_char2len utf_char2len
 
 /// Flags for vimconv_T

@@ -3649,7 +3649,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
         long n = 0;
         while (group_len >= stl_items[stl_groupitems[groupdepth]].maxwid) {
           group_len -= ptr2cells(t + n);
-          n += (*mb_ptr2len)(t + n);
+          n += utfc_ptr2len(t + n);
         }
         // }
 

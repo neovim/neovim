@@ -2888,7 +2888,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
         if (same == -1 && last != first) {
           same = n - 1;                       // count of same char type
         }
-        p += (*mb_ptr2len)(p);
+        p += utfc_ptr2len(p);
       }
       if (last && n > 2 && same >= 0 && same < n - 1) {
         retval = 1;
@@ -3812,7 +3812,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
     while (p > ptr + mincol) {
       p = mb_prevptr(ptr, p);
       if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
-        p += (*mb_ptr2len)(p);
+        p += utfc_ptr2len(p);
         break;
       }
       ++clen;

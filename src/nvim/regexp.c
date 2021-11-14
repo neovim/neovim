@@ -783,7 +783,7 @@ static int get_equi_class(char_u **pp)
   char_u      *p = *pp;
 
   if (p[1] == '=' && p[2] != NUL) {
-    l = (*mb_ptr2len)(p + 2);
+    l = utfc_ptr2len(p + 2);
     if (p[l + 2] == '=' && p[l + 3] == ']') {
       c = utf_ptr2char(p + 2);
       *pp += l + 4;
@@ -1144,7 +1144,7 @@ static char_u *skip_anyof(char_u *p)
   if (*p == ']' || *p == '-')
     ++p;
   while (*p != NUL && *p != ']') {
-    if ((l = (*mb_ptr2len)(p)) > 1) {
+    if ((l = utfc_ptr2len(p)) > 1) {
       p += l;
     } else if (*p == '-')  {
       p++;
@@ -3585,7 +3585,7 @@ static long bt_regexec_both(char_u *line,
       if (rex.line[col] == NUL) {
         break;
       }
-      col += (*mb_ptr2len)(rex.line + col);
+      col += utfc_ptr2len(rex.line + col);
       // Check for timeout once in a twenty times to avoid overhead.
       if (tm != NULL && ++tm_count == 20) {
         tm_count = 0;
@@ -4326,7 +4326,7 @@ static bool regmatch(
             const char_u *opnd = OPERAND(scan);
             // Safety check (just in case 'encoding' was changed since
             // compiling the program).
-            if ((len = (*mb_ptr2len)(opnd)) < 2) {
+            if ((len = utfc_ptr2len(opnd)) < 2) {
               status = RA_NOMATCH;
               break;
             }
@@ -5392,7 +5392,7 @@ do_class:
         if (got_int) {
           break;
         }
-      } else if ((l = (*mb_ptr2len)(scan)) > 1) {
+      } else if ((l = utfc_ptr2len(scan)) > 1) {
         if (testval != 0) {
           break;
         }
@@ -5507,12 +5507,12 @@ do_class:
 
     /* Safety check (just in case 'encoding' was changed since
      * compiling the program). */
-    if ((len = (*mb_ptr2len)(opnd)) > 1) {
+    if ((len = utfc_ptr2len(opnd)) > 1) {
       if (rex.reg_ic) {
         cf = utf_fold(utf_ptr2char(opnd));
       }
-      while (count < maxcount && (*mb_ptr2len)(scan) >= len) {
-        for (i = 0; i < len; ++i) {
+      while (count < maxcount && utfc_ptr2len(scan) >= len) {
+        for (i = 0; i < len; i++) {
           if (opnd[i] != scan[i]) {
             break;
           }
@@ -6532,7 +6532,7 @@ char_u *regtilde(char_u *source, int magic)
       if (*p == '\\' && p[1]) {         // skip escaped characters
         p++;
       }
-      p += (*mb_ptr2len)(p) - 1;
+      p += utfc_ptr2len(p) - 1;
     }
   }
 

@@ -2671,7 +2671,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
         if (line[shl->endcol] != NUL) {
-          shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+          shl->endcol += utfc_ptr2len(line + shl->endcol);
         } else {
           ++shl->endcol;
         }
@@ -3145,7 +3145,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
                 if (shl->startcol == shl->endcol) {
                   // highlight empty match, try again after it
-                  shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+                  shl->endcol += utfc_ptr2len(line + shl->endcol);
                 }
 
                 // Loop to check if the match starts at the
@@ -3244,7 +3244,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // represent special characters (non-printable stuff) and other
     // things.  When all characters are the same, c_extra is used.
     // If c_final is set, it will compulsorily be used at the end.
-    // "p_extra" must end in a NUL to avoid mb_ptr2len() reads past
+    // "p_extra" must end in a NUL to avoid utfc_ptr2len() reads past
     // "p_extra[n_extra]".
     // For the '$' of the 'list' option, n_extra == 1, p_extra == "".
     if (n_extra > 0) {
@@ -5134,7 +5134,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
       for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
-        if ((l = (*mb_ptr2len)(s)) > 1) {
+        if ((l = utfc_ptr2len(s)) > 1) {
           STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
@@ -6169,7 +6169,7 @@ static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum, colnr_T minc
         shl->lnum = 0;
         break;
       }
-      matchcol += mb_ptr2len(ml);
+      matchcol += utfc_ptr2len(ml);
     } else {
       matchcol = shl->rm.endpos[0].col;
     }

@@ -602,7 +602,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
         if (vcol > new_vcol && oldp[col + oldlen] == TAB) {
           break;
         }
-        oldlen += (size_t)(*mb_ptr2len)(oldp + col + oldlen);
+        oldlen += (size_t)utfc_ptr2len(oldp + col + oldlen);
         // Deleted a bit too much, insert spaces.
         if (vcol > new_vcol) {
           newlen += (size_t)(vcol - new_vcol);
@@ -611,7 +611,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       curwin->w_p_list = old_list;
     } else if (oldp[col] != NUL) {
       // normal replace
-      oldlen = (size_t)(*mb_ptr2len)(oldp + col);
+      oldlen = (size_t)utfc_ptr2len(oldp + col);
     }
 
 
@@ -725,7 +725,7 @@ int del_chars(long count, int fixpos)
 
   p = get_cursor_pos_ptr();
   for (i = 0; i < count && *p != NUL; i++) {
-    l = (*mb_ptr2len)(p);
+    l = utfc_ptr2len(p);
     bytes += l;
     p += l;
   }
@@ -1426,7 +1426,7 @@ int open_line(int dir, int flags, int second_line_indent)
             int l;
 
             for (i = 0; i < lead_len && p[i] != NUL; i += l) {
-              l = (*mb_ptr2len)(p + i);
+              l = utfc_ptr2len(p + i);
               if (vim_strnsize(p, i + l) > repl_size) {
                 break;
               }
@@ -1449,7 +1449,7 @@ int open_line(int dir, int flags, int second_line_indent)
                 lead_len--;
                 memmove(p, p + 1, (size_t)(leader + lead_len - p));
               } else {
-                int l = (*mb_ptr2len)(p);
+                int l = utfc_ptr2len(p);
 
                 if (l > 1) {
                   if (ptr2cells(p) > 1) {

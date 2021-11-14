@@ -281,7 +281,7 @@ void trans_characters(char_u *buf, int bufsize)
 
   while (*buf != 0) {
     // Assume a multi-byte character doesn't need translation.
-    if ((trs_len = (*mb_ptr2len)(buf)) > 1) {
+    if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
     } else {
       trs = transchar_byte(*buf);
@@ -498,7 +498,7 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
     }
 
     // skip to next multi-byte char
-    i += (*mb_ptr2len)(STR_PTR(i));
+    i += utfc_ptr2len(STR_PTR(i));
   }
 
 
@@ -732,7 +732,7 @@ int vim_strnsize(char_u *s, int len)
   assert(s != NULL);
   int size = 0;
   while (*s != NUL && --len >= 0) {
-    int l = (*mb_ptr2len)(s);
+    int l = utfc_ptr2len(s);
     size += ptr2cells(s);
     s += l;
     len -= l - 1;

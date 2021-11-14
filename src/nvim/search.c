@@ -386,7 +386,7 @@ bool pat_has_uppercase(char_u *pat)
   char_u *p = pat;
 
   while (*p != NUL) {
-    const int l = mb_ptr2len(p);
+    const int l = utfc_ptr2len(p);
 
     if (l > 1) {
       if (mb_isupper(utf_ptr2char(p))) {
@@ -797,7 +797,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                 // for empty match: advance one char
                 if (matchcol == matchpos.col
                     && ptr[matchcol] != NUL) {
-                  matchcol += mb_ptr2len(ptr + matchcol);
+                  matchcol += utfc_ptr2len(ptr + matchcol);
                 }
               } else {
                 // Stop when the match is in a next line.
@@ -806,7 +806,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                 }
                 matchcol = matchpos.col;
                 if (ptr[matchcol] != NUL) {
-                  matchcol += mb_ptr2len(ptr + matchcol);
+                  matchcol += utfc_ptr2len(ptr + matchcol);
                 }
               }
               if (ptr[matchcol] == NUL
@@ -3955,7 +3955,7 @@ static int find_next_quote(char_u *line, int col, int quotechar, char_u *escape)
     } else if (c == quotechar) {
       break;
     }
-    col += mb_ptr2len(line + col);
+    col += utfc_ptr2len(line + col);
   }
   return col;
 }

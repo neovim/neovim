@@ -4246,7 +4246,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=') {
       // cchar=?
       *conceal_char = utf_ptr2char(arg + 6);
-      arg += mb_ptr2len(arg + 6) - 1;
+      arg += utfc_ptr2len(arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
         emsg(_("E844: invalid cchar value"));
         return NULL;
@@ -4483,7 +4483,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
               kw = p + 1;
               break;   // skip over the "]"
             }
-            const int l = (*mb_ptr2len)(p + 1);
+            const int l = utfc_ptr2len(p + 1);
 
             memmove(p, p + 1, l);
             p += l;
