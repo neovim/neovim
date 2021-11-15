@@ -414,8 +414,9 @@ disable({bufnr}, {namespace})                       *vim.diagnostic.disable()*
                 Disable diagnostics in the given buffer.
 
                 Parameters: ~
-                    {bufnr}      number|nil Buffer number. Defaults to the
-                                 current buffer.
+                    {bufnr}      number|nil Buffer number, or 0 for current
+                                 buffer. When omitted, disable diagnostics in
+                                 all buffers.
                     {namespace}  number|nil Only disable diagnostics for the
                                  given namespace.
 
@@ -423,8 +424,9 @@ enable({bufnr}, {namespace})                         *vim.diagnostic.enable()*
                 Enable diagnostics in the given buffer.
 
                 Parameters: ~
-                    {bufnr}      number|nil Buffer number. Defaults to the
-                                 current buffer.
+                    {bufnr}      number|nil Buffer number, or 0 for current
+                                 buffer. When omitted, enable diagnostics in
+                                 all buffers.
                     {namespace}  number|nil Only enable diagnostics for the
                                  given namespace.
 
@@ -550,8 +552,9 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                     {namespace}  number|nil Diagnostic namespace. When
                                  omitted, hide diagnostics from all
                                  namespaces.
-                    {bufnr}      number|nil Buffer number. Defaults to the
-                                 current buffer.
+                    {bufnr}      number|nil Buffer number, or 0 for current
+                                 buffer. When omitted, hide diagnostics in all
+                                 buffers.
 
                                                       *vim.diagnostic.match()*
 match({str}, {pat}, {groups}, {severity_map}, {defaults})
@@ -698,15 +701,16 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                     {namespace}    number|nil Diagnostic namespace. When
                                    omitted, show diagnostics from all
                                    namespaces.
-                    {bufnr}        number|nil Buffer number. Defaults to the
-                                   current buffer.
+                    {bufnr}        number|nil Buffer number, or 0 for current
+                                   buffer. When omitted, show diagnostics in
+                                   all buffers.
                     {diagnostics}  table|nil The diagnostics to display. When
                                    omitted, use the saved diagnostics for the
                                    given namespace and buffer. This can be
                                    used to display a list of diagnostics
                                    without saving them or to display only a
                                    subset of diagnostics. May not be used when
-                                   {namespace} is nil.
+                                   {namespace} or {bufnr} is nil.
                     {opts}         table|nil Display options. See
                                    |vim.diagnostic.config()|.
 

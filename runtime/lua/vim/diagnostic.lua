@@ -245,6 +245,11 @@ local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
 
 ---@private
 local function is_disabled(namespace, bufnr)
+  local ns = M.get_namespace(namespace)
+  if ns.disabled then
+    return true
+  end
+
   if type(diagnostic_disabled[bufnr]) == "table" then
     return diagnostic_disabled[bufnr][namespace]
   end
@@ -1039,19 +1044,22 @@ end
 ---
 ---@param namespace number|nil Diagnostic namespace. When omitted, hide
 ---                            diagnostics from all namespaces.
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
+---@param bufnr number|nil Buffer number, or 0 for current buffer. When
+---                        omitted, hide diagnostics in all buffers.
 function M.hide(namespace, bufnr)
   vim.validate {
     namespace = { namespace, 'n', true },
     bufnr = { bufnr, 'n', true },
   }
 
-  bufnr = get_bufnr(bufnr)
-  local namespaces = namespace and {namespace} or vim.tbl_keys(diagnostic_cache[bufnr])
-  for _, iter_namespace in ipairs(namespaces) do
-    for _, handler in pairs(M.handlers) do
-      if handler.hide then
-        handler.hide(iter_namespace, bufnr)
+  local buffers = bufnr and {get_bufnr(bufnr)} or vim.tbl_keys(diagnostic_cache)
+  for _, iter_bufnr in ipairs(buffers) do
+    local namespaces = namespace and {namespace} or vim.tbl_keys(diagnostic_cache[iter_bufnr])
+    for _, iter_namespace in ipairs(namespaces) do
+      for _, handler in pairs(M.handlers) do
+        if handler.hide then
+          handler.hide(iter_namespace, iter_bufnr)
+        end
       end
     end
   end
@@ -1061,12 +1069,14 @@ end
 ---
 ---@param namespace number|nil Diagnostic namespace. When omitted, show
 ---                            diagnostics from all namespaces.
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
+---@param bufnr number|nil Buffer number, or 0 for current buffer. When omitted, show
+---                        diagnostics in all buffers.
 ---@param diagnostics table|nil The diagnostics to display. When omitted, use the
 ---                             saved diagnostics for the given namespace and
 ---                             buffer. This can be used to display a list of diagnostics
 ---                             without saving them or to display only a subset of
----                             diagnostics. May not be used when {namespace} is nil.
+---                             diagnostics. May not be used when {namespace}
+---                             or {bufnr} is nil.
 ---@param opts table|nil Display options. See |vim.diagnostic.config()|.
 function M.show(namespace, bufnr, diagnostics, opts)
   vim.validate {
@@ -1076,11 +1086,18 @@ function M.show(namespace, bufnr, diagnostics, opts)
     opts = { opts, 't', true },
   }
 
-  bufnr = get_bufnr(bufnr)
-  if not namespace then
-    assert(not diagnostics, "Cannot show diagnostics without a namespace")
-    for iter_namespace in pairs(diagnostic_cache[bufnr]) do
-      M.show(iter_namespace, bufnr, nil, opts)
+  if not bufnr or not namespace then
+    assert(not diagnostics, "Cannot show diagnostics without a buffer and namespace")
+    if not bufnr then
+      for iter_bufnr in pairs(diagnostic_cache) do
+        M.show(namespace, iter_bufnr, nil, opts)
+      end
+    else
+      -- namespace is nil
+      bufnr = get_bufnr(bufnr)
+      for iter_namespace in pairs(diagnostic_cache[bufnr]) do
+        M.show(iter_namespace, bufnr, nil, opts)
+      end
     end
     return
   end
@@ -1323,44 +1340,67 @@ end
 
 --- Disable diagnostics in the given buffer.
 ---
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
+---@param bufnr number|nil Buffer number, or 0 for current buffer. When
+---                        omitted, disable diagnostics in all buffers.
 ---@param namespace number|nil Only disable diagnostics for the given namespace.
 function M.disable(bufnr, namespace)
   vim.validate { bufnr = {bufnr, 'n', true}, namespace = {namespace, 'n', true} }
-  bufnr = get_bufnr(bufnr)
-  if namespace == nil then
-    diagnostic_disabled[bufnr] = true
-    for ns in pairs(diagnostic_cache[bufnr]) do
-      M.hide(ns, bufnr)
+  if bufnr == nil then
+    if namespace == nil then
+      -- Disable everything (including as yet non-existing buffers and
+      -- namespaces) by setting diagnostic_disabled to an empty table and set
+      -- its metatable to always return true. This metatable is removed
+      -- in enable()
+      diagnostic_disabled = setmetatable({}, {
+        __index = function() return true end,
+      })
+    else
+      local ns = M.get_namespace(namespace)
+      ns.disabled = true
     end
   else
-    if type(diagnostic_disabled[bufnr]) ~= "table" then
-      diagnostic_disabled[bufnr] = {}
+    bufnr = get_bufnr(bufnr)
+    if namespace == nil then
+      diagnostic_disabled[bufnr] = true
+    else
+      if type(diagnostic_disabled[bufnr]) ~= "table" then
+        diagnostic_disabled[bufnr] = {}
+      end
+      diagnostic_disabled[bufnr][namespace] = true
     end
-    diagnostic_disabled[bufnr][namespace] = true
-    M.hide(namespace, bufnr)
   end
+
+  M.hide(namespace, bufnr)
 end
 
 --- Enable diagnostics in the given buffer.
 ---
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
+---@param bufnr number|nil Buffer number, or 0 for current buffer. When
+---                        omitted, enable diagnostics in all buffers.
 ---@param namespace number|nil Only enable diagnostics for the given namespace.
 function M.enable(bufnr, namespace)
   vim.validate { bufnr = {bufnr, 'n', true}, namespace = {namespace, 'n', true} }
-  bufnr = get_bufnr(bufnr)
-  if namespace == nil then
-    diagnostic_disabled[bufnr] = nil
-    for ns in pairs(diagnostic_cache[bufnr]) do
-      M.show(ns, bufnr)
+  if bufnr == nil then
+    if namespace == nil then
+      -- Enable everything by setting diagnostic_disabled to an empty table
+      diagnostic_disabled = {}
+    else
+      local ns = M.get_namespace(namespace)
+      ns.disabled = false
     end
   else
-    if type(diagnostic_disabled[bufnr]) ~= "table" then
-      return
+    bufnr = get_bufnr(bufnr)
+    if namespace == nil then
+      diagnostic_disabled[bufnr] = nil
+    else
+      if type(diagnostic_disabled[bufnr]) ~= "table" then
+        return
+      end
+      diagnostic_disabled[bufnr][namespace] = nil
     end
-    diagnostic_disabled[bufnr][namespace] = nil
-    M.show(namespace, bufnr)
   end
+
+  M.show(namespace, bufnr)
 end
 
 --- Parse a diagnostic from a string.
