@@ -534,7 +534,9 @@ end
 ---                its severity. Otherwise, all signs use the same priority.
 ---       - float: Options for floating windows:
 ---                  * severity: See |diagnostic-severity|.
----                  * show_header: (boolean, default true) Show "Diagnostics:" header
+---                  * header: (string or table) String to use as the header for the floating
+---                            window. If a table, it is interpreted as a [text, hl_group] tuple.
+---                            Defaults to "Diagnostics:".
 ---                  * source: (string) Include the diagnostic source in
 ---                            the message. One of "always" or "if_many".
 ---                  * format: (function) A function that takes a diagnostic as input and returns a
@@ -1146,8 +1148,9 @@ end
 ---                             from |vim.diagnostic.config()|.
 ---            - severity: See |diagnostic-severity|. Overrides the setting from
 ---                        |vim.diagnostic.config()|.
----            - show_header: (boolean, default true) Show "Diagnostics:" header. Overrides the
----                           setting from |vim.diagnostic.config()|.
+---            - header: (string or table) String to use as the header for the floating window. If a
+---                      table, it is interpreted as a [text, hl_group] tuple. Overrides the setting
+---                      from |vim.diagnostic.config()|.
 ---            - source: (string) Include the diagnostic source in the message. One of "always" or
 ---                      "if_many". Overrides the setting from |vim.diagnostic.config()|.
 ---            - format: (function) A function that takes a diagnostic as input and returns a
@@ -1225,10 +1228,21 @@ function M.open_float(bufnr, opts)
 
   local lines = {}
   local highlights = {}
-  local show_header = vim.F.if_nil(opts.show_header, true)
-  if show_header then
-    table.insert(lines, "Diagnostics:")
-    table.insert(highlights, {0, "Bold"})
+  local header = if_nil(opts.header, "Diagnostics:")
+  if header then
+    vim.validate { header = { header, function(v)
+      return type(v) == "string" or type(v) == "table"
+    end, "'string' or 'table'" } }
+    if type(header) == "table" then
+      -- Don't insert any lines for an empty string
+      if string.len(if_nil(header[1], "")) > 0 then
+        table.insert(lines, header[1])
+        table.insert(highlights, {0, header[2] or "Bold"})
+      end
+    elseif #header > 0 then
+      table.insert(lines, header)
+      table.insert(highlights, {0, "Bold"})
+    end
   end
 
   if opts.format then

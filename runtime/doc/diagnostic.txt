@@ -375,8 +375,11 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
                                  • float: Options for floating windows:
                                    • severity: See |diagnostic-severity|.
-                                   • show_header: (boolean, default true) Show
-                                     "Diagnostics:" header
+                                   • header: (string or table) String to use
+                                     as the header for the floating window. If
+                                     a table, it is interpreted as a [text,
+                                     hl_group] tuple. Defaults to
+                                     "Diagnostics:".
                                    • source: (string) Include the diagnostic
                                      source in the message. One of "always" or
                                      "if_many".
@@ -620,9 +623,11 @@ open_float({bufnr}, {opts})                      *vim.diagnostic.open_float()*
                                |vim.diagnostic.config()|.
                              • severity: See |diagnostic-severity|. Overrides
                                the setting from |vim.diagnostic.config()|.
-                             • show_header: (boolean, default true) Show
-                               "Diagnostics:" header. Overrides the setting
-                               from |vim.diagnostic.config()|.
+                             • header: (string or table) String to use as the
+                               header for the floating window. If a table, it
+                               is interpreted as a [text, hl_group] tuple.
+                               Overrides the setting from
+                               |vim.diagnostic.config()|.
                              • source: (string) Include the diagnostic source
                                in the message. One of "always" or "if_many".
                                Overrides the setting from
