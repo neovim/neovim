@@ -870,6 +870,56 @@ func Test_edit_CTRL_T()
   bw!
 endfunc
 
+" Test 'thesaurusfunc'
+func MyThesaurus(findstart, base)
+  let mythesaurus = [
+        \ #{word: "happy",
+        \   synonyms: "cheerful,blissful,flying high,looking good,peppy"},
+        \ #{word: "kind",
+        \   synonyms: "amiable,bleeding-heart,heart in right place"}]
+  if a:findstart
+    " locate the start of the word
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && line[start - 1] =~ '\a'
+      let start -= 1
+    endwhile
+    return start
+  else
+    " find strings matching with "a:base"
+    let res = []
+    for w in mythesaurus
+      if w.word =~ '^' . a:base
+        call add(res, w.word)
+        call extend(res, split(w.synonyms, ","))
+      endif
+    endfor
+    return res
+  endif
+endfunc
+
+func Test_thesaurus_func()
+  new
+  set thesaurus=notused
+  set thesaurusfunc=NotUsed
+  setlocal thesaurusfunc=MyThesaurus
+  call setline(1, "an ki")
+  call cursor(1, 1)
+  call feedkeys("A\<c-x>\<c-t>\<c-n>\<cr>\<esc>", 'tnix')
+  call assert_equal(['an amiable', ''], getline(1, '$'))
+
+  setlocal thesaurusfunc=NonExistingFunc
+  call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
+
+  setlocal thesaurusfunc=
+  set thesaurusfunc=NonExistingFunc
+  call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
+  %bw!
+
+  set thesaurusfunc=
+  set thesaurus=
+endfunc
+
 func Test_edit_CTRL_U()
   " Test 'completefunc'
   new

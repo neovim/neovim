@@ -804,6 +804,9 @@ CTRL-X CTRL-K		Search the files given with the 'dictionary' option
 	CTRL-P		Search backwards for next matching keyword.  This
 			keyword replaces the previous matching keyword.
 
+
+Completing words in 'thesaurus'				*compl-thesaurus*
+
 							*i_CTRL-X_CTRL-T*
 CTRL-X CTRL-T		Works as CTRL-X CTRL-K, but in a special way.  It uses
 			the 'thesaurus' option instead of 'dictionary'.  If a
@@ -812,22 +815,65 @@ CTRL-X CTRL-T		Works as CTRL-X CTRL-K, but in a special way.  It uses
 			matches, even though they don't complete the word.
 			Thus a word can be completely replaced.
 
-			For an example, imagine the 'thesaurus' file has a
-			line like this: >
-				angry furious mad enraged
-<			Placing the cursor after the letters "ang" and typing
-			CTRL-X CTRL-T would complete the word "angry";
-			subsequent presses would change the word to "furious",
-			"mad" etc.
-			Other uses include translation between two languages,
-			or grouping API functions by keyword.
-
 	CTRL-T	or
 	CTRL-N		Search forward for next matching keyword.  This
 			keyword replaces the previous matching keyword.
 
 	CTRL-P		Search backwards for next matching keyword.  This
 			keyword replaces the previous matching keyword.
+
+In the file used by the 'thesaurus' option each line in the file should
+contain words with similar meaning, separated by non-keyword characters (white
+space is preferred).  Maximum line length is 510 bytes.
+
+For an example, imagine the 'thesaurus' file has a line like this: >
+	angry furious mad enraged
+<Placing the cursor after the letters "ang" and typing CTRL-X CTRL-T would
+complete the word "angry"; subsequent presses would change the word to
+"furious", "mad" etc.
+
+Other uses include translation between two languages, or grouping API
+functions by keyword.
+
+An English word list was added to this github issue:
+https://github.com/vim/vim/issues/629#issuecomment-443293282
+Unpack thesaurus_pkg.zip, put the thesaurus.txt file somewhere, e.g.
+~/.vim/thesaurus/english.txt, and the 'thesaurus' option to this file name.
+
+					
+Completing keywords with 'thesaurusfunc'		*compl-thesaurusfunc*
+
+If the 'thesaurusfunc' option is set, then the user specified function is
+invoked to get the list of completion matches and the 'thesaurus' option is
+not used. See |complete-functions| for an explanation of how the function is
+invoked and what it should return.
+
+Here is an example that uses the "aiksaurus" command (provided by Magnus
+Groß): >
+
+	func Thesaur(findstart, base)
+	    if a:findstart
+		let line = getline('.')
+		let start = col('.') - 1
+		while start > 0 && line[start - 1] =~ '\a'
+		   let start -= 1
+		endwhile
+		return start
+	    else
+		let res = []
+		let h = ''
+		for l in split(system('aiksaurus '.shellescape(a:base)), '\n')
+		    if l[:3] == '=== '
+		    	let h = substitute(l[4:], ' =*$', '', '')
+		    elseif l[0] =~ '\a'
+			call extend(res, map(split(l, ', '), {_, val -> {'word': val, 'menu': '('.h.')'}}))
+		    endif
+		endfor
+		return res
+	    endif
+	endfunc
+
+	set thesaurusfunc=Thesaur
 
 
 Completing keywords in the current and included files	*compl-keyword*
@@ -1032,7 +1078,7 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 
 FUNCTIONS FOR FINDING COMPLETIONS			*complete-functions*
 
-This applies to 'completefunc' and 'omnifunc'.
+This applies to 'completefunc', 'thesaurusfunc' and 'omnifunc'.
 
 The function is called in two different ways:
 - First the function is called to find the start of the text to be completed.

@@ -686,6 +686,7 @@ EXTERN long p_titlelen;         ///< 'titlelen'
 EXTERN char_u *p_titleold;      ///< 'titleold'
 EXTERN char_u *p_titlestring;   ///< 'titlestring'
 EXTERN char_u *p_tsr;           ///< 'thesaurus'
+EXTERN char_u *p_tsrfu;         ///< 'thesaurusfunc'
 EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN long p_ttm;              ///< 'ttimeoutlen'
@@ -826,6 +827,7 @@ enum {
   BV_SW,
   BV_SWF,
   BV_TFU,
+  BV_TSRFU,
   BV_TAGS,
   BV_TC,
   BV_TS,

@@ -2536,6 +2536,15 @@ return {
       defaults={if_true=""}
     },
     {
+      full_name='thesaurusfunc', abbreviation='tsrfu',
+      short_desc=N_("function used for thesaurus completion"),
+      type='string', scope={'global', 'buffer'},
+      secure=true,
+      alloced=true,
+      varname='p_tsrfu',
+      defaults={if_true=""}
+    },
+    {
       full_name='tildeop', abbreviation='top',
       short_desc=N_("tilde command \"~\" behaves like an operator"),
       type='bool', scope={'global'},

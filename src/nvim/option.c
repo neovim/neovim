@@ -2034,6 +2034,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_tsr);
+  check_string_option(&buf->b_p_tsrfu);
   check_string_option(&buf->b_p_lw);
   check_string_option(&buf->b_p_bkc);
   check_string_option(&buf->b_p_menc);
@@ -5536,6 +5537,9 @@ void unset_global_local_option(char *name, void *from)
   case PV_TSR:
     clear_string_option(&buf->b_p_tsr);
     break;
+  case PV_TSRFU:
+    clear_string_option(&buf->b_p_tsrfu);
+    break;
   case PV_FP:
     clear_string_option(&buf->b_p_fp);
     break;
@@ -5619,6 +5623,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
       return (char_u *)&(curbuf->b_p_dict);
     case PV_TSR:
       return (char_u *)&(curbuf->b_p_tsr);
+    case PV_TSRFU:
+      return (char_u *)&(curbuf->b_p_tsrfu);
     case PV_TFU:
       return (char_u *)&(curbuf->b_p_tfu);
     case PV_SBR:
@@ -5695,6 +5701,9 @@ static char_u *get_varp(vimoption_T *p)
   case PV_TSR:
     return *curbuf->b_p_tsr != NUL
            ? (char_u *)&(curbuf->b_p_tsr) : p->var;
+  case PV_TSRFU:
+    return *curbuf->b_p_tsrfu != NUL
+           ? (char_u *)&(curbuf->b_p_tsrfu) : p->var;
   case PV_FP:
     return *curbuf->b_p_fp != NUL
            ? (char_u *)&(curbuf->b_p_fp) : p->var;
@@ -6253,6 +6262,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inex = vim_strsave(p_inex);
       buf->b_p_dict = empty_option;
       buf->b_p_tsr = empty_option;
+      buf->b_p_tsrfu = empty_option;
       buf->b_p_qe = vim_strsave(p_qe);
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
