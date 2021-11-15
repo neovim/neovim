@@ -1081,7 +1081,7 @@ describe('vim.diagnostic', function()
 
     it('can show diagnostics from a specific position', function()
       -- Using cursor position
-      eq({'1. Syntax error'}, exec_lua [[
+      eq({'Syntax error'}, exec_lua [[
         local diagnostics = {
           make_error("Syntax error", 1, 1, 1, 2),
           make_warning("Some warning", 1, 3, 1, 4),
@@ -1096,7 +1096,7 @@ describe('vim.diagnostic', function()
       ]])
 
       -- With specified position
-      eq({'1. Some warning'}, exec_lua [[
+      eq({'Some warning'}, exec_lua [[
         local diagnostics = {
           make_error("Syntax error", 1, 1, 1, 2),
           make_warning("Some warning", 1, 3, 1, 4),
@@ -1111,7 +1111,7 @@ describe('vim.diagnostic', function()
       ]])
 
       -- With column position past the end of the line. #16062
-      eq({'1. Syntax error'}, exec_lua [[
+      eq({'Syntax error'}, exec_lua [[
         local first_line_len = #vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, 1, true)[1]
         local diagnostics = {
           make_error("Syntax error", 0, first_line_len + 1, 1, 0),
@@ -1324,6 +1324,81 @@ describe('vim.diagnostic', function()
       eq(1, count_diagnostics_with_severity("WARN", "WARN"))
       eq(4, count_diagnostics_with_severity("HINT"))
       eq(0, count_diagnostics_with_severity("HINT", "HINT"))
+    end)
+
+    it('can add a prefix to diagnostics', function()
+      -- Default is to add a number
+      eq({'1. Syntax error', '2. Some warning'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+          make_warning("Some warning", 1, 1, 1, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {show_header = false, number = "always"})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({'Syntax error', 'Some warning'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+          make_warning("Some warning", 1, 1, 1, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {show_header = false, prefix = ""})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({'1. Syntax error', '2. Some warning'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+          make_warning("Some warning", 1, 1, 1, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {
+          show_header = false,
+          prefix = function(_, i, total)
+            -- Only show a number if there is more than one diagnostic
+            if total > 1 then
+              return string.format("%d. ", i)
+            end
+            return ""
+          end,
+        })
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({'Syntax error'}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {
+          show_header = false,
+          prefix = function(_, i, total)
+            -- Only show a number if there is more than one diagnostic
+            if total > 1 then
+              return string.format("%d. ", i)
+            end
+            return ""
+          end,
+        })
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq("Error executing lua: .../diagnostic.lua:0: prefix: expected 'string' or 'function', got 42",
+        pcall_err(exec_lua, [[ vim.diagnostic.open_float(0, { prefix = 42 }) ]]))
     end)
   end)
 
