@@ -539,12 +539,17 @@ end
 ---                            the message. One of "always" or "if_many".
 ---                  * format: (function) A function that takes a diagnostic as input and returns a
 ---                            string. The return value is the text used to display the diagnostic.
----                  * prefix: (function or string) Prefix each diagnostic in the floating window. If
----                            a function, it must have the signature (diagnostic, i, total) -> string,
----                            where {i} is the index of the diagnostic being evaluated and {total} is
----                            the total number of diagnostics displayed in the window. The returned
----                            string is prepended to each diagnostic in the window. Otherwise,
----                            if {prefix} is a string, it is prepended to each diagnostic.
+---                  * prefix: (function, string, or table) Prefix each diagnostic in the floating
+---                            window. If a function, it must have the signature (diagnostic, i,
+---                            total) -> (string, string), where {i} is the index of the diagnostic
+---                            being evaluated and {total} is the total number of diagnostics
+---                            displayed in the window. The function should return a string which
+---                            is prepended to each diagnostic in the window as well as an
+---                            (optional) highlight group which will be used to highlight the
+---                            prefix. If {prefix} is a table, it is interpreted as a [text,
+---                            hl_group] tuple as in |nvim_echo()|; otherwise, if {prefix} is a
+---                            string, it is prepended to each diagnostic in the window with no
+---                            highlight.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
@@ -1148,7 +1153,7 @@ end
 ---            - format: (function) A function that takes a diagnostic as input and returns a
 ---                      string. The return value is the text used to display the diagnostic.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
----            - prefix: (function or string) Prefix each diagnostic in the floating window.
+---            - prefix: (function, string, or table) Prefix each diagnostic in the floating window.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
 ---@return tuple ({float_bufnr}, {win_id})
 function M.open_float(bufnr, opts)
@@ -1237,18 +1242,28 @@ function M.open_float(bufnr, opts)
   local prefix_opt = if_nil(opts.prefix, (scope == "cursor" and #diagnostics <= 1) and "" or function(_, i)
       return string.format("%d. ", i)
   end)
+
+  local prefix, prefix_hl_group
   if prefix_opt then
     vim.validate { prefix = { prefix_opt, function(v)
-      return type(v) == "string" or type(v) == "function"
-    end, "'string' or 'function'" } }
+      return type(v) == "string" or type(v) == "table" or type(v) == "function"
+    end, "'string' or 'table' or 'function'" } }
+    if type(prefix_opt) == "string" then
+      prefix, prefix_hl_group = prefix_opt, "NormalFloat"
+    elseif type(prefix_opt) == "table" then
+      prefix, prefix_hl_group = prefix_opt[1] or "", prefix_opt[2] or "NormalFloat"
+    end
   end
 
   for i, diagnostic in ipairs(diagnostics) do
-    local prefix = type(prefix_opt) == "string" and prefix_opt or prefix_opt(diagnostic, i, #diagnostics)
+    if prefix_opt and type(prefix_opt) == "function" then
+      prefix, prefix_hl_group = prefix_opt(diagnostic, i, #diagnostics)
+      prefix, prefix_hl_group = prefix or "", prefix_hl_group or "NormalFloat"
+    end
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
     table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix, hiname})
+    table.insert(highlights, {#prefix, hiname, prefix_hl_group})
     for j = 2, #message_lines do
       table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
       table.insert(highlights, {0, hiname})
@@ -1261,8 +1276,10 @@ function M.open_float(bufnr, opts)
   end
   local float_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
-    local prefixlen, hiname = unpack(hi)
-    -- Start highlight after the prefix
+    local prefixlen, hiname, prefix_hiname = unpack(hi)
+    if prefix_hiname then
+      vim.api.nvim_buf_add_highlight(float_bufnr, -1, prefix_hiname, i-1, 0, prefixlen)
+    end
     vim.api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i-1, prefixlen, -1)
   end
 
