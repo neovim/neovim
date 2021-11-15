@@ -66,6 +66,7 @@ local function test_edit(prev_buffer, edit_operations, expected_text_changes, of
   exec_lua("test_unreg = 'test1'")
 
 end
+
 describe('incremental synchronization', function()
   describe('single line edit', function()
     it('inserting a character in an empty buffer', function()
@@ -163,54 +164,119 @@ describe('incremental synchronization', function()
       }
       test_edit({"a"}, {"rb"}, expected_text_changes, 'utf-16', '\n')
     end)
-    describe('multi-byte edits', function()
-      it('join and undo', function()
-        local expected_text_changes = {
-          {
-            range = {
-              ['start'] = {
-                character = 11,
-                line = 0
-              },
-              ['end'] = {
-                character = 11,
-                line = 0
-              }
-            },
-            rangeLength = 0,
-            text = ' test3'
-          },{
-            range = {
-              ['start'] = {
-                character = 0,
-                line = 1
-              },
-              ['end'] = {
-                character = 0,
-                line = 2
-              }
-            },
-            rangeLength = 6,
-            text = ''
-          },{
-            range = {
-              ['start'] = {
-                character = 11,
-                line = 0
-              },
-              ['end'] = {
-                character = 17,
-                line = 0
-              }
-            },
-            rangeLength = 6,
-            text = '\ntest3'
-          },
+  end)
+
+  describe('multi-operation edits', function()
+    it('mult-line substitution', function()
+      local expected_text_changes = {
+        {
+          range = {
+             ["end"] = {
+               character = 11,
+               line = 2 },
+             ["start"] = {
+               character = 10,
+               line = 2 } },
+          rangeLength = 1,
+          text = '',
+        },{
+          range = {
+            ["end"] = {
+              character = 10,
+              line = 2 },
+            start = {
+              character = 10,
+              line = 2 } },
+          rangeLength = 0,
+          text = '2',
+        },{
+          range = {
+            ["end"] = {
+              character = 11,
+              line = 3 },
+            ["start"] = {
+              character = 10,
+              line = 3 } },
+          rangeLength = 1,
+          text = ''
+        },{
+          range = {
+            ['end'] = {
+              character = 10,
+              line = 3 },
+            ['start'] = {
+              character = 10,
+              line = 3 } },
+          rangeLength = 0,
+          text = '3' },
+        {
+          range = {
+            ['end'] = {
+              character = 0,
+              line = 3 },
+            ['start'] = {
+              character = 12,
+              line = 2 } },
+          rangeLength = 1,
+          text = '\n'
         }
-        test_edit({"test1 test2", "test3"}, {"J", "u"}, expected_text_changes, 'utf-16', '\n')
-      end)
+      }
+      local original_lines = {
+        "\\begin{document}",
+        "\\section*{1}",
+        "\\section*{1}",
+        "\\section*{1}",
+        "\\end{document}"
+      }
+      test_edit(original_lines, {"3gg$h<C-V>jg<C-A>"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('join and undo', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 11,
+              line = 0
+            },
+            ['end'] = {
+              character = 11,
+              line = 0
+            }
+          },
+          rangeLength = 0,
+          text = ' test3'
+        },{
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 0,
+              line = 2
+            }
+          },
+          rangeLength = 6,
+          text = ''
+        },{
+          range = {
+            ['start'] = {
+              character = 11,
+              line = 0
+            },
+            ['end'] = {
+              character = 17,
+              line = 0
+            }
+          },
+          rangeLength = 6,
+          text = '\ntest3'
+        },
+      }
+      test_edit({"test1 test2", "test3"}, {"J", "u"}, expected_text_changes, 'utf-16', '\n')
     end)
   end)
+
   describe('multi-byte edits', function()
     it('deleting a multibyte character', function()
       local expected_text_changes = {

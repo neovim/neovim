@@ -219,6 +219,10 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
 
   -- Iterate from end to beginning of shortest line
   local prev_end_byte_idx = prev_line_length - byte_offset + 1
+  -- Handle case where lines match
+  if prev_end_byte_idx == 0 then
+    prev_end_byte_idx = 1
+  end
   local prev_byte_idx, prev_char_idx = align_position(prev_line, prev_end_byte_idx, 'start', offset_encoding)
   local prev_end_range = { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
@@ -228,6 +232,10 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
     curr_end_range = { line_idx = start_line_idx, byte_idx = 1, char_idx = 1 }
   else
     local curr_end_byte_idx = curr_line_length - byte_offset + 1
+    -- Handle case where lines match
+    if curr_end_byte_idx == 0 then
+      curr_end_byte_idx = 1
+    end
     local curr_byte_idx, curr_char_idx = align_position(curr_line, curr_end_byte_idx, 'start', offset_encoding)
     curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
   end
