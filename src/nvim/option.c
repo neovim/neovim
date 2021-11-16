@@ -2665,14 +2665,19 @@ ambw_end:
     }
   } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
     errmsg = set_chars_option(curwin, varp, true);
-  } else if (varp == &p_fcs) {  // 'fillchars'
+  } else if (varp == &p_fcs) {  // global 'fillchars'
     errmsg = set_chars_option(curwin, varp, false);
-    if (!errmsg) {
+    if (errmsg == NULL) {
+      // The current window is set to use the global 'fillchars' value.
+      // So clear the window-local value.
+      if (!(opt_flags & OPT_GLOBAL)) {
+        clear_string_option(&curwin->w_p_fcs);
+      }
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         set_chars_option(wp, &wp->w_p_fcs, true);
       }
+      redraw_all_later(NOT_VALID);
     }
-    redraw_all_later(NOT_VALID);
   } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
     errmsg = set_chars_option(curwin, varp, true);
   } else if (varp == &p_cedit) {  // 'cedit'
