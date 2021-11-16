@@ -643,7 +643,7 @@ au BufNewFile,BufRead *.fsl			setf framescript
 au BufNewFile,BufRead fstab,mtab		setf fstab
 
 " GDB command files
-au BufNewFile,BufRead .gdbinit			setf gdb
+au BufNewFile,BufRead .gdbinit,gdbinit		setf gdb
 
 " GDMO
 au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
