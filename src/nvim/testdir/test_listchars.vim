@@ -469,6 +469,26 @@ func Test_listchars_window_local()
   close
   call assert_equal(['+------+^^one>>two<<%'], ScreenLines(1, virtcol('$')))
 
+  " Setting invalid value for a local setting should not impact the local and
+  " global settings
+  split
+  setlocal listchars=tab:<->,lead:_,space:.,trail:@,eol:#
+  let cmd = 'setlocal listchars=tab:{.},lead:-,space:=,trail:#,eol:$,x'
+  call assert_fails(cmd, 'E474:')
+  call assert_equal(['<------>__one..two@@#'], ScreenLines(1, virtcol('$')))
+  close
+  call assert_equal(['+------+^^one>>two<<%'], ScreenLines(1, virtcol('$')))
+
+  " Setting invalid value for a global setting should not impact the local and
+  " global settings
+  split
+  setlocal listchars=tab:<->,lead:_,space:.,trail:@,eol:#
+  let cmd = 'setglobal listchars=tab:{.},lead:-,space:=,trail:#,eol:$,x'
+  call assert_fails(cmd, 'E474:')
+  call assert_equal(['<------>__one..two@@#'], ScreenLines(1, virtcol('$')))
+  close
+  call assert_equal(['+------+^^one>>two<<%'], ScreenLines(1, virtcol('$')))
+
   %bw!
   set list& listchars&
 endfunc
