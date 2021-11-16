@@ -194,6 +194,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'rsc\>'
     set ft=routeros
 
+    " Fish shell
+  elseif s:name =~# 'fish\>'
+    set ft=fish
+
   endif
   unlet s:name
 
