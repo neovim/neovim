@@ -1440,7 +1440,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
                      _("%" PRId64 " lines filtered"), (int64_t)linecount);
         if (msg(msg_buf) && !msg_scroll) {
           // save message to display it after redraw
-          set_keep_msg((char_u *)msg_buf, 0);
+          set_keep_msg(msg_buf, 0);
         }
       } else {
         msgmore((long)linecount);
@@ -3280,7 +3280,7 @@ static bool sub_joining_lines(exarg_T *eap, char_u *pat, char_u *sub, char_u *cm
   // TODO(vim): find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
   if (pat != NULL
-      && strcmp((const char *)pat, "\\n") == 0
+      && STRCMP(pat, "\\n") == 0
       && *sub == NUL
       && (*cmd == NUL || (cmd[1] == NUL
                           && (*cmd == 'g'
@@ -4468,7 +4468,7 @@ bool do_sub_msg(bool count_only)
                      (int64_t)sub_nsubs, (int64_t)sub_nlines);
     if (msg(msg_buf)) {
       // save message to display it after redraw
-      set_keep_msg((char_u *)msg_buf, 0);
+      set_keep_msg(msg_buf, 0);
     }
     return true;
   }

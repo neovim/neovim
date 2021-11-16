@@ -4271,7 +4271,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
         if (STRCMP(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
         } else {
-          syn_id = syn_name2id(gname);
+          syn_id = syn_name2id((char *)gname);
           int i;
           for (i = curwin->w_s->b_syn_patterns.ga_len; --i >= 0; ) {
             if (SYN_ITEMS(curwin->w_s)[i].sp_syn.id == syn_id
@@ -5264,7 +5264,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         }
         next_arg = skipwhite(arg_end);
       } else if (!eap->skip) {
-        curwin->w_s->b_syn_sync_id = syn_name2id((char_u *)"Comment");
+        curwin->w_s->b_syn_sync_id = syn_name2id("Comment");
       }
     } else if (STRNCMP(key, "LINES", 5) == 0
                || STRNCMP(key, "MINLINES", 8) == 0
@@ -7403,9 +7403,9 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
       for (int i = 0; hl_attr_table[i] != 0; i++) {
         if (iarg & hl_attr_table[i]) {
           if (buf[0] != NUL) {
-            xstrlcat((char *)buf, ",", 100);
+            xstrlcat(buf, ",", 100);
           }
-          xstrlcat((char *)buf, hl_name_table[i], 100);
+          xstrlcat(buf, hl_name_table[i], 100);
           iarg &= ~hl_attr_table[i];                // don't want "inverse"
         }
       }
@@ -7605,10 +7605,10 @@ static void set_hl_attr(int idx)
   }
 }
 
-int syn_name2id(const char_u *name)
+int syn_name2id(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return syn_name2id_len(name, STRLEN(name));
+  return syn_name2id_len((char_u *)name, STRLEN(name));
 }
 
 /// Lookup a highlight group name and return its ID.
@@ -7641,7 +7641,7 @@ int syn_name2id_len(const char_u *name, size_t len)
 int syn_name2attr(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int id = syn_name2id(name);
+  int id = syn_name2id((char *)name);
 
   if (id != 0) {
     return syn_id2attr(id);
@@ -7652,7 +7652,7 @@ int syn_name2attr(const char_u *name)
 /*
  * Return TRUE if highlight group "name" exists.
  */
-int highlight_exists(const char_u *name)
+int highlight_exists(const char *name)
 {
   return syn_name2id(name) > 0;
 }
@@ -7870,7 +7870,7 @@ static void combine_stl_hlt(int id, int id_S, int id_alt, int hlcnt, int i, int 
 void highlight_changed(void)
 {
   int id;
-  char_u userhl[30];  // use 30 to avoid compiler warning
+  char userhl[30];  // use 30 to avoid compiler warning
   int id_S = -1;
   int id_SNC = 0;
   int hlcnt;
@@ -7919,7 +7919,7 @@ void highlight_changed(void)
     id_S = hlcnt + 10;
   }
   for (int i = 0; i < 9; i++) {
-    sprintf((char *)userhl, "User%d", i + 1);
+    snprintf(userhl, sizeof(userhl), "User%d", i + 1);
     id = syn_name2id(userhl);
     if (id == 0) {
       highlight_user[i] = 0;

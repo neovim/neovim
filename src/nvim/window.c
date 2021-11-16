@@ -569,7 +569,7 @@ wingotofile:
 
 static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize, int64_t Prenum)
 {
-  size_t len = xstrlcpy((char *)bufp, cmd, bufsize);
+  size_t len = STRLCPY(bufp, cmd, bufsize);
 
   if (Prenum > 0 && len < bufsize) {
     vim_snprintf((char *)bufp + len, bufsize - len, "%" PRId64, Prenum);

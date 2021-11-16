@@ -601,7 +601,7 @@ static int cs_cnt_matches(size_t idx)
     if ((stok = strtok(NULL, (const char *)" ")) == NULL) {
       continue;
     }
-    if (strncmp((const char *)stok, "lines", 5)) {
+    if (strncmp(stok, "lines", 5)) {
       continue;
     }
 
@@ -1214,8 +1214,8 @@ static cscmd_T *cs_lookup_cmd(exarg_T *eap)
   }
 
   len = strlen(stok);
-  for (cmdp = cs_cmds; cmdp->name != NULL; ++cmdp) {
-    if (strncmp((const char *)(stok), cmdp->name, len) == 0) {
+  for (cmdp = cs_cmds; cmdp->name != NULL; cmdp++) {
+    if (strncmp(stok, cmdp->name, len) == 0) {
       return cmdp;
     }
   }

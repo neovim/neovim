@@ -699,7 +699,7 @@ void msgmore(long n)
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
     if (msg(msg_buf)) {
-      set_keep_msg((char_u *)msg_buf, 0);
+      set_keep_msg(msg_buf, 0);
       keep_msg_more = true;
     }
   }

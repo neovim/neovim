@@ -393,7 +393,7 @@ void terminal_enter(void)
   long save_w_p_so = curwin->w_p_so;
   long save_w_p_siso = curwin->w_p_siso;
   if (curwin->w_p_cul && curwin->w_p_culopt_flags & CULOPT_NBR) {
-    if (strcmp((char *)curwin->w_p_culopt, "number")) {
+    if (STRCMP(curwin->w_p_culopt, "number")) {
       save_w_p_culopt = curwin->w_p_culopt;
       curwin->w_p_culopt = (char_u *)xstrdup("number");
     }

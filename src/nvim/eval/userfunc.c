@@ -1818,7 +1818,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   if (name != NULL) {
     name = vim_strsave(name);
     *pp = (char_u *)end;
-    if (strncmp((char *)name, "<SNR>", 5) == 0) {
+    if (STRNCMP(name, "<SNR>", 5) == 0) {
       // Change "<SNR>" to the byte sequence.
       name[0] = K_SPECIAL;
       name[1] = KS_EXTRA;

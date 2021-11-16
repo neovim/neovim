@@ -3544,7 +3544,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (from) {
-    xstrlcpy((char *)cwd, (char *)from, MAXPATHL);
+    STRLCPY(cwd, from, MAXPATHL);
   }
 
   rettv->vval.v_string = vim_strsave(cwd);
@@ -4867,7 +4867,7 @@ static void f_histnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = syn_name2id((const char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_number = syn_name2id(tv_get_string(&argvars[0]));
 }
 
 /*
@@ -4875,7 +4875,7 @@ static void f_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_hlexists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = highlight_exists((const char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_number = highlight_exists(tv_get_string(&argvars[0]));
 }
 
 /*

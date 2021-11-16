@@ -329,7 +329,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row - 1)
       * Columns + sc_col) {
-    set_keep_msg((char_u *)s, 0);
+    set_keep_msg((char *)s, 0);
   }
 
   xfree(buf);
@@ -732,7 +732,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 /// @return true if wait_return not called
 bool emsg(const char *s)
 {
-  return emsg_multiline((const char *)s, false);
+  return emsg_multiline(s, false);
 }
 
 void emsg_invreg(int name)
@@ -1288,11 +1288,11 @@ static void hit_return_msg(void)
 /*
  * Set "keep_msg" to "s".  Free the old value and check for NULL pointer.
  */
-void set_keep_msg(char_u *s, int attr)
+void set_keep_msg(char *s, int attr)
 {
   xfree(keep_msg);
   if (s != NULL && msg_silent == 0) {
-    keep_msg = vim_strsave(s);
+    keep_msg = vim_strsave((char_u *)s);
   } else {
     keep_msg = NULL;
   }
@@ -3342,7 +3342,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   }
 
   if (msg_attr((const char *)message, keep_msg_attr) && msg_scrolled == 0) {
-    set_keep_msg(message, keep_msg_attr);
+    set_keep_msg((char *)message, keep_msg_attr);
   }
   msg_didout = false;  // Overwrite this message.
   msg_nowait = true;   // Don't wait for this message.

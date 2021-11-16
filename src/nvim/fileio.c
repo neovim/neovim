@@ -125,7 +125,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   }
   add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)name);
   // Avoid an over-long translation to cause trouble.
-  xstrlcat((char *)IObuff, (const char *)s, IOSIZE);
+  STRLCAT(IObuff, s, IOSIZE);
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
@@ -1857,7 +1857,7 @@ failed:
         // - When restart_edit is set (otherwise there will be a delay before
         //   redrawing).
         // - When the screen was scrolled but there is no wait-return prompt.
-        set_keep_msg(p, 0);
+        set_keep_msg((char *)p, 0);
       }
       msg_scrolled_ign = false;
     }
@@ -3536,7 +3536,7 @@ restore_backup:
       }
     }
 
-    set_keep_msg((char_u *)msg_trunc_attr((char *)IObuff, FALSE, 0), 0);
+    set_keep_msg(msg_trunc_attr((char *)IObuff, false, 0), 0);
   }
 
   /* When written everything correctly: reset 'modified'.  Unless not

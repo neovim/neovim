@@ -1048,7 +1048,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
   }
 
   if (buf != NULL && buf->b_help) {
-    const size_t dlen = xstrlcpy((char *)dst, (char *)path_tail(src), dstlen);
+    const size_t dlen = STRLCPY(dst, path_tail(src), dstlen);
     return MIN(dlen, dstlen - 1);
   }
 

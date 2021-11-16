@@ -29,8 +29,6 @@
 #include "nvim/message.h"
 #include "nvim/vim.h"  // For _()
 
-#define utf_ptr2char(b) utf_ptr2char((char_u *)b)
-#define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
 
 const char *const encode_bool_var_names[] = {
@@ -614,8 +612,8 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 #define ENCODE_RAW(ch) \
   (ch >= 0x20 && utf_printable(ch))
     for (size_t i = 0; i < utf_len;) {
-      const int ch = utf_ptr2char(utf_buf + i);
-      const size_t shift = (ch == 0? 1: utf_ptr2len(utf_buf + i));
+      const int ch = utf_ptr2char((char_u *)utf_buf + i);
+      const size_t shift = (ch == 0 ? 1 : ((size_t)utf_ptr2len((char_u *)utf_buf + i)));
       assert(shift > 0);
       i += shift;
       switch (ch) {
@@ -654,11 +652,11 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
     ga_append(gap, '"');
     ga_grow(gap, (int)str_len);
     for (size_t i = 0; i < utf_len;) {
-      const int ch = utf_ptr2char(utf_buf + i);
+      const int ch = utf_ptr2char((char_u *)utf_buf + i);
       const size_t shift = (ch == 0? 1: utf_char2len(ch));
       assert(shift > 0);
       // Is false on invalid unicode, but this should already be handled.
-      assert(ch == 0 || shift == utf_ptr2len(utf_buf + i));
+      assert(ch == 0 || shift == ((size_t)utf_ptr2len((char_u *)utf_buf + i)));
       switch (ch) {
       case BS:
       case TAB:

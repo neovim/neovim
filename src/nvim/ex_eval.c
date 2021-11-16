@@ -566,7 +566,7 @@ static void discard_exception(except_T *excp, bool was_finished)
     } else {
       verbose_leave();
     }
-    xstrlcpy((char *)IObuff, (const char *)saved_IObuff, IOSIZE);
+    STRLCPY(IObuff, saved_IObuff, IOSIZE);
     xfree(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT) {

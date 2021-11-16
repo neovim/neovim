@@ -957,7 +957,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   while ((line = fgetline(0, cookie, 0, false)) != NULL) {
     GA_APPEND(char_u *, &ga, line);
   }
-  char *code = (char *)ga_concat_strings_sep(&ga, "\n");
+  char *code = ga_concat_strings_sep(&ga, "\n");
   size_t len = strlen(code);
   nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
 
