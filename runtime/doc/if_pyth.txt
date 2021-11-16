@@ -45,6 +45,11 @@ To see what version of Python you have: >
 
 There is no need to "import sys", it's done by default.
 
+							*python-environment*
+Environment variables set in Vim are not always available in Python.  This
+depends on how Vim and Python were build.  Also see
+https://docs.python.org/3/library/os.html#os.environ
+
 Note: Python is very sensitive to indenting.  Make sure the "class" line and
 "EOF" do not have any indent.
 

@@ -319,21 +319,25 @@ Hints for translators:
 3. Writing help files					*help-writing*
 
 For ease of use, a Vim help file for a plugin should follow the format of the
-standard Vim help files.  If you are writing a new help file it's best to copy
-one of the existing files and use it as a template.
+standard Vim help files, except fot the fist line.  If you are writing a new
+help file it's best to copy one of the existing files and use it as a
+template.
 
 The first line in a help file should have the following format:
 
-*helpfile_name.txt*	For Vim version 7.3	Last change: 2010 June 4
+*plugin_name.txt*	{short description of the plugin}
 
-The first field is a link to the help file name.  The second field describes
-the applicable Vim version.  The last field specifies the last modification
-date of the file.  Each field is separated by a tab.
+The first field is a help tag where ":help plugin_name" will jump to.  The
+remainder of the line, after a Tab, describes the plugin purpose in a short
+way.  This will show up in the "LOCAL ADDITIONS" section of the main help
+file.  Check there that it shows up properly: |local-additions|.
+
+If you want to add a version number of last modification date, put it in the
+second line, right aligned.
 
 At the bottom of the help file, place a Vim modeline to set the 'textwidth'
 and 'tabstop' options and the 'filetype' to "help".  Never set a global option
-in such a modeline, that can have consequences undesired by whoever reads that
-help.
+in such a modeline, that can have undesired consequences.
 
 
 TAGS

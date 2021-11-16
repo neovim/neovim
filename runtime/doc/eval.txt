@@ -10291,7 +10291,9 @@ wildmenumode()					*wildmenumode()*
 win_execute({id}, {command} [, {silent}])		*win_execute()*
 		Like `execute()` but in the context of window {id}.
 		The window will temporarily be made the current window,
-		without triggering autocommands.
+		without triggering autocommands or changing directory.  When
+		executing {command} autocommands will be triggered, this may
+		have unexpected side effects.  Use |:noautocmd| if needed.
 		Example: >
 			call win_execute(winid, 'syntax enable')
 
