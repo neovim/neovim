@@ -271,6 +271,79 @@ describe('vim.diagnostic', function()
   describe('show() and hide()', function()
     it('works', function()
       local result = exec_lua [[
+        local other_bufnr = vim.api.nvim_create_buf(true, false)
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+
+        local result = {}
+
+        vim.diagnostic.config({ underline = false, virtual_text = true })
+
+        local ns_1_diags = {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 5),
+        }
+        local ns_2_diags = {
+          make_warning("Warning 1", 2, 1, 2, 5),
+        }
+        local other_buffer_diags = {
+          make_info("This is interesting", 0, 0, 0, 0)
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
+        vim.diagnostic.set(diagnostic_ns, other_bufnr, other_buffer_diags)
+
+        -- All buffers and namespaces
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Hide one namespace
+        vim.diagnostic.hide(diagnostic_ns)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Show one namespace
+        vim.diagnostic.show(diagnostic_ns)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Hide one buffer
+        vim.diagnostic.hide(nil, other_bufnr)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Hide everything
+        vim.diagnostic.hide()
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Show one buffer
+        vim.diagnostic.show(nil, diagnostic_bufnr)
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        return result
+      ]]
+
+      eq(4, result[1])
+      eq(1, result[2])
+      eq(4, result[3])
+      eq(3, result[4])
+      eq(0, result[5])
+      eq(3, result[6])
+    end)
+  end)
+
+  describe('enable() and disable()', function()
+    it('works without arguments', function()
+      local result = exec_lua [[
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
 
         local result = {}
@@ -288,32 +361,204 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
         vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
 
-        -- Both
-        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
 
-        -- Hide one namespace
-        vim.diagnostic.hide(diagnostic_ns)
-        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns))
+        vim.diagnostic.disable()
 
-        -- Show one namespace
-        vim.diagnostic.show(diagnostic_ns)
-        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns))
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
 
-        -- Hide all namespaces
-        vim.diagnostic.hide()
-        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+        -- Create a new buffer
+        local other_bufnr = vim.api.nvim_create_buf(true, false)
+        local other_buffer_diags = {
+          make_info("This is interesting", 0, 0, 0, 0)
+        }
 
-        -- Show all namespaces
-        vim.diagnostic.show()
-        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) + count_extmarks(diagnostic_bufnr, other_ns))
+        vim.diagnostic.set(diagnostic_ns, other_bufnr, other_buffer_diags)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.enable()
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
 
         return result
       ]]
 
       eq(3, result[1])
       eq(0, result[2])
-      eq(2, result[3])
-      eq(0, result[4])
+      eq(0, result[3])
+      eq(4, result[4])
+    end)
+
+    it('works with only a buffer argument', function()
+      local result = exec_lua [[
+        local other_bufnr = vim.api.nvim_create_buf(true, false)
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+
+        local result = {}
+
+        vim.diagnostic.config({ underline = false, virtual_text = true })
+
+        local ns_1_diags = {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 5),
+        }
+        local ns_2_diags = {
+          make_warning("Warning 1", 2, 1, 2, 5),
+        }
+        local other_buffer_diags = {
+          make_info("This is interesting", 0, 0, 0, 0)
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
+        vim.diagnostic.set(diagnostic_ns, other_bufnr, other_buffer_diags)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.disable(diagnostic_bufnr)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.enable(diagnostic_bufnr)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.disable(other_bufnr)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        return result
+      ]]
+
+      eq(4, result[1])
+      eq(1, result[2])
+      eq(4, result[3])
+      eq(3, result[4])
+    end)
+
+    it('works with only a namespace argument', function()
+      local result = exec_lua [[
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+
+        local result = {}
+
+        vim.diagnostic.config({ underline = false, virtual_text = true })
+
+        local ns_1_diags = {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 5),
+        }
+        local ns_2_diags = {
+          make_warning("Warning 1", 2, 1, 2, 5),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
+
+        vim.diagnostic.disable(nil, diagnostic_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
+
+        vim.diagnostic.enable(nil, diagnostic_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
+
+        vim.diagnostic.disable(nil, other_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns))
+
+        return result
+      ]]
+
+      eq(3, result[1])
+      eq(1, result[2])
+      eq(3, result[3])
+      eq(2, result[4])
+    end)
+
+    it('works with both a buffer and a namespace argument', function()
+      local result = exec_lua [[
+        local other_bufnr = vim.api.nvim_create_buf(true, false)
+
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+
+        local result = {}
+
+        vim.diagnostic.config({ underline = false, virtual_text = true })
+
+        local ns_1_diags = {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 5),
+        }
+        local ns_2_diags = {
+          make_warning("Warning 1", 2, 1, 2, 5),
+        }
+        local other_buffer_diags = {
+          make_info("This is interesting", 0, 0, 0, 0)
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diags)
+        vim.diagnostic.set(diagnostic_ns, other_bufnr, other_buffer_diags)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.disable(diagnostic_bufnr, diagnostic_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.disable(diagnostic_bufnr, other_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        vim.diagnostic.enable(diagnostic_bufnr, diagnostic_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        -- Should have no effect
+        vim.diagnostic.disable(other_bufnr, other_ns)
+
+        table.insert(result, count_extmarks(diagnostic_bufnr, diagnostic_ns) +
+                             count_extmarks(diagnostic_bufnr, other_ns) +
+                             count_extmarks(other_bufnr, diagnostic_ns))
+
+        return result
+      ]]
+
+      eq(4, result[1])
+      eq(2, result[2])
+      eq(1, result[3])
+      eq(3, result[4])
       eq(3, result[5])
     end)
   end)
