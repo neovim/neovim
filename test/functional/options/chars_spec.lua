@@ -122,7 +122,7 @@ describe("'listchars'", function()
                                                         |
     ]])
   end)
-  it('has value local to window', function()
+  it('has window-local value', function()
     feed('i<tab><tab><tab><esc>')
     command('set list laststatus=0')
     command('setl listchars=tab:<->')
@@ -130,6 +130,20 @@ describe("'listchars'", function()
     command('setl listchars<')
     screen:expect([[
       >       >       ^>        │<------><------><------>|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
+  end)
+  it('using :set clears window-local value', function()
+    feed('i<tab><tab><tab><esc>')
+    command('set list laststatus=0')
+    command('setl listchars=tab:<->')
+    command('vsplit')
+    command('set listchars=tab:>-,eol:$')
+    screen:expect([[
+      >------->-------^>-------$│<------><------><------>|
       ~                        │~                       |
       ~                        │~                       |
       ~                        │~                       |
