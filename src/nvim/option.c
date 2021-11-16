@@ -2659,7 +2659,9 @@ ambw_end:
         clear_string_option(&curwin->w_p_lcs);
       }
       FOR_ALL_TAB_WINDOWS(tp, wp) {
-        set_chars_option(wp, &wp->w_p_lcs, true);
+        // If no error was returned above, we don't expect an error
+        // here, so ignore the return value.
+        (void)set_chars_option(wp, &wp->w_p_lcs, true);
       }
       redraw_all_later(NOT_VALID);
     }
@@ -2674,7 +2676,9 @@ ambw_end:
         clear_string_option(&curwin->w_p_fcs);
       }
       FOR_ALL_TAB_WINDOWS(tp, wp) {
-        set_chars_option(wp, &wp->w_p_fcs, true);
+        // If no error was returned above, we don't expect an error
+        // here, so ignore the return value.
+        (void)set_chars_option(wp, &wp->w_p_fcs, true);
       }
       redraw_all_later(NOT_VALID);
     }
