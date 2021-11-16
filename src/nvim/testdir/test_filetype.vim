@@ -180,6 +180,7 @@ let s:filename_checks = {
     \ 'fennel': ['file.fnl'],
     \ 'fetchmail': ['.fetchmailrc'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
+    \ 'fish': ['file.fish'],
     \ 'focexec': ['file.fex', 'file.focexec'],
     \ 'forth': ['file.fs', 'file.ft', 'file.fth'],
     \ 'fortran': ['file.f', 'file.for', 'file.fortran', 'file.fpp', 'file.ftn', 'file.f77', 'file.f90', 'file.f95', 'file.f03', 'file.f08'],
@@ -661,6 +662,7 @@ let s:script_checks = {
       \ 'pascal': [['#!/path/instantfpc']],
       \ 'fennel': [['#!/path/fennel']],
       \ 'routeros': [['#!/path/rsc']],
+      \ 'fish': [['#!/path/fish']],
       \ }
 
 " Various forms of "env" optional arguments.
