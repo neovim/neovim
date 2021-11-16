@@ -7870,7 +7870,7 @@ static void combine_stl_hlt(int id, int id_S, int id_alt, int hlcnt, int i, int 
 void highlight_changed(void)
 {
   int id;
-  char_u userhl[30];  // use 30 to avoid compiler warning
+  char userhl[30];  // use 30 to avoid compiler warning
   int id_S = -1;
   int id_SNC = 0;
   int hlcnt;
@@ -7919,8 +7919,8 @@ void highlight_changed(void)
     id_S = hlcnt + 10;
   }
   for (int i = 0; i < 9; i++) {
-    snprintf((char *)userhl, sizeof(userhl), "User%d", i + 1);
-    id = syn_name2id((char *)userhl);
+    snprintf(userhl, sizeof(userhl), "User%d", i + 1);
+    id = syn_name2id(userhl);
     if (id == 0) {
       highlight_user[i] = 0;
       highlight_stlnc[i] = 0;
