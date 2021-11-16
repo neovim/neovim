@@ -3081,7 +3081,7 @@ bufname([{buf}])						*bufname()*
 	bufname(3)		name of buffer 3
 	bufname("%")		name of current buffer
 	bufname("file2")	name of buffer where "file2" matches.
-
+<
 							*bufnr()*
 bufnr([{buf} [, {create}]])
 		The result is the number of a buffer, as it is displayed by
