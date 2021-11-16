@@ -115,6 +115,13 @@ local format_line_ending = {
   ["mac"] = '\r',
 }
 
+---@private
+---@param bufnr (number)
+---@returns (string)
+local function buf_get_line_ending(bufnr)
+  return format_line_ending[nvim_buf_get_option(bufnr, 'fileformat')] or '\n'
+end
+
 local client_index = 0
 ---@private
 --- Returns a new, unused client id.
@@ -277,9 +284,10 @@ end
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@returns Buffer text as string.
 local function buf_get_full_text(bufnr)
-  local text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, true), '\n')
+  local line_ending = buf_get_line_ending(bufnr)
+  local text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, true), line_ending)
   if nvim_buf_get_option(bufnr, 'eol') then
-    text = text .. '\n'
+    text = text .. line_ending
   end
   return text
 end
@@ -361,9 +369,9 @@ do
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
-      local line_ending = format_line_ending[vim.api.nvim_buf_get_option(0, 'fileformat')]
+      local line_ending = buf_get_line_ending(bufnr)
       local incremental_change = sync.compute_diff(
-        cached_buffers[bufnr], curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending or '\n')
+        cached_buffers[bufnr], curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
       cached_buffers[bufnr] = curr_lines
       return incremental_change
     end
