@@ -2300,6 +2300,9 @@ au BufNewFile,BufRead .bashrc*,.bash[_-]profile*,.bash[_-]logout*,.bash[_-]alias
 au BufNewFile,BufRead .kshrc* call dist#ft#SetFileTypeSH("ksh")
 au BufNewFile,BufRead .profile* call dist#ft#SetFileTypeSH(getline(1))
 
+" Sudoers
+au BufNewFile,BufRead */etc/sudoers.d/*		call s:StarSetf('sudoers')
+
 " tcsh scripts ending in a star
 au BufNewFile,BufRead .tcshrc*	call dist#ft#SetFileTypeShell("tcsh")
 
