@@ -286,6 +286,10 @@ func Test_listchars_unicode()
   call cursor(1, 1)
   call assert_equal(expected, ScreenLines(1, virtcol('$')))
 
+  set listchars=eol:\\u21d4,space:\\u2423,multispace:≡\\u2262\\U00002263,nbsp:\\U00002260,tab:←↔\\u2192
+  redraw!
+  call assert_equal(expected, ScreenLines(1, virtcol('$')))
+
   set listchars+=lead:⇨,trail:⇦
   let expected = ['⇨⇨⇨⇨⇨⇨⇨⇨a←↔↔↔↔↔→b␣c≠d⇦⇦⇔']
   redraw!
