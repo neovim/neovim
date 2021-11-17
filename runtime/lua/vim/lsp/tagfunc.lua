@@ -1,8 +1,9 @@
 local M = {}
 local lsp = vim.lsp
 
-local function mk_tag_item(name, range, uri)
+local function mk_tag_item(name, range, uri, offset_encoding)
   local start = range.start
+  -- todo, use URI and offset encoding to adjust for encoding schema
   return {
     name = name,
     filename = vim.uri_to_fname(uri),
@@ -15,19 +16,22 @@ end
 local function query_definition(pattern)
   local params = lsp.util.make_position_params()
   local results_by_client, err = lsp.buf_request_sync(0, 'textDocument/definition', params, 1000)
-  assert(not err, vim.inspect(err))
+  if err then
+    return {}
+  end
   local results = {}
-  local add = function(range, uri) table.insert(results, mk_tag_item(pattern, range, uri)) end
-  for _, lsp_results in pairs(results_by_client) do
+  local add = function(range, uri, encoding) table.insert(results, mk_tag_item(pattern, range, uri, encoding)) end
+  for client_id, lsp_results in pairs(results_by_client) do
+    local client = vim.lsp.get_client_by_id(client_id)
     local result = lsp_results.result or {}
     if result.range then              -- Location
       add(result.range, result.uri)
     else                              -- Location[] or LocationLink[]
       for _, item in pairs(result) do
         if item.range then            -- Location
-          add(item.range, item.uri)
+          add(item.range, item.uri, client.offset_encoding)
         else                          -- LocationLink
-          add(item.targetSelectionRange, item.targetUri)
+          add(item.targetSelectionRange, item.targetUri, client.offset_encoding)
         end
       end
     end
@@ -37,7 +41,9 @@ end
 
 local function query_workspace_symbols(pattern)
   local results_by_client, err = lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
-  assert(not err, vim.inspect(err))
+  if err then
+    return {}
+  end
   local results = {}
   for _, symbols in pairs(results_by_client) do
     for _, symbol in pairs(symbols.result or {}) do
@@ -60,9 +66,7 @@ function M.tagfunc(pattern, flags)
     return vim.NIL
   end
   -- fall back to tags if no matches
-  if #matches == 0 then
-    return vim.NIL
-  end
+  return #matches > 0 or vim.NIL
 end
 
 
