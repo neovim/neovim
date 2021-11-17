@@ -143,8 +143,8 @@ describe('URI methods', function()
       end)
 
       it('uri_to_fname returns non-file scheme URI without authority unchanged', function()
-        eq('zipfile:/path/to/archive.zip%3A%3Afilename.txt', exec_lua [[
-          return vim.uri_to_fname('zipfile:/path/to/archive.zip%3A%3Afilename.txt')
+        eq('zipfile:///path/to/archive.zip%3A%3Afilename.txt', exec_lua [[
+          return vim.uri_to_fname('zipfile:///path/to/archive.zip%3A%3Afilename.txt')
         ]])
       end)
     end)
@@ -186,7 +186,7 @@ describe('URI methods', function()
     end)
 
     it('uri_to_bufnr & uri_from_bufnr returns original uri for non-file uris without authority', function()
-      local uri = 'zipfile:/path/to/archive.zip%3A%3Afilename.txt'
+      local uri = 'zipfile:///path/to/archive.zip%3A%3Afilename.txt'
       local test_case = string.format([[
         local uri = '%s'
         return vim.uri_from_bufnr(vim.uri_to_bufnr(uri))
