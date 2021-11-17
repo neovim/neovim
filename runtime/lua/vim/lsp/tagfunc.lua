@@ -1,16 +1,13 @@
 local lsp = vim.lsp
 local util = vim.lsp.util
 
-
 local function mk_tag_item(name, range, uri, offset_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
   local byte = util._get_line_byte_from_position(bufnr, range.start, offset_encoding)
   return {
     name = name,
     filename = vim.uri_to_fname(uri),
-    cmd = string.format(
-      'call cursor(%d, %d)|', range.start.line + 1, byte
-    )
+    cmd = string.format('call cursor(%d, %d)|', range.start.line + 1, byte),
   }
 end
 
@@ -21,17 +18,19 @@ local function query_definition(pattern)
     return {}
   end
   local results = {}
-  local add = function(range, uri, offset_encoding) table.insert(results, mk_tag_item(pattern, range, uri, offset_encoding)) end
+  local add = function(range, uri, offset_encoding)
+    table.insert(results, mk_tag_item(pattern, range, uri, offset_encoding))
+  end
   for client_id, lsp_results in pairs(results_by_client) do
     local client = lsp.get_client_by_id(client_id)
     local result = lsp_results.result or {}
-    if result.range then              -- Location
+    if result.range then -- Location
       add(result.range, result.uri)
-    else                              -- Location[] or LocationLink[]
+    else -- Location[] or LocationLink[]
       for _, item in pairs(result) do
-        if item.range then            -- Location
+        if item.range then -- Location
           add(item.range, item.uri, client.offset_encoding)
-        else                          -- LocationLink
+        else -- LocationLink
           add(item.targetSelectionRange, item.targetUri, client.offset_encoding)
         end
       end
@@ -70,6 +69,5 @@ local function tagfunc(pattern, flags)
   -- fall back to tags if no matches
   return #matches > 0 and matches or vim.NIL
 end
-
 
 return tagfunc
