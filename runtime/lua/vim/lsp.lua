@@ -32,6 +32,7 @@ local lsp = {
 }
 
 -- maps request name to the required server capability
+-- capabilities can be nested
 lsp._request_name_to_capability = {
   ['textDocument/hover'] = 'hoverProvider';
   ['textDocument/signatureHelp'] = 'signatureHelpProvider';
@@ -40,11 +41,13 @@ lsp._request_name_to_capability = {
   ['textDocument/declaration'] = 'declarationProvider';
   ['textDocument/typeDefinition'] = 'typeDefinitionProvider';
   ['textDocument/documentSymbol'] = 'documentSymbolProvider';
-  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvide';
+  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvider';
   ['textDocument/rename'] = 'renameProvider';
+  -- TODO(mjlbach): handle nested attributes
   ['textDocument/prepareRename'] = 'renameProvider.prepareProvider';
   ['textDocument/codeAction'] = 'codeActionProvider';
   ['textDocument/codeLens'] = 'codeLensProvider';
+  -- TODO(mjlbach): handle nested attributes
   ['codeLens/resolve'] = 'codeLensProvider.resolveProvider';
   ['workspace/executeCommand'] = 'executeCommandProvider';
   ['workspace/symbol'] = 'workspaceSymbolProvider';
