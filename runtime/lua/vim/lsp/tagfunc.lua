@@ -1,4 +1,3 @@
-local M = {}
 local lsp = vim.lsp
 local util = vim.lsp.util
 
@@ -22,9 +21,9 @@ local function query_definition(pattern)
     return {}
   end
   local results = {}
-  local add = function(range, uri, encoding) table.insert(results, mk_tag_item(pattern, range, uri, encoding)) end
+  local add = function(range, uri, offset_encoding) table.insert(results, mk_tag_item(pattern, range, uri, offset_encoding)) end
   for client_id, lsp_results in pairs(results_by_client) do
-    local client = vim.lsp.get_client_by_id(client_id)
+    local client = lsp.get_client_by_id(client_id)
     local result = lsp_results.result or {}
     if result.range then              -- Location
       add(result.range, result.uri)
@@ -47,10 +46,11 @@ local function query_workspace_symbols(pattern)
     return {}
   end
   local results = {}
-  for _, symbols in pairs(results_by_client) do
+  for client_id, symbols in pairs(results_by_client) do
+    local client = lsp.get_client_by_id(client_id)
     for _, symbol in pairs(symbols.result or {}) do
       local loc = symbol.location
-      local item = mk_tag_item(symbol.name, loc.range, loc.uri)
+      local item = mk_tag_item(symbol.name, loc.range, loc.uri, client.offset_encoding)
       item.kind = lsp.protocol.SymbolKind[symbol.kind] or 'Unknown'
       table.insert(results, item)
     end
@@ -58,9 +58,9 @@ local function query_workspace_symbols(pattern)
   return results
 end
 
-function M.tagfunc(pattern, flags)
+local function tagfunc(pattern, flags)
   local matches
-  if flags == 'c' then
+  if string.match(flags, 'c') then
     matches = query_definition(pattern)
   elseif flags == '' or flags == 'i' then
     matches = query_workspace_symbols(pattern)
@@ -72,4 +72,4 @@ function M.tagfunc(pattern, flags)
 end
 
 
-return M
+return tagfunc
