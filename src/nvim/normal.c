@@ -6789,7 +6789,6 @@ static void n_start_visual_mode(int c)
   VIsual_mode = c;
   VIsual_active = true;
   VIsual_reselect = true;
-  trigger_modechanged();
   // Corner case: the 0 position in a tab may change when going into
   // virtualedit.  Recalculate curwin->w_cursor to avoid bad highlighting.
   //
@@ -6801,6 +6800,7 @@ static void n_start_visual_mode(int c)
 
   foldAdjustVisual();
 
+  trigger_modechanged();
   setmouse();
   // Check for redraw after changing the state.
   conceal_check_cursor_line();

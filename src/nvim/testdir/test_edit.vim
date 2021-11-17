@@ -1727,4 +1727,12 @@ func Test_recursive_ModeChanged()
   au!
 endfunc
 
+func Test_ModeChanged_starts_visual()
+  " This was triggering ModeChanged before setting VIsual, causing a crash.
+  au! ModeChanged * norm 0u
+  sil! norm 
+
+  au! ModeChanged
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
