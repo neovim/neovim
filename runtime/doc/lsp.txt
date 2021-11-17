@@ -637,9 +637,6 @@ client()                                                      *vim.lsp.client*
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server
                     sent on `initialize` describing the server's capabilities.
-                  • {resolved_capabilities} (table): Normalized table of
-                    capabilities that we have detected based on the initialize
-                    response from the server in `server_capabilities` .
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
                 Checks whether a client is stopped.

@@ -216,7 +216,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
 
   -- loop through the clients and make synchronous formatting requests
   for _, client in pairs(clients) do
-    if client.resolved_capabilities.document_formatting then
+    if client.server_capabilities.documentFormattingProvider then
       local params = util.make_formatting_params(options)
       local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
@@ -525,10 +525,11 @@ local function on_code_action_results(results, ctx)
     --
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
+    local resolve_support = client.server_capabilities.textDocument.codeAction.resolveSupport
     if not action.edit
         and client
-        and type(client.resolved_capabilities.code_action) == 'table'
-        and client.resolved_capabilities.code_action.resolveProvider then
+        and type(resolve_support) == 'table'-- get rid of this by making accessor falsy if nested entry non-existent. Can we just test if this exists?
+        and client.server_capabilities.codeActionProvider.resolveProvider then
 
       client.request('codeAction/resolve', action, function(err, resolved_action)
         if err then

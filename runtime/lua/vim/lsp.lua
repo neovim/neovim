@@ -326,7 +326,7 @@ do
         pending_changes = {};
         use_incremental_sync = (
           if_nil(client.config.flags.allow_incremental_sync, true)
-          and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
+          and client.server_capabilities.textDocumentSync.change  == protocol.TextDocumentSyncKind.Incremental
         );
       }
       state_by_client[client.id] = state
@@ -375,7 +375,7 @@ do
     end)
     local uri = vim.uri_from_bufnr(bufnr)
     return function(client)
-      if client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.None then
+      if client.server_capabilities.textDocumentSync.change == protocol.TextDocumentSyncKind.None then
         return
       end
       local state = state_by_client[client.id]
@@ -451,7 +451,7 @@ end
 ---@param client Client object
 local function text_document_did_open_handler(bufnr, client)
   changetracking.init(client, bufnr)
-  if not client.resolved_capabilities.text_document_open_close then
+  if not client.server_capabilities.textDocumentSync.openClose then
     return
   end
   if not vim.api.nvim_buf_is_loaded(bufnr) then
@@ -550,10 +550,6 @@ end
 ---
 ---  - {server_capabilities} (table): Response from the server sent on
 ---    `initialize` describing the server's capabilities.
----
----  - {resolved_capabilities} (table): Normalized table of
----    capabilities that we have detected based on the initialize
----    response from the server in `server_capabilities`.
 function lsp.client()
   error()
 end
@@ -867,9 +863,6 @@ function lsp.start_client(config)
       uninitialized_clients[client_id] = nil
       client.workspaceFolders = initialize_params.workspaceFolders
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
-      -- These are the cleaned up capabilities we use for dynamically deciding
-      -- when to send certain events to clients.
-      client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
       client.supports_method = function(method)
         local required_capability = lsp._request_name_to_capability[method]
         -- if we don't know about the method, assume that the client supports it.
@@ -877,7 +870,8 @@ function lsp.start_client(config)
           return true
         end
 
-        return client.resolved_capabilities[required_capability]
+        -- TODO(mjlbach): this needs to be smart... somehow
+        return client.server_capabilities[required_capability]
       end
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
@@ -886,7 +880,6 @@ function lsp.start_client(config)
         end
       end
       local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
-      local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
 
       -- Only assign after initialized.
       active_clients[client_id] = client
@@ -1095,9 +1088,9 @@ function lsp._text_document_did_save_handler(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client, _client_id)
-    if client.resolved_capabilities.text_document_save then
+    if client.server_capabilities.textDocumentSync.save then
       local included_text
-      if client.resolved_capabilities.text_document_save_include_text then
+      if client.server_capabilities.textDocumentSync.save.includeText then
         included_text = text()
       end
       client.notify('textDocument/didSave', {
@@ -1143,7 +1136,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_reload = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
-          if client.resolved_capabilities.text_document_open_close then
+          if client.server_capabilities.textDocumentSync.openClose then
             client.notify('textDocument/didClose', params)
           end
           text_document_did_open_handler(bufnr, client)
@@ -1152,7 +1145,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
-          if client.resolved_capabilities.text_document_open_close then
+          if client.server_capabilities.textDocumentSync.openClose then
             client.notify('textDocument/didClose', params)
           end
           changetracking.reset_buf(client, bufnr)
