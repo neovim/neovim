@@ -289,6 +289,11 @@ function M.rename(new_name)
     if new_name then on_confirm(new_name) end
   end
   request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
+  -- TODO(mjlbach): only *send* prepareRename if supported by the server.
+  -- new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
+  -- if not (new_name and #new_name > 0) then return end
+  -- params.newName = new_name
+  -- request('textDocument/rename', params)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
