@@ -61,7 +61,7 @@ local function tagfunc(pattern, flags)
   local matches
   if string.match(flags, 'c') then
     matches = query_definition(pattern)
-  elseif flags == '' or flags == 'i' then
+  elseif flags == '' or string.match(flags, 'i') then
     matches = query_workspace_symbols(pattern)
   else
     return vim.NIL
