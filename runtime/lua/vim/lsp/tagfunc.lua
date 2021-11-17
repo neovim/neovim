@@ -1,14 +1,16 @@
 local M = {}
 local lsp = vim.lsp
+local util = vim.lsp.util
+
 
 local function mk_tag_item(name, range, uri, offset_encoding)
-  local start = range.start
-  -- todo, use URI and offset encoding to adjust for encoding schema
+  local bufnr = vim.uri_to_bufnr(uri)
+  local byte = util._get_line_byte_from_position(bufnr, range.start, offset_encoding)
   return {
     name = name,
     filename = vim.uri_to_fname(uri),
     cmd = string.format(
-      'call cursor(%d, %d)', start.line + 1, start.character + 1
+      'call cursor(%d, %d)|', range.start.line + 1, byte
     )
   }
 end
@@ -66,7 +68,7 @@ function M.tagfunc(pattern, flags)
     return vim.NIL
   end
   -- fall back to tags if no matches
-  return #matches > 0 or vim.NIL
+  return #matches > 0 and matches or vim.NIL
 end
 
 
