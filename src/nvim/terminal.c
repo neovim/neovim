@@ -324,10 +324,11 @@ void terminal_close(Terminal *term, int status)
   }
 
   if (buf && !is_autocmd_blocked()) {
-    dict_T *dict = get_vim_var_dict(VV_EVENT);
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
     tv_dict_add_nr(dict, S_LEN("status"), status);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
-    tv_dict_clear(dict);
+    restore_v_event(dict, &save_v_event);
   }
 }
 

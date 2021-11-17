@@ -1603,7 +1603,8 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
 
   recursive = true;
 
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
   char buf[8];
 
   switch (scope) {
@@ -1648,7 +1649,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  curbuf);
 
-  tv_dict_clear(dict);
+  restore_v_event(dict, &save_v_event);
 
   recursive = false;
 }

@@ -1721,4 +1721,10 @@ func Test_mode_changes()
   unlet! g:i_to_any
 endfunc
 
+func Test_recursive_ModeChanged()
+  au! ModeChanged * norm 0u
+  sil! norm 
+  au!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

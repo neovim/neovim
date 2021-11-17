@@ -2719,12 +2719,13 @@ static bool pum_enough_matches(void)
 static void trigger_complete_changed_event(int cur)
 {
   static bool recursive = false;
+  save_v_event_T save_v_event;
 
   if (recursive) {
     return;
   }
 
-  dict_T *v_event = get_vim_var_dict(VV_EVENT);
+  dict_T *v_event = get_v_event(&save_v_event);
   if (cur < 0) {
     tv_dict_add_dict(v_event, S_LEN("completed_item"), tv_dict_alloc());
   } else {
@@ -2740,7 +2741,7 @@ static void trigger_complete_changed_event(int cur)
   textlock--;
   recursive = false;
 
-  tv_dict_clear(v_event);
+  restore_v_event(v_event, &save_v_event);
 }
 
 /// Show the popup menu for the list of matches.

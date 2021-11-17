@@ -10,6 +10,7 @@
 #include "nvim/event/socket.h"
 #include "nvim/fileio.h"
 #include "nvim/lua/executor.h"
+#include "nvim/misc1.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
@@ -821,7 +822,8 @@ static void set_info_event(void **argv)
   Channel *chan = argv[0];
   event_T event = (event_T)(ptrdiff_t)argv[1];
 
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
   Dictionary info = channel_info(chan->id);
   typval_T retval;
   (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
@@ -829,7 +831,7 @@ static void set_info_event(void **argv)
 
   apply_autocmds(event, NULL, NULL, false, curbuf);
 
-  tv_dict_clear(dict);
+  restore_v_event(dict, &save_v_event);
   api_free_dictionary(info);
   channel_decref(chan);
 }
