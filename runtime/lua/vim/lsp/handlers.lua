@@ -352,6 +352,7 @@ M['textDocument/documentHighlight'] = function(_, result, ctx, _)
   if not result then return end
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
+  if not client then return end
   util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
 end
 
