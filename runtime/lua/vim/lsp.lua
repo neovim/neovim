@@ -1587,6 +1587,13 @@ function lsp.formatexpr(opts)
   return 0
 end
 
+-- Provides an interface between the built-in client and `tagfunc`
+--
+-- Used via `set tagfunc=v:lua.vim.lsp.tagfunc`
+function lsp.tagfunc(...)
+  return require('vim.lsp.tagfunc')(...)
+end
+
 ---Checks whether a client is stopped.
 ---
 ---@param client_id (Number)
