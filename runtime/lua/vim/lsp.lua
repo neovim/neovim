@@ -31,28 +31,28 @@ local lsp = {
   rpc_response_error = lsp_rpc.rpc_response_error;
 }
 
--- maps request name to the required resolved_capability in the client.
+-- maps request name to the required server capability
 lsp._request_name_to_capability = {
-  ['textDocument/hover'] = 'hover';
-  ['textDocument/signatureHelp'] = 'signature_help';
-  ['textDocument/definition'] = 'goto_definition';
-  ['textDocument/implementation'] = 'implementation';
-  ['textDocument/declaration'] = 'declaration';
-  ['textDocument/typeDefinition'] = 'type_definition';
-  ['textDocument/documentSymbol'] = 'document_symbol';
-  ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
-  ['textDocument/rename'] = 'rename';
-  ['textDocument/prepareRename'] = 'rename';
-  ['textDocument/codeAction'] = 'code_action';
-  ['textDocument/codeLens'] = 'code_lens';
-  ['codeLens/resolve'] = 'code_lens_resolve';
-  ['workspace/executeCommand'] = 'execute_command';
-  ['workspace/symbol'] = 'workspace_symbol';
-  ['textDocument/references'] = 'find_references';
-  ['textDocument/rangeFormatting'] = 'document_range_formatting';
-  ['textDocument/formatting'] = 'document_formatting';
-  ['textDocument/completion'] = 'completion';
-  ['textDocument/documentHighlight'] = 'document_highlight';
+  ['textDocument/hover'] = 'hoverProvider';
+  ['textDocument/signatureHelp'] = 'signatureHelpProvider';
+  ['textDocument/definition'] = 'definitionProvider';
+  ['textDocument/implementation'] = 'implementationProvider';
+  ['textDocument/declaration'] = 'declarationProvider';
+  ['textDocument/typeDefinition'] = 'typeDefinitionProvider';
+  ['textDocument/documentSymbol'] = 'documentSymbolProvider';
+  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvide';
+  ['textDocument/rename'] = 'renameProvider';
+  ['textDocument/prepareRename'] = 'renameProvider.prepareProvider';
+  ['textDocument/codeAction'] = 'codeActionProvider';
+  ['textDocument/codeLens'] = 'codeLensProvider';
+  ['codeLens/resolve'] = 'codeLensProvider.resolveProvider';
+  ['workspace/executeCommand'] = 'executeCommandProvider';
+  ['workspace/symbol'] = 'workspaceSymbolProvider';
+  ['textDocument/references'] = 'referencesProvider';
+  ['textDocument/rangeFormatting'] = 'documentRangeFormattingProvider';
+  ['textDocument/formatting'] = 'documentFormattingProvider';
+  ['textDocument/completion'] = 'completionProvider';
+  ['textDocument/documentHighlight'] = 'documentHighlightProvider';
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.

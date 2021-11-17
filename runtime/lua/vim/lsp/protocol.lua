@@ -775,3 +775,4 @@ function protocol.make_client_capabilities()
     };
   }
 end
+return protocol
