@@ -34,28 +34,26 @@ local lsp = {
 -- maps request name to the required server capability
 -- capabilities can be nested
 lsp._request_name_to_capability = {
-  ['textDocument/hover'] = 'hoverProvider';
-  ['textDocument/signatureHelp'] = 'signatureHelpProvider';
-  ['textDocument/definition'] = 'definitionProvider';
-  ['textDocument/implementation'] = 'implementationProvider';
-  ['textDocument/declaration'] = 'declarationProvider';
-  ['textDocument/typeDefinition'] = 'typeDefinitionProvider';
-  ['textDocument/documentSymbol'] = 'documentSymbolProvider';
-  ['textDocument/prepareCallHierarchy'] = 'callHierarchyProvider';
-  ['textDocument/rename'] = 'renameProvider';
-  -- TODO(mjlbach): handle nested attributes
-  ['textDocument/prepareRename'] = 'renameProvider.prepareProvider';
-  ['textDocument/codeAction'] = 'codeActionProvider';
-  ['textDocument/codeLens'] = 'codeLensProvider';
-  -- TODO(mjlbach): handle nested attributes
-  ['codeLens/resolve'] = 'codeLensProvider.resolveProvider';
-  ['workspace/executeCommand'] = 'executeCommandProvider';
-  ['workspace/symbol'] = 'workspaceSymbolProvider';
-  ['textDocument/references'] = 'referencesProvider';
-  ['textDocument/rangeFormatting'] = 'documentRangeFormattingProvider';
-  ['textDocument/formatting'] = 'documentFormattingProvider';
-  ['textDocument/completion'] = 'completionProvider';
-  ['textDocument/documentHighlight'] = 'documentHighlightProvider';
+  ['textDocument/hover'] = {'hoverProvider'};
+  ['textDocument/signatureHelp'] = {'signatureHelpProvider'};
+  ['textDocument/definition'] = {'definitionProvider'};
+  ['textDocument/implementation'] = {'implementationProvider'};
+  ['textDocument/declaration'] = {'declarationProvider'};
+  ['textDocument/typeDefinition'] = {'typeDefinitionProvider'};
+  ['textDocument/documentSymbol'] = {'documentSymbolProvider'};
+  ['textDocument/prepareCallHierarchy'] = {'callHierarchyProvider'};
+  ['textDocument/rename'] = {'renameProvider'};
+  ['textDocument/prepareRename'] = {'renameProvider', 'prepareProvider'};
+  ['textDocument/codeAction'] = {'codeActionProvider'};
+  ['textDocument/codeLens'] = {'codeLensProvider'};
+  ['codeLens/resolve'] = {'codeLensProvider', 'resolveProvider'};
+  ['workspace/executeCommand'] = {'executeCommandProvider'};
+  ['workspace/symbol'] = {'workspaceSymbolProvider'};
+  ['textDocument/references'] = {'referencesProvider'};
+  ['textDocument/rangeFormatting'] = {'documentRangeFormattingProvider'};
+  ['textDocument/formatting'] = {'documentFormattingProvider'};
+  ['textDocument/completion'] = {'completionProvider'};
+  ['textDocument/documentHighlight'] = {'documentHighlightProvider'};
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -867,14 +865,25 @@ function lsp.start_client(config)
       client.workspaceFolders = initialize_params.workspaceFolders
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.supports_method = function(method)
-        local required_capability = lsp._request_name_to_capability[method]
-        -- if we don't know about the method, assume that the client supports it.
-        if not required_capability then
+        local capability_keys = lsp._request_name_to_capability[method]
+        -- Assume client supports methods that are not checked by neovim
+        if not capability_keys then
           return true
         end
+        
+        local server_capabilities = client.server_capabilities
+        local supported = true
+        for _, key in ipairs(capability_keys) do
+          print(key)
+          if not server_capabilities[key] then
+            return false
+          else
+            -- check nested keys
+            server_capabilities = server_capabilities[key]
+          end
+        end
 
-        -- TODO(mjlbach): this needs to be smart... somehow
-        return client.server_capabilities[required_capability]
+        return true
       end
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
@@ -889,6 +898,7 @@ function lsp.start_client(config)
       -- If we had been registered before we start, then send didOpen This can
       -- happen if we attach to buffers before initialize finishes or if
       -- someone restarts a client.
+
       for bufnr, client_ids in pairs(all_buffer_active_clients) do
         if client_ids[client_id] then
           client._on_attach(bufnr)
