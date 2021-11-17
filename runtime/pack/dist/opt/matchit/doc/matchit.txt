@@ -1,10 +1,10 @@
-*matchit.txt*   Extended "%" matching
+*matchit.txt*	Extended "%" matching
 
 For instructions on installing this file, type
 	`:help matchit-install`
 inside Vim.
 
-For Vim version 8.1.  Last change:  2021 May 17
+For Vim version 8.1.  Last change:  2021 Nov 13
 
 
 		  VIM REFERENCE MANUAL    by Benji Fisher et al

@@ -102,6 +102,9 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 
 ==============================================================================
 4. History							*zip-history* {{{1
+   v32 Oct 22, 2021 * to avoid an issue with a vim 8.2 patch, zipfile: has
+   		      been changed to zipfile:// . This often shows up
+		      as zipfile:/// with zipped files that are root-based.
    v29 Apr 02, 2017 * (Klartext) reported that an encrypted zip file could
    		      opened but the swapfile held unencrypted contents.
 		      The solution is to edit the contents of a zip file
