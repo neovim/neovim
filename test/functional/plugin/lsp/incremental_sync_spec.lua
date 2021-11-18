@@ -297,7 +297,31 @@ describe('incremental synchronization', function()
       }
       test_edit({"🔥"}, {"x"}, expected_text_changes, 'utf-16', '\n')
     end)
-    it('deleting a multiple lines containing multibyte characters', function()
+    it('deleting a multibyte character from a long line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 85,
+              line = 1
+            },
+            ['end'] = {
+              character = 86,
+              line = 1
+            }
+          },
+          rangeLength = 1,
+          text = ''
+        }
+      }
+      local original_lines = {
+        "\\begin{document}",
+        "→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→",
+        "\\end{document}",
+      }
+      test_edit(original_lines, {"jx"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('deleting multiple lines containing multibyte characters', function()
       local expected_text_changes = {
         {
           range = {

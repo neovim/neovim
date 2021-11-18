@@ -74,43 +74,45 @@ local function byte_to_utf(line, byte, offset_encoding)
   return utf_idx + 1
 end
 
+local function compute_line_length(line, offset_encoding)
+  local length
+  local _
+  if offset_encoding == 'utf-16' then
+     _, length = str_utfindex(line)
+  elseif offset_encoding == 'utf-32' then
+    length, _ = str_utfindex(line)
+  else
+    length = #line
+  end
+  return length
+end
+
 ---@private
 -- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
 -- utf-8 index and either the utf-16, or utf-32 index.
 ---@param line string the line to index into
 ---@param byte integer the byte idx
----@param align string when dealing with multibyte characters,
---        to choose the start of the current character or the beginning of the next.
---        Used for incremental sync for start/end range respectively
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 ---@returns table<string, int> byte_idx and char_idx of first change position
-local function align_position(line, byte, align, offset_encoding)
+local function align_end_position(line, byte, offset_encoding)
   local char
   -- If on the first byte, or an empty string: the trivial case
   if byte == 1 or #line == 0 then
     char = byte
   -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
-    byte = byte + str_utf_end(line, #line)
-    char = byte_to_utf(line, byte, offset_encoding)
+    char = compute_line_length(line, offset_encoding) + 1
   else
     -- Modifying line, find the nearest utf codepoint
-    if align == 'start' then
-      byte = byte + str_utf_start(line, byte)
-      char = byte_to_utf(line, byte, offset_encoding)
-    elseif align == 'end' then
-      local offset = str_utf_end(line, byte)
-      -- If the byte does not fall on the start of the character, then
-      -- align to the start of the next character.
-      if offset > 0 then
-        char = byte_to_utf(line, byte, offset_encoding) + 1
-        byte = byte + offset
-      else
-        char = byte_to_utf(line, byte, offset_encoding)
-        byte = byte + offset
-      end
+    local offset = str_utf_end(line, byte)
+    -- If the byte does not fall on the start of the character, then
+    -- align to the start of the next character.
+    if offset > 0 then
+      char = byte_to_utf(line, byte, offset_encoding) + 1
+      byte = byte + offset
     else
-      error('`align` must be start or end.')
+      char = byte_to_utf(line, byte, offset_encoding)
+      byte = byte + offset
     end
     -- Extending line, find the nearest utf codepoint for the last valid character
   end
@@ -154,7 +156,18 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   end
 
   -- Convert byte to codepoint if applicable
-  local byte_idx, char_idx = align_position(prev_line, start_byte_idx, 'start', offset_encoding)
+  local char_idx
+  local byte_idx
+  if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1)then
+    byte_idx = start_byte_idx
+    char_idx = 1
+  elseif start_byte_idx == #prev_line + 1 then
+    byte_idx = start_byte_idx
+    char_idx = compute_line_length(prev_line, offset_encoding)  + 1
+  else
+    byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
+    char_idx = byte_to_utf(prev_line, start_byte_idx, offset_encoding)
+  end
 
   -- Return the start difference (shared for new and prev lines)
   return { line_idx = firstline, byte_idx = byte_idx, char_idx = char_idx }
@@ -219,11 +232,12 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
 
   -- Iterate from end to beginning of shortest line
   local prev_end_byte_idx = prev_line_length - byte_offset + 1
+
   -- Handle case where lines match
   if prev_end_byte_idx == 0 then
     prev_end_byte_idx = 1
   end
-  local prev_byte_idx, prev_char_idx = align_position(prev_line, prev_end_byte_idx, 'start', offset_encoding)
+  local prev_byte_idx, prev_char_idx = align_end_position(prev_line, prev_end_byte_idx, offset_encoding)
   local prev_end_range = { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
   local curr_end_range
@@ -236,7 +250,7 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
     if curr_end_byte_idx == 0 then
       curr_end_byte_idx = 1
     end
-    local curr_byte_idx, curr_char_idx = align_position(curr_line, curr_end_byte_idx, 'start', offset_encoding)
+    local curr_byte_idx, curr_char_idx = align_end_position(curr_line, curr_end_byte_idx, offset_encoding)
     curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
   end
 
@@ -280,18 +294,6 @@ local function extract_text(lines, start_range, end_range, line_ending)
   end
 end
 
-local function compute_line_length(line, offset_encoding)
-  local length
-  local _
-  if offset_encoding == 'utf-16' then
-     _, length = str_utfindex(line)
-  elseif offset_encoding == 'utf-32' then
-    length, _ = str_utfindex(line)
-  else
-    length = #line
-  end
-  return length
-end
 ---@private
 -- rangelength depends on the offset encoding
 -- bytes for utf-8 (clangd with extenion)
