@@ -4523,41 +4523,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
   }
   changed_line_abv_curs();      // assume cursor position needs updating
 
-  // New directory is either the local directory of the window, tab or NULL.
-  char *new_dir = (char *)(curwin->w_localdir
-                           ? curwin->w_localdir : curtab->tp_localdir);
-
-  char cwd[MAXPATHL];
-  if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
-    cwd[0] = NUL;
-  }
-
-  if (new_dir) {
-    // Window/tab has a local directory: Save current directory as global
-    // (unless that was done already) and change to the local directory.
-    if (globaldir == NULL) {
-      if (cwd[0] != NUL) {
-        globaldir = (char_u *)xstrdup(cwd);
-      }
-    }
-    if (os_chdir(new_dir) == 0) {
-      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
-        do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
-      }
-      shorten_fnames(true);
-    }
-  } else if (globaldir != NULL) {
-    // Window doesn't have a local directory and we are not in the global
-    // directory: Change to the global directory.
-    if (os_chdir((char *)globaldir) == 0) {
-      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
-      }
-    }
-    XFREE_CLEAR(globaldir);
-    shorten_fnames(true);
-  }
+  fix_current_dir();
 
   if (flags & WEE_TRIGGER_NEW_AUTOCMDS) {
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
@@ -4602,6 +4568,44 @@ static void win_enter_ext(win_T *const wp, const int flags)
   do_autochdir();
 }
 
+/// Used after making another window the current one: change directory if needed.
+void fix_current_dir(void)
+{
+  // New directory is either the local directory of the window, tab or NULL.
+  char *new_dir = (char *)(curwin->w_localdir
+                           ? curwin->w_localdir : curtab->tp_localdir);
+  char cwd[MAXPATHL];
+  if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
+    cwd[0] = NUL;
+  }
+
+  if (new_dir) {
+    // Window/tab has a local directory: Save current directory as global
+    // (unless that was done already) and change to the local directory.
+    if (globaldir == NULL) {
+      if (cwd[0] != NUL) {
+        globaldir = (char_u *)xstrdup(cwd);
+      }
+    }
+    if (os_chdir(new_dir) == 0) {
+      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
+        do_autocmd_dirchanged(new_dir, curwin->w_localdir
+                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
+      }
+      shorten_fnames(true);
+    }
+  } else if (globaldir != NULL) {
+    // Window doesn't have a local directory and we are not in the global
+    // directory: Change to the global directory.
+    if (os_chdir((char *)globaldir) == 0) {
+      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
+      }
+    }
+    XFREE_CLEAR(globaldir);
+    shorten_fnames(true);
+  }
+}
 
 /// Jump to the first open window that contains buffer "buf", if one exists.
 /// Returns a pointer to the window found, otherwise NULL.
@@ -6624,6 +6628,9 @@ void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab, bool no_dis
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
   }
+  // If called by win_execute() and executing the command changed the
+  // directory, it now has to be restored.
+  fix_current_dir();
 }
 
 /// Make "buf" the current buffer.

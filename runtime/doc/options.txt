@@ -3792,6 +3792,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The characters ':' and ',' should not be used.  UTF-8 characters can
 	be used.  All characters must be single width.
 
+	Each character can be specified as hex: >
+		set listchars=eol:\\x24
+		set listchars=eol:\\u21b5
+		set listchars=eol:\\U000021b5
+<	Note that a double backslash is used.  The number of hex characters
+	must be exactly 2 for \\x, 4 for \\u and 8 for \\U.
+
 	Examples: >
 	    :set lcs=tab:>-,trail:-
 	    :set lcs=tab:>-,eol:<,nbsp:%

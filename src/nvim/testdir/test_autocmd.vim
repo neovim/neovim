@@ -222,6 +222,7 @@ func Test_win_tab_autocmd()
 
   augroup testing
     au WinNew * call add(g:record, 'WinNew')
+    au WinClosed * call add(g:record, 'WinClosed')
     au WinEnter * call add(g:record, 'WinEnter') 
     au WinLeave * call add(g:record, 'WinLeave') 
     au TabNew * call add(g:record, 'TabNew')
@@ -238,8 +239,8 @@ func Test_win_tab_autocmd()
   call assert_equal([
 	\ 'WinLeave', 'WinNew', 'WinEnter',
 	\ 'WinLeave', 'TabLeave', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
-	\ 'WinLeave', 'TabLeave', 'TabClosed', 'WinEnter', 'TabEnter',
-	\ 'WinLeave', 'WinEnter'
+	\ 'WinLeave', 'TabLeave', 'WinClosed', 'TabClosed', 'WinEnter', 'TabEnter',
+	\ 'WinLeave', 'WinClosed', 'WinEnter'
 	\ ], g:record)
 
   let g:record = []
@@ -250,13 +251,52 @@ func Test_win_tab_autocmd()
   call assert_equal([
 	\ 'WinLeave', 'TabLeave', 'WinNew', 'WinEnter', 'TabNew', 'TabEnter',
 	\ 'WinLeave', 'TabLeave', 'WinEnter', 'TabEnter',
-	\ 'TabClosed'
+	\ 'WinClosed', 'TabClosed'
 	\ ], g:record)
 
   augroup testing
     au!
   augroup END
   unlet g:record
+endfunc
+
+func Test_WinClosed()
+  " Test that the pattern is matched against the closed window's ID, and both
+  " <amatch> and <afile> are set to it.
+  new
+  let winid = win_getid()
+  let g:matched = v:false
+  augroup test-WinClosed
+    autocmd!
+    execute 'autocmd WinClosed' winid 'let g:matched = v:true'
+    autocmd WinClosed * let g:amatch = str2nr(expand('<amatch>'))
+    autocmd WinClosed * let g:afile = str2nr(expand('<afile>'))
+  augroup END
+  close
+  call assert_true(g:matched)
+  call assert_equal(winid, g:amatch)
+  call assert_equal(winid, g:afile)
+
+  " Test that WinClosed is non-recursive.
+  new
+  new
+  call assert_equal(3, winnr('$'))
+  let g:triggered = 0
+  augroup test-WinClosed
+    autocmd!
+    autocmd WinClosed * let g:triggered += 1
+    autocmd WinClosed * 2 wincmd c
+  augroup END
+  close
+  call assert_equal(1, winnr('$'))
+  call assert_equal(1, g:triggered)
+
+  autocmd! test-WinClosed
+  augroup! test-WinClosed
+  unlet g:matched
+  unlet g:amatch
+  unlet g:afile
+  unlet g:triggered
 endfunc
 
 func s:AddAnAutocmd()

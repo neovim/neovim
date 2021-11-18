@@ -3422,6 +3422,37 @@ void check_blending(win_T *wp)
     wp->w_p_winbl > 0 || (wp->w_floating && wp->w_float_config.shadow);
 }
 
+/// Calls mb_cptr2char_adv(p) and returns the character.
+/// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
+/// Returns 0 for invalid hex or invalid UTF-8 byte.
+static int get_encoded_char_adv(char_u **p)
+{
+  char_u *s = *p;
+
+  if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
+    int64_t num = 0;
+    int bytes;
+    int n;
+    for (bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
+      *p += 2;
+      n = hexhex2nr(*p);
+      if (n < 0) {
+        return 0;
+      }
+      num = num * 256 + n;
+    }
+    *p += 2;
+    return (int)num;
+  }
+
+  // TODO(bfredl): use schar_T representation and utfc_ptr2len
+  int clen = utf_ptr2len(s);
+  int c = mb_cptr2char_adv((const char_u **)p);
+  if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
+    return 0;
+  }
+  return c;
+}
 
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
@@ -3526,26 +3557,21 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             && p[len + 1] != NUL) {
           c2 = c3 = 0;
           s = p + len + 1;
-
-          // TODO(bfredl): use schar_T representation and utfc_ptr2len
-          int c1len = utf_ptr2len(s);
-          c1 = mb_cptr2char_adv((const char_u **)&s);
-          if (utf_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
+          c1 = get_encoded_char_adv(&s);
+          if (c1 == 0 || utf_char2cells(c1) > 1) {
             return e_invarg;
           }
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
             if (*s == NUL) {
               return e_invarg;
             }
-            int c2len = utf_ptr2len(s);
-            c2 = mb_cptr2char_adv((const char_u **)&s);
-            if (utf_char2cells(c2) > 1 || (c2len == 1 && c2 > 127)) {
+            c2 = get_encoded_char_adv(&s);
+            if (c2 == 0 || utf_char2cells(c2) > 1) {
               return e_invarg;
             }
             if (!(*s == ',' || *s == NUL)) {
-              int c3len = utf_ptr2len(s);
-              c3 = mb_cptr2char_adv((const char_u **)&s);
-              if (utf_char2cells(c3) > 1 || (c3len == 1 && c3 > 127)) {
+              c3 = get_encoded_char_adv(&s);
+              if (c3 == 0 || utf_char2cells(c3) > 1) {
                 return e_invarg;
               }
             }
@@ -3578,9 +3604,8 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             last_multispace = p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              int c1len = utf_ptr2len(s);
-              c1 = mb_cptr2char_adv((const char_u **)&s);
-              if (utf_char2cells(c1) > 1 || (c1len == 1 && c1 > 127)) {
+              c1 = get_encoded_char_adv(&s);
+              if (c1 == 0 || utf_char2cells(c1) > 1) {
                 return e_invarg;
               }
               multispace_len++;
@@ -3593,7 +3618,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              c1 = mb_cptr2char_adv((const char_u **)&s);
+              c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
