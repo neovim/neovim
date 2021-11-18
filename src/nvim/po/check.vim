@@ -162,7 +162,10 @@ endwhile
 " Check that the file is well formed according to msgfmts understanding
 if executable("msgfmt")
   let filename = expand("%")
-  let a = system("msgfmt --statistics OLD_PO_FILE_INPUT=yes " . filename)
+  " Newer msgfmt does not take OLD_PO_FILE_INPUT argument, must be in
+  " environment.
+  let $OLD_PO_FILE_INPUT = 'yes'
+  let a = system("msgfmt --statistics " . filename)
   if v:shell_error != 0
     let error = matchstr(a, filename.':\zs\d\+\ze:')+0
     for line in split(a, '\n') | echomsg line | endfor
