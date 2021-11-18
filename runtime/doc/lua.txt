@@ -1200,7 +1200,7 @@ inspect({object}, {options})                                   *vim.inspect()*
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
 
-make_dict_accessor({scope})                         *vim.make_dict_accessor()*
+make_dict_accessor({scope}, {handle})               *vim.make_dict_accessor()*
                 TODO: Documentation
 
 notify({msg}, {log_level}, {_opts})                             *vim.notify()*
@@ -1729,6 +1729,12 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                  • format_item (function item -> text)
                                    Function to format an individual item from
                                    `items` . Defaults to `tostring` .
+                                 • kind (string|nil) Arbitrary hint string
+                                   indicating the item shape. Plugins
+                                   reimplementing `vim.ui.select` may wish to
+                                   use this to infer the structure or
+                                   semantics of `items` , or the context in
+                                   which select() was called.
                     {on_choice}  function ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
                                  1-based index of `item` within `item` . `nil`

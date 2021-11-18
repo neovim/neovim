@@ -652,35 +652,6 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     occurred, the values from all preceding calls will still
                     be returned.
 
-                                                   *nvim_call_dict_function()*
-nvim_call_dict_function({dict}, {fn}, {args})
-                Calls a VimL |Dictionary-function| with the given arguments.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {dict}  Dictionary, or String evaluating to a VimL |self|
-                            dict
-                    {fn}    Name of the function defined on the VimL dict
-                    {args}  Function arguments packed in an Array
-
-                Return: ~
-                    Result of the function call
-
-nvim_call_function({fn}, {args})                        *nvim_call_function()*
-                Calls a VimL function with the given arguments.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {fn}    Function to call
-                    {args}  Function arguments packed in an Array
-
-                Return: ~
-                    Result of the function call
-
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
                 Send data to channel `id` . For a job, it writes it to the
                 stdin of the process. For the stdio channel |channel-stdio|,
@@ -697,18 +668,6 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
                     {chan}  id of the channel
                     {data}  data to write. 8-bit clean: can contain NUL bytes.
 
-nvim_command({command})                                       *nvim_command()*
-                Executes an ex-command.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {command}  Ex-command string
-
-                See also: ~
-                    |nvim_exec()|
-
 nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 Creates a new, empty, unnamed buffer.
 
@@ -723,22 +682,6 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
 
                 See also: ~
                     buf_open_scratch
-
-nvim_create_namespace({name})                        *nvim_create_namespace()*
-                Creates a new *namespace* or gets an existing one.
-
-                Namespaces are used for buffer highlights and virtual text,
-                see |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
-
-                Namespaces can be named or anonymous. If `name` matches an
-                existing namespace, the associated id is returned. If `name`
-                is an empty string a new, anonymous namespace is created.
-
-                Parameters: ~
-                    {name}  Namespace name or empty string
-
-                Return: ~
-                    Namespace id
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
@@ -806,19 +749,6 @@ nvim_err_writeln({str})                                   *nvim_err_writeln()*
                 See also: ~
                     nvim_err_write()
 
-nvim_eval({expr})                                                *nvim_eval()*
-                Evaluates a VimL |expression|. Dictionaries and Lists are
-                recursively expanded.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {expr}  VimL expression string
-
-                Return: ~
-                    Evaluation result or expanded object
-
 nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                 Evaluates statusline string.
 
@@ -851,29 +781,6 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                       • start: (number) Byte index (0-based) of first
                         character that uses the highlight.
                       • group: (string) Name of highlight group.
-
-nvim_exec({src}, {output})                                       *nvim_exec()*
-                Executes Vimscript (multiline block of Ex-commands), like
-                anonymous |:source|.
-
-                Unlike |nvim_command()| this function supports heredocs,
-                script-scope (s:), etc.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {src}     Vimscript code
-                    {output}  Capture and return all (non-error, non-shell
-                              |:!|) output
-
-                Return: ~
-                    Output (non-error, non-shell |:!|) if `output` is true,
-                    else empty string.
-
-                See also: ~
-                    |execute()|
-                    |nvim_command()|
 
 nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Execute Lua code. Parameters (if any) are available as `...`
@@ -1110,12 +1017,6 @@ nvim_get_mode()                                              *nvim_get_mode()*
                 Attributes: ~
                     {fast}
 
-nvim_get_namespaces()                                  *nvim_get_namespaces()*
-                Gets existing, non-anonymous namespaces.
-
-                Return: ~
-                    dict that maps from names to namespace ids.
-
 nvim_get_option({name})                                    *nvim_get_option()*
                 Gets an option value string.
 
@@ -1344,7 +1245,15 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
 
                 Parameters: ~
                     {buffer}  the buffer to use (expected to be empty)
-                    {opts}    Optional parameters. Reserved for future use.
+                    {opts}    Optional parameters.
+                              • on_input: lua callback for input sent, i e
+                                keypresses in terminal mode. Note: keypresses
+                                are sent raw as they would be to the pty
+                                master end. For instance, a carriage return is
+                                sent as a "\r", not as a "\n". |textlock|
+                                applies. It is possible to call
+                                |nvim_chan_send| directly in the callback
+                                however. ["input", term, bufnr, data]
 
                 Return: ~
                     Channel id, or 0 on error
@@ -1356,104 +1265,6 @@ nvim_out_write({str})                                       *nvim_out_write()*
 
                 Parameters: ~
                     {str}  Message
-
-                                                     *nvim_parse_expression()*
-nvim_parse_expression({expr}, {flags}, {highlight})
-                Parse a VimL expression.
-
-                Attributes: ~
-                    {fast}
-
-                Parameters: ~
-                    {expr}       Expression to parse. Always treated as a
-                                 single line.
-                    {flags}      Flags:
-                                 • "m" if multiple expressions in a row are
-                                   allowed (only the first one will be
-                                   parsed),
-                                 • "E" if EOC tokens are not allowed
-                                   (determines whether they will stop parsing
-                                   process or be recognized as an
-                                   operator/space, though also yielding an
-                                   error).
-                                 • "l" when needing to start parsing with
-                                   lvalues for ":let" or ":for". Common flag
-                                   sets:
-                                 • "m" to parse like for ":echo".
-                                 • "E" to parse like for "<C-r>=".
-                                 • empty string for ":call".
-                                 • "lm" to parse for ":let".
-                    {highlight}  If true, return value will also include
-                                 "highlight" key containing array of 4-tuples
-                                 (arrays) (Integer, Integer, Integer, String),
-                                 where first three numbers define the
-                                 highlighted region and represent line,
-                                 starting column and ending column (latter
-                                 exclusive: one should highlight region
-                                 [start_col, end_col)).
-
-                Return: ~
-
-                    • AST: top-level dictionary with these keys:
-                      • "error": Dictionary with error, present only if parser
-                        saw some error. Contains the following keys:
-                        • "message": String, error message in printf format,
-                          translated. Must contain exactly one "%.*s".
-                        • "arg": String, error message argument.
-
-                      • "len": Amount of bytes successfully parsed. With flags
-                        equal to "" that should be equal to the length of expr
-                        string. (“Successfully parsed” here means
-                        “participated in AST creation”, not “till the first
-                        error”.)
-                      • "ast": AST, either nil or a dictionary with these
-                        keys:
-                        • "type": node type, one of the value names from
-                          ExprASTNodeType stringified without "kExprNode"
-                          prefix.
-                        • "start": a pair [line, column] describing where node
-                          is "started" where "line" is always 0 (will not be 0
-                          if you will be using nvim_parse_viml() on e.g.
-                          ":let", but that is not present yet). Both elements
-                          are Integers.
-                        • "len": “length” of the node. This and "start" are
-                          there for debugging purposes primary (debugging
-                          parser and providing debug information).
-                        • "children": a list of nodes described in top/"ast".
-                          There always is zero, one or two children, key will
-                          not be present if node has no children. Maximum
-                          number of children may be found in node_maxchildren
-                          array.
-
-                    • Local values (present only for certain nodes):
-                      • "scope": a single Integer, specifies scope for
-                        "Option" and "PlainIdentifier" nodes. For "Option" it
-                        is one of ExprOptScope values, for "PlainIdentifier"
-                        it is one of ExprVarScope values.
-                      • "ident": identifier (without scope, if any), present
-                        for "Option", "PlainIdentifier", "PlainKey" and
-                        "Environment" nodes.
-                      • "name": Integer, register name (one character) or -1.
-                        Only present for "Register" nodes.
-                      • "cmp_type": String, comparison type, one of the value
-                        names from ExprComparisonType, stringified without
-                        "kExprCmp" prefix. Only present for "Comparison"
-                        nodes.
-                      • "ccs_strategy": String, case comparison strategy, one
-                        of the value names from ExprCaseCompareStrategy,
-                        stringified without "kCCStrategy" prefix. Only present
-                        for "Comparison" nodes.
-                      • "augmentation": String, augmentation type for
-                        "Assignment" nodes. Is either an empty string, "Add",
-                        "Subtract" or "Concat" for "=", "+=", "-=" or ".="
-                        respectively.
-                      • "invert": Boolean, true if result of comparison needs
-                        to be inverted. Only present for "Comparison" nodes.
-                      • "ivalue": Integer, integer value for "Integer" nodes.
-                      • "fvalue": Float, floating-point value for "Float"
-                        nodes.
-                      • "svalue": String, value for "SingleQuotedString" and
-                        "DoubleQuotedString" nodes.
 
 nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
                 Pastes at cursor, in any mode.
@@ -1650,53 +1461,6 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
                 Parameters: ~
                     {window}  Window handle
 
-                                              *nvim_set_decoration_provider()*
-nvim_set_decoration_provider({ns_id}, {opts})
-                Set or change decoration provider for a namespace
-
-                This is a very general purpose interface for having lua
-                callbacks being triggered during the redraw code.
-
-                The expected usage is to set extmarks for the currently
-                redrawn buffer. |nvim_buf_set_extmark| can be called to add
-                marks on a per-window or per-lines basis. Use the `ephemeral`
-                key to only use the mark for the current screen redraw (the
-                callback will be called again for the next redraw ).
-
-                Note: this function should not be called often. Rather, the
-                callbacks themselves can be used to throttle unneeded
-                callbacks. the `on_start` callback can return `false` to
-                disable the provider until the next redraw. Similarly, return
-                `false` in `on_win` will skip the `on_lines` calls for that
-                window (but any extmarks set in `on_win` will still be used).
-                A plugin managing multiple sources of decoration should
-                ideally only set one provider, and merge the sources
-                internally. You can use multiple `ns_id` for the extmarks
-                set/modified inside the callback anyway.
-
-                Note: doing anything other than setting extmarks is considered
-                experimental. Doing things like changing options are not
-                expliticly forbidden, but is likely to have unexpected
-                consequences (such as 100% CPU consumption). doing
-                `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite
-                dubious for the moment.
-
-                Parameters: ~
-                    {ns_id}  Namespace id from |nvim_create_namespace()|
-                    {opts}   Callbacks invoked during redraw:
-                             • on_start: called first on each screen redraw
-                               ["start", tick]
-                             • on_buf: called for each buffer being redrawn
-                               (before window callbacks) ["buf", bufnr, tick]
-                             • on_win: called when starting to redraw a
-                               specific window. ["win", winid, bufnr, topline,
-                               botline_guess]
-                             • on_line: called for each buffer line being
-                               redrawn. (The interation with fold lines is
-                               subject to change) ["win", winid, bufnr, row]
-                             • on_end: called at the end of a redraw cycle
-                               ["end", tick]
-
 nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                 Set a highlight group.
 
@@ -1790,6 +1554,185 @@ nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
 
 
 ==============================================================================
+Vimscript Functions                                            *api-vimscript*
+
+                                                   *nvim_call_dict_function()*
+nvim_call_dict_function({dict}, {fn}, {args})
+                Calls a VimL |Dictionary-function| with the given arguments.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {dict}  Dictionary, or String evaluating to a VimL |self|
+                            dict
+                    {fn}    Name of the function defined on the VimL dict
+                    {args}  Function arguments packed in an Array
+
+                Return: ~
+                    Result of the function call
+
+nvim_call_function({fn}, {args})                        *nvim_call_function()*
+                Calls a VimL function with the given arguments.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {fn}    Function to call
+                    {args}  Function arguments packed in an Array
+
+                Return: ~
+                    Result of the function call
+
+nvim_command({command})                                       *nvim_command()*
+                Executes an ex-command.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {command}  Ex-command string
+
+                See also: ~
+                    |nvim_exec()|
+
+nvim_eval({expr})                                                *nvim_eval()*
+                Evaluates a VimL |expression|. Dictionaries and Lists are
+                recursively expanded.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {expr}  VimL expression string
+
+                Return: ~
+                    Evaluation result or expanded object
+
+nvim_exec({src}, {output})                                       *nvim_exec()*
+                Executes Vimscript (multiline block of Ex-commands), like
+                anonymous |:source|.
+
+                Unlike |nvim_command()| this function supports heredocs,
+                script-scope (s:), etc.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {src}     Vimscript code
+                    {output}  Capture and return all (non-error, non-shell
+                              |:!|) output
+
+                Return: ~
+                    Output (non-error, non-shell |:!|) if `output` is true,
+                    else empty string.
+
+                See also: ~
+                    |execute()|
+                    |nvim_command()|
+
+                                                     *nvim_parse_expression()*
+nvim_parse_expression({expr}, {flags}, {highlight})
+                Parse a VimL expression.
+
+                Attributes: ~
+                    {fast}
+
+                Parameters: ~
+                    {expr}       Expression to parse. Always treated as a
+                                 single line.
+                    {flags}      Flags:
+                                 • "m" if multiple expressions in a row are
+                                   allowed (only the first one will be
+                                   parsed),
+                                 • "E" if EOC tokens are not allowed
+                                   (determines whether they will stop parsing
+                                   process or be recognized as an
+                                   operator/space, though also yielding an
+                                   error).
+                                 • "l" when needing to start parsing with
+                                   lvalues for ":let" or ":for". Common flag
+                                   sets:
+                                 • "m" to parse like for ":echo".
+                                 • "E" to parse like for "<C-r>=".
+                                 • empty string for ":call".
+                                 • "lm" to parse for ":let".
+                    {highlight}  If true, return value will also include
+                                 "highlight" key containing array of 4-tuples
+                                 (arrays) (Integer, Integer, Integer, String),
+                                 where first three numbers define the
+                                 highlighted region and represent line,
+                                 starting column and ending column (latter
+                                 exclusive: one should highlight region
+                                 [start_col, end_col)).
+
+                Return: ~
+
+                    • AST: top-level dictionary with these keys:
+                      • "error": Dictionary with error, present only if parser
+                        saw some error. Contains the following keys:
+                        • "message": String, error message in printf format,
+                          translated. Must contain exactly one "%.*s".
+                        • "arg": String, error message argument.
+
+                      • "len": Amount of bytes successfully parsed. With flags
+                        equal to "" that should be equal to the length of expr
+                        string. (“Successfully parsed” here means
+                        “participated in AST creation”, not “till the first
+                        error”.)
+                      • "ast": AST, either nil or a dictionary with these
+                        keys:
+                        • "type": node type, one of the value names from
+                          ExprASTNodeType stringified without "kExprNode"
+                          prefix.
+                        • "start": a pair [line, column] describing where node
+                          is "started" where "line" is always 0 (will not be 0
+                          if you will be using nvim_parse_viml() on e.g.
+                          ":let", but that is not present yet). Both elements
+                          are Integers.
+                        • "len": “length” of the node. This and "start" are
+                          there for debugging purposes primary (debugging
+                          parser and providing debug information).
+                        • "children": a list of nodes described in top/"ast".
+                          There always is zero, one or two children, key will
+                          not be present if node has no children. Maximum
+                          number of children may be found in node_maxchildren
+                          array.
+
+                    • Local values (present only for certain nodes):
+                      • "scope": a single Integer, specifies scope for
+                        "Option" and "PlainIdentifier" nodes. For "Option" it
+                        is one of ExprOptScope values, for "PlainIdentifier"
+                        it is one of ExprVarScope values.
+                      • "ident": identifier (without scope, if any), present
+                        for "Option", "PlainIdentifier", "PlainKey" and
+                        "Environment" nodes.
+                      • "name": Integer, register name (one character) or -1.
+                        Only present for "Register" nodes.
+                      • "cmp_type": String, comparison type, one of the value
+                        names from ExprComparisonType, stringified without
+                        "kExprCmp" prefix. Only present for "Comparison"
+                        nodes.
+                      • "ccs_strategy": String, case comparison strategy, one
+                        of the value names from ExprCaseCompareStrategy,
+                        stringified without "kCCStrategy" prefix. Only present
+                        for "Comparison" nodes.
+                      • "augmentation": String, augmentation type for
+                        "Assignment" nodes. Is either an empty string, "Add",
+                        "Subtract" or "Concat" for "=", "+=", "-=" or ".="
+                        respectively.
+                      • "invert": Boolean, true if result of comparison needs
+                        to be inverted. Only present for "Comparison" nodes.
+                      • "ivalue": Integer, integer value for "Integer" nodes.
+                      • "fvalue": Float, floating-point value for "Float"
+                        nodes.
+                      • "svalue": String, value for "SingleQuotedString" and
+                        "DoubleQuotedString" nodes.
+
+
+==============================================================================
 Buffer Functions                                                  *api-buffer*
 
 
@@ -1814,48 +1757,6 @@ nvim__buf_redraw_range({buffer}, {first}, {last})
 
 nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
-
-                                                    *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
-                       {col_end})
-                Adds a highlight to buffer.
-
-                Useful for plugins that dynamically generate highlights to a
-                buffer (like a semantic highlighter or linter). The function
-                adds a single highlight to a buffer. Unlike |matchaddpos()|
-                highlights follow changes to line numbering (as lines are
-                inserted/removed above the highlighted line), like signs and
-                marks do.
-
-                Namespaces are used for batch deletion/updating of a set of
-                highlights. To create a namespace, use
-                |nvim_create_namespace()| which returns a namespace id. Pass
-                it in to this function as `ns_id` to add highlights to the
-                namespace. All highlights in the same namespace can then be
-                cleared with single call to |nvim_buf_clear_namespace()|. If
-                the highlight never will be deleted by an API call, pass
-                `ns_id = -1` .
-
-                As a shorthand, `ns_id = 0` can be used to create a new
-                namespace for the highlight, the allocated id is then
-                returned. If `hl_group` is the empty string no highlight is
-                added, but a new `ns_id` is still returned. This is supported
-                for backwards compatibility, new code should use
-                |nvim_create_namespace()| to create a new empty namespace.
-
-                Parameters: ~
-                    {buffer}     Buffer handle, or 0 for current buffer
-                    {ns_id}      namespace to use or -1 for ungrouped
-                                 highlight
-                    {hl_group}   Name of the highlight group to use
-                    {line}       Line to highlight (zero-indexed)
-                    {col_start}  Start of (byte-indexed) column range to
-                                 highlight
-                    {col_end}    End of (byte-indexed) column range to
-                                 highlight, or -1 to highlight to end of line
-
-                Return: ~
-                    The ns_id that was used
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activates buffer-update events on a channel, or as Lua
@@ -1965,33 +1866,6 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                     Return value of function. NB: will deepcopy lua values
                     currently, use upvalues to send lua references in and out.
 
-                                                  *nvim_buf_clear_namespace()*
-nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
-                Clears namespaced objects (highlights, extmarks, virtual text)
-                from a region.
-
-                Lines are 0-indexed. |api-indexing| To clear the namespace in
-                the entire buffer, specify line_start=0 and line_end=-1.
-
-                Parameters: ~
-                    {buffer}      Buffer handle, or 0 for current buffer
-                    {ns_id}       Namespace to clear, or -1 to clear all
-                                  namespaces.
-                    {line_start}  Start of range of lines to clear
-                    {line_end}    End of range of lines to clear (exclusive)
-                                  or -1 to clear to end of buffer.
-
-nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
-                Removes an extmark.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {id}      Extmark id
-
-                Return: ~
-                    true if the extmark was found, else false
-
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
                 Unmaps a buffer-local |mapping| for the given mode.
 
@@ -2072,73 +1946,6 @@ nvim_buf_get_commands({buffer}, {*opts})             *nvim_buf_get_commands()*
 
                 Return: ~
                     Map of maps describing commands.
-
-                                                *nvim_buf_get_extmark_by_id()*
-nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
-                Gets the position (0-indexed) of an extmark.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {id}      Extmark id
-                    {opts}    Optional parameters. Keys:
-                              • details: Whether to include the details dict
-
-                Return: ~
-                    0-indexed (row, col) tuple or empty list () if extmark id
-                    was absent
-
-                                                     *nvim_buf_get_extmarks()*
-nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
-                Gets extmarks in "traversal order" from a |charwise| region
-                defined by buffer positions (inclusive, 0-indexed
-                |api-indexing|).
-
-                Region can be given as (row,col) tuples, or valid extmark ids
-                (whose positions define the bounds). 0 and -1 are understood
-                as (0,0) and (-1,-1) respectively, thus the following are
-                equivalent:
->
-    nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-    nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
-<
-
-                If `end` is less than `start` , traversal works backwards.
-                (Useful with `limit` , to get the first marks prior to a given
-                position.)
-
-                Example:
->
-    local a   = vim.api
-    local pos = a.nvim_win_get_cursor(0)
-    local ns  = a.nvim_create_namespace('my-plugin')
-    -- Create new extmark at line 1, column 1.
-    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
-    -- Create new extmark at line 3, column 1.
-    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
-    -- Get extmarks only from line 3.
-    local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
-    -- Get all marks in this buffer + namespace.
-    local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-    print(vim.inspect(ms))
-<
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {start}   Start of range: a 0-indexed (row, col) or valid
-                              extmark id (whose position defines the bound).
-                              |api-indexing|
-                    {end}     End of range (inclusive): a 0-indexed (row, col)
-                              or valid extmark id (whose position defines the
-                              bound). |api-indexing|
-                    {opts}    Optional parameters. Keys:
-                              • limit: Maximum number of marks to return
-                              • details Whether to include the details dict
-
-                Return: ~
-                    List of [extmark_id, row, col] tuples in "traversal
-                    order".
 
 nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                 Gets a list of buffer-local |mapping| definitions.
@@ -2270,119 +2077,6 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                 Return: ~
                     Line count, or 0 for unloaded buffer. |api-buffer|
 
-                                                      *nvim_buf_set_extmark()*
-nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
-                Creates or updates an extmark.
-
-                To create a new extmark, pass id=0. The extmark id will be
-                returned. To move an existing mark, pass its id.
-
-                It is also allowed to create a new mark by passing in a
-                previously unused id, but the caller must then keep track of
-                existing and unused ids itself. (Useful over RPC, to avoid
-                waiting for the return value.)
-
-                Using the optional arguments, it is possible to use this to
-                highlight a range of text, and also to associate virtual text
-                to the mark.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {line}    Line where to place the mark, 0-based.
-                              |api-indexing|
-                    {col}     Column where to place the mark, 0-based.
-                              |api-indexing|
-                    {opts}    Optional parameters.
-                              • id : id of the extmark to edit.
-                              • end_line : ending line of the mark, 0-based
-                                inclusive.
-                              • end_col : ending col of the mark, 0-based
-                                exclusive.
-                              • hl_group : name of the highlight group used to
-                                highlight this mark.
-                              • hl_eol : when true, for a multiline highlight
-                                covering the EOL of a line, continue the
-                                highlight for the rest of the screen line
-                                (just like for diff and cursorline highlight).
-                              • virt_text : virtual text to link to this mark.
-                                A list of [text, highlight] tuples, each
-                                representing a text chunk with specified
-                                highlight. `highlight` element can either be a
-                                a single highlight group, or an array of
-                                multiple highlight groups that will be stacked
-                                (highest priority last). A highlight group can
-                                be supplied either as a string or as an
-                                integer, the latter which can be obtained
-                                using |nvim_get_hl_id_by_name|.
-                              • virt_text_pos : position of virtual text.
-                                Possible values:
-                                • "eol": right after eol character (default)
-                                • "overlay": display over the specified
-                                  column, without shifting the underlying
-                                  text.
-                                • "right_align": display right aligned in the
-                                  window.
-
-                              • virt_text_win_col : position the virtual text
-                                at a fixed window column (starting from the
-                                first text column)
-                              • virt_text_hide : hide the virtual text when
-                                the background text is selected or hidden due
-                                to horizontal scroll 'nowrap'
-                              • hl_mode : control how highlights are combined
-                                with the highlights of the text. Currently
-                                only affects virt_text highlights, but might
-                                affect `hl_group` in later versions.
-                                • "replace": only show the virt_text color.
-                                  This is the default
-                                • "combine": combine with background text
-                                  color
-                                • "blend": blend with background text color.
-
-                              • virt_lines : virtual lines to add next to this
-                                mark This should be an array over lines, where
-                                each line in turn is an array over [text,
-                                highlight] tuples. In general, buffer and
-                                window options do not affect the display of
-                                the text. In particular 'wrap' and 'linebreak'
-                                options do not take effect, so the number of
-                                extra screen lines will always match the size
-                                of the array. However the 'tabstop' buffer
-                                option is still used for hard tabs. By default
-                                lines are placed below the buffer line
-                                containing the mark.              • Note: currently virtual lines are limited to
-                                one block per buffer. Thus setting a new mark
-                                disables any previous `virt_lines` decoration.
-                                However plugins should not rely on this
-                                behaviour, as this limitation is planned to be
-                                removed.
-                              • virt_lines_above: place virtual lines above
-                                instead.
-                              • virt_lines_leftcol: Place extmarks in the
-                                leftmost column of the window, bypassing sign
-                                and number columns.
-                              • ephemeral : for use with
-                                |nvim_set_decoration_provider| callbacks. The
-                                mark will only be used for the current redraw
-                                cycle, and not be permantently stored in the
-                                buffer.
-                              • right_gravity : boolean that indicates the
-                                direction the extmark will be shifted in when
-                                new text is inserted (true for right, false
-                                for left). defaults to true.
-                              • end_right_gravity : boolean that indicates the
-                                direction the extmark end position (if it
-                                exists) will be shifted in when new text is
-                                inserted (true for right, false for left).
-                                Defaults to false.
-                              • priority: a priority value for the highlight
-                                group. For example treesitter highlighting
-                                uses a value of 100.
-
-                Return: ~
-                    Id of the created/updated extmark
-
                                                        *nvim_buf_set_keymap()*
 nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {*opts})
                 Sets a buffer-local |mapping| for the given mode.
@@ -2493,6 +2187,323 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                     {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Variable name
                     {value}   Variable value
+
+
+==============================================================================
+Extmark Functions                                                *api-extmark*
+
+                                                    *nvim_buf_add_highlight()*
+nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
+                       {col_end})
+                Adds a highlight to buffer.
+
+                Useful for plugins that dynamically generate highlights to a
+                buffer (like a semantic highlighter or linter). The function
+                adds a single highlight to a buffer. Unlike |matchaddpos()|
+                highlights follow changes to line numbering (as lines are
+                inserted/removed above the highlighted line), like signs and
+                marks do.
+
+                Namespaces are used for batch deletion/updating of a set of
+                highlights. To create a namespace, use
+                |nvim_create_namespace()| which returns a namespace id. Pass
+                it in to this function as `ns_id` to add highlights to the
+                namespace. All highlights in the same namespace can then be
+                cleared with single call to |nvim_buf_clear_namespace()|. If
+                the highlight never will be deleted by an API call, pass
+                `ns_id = -1` .
+
+                As a shorthand, `ns_id = 0` can be used to create a new
+                namespace for the highlight, the allocated id is then
+                returned. If `hl_group` is the empty string no highlight is
+                added, but a new `ns_id` is still returned. This is supported
+                for backwards compatibility, new code should use
+                |nvim_create_namespace()| to create a new empty namespace.
+
+                Parameters: ~
+                    {buffer}     Buffer handle, or 0 for current buffer
+                    {ns_id}      namespace to use or -1 for ungrouped
+                                 highlight
+                    {hl_group}   Name of the highlight group to use
+                    {line}       Line to highlight (zero-indexed)
+                    {col_start}  Start of (byte-indexed) column range to
+                                 highlight
+                    {col_end}    End of (byte-indexed) column range to
+                                 highlight, or -1 to highlight to end of line
+
+                Return: ~
+                    The ns_id that was used
+
+                                                  *nvim_buf_clear_namespace()*
+nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
+                Clears namespaced objects (highlights, extmarks, virtual text)
+                from a region.
+
+                Lines are 0-indexed. |api-indexing| To clear the namespace in
+                the entire buffer, specify line_start=0 and line_end=-1.
+
+                Parameters: ~
+                    {buffer}      Buffer handle, or 0 for current buffer
+                    {ns_id}       Namespace to clear, or -1 to clear all
+                                  namespaces.
+                    {line_start}  Start of range of lines to clear
+                    {line_end}    End of range of lines to clear (exclusive)
+                                  or -1 to clear to end of buffer.
+
+nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
+                Removes an extmark.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {id}      Extmark id
+
+                Return: ~
+                    true if the extmark was found, else false
+
+                                                *nvim_buf_get_extmark_by_id()*
+nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
+                Gets the position (0-indexed) of an extmark.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {id}      Extmark id
+                    {opts}    Optional parameters. Keys:
+                              • details: Whether to include the details dict
+
+                Return: ~
+                    0-indexed (row, col) tuple or empty list () if extmark id
+                    was absent
+
+                                                     *nvim_buf_get_extmarks()*
+nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
+                Gets extmarks in "traversal order" from a |charwise| region
+                defined by buffer positions (inclusive, 0-indexed
+                |api-indexing|).
+
+                Region can be given as (row,col) tuples, or valid extmark ids
+                (whose positions define the bounds). 0 and -1 are understood
+                as (0,0) and (-1,-1) respectively, thus the following are
+                equivalent:
+>
+    nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+    nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+<
+
+                If `end` is less than `start` , traversal works backwards.
+                (Useful with `limit` , to get the first marks prior to a given
+                position.)
+
+                Example:
+>
+    local a   = vim.api
+    local pos = a.nvim_win_get_cursor(0)
+    local ns  = a.nvim_create_namespace('my-plugin')
+    -- Create new extmark at line 1, column 1.
+    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+    -- Create new extmark at line 3, column 1.
+    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+    -- Get extmarks only from line 3.
+    local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+    -- Get all marks in this buffer + namespace.
+    local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+    print(vim.inspect(ms))
+<
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {start}   Start of range: a 0-indexed (row, col) or valid
+                              extmark id (whose position defines the bound).
+                              |api-indexing|
+                    {end}     End of range (inclusive): a 0-indexed (row, col)
+                              or valid extmark id (whose position defines the
+                              bound). |api-indexing|
+                    {opts}    Optional parameters. Keys:
+                              • limit: Maximum number of marks to return
+                              • details Whether to include the details dict
+
+                Return: ~
+                    List of [extmark_id, row, col] tuples in "traversal
+                    order".
+
+                                                      *nvim_buf_set_extmark()*
+nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
+                Creates or updates an extmark.
+
+                To create a new extmark, pass id=0. The extmark id will be
+                returned. To move an existing mark, pass its id.
+
+                It is also allowed to create a new mark by passing in a
+                previously unused id, but the caller must then keep track of
+                existing and unused ids itself. (Useful over RPC, to avoid
+                waiting for the return value.)
+
+                Using the optional arguments, it is possible to use this to
+                highlight a range of text, and also to associate virtual text
+                to the mark.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {line}    Line where to place the mark, 0-based.
+                              |api-indexing|
+                    {col}     Column where to place the mark, 0-based.
+                              |api-indexing|
+                    {opts}    Optional parameters.
+                              • id : id of the extmark to edit.
+                              • end_line : ending line of the mark, 0-based
+                                inclusive.
+                              • end_col : ending col of the mark, 0-based
+                                exclusive.
+                              • hl_group : name of the highlight group used to
+                                highlight this mark.
+                              • hl_eol : when true, for a multiline highlight
+                                covering the EOL of a line, continue the
+                                highlight for the rest of the screen line
+                                (just like for diff and cursorline highlight).
+                              • virt_text : virtual text to link to this mark.
+                                A list of [text, highlight] tuples, each
+                                representing a text chunk with specified
+                                highlight. `highlight` element can either be a
+                                a single highlight group, or an array of
+                                multiple highlight groups that will be stacked
+                                (highest priority last). A highlight group can
+                                be supplied either as a string or as an
+                                integer, the latter which can be obtained
+                                using |nvim_get_hl_id_by_name|.
+                              • virt_text_pos : position of virtual text.
+                                Possible values:
+                                • "eol": right after eol character (default)
+                                • "overlay": display over the specified
+                                  column, without shifting the underlying
+                                  text.
+                                • "right_align": display right aligned in the
+                                  window.
+
+                              • virt_text_win_col : position the virtual text
+                                at a fixed window column (starting from the
+                                first text column)
+                              • virt_text_hide : hide the virtual text when
+                                the background text is selected or hidden due
+                                to horizontal scroll 'nowrap'
+                              • hl_mode : control how highlights are combined
+                                with the highlights of the text. Currently
+                                only affects virt_text highlights, but might
+                                affect `hl_group` in later versions.
+                                • "replace": only show the virt_text color.
+                                  This is the default
+                                • "combine": combine with background text
+                                  color
+                                • "blend": blend with background text color.
+
+                              • virt_lines : virtual lines to add next to this
+                                mark This should be an array over lines, where
+                                each line in turn is an array over [text,
+                                highlight] tuples. In general, buffer and
+                                window options do not affect the display of
+                                the text. In particular 'wrap' and 'linebreak'
+                                options do not take effect, so the number of
+                                extra screen lines will always match the size
+                                of the array. However the 'tabstop' buffer
+                                option is still used for hard tabs. By default
+                                lines are placed below the buffer line
+                                containing the mark.
+                              • virt_lines_above: place virtual lines above
+                                instead.
+                              • virt_lines_leftcol: Place extmarks in the
+                                leftmost column of the window, bypassing sign
+                                and number columns.
+                              • ephemeral : for use with
+                                |nvim_set_decoration_provider| callbacks. The
+                                mark will only be used for the current redraw
+                                cycle, and not be permantently stored in the
+                                buffer.
+                              • right_gravity : boolean that indicates the
+                                direction the extmark will be shifted in when
+                                new text is inserted (true for right, false
+                                for left). defaults to true.
+                              • end_right_gravity : boolean that indicates the
+                                direction the extmark end position (if it
+                                exists) will be shifted in when new text is
+                                inserted (true for right, false for left).
+                                Defaults to false.
+                              • priority: a priority value for the highlight
+                                group. For example treesitter highlighting
+                                uses a value of 100.
+
+                Return: ~
+                    Id of the created/updated extmark
+
+nvim_create_namespace({name})                        *nvim_create_namespace()*
+                Creates a new *namespace* or gets an existing one.
+
+                Namespaces are used for buffer highlights and virtual text,
+                see |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
+
+                Namespaces can be named or anonymous. If `name` matches an
+                existing namespace, the associated id is returned. If `name`
+                is an empty string a new, anonymous namespace is created.
+
+                Parameters: ~
+                    {name}  Namespace name or empty string
+
+                Return: ~
+                    Namespace id
+
+nvim_get_namespaces()                                  *nvim_get_namespaces()*
+                Gets existing, non-anonymous namespaces.
+
+                Return: ~
+                    dict that maps from names to namespace ids.
+
+                                              *nvim_set_decoration_provider()*
+nvim_set_decoration_provider({ns_id}, {opts})
+                Set or change decoration provider for a namespace
+
+                This is a very general purpose interface for having lua
+                callbacks being triggered during the redraw code.
+
+                The expected usage is to set extmarks for the currently
+                redrawn buffer. |nvim_buf_set_extmark| can be called to add
+                marks on a per-window or per-lines basis. Use the `ephemeral`
+                key to only use the mark for the current screen redraw (the
+                callback will be called again for the next redraw ).
+
+                Note: this function should not be called often. Rather, the
+                callbacks themselves can be used to throttle unneeded
+                callbacks. the `on_start` callback can return `false` to
+                disable the provider until the next redraw. Similarly, return
+                `false` in `on_win` will skip the `on_lines` calls for that
+                window (but any extmarks set in `on_win` will still be used).
+                A plugin managing multiple sources of decoration should
+                ideally only set one provider, and merge the sources
+                internally. You can use multiple `ns_id` for the extmarks
+                set/modified inside the callback anyway.
+
+                Note: doing anything other than setting extmarks is considered
+                experimental. Doing things like changing options are not
+                expliticly forbidden, but is likely to have unexpected
+                consequences (such as 100% CPU consumption). doing
+                `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite
+                dubious for the moment.
+
+                Parameters: ~
+                    {ns_id}  Namespace id from |nvim_create_namespace()|
+                    {opts}   Callbacks invoked during redraw:
+                             • on_start: called first on each screen redraw
+                               ["start", tick]
+                             • on_buf: called for each buffer being redrawn
+                               (before window callbacks) ["buf", bufnr, tick]
+                             • on_win: called when starting to redraw a
+                               specific window. ["win", winid, bufnr, topline,
+                               botline_guess]
+                             • on_line: called for each buffer line being
+                               redrawn. (The interation with fold lines is
+                               subject to change) ["win", winid, bufnr, row]
+                             • on_end: called at the end of a redraw cycle
+                               ["end", tick]
 
 
 ==============================================================================
