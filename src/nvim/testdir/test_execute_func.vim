@@ -107,6 +107,18 @@ func Test_win_execute()
 
   call win_gotoid(otherwin)
   bwipe!
+
+  " check :lcd in another window does not change directory
+  let curid = win_getid()
+  let curdir = getcwd()
+  split Xother
+  lcd ..
+  " Use :pwd to get the actual current directory
+  let otherdir = execute('pwd')
+  call win_execute(curid, 'lcd testdir')
+  call assert_equal(otherdir, execute('pwd'))
+  bwipe!
+  execute 'cd ' .. curdir
 endfunc
 
 func Test_win_execute_update_ruler()
