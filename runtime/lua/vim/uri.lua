@@ -56,8 +56,8 @@ local function is_windows_file_uri(uri)
 end
 
 --- Get a URI from a file path.
----@param path (string): Path to file
----@return URI
+---@param path string Path to file
+---@return string URI
 local function uri_from_fname(path)
   local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
   local is_windows = volume_path ~= nil
@@ -78,8 +78,8 @@ local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):[a-zA-Z]:.*'
 
 --- Get a URI from a bufnr
----@param bufnr (number): Buffer number
----@return URI
+---@param bufnr number
+---@return string URI
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local volume_path = fname:match("^([a-zA-Z]:).*")
@@ -99,8 +99,8 @@ local function uri_from_bufnr(bufnr)
 end
 
 --- Get a filename from a URI
----@param uri (string): The URI
----@return Filename
+---@param uri string
+---@return string filename or unchanged URI for non-file URIs
 local function uri_to_fname(uri)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
@@ -117,17 +117,13 @@ local function uri_to_fname(uri)
   return uri
 end
 
---- Return or create a buffer for a uri.
----@param uri (string): The URI
----@return bufnr.
----@note Creates buffer but does not load it
+--- Get the buffer for a uri.
+--- Creates a new unloaded buffer if no buffer for the uri already exists.
+--
+---@param uri string
+---@return number bufnr
 local function uri_to_bufnr(uri)
-  local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
-  if scheme == 'file' then
-    return vim.fn.bufadd(uri_to_fname(uri))
-  else
-    return vim.fn.bufadd(uri)
-  end
+  return vim.fn.bufadd(uri_to_fname(uri))
 end
 
 return {
