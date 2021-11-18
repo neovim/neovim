@@ -1658,40 +1658,38 @@ uri_from_bufnr({bufnr})                                 *vim.uri_from_bufnr()*
                 Get a URI from a bufnr
 
                 Parameters: ~
-                    {bufnr}  (number): Buffer number
+                    {bufnr}  number
 
                 Return: ~
-                    URI
+                    string URI
 
 uri_from_fname({path})                                  *vim.uri_from_fname()*
                 Get a URI from a file path.
 
                 Parameters: ~
-                    {path}  (string): Path to file
+                    {path}  string Path to file
 
                 Return: ~
-                    URI
+                    string URI
 
 uri_to_bufnr({uri})                                       *vim.uri_to_bufnr()*
-                Return or create a buffer for a uri.
+                Get the buffer for a uri. Creates a new unloaded buffer if no
+                buffer for the uri already exists.
 
                 Parameters: ~
-                    {uri}  (string): The URI
+                    {uri}  string
 
                 Return: ~
-                    bufnr.
-
-                Note:
-                    Creates buffer but does not load it
+                    number bufnr
 
 uri_to_fname({uri})                                       *vim.uri_to_fname()*
                 Get a filename from a URI
 
                 Parameters: ~
-                    {uri}  (string): The URI
+                    {uri}  string
 
                 Return: ~
-                    Filename
+                    string filename or unchanged URI for non-file URIs
 
 
 ==============================================================================
