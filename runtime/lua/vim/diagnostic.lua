@@ -1545,7 +1545,7 @@ function M.fromqflist(list)
   for _, item in ipairs(list) do
     if item.valid == 1 then
       local lnum = math.max(0, item.lnum - 1)
-      local col = item.col > 0 and (item.col - 1) or nil
+      local col = math.max(0, item.col - 1)
       local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
       local end_col = item.end_col > 0 and (item.end_col - 1) or col
       local severity = item.type ~= "" and M.severity[item.type] or M.severity.ERROR
