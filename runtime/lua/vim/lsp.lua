@@ -1587,9 +1587,17 @@ function lsp.formatexpr(opts)
   return 0
 end
 
--- Provides an interface between the built-in client and `tagfunc`
---
--- Used via `set tagfunc=v:lua.vim.lsp.tagfunc`
+--- Provides an interface between the built-in client and 'tagfunc'.
+---
+--- When used with normal mode commands (e.g. |CTRL-]|) this will invoke
+--- the "textDocument/definition" LSP method to find the tag under the cursor.
+--- Otherwise, uses "workspace/symbol". If no results are returned from
+--- any LSP servers, falls back to using built-in tags.
+---
+---@param pattern Pattern used to find a workspace symbol
+---@param flags See |tag-function|
+---
+---@returns A list of matching tags
 function lsp.tagfunc(...)
   return require('vim.lsp.tagfunc')(...)
 end
