@@ -1246,7 +1246,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// If the current window already shows "buffer", the window is not switched
 /// If a window inside the current tabpage (including a float) already shows the
 /// buffer One of these windows will be set as current window temporarily.
-/// Otherwise a temporary scratch window (calleed the "autocmd window" for
+/// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
 /// This is useful e.g. to call vimL functions that only work with the current
