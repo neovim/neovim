@@ -92,5 +92,29 @@ describe("'shortmess'", function()
       ]])
       eq(1, eval('bufnr("%")'))
     end)
+    it('hides :tabedit messages', function()
+      command('set hidden')
+      command('set shortmess-=F')
+      feed(':tabedit foo<CR>')
+      screen:expect([[
+         [No Name]  foo                          X|
+        ^                                          |
+        ~                                         |
+        ~                                         |
+        "foo" [New]                               |
+      ]])
+      eq(2, eval('tabpagenr()'))
+
+      command('set shortmess+=F')
+      feed(':tabedit bar<CR>')
+      screen:expect([[
+         [No Name]  foo  bar                     X|
+        ^                                          |
+        ~                                         |
+        ~                                         |
+        :tabedit bar                              |
+      ]])
+      eq(3, eval('tabpagenr()'))
+    end)
   end)
 end)

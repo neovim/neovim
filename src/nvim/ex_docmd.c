@@ -7160,6 +7160,10 @@ void ex_splitview(exarg_T *eap)
                        || eap->cmdidx == CMD_tabfind
                        || eap->cmdidx == CMD_tabnew;
 
+  if (shortmess(SHM_FILEINFO)) {
+    msg_silent = 1;
+  }
+
   // A ":split" in the quickfix window works like ":new".  Don't want two
   // quickfix windows.  But it's OK when doing ":tab split".
   if (bt_quickfix(curbuf) && cmdmod.tab == 0) {
