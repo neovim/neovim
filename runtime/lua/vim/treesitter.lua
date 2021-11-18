@@ -72,7 +72,7 @@ end
 --- Gets the parser for this bufnr / ft combination.
 ---
 --- If needed this will create the parser.
---- Unconditionnally attach the provided callback
+--- Unconditionally attach the provided callback
 ---
 ---@param bufnr The buffer the parser should be tied to
 ---@param lang The filetype of this parser

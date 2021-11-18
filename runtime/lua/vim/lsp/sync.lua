@@ -133,7 +133,7 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   -- occur on a new line pointed to by lastline. This occurs during insertion of
   -- new lines(O), the new newline is inserted at the line indicated by
   -- new_lastline.
-  -- If firstline == new_lastline, the first change occured on a line that was deleted.
+  -- If firstline == new_lastline, the first change occurred on a line that was deleted.
   -- In this case, the first byte change is also at the first byte of firstline
   if firstline == new_lastline or firstline == lastline then
     return { line_idx = firstline, byte_idx = 1, char_idx = 1 }
@@ -187,7 +187,7 @@ end
 ---@param offset_encoding string
 ---@returns (int, int) end_line_idx and end_col_idx of range
 local function compute_end_range(prev_lines, curr_lines, start_range, firstline, lastline, new_lastline, offset_encoding)
-  -- If firstline == new_lastline, the first change occured on a line that was deleted.
+  -- If firstline == new_lastline, the first change occurred on a line that was deleted.
   -- In this case, the last_byte...
   if firstline == new_lastline then
       return { line_idx = (lastline - new_lastline + firstline), byte_idx = 1, char_idx = 1 }, { line_idx = firstline, byte_idx = 1, char_idx = 1 }

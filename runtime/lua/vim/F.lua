@@ -27,7 +27,7 @@ function F.nil_wrap(fn)
   end
 end
 
---- like {...} except preserve the lenght explicitly
+--- like {...} except preserve the length explicitly
 function F.pack_len(...)
   return {n=select('#', ...), ...}
 end

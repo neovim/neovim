@@ -230,7 +230,7 @@ function default_dispatchers.on_error(code, err)
 end
 
 --- Starts an LSP server process and create an LSP RPC client object to
---- interact with it.
+--- interact with it. Communication with the server is currently limited to stdio.
 ---
 ---@param cmd (string) Command to start the LSP server.
 ---@param cmd_args (table) List of additional string arguments to pass to {cmd}.

@@ -474,7 +474,7 @@ local function remove_unmatch_completion_items(items, prefix)
   end, items)
 end
 
---- Acording to LSP spec, if the client set `completionItemKind.valueSet`,
+--- According to LSP spec, if the client set `completionItemKind.valueSet`,
 --- the client must handle it properly even if it receives a value outside the
 --- specification.
 ---
@@ -1054,7 +1054,7 @@ function M.stylize_markdown(bufnr, contents, opts)
           markdown_lines[#stripped] = true
         end
       else
-        -- strip any emty lines or separators prior to this separator in actual markdown
+        -- strip any empty lines or separators prior to this separator in actual markdown
         if line:match("^---+$") then
           while markdown_lines[#stripped] and (stripped[#stripped]:match("^%s*$") or stripped[#stripped]:match("^---+$")) do
             markdown_lines[#stripped] = false
@@ -1087,7 +1087,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   local idx = 1
   ---@private
-  -- keep track of syntaxes we already inlcuded.
+  -- keep track of syntaxes we already included.
   -- no need to include the same syntax more than once
   local langs = {}
   local fences = get_markdown_fences()
@@ -1223,18 +1223,18 @@ end
 ---
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
----@param opts dictionary with optional fields
----             - height    of floating window
----             - width     of floating window
----             - wrap boolean enable wrapping of long lines (defaults to true)
----             - wrap_at   character to wrap at for computing height when wrap is enabled
----             - max_width  maximal width of floating window
----             - max_height maximal height of floating window
----             - pad_top    number of lines to pad contents at top
----             - pad_bottom number of lines to pad contents at bottom
----             - focus_id if a popup with this id is opened, then focus it
----             - close_events list of events that closes the floating window
----             - focusable (boolean, default true): Make float focusable
+---@param opts table with optional fields (additional keys are passed on to |vim.api.nvim_open_win()|)
+---             - height: (number) height of floating window
+---             - width: (number) width of floating window
+---             - wrap: (boolean, default true) wrap long lines
+---             - wrap_at: (string) character to wrap at for computing height when wrap is enabled
+---             - max_width: (number) maximal width of floating window
+---             - max_height: (number) maximal height of floating window
+---             - pad_top: (number) number of lines to pad contents at top
+---             - pad_bottom: (number) number of lines to pad contents at bottom
+---             - focus_id: (string) if a popup with this id is opened, then focus it
+---             - close_events: (table) list of events that closes the floating window
+---             - focusable: (boolean, default true) Make float focusable
 ---@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1541,7 +1541,7 @@ function M.set_qflist(items)
   })
 end
 
--- Acording to LSP spec, if the client set "symbolKind.valueSet",
+-- According to LSP spec, if the client set "symbolKind.valueSet",
 -- the client must handle it properly even if it receives a value outside the specification.
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
 function M._get_symbol_kind_name(symbol_kind)

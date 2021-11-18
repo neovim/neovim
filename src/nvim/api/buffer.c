@@ -535,7 +535,7 @@ end:
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_column     Last column
+/// @param start_column     First column
 /// @param end_row          Last line index
 /// @param end_column       Last column
 /// @param replacement      Array of lines to use as replacement
@@ -1246,7 +1246,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// If the current window already shows "buffer", the window is not switched
 /// If a window inside the current tabpage (including a float) already shows the
 /// buffer One of these windows will be set as current window temporarily.
-/// Otherwise a temporary scratch window (calleed the "autocmd window" for
+/// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
 /// This is useful e.g. to call vimL functions that only work with the current

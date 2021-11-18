@@ -38,7 +38,7 @@ end
 
 --- Inspects the provided language.
 ---
---- Inspecting provides some useful informations on the language like node names, ...
+--- Inspecting provides some useful information on the language like node names, ...
 ---
 ---@param lang The language.
 function M.inspect_language(lang)

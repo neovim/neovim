@@ -48,7 +48,7 @@ function M.get_query_files(lang, query_name, is_included)
   local base_langs = {}
 
   -- Now get the base languages by looking at the first line of every file
-  -- The syntax is the folowing :
+  -- The syntax is the following :
   -- ;+ inherits: ({language},)*{language}
   --
   -- {language} ::= {lang} | ({lang})
@@ -446,7 +446,7 @@ end
 ---
 --- {source} is needed if the query contains predicates, then the caller
 --- must ensure to use a freshly parsed tree consistent with the current
---- text of the buffer (if relevent). {start_row} and {end_row} can be used to limit
+--- text of the buffer (if relevant). {start_row} and {end_row} can be used to limit
 --- matches inside a row range (this is typically used with root node
 --- as the node, i e to get syntax highlight matches in the current
 --- viewport). When omitted the start and end row values are used from the given node.
@@ -466,7 +466,7 @@ end
 --- </pre>
 ---
 ---@param node The node under which the search will occur
----@param source The source buffer or string to exctract text from
+---@param source The source buffer or string to extract text from
 ---@param start The starting line of the search
 ---@param stop The stopping line of the search (end-exclusive)
 ---

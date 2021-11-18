@@ -225,7 +225,7 @@ function M.on_publish_diagnostics(_, result, ctx, config)
   vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
 end
 
---- Clear diagnotics and diagnostic cache.
+--- Clear diagnostics and diagnostic cache.
 ---
 --- Diagnostic producers should prefer |vim.diagnostic.reset()|. However,
 --- this method signature is still used internally in some parts of the LSP

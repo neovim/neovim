@@ -428,7 +428,7 @@ Working directory (Vim implemented some of these later than Nvim):
 - |DirChanged| can be triggered when switching to another window.
 - |getcwd()| and |haslocaldir()| may throw errors if the tab page or window
   cannot be found.  *E5000* *E5001* *E5002*
-- |haslocaldir()| only checks for tab-local directory when -1 is passed as
+- |haslocaldir()| checks for tab-local directory if and only if -1 is passed as
   window number, and its only possible returns values are 0 and 1.
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
   working directory. Use `getcwd(-1, -1)` to get the global working directory.

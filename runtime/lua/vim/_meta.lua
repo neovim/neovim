@@ -398,7 +398,7 @@ end)()
 
 --- Converts a vimoption_T style value to a Lua value
 local convert_value_to_lua = (function()
-  -- Map of OptionType to functions that take vimoption_T values and conver to lua values.
+  -- Map of OptionType to functions that take vimoption_T values and convert to lua values.
   -- Each function takes (info, vim_value) -> lua_value
   local to_lua_value = {
     [OptionTypes.BOOLEAN] = function(_, value) return value end,

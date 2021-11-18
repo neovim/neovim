@@ -47,7 +47,7 @@ end
 local function validate_commit(commit_message)
   local commit_split = vim.split(commit_message, ":")
 
-  -- Return true if the type is vim-patch since most of the normal rules don't
+  -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
   if commit_split[1] == "vim-patch" then
     return nil
