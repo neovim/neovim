@@ -505,7 +505,7 @@ bool mf_release_all(void)
 
       // Flush as many blocks as possible, only if there is a swapfile.
       if (mfp->mf_fd >= 0) {
-        for (bhdr_T *hp = mfp->mf_used_last; hp != NULL; ) {
+        for (bhdr_T *hp = mfp->mf_used_last; hp != NULL;) {
           if (!(hp->bh_flags & BH_LOCKED)
               && (!(hp->bh_flags & BH_DIRTY)
                   || mf_write(mfp, hp) != FAIL)) {

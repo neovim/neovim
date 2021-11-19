@@ -557,7 +557,7 @@ static int cs_cnt_matches(size_t idx)
   int nlines = 0;
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
-  for (;; ) {
+  for (;;) {
     errno = 0;
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
       if (errno == EINTR) {
@@ -966,7 +966,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     qfpos++;
     // next symbol must be + or -
     if (strchr(CSQF_FLAGS, *qfpos) == NULL) {
-      (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));;
+      (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));
       return FALSE;
     }
 

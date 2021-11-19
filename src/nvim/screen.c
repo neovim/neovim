@@ -1084,7 +1084,7 @@ static void win_update(win_T *wp, Providers *providers)
            */
           bot_start = 0;
           idx = 0;
-          for (;; ) {
+          for (;;) {
             wp->w_lines[idx] = wp->w_lines[j];
             /* stop at line that didn't fit, unless it is still
              * valid (no lines deleted) */
@@ -1359,7 +1359,7 @@ static void win_update(win_T *wp, Providers *providers)
   win_check_ns_hl(wp);
 
 
-  for (;; ) {
+  for (;;) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
     if (row == wp->w_grid.Rows) {
@@ -1508,7 +1508,7 @@ static void win_update(win_T *wp, Providers *providers)
               int x = row + new_rows;
 
               // move entries in w_lines[] upwards
-              for (;; ) {
+              for (;;) {
                 // stop at last valid entry in w_lines[]
                 if (i >= wp->w_lines_valid) {
                   wp->w_lines_valid = j;
@@ -2707,7 +2707,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   int sign_idx = 0;
   // Repeat for the whole displayed line.
-  for (;; ) {
+  for (;;) {
     int has_match_conc = 0;  ///< match wants to conceal
     bool did_decrement_ptr = false;
 
@@ -4413,8 +4413,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             || filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && p_extra != at_end_str)
-            || (n_extra != 0 &&
-                (c_extra != NUL || *p_extra != NUL)))) {
+            || (n_extra != 0
+                && (c_extra != NUL || *p_extra != NUL)))) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
                   && filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
@@ -5011,8 +5011,8 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
            || xp->xp_context == EXPAND_MENUNAMES)
-          && (s[0] == '\t' ||
-              (s[0] == '\\' && s[1] != NUL)))) {
+          && (s[0] == '\t'
+              || (s[0] == '\\' && s[1] != NUL)))) {
 #ifndef BACKSLASH_IN_FILENAME
     if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!') {
       return 2;
@@ -6144,7 +6144,7 @@ static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum, colnr_T minc
    * or none is found in this line.
    */
   called_emsg = FALSE;
-  for (;; ) {
+  for (;;) {
     // Stop searching after passing the time limit.
     if (profile_passed_limit(shl->tm)) {
       shl->lnum = 0;                    // no match found in time

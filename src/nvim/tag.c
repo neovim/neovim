@@ -431,7 +431,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
   /*
    * Repeat searching for tags, when a file has not been found.
    */
-  for (;; ) {
+  for (;;) {
     int other_name;
     char_u *name;
 
@@ -1638,7 +1638,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
       /*
        * Read and parse the lines in the file one by one
        */
-      for (;; ) {
+      for (;;) {
         // check for CTRL-C typed, more often when jumping around
         if (state == TS_BINARY || state == TS_SKIP_BACK) {
           line_breakcheck();
@@ -2403,7 +2403,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
    * tnp->tn_did_filefind_init == FALSE: setup for next part in 'tags'.
    * tnp->tn_did_filefind_init == TRUE: find next file in this part.
    */
-  for (;; ) {
+  for (;;) {
     if (tnp->tn_did_filefind_init) {
       fname = vim_findfile(tnp->tn_search_ctx);
       if (fname != NULL) {
@@ -2687,7 +2687,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
 
   // copy the command to pbuf[], remove trailing CR/NL
   str = tagp.command;
-  for (pbuf_end = pbuf; *str && *str != '\n' && *str != '\r'; ) {
+  for (pbuf_end = pbuf; *str && *str != '\n' && *str != '\r';) {
     *pbuf_end++ = *str++;
     if (pbuf_end - pbuf + 1 >= LSIZE) {
       break;
@@ -3056,7 +3056,7 @@ static int find_extra(char_u **pp)
   char_u first_char = **pp;
 
   // Repeat for addresses separated with ';'
-  for (;; ) {
+  for (;;) {
     if (ascii_isdigit(*str)) {
       str = skipdigits(str + 1);
     } else if (*str == '/' || *str == '?') {

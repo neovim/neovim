@@ -17,7 +17,7 @@
 #include "xdiff/xdiff.h"
 
 typedef enum {
-  kNluaXdiffModeUnified =  0,
+  kNluaXdiffModeUnified = 0,
   kNluaXdiffModeOnHunkCB,
   kNluaXdiffModeLocations,
 } NluaXdiffMode;

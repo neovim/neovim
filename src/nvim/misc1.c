@@ -99,7 +99,7 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
      * scan through the 'comments' option for a match
      */
     found_one = FALSE;
-    for (list = curbuf->b_p_com; *list; ) {
+    for (list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
@@ -244,7 +244,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
      * scan through the 'comments' option for a match
      */
     found_one = FALSE;
-    for (list = curbuf->b_p_com; *list; ) {
+    for (list = curbuf->b_p_com; *list;) {
       char_u *flags_save = list;
 
       /*
@@ -340,7 +340,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       }
       len1 = (int)STRLEN(com_leader);
 
-      for (list = curbuf->b_p_com; *list; ) {
+      for (list = curbuf->b_p_com; *list;) {
         char_u *flags_save = list;
 
         (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
@@ -359,7 +359,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
 
         // Now we have to verify whether string ends with a substring
         // beginning the com_leader.
-        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2; ) {
+        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           --off;
           if (!STRNCMP(string + off, com_leader, len2 - off)) {
             if (i - off < lower_check_bound) {
@@ -492,7 +492,7 @@ int get_keystroke(MultiQueue *events)
   int waited = 0;
 
   mapped_ctrl_c = 0;        // mappings are not used here
-  for (;; ) {
+  for (;;) {
     // flush output before waiting
     ui_flush();
     // Leave some room for check_termcode() to insert a key code into (max
@@ -580,7 +580,7 @@ int get_number(int colon, int *mouse_used)
   }
 
   no_mapping++;
-  for (;; ) {
+  for (;;) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
     if (ascii_isdigit(c)) {

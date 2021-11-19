@@ -242,7 +242,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
 #endif
   *d++ = '\'';
 
-  for (const char_u *p = string; *p != NUL; ) {
+  for (const char_u *p = string; *p != NUL;) {
 #ifdef WIN32
     if (!p_ssl) {
       if (*p == '"') {
@@ -405,7 +405,7 @@ int vim_stricmp(const char *s1, const char *s2)
 {
   int i;
 
-  for (;; ) {
+  for (;;) {
     i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
     if (i != 0) {
       return i;                             // this character different

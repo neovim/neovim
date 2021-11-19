@@ -1079,7 +1079,7 @@ const char *gettail_dir(const char *const fname)
   const char *next_dir_end = fname;
   bool look_for_sep = true;
 
-  for (const char *p = fname; *p != NUL; ) {
+  for (const char *p = fname; *p != NUL;) {
     if (vim_ispathsep(*p)) {
       if (look_for_sep) {
         next_dir_end = p;
@@ -1289,8 +1289,8 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
             && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
-                     || (p[1] == '.' &&
-                         vim_ispathsep(p[2]))))) {
+                     || (p[1] == '.'
+                         && vim_ispathsep(p[2]))))) {
           /* :find completion where 'path' is used.
            * Recursiveness is OK here. */
           recursive = false;
@@ -1505,7 +1505,7 @@ void simplify_filename(char_u *filename)
 
   if (vim_ispathsep(*p)) {
     relative = false;
-    do{
+    do {
       ++p;
     }
     while (vim_ispathsep(*p));
@@ -1517,8 +1517,8 @@ void simplify_filename(char_u *filename)
      * or "p" is at the "start" of the (absolute or relative) path name. */
     if (vim_ispathsep(*p)) {
       STRMOVE(p, p + 1);                // remove duplicate "/"
-    } else if (p[0] == '.' &&
-               (vim_ispathsep(p[1]) || p[1] == NUL)) {
+    } else if (p[0] == '.'
+               && (vim_ispathsep(p[1]) || p[1] == NUL)) {
       if (p == start && relative) {
         p += 1 + (p[1] != NUL);         // keep single "." or leading "./"
       } else {
@@ -2198,7 +2198,7 @@ int match_suffix(char_u *fname)
 
   size_t fnamelen = STRLEN(fname);
   size_t setsuflen = 0;
-  for (char_u *setsuf = p_su; *setsuf; ) {
+  for (char_u *setsuf = p_su; *setsuf;) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
       char_u *tail = path_tail(fname);

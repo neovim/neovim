@@ -378,7 +378,7 @@ static void shift_block(oparg_T *oap, int amount)
         bd.startspaces = 0;
       }
     }
-    for (; ascii_iswhite(*bd.textstart); ) {
+    for (; ascii_iswhite(*bd.textstart);) {
       // TODO: is passing bd.textstart for start of the line OK?
       incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (bd.start_vcol));
       total += incr;
@@ -2037,7 +2037,7 @@ void op_tilde(oparg_T *oap)
       did_change = swapchars(oap->op_type, &pos,
                              oap->end.col - pos.col + 1);
     } else {
-      for (;; ) {
+      for (;;) {
         did_change |= swapchars(oap->op_type, &pos,
                                 pos.lnum == oap->end.lnum ? oap->end.col + 1 :
                                 (int)STRLEN(ml_get_pos(&pos)));
@@ -2987,7 +2987,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       /* For the = register we need to split the string at NL
        * characters.
        * Loop twice: count the number of lines and save them. */
-      for (;; ) {
+      for (;;) {
         y_size = 0;
         ptr = insert_string;
         while (ptr != NULL) {
@@ -3204,7 +3204,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // get the old line and advance to the position to insert at
       oldp = get_cursor_line_ptr();
       oldlen = STRLEN(oldp);
-      for (ptr = oldp; vcol < col && *ptr; ) {
+      for (ptr = oldp; vcol < col && *ptr;) {
         // Count a tab for what it's worth (if list mode not on)
         incr = lbr_chartabsize_adv(oldp, &ptr, vcol);
         vcol += incr;
@@ -3936,8 +3936,8 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
               || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
-              || (endcurr1 < 0x100 &&
-                  !utf_eat_space(utf_ptr2char(curr))))) {
+              || (endcurr1 < 0x100
+                  && !utf_eat_space(utf_ptr2char(curr))))) {
         // don't add a space if the line is ending in a space
         if (endcurr1 == ' ') {
           endcurr1 = endcurr2;
@@ -5631,7 +5631,7 @@ static varnumber_T line_count_info(char_u *line, varnumber_T *wc, varnumber_T *c
   varnumber_T chars = 0;
   int is_word = 0;
 
-  for (i = 0; i < limit && line[i] != NUL; ) {
+  for (i = 0; i < limit && line[i] != NUL;) {
     if (is_word) {
       if (ascii_isspace(line[i])) {
         words++;

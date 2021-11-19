@@ -80,7 +80,7 @@ void ex_menu(exarg_T *eap)
   modes = get_menu_cmd_modes((char *)eap->cmd, eap->forceit, &noremap, &unmenu);
   arg = eap->arg;
 
-  for (;; ) {
+  for (;;) {
     if (STRNCMP(arg, "<script>", 8) == 0) {
       noremap = REMAP_SCRIPT;
       arg = skipwhite(arg + 8);
@@ -449,7 +449,7 @@ static int add_menu_path(const char_u *const menu_path, vimmenu_T *menuarg,
         }
 
         if (c != 0) {
-          menu->strings[i] = xmalloc(STRLEN(call_data) + 5 );
+          menu->strings[i] = xmalloc(STRLEN(call_data) + 5);
           menu->strings[i][0] = c;
           if (d == 0) {
             STRCPY(menu->strings[i] + 1, call_data);
@@ -1315,7 +1315,7 @@ static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
   }
 
   // Find mnemonic characters "&a" and reduce "&&" to "&".
-  for (p = text; p != NULL; ) {
+  for (p = text; p != NULL;) {
     p = vim_strchr(p, '&');
     if (p != NULL) {
       if (p[1] == NUL) {            // trailing "&"

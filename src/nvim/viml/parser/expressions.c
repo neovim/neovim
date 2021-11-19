@@ -1036,7 +1036,7 @@ void viml_pexpr_free_ast(ExprAST ast)
     ExprASTNode **const cur_node = kv_last(ast_stack);
 #ifndef NDEBUG
     // Explicitly check for AST recursiveness.
-    for (size_t i = 0 ; i < kv_size(ast_stack) - 1 ; i++) {
+    for (size_t i = 0; i < kv_size(ast_stack) - 1; i++) {
       assert(*kv_A(ast_stack, i) != *cur_node);
     }
 #endif

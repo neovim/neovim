@@ -224,7 +224,7 @@ newwindow:
       beep_flush();
     } else {
       if (Prenum) {  // go to specified window
-        for (wp = firstwin; --Prenum > 0; ) {
+        for (wp = firstwin; --Prenum > 0;) {
           if (wp->w_next == NULL) {
             break;
           } else {
@@ -1958,8 +1958,8 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
     // Set the width/height of this frame.
     // Redraw when size or position changes
     if (topfr->fr_height != height || topfr->fr_win->w_winrow != row
-        || topfr->fr_width != width ||
-        topfr->fr_win->w_wincol != col) {
+        || topfr->fr_width != width
+        || topfr->fr_win->w_wincol != col) {
       topfr->fr_win->w_winrow = row;
       frame_new_height(topfr, height, false, false);
       topfr->fr_win->w_wincol = col;
@@ -2239,7 +2239,7 @@ void close_windows(buf_T *buf, int keep_curwin)
 
   ++RedrawingDisabled;
 
-  for (win_T *wp = firstwin; wp != NULL && !ONE_WINDOW; ) {
+  for (win_T *wp = firstwin; wp != NULL && !ONE_WINDOW;) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false) == FAIL) {
@@ -2582,7 +2582,7 @@ int win_close(win_T *win, bool free_buf)
        * If the cursor goes to the preview or the quickfix window, try
        * finding another window to go to.
        */
-      for (;; ) {
+      for (;;) {
         if (wp->w_next == NULL) {
           wp = firstwin;
         } else {
@@ -3147,12 +3147,12 @@ static void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wf
           break;
         }
         if (topfirst) {
-          do{
+          do {
             frp = frp->fr_next;
           }
           while (wfh && frp != NULL && frame_fixed_height(frp));
         } else {
-          do{
+          do {
             frp = frp->fr_prev;
           }
           while (wfh && frp != NULL && frame_fixed_height(frp));
@@ -3347,12 +3347,12 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
           break;
         }
         if (leftfirst) {
-          do{
+          do {
             frp = frp->fr_next;
           }
           while (wfw && frp != NULL && frame_fixed_width(frp));
         } else {
-          do{
+          do {
             frp = frp->fr_prev;
           }
           while (wfw && frp != NULL && frame_fixed_width(frp));
@@ -4316,7 +4316,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
      * downwards neighbor.
      */
     fr = foundfr;
-    for (;; ) {
+    for (;;) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4334,7 +4334,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
     /*
      * Now go downwards to find the bottom or top frame in it.
      */
-    for (;; ) {
+    for (;;) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -4399,7 +4399,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
      * right neighbor.
      */
     fr = foundfr;
-    for (;; ) {
+    for (;;) {
       if (fr == tp->tp_topframe) {
         goto end;
       }
@@ -4417,7 +4417,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
     /*
      * Now go downwards to find the leftmost or rightmost frame in it.
      */
-    for (;; ) {
+    for (;;) {
       if (nfr->fr_layout == FR_LEAF) {
         foundfr = nfr;
         break;
@@ -5827,8 +5827,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   //   is visible.
   if (height > 0
       && (!wp->w_p_scb || wp == curwin)
-      && (height < wp->w_buffer->b_ml.ml_line_count ||
-          wp->w_topline > 1)) {
+      && (height < wp->w_buffer->b_ml.ml_line_count
+          || wp->w_topline > 1)) {
     /*
      * Find a value for w_topline that shows the cursor at the same
      * relative position in the window as before (more or less).
@@ -6084,7 +6084,7 @@ void command_height(void)
 static void frame_add_height(frame_T *frp, int n)
 {
   frame_new_height(frp, frp->fr_height + n, false, false);
-  for (;; ) {
+  for (;;) {
     frp = frp->fr_parent;
     if (frp == NULL) {
       break;
@@ -7010,7 +7010,7 @@ int win_getid(typval_T *argvars)
         wp = tp->tp_firstwin;
       }
     }
-    for ( ; wp != NULL; wp = wp->w_next) {
+    for (; wp != NULL; wp = wp->w_next) {
       if (--winnr == 0) {
         return wp->handle;
       }

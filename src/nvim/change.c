@@ -1355,7 +1355,7 @@ int open_line(int dir, int flags, int second_line_indent)
         int c = 0;
         int off = 0;
 
-        for (p = lead_flags; *p != NUL && *p != ':'; ) {
+        for (p = lead_flags; *p != NUL && *p != ':';) {
           if (*p == COM_RIGHT || *p == COM_LEFT) {
             c = *p++;
           } else if (ascii_isdigit(*p) || *p == '-') {
@@ -1841,7 +1841,7 @@ void del_lines(long nlines, bool undo)
     return;
   }
 
-  for (n = 0; n < nlines; ) {
+  for (n = 0; n < nlines;) {
     if (curbuf->b_ml.ml_flags & ML_EMPTY) {  // nothing to delete
       break;
     }

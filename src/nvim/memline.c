@@ -407,7 +407,7 @@ void ml_setname(buf_T *buf)
    */
   dirp = p_dir;
   bool found_existing_dir = false;
-  for (;; ) {
+  for (;;) {
     if (*dirp == NUL) {             // tried all directories, fail
       break;
     }
@@ -504,7 +504,7 @@ void ml_open_file(buf_T *buf)
    */
   dirp = p_dir;
   bool found_existing_dir = false;
-  for (;; ) {
+  for (;;) {
     if (*dirp == NUL) {
       break;
     }
@@ -1236,7 +1236,7 @@ void ml_recover(bool checkext)
   } else if (error) {
     ++no_wait_return;
     msg(">>>>>>>>>>>>>");
-    emsg(_( "E312: Errors detected while recovering; look for lines starting with ???"));
+    emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
     --no_wait_return;
     msg(_("See \":help E312\" for more information."));
     msg(">>>>>>>>>>>>>");
@@ -2349,7 +2349,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
          * move some of the pointer into the new block
          * prepare for updating the parent block
          */
-        for (;; ) {             // do this twice when splitting block 1
+        for (;;) {             // do this twice when splitting block 1
           hp_new = ml_new_ptr(mfp);
           if (hp_new == NULL) {             // TODO: try to fix tree
             return FAIL;
@@ -2733,7 +2733,7 @@ linenr_T ml_firstmarked(void)
    * The search starts with lowest_marked line. This is the last line where
    * a mark was found, adjusted by inserting/deleting lines.
    */
-  for (lnum = lowest_marked; lnum <= curbuf->b_ml.ml_line_count; ) {
+  for (lnum = lowest_marked; lnum <= curbuf->b_ml.ml_line_count;) {
     /*
      * Find the data block containing the line.
      * This also fills the stack with the blocks from the root to the data
@@ -2775,7 +2775,7 @@ void ml_clearmarked(void)
   /*
    * The search starts with line lowest_marked.
    */
-  for (lnum = lowest_marked; lnum <= curbuf->b_ml.ml_line_count; ) {
+  for (lnum = lowest_marked; lnum <= curbuf->b_ml.ml_line_count;) {
     /*
      * Find the data block containing the line.
      * This also fills the stack with the blocks from the root to the data
@@ -3034,7 +3034,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
   /*
    * search downwards in the tree until a data block is found
    */
-  for (;; ) {
+  for (;;) {
     if ((hp = mf_get(mfp, bnum, page_count)) == NULL) {
       goto error_noblock;
     }
@@ -3211,7 +3211,7 @@ int resolve_symlink(const char_u *fname, char_u *buf)
   // Put the result so far in tmp[], starting with the original name.
   STRLCPY(tmp, fname, MAXPATHL);
 
-  for (;; ) {
+  for (;;) {
     // Limit symlink depth to 100, catch recursive loops.
     if (++depth == 100) {
       semsg(_("E773: Symlink loop for \"%s\""), fname);
@@ -3481,7 +3481,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   fname = (char *)makeswapname((char_u *)buf_fname, buf->b_ffname, buf,
                                (char_u *)dir_name);
 
-  for (;; ) {
+  for (;;) {
     if (fname == NULL) {        // must be out of memory
       break;
     }

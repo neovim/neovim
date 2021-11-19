@@ -995,7 +995,7 @@ retry:
             long tlen;
 
             tlen = 0;
-            for (;; ) {
+            for (;;) {
               p = ml_get(read_buf_lnum) + read_buf_col;
               n = (int)STRLEN(p);
               if ((int)tlen + n + 1 > size) {
@@ -3125,7 +3125,7 @@ nobackup:
   // If conversion is taking place, we may first pretend to write and check
   // for conversion errors.  Then loop again to write for real.
   // When not doing conversion this writes for real right away.
-  for (checking_conversion = true; ; checking_conversion = false) {
+  for (checking_conversion = true;; checking_conversion = false) {
     // There is no need to check conversion when:
     // - there is no conversion
     // - we make a backup file, that can be restored in case of conversion
@@ -4265,8 +4265,8 @@ static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
       len = 4;
     } else if (flags == (FIO_UCS2 | FIO_ENDIAN_L)) {
       name = "ucs-2le";         // FF FE
-    } else if (flags == FIO_ALL ||
-               flags == (FIO_UTF16 | FIO_ENDIAN_L)) {
+    } else if (flags == FIO_ALL
+               || flags == (FIO_UTF16 | FIO_ENDIAN_L)) {
       // utf-16le is preferred, it also works for ucs-2le text
       name = "utf-16le";        // FF FE
     }
@@ -4811,8 +4811,8 @@ int check_timestamps(int focus)
   }
 
   if (!stuff_empty() || global_busy || !typebuf_typed()
-      || autocmd_busy || curbuf->b_ro_locked > 0 ||
-      allbuf_lock > 0) {
+      || autocmd_busy || curbuf->b_ro_locked > 0
+      || allbuf_lock > 0) {
     need_check_timestamps = true;               // check later
   } else {
     no_wait_return++;
@@ -5727,7 +5727,7 @@ long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
 
-  for (;; ) {
+  for (;;) {
     ret = read(fd, buf, bufsize);
     if (ret >= 0 || errno != EINTR) {
       break;

@@ -1453,7 +1453,7 @@ int vgetc(void)
   } else {
     mod_mask = 0x0;
     last_recorded_len = 0;
-    for (;; ) {                 // this is done twice if there are modifiers
+    for (;;) {                 // this is done twice if there are modifiers
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
         no_mapping++;
@@ -1793,7 +1793,7 @@ static int vgetorpeek(bool advance)
        * If a mapped key sequence is found we go back to the start to
        * try re-mapping.
        */
-      for (;; ) {
+      for (;;) {
         /*
          * os_breakcheck() is slow, don't use it too often when
          * inside a mapping.  But call it each time for typed
@@ -1861,8 +1861,8 @@ static int vgetorpeek(bool advance)
               && State != CONFIRM
               && !((ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c1))
                    || ((compl_cont_status & CONT_LOCAL)
-                       && (c1 == Ctrl_N ||
-                           c1 == Ctrl_P)))) {
+                       && (c1 == Ctrl_N
+                           || c1 == Ctrl_P)))) {
             if (c1 == K_SPECIAL) {
               nolmaplen = 2;
             } else {
@@ -1951,7 +1951,7 @@ static int vgetorpeek(bool advance)
                    * If one of the typed keys cannot be
                    * remapped, skip the entry.
                    */
-                  for (n = mlen; --n >= 0; ) {
+                  for (n = mlen; --n >= 0;) {
                     if (*s++ & (RM_NONE|RM_ABBR)) {
                       break;
                     }
@@ -2550,7 +2550,7 @@ int inchar(char_u *buf, int maxlen, long wait_time)
 #define DUM_LEN MAXMAPLEN * 3 + 3
       char_u dum[DUM_LEN + 1];
 
-      for (;; ) {
+      for (;;) {
         len = os_inchar(dum, DUM_LEN, 0L, 0, NULL);
         if (len == 0 || (len == 1 && dum[0] == 3)) {
           break;
@@ -3599,7 +3599,7 @@ char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forc
     expand_isabbrev = isabbrev;
     xp->xp_context = EXPAND_MAPPINGS;
     expand_buffer = false;
-    for (;; ) {
+    for (;;) {
       if (STRNCMP(arg, "<buffer>", 8) == 0) {
         expand_buffer = true;
         arg = skipwhite(arg + 8);
@@ -3987,7 +3987,7 @@ char_u *vim_strsave_escape_csi(char_u *p)
   // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
   char_u *res = xmalloc(STRLEN(p) * 4 + 1);
   char_u *d = res;
-  for (char_u *s = p; *s != NUL; ) {
+  for (char_u *s = p; *s != NUL;) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Copy special key unmodified.
       *d++ = *s++;

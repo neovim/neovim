@@ -245,7 +245,7 @@ retnomove:
     // Scroll by however many rows outside the window we are.
     if (row < 0) {
       count = 0;
-      for (first = true; curwin->w_topline > 1; ) {
+      for (first = true; curwin->w_topline > 1;) {
         if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
           count++;
         } else {
@@ -270,7 +270,7 @@ retnomove:
       row = 0;
     } else if (row >= curwin->w_height_inner) {
       count = 0;
-      for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
+      for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count;) {
         if (curwin->w_topfill > 0) {
           ++count;
         } else {
@@ -448,7 +448,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 
   fp = topframe;
   *rowp -= firstwin->w_winrow;
-  for (;; ) {
+  for (;;) {
     if (fp->fr_layout == FR_LEAF) {
       break;
     }

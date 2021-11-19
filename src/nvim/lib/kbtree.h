@@ -53,7 +53,7 @@
     bool is_internal; \
     key_t key[2*T-1]; \
     kbnode_##name##_t *ptr[]; \
-  } ; \
+  }; \
   typedef struct { \
     kbnode_##name##_t *root; \
     int n_keys, n_nodes; \

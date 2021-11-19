@@ -1665,7 +1665,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
 static void command_line_next_histidx(CommandLineState *s, bool next_match)
 {
   int j = (int)STRLEN(s->lookfor);
-  for (;; ) {
+  for (;;) {
     // one step backwards
     if (!next_match) {
       if (s->hiscnt == hislen) {
@@ -2686,7 +2686,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
   viml_parser_destroy(&pstate);
   kv_resize(ret_ccline_colors->colors, kv_size(colors));
   size_t prev_end = 0;
-  for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+  for (size_t i = 0; i < kv_size(colors); i++) {
     const ParserHighlightChunk chunk = kv_A(colors, i);
     assert(chunk.start.col < INT_MAX);
     assert(chunk.end_col < INT_MAX);
@@ -3466,7 +3466,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       int len;
 
       // Locate start of last word in the cmd buffer.
-      for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff; ) {
+      for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff;) {
         len = utf_head_off(ccline.cmdbuff, w - 1) + 1;
         if (!vim_iswordc(utf_ptr2char(w - len))) {
           break;
@@ -4386,7 +4386,7 @@ static int showmatches(expand_T *xp, int wildmenu)
           msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
           break;
         }
-        for (j = maxlen - lastlen; --j >= 0; ) {
+        for (j = maxlen - lastlen; --j >= 0;) {
           msg_putchar(' ');
         }
         if (xp->xp_context == EXPAND_FILES
@@ -4457,7 +4457,7 @@ char_u *sm_gettail(char_u *s, bool eager)
   char_u *t = s;
   int had_sep = FALSE;
 
-  for (p = s; *p != NUL; ) {
+  for (p = s; *p != NUL;) {
     if (vim_ispathsep(*p)
 #ifdef BACKSLASH_IN_FILENAME
         && !rem_backslash(p)
@@ -5219,7 +5219,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file, int 
   ga_init(&ga, (int)sizeof(char *), 10);
   hashtab_T found_ht;
   hash_init(&found_ht);
-  for (s = path; ; s = e) {
+  for (s = path;; s = e) {
     e = vim_strchr(s, ENV_SEPCHAR);
     if (e == NULL) {
       e = s + STRLEN(s);

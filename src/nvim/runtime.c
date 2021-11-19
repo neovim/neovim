@@ -479,7 +479,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   CharVec after_path = KV_INITIAL_VALUE;
 
   static char_u buf[MAXPATHL];
-  for (char *entry = (char *)p_pp; *entry != NUL; ) {
+  for (char *entry = (char *)p_pp; *entry != NUL;) {
     char *cur_entry = entry;
     copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
 
@@ -491,7 +491,7 @@ RuntimeSearchPath runtime_search_path_build(void)
 
 
   char *rtp_entry;
-  for (rtp_entry = (char *)p_rtp; *rtp_entry != NUL; ) {
+  for (rtp_entry = (char *)p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
     copy_option_part((char_u **)&rtp_entry, buf, MAXPATHL, ",");
     size_t buflen = STRLEN(buf);
@@ -663,7 +663,7 @@ static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
   }
   const char *insp = NULL;
   const char *after_insp = NULL;
-  for (const char *entry = (const char *)p_rtp; *entry != NUL; ) {
+  for (const char *entry = (const char *)p_rtp; *entry != NUL;) {
     const char *cur_entry = entry;
 
     copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");

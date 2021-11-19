@@ -146,7 +146,7 @@ char *stdpaths_user_data_subpath(const char *fname, const size_t trailing_pathse
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {
     ret = xrealloc(ret, len + trailing_pathseps + numcommas + 1);
-    for (size_t i = 0 ; i < len + numcommas ; i++) {
+    for (size_t i = 0; i < len + numcommas; i++) {
       if (ret[i] == ',') {
         memmove(ret + i + 1, ret + i, len - i + numcommas);
         ret[i] = '\\';

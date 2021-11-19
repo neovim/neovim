@@ -1551,7 +1551,7 @@ static const char_u *skip_var_list(const char_u *arg, int *var_count, int *semic
   if (*arg == '[') {
     // "[var, var]": find the matching ']'.
     p = arg;
-    for (;; ) {
+    for (;;) {
       p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one(p);
       if (s == p) {
@@ -2448,7 +2448,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, co
 
     // Check whether any of the list items is locked
     for (ri = tv_list_first(rettv->vval.v_list);
-         ri != NULL && ll_li != NULL; ) {
+         ri != NULL && ll_li != NULL;) {
       if (var_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
                          TV_CSTRING)) {
         return;
@@ -2464,7 +2464,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, co
     /*
      * Assign the List values to the list items.
      */
-    for (ri = tv_list_first(rettv->vval.v_list); ri != NULL; ) {
+    for (ri = tv_list_first(rettv->vval.v_list); ri != NULL;) {
       if (op != NULL && *op != '=') {
         eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri), op);
       } else {
@@ -2691,7 +2691,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
     xp->xp_context = EXPAND_USER_VARS;
     if (vim_strpbrk(arg, (char_u *)"\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
-      for (p = arg + STRLEN(arg); p >= arg; ) {
+      for (p = arg + STRLEN(arg); p >= arg;) {
         xp->xp_pattern = p;
         MB_PTR_BACK(arg, p);
         if (ascii_iswhite(*p)) {
@@ -3732,7 +3732,7 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Repeat computing, until no '+', '-' or '.' is following.
    */
-  for (;; ) {
+  for (;;) {
     op = **arg;
     if (op != '+' && op != '-' && op != '.') {
       break;
@@ -3907,7 +3907,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
   /*
    * Repeat computing, until no '*', '/' or '%' is following.
    */
-  for (;; ) {
+  for (;;) {
     op = **arg;
     if (op != '*' && op != '/' && op != '%') {
       break;
@@ -4890,7 +4890,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = name;
 
-  for (p = *arg + 1; *p != NUL && *p != '"'; ) {
+  for (p = *arg + 1; *p != NUL && *p != '"';) {
     if (*p == '\\') {
       switch (*++p) {
       case 'b':
@@ -5026,7 +5026,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = str;
 
-  for (p = *arg + 1; *p != NUL; ) {
+  for (p = *arg + 1; *p != NUL;) {
     if (*p == '\'') {
       if (p[1] != '\'') {
         break;
@@ -6086,7 +6086,7 @@ int assert_equalfile(typval_T *argvars)
       snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
     } else {
       int64_t linecount = 1;
-      for (int64_t count = 0; ; count++) {
+      for (int64_t count = 0;; count++) {
         const int c1 = fgetc(fd1);
         const int c2 = fgetc(fd2);
         if (c1 == EOF) {
@@ -7382,7 +7382,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   }
 
   // Default result is zero == OK.
-  for (;; ) {
+  for (;;) {
     if (lines->v_type == VAR_LIST) {
       // List argument, get next string.
       if (li == NULL) {

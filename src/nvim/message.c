@@ -401,7 +401,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
     }
     len += n;
     buf[e] = s[e];
-    for (n = utfc_ptr2len(s + e); --n > 0; ) {
+    for (n = utfc_ptr2len(s + e); --n > 0;) {
       if (++e == buflen) {
         break;
       }
@@ -883,7 +883,7 @@ char_u *msg_may_trunc(int force, char_u *s)
       return s;
     }
     int n;
-    for (n = 0; size >= room; ) {
+    for (n = 0; size >= room;) {
       size -= utf_ptr2cells(s + n);
       n += utfc_ptr2len(s + n);
     }
@@ -2549,7 +2549,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
   msgchunk_T *mp = smp;
   char_u *p;
 
-  for (;; ) {
+  for (;;) {
     msg_row = row;
     msg_col = mp->sb_msg_col;
     p = mp->sb_text;
@@ -2688,7 +2688,7 @@ static int do_more_prompt(int typed_char)
   if (typed_char == NUL) {
     msg_moremsg(FALSE);
   }
-  for (;; ) {
+  for (;;) {
     /*
      * Get a typed character directly from the user.
      */
@@ -3436,7 +3436,7 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
   ++no_wait_return;
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
-  for (;; ) {
+  for (;;) {
     // Get a typed character directly from the user.
     c = get_keystroke(NULL);
     switch (c) {

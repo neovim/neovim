@@ -168,7 +168,7 @@ char *parse_shape_opt(int what)
         }
 
         // Parse the part after the colon
-        for (p = colonp + 1; *p && *p != ','; ) {
+        for (p = colonp + 1; *p && *p != ',';) {
           {
             /*
              * First handle the ones with a number argument.

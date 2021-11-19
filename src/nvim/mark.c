@@ -235,7 +235,7 @@ pos_T *movemark(int count)
     return (pos_T *)NULL;
   }
 
-  for (;; ) {
+  for (;;) {
     if (curwin->w_jumplistidx + count < 0
         || curwin->w_jumplistidx + count >= curwin->w_jumplistlen) {
       return (pos_T *)NULL;

@@ -390,7 +390,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
-  for (size_t i = 0 ; i < flags.size ; i++) {
+  for (size_t i = 0; i < flags.size; i++) {
     switch (flags.data[i]) {
     case 'm':
       pflags |= kExprFlagsMulti; break;
@@ -478,7 +478,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
       .capacity = kv_size(colors),
       .size = kv_size(colors),
     };
-    for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+    for (size_t i = 0; i < kv_size(colors); i++) {
       const ParserHighlightChunk chunk = kv_A(colors, i);
       Array chunk_arr = (Array) {
         .items = xmalloc(4 * sizeof(chunk_arr.items[0])),

@@ -382,8 +382,8 @@ static bool check_top_offset(void)
       topline_back(curwin, &loff);
       // Stop when included a line above the window.
       if (loff.lnum < curwin->w_topline
-          || (loff.lnum == curwin->w_topline &&
-              loff.fill > 0)) {
+          || (loff.lnum == curwin->w_topline
+              && loff.fill > 0)) {
         break;
       }
       n += loff.height;
@@ -1661,7 +1661,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     boff.fill = curwin->w_topfill;
     boff.lnum = curwin->w_topline - 1;
     int i;
-    for (i = 0; i < scrolled && boff.lnum < curwin->w_botline; ) {
+    for (i = 0; i < scrolled && boff.lnum < curwin->w_botline;) {
       botline_forw(curwin, &boff);
       i += boff.height;
       ++line_count;
