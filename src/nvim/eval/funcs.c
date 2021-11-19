@@ -2669,10 +2669,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
-      if (*mods != NUL) {
-        (void)modify_fname((char_u *)mods, false, &usedlen,
-                           (char_u **)&fname, &fbuf, &len);
-      }
+      (void)modify_fname((char_u *)mods, false, &usedlen,
+                         (char_u **)&fname, &fbuf, &len);
     }
   }
 
