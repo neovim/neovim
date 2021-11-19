@@ -42,6 +42,14 @@ func Test_verbose_pwd()
   set acd
   wincmd w
   call assert_match('\[autochdir\].*testdir$', execute('verbose pwd'))
+  execute 'lcd' cwd
+  call assert_match('\[window\].*testdir$', execute('verbose pwd'))
+  execute 'tcd' cwd
+  call assert_match('\[tabpage\].*testdir$', execute('verbose pwd'))
+  execute 'cd' cwd
+  call assert_match('\[global\].*testdir$', execute('verbose pwd'))
+  edit
+  call assert_match('\[autochdir\].*testdir$', execute('verbose pwd'))
   wincmd w
   call assert_match('\[autochdir\].*testdir[/\\]Xautodir', execute('verbose pwd'))
   set noacd
