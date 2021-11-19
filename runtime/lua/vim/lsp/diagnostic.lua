@@ -717,5 +717,3 @@ end
 -- }}}
 
 return M
-
--- vim: fdm=marker

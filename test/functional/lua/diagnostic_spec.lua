@@ -110,17 +110,21 @@ describe('vim.diagnostic', function()
 
   it('retrieves diagnostics from all buffers and namespaces', function()
     local result = exec_lua [[
-      vim.diagnostic.set(diagnostic_ns, 1, {
+      local other_bufnr = vim.api.nvim_create_buf(true, false)
+      local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
+      vim.api.nvim_buf_set_lines(other_bufnr, 0, 1, false, lines)
+
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
         make_error('Diagnostic #1', 1, 1, 1, 1),
         make_error('Diagnostic #2', 2, 1, 2, 1),
       })
-      vim.diagnostic.set(other_ns, 2, {
+      vim.diagnostic.set(other_ns, other_bufnr, {
         make_error('Diagnostic #3', 3, 1, 3, 1),
       })
       return vim.diagnostic.get()
     ]]
     eq(3, #result)
-    eq(2, exec_lua([[return #vim.tbl_filter(function(d) return d.bufnr == 1 end, ...)]], result))
+    eq(2, exec_lua([[return #vim.tbl_filter(function(d) return d.bufnr == diagnostic_bufnr end, ...)]], result))
     eq('Diagnostic #1', result[1].message)
   end)
 
