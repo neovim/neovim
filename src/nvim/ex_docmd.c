@@ -7753,6 +7753,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
     abort();
   }
 
+  last_chdir_reason = NULL;
   shorten_fnames(true);
 
   if (trigger_dirchanged) {
@@ -7870,7 +7871,9 @@ static void ex_pwd(exarg_T *eap)
 #endif
     if (p_verbose > 0) {
       char *context = "global";
-      if (curwin->w_localdir != NULL) {
+      if (last_chdir_reason != NULL) {
+        context = last_chdir_reason;
+      } else if (curwin->w_localdir != NULL) {
         context = "window";
       } else if (curtab->tp_localdir != NULL) {
         context = "tabpage";

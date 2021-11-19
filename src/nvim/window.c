@@ -4592,6 +4592,7 @@ void fix_current_dir(void)
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
                               ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
       }
+      last_chdir_reason = NULL;
       shorten_fnames(true);
     }
   } else if (globaldir != NULL) {
@@ -4603,6 +4604,7 @@ void fix_current_dir(void)
       }
     }
     XFREE_CLEAR(globaldir);
+    last_chdir_reason = NULL;
     shorten_fnames(true);
   }
 }
