@@ -467,13 +467,14 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
       lnum = (lnum + line_count) % line_count
     end
     if line_diagnostics[lnum] and not vim.tbl_isempty(line_diagnostics[lnum]) then
+      local line_length = #vim.api.nvim_buf_get_lines(bufnr,  lnum, lnum + 1, true)[1]
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b) return a.col < b.col end
-        is_next = function(diagnostic) return diagnostic.col > position[2] end
+        is_next = function(d) return math.min(d.col, line_length - 1) > position[2] end
       else
         sort_diagnostics = function(a, b) return a.col > b.col end
-        is_next = function(diagnostic) return diagnostic.col < position[2] end
+        is_next = function(d) return math.min(d.col, line_length - 1) < position[2] end
       end
       table.sort(line_diagnostics[lnum], sort_diagnostics)
       if i == 0 then
