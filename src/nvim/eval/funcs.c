@@ -2665,12 +2665,14 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const mods = tv_get_string_buf_chk(&argvars[1], buf);
   if (mods == NULL || fname == NULL) {
     fname = NULL;
-  } else if (mods != NULL && *mods != NUL) {
+  } else {
     len = strlen(fname);
-    size_t usedlen = 0;
-    if (*mods != NUL) {
-      (void)modify_fname((char_u *)mods, false, &usedlen,
-                         (char_u **)&fname, &fbuf, &len);
+    if (mods != NULL && *mods != NUL) {
+      size_t usedlen = 0;
+      if (*mods != NUL) {
+        (void)modify_fname((char_u *)mods, false, &usedlen,
+                           (char_u **)&fname, &fbuf, &len);
+      }
     }
   }
 
