@@ -3485,11 +3485,6 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  // If the user didn't specify anything, default to window scope
-  if (scope == kCdScopeInvalid) {
-    scope = MIN_CD_SCOPE;
-  }
-
   // Find the tabpage by number
   if (scope_number[kCdScopeTabpage] > 0) {
     tp = find_tabpage(scope_number[kCdScopeTabpage]);
@@ -3535,12 +3530,13 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   case kCdScopeGlobal:
     if (globaldir) {        // `globaldir` is not always set.
       from = globaldir;
-    } else if (os_dirname(cwd, MAXPATHL) == FAIL) {  // Get the OS CWD.
+      break;
+    }
+    FALLTHROUGH;            // In global directory, just need to get OS CWD.
+  case kCdScopeInvalid:     // If called without any arguments, get OS CWD.
+    if (os_dirname(cwd, MAXPATHL) == FAIL) {
       from = (char_u *)"";  // Return empty string on failure.
     }
-    break;
-  case kCdScopeInvalid:     // We should never get here
-    abort();
   }
 
   if (from) {

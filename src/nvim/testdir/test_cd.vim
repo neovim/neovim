@@ -233,4 +233,24 @@ func Test_cd_unknown_dir()
   call delete('Xa', 'rf')
 endfunc
 
+func Test_getcwd_actual_dir()
+  CheckFunction test_autochdir
+  let startdir = getcwd()
+  call mkdir('Xactual')
+  call test_autochdir()
+  set autochdir
+  edit Xactual/file.txt
+  call assert_match('testdir.Xactual$', getcwd())
+  lcd ..
+  call assert_match('testdir$', getcwd())
+  edit
+  call assert_match('testdir.Xactual$', getcwd())
+  call assert_match('testdir$', getcwd(win_getid()))
+
+  set noautochdir
+  bwipe!
+  call chdir(startdir)
+  call delete('Xactual', 'rf')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
