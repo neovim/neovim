@@ -573,6 +573,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                     error, returns `(nil, err)` where `err` is a string
                     describing the failure reason.
 
+check_clients_closed()                        *vim.lsp.check_clients_closed()*
+                TODO: Documentation
+
 client()                                                      *vim.lsp.client*
                 LSP client object. You can get an active client object via
                 |vim.lsp.get_client_by_id()| or
@@ -628,11 +631,6 @@ client()                                                      *vim.lsp.client*
                     server.
                   • {handlers} (table): The handlers used by the client as
                     described in |lsp-handler|.
-                  • {requests} (table): The current pending requests in flight
-                    to the server. Entries are key-value pairs with the key
-                    being the request ID while the value is a table with `type`,
-                    `bufnr`, and `method` key-value pairs. `type` is either "pending"
-                    for an active request, or "cancel" for a cancel request.
                   • {config} (table): copy of the table that was passed by the
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server
@@ -657,6 +655,19 @@ flush({client})                                              *vim.lsp.flush()*
 for_each_buffer_client({bufnr}, {fn})
                 TODO: Documentation
 
+formatexpr({opts})                                      *vim.lsp.formatexpr()*
+                Provides an interface between the built-in client and a
+                `formatexpr` function.
+
+                Currently only supports a single client. This can be set via `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in `on_attach` via vim.api.nvim_buf_set_option(bufnr, 'formatexpr , 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')`.
+
+                Parameters: ~
+                    {opts}  table options for customizing the formatting
+                            expression which takes the following optional
+                            keys:
+                            • timeout_ms (default 500ms). The timeout period
+                              for the formatting request.
+
 get_active_clients()                            *vim.lsp.get_active_clients()*
                 Gets all active clients.
 
@@ -666,7 +677,7 @@ get_active_clients()                            *vim.lsp.get_active_clients()*
                                           *vim.lsp.get_buffers_by_client_id()*
 get_buffers_by_client_id({client_id})
                 Parameters: ~
-                    {client_id}  client id
+                    {client_id}  number client id
 
                 Return: ~
                     list of buffer ids
@@ -676,7 +687,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
                 client may not yet be fully initialized.
 
                 Parameters: ~
-                    {client_id}  client id number
+                    {client_id}  number client id
 
                 Return: ~
                     |vim.lsp.client| object, or nil
@@ -707,7 +718,7 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                     |CompleteDone|
 
                                                            *vim.lsp.prepare()*
-prepare({bufnr}, {firstline}, {new_lastline}, {changedtick})
+prepare({bufnr}, {firstline}, {lastline}, {new_lastline}, {changedtick})
                 TODO: Documentation
 
 reset({client_id})                                           *vim.lsp.reset()*
@@ -776,6 +787,15 @@ start_client({config})                                *vim.lsp.start_client()*
                                          language server if requested via
                                          `workspace/configuration` . Keys are
                                          case-sensitive.
+                    {commands}           table Table that maps string of
+                                         clientside commands to user-defined
+                                         functions. Commands passed to
+                                         start_client take precedence over the
+                                         global command registry. Each key
+                                         must be a unique comand name, and the
+                                         value is a function which is called
+                                         if any LSP action (code action, code
+                                         lenses, ...) triggers the command.
                     {init_options}       Values to pass in the initialization
                                          request as `initializationOptions` .
                                          See `initialize` in the LSP spec.
@@ -851,6 +871,8 @@ start_client({config})                                *vim.lsp.start_client()*
                                            notifications to the server by the
                                            given number in milliseconds. No
                                            debounce occurs if nil
+                                         • exit_timeout (number, default 500):
+                                           Milliseconds to wait for server to
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
@@ -875,6 +897,23 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                     {client_id}  client id or |vim.lsp.client| object, or list
                                  thereof
                     {force}      boolean (optional) shutdown forcefully
+
+tagfunc({...})                                             *vim.lsp.tagfunc()*
+                Provides an interface between the built-in client and
+                'tagfunc'.
+
+                When used with normal mode commands (e.g. |CTRL-]|) this will
+                invoke the "textDocument/definition" LSP method to find the
+                tag under the cursor. Otherwise, uses "workspace/symbol". If
+                no results are returned from any LSP servers, falls back to
+                using built-in tags.
+
+                Parameters: ~
+                    {pattern}  Pattern used to find a workspace symbol
+                    {flags}    See |tag-function|
+
+                Return: ~
+                    A list of matching tags
 
 with({handler}, {override_config})                            *vim.lsp.with()*
                 Function to manage overriding defaults for LSP handlers.
@@ -1304,13 +1343,15 @@ buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                     {bufnr}  buffer id
 
                                      *vim.lsp.util.buf_highlight_references()*
-buf_highlight_references({bufnr}, {references})
+buf_highlight_references({bufnr}, {references}, {offset_encoding})
                 Shows a list of document highlights for a certain buffer.
 
                 Parameters: ~
-                    {bufnr}       buffer id
-                    {references}  List of `DocumentHighlight` objects to
-                                  highlight
+                    {bufnr}            buffer id
+                    {references}       List of `DocumentHighlight` objects to
+                                       highlight
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to utf-16
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
@@ -1343,25 +1384,6 @@ close_preview_autocmd({events}, {winnr})
 
                 See also: ~
                     |autocmd-events|
-
-                                                 *vim.lsp.util.compute_diff()*
-compute_diff({old_lines}, {new_lines}, {start_line_idx}, {end_line_idx},
-             {offset_encoding})
-                Returns the range table for the difference between old and new
-                lines
-
-                Parameters: ~
-                    {old_lines}        table list of lines
-                    {new_lines}        table list of lines
-                    {start_line_idx}   int line to begin search for first
-                                       difference
-                    {end_line_idx}     int line to begin search for last
-                                       difference
-                    {offset_encoding}  string encoding requested by language
-                                       server
-
-                Return: ~
-                    table start_line_idx and start_col_idx of range
 
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
@@ -1800,14 +1822,19 @@ notify({method}, {params})                              *vim.lsp.rpc.notify()*
                     (bool) `true` if notification could be sent, `false` if
                     not
 
-request({method}, {params}, {callback})                *vim.lsp.rpc.request()*
+                                                       *vim.lsp.rpc.request()*
+request({method}, {params}, {callback}, {notify_reply_callback})
                 Sends a request to the LSP server and runs {callback} upon
                 response.
 
                 Parameters: ~
-                    {method}    (string) The invoked LSP method
-                    {params}    (table) Parameters for the invoked LSP method
-                    {callback}  (function) Callback to invoke
+                    {method}                 (string) The invoked LSP method
+                    {params}                 (table) Parameters for the
+                                             invoked LSP method
+                    {callback}               (function) Callback to invoke
+                    {notify_reply_callback}  (function) Callback to invoke as
+                                             soon as a request is no longer
+                                             pending
 
                 Return: ~
                     (bool, number) `(true, message_id)` if request could be
@@ -1859,6 +1886,35 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                     • {pid} (number) The LSP server's PID.
                     • {handle} A handle for low-level interaction with the LSP
                       server process |vim.loop|.
+
+
+==============================================================================
+Lua module: vim.lsp.sync                                            *lsp-sync*
+
+                                                 *vim.lsp.sync.compute_diff()*
+compute_diff({prev_lines}, {curr_lines}, {firstline}, {lastline},
+             {new_lastline}, {offset_encoding}, {line_ending})
+                Returns the range table for the difference between prev and
+                curr lines
+
+                Parameters: ~
+                    {prev_lines}       table list of lines
+                    {curr_lines}       table list of lines
+                    {firstline}        number line to begin search for first
+                                       difference
+                    {lastline}         number line to begin search in
+                                       old_lines for last difference
+                    {new_lastline}     number line to begin search in
+                                       new_lines for last difference
+                    {offset_encoding}  string encoding requested by language
+                                       server
+
+                Return: ~
+                    table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
+
+                                          *vim.lsp.sync.compute_line_length()*
+compute_line_length({line}, {offset_encoding})
+                TODO: Documentation
 
 
 ==============================================================================
