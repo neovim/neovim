@@ -215,3 +215,22 @@ func Test_cd_from_non_existing_dir()
   cd -
   call assert_equal(saveddir, getcwd())
 endfunc
+
+func Test_cd_unknown_dir()
+  call mkdir('Xa')
+  cd Xa
+  call writefile(['text'], 'Xb.txt')
+  edit Xa/Xb.txt
+  let first_buf = bufnr()
+  cd ..
+  edit
+  call assert_equal(first_buf, bufnr())
+  edit Xa/Xb.txt
+  call assert_notequal(first_buf, bufnr())
+
+  bwipe!
+  exe "bwipe! " .. first_buf
+  call delete('Xa', 'rf')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
