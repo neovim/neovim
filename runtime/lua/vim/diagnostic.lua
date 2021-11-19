@@ -375,28 +375,6 @@ local function clear_scheduled_display(namespace, bufnr)
 end
 
 ---@private
-local function set_list(loclist, opts)
-  opts = opts or {}
-  local open = vim.F.if_nil(opts.open, true)
-  local title = opts.title or "Diagnostics"
-  local winnr = opts.winnr or 0
-  local bufnr
-  if loclist then
-    bufnr = vim.api.nvim_win_get_buf(winnr)
-  end
-  local diagnostics = M.get(bufnr, opts)
-  local items = M.toqflist(diagnostics)
-  if loclist then
-    vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
-  else
-    vim.fn.setqflist({}, ' ', { title = title, items = items })
-  end
-  if open then
-    vim.api.nvim_command(loclist and "lopen" or "copen")
-  end
-end
-
----@private
 local function get_diagnostics(bufnr, opts, clamp)
   opts = opts or {}
 
@@ -447,6 +425,28 @@ local function get_diagnostics(bufnr, opts, clamp)
   end
 
   return diagnostics
+end
+
+---@private
+local function set_list(loclist, opts)
+  opts = opts or {}
+  local open = vim.F.if_nil(opts.open, true)
+  local title = opts.title or "Diagnostics"
+  local winnr = opts.winnr or 0
+  local bufnr
+  if loclist then
+    bufnr = vim.api.nvim_win_get_buf(winnr)
+  end
+  local diagnostics = get_diagnostics(bufnr, opts, true)
+  local items = M.toqflist(diagnostics)
+  if loclist then
+    vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = items })
+  end
+  if open then
+    vim.api.nvim_command(loclist and "lopen" or "copen")
+  end
 end
 
 ---@private
