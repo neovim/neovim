@@ -2663,7 +2663,7 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char buf[NUMBUFLEN];
   const char *fname = tv_get_string_chk(&argvars[0]);
   const char *const mods = tv_get_string_buf_chk(&argvars[1], buf);
-  if (fname == NULL) {
+  if (mods == NULL || fname == NULL) {
     fname = NULL;
   } else if (mods != NULL && *mods != NUL) {
     len = strlen(fname);
