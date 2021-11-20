@@ -117,6 +117,7 @@ setmetatable(vim, {
 })
 
 vim.log = {
+  ---@table log levels
   levels = {
     TRACE = 0;
     DEBUG = 1;

@@ -1640,7 +1640,7 @@ lsp.log_levels = log.levels
 ---
 ---@see |vim.lsp.log_levels|
 ---
----@param level [number|string] the case insensitive level name or number
+---@param level number|string the case insensitive level name or number
 function lsp.set_log_level(level)
   if type(level) == 'string' or type(level) == 'number' then
     log.set_level(level)
@@ -1653,6 +1653,12 @@ end
 ---@returns (String) Path to logfile.
 function lsp.get_log_path()
   return log.get_filename()
+end
+
+--- Sets the path of the logfile used by the LSP client.
+---@param path string full path to the logfile
+function lsp.set_log_path(path)
+  return log.set_filename(path)
 end
 
 --- Call {fn} for every client attached to {bufnr}

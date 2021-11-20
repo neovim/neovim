@@ -736,11 +736,17 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
                 Use `lsp.log_levels` for reverse lookup.
 
                 Parameters: ~
-                    {level}  [number|string] the case insensitive level name
-                             or number
+                    {level}  number|string the case insensitive level name or
+                             number
 
                 See also: ~
                     |vim.lsp.log_levels|
+
+set_log_path({path})                                  *vim.lsp.set_log_path()*
+                Sets the path of the logfile used by the LSP client.
+
+                Parameters: ~
+                    {path}  string full path to the logfile
 
 start_client({config})                                *vim.lsp.start_client()*
                 Starts and initializes a client with the given configuration.
@@ -1771,10 +1777,19 @@ get_filename()                                    *vim.lsp.log.get_filename()*
                 Returns the log filename.
 
                 Return: ~
-                    (string) log filename
+                    string log filename
 
 get_level()                                          *vim.lsp.log.get_level()*
-                TODO: Documentation
+                Gets the current log level.
+
+                Return: ~
+                    number current log level, see |vim.log.levels|
+
+set_filename({name})                              *vim.lsp.log.set_filename()*
+                Sets the log filename.
+
+                Parameters: ~
+                    {name}  string full path to the logfile
 
 set_format_func({handle})                      *vim.lsp.log.set_format_func()*
                 Sets formatting function used to format logs
@@ -1796,7 +1811,7 @@ should_log({level})                                 *vim.lsp.log.should_log()*
                     {level}  number log level
 
                 Return: ~
-                    (bool) true if would log, false if not
+                    boolean true if would log, false if not
 
 
 ==============================================================================
