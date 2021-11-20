@@ -6184,7 +6184,7 @@ static void do_ucmd(exarg_T *eap)
         }
       }
 
-      // break if there no <item> is found
+      // break if no <item> is found
       if (start == NULL || end == NULL) {
         break;
       }
