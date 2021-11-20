@@ -1636,6 +1636,15 @@ return {
       defaults={if_true=500}
     },
     {
+      full_name='msgfunc', abbreviation='msgfu',
+      short_desc=N_("function used for messages"),
+      type='string', scope={'global'},
+      secure=true,
+      alloced=true,
+      varname='p_msgfunc',
+      defaults={if_true=""}
+    },
+    {
       full_name='nrformats', abbreviation='nf',
       short_desc=N_("number formats recognized for CTRL-A command"),
       type='string', list='onecomma', scope={'buffer'},

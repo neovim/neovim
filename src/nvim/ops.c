@@ -953,7 +953,7 @@ int do_record(int c)
     restore_v_event(dict, &save_v_event);
     reg_recorded = reg_recording;
     reg_recording = 0;
-    if (ui_has(kUIMessages)) {
+    if (msg_enable_ext()) {
       showmode();
     } else {
       msg("");

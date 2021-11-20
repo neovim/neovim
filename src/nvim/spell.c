@@ -3016,8 +3016,12 @@ void spell_suggest(int count)
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
 
-    if (ui_has(kUIMessages)) {
-      ui_call_msg_clear();
+    if (msg_enable_ext()) {
+      if (ui_has(kUIMessages)) {
+        ui_call_msg_clear();
+      } else {
+        msg_call_msgfunc("clear", NULL);
+      }
     }
 
     if (mouse_used) {

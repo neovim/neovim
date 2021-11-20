@@ -6639,7 +6639,7 @@ int showmode(void)
   int attr;
   int sub_attr;
 
-  if (ui_has(kUIMessages) && clear_cmdline) {
+  if (msg_enable_ext() && clear_cmdline) {
     msg_ext_clear(true);
   }
 
@@ -6690,7 +6690,7 @@ int showmode(void)
         // These messages can get long, avoid a wrap in a narrow window.
         // Prefer showing edit_submode_extra. With external messages there
         // is no imposed limit.
-        if (ui_has(kUIMessages)) {
+        if (msg_enable_ext()) {
           length = INT_MAX;
         } else {
           length = (Rows - msg_row) * Columns - 3;

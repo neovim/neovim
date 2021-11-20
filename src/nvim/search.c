@@ -1222,7 +1222,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
         // search stat.  Use all the space available, so that the
         // search state is right aligned.  If there is not enough space
         // msg_strtrunc() will shorten in the middle.
-        if (ui_has(kUIMessages)) {
+        if (msg_enable_ext()) {
           len = 0;  // adjusted below
         } else if (msg_scrolled != 0 && !cmd_silent) {
           // Use all the columns.

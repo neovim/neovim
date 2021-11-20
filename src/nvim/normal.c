@@ -2695,7 +2695,7 @@ void clear_showcmd(void)
         sprintf((char *)showcmd_buf, "%d-%d", chars, bytes);
       }
     }
-    int limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+    int limit = msg_enable_ext() ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
     showcmd_buf[limit] = NUL;  // truncate
     showcmd_visual = true;
   } else {
@@ -2755,7 +2755,7 @@ bool add_to_showcmd(int c)
   }
   size_t old_len = STRLEN(showcmd_buf);
   size_t extra_len = STRLEN(p);
-  size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+  size_t limit = msg_enable_ext() ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
   if (old_len + extra_len > limit) {
     size_t overflow = old_len + extra_len - limit;
     memmove(showcmd_buf, showcmd_buf + overflow, old_len - overflow + 1);

@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
@@ -130,6 +131,9 @@ static bool msg_ext_keep_after_cmdline = false;
 
 static int msg_grid_pos_at_flush = 0;
 static int msg_grid_scroll_discount = 0;
+
+// For check infinite loop for msgfunc
+static bool msg_check_loop;
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
@@ -351,7 +355,7 @@ char_u *msg_strtrunc(char_u *s, int force)
 
   // May truncate message to avoid a hit-return prompt
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
-       && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
+       && !exmode_active && msg_silent == 0 && !msg_enable_ext())
       || force) {
     len = vim_strsize(s);
     if (msg_scrolled != 0) {
@@ -1027,7 +1031,7 @@ void ex_messages(void *const eap_p)
   }
 
   // Display what was not skipped.
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     Array entries = ARRAY_DICT_INIT;
     for (; p != NULL; p = p->next) {
       if (p->msg != NULL && p->msg[0] != NUL) {
@@ -1042,7 +1046,11 @@ void ex_messages(void *const eap_p)
         ADD(entries, ARRAY_OBJ(entry));
       }
     }
-    ui_call_msg_history_show(entries);
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_history_show(entries);
+    } else {
+      msg_call_msgfunc("history_show", &entries);
+    }
   } else {
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
@@ -1255,7 +1263,7 @@ void wait_return(int redraw)
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
       redraw_later(curwin, VALID);
     }
-    if (ui_has(kUIMessages)) {
+    if (msg_enable_ext()) {
       msg_ext_clear(true);
     }
   }
@@ -1383,7 +1391,7 @@ void msg_start(void)
     msg_didout = false;                     // no output on current line yet
   }
 
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     msg_ext_ui_flush();
     if (!msg_scroll && msg_ext_visible) {
       // Will overwrite last message.
@@ -1998,7 +2006,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   // without scrolling
   // Not needed when only using CR to move the cursor.
   bool overflow = false;
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     int count = msg_ext_visible + (msg_ext_overwrite ? 0 : 1);
     // TODO(bfredl): possible extension point, let external UI control this
     if (count > 1) {
@@ -2083,7 +2091,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
   did_wait_return = false;
 
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     if (attr != msg_ext_last_attr) {
       msg_ext_emit_chunk();
       msg_ext_last_attr = attr;
@@ -2380,7 +2388,7 @@ void msg_scroll_flush(void)
 
 void msg_reset_scroll(void)
 {
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     msg_ext_clear(true);
     return;
   }
@@ -3083,14 +3091,19 @@ int msg_end(void)
 
 void msg_ext_ui_flush(void)
 {
-  if (!ui_has(kUIMessages)) {
+  if (!msg_enable_ext()) {
     return;
   }
 
   msg_ext_emit_chunk();
   if (msg_ext_chunks.size > 0) {
-    ui_call_msg_show(cstr_to_string(msg_ext_kind),
-                     msg_ext_chunks, msg_ext_overwrite);
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_show(cstr_to_string(msg_ext_kind),
+          msg_ext_chunks, msg_ext_overwrite);
+    } else {
+      msg_call_msgfunc("show", &msg_ext_chunks);
+    }
+
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
     }
@@ -3116,7 +3129,11 @@ void msg_ext_flush_showmode(void)
 void msg_ext_clear(bool force)
 {
   if (msg_ext_visible && (!msg_ext_keep_after_cmdline || force)) {
-    ui_call_msg_clear();
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    } else {
+      msg_call_msgfunc("clear", NULL);
+    }
     msg_ext_visible = 0;
     msg_ext_overwrite = false;  // nothing to overwrite
   }
@@ -3146,20 +3163,57 @@ void msg_ext_check_clear(void)
 
 bool msg_ext_is_visible(void)
 {
-  return ui_has(kUIMessages) && msg_ext_visible > 0;
+  return msg_enable_ext() && msg_ext_visible > 0;
 }
 
 /// If the written message runs into the shown command or ruler, we have to
 /// wait for hit-return and redraw the window later.
 void msg_check(void)
 {
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     return;
   }
   if (msg_row == Rows - 1 && msg_col >= sc_col) {
     need_wait_return = true;
     redraw_cmdline = true;
   }
+}
+
+bool msg_enable_ext(void)
+{
+  // msgfunc is disabled in command line mode
+  // Because default echo is used for command line redraw
+  return ui_has(kUIMessages) || (*p_msgfunc != NUL &&
+                                 !msg_check_loop && !redir_off);
+}
+
+void msg_call_msgfunc(const char *method, Array *entries)
+{
+  // call msgfunc(method, kind, chunks, overwrite)
+  typval_T args[5];
+
+  Error err = ERROR_INIT;
+  Array arr = ARRAY_DICT_INIT;
+  if (!object_to_vim(ARRAY_OBJ(entries == NULL ? arr : *entries),
+      &args[2], &err)) {
+    return;
+  }
+  if (!object_to_vim(BOOLEAN_OBJ(msg_ext_overwrite), &args[3], &err)) {
+    return;
+  }
+
+  args[0].v_type = VAR_STRING;
+  args[1].v_type = VAR_STRING;
+  args[4].v_type = VAR_UNKNOWN;
+  args[0].vval.v_string = (char_u *)method;
+  args[1].vval.v_string = (char_u *)msg_ext_kind;
+
+  // Prevent infinite loop
+  msg_check_loop = true;
+
+  call_func_retnr(p_msgfunc, 4, args);
+
+  msg_check_loop = false;
 }
 
 /// May write a string to the redirection file.
@@ -3367,7 +3421,7 @@ void msg_advance(int col)
     msg_col = col;              // for redirection, may fill it up later
     return;
   }
-  if (ui_has(kUIMessages)) {
+  if (msg_enable_ext()) {
     // TODO(bfredl): use byte count as a basic proxy.
     // later on we might add proper support for formatted messages.
     while (msg_ext_cur_len < (size_t)col) {
