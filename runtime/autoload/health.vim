@@ -60,6 +60,10 @@ function! health#check(plugin_names) abort
         endif
       endtry
       let header = [name. ': ' . func, repeat('=', 72)]
+      if !len(s:output)
+        call health#report_error(
+                \ 'Healthcheck for "'.name.'" plugin returned an empty result.')
+      endif
       " remove empty line after header from report_start
       let s:output = s:output[0] == '' ? s:output[1:] : s:output
       let s:output = header + s:output + ['']
