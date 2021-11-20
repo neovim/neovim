@@ -309,17 +309,20 @@ endfunc
 func Test_early_bar()
   " test that a bar is recognized before the {event}
   call s:AddAnAutocmd()
-  augroup vimBarTest | au! | augroup END
+  augroup vimBarTest | au! | let done = 77 | augroup END
   call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+  call assert_equal(77, done)
 
   call s:AddAnAutocmd()
-  augroup vimBarTest| au!| augroup END
+  augroup vimBarTest| au!| let done = 88 | augroup END
   call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+  call assert_equal(88, done)
 
   " test that a bar is recognized after the {event}
   call s:AddAnAutocmd()
-  augroup vimBarTest| au!BufReadCmd| augroup END
+  augroup vimBarTest| au!BufReadCmd| let done = 99 | augroup END
   call assert_equal(1, len(split(execute('au vimBarTest'), "\n")))
+  call assert_equal(99, done)
 
   " test that a bar is recognized after the {group}
   call s:AddAnAutocmd()

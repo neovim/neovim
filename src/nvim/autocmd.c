@@ -600,6 +600,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   int group;
 
   if (*arg == '|') {
+    eap->nextcmd = arg + 1;
     arg = (char_u *)"";
     group = AUGROUP_ALL;  // no argument, use all groups
   } else {
@@ -616,6 +617,7 @@ void do_autocmd(char_u *arg_in, int forceit)
 
   pat = skipwhite(pat);
   if (*pat == '|') {
+    eap->nextcmd = pat + 1;
     pat = (char_u *)"";
     cmd = (char_u *)"";
   } else {
