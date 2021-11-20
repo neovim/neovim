@@ -625,7 +625,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
   }
 
-  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
+  char_u *newp = xmalloc(linelen + newlen - oldlen);
 
   // Copy bytes before the cursor.
   if (col > 0) {
