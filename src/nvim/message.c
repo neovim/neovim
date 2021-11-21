@@ -3183,8 +3183,8 @@ bool msg_enable_ext(void)
 {
   // msgfunc is disabled in command line mode
   // Because default echo is used for command line redraw
-  return ui_has(kUIMessages) || (*p_msgfunc != NUL &&
-                                 !msg_check_loop && !redir_off);
+  return ui_has(kUIMessages) || (*p_msgfunc != NUL
+                                 && !msg_check_loop && !redir_off);
 }
 
 void msg_call_msgfunc(const char *method, Array *entries)
