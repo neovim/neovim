@@ -531,34 +531,30 @@ buf_request({bufnr}, {method}, {params}, {handler})
                       You could instead iterate all clients and call their
                       `cancel_request()` methods.
 
-                                                   *vim.lsp.buf_request_all()*
-buf_request_all({bufnr}, {method}, {params}, {callback})
+                                             *vim.lsp.buf_request_and_apply()*
+buf_request_and_apply({bufnr}, {method}, {params}, {callback})
                 Sends an async request for all active clients attached to the
-                buffer. Executes the callback on the combined result.
-                Parameters are the same as |vim.lsp.buf_request()| but the
-                return result and callback are different.
+                buffer, then executes async callback on the combined result.
 
                 Parameters: ~
                     {bufnr}     (number) Buffer handle, or 0 for current.
                     {method}    (string) LSP method name
                     {params}    (optional, table) Parameters to send to the
                                 server
-                    {callback}  (function) The callback to call when all
-                                requests are finished.
+                    {callback}  (function) Asynchronous callback executed when
+                                all requests are finished. It is invoked with
+                                map of client_id:request_result as only
+                                argument and the return value is ignored.
 
                 Return: ~
-                    (function) A function that will cancel all requests which
-                    is the same as the one returned from `buf_request` .
+                    (function) A function that will cancel all requests.
 
                                                   *vim.lsp.buf_request_sync()*
 buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
-                Sends a request to all server and waits for the response of
-                all of them.
+                Sends a request for all active clients attached to the buffer
+                and waits for the response of all of them.
 
-                Calls |vim.lsp.buf_request_all()| but blocks Nvim while
-                awaiting the result. Parameters are the same as
-                |vim.lsp.buf_request()| but the return result is different.
-                Wait maximum of {timeout_ms} (default 1000) ms.
+                This is synchronous variant of |vim.lsp.buf_request|
 
                 Parameters: ~
                     {bufnr}       (number) Buffer handle, or 0 for current.
@@ -569,9 +565,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                                   time in milliseconds to wait for a result.
 
                 Return: ~
-                    Map of client_id:request_result. On timeout, cancel or
-                    error, returns `(nil, err)` where `err` is a string
-                    describing the failure reason.
+                    Map of client-id:request-id pairs for all successful
+                    requests. On timeout or error, returns `(nil, err)` where
+                    `err` is a string describing the failure reason.
 
 check_clients_closed()                        *vim.lsp.check_clients_closed()*
                 TODO: Documentation

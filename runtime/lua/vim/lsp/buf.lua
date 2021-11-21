@@ -559,7 +559,7 @@ end
 local function code_action_request(params)
   local bufnr = vim.api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
-  vim.lsp.buf_request_all(bufnr, method, params, function(results)
+  vim.lsp.buf_request_and_apply(bufnr, method, params, function(results)
     on_code_action_results(results, { bufnr = bufnr, method = method, params = params })
   end)
 end

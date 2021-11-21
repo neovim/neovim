@@ -959,7 +959,7 @@ function lsp.start_client(config)
   ---@private
   --- Sends a request to the server and synchronously waits for the response.
   ---
-  --- This is a wrapper around {client.request}
+  --- This is a synchronous variant of {client.request}
   ---
   ---@param method (string) LSP method name.
   ---@param params (table) LSP request params.
@@ -967,7 +967,7 @@ function lsp.start_client(config)
   ---milliseconds to wait for a result.
   ---@param bufnr (number) Buffer handle (0 for current).
   ---@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
-  ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
+  ---On timeout or error, returns `(nil, err)` where `err` is a
   ---string describing the failure reason. If the request was unsuccessful
   ---returns `nil`.
   ---@see |vim.lsp.buf_request_sync()|
@@ -1366,20 +1366,18 @@ function lsp.buf_request(bufnr, method, params, handler)
   return client_request_ids, _cancel_all_requests
 end
 
----Sends an async request for all active clients attached to the buffer.
----Executes the callback on the combined result.
----Parameters are the same as |vim.lsp.buf_request()| but the return result and callback are
----different.
+--- Sends an async request for all active clients attached to the
+--- buffer, then executes async callback on the combined result.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params (optional, table) Parameters to send to the server
----@param callback (function) The callback to call when all requests are finished.
---  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
---  A map of client_id:request_result will be provided to the callback
---
----@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
-function lsp.buf_request_all(bufnr, method, params, callback)
+---@param callback (function) Asynchronous callback executed when all requests are finished.
+---       It is invoked with map of client_id:request_result as only argument and
+---       the return value is ignored.
+---
+---@returns (function) A function that will cancel all requests.
+function lsp.buf_request_and_apply(bufnr, method, params, callback)
   local request_results = {}
   local result_count = 0
   local expected_result_count = 0
@@ -1407,25 +1405,24 @@ function lsp.buf_request_all(bufnr, method, params, callback)
   return cancel
 end
 
---- Sends a request to all server and waits for the response of all of them.
+--- Sends a request for all active clients attached to the buffer and waits
+--- for the response of all of them.
 ---
---- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
---- Parameters are the same as |vim.lsp.buf_request()| but the return result is
---- different. Wait maximum of {timeout_ms} (default 1000) ms.
+--- This is synchronous variant of |vim.lsp.buf_request|
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params (optional, table) Parameters to send to the server
 ---@param timeout_ms (optional, number, default=1000) Maximum time in
----      milliseconds to wait for a result.
+---       milliseconds to wait for a result.
 ---
----@returns Map of client_id:request_result. On timeout, cancel or error,
----        returns `(nil, err)` where `err` is a string describing the failure
----        reason.
+---@returns Map of client-id:request-id pairs for all successful requests.
+---         On timeout or error, returns `(nil, err)` where `err`
+---         is a string describing the failure reason.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results
 
-  local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
+  local cancel = lsp.buf_request_and_apply(bufnr, method, params, function(it)
     request_results = it
   end)
 
