@@ -677,7 +677,7 @@ void getout(int exitval)
   if (did_emsg) {
     // give the user a chance to read the (error) message
     no_wait_return = FALSE;
-    wait_return(FALSE);
+//  wait_return(FALSE);
   }
 
   // Position the cursor again, the autocommands may have moved it
