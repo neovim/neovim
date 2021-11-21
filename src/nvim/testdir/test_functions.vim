@@ -1592,6 +1592,10 @@ func Test_bufadd_bufload()
 endfunc
 
 func Test_readdir()
+  if isdirectory('Xdir')
+    call delete('Xdir', 'rf')
+  endif
+
   call mkdir('Xdir')
   call writefile([], 'Xdir/foo.txt')
   call writefile([], 'Xdir/bar.txt')

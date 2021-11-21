@@ -3653,6 +3653,9 @@ func Xqftick_tests(cchar)
 	      \ {'filename' : 'F7', 'lnum' : 11, 'text' : 'L11'}], 'r')
   call assert_equal(2, g:Xgetlist({'changedtick' : 0}).changedtick)
 
+  if isdirectory("Xone")
+    call delete("Xone", 'rf')
+  endif
   call writefile(["F8:80:L80", "F8:81:L81"], "Xone")
   Xfile Xone
   call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
