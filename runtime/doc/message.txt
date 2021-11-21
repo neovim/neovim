@@ -847,8 +847,10 @@ The arguments are:
 
     a:method	"clear", "history_show", or "show"
     a:kind	specify internal message command.
-    a:chunks	[text_attr, text] list
+    a:chunks	[attr, text] list
     a:overwrite	messages overwrite flag
+
+For detailed arguments info, please see |ui-messages|.
 
 Here is an example: >
 
