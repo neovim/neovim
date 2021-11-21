@@ -1050,6 +1050,11 @@ void ex_messages(void *const eap_p)
       ui_call_msg_history_show(entries);
     } else {
       msg_call_msgfunc("msg_history_show", &entries);
+
+      // ui_call_msg_xxx() calls ui_event(), which frees the allocated chunk
+      // The allocated chunk should also need freeing in or after
+      // msg_call_msgfunc().
+      api_free_array(entries);
     }
   } else {
     msg_hist_off = true;
@@ -3102,6 +3107,11 @@ void msg_ext_ui_flush(void)
                        msg_ext_chunks, msg_ext_overwrite);
     } else {
       msg_call_msgfunc("msg_show", &msg_ext_chunks);
+
+      // ui_call_msg_xxx() calls ui_event(), which frees the allocated chunk
+      // The allocated chunk should also need freeing in or after
+      // msg_call_msgfunc().
+      api_free_array(msg_ext_chunks);
     }
 
     if (!msg_ext_overwrite) {
