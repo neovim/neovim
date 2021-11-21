@@ -845,7 +845,7 @@ invoked to display messages instead.
 
 The arguments are:
 
-    a:method	"clear", "history_show", or "show"
+    a:method	"msg_clear", "msg_history_show", or "msg_show"
     a:kind	specify internal message command.
     a:chunks	[attr, text] list
     a:overwrite	messages overwrite flag
@@ -865,5 +865,5 @@ Here is an example: >
 	endfunction
 	
 	set msgfunc=Func
->
+<
  vim:tw=78:ts=8:noet:ft=help:norl:
