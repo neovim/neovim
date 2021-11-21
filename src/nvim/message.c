@@ -3099,7 +3099,7 @@ void msg_ext_ui_flush(void)
   if (msg_ext_chunks.size > 0) {
     if (ui_has(kUIMessages)) {
       ui_call_msg_show(cstr_to_string(msg_ext_kind),
-          msg_ext_chunks, msg_ext_overwrite);
+                       msg_ext_chunks, msg_ext_overwrite);
     } else {
       msg_call_msgfunc("msg_show", &msg_ext_chunks);
     }
