@@ -428,14 +428,17 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   func T(a, c, p)
+    let g:cmdline_compl_params = [a:a, a:c, a:p]
     return "oneA\noneB\noneC"
   endfunc
   command -nargs=1 -complete=custom,T MyCmd
   let l = getcompletion('MyCmd ', 'cmdline')
   call assert_equal(['oneA', 'oneB', 'oneC'], l)
+  call assert_equal(['', 'MyCmd ', 6], g:cmdline_compl_params)
 
   delcommand MyCmd
   delfunc T
+  unlet g:cmdline_compl_params
 
   " For others test if the name is recognized.
   let names = ['buffer', 'environment', 'file_in_path', 'mapping', 'tag', 'tag_listfiles', 'user']
