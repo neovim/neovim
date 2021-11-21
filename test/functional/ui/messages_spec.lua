@@ -12,6 +12,7 @@ local nvim_prog = helpers.nvim_prog
 local iswin = helpers.iswin
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
+local source = helpers.source
 
 describe('ui/ext_messages', function()
   local screen
@@ -1095,6 +1096,29 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {2:        [string ":lua"]:1: in main chunk}                    |
       {4:Press ENTER or type command to continue}^                     |
     ]]}
+  end)
+  it('msgfunc disables messages output', function()
+    screen:try_resize(40,6)
+    source([[
+    function! Func(method, kind, chunks, overwrite) abort
+      let g:method = a:method
+      let g:kind = a:kind
+      let g:chunks = a:chunks
+    endfunction
+    set msgfunc=Func
+    ]])
+    feed(':echo "hello"<cr>')
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+    eq('show', eval('g:method'))
+    eq('echo', eval('g:kind'))
+    eq({{0, 'hello'}}, eval('g:chunks'))
   end)
 end)
 
