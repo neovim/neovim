@@ -1808,6 +1808,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     initc = NUL;
   } else if (initc != '#' && initc != NUL) {
     find_mps_values(&initc, &findc, &backwards, true);
+    if (dir) {
+      backwards = (dir == FORWARD) ? false : true;
+    }
     if (findc == NUL) {
       return NULL;
     }
@@ -3427,12 +3430,22 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
   // user wants.
   save_cpo = p_cpo;
   p_cpo = (char_u *)(vim_strchr(p_cpo, CPO_MATCHBSL) != NULL ? "%M" : "%");
-  while (count-- > 0) {
-    if ((pos = findmatch(NULL, what)) == NULL) {
-      break;
+  if ((pos = findmatch(NULL, what)) != NULL) {
+    while (count-- > 0) {
+      if ((pos = findmatch(NULL, what)) == NULL) {
+        break;
+      }
+      curwin->w_cursor = *pos;
+      start_pos = *pos;   // the findmatch for end_pos will overwrite *pos
     }
-    curwin->w_cursor = *pos;
-    start_pos = *pos;  // the findmatch for end_pos will overwrite *pos
+  } else {
+    while (count-- > 0) {
+      if ((pos = findmatchlimit(NULL, what, FM_FORWARD, 0)) == NULL) {
+        break;
+      }
+      curwin->w_cursor = *pos;
+      start_pos = *pos;   // the findmatch for end_pos will overwrite *pos
+    }
   }
   p_cpo = save_cpo;
 

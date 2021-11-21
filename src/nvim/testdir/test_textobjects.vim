@@ -421,4 +421,36 @@ func Test_textobj_quote()
   close!
 endfunc
 
+" Test for i(, i<, etc. when cursor is in front of a block
+func Test_textobj_find_paren_forward()
+  new
+
+  " i< and a> when cursor is in front of a block
+  call setline(1, '#include <foo.h>')
+  normal 0yi<
+  call assert_equal('foo.h', @")
+  normal 0ya>
+  call assert_equal('<foo.h>', @")
+
+  " 2i(, 3i( in front of a block enters second/third nested '('
+  call setline(1, 'foo (bar (baz (quux)))')
+  normal 0yi)
+  call assert_equal('bar (baz (quux))', @")
+  normal 02yi)
+  call assert_equal('baz (quux)', @")
+  normal 03yi)
+  call assert_equal('quux', @")
+
+  " 3i( in front of a block doesn't enter third but un-nested '('
+  call setline(1, 'foo (bar (baz) (quux))')
+  normal 03di)
+  call assert_equal('foo (bar (baz) (quux))', getline(1))
+  normal 02di)
+  call assert_equal('foo (bar () (quux))', getline(1))
+  normal 0di)
+  call assert_equal('foo ()', getline(1))
+
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
