@@ -7536,6 +7536,7 @@ static bool syn_list_header(const bool did_header, const int outlen, const int i
 {
   int endcol = 19;
   bool newline = true;
+  int name_col = 0;
   bool adjust = true;
 
   if (!did_header) {
@@ -7544,6 +7545,7 @@ static bool syn_list_header(const bool did_header, const int outlen, const int i
       return true;
     }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
+    name_col = msg_col;
     endcol = 15;
   } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
     msg_putchar(' ');
@@ -7570,6 +7572,9 @@ static bool syn_list_header(const bool did_header, const int outlen, const int i
 
   // Show "xxx" with the attributes.
   if (!did_header) {
+    if (endcol == Columns - 1 && endcol <= name_col) {
+        msg_putchar(' ');
+    }
     msg_puts_attr("xxx", syn_id2attr(id));
     msg_putchar(' ');
   }
