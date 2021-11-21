@@ -3386,15 +3386,17 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsg(_(e_invarg));
     return;
   }
+  const char *pattern = tv_get_string(&argvars[0]);
 
   if (strcmp(type, "cmdline") == 0) {
-    set_one_cmd_context(&xpc, tv_get_string(&argvars[0]));
+    set_one_cmd_context(&xpc, pattern);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_col = STRLEN(pattern);
     goto theend;
   }
 
   ExpandInit(&xpc);
-  xpc.xp_pattern = (char_u *)tv_get_string(&argvars[0]);
+  xpc.xp_pattern = (char_u *)pattern;
   xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
