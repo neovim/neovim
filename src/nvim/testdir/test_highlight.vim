@@ -651,6 +651,16 @@ func Test_1_highlight_Normalgroup_exists()
   endif
 endfunc
 
+function Test_no_space_before_xxx()
+  " Note: we need to create this highlight group in the test because it does not exist in Neovim
+  execute('hi StatusLineTermNC ctermfg=green')
+  let l:org_columns = &columns
+  set columns=17
+  let l:hi_StatusLineTermNC = join(split(execute('hi StatusLineTermNC')))
+  call assert_match('StatusLineTermNC xxx', l:hi_StatusLineTermNC)
+  let &columns = l:org_columns
+endfunction
+
 " Test for using RGB color values in a highlight group
 func Test_xxlast_highlight_RGB_color()
   CheckCanRunGui
