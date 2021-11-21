@@ -5401,7 +5401,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
     do {
       for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {
       }
-      char_u *const name = xmalloc((int)(end - p + 3));   // leave room for "^$"
+      char_u *const name = xmalloc(end - p + 3);   // leave room for "^$"
       STRLCPY(name + 1, p, end - p + 1);
       if (STRCMP(name + 1, "ALLBUT") == 0
           || STRCMP(name + 1, "ALL") == 0
