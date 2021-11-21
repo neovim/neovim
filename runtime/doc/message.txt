@@ -837,4 +837,31 @@ The |g<| command can be used to see the last page of previous command output.
 This is especially useful if you accidentally typed <Space> at the hit-enter
 prompt.
 
+
+						*message-function*  >
+
+If the 'msgfunc' option is set, then the user specified function is
+invoked to display messages instead.
+
+The arguments are:
+
+    a:method	"clear", "history_show", or "show"
+    a:kind	specify internal message command.
+    a:chunks	[text_attr, text] list
+    a:overwrite	messages overwrite flag
+
+Here is an example: >
+
+	function! Func(method, kind, chunks, overwrite) abort
+	  echomsg a:method
+	  if a:kind !=# ''
+	    echomsg a:kind
+	  endif
+	  if !empty(a:chunks)
+	    echomsg a:chunks
+	  endif
+	endfunction
+	
+	set msgfunc=Func
+>
  vim:tw=78:ts=8:noet:ft=help:norl:

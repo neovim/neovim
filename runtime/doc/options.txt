@@ -4298,6 +4298,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Defines the maximum time in msec between two mouse clicks for the
 	second click to be recognized as a multi click.
 
+							*'msgfunc'* *'msgfu'*
+'msgfunc' 'msgfu'	string	(default: empty)
+			global
+	This option specifies a function to be called by |messages|.
+	It overwrites the default messages behavior.
+	See |message-function| for an explanation of how to write the
+	function and an example.
+	Note: It is disabled if your neovim GUI enables "ext_messages"
+	feature.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 							*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "bin,hex")
 			local to buffer
