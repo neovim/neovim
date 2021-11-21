@@ -292,7 +292,7 @@ to newer commands.
 There are actually five histories.  The ones we will mention here are for ":"
 commands and for "/" and "?" search commands.  The "/" and "?" commands share
 the same history, because they are both search commands.  The three other
-histories are for expressions, debug more commands and input lines for the
+histories are for expressions, debug mode commands and input lines for the
 input() function.  |cmdline-history|
 
 Suppose you have done a ":set" command, typed ten more colon commands and then

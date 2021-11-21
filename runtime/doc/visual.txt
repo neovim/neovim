@@ -360,7 +360,8 @@ same amount of text as the last time:
   last line the same number of characters as in the last line the last time.
 The start of the text is the Cursor position.  If the "$" command was used as
 one of the last commands to extend the highlighted text, the repeating will
-be applied up to the rightmost column of the longest line.
+be applied up to the rightmost column of the longest line.  Any count passed
+to the `.` command is not used.
 
 
 ==============================================================================
