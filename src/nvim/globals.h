@@ -789,6 +789,8 @@ extern char_u *compiled_sys;
 // directory is not a local directory, globaldir is NULL.
 EXTERN char_u *globaldir INIT(= NULL);
 
+EXTERN char *last_chdir_reason INIT(= NULL);
+
 // Whether 'keymodel' contains "stopsel" and "startsel".
 EXTERN bool km_stopsel INIT(= false);
 EXTERN bool km_startsel INIT(= false);

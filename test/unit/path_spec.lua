@@ -54,14 +54,20 @@ describe('path.c', function()
       eq(lfs.currentdir(), (ffi.string(buffer)))
     end)
 
-    itp('fails if the given directory does not exist', function()
-      eq(FAIL, path_full_dir_name('does_not_exist', buffer, length))
-    end)
-
     itp('works with a normal relative dir', function()
       local result = path_full_dir_name('unit-test-directory', buffer, length)
       eq(lfs.currentdir() .. '/unit-test-directory', (ffi.string(buffer)))
       eq(OK, result)
+    end)
+
+    itp('works with a non-existing relative dir', function()
+      local result = path_full_dir_name('does-not-exist', buffer, length)
+      eq(lfs.currentdir() .. '/does-not-exist', (ffi.string(buffer)))
+      eq(OK, result)
+    end)
+
+    itp('fails with a non-existing absolute dir', function()
+      eq(FAIL, path_full_dir_name('/does_not_exist', buffer, length))
     end)
   end)
 

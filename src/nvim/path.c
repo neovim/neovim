@@ -2245,11 +2245,17 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
   }
 
   if (os_chdir(directory) != SUCCESS) {
-    // Do not return immediately since we may be in the wrong directory.
-    retval = FAIL;
-  }
-
-  if (retval == FAIL || os_dirname((char_u *)buffer, len) == FAIL) {
+    // Path does not exist (yet).  For a full path fail,
+    // will use the path as-is.  For a relative path use
+    // the current directory and append the file name.
+    if (path_is_absolute((const char_u *)directory)) {
+      // Do not return immediately since we may be in the wrong directory.
+      retval = FAIL;
+    } else {
+      xstrlcpy(buffer, old_dir, len);
+      append_path(buffer, directory, len);
+    }
+  } else if (os_dirname((char_u *)buffer, len) == FAIL) {
     // Do not return immediately since we are in the wrong directory.
     retval = FAIL;
   }
