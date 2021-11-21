@@ -521,7 +521,9 @@ buf_request({bufnr}, {method}, {params}, {handler})
                     {method}   (string) LSP method name
                     {params}   (optional, table) Parameters to send to the
                                server
-                    {handler}  (optional, function) See |lsp-handler|
+                    {handler}  (optional, function) See |lsp-handler| If nil,
+                               follows resolution strategy defined in
+                               |lsp-handler-configuration|
 
                 Return: ~
                     2-tuple:
@@ -676,6 +678,8 @@ get_active_clients()                            *vim.lsp.get_active_clients()*
 
                                           *vim.lsp.get_buffers_by_client_id()*
 get_buffers_by_client_id({client_id})
+                Returns list of buffers attached to client_id.
+
                 Parameters: ~
                     {client_id}  number client id
 
@@ -873,6 +877,11 @@ start_client({config})                                *vim.lsp.start_client()*
                                            debounce occurs if nil
                                          • exit_timeout (number, default 500):
                                            Milliseconds to wait for server to
+                                           exit cleanly after sending the
+                                           'shutdown' request before sending
+                                           kill -15. If set to false, nvim
+                                           exits immediately after sending the
+                                           'shutdown' request to the server.
                     {root_dir}           string Directory where the LSP server
                                          will base its workspaceFolders,
                                          rootUri, and rootPath on
