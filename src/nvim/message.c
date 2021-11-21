@@ -3195,7 +3195,7 @@ void msg_call_msgfunc(const char *method, Array *entries)
   Error err = ERROR_INIT;
   Array arr = ARRAY_DICT_INIT;
   if (!object_to_vim(ARRAY_OBJ(entries == NULL ? arr : *entries),
-      &args[2], &err)) {
+                     &args[2], &err)) {
     return;
   }
   if (!object_to_vim(BOOLEAN_OBJ(msg_ext_overwrite), &args[3], &err)) {
