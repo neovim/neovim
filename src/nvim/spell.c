@@ -3020,7 +3020,7 @@ void spell_suggest(int count)
       if (ui_has(kUIMessages)) {
         ui_call_msg_clear();
       } else {
-        msg_call_msgfunc("clear", NULL);
+        msg_call_msgfunc("msg_clear", NULL);
       }
     }
 

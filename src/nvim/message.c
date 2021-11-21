@@ -1049,7 +1049,7 @@ void ex_messages(void *const eap_p)
     if (ui_has(kUIMessages)) {
       ui_call_msg_history_show(entries);
     } else {
-      msg_call_msgfunc("history_show", &entries);
+      msg_call_msgfunc("msg_history_show", &entries);
     }
   } else {
     msg_hist_off = true;
@@ -3101,7 +3101,7 @@ void msg_ext_ui_flush(void)
       ui_call_msg_show(cstr_to_string(msg_ext_kind),
           msg_ext_chunks, msg_ext_overwrite);
     } else {
-      msg_call_msgfunc("show", &msg_ext_chunks);
+      msg_call_msgfunc("msg_show", &msg_ext_chunks);
     }
 
     if (!msg_ext_overwrite) {
@@ -3132,7 +3132,7 @@ void msg_ext_clear(bool force)
     if (ui_has(kUIMessages)) {
       ui_call_msg_clear();
     } else {
-      msg_call_msgfunc("clear", NULL);
+      msg_call_msgfunc("msg_clear", NULL);
     }
     msg_ext_visible = 0;
     msg_ext_overwrite = false;  // nothing to overwrite
