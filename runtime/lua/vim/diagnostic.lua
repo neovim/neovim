@@ -36,7 +36,37 @@ M.handlers = setmetatable({}, {
   end,
 })
 
--- Local functions {{{
+-- Metatable that automatically creates an empty table when assigning to a missing key
+local bufnr_and_namespace_cacher_mt = {
+  __index = function(t, bufnr)
+    if not bufnr or bufnr == 0 then
+      bufnr = vim.api.nvim_get_current_buf()
+    end
+
+    if rawget(t, bufnr) == nil then
+      rawset(t, bufnr, {})
+    end
+
+    return rawget(t, bufnr)
+  end,
+
+  __newindex = function(t, bufnr, v)
+    if not bufnr or bufnr == 0 then
+      bufnr = vim.api.nvim_get_current_buf()
+    end
+
+    rawset(t, bufnr, v)
+  end,
+}
+
+local diagnostic_cleanup = setmetatable({}, bufnr_and_namespace_cacher_mt)
+local diagnostic_cache = setmetatable({}, bufnr_and_namespace_cacher_mt)
+local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
+local diagnostic_attached_buffers = {}
+local diagnostic_disabled = {}
+local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
+
+local all_namespaces = {}
 
 ---@private
 local function to_severity(severity)
@@ -105,8 +135,6 @@ local function reformat_diagnostics(format, diagnostics)
   end
   return formatted
 end
-
-local all_namespaces = {}
 
 ---@private
 local function enabled_value(option, namespace)
@@ -212,36 +240,6 @@ local function get_bufnr(bufnr)
   end
   return bufnr
 end
-
--- Metatable that automatically creates an empty table when assigning to a missing key
-local bufnr_and_namespace_cacher_mt = {
-  __index = function(t, bufnr)
-    if not bufnr or bufnr == 0 then
-      bufnr = vim.api.nvim_get_current_buf()
-    end
-
-    if rawget(t, bufnr) == nil then
-      rawset(t, bufnr, {})
-    end
-
-    return rawget(t, bufnr)
-  end,
-
-  __newindex = function(t, bufnr, v)
-    if not bufnr or bufnr == 0 then
-      bufnr = vim.api.nvim_get_current_buf()
-    end
-
-    rawset(t, bufnr, v)
-  end,
-}
-
-local diagnostic_cleanup = setmetatable({}, bufnr_and_namespace_cacher_mt)
-local diagnostic_cache = setmetatable({}, bufnr_and_namespace_cacher_mt)
-local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
-local diagnostic_attached_buffers = {}
-local diagnostic_disabled = {}
-local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
 
 ---@private
 local function is_disabled(namespace, bufnr)
@@ -377,6 +375,59 @@ local function clear_scheduled_display(namespace, bufnr)
 end
 
 ---@private
+local function get_diagnostics(bufnr, opts, clamp)
+  opts = opts or {}
+
+  local namespace = opts.namespace
+  local diagnostics = {}
+  local buf_line_count = clamp and vim.api.nvim_buf_line_count(bufnr) or math.huge
+
+  ---@private
+  local function add(d)
+    if not opts.lnum or d.lnum == opts.lnum then
+      if clamp and (d.lnum >= buf_line_count or d.end_lnum >= buf_line_count) then
+        d = vim.deepcopy(d)
+        d.lnum = math.max(math.min(d.lnum, buf_line_count - 1), 0)
+        d.end_lnum = math.max(math.min(d.end_lnum, buf_line_count - 1), 0)
+      end
+      table.insert(diagnostics, d)
+    end
+  end
+
+  if namespace == nil and bufnr == nil then
+    for _, t in pairs(diagnostic_cache) do
+      for _, v in pairs(t) do
+        for _, diagnostic in pairs(v) do
+          add(diagnostic)
+        end
+      end
+    end
+  elseif namespace == nil then
+    for iter_namespace in pairs(diagnostic_cache[bufnr]) do
+      for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
+        add(diagnostic)
+      end
+    end
+  elseif bufnr == nil then
+    for _, t in pairs(diagnostic_cache) do
+      for _, diagnostic in pairs(t[namespace] or {}) do
+        add(diagnostic)
+      end
+    end
+  else
+    for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
+      add(diagnostic)
+    end
+  end
+
+  if opts.severity then
+    diagnostics = filter_by_severity(opts.severity, diagnostics)
+  end
+
+  return diagnostics
+end
+
+---@private
 local function set_list(loclist, opts)
   opts = opts or {}
   local open = vim.F.if_nil(opts.open, true)
@@ -386,7 +437,7 @@ local function set_list(loclist, opts)
   if loclist then
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
-  local diagnostics = M.get(bufnr, opts)
+  local diagnostics = get_diagnostics(bufnr, opts, true)
   local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
@@ -399,27 +450,12 @@ local function set_list(loclist, opts)
 end
 
 ---@private
---- To (slightly) improve performance, modifies diagnostics in place.
-local function clamp_line_numbers(bufnr, diagnostics)
-  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
-  if buf_line_count == 0 then
-    return
-  end
-
-  for _, diagnostic in ipairs(diagnostics) do
-    diagnostic.lnum = math.max(math.min(diagnostic.lnum, buf_line_count - 1), 0)
-    diagnostic.end_lnum = math.max(math.min(diagnostic.end_lnum, buf_line_count - 1), 0)
-  end
-end
-
----@private
 local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local diagnostics = M.get(bufnr, vim.tbl_extend("keep", opts, {namespace = namespace}))
-  clamp_line_numbers(bufnr, diagnostics)
+  local diagnostics = get_diagnostics(bufnr, vim.tbl_extend("keep", opts, {namespace = namespace}), true)
   local line_diagnostics = diagnostic_lines(diagnostics)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
@@ -431,13 +467,14 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
       lnum = (lnum + line_count) % line_count
     end
     if line_diagnostics[lnum] and not vim.tbl_isempty(line_diagnostics[lnum]) then
+      local line_length = #vim.api.nvim_buf_get_lines(bufnr,  lnum, lnum + 1, true)[1]
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b) return a.col < b.col end
-        is_next = function(diagnostic) return diagnostic.col > position[2] end
+        is_next = function(d) return math.min(d.col, line_length - 1) > position[2] end
       else
         sort_diagnostics = function(a, b) return a.col > b.col end
-        is_next = function(diagnostic) return diagnostic.col < position[2] end
+        is_next = function(d) return math.min(d.col, line_length - 1) < position[2] end
       end
       table.sort(line_diagnostics[lnum], sort_diagnostics)
       if i == 0 then
@@ -480,10 +517,6 @@ local function diagnostic_move_pos(opts, pos)
     end)
   end
 end
-
--- }}}
-
--- Public API {{{
 
 --- Configure diagnostic options globally or for a specific diagnostic
 --- namespace.
@@ -689,49 +722,7 @@ function M.get(bufnr, opts)
     opts = { opts, 't', true },
   }
 
-  opts = opts or {}
-
-  local namespace = opts.namespace
-  local diagnostics = {}
-
-  ---@private
-  local function add(d)
-    if not opts.lnum or d.lnum == opts.lnum then
-      table.insert(diagnostics, d)
-    end
-  end
-
-  if namespace == nil and bufnr == nil then
-    for _, t in pairs(diagnostic_cache) do
-      for _, v in pairs(t) do
-        for _, diagnostic in pairs(v) do
-          add(diagnostic)
-        end
-      end
-    end
-  elseif namespace == nil then
-    for iter_namespace in pairs(diagnostic_cache[bufnr]) do
-      for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
-        add(diagnostic)
-      end
-    end
-  elseif bufnr == nil then
-    for _, t in pairs(diagnostic_cache) do
-      for _, diagnostic in pairs(t[namespace] or {}) do
-        add(diagnostic)
-      end
-    end
-  else
-    for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
-      add(diagnostic)
-    end
-  end
-
-  if opts.severity then
-    diagnostics = filter_by_severity(opts.severity, diagnostics)
-  end
-
-  return diagnostics
+  return get_diagnostics(bufnr, opts, false)
 end
 
 --- Get the previous diagnostic closest to the cursor position.
@@ -1115,7 +1106,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
 
   M.hide(namespace, bufnr)
 
-  diagnostics = diagnostics or M.get(bufnr, {namespace=namespace})
+  diagnostics = diagnostics or get_diagnostics(bufnr, {namespace=namespace}, true)
 
   if not diagnostics or vim.tbl_isempty(diagnostics) then
     return
@@ -1140,8 +1131,6 @@ function M.show(namespace, bufnr, diagnostics, opts)
       table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
     end
   end
-
-  clamp_line_numbers(bufnr, diagnostics)
 
   for handler_name, handler in pairs(M.handlers) do
     if handler.show and opts[handler_name] then
@@ -1213,8 +1202,7 @@ function M.open_float(bufnr, opts)
     opts = get_resolved_options({ float = float_opts }, nil, bufnr).float
   end
 
-  local diagnostics = M.get(bufnr, opts)
-  clamp_line_numbers(bufnr, diagnostics)
+  local diagnostics = get_diagnostics(bufnr, opts, true)
 
   if scope == "line" then
     diagnostics = vim.tbl_filter(function(d)
@@ -1562,7 +1550,5 @@ function M.fromqflist(list)
   end
   return diagnostics
 end
-
--- }}}
 
 return M
