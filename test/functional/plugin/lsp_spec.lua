@@ -66,7 +66,10 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
           end
         end;
       });
-      root_dir = vim.loop.cwd();
+      workspace_folders = {{
+          uri = 'file://' .. vim.loop.cwd(),
+          name = 'test_folder',
+      }};
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
         vim.rpcrequest(1, "init", result)
@@ -153,7 +156,10 @@ describe('LSP', function()
             "-c", string.format("lua TEST_NAME = %q", test_name),
             "-c", "luafile "..fixture_filename;
           };
-          root_dir = vim.loop.cwd();
+          workspace_folders = {{
+              uri = 'file://' .. vim.loop.cwd(),
+              name = 'test_folder',
+          }};
         }
       end
       TEST_CLIENT1 = test__start_client()

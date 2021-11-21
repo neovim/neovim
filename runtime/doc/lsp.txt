@@ -745,15 +745,12 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
 start_client({config})                                *vim.lsp.start_client()*
                 Starts and initializes a client with the given configuration.
 
-                Parameters `cmd` and `root_dir` are required.
+                Parameter `cmd` is required.
 
                 The following parameters describe fields in the {config}
                 table.
 
                 Parameters: ~
-                    {root_dir}           (string) Directory where the LSP
-                                         server will base its rootUri on
-                                         initialization.
                     {cmd}                (required, string or list treated
                                          like |jobstart()|) Base command that
                                          initiates the LSP client.
@@ -768,6 +765,13 @@ start_client({config})                                *vim.lsp.start_client()*
 
                  { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
 <
+                    {workspace_folders}  (table) List of workspace folders
+                                         passed to the language server. For
+                                         backwards compatibility rootUri and
+                                         rootPath will be derived from the
+                                         first workspace folder in this list.
+                                         See `workspaceFolders` in the LSP
+                                         spec.
                     {capabilities}       Map overriding the default
                                          capabilities defined by
                                          |vim.lsp.protocol.make_client_capabilities()|,
@@ -801,10 +805,6 @@ start_client({config})                                *vim.lsp.start_client()*
                                          See `initialize` in the LSP spec.
                     {name}               (string, default=client-id) Name in
                                          log messages.
-                    {workspace_folders}  (table) List of workspace folders
-                                         passed to the language server.
-                                         Defaults to root_dir if not set. See
-                                         `workspaceFolders` in the LSP spec
                     {get_language_id}    function(bufnr, filetype) -> language
                                          ID as string. Defaults to the
                                          filetype.
@@ -873,6 +873,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                            debounce occurs if nil
                                          • exit_timeout (number, default 500):
                                            Milliseconds to wait for server to
+                    {root_dir}           string Directory where the LSP server
+                                         will base its workspaceFolders,
+                                         rootUri, and rootPath on
+                                         initialization.
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
