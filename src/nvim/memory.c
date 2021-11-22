@@ -573,7 +573,6 @@ void free_all_mem(void)
     return;
   }
   entered_free_all_mem = true;
-
   // Don't want to trigger autocommands from here on.
   block_autocmds();
 
