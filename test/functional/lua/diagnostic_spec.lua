@@ -111,7 +111,7 @@ describe('vim.diagnostic', function()
   it('retrieves diagnostics from all buffers and namespaces', function()
     local result = exec_lua [[
       local other_bufnr = vim.api.nvim_create_buf(true, false)
-      local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
+      local lines = vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, -1, true)
       vim.api.nvim_buf_set_lines(other_bufnr, 0, 1, false, lines)
 
       vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
