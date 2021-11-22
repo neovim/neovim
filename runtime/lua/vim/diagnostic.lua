@@ -705,6 +705,8 @@ function M.get(bufnr, opts)
     opts = { opts, 't', true },
   }
 
+  bufnr = get_bufnr(bufnr)
+
   return get_diagnostics(bufnr, opts, false)
 end
 
