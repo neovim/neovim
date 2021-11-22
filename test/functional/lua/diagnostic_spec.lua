@@ -128,6 +128,17 @@ describe('vim.diagnostic', function()
     eq('Diagnostic #1', result[1].message)
   end)
 
+  it('resolves buffer number 0 to the current buffer', function()
+    eq(2, exec_lua [[
+      vim.api.nvim_set_current_buf(diagnostic_bufnr)
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 1, 1, 1, 1),
+        make_error('Diagnostic #2', 2, 1, 2, 1),
+      })
+      return #vim.diagnostic.get(0)
+    ]])
+  end)
+
   it('saves and count a single error', function()
     eq(1, exec_lua [[
       vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
