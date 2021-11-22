@@ -5562,6 +5562,9 @@ getwininfo([{winid}])					*getwininfo()*
 					otherwise
 			wincol		leftmost screen column of the window;
 					"col" from |win_screenpos()|
+			textoff		number of columns occupied by any
+					'foldcolumn', 'signcolumn' and line
+					number in front of the text
 			winid		|window-ID|
 			winnr		window number
 			winrow		topmost screen line of the window;
