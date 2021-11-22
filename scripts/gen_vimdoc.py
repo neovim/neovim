@@ -989,11 +989,18 @@ def main(config, args):
                 # silence warnings
                 # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
+        ci_opts = ''
+        if args.ci:
+            ci_opts = textwrap.dedent('''
+    WARN_LOGFILE           = annotations.json
+    WARN_FORMAT            = "{\\"path\\": \\"$file\\", \\"start_line\\": $line, \\"end_line\\": $line, \\"annotation_level\\": \\"warning\\", \\"message\\": \\"$text\\"},"
+''')
         p.communicate(
             config.format(
                 input=CONFIG[target]['files'],
                 output=output_dir,
                 filter=filter_cmd,
+                ci_opts=ci_opts,
                 file_patterns=CONFIG[target]['file_patterns'])
             .encode('utf8')
         )
@@ -1149,6 +1156,8 @@ def parse_args():
                     help="Keep temporary files")
     ap.add_argument('-t', '--target',
                     help=f'One of ({targets}), defaults to "all"')
+    ap.add_argument('--ci', action='store_true',
+                    help='Run in CI mode, writing annotations to annotations.json')
     return ap.parse_args()
 
 
@@ -1185,6 +1194,7 @@ Doxyfile = textwrap.dedent('''
     MACRO_EXPANSION        = YES
     EXPAND_ONLY_PREDEF     = NO
     MARKDOWN_SUPPORT       = YES
+    {ci_opts}
 ''')
 
 if __name__ == "__main__":

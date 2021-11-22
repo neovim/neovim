@@ -1,0 +1,38 @@
+name: gendocs CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+    paths:
+      - 'src/nvim/api/*.[ch]'
+      - 'src/nvim/**.lua'
+      - 'runtime/lua/**.lua'
+
+jobs:
+  regen-api-docs:
+    runs-on: ubuntu-20.04
+    permissions:
+      checks: write
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit jq
+
+      - name: Generate docs
+        id: docs
+        run: |
+          python3 scripts/gen_vimdoc.py --ci
+          sed -i -e '$s/,$/]' -e '1s/^/[/' -e 's@${GITHUB_WORKSPACE}/@@' annotations.json
+
+      - name: Upload gendocs warnings
+        uses: kibalabs/github-action-create-annotations@v0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          json-file-path: annotations.json
+          check-name: gendocs-warnings
+          fail-on-error: false
