@@ -4305,6 +4305,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	It overwrites the default messages behavior.
 	See |message-function| for an explanation of how to write the
 	function and an example.
+	Note: It disables 'showmode' feature.
 	Note: It is disabled if your neovim GUI enables "ext_messages"
 	feature.
 
