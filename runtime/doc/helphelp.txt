@@ -319,7 +319,7 @@ Hints for translators:
 3. Writing help files					*help-writing*
 
 For ease of use, a Vim help file for a plugin should follow the format of the
-standard Vim help files, except fot the fist line.  If you are writing a new
+standard Vim help files, except for the first line.  If you are writing a new
 help file it's best to copy one of the existing files and use it as a
 template.
 
@@ -332,7 +332,7 @@ remainder of the line, after a Tab, describes the plugin purpose in a short
 way.  This will show up in the "LOCAL ADDITIONS" section of the main help
 file.  Check there that it shows up properly: |local-additions|.
 
-If you want to add a version number of last modification date, put it in the
+If you want to add a version number or last modification date, put it in the
 second line, right aligned.
 
 At the bottom of the help file, place a Vim modeline to set the 'textwidth'

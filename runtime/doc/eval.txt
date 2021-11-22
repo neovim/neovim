@@ -5136,8 +5136,8 @@ getline({lnum} [, {end}])
 		digit, |line()| is called to translate the String into a Number.
 		To get the line under the cursor: >
 			getline(".")
-<		When {lnum} is smaller than 1 or bigger than the number of
-		lines in the buffer, an empty string is returned.
+<		When {lnum} is a number smaller than 1 or bigger than the
+		number of lines in the buffer, an empty string is returned.
 
 		When {end} is given the result is a |List| where each item is
 		a line from the current buffer in the range {lnum} to {end},
@@ -7464,15 +7464,18 @@ printf({fmt}, {expr1} ...)				*printf()*
 			field width.  If the converted value has fewer bytes
 			than the field width, it will be padded with spaces on
 			the left (or right, if the left-adjustment flag has
-			been given) to fill out the field width.
+			been given) to fill out the field width.  For the S
+			conversion the count is in cells.
 
 		.precision
 			An optional precision, in the form of a period '.'
 			followed by an optional digit string.  If the digit
 			string is omitted, the precision is taken as zero.
 			This gives the minimum number of digits to appear for
-			d, o, x, and X conversions, or the maximum number of
-			bytes to be printed from a string for s conversions.
+			d, o, x, and X conversions, the maximum number of
+			bytes to be printed from a string for s conversions,
+			or the maximum number of cells to be printed from a
+			string for S conversions.
 			For floating point it is the number of digits after
 			the decimal point.
 

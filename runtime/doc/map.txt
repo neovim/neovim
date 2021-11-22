@@ -81,6 +81,9 @@ modes.
 			Remove the mapping of {lhs} for the modes where the
 			map command applies.  The mapping may remain defined
 			for other modes where it applies.
+			It also works when {lhs} matches the {rhs} of a
+			mapping. This is for when when an abbreviation
+			applied.
 			Note: Trailing spaces are included in the {lhs}.  This
 			unmap does NOT work: >
 				:map @@ foo
@@ -320,6 +323,8 @@ Note:
 - For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
   unmapped keys.
 - The command is not echo'ed, no need for <silent>.
+- The {rhs} is not subject to abbreviations nor to other mappings, even if the
+  mapping is recursive.
 - In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
 - In select-mode, |:map| and |:vmap| command mappings are executed in
