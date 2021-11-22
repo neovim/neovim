@@ -4756,6 +4756,8 @@ static void win_free(win_T *wp, tabpage_T *tp)
   clear_winopt(&wp->w_onebuf_opt);
   clear_winopt(&wp->w_allbuf_opt);
 
+  xfree(wp->w_p_lcs_chars.multispace);
+
   vars_clear(&wp->w_vars->dv_hashtab);          // free all w: variables
   hash_init(&wp->w_vars->dv_hashtab);
   unref_var_dict(wp->w_vars);
