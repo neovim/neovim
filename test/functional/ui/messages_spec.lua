@@ -1107,6 +1107,14 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     endfunction
     set msgfunc=Func
     ]])
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
     feed(':echo "hello"<cr>')
     screen:expect{grid=[[
       ^                                        |
