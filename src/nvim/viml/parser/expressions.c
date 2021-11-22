@@ -204,40 +204,40 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     } \
   } while (0)
   switch (schar) {
-    // Paired brackets.
+  // Paired brackets.
 #define BRACKET(typ, opning, clsing) \
-case opning: \
-case clsing: { \
-  ret.type = typ; \
-  ret.data.brc.closing = (schar == clsing); \
-  break; \
-}
-    BRACKET(kExprLexParenthesis, '(', ')')
-    BRACKET(kExprLexBracket, '[', ']')
-    BRACKET(kExprLexFigureBrace, '{', '}')
+  case opning: \
+  case clsing: { \
+      ret.type = typ; \
+      ret.data.brc.closing = (schar == clsing); \
+      break; \
+  }
+  BRACKET(kExprLexParenthesis, '(', ')')
+  BRACKET(kExprLexBracket, '[', ']')
+  BRACKET(kExprLexFigureBrace, '{', '}')
 #undef BRACKET
 
-    // Single character tokens without data.
+  // Single character tokens without data.
 #define CHAR(typ, ch) \
-case ch: { \
-  ret.type = typ; \
-  break; \
-}
-    CHAR(kExprLexQuestion, '?')
-    CHAR(kExprLexColon, ':')
-    CHAR(kExprLexComma, ',')
+  case ch: { \
+      ret.type = typ; \
+      break; \
+  }
+  CHAR(kExprLexQuestion, '?')
+  CHAR(kExprLexColon, ':')
+  CHAR(kExprLexComma, ',')
 #undef CHAR
 
-    // Multiplication/division/modulo.
+  // Multiplication/division/modulo.
 #define MUL(mul_type, ch) \
-case ch: { \
-  ret.type = kExprLexMultiplication; \
-  ret.data.mul.type = mul_type; \
-  break; \
-}
-    MUL(kExprLexMulMul, '*')
-    MUL(kExprLexMulDiv, '/')
-    MUL(kExprLexMulMod, '%')
+  case ch: { \
+      ret.type = kExprLexMultiplication; \
+      ret.data.mul.type = mul_type; \
+      break; \
+  }
+  MUL(kExprLexMulMul, '*')
+  MUL(kExprLexMulDiv, '/')
+  MUL(kExprLexMulMod, '%')
 #undef MUL
 
 #define CHARREG(typ, cond) \
@@ -653,16 +653,16 @@ case ch: { \
 
     // Sign or augmented assignment.
 #define CHAR_OR_ASSIGN(ch, ch_type, ass_type) \
-case ch: { \
-  if (pline.size > 1 && pline.data[1] == '=') { \
-    ret.len++; \
-    ret.type = kExprLexAssignment; \
-    ret.data.ass.type = ass_type; \
-  } else { \
-    ret.type = ch_type; \
-  } \
-  break; \
-}
+  case ch: { \
+      if (pline.size > 1 && pline.data[1] == '=') { \
+        ret.len++; \
+        ret.type = kExprLexAssignment; \
+        ret.data.ass.type = ass_type; \
+      } else { \
+        ret.type = ch_type; \
+      } \
+      break; \
+  }
     CHAR_OR_ASSIGN('+', kExprLexPlus, kExprAsgnAdd)
     CHAR_OR_ASSIGN('.', kExprLexDot, kExprAsgnConcat)
 #undef CHAR_OR_ASSIGN
@@ -811,19 +811,19 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate, const LexExpr
          eltkn_type_tab[token.type]);
   switch (token.type) {
 #define TKNARGS(tkn_type, ...) \
-case tkn_type: { \
-  ADDSTR(__VA_ARGS__); \
-  break; \
-}
-    TKNARGS(kExprLexComparison, "(type=%s,ccs=%s,inv=%i)",
-            eltkn_cmp_type_tab[token.data.cmp.type],
-            ccs_tab[token.data.cmp.ccs],
-            (int)token.data.cmp.inv)
-    TKNARGS(kExprLexMultiplication, "(type=%s)",
-            eltkn_mul_type_tab[token.data.mul.type])
-    TKNARGS(kExprLexAssignment, "(type=%s)",
-            expr_asgn_type_tab[token.data.ass.type])
-    TKNARGS(kExprLexRegister, "(name=%s)", intchar2str(token.data.reg.name))
+  case tkn_type: { \
+      ADDSTR(__VA_ARGS__); \
+      break; \
+  }
+  TKNARGS(kExprLexComparison, "(type=%s,ccs=%s,inv=%i)",
+          eltkn_cmp_type_tab[token.data.cmp.type],
+          ccs_tab[token.data.cmp.ccs],
+          (int)token.data.cmp.inv)
+  TKNARGS(kExprLexMultiplication, "(type=%s)",
+          eltkn_mul_type_tab[token.data.mul.type])
+  TKNARGS(kExprLexAssignment, "(type=%s)",
+          expr_asgn_type_tab[token.data.ass.type])
+  TKNARGS(kExprLexRegister, "(name=%s)", intchar2str(token.data.reg.name))
   case kExprLexDoubleQuotedString:
     TKNARGS(kExprLexSingleQuotedString, "(closed=%i)",
             (int)token.data.str.closed)
@@ -1540,21 +1540,21 @@ static inline void east_set_error(const ParserState *const pstate, ExprASTError 
     case kExprNodeComplexIdentifier: \
     case kExprNodePlainIdentifier: \
     case kExprNodeCurlyBracesIdentifier: { \
-      NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier); \
-      cur_node->len = 0; \
-      cur_node->children = *top_node_p; \
-      *top_node_p = cur_node; \
-      kvi_push(ast_stack, &cur_node->children->next); \
-      ExprASTNode **const new_top_node_p = kv_last(ast_stack); \
-      assert(*new_top_node_p == NULL); \
-      new_ident_node_code; \
-      *new_top_node_p = cur_node; \
-      HL_CUR_TOKEN(hl); \
-      break; \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier); \
+        cur_node->len = 0; \
+        cur_node->children = *top_node_p; \
+        *top_node_p = cur_node; \
+        kvi_push(ast_stack, &cur_node->children->next); \
+        ExprASTNode **const new_top_node_p = kv_last(ast_stack); \
+        assert(*new_top_node_p == NULL); \
+        new_ident_node_code; \
+        *new_top_node_p = cur_node; \
+        HL_CUR_TOKEN(hl); \
+        break; \
     } \
     default: { \
-      OP_MISSING; \
-      break; \
+        OP_MISSING; \
+        break; \
     } \
     } \
   } while (0)
@@ -1747,19 +1747,19 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
         const char *const v_p_start = v_p;
         switch (*p) {
 #define SINGLE_CHAR_ESC(ch, real_ch) \
-case ch: { \
-  *v_p++ = real_ch; \
-  p++; \
-  break; \
-}
-          SINGLE_CHAR_ESC('b', BS)
-          SINGLE_CHAR_ESC('e', ESC)
-          SINGLE_CHAR_ESC('f', FF)
-          SINGLE_CHAR_ESC('n', NL)
-          SINGLE_CHAR_ESC('r', CAR)
-          SINGLE_CHAR_ESC('t', TAB)
-          SINGLE_CHAR_ESC('"', '"')
-          SINGLE_CHAR_ESC('\\', '\\')
+  case ch: { \
+      *v_p++ = real_ch; \
+      p++; \
+      break; \
+  }
+        SINGLE_CHAR_ESC('b', BS)
+        SINGLE_CHAR_ESC('e', ESC)
+        SINGLE_CHAR_ESC('f', FF)
+        SINGLE_CHAR_ESC('n', NL)
+        SINGLE_CHAR_ESC('r', CAR)
+        SINGLE_CHAR_ESC('t', TAB)
+        SINGLE_CHAR_ESC('"', '"')
+        SINGLE_CHAR_ESC('\\', '\\')
 #undef SINGLE_CHAR_ESC
 
         // Hexadecimal or unicode.
@@ -2141,32 +2141,32 @@ viml_pexpr_parse_process_token:
       break;
     }
 #define SIMPLE_UB_OP(op) \
-case kExprLex##op: { \
-  if (want_node == kENodeValue) { \
-    /* Value level: assume unary operator. */ \
-    NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
-    *top_node_p = cur_node; \
-    kvi_push(ast_stack, &cur_node->children); \
-    HL_CUR_TOKEN(Unary##op); \
-  } else { \
-    NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
-    ADD_OP_NODE(cur_node); \
-    HL_CUR_TOKEN(Binary##op); \
-  } \
-  want_node = kENodeValue; \
-  break; \
-}
+  case kExprLex##op: { \
+      if (want_node == kENodeValue) { \
+        /* Value level: assume unary operator. */ \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
+        *top_node_p = cur_node; \
+        kvi_push(ast_stack, &cur_node->children); \
+        HL_CUR_TOKEN(Unary##op); \
+      } else { \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
+        ADD_OP_NODE(cur_node); \
+        HL_CUR_TOKEN(Binary##op); \
+      } \
+      want_node = kENodeValue; \
+      break; \
+  }
       SIMPLE_UB_OP(Plus)
       SIMPLE_UB_OP(Minus)
 #undef SIMPLE_UB_OP
 #define SIMPLE_B_OP(op, msg) \
-case kExprLex##op: { \
-  ADD_VALUE_IF_MISSING(_("E15: Unexpected " msg ": %.*s")); \
-  NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##op); \
-  HL_CUR_TOKEN(op); \
-  ADD_OP_NODE(cur_node); \
-  break; \
-}
+  case kExprLex##op: { \
+      ADD_VALUE_IF_MISSING(_("E15: Unexpected " msg ": %.*s")); \
+      NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##op); \
+      HL_CUR_TOKEN(op); \
+      ADD_OP_NODE(cur_node); \
+      break; \
+  }
       SIMPLE_B_OP(Or, "or operator")
       SIMPLE_B_OP(And, "and operator")
 #undef SIMPLE_B_OP
@@ -2174,14 +2174,14 @@ case kExprLex##op: { \
       ADD_VALUE_IF_MISSING(_("E15: Unexpected multiplication-like operator: %.*s"));
       switch (cur_token.data.mul.type) {
 #define MUL_OP(lex_op_tail, node_op_tail) \
-case kExprLexMul##lex_op_tail: { \
-  NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##node_op_tail); \
-  HL_CUR_TOKEN(node_op_tail); \
-  break; \
-}
-        MUL_OP(Mul, Multiplication)
-        MUL_OP(Div, Division)
-        MUL_OP(Mod, Mod)
+  case kExprLexMul##lex_op_tail: { \
+      NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##node_op_tail); \
+      HL_CUR_TOKEN(node_op_tail); \
+      break; \
+  }
+      MUL_OP(Mul, Multiplication)
+      MUL_OP(Div, Division)
+      MUL_OP(Mod, Mod)
 #undef MUL_OP
       }
       ADD_OP_NODE(cur_node);
@@ -2929,11 +2929,11 @@ viml_pexpr_parse_no_paren_closing_error: {}
       cur_node->data.ass.type = cur_token.data.ass.type;
       switch (cur_token.data.ass.type) {
 #define HL_ASGN(asgn, hl) \
-case kExprAsgn##asgn: { HL_CUR_TOKEN(hl); break; }
-        HL_ASGN(Plain, PlainAssignment)
-        HL_ASGN(Add, AssignmentWithAddition)
-        HL_ASGN(Subtract, AssignmentWithSubtraction)
-        HL_ASGN(Concat, AssignmentWithConcatenation)
+  case kExprAsgn##asgn: { HL_CUR_TOKEN(hl); break; }
+      HL_ASGN(Plain, PlainAssignment)
+      HL_ASGN(Add, AssignmentWithAddition)
+      HL_ASGN(Subtract, AssignmentWithSubtraction)
+      HL_ASGN(Concat, AssignmentWithConcatenation)
 #undef HL_ASGN
       }
       ADD_OP_NODE(cur_node);

@@ -782,10 +782,10 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
     break;
   }
 #define ADD_TYPE(type, data_key) \
-case kObjectType##type: { \
-  nlua_push_##type(lstate, obj.data.data_key, special); \
-  break; \
-}
+  case kObjectType##type: { \
+      nlua_push_##type(lstate, obj.data.data_key, special); \
+      break; \
+  }
     ADD_TYPE(Boolean,      boolean)
     ADD_TYPE(Integer,      integer)
     ADD_TYPE(Float,        floating)
@@ -794,10 +794,10 @@ case kObjectType##type: { \
     ADD_TYPE(Dictionary,   dictionary)
 #undef ADD_TYPE
 #define ADD_REMOTE_TYPE(type) \
-case kObjectType##type: { \
-  nlua_push_##type(lstate, (type)obj.data.integer, special); \
-  break; \
-}
+  case kObjectType##type: { \
+      nlua_push_##type(lstate, (type)obj.data.integer, special); \
+      break; \
+  }
     ADD_REMOTE_TYPE(Buffer)
     ADD_REMOTE_TYPE(Window)
     ADD_REMOTE_TYPE(Tabpage)

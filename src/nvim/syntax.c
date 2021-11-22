@@ -7573,7 +7573,7 @@ static bool syn_list_header(const bool did_header, const int outlen, const int i
   // Show "xxx" with the attributes.
   if (!did_header) {
     if (endcol == Columns - 1 && endcol <= name_col) {
-        msg_putchar(' ');
+      msg_putchar(' ');
     }
     msg_puts_attr("xxx", syn_id2attr(id));
     msg_putchar(' ');

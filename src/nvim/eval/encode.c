@@ -352,20 +352,20 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const float_T flt_ = (flt); \
     switch (xfpclassify(flt_)) { \
     case FP_NAN: { \
-      ga_concat(gap, "str2float('nan')"); \
-      break; \
+        ga_concat(gap, "str2float('nan')"); \
+        break; \
     } \
     case FP_INFINITE: { \
-      if (flt_ < 0) { \
-        ga_append(gap, '-'); \
-      } \
-      ga_concat(gap, "str2float('inf')"); \
-      break; \
+        if (flt_ < 0) { \
+          ga_append(gap, '-'); \
+        } \
+        ga_concat(gap, "str2float('inf')"); \
+        break; \
     } \
     default: { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-      ga_concat(gap, numbuf); \
+        char numbuf[NUMBUFLEN]; \
+        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
+        ga_concat(gap, numbuf); \
     } \
     } \
   } while (0)
@@ -556,18 +556,18 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const float_T flt_ = (flt); \
     switch (xfpclassify(flt_)) { \
     case FP_NAN: { \
-      emsg(_("E474: Unable to represent NaN value in JSON")); \
-      return FAIL; \
+        emsg(_("E474: Unable to represent NaN value in JSON")); \
+        return FAIL; \
     } \
     case FP_INFINITE: { \
-      emsg(_("E474: Unable to represent infinity in JSON")); \
-      return FAIL; \
+        emsg(_("E474: Unable to represent infinity in JSON")); \
+        return FAIL; \
     } \
     default: { \
-      char numbuf[NUMBUFLEN]; \
-      vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-      ga_concat(gap, numbuf); \
-      break; \
+        char numbuf[NUMBUFLEN]; \
+        vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
+        ga_concat(gap, numbuf); \
+        break; \
     } \
     } \
   } while (0)
