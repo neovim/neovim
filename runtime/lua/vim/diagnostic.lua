@@ -43,9 +43,7 @@ local bufnr_and_namespace_cacher_mt = {
       bufnr = vim.api.nvim_get_current_buf()
     end
 
-    if rawget(t, bufnr) == nil then
-      rawset(t, bufnr, {})
-    end
+    rawset(t, bufnr, {})
 
     return rawget(t, bufnr)
   end,
@@ -59,8 +57,24 @@ local bufnr_and_namespace_cacher_mt = {
   end,
 }
 
-local diagnostic_cleanup = setmetatable({}, bufnr_and_namespace_cacher_mt)
-local diagnostic_cache = setmetatable({}, bufnr_and_namespace_cacher_mt)
+local diagnostic_cache = setmetatable({}, {
+  __index = function(t, bufnr)
+    if not bufnr or bufnr == 0 then
+      bufnr = vim.api.nvim_get_current_buf()
+    end
+
+    vim.api.nvim_buf_attach(bufnr, false, {
+      on_detach = function()
+        rawset(t, bufnr, nil) -- clear cache
+      end
+    })
+
+    rawset(t, bufnr, {})
+
+    return rawget(t, bufnr)
+  end,
+})
+
 local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
 local diagnostic_attached_buffers = {}
 local diagnostic_disabled = {}
@@ -282,11 +296,6 @@ local function set_diagnostic_cache(namespace, bufnr, diagnostics)
     diagnostic.bufnr = bufnr
   end
   diagnostic_cache[bufnr][namespace] = diagnostics
-end
-
----@private
-local function clear_diagnostic_cache(namespace, bufnr)
-  diagnostic_cache[bufnr][namespace] = nil
 end
 
 ---@private
@@ -651,19 +660,8 @@ function M.set(namespace, bufnr, diagnostics, opts)
   }
 
   if vim.tbl_isempty(diagnostics) then
-    clear_diagnostic_cache(namespace, bufnr)
+    diagnostic_cache[bufnr][namespace] = nil
   else
-    if not diagnostic_cleanup[bufnr][namespace] then
-      diagnostic_cleanup[bufnr][namespace] = true
-
-      -- Clean up our data when the buffer unloads.
-      vim.api.nvim_buf_attach(bufnr, false, {
-        on_detach = function(_, b)
-          clear_diagnostic_cache(namespace, b)
-          diagnostic_cleanup[b][namespace] = nil
-        end
-      })
-    end
     set_diagnostic_cache(namespace, bufnr, diagnostics)
   end
 
@@ -1326,7 +1324,7 @@ function M.reset(namespace, bufnr)
   for _, iter_bufnr in ipairs(buffers) do
     local namespaces = namespace and {namespace} or vim.tbl_keys(diagnostic_cache[iter_bufnr])
     for _, iter_namespace in ipairs(namespaces) do
-      clear_diagnostic_cache(iter_namespace, iter_bufnr)
+      diagnostic_cache[iter_bufnr][iter_namespace] = nil
       M.hide(iter_namespace, iter_bufnr)
     end
   end

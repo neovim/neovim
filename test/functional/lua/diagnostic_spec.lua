@@ -343,6 +343,16 @@ describe('vim.diagnostic', function()
       eq(0, result[5])
       eq(3, result[6])
     end)
+
+    it("doesn't error after bwipeout on buffer", function()
+      exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, { lnum = 0, end_lnum = 0, col = 0, end_col = 0 })
+        vim.cmd("bwipeout! " .. diagnostic_bufnr)
+
+        vim.diagnostic.show(diagnostic_ns)
+        vim.diagnostic.hide(diagnostic_ns)
+      ]]
+    end)
   end)
 
   describe('enable() and disable()', function()
@@ -628,6 +638,15 @@ describe('vim.diagnostic', function()
         return diagnostic_count
       ]])
 
+    end)
+
+    it("doesn't error after bwipeout called on buffer", function()
+      exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, { lnum = 0, end_lnum = 0, col = 0, end_col = 0 })
+        vim.cmd("bwipeout! " .. diagnostic_bufnr)
+
+        vim.diagnostic.reset(diagnostic_ns)
+      ]]
     end)
   end)
 
