@@ -831,9 +831,9 @@ function lsp.start_client(config)
       root_uri = workspace_folders[1].uri
       root_path = vim.uri_to_fname(root_uri)
     else
-      workspace_folders = vim.NIL
-      root_uri = vim.NIL
-      root_path = vim.NIL
+      workspace_folders = nil
+      root_uri = nil
+      root_path = nil
     end
 
     local initialize_params = {
@@ -851,15 +851,15 @@ function lsp.start_client(config)
       -- The rootPath of the workspace. Is null if no folder is open.
       --
       -- @deprecated in favour of rootUri.
-      rootPath = root_path;
+      rootPath = root_path or vim.NIL;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = root_uri;
+      rootUri = root_uri or vim.NIL;
       -- The workspace folders configured in the client when the server starts.
       -- This property is only available if the client supports workspace folders.
       -- It can be `null` if the client supports workspace folders but none are
       -- configured.
-      workspaceFolders = workspace_folders;
+      workspaceFolders = workspace_folders or vim.NIL;
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
@@ -879,7 +879,9 @@ function lsp.start_client(config)
       rpc.notify('initialized', vim.empty_dict())
       client.initialized = true
       uninitialized_clients[client_id] = nil
-      client.workspaceFolders = initialize_params.workspaceFolders
+      client.workspace_folders = workspace_folders
+      -- TODO(mjlbach): Backwards compatbility, to be removed in 0.7
+      client.workspaceFolders = client.workspace_folders
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
