@@ -751,33 +751,33 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
 
-  " 19a: Setting string local-global (to buffer) option"
+  " 19a: Setting string global-local (to buffer) option"
   let oldval = &tags
   let g:options = [['tags', oldval, oldval, oldval, 'tagpath', 'global', 'set']]
   set tags=tagpath
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 19b: Resetting string local-global (to buffer) option"
+  " 19b: Resetting string global-local (to buffer) option"
   let g:options = [['tags', 'tagpath', 'tagpath', 'tagpath', oldval, 'global', 'set']]
   set tags&
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 19c: Setting global string local-global (to buffer) option "
+  " 19c: Setting global string global-local (to buffer) option "
   let g:options = [['tags', oldval, '', oldval, 'tagpath1', 'global', 'setglobal']]
   setglobal tags=tagpath1
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 19d: Setting local string local-global (to buffer) option"
+  " 19d: Setting local string global-local (to buffer) option"
   let g:options = [['tags', 'tagpath1', 'tagpath1', '', 'tagpath2', 'local', 'setlocal']]
   setlocal tags=tagpath2
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 19e: Setting again string local-global (to buffer) option"
-  " Note: v:option_old is the old global value for local-global string options
+  " 19e: Setting again string global-local (to buffer) option"
+  " Note: v:option_old is the old global value for global-local string options
   " but the old local value for all other kinds of options.
   noa setglobal tags=tag_global " Reset global and local value (without triggering autocmd)
   noa setlocal tags=tag_local
@@ -786,8 +786,8 @@ func Test_OptionSet()
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 19f: Setting string local-global (to buffer) option to an empty string"
-  " Note: v:option_old is the old global value for local-global string options
+  " 19f: Setting string global-local (to buffer) option to an empty string"
+  " Note: v:option_old is the old global value for global-local string options
   " but the old local value for all other kinds of options.
   noa set tags=tag_global " Reset global and local value (without triggering autocmd)
   noa setlocal tags= " empty string
@@ -824,7 +824,7 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
   " 20e: Setting again string local (to buffer) option"
-  " Note: v:option_old is the old global value for local-global string options
+  " Note: v:option_old is the old global value for global-local string options
   " but the old local value for all other kinds of options.
   noa setglobal spelllang=spellglobal " Reset global and local value (without triggering autocmd)
   noa setlocal spelllang=spelllocal
@@ -834,36 +834,36 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
 
-  " 21a: Setting string local-global (to window) option"
+  " 21a: Setting string global-local (to window) option"
   let oldval = &statusline
   let g:options = [['statusline', oldval, oldval, oldval, 'foo', 'global', 'set']]
   set statusline=foo
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 21b: Resetting string local-global (to window) option"
-  " Note: v:option_old is the old global value for local-global string options
+  " 21b: Resetting string global-local (to window) option"
+  " Note: v:option_old is the old global value for global-local string options
   " but the old local value for all other kinds of options.
   let g:options = [['statusline', 'foo', 'foo', 'foo', oldval, 'global', 'set']]
   set statusline&
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 21c: Setting global string local-global (to window) option"
+  " 21c: Setting global string global-local (to window) option"
   let g:options = [['statusline', oldval, '', oldval, 'bar', 'global', 'setglobal']]
   setglobal statusline=bar
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 21d: Setting local string local-global (to window) option"
+  " 21d: Setting local string global-local (to window) option"
   noa set statusline& " Reset global and local value (without triggering autocmd)
   let g:options = [['statusline', oldval, oldval, '', 'baz', 'local', 'setlocal']]
   setlocal statusline=baz
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 21e: Setting again string local-global (to window) option"
-  " Note: v:option_old is the old global value for local-global string options
+  " 21e: Setting again string global-local (to window) option"
+  " Note: v:option_old is the old global value for global-local string options
   " but the old local value for all other kinds of options.
   noa setglobal statusline=bar " Reset global and local value (without triggering autocmd)
   noa setlocal statusline=baz
@@ -908,7 +908,7 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
 
-  " 23a: Setting global number local option"
+  " 23a: Setting global number global option"
   noa setglobal cmdheight=8 " Reset global and local value (without triggering autocmd)
   noa setlocal cmdheight=1 " Sets the global(!) value!
   let g:options = [['cmdheight', '1', '', '1', '2', 'global', 'setglobal']]
@@ -1032,7 +1032,7 @@ func Test_OptionSet()
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
-  " 27d: Ssettin again global number local (to window) option"
+  " 27d: Setting again global number local (to window) option"
   noa set foldcolumn=8 " Reset global and local value (without triggering autocmd)
   let g:options = [['foldcolumn', '8', '8', '8', '2', 'global', 'set']]
   set foldcolumn=2
