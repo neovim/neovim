@@ -6639,7 +6639,7 @@ int showmode(void)
   int attr;
   int sub_attr;
 
-  if (msg_enable_ext() && clear_cmdline) {
+  if (ui_has(kUIMessages) && clear_cmdline) {
     msg_ext_clear(true);
   }
 
@@ -6649,6 +6649,7 @@ int showmode(void)
   msg_grid_validate();
 
   do_mode = ((p_smd && msg_silent == 0)
+             && !msg_enable_msgfunc()
              && ((State & TERM_FOCUS)
                  || (State & INSERT)
                  || restart_edit != NUL
