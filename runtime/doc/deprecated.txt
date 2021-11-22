@@ -78,8 +78,8 @@ For each of the functions below, use the corresponding function in
 				No replacement. Use options provided by
 				|vim.diagnostic.config()| to customize
 				virtual text.
-*vim.lsp.diagnostic.goto_next()*
-*vim.lsp.diagnostic.goto_prev()*
+*vim.lsp.diagnostic.goto_next()*	Use |vim.diagnostic.goto_next()| instead.
+*vim.lsp.diagnostic.goto_prev()*	Use |vim.diagnostic.goto_prev()| instead.
 *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
 *vim.lsp.diagnostic.reset()*
 *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
