@@ -1116,7 +1116,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {1:~                                       }|
                                               |
     ]]}
-    eq('show', eval('g:method'))
+    eq('msg_show', eval('g:method'))
     eq('echo', eval('g:kind'))
     eq({{0, 'hello'}}, eval('g:chunks'))
   end)
