@@ -1301,7 +1301,11 @@ int do_set(char_u *arg, int opt_flags)
             char_u *oldval = NULL;         // previous value if *varp
             char_u *newval;
             char_u *origval = NULL;
+            char_u *origval_l = NULL;
+            char_u *origval_g = NULL;
             char *saved_origval = NULL;
+            char *saved_origval_l = NULL;
+            char *saved_origval_g = NULL;
             char *saved_newval = NULL;
             unsigned newlen;
             int comma;
@@ -1319,10 +1323,21 @@ int do_set(char_u *arg, int opt_flags)
             // new value is valid.
             oldval = *(char_u **)varp;
 
+            if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+              origval_l = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
+              origval_g = *(char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+
+              // A global-local string option might have an empty
+              // option as value to indicate that the global
+              // value should be used.
+              if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == empty_option) {
+                origval_l = origval_g;
+              }
+            }
+
             // When setting the local value of a global
             // option, the old value may be the global value.
-            if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags
-                                                            & OPT_LOCAL)) {
+            if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
               origval = *(char_u **)get_varp(&options[opt_idx]);
             } else {
               origval = oldval;
@@ -1387,6 +1402,12 @@ int do_set(char_u *arg, int opt_flags)
                 xfree(oldval);
                 if (origval == oldval) {
                   origval = *(char_u **)varp;
+                }
+                if (origval_l == oldval) {
+                  origval_l = *(char_u **)varp;
+                }
+                if (origval_g == oldval) {
+                  origval_g = *(char_u **)varp;
                 }
                 oldval = *(char_u **)varp;
               }
@@ -1596,6 +1617,8 @@ int do_set(char_u *arg, int opt_flags)
             // origval may be freed by
             // did_set_string_option(), make a copy.
             saved_origval = (origval != NULL) ? xstrdup((char *)origval) : 0;
+            saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : 0;
+            saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : 0;
 
             // newval (and varp) may become invalid if the
             // buffer is closed by autocommands.
@@ -1630,8 +1653,8 @@ int do_set(char_u *arg, int opt_flags)
 
             if (errmsg == NULL) {
               if (!starting) {
-                trigger_optionsset_string(opt_idx, opt_flags, saved_origval,
-                                          saved_newval);
+                trigger_optionsset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
+                                          saved_origval_g, saved_newval);
               }
               if (options[opt_idx].flags & P_UI_OPTION) {
                 ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
@@ -1639,6 +1662,8 @@ int do_set(char_u *arg, int opt_flags)
               }
             }
             xfree(saved_origval);
+            xfree(saved_origval_l);
+            xfree(saved_origval_g);
             xfree(saved_newval);
 
             // If error detected, print the error message.
@@ -2233,9 +2258,19 @@ static char *set_string_option(const int opt_idx, const char *const value, const
           ? OPT_GLOBAL : OPT_LOCAL)
           : opt_flags));
   char *const oldval = *varp;
+  char *oldval_l = NULL;
+  char *oldval_g = NULL;
+
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    oldval_l = *(char **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
+    oldval_g = *(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+  }
+
   *varp = s;
 
   char *const saved_oldval = xstrdup(oldval);
+  char *const saved_oldval_l = (oldval_l != NULL) ? xstrdup((char *)oldval_l) : 0;
+  char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup((char *)oldval_g) : 0;
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
@@ -2249,7 +2284,8 @@ static char *set_string_option(const int opt_idx, const char *const value, const
   // call autocommand after handling side effects
   if (r == NULL) {
     if (!starting) {
-      trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_newval);
+      trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
+                                saved_newval);
     }
     if (options[opt_idx].flags & P_UI_OPTION) {
       ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
@@ -2257,6 +2293,8 @@ static char *set_string_option(const int opt_idx, const char *const value, const
     }
   }
   xfree(saved_oldval);
+  xfree(saved_oldval_l);
+  xfree(saved_oldval_g);
   xfree(saved_newval);
 
   return r;
@@ -3851,11 +3889,19 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
                              const int opt_flags)
 {
   int old_value = *(int *)varp;
+  int old_global_value = 0;
 
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     return (char *)e_secure;
+  }
+
+  // Save the global value before changing anything. This is needed as for
+  // a global-only option setting the "local value" in fact sets the global
+  // value (since there is only one value).
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    old_global_value = *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
   }
 
   *(int *)varp = value;             // set the new value
@@ -4134,20 +4180,35 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   // Don't do this while starting up or recursively.
   if (!starting && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
     char buf_old[2];
+    char buf_old_global[2];
     char buf_new[2];
     char buf_type[7];
-    vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%d",
-                 old_value ? true: false);
-    vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%d",
-                 value ? true: false);
+    vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%d", old_value ? true : false);
+    vim_snprintf(buf_old_global, ARRAY_SIZE(buf_old_global), "%d", old_global_value ? true : false);
+    vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%d", value ? true : false);
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
     set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
     set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    apply_autocmds(EVENT_OPTIONSET,
-                   (char_u *)options[opt_idx].fullname,
-                   NULL, false, NULL);
+    if (opt_flags & OPT_LOCAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    if (opt_flags & OPT_GLOBAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old, -1);
+    }
+    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+      set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old_global, -1);
+    }
+    if (opt_flags & OPT_MODELINE) {
+      set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    apply_autocmds(EVENT_OPTIONSET, (char_u *)options[opt_idx].fullname, NULL, false, NULL);
     reset_v_option_vars();
   }
 
@@ -4181,13 +4242,21 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
 {
   char *errmsg = NULL;
   long old_value = *(long *)varp;
-  long old_Rows = Rows;                 // remember old Rows
+  long old_global_value = 0;  // only used when setting a local and global option
+  long old_Rows = Rows;       // remember old Rows
   long *pp = (long *)varp;
 
   // Disallow changing some options from secure mode.
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     return e_secure;
+  }
+
+  // Save the global value before changing anything. This is needed as for
+  // a global-only option setting the "local value" infact sets the global
+  // value (since there is only one value).
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
   }
 
   // Many number options assume their value is in the signed int range.
@@ -4534,19 +4603,36 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   // Don't do this while starting up, failure or recursively.
   if (!starting && errmsg == NULL && *get_vim_var_str(VV_OPTION_TYPE) == NUL) {
     char buf_old[NUMBUFLEN];
+    char buf_old_global[NUMBUFLEN];
     char buf_new[NUMBUFLEN];
     char buf_type[7];
 
     vim_snprintf(buf_old, ARRAY_SIZE(buf_old), "%ld", old_value);
+    vim_snprintf(buf_old_global, ARRAY_SIZE(buf_old_global), "%ld", old_global_value);
     vim_snprintf(buf_new, ARRAY_SIZE(buf_new), "%ld", value);
     vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
                  (opt_flags & OPT_LOCAL) ? "local" : "global");
     set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
     set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    apply_autocmds(EVENT_OPTIONSET,
-                   (char_u *)options[opt_idx].fullname,
-                   NULL, false, NULL);
+    if (opt_flags & OPT_LOCAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    if (opt_flags & OPT_GLOBAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old, -1);
+    }
+    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+      set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old_global, -1);
+    }
+    if (opt_flags & OPT_MODELINE) {
+      set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    }
+    apply_autocmds(EVENT_OPTIONSET, (char_u *)options[opt_idx].fullname, NULL, false, NULL);
     reset_v_option_vars();
   }
 
@@ -4565,7 +4651,15 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   return (char *)errmsg;
 }
 
-static void trigger_optionsset_string(int opt_idx, int opt_flags, char *oldval, char *newval)
+/// Trigger the OptionSet autocommand.
+/// "opt_idx"   is the index of the option being set.
+/// "opt_flags" can be OPT_LOCAL etc.
+/// "oldval"    the old value
+/// "oldval_l"  the old local value (only non-NULL if global and local value are set)
+/// "oldval_g"  the old global value (only non-NULL if global and local value are set)
+/// "newval"    the new value
+static void trigger_optionsset_string(int opt_idx, int opt_flags, char *oldval, char *oldval_l,
+                                      char *oldval_g, char *newval)
 {
   // Don't do this recursively.
   if (oldval != NULL
@@ -4578,8 +4672,24 @@ static void trigger_optionsset_string(int opt_idx, int opt_flags, char *oldval, 
     set_vim_var_string(VV_OPTION_OLD, oldval, -1);
     set_vim_var_string(VV_OPTION_NEW, newval, -1);
     set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-    apply_autocmds(EVENT_OPTIONSET,
-                   (char_u *)options[opt_idx].fullname, NULL, false, NULL);
+    if (opt_flags & OPT_LOCAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
+    }
+    if (opt_flags & OPT_GLOBAL) {
+      set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval, -1);
+    }
+    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+      set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval_l, -1);
+      set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval_g, -1);
+    }
+    if (opt_flags & OPT_MODELINE) {
+      set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
+      set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
+    }
+    apply_autocmds(EVENT_OPTIONSET, (char_u *)options[opt_idx].fullname, NULL, false, NULL);
     reset_v_option_vars();
   }
 }
