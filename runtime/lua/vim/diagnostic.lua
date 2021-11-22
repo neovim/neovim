@@ -39,39 +39,22 @@ M.handlers = setmetatable({}, {
 -- Metatable that automatically creates an empty table when assigning to a missing key
 local bufnr_and_namespace_cacher_mt = {
   __index = function(t, bufnr)
-    if not bufnr or bufnr == 0 then
-      bufnr = vim.api.nvim_get_current_buf()
-    end
-
-    rawset(t, bufnr, {})
-
-    return rawget(t, bufnr)
-  end,
-
-  __newindex = function(t, bufnr, v)
-    if not bufnr or bufnr == 0 then
-      bufnr = vim.api.nvim_get_current_buf()
-    end
-
-    rawset(t, bufnr, v)
+    assert(bufnr > 0, "Invalid buffer number")
+    t[bufnr] = {}
+    return t[bufnr]
   end,
 }
 
 local diagnostic_cache = setmetatable({}, {
   __index = function(t, bufnr)
-    if not bufnr or bufnr == 0 then
-      bufnr = vim.api.nvim_get_current_buf()
-    end
-
+    assert(bufnr > 0, "Invalid buffer number")
     vim.api.nvim_buf_attach(bufnr, false, {
       on_detach = function()
         rawset(t, bufnr, nil) -- clear cache
       end
     })
-
-    rawset(t, bufnr, {})
-
-    return rawget(t, bufnr)
+    t[bufnr] = {}
+    return t[bufnr]
   end,
 })
 
@@ -658,6 +641,8 @@ function M.set(namespace, bufnr, diagnostics, opts)
     diagnostics = {diagnostics, 't'},
     opts = {opts, 't', true},
   }
+
+  bufnr = get_bufnr(bufnr)
 
   if vim.tbl_isempty(diagnostics) then
     diagnostic_cache[bufnr][namespace] = nil
@@ -1320,7 +1305,7 @@ function M.reset(namespace, bufnr)
     bufnr = {bufnr, 'n', true},
   }
 
-  local buffers = bufnr and {bufnr} or vim.tbl_keys(diagnostic_cache)
+  local buffers = bufnr and {get_bufnr(bufnr)} or vim.tbl_keys(diagnostic_cache)
   for _, iter_bufnr in ipairs(buffers) do
     local namespaces = namespace and {namespace} or vim.tbl_keys(diagnostic_cache[iter_bufnr])
     for _, iter_namespace in ipairs(namespaces) do
