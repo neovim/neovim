@@ -395,6 +395,7 @@ local function get_diagnostics(bufnr, opts, clamp)
       end
     end
   elseif namespace == nil then
+    bufnr = get_bufnr(bufnr)
     for iter_namespace in pairs(diagnostic_cache[bufnr]) do
       for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
         add(diagnostic)
@@ -407,6 +408,7 @@ local function get_diagnostics(bufnr, opts, clamp)
       end
     end
   else
+    bufnr = get_bufnr(bufnr)
     for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
       add(diagnostic)
     end
