@@ -231,11 +231,11 @@ void ui_refresh(void)
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 
     local res = exec_lua([[
-      cquery = vim.treesitter.parse_query("c", '((_) @plus (vim-match? @plus "^\\\\+$"))'..
-                                               '((_) @times (vim-match? @times "^\\\\*$"))'..
-                                               '((_) @paren (vim-match? @paren "^\\\\($"))'..
-                                               '((_) @escape (vim-match? @escape "^\\\\\\\\n$"))'..
-                                               '((_) @string (vim-match? @string "^\\"\\\\\\\\n\\"$"))')
+      cquery = vim.treesitter.parse_query("c", '([_] @plus (#vim-match? @plus "^\\\\+$"))'..
+                                               '([_] @times (#vim-match? @times "^\\\\*$"))'..
+                                               '([_] @paren (#vim-match? @paren "^\\\\($"))'..
+                                               '([_] @escape (#vim-match? @escape "^\\\\\\\\n$"))'..
+                                               '([_] @string (#vim-match? @string "^\\"\\\\\\\\n\\"$"))')
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
@@ -321,7 +321,7 @@ void ui_refresh(void)
     insert('char* astring = "Hello World!";')
 
     local res = exec_lua([[
-      cquery = vim.treesitter.parse_query("c", '((_) @quote (vim-match? @quote "^\\"$")) ((_) @quote (lua-match? @quote "^\\"$"))')
+      cquery = vim.treesitter.parse_query("c", '([_] @quote (#vim-match? @quote "^\\"$")) ([_] @quote (#lua-match? @quote "^\\"$"))')
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
