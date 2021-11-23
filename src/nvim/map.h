@@ -8,6 +8,7 @@
 #include "nvim/extmark_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/tui/input_defs.h"
 #include "nvim/ui_client.h"
 
 #if defined(__NetBSD__)
@@ -35,6 +36,7 @@
 // NOTE: Keys AND values must be allocated! khash.h does not make a copy.
 //
 MAP_DECLS(int, int)
+MAP_DECLS(int, cstr_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(cstr_t, int)
 MAP_DECLS(ptr_t, ptr_t)
@@ -52,6 +54,8 @@ MAP_DECLS(int, String)
 MAP_DECLS(String, UIClientHandler)
 
 MAP_DECLS(ColorKey, ColorItem)
+
+MAP_DECLS(KittyKey, cstr_t)
 
 #define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
 #define map_init(k, v, map) do { *(map) = (Map(k, v)) MAP_INIT; } while (false)

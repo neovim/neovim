@@ -31,6 +31,8 @@
 #define int_eq kh_int_hash_equal
 #define handle_T_hash kh_int_hash_func
 #define handle_T_eq kh_int_hash_equal
+#define KittyKey_hash kh_int_hash_func
+#define KittyKey_eq kh_int_hash_equal
 
 
 #if defined(ARCH_64)
@@ -165,6 +167,7 @@ static inline bool ColorKey_eq(ColorKey ae1, ColorKey ae2)
 
 
 MAP_IMPL(int, int, DEFAULT_INITIALIZER)
+MAP_IMPL(int, cstr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, int, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
@@ -182,6 +185,8 @@ MAP_IMPL(int, String, DEFAULT_INITIALIZER)
 MAP_IMPL(String, UIClientHandler, NULL)
 
 MAP_IMPL(ColorKey, ColorItem, COLOR_ITEM_INITIALIZER)
+
+MAP_IMPL(KittyKey, cstr_t, DEFAULT_INITIALIZER)
 
 /// Deletes a key:value pair from a string:pointer map, and frees the
 /// storage of both key and value.
