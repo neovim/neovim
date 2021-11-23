@@ -22,6 +22,8 @@
 
 #define KEY_BUFFER_SIZE 0xfff
 
+static Map(KittyKey, cstr_t) kitty_key_map = MAP_INIT;
+
 #ifndef UNIT_TESTING
 typedef enum {
   kIncomplete = -1,
@@ -47,6 +49,11 @@ void tinput_init(TermInput *input, Loop *loop)
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
+
+  for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
+    map_put(KittyKey, cstr_t)(&kitty_key_map, kitty_key_map_entry[i].key,
+                              kitty_key_map_entry[i].name);
+  }
 
   // If stdin is not a pty, switch to stderr. For cases like:
   //    echo q | nvim -es
@@ -87,6 +94,7 @@ void tinput_init(TermInput *input, Loop *loop)
 
 void tinput_destroy(TermInput *input)
 {
+  map_destroy(KittyKey, cstr_t)(&kitty_key_map);
   rbuffer_free(input->key_buffer);
   uv_mutex_destroy(&input->key_buffer_mutex);
   uv_cond_destroy(&input->key_buffer_cond);
@@ -183,19 +191,53 @@ static void tinput_enqueue(TermInput *input, char *buf, size_t size)
   rbuffer_write(input->key_buffer, buf, size);
 }
 
+static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
+{
+  const char *name = map_get(KittyKey, cstr_t)(&kitty_key_map,
+                             (KittyKey)key->code.codepoint);
+  if (name) {
+    char buf[64];
+    size_t len = 0;
+    buf[len++] = '<';
+    if (key->modifiers & KITTY_MOD_SHIFT) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "S-");
+    }
+    if (key->modifiers & KITTY_MOD_ALT) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "A-");
+    }
+    if (key->modifiers & KITTY_MOD_CTRL) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "C-");
+    }
+    if (key->modifiers & KITTY_MOD_SUPER) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "D-");
+    }
+    if (key->modifiers & KITTY_MOD_META) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "M-");
+    }
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "%s>", name);
+    tinput_enqueue(input, buf, len);
+  }
+}
+
 static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
 {
   size_t len = 0;
   char buf[64];
   char *ptr = key->utf8;
 
-  while (*ptr) {
-    if (*ptr == '<') {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
-    } else {
-      buf[len++] = *ptr;
+  if (key->code.codepoint >= 0xE000 && key->code.codepoint <= 0xF8FF
+      && map_has(KittyKey, cstr_t)(&kitty_key_map, (KittyKey)key->code.codepoint)) {
+    handle_kitty_key_protocol(input, key);
+    return;
+  } else {
+    while (*ptr) {
+      if (*ptr == '<') {
+        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
+      } else {
+        buf[len++] = *ptr;
+      }
+      ptr++;
     }
-    ptr++;
   }
 
   tinput_enqueue(input, buf, len);
@@ -213,19 +255,26 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
   } else {
     assert(key->modifiers);
-    // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
-    // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
-    // treats <C-L> and <C-l> the same, requiring the S- modifier.
-    len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
-    if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
-        && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
-        && ASCII_ISUPPER(key->code.codepoint)) {
-      assert(len <= 62);
-      // Make remove for the S-
-      memmove(buf + 3, buf + 1, len - 1);
-      buf[1] = 'S';
-      buf[2] = '-';
-      len += 2;
+    if (key->code.codepoint >= 0xE000 && key->code.codepoint <= 0xF8FF
+        && map_has(KittyKey, cstr_t)(&kitty_key_map,
+                                     (KittyKey)key->code.codepoint)) {
+      handle_kitty_key_protocol(input, key);
+      return;
+    } else {
+      // Termkey doesn't include the S- modifier for ASCII characters (e.g.,
+      // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
+      // treats <C-L> and <C-l> the same, requiring the S- modifier.
+      len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+      if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
+          && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
+          && ASCII_ISUPPER(key->code.codepoint)) {
+        assert(len <= 62);
+        // Make remove for the S-
+        memmove(buf + 3, buf + 1, len - 1);
+        buf[1] = 'S';
+        buf[2] = '-';
+        len += 2;
+      }
     }
   }
 

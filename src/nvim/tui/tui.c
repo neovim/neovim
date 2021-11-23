@@ -131,6 +131,7 @@ typedef struct {
     int get_bg;
     int set_underline_style;
     int set_underline_color;
+    int enable_kitty_key_prot, disable_kitty_key_prot;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -225,6 +226,8 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
   data->unibi_ext.set_underline_color = -1;
+  data->unibi_ext.enable_kitty_key_prot = -1;
+  data->unibi_ext.disable_kitty_key_prot = -1;
   data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
@@ -307,6 +310,9 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+  if (data->unibi_ext.enable_kitty_key_prot != -1) {
+    unibi_out_ext(ui, data->unibi_ext.enable_kitty_key_prot);
+  }
 
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
@@ -340,6 +346,9 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
+  if (data->unibi_ext.disable_kitty_key_prot != -1) {
+    unibi_out_ext(ui, data->unibi_ext.disable_kitty_key_prot);
+  }
   // Restore title/icon from the "stack". #4063
   unibi_out_ext(ui, data->unibi_ext.restore_title);
   if (data->cursor_color_changed) {
@@ -1732,6 +1741,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
     unibi_set_if_empty(ut, unibi_exit_standout_mode, "\x1b[27m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
+  }
+
+  if (kitty) {
+    data->unibi_ext.enable_kitty_key_prot =
+      (int)unibi_add_ext_str(ut, "ext.enable_kitty_key_prot", "\x1b[>1u");
+    data->unibi_ext.disable_kitty_key_prot =
+      (int)unibi_add_ext_str(ut, "ext.disable_kitty_key_prot", "\x1b[<u");
   }
 
 // At this time (2017-07-12) it seems like all terminals that support 256
