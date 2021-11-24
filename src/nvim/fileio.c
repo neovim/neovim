@@ -1360,6 +1360,10 @@ retry:
               u8c += (unsigned)(*--p) << 16;
               u8c += (unsigned)(*--p) << 24;
             }
+            // Replace characters over INT_MAX with Unicode replacement character
+            if (u8c > INT_MAX) {
+              u8c = 0xfffd;
+            }
           } else {        // UTF-8
             if (*--p < 0x80) {
               u8c = *p;
