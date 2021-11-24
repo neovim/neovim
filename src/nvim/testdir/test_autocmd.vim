@@ -33,7 +33,7 @@ if has('timers')
     let g:triggered = 0
     au CursorHoldI * let g:triggered += 1
     set updatetime=20
-    call timer_start(LoadAdjust(100), 'ExitInsertMode')
+    call timer_start(LoadAdjust(200), 'ExitInsertMode')
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     unlet g:triggered
@@ -1900,12 +1900,21 @@ endfunc
 func Test_autocmd_was_using_freed_memory()
   pedit xx
   n x
-  au WinEnter * quit
+  augroup winenter
+    au WinEnter * if winnr('$') > 2 | quit | endif
+  augroup END
   " Nvim needs large 'winwidth' and 'nowinfixwidth' to crash
   set winwidth=99999 nowinfixwidth
   split
-  au! WinEnter
+
+  augroup winenter
+    au! WinEnter
+  augroup END
+
   set winwidth& winfixwidth&
+  bwipe xx
+  bwipe x
+  pclose
 endfunc
 
 func Test_FileChangedShell_reload()
@@ -2134,6 +2143,19 @@ func Test_autocmd_closes_window()
   bwipe %
   au! BufNew
   au! BufWinLeave
+endfunc
+
+func Test_autocmd_quit_psearch()
+  sn aa bb
+  augroup aucmd_win_test
+    au!
+    au BufEnter,BufLeave,BufNew,WinEnter,WinLeave,WinNew * if winnr('$') > 1 | q | endif
+  augroup END
+  ps /
+
+  augroup aucmd_win_test
+    au!
+  augroup END
 endfunc
 
 func Test_autocmd_closing_cmdwin()
