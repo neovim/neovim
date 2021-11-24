@@ -3198,7 +3198,7 @@ bool msg_enable_msgfunc(void)
 {
   // msgfunc is disabled in command line mode
   // Because default echo is used for command line redraw
-  return *p_msgfunc != NUL && !msg_check_loop
+  return *p_msgfunc != NUL && !msg_check_loop && !main_loop.recursive
     && (!redir_off || need_wait_return) && State != CONFIRM;
 }
 
