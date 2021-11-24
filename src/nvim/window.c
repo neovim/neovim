@@ -4525,6 +4525,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 
   fix_current_dir();
 
+  // Careful: autocommands may close the window and make "wp" invalid
   if (flags & WEE_TRIGGER_NEW_AUTOCMDS) {
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
   }
@@ -4558,7 +4559,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
   }
 
   // set window width to desired minimal value
-  if (curwin->w_width < p_wiw && !curwin->w_p_wfw && !wp->w_floating) {
+  if (curwin->w_width < p_wiw && !curwin->w_p_wfw && !curwin->w_floating) {
     win_setwidth((int)p_wiw);
   }
 

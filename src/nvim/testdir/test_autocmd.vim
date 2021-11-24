@@ -1897,6 +1897,17 @@ func Test_autocmd_CmdWinEnter()
   call delete(filename)
 endfunc
 
+func Test_autocmd_was_using_freed_memory()
+  pedit xx
+  n x
+  au WinEnter * quit
+  " Nvim needs large 'winwidth' and 'nowinfixwidth' to crash
+  set winwidth=99999 nowinfixwidth
+  split
+  au! WinEnter
+  set winwidth& winfixwidth&
+endfunc
+
 func Test_FileChangedShell_reload()
   if !has('unix')
     return
