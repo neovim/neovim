@@ -5248,6 +5248,9 @@ search_line:
           if (depth == -1) {
             // match in current file
             if (l_g_do_tagpreview != 0) {
+              if (!win_valid(curwin_save)) {
+                break;
+              }
               if (!GETFILE_SUCCESS(getfile(curwin_save->w_buffer->b_fnum, NULL,
                                            NULL, true, lnum, false))) {
                 break;    // failed to jump to file
