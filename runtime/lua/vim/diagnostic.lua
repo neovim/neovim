@@ -976,19 +976,19 @@ function M._get_virt_text_chunks(line_diags, opts)
   -- Create a little more space between virtual text and contents
   local virt_texts = {{string.rep(" ", spacing)}}
 
-  for i = 1, #line_diags - 1 do
+  for i = 2, #line_diags do
     table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
   end
-  local last = line_diags[#line_diags]
+
+  local first = line_diags[1]
 
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
-  -- TODO(tjdevries): Display server name associated with these?
-  if last.message then
+  if first.message then
     table.insert(
       virt_texts,
       {
-        string.format("%s %s", prefix, last.message:gsub("\r", ""):gsub("\n", "  ")),
-        virtual_text_highlight_map[last.severity]
+        string.format("%s %s", prefix, first.message:gsub("\r", ""):gsub("\n", "  ")),
+        virtual_text_highlight_map[first.severity]
       }
     )
 
