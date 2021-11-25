@@ -506,7 +506,10 @@ local function diagnostic_move_pos(opts, pos)
     vim.schedule(function()
       M.open_float(
         vim.api.nvim_win_get_buf(win_id),
-        vim.tbl_extend("keep", float_opts, {scope="cursor"})
+        vim.tbl_extend("keep", float_opts, {
+          scope = "cursor",
+          focusable = false,
+        })
       )
     end)
   end
