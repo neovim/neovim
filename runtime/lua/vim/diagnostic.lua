@@ -441,7 +441,9 @@ local function set_list(loclist, opts)
   if loclist then
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
-  local diagnostics = get_diagnostics(bufnr, opts, true)
+  -- Don't clamp line numbers since the quickfix list can already handle line
+  -- numbers beyond the end of the buffer
+  local diagnostics = get_diagnostics(bufnr, opts, false)
   local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
