@@ -345,13 +345,13 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
                                        mouse_row, mouse_col);
 
   if (modifiers) {
-    if (buf[1] != KS_MODIFIER) {
+    if (!IS_MODIFIER(buf[1])) {
       // no modifiers in the buffer yet, shift the bytes 3 positions
       memcpy(buf + 3, buf, 3);
       // add the modifier sequence
       buf[0] = K_SPECIAL;
       buf[1] = KS_MODIFIER;
-      buf[2] = modifiers;
+      buf[2] = modifiers + 1;
       bufsize += 3;
     } else {
       buf[2] |= modifiers;
@@ -361,14 +361,14 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
   return bufsize;
 }
 
-size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int col)
+size_t input_enqueue_mouse(int code, int modifier, int grid, int row, int col)
 {
   modifier |= check_multiclick(code, grid, row, col);
   uint8_t buf[7], *p = buf;
   if (modifier) {
     p[0] = K_SPECIAL;
-    p[1] = KS_MODIFIER;
-    p[2] = modifier;
+    p[1] = (KS_MODIFIER + (uint8_t)(modifier >> 8));
+    p[2] = (uint8_t)((modifier & 0xFF) + 1);
     p += 3;
   }
   p[0] = K_SPECIAL;

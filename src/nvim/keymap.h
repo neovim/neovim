@@ -58,12 +58,6 @@
 #define KS_EXTRA                253
 
 /*
- * KS_MODIFIER is used when a modifier is given for a (special) key
- *      K_SPECIAL   KS_MODIFIER bitmask
- */
-#define KS_MODIFIER             252
-
-/*
  * These are used for the GUI
  *      K_SPECIAL   KS_xxx      KE_FILLER
  */
@@ -86,6 +80,13 @@
 
 // Used for menu in a tab pages line.
 #define KS_TABMENU              239
+
+// KS_MODIFIER is used when a modifier is given for a (special) key
+//      K_SPECIAL   KS_MODIFIER bitmask
+// The lower three bits are used for the modifier mask, so 224-231 are used
+#define KS_MODIFIER             224
+
+#define IS_MODIFIER(c)         ((c) >= KS_MODIFIER && (c) <= KS_MODIFIER + 7)
 
 /*
  * Filler used after KS_SPECIAL and others
@@ -446,14 +447,17 @@ enum key_extra {
 
 // Bits for modifier mask
 // 0x01 cannot be used, because the modifier must be 0x02 or higher
-#define MOD_MASK_SHIFT      0x02
-#define MOD_MASK_CTRL       0x04
-#define MOD_MASK_ALT        0x08        // aka META
-#define MOD_MASK_META       0x10        // META when it's different from ALT
-#define MOD_MASK_2CLICK     0x20        // use MOD_MASK_MULTI_CLICK
-#define MOD_MASK_3CLICK     0x40        // use MOD_MASK_MULTI_CLICK
-#define MOD_MASK_4CLICK     0x60        // use MOD_MASK_MULTI_CLICK
-#define MOD_MASK_CMD        0x80        // "super" key (macOS: command-key)
+#define MOD_MASK_SHIFT      0x0002
+#define MOD_MASK_CTRL       0x0004
+#define MOD_MASK_ALT        0x0008      // aka META
+#define MOD_MASK_META       0x0010      // META when it's different from ALT
+#define MOD_MASK_2CLICK     0x0020      // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_3CLICK     0x0040      // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_4CLICK     0x0060      // use MOD_MASK_MULTI_CLICK
+#define MOD_MASK_CMD        0x0080      // "super" key (macOS: command-key)
+#define MOD_MASK_HYPER      0x0100      // "Hyper" key
+#define MOD_MASK_CAPS       0x0200      // Caps Lock
+#define MOD_MASK_NUM        0x0400      // Num Lock
 
 #define MOD_MASK_MULTI_CLICK    (MOD_MASK_2CLICK|MOD_MASK_3CLICK| \
                                  MOD_MASK_4CLICK)

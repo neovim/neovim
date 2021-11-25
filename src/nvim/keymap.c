@@ -37,6 +37,9 @@ static const struct modmasktable {
   { MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3' },
   { MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4' },
   { MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D' },
+  { MOD_MASK_HYPER,            MOD_MASK_HYPER,         (char_u)'H' },
+  { MOD_MASK_CAPS,             MOD_MASK_CAPS,          (char_u)'P' },
+  { MOD_MASK_NUM,              MOD_MASK_NUM,           (char_u)'N' },
   // 'A' must be the last one
   { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A' },
   { 0, 0, NUL }
@@ -571,8 +574,8 @@ unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
   // Put the appropriate modifier in a string.
   if (modifiers != 0) {
     dst[dlen++] = K_SPECIAL;
-    dst[dlen++] = KS_MODIFIER;
-    dst[dlen++] = (char_u)modifiers;
+    dst[dlen++] = KS_MODIFIER + (char_u)(modifiers >> 8);
+    dst[dlen++] = (char_u)((modifiers & 0xFF) + 1);
   }
 
   if (IS_SPECIAL(key)) {

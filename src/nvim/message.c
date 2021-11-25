@@ -1642,8 +1642,8 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
   int modifiers = 0;
   bool special = false;
   if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-    if ((uint8_t)str[1] == KS_MODIFIER) {
-      modifiers = (uint8_t)str[2];
+    if (IS_MODIFIER((uint8_t)str[1])) {
+      modifiers = (uint8_t)str[2] - 1 + ((((uint8_t)str[1]) & 0x0F) << 8);
       str += 3;
       c = (uint8_t)(*str);
     }

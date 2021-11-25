@@ -4846,6 +4846,9 @@ getcharmod()						*getcharmod()*
 			64	mouse triple click
 			96	mouse quadruple click (== 32 + 64)
 			128	command (Macintosh only)
+			256	hyper (When using the kitty keyboard protocol)
+			512	caps lock (When using the kitty keyboard protocol)
+			1024	num lock (When using the kitty keyboard protocol)
 		Only the modifiers that have not been included in the
 		character itself are obtained.  Thus Shift-a results in "A"
 		without a modifier.

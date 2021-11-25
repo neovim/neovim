@@ -8042,8 +8042,9 @@ static bool ins_start_select(int c)
     // Execute the key in (insert) Select mode.
     stuffcharReadbuff(Ctrl_O);
     if (mod_mask) {
-      const char buf[] = { (char)K_SPECIAL, (char)KS_MODIFIER,
-                           (char)(uint8_t)mod_mask, NUL };
+      const char buf[] =
+          { (char)K_SPECIAL, (char)(KS_MODIFIER + (mod_mask >> 8)),
+            (char)(uint8_t)((mod_mask & 0xFF) + 1), NUL };
       stuffReadbuff(buf);
     }
     stuffcharReadbuff(c);

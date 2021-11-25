@@ -3225,8 +3225,8 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
     // Turn a special key into three bytes, plus modifier.
     if (mod_mask != 0) {
       temp[i++] = K_SPECIAL;
-      temp[i++] = KS_MODIFIER;
-      temp[i++] = mod_mask;
+      temp[i++] = (KS_MODIFIER + (mod_mask >> 8));
+      temp[i++] = ((mod_mask & 0xFF) + 1);
     }
     if (IS_SPECIAL(n)) {
       temp[i++] = K_SPECIAL;

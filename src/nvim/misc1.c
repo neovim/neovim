@@ -531,11 +531,11 @@ int get_keystroke(MultiQueue *events)
     n = buf[0];
     if (n == K_SPECIAL) {
       n = TO_SPECIAL(buf[1], buf[2]);
-      if (buf[1] == KS_MODIFIER
+      if (IS_MODIFIER(buf[1])
           || n == K_IGNORE
           || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
-        if (buf[1] == KS_MODIFIER) {
-          mod_mask = buf[2];
+        if (IS_MODIFIER(buf[1])) {
+          mod_mask = buf[2] - 1 + ((buf[1] & 0x0F) << 8);
         }
         len -= 3;
         if (len > 0) {

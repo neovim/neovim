@@ -1470,8 +1470,8 @@ int vgetc(void)
         c2 = vgetorpeek(true);          // no mapping for these chars
         c = vgetorpeek(true);
         no_mapping--;
-        if (c2 == KS_MODIFIER) {
-          mod_mask = c;
+        if (IS_MODIFIER(c2)) {
+          mod_mask = c - 1 + ((c2 & 0x0F) << 8);
           continue;
         }
         c = TO_SPECIAL(c2, c);
@@ -4279,8 +4279,8 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
      */
     if (c == K_SPECIAL && what != 2) {
       int modifiers = 0;
-      if (str[1] == KS_MODIFIER) {
-        modifiers = str[2];
+      if (IS_MODIFIER(str[1])) {
+        modifiers = str[2] - 1 + ((str[1] & 0x0F) << 8);
         str += 3;
         c = *str;
       }
@@ -4385,7 +4385,7 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
           char_u *s = mp->m_keys;
           int keylen = mp->m_keylen;
           if (ign_mod && keylen >= 3
-              && s[0] == K_SPECIAL && s[1] == KS_MODIFIER) {
+              && s[0] == K_SPECIAL && IS_MODIFIER(s[1])) {
             s += 3;
             keylen -= 3;
           }
@@ -4453,9 +4453,9 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
     int c = *str;
     if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
       int modifiers = 0;
-      if (str[1] == KS_MODIFIER) {
-        str++;
-        modifiers = *++str;
+      if (IS_MODIFIER(str[1])) {
+        modifiers = (((*++str) & 0x0F) << 8);
+        modifiers += (*++str) - 1;
         c = *++str;
       }
 
@@ -4542,8 +4542,8 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     if (c1 == K_SPECIAL) {
       c1 = vgetorpeek(true);          // no mapping for these chars
       c2 = vgetorpeek(true);
-      if (c1 == KS_MODIFIER) {
-        cmod = c2;
+      if (IS_MODIFIER(c1)) {
+        cmod = c2 - 1 + ((c1 & 0x0F) << 8);
         continue;
       }
       c1 = TO_SPECIAL(c1, c2);

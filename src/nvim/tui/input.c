@@ -214,9 +214,39 @@ static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
     if (key->modifiers & KITTY_MOD_META) {
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "M-");
     }
+    if (key->modifiers & KITTY_MOD_HYPER) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "H-");
+    }
+    if (key->modifiers & KITTY_MOD_CAPS) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "P-");
+    }
+    if (key->modifiers & KITTY_MOD_NUM) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "N-");
+    }
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "%s>", name);
     tinput_enqueue(input, buf, len);
   }
+}
+
+static size_t insert_kitty_modifier(TermKeyKey *key, char *buf, size_t len)
+{
+  size_t ret = 0;
+  if (key->modifiers & KITTY_MOD_SUPER) {
+    ret += insert_modifier(buf, 'D', len);
+  }
+  if (key->modifiers & KITTY_MOD_HYPER) {
+    ret += insert_modifier(buf, 'H', len);
+  }
+  if (key->modifiers & KITTY_MOD_META) {
+    ret += insert_modifier(buf, 'M', len + ret);
+  }
+  if (key->modifiers & KITTY_MOD_CAPS) {
+    ret += insert_modifier(buf, 'P', len + ret);
+  }
+  if (key->modifiers & KITTY_MOD_NUM) {
+    ret += insert_modifier(buf, 'N', len + ret);
+  }
+  return ret;
 }
 
 static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
@@ -243,6 +273,15 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
   tinput_enqueue(input, buf, len);
 }
 
+static size_t insert_modifier(char *buf, char mod, size_t len)
+{
+  // Make remove for the 'mod'-
+  memmove(buf + 3, buf + 1, len - 1);
+  buf[1] = mod;
+  buf[2] = '-';
+  return 2;
+}
+
 static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
 {
   size_t len;
@@ -253,6 +292,9 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
     len = (size_t)snprintf(buf, sizeof(buf), "<C-Z>");
   } else if (key->type != TERMKEY_TYPE_UNICODE) {
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+    if (key->modifiers >= KITTY_MOD_SUPER) {
+      len += insert_kitty_modifier(key, buf, len);
+    }
   } else {
     assert(key->modifiers);
     if (key->code.codepoint >= 0xE000 && key->code.codepoint <= 0xF8FF
@@ -265,15 +307,14 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
       // ctrl-shift-l is <C-L> instead of <C-S-L>.  Vim, on the other hand,
       // treats <C-L> and <C-l> the same, requiring the S- modifier.
       len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
+      if (key->modifiers >= KITTY_MOD_SUPER) {
+        len += insert_kitty_modifier(key, buf, len);
+      }
       if ((key->modifiers & TERMKEY_KEYMOD_CTRL)
           && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
           && ASCII_ISUPPER(key->code.codepoint)) {
         assert(len <= 62);
-        // Make remove for the S-
-        memmove(buf + 3, buf + 1, len - 1);
-        buf[1] = 'S';
-        buf[2] = '-';
-        len += 2;
+        len += insert_modifier(buf, 'S', len);
       }
     }
   }

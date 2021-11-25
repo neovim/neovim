@@ -369,7 +369,7 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
     modmask |= mod;
   }
 
-  input_enqueue_mouse(code, (uint8_t)modmask, (int)grid, (int)row, (int)col);
+  input_enqueue_mouse(code, (int)modmask, (int)grid, (int)row, (int)col);
   return;
 
 error:
