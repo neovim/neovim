@@ -402,27 +402,36 @@ do
       if state.use_incremental_sync then
         -- This must be done immediately and cannot be delayed
         -- The contents would further change and startline/endline may no longer fit
-        table.insert(state.pending_changes, incremental_changes(client))
+        if not state.pending_changes[uri] then
+          state.pending_changes[uri] = {}
+        end
+        table.insert(state.pending_changes[uri], incremental_changes(client))
       end
       state.pending_change = function()
         state.pending_change = nil
         if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
-        local contentChanges
         if state.use_incremental_sync then
-          contentChanges = state.pending_changes
+          for change_uri, content_changes in pairs(state.pending_changes) do
+            client.notify("textDocument/didChange", {
+              textDocument = {
+                uri = change_uri;
+                version = changedtick;
+              };
+              contentChanges = content_changes,
+            })
+          end
           state.pending_changes = {}
         else
-          contentChanges = { full_changes(), }
+            client.notify("textDocument/didChange", {
+              textDocument = {
+                uri = uri;
+                version = changedtick;
+              };
+              contentChanges = { full_changes() },
+            })
         end
-        client.notify("textDocument/didChange", {
-          textDocument = {
-            uri = uri;
-            version = changedtick;
-          };
-          contentChanges = contentChanges
-        })
       end
       state.timer = vim.loop.new_timer()
       -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
