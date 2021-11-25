@@ -2271,8 +2271,10 @@ void entering_window(win_T *const win)
   }
 
   // When entering the prompt window restart Insert mode if we were in Insert
-  // mode when we left it.
-  restart_edit = win->w_buffer->b_prompt_insert;
+  // mode when we left it and not already in Insert mode.
+  if ((State & INSERT) == 0) {
+    restart_edit = win->w_buffer->b_prompt_insert;
+  }
 }
 
 /// Closes all windows for buffer `buf`.

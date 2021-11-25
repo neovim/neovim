@@ -31,6 +31,10 @@ describe('prompt buffer', function()
       func TimerFunc(text)
         call append(line("$") - 1, 'Result: "' . a:text .'"')
       endfunc
+
+      func SwitchWindows()
+        call timer_start(0, {-> execute("wincmd p|wincmd p", "")})
+      endfunc
     ]])
     feed_command("set noshowmode | set laststatus=0")
     feed_command("call setline(1, 'other buffer')")
@@ -160,6 +164,51 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
+  it('switch windows', function()
+    feed_command("set showmode")
+    feed("i")
+    screen:expect([[
+      cmd: ^                    |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+      -- INSERT --             |
+    ]])
+    feed("<C-O>:call SwitchWindows()<CR>")
+    poke_eventloop()
+    screen:expect([[
+      cmd: ^                    |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+      -- INSERT --             |
+    ]])
+    feed("<Esc>")
+    poke_eventloop()
+    screen:expect([[
+      cmd:^                     |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
       ~                        |
       ~                        |
       ~                        |
