@@ -3198,14 +3198,29 @@ bool msg_enable_msgfunc(void)
 {
   // msgfunc is disabled in command line mode
   // Because default echo is used for command line redraw
-  return *p_msgfunc != NUL && !msg_check_loop && !main_loop.recursive
+  return *p_msgfunc != NUL && !msg_check_loop
     && (!redir_off || need_wait_return) && State != CONFIRM;
+}
+
+static void msg_call_msgfunc_event(void **argv)
+{
+  typval_T *args = argv[0];
+
+  if (msg_enable_msgfunc()) {
+    // Prevent infinite loop
+    msg_check_loop = true;
+    call_func_retnr(p_msgfunc, 4, args);
+    msg_check_loop = false;
+  }
+
+  XFREE_CLEAR(args[1].vval.v_string);
+  xfree(args);
 }
 
 void msg_call_msgfunc(const char *method, Array *entries)
 {
   // call msgfunc(method, kind, chunks, overwrite)
-  typval_T args[5];
+  typval_T *args = xmalloc(sizeof(*args) * 5);
 
   Error err = ERROR_INIT;
   Array arr = ARRAY_DICT_INIT;
@@ -3221,14 +3236,14 @@ void msg_call_msgfunc(const char *method, Array *entries)
   args[1].v_type = VAR_STRING;
   args[4].v_type = VAR_UNKNOWN;
   args[0].vval.v_string = (char_u *)method;
-  args[1].vval.v_string = (char_u *)msg_ext_kind;
+  args[1].vval.v_string =
+    msg_ext_kind ? vim_strsave((char_u *)msg_ext_kind) : (char_u *)msg_ext_kind;
 
-  // Prevent infinite loop
-  msg_check_loop = true;
-
-  call_func_retnr(p_msgfunc, 4, args);
-
-  msg_check_loop = false;
+  if (main_loop.recursive) {
+    multiqueue_put(main_loop.events, msg_call_msgfunc_event, 1, args);
+  } else {
+    msg_call_msgfunc_event((void *[]){ args });
+  }
 }
 
 /// May write a string to the redirection file.
