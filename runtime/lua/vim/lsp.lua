@@ -790,6 +790,9 @@ function lsp.start_client(config)
     env = config.cmd_env;
   })
 
+  -- Return nil if client fails to start
+  if not rpc then return end
+
   local client = {
     id = client_id;
     name = name;
