@@ -112,6 +112,9 @@ setmetatable(vim, {
     elseif key == 'ui' then
       t.ui = require('vim.ui')
       return t.ui
+    elseif key == "utf8" then
+      t.utf8 = require("vim.utf8")
+      return t.utf8
     end
   end
 })
