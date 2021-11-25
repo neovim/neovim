@@ -1168,6 +1168,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_reload = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
+          changetracking.reset_buf(client, bufnr)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
