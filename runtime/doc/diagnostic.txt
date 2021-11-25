@@ -289,11 +289,11 @@ option in the "signs" table of |vim.diagnostic.config()| or 10 if unset).
 ==============================================================================
 EVENTS							*diagnostic-events*
 
-							*DiagnosticsChanged*
-DiagnosticsChanged	After diagnostics have changed.
+							*DiagnosticChanged*
+DiagnosticChanged	After diagnostics have changed.
 
 Example: >
-	autocmd User DiagnosticsChanged lua vim.diagnostic.setqflist({open = false })
+	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
 ==============================================================================
