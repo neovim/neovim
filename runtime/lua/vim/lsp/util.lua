@@ -148,6 +148,92 @@ local function sort_by_key(fn)
 end
 
 ---@private
+--- Gets the zero-indexed lines from the given buffer.
+--- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
+--- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
+---
+---@param bufnr number bufnr to get the lines from
+---@param rows number[] zero-indexed line numbers
+---@return table<number string> a table mapping rows to lines
+local function get_lines(bufnr, rows)
+  rows = type(rows) == "table" and rows or { rows }
+
+  local function buf_lines()
+    local lines = {}
+    for _, row in pairs(rows) do
+      lines[row] = (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+    end
+    return lines
+  end
+
+  local uri = vim.uri_from_bufnr(bufnr)
+
+  -- load the buffer if this is not a file uri
+  -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
+  if uri:sub(1, 4) ~= "file" then
+    vim.fn.bufload(bufnr)
+    return buf_lines()
+  end
+
+  -- use loaded buffers if available
+  if vim.fn.bufloaded(bufnr) == 1 then
+    return buf_lines()
+  end
+
+  local filename = api.nvim_buf_get_name(bufnr)
+
+  -- get the data from the file
+  local fd = uv.fs_open(filename, "r", 438)
+  if not fd then return "" end
+  local stat = uv.fs_fstat(fd)
+  local data = uv.fs_read(fd, stat.size, 0)
+  uv.fs_close(fd)
+
+  local lines = {} -- rows we need to retrieve
+  local need = 0 -- keep track of how many unique rows we need
+  for _, row in pairs(rows) do
+    if not lines[row] then
+      need = need + 1
+    end
+    lines[row] = true
+  end
+
+  local found = 0
+  local lnum = 0
+
+  for line in string.gmatch(data, "([^\n]*)\n?") do
+    if lines[lnum] == true then
+      lines[lnum] = line
+      found = found + 1
+      if found == need then break end
+    end
+    lnum = lnum + 1
+  end
+
+  -- change any lines we didn't find to the empty string
+  for i, line in pairs(lines) do
+    if line == true then
+      lines[i] = ""
+    end
+  end
+  return lines
+end
+
+
+---@private
+--- Gets the zero-indexed line from the given buffer.
+--- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
+--- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
+---
+---@param bufnr number
+---@param row number zero-indexed line number
+---@return string the line at row in filename
+local function get_line(bufnr, row)
+  return get_lines(bufnr, { row })[row]
+end
+
+
+---@private
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
@@ -158,26 +244,19 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- When on the first character, we can ignore the difference between byte and
   -- character
   if col > 0 then
-    if not api.nvim_buf_is_loaded(bufnr) then
-      vim.fn.bufload(bufnr)
+    local line = get_line(bufnr, position.line)
+    local ok, result
+
+    if offset_encoding == "utf-16" or not offset_encoding then
+      ok, result = pcall(vim.str_byteindex, line, col, true)
+    elseif offset_encoding == "utf-32" then
+      ok, result = pcall(vim.str_byteindex, line, col, false)
     end
 
-    local line = position.line
-    local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
-    if #lines > 0 then
-      local ok, result
-
-      if offset_encoding == "utf-16" or not offset_encoding then
-        ok, result = pcall(vim.str_byteindex, lines[1], col, true)
-      elseif offset_encoding == "utf-32" then
-        ok, result = pcall(vim.str_byteindex, lines[1], col, false)
-      end
-
-      if ok then
-        return result
-      end
-      return math.min(#lines[1], col)
+    if ok then
+      return result
     end
+    return math.min(#line, col)
   end
   return col
 end
@@ -1372,88 +1451,6 @@ local position_sort = sort_by_key(function(v)
   return {v.start.line, v.start.character}
 end)
 
---- Gets the zero-indexed line from the given uri.
----@param uri string uri of the resource to get the line from
----@param row number zero-indexed line number
----@return string the line at row in filename
--- For non-file uris, we load the buffer and get the line.
--- If a loaded buffer exists, then that is used.
--- Otherwise we get the line using libuv which is a lot faster than loading the buffer.
-function M.get_line(uri, row)
-  return M.get_lines(uri, { row })[row]
-end
-
---- Gets the zero-indexed lines from the given uri.
----@param uri string uri of the resource to get the lines from
----@param rows number[] zero-indexed line numbers
----@return table<number string> a table mapping rows to lines
--- For non-file uris, we load the buffer and get the lines.
--- If a loaded buffer exists, then that is used.
--- Otherwise we get the lines using libuv which is a lot faster than loading the buffer.
-function M.get_lines(uri, rows)
-  rows = type(rows) == "table" and rows or { rows }
-
-  local function buf_lines(bufnr)
-    local lines = {}
-    for _, row in pairs(rows) do
-      lines[row] = (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
-    end
-    return lines
-  end
-
-  -- load the buffer if this is not a file uri
-  -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
-  if uri:sub(1, 4) ~= "file" then
-    local bufnr = vim.uri_to_bufnr(uri)
-    vim.fn.bufload(bufnr)
-    return buf_lines(bufnr)
-  end
-
-  local filename = vim.uri_to_fname(uri)
-
-  -- use loaded buffers if available
-  if vim.fn.bufloaded(filename) == 1 then
-    local bufnr = vim.fn.bufnr(filename, false)
-    return buf_lines(bufnr)
-  end
-
-  -- get the data from the file
-  local fd = uv.fs_open(filename, "r", 438)
-  if not fd then return "" end
-  local stat = uv.fs_fstat(fd)
-  local data = uv.fs_read(fd, stat.size, 0)
-  uv.fs_close(fd)
-
-  local lines = {} -- rows we need to retrieve
-  local need = 0 -- keep track of how many unique rows we need
-  for _, row in pairs(rows) do
-    if not lines[row] then
-      need = need + 1
-    end
-    lines[row] = true
-  end
-
-  local found = 0
-  local lnum = 0
-
-  for line in string.gmatch(data, "([^\n]*)\n?") do
-    if lines[lnum] == true then
-      lines[lnum] = line
-      found = found + 1
-      if found == need then break end
-    end
-    lnum = lnum + 1
-  end
-
-  -- change any lines we didn't find to the empty string
-  for i, line in pairs(lines) do
-    if line == true then
-      lines[i] = ""
-    end
-  end
-  return lines
-end
-
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
@@ -1496,7 +1493,7 @@ function M.locations_to_items(locations)
     end
 
     -- get all the lines for this uri
-    local lines = M.get_lines(uri, uri_rows)
+    local lines = get_lines(vim.uri_to_bufnr(uri), uri_rows)
 
     for _, temp in ipairs(rows) do
       local pos = temp.start
@@ -1773,8 +1770,7 @@ end
 ---@param col 0-indexed byte offset in line
 ---@returns (number, number) UTF-32 and UTF-16 index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(bufnr, row, col)
-  local uri = vim.uri_from_bufnr(bufnr)
-  local line = M.get_line(uri, row)
+  local line = get_line(bufnr, row)
   -- If the col is past the EOL, use the line length.
   if col > #line then
     return str_utfindex(line)
