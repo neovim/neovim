@@ -320,7 +320,8 @@ do
   ---
   ---   state
   ---     pending_change?: function that the timer starts to trigger didChange
-  ---     pending_changes: list of tables with the pending changesets; for incremental_sync only
+  ---     pending_changes: table (uri -> list of tables with the pending changesets);
+  --                       Only set if incremental_sync is used
   ---     use_incremental_sync: bool
   ---     buffers?: table (bufnr → lines); for incremental sync only
   ---     timer?: uv_timer
@@ -348,12 +349,10 @@ do
   end
 
   function changetracking.reset_buf(client, bufnr)
+    changetracking.flush(client)
     local state = state_by_client[client.id]
-    if state then
-      changetracking._reset_timer(state)
-      if state.buffers then
-        state.buffers[bufnr] = nil
-      end
+    if state and state.buffers then
+      state.buffers[bufnr] = nil
     end
   end
 
@@ -1178,10 +1177,10 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
+          changetracking.reset_buf(client, bufnr)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
-          changetracking.reset_buf(client, bufnr)
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
