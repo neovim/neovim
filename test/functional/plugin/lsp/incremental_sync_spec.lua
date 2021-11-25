@@ -37,7 +37,9 @@ before_each(function ()
         local incremental_change = sync.compute_diff(
           prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding, line_ending)
 
-        table.insert(events, incremental_change)
+        if incremental_change then
+          table.insert(events, incremental_change)
+        end
         prev_lines = curr_lines
       end
       local opts = {on_lines=callback, on_detach=callback, on_reload=callback}
@@ -208,18 +210,7 @@ describe('incremental synchronization', function()
               character = 10,
               line = 3 } },
           rangeLength = 0,
-          text = '3' },
-        {
-          range = {
-            ['end'] = {
-              character = 0,
-              line = 3 },
-            ['start'] = {
-              character = 12,
-              line = 2 } },
-          rangeLength = 1,
-          text = '\n'
-        }
+          text = '3' }
       }
       local original_lines = {
         "\\begin{document}",
@@ -340,6 +331,33 @@ describe('incremental synchronization', function()
         }
       }
       test_edit({"a🔥", "b🔥", "c🔥", "d🔥"}, {"j2dd"}, expected_text_changes, 'utf-16', '\n')
+    end)
+  end)
+
+  describe('shrinking of modified lines range', function()
+    it('text edit which creates an inefficient on_lines event', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 2
+            },
+            ['end'] = {
+              character = 2,
+              line = 2
+            }
+          },
+          rangeLength = 2,
+          text = ''
+        }
+      }
+      test_edit({"abc", "def", "  ghi", "jkl", "mno"}, {"gg<lt>G"}, expected_text_changes, 'utf-16', '\n')
+    end)
+
+    it('text edit which creates an on_lines event with no modified lines', function()
+      local expected_text_changes = {}
+      test_edit({"abc", "def", "jkl", "mno"}, {"gg<lt>G"}, expected_text_changes, 'utf-16', '\n')
     end)
   end)
 end)

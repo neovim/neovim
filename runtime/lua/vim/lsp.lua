@@ -387,14 +387,21 @@ do
       local state = state_by_client[client.id]
       local debounce = client.config.flags.debounce_text_changes
       if not debounce then
-        local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
-        client.notify("textDocument/didChange", {
-          textDocument = {
-            uri = uri;
-            version = util.buf_versions[bufnr];
-          };
-          contentChanges = { changes, }
-        })
+        local change
+        if state.use_incremental_sync then
+          change = incremental_changes(client)
+        else
+          change = full_changes()
+        end
+        if change then
+          client.notify("textDocument/didChange", {
+            textDocument = {
+              uri = uri;
+              version = util.buf_versions[bufnr];
+            };
+            contentChanges = { change, }
+          })
+        end
         return
       end
       changetracking._reset_timer(state)
@@ -404,7 +411,10 @@ do
         if not state.pending_changes[uri] then
           state.pending_changes[uri] = {}
         end
-        table.insert(state.pending_changes[uri], incremental_changes(client))
+        local change = incremental_changes(client)
+        if change then
+          table.insert(state.pending_changes[uri], change)
+        end
       end
       state.pending_change = function()
         state.pending_change = nil
@@ -413,13 +423,15 @@ do
         end
         if state.use_incremental_sync then
           for change_uri, content_changes in pairs(state.pending_changes) do
-            client.notify("textDocument/didChange", {
-              textDocument = {
-                uri = change_uri;
-                version = util.buf_versions[vim.uri_to_bufnr(change_uri)];
-              };
-              contentChanges = content_changes,
-            })
+            if not tbl_isempty(content_changes) then
+              client.notify("textDocument/didChange", {
+                textDocument = {
+                  uri = change_uri;
+                  version = util.buf_versions[vim.uri_to_bufnr(change_uri)];
+                };
+                contentChanges = content_changes,
+              })
+            end
           end
           state.pending_changes = {}
         else

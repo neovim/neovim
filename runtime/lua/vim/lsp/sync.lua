@@ -335,6 +335,58 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   return range_length
 end
 
+---@private
+--- The callback for on_lines sometimes receives "inefficient" events whose reported range of
+--- changes (firstline/lastline/new_lastline) is larger than the actual change. In other words,
+--- these "inefficient" events also include unchanged lines. This function narrows down the
+--- firstline/lastline/new_lastline parameters to a range without those unchanged lines.
+---@param prev_lines number
+---@param curr_lines number
+---@param firstline number
+---@param lastline number
+---@param new_lastline number
+---@return number modified_firstline
+---@return number modified_lastline
+---@return number modified_new_lastline
+local function shrink_modified_lines_range(prev_lines, curr_lines, firstline, lastline, new_lastline)
+  -- Note that firstline and lastline are 0-indexed, and lastline is exclusive.
+  -- This means that lastline is effectively 1-indexed already, but firstline
+  -- needs to be incremented before using it for indexing into Lua tables, or
+  -- ranges in Lua loops.
+  -- Speaking of loops: the ranges may not make sense at first, but it is
+  -- because this code doesn't actually read the counter variable and cares
+  -- only about the number of steps taken by the loops.
+
+  -- Within the firstline/lastline range, find the first line that was actually changed.
+  for _ = firstline + 1, min(lastline, new_lastline) do
+    if prev_lines[firstline + 1] ~= curr_lines[firstline + 1] then
+      break
+    end
+    firstline = firstline + 1
+  end
+
+  if lastline == new_lastline and firstline == new_lastline then
+    -- The lengths of both previous and current ranges (lastline - firstline == new_lastline - firstline,
+    -- which is equivalent to lastline == new_lastline) match, which means no lines were added or
+    -- removed, and all lines in the range between firstline and lastline were equivalent to the
+    -- range firstline to new_lastline (and so were all skipped, as such firstline == new_lastline),
+    -- thus no insertions or deletions or changes were made at all.
+    return
+  end
+
+  -- Repeat the logic in the first loop, but in the reverse direction, to find
+  -- the last line with actual changes.
+  for _ = min(lastline, new_lastline), firstline + 1, -1 do
+    if prev_lines[lastline] ~= curr_lines[new_lastline] then
+      break
+    end
+    lastline = lastline - 1
+    new_lastline = new_lastline - 1
+  end
+
+  return firstline, lastline, new_lastline
+end
+
 --- Returns the range table for the difference between prev and curr lines
 ---@param prev_lines table list of lines
 ---@param curr_lines table list of lines
@@ -344,6 +396,11 @@ end
 ---@param offset_encoding string encoding requested by language server
 ---@returns table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
 function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding, line_ending)
+  firstline, lastline, new_lastline = shrink_modified_lines_range(prev_lines, curr_lines, firstline, lastline, new_lastline)
+  if not firstline then
+    return nil
+  end
+
   -- Find the start of changes between the previous and current buffer. Common between both.
   -- Sent to the server as the start of the changed range.
   -- Used to grab the changed text from the latest buffer.
