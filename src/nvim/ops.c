@@ -3340,6 +3340,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     if (y_type == kMTCharWise && y_size == 1) {
       linenr_T end_lnum = 0;  // init for gcc
       linenr_T start_lnum = lnum;
+      int first_byte_off = 0;
 
       if (VIsual_active) {
         end_lnum = curbuf->b_visual.vi_end.lnum;
@@ -3386,6 +3387,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           }
           STRMOVE(ptr, oldp + col);
           ml_replace(lnum, newp, false);
+
+          // compute the byte offset for the last character
+          first_byte_off = utf_head_off(newp, ptr - 1);
+
           // Place cursor on last putted char.
           if (lnum == curwin->w_cursor.lnum) {
             // make sure curwin->w_virtcol is updated
@@ -3405,10 +3410,15 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         lnum--;
       }
 
+      // put '] at the first byte of the last character
       curbuf->b_op_end = curwin->w_cursor;
+      curbuf->b_op_end.col -= first_byte_off;
+
       // For "CTRL-O p" in Insert mode, put cursor after last char
       if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND))) {
         curwin->w_cursor.col++;
+      } else {
+        curwin->w_cursor.col -= first_byte_off;
       }
     } else {
       // Insert at least one line.  When y_type is kMTCharWise, break the first
@@ -3520,12 +3530,13 @@ error:
                       curbuf->b_op_start.lnum, nr_lines, true);
       }
 
-      // put '] mark at last inserted character
+      // Put the '] mark on the first byte of the last inserted character.
+      // Correct the length for change in indent.
       curbuf->b_op_end.lnum = lnum;
-      // correct length for change in indent
       col = (colnr_T)STRLEN(y_array[y_size - 1]) - lendiff;
       if (col > 1) {
-        curbuf->b_op_end.col = col - 1;
+        curbuf->b_op_end.col = col - 1 - utf_head_off(y_array[y_size - 1],
+                                                      y_array[y_size - 1] + col - 1);
       } else {
         curbuf->b_op_end.col = 0;
       }

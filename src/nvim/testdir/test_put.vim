@@ -111,3 +111,16 @@ func Test_put_p_indent_visual()
   call assert_equal('select that text', getline(2))
   bwipe!
 endfunc
+
+func Test_multibyte_op_end_mark()
+   new
+   call setline(1, 'тест')
+   normal viwdp
+   call assert_equal([0, 1, 7, 0], getpos("'>"))
+   call assert_equal([0, 1, 7, 0], getpos("']"))
+
+   normal Vyp
+   call assert_equal([0, 1, 2147483647, 0], getpos("'>"))
+   call assert_equal([0, 2, 7, 0], getpos("']"))
+   bwipe!
+ endfunc
