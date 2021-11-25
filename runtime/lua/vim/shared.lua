@@ -279,10 +279,10 @@ function vim.tbl_isempty(t)
   return next(t) == nil
 end
 
---- We only merge empty tables or tables that are not a list
+--- We only merge empty tables or tables that are not an array (indexed by integers)
 ---@private
 local function can_merge(v)
-  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_islist(v))
+  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
 end
 
 local function tbl_extend(behavior, deep_extend, ...)
@@ -513,15 +513,15 @@ function vim.spairs(t)
   end
 end
 
---- Tests if a Lua table can be treated as an array.
+--- Tests if a Lua table can be treated as an array (a table indexed by integers).
 ---
 --- Empty table `{}` is assumed to be an array, unless it was created by
 --- |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
 --- for example from |rpcrequest()| or |vim.fn|.
 ---
----@param t table Table
----@return boolean `true` if array-like table, else `false`
-function vim.tbl_islist(t)
+---@param t table
+---@return boolean `true` if array-like table, else `false`.
+function vim.tbl_isarray(t)
   if type(t) ~= 'table' then
     return false
   end
@@ -529,7 +529,8 @@ function vim.tbl_islist(t)
   local count = 0
 
   for k, _ in pairs(t) do
-    if type(k) == 'number' then
+    --- Check if the number k is an integer
+    if type(k) == 'number' and k == math.floor(k) then
       count = count + 1
     else
       return false
@@ -545,6 +546,38 @@ function vim.tbl_islist(t)
       return false
     end
     return getmetatable(t) ~= vim._empty_dict_mt
+  end
+end
+
+--- Tests if a Lua table can be treated as a list (a table indexed by consecutive integers starting from 1).
+---
+--- Empty table `{}` is assumed to be an list, unless it was created by
+--- |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
+--- for example from |rpcrequest()| or |vim.fn|.
+---
+---@param t table
+---@return boolean `true` if list-like table, else `false`.
+function vim.tbl_islist(t)
+  if type(t) ~= 'table' then
+    return false
+  end
+
+  local num_elem = vim.tbl_count(t)
+
+  if num_elem == 0 then
+    -- TODO(bfredl): in the future, we will always be inside nvim
+    -- then this check can be deleted.
+    if vim._empty_dict_mt == nil then
+      return nil
+    end
+    return getmetatable(t) ~= vim._empty_dict_mt
+  else
+    for i = 1, num_elem do
+      if t[i] == nil then
+        return false
+      end
+    end
+    return true
   end
 end
 
