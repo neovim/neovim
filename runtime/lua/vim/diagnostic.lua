@@ -372,25 +372,35 @@ local function get_diagnostics(bufnr, opts, clamp)
 
   local namespace = opts.namespace
   local diagnostics = {}
-  local buf_line_count = clamp and vim.api.nvim_buf_line_count(bufnr) or math.huge
+
+  -- Memoized results of buf_line_count per bufnr
+  local buf_line_count = setmetatable({}, {
+    __index = function(t, k)
+      t[k] = vim.api.nvim_buf_line_count(k)
+      return rawget(t, k)
+    end,
+  })
 
   ---@private
-  local function add(d)
+  local function add(b, d)
     if not opts.lnum or d.lnum == opts.lnum then
-      if clamp and (d.lnum >= buf_line_count or d.end_lnum >= buf_line_count) then
-        d = vim.deepcopy(d)
-        d.lnum = math.max(math.min(d.lnum, buf_line_count - 1), 0)
-        d.end_lnum = math.max(math.min(d.end_lnum, buf_line_count - 1), 0)
+      if clamp and vim.api.nvim_buf_is_loaded(b) then
+        local line_count = buf_line_count[b] - 1
+        if (d.lnum > line_count or d.end_lnum > line_count) then
+          d = vim.deepcopy(d)
+          d.lnum = math.max(math.min(d.lnum, line_count), 0)
+          d.end_lnum = math.max(math.min(d.end_lnum, line_count), 0)
+        end
       end
       table.insert(diagnostics, d)
     end
   end
 
   if namespace == nil and bufnr == nil then
-    for _, t in pairs(diagnostic_cache) do
+    for b, t in pairs(diagnostic_cache) do
       for _, v in pairs(t) do
         for _, diagnostic in pairs(v) do
-          add(diagnostic)
+          add(b, diagnostic)
         end
       end
     end
@@ -398,19 +408,19 @@ local function get_diagnostics(bufnr, opts, clamp)
     bufnr = get_bufnr(bufnr)
     for iter_namespace in pairs(diagnostic_cache[bufnr]) do
       for _, diagnostic in pairs(diagnostic_cache[bufnr][iter_namespace]) do
-        add(diagnostic)
+        add(bufnr, diagnostic)
       end
     end
   elseif bufnr == nil then
-    for _, t in pairs(diagnostic_cache) do
+    for b, t in pairs(diagnostic_cache) do
       for _, diagnostic in pairs(t[namespace] or {}) do
-        add(diagnostic)
+        add(b, diagnostic)
       end
     end
   else
     bufnr = get_bufnr(bufnr)
     for _, diagnostic in pairs(diagnostic_cache[bufnr][namespace] or {}) do
-      add(diagnostic)
+      add(bufnr, diagnostic)
     end
   end
 
@@ -431,7 +441,9 @@ local function set_list(loclist, opts)
   if loclist then
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
-  local diagnostics = get_diagnostics(bufnr, opts, true)
+  -- Don't clamp line numbers since the quickfix list can already handle line
+  -- numbers beyond the end of the buffer
+  local diagnostics = get_diagnostics(bufnr, opts, false)
   local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
