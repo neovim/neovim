@@ -320,7 +320,7 @@ do
   ---
   ---   state
   ---     pending_change?: function that the timer starts to trigger didChange
-  ---     pending_changes: table (uri -> list of tables with the pending changesets);
+  ---     pending_changes: table (uri -> list of pending changeset tables));
   --                       Only set if incremental_sync is used
   ---     use_incremental_sync: bool
   ---     buffers?: table (bufnr → lines); for incremental sync only
@@ -364,7 +364,7 @@ do
     end
   end
 
-  function changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
+  function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
@@ -391,7 +391,7 @@ do
         client.notify("textDocument/didChange", {
           textDocument = {
             uri = uri;
-            version = changedtick;
+            version = util.buf_versions[bufnr];
           };
           contentChanges = { changes, }
         })
@@ -416,20 +416,20 @@ do
             client.notify("textDocument/didChange", {
               textDocument = {
                 uri = change_uri;
-                version = changedtick;
+                version = util.buf_versions[vim.uri_to_bufnr(change_uri)];
               };
               contentChanges = content_changes,
             })
           end
           state.pending_changes = {}
         else
-            client.notify("textDocument/didChange", {
-              textDocument = {
-                uri = uri;
-                version = changedtick;
-              };
-              contentChanges = { full_changes() },
-            })
+          client.notify("textDocument/didChange", {
+            textDocument = {
+              uri = uri;
+              version = util.buf_versions[bufnr];
+            };
+            contentChanges = { full_changes() },
+          })
         end
       end
       state.timer = vim.loop.new_timer()
@@ -1108,7 +1108,7 @@ do
       return
     end
     util.buf_versions[bufnr] = changedtick
-    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
+    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end
