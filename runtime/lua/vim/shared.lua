@@ -12,7 +12,7 @@ local vim = vim or {}
 --- same functions as those in the input table. Userdata and threads are not
 --- copied and will throw an error.
 ---
----@param orig Table to copy
+---@param orig table Table to copy
 ---@returns New table of copied keys and (nested) values.
 function vim.deepcopy(orig) end  -- luacheck: no unused
 vim.deepcopy = (function()
@@ -21,17 +21,16 @@ vim.deepcopy = (function()
   end
 
   local deepcopy_funcs = {
-    table = function(orig)
+    table = function(orig, cache)
+      if cache[orig] then return cache[orig] end
       local copy = {}
 
-      if vim._empty_dict_mt ~= nil and getmetatable(orig) == vim._empty_dict_mt then
-        copy = vim.empty_dict()
-      end
-
+      cache[orig] = copy
+      local mt = getmetatable(orig)
       for k, v in pairs(orig) do
-        copy[vim.deepcopy(k)] = vim.deepcopy(v)
+        copy[vim.deepcopy(k, cache)] = vim.deepcopy(v, cache)
       end
-      return copy
+      return setmetatable(copy, mt)
     end,
     number = _id,
     string = _id,
@@ -40,10 +39,10 @@ vim.deepcopy = (function()
     ['function'] = _id,
   }
 
-  return function(orig)
+  return function(orig, cache)
     local f = deepcopy_funcs[type(orig)]
     if f then
-      return f(orig)
+      return f(orig, cache or {})
     else
       error("Cannot deepcopy object of type "..type(orig))
     end
