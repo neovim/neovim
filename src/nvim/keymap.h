@@ -247,6 +247,8 @@ enum key_extra {
   // , KE_CANCEL = 101        // return from vgetc
   KE_EVENT = 102,           // event
   KE_COMMAND = 104,  // <Cmd> special key
+
+  KE_PLAY = 105           // Media play key
 };
 
 /*
@@ -350,6 +352,7 @@ enum key_extra {
 // K_S_F13 to K_S_F37  are currently not used
 
 #define K_HELP          TERMCAP2KEY('%', '1')
+#define K_PRT           TERMCAP2KEY('%', '9')
 #define K_UNDO          TERMCAP2KEY('&', '8')
 
 #define K_BS            TERMCAP2KEY('k', 'b')
@@ -444,6 +447,8 @@ enum key_extra {
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
+
+#define K_PLAY          TERMCAP2KEY(KS_EXTRA, KE_PLAY)
 
 // Bits for modifier mask
 // 0x01 cannot be used, because the modifier must be 0x02 or higher

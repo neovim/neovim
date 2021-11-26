@@ -232,6 +232,7 @@ static const struct key_name_entry {
   { K_XF4,             "xF4" },
 
   { K_HELP,            "Help" },
+  { K_PRT,             "Print" },
   { K_UNDO,            "Undo" },
   { K_INS,             "Insert" },
   { K_INS,             "Ins" },         // Alternative name
@@ -316,6 +317,9 @@ static const struct key_name_entry {
   { K_PLUG,            "Plug" },
   { K_IGNORE,          "Ignore" },
   { K_COMMAND,         "Cmd" },
+
+  { K_PLAY,            "Play" },
+
   { 0,                 NULL }
   // NOTE: When adding a long name update MAX_KEY_NAME_LEN.
 };
