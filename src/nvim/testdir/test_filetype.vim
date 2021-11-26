@@ -866,6 +866,16 @@ func Test_m_file()
   call assert_equal('objc', &filetype)
   bwipe!
 
+  call writefile(['#include <header.h>'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('objc', &filetype)
+  bwipe!
+
+  call writefile(['#define FORTY_TWO'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('objc', &filetype)
+  bwipe!
+
   " Octave
 
   call writefile(['# Octave line comment'], 'Xfile.m')
