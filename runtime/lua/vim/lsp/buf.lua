@@ -176,9 +176,10 @@ function M.formatting_sync(options, timeout_ms)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+  local bufnr = vim.api.nvim_get_current_buf()
+  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, bufnr)
   if result and result.result then
-    util.apply_text_edits(result.result)
+    util.apply_text_edits(result.result, bufnr)
   elseif err then
     vim.notify("vim.lsp.buf.formatting_sync: " .. err, vim.log.levels.WARN)
   end
@@ -202,6 +203,7 @@ end
 ---the remaining clients in the order as they occur in the `order` list.
 function M.formatting_seq_sync(options, timeout_ms, order)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
+  local bufnr = vim.api.nvim_get_current_buf()
 
   -- sort the clients according to `order`
   for _, client_name in pairs(order or {}) do
@@ -220,7 +222,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
       local params = util.make_formatting_params(options)
       local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
-        util.apply_text_edits(result.result)
+        util.apply_text_edits(result.result, bufnr)
       elseif err then
         vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
       end

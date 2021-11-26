@@ -325,6 +325,10 @@ end
 ---@param bufnr number Buffer id
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
+  validate {
+    text_edits = { text_edits, 't', false };
+    bufnr = { bufnr, 'number', false };
+  }
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
