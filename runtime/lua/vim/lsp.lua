@@ -1542,11 +1542,7 @@ local function adjust_start_col(lnum, line, items, encoding)
     end
   end
   if min_start_char then
-    if encoding == 'utf-8' then
-      return min_start_char
-    else
-      return vim.str_byteindex(line, min_start_char, encoding == 'utf-16')
-    end
+    return util._str_byteindex_enc(line, min_start_char, encoding)
   else
     return nil
   end
