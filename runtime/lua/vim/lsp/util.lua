@@ -90,6 +90,42 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
+--- Convert byte index to `encoding` index.
+--- Convenience wrapper around vim.str_utfindex
+---@param line string line to be indexed
+---@param index number byte index (utf-8), or `nil` for length
+---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
+---@return number `encoding` index of `index` in `line`
+function M._str_utfindex_enc(line, index, encoding)
+  if encoding ~= 'utf-8' then
+    local col32, col16 = vim.str_utfindex(line, index)
+    if encoding == 'utf-32' then
+      return col32
+    else
+      return col16
+    end
+  else
+    return index
+  end
+end
+
+--- Convert UTF index to `encoding` index.
+--- Convenience wrapper around vim.str_byteindex
+---Alternative to vim.str_byteindex that takes an encoding.
+---@param line string line to be indexed
+---@param index number UTF index
+---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
+---@return number byte (utf-8) index of `encoding` index `index` in `line`
+function M._str_byteindex_enc(line, index, encoding)
+  if encoding ~= 'utf-8' then
+    return vim.str_byteindex(line, index, not encoding or encoding ~= 'utf-32')
+  else
+    return index
+  end
+end
+
+local _str_utfindex_enc = M._str_utfindex_enc
+local _str_byteindex_enc = M._str_byteindex_enc
 --- Replaces text in a range with new text.
 ---
 --- CAUTION: Changes in-place!
@@ -237,6 +273,7 @@ end
 ---@private
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
 --- 1-indexed
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
@@ -247,13 +284,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   if col > 0 then
     local line = get_line(bufnr, position.line)
     local ok, result
-
-    if offset_encoding == "utf-16" or not offset_encoding then
-      ok, result = pcall(vim.str_byteindex, line, col, true)
-    elseif offset_encoding == "utf-32" then
-      ok, result = pcall(vim.str_byteindex, line, col, false)
-    end
-
+    ok, result = pcall(_str_byteindex_enc, line, col, offset_encoding)
     if ok then
       return result
     end
@@ -325,12 +356,15 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr number Buffer id
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to encoding of first client of `bufnr`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
-function M.apply_text_edits(text_edits, bufnr)
+function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate {
     text_edits = { text_edits, 't', false };
     bufnr = { bufnr, 'number', false };
+    offset_encoding = { offset_encoding, 'string', true };
   }
+  offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -367,8 +401,7 @@ function M.apply_text_edits(text_edits, bufnr)
   -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
   local has_eol_text_edit = false
   local max = vim.api.nvim_buf_line_count(bufnr)
-  -- TODO handle offset_encoding
-  local _, len = vim.str_utfindex(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '')
+  local len = _str_utfindex_enc(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '', nil, offset_encoding)
   text_edits = vim.tbl_map(function(text_edit)
     if max <= text_edit.range.start.line then
       text_edit.range.start.line = max - 1
@@ -1432,11 +1465,11 @@ do --[[ References ]]
   ---
   ---@param bufnr number Buffer id
   ---@param references table List of `DocumentHighlight` objects to highlight
-  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32", or nil. Defaults to utf-16
+  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32", or nil. Defaults to `offset_encoding` of first client of `bufnr`
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references, offset_encoding)
     validate { bufnr = {bufnr, 'n', true} }
-    offset_encoding = offset_encoding or 'utf-16'
+    offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
     for _, reference in ipairs(references) do
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
@@ -1647,30 +1680,61 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
-local str_utfindex = vim.str_utfindex
 ---@private
-local function make_position_param()
-  local row, col = unpack(api.nvim_win_get_cursor(0))
+---@param window (optional, number): window handle or 0 for current, defaults to current
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+local function make_position_param(window, offset_encoding)
+  window = window or 0
+  local buf = vim.api.nvim_win_get_buf(window)
+  local row, col = unpack(api.nvim_win_get_cursor(window))
+  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   row = row - 1
-  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
   if not line then
     return { line = 0; character = 0; }
   end
-  -- TODO handle offset_encoding
-  local _
-  _, col = str_utfindex(line, col)
+
+  col = _str_utfindex_enc(line, col, offset_encoding)
+
   return { line = row; character = col; }
 end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
+---@param window (optional, number): window handle or 0 for current, defaults to current
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params()
+function M.make_position_params(window, offset_encoding)
+  window = window or 0
+  local buf = vim.api.nvim_win_get_buf(window)
+  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   return {
-    textDocument = M.make_text_document_params();
-    position = make_position_param()
+    textDocument = M.make_text_document_params(buf);
+    position = make_position_param(window, offset_encoding)
   }
+end
+
+--- Utility function for getting the encoding of the first LSP client on the given buffer.
+---@param bufnr (number) buffer handle or 0 for current, defaults to current
+---@returns (string) encoding first client if there is one, nil otherwise
+function M._get_offset_encoding(bufnr)
+  validate {
+    bufnr = {bufnr, 'n', true};
+  }
+
+  local offset_encoding
+
+  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+    local this_offset_encoding = client.offset_encoding or "utf-16"
+    if not offset_encoding then
+      offset_encoding = this_offset_encoding
+    elseif offset_encoding ~= this_offset_encoding then
+      vim.notify("warning: multiple different client offset_encodings detected for buffer, this is not supported yet", vim.log.levels.WARN)
+    end
+  end
+
+  return offset_encoding
 end
 
 --- Using the current position in the current buffer, creates an object that
@@ -1678,12 +1742,16 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
+---@param window (optional, number): window handle or 0 for current, defaults to current
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
-function M.make_range_params()
-  local position = make_position_param()
+function M.make_range_params(window, offset_encoding)
+  local buf = vim.api.nvim_win_get_buf(window)
+  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
+  local position = make_position_param(window, offset_encoding)
   return {
-    textDocument = M.make_text_document_params(),
+    textDocument = M.make_text_document_params(buf),
     range = { start = position; ["end"] = position; }
   }
 end
@@ -1695,27 +1763,29 @@ end
 ---Defaults to the start of the last visual selection.
 ---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
+---@param bufnr (optional, number): buffer handle or 0 for current, defaults to current
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of `bufnr`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
-function M.make_given_range_params(start_pos, end_pos)
+function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   validate {
     start_pos = {start_pos, 't', true};
     end_pos = {end_pos, 't', true};
+    offset_encoding = {offset_encoding, 's', true};
   }
-  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(0, '<'))
-  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(0, '>'))
+  bufnr = bufnr or 0
+  offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
+  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
+  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
   -- convert to 0-index
   A[1] = A[1] - 1
   B[1] = B[1] - 1
-  -- account for encoding.
-  -- TODO handle offset_encoding
+  -- account for offset_encoding.
   if A[2] > 0 then
-    local _, char = M.character_offset(0, A[1], A[2])
-    A = {A[1], char}
+    A = {A[1], M.character_offset(bufnr, A[1], A[2], offset_encoding)}
   end
   if B[2] > 0 then
-    local _, char = M.character_offset(0, B[1], B[2])
-    B = {B[1], char}
+    B = {B[1], M.character_offset(bufnr, B[1], B[2], offset_encoding)}
   end
   -- we need to offset the end character position otherwise we loose the last
   -- character of the selection, as LSP end position is exclusive
@@ -1724,7 +1794,7 @@ function M.make_given_range_params(start_pos, end_pos)
     B[2] = B[2] + 1
   end
   return {
-    textDocument = M.make_text_document_params(),
+    textDocument = M.make_text_document_params(bufnr),
     range = {
       start = {line = A[1], character = A[2]},
       ['end'] = {line = B[1], character = B[2]}
@@ -1734,10 +1804,11 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
+---@param bufnr (optional, number): Buffer handle, defaults to current
 ---@returns `TextDocumentIdentifier`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
-function M.make_text_document_params()
-  return { uri = vim.uri_from_bufnr(0) }
+function M.make_text_document_params(bufnr)
+  return { uri = vim.uri_from_bufnr(bufnr or 0) }
 end
 
 --- Create the workspace params
@@ -1780,14 +1851,16 @@ end
 ---@param buf buffer id (0 for current)
 ---@param row 0-indexed line
 ---@param col 0-indexed byte offset in line
----@returns (number, number) UTF-32 and UTF-16 index of the character in line {row} column {col} in buffer {buf}
-function M.character_offset(bufnr, row, col)
-  local line = get_line(bufnr, row)
+---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of `buf`
+---@returns (number, number) `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
+function M.character_offset(buf, row, col, offset_encoding)
+  local line = get_line(buf, row)
+  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   -- If the col is past the EOL, use the line length.
   if col > #line then
-    return str_utfindex(line)
+    return _str_utfindex_enc(line, nil, offset_encoding)
   end
-  return str_utfindex(line, col)
+  return _str_utfindex_enc(line, col, offset_encoding)
 end
 
 --- Helper function to return nested values in language server settings
