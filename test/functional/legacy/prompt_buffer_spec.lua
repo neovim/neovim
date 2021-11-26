@@ -37,6 +37,7 @@ describe('prompt buffer', function()
     feed_command("new")
     feed_command("set buftype=prompt")
     feed_command("call prompt_setcallback(bufnr(''), function('TextEntered'))")
+    feed_command("eval bufnr('')->prompt_setprompt('cmd: ')")
   end)
 
   after_each(function()
@@ -59,10 +60,10 @@ describe('prompt buffer', function()
     feed("i")
     feed("hello\n")
     screen:expect([[
-      % hello                  |
+      cmd: hello               |
       Command: "hello"         |
       Result: "hello"          |
-      % ^                       |
+      cmd: ^                    |
       [Prompt] [+]             |
       other buffer             |
       ~                        |
@@ -101,7 +102,7 @@ describe('prompt buffer', function()
     feed("i")
     feed("hello<BS><BS>")
     screen:expect([[
-      % hel^                    |
+      cmd: hel^                 |
       ~                        |
       ~                        |
       ~                        |
@@ -114,7 +115,7 @@ describe('prompt buffer', function()
     ]])
     feed("<Left><Left><Left><BS>-")
     screen:expect([[
-      % -^hel                   |
+      cmd: -^hel                |
       ~                        |
       ~                        |
       ~                        |
@@ -127,7 +128,7 @@ describe('prompt buffer', function()
     ]])
     feed("<C-O>lz")
     screen:expect([[
-      % -hz^el                  |
+      cmd: -hz^el               |
       ~                        |
       ~                        |
       ~                        |
@@ -140,7 +141,7 @@ describe('prompt buffer', function()
     ]])
     feed("<End>x")
     screen:expect([[
-      % -hzelx^                 |
+      cmd: -hzelx^              |
       ~                        |
       ~                        |
       ~                        |
