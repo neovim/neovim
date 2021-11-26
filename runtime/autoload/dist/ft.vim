@@ -272,6 +272,8 @@ func dist#ft#FTm()
   " excluding end(for|function|if|switch|while) common to Murphi
   let octave_block_terminators = '\<end\%(_try_catch\|classdef\|enumeration\|events\|methods\|parfor\|properties\)\>'
 
+  let objc_preprocessor = '^\s*#\s*\%(import\|include\|define\|if\|ifn\=def\|undef\|line\|error\|pragma\)\>'
+
   let n = 1
   let saw_comment = 0 " Whether we've seen a multiline comment leader.
   while n < 100
@@ -282,7 +284,7 @@ func dist#ft#FTm()
       " anything more definitive.
       let saw_comment = 1
     endif
-    if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|//\)'
+    if line =~ '^\s*//' || line =~ '^\s*@import\>' || line =~ objc_preprocessor
       setf objc
       return
     endif
