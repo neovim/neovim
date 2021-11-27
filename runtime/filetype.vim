@@ -2055,8 +2055,14 @@ au BufNewFile,BufRead *.xml			call dist#ft#FTxml()
 " XMI (holding UML models) is also XML
 au BufNewFile,BufRead *.xmi			setf xml
 
-" CSPROJ files are Visual Studio.NET's XML-based project config files
+" CSPROJ files are Visual Studio.NET's XML-based C# project config files
 au BufNewFile,BufRead *.csproj,*.csproj.user	setf xml
+
+" FSPROJ files are Visual Studio.NET's XML-based F# project config files
+au BufNewFile,BufRead *.fsproj,*.fsproj.user	setf xml
+
+" VBPROJ files are Visual Studio.NET's XML-based Visual Basic project config files
+au BufNewFile,BufRead *.vbproj,*.vbproj.user	setf xml
 
 " Qt Linguist translation source and Qt User Interface Files are XML
 " However, for .ts Typescript is more common.
