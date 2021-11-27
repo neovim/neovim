@@ -8552,6 +8552,7 @@ setbufline({buf}, {lnum}, {text})			*setbufline()*
 		For the use of {buf}, see |bufname()| above.
 
 		{lnum} is used like with |setline()|.
+		Use "$" to refer to the last line in buffer {buf}.
 		When {lnum} is just below the last line the {text} will be
 		added below the last line.
 		On success 0 is returned, on failure 1 is returned.

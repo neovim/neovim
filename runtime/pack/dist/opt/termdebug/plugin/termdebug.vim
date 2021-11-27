@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Nov 21
+" Last Change: 2021 Nov 27
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -102,6 +102,7 @@ endfunc
 
 call s:Highlight(1, '', &background)
 hi default debugBreakpoint term=reverse ctermbg=red guibg=red
+hi default debugBreakpointDisabled term=reverse ctermbg=gray guibg=gray
 
 func s:StartDebug(bang, ...)
   " First argument is the command to debug, second core file or process ID.
@@ -241,15 +242,29 @@ func s:StartDebug_term(dict)
   let comm_job_info = nvim_get_chan_info(s:comm_job_id)
   let commpty = comm_job_info['pty']
 
-  " Open a terminal window to run the debugger.
-  " Add -quiet to avoid the intro message causing a hit-enter prompt.
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let cmd = [g:termdebugger, '-quiet', '-tty', pty, '--eval-command', 'echo startupdone\n'] + gdb_args
-  "call ch_log('executing "' . join(cmd) . '"')
+  let gdb_cmd = [g:termdebugger]
+  " Add -quiet to avoid the intro message causing a hit-enter prompt.
+  let gdb_cmd += ['-quiet']
+  " Disable pagination, it causes everything to stop at the gdb
+  let gdb_cmd += ['-iex', 'set pagination off']
+  " Interpret commands while the target is running.  This should usually only
+  " be exec-interrupt, since many commands don't work properly while the
+  " target is running (so execute during startup).
+  let gdb_cmd += ['-iex', 'set mi-async on']
+  " Open a terminal window to run the debugger.
+  let gdb_cmd += ['-tty', pty]
+  " Command executed _after_ startup is done, provides us with the necessary feedback
+  let gdb_cmd += ['-ex', 'echo startupdone\n']
+
+  " Adding arguments requested by the user
+  let gdb_cmd += gdb_args
+
   execute 'new'
-  let s:gdb_job_id = termopen(cmd, {'on_exit': function('s:EndTermDebug')})
+  " call ch_log('executing "' . join(gdb_cmd) . '"')
+  let s:gdb_job_id = termopen(gdb_cmd, {'on_exit': function('s:EndTermDebug')})
   if s:gdb_job_id == 0
     echoerr 'invalid argument (or job table is full) while opening gdb terminal window'
     exe 'bwipe! ' . s:ptybuf
@@ -272,8 +287,8 @@ func s:StartDebug_term(dict)
 
     for lnum in range(1, 200)
       if get(getbufline(s:gdbbuf, lnum), 0, '') =~ 'startupdone'
-    let try_count = 9999
-    break
+        let try_count = 9999
+        break
       endif
     endfor
     let try_count += 1
@@ -286,7 +301,7 @@ func s:StartDebug_term(dict)
 
   " Set arguments to be run.
   if len(proc_args)
-    call chansend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
+    call chansend(s:gdb_job_id, 'server set args ' . join(proc_args) . "\r")
   endif
 
   " Connect gdb to the communication pty, using the GDB/MI interface.
@@ -310,6 +325,7 @@ func s:StartDebug_term(dict)
         let response = line1 . line2
         if response =~ 'Undefined command'
           echoerr 'Sorry, your gdb is too old, gdb 7.12 is required'
+          " CHECKME: possibly send a "server show version" here
           call s:CloseBuffers()
           return
         endif
@@ -332,17 +348,6 @@ func s:StartDebug_term(dict)
     endif
     sleep 10m
   endwhile
-
-  " Interpret commands while the target is running.  This should usually only be
-  " exec-interrupt, since many commands don't work properly while the target is
-  " running.
-  call s:SendCommand('-gdb-set mi-async on')
-  " Older gdb uses a different command.
-  call s:SendCommand('-gdb-set target-async on')
-
-  " Disable pagination, it causes everything to stop at the gdb
-  " "Type <return> to continue" prompt.
-  call s:SendCommand('set pagination off')
 
   " Set the filetype, this can be used to add mappings.
   set filetype=termdebug
@@ -371,14 +376,26 @@ func s:StartDebug_prompt(dict)
     exe (&columns / 2 - 1) . "wincmd |"
   endif
 
-  " Add -quiet to avoid the intro message causing a hit-enter prompt.
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let cmd = [g:termdebugger, '-quiet', '--interpreter=mi2'] + gdb_args
-  "call ch_log('executing "' . join(cmd) . '"')
+  let gdb_cmd = [g:termdebugger]
+  " Add -quiet to avoid the intro message causing a hit-enter prompt.
+  let gdb_cmd += ['-quiet']
+  " Disable pagination, it causes everything to stop at the gdb, needs to be run early
+  let gdb_cmd += ['-iex', 'set pagination off']
+  " Interpret commands while the target is running.  This should usually only
+  " be exec-interrupt, since many commands don't work properly while the
+  " target is running (so execute during startup).
+  let gdb_cmd += ['-iex', 'set mi-async on']
+  " directly communicate via mi2
+  let gdb_cmd += ['--interpreter=mi2']
 
-  let s:gdbjob = jobstart(cmd, {
+  " Adding arguments requested by the user
+  let gdb_cmd += gdb_args
+
+  " call ch_log('executing "' . join(gdb_cmd) . '"')
+  let s:gdbjob = jobstart(gdb_cmd, {
     \ 'on_exit': function('s:EndPromptDebug'),
     \ 'on_stdout': function('s:GdbOutCallback'),
     \ })
@@ -391,13 +408,6 @@ func s:StartDebug_prompt(dict)
     call s:CloseBuffers()
     return
   endif
-
-  " Interpret commands while the target is running.  This should usually only
-  " be exec-interrupt, since many commands don't work properly while the
-  " target is running.
-  call s:SendCommand('-gdb-set mi-async on')
-  " Older gdb uses a different command.
-  call s:SendCommand('-gdb-set target-async on')
 
   let s:ptybuf = 0
   if has('win32')
@@ -433,8 +443,6 @@ func s:StartDebug_prompt(dict)
   endif
   call s:SendCommand('set print pretty on')
   call s:SendCommand('set breakpoint pending on')
-  " Disable pagination, it causes everything to stop at the gdb
-  call s:SendCommand('set pagination off')
 
   " Set arguments to be run
   if len(proc_args)
@@ -516,6 +524,15 @@ func TermDebugSendCommand(cmd)
   endif
 endfunc
 
+" Send a command only when stopped.  Used for :Next and :Step.
+func s:SendCommandIfStopped(cmd)
+  if s:stopped
+    call s:SendCommand(a:cmd)
+  " else
+    " call ch_log('dropping command, program is running: ' . a:cmd)
+  endif
+endfunc
+
 " Function called when entering a line in the prompt buffer.
 func s:PromptCallback(text)
   call s:SendCommand(a:text)
@@ -584,32 +601,23 @@ func s:GdbOutCallback(job_id, msgs, event)
 endfunc
 
 " Decode a message from gdb.  quotedText starts with a ", return the text up
-" to the next ", unescaping characters.
+" to the next ", unescaping characters:
+" - remove line breaks
+" - change \\t to \t
+" - change \0xhh to \xhh
+" - change \ooo to octal
+" - change \\ to \
 func s:DecodeMessage(quotedText)
   if a:quotedText[0] != '"'
     echoerr 'DecodeMessage(): missing quote in ' . a:quotedText
     return
   endif
-  let result = ''
-  let i = 1
-  while a:quotedText[i] != '"' && i < len(a:quotedText)
-    if a:quotedText[i] == '\'
-      let i += 1
-      if a:quotedText[i] == 'n'
-        " drop \n
-        let i += 1
-        continue
-      elseif a:quotedText[i] == 't'
-        " append \t
-        let i += 1
-        let result .= "\t"
-        continue
-      endif
-    endif
-    let result .= a:quotedText[i]
-    let i += 1
-  endwhile
-  return result
+  return a:quotedText
+        \->substitute('^"\|".*\|\\n', '', 'g')
+        \->substitute('\\t', "\t", 'g')
+        \->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
+        \->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
+        \->substitute('\\\\', '\', 'g')
 endfunc
 
 " Extract the "name" value from a gdb message with fullname="name".
@@ -770,8 +778,10 @@ func s:CommOutput(job_id, msgs, event)
     elseif msg != ''
       if msg =~ '^\(\*stopped\|\*running\|=thread-selected\)'
         call s:HandleCursor(msg)
-      elseif msg =~ '^\^done,bkpt=' || msg =~ '^=breakpoint-created,' || msg =~ '^=breakpoint-modified,'
-        call s:HandleNewBreakpoint(msg)
+      elseif msg =~ '^\^done,bkpt=' || msg =~ '^=breakpoint-created,'
+        call s:HandleNewBreakpoint(msg, 0)
+      elseif msg =~ '^=breakpoint-modified,'
+        call s:HandleNewBreakpoint(msg, 1)
       elseif msg =~ '^=breakpoint-deleted,'
         call s:HandleBreakpointDelete(msg)
       elseif msg =~ '^=thread-group-started'
@@ -805,9 +815,9 @@ func s:InstallCommands()
 
   command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command Clear call s:ClearBreakpoint()
-  command Step call s:SendCommand('-exec-step')
-  command Over call s:SendCommand('-exec-next')
-  command Finish call s:SendCommand('-exec-finish')
+  command Step call s:SendCommandIfStopped('-exec-step')
+  command Over call s:SendCommandIfStopped('-exec-next')
+  command Finish call s:SendCommandIfStopped('-exec-finish')
   command -nargs=* Run call s:Run(<q-args>)
   command -nargs=* Arguments call s:SendCommand('-exec-arguments ' . <q-args>)
 
@@ -1024,21 +1034,24 @@ endfunc
 
 " clean up expression that may got in because of range
 " (newlines and surrounding whitespace)
+" As it can also be specified via ex-command for assignments this function
+" may not change the "content" parts (like replacing contained spaces
 func s:CleanupExpr(expr)
   " replace all embedded newlines/tabs/...
-  let expr = substitute( a:expr, '\s', ' ', 'g')
+  let expr = substitute(a:expr, '\_s', ' ', 'g')
 
   if &filetype ==# 'cobol'
-    " extra cleanup for COBOL: _every: expression ends with a period,
-    " a semicolon nmay be used instead of a space
-    " a trailing comma is ignored as it commonly separates multiple expr
-    let expr = substitute(expr, '\..*', '', '')
+    " extra cleanup for COBOL:
+    " - a semicolon nmay be used instead of a space
+    " - a trailing comma or period is ignored as it commonly separates/ends
+    "   multiple expr
     let expr = substitute(expr, ';', ' ', 'g')
-    let expr = substitute(expr, ',*$', '', '')
+    let expr = substitute(expr, '[,.]\+ *$', '', '')
   endif
 
-  " get rid of surrounding spaces
-  let expr = substitute(expr, '^ *\(.*\) *', '\1', '')
+  " get rid of leading and trailing spaces
+  let expr = substitute(expr, '^ *', '', '')
+  let expr = substitute(expr, ' *$', '', '')
   return expr
 endfunc
 
@@ -1050,6 +1063,8 @@ let s:evalFromBalloonExprResult = ''
 func s:HandleEvaluate(msg)
   let value = substitute(a:msg, '.*value="\(.*\)"', '\1', '')
   let value = substitute(value, '\\"', '"', 'g')
+  " multi-byte characters arrive in octal form
+  let value = substitute(value, '\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
   let value = substitute(value, '', '\1', '')
   if s:evalFromBalloonExpr
     if s:evalFromBalloonExprResult == ''
@@ -1329,11 +1344,16 @@ endfunc
 
 let s:BreakpointSigns = []
 
-func s:CreateBreakpoint(id, subid)
+func s:CreateBreakpoint(id, subid, enabled)
   let nr = printf('%d.%d', a:id, a:subid)
   if index(s:BreakpointSigns, nr) == -1
     call add(s:BreakpointSigns, nr)
-    exe "sign define debugBreakpoint" . nr . " text=" . substitute(nr, '\..*', '', '') . " texthl=debugBreakpoint"
+    if a:enabled == "n"
+      let hiName = "debugBreakpointDisabled"
+    else
+      let hiName = "debugBreakpoint"
+    endif
+    exe "sign define debugBreakpoint" . nr . " text=" . substitute(nr, '\..*', '', '') . " texthl=" . hiName
   endif
 endfunc
 
@@ -1343,7 +1363,7 @@ endfunction
 
 " Handle setting a breakpoint
 " Will update the sign that shows the breakpoint
-func s:HandleNewBreakpoint(msg)
+func s:HandleNewBreakpoint(msg, modifiedFlag)
   if a:msg !~ 'fullname='
     " a watch or a pending breakpoint does not have a file name
     if a:msg =~ 'pending='
@@ -1366,7 +1386,8 @@ func s:HandleNewBreakpoint(msg)
     " If "nr" is 123 it becomes "123.0" and subid is "0".
     " If "nr" is 123.4 it becomes "123.4.0" and subid is "4"; "0" is discarded.
     let [id, subid; _] = map(split(nr . '.0', '\.'), 'v:val + 0')
-    call s:CreateBreakpoint(id, subid)
+    let enabled = substitute(msg, '.*enabled="\([yn]\)".*', '\1', '')
+    call s:CreateBreakpoint(id, subid, enabled)
 
     if has_key(s:breakpoints, id)
       let entries = s:breakpoints[id]
@@ -1393,8 +1414,18 @@ func s:HandleNewBreakpoint(msg)
 
     if bufloaded(fname)
       call s:PlaceSign(id, subid, entry)
+      let posMsg = ' at line ' . lnum . '.'
+    else
+      let posMsg = ' in ' . fname . ' at line ' . lnum . '.'
     endif
-    echomsg 'Breakpoint ' . nr . ' created at line ' . lnum . '.'
+    if !a:modifiedFlag
+      let actionTaken = 'created'
+    elseif enabled == 'n'
+      let actionTaken = 'disabled'
+    else
+      let actionTaken = 'enabled'
+    endif
+    echomsg 'Breakpoint ' . nr . ' ' . actionTaken . posMsg
   endfor
 endfunc
 

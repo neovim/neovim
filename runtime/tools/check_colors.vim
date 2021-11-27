@@ -226,7 +226,13 @@ fu! Result(err)
   endif
 endfu
 
-call Test_check_colors()
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
+try
+  call Test_check_colors()
+catch
+  echohl ErrorMsg
+  echomsg v:exception
+  echohl NONE
+finally
+  let &cpo = s:save_cpo
+  unlet s:save_cpo
+endtry
