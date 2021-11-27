@@ -3204,14 +3204,15 @@ bool msg_enable_msgfunc(void)
 
 static void msg_call_msgfunc_event(void **argv)
 {
-  typval_T *args = argv[0];
+  char_u *msgfunc = argv[0];
+  typval_T *args = argv[1];
 
-  if (msg_enable_msgfunc()) {
-    // Prevent infinite loop
-    msg_check_loop = true;
-    call_func_retnr(p_msgfunc, 4, args);
-    msg_check_loop = false;
-  }
+  // Prevent infinite loop
+  msg_check_loop = true;
+  call_func_retnr(msgfunc, 4, args);
+  msg_check_loop = false;
+
+  xfree(msgfunc);
 
   XFREE_CLEAR(args[1].vval.v_string);
   xfree(args);
@@ -3240,9 +3241,10 @@ void msg_call_msgfunc(const char *method, Array *entries)
     msg_ext_kind ? vim_strsave((char_u *)msg_ext_kind) : (char_u *)msg_ext_kind;
 
   if (main_loop.recursive) {
-    multiqueue_put(main_loop.events, msg_call_msgfunc_event, 1, args);
+    multiqueue_put(main_loop.events, msg_call_msgfunc_event, 2,
+                   vim_strsave(p_msgfunc), args);
   } else {
-    msg_call_msgfunc_event((void *[]){ args });
+    msg_call_msgfunc_event((void *[]){ vim_strsave(p_msgfunc), args });
   }
 }
 
