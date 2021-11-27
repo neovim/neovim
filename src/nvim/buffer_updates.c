@@ -282,7 +282,11 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
+      pos_T save_cursor = curwin->w_cursor;
+      // Cursor may be in bad state during in progress editing operation
+      curwin->w_cursor = (pos_T) { 1, 0, 0 };
       Object res = nlua_call_ref(cb.on_lines, "lines", args, true, NULL);
+      curwin->w_cursor = save_cursor;
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
