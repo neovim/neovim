@@ -1200,20 +1200,16 @@ inspect({object}, {options})                                   *vim.inspect()*
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
 
-make_dict_accessor({scope}, {handle})               *vim.make_dict_accessor()*
-                TODO: Documentation
-
-notify({msg}, {log_level}, {_opts})                             *vim.notify()*
+notify({msg}, {log_level}, {opts})                              *vim.notify()*
                 Notification provider
 
                 Without a runtime, writes to :Messages
 
                 Parameters: ~
-                    {msg}        Content of the notification to show to the
-                                 user
-                    {log_level}  Optional log level
-                    {opts}       Dictionary with optional options (timeout,
-                                 etc)
+                    {msg}        string Content of the notification to show to
+                                 the user
+                    {log_level}  number|nil enum from vim.log.levels
+                    {opts}       table|nil additional options (timeout, etc)
 
                 See also: ~
                     :help nvim_notify

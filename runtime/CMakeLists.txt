@@ -123,7 +123,7 @@ foreach(PROG ${RUNTIME_PROGRAMS})
 endforeach()
 
 globrecurse_wrapper(RUNTIME_FILES ${CMAKE_CURRENT_SOURCE_DIR}
-  rgb.txt *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
+  *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
 
 foreach(F ${RUNTIME_FILES})
   get_filename_component(BASEDIR ${F} PATH)

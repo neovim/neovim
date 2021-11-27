@@ -1462,26 +1462,6 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                 See also: ~
                     |softtabstop|
 
-get_line({uri}, {row})                               *vim.lsp.util.get_line()*
-                Gets the zero-indexed line from the given uri.
-
-                Parameters: ~
-                    {uri}  string uri of the resource to get the line from
-                    {row}  number zero-indexed line number
-
-                Return: ~
-                    string the line at row in filename
-
-get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
-                Gets the zero-indexed lines from the given uri.
-
-                Parameters: ~
-                    {uri}   string uri of the resource to get the lines from
-                    {rows}  number[] zero-indexed line numbers
-
-                Return: ~
-                    table<number string> a table mapping rows to lines
-
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
 

@@ -264,8 +264,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   if extra_spawn_params and extra_spawn_params.cwd then
       assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
-  elseif not (vim.fn.executable(cmd) == 1) then
-      error(string.format("The given command %q is not executable.", cmd))
   end
   if dispatchers then
     local user_dispatchers = dispatchers
@@ -325,7 +323,14 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
     if handle == nil then
-      error(string.format("start `%s` failed: %s", cmd, pid))
+      local msg = string.format("Spawning language server with cmd: `%s` failed", cmd)
+      if string.match(pid, "ENOENT") then
+        msg = msg .. ". The language server is either not installed, missing from PATH, or not executable."
+      else
+        msg = msg .. string.format(" with error message: %s", pid)
+      end
+      vim.notify(msg, vim.log.levels.ERROR)
+      return
     end
   end
 

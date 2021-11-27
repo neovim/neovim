@@ -323,6 +323,7 @@ end
 do
   local validate = vim.validate
 
+  --@private
   local function make_dict_accessor(scope, handle)
     validate {
       scope = {scope, 's'};
@@ -422,11 +423,10 @@ end
 ---
 --- Without a runtime, writes to :Messages
 ---@see :help nvim_notify
----@param msg Content of the notification to show to the user
----@param log_level Optional log level
----@param opts Dictionary with optional options (timeout, etc)
-function vim.notify(msg, log_level, _opts)
-
+---@param msg string Content of the notification to show to the user
+---@param log_level number|nil enum from vim.log.levels
+---@param opts table|nil additional options (timeout, etc)
+function vim.notify(msg, log_level, opts) -- luacheck: no unused
   if log_level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
   elseif log_level == vim.log.levels.WARN then

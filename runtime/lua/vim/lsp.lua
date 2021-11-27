@@ -320,7 +320,8 @@ do
   ---
   ---   state
   ---     pending_change?: function that the timer starts to trigger didChange
-  ---     pending_changes: list of tables with the pending changesets; for incremental_sync only
+  ---     pending_changes: table (uri -> list of pending changeset tables));
+  --                       Only set if incremental_sync is used
   ---     use_incremental_sync: bool
   ---     buffers?: table (bufnr → lines); for incremental sync only
   ---     timer?: uv_timer
@@ -348,12 +349,10 @@ do
   end
 
   function changetracking.reset_buf(client, bufnr)
+    changetracking.flush(client)
     local state = state_by_client[client.id]
-    if state then
-      changetracking._reset_timer(state)
-      if state.buffers then
-        state.buffers[bufnr] = nil
-      end
+    if state and state.buffers then
+      state.buffers[bufnr] = nil
     end
   end
 
@@ -365,7 +364,7 @@ do
     end
   end
 
-  function changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
+  function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
       local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
@@ -392,7 +391,7 @@ do
         client.notify("textDocument/didChange", {
           textDocument = {
             uri = uri;
-            version = changedtick;
+            version = util.buf_versions[bufnr];
           };
           contentChanges = { changes, }
         })
@@ -402,27 +401,36 @@ do
       if state.use_incremental_sync then
         -- This must be done immediately and cannot be delayed
         -- The contents would further change and startline/endline may no longer fit
-        table.insert(state.pending_changes, incremental_changes(client))
+        if not state.pending_changes[uri] then
+          state.pending_changes[uri] = {}
+        end
+        table.insert(state.pending_changes[uri], incremental_changes(client))
       end
       state.pending_change = function()
         state.pending_change = nil
         if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
-        local contentChanges
         if state.use_incremental_sync then
-          contentChanges = state.pending_changes
+          for change_uri, content_changes in pairs(state.pending_changes) do
+            client.notify("textDocument/didChange", {
+              textDocument = {
+                uri = change_uri;
+                version = util.buf_versions[vim.uri_to_bufnr(change_uri)];
+              };
+              contentChanges = content_changes,
+            })
+          end
           state.pending_changes = {}
         else
-          contentChanges = { full_changes(), }
+          client.notify("textDocument/didChange", {
+            textDocument = {
+              uri = uri;
+              version = util.buf_versions[bufnr];
+            };
+            contentChanges = { full_changes() },
+          })
         end
-        client.notify("textDocument/didChange", {
-          textDocument = {
-            uri = uri;
-            version = changedtick;
-          };
-          contentChanges = contentChanges
-        })
       end
       state.timer = vim.loop.new_timer()
       -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
@@ -790,6 +798,9 @@ function lsp.start_client(config)
     env = config.cmd_env;
   })
 
+  -- Return nil if client fails to start
+  if not rpc then return end
+
   local client = {
     id = client_id;
     name = name;
@@ -1100,7 +1111,7 @@ do
       return
     end
     util.buf_versions[bufnr] = changedtick
-    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline, changedtick)
+    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end
@@ -1159,6 +1170,7 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_reload = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
+          changetracking.reset_buf(client, bufnr)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
@@ -1168,10 +1180,10 @@ function lsp.buf_attach_client(bufnr, client_id)
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
+          changetracking.reset_buf(client, bufnr)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
-          changetracking.reset_buf(client, bufnr)
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil

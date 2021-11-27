@@ -396,6 +396,20 @@ describe('lua stdlib', function()
       return t1.f() ~= t2.f()
     ]]))
 
+    ok(exec_lua([[
+      local t1 = {a = 5}
+      t1.self = t1
+      local t2 = vim.deepcopy(t1)
+      return t2.self == t2 and t2.self ~= t1
+    ]]))
+
+    ok(exec_lua([[
+      local mt = {mt=true}
+      local t1 = setmetatable({a = 5}, mt)
+      local t2 = vim.deepcopy(t1)
+      return getmetatable(t2) == mt
+    ]]))
+
     eq('Error executing lua: vim/shared.lua:0: Cannot deepcopy object of type thread',
       pcall_err(exec_lua, [[
         local thread = coroutine.create(function () return 0 end)

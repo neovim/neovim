@@ -925,7 +925,7 @@ describe('vim.diagnostic', function()
       ]]
 
       eq(1, exec_lua [[return count_diagnostics(diagnostic_bufnr, vim.diagnostic.severity.ERROR, diagnostic_ns)]])
-      -- eq(1, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
+      eq(1, exec_lua [[return count_extmarks(diagnostic_bufnr, diagnostic_ns)]])
     end)
 
     it('allows filtering by severity', function()

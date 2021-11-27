@@ -37,6 +37,7 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'DiagnosticChanged',      -- diagnostics in a buffer were modified
     'DiffUpdated',            -- diffs have been updated
     'DirChanged',             -- directory changed
     'EncodingChanged',        -- after changing the 'encoding' option
@@ -126,6 +127,7 @@ return {
   -- syntax file
   nvim_specific = {
     BufModifiedSet=true,
+    DiagnosticChanged=true,
     DirChanged=true,
     Signal=true,
     TabClosed=true,
