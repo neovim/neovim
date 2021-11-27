@@ -22,7 +22,7 @@ enum {
 };
 
 /* Storing integer in pointers in undefined behavior according to the C
- * standard. Define a union type to accomodate arbitrary user data associated
+ * standard. Define a union type to accommodate arbitrary user data associated
  * with nodes(and with requests in rpc.h). */
 typedef union {
   void *p;

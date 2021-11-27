@@ -493,9 +493,9 @@ local function tree_contains(tree, range)
   return false
 end
 
---- Determines wether @param range is contained in this language tree
+--- Determines whether @param range is contained in this language tree
 ---
---- This goes down the tree to recursively check childs.
+--- This goes down the tree to recursively check children.
 ---
 ---@param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
 function LanguageTree:contains(range)

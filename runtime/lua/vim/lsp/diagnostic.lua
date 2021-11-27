@@ -222,7 +222,7 @@ function M.on_publish_diagnostics(_, result, ctx, config)
   vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
 
---- Clear diagnotics and diagnostic cache.
+--- Clear diagnostics and diagnostic cache.
 ---
 --- Diagnostic producers should prefer |vim.diagnostic.reset()|. However,
 --- this method signature is still used internally in some parts of the LSP

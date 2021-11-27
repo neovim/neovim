@@ -362,8 +362,8 @@ cases there is the following agreement:
      converted to a dictionary `{'a': 42}`: non-string keys are ignored.
      Without `vim.type_idx` key tables with keys not fitting in 1., 2. or 3.
      are errors.
-   - `{[vim.type_idx]=vim.types.list}` is converted to an empty list. As well
-     as `{[vim.type_idx]=vim.types.list, [42]=1}`: integral keys that do not
+   - `{[vim.type_idx]=vim.types.array}` is converted to an empty list. As well
+     as `{[vim.type_idx]=vim.types.array, [42]=1}`: integral keys that do not
      form a 1-step sequence from 1 to N are ignored, as well as all
      non-integral keys.
 

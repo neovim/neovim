@@ -839,7 +839,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///             - on_win: called when starting to redraw a specific window.
 ///                 ["win", winid, bufnr, topline, botline_guess]
 ///             - on_line: called for each buffer line being redrawn. (The
-///                 interation with fold lines is subject to change)
+///                 interaction with fold lines is subject to change)
 ///                 ["win", winid, bufnr, row]
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]

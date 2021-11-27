@@ -560,7 +560,7 @@ describe('user config init', function()
 
     it('loads default lua config, but shows an error', function()
       clear{ args_rm={'-u'}, env=xenv }
-      feed('<cr>') -- TODO check this, test execution is blocked without it
+      feed('<cr>') -- confirm "Conflicting config ..." message
       eq(1, eval('g:lua_rc'))
       matches('^E5422: Conflicting configs', meths.exec('messages', true))
     end)

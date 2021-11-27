@@ -68,7 +68,7 @@ msgpack#strftime({format}, {msgpack-integer})		*msgpack#strftime()*
 
 							*msgpack#strptime*
 msgpack#strptime({format}, {time})			*msgpack#strptime()*
-	Reverse of |msgpack#strptime()|: for any time and format 
+	Reverse of |msgpack#strftime()|: for any time and format 
 	|msgpack#equal|( |msgpack#strptime|(format, |msgpack#strftime|(format, 
 	time)), time) be true.  Requires |+python| or |+python3|, without it 
 	only supports non-|msgpack-special-dict| nonnegative times and format 

@@ -621,7 +621,7 @@ end
 ---
 ---@param commands table Table that maps string of clientside commands to user-defined functions.
 --- Commands passed to start_client take precedence over the global command registry. Each key
---- must be a unique comand name, and the value is a function which is called if any LSP action
+--- must be a unique command name, and the value is a function which is called if any LSP action
 --- (code action, code lenses, ...) triggers the command.
 ---
 ---@param init_options Values to pass in the initialization request
@@ -675,8 +675,8 @@ end
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
 --- - exit_timeout (number, default 500): Milliseconds to wait for server to
---        exit cleanly after sending the 'shutdown' request before sending kill -15.
---        If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
+---       exit cleanly after sending the 'shutdown' request before sending kill -15.
+---       If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
 ---
 ---@param root_dir string Directory where the LSP
 --- server will base its workspaceFolders, rootUri, and rootPath
@@ -1034,7 +1034,7 @@ function lsp.start_client(config)
     return rpc.notify("$/cancelRequest", { id = id })
   end
 
-  -- Track this so that we can escalate automatically if we've alredy tried a
+  -- Track this so that we can escalate automatically if we've already tried a
   -- graceful shutdown
   local graceful_shutdown_failed = false
   ---@private
@@ -1218,7 +1218,7 @@ end
 
 --- Gets a client by id, or nil if the id is invalid.
 --- The returned client may not yet be fully initialized.
---
+---
 ---@param client_id number client id
 ---
 ---@returns |vim.lsp.client| object, or nil
@@ -1227,7 +1227,7 @@ function lsp.get_client_by_id(client_id)
 end
 
 --- Returns list of buffers attached to client_id.
---
+---
 ---@param client_id number client id
 ---@returns list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
@@ -1331,8 +1331,8 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 ---@param method (string) LSP method name
 ---@param params (optional, table) Parameters to send to the server
 ---@param handler (optional, function) See |lsp-handler|
---  If nil, follows resolution strategy defined in |lsp-handler-configuration|
---
+---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
+---
 ---@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
@@ -1742,11 +1742,11 @@ end
 --- using `workspace/executeCommand`.
 ---
 --- The first argument to the function will be the `Command`:
---    Command
---      title: String
---      command: String
---      arguments?: any[]
---
+---   Command
+---     title: String
+---     command: String
+---     arguments?: any[]
+---
 --- The second argument is the `ctx` of |lsp-handler|
 lsp.commands = setmetatable({}, {
   __newindex = function(tbl, key, value)

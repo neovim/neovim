@@ -92,7 +92,7 @@ if (NOT "${HAVE_BE64TOH}")
     #   any case and ORDER_BIG_ENDIAN will not be examined.
     # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case
     #   be64toh function which uses cycle and arithmetic operations is used which
-    #   will work regardless of endianess. Function is sub-optimal though.
+    #   will work regardless of endianness. Function is sub-optimal though.
     check_c_source_runs("
       ${SI}
       ${MS}
