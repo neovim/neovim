@@ -38,6 +38,31 @@ func Test_blockinsert_autoindent()
   END
   call assert_equal(expected, getline(1, 5))
 
+  " insert on the next column should do exactly the same
+  :%dele
+  call setline(1, lines)
+  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 5))
+
+  :%dele
+  call setline(1, lines)
+  setlocal sw=8 noet
+  exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  let expected =<< trim END
+      var d = {
+      	a: (): asdf => 0,
+      b: (): asdf => 0,
+      c: (): asdf => 0,
+      }
+  END
+  call assert_equal(expected, getline(1, 5))
+
+  " insert on the next column should do exactly the same
+  :%dele
+  call setline(1, lines)
+  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 5))
+
   filetype off
   bwipe!
 endfunc
