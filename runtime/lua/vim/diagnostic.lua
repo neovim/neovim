@@ -650,7 +650,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
   end
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
-    M.show(namespace, bufnr, diagnostics, opts)
+    M.show(namespace, bufnr, nil, opts)
   end
 
   vim.api.nvim_command(
