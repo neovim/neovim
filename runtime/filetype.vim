@@ -484,7 +484,7 @@ au BufNewFile,BufRead *.desktop,*.directory	setf desktop
 au BufNewFile,BufRead dict.conf,.dictrc		setf dictconf
 
 " Dictd config
-au BufNewFile,BufRead dictd.conf		setf dictdconf
+au BufNewFile,BufRead dictd*.conf		setf dictdconf
 
 " Diff files
 au BufNewFile,BufRead *.diff,*.rej		setf diff
