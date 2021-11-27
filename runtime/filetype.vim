@@ -628,7 +628,10 @@ au BufNewFile,BufRead auto.master		setf conf
 au BufNewFile,BufRead *.mas,*.master		setf master
 
 " Forth
-au BufNewFile,BufRead *.fs,*.ft,*.fth		setf forth
+au BufNewFile,BufRead *.ft,*.fth		setf forth
+
+" F# or Forth
+au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
 
 " Reva Forth
 au BufNewFile,BufRead *.frt			setf reva

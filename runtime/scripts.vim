@@ -198,6 +198,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'fish\>'
     set ft=fish
 
+    " Gforth
+  elseif s:name =~# 'gforth\>'
+    set ft=forth
+
   endif
   unlet s:name
 

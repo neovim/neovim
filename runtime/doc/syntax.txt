@@ -1497,6 +1497,14 @@ gvim display.  Here, statements are colored LightYellow instead of Yellow, and
 conditionals are LightBlue for better distinction.
 
 
+FORTH						*forth.vim* *ft-forth-syntax*
+
+Files matching "*.fs" could be F# or Forth.  If the automatic detection
+doesn't work for you, or you don't edit F# at all, use this in your
+startup vimrc: >
+   :let filetype_fs = "forth"
+
+
 FORTRAN					*fortran.vim* *ft-fortran-syntax*
 
 Default highlighting and dialect ~
