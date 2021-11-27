@@ -175,13 +175,13 @@ int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t s1_len;
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   intptr_t idx;
-  if (lua_gettop(lstate) >= 2) {
+  if (lua_isnoneornil(lstate, 2)) {
+    idx = (intptr_t)s1_len;
+  } else {
     idx = luaL_checkinteger(lstate, 2);
     if (idx < 0 || idx > (intptr_t)s1_len) {
       return luaL_error(lstate, "index out of range");
     }
-  } else {
-    idx = (intptr_t)s1_len;
   }
 
   size_t codepoints = 0, codeunits = 0;
