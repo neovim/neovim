@@ -3565,7 +3565,7 @@ static void qf_set_cwindow_options(void)
   // switch off 'swapfile'
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
   set_option_value("bt", 0L, "quickfix", OPT_LOCAL);
-  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+  set_option_value("bh", 0L, "hide", OPT_LOCAL);
   RESET_BINDING(curwin);
   curwin->w_p_diff = false;
   set_option_value("fdm", 0L, "manual", OPT_LOCAL);
