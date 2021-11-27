@@ -353,7 +353,7 @@ Lua module: vim.treesitter                               *lua-treesitter-core*
 get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
                 Gets the parser for this bufnr / ft combination.
 
-                If needed this will create the parser. Unconditionnally attach
+                If needed this will create the parser. Unconditionally attach
                 the provided callback
 
                 Parameters: ~
@@ -380,7 +380,7 @@ Lua module: vim.treesitter.language                      *treesitter-language*
 inspect_language({lang})                                  *inspect_language()*
                 Inspects the provided language.
 
-                Inspecting provides some useful informations on the language
+                Inspecting provides some useful information on the language
                 like node names, ...
 
                 Parameters: ~
@@ -479,7 +479,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
                 {source} is needed if the query contains predicates, then the
                 caller must ensure to use a freshly parsed tree consistent
-                with the current text of the buffer (if relevent). {start_row}
+                with the current text of the buffer (if relevant). {start_row}
                 and {end_row} can be used to limit matches inside a row range
                 (this is typically used with root node as the node, i e to get
                 syntax highlight matches in the current viewport). When
@@ -503,8 +503,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
                 Parameters: ~
                     {node}    The node under which the search will occur
-                    {source}  The source buffer or string to exctract text
-                              from
+                    {source}  The source buffer or string to extract text from
                     {start}   The starting line of the search
                     {stop}    The stopping line of the search (end-exclusive)
                     {self}
@@ -531,9 +530,11 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
       for id, node in pairs(match) do
         local name = query.captures[id]
         -- `node` was captured by the `name` capture in the match
-
-        local node_data = metadata[id] -- Node level metadata
-
+<
+>
+    local node_data = metadata[id] -- Node level metadata
+<
+>
         ... use the info here ...
       end
     end
@@ -609,7 +610,7 @@ LanguageTree:children({self})                        *LanguageTree:children()*
                     {self}
 
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
-                Determines wether This goes down the tree to recursively check childs.
+                Determines whether This goes down the tree to recursively check children.
 
                 Parameters: ~
                     {range}  is contained in this language tree

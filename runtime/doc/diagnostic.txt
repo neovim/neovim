@@ -439,7 +439,7 @@ get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
                 Get namespace metadata.
 
                 Parameters: ~
-                    {ns}  number Diagnostic namespace
+                    {namespace}  number Diagnostic namespace
 
                 Return: ~
                     table Namespace metadata
@@ -508,6 +508,9 @@ goto_next({opts})                                 *vim.diagnostic.goto_next()*
                               "true", call |vim.diagnostic.open_float()| after
                               moving. If a table, pass the table as the {opts}
                               parameter to |vim.diagnostic.open_float()|.
+                              Unless overridden, the float will show
+                              diagnostics at the new cursor position (as if
+                              "cursor" were passed to the "scope" option).
                             • win_id: (number, default 0) Window ID
 
 goto_prev({opts})                                 *vim.diagnostic.goto_prev()*

@@ -1851,7 +1851,7 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                 switched If a window inside the current tabpage (including a
                 float) already shows the buffer One of these windows will be
                 set as current window temporarily. Otherwise a temporary
-                scratch window (calleed the "autocmd window" for historical
+                scratch window (called the "autocmd window" for historical
                 reasons) will be used.
 
                 This is useful e.g. to call vimL functions that only work with
@@ -2175,7 +2175,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 Parameters: ~
                     {buffer}        Buffer handle, or 0 for current buffer
                     {start_row}     First line index
-                    {start_column}  Last column
+                    {start_column}  First column
                     {end_row}       Last line index
                     {end_column}    Last column
                     {replacement}   Array of lines to use as replacement
@@ -2500,7 +2500,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
                                specific window. ["win", winid, bufnr, topline,
                                botline_guess]
                              • on_line: called for each buffer line being
-                               redrawn. (The interation with fold lines is
+                               redrawn. (The interaction with fold lines is
                                subject to change) ["win", winid, bufnr, row]
                              • on_end: called at the end of a redraw cycle
                                ["end", tick]
