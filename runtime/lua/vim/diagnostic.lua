@@ -1131,7 +1131,7 @@ end
 ---@param opts table|nil Configuration table with the same keys as
 ---            |vim.lsp.util.open_floating_preview()| in addition to the following:
 ---            - namespace: (number) Limit diagnostics to the given namespace
----            - scope: (string, default "buffer") Show diagnostics from the whole buffer ("buffer"),
+---            - scope: (string, default "line") Show diagnostics from the whole buffer ("buffer"),
 ---                     the current cursor line ("line"), or the current cursor position ("cursor").
 ---            - pos: (number or table) If {scope} is "line" or "cursor", use this position rather
 ---                   than the cursor position. If a number, interpreted as a line number;
@@ -1169,7 +1169,7 @@ function M.open_float(bufnr, opts)
 
   opts = opts or {}
   bufnr = get_bufnr(bufnr)
-  local scope = opts.scope or "buffer"
+  local scope = opts.scope or "line"
   local lnum, col
   if scope == "line" or scope == "cursor" then
     if not opts.pos then

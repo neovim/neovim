@@ -239,7 +239,7 @@ DiagnosticUnderlineHint
 						*hl-DiagnosticFloatingError*
 DiagnosticFloatingError
   Used to color "Error" diagnostic messages in diagnostics float.
-  See |vim.diagnostic.show_line_diagnostics()|
+  See |vim.diagnostic.open_float()|
 
 						*hl-DiagnosticFloatingWarn*
 DiagnosticFloatingWarn
