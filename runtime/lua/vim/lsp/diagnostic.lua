@@ -431,24 +431,6 @@ end
 --- Move to the next diagnostic
 ---
 ---@deprecated Prefer |vim.diagnostic.goto_next()|
----
----@param opts table|nil Configuration table. Keys:
----         - {client_id}: (number)
----             - If nil, will consider all clients attached to buffer.
----         - {cursor_position}: (Position, default current position)
----             - See |nvim_win_get_cursor()|
----         - {wrap}: (boolean, default true)
----             - Whether to loop around file or not. Similar to 'wrapscan'
----         - {severity}: (DiagnosticSeverity)
----             - Exclusive severity to consider. Overrides {severity_limit}
----         - {severity_limit}: (DiagnosticSeverity)
----             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----         - {enable_popup}: (boolean, default true)
----             - Call |vim.lsp.diagnostic.show_line_diagnostics()| on jump
----         - {popup_opts}: (table)
----             - Table to pass as {opts} parameter to |vim.lsp.diagnostic.show_line_diagnostics()|
----         - {win_id}: (number, default 0)
----             - Window ID
 function M.goto_next(opts)
   if opts then
     if opts.severity then
@@ -562,7 +544,7 @@ end
 
 --- Open a floating window with the diagnostics from {line_nr}
 ---
----@deprecated Prefer |vim.diagnostic.show_line_diagnostics()|
+---@deprecated Prefer |vim.diagnostic.open_float()|
 ---
 ---@param opts table Configuration table
 ---     - all opts for |vim.lsp.diagnostic.get_line_diagnostics()| and

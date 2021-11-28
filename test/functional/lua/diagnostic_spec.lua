@@ -1370,7 +1370,7 @@ describe('vim.diagnostic', function()
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false, scope="buffer"})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -1387,7 +1387,7 @@ describe('vim.diagnostic', function()
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
         vim.api.nvim_win_set_cursor(0, {2, 1})
-        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header=false, scope="line"})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header=false})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -1402,7 +1402,7 @@ describe('vim.diagnostic', function()
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
         vim.api.nvim_win_set_cursor(0, {1, 1})
-        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header=false, scope="line", pos=1})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header=false, pos=1})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -1466,7 +1466,7 @@ describe('vim.diagnostic', function()
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        local float_bufnr, winnr = vim.diagnostic.open_float(diagnostic_bufnr, {scope="line"})
+        local float_bufnr, winnr = vim.diagnostic.open_float(diagnostic_bufnr)
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return #lines
@@ -1533,7 +1533,7 @@ describe('vim.diagnostic', function()
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        local float_bufnr, winnr = vim.diagnostic.open_float(diagnostic_bufnr, {header = false, scope = "line", pos = 5})
+        local float_bufnr, winnr = vim.diagnostic.open_float(diagnostic_bufnr, {header = false, pos = 5})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return #lines
@@ -1665,7 +1665,7 @@ describe('vim.diagnostic', function()
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false, scope = "buffer"})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -1678,7 +1678,7 @@ describe('vim.diagnostic', function()
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false, prefix = ""})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header = false, scope = "buffer", prefix = ""})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -1687,7 +1687,7 @@ describe('vim.diagnostic', function()
       eq({'1. Syntax error', '2. Some warning'}, exec_lua [[
         local diagnostics = {
           make_error("Syntax error", 0, 1, 0, 3),
-          make_warning("Some warning", 1, 1, 1, 3),
+          make_warning("Some warning", 0, 1, 0, 3),
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
