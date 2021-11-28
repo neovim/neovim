@@ -3584,7 +3584,7 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 
 		Can also be used as a |method|: >
 			mylist->count(val)
-
+<
 							*cscope_connection()*
 cscope_connection([{num} , {dbpath} [, {prepend}]])
 		Checks for the existence of a |cscope| connection.  If no
@@ -3937,7 +3937,7 @@ exepath({expr})						*exepath()*
 
 		Can also be used as a |method|: >
 			GetCommand()->exepath()
-
+<
 							*exists()*
 exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 		defined, zero otherwise.
@@ -4483,7 +4483,7 @@ foldlevel({lnum})					*foldlevel()*
 
 		Can also be used as a |method|: >
 			GetLnum()->foldlevel()
-
+<
 							*foldtext()*
 foldtext()	Returns a String, to be displayed for a closed fold.  This is
 		the default function used for the 'foldtext' option and should
