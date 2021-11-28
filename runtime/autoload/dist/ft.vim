@@ -219,6 +219,23 @@ func dist#ft#FTe()
   endif
 endfunc
 
+" Distinguish between Forth and F#.
+" Provided by Doug Kearns.
+func dist#ft#FTfs()
+  if exists("g:filetype_fs")
+    exe "setf " . g:filetype_fs
+  else
+    let line = getline(nextnonblank(1))
+    " comments and colon definitions
+    if line =~ '^\s*\.\=( ' || line =~ '^\s*\\G\= ' || line =~ '^\\$'
+	  \ || line =~ '^\s*: \S'
+      setf forth
+    else
+      setf fs
+    endif
+  endif
+endfunc
+
 " Distinguish between HTML, XHTML and Django
 func dist#ft#FThtml()
   let n = 1
