@@ -585,7 +585,7 @@ open_float({bufnr}, {opts})                      *vim.diagnostic.open_float()*
                              addition to the following:
                              • namespace: (number) Limit diagnostics to the
                                given namespace
-                             • scope: (string, default "buffer") Show
+                             • scope: (string, default "line") Show
                                diagnostics from the whole buffer ("buffer"),
                                the current cursor line ("line"), or the
                                current cursor position ("cursor").
