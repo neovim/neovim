@@ -520,7 +520,7 @@ local function diagnostic_move_pos(opts, pos)
         vim.api.nvim_win_get_buf(win_id),
         vim.tbl_extend("keep", float_opts, {
           scope = "cursor",
-          focusable = false,
+          focus = false,
         })
       )
     end)

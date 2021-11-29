@@ -1631,6 +1631,10 @@ open_floating_preview({contents}, {syntax}, {opts})
                                   closes the floating window
                                 • focusable: (boolean, default true) Make
                                   float focusable
+                                • focus: (boolean, default true) If `true` ,
+                                  and if {focusable} is also `true` , focus an
+                                  existing floating window with the same
+                                  {focus_id}
 
                 Return: ~
                     bufnr,winnr buffer and window number of the newly created
