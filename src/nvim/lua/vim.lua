@@ -580,6 +580,7 @@ function vim._expand_pat(pat, env)
   end
 
   local keys = {}
+  ---@private
   local function insert_keys(obj)
     for k,_ in pairs(obj) do
       if type(k) == "string" and string.sub(k,1,string.len(match_part)) == match_part then

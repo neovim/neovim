@@ -263,6 +263,7 @@ function M.rename(new_name)
     request('textDocument/rename', params)
   end
 
+  ---@private
   local function prepare_rename(err, result)
     if err == nil and result == nil then
       vim.notify('nothing to rename', vim.log.levels.INFO)

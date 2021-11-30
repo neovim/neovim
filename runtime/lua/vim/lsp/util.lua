@@ -158,6 +158,7 @@ end
 local function get_lines(bufnr, rows)
   rows = type(rows) == "table" and rows or { rows }
 
+  ---@private
   local function buf_lines()
     local lines = {}
     for _, row in pairs(rows) do
@@ -262,6 +263,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
 end
 
 --- Process and return progress reports from lsp server
+---@private
 function M.get_progress_messages()
 
   local new_messages = {}
@@ -657,7 +659,7 @@ function M.rename(old_fname, new_fname, opts)
   api.nvim_buf_delete(oldbuf, { force = true })
 end
 
-
+---@private
 local function create_file(change)
   local opts = change.options or {}
   -- from spec: Overwrite wins over `ignoreIfExists`
@@ -669,7 +671,7 @@ local function create_file(change)
   vim.fn.bufadd(fname)
 end
 
-
+---@private
 local function delete_file(change)
   local opts = change.options or {}
   local fname = vim.uri_to_fname(change.uri)

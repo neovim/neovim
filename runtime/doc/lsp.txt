@@ -575,9 +575,6 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                     error, returns `(nil, err)` where `err` is a string
                     describing the failure reason.
 
-check_clients_closed()                        *vim.lsp.check_clients_closed()*
-                TODO: Documentation
-
 client()                                                      *vim.lsp.client*
                 LSP client object. You can get an active client object via
                 |vim.lsp.get_client_by_id()| or
@@ -650,12 +647,21 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
                 Return: ~
                     true if client is stopped, false otherwise.
 
-flush({client})                                              *vim.lsp.flush()*
-                TODO: Documentation
-
                                             *vim.lsp.for_each_buffer_client()*
 for_each_buffer_client({bufnr}, {fn})
-                TODO: Documentation
+                Invokes a function for each LSP client attached to a buffer.
+
+                Parameters: ~
+                    {bufnr}  number Buffer number
+                    {fn}     function Function to run on each client attached
+                             to buffer {bufnr}. The function takes the client,
+                             client ID, and buffer number as arguments.
+                             Example: >
+
+                               vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
+                                 print(vim.inspect(client))
+                               end)
+<
 
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
                 Provides an interface between the built-in client and a
@@ -720,16 +726,6 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                     |complete-functions|
                     |complete-items|
                     |CompleteDone|
-
-                                                           *vim.lsp.prepare()*
-prepare({bufnr}, {firstline}, {lastline}, {new_lastline})
-                TODO: Documentation
-
-reset({client_id})                                           *vim.lsp.reset()*
-                TODO: Documentation
-
-reset_buf({client}, {bufnr})                             *vim.lsp.reset_buf()*
-                TODO: Documentation
 
 set_log_level({level})                               *vim.lsp.set_log_level()*
                 Sets the global log level for LSP logging.
@@ -1097,9 +1093,6 @@ outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
                 cursor in the |quickfix| window. If the symbol can resolve to
                 multiple items, the user can pick one in the |inputlist|.
 
-prepare_rename({err}, {result})                 *vim.lsp.buf.prepare_rename()*
-                TODO: Documentation
-
                                              *vim.lsp.buf.range_code_action()*
 range_code_action({context}, {start_pos}, {end_pos})
                 Performs |vim.lsp.buf.code_action()| for a given range.
@@ -1370,9 +1363,6 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
 
-buf_lines()                                         *vim.lsp.util.buf_lines()*
-                TODO: Documentation
-
                                              *vim.lsp.util.character_offset()*
 character_offset({bufnr}, {row}, {col})
                 Returns the UTF-32 and UTF-16 offsets for a position in a
@@ -1439,12 +1429,6 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 
-create_file({change})                             *vim.lsp.util.create_file()*
-                TODO: Documentation
-
-delete_file({change})                             *vim.lsp.util.delete_file()*
-                TODO: Documentation
-
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})
                 Can be used to extract the completion items from a `textDocument/completion` request, which may return one of `CompletionItem[]` , `CompletionList` or null.
@@ -1471,9 +1455,6 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
 
                 See also: ~
                     |softtabstop|
-
-get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
-                TODO: Documentation
 
 jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
                 Jumps to a location.
@@ -1771,7 +1752,10 @@ get_filename()                                    *vim.lsp.log.get_filename()*
                     (string) log filename
 
 get_level()                                          *vim.lsp.log.get_level()*
-                TODO: Documentation
+                Gets the current log level.
+
+                Return: ~
+                    string current log level
 
 set_format_func({handle})                      *vim.lsp.log.set_format_func()*
                 Sets formatting function used to format logs
@@ -1909,10 +1893,6 @@ compute_diff({prev_lines}, {curr_lines}, {firstline}, {lastline},
 
                 Return: ~
                     table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
-
-                                          *vim.lsp.sync.compute_line_length()*
-compute_line_length({line}, {offset_encoding})
-                TODO: Documentation
 
 
 ==============================================================================

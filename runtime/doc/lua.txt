@@ -1190,9 +1190,6 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Return: ~
                     timer luv timer object
 
-insert_keys({obj})                                         *vim.insert_keys()*
-                TODO: Documentation
-
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 
@@ -1364,9 +1361,6 @@ is_callable({f})                                           *vim.is_callable()*
 
                 Return: ~
                     true if `f` is callable, else false
-
-is_valid({opt})                                               *vim.is_valid()*
-                TODO: Documentation
 
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like

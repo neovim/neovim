@@ -137,12 +137,6 @@ local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
 ---@private
---- Invokes a function for each LSP client attached to the buffer {bufnr}.
----
----@param bufnr (Number) of buffer
----@param fn (function({client}, {client_id}, {bufnr}) Function to run on
----each client attached to that buffer.
----@param restrict_client_ids table list of client ids on which to restrict function application.
 local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   validate {
     fn = { fn, 'f' };
@@ -327,6 +321,7 @@ do
   ---     timer?: uv_timer
   local state_by_client = {}
 
+  ---@private
   function changetracking.init(client, bufnr)
     local state = state_by_client[client.id]
     if not state then
@@ -348,6 +343,7 @@ do
     state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
   end
 
+  ---@private
   function changetracking.reset_buf(client, bufnr)
     changetracking.flush(client)
     local state = state_by_client[client.id]
@@ -356,6 +352,7 @@ do
     end
   end
 
+  ---@private
   function changetracking.reset(client_id)
     local state = state_by_client[client_id]
     if state then
@@ -364,6 +361,7 @@ do
     end
   end
 
+  ---@private
   function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     local incremental_changes = function(client)
       local cached_buffers = state_by_client[client.id].buffers
@@ -447,6 +445,7 @@ do
   end
 
   --- Flushes any outstanding change notification.
+  ---@private
   function changetracking.flush(client)
     local state = state_by_client[client.id]
     if state then
@@ -1297,6 +1296,7 @@ function lsp._vim_exit_handler()
 
   local poll_time = 50
 
+  ---@private
   local function check_clients_closed()
     for client_id, timeout in pairs(timeouts) do
       timeouts[client_id] = timeout - poll_time
@@ -1683,7 +1683,17 @@ function lsp.get_log_path()
   return log.get_filename()
 end
 
---- Call {fn} for every client attached to {bufnr}
+--- Invokes a function for each LSP client attached to a buffer.
+---
+---@param bufnr number Buffer number
+---@param fn function Function to run on each client attached to buffer
+---                   {bufnr}. The function takes the client, client ID, and
+---                   buffer number as arguments. Example:
+---             <pre>
+---               vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
+---                 print(vim.inspect(client))
+---               end)
+---             </pre>
 function lsp.for_each_buffer_client(bufnr, fn)
   return for_each_buffer_client(bufnr, fn)
 end
