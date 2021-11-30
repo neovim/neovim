@@ -454,7 +454,7 @@ local on_key_cbs = {}
 ---                   On each key press, Nvim passes the key char to fn(). |i_CTRL-V|
 ---                   If {fn} is nil, it removes the callback for the associated {ns_id}
 ---@param ns_id number? Namespace ID. If nil or 0, generates and returns a new
----                    |nvim_create_namesapce()| id.
+---                    |nvim_create_namespace()| id.
 ---
 ---@return number Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
@@ -580,6 +580,7 @@ function vim._expand_pat(pat, env)
   end
 
   local keys = {}
+  ---@private
   local function insert_keys(obj)
     for k,_ in pairs(obj) do
       if type(k) == "string" and string.sub(k,1,string.len(match_part)) == match_part then

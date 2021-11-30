@@ -1190,9 +1190,6 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Return: ~
                     timer luv timer object
 
-insert_keys({obj})                                         *vim.insert_keys()*
-                TODO: Documentation
-
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 
@@ -1235,7 +1232,7 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
                              it removes the callback for the associated
                              {ns_id}
                     {ns_id}  number? Namespace ID. If nil or 0, generates and
-                             returns a new |nvim_create_namesapce()| id.
+                             returns a new |nvim_create_namespace()| id.
 
                 Return: ~
                     number Namespace id associated with {fn}. Or count of all
@@ -1364,9 +1361,6 @@ is_callable({f})                                           *vim.is_callable()*
 
                 Return: ~
                     true if `f` is callable, else false
-
-is_valid({opt})                                               *vim.is_valid()*
-                TODO: Documentation
 
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like
@@ -1613,14 +1607,12 @@ validate({opt})                                               *vim.validate()*
 
                   vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
                      => NOP (success)
-<
->
-    vim.validate{arg1={1, 'table'}}
-       => error('arg1: expected table, got number')
-<
->
-    vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-       => error('arg1: expected even number, got 3')
+
+                  vim.validate{arg1={1, 'table'}}
+                     => error('arg1: expected table, got number')
+
+                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+                     => error('arg1: expected even number, got 3')
 <
 
                 Parameters: ~

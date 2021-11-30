@@ -559,6 +559,7 @@ do
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
+  ---@private
   local function is_valid(opt)
     if type(opt) ~= 'table' then
       return false, string.format('opt: expected table, got %s', type(opt))

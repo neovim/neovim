@@ -74,6 +74,7 @@ local function byte_to_utf(line, byte, offset_encoding)
   return utf_idx + 1
 end
 
+---@private
 local function compute_line_length(line, offset_encoding)
   local length
   local _
