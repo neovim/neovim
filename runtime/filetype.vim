@@ -630,9 +630,6 @@ au BufNewFile,BufRead *.mas,*.master		setf master
 " Forth
 au BufNewFile,BufRead *.ft,*.fth		setf forth
 
-" F# or Forth
-au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
-
 " Reva Forth
 au BufNewFile,BufRead *.frt			setf reva
 
@@ -647,6 +644,12 @@ au BufNewFile,BufRead *.fsl			setf framescript
 
 " FStab
 au BufNewFile,BufRead fstab,mtab		setf fstab
+
+" F# or Forth
+au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
+
+" F#
+au BufNewFile,BufRead *.fsi,*.fsx		setf fsharp
 
 " GDB command files
 au BufNewFile,BufRead .gdbinit,gdbinit		setf gdb

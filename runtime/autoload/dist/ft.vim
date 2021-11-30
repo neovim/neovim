@@ -231,7 +231,7 @@ func dist#ft#FTfs()
 	  \ || line =~ '^\s*: \S'
       setf forth
     else
-      setf fs
+      setf fsharp
     endif
   endif
 endfunc
