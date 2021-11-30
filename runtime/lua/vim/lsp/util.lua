@@ -1416,7 +1416,7 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
-  ---@param bufnr buffer id
+  ---@param bufnr number Buffer id
   function M.buf_clear_references(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
     api.nvim_buf_clear_namespace(bufnr, reference_ns, 0, -1)
@@ -1424,9 +1424,9 @@ do --[[ References ]]
 
   --- Shows a list of document highlights for a certain buffer.
   ---
-  ---@param bufnr buffer id
-  ---@param references List of `DocumentHighlight` objects to highlight
-  ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
+  ---@param bufnr number Buffer id
+  ---@param references table List of `DocumentHighlight` objects to highlight
+  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32", or nil. Defaults to utf-16
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references, offset_encoding)
     validate { bufnr = {bufnr, 'n', true} }
