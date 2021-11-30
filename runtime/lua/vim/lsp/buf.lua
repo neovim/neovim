@@ -165,7 +165,7 @@ end
 --- saved. {timeout_ms} is passed on to |vim.lsp.buf_request_sync()|. Example:
 ---
 --- <pre>
---- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()]]
+--- autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()
 --- </pre>
 ---
 ---@param options Table with valid `FormattingOptions` entries
@@ -447,9 +447,9 @@ end
 --- by events such as `CursorHold`, eg:
 ---
 --- <pre>
---- vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
---- vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
---- vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
+--- autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
+--- autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
+--- autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
 --- </pre>
 ---
 --- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
