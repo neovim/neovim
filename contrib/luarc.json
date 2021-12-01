@@ -2,7 +2,15 @@
     "runtime.version": "LuaJIT",
     "diagnostics": {
         "enable": true,
-        "globals": ["vim"]
+        "globals": [
+          "vim",
+          "describe",
+          "it",
+          "before_each",
+          "after_each",
+          "setup",
+          "teardown"
+        ]
     },
     "workspace": {
         "library": {
