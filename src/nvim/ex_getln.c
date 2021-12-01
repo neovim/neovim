@@ -880,7 +880,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   TryState tstate;
   Error err = ERROR_INIT;
   bool tl_ret = true;
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
   char firstcbuf[2];
   firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
   firstcbuf[1] = 0;
@@ -894,7 +895,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
     apply_autocmds(EVENT_CMDLINEENTER, (char_u *)firstcbuf, (char_u *)firstcbuf,
                    false, curbuf);
-    tv_dict_clear(dict);
+    restore_v_event(dict, &save_v_event);
 
 
     tl_ret = try_leave(&tstate, &err);
@@ -906,6 +907,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     }
     tl_ret = true;
   }
+  trigger_modechanged();
 
   state_enter(&s->state);
 
@@ -924,7 +926,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     if (tv_dict_get_number(dict, "abort") != 0) {
       s->gotesc = 1;
     }
-    tv_dict_clear(dict);
+    restore_v_event(dict, &save_v_event);
   }
 
   cmdmsg_rl = false;
@@ -2289,7 +2291,8 @@ static int command_line_changed(CommandLineState *s)
   if (has_event(EVENT_CMDLINECHANGED)) {
     TryState tstate;
     Error err = ERROR_INIT;
-    dict_T *dict = get_vim_var_dict(VV_EVENT);
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
 
     char firstcbuf[2];
     firstcbuf[0] = (char)(s->firstc > 0 ? s->firstc : '-');
@@ -2303,7 +2306,7 @@ static int command_line_changed(CommandLineState *s)
 
     apply_autocmds(EVENT_CMDLINECHANGED, (char_u *)firstcbuf,
                    (char_u *)firstcbuf, false, curbuf);
-    tv_dict_clear(dict);
+    restore_v_event(dict, &save_v_event);
 
     bool tl_ret = try_leave(&tstate, &err);
     if (!tl_ret && ERROR_SET(&err)) {
@@ -6547,6 +6550,7 @@ static int open_cmdwin(void)
   cmdmsg_rl = save_cmdmsg_rl;
 
   State = save_State;
+  trigger_modechanged();
   setmouse();
 
   return cmdwin_result;

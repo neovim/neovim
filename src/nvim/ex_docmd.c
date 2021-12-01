@@ -196,6 +196,7 @@ void do_exmode(void)
 
   exmode_active = true;
   State = NORMAL;
+  trigger_modechanged();
 
   // When using ":global /pat/ visual" and then "Q" we return to continue
   // the :global command.

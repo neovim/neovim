@@ -631,6 +631,7 @@ void free_all_mem(void)
   clear_sb_text(true);            // free any scrollback text
 
   // Free some global vars.
+  xfree(last_mode);
   xfree(last_cmdline);
   xfree(new_last_cmdline);
   set_keep_msg(NULL, 0);

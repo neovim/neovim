@@ -1059,3 +1059,58 @@ void add_time(char_u *buf, size_t buflen, time_t tt)
                  seconds);
   }
 }
+
+dict_T *get_v_event(save_v_event_T *sve)
+{
+  dict_T *v_event = get_vim_var_dict(VV_EVENT);
+
+  if (v_event->dv_hashtab.ht_used > 0) {
+    // recursive use of v:event, save, make empty and restore later
+    sve->sve_did_save = true;
+    sve->sve_hashtab = v_event->dv_hashtab;
+    hash_init(&v_event->dv_hashtab);
+  } else {
+    sve->sve_did_save = false;
+  }
+  return v_event;
+}
+
+void restore_v_event(dict_T *v_event, save_v_event_T *sve)
+{
+  tv_dict_free_contents(v_event);
+  if (sve->sve_did_save) {
+    v_event->dv_hashtab = sve->sve_hashtab;
+  } else {
+    hash_init(&v_event->dv_hashtab);
+  }
+}
+
+/// Fires a ModeChanged autocmd.
+void trigger_modechanged(void)
+{
+  if (!has_event(EVENT_MODECHANGED)) {
+    return;
+  }
+
+  char *mode = get_mode();
+  if (STRCMP(mode, last_mode) == 0) {
+    xfree(mode);
+    return;
+  }
+
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
+  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+
+  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
+  char_u *pat = concat_str(pat_pre, (char_u *)mode);
+  xfree(pat_pre);
+
+  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
+  xfree(last_mode);
+  last_mode = mode;
+
+  xfree(pat);
+  restore_v_event(v_event, &save_v_event);
+}

@@ -1116,6 +1116,12 @@ typedef struct {
   pos_T w_cursor_corr;  // corrected cursor position
 } pos_save_T;
 
+// Struct passed to get_v_event() and restore_v_event().
+typedef struct {
+  bool sve_did_save;
+  hashtab_T sve_hashtab;
+} save_v_event_T;
+
 /// Indices into vimmenu_T->strings[] and vimmenu_T->noremap[] for each mode
 /// \addtogroup MENU_INDEX
 /// @{

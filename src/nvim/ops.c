@@ -2809,8 +2809,9 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 
   recursive = true;
 
+  save_v_event_T save_v_event;
   // Set the v:event dictionary with information about the yank.
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  dict_T *dict = get_v_event(&save_v_event);
 
   // The yanked text contents.
   list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
@@ -2847,7 +2848,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   textlock++;
   apply_autocmds(EVENT_TEXTYANKPOST, NULL, NULL, false, curbuf);
   textlock--;
-  tv_dict_clear(dict);
+  restore_v_event(dict, &save_v_event);
 
   recursive = false;
 }
