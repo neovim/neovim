@@ -4523,7 +4523,7 @@ static int eval_index(char_u **arg, typval_T *rettv, int evaluate, int verbose)
      * dict.name
      */
     key = *arg + 1;
-    for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; ++len) {
+    for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {
     }
     if (len == 0) {
       return FAIL;
@@ -6603,8 +6603,9 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref, FunPtr
                          : (const char *)s));
     // Don't check an autoload name for existence here.
   } else if (trans_name != NULL
-             && (is_funcref ? find_func(trans_name) == NULL
-                            : !translated_function_exists((const char *)trans_name))) {
+             && (is_funcref
+                 ? find_func(trans_name) == NULL
+                 : !translated_function_exists((const char *)trans_name))) {
     semsg(_("E700: Unknown function: %s"), s);
   } else {
     int dict_idx = 0;
@@ -9649,8 +9650,8 @@ bool var_check_func_name(const char *const name, const bool new_var)
 {
   // Allow for w: b: s: and t:.
   if (!(vim_strchr((char_u *)"wbst", name[0]) != NULL && name[1] == ':')
-      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2]
-                                                           : name[0])) {
+      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':')
+                        ? name[2] : name[0])) {
     semsg(_("E704: Funcref variable name must start with a capital: %s"), name);
     return false;
   }

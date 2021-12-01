@@ -730,7 +730,7 @@ json_decode_string_cycle_start:
                       ? (DICT_LEN(last_container.container.vval.v_dict) == 0)
                       : (tv_list_len(last_container.container.vval.v_list)
                          == 0))
-                      : (tv_list_len(last_container.special_val) == 0)) {
+                   : (tv_list_len(last_container.special_val) == 0)) {
         semsg(_("E474: Leading comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }

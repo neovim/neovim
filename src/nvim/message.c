@@ -839,13 +839,11 @@ void msg_schedule_semsg(const char *const fmt, ...)
   multiqueue_put(main_loop.events, msg_semsg_event, 1, s);
 }
 
-/*
- * Like msg(), but truncate to a single line if p_shm contains 't', or when
- * "force" is TRUE.  This truncates in another way as for normal messages.
- * Careful: The string may be changed by msg_may_trunc()!
- * Returns a pointer to the printed message, if wait_return() not called.
- */
-char *msg_trunc_attr(char *s, int force, int attr)
+// Like msg(), but truncate to a single line if p_shm contains 't', or when
+// "force" is true.  This truncates in another way as for normal messages.
+// Careful: The string may be changed by msg_may_trunc()!
+// Returns a pointer to the printed message, if wait_return() not called.
+char *msg_trunc_attr(char *s, bool force, int attr)
 {
   int n;
 
@@ -869,7 +867,7 @@ char *msg_trunc_attr(char *s, int force, int attr)
  * Return a pointer to where the truncated message starts.
  * Note: May change the message by replacing a character with '<'.
  */
-char_u *msg_may_trunc(int force, char_u *s)
+char_u *msg_may_trunc(bool force, char_u *s)
 {
   int room;
 

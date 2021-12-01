@@ -209,8 +209,8 @@ typedef enum {
 
 /// flags for find_name_end()
 #define FNE_INCL_BR     1       // find_name_end(): include [] in name
-#define FNE_CHECK_START 2       /* find_name_end(): check name starts with
-                                   valid character */
+#define FNE_CHECK_START 2       // find_name_end(): check name starts with
+                                // valid character
 
 typedef struct {
   TimeWatcher tw;

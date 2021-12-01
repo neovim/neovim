@@ -1253,7 +1253,7 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
  * Variables for the output PostScript file.
  */
 static FILE *prt_ps_fd;
-static int prt_file_error;
+static bool prt_file_error;
 static char_u *prt_ps_file_name = NULL;
 
 /*
@@ -1329,7 +1329,7 @@ static void prt_write_file_raw_len(char_u *buffer, size_t bytes)
   if (!prt_file_error
       && fwrite(buffer, sizeof(char_u), bytes, prt_ps_fd) != bytes) {
     emsg(_("E455: Error writing to PostScript output file"));
-    prt_file_error = TRUE;
+    prt_file_error = true;
   }
 }
 
@@ -1981,7 +1981,7 @@ void mch_print_cleanup(void)
   if (prt_ps_fd != NULL) {
     fclose(prt_ps_fd);
     prt_ps_fd = NULL;
-    prt_file_error = FALSE;
+    prt_file_error = false;
   }
   if (prt_ps_file_name != NULL) {
     XFREE_CLEAR(prt_ps_file_name);
@@ -2203,7 +2203,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       // Check encoding and character set are compatible
       if ((p_mbenc->needs_charset & p_mbchar->has_charset) == 0) {
         emsg(_("E673: Incompatible multi-byte encoding and character set."));
-        return FALSE;
+        return false;
       }
 
       // Add charset name if not empty
@@ -2215,7 +2215,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       // Add custom CMap character set name
       if (*p_pmcs == NUL) {
         emsg(_("E674: printmbcharset cannot be empty with multi-byte encoding."));
-        return FALSE;
+        return false;
       }
       STRLCPY(prt_cmap, p_pmcs, sizeof(prt_cmap) - 2);
       STRCAT(prt_cmap, "-");
@@ -2231,7 +2231,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
     if (!mbfont_opts[OPT_MBFONT_REGULAR].present) {
       emsg(_("E675: No default font specified for multi-byte printing."));
-      return FALSE;
+      return false;
     }
 
     // Derive CID font names with fallbacks if not defined
@@ -2425,12 +2425,12 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   prt_need_bgcol = false;
   prt_need_underline = false;
 
-  prt_file_error = FALSE;
+  prt_file_error = false;
 
   return OK;
 }
 
-static int prt_add_resource(struct prt_ps_resource_S *resource)
+static bool prt_add_resource(struct prt_ps_resource_S *resource)
 {
   FILE *fd_resource;
   char_u resource_buffer[512];
@@ -2439,7 +2439,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     semsg(_("E456: Can't open file \"%s\""), resource->filename);
-    return FALSE;
+    return false;
   }
   switch (resource->type) {
   case PRT_RESOURCE_TYPE_PROCSET:
@@ -2449,7 +2449,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
                       (char *)resource->title);
     break;
   default:
-    return FALSE;
+    return false;
   }
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
@@ -2461,7 +2461,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
       semsg(_("E457: Can't read PostScript resource file \"%s\""),
             resource->filename);
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
     if (bytes_read == 0) {
       break;
@@ -2469,7 +2469,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
     prt_write_file_raw_len(resource_buffer, bytes_read);
     if (prt_file_error) {
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
   }
   fclose(fd_resource);
@@ -2478,10 +2478,10 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
 
   prt_dsc_noarg("EndResource");
 
-  return TRUE;
+  return true;
 }
 
-int mch_print_begin(prt_settings_T *psettings)
+bool mch_print_begin(prt_settings_T *psettings)
 {
   int bbox[4];
   double left;
@@ -2495,7 +2495,6 @@ int mch_print_begin(prt_settings_T *psettings)
   char_u *p;
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
-  int retval = FALSE;
 
   /*
    * PS DSC Header comments - no PS code!
@@ -2567,25 +2566,25 @@ int mch_print_begin(prt_settings_T *psettings)
   // Search for external resources VIM supplies
   if (!prt_find_resource("prolog", &res_prolog)) {
     emsg(_("E456: Can't find PostScript resource file \"prolog.ps\""));
-    return FALSE;
+    return false;
   }
   if (!prt_open_resource(&res_prolog)) {
-    return FALSE;
+    return false;
   }
   if (!prt_check_resource(&res_prolog, PRT_PROLOG_VERSION)) {
-    return FALSE;
+    return false;
   }
   if (prt_out_mbyte) {
     // Look for required version of multi-byte printing procset
     if (!prt_find_resource("cidfont", &res_cidfont)) {
       emsg(_("E456: Can't find PostScript resource file \"cidfont.ps\""));
-      return FALSE;
+      return false;
     }
     if (!prt_open_resource(&res_cidfont)) {
-      return FALSE;
+      return false;
     }
     if (!prt_check_resource(&res_cidfont, PRT_CID_PROLOG_VERSION)) {
-      return FALSE;
+      return false;
     }
   }
 
@@ -2610,12 +2609,12 @@ int mch_print_begin(prt_settings_T *psettings)
         if (!prt_find_resource(p_encoding, &res_encoding)) {
           semsg(_("E456: Can't find PostScript resource file \"%s.ps\""),
                 p_encoding);
-          return FALSE;
+          return false;
         }
       }
     }
     if (!prt_open_resource(&res_encoding)) {
-      return FALSE;
+      return false;
     }
     // For the moment there are no checks on encoding resource files to
     // perform
@@ -2629,10 +2628,10 @@ int mch_print_begin(prt_settings_T *psettings)
       if (!prt_find_resource(prt_ascii_encoding, &res_encoding)) {
         semsg(_("E456: Can't find PostScript resource file \"%s.ps\""),
               prt_ascii_encoding);
-        return FALSE;
+        return false;
       }
       if (!prt_open_resource(&res_encoding)) {
-        return FALSE;
+        return false;
       }
       // For the moment there are no checks on encoding resource files to
       // perform
@@ -2655,10 +2654,10 @@ int mch_print_begin(prt_settings_T *psettings)
     if (!prt_find_resource(prt_cmap, &res_cmap)) {
       semsg(_("E456: Can't find PostScript resource file \"%s.ps\""),
             prt_cmap);
-      return FALSE;
+      return false;
     }
     if (!prt_open_resource(&res_cmap)) {
-      return FALSE;
+      return false;
     }
   }
 
@@ -2736,7 +2735,7 @@ int mch_print_begin(prt_settings_T *psettings)
     // There will be only one Roman font encoding to be included in the PS
     // file.
     if (!prt_add_resource(&res_encoding)) {
-      return FALSE;
+      return false;
     }
   }
 
@@ -2846,9 +2845,7 @@ int mch_print_begin(prt_settings_T *psettings)
   prt_dsc_noarg("EndSetup");
 
   // Fail if any problems writing out to the PS file
-  retval = !prt_file_error;
-
-  return retval;
+  return !prt_file_error;
 }
 
 void mch_print_end(prt_settings_T *psettings)

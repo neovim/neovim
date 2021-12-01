@@ -141,12 +141,12 @@ static int tfu_in_use = false;  // disallow recursive call of tagfunc
 /// type == DT_LTAG:     use location list for displaying tag matches
 /// type == DT_FREE:     free cached matches
 ///
-/// for cscope, returns TRUE if we jumped to tag or aborted, FALSE otherwise
+/// for cscope, returns true if we jumped to tag or aborted, false otherwise
 ///
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
 /// @param verbose  print "tag not found" message
-int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
+bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -163,7 +163,7 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
   int error_cur_match = 0;
   int save_pos = false;
   fmark_T saved_fmark;
-  int jumped_to_tag = false;
+  bool jumped_to_tag = false;
   int new_num_matches;
   char_u **new_matches;
   int use_tagstack;

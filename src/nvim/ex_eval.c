@@ -437,7 +437,7 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
       }
     }
   } else {
-    *should_free = FALSE;
+    *should_free = false;
     ret = value;
   }
 
@@ -888,11 +888,10 @@ void ex_endif(exarg_T *eap)
  */
 void ex_else(exarg_T *eap)
 {
-  int skip;
   int result;
   cstack_T *const cstack = eap->cstack;
 
-  skip = CHECK_SKIP;
+  bool skip = CHECK_SKIP;
 
   if (cstack->cs_idx < 0
       || (cstack->cs_flags[cstack->cs_idx]
@@ -902,14 +901,14 @@ void ex_else(exarg_T *eap)
       return;
     }
     eap->errmsg = N_("E582: :elseif without :if");
-    skip = TRUE;
+    skip = true;
   } else if (cstack->cs_flags[cstack->cs_idx] & CSF_ELSE) {
     if (eap->cmdidx == CMD_else) {
       eap->errmsg = N_("E583: multiple :else");
       return;
     }
     eap->errmsg = N_("E584: :elseif after :else");
-    skip = TRUE;
+    skip = true;
   }
 
   // if skipping or the ":if" was TRUE, reset ACTIVE, otherwise set it
@@ -917,7 +916,7 @@ void ex_else(exarg_T *eap)
     if (eap->errmsg == NULL) {
       cstack->cs_flags[cstack->cs_idx] = CSF_TRUE;
     }
-    skip = TRUE;        // don't evaluate an ":elseif"
+    skip = true;        // don't evaluate an ":elseif"
   } else {
     cstack->cs_flags[cstack->cs_idx] = CSF_ACTIVE;
   }
@@ -932,7 +931,7 @@ void ex_else(exarg_T *eap)
   // later on.
   if (!skip && dbg_check_skipped(eap) && got_int) {
     (void)do_intthrow(cstack);
-    skip = TRUE;
+    skip = true;
   }
 
   if (eap->cmdidx == CMD_elseif) {
@@ -1322,9 +1321,9 @@ void ex_try(exarg_T *eap)
 void ex_catch(exarg_T *eap)
 {
   int idx = 0;
-  int give_up = FALSE;
-  int skip = FALSE;
-  int caught = FALSE;
+  bool give_up = false;
+  bool skip = false;
+  bool caught = false;
   char_u *end;
   char_u save_char = 0;
   char_u *save_cpo;
@@ -1335,13 +1334,13 @@ void ex_catch(exarg_T *eap)
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = N_("E603: :catch without :try");
-    give_up = TRUE;
+    give_up = true;
   } else {
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       // Report what's missing if the matching ":try" is not in its
       // finally clause.
       eap->errmsg = get_end_emsg(cstack);
-      skip = TRUE;
+      skip = true;
     }
     for (idx = cstack->cs_idx; idx > 0; --idx) {
       if (cstack->cs_flags[idx] & CSF_TRY) {
@@ -1352,7 +1351,7 @@ void ex_catch(exarg_T *eap)
       // Give up for a ":catch" after ":finally" and ignore it.
       // Just parse.
       eap->errmsg = N_("E604: :catch after :finally");
-      give_up = TRUE;
+      give_up = true;
     } else {
       rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,
                           &cstack->cs_looplevel);
@@ -1425,7 +1424,7 @@ void ex_catch(exarg_T *eap)
           // CTRL-C while matching should abort it.
           //
           prev_got_int = got_int;
-          got_int = FALSE;
+          got_int = false;
           caught = vim_regexec_nl(&regmatch, (char_u *)current_exception->value,
                                   (colnr_T)0);
           got_int |= prev_got_int;
@@ -1602,8 +1601,7 @@ void ex_finally(exarg_T *eap)
 void ex_endtry(exarg_T *eap)
 {
   int idx;
-  int skip;
-  int rethrow = FALSE;
+  bool rethrow = false;
   int pending = CSTP_NONE;
   void *rettv = NULL;
   cstack_T *const cstack = eap->cstack;
@@ -1621,20 +1619,19 @@ void ex_endtry(exarg_T *eap)
     // made inactive by a ":continue", ":break", ":return", or ":finish" in
     // the finally clause.  The latter case need not be tested since then
     // anything pending has already been discarded.
-    skip = (did_emsg || got_int || current_exception
-            || !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE));
+    bool skip = did_emsg || got_int || current_exception
+            || !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
 
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
       // Find the matching ":try" and report what's missing.
       idx = cstack->cs_idx;
       do {
-        --idx;
-      }
-      while (idx > 0 && !(cstack->cs_flags[idx] & CSF_TRY));
+        idx--;
+      } while (idx > 0 && !(cstack->cs_flags[idx] & CSF_TRY));
       rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,
                           &cstack->cs_looplevel);
-      skip = TRUE;
+      skip = true;
 
       /*
        * If an exception is being thrown, discard it to prevent it from
@@ -1677,7 +1674,7 @@ void ex_endtry(exarg_T *eap)
       // before the ":endtry".  That is, throw an interrupt exception and
       // set "skip" and "rethrow".
       if (got_int) {
-        skip = TRUE;
+        skip = true;
         (void)do_intthrow(cstack);
         // The do_intthrow() call may have reset current_exception or
         // cstack->cs_pending[idx].

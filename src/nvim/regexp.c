@@ -1760,13 +1760,14 @@ static char_u *regpiece(int *flagp)
     break;
   }
   if (re_multi_type(peekchr()) != NOT_MULTI) {
-    /* Can't have a multi follow a multi. */
-    if (peekchr() == Magic('*'))
-      sprintf((char *)IObuff, _("E61: Nested %s*"),
-          reg_magic >= MAGIC_ON ? "" : "\\");
-    else
-      sprintf((char *)IObuff, _("E62: Nested %s%c"),
-          reg_magic == MAGIC_ALL ? "" : "\\", no_Magic(peekchr()));
+    // Can't have a multi follow a multi.
+    if (peekchr() == Magic('*')) {
+      snprintf((char *)IObuff, IOSIZE, _("E61: Nested %s*"),
+               reg_magic >= MAGIC_ON ? "" : "\\");
+    } else {
+      snprintf((char *)IObuff, IOSIZE, _("E62: Nested %s%c"),
+               reg_magic == MAGIC_ALL ? "" : "\\", no_Magic(peekchr()));
+    }
     EMSG_RET_NULL((char *)IObuff);
   }
 
@@ -1926,11 +1927,11 @@ static char_u *regatom(int *flagp)
   case Magic('{'):
   case Magic('*'):
     c = no_Magic(c);
-    sprintf((char *)IObuff, _("E64: %s%c follows nothing"),
-        (c == '*' ? reg_magic >= MAGIC_ON : reg_magic == MAGIC_ALL)
-        ? "" : "\\", c);
+    snprintf((char *)IObuff, IOSIZE, _("E64: %s%c follows nothing"),
+             (c == '*' ? reg_magic >= MAGIC_ON : reg_magic == MAGIC_ALL)
+             ? "" : "\\", c);
     EMSG_RET_NULL((char *)IObuff);
-  /* NOTREACHED */
+  // NOTREACHED
 
   case Magic('~'):              /* previous substitute pattern */
     if (reg_prev_sub != NULL) {
@@ -3152,8 +3153,8 @@ static int read_limits(long *minval, long *maxval)
     regparse++;         // Allow either \{...} or \{...\}
   }
   if (*regparse != '}') {
-    sprintf((char *)IObuff, _("E554: Syntax error in %s{...}"),
-        reg_magic == MAGIC_ALL ? "" : "\\");
+    snprintf((char *)IObuff, IOSIZE, _("E554: Syntax error in %s{...}"),
+             reg_magic == MAGIC_ALL ? "" : "\\");
     EMSG_RET_FAIL((char *)IObuff);
   }
 
@@ -7263,9 +7264,10 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
       if (f) {
         fprintf(f, "Syntax error in \"%s\"\n", expr);
         fclose(f);
-      } else
+      } else {
         semsg("(NFA) Could not open \"%s\" to write !!!",
-            BT_REGEXP_DEBUG_LOG_NAME);
+              BT_REGEXP_DEBUG_LOG_NAME);
+      }
     }
 #endif
     // If the NFA engine failed, try the backtracking engine. The NFA engine

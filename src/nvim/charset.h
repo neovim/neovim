@@ -14,8 +14,8 @@
 /// @return Folded variant.
 #define CH_FOLD(c) \
   utf_fold((sizeof(c) == sizeof(char)) \
-             ?((int)(uint8_t)(c)) \
-             :((int)(c)))
+           ? ((int)(uint8_t)(c)) \
+           : ((int)(c)))
 
 /// Flags for vim_str2nr()
 typedef enum {
