@@ -217,7 +217,7 @@ static int nlua_str_utf_pos(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Return the offset from the 1-indexed byte position to the first byte of the
-/// current character.
+/// current character. Composing characters are treated as separate characters.
 ///
 /// Expects a string and an int.
 ///
@@ -236,8 +236,8 @@ static int nlua_str_utf_start(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-/// Return the offset from the 1-indexed byte position to the last
-/// byte of the current character.
+/// Return the offset from the 1-indexed byte position to the last byte of the
+/// current character. Composing characters are treated as separate characters.
 ///
 /// Expects a string and an int.
 ///
