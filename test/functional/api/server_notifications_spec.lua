@@ -81,6 +81,8 @@ describe('notify', function()
     if isCI() then
       pending('hangs on CI #14083 #15251')
       return
+    elseif helpers.skip_fragile(pending) then
+      return
     end
     if helpers.pending_win32(pending) then return end
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
