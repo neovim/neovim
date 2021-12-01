@@ -653,9 +653,11 @@ function M.set(namespace, bufnr, diagnostics, opts)
     M.show(namespace, bufnr, nil, opts)
   end
 
-  vim.api.nvim_command(
-    string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
-  )
+  vim.api.nvim_buf_call(bufnr, function()
+    vim.api.nvim_command(
+      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
+    )
+  end)
 end
 
 --- Get namespace metadata.
