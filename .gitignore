@@ -1,6 +1,7 @@
 # Tools
 /venv/
 compile_commands.json
+/.luarc.json
 
 # IDEs
 /.vs/

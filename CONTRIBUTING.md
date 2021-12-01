@@ -244,6 +244,10 @@ You can lint a single file (but this will _not_ exclude legacy errors):
   ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
   unmaintained and won't recognize many function signatures in Neovim source.)
 - Explore the source code [on the web](https://sourcegraph.com/github.com/neovim/neovim).
+- If using [lua-language-server][], symlink `contrib/luarc.json` into the
+  project root:
+
+      $ ln -s contrib/luarc.json .luarc.json
 
 
 Reviewing
@@ -288,3 +292,4 @@ as context, use the `-W` argument as well.
 [pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
 [uncrustify]: https://formulae.brew.sh/formula/uncrustify
+[lua-language-server]: https://github.com/sumneko/lua-language-server/
