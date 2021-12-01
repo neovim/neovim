@@ -12,7 +12,7 @@ jobs:
     name: Backport Pull Request
     if: >
       github.repository_owner == 'neovim' && (
-        github.event_name == 'pull_request' &&
+        github.event_name == 'pull_request_target' &&
         github.event.pull_request.merged
       ) || (
         github.event_name == 'issue_comment' &&
