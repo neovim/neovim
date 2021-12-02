@@ -132,7 +132,7 @@ with |vim.notify()|: >
 In this example, there is nothing to do when diagnostics are hidden, so we
 omit the "hide" function.
 
-Existing handlers can be overriden. For example, use the following to only
+Existing handlers can be overridden. For example, use the following to only
 show a sign for the highest severity diagnostic on a given line: >
 
 	-- Create a custom namespace. This will aggregate signs from all other
@@ -177,8 +177,9 @@ All highlights defined for diagnostics begin with `Diagnostic` followed by
 the type of highlight (e.g., `Sign`, `Underline`, etc.) and the severity (e.g.
 `Error`, `Warn`, etc.)
 
-Sign, underline and virtual text highlights (by default) are linked to their
-corresponding default highlight.
+By default, highlights for signs, floating windows, and virtual text are linked to the
+corresponding default highlight. Underline highlights are not linked and use their
+own default highlight groups.
 
 For example, the default highlighting for |hl-DiagnosticSignError| is linked
 to |hl-DiagnosticError|. To change the default (and therefore the linked
@@ -298,7 +299,6 @@ Example: >
 	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
-==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
 config({opts}, {namespace})                          *vim.diagnostic.config()*
@@ -343,7 +343,10 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                      |diagnostic-severity|
 
                                  • virtual_text: (default true) Use virtual
-                                   text for diagnostics. Options:
+                                   text for diagnostics. If multiple
+                                   diagnostics are set for a namespace, one
+                                   prefix per diagnostic + the last diagnostic
+                                   message are shown. Options:
                                    • severity: Only show virtual text for
                                      diagnostics matching the given severity
                                      |diagnostic-severity|
@@ -353,6 +356,11 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                      is more than one diagnostic source in the
                                      buffer. Otherwise, any truthy value means
                                      to always show the diagnostic source.
+                                   • spacing: (number) Amount of empty spaces
+                                     inserted at the beginning of the virtual
+                                     text.
+                                   • prefix: (string) Prepend diagnostic
+                                     message with prefix.
                                    • format: (function) A function that takes
                                      a diagnostic as input and returns a
                                      string. The return value is the text used

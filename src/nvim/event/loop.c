@@ -75,7 +75,7 @@ bool loop_poll_events(Loop *loop, int ms)
 /// @note Event is queued into `fast_events`, which is processed outside of the
 ///       primary `events` queue by loop_poll_events(). For `main_loop`, that
 ///       means `fast_events` is NOT processed in an "editor mode"
-///       (VimState.execute), so redraw and other side-effects are likely to be
+///       (VimState.execute), so redraw and other side effects are likely to be
 ///       skipped.
 /// @see loop_schedule_deferred
 void loop_schedule_fast(Loop *loop, Event event)

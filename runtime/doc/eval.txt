@@ -2278,7 +2278,7 @@ USAGE				RESULT	DESCRIPTION	~
 abs({expr})			Float or Number  absolute value of {expr}
 acos({expr})			Float	arc cosine of {expr}
 add({object}, {item})		List/Blob   append {item} to {object}
-and({expr}, {expr})		Number  bitwise AND
+and({expr}, {expr})		Number	bitwise AND
 api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
 append({lnum}, {list})		Number	append lines {list} below line {lnum}
@@ -2310,7 +2310,7 @@ assert_notmatch({pat}, {text} [, {msg}])
 assert_report({msg})		Number	report a test failure
 assert_true({actual} [, {msg}])	Number	assert {actual} is true
 atan({expr})			Float	arc tangent of {expr}
-atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
+atan2({expr}, {expr})		Float	arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
@@ -2336,7 +2336,7 @@ char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
-cindent({lnum})		Number	C indent for line {lnum}
+cindent({lnum})			Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
 col({expr})			Number	column nr of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
@@ -2349,7 +2349,7 @@ copy({expr})			any	make a shallow copy of {expr}
 cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({list}, {expr} [, {ic} [, {start}]])
-				Number	 count how many {expr} are in {list}
+				Number	count how many {expr} are in {list}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 ctxget([{index}])		Dict	return the |context| dict at {index}
@@ -2362,7 +2362,7 @@ ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
-debugbreak({pid})		Number  interrupt process being debugged
+debugbreak({pid})		Number	interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
 deletebufline({buf}, {first}[, {last}])
@@ -2381,7 +2381,7 @@ eval({string})			any	evaluate {string} into its value
 eventhandler()			Number	|TRUE| if inside an event handler
 executable({expr})		Number	1 if executable {expr} exists
 execute({command})		String	execute and capture output of {command}
-exepath({expr})		String  full path of the command {expr}
+exepath({expr})			String	full path of the command {expr}
 exists({expr})			Number	|TRUE| if {expr} exists
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
@@ -2502,11 +2502,11 @@ inputlist({textlist})		Number	let the user pick from a choice list
 inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
 inputsecret({prompt} [, {text}])
-				String  like input() but hiding the text
+				String	like input() but hiding the text
 insert({object}, {item} [, {idx}])
 				List	insert {item} in {object} [before {idx}]
 interrupt()			none	interrupt script execution
-invert({expr})			Number  bitwise invert
+invert({expr})			Number	bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
 isinf({expr})			Number	determine if {expr} is infinity value
 					(positive or negative)
@@ -2526,7 +2526,7 @@ json_encode({expr})		String	Convert {expr} to JSON
 keys({dict})			List	keys in {dict}
 len({expr})			Number	the length of {expr}
 libcall({lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
-libcallnr({lib}, {func}, {arg})  Number  idem, but return a Number
+libcallnr({lib}, {func}, {arg})	Number	idem, but return a Number
 line({expr} [, {winid}])	Number	line nr of cursor, last line or mark
 line2byte({lnum})		Number	byte count of line {lnum}
 lispindent({lnum})		Number	Lisp indent for line {lnum}
@@ -2568,7 +2568,7 @@ msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
-or({expr}, {expr})		Number  bitwise OR
+or({expr}, {expr})		Number	bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
 perleval({expr})		any	evaluate |perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
@@ -2628,7 +2628,7 @@ screenrow()			Number	current cursor row
 screenstring({row}, {col})	String	characters at screen position
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 				Number	search for {pattern}
-searchcount([{options}])	Dict    Get or update the last search count
+searchcount([{options}])	Dict	Get or update the last search count
 searchdecl({name} [, {global} [, {thisblock}]])
 				Number	search for variable declaration
 searchpair({start}, {middle}, {end} [, {flags} [, {skip} [...]]])
@@ -2700,7 +2700,7 @@ split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
-stdpath({what})                 String/List  returns the standard path(s) for {what}
+stdpath({what})			String/List  returns the standard path(s) for {what}
 str2float({expr} [, {quoted}])	Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF-8 value
@@ -2736,7 +2736,7 @@ synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
 synIDattr({synID}, {what} [, {mode}])
 				String	attribute {what} of syntax ID {synID}
 synIDtrans({synID})		Number	translated syntax ID of {synID}
-synconcealed({lnum}, {col})	List    info about concealing
+synconcealed({lnum}, {col})	List	info about concealing
 synstack({lnum}, {col})	List	stack of syntax IDs at {lnum} and {col}
 system({cmd} [, {input}])	String	output of shell command/filter {cmd}
 systemlist({cmd} [, {input}])	List	output of shell command/filter {cmd}
@@ -2772,7 +2772,7 @@ values({dict})			List	values in {dict}
 virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wait({timeout}, {condition}[, {interval}])
-				Number  Wait until {condition} is satisfied
+				Number	Wait until {condition} is satisfied
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_execute({id}, {command} [, {silent}])
 				String	execute {command} in window {id}

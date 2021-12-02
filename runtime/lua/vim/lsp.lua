@@ -290,7 +290,7 @@ end
 --- Memoizes a function. On first run, the function return value is saved and
 --- immediately returned on subsequent runs. If the function returns a multival,
 --- only the first returned value will be memoized and returned. The function will only be run once,
---- even if it has side-effects.
+--- even if it has side effects.
 ---
 ---@param fn (function) Function to run
 ---@returns (function) Memoized function
@@ -645,8 +645,8 @@ end
 ---@param on_error Callback with parameters (code, ...), invoked
 --- when the client operation throws an error. `code` is a number describing
 --- the error. Other arguments may be passed depending on the error kind.  See
---- |vim.lsp.client_errors| for possible errors.
---- Use `vim.lsp.client_errors[code]` to get human-friendly name.
+--- |vim.lsp.rpc.client_errors| for possible errors.
+--- Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
 ---
 ---@param before_init Callback with parameters (initialize_params, config)
 --- invoked before the LSP "initialize" phase, where `params` contains the
@@ -757,8 +757,8 @@ function lsp.start_client(config)
   ---
   ---@param code (number) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
-  ---@see |vim.lsp.client_errors| for possible errors. Use
-  ---`vim.lsp.client_errors[code]` to get a human-friendly name.
+  ---@see |vim.lsp.rpc.client_errors| for possible errors. Use
+  ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
     err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
@@ -1708,14 +1708,14 @@ end
 --
 -- Can be used to lookup the number from the name or the
 -- name from the number.
--- Levels by name: "trace", "debug", "info", "warn", "error"
--- Level numbers begin with "trace" at 0
+-- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+-- Level numbers begin with "TRACE" at 0
 lsp.log_levels = log.levels
 
 --- Sets the global log level for LSP logging.
 ---
---- Levels by name: "trace", "debug", "info", "warn", "error"
---- Level numbers begin with "trace" at 0
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+--- Level numbers begin with "TRACE" at 0
 ---
 --- Use `lsp.log_levels` for reverse lookup.
 ---

@@ -361,7 +361,7 @@ UTF-32 and UTF-16 sizes of the deleted region is also passed as additional
 arguments {old_utf32_size} and {old_utf16_size}.
 
 "on_changedtick" is invoked when |b:changedtick| was incremented but no text
-was changed. The parameters recieved are ("changedtick", {buf}, {changedtick}).
+was changed. The parameters received are ("changedtick", {buf}, {changedtick}).
 
                                                         *api-lua-detach*
 In-process Lua callbacks can detach by returning `true`. This will detach all
@@ -634,7 +634,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                    atomically, i.e. without interleaving redraws, RPC requests
                    from other clients, or user interactions (however API
                    methods may trigger autocommands or event processing which
-                   have such side-effects, e.g. |:sleep| may wake timers).
+                   have such side effects, e.g. |:sleep| may wake timers).
                 2. To minimize RPC overhead (roundtrips) of a sequence of many
                    requests.
 
@@ -698,7 +698,7 @@ nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
                     |nvim_set_keymap()|
 
 nvim_del_mark({name})                                        *nvim_del_mark()*
-                Deletes a uppercase/file named mark. See |mark-motions|.
+                Deletes an uppercase/file named mark. See |mark-motions|.
 
                 Note:
                     fails with error if a lowercase or buffer local named mark
@@ -1061,7 +1061,7 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
                 Parameters: ~
                     {name}  Option name
                     {opts}  Optional parameters
-                            • scope: One of 'global' or 'local'. Analagous to
+                            • scope: One of 'global' or 'local'. Analogous to
                               |:setglobal| and |:setlocal|, respectively.
 
                 Return: ~
@@ -1545,7 +1545,7 @@ nvim_set_option_value({name}, {value}, {*opts})
                     {name}   Option name
                     {value}  New option value
                     {opts}   Optional parameters
-                             • scope: One of 'global' or 'local'. Analagous to
+                             • scope: One of 'global' or 'local'. Analogous to
                                |:setglobal| and |:setlocal|, respectively.
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
@@ -2687,7 +2687,7 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                     true if the window is valid, false otherwise
 
 nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
-                Sets the current buffer in a window, without side-effects
+                Sets the current buffer in a window, without side effects
 
                 Attributes: ~
                     not allowed when |textlock| is active

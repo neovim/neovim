@@ -100,7 +100,7 @@ tsnode:prev_named_sibling()				*tsnode:prev_named_sibling()*
 
 tsnode:iter_children()					*tsnode:iter_children()*
 	Iterates over all the direct children of {tsnode}, regardless of
-	wether they are named or not.
+	whether they are named or not.
 	Returns the child node plus the eventual field name corresponding to
 	this child node.
 
@@ -155,9 +155,9 @@ tsnode:sexpr()						*tsnode:sexpr()*
 	Get an S-expression representing the node as a string.
 
 tsnode:id()						*tsnode:id()*
-	Get an unique identier for the node inside its own tree.
+	Get an unique identifier for the node inside its own tree.
 
-	No guarantees are made about this identifer's internal representation,
+	No guarantees are made about this identifier's internal representation,
 	except for being a primitive lua type with value equality (so not a table).
 	Presently it is a (non-printable) string.
 
@@ -195,7 +195,7 @@ to a match.
 Treesitter Query Predicates				*lua-treesitter-predicates*
 
 When writing queries for treesitter, one might use `predicates`, that is,
-special scheme nodes that are evaluted to verify things on a captured node for
+special scheme nodes that are evaluated to verify things on a captured node for
 example, the |eq?| predicate : >
 	((identifier) @foo (#eq? @foo "foo"))
 
@@ -203,7 +203,7 @@ This will only match identifier corresponding to the `"foo"` text.
 Here is a list of built-in predicates :
 
 	`eq?`						*ts-predicate-eq?*
-		This predicate will check text correspondance between nodes or
+		This predicate will check text correspondence between nodes or
 		strings : >
 			((identifier) @foo (#eq? @foo "foo"))
 			((node1) @left (node2) @right (#eq? @left @right))
@@ -212,7 +212,7 @@ Here is a list of built-in predicates :
 	`vim-match?`					*ts-predicate-vim-match?*
 		This will match if the provived vim regex matches the text
 		corresponding to a node : >
-			((idenfitier) @constant (#match? @constant "^[A-Z_]+$"))
+			((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <		Note: the `^` and `$` anchors will respectively match the
 			start and end of the node's text.
 
@@ -267,7 +267,7 @@ Here is a list of built-in directives:
 	`offset!`					*ts-predicate-offset!*
 		Takes the range of the captured node and applies the offsets
 		to it's range : >
-			((idenfitier) @constant (#offset! @constant 0 1 0 -1))
+			((identifier) @constant (#offset! @constant 0 1 0 -1))
 <		This will generate a range object for the captured node with the
 		offsets applied. The arguments are
 		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
