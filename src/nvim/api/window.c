@@ -39,7 +39,7 @@ Buffer nvim_win_get_buf(Window window, Error *err)
   return win->w_buffer->handle;
 }
 
-/// Sets the current buffer in a window, without side-effects
+/// Sets the current buffer in a window, without side effects
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param buffer   Buffer handle

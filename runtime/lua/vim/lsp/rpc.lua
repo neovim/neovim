@@ -133,7 +133,8 @@ local function request_parser_loop()
   end
 end
 
-local client_errors = vim.tbl_add_reverse_lookup {
+--- Mapping of error codes used by the client
+local client_errors = {
   INVALID_SERVER_MESSAGE       = 1;
   INVALID_SERVER_JSON          = 2;
   NO_RESULT_CALLBACK_FOUND     = 3;
@@ -142,6 +143,8 @@ local client_errors = vim.tbl_add_reverse_lookup {
   SERVER_REQUEST_HANDLER_ERROR = 6;
   SERVER_RESULT_CALLBACK_ERROR = 7;
 }
+
+client_errors = vim.tbl_add_reverse_lookup(client_errors)
 
 --- Constructs an error message from an LSP error object.
 ---

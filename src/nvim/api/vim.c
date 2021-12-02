@@ -1622,7 +1622,7 @@ Array nvim_list_chans(void)
 /// 1. To perform several requests from an async context atomically, i.e.
 ///    without interleaving redraws, RPC requests from other clients, or user
 ///    interactions (however API methods may trigger autocommands or event
-///    processing which have such side-effects, e.g. |:sleep| may wake timers).
+///    processing which have such side effects, e.g. |:sleep| may wake timers).
 /// 2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
 ///
 /// @param channel_id
@@ -1979,7 +1979,7 @@ void nvim__screenshot(String path)
 }
 
 
-/// Deletes a uppercase/file named mark. See |mark-motions|.
+/// Deletes an uppercase/file named mark. See |mark-motions|.
 ///
 /// @note fails with error if a lowercase or buffer local named mark is used.
 /// @param name       Mark name
