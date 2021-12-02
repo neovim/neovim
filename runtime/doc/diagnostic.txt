@@ -175,9 +175,9 @@ All highlights defined for diagnostics begin with `Diagnostic` followed by
 the type of highlight (e.g., `Sign`, `Underline`, etc.) and the severity (e.g.
 `Error`, `Warn`, etc.)
 
-Sign, floating and virtual text highlights (by default) are linked to their
-corresponding default highlight. Underline highlights (by default) are defined
-with corresponding color.
+By default, highlights for signs, floating windows, and virtual text are linked to the
+corresponding default highlight. Underline highlights are not linked and use their
+own default highlight groups.
 
 For example, the default highlighting for |hl-DiagnosticSignError| is linked
 to |hl-DiagnosticError|. To change the default (and therefore the linked
