@@ -256,10 +256,10 @@ Reviewing
 To help review pull requests, start with [this checklist][review-checklist].
 
 Reviewing can be done on GitHub, but you may find it easier to do locally.
-Using [`hub`][hub], you can create a new branch with the contents of a pull
+Using [GitHub CLI][gh], you can create a new branch with the contents of a pull
 request, e.g. [#1820][1820]:
 
-    hub checkout https://github.com/neovim/neovim/pull/1820
+    gh pr checkout https://github.com/neovim/neovim/pull/1820
 
 Use [`git log -p master..FETCH_HEAD`][git-history-filtering] to list all
 commits in the feature branch which aren't in the `master` branch; `-p`
@@ -274,7 +274,7 @@ as context, use the `-W` argument as well.
 [git-rebasing]: http://git-scm.com/book/en/v2/Git-Branching-Rebasing
 [github-issues]: https://github.com/neovim/neovim/issues
 [1820]: https://github.com/neovim/neovim/pull/1820
-[hub]: https://hub.github.com/
+[gh]: https://cli.github.com/
 [conventional_commits]: https://www.conventionalcommits.org
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
@@ -291,5 +291,5 @@ as context, use the `-W` argument as well.
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
 [pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
-[uncrustify]: https://formulae.brew.sh/formula/uncrustify
+[uncrustify]: http://uncrustify.sourceforge.net/
 [lua-language-server]: https://github.com/sumneko/lua-language-server/
