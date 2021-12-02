@@ -1607,12 +1607,14 @@ validate({opt})                                               *vim.validate()*
 
                   vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
                      => NOP (success)
-
-                  vim.validate{arg1={1, 'table'}}
-                     => error('arg1: expected table, got number')
-
-                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-                     => error('arg1: expected even number, got 3')
+<
+>
+    vim.validate{arg1={1, 'table'}}
+       => error('arg1: expected table, got number')
+<
+>
+    vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+       => error('arg1: expected even number, got 3')
 <
 
                 Parameters: ~
