@@ -1,0 +1,69 @@
+diff --git a/src/win/util.c b/src/win/util.c
+index 88602c7ee..086cc64e1 100644
+--- a/src/win/util.c
++++ b/src/win/util.c
+@@ -1664,6 +1664,9 @@ int uv_os_unsetenv(const char* name) {
+ 
+ 
+ int uv_os_gethostname(char* buffer, size_t* size) {
++  static HMODULE winsock_dll; 
++  static int WSAAPI (*gethostnamew)(PWSTR name, int namelen);
++
+   WCHAR buf[UV_MAXHOSTNAMESIZE];
+   size_t len;
+   char* utf8_str;
+@@ -1674,24 +1677,41 @@ int uv_os_gethostname(char* buffer, size_t* size) {
+ 
+   uv__once_init(); /* Initialize winsock */
+ 
+-  if (GetHostNameW(buf, UV_MAXHOSTNAMESIZE) != 0)
+-    return uv_translate_sys_error(WSAGetLastError());
++  if (!winsock_dll) {
++    winsock_dll = LoadLibraryA("Ws2_32.dll");
++    gethostnamew = GetProcAddress(winsock_dll, "GetHostNameW");
++  }
+ 
+-  convert_result = uv__convert_utf16_to_utf8(buf, -1, &utf8_str);
++  if (gethostnamew) {
++    if (gethostnamew(buf, UV_MAXHOSTNAMESIZE) != 0)
++      return uv_translate_sys_error(WSAGetLastError());
+ 
+-  if (convert_result != 0)
+-    return convert_result;
++    convert_result = uv__convert_utf16_to_utf8(buf, -1, &utf8_str);
+ 
+-  len = strlen(utf8_str);
+-  if (len >= *size) {
+-    *size = len + 1;
++    if (convert_result != 0)
++      return convert_result;
++
++    len = strlen(utf8_str);
++    if (len >= *size) {
++      *size = len + 1;
++      uv__free(utf8_str);
++      return UV_ENOBUFS;
++    }
++
++    memcpy(buffer, utf8_str, len + 1);
+     uv__free(utf8_str);
+-    return UV_ENOBUFS;
++    *size = len;
++  } else {
++    if (gethostname((char*)buf, sizeof(buf)) != 0)
++      return uv_translate_sys_error(WSAGetLastError());
++    len = strlen(buf);
++    if (len >= *size) {
++      *size = len + 1;
++      return UV_ENOBUFS;
++    }
++    *size = len;
++    memcpy(buffer, buf, len + 1);
+   }
+-
+-  memcpy(buffer, utf8_str, len + 1);
+-  uv__free(utf8_str);
+-  *size = len;
+   return 0;
+ }
+ 
