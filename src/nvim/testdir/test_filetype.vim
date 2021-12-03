@@ -476,6 +476,7 @@ let s:filename_checks = {
     \ 'sqlj': ['file.sqlj'],
     \ 'sqr': ['file.sqr', 'file.sqi'],
     \ 'squid': ['squid.conf'],
+    \ 'squirrel': ['file.nut'],
     \ 'srec': ['file.s19', 'file.s28', 'file.s37', 'file.mot', 'file.srec'],
     \ 'sshconfig': ['ssh_config', '/.ssh/config', '/etc/ssh/ssh_config.d/file.conf', 'any/etc/ssh/ssh_config.d/file.conf', 'any/.ssh/config'],
     \ 'sshdconfig': ['sshd_config', '/etc/ssh/sshd_config.d/file.conf', 'any/etc/ssh/sshd_config.d/file.conf'],
