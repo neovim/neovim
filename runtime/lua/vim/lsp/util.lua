@@ -965,6 +965,8 @@ function M.jump_to_location(location)
   local row = range.start.line
   local col = get_line_byte_from_position(0, range.start)
   api.nvim_win_set_cursor(0, {row + 1, col})
+  -- Open folds under the cursor
+  vim.cmd("normal! zv")
   return true
 end
 
