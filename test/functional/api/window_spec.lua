@@ -222,9 +222,9 @@ describe('API/win', function()
       eq('', nvim('get_option', 'statusline'))
       command("set modified")
       command("enew") -- global-local: not preserved in new buffer
-      eq("Failed to get value for option 'statusline'",
-        pcall_err(curwin, 'get_option', 'statusline'))
-      eq('', eval('&l:statusline')) -- confirm local value was not copied
+      -- confirm local value was not copied
+      eq('', curwin('get_option', 'statusline'))
+      eq('', eval('&l:statusline'))
     end)
 
     it('after switching windows #15390', function()
@@ -237,6 +237,10 @@ describe('API/win', function()
       nvim('command', 'wincmd j')
       eq('window-status', window('get_option', win1, 'statusline'))
       assert_alive()
+    end)
+
+    it('returns values for unset local options', function()
+      eq(-1, curwin('get_option', 'scrolloff'))
     end)
   end)
 

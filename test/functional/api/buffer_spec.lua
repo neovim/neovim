@@ -629,6 +629,13 @@ describe('api/buf', function()
       -- Doesn't change the global value
       eq([[^\s*#\s*define]], nvim('get_option', 'define'))
     end)
+
+    it('returns values for unset local options', function()
+      -- 'undolevels' is only set to its "unset" value when a new buffer is
+      -- created
+      command('enew')
+      eq(-123456, curbuf('get_option', 'undolevels'))
+    end)
   end)
 
   describe('nvim_buf_get_name, nvim_buf_set_name', function()

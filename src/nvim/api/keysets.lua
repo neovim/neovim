@@ -58,5 +58,8 @@ return {
     "highlights";
     "use_tabline";
   };
+  option = {
+    "scope";
+  };
 }
 
