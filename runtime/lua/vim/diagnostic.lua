@@ -504,10 +504,13 @@ local function diagnostic_move_pos(opts, pos)
     return
   end
 
-  -- Save position in the window's jumplist
-  vim.api.nvim_win_call(win_id, function() vim.cmd("normal! m'") end)
-
-  vim.api.nvim_win_set_cursor(win_id, {pos[1] + 1, pos[2]})
+  vim.api.nvim_win_call(win_id, function()
+    -- Save position in the window's jumplist
+    vim.cmd("normal! m'")
+    vim.api.nvim_win_set_cursor(win_id, {pos[1] + 1, pos[2]})
+    -- Open folds under the cursor
+    vim.cmd("normal! zv")
+  end)
 
   if float then
     local float_opts = type(float) == "table" and float or {}
