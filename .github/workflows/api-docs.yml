@@ -26,7 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-msgpack luajit
+          brew install doxygen
 
       - name: Setup git config
         run: |
