@@ -445,6 +445,15 @@ return {
       defaults={if_true=""}
     },
     {
+      full_name='completefilterfunc', abbreviation='cff',
+      short_desc=N_("function to filter completion matches"),
+      type='string', scope={'buffer'},
+      secure=true,
+      alloced=true,
+      varname='p_cff',
+      defaults={if_true=""}
+    },
+    {
       full_name='completeopt', abbreviation='cot',
       short_desc=N_("options for Insert mode completion"),
       type='string', list='onecomma', scope={'global'},

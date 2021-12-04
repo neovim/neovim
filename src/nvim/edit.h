@@ -2,6 +2,7 @@
 #define NVIM_EDIT_H
 
 #include "nvim/vim.h"
+#include "nvim/api/private/defs.h"
 
 /*
  * Array indexes used for cptext argument of ins_compl_add().
@@ -21,6 +22,27 @@ typedef enum {
   CP_ICASE = 16,         // ins_compl_equal ignores case
   CP_FAST = 32,          // use fast_breakcheck instead of os_breakcheck
 } cp_flags_T;
+
+// Function for use in filtering completion entries.
+// Can either be a string referencing a viml function,
+// or a LuaRef to a lua function.
+typedef enum {
+  kFuncTypeString,
+  kFuncTypeLuaRef,
+  kFuncTypeNil
+} FuncType;
+struct compl_filterfunc_S {
+  FuncType type;
+  union {
+    char_u *name;
+    LuaRef func;
+  } data;
+};
+typedef struct compl_filterfunc_S compl_filterfunc_T;
+
+// local filtering function set by vim.api.nvim_complete. Overrides
+// the global option 'completefilterfunc', if it exists.
+extern compl_filterfunc_T local_filter_func INIT(= { kFuncTypeNil, 0 });
 
 typedef int (*IndentGetter)(void);
 
