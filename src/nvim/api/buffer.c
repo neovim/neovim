@@ -1020,6 +1020,9 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   aucmd_prepbuf(&aco, buf);
   int ren_ret = rename_buffer((char_u *)name.data);
   aucmd_restbuf(&aco);
+  if (buf != curbuf) {
+    do_autochdir();
+  }
 
   if (try_end(err)) {
     return;
@@ -1274,6 +1277,9 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   Object res = nlua_call_ref(fun, NULL, args, true, err);
 
   aucmd_restbuf(&aco);
+  if (buf != curbuf) {
+    do_autochdir();
+  }
   try_end(err);
   return res;
 }
