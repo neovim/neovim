@@ -92,15 +92,15 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       break;
     }
 #define STR_CASE(type, attr, obj, dest, conv) \
-case type: { \
-  dest = conv(((String) { \
+  case type: { \
+      dest = conv(((String) { \
       .size = obj->via.attr.size, \
       .data = (obj->via.attr.ptr == NULL || obj->via.attr.size == 0 \
                    ? xmemdupz("", 0) \
                    : xmemdupz(obj->via.attr.ptr, obj->via.attr.size)), \
     })); \
-  break; \
-}
+      break; \
+  }
       STR_CASE(MSGPACK_OBJECT_STR, str, cur.mobj, *cur.aobj, STRING_OBJ)
       STR_CASE(MSGPACK_OBJECT_BIN, bin, cur.mobj, *cur.aobj, STRING_OBJ)
     case MSGPACK_OBJECT_ARRAY: {
@@ -143,10 +143,10 @@ case type: { \
           const msgpack_object *const key = &cur.mobj->via.map.ptr[idx].key;
           switch (key->type) {
 #define ID(x) x
-            STR_CASE(MSGPACK_OBJECT_STR, str, key,
-                     cur.aobj->data.dictionary.items[idx].key, ID)
-            STR_CASE(MSGPACK_OBJECT_BIN, bin, key,
-                     cur.aobj->data.dictionary.items[idx].key, ID)
+          STR_CASE(MSGPACK_OBJECT_STR, str, key,
+                   cur.aobj->data.dictionary.items[idx].key, ID)
+          STR_CASE(MSGPACK_OBJECT_BIN, bin, key,
+                   cur.aobj->data.dictionary.items[idx].key, ID)
 #undef ID
           case MSGPACK_OBJECT_NIL:
           case MSGPACK_OBJECT_BOOLEAN:
