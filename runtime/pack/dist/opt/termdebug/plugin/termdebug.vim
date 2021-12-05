@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Nov 27
+" Last Change: 2021 Nov 29
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -485,7 +485,7 @@ func s:StartDebugCommon(dict)
   " Run the command if the bang attribute was given and got to the debug
   " window.
   if get(a:dict, 'bang', 0)
-    call s:SendCommand('-exec-run')
+    call s:SendResumingCommand('-exec-run')
     call win_gotoid(s:ptywin)
   endif
 endfunc
@@ -524,9 +524,14 @@ func TermDebugSendCommand(cmd)
   endif
 endfunc
 
-" Send a command only when stopped.  Used for :Next and :Step.
-func s:SendCommandIfStopped(cmd)
+" Send a command that resumes the program.  If the program isn't stopped the
+" command is not sent (to avoid a repeated command to cause trouble).
+" If the command is sent then reset s:stopped.
+func s:SendResumingCommand(cmd)
   if s:stopped
+    " reset s:stopped here, it may take a bit of time before we get a response
+    let s:stopped = 0
+    " call ch_log('assume that program is running after this command')
     call s:SendCommand(a:cmd)
   " else
     " call ch_log('dropping command, program is running: ' . a:cmd)
@@ -815,11 +820,11 @@ func s:InstallCommands()
 
   command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command Clear call s:ClearBreakpoint()
-  command Step call s:SendCommandIfStopped('-exec-step')
-  command Over call s:SendCommandIfStopped('-exec-next')
-  command Finish call s:SendCommandIfStopped('-exec-finish')
+  command Step call s:SendResumingCommand('-exec-step')
+  command Over call s:SendResumingCommand('-exec-next')
+  command Finish call s:SendResumingCommand('-exec-finish')
   command -nargs=* Run call s:Run(<q-args>)
-  command -nargs=* Arguments call s:SendCommand('-exec-arguments ' . <q-args>)
+  command -nargs=* Arguments call s:SendResumingCommand('-exec-arguments ' . <q-args>)
 
   if s:way == 'prompt'
     command Stop call s:PromptInterrupt()
@@ -978,9 +983,9 @@ endfunc
 
 func s:Run(args)
   if a:args != ''
-    call s:SendCommand('-exec-arguments ' . a:args)
+    call s:SendResumingCommand('-exec-arguments ' . a:args)
   endif
-  call s:SendCommand('-exec-run')
+  call s:SendResumingCommand('-exec-run')
 endfunc
 
 func s:SendEval(expr)

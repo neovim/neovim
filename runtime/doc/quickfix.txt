@@ -837,9 +837,9 @@ lists.  They set one of the existing error lists as the current one.
 						*:chistory* *:chi*
 :[count]chi[story]	Show the list of error lists.  The current list is
 			marked with ">".  The output looks like:
-				  error list 1 of 3; 43 errors ~
-				> error list 2 of 3; 0 errors ~
-				  error list 3 of 3; 15 errors ~
+			  error list 1 of 3; 43 errors   :make  ~
+			> error list 2 of 3; 0 errors    :helpgrep tag  ~
+			  error list 3 of 3; 15 errors   :grep ex_help *.c ~
 
 			When [count] is given, then the count'th quickfix
 			list is made the current list. Example: >
