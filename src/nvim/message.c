@@ -3107,6 +3107,11 @@ void msg_ext_ui_flush(void)
                        msg_ext_chunks, msg_ext_overwrite);
     } else {
       msg_call_msgfunc("msg_show", &msg_ext_chunks);
+
+      // ui_call_msg_xxx() calls ui_event(), which frees the allocated chunk
+      // The allocated chunk should also need freeing in or after
+      // msg_call_msgfunc().
+      api_free_array(msg_ext_chunks);
     }
 
     if (!msg_ext_overwrite) {
@@ -3195,7 +3200,7 @@ bool msg_enable_msgfunc(void)
   // Because default echo is used for command line redraw
   return *p_msgfunc != NUL && !msg_check_loop
     && !redir_off && !need_wait_return
-    && State != CMDLINE && State != CONFIRM;
+    && State & CMDLINE && State != CONFIRM && State != ASKMORE;
 }
 
 static void msg_call_msgfunc_event(void **argv)
@@ -3212,11 +3217,6 @@ static void msg_call_msgfunc_event(void **argv)
 
   XFREE_CLEAR(args[1].vval.v_string);
   xfree(args);
-
-  // ui_call_msg_xxx() calls ui_event(), which frees the allocated chunk
-  // The allocated chunk should also need freeing in or after
-  // msg_call_msgfunc().
-  api_free_array(msg_ext_chunks);
 }
 
 void msg_call_msgfunc(const char *method, Array *entries)
