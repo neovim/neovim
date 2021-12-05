@@ -559,6 +559,12 @@ end
 ---
 ---  - {handlers} (table): The handlers used by the client as described in |lsp-handler|.
 ---
+---  - {requests} (table): The current pending requests in flight
+---    to the server. Entries are key-value pairs with the key
+---    being the request ID while the value is a table with `type`,
+---    `bufnr`, and `method` key-value pairs. `type` is either "pending"
+---    for an active request, or "cancel" for a cancel request.
+---
 ---  - {config} (table): copy of the table that was passed by the user
 ---    to |vim.lsp.start_client()|.
 ---
