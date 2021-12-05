@@ -1938,11 +1938,9 @@ describe('vim.diagnostic', function()
         vim.g.diagnostic_autocmd_triggered = 0
         vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = 1')
         vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
-        vim.wait(100, function ()
-          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
-            make_error('Diagnostic', 0, 0, 0, 0)
-          })
-        end)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic', 0, 0, 0, 0)
+        })
         return vim.g.diagnostic_autocmd_triggered
       ]])
       end)
@@ -1952,9 +1950,7 @@ describe('vim.diagnostic', function()
         vim.g.diagnostic_autocmd_triggered = 0
         vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = 1')
         vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
-        vim.wait(100, function ()
-          vim.diagnostic.reset(diagnostic_ns, diagnostic_bufnr)
-        end)
+        vim.diagnostic.reset(diagnostic_ns, diagnostic_bufnr)
         return vim.g.diagnostic_autocmd_triggered
       ]])
       end)
