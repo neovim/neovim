@@ -16,10 +16,6 @@ for _, v in pairs(a.nvim_get_all_options_info()) do
   if v.shortname ~= "" then options_info[v.shortname] = v end
 end
 
-local is_global_option = function(info) return info.scope == "global" end
-local is_buffer_option = function(info) return info.scope == "buf" end
-local is_window_option = function(info) return info.scope == "win" end
-
 local get_scoped_options = function(scope)
   local result = {}
   for name, option_info in pairs(options_info) do
