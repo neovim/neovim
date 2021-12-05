@@ -6175,6 +6175,8 @@ static const char *highlight_init_both[] = {
   "default link LineNrAbove LineNr",
   "default link LineNrBelow LineNr",
   "default link QuickFixLine Search",
+  "default link CursorLineSign SignColumn",
+  "default link CursorLineFold FoldColumn",
   "default link Substitute Search",
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",

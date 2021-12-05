@@ -2746,7 +2746,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           p_extra = p_extra_free;
           c_extra = NUL;
           c_final = NUL;
-          char_attr = win_hl_attr(wp, HLF_FC);
+          if (use_cursor_line_sign(wp, lnum)) {
+            char_attr = win_hl_attr(wp, HLF_CLF);
+          } else {
+            char_attr = win_hl_attr(wp, HLF_FC);
+          }
         }
       }
 
@@ -2757,7 +2761,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
          * buffer or when using Netbeans. */
         int count = win_signcol_count(wp);
         if (count > 0) {
-          get_sign_display_info(false, wp, sattrs, row,
+          get_sign_display_info(false, wp, lnum, sattrs, row,
                                 startrow, filler_lines, filler_todo, count,
                                 &c_extra, &c_final, extra, sizeof(extra),
                                 &p_extra, &n_extra,
@@ -2778,7 +2782,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
               && num_signs > 0) {
             int count = win_signcol_count(wp);
-            get_sign_display_info(true, wp, sattrs, row,
+            get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo, count,
                                   &c_extra, &c_final, extra, sizeof(extra),
                                   &p_extra, &n_extra,
@@ -4617,6 +4621,14 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
   }
 }
 
+// Return true if CursorLineSign highlight is to be used.
+static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
+{
+  return wp->w_p_cul
+    && lnum == wp->w_cursor.lnum
+    && (wp->w_p_culopt_flags & CULOPT_NBR);
+}
+
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
@@ -4624,11 +4636,11 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 // @param count max number of signs
 // @param[out] n_extrap number of characters from pp_extra to display
 // @param[in, out] sign_idxp Index of the displayed sign
-static void get_sign_display_info(bool nrcol, win_T *wp, sign_attrs_T sattrs[], int row,
-                                  int startrow, int filler_lines, int filler_todo, int count,
-                                  int *c_extrap, int *c_finalp, char_u *extra, size_t extra_size,
-                                  char_u **pp_extra, int *n_extrap, int *char_attrp,
-                                  int *draw_statep, int *sign_idxp)
+static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
+                                  int row, int startrow, int filler_lines, int filler_todo,
+                                  int count, int *c_extrap, int *c_finalp, char_u *extra,
+                                  size_t extra_size, char_u **pp_extra, int *n_extrap,
+                                  int *char_attrp, int *draw_statep, int *sign_idxp)
 {
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
@@ -4636,7 +4648,11 @@ static void get_sign_display_info(bool nrcol, win_T *wp, sign_attrs_T sattrs[], 
   if (nrcol) {
     *n_extrap = number_width(wp) + 1;
   } else {
-    *char_attrp = win_hl_attr(wp, HLF_SC);
+    if (use_cursor_line_sign(wp, lnum)) {
+      *char_attrp = win_hl_attr(wp, HLF_CLS);
+    } else {
+      *char_attrp = win_hl_attr(wp, HLF_SC);
+    }
     *n_extrap = win_signcol_width(wp);
   }
 
@@ -4676,7 +4692,12 @@ static void get_sign_display_info(bool nrcol, win_T *wp, sign_attrs_T sattrs[], 
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
-      *char_attrp = sattr->sat_texthl;
+
+      if (use_cursor_line_sign(wp, lnum) && sattr->sat_culhl > 0) {
+        *char_attrp = sattr->sat_culhl;
+      } else {
+        *char_attrp = sattr->sat_texthl;
+      }
     }
   }
 

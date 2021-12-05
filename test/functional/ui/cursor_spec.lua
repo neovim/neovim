@@ -212,10 +212,10 @@ describe('ui/cursor', function()
         if m.blinkwait then m.blinkwait = 700 end
       end
       if m.hl_id then
-          m.hl_id = 58
+          m.hl_id = 60
           m.attr = {background = Screen.colors.DarkGray}
       end
-      if m.id_lm then m.id_lm = 59 end
+      if m.id_lm then m.id_lm = 61 end
     end
 
     -- Assert the new expectation.
