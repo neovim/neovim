@@ -3228,7 +3228,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	"nosplit": Shows the effects of a command incrementally, as you type.
 	"split"	 : Also shows partial off-screen results in a preview window.
-	""	 : Does not preview the changes directly.
+	""       : Disable preview.
 
 	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
 
