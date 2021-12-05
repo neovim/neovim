@@ -3196,11 +3196,13 @@ bool msg_enable_ext(void)
 
 bool msg_enable_msgfunc(void)
 {
-  // msgfunc is disabled in command line mode
-  // Because default echo is used for command line redraw
+  // Note: msgfunc is disabled in command line mode
+  //       Because default echo is used for command line redraw
+  // Note: msgfunc is disabled if msg_hist_off
+  //       Because it is set in cmdline_search_stat()
   return *p_msgfunc != NUL && !msg_check_loop
-    && !redir_off && !need_wait_return
-    && !(State & (CMDLINE | CONFIRM | HITRETURN | ASKMORE));
+    && !redir_off && !need_wait_return && !msg_hist_off
+    && !(State & (CMDLINE | CONFIRM | ASKMORE));
 }
 
 static void msg_call_msgfunc_event(void **argv)
