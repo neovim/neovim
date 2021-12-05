@@ -3200,7 +3200,7 @@ bool msg_enable_msgfunc(void)
   // Because default echo is used for command line redraw
   return *p_msgfunc != NUL && !msg_check_loop
     && !redir_off && !need_wait_return
-    && State & CMDLINE && State != CONFIRM && State != ASKMORE;
+    && !(State & (CMDLINE | CONFIRM | HITRETURN | ASKMORE));
 }
 
 static void msg_call_msgfunc_event(void **argv)
