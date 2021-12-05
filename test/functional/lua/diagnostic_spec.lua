@@ -1945,7 +1945,7 @@ describe('vim.diagnostic', function()
       ]])
       end)
 
-    it('triggers the autocommand diagnostics are cleared', function()
+    it('triggers the autocommand when diagnostics are cleared', function()
       eq(1, exec_lua [[
         vim.g.diagnostic_autocmd_triggered = 0
         vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = 1')
