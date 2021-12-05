@@ -4302,12 +4302,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 'msgfunc' 'msgfu'	string	(default: empty)
 			global
 	This option specifies a function to be called by |messages|.
-	It overwrites the default messages behavior.
+	It replaces the default messages display functionality.
 	See |message-function| for an explanation of how to write the
 	function and an example.
 	Note: It disables 'showmode' feature.
-	Note: It is disabled if your neovim GUI enables "ext_messages"
-	feature.
+	Note: It is disabled if your Nvim enables "ext_messages" feature.
+	Note: It cannot work for hit-enter prompts needed output commands like
+	|:map| etc.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.

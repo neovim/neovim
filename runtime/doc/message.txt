@@ -840,14 +840,16 @@ prompt.
 
 						*message-function*  >
 
-If the 'msgfunc' option is set, then the user specified function is
+If the 'msgfunc' option is set, then the user-specified function is
 invoked to display messages instead.
 
 The arguments are:
 
     a:method	"msg_clear", "msg_history_show", or "msg_show"
-    a:kind	specify internal message command.
-    a:chunks	[attr, text] list
+    a:kind	the "kinds" described in |ui-messages| if method is "msg_show"
+    a:chunks	[attr_id, text] list.
+    		attr_id is described in |ui-messages|.
+		it specifies message highlight id(|hlID()|).
     a:overwrite	messages overwrite flag
 
 For detailed arguments info, please see |ui-messages|.

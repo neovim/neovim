@@ -1128,6 +1128,20 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     eq('echo', eval('g:kind'))
     eq({{0, 'hello'}}, eval('g:chunks'))
   end)
+  it('msgfunc does not crash on recursive echo', function()
+    source([[
+    let g:ok = v:false
+    function! Func(...) abort
+    echomsg "Test recursion crash prevention"
+    let g:ok = v:true
+    endfunction
+
+    set msgfunc=Func
+
+    echomsg "Foo"
+    ]])
+    eq(0, eval('wait(2048, {->g:ok})'))
+  end)
 end)
 
 describe('ui/ext_messages', function()
