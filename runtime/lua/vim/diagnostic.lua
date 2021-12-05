@@ -658,7 +658,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   vim.api.nvim_buf_call(bufnr, function()
     vim.api.nvim_command(
-      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
+      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.fn.fnameescape(vim.api.nvim_buf_get_name(bufnr)))
     )
   end)
 end
@@ -1333,7 +1333,7 @@ function M.reset(namespace, bufnr)
   end
 
   vim.api.nvim_command(
-      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
+      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.fn.fnameescape(vim.api.nvim_buf_get_name(bufnr)))
   )
 end
 
