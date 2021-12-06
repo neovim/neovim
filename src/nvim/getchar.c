@@ -1794,11 +1794,9 @@ static int vgetorpeek(bool advance)
        * try re-mapping.
        */
       for (;;) {
-        /*
-         * os_breakcheck() is slow, don't use it too often when
-         * inside a mapping.  But call it each time for typed
-         * characters.
-         */
+        // os_breakcheck() is slow, don't use it too often when
+        // inside a mapping.  But call it each time for typed
+        // characters.
         if (typebuf.tb_maplen) {
           line_breakcheck();
         } else {

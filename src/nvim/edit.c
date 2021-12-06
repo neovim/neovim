@@ -5241,7 +5241,7 @@ static int ins_complete(int c, bool enable_pum)
       funcname = get_complete_funcname(ctrl_x_mode);
       if (*funcname == NUL) {
         semsg(_(e_notset), ctrl_x_mode == CTRL_X_FUNCTION
-            ? "completefunc" : "omnifunc");
+              ? "completefunc" : "omnifunc");
         // restore did_ai, so that adding comment leader works
         did_ai = save_did_ai;
         return FAIL;

@@ -223,9 +223,9 @@ void ex_cstag(exarg_T *eap)
   switch (p_csto) {
   case 0:
     if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, FALSE,
-                           FALSE, *eap->cmdlinep);
-      if (ret == FALSE) {
+      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
+                           false, *eap->cmdlinep);
+      if (ret == false) {
         cs_free_tags();
         if (msg_col) {
           msg_putchar('\n');
@@ -249,16 +249,16 @@ void ex_cstag(exarg_T *eap)
 
         if (cs_check_for_connections()) {
           ret = cs_find_common("g", (char *)(eap->arg), eap->forceit,
-                               FALSE, FALSE, *eap->cmdlinep);
-          if (ret == FALSE) {
+                               false, false, *eap->cmdlinep);
+          if (ret == false) {
             cs_free_tags();
           }
         }
       }
     } else if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, FALSE,
-                           FALSE, *eap->cmdlinep);
-      if (ret == FALSE) {
+      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
+                           false, *eap->cmdlinep);
+      if (ret == false) {
         cs_free_tags();
       }
     }
@@ -520,7 +520,7 @@ add_err:
 }
 
 
-static int cs_check_for_connections(void)
+static bool cs_check_for_connections(void)
 {
   return cs_cnt_connections() > 0;
 }
@@ -887,20 +887,20 @@ static int cs_find(exarg_T *eap)
 {
   char *opt, *pat;
 
-  if (cs_check_for_connections() == FALSE) {
+  if (cs_check_for_connections() == false) {
     (void)emsg(_("E567: no cscope connections"));
-    return FALSE;
+    return false;
   }
 
   if ((opt = strtok((char *)NULL, (const char *)" ")) == NULL) {
     cs_usage_msg(Find);
-    return FALSE;
+    return false;
   }
 
   pat = opt + strlen(opt) + 1;
   if (pat >= (char *)eap->arg + eap_arg_len) {
     cs_usage_msg(Find);
-    return FALSE;
+    return false;
   }
 
   /*
@@ -919,8 +919,8 @@ static int cs_find(exarg_T *eap)
 
 
 /// Common code for cscope find, shared by cs_find() and ex_cstag().
-static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int use_ll,
-                          char_u *cmdline)
+static bool cs_find_common(char *opt, char *pat, int forceit, int verbose,
+                           bool use_ll, char_u *cmdline)
 {
   char *cmd;
   int *nummatches;
@@ -967,7 +967,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     // next symbol must be + or -
     if (strchr(CSQF_FLAGS, *qfpos) == NULL) {
       (void)semsg(_("E469: invalid cscopequickfix flag %c for %c"), *qfpos, *(qfpos - 1));
-      return FALSE;
+      return false;
     }
 
     if (*qfpos != '0'
@@ -982,7 +982,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
   // create the actual command to send to cscope
   cmd = cs_create_cmd(opt, pat);
   if (cmd == NULL) {
-    return FALSE;
+    return false;
   }
 
   nummatches = xmalloc(sizeof(int) * csinfo_size);
@@ -1019,7 +1019,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       (void)semsg(_("E259: no matches found for cscope query %s of %s"), opt, pat);
     }
     xfree(nummatches);
-    return FALSE;
+    return false;
   }
 
   if (qfpos != NULL && *qfpos != '0') {
@@ -1064,7 +1064,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     os_remove((char *)tmp);
     xfree(tmp);
     xfree(nummatches);
-    return TRUE;
+    return true;
   } else {
     char **matches = NULL, **contexts = NULL;
     size_t matched = 0;
@@ -1073,7 +1073,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     cs_fill_results(pat, totmatches, nummatches, &matches, &contexts, &matched);
     xfree(nummatches);
     if (matches == NULL) {
-      return FALSE;
+      return false;
     }
 
     (void)cs_manage_matches(matches, contexts, matched, Store);
@@ -1499,12 +1499,13 @@ static void cs_file_results(FILE *f, int *nummatches_a)
         continue;
       }
 
-      context = xmalloc(strlen(cntx) + 5);
+      size_t context_len = strlen(cntx) + 5;
+      context = xmalloc(context_len);
 
       if (strcmp(cntx, "<global>") == 0) {
-        strcpy(context, "<<global>>");
+        xstrlcpy(context, "<<global>>", context_len);
       } else {
-        sprintf(context, "<<%s>>", cntx);
+        snprintf(context, context_len, "<<%s>>", cntx);
       }
 
       if (search == NULL) {

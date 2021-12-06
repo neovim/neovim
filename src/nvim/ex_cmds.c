@@ -305,9 +305,8 @@ void ex_align(exarg_T *eap)
                */
               do {
                 (void)set_indent(++new_indent, 0);
-              }
-              while (linelen(NULL) <= width);
-              --new_indent;
+              } while (linelen(NULL) <= width);
+              new_indent--;
               break;
             }
             --new_indent;
@@ -1457,7 +1456,7 @@ error:
 filterend:
 
   if (curbuf != old_curbuf) {
-    --no_wait_return;
+    no_wait_return--;
     emsg(_("E135: *Filter* Autocommands must not change current buffer"));
   }
   if (itmp != NULL) {
@@ -2094,7 +2093,7 @@ void do_wqall(exarg_T *eap)
     }
     if (buf->b_ffname == NULL) {
       semsg(_("E141: No file name for buffer %" PRId64), (int64_t)buf->b_fnum);
-      ++error;
+      error++;
     } else if (check_readonly(&eap->forceit, buf)
                || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
                                   FALSE) == FAIL) {
@@ -2120,17 +2119,15 @@ void do_wqall(exarg_T *eap)
   }
 }
 
-/*
- * Check the 'write' option.
- * Return TRUE and give a message when it's not st.
- */
-int not_writing(void)
+// Check the 'write' option.
+// Return true and give a message when it's not st.
+bool not_writing(void)
 {
   if (p_write) {
-    return FALSE;
+    return false;
   }
   emsg(_("E142: File not written: Writing is disabled by 'write' option"));
-  return TRUE;
+  return true;
 }
 
 /*
@@ -2945,7 +2942,7 @@ void ex_append(exarg_T *eap)
   }
 
   for (;;) {
-    msg_scroll = TRUE;
+    msg_scroll = true;
     need_wait_return = false;
     if (curbuf->b_p_ai) {
       if (append_indent >= 0) {
@@ -3131,7 +3128,7 @@ void ex_z(exarg_T *eap)
 
   // the number of '-' and '+' multiplies the distance
   if (*kind == '-' || *kind == '+') {
-    for (x = kind + 1; *x == *kind; ++x) {
+    for (x = kind + 1; *x == *kind; x++) {
     }
   }
 
@@ -3214,26 +3211,24 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/*
- * Check if the secure flag is set (.exrc or .vimrc in current directory).
- * If so, give an error message and return TRUE.
- * Otherwise, return FALSE.
- */
-int check_secure(void)
+// Check if the secure flag is set (.exrc or .vimrc in current directory).
+// If so, give an error message and return true.
+// Otherwise, return false.
+bool check_secure(void)
 {
   if (secure) {
     secure = 2;
     emsg(_(e_curdir));
-    return TRUE;
+    return true;
   }
 
   // In the sandbox more things are not allowed, including the things
   // disallowed in secure mode.
   if (sandbox != 0) {
     emsg(_(e_sandbox));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Previous substitute replacement string

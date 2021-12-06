@@ -1851,7 +1851,7 @@ failed:
       msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
-        p = (char_u *)msg_trunc_attr((char *)IObuff, FALSE, 0);
+        p = (char_u *)msg_trunc_attr((char *)IObuff, false, 0);
       }
 
       if (read_stdin || read_buffer || restart_edit != 0

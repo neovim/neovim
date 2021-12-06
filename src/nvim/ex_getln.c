@@ -2491,27 +2491,25 @@ char *get_text_locked_msg(void)
 }
 
 /// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
-/// return TRUE when it is and give an error message.
-int curbuf_locked(void)
+/// return true when it is and give an error message.
+bool curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {
     emsg(_("E788: Not allowed to edit another buffer now"));
-    return TRUE;
+    return true;
   }
   return allbuf_locked();
 }
 
-/*
- * Check if "allbuf_lock" is set and return TRUE when it is and give an error
- * message.
- */
-int allbuf_locked(void)
+// Check if "allbuf_lock" is set and return true when it is and give an error
+// message.
+bool allbuf_locked(void)
 {
   if (allbuf_lock > 0) {
     emsg(_("E811: Not allowed to change buffer information now"));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static int cmdline_charsize(int idx)
