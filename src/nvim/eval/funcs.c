@@ -7882,7 +7882,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   funcexe.evaluate = true;
   funcexe.partial = partial;
 
-  typval_T accum;
+  typval_T initial;
   typval_T argv[3];
   if (argvars[0].v_type == VAR_LIST) {
     const list_T *const l = argvars[0].vval.v_list;
@@ -7894,21 +7894,23 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         return;
       }
       const listitem_T *const first = tv_list_first(l);
-      accum = *TV_LIST_ITEM_TV(first);
+      initial = *TV_LIST_ITEM_TV(first);
       li = TV_LIST_ITEM_NEXT(l, first);
     } else {
-      accum = argvars[2];
+      initial = argvars[2];
       li = tv_list_first(l);
     }
 
-    tv_copy(&accum, rettv);
+    tv_copy(&initial, rettv);
     for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
-      argv[0] = accum;
+      argv[0] = *rettv;
       argv[1] = *TV_LIST_ITEM_TV(li);
-      if (call_func(func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
+      rettv->v_type = VAR_UNKNOWN;
+      const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
+      tv_clear(&argv[0]);
+      if (r == FAIL) {
         return;
       }
-      accum = *rettv;
     }
   } else {
     const blob_T *const b = argvars[0].vval.v_blob;
@@ -7919,23 +7921,25 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         semsg(_(e_reduceempty), "Blob");
         return;
       }
-      accum.v_type = VAR_NUMBER;
-      accum.vval.v_number = tv_blob_get(b, 0);
+      initial.v_type = VAR_NUMBER;
+      initial.vval.v_number = tv_blob_get(b, 0);
       i = 1;
+    } else if (argvars[2].v_type != VAR_NUMBER) {
+      emsg(_(e_number_exp));
+      return;
     } else {
-      accum = argvars[2];
+      initial = argvars[2];
       i = 0;
     }
 
-    tv_copy(&accum, rettv);
+    tv_copy(&initial, rettv);
     for (; i < tv_blob_len(b); i++) {
-      argv[0] = accum;
+      argv[0] = *rettv;
       argv[1].v_type = VAR_NUMBER;
       argv[1].vval.v_number = tv_blob_get(b, i);
       if (call_func(func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
         return;
       }
-      accum = *rettv;
     }
   }
 }
