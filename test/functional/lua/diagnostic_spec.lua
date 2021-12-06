@@ -1918,5 +1918,27 @@ describe('vim.diagnostic', function()
         return {show_called, hide_called}
       ]])
     end)
+
+    it('triggers the autocommand when diagnostics are set', function()
+      eq(1, exec_lua [[
+        vim.g.diagnostic_autocmd_triggered = 0
+        vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = 1')
+        vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Diagnostic', 0, 0, 0, 0)
+        })
+        return vim.g.diagnostic_autocmd_triggered
+      ]])
+      end)
+
+    it('triggers the autocommand when diagnostics are cleared', function()
+      eq(1, exec_lua [[
+        vim.g.diagnostic_autocmd_triggered = 0
+        vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = 1')
+        vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
+        vim.diagnostic.reset(diagnostic_ns, diagnostic_bufnr)
+        return vim.g.diagnostic_autocmd_triggered
+      ]])
+      end)
   end)
 end)
