@@ -4307,8 +4307,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function and an example.
 	Note: It disables 'showmode' feature.
 	Note: It is disabled if your Nvim enables "ext_messages" feature.
-	Note: It cannot work for hit-enter prompts needed commands like
-	|:map| or |:!| etc.
+	Note: It cannot work for below situations.
+		1. hit-enter prompts needed commands output like |:map| or
+		   |:!| etc
+		2. error messages
+		3. startup messages
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
