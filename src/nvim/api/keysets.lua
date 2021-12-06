@@ -5,8 +5,6 @@ return {
   set_extmark = {
     "id";
     "end_line";
-    -- nvim_buf_get_extmark uses "end_row" rather than "end_line" in its
-    -- details dict, so allow that as an alias
     "end_row";
     "end_col";
     "hl_group";
