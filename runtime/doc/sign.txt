@@ -133,6 +133,10 @@ See |sign_define()| for the equivalent Vim script function.
 	texthl={group}
 		Highlighting group used for the text item.
 
+	culhl={group}
+		Highlighting group used for the text item when the cursor is
+		on the same line as the sign and 'cursorline' is enabled.
+
 	Example: >
 		:sign define MySign text=>> texthl=Search linehl=DiffText
 <
@@ -158,13 +162,6 @@ See |sign_getdefined()| for the equivalent Vim script function.
 :sign list {name}
 		Lists one defined sign and its attributes.
 
-	culhl={group}
-		Highlighting group used for the text item when the cursor is
-		on the same line as the sign and 'cursorline' is enabled.
-
-	Example: >
-		:sign define MySign text=>> texthl=Search linehl=DiffText
-<
 
 PLACING SIGNS						*:sign-place* *E158*
 
