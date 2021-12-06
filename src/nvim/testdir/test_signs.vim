@@ -126,6 +126,10 @@ func Test_sign()
   " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
+  call assert_fails("sign define Sign4 linehl=", 'E1249: Group name missing for linehl')
+  call assert_fails("sign define Sign4 culhl=", 'E1249: Group name missing for culhl')
+  call assert_fails("sign define Sign4 texthl=", 'E1249: Group name missing for texthl')
+
   " define sign with whitespace
   sign define Sign4 text=\ X linehl=Comment
   sign undefine Sign4
