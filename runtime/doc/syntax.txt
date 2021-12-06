@@ -3161,6 +3161,14 @@ buffer by buffer basis.
 For more detailed instructions see |ft_sql.txt|.
 
 
+SQUIRREL				*squirrel.vim* *ft-squirrel-syntax*
+
+Squirrel is a high level imperative, object-oriented programming language,
+designed to be a light-weight scripting language that fits in the size, memory
+bandwidth, and real-time requirements of applications like video games.  Files
+with the following extensions are recognized as squirrel files: .nut.
+
+
 TCSH						*tcsh.vim* *ft-tcsh-syntax*
 
 This covers the shell named "tcsh".  It is a superset of csh.  See |csh.vim|

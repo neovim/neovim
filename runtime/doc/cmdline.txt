@@ -863,9 +863,11 @@ Note: these are typed literally, they are not special keys!
 							*:<amatch>* *<amatch>*
 	<amatch>   When executing autocommands, is replaced with the match for
 		   which this autocommand was executed.  *E497*
-		   It differs from <afile> only when the file name isn't used
-		   to match with (for FileType, Syntax and SpellFileMissing
+		   It differs from <afile> when the file name isn't used to
+		   match with (for FileType, Syntax and SpellFileMissing
 		   events).
+		   When the match is with a file name, it is expanded to the
+ 		   full path.
 							*:<sfile>* *<sfile>*
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
