@@ -1190,6 +1190,8 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       // Compute msg_row early.
       msg_start();
 
+      msg_ext_set_kind("search");
+
       // Get the offset, so we know how long it is.
       if (!cmd_silent
           && (spats[0].off.line || spats[0].off.end || spats[0].off.off)) {
