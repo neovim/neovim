@@ -153,19 +153,6 @@ function M.get_namespace(client_id)
   return _client_namespaces[client_id]
 end
 
---- Save diagnostics to the current buffer.
----
---- Handles saving diagnostics from multiple clients in the same buffer.
----@param diagnostics Diagnostic[]
----@param bufnr number
----@param client_id number
----@private
-function M.save(diagnostics, bufnr, client_id)
-  local namespace = M.get_namespace(client_id)
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
-end
--- }}}
-
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
@@ -244,6 +231,23 @@ function M.reset(client_id, buffer_client_map)
 end
 
 -- Deprecated Functions {{{
+
+
+--- Save diagnostics to the current buffer.
+---
+---@deprecated Prefer |vim.diagnostic.set()|
+---
+--- Handles saving diagnostics from multiple clients in the same buffer.
+---@param diagnostics Diagnostic[]
+---@param bufnr number
+---@param client_id number
+---@private
+function M.save(diagnostics, bufnr, client_id)
+  vim.api.nvim_echo({{'vim.lsp.diagnostic.save is deprecated. See :h deprecated', 'WarningMsg'}}, true, {})
+  local namespace = M.get_namespace(client_id)
+  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+end
+-- }}}
 
 --- Get all diagnostics for clients
 ---
