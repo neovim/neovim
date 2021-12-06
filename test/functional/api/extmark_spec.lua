@@ -1424,6 +1424,14 @@ describe('API/extmarks', function()
     eq({ {1, 0, 0}, {2, 0, 8} },
         meths.buf_get_extmarks(0, ns, 0, -1, {}))
   end)
+
+  it('can accept "end_row" or "end_line"', function()
+    set_extmark(ns, marks[1], 0, 0, {
+      end_col = 0,
+      end_row = 1
+    })
+    eq({ {1, 0, 0, { end_col = 0, end_row = 1 }} }, get_extmarks(ns, 0, -1, {details=true}))
+  end)
 end)
 
 describe('Extmarks buffer api with many marks', function()

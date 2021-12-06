@@ -431,6 +431,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   int line2 = -1;
+
+  if (HAS_KEY(opts->end_row) && !HAS_KEY(opts->end_line)) {
+    opts->end_line = opts->end_row;
+  }
+
   if (opts->end_line.type == kObjectTypeInteger) {
     Integer val = opts->end_line.data.integer;
     if (val < 0 || val > buf->b_ml.ml_line_count) {
