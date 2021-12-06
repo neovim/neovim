@@ -7901,22 +7901,25 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       li = tv_list_first(l);
     }
 
-    const VarLockStatus prev_locked = tv_list_locked(l);
-    const int called_emsg_start = called_emsg;
-
-    tv_list_set_lock(l, VAR_FIXED);  // disallow the list changing here
     tv_copy(&initial, rettv);
-    for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
-      argv[0] = *rettv;
-      argv[1] = *TV_LIST_ITEM_TV(li);
-      rettv->v_type = VAR_UNKNOWN;
-      const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
-      tv_clear(&argv[0]);
-      if (r == FAIL || called_emsg != called_emsg_start) {
-        break;
+
+    if (l != NULL) {
+      const VarLockStatus prev_locked = tv_list_locked(l);
+      const int called_emsg_start = called_emsg;
+
+      tv_list_set_lock(l, VAR_FIXED);  // disallow the list changing here
+      for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
+        argv[0] = *rettv;
+        argv[1] = *TV_LIST_ITEM_TV(li);
+        rettv->v_type = VAR_UNKNOWN;
+        const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
+        tv_clear(&argv[0]);
+        if (r == FAIL || called_emsg != called_emsg_start) {
+          break;
+        }
       }
+      tv_list_set_lock(l, prev_locked);
     }
-    tv_list_set_lock(l, prev_locked);
   } else {
     const blob_T *const b = argvars[0].vval.v_blob;
     int i;
