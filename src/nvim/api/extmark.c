@@ -340,6 +340,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_line : ending line of the mark, 0-based inclusive.
+///               - end_row : alias of "end_line". It is an error to use both
+///                           "end_row" and "end_line".
 ///               - end_col : ending col of the mark, 0-based exclusive.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
