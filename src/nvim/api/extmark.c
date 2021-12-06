@@ -432,7 +432,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   int line2 = -1;
 
-  if (HAS_KEY(opts->end_row) && !HAS_KEY(opts->end_line)) {
+  if (HAS_KEY(opts->end_row)) {
+    if (HAS_KEY(opts->end_line)) {
+      api_set_error(err, kErrorTypeValidation, "cannot use both end_row and end_line");
+      goto error;
+    }
     opts->end_line = opts->end_row;
   }
 
