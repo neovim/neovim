@@ -997,8 +997,6 @@ EXTERN char e_non_empty_string_required[] INIT(= N_("E1142: Non-empty string req
 
 EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 
-EXTERN char e_group_name_missing_for_str[] INIT(= N_("E1249: Group name missing for %s"));
-
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 

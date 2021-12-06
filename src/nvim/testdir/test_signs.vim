@@ -126,11 +126,6 @@ func Test_sign()
   " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
-  " an empty highlight argument for a new sign is an error
-  call assert_fails("sign define SignX linehl=", 'E1249: Group name missing for linehl')
-  call assert_fails("sign define SignX culhl=", 'E1249: Group name missing for culhl')
-  call assert_fails("sign define SignX texthl=", 'E1249: Group name missing for texthl')
-
   " an empty highlight argument for an existing sign clears it
   sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl
   let sl = sign_getdefined('SignY')[0]
