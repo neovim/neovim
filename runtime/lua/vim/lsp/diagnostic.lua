@@ -565,7 +565,7 @@ end
 
 --- Redraw diagnostics for the given buffer and client
 ---
----@deprecated Prefer |vim.diagnostic.redraw()|
+---@deprecated Prefer |vim.diagnostic.show()|
 ---
 --- This calls the "textDocument/publishDiagnostics" handler manually using
 --- the cached diagnostics already received from the server. This can be useful
