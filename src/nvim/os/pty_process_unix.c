@@ -15,7 +15,7 @@
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
-#else
+#elif !defined(__sun)
 # include <pty.h>
 #endif
 
