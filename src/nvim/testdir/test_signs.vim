@@ -126,9 +126,34 @@ func Test_sign()
   " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
-  call assert_fails("sign define Sign4 linehl=", 'E1249: Group name missing for linehl')
-  call assert_fails("sign define Sign4 culhl=", 'E1249: Group name missing for culhl')
-  call assert_fails("sign define Sign4 texthl=", 'E1249: Group name missing for texthl')
+  " an empty highlight argument for a new sign is an error
+  call assert_fails("sign define SignX linehl=", 'E1249: Group name missing for linehl')
+  call assert_fails("sign define SignX culhl=", 'E1249: Group name missing for culhl')
+  call assert_fails("sign define SignX texthl=", 'E1249: Group name missing for texthl')
+
+  " an empty highlight argument for an existing sign clears it
+  sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_equal('TextHl', sl.texthl)
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY texthl= culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'texthl'))
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY linehl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'linehl'))
+  call assert_equal('CulHl', sl.culhl)
+
+  sign define SignY culhl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'culhl'))
+
+  sign undefine SignY
 
   " define sign with whitespace
   sign define Sign4 text=\ X linehl=Comment

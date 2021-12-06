@@ -943,19 +943,35 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
   }
 
   if (linehl != NULL) {
-    sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+    if (*linehl == NUL) {
+      sp->sn_line_hl = 0;
+    } else {
+      sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+    }
   }
 
   if (texthl != NULL) {
-    sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+    if (*texthl == NUL) {
+      sp->sn_text_hl = 0;
+    } else {
+      sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+    }
   }
 
   if (culhl != NULL) {
-    sp->sn_cul_hl = syn_check_group((char *)culhl, (int)STRLEN(culhl));
+    if (*culhl == NUL) {
+      sp->sn_cul_hl = 0;
+    } else {
+      sp->sn_cul_hl = syn_check_group((char *)culhl, (int)STRLEN(culhl));
+    }
   }
 
   if (numhl != NULL) {
-    sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+    if (*numhl == NUL) {
+      sp->sn_num_hl = 0;
+    } else {
+      sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+    }
   }
 
   return OK;
@@ -1153,6 +1169,9 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   char_u *culhl = NULL;
   char_u *numhl = NULL;
   int failed = false;
+  sign_T *sp_prev;
+
+  bool exists = sign_find(sign_name, &sp_prev) != NULL;
 
   // set values for a defined sign.
   for (;;) {
@@ -1169,28 +1188,28 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
       text = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "linehl=", 7) == 0) {
       arg += 7;
-      if (check_empty_group(p - arg, "linehl") == FAIL) {
+      if (!exists && check_empty_group(p - arg, "linehl") == FAIL) {
         failed = true;
         break;
       }
       linehl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "texthl=", 7) == 0) {
       arg += 7;
-      if (check_empty_group(p - arg, "texthl") == FAIL) {
+      if (!exists && check_empty_group(p - arg, "texthl") == FAIL) {
         failed = true;
         break;
       }
       texthl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "culhl=", 6) == 0) {
       arg += 6;
-      if (check_empty_group(p - arg, "culhl") == FAIL) {
+      if (!exists && check_empty_group(p - arg, "culhl") == FAIL) {
         failed = true;
         break;
       }
       culhl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "numhl=", 6) == 0) {
       arg += 6;
-      if (check_empty_group(p - arg, "numhl") == FAIL) {
+      if (!exists && check_empty_group(p - arg, "numhl") == FAIL) {
         failed = true;
         break;
       }
