@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_eval.h"
 #include "nvim/iconv.h"
@@ -532,6 +533,11 @@ EXTERN int VIsual_reselect;
 EXTERN int VIsual_mode INIT(= 'v');
 /// true when redoing Visual.
 EXTERN int redo_VIsual_busy INIT(= false);
+
+// The Visual area is remembered for reselection.
+EXTERN int resel_VIsual_mode INIT(= NUL);       // 'v', 'V', or Ctrl-V
+EXTERN linenr_T resel_VIsual_line_count;        // number of lines
+EXTERN colnr_T resel_VIsual_vcol;               // nr of cols or end col
 
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Insstart.
