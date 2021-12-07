@@ -1,14 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * getchar.c
- *
- * functions related with getting a character from the user/mapping/redo/...
- *
- * manipulations with redo buffer and stuff buffer
- * mappings and abbreviations
- */
+// getchar.c: Code related to getting a character from the user or a script
+// file, manipulations with redo buffer and stuff buffer.
 
 #include <assert.h>
 #include <inttypes.h>

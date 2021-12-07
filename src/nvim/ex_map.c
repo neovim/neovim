@@ -1,7 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// ex_map.c: functions for mappings and abbreviations
+// ex_map.c: Code for mappings and abbreviations.
 
 #include <assert.h>
 #include <inttypes.h>
