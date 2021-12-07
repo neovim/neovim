@@ -1222,11 +1222,57 @@ end
 ---
 ---@param events (table) list of events
 ---@param winnr (number) window id of preview window
+---@param bufnrs (table) buffers where the preview window should remain visible
 ---@see |autocmd-events|
-function M.close_preview_autocmd(events, winnr)
-  if #events > 0 then
-    api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
+function M.close_preview_autocmd(events, winnr, bufnrs)
+  if #events == 0 then
+    return
   end
+
+  local has_bufleave = false
+  events = vim.tbl_filter(function(v)
+    if v == 'BufLeave' then
+      has_bufleave = true
+      return false
+    end
+    return true
+  end, events)
+
+  local augroup = 'preview_window_'..winnr
+
+  vim.cmd(string.format([[
+    augroup %s
+      autocmd!
+      autocmd %s <buffer> lua vim.lsp.util._close_preview_window(%d)
+    augroup end
+  ]], augroup, table.concat(events, ','), winnr))
+
+  -- convert BufLeave to BufEnter, so we can check what's the new buffer
+  if has_bufleave then
+    vim.cmd(string.format([[
+      augroup %s
+        autocmd BufEnter * lua vim.lsp.util._close_preview_window(%d, {%s})
+      augroup end
+    ]], augroup, winnr, table.concat(bufnrs, ',')))
+  end
+end
+
+---@internal
+function M._close_preview_window(winnr, bufnrs)
+  vim.schedule(function()
+    if bufnrs and vim.tbl_contains(bufnrs, api.nvim_get_current_buf()) then
+      return
+    end
+
+    local augroup = 'preview_window_'..winnr
+    vim.cmd(string.format([[
+      augroup %s
+        autocmd!
+      augroup end
+      augroup! %s
+    ]], augroup, augroup))
+    pcall(vim.api.nvim_win_close, winnr, true)
+  end)
 end
 
 ---@internal
@@ -1404,7 +1450,7 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
   api.nvim_buf_set_keymap(floating_bufnr, "n", "q", "<cmd>bdelete<cr>", {silent = true, noremap = true, nowait = true})
-  M.close_preview_autocmd(opts.close_events, floating_winnr)
+  M.close_preview_autocmd(opts.close_events, floating_winnr, {floating_bufnr, bufnr})
 
   -- save focus_id
   if opts.focus_id then
