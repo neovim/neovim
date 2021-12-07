@@ -29,6 +29,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
+#include "nvim/getchar.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
