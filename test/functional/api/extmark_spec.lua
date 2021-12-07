@@ -104,10 +104,10 @@ describe('API/extmarks', function()
   it("can end extranges past final newline using end_col = 0", function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
-      end_line = 1
+      end_row = 1
     })
     eq("end_col value outside range",
-       pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_line = 1 }))
+       pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = 1 }))
   end)
 
   it('adds, updates  and deletes marks', function()
@@ -1425,10 +1425,10 @@ describe('API/extmarks', function()
         meths.buf_get_extmarks(0, ns, 0, -1, {}))
   end)
 
-  it('can accept "end_row" or "end_line"', function()
+  it('can accept "end_row" or "end_line" #16548', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
-      end_row = 1
+      end_line = 1
     })
     eq({ {1, 0, 0, { end_col = 0, end_row = 1 }} }, get_extmarks(ns, 0, -1, {details=true}))
   end)
