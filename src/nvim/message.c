@@ -3199,7 +3199,7 @@ bool msg_enable_msgfunc(void)
   // Note: msgfunc is disabled in command line mode
   //       Because default echo is used for command line redraw
   return *p_msgfunc != NUL && !msg_check_loop
-    && !redir_off && !need_wait_return && !starting
+    && !redir_off && !need_wait_return && !starting && !called_emsg
     && !(State & (CMDLINE | CONFIRM | ASKMORE));
 }
 
