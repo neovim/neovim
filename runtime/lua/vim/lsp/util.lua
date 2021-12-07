@@ -1337,7 +1337,7 @@ function M.open_floating_preview(contents, syntax, opts)
   opts.wrap = opts.wrap ~= false -- wrapping by default
   opts.stylize_markdown = opts.stylize_markdown ~= false
   opts.focus = opts.focus ~= false
-  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre"}
+  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufLeave", "InsertCharPre"}
 
   local bufnr = api.nvim_get_current_buf()
 
