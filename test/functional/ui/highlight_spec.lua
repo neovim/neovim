@@ -276,6 +276,24 @@ describe('highlight defaults', function()
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
   end)
 
+  it('linking updates window highlight immediately #16552', function()
+    screen:try_resize(53, 4)
+    screen:expect([[
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+    feed_command("hi NonTextAlt guifg=Red")
+    feed_command("hi! link NonText NonTextAlt")
+    screen:expect([[
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      :hi! link NonText NonTextAlt                         |
+    ]], {[0] = {foreground=Screen.colors.Red}})
+  end)
+
   it('Cursor after `:hi clear|syntax reset` #6508', function()
     command('highlight clear|syntax reset')
     eq('guifg=bg guibg=fg', eval([[matchstr(execute('hi Cursor'), '\v(gui|cterm).*$')]]))
