@@ -1031,6 +1031,69 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]]}
 
+    screen:try_resize(50, 11)
+    feed('gg')
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+
+    feed('G<C-E>')
+    screen:expect{grid=[[
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      Grugg                                             |
+                                                        |
+    ]]}
+
+    feed('gg')
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+
+    screen:try_resize(50, 12)
+    feed('G')
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      Grugg                                             |
+                                                        |
+    ]]}
+
     meths.buf_del_extmark(0, ns, id)
     screen:expect{grid=[[
       if (h->n_buckets < new_n_buckets) { // expand     |

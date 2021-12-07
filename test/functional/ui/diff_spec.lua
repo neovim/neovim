@@ -186,6 +186,19 @@ describe('Diff mode screen', function()
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
+
+    screen:try_resize(40, 9)
+    screen:expect([[
+      {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
+      {1:  }5                 {3:│}{1:  }5                |
+      {1:  }6                 {3:│}{1:  }6                |
+      {1:  }7                 {3:│}{1:  }7                |
+      {1:  }8                 {3:│}{1:  }8                |
+      {1:  }9                 {3:│}{1:  }9                |
+      {1:  }10                {3:│}{1:  }10               |
+      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                              |
+    ]])
   end)
 
   it('Add a line at the end of file 1', function()
@@ -231,6 +244,19 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
+    ]])
+
+    screen:try_resize(40, 9)
+    screen:expect([[
+      {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
+      {1:  }5                 {3:│}{1:  }5                |
+      {1:  }6                 {3:│}{1:  }6                |
+      {1:  }7                 {3:│}{1:  }7                |
+      {1:  }8                 {3:│}{1:  }8                |
+      {1:  }9                 {3:│}{1:  }9                |
+      {1:  }10                {3:│}{1:  }10               |
+      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                              |
     ]])
   end)
 
