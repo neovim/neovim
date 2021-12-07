@@ -227,7 +227,7 @@ func Test_getmarklist()
   call cursor(2, 2)
   normal mr
   call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 2, 0]},
-        \ getmarklist(bufnr())[0])
-  call assert_equal([], getmarklist({}))
+        \ bufnr()->getmarklist()[0])
+  call assert_equal([], {}->getmarklist())
   close!
 endfunc

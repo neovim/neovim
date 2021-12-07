@@ -809,8 +809,7 @@ func Test_undo_fold_deletion()
   g/"/d
   undo
   redo
-  " eval getline(1, '$')->assert_equal([''])
-  eval assert_equal(getline(1, '$'), [''])
+  eval getline(1, '$')->assert_equal([''])
 
   set fdm&vim
   bwipe!

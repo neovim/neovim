@@ -101,7 +101,7 @@ func Test_chdir_func()
   call assert_match('^\[global\] .*/Xdir$', trim(execute('verbose pwd')))
   call chdir('..')
   call assert_equal('y', fnamemodify(getcwd(1, 2), ':t'))
-  call assert_equal('z', fnamemodify(getcwd(3, 2), ':t'))
+  call assert_equal('z', fnamemodify(3->getcwd(2), ':t'))
   tabnext | wincmd t
   call assert_match('^\[tabpage\] .*/y$', trim(execute('verbose pwd')))
   call chdir('..')

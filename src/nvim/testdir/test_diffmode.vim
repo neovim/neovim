@@ -387,7 +387,7 @@ func Test_diffoff()
   call setline(1, ['One', '', 'Two', 'Three'])
   diffthis
   redraw
-  call assert_notequal(normattr, screenattr(1, 1))
+  call assert_notequal(normattr, 1->screenattr(1))
   diffoff!
   redraw
   call assert_equal(normattr, screenattr(1, 1))

@@ -547,7 +547,7 @@ func Test_sub_replace_5()
 		\ substitute('A123456789',
 		\ 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
 		\ '\=string([submatch(0, 1), submatch(9, 1), ' .
-		\ 'submatch(8, 1), submatch(7, 1), submatch(6, 1), ' .
+		\ 'submatch(8, 1), 7->submatch(1), submatch(6, 1), ' .
 		\ 'submatch(5, 1), submatch(4, 1), submatch(3, 1), ' .
 		\ 'submatch(2, 1), submatch(1, 1)])',
 		\ ''))
@@ -752,8 +752,7 @@ endfunc
 func Test_submatch_list_concatenate()
   let pat = 'A\(.\)'
   let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}
-  " call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
-  call assert_equal(substitute('A1', pat, Rep, ''), "[['A1'], ['1']]")
+  call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
 endfunc
 
 func Test_substitute_skipped_range()

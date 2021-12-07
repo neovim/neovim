@@ -56,7 +56,7 @@ endfunc
 
 func Test_strgetchar()
   call assert_equal(char2nr('a'), strgetchar('axb', 0))
-  call assert_equal(char2nr('x'), strgetchar('axb', 1))
+  call assert_equal(char2nr('x'), 'axb'->strgetchar(1))
   call assert_equal(char2nr('b'), strgetchar('axb', 2))
 
   call assert_equal(-1, strgetchar('axb', -1))
@@ -66,7 +66,7 @@ endfunc
 
 func Test_strcharpart()
   call assert_equal('a', strcharpart('axb', 0, 1))
-  call assert_equal('x', strcharpart('axb', 1, 1))
+  call assert_equal('x', 'axb'->strcharpart(1, 1))
   call assert_equal('b', strcharpart('axb', 2, 1))
   call assert_equal('xb', strcharpart('axb', 1))
 
@@ -493,7 +493,7 @@ func Test_setmatches()
     let set[0]['conceal'] = 5
     let exp[0]['conceal'] = '5'
   endif
-  call setmatches(set)
+  eval set->setmatches()
   call assert_equal(exp, getmatches())
 endfunc
 

@@ -512,8 +512,7 @@ func TestGoodBadBase()
       break
     endif
     let prevbad = bad
-    " let lst = bad->spellsuggest(3)
-    let lst = spellsuggest(bad, 3)
+    let lst = bad->spellsuggest(3)
     normal mm
 
     call add(result, [bad, lst])
@@ -552,8 +551,7 @@ func Test_spell_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  " call assert_equal("kepereneven", 'kóopërÿnôven'->soundfold())
-  call assert_equal("kepereneven", soundfold('kóopërÿnôven'))
+  call assert_equal("kepereneven", 'kóopërÿnôven'->soundfold())
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 

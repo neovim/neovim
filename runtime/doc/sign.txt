@@ -404,6 +404,9 @@ sign_define({list})
 				\  'text' : '!!'}
 				\ ])
 <
+		Can also be used as a |method|: >
+			GetSignList()->sign_define()
+
 sign_getdefined([{name}])				*sign_getdefined()*
 		Get a list of defined signs and their attributes.
 		This is similar to the |:sign-list| command.
@@ -436,6 +439,9 @@ sign_getdefined([{name}])				*sign_getdefined()*
 			" Get the attribute of the sign named mySign
 			echo sign_getdefined("mySign")
 <
+		Can also be used as a |method|: >
+			GetSignList()->sign_getdefined()
+
 sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		Return a list of signs placed in a buffer or all the buffers.
 		This is similar to the |:sign-place-list| command.
@@ -496,6 +502,9 @@ sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 			" Get a List of all the placed signs
 			echo sign_getplaced()
 <
+		Can also be used as a |method|: >
+			GetBufname()->sign_getplaced()
+<
 							*sign_jump()*
 sign_jump({id}, {group}, {buf})
 		Open the buffer {buf} or jump to the window that contains
@@ -511,7 +520,9 @@ sign_jump({id}, {group}, {buf})
 			" Jump to sign 10 in the current buffer
 			call sign_jump(10, '', '')
 <
-
+		Can also be used as a |method|: >
+			GetSignid()->sign_jump()
+<
 							*sign_place()*
 sign_place({id}, {group}, {name}, {buf} [, {dict}])
 		Place the sign defined as {name} at line {lnum} in file or
@@ -561,7 +572,9 @@ sign_place({id}, {group}, {name}, {buf} [, {dict}])
 			call sign_place(10, 'g3', 'sign4', 'json.c',
 					\ {'lnum' : 40, 'priority' : 90})
 <
-
+		Can also be used as a |method|: >
+			GetSignid()->sign_place(group, name, expr)
+<
 							*sign_placelist()*
 sign_placelist({list})
 		Place one or more signs.  This is similar to the
@@ -621,6 +634,8 @@ sign_placelist({list})
 				\  'lnum' : 50}
 				\ ])
 <
+		Can also be used as a |method|: >
+			GetSignlist()->sign_placelist()
 
 sign_undefine([{name}])					*sign_undefine()*
 sign_undefine({list})
@@ -645,6 +660,8 @@ sign_undefine({list})
 			" Delete all the signs
 			call sign_undefine()
 <
+		Can also be used as a |method|: >
+			GetSignlist()->sign_undefine()
 
 sign_unplace({group} [, {dict}])			*sign_unplace()*
 		Remove a previously placed sign in one or more buffers.  This
@@ -687,6 +704,9 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 
 			" Remove all the placed signs from all the buffers
 			call sign_unplace('*')
+
+<		Can also be used as a |method|: >
+			GetSigngroup()->sign_unplace()
 <
 sign_unplacelist({list})				*sign_unplacelist()*
 		Remove previously placed signs from one or more buffers.  This
@@ -715,6 +735,9 @@ sign_unplacelist({list})				*sign_unplacelist()*
 				\ {'id' : 10, 'buffer' : "a.vim"},
 				\ {'id' : 20, 'buffer' : 'b.vim'},
 				\ ])
+<
+		Can also be used as a |method|: >
+			GetSignlist()->sign_unplacelist()
 <
 
  vim:tw=78:ts=8:noet:ft=help:norl:

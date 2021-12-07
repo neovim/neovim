@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
+local exc_exec = helpers.exc_exec
 local curbufmeths = helpers.curbufmeths
 local load_adjust = helpers.load_adjust
 local retry = helpers.retry
@@ -261,5 +262,14 @@ describe('timers', function()
     ]], intermediate=true, timeout=load_adjust(200)}
 
     eq(2, eval('g:val'))
+  end)
+
+  it("timer_start can't be used in the sandbox", function()
+    source [[
+      function! Scary(timer) abort
+        call execute('echo ''execute() should be disallowed''', '')
+      endfunction
+    ]]
+    eq("Vim(call):E48: Not allowed in sandbox", exc_exec("sandbox call timer_start(0, 'Scary')"))
   end)
 end)

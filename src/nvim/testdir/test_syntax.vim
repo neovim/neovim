@@ -30,23 +30,17 @@ func AssertHighlightGroups(lnum, startcol, expected, trans = 1, msg = "")
   " If groups are provided as a string, each character is assumed to be a
   " group and spaces represent no group, useful for visually describing tests.
   let l:expectedGroups = type(a:expected) == v:t_string
-        "\ ? a:expected->split('\zs')->map({_, v -> trim(v)})
-        \ ? map(split(a:expected, '\zs'), {_, v -> trim(v)})
+        \ ? a:expected->split('\zs')->map({_, v -> trim(v)})
         \ : a:expected
   let l:errors = 0
-  " let l:msg = (a:msg->empty() ? "" : a:msg .. ": ")
-  let l:msg = (empty(a:msg) ? "" : a:msg .. ": ")
+  let l:msg = (a:msg->empty() ? "" : a:msg .. ": ")
         \ .. "Wrong highlight group at " .. a:lnum .. ","
 
-  " for l:i in range(a:startcol, a:startcol + l:expectedGroups->len() - 1)
-  "   let l:errors += synID(a:lnum, l:i, a:trans)
-  "        \ ->synIDattr("name")
-  "        \ ->assert_equal(l:expectedGroups[l:i - 1],
-  for l:i in range(a:startcol, a:startcol + len(l:expectedGroups) - 1)
-    let l:errors +=
-          \ assert_equal(synIDattr(synID(a:lnum, l:i, a:trans), "name"),
-          \    l:expectedGroups[l:i - 1],
-          \    l:msg .. l:i)
+  for l:i in range(a:startcol, a:startcol + l:expectedGroups->len() - 1)
+    let l:errors += synID(a:lnum, l:i, a:trans)
+         \ ->synIDattr("name")
+         \ ->assert_equal(l:expectedGroups[l:i - 1],
+         \    l:msg .. l:i)
   endfor
 endfunc
 

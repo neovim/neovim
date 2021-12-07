@@ -99,7 +99,7 @@ func Test_win_execute()
   if has('textprop')
     let popupwin = popup_create('the popup win', {'line': 2, 'col': 3})
     redraw
-    let line = win_execute(popupwin, 'echo getline(1)')
+    let line = 'echo getline(1)'->win_execute(popupwin)
     call assert_match('the popup win', line)
 
     call popup_close(popupwin)

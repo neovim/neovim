@@ -20,6 +20,9 @@ function Test_getbufwintabinfo()
   call assert_equal('vim', l[0].variables.editor)
   call assert_notequal(-1, index(l[0].windows, '%'->bufwinid()))
 
+  let l = '%'->getbufinfo()
+  call assert_equal(bufnr('%'), l[0].bufnr)
+
   " Test for getbufinfo() with 'bufmodified'
   call assert_equal(0, len(getbufinfo({'bufmodified' : 1})))
   call setbufline('Xtestfile1', 1, ["Line1"])
@@ -48,7 +51,7 @@ function Test_getbufwintabinfo()
   tabnew | let w3_id = win_getid()
   new | let w4_id = win_getid()
   vert new | let w5_id = win_getid()
-  call setwinvar(0, 'signal', 'green')
+  eval 'green'->setwinvar(0, 'signal')
   tabfirst
   let winlist = getwininfo()
   call assert_equal(5, len(winlist))

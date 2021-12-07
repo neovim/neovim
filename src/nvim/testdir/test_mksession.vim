@@ -156,8 +156,7 @@ func Test_mksession_zero_winheight()
   wincmd _
   mksession! Xtest_mks_zero
   set winminheight&
-  " let text = readfile('Xtest_mks_zero')->join()
-  let text = join(readfile('Xtest_mks_zero'))
+  let text = readfile('Xtest_mks_zero')->join()
   call delete('Xtest_mks_zero')
   close
   " check there is no divide by zero

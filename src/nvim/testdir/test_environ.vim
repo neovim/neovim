@@ -22,7 +22,7 @@ endfunc
 
 func Test_setenv()
   unlet! $TESTENV
-  call setenv('TEST ENV', 'foo')
+  eval 'foo'->setenv('TEST ENV')
   call assert_equal('foo', getenv('TEST ENV'))
   call setenv('TEST ENV', v:null)
   call assert_equal(v:null, getenv('TEST ENV'))

@@ -905,15 +905,13 @@ func Test_not_a_term()
   " This will take 2 seconds because of the missing --not-a-term
   let cmd = GetVimProg() .. ' --cmd quit ' .. redir
   exe "silent !" . cmd
-  " call assert_match("\<Esc>", readfile('Xvimout')->join())
-  call assert_match("\<Esc>", join(readfile('Xvimout')))
+  call assert_match("\<Esc>", readfile('Xvimout')->join())
   call delete('Xvimout')
 
   " With --not-a-term there are no escape sequences.
   let cmd = GetVimProg() .. ' --not-a-term --cmd quit ' .. redir
   exe "silent !" . cmd
-  " call assert_notmatch("\<Esc>", readfile('Xvimout')->join())
-  call assert_notmatch("\<Esc>", join(readfile('Xvimout')))
+  call assert_notmatch("\<Esc>", readfile('Xvimout')->join())
   call delete('Xvimout')
 endfunc
 

@@ -25,7 +25,7 @@ func Test_listchars()
   redraw!
   for i in range(1, 5)
     call cursor(i, 1)
-    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+    call assert_equal([expected[i - 1]], ScreenLines(i, '$'->virtcol()))
   endfor
 
   set listchars-=trail:<

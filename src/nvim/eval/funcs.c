@@ -11551,6 +11551,9 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dict_T *dict;
 
   rettv->vval.v_number = -1;
+  if (check_secure()) {
+    return;
+  }
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT

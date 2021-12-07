@@ -77,7 +77,7 @@ func Test_spellbadword()
   set spell
 
   call assert_equal(['bycycle', 'bad'],  spellbadword('My bycycle.'))
-  call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
+  call assert_equal(['another', 'caps'], 'A sentence. another sentence'->spellbadword())
 
   call assert_equal(['TheCamelWord', 'bad'], spellbadword('TheCamelWord asdf'))
   set spelloptions=camel
@@ -407,7 +407,7 @@ func Test_zz_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  call assert_equal("kepereneven", soundfold('kóopërÿnôven'))
+  call assert_equal("kepereneven", 'kóopërÿnôven'->soundfold())
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 
@@ -711,7 +711,7 @@ func TestGoodBadBase()
       break
     endif
     let prevbad = bad
-    let lst = spellsuggest(bad, 3)
+    let lst = bad->spellsuggest(3)
     normal mm
 
     call add(result, [bad, lst])

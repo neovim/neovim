@@ -113,7 +113,7 @@ func Test_swapinfo()
   w
   let fname = s:swapname()
   call assert_match('Xswapinfo', fname)
-  let info = swapinfo(fname)
+  let info = fname->swapinfo()
 
   let ver = printf('VIM %d.%d', v:version / 100, v:version % 100)
   call assert_equal(ver, info.version)
@@ -155,7 +155,7 @@ func Test_swapname()
   let buf = bufnr('%')
   let expected = s:swapname()
   wincmd p
-  call assert_equal(expected, swapname(buf))
+  call assert_equal(expected, buf->swapname())
 
   new Xtest3
   setlocal noswapfile

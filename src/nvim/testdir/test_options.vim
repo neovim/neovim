@@ -235,8 +235,7 @@ func Test_set_completion()
   call feedkeys(":set filetype=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"set filetype=sshdconfig', @:)
   call feedkeys(":set filetype=a\<C-A>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
-  call assert_equal('"set filetype=' .. join(getcompletion('a*', 'filetype')), @:)
+  call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
 endfunc
 
 func Test_set_errors()

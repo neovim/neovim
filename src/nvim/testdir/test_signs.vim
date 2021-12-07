@@ -393,7 +393,7 @@ func Test_sign_funcs()
 
   " Tests for sign_define()
   let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error'}
-  call assert_equal(0, sign_define("sign1", attr))
+  call assert_equal(0, "sign1"->sign_define(attr))
   call assert_equal([{'name' : 'sign1', 'texthl' : 'Error',
 	      \ 'linehl' : 'Search', 'text' : '=>'}], sign_getdefined())
 
@@ -404,13 +404,13 @@ func Test_sign_funcs()
   call Sign_define_ignore_error("sign2", attr)
   call assert_equal([{'name' : 'sign2', 'texthl' : 'DiffChange',
 	      \ 'linehl' : 'DiffAdd', 'text' : '!!', 'icon' : 'sign2.ico'}],
-	      \ sign_getdefined("sign2"))
+	      \ "sign2"->sign_getdefined())
 
   " Test for a sign name with digits
   call assert_equal(0, sign_define(0002, {'linehl' : 'StatusLine'}))
   call assert_equal([{'name' : '2', 'linehl' : 'StatusLine'}],
 	      \ sign_getdefined(0002))
-  call sign_undefine(0002)
+  eval 0002->sign_undefine()
 
   " Tests for invalid arguments to sign_define()
   call assert_fails('call sign_define("sign4", {"text" : "===>"})', 'E239:')
@@ -434,7 +434,7 @@ func Test_sign_funcs()
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
-	      \ sign_getplaced('%', {'lnum' : 20}))
+	      \ '%'->sign_getplaced({'lnum' : 20}))
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
@@ -490,10 +490,10 @@ func Test_sign_funcs()
 	      \ 'E745:')
 
   " Tests for sign_unplace()
-  call sign_place(20, '', 'sign2', 'Xsign', {"lnum" : 30})
+  eval 20->sign_place('', 'sign2', 'Xsign', {"lnum" : 30})
   call assert_equal(0, sign_unplace('',
 	      \ {'id' : 20, 'buffer' : 'Xsign'}))
-  call assert_equal(-1, sign_unplace('',
+  call assert_equal(-1, ''->sign_unplace(
 	      \ {'id' : 30, 'buffer' : 'Xsign'}))
   call sign_place(20, '', 'sign2', 'Xsign', {"lnum" : 30})
   call assert_fails("call sign_unplace('',
@@ -1693,7 +1693,7 @@ func Test_sign_jump_func()
   let r = sign_jump(5, '', 'foo')
   call assert_equal(2, r)
   call assert_equal(2, line('.'))
-  let r = sign_jump(6, 'g1', 'foo')
+  let r = 6->sign_jump('g1', 'foo')
   call assert_equal(5, r)
   call assert_equal(5, line('.'))
   let r = sign_jump(5, '', 'bar')
@@ -1921,8 +1921,7 @@ func Test_sign_funcs_multi()
 	      \ 'group' : 'g1', 'priority' : 10}], s[0].signs)
 
   " Change an existing sign without specifying the group
-  call assert_equal([5], sign_placelist([
-	      \ {'id' : 5, 'name' : 'sign1', 'buffer' : 'Xsign'}]))
+  call assert_equal([5], [{'id' : 5, 'name' : 'sign1', 'buffer' : 'Xsign'}]->sign_placelist())
   let s = sign_getplaced('Xsign', {'id' : 5, 'group' : ''})
   call assert_equal([{'id' : 5, 'name' : 'sign1', 'lnum' : 11,
 	      \ 'group' : '', 'priority' : 10}], s[0].signs)
@@ -1955,7 +1954,7 @@ func Test_sign_funcs_multi()
 	      \ {'id' : 1, 'group' : 'g1'}, {'id' : 1, 'group' : 'g2'}]))
 
   " Invalid arguments
-  call assert_equal([], sign_unplacelist([]))
+  call assert_equal([], []->sign_unplacelist())
   call assert_fails('call sign_unplacelist({})', "E714:")
   call assert_fails('call sign_unplacelist([[]])', "E715:")
   call assert_fails('call sign_unplacelist(["abc"])', "E715:")

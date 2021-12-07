@@ -1315,7 +1315,7 @@ func Test_search_match_at_curpos()
 
   normal gg
 
-  call search('foobar', 'c')
+  eval 'foobar'->search('c')
   call assert_equal([1, 1], [line('.'), col('.')])
 
   normal j
@@ -1352,6 +1352,41 @@ func Test_search_display_pattern()
     call assert_match(pat, g:a)
     set norl
   endif
+endfunc
+
+func Test_searchdecl()
+  let lines =<< trim END
+     int global;
+
+     func()
+     {
+       int global;
+       if (cond) {
+	 int local;
+       }
+       int local;
+       // comment
+     }
+  END
+  new
+  call setline(1, lines)
+  10
+  call assert_equal(0, searchdecl('local', 0, 0))
+  call assert_equal(7, getcurpos()[1])
+
+  10
+  call assert_equal(0, 'local'->searchdecl(0, 1))
+  call assert_equal(9, getcurpos()[1])
+
+  10
+  call assert_equal(0, searchdecl('global'))
+  call assert_equal(5, getcurpos()[1])
+
+  10
+  call assert_equal(0, searchdecl('global', 1))
+  call assert_equal(1, getcurpos()[1])
+
+  bwipe!
 endfunc
 
 func Test_search_special()

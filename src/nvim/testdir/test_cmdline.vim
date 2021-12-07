@@ -905,7 +905,7 @@ func Test_setcmdpos()
   call assert_equal('"12ab', @:)
 
   " setcmdpos() returns 1 when not editing the command line.
-  call assert_equal(1, setcmdpos(3))
+  call assert_equal(1, 3->setcmdpos())
 endfunc
 
 func Test_cmdline_overstrike()
