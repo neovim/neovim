@@ -1692,7 +1692,7 @@ static void win_update(win_T *wp, Providers *providers)
     if (eof) {  // we hit the end of the file
       wp->w_botline = buf->b_ml.ml_line_count + 1;
       j = win_get_fill(wp, wp->w_botline);
-      if (j > 0 && !wp->w_botfill) {
+      if (j > 0 && !wp->w_botfill && row < wp->w_grid.Rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
         foldinfo_T info = FOLDINFO_INIT;
