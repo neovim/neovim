@@ -110,7 +110,13 @@ local function uri_to_fname(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:/+', '')
-    uri = uri:gsub('/', '\\')
+    if vim.fn.has('wsl') == 1 then
+      uri = uri:gsub('^([a-zA-Z]):', function(match)
+        return '/mnt/'.. match:lower()
+      end)
+    else
+      uri = uri:gsub('/', '\\')
+    end
   else
     uri = uri:gsub('^file:/+', '/')
   end
