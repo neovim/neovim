@@ -726,11 +726,11 @@ json_decode_string_cycle_start:
         semsg(_("E474: Using comma in place of colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (last_container.special_val == NULL
-                   ? (last_container.container.v_type == VAR_DICT
-                      ? (DICT_LEN(last_container.container.vval.v_dict) == 0)
-                      : (tv_list_len(last_container.container.vval.v_list)
-                         == 0))
-                   : (tv_list_len(last_container.special_val) == 0)) {
+                 ? (last_container.container.v_type == VAR_DICT
+                    ? (DICT_LEN(last_container.container.vval.v_dict) == 0)
+                    : (tv_list_len(last_container.container.vval.v_list)
+                       == 0))
+                 : (tv_list_len(last_container.special_val) == 0)) {
         semsg(_("E474: Leading comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
