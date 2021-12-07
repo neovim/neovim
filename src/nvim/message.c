@@ -1099,7 +1099,9 @@ void wait_return(int redraw)
 
   // If using ":silent cmd", don't wait for a return.  Also don't set
   // need_wait_return to do it later.
-  if (msg_silent != 0) {
+  // wait_return can be skipped when msgfunc is enabled because messages are not
+  // drawn to the message buffer, therefore hitting enter is not necessary
+  if (msg_silent != 0 || msg_enable_msgfunc()) {
     return;
   }
 
@@ -3196,10 +3198,21 @@ bool msg_enable_ext(void)
 
 bool msg_enable_msgfunc(void)
 {
-  // Note: msgfunc is disabled in command line mode
-  //       Because default echo is used for command line redraw
+  static bool starting_hitreturn = false;
+  if (starting) {
+    // this code assumes we're interested in outputting something if this
+    // function has been called while the editor is starting; for any message
+    // being output during this period, we assume a "Press ENTER to continue"
+    // prompt will come up in the future
+    starting_hitreturn = true;
+  } else if (starting_hitreturn && !need_wait_return) {
+    starting_hitreturn = false;
+  }
+
+  // msgfunc is disabled in command line mode
+  // Because default echo is used for command line redraw
   return *p_msgfunc != NUL && !msg_check_loop
-    && !redir_off && !need_wait_return && !starting && !called_emsg
+    && !redir_off && !starting_hitreturn
     && !(State & (CMDLINE | CONFIRM | ASKMORE));
 }
 
