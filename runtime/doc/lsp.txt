@@ -1377,18 +1377,6 @@ character_offset({bufnr}, {row}, {col})
                     (number, number) UTF-32 and UTF-16 index of the character
                     in line {row} column {col} in buffer {buf}
 
-                                        *vim.lsp.util.close_preview_autocmd()*
-close_preview_autocmd({events}, {winnr})
-                Creates autocommands to close a preview window when events
-                happen.
-
-                Parameters: ~
-                    {events}  (table) list of events
-                    {winnr}   (number) window id of preview window
-
-                See also: ~
-                    |autocmd-events|
-
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
                 Converts any of `MarkedString` | `MarkedString[]` |
