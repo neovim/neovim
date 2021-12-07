@@ -451,9 +451,11 @@ int update_screen(int type)
   // reset cmdline_row now (may have been changed temporarily)
   compute_cmdrow();
 
+  bool hl_changed = false;
   // Check for changed highlighting
   if (need_highlight_changed) {
     highlight_changed();
+    hl_changed = true;
   }
 
   if (type == CLEAR) {          // first clear screen
@@ -554,7 +556,7 @@ int update_screen(int type)
    * buffer.  Each buffer must only be done once.
    */
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    update_window_hl(wp, type >= NOT_VALID);
+    update_window_hl(wp, type >= NOT_VALID || hl_changed);
 
     buf_T *buf = wp->w_buffer;
     if (buf->b_mod_set) {
