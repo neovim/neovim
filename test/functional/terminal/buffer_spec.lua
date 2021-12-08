@@ -6,9 +6,11 @@ local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
-local command= helpers.command
+local command = helpers.command
 local exc_exec = helpers.exc_exec
 local matches = helpers.matches
+local exec_lua = helpers.exec_lua
+local sleep = helpers.sleep
 
 describe(':terminal buffer', function()
   local screen
@@ -326,5 +328,39 @@ describe('No heap-buffer-overflow when', function()
     feed_command('autocmd TermOpen * startinsert')
     feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
     assert_alive()
+  end)
+end)
+
+describe('on_lines does not emit out-of-bounds line indexes when', function()
+  before_each(function()
+    clear()
+    exec_lua([[
+      function _G.register_callback(bufnr)
+        _G.cb_error = ''
+        vim.api.nvim_buf_attach(bufnr, false, {
+          on_lines = function(_, bufnr, _, firstline, _, _)
+            local status, msg = pcall(vim.api.nvim_buf_get_offset, bufnr, firstline)
+            if not status then
+              _G.cb_error = msg
+            end
+          end
+        })
+      end
+    ]])
+  end)
+
+  it('creating a terminal buffer #16394', function()
+    feed_command([[autocmd TermOpen * ++once call v:lua.register_callback(expand("<abuf>"))]])
+    feed_command('terminal')
+    sleep(500)
+    eq('', exec_lua([[return _G.cb_error]]))
+  end)
+
+  it('deleting a terminal buffer #16394', function()
+    feed_command('terminal')
+    sleep(500)
+    feed_command('lua _G.register_callback(0)')
+    feed_command('bdelete!')
+    eq('', exec_lua([[return _G.cb_error]]))
   end)
 end)
