@@ -1225,6 +1225,13 @@ return {
       defaults={if_true=indentkeys_default}
     },
     {
+      full_name='innermapping', abbreviation='inmp',
+      short_desc=N_("if not mapped, convert ALT/META+c to ESC+c"),
+      type='bool', scope={'global'},
+      varname='p_inmp',
+      defaults={if_true=true}
+    },
+    {
       full_name='infercase', abbreviation='inf',
       short_desc=N_("adjust case of match for keyword completion"),
       type='bool', scope={'buffer'},
