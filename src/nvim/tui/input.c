@@ -401,6 +401,14 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
 
 static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
+static void set_innermapping(void **argv)
+{
+  if ((int)(intptr_t)argv[0] > 0
+      && !option_was_set("inmp")) {
+      set_option_value("inmp", false, NULL, 0);
+  }
+}
+
 static void tk_getkeys(TermInput *input, bool force)
 {
   TermKeyKey key;
@@ -415,6 +423,17 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+      long arg[16];
+      size_t args = ARRAY_SIZE(arg);
+      unsigned long cmd;
+      termkey_interpret_csi(input->tk, &key, arg, &args, &cmd);
+      char init = (char)((cmd & ~((unsigned long)0xFF)) >> 8);
+      char fin = (char)(cmd & 0xFF);
+      if (init == '?' && fin == 'u') {
+        loop_schedule_deferred(&main_loop,
+          event_create(set_innermapping, 1, (void *)(intptr_t)arg[0]));
+      }
     }
   }
 

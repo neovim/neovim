@@ -132,6 +132,7 @@ typedef struct {
     int set_underline_style;
     int set_underline_color;
     int enable_kitty_key_prot, disable_kitty_key_prot;
+    int get_kitty_key_prot_status;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -228,6 +229,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.set_underline_color = -1;
   data->unibi_ext.enable_kitty_key_prot = -1;
   data->unibi_ext.disable_kitty_key_prot = -1;
+  data->unibi_ext.get_kitty_key_prot_status = -1;
   data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
@@ -312,6 +314,9 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
   if (data->unibi_ext.enable_kitty_key_prot != -1) {
     unibi_out_ext(ui, data->unibi_ext.enable_kitty_key_prot);
+  }
+  if (data->unibi_ext.get_kitty_key_prot_status != -1) {
+    unibi_out_ext(ui, data->unibi_ext.get_kitty_key_prot_status);
   }
 
   uv_loop_init(&data->write_loop);
@@ -1748,6 +1753,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
       (int)unibi_add_ext_str(ut, "ext.enable_kitty_key_prot", "\x1b[>1u");
     data->unibi_ext.disable_kitty_key_prot =
       (int)unibi_add_ext_str(ut, "ext.disable_kitty_key_prot", "\x1b[<u");
+    data->unibi_ext.get_kitty_key_prot_status =
+      (int)unibi_add_ext_str(ut, "ext.get_kitty_key_prot_status", "\x1b[?u");
   }
 
 // At this time (2017-07-12) it seems like all terminals that support 256
