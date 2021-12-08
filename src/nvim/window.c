@@ -2229,6 +2229,54 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
   }
 }
 
+static void leaving_window(win_T *const win)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Only matters for a prompt window.
+  if (!bt_prompt(win->w_buffer)) {
+    return;
+  }
+
+  // When leaving a prompt window stop Insert mode and perhaps restart
+  // it when entering that window again.
+  win->w_buffer->b_prompt_insert = restart_edit;
+  if (restart_edit != NUL && mode_displayed) {
+    clear_cmdline = true;  // unshow mode later
+  }
+  restart_edit = NUL;
+
+  // When leaving the window (or closing the window) was done from a
+  // callback we need to break out of the Insert mode loop and restart Insert
+  // mode when entering the window again.
+  if (State & INSERT) {
+    stop_insert_mode = true;
+    if (win->w_buffer->b_prompt_insert == NUL) {
+      win->w_buffer->b_prompt_insert = 'A';
+    }
+  }
+}
+
+void entering_window(win_T *const win)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Only matters for a prompt window.
+  if (!bt_prompt(win->w_buffer)) {
+    return;
+  }
+
+  // When switching to a prompt buffer that was in Insert mode, don't stop
+  // Insert mode, it may have been set in leaving_window().
+  if (win->w_buffer->b_prompt_insert != NUL) {
+    stop_insert_mode = false;
+  }
+
+  // When entering the prompt window restart Insert mode if we were in Insert
+  // mode when we left it and not already in Insert mode.
+  if ((State & INSERT) == 0) {
+    restart_edit = win->w_buffer->b_prompt_insert;
+  }
+}
+
 /// Closes all windows for buffer `buf`.
 ///
 /// @param keep_curwin don't close `curwin`
@@ -2367,6 +2415,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
       shell_new_rows();
     }
   }
+  entering_window(curwin);
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
@@ -2434,10 +2483,10 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (win == curwin) {
-    /*
-     * Guess which window is going to be the new current window.
-     * This may change because of the autocommands (sigh).
-     */
+    leaving_window(curwin);
+
+    // Guess which window is going to be the new current window.
+    // This may change because of the autocommands (sigh).
     if (!win->w_floating) {
       wp = frame2win(win_altframe(win, NULL));
     } else {
@@ -3801,6 +3850,8 @@ int win_new_tabpage(int after, char_u *filename)
 
     lastused_tabpage = old_curtab;
 
+    entering_window(curwin);
+
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
@@ -3956,6 +4007,7 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
 {
   tabpage_T *tp = curtab;
 
+  leaving_window(curwin);
   reset_VIsual_and_resel();     // stop Visual mode
   if (trigger_leave_autocmds) {
     if (new_curbuf != curbuf) {
@@ -4478,6 +4530,10 @@ static void win_enter_ext(win_T *const wp, const int flags)
     return;
   }
 
+  if (!curwin_invalid) {
+    leaving_window(curwin);
+  }
+
   if (!curwin_invalid && (flags & WEE_TRIGGER_LEAVE_AUTOCMDS)) {
     // Be careful: If autocommands delete the window, return now.
     if (wp->w_buffer != curbuf) {
@@ -4525,6 +4581,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 
   fix_current_dir();
 
+  entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
   if (flags & WEE_TRIGGER_NEW_AUTOCMDS) {
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);

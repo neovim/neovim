@@ -210,6 +210,11 @@ effective prompt text for a buffer, with |prompt_getprompt()|.
 The user can go to Normal mode and navigate through the buffer.  This can be
 useful to see older output or copy text.
 
+The CTRL-W key can be used to start a window command, such as CTRL-W w to
+switch to the next window.  This also works in Insert mode (use Shift-CTRL-W
+to delete a word). When leaving the window Insert mode will be stopped.  When
+coming back to the prompt window Insert mode will be restored.
+
 Any command that starts Insert mode, such as "a", "i", "A" and "I", will move
 the cursor to the last line.  "A" will move to the end of the line, "I" to the
 start of the line.

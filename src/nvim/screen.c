@@ -6932,7 +6932,7 @@ int showmode(void)
   do_mode = ((p_smd && msg_silent == 0)
              && ((State & TERM_FOCUS)
                  || (State & INSERT)
-                 || restart_edit
+                 || restart_edit != NUL
                  || VIsual_active));
   if (do_mode || reg_recording != 0) {
     // Don't show mode right now, when not redrawing or inside a mapping.
@@ -7012,7 +7012,7 @@ int showmode(void)
           }
           msg_puts_attr(_(" INSERT"), attr);
         } else if (restart_edit == 'I' || restart_edit == 'i'
-                   || restart_edit == 'a') {
+                   || restart_edit == 'a' || restart_edit == 'A') {
           msg_puts_attr(_(" (insert)"), attr);
         } else if (restart_edit == 'R') {
           msg_puts_attr(_(" (replace)"), attr);
