@@ -303,13 +303,16 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   }
   ++entered;
 
-  // Add message to history (unless it's a repeated kept message or a
-  // truncated message)
-  if ((const char_u *)s != keep_msg
-      || (*s != '<'
+  // Add message to history (unless it's a repeated kept message or a truncated
+  // message). Avoid doing so while msgfunc is active because then the recording
+  // of messages is managed by the msgfunc's implementation, which is a separate
+  // thing from the native history.
+  if (!msg_enable_msgfunc() &&
+        ((const char_u *)s != keep_msg ||
+        (*s != '<'
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
-          && STRCMP(s, last_msg_hist->msg))) {
+          && STRCMP(s, last_msg_hist->msg)))) {
     add_msg_hist(s, -1, attr, multiline);
   }
 
@@ -1306,7 +1309,9 @@ static void hit_return_msg(void)
 void set_keep_msg(char *s, int attr)
 {
   xfree(keep_msg);
-  if (s != NULL && msg_silent == 0) {
+  // Do not "keep" anything while msgfunc is active because the messages are
+  // flushed immediately
+  if (!msg_enable_msgfunc() && s != NULL && msg_silent == 0) {
     keep_msg = vim_strsave((char_u *)s);
   } else {
     keep_msg = NULL;
@@ -3064,7 +3069,9 @@ int msg_end(void)
    * we have to redraw the window.
    * Do not do this if we are abandoning the file or editing the command line.
    */
-  if (!exiting && need_wait_return && !(State & CMDLINE)) {
+  if (msg_enable_ext()) {
+    need_wait_return = false;
+  } else if (!exiting && need_wait_return && !(State & CMDLINE)) {
     wait_return(FALSE);
     return FALSE;
   }
@@ -3181,6 +3188,10 @@ bool msg_enable_ext(void)
 
 bool msg_enable_msgfunc(void)
 {
+  if (*p_msgfunc == NUL) {
+    return;
+  }
+
   static bool starting_hitreturn = false;
   if (starting) {
     // this code assumes we're interested in outputting something if this

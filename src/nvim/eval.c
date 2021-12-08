@@ -6557,6 +6557,9 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
                     const bool secret)
   FUNC_ATTR_NONNULL_ALL
 {
+  int saved_state = State;
+  State = INPUT;
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
@@ -6573,21 +6576,21 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
       emsg(_("E5050: {opts} must be the only argument"));
-      return;
+      goto end;
     }
     dict_T *const dict = argvars[0].vval.v_dict;
     prompt = tv_dict_get_string_buf_chk(dict, S_LEN("prompt"), prompt_buf, "");
     if (prompt == NULL) {
-      return;
+      goto end;
     }
     defstr = tv_dict_get_string_buf_chk(dict, S_LEN("default"), defstr_buf, "");
     if (defstr == NULL) {
-      return;
+      goto end;
     }
     cancelreturn = tv_dict_get_string_buf_chk(dict, S_LEN("cancelreturn"),
                                               cancelreturn_buf, def);
     if (cancelreturn == NULL) {  // error
-      return;
+      goto end;
     }
     if (*cancelreturn == NUL) {
       cancelreturn = NULL;
@@ -6595,29 +6598,29 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
     xp_name = tv_dict_get_string_buf_chk(dict, S_LEN("completion"),
                                          xp_name_buf, def);
     if (xp_name == NULL) {  // error
-      return;
+      goto end;
     }
     if (xp_name == def) {  // default to NULL
       xp_name = NULL;
     }
     if (!tv_dict_get_callback(dict, S_LEN("highlight"), &input_callback)) {
-      return;
+      goto end;
     }
   } else {
     prompt = tv_get_string_buf_chk(&argvars[0], prompt_buf);
     if (prompt == NULL) {
-      return;
+      goto end;
     }
     if (argvars[1].v_type != VAR_UNKNOWN) {
       defstr = tv_get_string_buf_chk(&argvars[1], defstr_buf);
       if (defstr == NULL) {
-        return;
+        goto end;
       }
       if (argvars[2].v_type != VAR_UNKNOWN) {
         const char *const arg2 = tv_get_string_buf_chk(&argvars[2],
                                                        cancelreturn_buf);
         if (arg2 == NULL) {
-          return;
+          goto end;
         }
         if (inputdialog) {
           cancelreturn = arg2;
@@ -6637,7 +6640,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
     uint32_t argt;
     if (parse_compl_arg((char_u *)xp_name, xp_namelen, &xp_type,
                         &argt, (char_u **)&xp_arg) == FAIL) {
-      return;
+      goto end;
     }
   }
 
@@ -6680,6 +6683,9 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   need_wait_return = false;
   msg_didout = false;
   cmd_silent = cmd_silent_save;
+
+end:
+  State = saved_state;
 }
 
 /// Turn a dictionary into a list

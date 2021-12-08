@@ -3205,6 +3205,10 @@ bool msg_enable_ext(void)
 
 bool msg_enable_msgfunc(void)
 {
+  if (*p_msgfunc == NUL) {
+    return;
+  }
+
   static bool starting_hitreturn = false;
   if (starting) {
     // this code assumes we're interested in outputting something if this
@@ -3220,7 +3224,7 @@ bool msg_enable_msgfunc(void)
   // Because default echo is used for command line redraw
   return *p_msgfunc != NUL && !msg_check_loop
     && !redir_off && !starting_hitreturn
-    && !(State & (CMDLINE | CONFIRM | ASKMORE));
+    && !(State & (CMDLINE | CONFIRM | ASKMORE | INPUT));
 }
 
 static void msg_call_msgfunc_event(void **argv)
