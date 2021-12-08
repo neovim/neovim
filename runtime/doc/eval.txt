@@ -2336,7 +2336,7 @@ char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
-cindent({lnum})		Number	C indent for line {lnum}
+cindent({lnum})			Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
 col({expr})			Number	column nr of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
@@ -2381,7 +2381,7 @@ eval({string})			any	evaluate {string} into its value
 eventhandler()			Number	|TRUE| if inside an event handler
 executable({expr})		Number	1 if executable {expr} exists
 execute({command})		String	execute and capture output of {command}
-exepath({expr})		String  full path of the command {expr}
+exepath({expr})			String  full path of the command {expr}
 exists({expr})			Number	|TRUE| if {expr} exists
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
