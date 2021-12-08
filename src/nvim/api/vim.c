@@ -842,7 +842,7 @@ void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
-                       false, &need_clear);
+                       true, &need_clear);
   }
   if (history) {
     msg_ext_set_kind("echomsg");
@@ -1842,6 +1842,9 @@ static void write_msg(String message, bool to_err)
 
   ++no_wait_return;
   for (uint32_t i = 0; i < message.size; i++) {
+    if (got_int) {
+      break;
+    }
     if (to_err) {
       PUSH_CHAR(i, err_pos, err_line_buf, emsg);
     } else {

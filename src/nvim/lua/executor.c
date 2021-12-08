@@ -521,6 +521,9 @@ static void nlua_print_event(void **argv)
   const size_t len = (size_t)(intptr_t)argv[1]-1;  // exclude final NUL
 
   for (size_t i = 0; i < len;) {
+    if (got_int) {
+      break;
+    }
     const size_t start = i;
     while (i < len) {
       switch (str[i]) {
