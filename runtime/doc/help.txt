@@ -167,7 +167,7 @@ GUI ~
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim
-|if_perl|	Perl interface
+|if_perl.txt|	Perl interface
 |if_pyth.txt|	Python interface
 |if_ruby.txt|	Ruby interface
 |sign.txt|	debugging signs
