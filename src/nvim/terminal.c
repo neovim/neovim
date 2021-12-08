@@ -46,6 +46,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
@@ -464,9 +465,7 @@ static void terminal_check_cursor(void)
                               row_to_linenr(term, term->cursor.row));
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-  curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
-  curwin->w_cursor.coladd = 0;
-  mb_check_adjust_col(curwin);
+  coladvance(MAX(0, term->cursor.col + off));
 }
 
 // Function executed before each iteration of terminal mode.
