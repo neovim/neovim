@@ -523,7 +523,7 @@ function! s:check_virtualenv() abort
         let hint = '$PATH ambiguities in subshells typically are '
           \.'caused by your shell config overriding the $PATH previously set by the '
           \.'virtualenv. Either prevent them from doing so, or use this workaround: '
-          \.'https://vi.stackexchange.com/a/7654'
+          \.'https://vi.stackexchange.com/a/34996'
         let hints[hint] = v:true
       endif
     endfor
