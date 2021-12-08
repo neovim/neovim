@@ -175,7 +175,7 @@ Interfaces ~
 Versions ~
 |vim_diff.txt|	Main differences between Nvim and Vim
 |vi_diff.txt|	Main differences between Vim and Vi
-|deprecated.txt|  Deprecated items that has been or will be removed
+|deprecated.txt|  Deprecated items that have been or will be removed
 
 Other ~
 |terminal_emulator.txt|	Terminal buffers
