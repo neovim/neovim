@@ -3088,7 +3088,7 @@ int msg_end(void)
    * we have to redraw the window.
    * Do not do this if we are abandoning the file or editing the command line.
    */
-  if (msg_enable_ext()) {
+  if (msg_enable_msgfunc()) {
     need_wait_return = false;
   } else if (!exiting && need_wait_return && !(State & CMDLINE)) {
     wait_return(false);
