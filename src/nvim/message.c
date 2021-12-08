@@ -307,12 +307,12 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   // message). Avoid doing so while msgfunc is active because then the recording
   // of messages is managed by the msgfunc's implementation, which is a separate
   // thing from the native history.
-  if (!msg_enable_msgfunc() &&
-      ((const char_u *)s != keep_msg ||
-       (*s != '<'
-        && last_msg_hist != NULL
-        && last_msg_hist->msg != NULL
-        && STRCMP(s, last_msg_hist->msg)))) {
+  if (!msg_enable_msgfunc()
+      && ((const char_u *)s != keep_msg
+          || (*s != '<'
+              && last_msg_hist != NULL
+              && last_msg_hist->msg != NULL
+              && STRCMP(s, last_msg_hist->msg)))) {
     add_msg_hist(s, -1, attr, multiline);
   }
 
@@ -3091,8 +3091,8 @@ int msg_end(void)
   if (msg_enable_ext()) {
     need_wait_return = false;
   } else if (!exiting && need_wait_return && !(State & CMDLINE)) {
-    wait_return(FALSE);
-    return FALSE;
+    wait_return(false);
+    return false;
   }
 
   // NOTE: ui_flush() used to be called here. This had to be removed, as it
