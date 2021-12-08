@@ -1531,6 +1531,7 @@ end
 ---
 ---@param items (table) list of items
 function M.set_loclist(items, win_id)
+  vim.api.nvim_echo({{'vim.lsp.util.set_loclist is deprecated. See :h deprecated', 'WarningMsg'}}, true, {})
   vim.fn.setloclist(win_id or 0, {}, ' ', {
     title = 'Language Server';
     items = items;
@@ -1544,6 +1545,7 @@ end
 ---
 ---@param items (table) list of items
 function M.set_qflist(items)
+  vim.api.nvim_echo({{'vim.lsp.util.set_qflist is deprecated. See :h deprecated', 'WarningMsg'}}, true, {})
   vim.fn.setqflist({}, ' ', {
     title = 'Language Server';
     items = items;
