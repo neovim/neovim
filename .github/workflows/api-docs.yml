@@ -26,7 +26,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y python3 luajit
+          conda install -c conda-forge doxygen=1.9.2 msgpack-python
+          echo "$CONDA/bin" >> $GITHUB_PATH
 
       - name: Setup git config
         run: |
