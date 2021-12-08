@@ -3205,10 +3205,6 @@ bool msg_enable_ext(void)
 
 bool msg_enable_msgfunc(void)
 {
-  if (*p_msgfunc == NUL) {
-    return;
-  }
-
   static bool starting_hitreturn = false;
   if (starting) {
     // this code assumes we're interested in outputting something if this
@@ -3245,6 +3241,10 @@ static void msg_call_msgfunc_event(void **argv)
 
 void msg_call_msgfunc(const char *method, Array *entries)
 {
+  if (*p_msgfunc == NUL) {
+    return;
+  }
+
   // call msgfunc(method, kind, chunks, overwrite)
   typval_T *args = xmalloc(sizeof(*args) * 5);
 
