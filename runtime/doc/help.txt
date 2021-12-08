@@ -93,6 +93,7 @@ REFERENCE MANUAL: These files explain every detail of Vim.	*reference_toc*
 
 General subjects ~
 |intro.txt|	general introduction to Vim; notation used in help files
+|nvim.txt|	Transitioning from Vim
 |help.txt|	overview and quick reference (this file)
 |helphelp.txt|	about using the help files
 |index.txt|	alphabetical index of all commands
@@ -133,17 +134,19 @@ Advanced editing ~
 |api.txt|	Nvim API via RPC, Lua and VimL
 
 Special issues ~
-|testing.txt|	testing Vim and Vim scripts
-|print.txt|	printing
-|remote.txt|	using Vim as a server or client
+|testing.txt|	    testing Vim and Vim scripts
+|print.txt|	    printing
+|remote_plugin.txt|   Nvim support for remote plugins
 
 Programming language support ~
 |indent.txt|       automatic indenting for C and other languages
 |lsp.txt|          Language Server Protocol (LSP)
 |treesitter.txt|   tree-sitter library for incremental parsing of buffers
+|diagnostic.txt|   Diagnostic framework
 |syntax.txt|       syntax highlighting
 |filetype.txt|     settings done specifically for a type of file
 |quickfix.txt|     commands for a quick edit-compile-fix cycle
+|provider.txt|     Built-in remote plugin hosts
 |ft_ada.txt|       Ada (the programming language) support
 |ft_ps1.txt|       Filetype plugin for Windows PowerShell
 |ft_raku.txt|      Filetype plugin for Raku
@@ -164,6 +167,7 @@ GUI ~
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim
+|if_perl.txt|	Perl interface
 |if_pyth.txt|	Python interface
 |if_ruby.txt|	Ruby interface
 |sign.txt|	debugging signs
@@ -171,6 +175,16 @@ Interfaces ~
 Versions ~
 |vim_diff.txt|	Main differences between Nvim and Vim
 |vi_diff.txt|	Main differences between Vim and Vi
+|deprecated.txt|  Deprecated items that have been or will be removed
+
+Other ~
+|terminal_emulator.txt|	Terminal buffers
+|term.txt|		Terminal UI
+|ui.txt|		Nvim UI protocol
+|channel.txt|		Nvim asynchronous IO
+|dev_style.txt|		Nvim style guide
+|job_control.txt|	Spawn and control multiple processes
+
 						*standard-plugin-list*
 Standard plugins ~
 |matchit.txt|      Extended |%| matching
