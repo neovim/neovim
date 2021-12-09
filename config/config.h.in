@@ -50,6 +50,7 @@
 #  undef HAVE_SYS_UIO_H
 # endif
 #endif
+#cmakedefine HAVE_FORKPTY
 
 #cmakedefine FEAT_TUI
 
