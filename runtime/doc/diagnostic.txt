@@ -574,61 +574,64 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
                     diagnostic |diagnostic-structure| or `nil` if {pat} fails
                     to match {str}.
 
-open_float({bufnr}, {opts})                      *vim.diagnostic.open_float()*
+open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                 Show diagnostics in a floating window.
 
                 Parameters: ~
-                    {bufnr}  number|nil Buffer number. Defaults to the current
-                             buffer.
-                    {opts}   table|nil Configuration table with the same keys
-                             as |vim.lsp.util.open_floating_preview()| in
-                             addition to the following:
-                             • namespace: (number) Limit diagnostics to the
-                               given namespace
-                             • scope: (string, default "line") Show
-                               diagnostics from the whole buffer ("buffer"),
-                               the current cursor line ("line"), or the
-                               current cursor position ("cursor").
-                             • pos: (number or table) If {scope} is "line" or
-                               "cursor", use this position rather than the
-                               cursor position. If a number, interpreted as a
-                               line number; otherwise, a (row, col) tuple.
-                             • severity_sort: (default false) Sort diagnostics
-                               by severity. Overrides the setting from
-                               |vim.diagnostic.config()|.
-                             • severity: See |diagnostic-severity|. Overrides
-                               the setting from |vim.diagnostic.config()|.
-                             • header: (string or table) String to use as the
-                               header for the floating window. If a table, it
-                               is interpreted as a [text, hl_group] tuple.
-                               Overrides the setting from
-                               |vim.diagnostic.config()|.
-                             • source: (string) Include the diagnostic source
-                               in the message. One of "always" or "if_many".
-                               Overrides the setting from
-                               |vim.diagnostic.config()|.
-                             • format: (function) A function that takes a
-                               diagnostic as input and returns a string. The
-                               return value is the text used to display the
-                               diagnostic. Overrides the setting from
-                               |vim.diagnostic.config()|.
-                             • prefix: (function, string, or table) Prefix
-                               each diagnostic in the floating window. If a
-                               function, it must have the signature
-                               (diagnostic, i, total) -> (string, string),
-                               where {i} is the index of the diagnostic being
-                               evaluated and {total} is the total number of
-                               diagnostics displayed in the window. The
-                               function should return a string which is
-                               prepended to each diagnostic in the window as
-                               well as an (optional) highlight group which
-                               will be used to highlight the prefix. If
-                               {prefix} is a table, it is interpreted as a
-                               [text, hl_group] tuple as in |nvim_echo()|;
-                               otherwise, if {prefix} is a string, it is
-                               prepended to each diagnostic in the window with
-                               no highlight. Overrides the setting from
-                               |vim.diagnostic.config()|.
+                    {opts}  table|nil Configuration table with the same keys
+                            as |vim.lsp.util.open_floating_preview()| in
+                            addition to the following:
+                            • bufnr: (number) Buffer number to show
+                              diagnostics from. Defaults to the current
+                              buffer.
+                            • namespace: (number) Limit diagnostics to the
+                              given namespace
+                            • scope: (string, default "line") Show diagnostics
+                              from the whole buffer ("buffer"), the current
+                              cursor line ("line"), or the current cursor
+                              position ("cursor"). Shorthand versions are also
+                              accepted ("c" for "cursor", "l" for "line", "b"
+                              for "buffer").
+                            • pos: (number or table) If {scope} is "line" or
+                              "cursor", use this position rather than the
+                              cursor position. If a number, interpreted as a
+                              line number; otherwise, a (row, col) tuple.
+                            • severity_sort: (default false) Sort diagnostics
+                              by severity. Overrides the setting from
+                              |vim.diagnostic.config()|.
+                            • severity: See |diagnostic-severity|. Overrides
+                              the setting from |vim.diagnostic.config()|.
+                            • header: (string or table) String to use as the
+                              header for the floating window. If a table, it
+                              is interpreted as a [text, hl_group] tuple.
+                              Overrides the setting from
+                              |vim.diagnostic.config()|.
+                            • source: (string) Include the diagnostic source
+                              in the message. One of "always" or "if_many".
+                              Overrides the setting from
+                              |vim.diagnostic.config()|.
+                            • format: (function) A function that takes a
+                              diagnostic as input and returns a string. The
+                              return value is the text used to display the
+                              diagnostic. Overrides the setting from
+                              |vim.diagnostic.config()|.
+                            • prefix: (function, string, or table) Prefix each
+                              diagnostic in the floating window. If a
+                              function, it must have the signature
+                              (diagnostic, i, total) -> (string, string),
+                              where {i} is the index of the diagnostic being
+                              evaluated and {total} is the total number of
+                              diagnostics displayed in the window. The
+                              function should return a string which is
+                              prepended to each diagnostic in the window as
+                              well as an (optional) highlight group which will
+                              be used to highlight the prefix. If {prefix} is
+                              a table, it is interpreted as a [text, hl_group]
+                              tuple as in |nvim_echo()|; otherwise, if
+                              {prefix} is a string, it is prepended to each
+                              diagnostic in the window with no highlight.
+                              Overrides the setting from
+                              |vim.diagnostic.config()|.
 
                 Return: ~
                     tuple ({float_bufnr}, {win_id})

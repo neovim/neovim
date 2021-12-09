@@ -517,8 +517,8 @@ local function diagnostic_move_pos(opts, pos)
     local float_opts = type(float) == "table" and float or {}
     vim.schedule(function()
       M.open_float(
-        vim.api.nvim_win_get_buf(win_id),
         vim.tbl_extend("keep", float_opts, {
+          bufnr = vim.api.nvim_win_get_buf(win_id),
           scope = "cursor",
           focus = false,
         })
@@ -1129,12 +1129,15 @@ end
 
 --- Show diagnostics in a floating window.
 ---
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param opts table|nil Configuration table with the same keys as
 ---            |vim.lsp.util.open_floating_preview()| in addition to the following:
+---            - bufnr: (number) Buffer number to show diagnostics from.
+---                     Defaults to the current buffer.
 ---            - namespace: (number) Limit diagnostics to the given namespace
 ---            - scope: (string, default "line") Show diagnostics from the whole buffer ("buffer"),
 ---                     the current cursor line ("line"), or the current cursor position ("cursor").
+---                     Shorthand versions are also accepted ("c" for "cursor", "l" for "line", "b"
+---                     for "buffer").
 ---            - pos: (number or table) If {scope} is "line" or "cursor", use this position rather
 ---                   than the cursor position. If a number, interpreted as a line number;
 ---                   otherwise, a (row, col) tuple.
@@ -1163,15 +1166,21 @@ end
 ---                      highlight.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
 ---@return tuple ({float_bufnr}, {win_id})
-function M.open_float(bufnr, opts)
-  vim.validate {
-    bufnr = { bufnr, 'n', true },
-    opts = { opts, 't', true },
-  }
+function M.open_float(opts, ...)
+  -- Support old (bufnr, opts) signature
+  local bufnr
+  if opts == nil or type(opts) == "number" then
+    bufnr = opts
+    opts = ...
+  else
+    vim.validate {
+      opts = { opts, 't', true },
+    }
+  end
 
   opts = opts or {}
-  bufnr = get_bufnr(bufnr)
-  local scope = opts.scope or "line"
+  bufnr = get_bufnr(bufnr or opts.bufnr)
+  local scope = ({l = "line", c = "cursor", b = "buffer"})[opts.scope] or opts.scope or "line"
   local lnum, col
   if scope == "line" or scope == "cursor" then
     if not opts.pos then
