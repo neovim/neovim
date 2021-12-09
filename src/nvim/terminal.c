@@ -701,7 +701,17 @@ void terminal_receive(Terminal *term, char *data, size_t len)
     return;
   }
 
-  vterm_input_write(term->vt, data, len);
+  // Because libvterm uses VLA, it causes stack overflow when large data is
+  // written at once. To prevent this, the data will be split and written until
+  // libvterm is fixed (#16040).
+  size_t remain = len;
+  char *cur_pos = data;
+  while (remain) {
+    size_t write_len = remain > 1024 ? 1024 : remain;
+    vterm_input_write(term->vt, cur_pos, write_len);
+    cur_pos += write_len;
+    remain -= write_len;
+  }
   vterm_screen_flush_damage(term->vts);
 }
 

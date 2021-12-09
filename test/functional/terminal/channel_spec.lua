@@ -6,6 +6,7 @@ local exc_exec = helpers.exc_exec
 local feed = helpers.feed
 local sleep = helpers.sleep
 local poke_eventloop = helpers.poke_eventloop
+local assert_alive = helpers.assert_alive
 
 describe('associated channel is closed and later freed for terminal', function()
   before_each(clear)
@@ -45,5 +46,15 @@ describe('associated channel is closed and later freed for terminal', function()
     poke_eventloop()
     -- channel has been freed
     eq("Vim(call):E900: Invalid channel id", exc_exec([[call chansend(id, 'test')]]))
+  end)
+end)
+
+describe('associated channel', function()
+  before_each(clear)
+
+  it('does not crash when write large data', function()
+    command([[let id = nvim_open_term(0, {})]])
+    command([[call chansend(id, repeat([repeat('x', 187)."\r"], 12250))]])
+    assert_alive()
   end)
 end)
