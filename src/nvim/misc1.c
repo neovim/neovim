@@ -858,47 +858,6 @@ void preserve_exit(void)
   getout(1);
 }
 
-/*
- * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of os_breakcheck() for functions that check for
- * each line in the file.  Calling os_breakcheck() each time takes too much
- * time, because it can be a system call.
- */
-
-#ifndef BREAKCHECK_SKIP
-# define BREAKCHECK_SKIP 1000
-#endif
-
-static int breakcheck_count = 0;
-
-void line_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-/*
- * Like line_breakcheck() but check 10 times less often.
- */
-void fast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-// Like line_breakcheck() but check 100 times less often.
-void veryfast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
 /// Invalidates cached tags.
 ///

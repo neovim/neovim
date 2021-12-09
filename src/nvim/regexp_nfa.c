@@ -16,6 +16,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/garray.h"
+#include "nvim/os/input.h"
 
 /*
  * Logging of NFA engine.

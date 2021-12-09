@@ -100,6 +100,7 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/option.h"
+#include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/os_unix.h"
