@@ -1,8 +1,0 @@
-
-
-                             NVIM REFERENCE MANUAL
-
-Moved to |lua.txt|
-
-==============================================================================
- vim:tw=78:ts=8:noet:ft=help:norl:
