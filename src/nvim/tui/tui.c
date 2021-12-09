@@ -129,6 +129,7 @@ typedef struct {
     int set_cursor_style, reset_cursor_style;
     int save_title, restore_title;
     int get_bg;
+    int set_bg;
     int set_underline_style;
     int set_underline_color;
   } unibi_ext;
@@ -349,6 +350,13 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
+  if (data->input.saved_bg != -1) {
+    RgbValue bg = data->input.saved_bg;
+    UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xFF);
+    UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xFF);
+    UNIBI_SET_NUM_VAR(data->params[2], bg & 0xFF);
+    unibi_out_ext(ui, data->unibi_ext.set_bg);
+  }
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -1183,6 +1191,7 @@ static void tui_default_colors_set(UI *ui, Integer rgb_fg, Integer rgb_bg, Integ
   data->clear_attrs.cterm_fg_color = (int)cterm_fg;
   data->clear_attrs.cterm_bg_color = (int)cterm_bg;
 
+  tui_set_bg(ui);
   data->print_attr_id = -1;
   invalidate(ui, 0, data->grid.height, 0, data->grid.width);
 }
@@ -1331,6 +1340,19 @@ static void tui_screenshot(UI *ui, String path)
   fclose(f);
 }
 
+static void tui_set_bg(UI *ui)
+{
+  TUIData *data = ui->data;
+  if (ui->rgb) {
+    RgbValue bg = data->clear_attrs.rgb_bg_color;
+    if (bg > 0) {
+      UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xff);
+      UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xFF);
+      UNIBI_SET_NUM_VAR(data->params[2], bg & 0xFF);
+      unibi_out_ext(ui, data->unibi_ext.set_bg);
+    }
+  }
+}
 
 static void tui_option_set(UI *ui, String name, Object value)
 {
@@ -1338,6 +1360,7 @@ static void tui_option_set(UI *ui, String name, Object value)
   if (strequal(name.data, "termguicolors")) {
     ui->rgb = value.data.boolean;
 
+    tui_set_bg(ui);
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
   }
@@ -1757,6 +1780,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
 
   data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
                                                   "\x1b]11;?\x07");
+  data->unibi_ext.set_bg
+    = (int)unibi_add_ext_str(ut, "ext.set_bg",
+                             "\x1b]11;rgb:%p1%02x/%p2%02x/%p3%02x\x07");
 
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {

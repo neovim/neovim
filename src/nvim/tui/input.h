@@ -6,6 +6,7 @@
 
 #include "nvim/event/stream.h"
 #include "nvim/event/time.h"
+#include "nvim/highlight.h"
 
 typedef struct term_input {
   int in_fd;
@@ -15,6 +16,7 @@ typedef struct term_input {
   bool ttimeout;
   int8_t waiting_for_bg_response;
   long ttimeoutlen;
+  RgbValue saved_bg;
   TermKey *tk;
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook

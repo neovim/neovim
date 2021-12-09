@@ -44,6 +44,7 @@ void tinput_init(TermInput *input, Loop *loop)
   // safely access global variables.
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
+  input->saved_bg = -1;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
@@ -536,6 +537,7 @@ static HandleState handle_background_color(TermInput *input)
     DLOG("bg response: %s", bgvalue);
     loop_schedule_deferred(&main_loop,
                            event_create(set_bg_deferred, 1, bgvalue));
+    input->saved_bg = RGB_(rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
     input->waiting_for_bg_response = 0;
   } else if (!done && !bad) {
     // An incomplete sequence was found, waiting for the next input.
