@@ -788,50 +788,6 @@ int match_user(char_u *name)
   return result;
 }
 
-/// Preserve files and exit.
-/// @note IObuff must contain a message.
-/// @note This may be called from deadly_signal() in a signal handler, avoid
-///       unsafe functions, such as allocating memory.
-void preserve_exit(void)
-  FUNC_ATTR_NORETURN
-{
-  // 'true' when we are sure to exit, e.g., after a deadly signal
-  static bool really_exiting = false;
-
-  // Prevent repeated calls into this method.
-  if (really_exiting) {
-    if (input_global_fd() >= 0) {
-      // normalize stream (#2598)
-      stream_set_blocking(input_global_fd(), true);
-    }
-    exit(2);
-  }
-
-  really_exiting = true;
-  // Ignore SIGHUP while we are already exiting. #9274
-  signal_reject_deadly();
-  mch_errmsg(IObuff);
-  mch_errmsg("\n");
-  ui_flush();
-
-  ml_close_notmod();                // close all not-modified buffers
-
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      mch_errmsg("Vim: preserving files...\r\n");
-      ui_flush();
-      ml_sync_all(false, false, true);  // preserve all swap files
-      break;
-    }
-  }
-
-  ml_close_all(false);              // close all memfiles, without deleting
-
-  mch_errmsg("Vim: Finished.\r\n");
-
-  getout(1);
-}
-
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
 /// Invalidates cached tags.
 ///
