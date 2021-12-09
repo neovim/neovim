@@ -1841,6 +1841,17 @@ char_u *ml_get_pos(const pos_T *pos)
   return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
+/// get codepoint at pos. pos must be either valid or have col set to MAXCOL!
+int gchar_pos(pos_T *pos)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  // When searching columns is sometimes put at the end of a line.
+  if (pos->col == MAXCOL) {
+    return NUL;
+  }
+  return utf_ptr2char(ml_get_pos(pos));
+}
+
 /// Return a pointer to a line in a specific buffer
 ///
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)

@@ -373,32 +373,6 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   return result;
 }
 
-int gchar_pos(pos_T *pos)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  // When searching columns is sometimes put at the end of a line.
-  if (pos->col == MAXCOL) {
-    return NUL;
-  }
-  return utf_ptr2char(ml_get_pos(pos));
-}
-
-/*
- * check_status: called when the status bars for the buffer 'buf'
- *               need to be updated
- */
-void check_status(buf_T *buf)
-{
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf && wp->w_status_height) {
-      wp->w_redr_status = TRUE;
-      if (must_redraw < VALID) {
-        must_redraw = VALID;
-      }
-    }
-  }
-}
-
 /// Ask for a reply from the user, 'y' or 'n'
 ///
 /// No other characters are accepted, the message is repeated until a valid
@@ -972,21 +946,6 @@ done:
 }
 
 /*
- * Free the list of files returned by expand_wildcards() or other expansion
- * functions.
- */
-void FreeWild(int count, char_u **files)
-{
-  if (count <= 0 || files == NULL) {
-    return;
-  }
-  while (count--) {
-    xfree(files[count]);
-  }
-  xfree(files);
-}
-
-/*
  * Return TRUE when need to go to Insert mode because of 'insertmode'.
  * Don't do this when still processing a command or a mapping.
  * Don't do this when inside a ":normal" command.
@@ -994,27 +953,4 @@ void FreeWild(int count, char_u **files)
 int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
-}
-
-/// Put the timestamp of an undo header in "buf[buflen]" in a nice format.
-void add_time(char_u *buf, size_t buflen, time_t tt)
-{
-  struct tm curtime;
-
-  if (time(NULL) - tt >= 100) {
-    os_localtime_r(&tt, &curtime);
-    if (time(NULL) - tt < (60L * 60L * 12L)) {
-      // within 12 hours
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
-    } else {
-      // longer ago
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-    }
-  } else {
-    int64_t seconds = time(NULL) - tt;
-    vim_snprintf((char *)buf, buflen,
-                 NGETTEXT("%" PRId64 " second ago",
-                          "%" PRId64 " seconds ago", (uint32_t)seconds),
-                 seconds);
-  }
 }

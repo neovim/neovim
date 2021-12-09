@@ -314,6 +314,19 @@ void update_curbuf(int type)
   update_screen(type);
 }
 
+/// called when the status bars for the buffer 'buf' need to be updated
+void redraw_buf_status_later(buf_T *buf)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf && wp->w_status_height) {
+      wp->w_redr_status = true;
+      if (must_redraw < VALID) {
+        must_redraw = VALID;
+      }
+    }
+  }
+}
+
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and

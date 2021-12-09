@@ -131,7 +131,7 @@ void changed_internal(void)
   curbuf->b_changed = true;
   curbuf->b_changed_invalid = true;
   ml_setflags(curbuf);
-  check_status(curbuf);
+  redraw_buf_status_later(curbuf);
   redraw_tabline = true;
   need_maketitle = true;  // set window title later
 }
@@ -517,7 +517,7 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
     if (ff) {
       save_file_ff(buf);
     }
-    check_status(buf);
+    redraw_buf_status_later(buf);
     redraw_tabline = true;
     need_maketitle = true;  // set window title later
     buf_inc_changedtick(buf);
