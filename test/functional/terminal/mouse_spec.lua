@@ -45,6 +45,12 @@ describe(':terminal mouse', function()
       eq('nt', eval('mode(1)'))
     end)
 
+    it('does not leave terminal mode on left-release', function()
+      if helpers.pending_win32(pending) then return end
+      feed('<LeftRelease>')
+      eq('t', eval('mode(1)'))
+    end)
+
     describe('with mouse events enabled by the program', function()
       before_each(function()
         thelpers.enable_mouse()
