@@ -9551,15 +9551,18 @@ static void ex_filetype(exarg_T *eap)
 void filetype_maybe_enable(void)
 {
   if (filetype_detect == kNone) {
-    source_runtime(FILETYPE_FILE, true);
+    // Normally .vim files are sourced before .lua files when both are
+    // supported, but we reverse the order here because we want the Lua
+    // autocommand to be defined first so that it runs first
+    source_runtime(FILETYPE_FILE, DIP_ALL);
     filetype_detect = kTrue;
   }
   if (filetype_plugin == kNone) {
-    source_runtime(FTPLUGIN_FILE, true);
+    source_runtime(FTPLUGIN_FILE, DIP_ALL);
     filetype_plugin = kTrue;
   }
   if (filetype_indent == kNone) {
-    source_runtime(INDENT_FILE, true);
+    source_runtime(INDENT_FILE, DIP_ALL);
     filetype_indent = kTrue;
   }
 }

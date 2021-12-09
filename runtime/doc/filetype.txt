@@ -24,12 +24,21 @@ Each time a new or existing file is edited, Vim will try to recognize the type
 of the file and set the 'filetype' option.  This will trigger the FileType
 event, which can be used to set the syntax highlighting, set options, etc.
 
-Detail: The ":filetype on" command will load this file:
+Detail: The ":filetype on" command will load these files:
+		$VIMRUNTIME/filetype.lua
 		$VIMRUNTIME/filetype.vim
-	This file is a Vim script that defines autocommands for the
-	BufNewFile and BufRead events.  If the file type is not found by the
-	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
-	contents of the file.
+	filetype.lua creates an autocommand that fires for all BufNewFile and
+	BufRead events. It tries to detect the filetype based off of the
+	file's extension or name.
+
+	filetype.vim is a Vim script that defines autocommands for the
+	BufNewFile and BufRead events. In contrast to filetype.lua, this
+	file creates separate BufNewFile and BufRead events for each filetype
+	pattern.
+
+	If the file type is not found by the name, the file
+	$VIMRUNTIME/scripts.vim is used to detect it from the contents of the
+	file.
 	When the GUI is running or will start soon, the |menu.vim| script is
 	also sourced.  See |'go-M'| about avoiding that.
 
@@ -149,9 +158,10 @@ is used.  The default value is set like this: >
 This means that the contents of compressed files are not inspected.
 
 							*new-filetype*
-If a file type that you want to use is not detected yet, there are four ways
-to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.vim
-file.  It will be overwritten when installing a new version of Vim.
+If a file type that you want to use is not detected yet, there are a few ways
+to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.lua
+or $VIMRUNTIME/filetype.vim files.  They will be overwritten when installing a
+new version of Nvim.
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
@@ -191,7 +201,7 @@ B. If you want to detect your file after the default file type checks.
 	au BufRead,BufNewFile *		if &ft == 'pascal' | set ft=mypascal
 								       | endif
 
-C. If your file type can be detected by the file name.
+C. If your file type can be detected by the file name or extension.
    1. Create your user runtime directory.  You would normally use the first
       item of the 'runtimepath' option.  Example for Unix: >
 	:!mkdir -p ~/.config/nvim
@@ -206,9 +216,38 @@ C. If your file type can be detected by the file name.
 	  au! BufRead,BufNewFile *.mine		setfiletype mine
 	  au! BufRead,BufNewFile *.xyz		setfiletype drawing
 	augroup END
-<     Write this file as "filetype.vim" in your user runtime directory.  For
+<
+      Write this file as "filetype.vim" in your user runtime directory.  For
       example, for Unix: >
 	:w ~/.config/nvim/filetype.vim
+<
+      Alternatively, create a file called "filetype.lua" that adds new
+      filetypes.
+      Example: >
+	vim.filetype.add({
+	  extension = {
+	    foo = "fooscript",
+	  },
+	  filename = {
+	    [".foorc"] = "foorc",
+	  },
+	  pattern = {
+	    [".*/etc/foo/.*%.conf"] = "foorc",
+	  },
+	})
+<
+      See |vim.filetype.add()|.
+						     *g:do_filetype_lua*
+      For now, Lua filetype detection is opt-in. You can enable it by adding
+      the following to your |init.vim|: >
+        let g:do_filetype_lua = 1
+<						     *g:did_load_filetypes*
+      In either case, the builtin filetype detection provided by Nvim can be
+      disabled by setting the did_load_filetypes global variable. If this
+      variable exists, $VIMRUNTIME/filetype.vim will not run.
+      Example: >
+	" Disable filetype.vim
+	let g:did_load_filetypes = 1
 
 <  3. To use the new filetype detection you must restart Vim.
 
@@ -245,9 +284,9 @@ D. If your filetype can only be detected by inspecting the contents of the
    $VIMRUNTIME/scripts.vim.
 
 						*remove-filetype*
-If a file type is detected that is wrong for you, install a filetype.vim or
-scripts.vim to catch it (see above).  You can set 'filetype' to a non-existing
-name to avoid that it will be set later anyway: >
+If a file type is detected that is wrong for you, install a filetype.lua,
+filetype.vim or scripts.vim to catch it (see above).  You can set 'filetype' to
+a non-existing name to avoid that it will be set later anyway: >
 	:set filetype=ignored
 
 If you are setting up a system with many users, and you don't want each user
