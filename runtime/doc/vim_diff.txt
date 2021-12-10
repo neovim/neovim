@@ -180,6 +180,7 @@ Commands:
   |:match| can be invoked before highlight group is defined
 
 Events:
+  |SearchWrapped|
   |Signal|
   |TabNewEntered|
   |TermClose|
