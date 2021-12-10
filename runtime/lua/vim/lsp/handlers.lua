@@ -379,7 +379,7 @@ local make_call_hierarchy_handler = function(direction)
         })
       end
     end
-    vim.fn.setqflist({}, ' ', {title = 'LSP call hierarchy', items = util.locations_to_items(result))
+    vim.fn.setqflist({}, ' ', {title = 'LSP call hierarchy', items = items)
     api.nvim_command("copen")
   end
 end
