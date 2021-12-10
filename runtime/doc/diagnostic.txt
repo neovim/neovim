@@ -296,7 +296,6 @@ Example: >
 	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
-==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
 config({opts}, {namespace})                          *vim.diagnostic.config()*
