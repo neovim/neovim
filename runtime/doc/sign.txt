@@ -47,6 +47,8 @@ The color of the column is set with the SignColumn highlight group
 
 	:highlight SignColumn guibg=darkgrey
 <
+If 'cursorline' is enabled, then the CursorLineSign highlight group is used
+|hl-CursorLineSign|.
 							*sign-identifier*
 Each placed sign is identified by a number called the sign identifier. This
 identifier is used to jump to the sign or to remove the sign. The identifier
@@ -130,6 +132,10 @@ See |sign_define()| for the equivalent Vim script function.
 
 	texthl={group}
 		Highlighting group used for the text item.
+
+	culhl={group}
+		Highlighting group used for the text item when the cursor is
+		on the same line as the sign and 'cursorline' is enabled.
 
 	Example: >
 		:sign define MySign text=>> texthl=Search linehl=DiffText
@@ -377,6 +383,9 @@ sign_define({list})
 		   text		text that is displayed when there is no icon
 				or the GUI is not being used.
 		   texthl	highlight group used for the text item
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled.
 		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
 				|hl-CursorLineNr|.
@@ -425,9 +434,13 @@ sign_getdefined([{name}])				*sign_getdefined()*
 				or the GUI is not being used.
 		   texthl	highlight group used for the text item; not
 				present if not set.
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled; not present if not
+				set.
 		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
-				|hl-CursorLineNr|.
+				|hl-CursorLineNr|; not present if not set.
 
 		Returns an empty List if there are no signs and when {name} is
 		not found.

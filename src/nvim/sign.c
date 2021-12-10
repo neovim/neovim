@@ -31,6 +31,7 @@ struct sign {
   char_u *sn_text;       // text used instead of pixmap
   int sn_line_hl;     // highlight ID for line
   int sn_text_hl;     // highlight ID for text
+  int sn_cul_hl;      // highlight ID for text on current line when 'cursorline' is set
   int sn_num_hl;      // highlight ID for line number
 };
 
@@ -499,6 +500,9 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
         if (sp->sn_line_hl != 0) {
           sattr.sat_linehl = syn_id2attr(sp->sn_line_hl);
         }
+        if (sp->sn_cul_hl != 0) {
+          sattr.sat_culhl = syn_id2attr(sp->sn_cul_hl);
+        }
         if (sp->sn_num_hl != 0) {
           sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
         }
@@ -901,7 +905,7 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
 
 /// Define a new sign or update an existing sign
 int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text, char_u *texthl,
-                        char *numhl)
+                        char_u *culhl, char *numhl)
 {
   sign_T *sp_prev;
   sign_T *sp;
@@ -939,15 +943,35 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
   }
 
   if (linehl != NULL) {
-    sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+    if (*linehl == NUL) {
+      sp->sn_line_hl = 0;
+    } else {
+      sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+    }
   }
 
   if (texthl != NULL) {
-    sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+    if (*texthl == NUL) {
+      sp->sn_text_hl = 0;
+    } else {
+      sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+    }
+  }
+
+  if (culhl != NULL) {
+    if (*culhl == NUL) {
+      sp->sn_cul_hl = 0;
+    } else {
+      sp->sn_cul_hl = syn_check_group((char *)culhl, (int)STRLEN(culhl));
+    }
   }
 
   if (numhl != NULL) {
-    sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+    if (*numhl == NUL) {
+      sp->sn_num_hl = 0;
+    } else {
+      sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+    }
   }
 
   return OK;
@@ -1133,6 +1157,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   char_u *text = NULL;
   char_u *linehl = NULL;
   char_u *texthl = NULL;
+  char_u *culhl = NULL;
   char_u *numhl = NULL;
   int failed = false;
 
@@ -1155,6 +1180,9 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
     } else if (STRNCMP(arg, "texthl=", 7) == 0) {
       arg += 7;
       texthl = vim_strnsave(arg, (size_t)(p - arg));
+    } else if (STRNCMP(arg, "culhl=", 6) == 0) {
+      arg += 6;
+      culhl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "numhl=", 6) == 0) {
       arg += 6;
       numhl = vim_strnsave(arg, (size_t)(p - arg));
@@ -1166,13 +1194,14 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   }
 
   if (!failed) {
-    sign_define_by_name(sign_name, icon, linehl, text, texthl, (char *)numhl);
+    sign_define_by_name(sign_name, icon, linehl, text, texthl, culhl, (char *)numhl);
   }
 
   xfree(icon);
   xfree(text);
   xfree(linehl);
   xfree(texthl);
+  xfree(culhl);
   xfree(numhl);
 }
 
@@ -1481,6 +1510,13 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
     }
     tv_dict_add_str(retdict, S_LEN("texthl"), (char *)p);
   }
+  if (sp->sn_cul_hl > 0) {
+    p = get_highlight_name_ext(NULL, sp->sn_cul_hl - 1, false);
+    if (p == NULL) {
+      p = "NONE";
+    }
+    tv_dict_add_str(retdict, S_LEN("culhl"), (char *)p);
+  }
   if (sp->sn_num_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_num_hl - 1, false);
     if (p == NULL) {
@@ -1603,6 +1639,16 @@ static void sign_list_defined(sign_T *sp)
     msg_puts(" texthl=");
     const char *const p = get_highlight_name_ext(NULL,
                                                  sp->sn_text_hl - 1, false);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
+      msg_puts(p);
+    }
+  }
+  if (sp->sn_cul_hl > 0) {
+    msg_puts(" culhl=");
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_cul_hl - 1, false);
     if (p == NULL) {
       msg_puts("NONE");
     } else {
@@ -1847,6 +1893,7 @@ int sign_define_from_dict(const char *name_arg, dict_T *dict)
   char *linehl = NULL;
   char *text = NULL;
   char *texthl = NULL;
+  char *culhl = NULL;
   char *numhl = NULL;
   int retval = -1;
 
@@ -1866,11 +1913,12 @@ int sign_define_from_dict(const char *name_arg, dict_T *dict)
     linehl = tv_dict_get_string(dict, "linehl", true);
     text   = tv_dict_get_string(dict, "text", true);
     texthl = tv_dict_get_string(dict, "texthl", true);
+    culhl  = tv_dict_get_string(dict, "culhl", true);
     numhl  = tv_dict_get_string(dict, "numhl", true);
   }
 
   if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
-                          (char_u *)text, (char_u *)texthl, numhl)
+                          (char_u *)text, (char_u *)texthl, (char_u *)culhl, numhl)
       == OK) {
     retval = 0;
   }
@@ -1881,6 +1929,7 @@ cleanup:
   xfree(linehl);
   xfree(text);
   xfree(texthl);
+  xfree(culhl);
   xfree(numhl);
 
   return retval;

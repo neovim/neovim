@@ -65,6 +65,8 @@ typedef enum {
   HLF_LNA,        // LineNrAbove
   HLF_LNB,        // LineNrBelow
   HLF_CLN,        // current line number when 'cursorline' is set
+  HLF_CLS,        // current line sign column
+  HLF_CLF,        // current line fold
   HLF_R,          // return to continue message and yes/no questions
   HLF_S,          // status lines
   HLF_SNC,        // status lines of not-current windows
@@ -122,6 +124,8 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_LNA] = "LineNrAbove",
   [HLF_LNB] = "LineNrBelow",
   [HLF_CLN] = "CursorLineNr",
+  [HLF_CLS] = "CursorLineSign",
+  [HLF_CLF] = "CursorLineFold",
   [HLF_R] = "Question",
   [HLF_S] = "StatusLine",
   [HLF_SNC] = "StatusLineNC",

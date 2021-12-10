@@ -661,6 +661,13 @@ function Test_no_space_before_xxx()
   let &columns = l:org_columns
 endfunction
 
+" Test for :highlight command errors
+func Test_highlight_cmd_errors()
+  if has('gui_running') || has('nvim')
+    call assert_fails('hi ' .. repeat('a', 201) .. ' ctermfg=black', 'E1249:')
+  endif
+endfunc
+
 " Test for using RGB color values in a highlight group
 func Test_xxlast_highlight_RGB_color()
   CheckCanRunGui

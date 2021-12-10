@@ -41,6 +41,7 @@ describe("folded lines", function()
         [9] = {bold = true, foreground = Screen.colors.Brown},
         [10] = {background = Screen.colors.LightGrey, underline = true},
         [11] = {bold=true},
+        [12] = {background = Screen.colors.Grey90},
       })
     end)
 
@@ -80,6 +81,117 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
+        ]])
+      end
+    end)
+
+    it("highlights with CursorLineFold when 'cursorline' is set", function()
+      command("set cursorline foldcolumn=2 foldmethod=marker")
+      command("hi link CursorLineFold Search")
+      insert(content1)
+      feed("zf3j")
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:  }This is a                                  |
+          {7:  }valid English                              |
+          {7:  }sentence composed by                       |
+          {7:  }an exhausted developer                     |
+          {7:  }in his cave.                               |
+          {6:  }{12:^                                           }|
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+        {7:  }This is a                                  |
+        {7:  }valid English                              |
+        {7:  }sentence composed by                       |
+        {7:  }an exhausted developer                     |
+        {7:  }in his cave.                               |
+        {6:  }{12:^                                           }|
+        {1:~                                            }|
+                                                     |
+        ]])
+      end
+      feed("k")
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:  }This is a                                  |
+          {7:  }valid English                              |
+          {7:  }sentence composed by                       |
+          {7:  }an exhausted developer                     |
+          {6:  }{12:^in his cave.                               }|
+          {7:  }                                           |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+        {7:  }This is a                                  |
+        {7:  }valid English                              |
+        {7:  }sentence composed by                       |
+        {7:  }an exhausted developer                     |
+        {6:  }{12:^in his cave.                               }|
+        {7:  }                                           |
+        {1:~                                            }|
+                                                     |
+        ]])
+      end
+      command("set cursorlineopt=line")
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:  }This is a                                  |
+          {7:  }valid English                              |
+          {7:  }sentence composed by                       |
+          {7:  }an exhausted developer                     |
+          {7:  }{12:^in his cave.                               }|
+          {7:  }                                           |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+        {7:  }This is a                                  |
+        {7:  }valid English                              |
+        {7:  }sentence composed by                       |
+        {7:  }an exhausted developer                     |
+        {7:  }{12:^in his cave.                               }|
+        {7:  }                                           |
+        {1:~                                            }|
+                                                     |
         ]])
       end
     end)

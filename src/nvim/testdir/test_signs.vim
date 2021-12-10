@@ -15,13 +15,13 @@ func Test_sign()
   " the icon name when listing signs.
   sign define Sign1 text=x
 
-  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error icon=../../pixmaps/stock_vim_find_help.png')
+  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error culhl=Search icon=../../pixmaps/stock_vim_find_help.png')
 
   " Test listing signs.
   let a=execute('sign list')
   call assert_match('^\nsign Sign1 text=x \nsign Sign2 ' .
 	      \ 'icon=../../pixmaps/stock_vim_find_help.png .*text=xy ' .
-	      \ 'linehl=Error texthl=Title$', a)
+	      \ 'linehl=Error texthl=Title culhl=Search$', a)
 
   let a=execute('sign list Sign1')
   call assert_equal("\nsign Sign1 text=x ", a)
@@ -125,6 +125,30 @@ func Test_sign()
   call assert_fails("sign define Sign4 text=abc linehl=Comment", 'E239:')
   " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
+
+  " an empty highlight argument for an existing sign clears it
+  sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_equal('TextHl', sl.texthl)
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY texthl= culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'texthl'))
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY linehl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'linehl'))
+  call assert_equal('CulHl', sl.culhl)
+
+  sign define SignY culhl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'culhl'))
+
+  sign undefine SignY
 
   " define sign with whitespace
   sign define Sign4 text=\ X linehl=Comment
@@ -392,19 +416,21 @@ func Test_sign_funcs()
   call sign_undefine()
 
   " Tests for sign_define()
-  let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error'}
+  let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error',
+              \ 'culhl': 'Visual'}
   call assert_equal(0, "sign1"->sign_define(attr))
   call assert_equal([{'name' : 'sign1', 'texthl' : 'Error',
-	      \ 'linehl' : 'Search', 'text' : '=>'}], sign_getdefined())
+	      \ 'linehl' : 'Search', 'culhl': 'Visual', 'text' : '=>'}],
+              \ sign_getdefined())
 
   " Define a new sign without attributes and then update it
   call sign_define("sign2")
   let attr = {'text' : '!!', 'linehl' : 'DiffAdd', 'texthl' : 'DiffChange',
-	      \ 'icon' : 'sign2.ico'}
+	      \ 'culhl': 'DiffDelete', 'icon' : 'sign2.ico'}
   call Sign_define_ignore_error("sign2", attr)
   call assert_equal([{'name' : 'sign2', 'texthl' : 'DiffChange',
-	      \ 'linehl' : 'DiffAdd', 'text' : '!!', 'icon' : 'sign2.ico'}],
-	      \ "sign2"->sign_getdefined())
+	      \ 'linehl' : 'DiffAdd', 'culhl' : 'DiffDelete', 'text' : '!!',
+              \ 'icon' : 'sign2.ico'}], "sign2"->sign_getdefined())
 
   " Test for a sign name with digits
   call assert_equal(0, sign_define(0002, {'linehl' : 'StatusLine'}))

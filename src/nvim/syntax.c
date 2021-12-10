@@ -115,6 +115,8 @@ static int include_none = 0;    // when 1 include "nvim/None"
 static int include_default = 0;  // when 1 include "nvim/default"
 static int include_link = 0;    // when 2 include "nvim/link" and "clear"
 
+#define MAX_SYN_NAME 200
+
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
@@ -6175,6 +6177,8 @@ static const char *highlight_init_both[] = {
   "default link LineNrAbove LineNr",
   "default link LineNrBelow LineNr",
   "default link QuickFixLine Search",
+  "default link CursorLineSign SignColumn",
+  "default link CursorLineFold FoldColumn",
   "default link Substitute Search",
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
@@ -7623,10 +7627,9 @@ int syn_name2id(const char *name)
 int syn_name2id_len(const char_u *name, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  char name_u[201];
+  char name_u[MAX_SYN_NAME + 1];
 
-  if (len == 0 || len > 200) {
-    // ID names over 200 chars don't deserve to be found!
+  if (len == 0 || len > MAX_SYN_NAME) {
     return 0;
   }
 
@@ -7684,6 +7687,10 @@ char_u *syn_id2name(int id)
 /// @return 0 for failure else the id of the group
 int syn_check_group(const char *name, int len)
 {
+  if (len > MAX_SYN_NAME) {
+    emsg(_(e_highlight_group_name_too_long));
+    return 0;
+  }
   int id = syn_name2id_len((char_u *)name, len);
   if (id == 0) {  // doesn't exist yet
     return syn_add_group(vim_strnsave((char_u *)name, len));
