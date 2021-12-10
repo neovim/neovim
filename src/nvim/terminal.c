@@ -1507,6 +1507,13 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   // Terminal height may have decreased before `invalid_end` reflects it.
   term->invalid_end = MIN(term->invalid_end, height);
 
+  // There are no invalid rows.
+  if (term->invalid_start >= term->invalid_end) {
+    term->invalid_start = INT_MAX;
+    term->invalid_end = -1;
+    return;
+  }
+
   for (int r = term->invalid_start, linenr = row_to_linenr(term, r);
        r < term->invalid_end; r++, linenr++) {
     fetch_row(term, r, width);
