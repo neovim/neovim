@@ -28,6 +28,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/input.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"

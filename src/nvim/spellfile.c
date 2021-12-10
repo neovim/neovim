@@ -239,6 +239,7 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/option.h"
+#include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/regexp.h"

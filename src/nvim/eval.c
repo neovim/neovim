@@ -303,6 +303,31 @@ const list_T *eval_msgpack_type_lists[] = {
   [kMPExt] = NULL,
 };
 
+dict_T *get_v_event(save_v_event_T *sve)
+{
+  dict_T *v_event = get_vim_var_dict(VV_EVENT);
+
+  if (v_event->dv_hashtab.ht_used > 0) {
+    // recursive use of v:event, save, make empty and restore later
+    sve->sve_did_save = true;
+    sve->sve_hashtab = v_event->dv_hashtab;
+    hash_init(&v_event->dv_hashtab);
+  } else {
+    sve->sve_did_save = false;
+  }
+  return v_event;
+}
+
+void restore_v_event(dict_T *v_event, save_v_event_T *sve)
+{
+  tv_dict_free_contents(v_event);
+  if (sve->sve_did_save) {
+    v_event->dv_hashtab = sve->sve_hashtab;
+  } else {
+    hash_init(&v_event->dv_hashtab);
+  }
+}
+
 // Return "n1" divided by "n2", taking care of dividing by zero.
 varnumber_T num_divide(varnumber_T n1, varnumber_T n2)
   FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT

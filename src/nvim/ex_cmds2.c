@@ -41,6 +41,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"

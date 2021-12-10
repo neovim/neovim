@@ -4,7 +4,9 @@
 #include <assert.h>
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/edit.h"
+#include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/getchar.h"
 #include "nvim/lib/kvec.h"
@@ -201,4 +203,34 @@ char *get_mode(void)
   }
 
   return buf;
+}
+
+/// Fires a ModeChanged autocmd.
+void trigger_modechanged(void)
+{
+  if (!has_event(EVENT_MODECHANGED)) {
+    return;
+  }
+
+  char *mode = get_mode();
+  if (STRCMP(mode, last_mode) == 0) {
+    xfree(mode);
+    return;
+  }
+
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
+  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+
+  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
+  char_u *pat = concat_str(pat_pre, (char_u *)mode);
+  xfree(pat_pre);
+
+  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
+  xfree(last_mode);
+  last_mode = mode;
+
+  xfree(pat);
+  restore_v_event(v_event, &save_v_event);
 }

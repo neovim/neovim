@@ -32,6 +32,7 @@
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/os/input.h"
 #include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"

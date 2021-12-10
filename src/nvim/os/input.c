@@ -183,6 +183,40 @@ void os_breakcheck(void)
   updating_screen = save_us;
 }
 
+#define BREAKCHECK_SKIP 1000
+static int breakcheck_count = 0;
+
+/// Check for CTRL-C pressed, but only once in a while.
+///
+/// Should be used instead of os_breakcheck() for functions that check for
+/// each line in the file.  Calling os_breakcheck() each time takes too much
+/// time, because it will use system calls to check for input.
+void line_breakcheck(void)
+{
+  if (++breakcheck_count >= BREAKCHECK_SKIP) {
+    breakcheck_count = 0;
+    os_breakcheck();
+  }
+}
+
+/// Like line_breakcheck() but check 10 times less often.
+void fast_breakcheck(void)
+{
+  if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
+    breakcheck_count = 0;
+    os_breakcheck();
+  }
+}
+
+/// Like line_breakcheck() but check 100 times less often.
+void veryfast_breakcheck(void)
+{
+  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
+    breakcheck_count = 0;
+    os_breakcheck();
+  }
+}
+
 
 /// Test whether a file descriptor refers to a terminal.
 ///

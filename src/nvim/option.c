@@ -7899,7 +7899,7 @@ void set_fileformat(int eol_style, int opt_flags)
   }
 
   // This may cause the buffer to become (un)modified.
-  check_status(curbuf);
+  redraw_buf_status_later(curbuf);
   redraw_tabline = true;
   need_maketitle = true;  // Set window title later.
 }

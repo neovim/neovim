@@ -373,32 +373,6 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   return result;
 }
 
-int gchar_pos(pos_T *pos)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  // When searching columns is sometimes put at the end of a line.
-  if (pos->col == MAXCOL) {
-    return NUL;
-  }
-  return utf_ptr2char(ml_get_pos(pos));
-}
-
-/*
- * check_status: called when the status bars for the buffer 'buf'
- *               need to be updated
- */
-void check_status(buf_T *buf)
-{
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf && wp->w_status_height) {
-      wp->w_redr_status = TRUE;
-      if (must_redraw < VALID) {
-        must_redraw = VALID;
-      }
-    }
-  }
-}
-
 /// Ask for a reply from the user, 'y' or 'n'
 ///
 /// No other characters are accepted, the message is repeated until a valid
@@ -814,91 +788,6 @@ int match_user(char_u *name)
   return result;
 }
 
-/// Preserve files and exit.
-/// @note IObuff must contain a message.
-/// @note This may be called from deadly_signal() in a signal handler, avoid
-///       unsafe functions, such as allocating memory.
-void preserve_exit(void)
-  FUNC_ATTR_NORETURN
-{
-  // 'true' when we are sure to exit, e.g., after a deadly signal
-  static bool really_exiting = false;
-
-  // Prevent repeated calls into this method.
-  if (really_exiting) {
-    if (input_global_fd() >= 0) {
-      // normalize stream (#2598)
-      stream_set_blocking(input_global_fd(), true);
-    }
-    exit(2);
-  }
-
-  really_exiting = true;
-  // Ignore SIGHUP while we are already exiting. #9274
-  signal_reject_deadly();
-  mch_errmsg(IObuff);
-  mch_errmsg("\n");
-  ui_flush();
-
-  ml_close_notmod();                // close all not-modified buffers
-
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      mch_errmsg("Vim: preserving files...\r\n");
-      ui_flush();
-      ml_sync_all(false, false, true);  // preserve all swap files
-      break;
-    }
-  }
-
-  ml_close_all(false);              // close all memfiles, without deleting
-
-  mch_errmsg("Vim: Finished.\r\n");
-
-  getout(1);
-}
-
-/*
- * Check for CTRL-C pressed, but only once in a while.
- * Should be used instead of os_breakcheck() for functions that check for
- * each line in the file.  Calling os_breakcheck() each time takes too much
- * time, because it can be a system call.
- */
-
-#ifndef BREAKCHECK_SKIP
-# define BREAKCHECK_SKIP 1000
-#endif
-
-static int breakcheck_count = 0;
-
-void line_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-/*
- * Like line_breakcheck() but check 10 times less often.
- */
-void fast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
-// Like line_breakcheck() but check 100 times less often.
-void veryfast_breakcheck(void)
-{
-  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
-    breakcheck_count = 0;
-    os_breakcheck();
-  }
-}
-
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
 /// Invalidates cached tags.
 ///
@@ -1013,21 +902,6 @@ done:
 }
 
 /*
- * Free the list of files returned by expand_wildcards() or other expansion
- * functions.
- */
-void FreeWild(int count, char_u **files)
-{
-  if (count <= 0 || files == NULL) {
-    return;
-  }
-  while (count--) {
-    xfree(files[count]);
-  }
-  xfree(files);
-}
-
-/*
  * Return TRUE when need to go to Insert mode because of 'insertmode'.
  * Don't do this when still processing a command or a mapping.
  * Don't do this when inside a ":normal" command.
@@ -1035,82 +909,4 @@ void FreeWild(int count, char_u **files)
 int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
-}
-
-/// Put the timestamp of an undo header in "buf[buflen]" in a nice format.
-void add_time(char_u *buf, size_t buflen, time_t tt)
-{
-  struct tm curtime;
-
-  if (time(NULL) - tt >= 100) {
-    os_localtime_r(&tt, &curtime);
-    if (time(NULL) - tt < (60L * 60L * 12L)) {
-      // within 12 hours
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
-    } else {
-      // longer ago
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-    }
-  } else {
-    int64_t seconds = time(NULL) - tt;
-    vim_snprintf((char *)buf, buflen,
-                 NGETTEXT("%" PRId64 " second ago",
-                          "%" PRId64 " seconds ago", (uint32_t)seconds),
-                 seconds);
-  }
-}
-
-dict_T *get_v_event(save_v_event_T *sve)
-{
-  dict_T *v_event = get_vim_var_dict(VV_EVENT);
-
-  if (v_event->dv_hashtab.ht_used > 0) {
-    // recursive use of v:event, save, make empty and restore later
-    sve->sve_did_save = true;
-    sve->sve_hashtab = v_event->dv_hashtab;
-    hash_init(&v_event->dv_hashtab);
-  } else {
-    sve->sve_did_save = false;
-  }
-  return v_event;
-}
-
-void restore_v_event(dict_T *v_event, save_v_event_T *sve)
-{
-  tv_dict_free_contents(v_event);
-  if (sve->sve_did_save) {
-    v_event->dv_hashtab = sve->sve_hashtab;
-  } else {
-    hash_init(&v_event->dv_hashtab);
-  }
-}
-
-/// Fires a ModeChanged autocmd.
-void trigger_modechanged(void)
-{
-  if (!has_event(EVENT_MODECHANGED)) {
-    return;
-  }
-
-  char *mode = get_mode();
-  if (STRCMP(mode, last_mode) == 0) {
-    xfree(mode);
-    return;
-  }
-
-  save_v_event_T save_v_event;
-  dict_T *v_event = get_v_event(&save_v_event);
-  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
-  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
-
-  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
-  char_u *pat = concat_str(pat_pre, (char_u *)mode);
-  xfree(pat_pre);
-
-  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
-  xfree(last_mode);
-  last_mode = mode;
-
-  xfree(pat);
-  restore_v_event(v_event, &save_v_event);
 }
