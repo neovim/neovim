@@ -8,7 +8,6 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/main.h"
-#include "nvim/misc1.h"
 #include "nvim/os/os.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

@@ -29,6 +29,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/input.h"
 #include "nvim/keymap.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -36,7 +37,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
@@ -455,6 +455,15 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   typebuf.tb_no_abbr_cnt = 0;
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
+  }
+}
+
+/// flush map and typeahead buffers and give a warning for an error
+void beep_flush(void)
+{
+  if (emsg_silent == 0) {
+    flush_buffers(FLUSH_MINIMAL);
+    vim_beep(BO_ERROR);
   }
 }
 

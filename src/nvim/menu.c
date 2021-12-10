@@ -22,7 +22,6 @@
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"

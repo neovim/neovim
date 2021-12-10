@@ -21,7 +21,6 @@
 #include "nvim/assert.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"

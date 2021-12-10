@@ -23,12 +23,12 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/input.h"
 #include "nvim/keymap.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
@@ -75,6 +75,8 @@ static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;
 static int verbose_did_open = FALSE;
+
+bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 /*
  * When writing messages to the screen, there are many different situations.
@@ -1297,6 +1299,49 @@ void set_keep_msg(char *s, int attr)
   keep_msg_more = false;
   keep_msg_attr = attr;
 }
+
+void msgmore(long n)
+{
+  long pn;
+
+  if (global_busy           // no messages now, wait until global is finished
+      || !messaging()) {      // 'lazyredraw' set, don't do messages now
+    return;
+  }
+
+  // We don't want to overwrite another important message, but do overwrite
+  // a previous "more lines" or "fewer lines" message, so that "5dd" and
+  // then "put" reports the last action.
+  if (keep_msg != NULL && !keep_msg_more) {
+    return;
+  }
+
+  if (n > 0) {
+    pn = n;
+  } else {
+    pn = -n;
+  }
+
+  if (pn > p_report) {
+    if (n > 0) {
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld more line", "%ld more lines", pn),
+                   pn);
+    } else {
+      vim_snprintf(msg_buf, MSG_BUF_LEN,
+                   NGETTEXT("%ld line less", "%ld fewer lines", pn),
+                   pn);
+    }
+    if (got_int) {
+      xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
+    }
+    if (msg(msg_buf)) {
+      set_keep_msg(msg_buf, 0);
+      keep_msg_more = true;
+    }
+  }
+}
+
 
 void msg_ext_set_kind(const char *msg_kind)
 {

@@ -12,6 +12,7 @@
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
+#include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
 #include "nvim/lib/kvec.h"
@@ -20,7 +21,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
@@ -28,6 +28,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
+#include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -681,6 +682,116 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   return exitcode;
 }
 
+/// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
+/// Invalidates cached tags.
+///
+/// @return shell command exit code
+int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
+{
+  int retval;
+  proftime_T wait_time;
+
+  if (p_verbose > 3) {
+    verbose_enter();
+    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
+    msg_putchar('\n');
+    verbose_leave();
+  }
+
+  if (do_profiling == PROF_YES) {
+    prof_child_enter(&wait_time);
+  }
+
+  if (*p_sh == NUL) {
+    emsg(_(e_shellempty));
+    retval = -1;
+  } else {
+    // The external command may update a tags file, clear cached tags.
+    tag_freematch();
+
+    retval = os_call_shell(cmd, opts, extra_shell_arg);
+  }
+
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)retval);
+  if (do_profiling == PROF_YES) {
+    prof_child_exit(&wait_time);
+  }
+
+  return retval;
+}
+
+/// Get the stdout of an external command.
+/// If "ret_len" is NULL replace NUL characters with NL. When "ret_len" is not
+/// NULL store the length there.
+///
+/// @param  cmd      command to execute
+/// @param  infile   optional input file name
+/// @param  flags    can be kShellOptSilent or 0
+/// @param  ret_len  length of the stdout
+///
+/// @return an allocated string, or NULL for error.
+char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret_len)
+{
+  char_u *buffer = NULL;
+
+  if (check_secure()) {
+    return NULL;
+  }
+
+  // get a name for the temp file
+  char_u *tempname = vim_tempname();
+  if (tempname == NULL) {
+    emsg(_(e_notmp));
+    return NULL;
+  }
+
+  // Add the redirection stuff
+  char_u *command = make_filter_cmd(cmd, infile, tempname);
+
+  // Call the shell to execute the command (errors are ignored).
+  // Don't check timestamps here.
+  no_check_timestamps++;
+  call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
+  no_check_timestamps--;
+
+  xfree(command);
+
+  // read the names from the file into memory
+  FILE *fd = os_fopen((char *)tempname, READBIN);
+
+  if (fd == NULL) {
+    semsg(_(e_notopen), tempname);
+    goto done;
+  }
+
+  fseek(fd, 0L, SEEK_END);
+  size_t len = (size_t)ftell(fd);  // get size of temp file
+  fseek(fd, 0L, SEEK_SET);
+
+  buffer = xmalloc(len + 1);
+  size_t i = fread((char *)buffer, 1, len, fd);
+  fclose(fd);
+  os_remove((char *)tempname);
+  if (i != len) {
+    semsg(_(e_notread), tempname);
+    XFREE_CLEAR(buffer);
+  } else if (ret_len == NULL) {
+    // Change NUL into SOH, otherwise the string is truncated.
+    for (i = 0; i < len; i++) {
+      if (buffer[i] == NUL) {
+        buffer[i] = 1;
+      }
+    }
+
+    buffer[len] = NUL;          // make sure the buffer is terminated
+  } else {
+    *ret_len = len;
+  }
+
+done:
+  xfree(tempname);
+  return buffer;
+}
 /// os_system - synchronously execute a command in the shell
 ///
 /// example:

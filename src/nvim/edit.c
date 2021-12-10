@@ -35,7 +35,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
@@ -830,6 +829,16 @@ static int insert_execute(VimState *state, int key)
   }
 
   return insert_handle_key(s);
+}
+
+
+/// Return true when need to go to Insert mode because of 'insertmode'.
+///
+/// Don't do this when still processing a command or a mapping.
+/// Don't do this when inside a ":normal" command.
+bool goto_im(void)
+{
+  return p_im && stuff_empty() && typebuf_typed();
 }
 
 static int insert_handle_key(InsertState *s)

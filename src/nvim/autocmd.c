@@ -15,7 +15,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
-#include "nvim/misc1.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/regexp.h"

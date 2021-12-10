@@ -17,7 +17,6 @@
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/sign.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

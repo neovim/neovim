@@ -35,7 +35,6 @@
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
-#include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"

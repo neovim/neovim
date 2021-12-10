@@ -57,7 +57,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"

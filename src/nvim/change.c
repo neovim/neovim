@@ -19,7 +19,6 @@
 #include "nvim/indent_c.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
-#include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
@@ -1862,4 +1861,290 @@ void del_lines(long nlines, bool undo)
 
   // adjust marks, mark the buffer as changed and prepare for displaying
   deleted_lines_mark(first, n);
+}
+
+/// Returns the length in bytes of the prefix of the given string which introduces a comment.
+///
+/// If this string is not a comment then 0 is returned.
+/// When "flags" is not NULL, it is set to point to the flags of the recognized comment leader.
+/// "backward" must be true for the "O" command.
+/// If "include_space" is set, include trailing whitespace while calculating the length.
+int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_space)
+{
+  int i, j;
+  int result;
+  int got_com = false;
+  int found_one;
+  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
+  char_u *string;                  // pointer to comment string
+  char_u *list;
+  int middle_match_len = 0;
+  char_u *prev_list;
+  char_u *saved_flags = NULL;
+
+  result = i = 0;
+  while (ascii_iswhite(line[i])) {  // leading white space is ignored
+    i++;
+  }
+
+  // Repeat to match several nested comment strings.
+  while (line[i] != NUL) {
+    // scan through the 'comments' option for a match
+    found_one = false;
+    for (list = curbuf->b_p_com; *list;) {
+      // Get one option part into part_buf[].  Advance "list" to next
+      // one.  Put "string" at start of string.
+      if (!got_com && flags != NULL) {
+        *flags = list;              // remember where flags started
+      }
+      prev_list = list;
+      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      string = vim_strchr(part_buf, ':');
+      if (string == NULL) {         // missing ':', ignore this part
+        continue;
+      }
+      *string++ = NUL;              // isolate flags from string
+
+      // If we found a middle match previously, use that match when this
+      // is not a middle or end.
+      if (middle_match_len != 0
+          && vim_strchr(part_buf, COM_MIDDLE) == NULL
+          && vim_strchr(part_buf, COM_END) == NULL) {
+        break;
+      }
+
+      // When we already found a nested comment, only accept further
+      // nested comments.
+      if (got_com && vim_strchr(part_buf, COM_NEST) == NULL) {
+        continue;
+      }
+
+      // When 'O' flag present and using "O" command skip this one.
+      if (backward && vim_strchr(part_buf, COM_NOBACK) != NULL) {
+        continue;
+      }
+
+      // Line contents and string must match.
+      // When string starts with white space, must have some white space
+      // (but the amount does not need to match, there might be a mix of
+      // TABs and spaces).
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1])) {
+          continue;            // missing white space
+        }
+        while (ascii_iswhite(string[0])) {
+          string++;
+        }
+      }
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; j++) {
+      }
+      if (string[j] != NUL) {
+        continue;          // string doesn't match
+      }
+      // When 'b' flag used, there must be white space or an
+      // end-of-line after the string in the line.
+      if (vim_strchr(part_buf, COM_BLANK) != NULL
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
+        continue;
+      }
+
+      // We have found a match, stop searching unless this is a middle
+      // comment. The middle comment can be a substring of the end
+      // comment in which case it's better to return the length of the
+      // end comment and its flags.  Thus we keep searching with middle
+      // and end matches and use an end match if it matches better.
+      if (vim_strchr(part_buf, COM_MIDDLE) != NULL) {
+        if (middle_match_len == 0) {
+          middle_match_len = j;
+          saved_flags = prev_list;
+        }
+        continue;
+      }
+      if (middle_match_len != 0 && j > middle_match_len) {
+        // Use this match instead of the middle match, since it's a
+        // longer thus better match.
+        middle_match_len = 0;
+      }
+
+      if (middle_match_len == 0) {
+        i += j;
+      }
+      found_one = true;
+      break;
+    }
+
+    if (middle_match_len != 0) {
+      // Use the previously found middle match after failing to find a
+      // match with an end.
+      if (!got_com && flags != NULL) {
+        *flags = saved_flags;
+      }
+      i += middle_match_len;
+      found_one = true;
+    }
+
+    // No match found, stop scanning.
+    if (!found_one) {
+      break;
+    }
+
+    result = i;
+
+    // Include any trailing white space.
+    while (ascii_iswhite(line[i])) {
+      i++;
+    }
+
+    if (include_space) {
+      result = i;
+    }
+
+    // If this comment doesn't nest, stop here.
+    got_com = true;
+    if (vim_strchr(part_buf, COM_NEST) == NULL) {
+      break;
+    }
+  }
+  return result;
+}
+
+/// Return the offset at which the last comment in line starts. If there is no
+/// comment in the whole line, -1 is returned.
+///
+/// When "flags" is not null, it is set to point to the flags describing the
+/// recognized comment leader.
+int get_last_leader_offset(char_u *line, char_u **flags)
+{
+  int result = -1;
+  int i, j;
+  int lower_check_bound = 0;
+  char_u *string;
+  char_u *com_leader;
+  char_u *com_flags;
+  char_u *list;
+  int found_one;
+  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
+
+  // Repeat to match several nested comment strings.
+  i = (int)STRLEN(line);
+  while (--i >= lower_check_bound) {
+    // scan through the 'comments' option for a match
+    found_one = false;
+    for (list = curbuf->b_p_com; *list;) {
+      char_u *flags_save = list;
+
+      // Get one option part into part_buf[].  Advance list to next one.
+      // put string at start of string.
+      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      string = vim_strchr(part_buf, ':');
+      if (string == NULL) {  // If everything is fine, this cannot actually
+                             // happen.
+        continue;
+      }
+      *string++ = NUL;          // Isolate flags from string.
+      com_leader = string;
+
+      // Line contents and string must match.
+      // When string starts with white space, must have some white space
+      // (but the amount does not need to match, there might be a mix of
+      // TABs and spaces).
+      if (ascii_iswhite(string[0])) {
+        if (i == 0 || !ascii_iswhite(line[i - 1])) {
+          continue;
+        }
+        while (ascii_iswhite(*string)) {
+          string++;
+        }
+      }
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; j++) {
+        // do nothing
+      }
+      if (string[j] != NUL) {
+        continue;
+      }
+
+      // When 'b' flag used, there must be white space or an
+      // end-of-line after the string in the line.
+      if (vim_strchr(part_buf, COM_BLANK) != NULL
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
+        continue;
+      }
+
+      if (vim_strchr(part_buf, COM_MIDDLE) != NULL) {
+        // For a middlepart comment, only consider it to match if
+        // everything before the current position in the line is
+        // whitespace.  Otherwise we would think we are inside a
+        // comment if the middle part appears somewhere in the middle
+        // of the line.  E.g. for C the "*" appears often.
+        for (j = 0; j <= i && ascii_iswhite(line[j]); j++) {
+        }
+        if (j < i) {
+          continue;
+        }
+      }
+
+      // We have found a match, stop searching.
+      found_one = true;
+
+      if (flags) {
+        *flags = flags_save;
+      }
+      com_flags = flags_save;
+
+      break;
+    }
+
+    if (found_one) {
+      char_u part_buf2[COM_MAX_LEN];            // buffer for one option part
+      int len1, len2, off;
+
+      result = i;
+      // If this comment nests, continue searching.
+      if (vim_strchr(part_buf, COM_NEST) != NULL) {
+        continue;
+      }
+
+      lower_check_bound = i;
+
+      // Let's verify whether the comment leader found is a substring
+      // of other comment leaders. If it is, let's adjust the
+      // lower_check_bound so that we make sure that we have determined
+      // the comment leader correctly.
+
+      while (ascii_iswhite(*com_leader)) {
+        com_leader++;
+      }
+      len1 = (int)STRLEN(com_leader);
+
+      for (list = curbuf->b_p_com; *list;) {
+        char_u *flags_save = list;
+
+        (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
+        if (flags_save == com_flags) {
+          continue;
+        }
+        string = vim_strchr(part_buf2, ':');
+        string++;
+        while (ascii_iswhite(*string)) {
+          string++;
+        }
+        len2 = (int)STRLEN(string);
+        if (len2 == 0) {
+          continue;
+        }
+
+        // Now we have to verify whether string ends with a substring
+        // beginning the com_leader.
+        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
+          off--;
+          if (!STRNCMP(string + off, com_leader, len2 - off)) {
+            if (i - off < lower_check_bound) {
+              lower_check_bound = i - off;
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
 }

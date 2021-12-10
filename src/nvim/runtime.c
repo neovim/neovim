@@ -12,7 +12,6 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/lua/executor.h"
-#include "nvim/misc1.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/runtime.h"

@@ -17,7 +17,6 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
-#include "nvim/misc1.h"
 #include "nvim/os/input.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"

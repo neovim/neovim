@@ -34,7 +34,6 @@
 #include "nvim/map.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/os.h"
 #include "nvim/regexp.h"
