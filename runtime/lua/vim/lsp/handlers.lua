@@ -286,7 +286,7 @@ local function location_handler(_, result, ctx, _)
     util.jump_to_location(result[1])
 
     if #result > 1 then
-      diag.setqflist(util.locations_to_items(result))
+      vim.fn.setqflist({}, ' ', {title = 'LSP locations', items = util.locations_to_items(result))
       api.nvim_command("copen")
     end
   else
@@ -380,7 +380,7 @@ local make_call_hierarchy_handler = function(direction)
         })
       end
     end
-    diag.setqflist(items)
+    vim.fn.setqflist({}, ' ', {title = 'LSP call hierarchy', items = util.locations_to_items(result))
     api.nvim_command("copen")
   end
 end
