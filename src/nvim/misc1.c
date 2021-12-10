@@ -437,13 +437,3 @@ done:
   xfree(tempname);
   return buffer;
 }
-
-/*
- * Return TRUE when need to go to Insert mode because of 'insertmode'.
- * Don't do this when still processing a command or a mapping.
- * Don't do this when inside a ":normal" command.
- */
-int goto_im(void)
-{
-  return p_im && stuff_empty() && typebuf_typed();
-}
