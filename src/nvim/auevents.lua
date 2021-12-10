@@ -76,6 +76,7 @@ return {
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
     'RemoteReply',            -- upon string reception from a remote vim
+    'SearchWrapped',          -- after the search wrapped around
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".

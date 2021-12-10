@@ -824,6 +824,10 @@ RemoteReply			When a reply from a Vim that functions as
 				Note that even if an autocommand is defined,
 				the reply should be read with |remote_read()|
 				to consume it.
+							*SearchWrapped*
+SearchWrapped			After making a search with |n| or |N| if the
+				search wraps around the document back to
+				the start/finish respectively.
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.

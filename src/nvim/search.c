@@ -1354,6 +1354,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
     }
     retval = 1;                     // pattern found
 
+    if (sia && sia->sa_wrapped) {
+      apply_autocmds(EVENT_SEARCHWRAPPED, NULL, NULL, false, NULL);
+    }
+
     /*
      * Add character and/or line offset
      */
