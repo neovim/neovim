@@ -30,6 +30,7 @@
 #cmakedefine HAVE_SETPGID
 #cmakedefine HAVE_SETSID
 #cmakedefine HAVE_SIGACTION
+#cmakedefine HAVE_STRNLEN
 #cmakedefine HAVE_STRCASECMP
 #cmakedefine HAVE_STRINGS_H
 #cmakedefine HAVE_STRNCASECMP

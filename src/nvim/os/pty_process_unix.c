@@ -15,7 +15,7 @@
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
-#else
+#elif !defined(__sun)
 # include <pty.h>
 #endif
 
@@ -198,7 +198,9 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cflag = CS8|CREAD;
   termios->c_lflag = ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK;
 
-  cfsetspeed(termios, 38400);
+  // not using cfsetspeed, not available on all platforms
+  cfsetispeed(termios, 38400);
+  cfsetospeed(termios, 38400);
 
 #ifdef IUTF8
   termios->c_iflag |= IUTF8;
