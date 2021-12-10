@@ -458,6 +458,15 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   }
 }
 
+/// flush map and typeahead buffers and give a warning for an error
+void beep_flush(void)
+{
+  if (emsg_silent == 0) {
+    flush_buffers(FLUSH_MINIMAL);
+    vim_beep(BO_ERROR);
+  }
+}
+
 /*
  * The previous contents of the redo buffer is kept in old_redobuffer.
  * This is used for the CTRL-O <.> command in insert mode.

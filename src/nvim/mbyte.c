@@ -42,6 +42,7 @@
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
+#include "nvim/getchar.h"
 #include "nvim/iconv.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

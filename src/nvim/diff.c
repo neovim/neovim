@@ -39,6 +39,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "xdiff/xdiff.h"

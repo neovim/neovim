@@ -93,6 +93,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
+#include "nvim/getchar.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
