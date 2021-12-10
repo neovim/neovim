@@ -20,7 +20,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/misc1.h"
 #include "nvim/mouse.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/os/input.h"

@@ -18,7 +18,6 @@
 #include "nvim/main.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/misc1.h"
 #include "nvim/os/signal.h"
 #include "nvim/vim.h"
 

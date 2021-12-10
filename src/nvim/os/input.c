@@ -17,7 +17,6 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/misc1.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/input.h"
 #include "nvim/state.h"

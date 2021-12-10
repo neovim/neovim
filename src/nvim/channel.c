@@ -10,7 +10,6 @@
 #include "nvim/event/socket.h"
 #include "nvim/fileio.h"
 #include "nvim/lua/executor.h"
-#include "nvim/misc1.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"

@@ -10,7 +10,6 @@
 #include "nvim/diff.h"
 #include "nvim/fold.h"
 #include "nvim/memline.h"
-#include "nvim/misc1.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/os_unix.h"
@@ -31,6 +30,32 @@
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
 
+/// Return true if "c" is a mouse key.
+bool is_mouse_key(int c)
+{
+  return c == K_LEFTMOUSE
+         || c == K_LEFTMOUSE_NM
+         || c == K_LEFTDRAG
+         || c == K_LEFTRELEASE
+         || c == K_LEFTRELEASE_NM
+         || c == K_MOUSEMOVE
+         || c == K_MIDDLEMOUSE
+         || c == K_MIDDLEDRAG
+         || c == K_MIDDLERELEASE
+         || c == K_RIGHTMOUSE
+         || c == K_RIGHTDRAG
+         || c == K_RIGHTRELEASE
+         || c == K_MOUSEDOWN
+         || c == K_MOUSEUP
+         || c == K_MOUSELEFT
+         || c == K_MOUSERIGHT
+         || c == K_X1MOUSE
+         || c == K_X1DRAG
+         || c == K_X1RELEASE
+         || c == K_X2MOUSE
+         || c == K_X2DRAG
+         || c == K_X2RELEASE;
+}
 /// Move the cursor to the specified row and column on the screen.
 /// Change current window if necessary. Returns an integer with the
 /// CURSOR_MOVED bit set if the cursor has moved or unset otherwise.

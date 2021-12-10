@@ -23,7 +23,6 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"

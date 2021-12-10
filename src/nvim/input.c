@@ -1,64 +1,24 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * misc1.c: functions that didn't seem to fit elsewhere
- */
+// input.c: high level functions for prompting the user or input
+// like yes/no or number prompts.
 
-#include <assert.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdbool.h>
-#include <string.h>
 
-#include "nvim/ascii.h"
-#include "nvim/buffer.h"
-#include "nvim/buffer_updates.h"
-#include "nvim/charset.h"
-#include "nvim/cursor.h"
-#include "nvim/diff.h"
-#include "nvim/edit.h"
-#include "nvim/eval.h"
-#include "nvim/event/stream.h"
-#include "nvim/ex_cmds.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/ex_getln.h"
-#include "nvim/fileio.h"
-#include "nvim/fold.h"
 #include "nvim/func_attr.h"
-#include "nvim/garray.h"
 #include "nvim/getchar.h"
-#include "nvim/indent.h"
-#include "nvim/indent_c.h"
-#include "nvim/main.h"
 #include "nvim/mbyte.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
-#include "nvim/misc1.h"
+#include "nvim/input.h"
 #include "nvim/mouse.h"
-#include "nvim/move.h"
-#include "nvim/option.h"
 #include "nvim/os/input.h"
-#include "nvim/os/os.h"
-#include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
-#include "nvim/os/time.h"
-#include "nvim/os_unix.h"
-#include "nvim/quickfix.h"
-#include "nvim/regexp.h"
-#include "nvim/screen.h"
-#include "nvim/search.h"
-#include "nvim/state.h"
-#include "nvim/strings.h"
-#include "nvim/tag.h"
 #include "nvim/ui.h"
-#include "nvim/undo.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "misc1.c.generated.h"
+# include "input.c.generated.h"
 #endif
 
 /// Ask for a reply from the user, 'y' or 'n'
@@ -106,43 +66,13 @@ int ask_yesno(const char *const str, const bool direct)
   return r;
 }
 
-/*
- * Return TRUE if "c" is a mouse key.
- */
-int is_mouse_key(int c)
-{
-  return c == K_LEFTMOUSE
-         || c == K_LEFTMOUSE_NM
-         || c == K_LEFTDRAG
-         || c == K_LEFTRELEASE
-         || c == K_LEFTRELEASE_NM
-         || c == K_MOUSEMOVE
-         || c == K_MIDDLEMOUSE
-         || c == K_MIDDLEDRAG
-         || c == K_MIDDLERELEASE
-         || c == K_RIGHTMOUSE
-         || c == K_RIGHTDRAG
-         || c == K_RIGHTRELEASE
-         || c == K_MOUSEDOWN
-         || c == K_MOUSEUP
-         || c == K_MOUSELEFT
-         || c == K_MOUSERIGHT
-         || c == K_X1MOUSE
-         || c == K_X1DRAG
-         || c == K_X1RELEASE
-         || c == K_X2MOUSE
-         || c == K_X2DRAG
-         || c == K_X2RELEASE;
-}
-
-/*
- * Get a key stroke directly from the user.
- * Ignores mouse clicks and scrollbar events, except a click for the left
- * button (used at the more prompt).
- * Doesn't use vgetc(), because it syncs undo and eats mapped characters.
- * Disadvantage: typeahead is ignored.
- * Translates the interrupt character for unix to ESC.
- */
+/// Get a key stroke directly from the user.
+///
+/// Ignores mouse clicks and scrollbar events, except a click for the left
+/// button (used at the more prompt).
+/// Doesn't use vgetc(), because it syncs undo and eats mapped characters.
+/// Disadvantage: typeahead is ignored.
+/// Translates the interrupt character for unix to ESC.
 int get_keystroke(MultiQueue *events)
 {
   char_u *buf = NULL;
@@ -180,7 +110,7 @@ int get_keystroke(MultiQueue *events)
       len += n;
       waited = 0;
     } else if (len > 0) {
-      ++waited;             // keep track of the waiting time
+      waited++;             // keep track of the waiting time
     }
     if (n > 0) {  // found a termcode: adjust length
       len = n;
@@ -232,7 +162,7 @@ int get_number(int colon, int *mouse_used)
   int typed = 0;
 
   if (mouse_used != NULL) {
-    *mouse_used = FALSE;
+    *mouse_used = false;
   }
 
   // When not printing messages, the user won't know what to type, return a
@@ -248,15 +178,15 @@ int get_number(int colon, int *mouse_used)
     if (ascii_isdigit(c)) {
       n = n * 10 + c - '0';
       msg_putchar(c);
-      ++typed;
+      typed++;
     } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
       if (typed > 0) {
         msg_puts("\b \b");
-        --typed;
+        typed--;
       }
       n /= 10;
     } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = TRUE;
+      *mouse_used = true;
       n = mouse_row + 1;
       break;
     } else if (n == 0 && c == ':' && colon) {
@@ -278,11 +208,10 @@ int get_number(int colon, int *mouse_used)
   return n;
 }
 
-/*
- * Ask the user to enter a number.
- * When "mouse_used" is not NULL allow using the mouse and in that case return
- * the line number.
- */
+/// Ask the user to enter a number.
+///
+/// When "mouse_used" is not NULL allow using the mouse and in that case return
+/// the line number.
 int prompt_for_number(int *mouse_used)
 {
   int i;
@@ -297,8 +226,8 @@ int prompt_for_number(int *mouse_used)
     msg_puts(_("Type number and <Enter> (q or empty cancels): "));
   }
 
-  /* Set the state such that text can be selected/copied/pasted and we still
-   * get mouse events. */
+  // Set the state such that text can be selected/copied/pasted and we still
+  // get mouse events.
   save_cmdline_row = cmdline_row;
   cmdline_row = 0;
   save_State = State;
@@ -306,7 +235,7 @@ int prompt_for_number(int *mouse_used)
   // May show different mouse shape.
   setmouse();
 
-  i = get_number(TRUE, mouse_used);
+  i = get_number(true, mouse_used);
   if (KeyTyped) {
     // don't call wait_return() now
     if (msg_row > 0) {
@@ -324,4 +253,3 @@ int prompt_for_number(int *mouse_used)
 
   return i;
 }
-

@@ -13,7 +13,6 @@
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/main.h"
-#include "nvim/misc1.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
