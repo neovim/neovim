@@ -45,6 +45,18 @@ describe(':terminal mouse', function()
       eq('nt', eval('mode(1)'))
     end)
 
+    it('will not exit the terminal mode on mouse clicks', function()
+      if helpers.pending_win32(pending) then return end
+      feed('<LeftMouse>')
+      eq('t', eval('mode(1)'))
+      feed('<LeftRelease>')
+      eq('t', eval('mode(1)'))
+      feed('<RightMouse>')
+      eq('t', eval('mode(1)'))
+      feed('<RightRelease>')
+      eq('t', eval('mode(1)'))
+    end)
+
     describe('with mouse events enabled by the program', function()
       before_each(function()
         thelpers.enable_mouse()

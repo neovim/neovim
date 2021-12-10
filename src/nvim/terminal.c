@@ -1296,6 +1296,12 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
+  // do not leave terminal mode on mouse clicks
+  if ((mouse_win->w_buffer->terminal == term)
+      && (c == K_LEFTMOUSE || c == K_LEFTRELEASE || c == K_RIGHTMOUSE || c == K_RIGHTRELEASE)) {
+    return false;
+  }
+
 end:
   ins_char_typebuf(c);
   return true;
