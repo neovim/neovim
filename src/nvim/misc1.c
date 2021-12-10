@@ -60,8 +60,6 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
 #endif
-// All user names (for ~user completion as done by shell).
-static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 
 /*
  * get_leader_len() returns the length in bytes of the prefix of the given
@@ -725,67 +723,6 @@ void vim_beep(unsigned val)
       msg_attr(_("Beep!"), HL_ATTR(HLF_W));
     }
   }
-}
-
-#if defined(EXITFREE)
-
-void free_users(void)
-{
-  ga_clear_strings(&ga_users);
-}
-
-#endif
-
-/*
- * Find all user names for user completion.
- * Done only once and then cached.
- */
-static void init_users(void)
-{
-  static int lazy_init_done = FALSE;
-
-  if (lazy_init_done) {
-    return;
-  }
-
-  lazy_init_done = TRUE;
-
-  os_get_usernames(&ga_users);
-}
-
-/*
- * Function given to ExpandGeneric() to obtain an user names.
- */
-char_u *get_users(expand_T *xp, int idx)
-{
-  init_users();
-  if (idx < ga_users.ga_len) {
-    return ((char_u **)ga_users.ga_data)[idx];
-  }
-  return NULL;
-}
-
-/*
- * Check whether name matches a user name. Return:
- * 0 if name does not match any user name.
- * 1 if name partially matches the beginning of a user name.
- * 2 is name fully matches a user name.
- */
-int match_user(char_u *name)
-{
-  int n = (int)STRLEN(name);
-  int result = 0;
-
-  init_users();
-  for (int i = 0; i < ga_users.ga_len; i++) {
-    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
-      return 2;       // full match
-    }
-    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
-      result = 1;       // partial match
-    }
-  }
-  return result;
 }
 
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
