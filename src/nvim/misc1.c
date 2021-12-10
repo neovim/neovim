@@ -325,48 +325,6 @@ int prompt_for_number(int *mouse_used)
   return i;
 }
 
-void msgmore(long n)
-{
-  long pn;
-
-  if (global_busy           // no messages now, wait until global is finished
-      || !messaging()) {      // 'lazyredraw' set, don't do messages now
-    return;
-  }
-
-  // We don't want to overwrite another important message, but do overwrite
-  // a previous "more lines" or "fewer lines" message, so that "5dd" and
-  // then "put" reports the last action.
-  if (keep_msg != NULL && !keep_msg_more) {
-    return;
-  }
-
-  if (n > 0) {
-    pn = n;
-  } else {
-    pn = -n;
-  }
-
-  if (pn > p_report) {
-    if (n > 0) {
-      vim_snprintf(msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld more line", "%ld more lines", pn),
-                   pn);
-    } else {
-      vim_snprintf(msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld line less", "%ld fewer lines", pn),
-                   pn);
-    }
-    if (got_int) {
-      xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
-    }
-    if (msg(msg_buf)) {
-      set_keep_msg(msg_buf, 0);
-      keep_msg_more = true;
-    }
-  }
-}
-
 /*
  * flush map and typeahead buffers and give a warning for an error
  */
