@@ -1,7 +1,6 @@
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
-local diag = require 'vim.diagnostic'
 local vim = vim
 local api = vim.api
 
