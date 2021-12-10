@@ -741,9 +741,20 @@ function module.read_file_list(filename, start)
   if not file then
     return nil
   end
+
+  -- There is no need to read more than the last 2MB of the log file, so seek
+  -- to that.
+  local file_size = file:seek("end")
+  local offset = file_size - 2000000
+  if offset < 0 then
+    offset = 0
+  end
+  file:seek("set", offset)
+
   local lines = {}
   local i = 1
-  for line in file:lines() do
+  local line = file:read("*l")
+  while line ~= nil do
     if i >= start then
       table.insert(lines, line)
       if #lines > maxlines then
@@ -751,6 +762,7 @@ function module.read_file_list(filename, start)
       end
     end
     i = i + 1
+    line = file:read("*l")
   end
   file:close()
   return lines
