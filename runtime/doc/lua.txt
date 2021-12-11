@@ -708,6 +708,38 @@ vim.mpack.decode({str})                                 *vim.mpack.decode*
         Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
 ------------------------------------------------------------------------------
+VIM.SPELL                                                           *lua-spell*
+
+vim.spell.check({str})                                      *vim.spell.check()*
+        Check {str} for spelling errors. Similar to the Vimscript function
+        |spellbadword()|.
+
+        Note: The behaviour of this function is dependent on: 'spelllang',
+        'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local
+        to the buffer. Consider calling this with |nvim_buf_call()|.
+
+        Example: >
+            vim.spell.check("the quik brown fox")
+            -->
+            {
+                {'quik', 'bad', 4}
+            }
+<
+
+        Parameters: ~
+            {str}    String to spell check.
+
+        Return: ~
+          List of tuples with three items:
+            - The badly spelled word.
+            - The type of the spelling error:
+                "bad"   spelling mistake
+                "rare"  rare word
+                "local" word only valid in another region
+                "caps"  word should start with Capital
+            - The position in {str} where the word begins.
+
+------------------------------------------------------------------------------
 VIM                                                     *lua-builtin*
 
 vim.api.{func}({...})                                   *vim.api*
