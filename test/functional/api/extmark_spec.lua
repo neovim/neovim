@@ -420,7 +420,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks move with open line', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     -- testing marks below are also moved
     feed("yyP")
     set_extmark(ns, marks[1], 0, 4)
@@ -489,7 +489,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks move with line splits (using enter)', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     -- testing marks below are also moved
     feed("yyP")
     set_extmark(ns, marks[1], 0, 4)
@@ -500,7 +500,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks at last line move on insert new line', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     set_extmark(ns, marks[1], 0, 4)
     feed('0i<cr><esc>')
     check_undo_redo(ns, marks[1], 0, 4, 1, 4)

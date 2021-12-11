@@ -4,7 +4,6 @@ local cimported = helpers.cimport(
   './src/nvim/os/shell.h',
   './src/nvim/option_defs.h',
   './src/nvim/main.h',
-  './src/nvim/misc1.h',
   './src/nvim/memory.h'
 )
 local ffi, eq = helpers.ffi, helpers.eq
