@@ -341,7 +341,10 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                      |diagnostic-severity|
 
                                  • virtual_text: (default true) Use virtual
-                                   text for diagnostics. Options:
+                                   text for diagnostics. If multiple
+                                   diagnostics are set for a namespace, one
+                                   prefix per diagnostic + the last diagnostic
+                                   message are shown. Options:
                                    • severity: Only show virtual text for
                                      diagnostics matching the given severity
                                      |diagnostic-severity|

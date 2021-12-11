@@ -560,7 +560,10 @@ end
 ---       - underline: (default true) Use underline for diagnostics. Options:
 ---                    * severity: Only underline diagnostics matching the given severity
 ---                    |diagnostic-severity|
----       - virtual_text: (default true) Use virtual text for diagnostics. Options:
+---       - virtual_text: (default true) Use virtual text for diagnostics. If multiple diagnostics
+---                       are set for a namespace, one prefix per diagnostic + the last diagnostic
+---                       message are shown.
+---                       Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|
 ---                       * source: (string) Include the diagnostic source in virtual
