@@ -4446,10 +4446,10 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SN_PREFCOND, fd);                              // <sectionID>
     putc(SNF_REQUIRED, fd);                             // <sectionflags>
 
-    size_t l = (size_t)write_spell_prefcond(NULL, &spin->si_prefcond);
+    size_t l = (size_t)write_spell_prefcond(NULL, &spin->si_prefcond, &fwv);
     put_bytes(fd, l, 4);                                // <sectionlen>
 
-    write_spell_prefcond(fd, &spin->si_prefcond);
+    write_spell_prefcond(fd, &spin->si_prefcond, &fwv);
   }
 
   // SN_REP: <repcount> <rep> ...
@@ -5793,7 +5793,7 @@ static int set_spell_finish(spelltab_T *new_st)
 
 // Write the table with prefix conditions to the .spl file.
 // When "fd" is NULL only count the length of what is written.
-static int write_spell_prefcond(FILE *fd, garray_T *gap)
+static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
 {
   assert(gap->ga_len >= 0);
 
@@ -5801,8 +5801,7 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap)
     put_bytes(fd, (uintmax_t)gap->ga_len, 2);           // <prefcondcnt>
   }
   size_t totlen = 2 + (size_t)gap->ga_len;  // <prefcondcnt> and <condlen> bytes
-  size_t x = 1;  // collect return value of fwrite()
-  for (int i = 0; i < gap->ga_len; ++i) {
+  for (int i = 0; i < gap->ga_len; i++) {
     // <prefcond> : <condlen> <condstr>
     char_u *p = ((char_u **)gap->ga_data)[i];
     if (p != NULL) {
@@ -5810,7 +5809,7 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap)
       if (fd != NULL) {
         assert(len <= INT_MAX);
         fputc((int)len, fd);
-        x &= fwrite(p, len, 1, fd);
+        *fwv &= fwrite(p, len, 1, fd);
       }
       totlen += len;
     } else if (fd != NULL) {
