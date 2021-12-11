@@ -696,6 +696,13 @@ else()
     COMMENT "lualint: LUACHECK_PRG not defined")
 endif()
 
+add_custom_target(
+  check-error-codes
+  COMMAND nvim -u NONE -i NONE --headless -c "set nomore noswapfile" -c "luafile scripts/check-error-codes.lua" -c q
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${LUA_PRG}
+)
+
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
 set(CPACK_PACKAGE_VERSION ${NVIM_VERSION_MEDIUM})

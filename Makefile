@@ -205,6 +205,9 @@ check-single-includes: build/.ran-cmake
 generated-sources: build/.ran-cmake
 	+$(BUILD_TOOL) -C build generated-sources
 
+check-error-codes: build/.ran-cmake
+	+$(BUILD_CMD) -C build check-error-codes
+
 appimage:
 	bash scripts/genappimage.sh
 
