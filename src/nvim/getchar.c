@@ -4001,7 +4001,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
   char_u *res;
   char_u *p = NULL;
   char_u *expr = NULL;
-  char_u *save_cmd;
   pos_T save_cursor;
   int save_msg_col;
   int save_msg_row;
@@ -4012,8 +4011,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
     expr = vim_strsave(mp->m_str);
     vim_unescape_ks(expr);
   }
-
-  save_cmd = save_cmdline_alloc();
 
   // Forbid changing text or using ":normal" to avoid most of the bad side
   // effects.  Also restore the cursor position.
@@ -4044,8 +4041,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
   curwin->w_cursor = save_cursor;
   msg_col = save_msg_col;
   msg_row = save_msg_row;
-
-  restore_cmdline_alloc(save_cmd);
 
   if (p == NULL) {
     return NULL;
