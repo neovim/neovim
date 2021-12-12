@@ -854,6 +854,16 @@ void init_default_mappings(void)
   add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>", NORMAL, true);
   add_map((char_u *)"<C-U> <C-G>u<C-U>", INSERT, true);
   add_map((char_u *)"<C-W> <C-G>u<C-W>", INSERT, true);
+
+  add_map((char_u *)"<Plug>(VimDiagnosticGotoNext) <Cmd>lua vim.diagnostic.goto_next {float=false}<CR>", NORMAL, true);
+  add_map((char_u *)"<Plug>(VimDiagnosticGotoPrev) <Cmd>lua vim.diagnostic.goto_prev {float=false}<CR>", NORMAL, true);
+  add_map((char_u *)"<Plug>(VimDiagnosticGotoLast) <Cmd>lua vim.diagnostic.goto_last {float=false}<CR>", NORMAL, true);
+  add_map((char_u *)"<Plug>(VimDiagnosticGotoFirst) <Cmd>lua vim.diagnostic.goto_first {float=false}<CR>", NORMAL, true);
+
+  add_map((char_u *)"]g <Plug>(VimDiagnosticGotoNext)", NORMAL, false);
+  add_map((char_u *)"[g <Plug>(VimDiagnosticGotoPrev)", NORMAL, false);
+  add_map((char_u *)"]G <Plug>(VimDiagnosticGotoLast)", NORMAL, false);
+  add_map((char_u *)"[G <Plug>(VimDiagnosticGotoFirst)", NORMAL, false);
 }
 
 // Insert a string in position 'offset' in the typeahead buffer (for "@r"

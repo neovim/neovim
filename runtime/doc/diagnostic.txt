@@ -298,6 +298,16 @@ Example: >
 	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({open = false })
 <
 ==============================================================================
+MAPS							*diagnostic-maps*
+
+]g			Goto the next diagnostic in the buffer.
+			|vim.diagnostic.goto_next()|
+]G			Goto the last diagnostic in the buffer.
+			|vim.diagnostic.goto_last()|
+[g			Goto the previous diagnostic in the buffer.
+			|vim.diagnostic.goto_prev()|
+[G			Goto the first diagnostic in the buffer.
+			|vim.diagnostic.goto_first()|
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
@@ -490,6 +500,18 @@ get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
 
                 Return: ~
                     table Previous diagnostic position as a (row, col) tuple.
+
+goto_first({opts})                               *vim.diagnostic.goto_first()*
+                Move to the first diagnostic in the current buffer.
+
+                Parameters: ~
+                    {opts}  table See |vim.diagnostic.goto_next()|
+
+goto_last({opts})                                 *vim.diagnostic.goto_last()*
+                Move to the last diagnostic in the current buffer.
+
+                Parameters: ~
+                    {opts}  table See |vim.diagnostic.goto_next()|
 
 goto_next({opts})                                 *vim.diagnostic.goto_next()*
                 Move to the next diagnostic.
