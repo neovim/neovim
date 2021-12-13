@@ -765,6 +765,44 @@ describe('TUI', function()
     ]])
   end)
 
+  it('paste: streamed paste with isolated "stop paste" code', function()
+    child_session:request('nvim_exec_lua', [[
+      _G.paste_phases = {}
+      vim.paste = (function(overridden)
+        return function(lines, phase)
+          table.insert(_G.paste_phases, phase)
+          overridden(lines, phase)
+        end
+      end)(vim.paste)
+    ]], {})
+    feed_data('i')
+    feed_data('\027[200~pasted')  -- phase 1
+    screen:expect([[
+      pasted{1: }                                           |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(' from terminal')  -- phase 2
+    screen:expect([[
+      pasted from terminal{1: }                             |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Send isolated "stop paste" sequence.
+    feed_data('\027[201~')  -- phase 3
+    screen:expect_unchanged()
+    local _, rv = child_session:request('nvim_exec_lua', [[return _G.paste_phases]], {})
+    eq({1, 2, 3}, rv)
+  end)
+
   it('allows termguicolors to be set at runtime', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
