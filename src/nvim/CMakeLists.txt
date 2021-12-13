@@ -326,7 +326,9 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
+  COMMAND ${CMAKE_COMMAND} -E env
+      "LUAC_PRG=${LUAC_PRG}"
+      ${LUA_PRG} ${CHAR_BLOB_GENERATOR} -c ${VIM_MODULE_FILE}
       ${LUA_VIM_MODULE_SOURCE} vim_module
       ${LUA_SHARED_MODULE_SOURCE} shared_module
       ${LUA_INSPECT_MODULE_SOURCE} inspect_module
@@ -339,6 +341,7 @@ add_custom_command(
     ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
     ${LUA_META_MODULE_SOURCE}
+  VERBATIM
 )
 
 list(APPEND NVIM_GENERATED_SOURCES

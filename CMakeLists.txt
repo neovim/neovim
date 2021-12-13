@@ -543,6 +543,24 @@ endif()
 
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
+if(PREFER_LUA)
+  foreach(CURRENT_LUAC_PRG luac5.1 luac)
+    find_program(_CHECK_LUAC_PRG ${CURRENT_LUAC_PRG})
+    if(_CHECK_LUAC_PRG)
+      set(LUAC_PRG "${_CHECK_LUAC_PRG} -s -o - %s" CACHE STRING "Format for compiling to Lua bytecode")
+      break()
+    endif()
+  endforeach()
+elseif(LUA_PRG MATCHES "luajit")
+  set(LUAC_PRG "${LUA_PRG} -b -s %s -" CACHE STRING "Format for compiling to Lua bytecode")
+endif()
+
+if(NOT LUAC_PRG)
+  message(FATAL_ERROR "No program exists to compile Lua bytecode")
+endif()
+
+message(STATUS "Using Lua compiler: ${LUAC_PRG}")
+
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
 find_program(BUSTED_LUA_PRG busted-lua)
