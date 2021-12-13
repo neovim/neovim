@@ -776,6 +776,10 @@ function lsp.start_client(config)
   ---@param code (number) exit code of the process
   ---@param signal (number) the signal used to terminate (if any)
   function dispatch.on_exit(code, signal)
+    if config.on_exit then
+      pcall(config.on_exit, code, signal, client_id)
+    end
+
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
 
@@ -790,10 +794,6 @@ function lsp.start_client(config)
       vim.schedule(function()
         vim.notify(msg, vim.log.levels.WARN)
       end)
-    end
-
-    if config.on_exit then
-      pcall(config.on_exit, code, signal, client_id)
     end
   end
 
