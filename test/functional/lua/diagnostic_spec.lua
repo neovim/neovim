@@ -1744,6 +1744,23 @@ describe('vim.diagnostic', function()
         return lines
       ]])
     end)
+
+    it('can provide its own diagnostics', function()
+      eq({'1. Here I am'}, exec_lua [[
+        local custom_diagnostics = {
+          make_error("Here I am", 0, 1, 0, 3),
+        }
+        local buffer_diagnostics = {
+          make_error("There you are", 0, 1, 0, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, buffer_diagnostics)
+        local float_bufnr, winnr = vim.diagnostic.open_float({ header = false }, custom_diagnostics)
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+    end)
   end)
 
   describe('setloclist()', function()

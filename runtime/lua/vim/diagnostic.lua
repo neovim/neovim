@@ -1171,16 +1171,21 @@ end
 ---                      string, it is prepended to each diagnostic in the window with no
 ---                      highlight.
 ---                      Overrides the setting from |vim.diagnostic.config()|.
+---@param diagnostics table|nil Diagnostics to show in the floating window. When omitted, uses the
+---                   {scope} and {bufnr} options from the {opts} table to find diagnostics. When
+---                   this option is given, {scope} and {bufnr} are ignored.
 ---@return tuple ({float_bufnr}, {win_id})
-function M.open_float(opts, ...)
+function M.open_float(opts, diagnostics)
   -- Support old (bufnr, opts) signature
   local bufnr
   if opts == nil or type(opts) == "number" then
     bufnr = opts
-    opts = ...
+    opts = diagnostics
+    diagnostics = nil
   else
     vim.validate {
       opts = { opts, 't', true },
+      diagnostics = { diagnostics, 't', true },
     }
   end
 
@@ -1215,20 +1220,21 @@ function M.open_float(opts, ...)
     opts = get_resolved_options({ float = float_opts }, nil, bufnr).float
   end
 
-  local diagnostics = get_diagnostics(bufnr, opts, true)
-
-  if scope == "line" then
-    diagnostics = vim.tbl_filter(function(d)
-      return d.lnum == lnum
-    end, diagnostics)
-  elseif scope == "cursor" then
-    -- LSP servers can send diagnostics with `end_col` past the length of the line
-    local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
-    diagnostics = vim.tbl_filter(function(d)
-      return d.lnum == lnum
-        and math.min(d.col, line_length - 1) <= col
-        and (d.end_col >= col or d.end_lnum > lnum)
-    end, diagnostics)
+  if not diagnostics then
+    diagnostics = get_diagnostics(bufnr, opts, true)
+    if scope == "line" then
+      diagnostics = vim.tbl_filter(function(d)
+        return d.lnum == lnum
+      end, diagnostics)
+    elseif scope == "cursor" then
+      -- LSP servers can send diagnostics with `end_col` past the length of the line
+      local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
+      diagnostics = vim.tbl_filter(function(d)
+        return d.lnum == lnum
+          and math.min(d.col, line_length - 1) <= col
+          and (d.end_col >= col or d.end_lnum > lnum)
+      end, diagnostics)
+    end
   end
 
   if vim.tbl_isempty(diagnostics) then
