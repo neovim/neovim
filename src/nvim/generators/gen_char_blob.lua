@@ -44,8 +44,15 @@ for argi = 2, #arg, 2 do
 
   local output
   if options.c then
-    output = assert(io.popen(os.getenv("LUAC_PRG"):format(source_file)):read("*a"))
-  else
+    local luac = os.getenv("LUAC_PRG")
+    if luac then
+      output = io.popen(luac:format(source_file)):read("*a")
+    else
+      print("LUAC_PRG is undefined")
+    end
+  end
+
+  if not output then
     local f = io.open(source_file)
     output = f:read("*a")
     f:close()
