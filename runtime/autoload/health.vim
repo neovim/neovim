@@ -29,7 +29,8 @@ function! health#check(plugin_names) abort
         \ ? s:discover_healthchecks()
         \ : s:get_healthcheck(a:plugin_names)
 
-  tabnew
+  " create scratch-buffer
+  execute 'tab sbuffer' nvim_create_buf(v:true, v:true)
   setlocal wrap breakindent linebreak
   setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
@@ -70,8 +71,6 @@ function! health#check(plugin_names) abort
 
   " needed for plasticboy/vim-markdown, because it uses fdm=expr
   normal! zR
-  setlocal nomodified
-  setlocal bufhidden=hide
   redraw|echo ''
 endfunction
 
