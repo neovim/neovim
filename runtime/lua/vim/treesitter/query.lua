@@ -326,6 +326,50 @@ local directive_handlers = {
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
       metadata.content = {range}
     end
+  end,
+
+  -- Spell checks the captures text and create sub captures of all the spelling
+  -- errors. Creates sub-captures: .bad, .rare, .caps and .local
+  -- Example: (#spellcheck! @spell)
+  ["spellcheck!"] = function(match, _, bufnr, pred, metadata)
+    local node = match[pred[2]]
+    local node_text = M.get_node_text(node, bufnr)
+
+    local newline_pos = {}
+    do
+      -- Find all the newline positions to detect what line we are on
+      local i = 0
+      while true do
+        i = string.find(node_text, '\n', i+1)
+        if i == nil then break end
+        newline_pos[#newline_pos+1] = i - i
+      end
+    end
+
+    local start_row, start_col = node:range()
+
+    local errors = {}
+    for _, res in ipairs(vim.spell.check(node_text)) do
+      local word, type, pos = unpack(res)
+
+      -- Detect if we have crossed a line boundary
+      if newline_pos[1] and pos > newline_pos[1] then
+        start_row = start_row + 1
+        pos = pos - newline_pos[1]
+        table.remove(newline_pos, 1)
+      end
+
+      errors[#errors+1] = {
+        type, {
+          start_row,
+          start_col + pos - 1,
+          start_row,
+          start_col + pos + #word - 1
+        }
+      }
+    end
+
+    metadata.sub_captures = errors[1] and errors
   end
 }
 

@@ -110,7 +110,12 @@ end
 --- Get the hl from capture.
 --- Returns a tuple { highlight_name: string, is_builtin: bool }
 function TSHighlighterQuery:_get_hl_from_capture(capture)
-  local name = self._query.captures[capture]
+  local name
+  if type(capture) == "string" then
+    name = capture
+  else
+    name = self._query.captures[capture]
+  end
 
   if is_highlight_name(name) then
     -- From "Normal.left" only keep "Normal"
@@ -263,6 +268,27 @@ local function on_line_impl(self, buf, line)
                                  priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
                                 })
       end
+
+      if metadata.sub_captures then
+        for _, sub_capture in ipairs(metadata.sub_captures) do
+          local sub_capture_name, range = unpack(sub_capture)
+          local capture_name = highlighter_query._query.captures[capture]
+
+          hl = highlighter_query.hl_cache[capture_name..'.'..sub_capture_name]
+
+          start_row, start_col, end_row, end_col = unpack(range)
+
+          if hl and end_row >= line then
+            a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
+                                   { end_line = end_row, end_col = end_col,
+                                     hl_group = hl,
+                                     ephemeral = true,
+                                     priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
+                                    })
+          end
+        end
+      end
+
       if start_row > line then
         state.next_row = start_row
       end
