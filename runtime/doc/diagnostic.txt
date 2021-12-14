@@ -347,9 +347,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                    • severity: Only show virtual text for
                                      diagnostics matching the given severity
                                      |diagnostic-severity|
-                                   • source: (string) Include the diagnostic
-                                     source in virtual text. One of "always"
-                                     or "if_many".
+                                   • source: (boolean or string) Include the
+                                     diagnostic source in virtual text. Use
+                                     "if_many" to only show sources if there
+                                     is more than one diagnostic source in the
+                                     buffer. Otherwise, any truthy value means
+                                     to always show the diagnostic source.
                                    • format: (function) A function that takes
                                      a diagnostic as input and returns a
                                      string. The return value is the text used
@@ -608,9 +611,12 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                               is interpreted as a [text, hl_group] tuple.
                               Overrides the setting from
                               |vim.diagnostic.config()|.
-                            • source: (string) Include the diagnostic source
-                              in the message. One of "always" or "if_many".
-                              Overrides the setting from
+                            • source: (boolean or string) Include the
+                              diagnostic source in the message. Use "if_many"
+                              to only show sources if there is more than one
+                              source of diagnostics in the buffer. Otherwise,
+                              any truthy value means to always show the
+                              diagnostic source. Overrides the setting from
                               |vim.diagnostic.config()|.
                             • format: (function) A function that takes a
                               diagnostic as input and returns a string. The
