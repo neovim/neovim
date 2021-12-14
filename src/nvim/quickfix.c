@@ -658,7 +658,8 @@ static int qf_get_next_str_line(qfstate_T *state)
     state->linebuf = IObuff;
     state->linelen = len;
   }
-  STRLCPY(state->linebuf, p_str, state->linelen + 1);
+  memcpy(state->linebuf, p_str, state->linelen);
+  state->linebuf[state->linelen] = '\0';
 
   // Increment using len in order to discard the rest of the line if it
   // exceeds LINE_MAXLEN.
