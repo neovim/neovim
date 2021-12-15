@@ -1253,15 +1253,55 @@ function M.stylize_markdown(bufnr, contents, opts)
   return stripped
 end
 
+---@private
 --- Creates autocommands to close a preview window when events happen.
 ---
----@param events (table) list of events
----@param winnr (number) window id of preview window
+---@param events table list of events
+---@param winnr number window id of preview window
+---@param bufnrs table list of buffers where the preview window will remain visible
 ---@see |autocmd-events|
-function M.close_preview_autocmd(events, winnr)
+local function close_preview_autocmd(events, winnr, bufnrs)
+  local augroup = 'preview_window_'..winnr
+
+  -- close the preview window when entered a buffer that is not
+  -- the floating window buffer or the buffer that spawned it
+  vim.cmd(string.format([[
+    augroup %s
+      autocmd!
+      autocmd BufEnter * lua vim.lsp.util._close_preview_window(%d, {%s})
+    augroup end
+  ]], augroup, winnr, table.concat(bufnrs, ',')))
+
   if #events > 0 then
-    api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
+    vim.cmd(string.format([[
+      augroup %s
+        autocmd %s <buffer> lua vim.lsp.util._close_preview_window(%d)
+      augroup end
+    ]], augroup, table.concat(events, ','), winnr))
   end
+end
+
+---@private
+--- Closes the preview window
+---
+---@param winnr number window id of preview window
+---@param bufnrs table|nil optional list of ignored buffers
+function M._close_preview_window(winnr, bufnrs)
+  vim.schedule(function()
+    -- exit if we are in one of ignored buffers
+    if bufnrs and vim.tbl_contains(bufnrs, api.nvim_get_current_buf()) then
+      return
+    end
+
+    local augroup = 'preview_window_'..winnr
+    vim.cmd(string.format([[
+      augroup %s
+        autocmd!
+      augroup end
+      augroup! %s
+    ]], augroup, augroup))
+    pcall(vim.api.nvim_win_close, winnr, true)
+  end)
 end
 
 ---@internal
@@ -1370,7 +1410,7 @@ function M.open_floating_preview(contents, syntax, opts)
   opts.wrap = opts.wrap ~= false -- wrapping by default
   opts.stylize_markdown = opts.stylize_markdown ~= false
   opts.focus = opts.focus ~= false
-  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre"}
+  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "InsertCharPre"}
 
   local bufnr = api.nvim_get_current_buf()
 
@@ -1439,7 +1479,7 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
   api.nvim_buf_set_keymap(floating_bufnr, "n", "q", "<cmd>bdelete<cr>", {silent = true, noremap = true, nowait = true})
-  M.close_preview_autocmd(opts.close_events, floating_winnr)
+  close_preview_autocmd(opts.close_events, floating_winnr, {floating_bufnr, bufnr})
 
   -- save focus_id
   if opts.focus_id then
