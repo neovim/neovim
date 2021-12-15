@@ -595,6 +595,7 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
       /* push the pair */
       result = lua_next(L, -2);
       assert(result);  /* should not be here if the map was fully processed */
+      (void)result; /* ignore unused warning */
       if (parent->key_visited) {
         /* release the current key */
         lmpack_unref(L, packer->reg, (int)parent->data[1].i);
@@ -1010,6 +1011,7 @@ static int lmpack_session_reply(lua_State *L)
       "invalid request id");
   result = mpack_rpc_reply(session->session, &b, &bl, (mpack_uint32_t)id);
   assert(result == MPACK_OK);
+  (void)result; /* ignore unused warning */
   lua_pushlstring(L, buf, sizeof(buf) - bl);
   return 1;
 }
@@ -1027,6 +1029,7 @@ static int lmpack_session_notify(lua_State *L)
   session = lmpack_check_session(L, 1);
   result = mpack_rpc_notify(session->session, &b, &bl);
   assert(result == MPACK_OK);
+  (void)result; /* ignore unused warning */
   lua_pushlstring(L, buf, sizeof(buf) - bl);
   return 1;
 }
