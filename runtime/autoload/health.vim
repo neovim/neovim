@@ -19,7 +19,7 @@ function! s:enhance_syntax() abort
   highlight default link healthHelp Identifier
 
   " We do not care about markdown syntax errors in :checkhealth output.
-  highlight! link markdownError Normal
+  syn clear markdownError
 endfunction
 
 " Runs the specified healthchecks.
