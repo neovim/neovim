@@ -3226,10 +3226,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 'inccommand' 'icm'	string	(default "nosplit")
 			global
 
-	"nosplit": Shows the effects of a command incrementally, as you type.
-	"split"	 : Also shows partial off-screen results in a preview window.
+	When nonempty, shows the effects of |:substitute|, |:smagic|, and
+	|:snomagic| as you type.
 
-	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
+	Possible values:
+		nosplit	Shows the effects of a command incrementally in the
+			buffer.
+		split	Like "nosplit", but also shows partial off-screen
+			results in a preview window.
 
 	If the preview is too slow (exceeds 'redrawtime') then 'inccommand' is
 	automatically disabled until |Command-line-mode| is done.
