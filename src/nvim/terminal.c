@@ -1466,6 +1466,17 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
+  // May still have pending scrollback after increase in terminal height if the
+  // scrollback wasn't refreshed in time; append these to the top of the buffer.
+  int row_offset = term->sb_pending;
+  while (term->sb_pending > 0 && buf->b_ml.ml_line_count < height) {
+    fetch_row(term, term->sb_pending - row_offset - 1, width);
+    ml_append(0, (uint8_t *)term->textbuf, 0, false);
+    appended_lines(0, 1);
+    term->sb_pending--;
+  }
+
+  row_offset -= term->sb_pending;
   while (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
@@ -1476,7 +1487,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
       ml_delete(1, false);
       deleted_lines(1, 1);
     }
-    fetch_row(term, -term->sb_pending, width);
+    fetch_row(term, -term->sb_pending - row_offset, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
     ml_append(buf_index, (uint8_t *)term->textbuf, 0, false);
     appended_lines(buf_index, 1);
