@@ -327,12 +327,12 @@ describe('incremental synchronization', function()
               line = 1
             },
             ['end'] = {
-              character = 9,
+              character = 4,
               line = 1
             }
           },
-          rangeLength = 5,
-          text = "_fdsa\nhello world\n1234 asdf"
+          rangeLength = 0,
+          text = "_fdsa\nhello world\n1234"
         },
         -- redo entire deletion
         {
@@ -342,12 +342,12 @@ describe('incremental synchronization', function()
               line = 1
             },
             ['end'] = {
-              character = 9,
+              character = 4,
               line = 3
             }
           },
-          rangeLength = 27,
-          text = ' asdf'
+          rangeLength = 22,
+          text = ''
         },
       }
       local original_lines = {
@@ -460,12 +460,12 @@ describe('incremental synchronization', function()
               line = 0
             },
             ['end'] = {
-              character = 17,
+              character = 12,
               line = 0
             }
           },
-          rangeLength = 6,
-          text = '\ntest3'
+          rangeLength = 1,
+          text = '\n'
         },
       }
       test_edit({"test1 test2", "test3"}, {"J", "u"}, expected_text_changes, 'utf-16', '\n')

@@ -93,31 +93,38 @@ end
 -- utf-8 index and either the utf-16, or utf-32 index.
 ---@param line string the line to index into
 ---@param byte integer the byte idx
+---@param start boolean true for start align, false for end align
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 ---@returns table<string, int> byte_idx and char_idx of first change position
-local function align_end_position(line, byte, offset_encoding)
+local function align_position(line, byte, start, offset_encoding)
+  if byte ~= 1 and byte <= #line then
+    -- Modifying line, find the nearest utf codepoint
+    local offset = str_utf_start(line, byte)
+
+    -- If the byte does not fall on the start of the character, then
+    -- align to the start of the next character if end align, and start
+    -- of this character if start align
+    if offset < 0 then
+      if start then
+        byte = byte + offset
+      else
+        byte = byte + str_utf_end(line, byte) + 1
+      end
+    end
+  end
+
   local char
-  -- If on the first byte, or an empty string: the trivial case
-  if byte == 1 or #line == 0 then
-    char = byte
+
+  -- optimize for first byte case
+  if byte == 1 then
+    char = 1
   -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
     char = compute_line_length(line, offset_encoding) + 1
   else
-    -- Modifying line, find the nearest utf codepoint
-    local offset = str_utf_start(line, byte)
-    -- If the byte does not fall on the start of the character, then
-    -- align to the start of the next character.
-    if offset < 0 then
-      byte = byte + str_utf_end(line, byte) + 1
-    end
-    if byte <= #line then
-      char = byte_to_utf(line, byte, offset_encoding)
-    else
-      char = compute_line_length(line, offset_encoding) + 1
-    end
-    -- Extending line, find the nearest utf codepoint for the last valid character
+    char = byte_to_utf(line, byte, offset_encoding)
   end
+
   return byte, char
 end
 
@@ -158,18 +165,7 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   end
 
   -- Convert byte to codepoint if applicable
-  local char_idx
-  local byte_idx
-  if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1)then
-    byte_idx = start_byte_idx
-    char_idx = 1
-  elseif start_byte_idx == #prev_line + 1 then
-    byte_idx = start_byte_idx
-    char_idx = compute_line_length(prev_line, offset_encoding)  + 1
-  else
-    byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
-    char_idx = byte_to_utf(prev_line, byte_idx, offset_encoding)
-  end
+  local byte_idx, char_idx = align_position(prev_line, start_byte_idx, true, offset_encoding)
 
   -- Return the start difference (shared for new and prev lines)
   return { line_idx = firstline, byte_idx = byte_idx, char_idx = char_idx }
@@ -210,51 +206,48 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
   local prev_line_length = #prev_line
   local curr_line_length = #curr_line
 
-  local byte_offset = 0
-
-  -- Editing the same line
-  -- If the byte offset is zero, that means there is a difference on the last byte (not newline)
-  if prev_line_idx == curr_line_idx then
-    local max_length
-    if start_line_idx == prev_line_idx then
-      -- Search until beginning of difference
-      max_length = min(prev_line_length - start_range.byte_idx, curr_line_length - start_range.byte_idx) + 1
-    else
-      max_length = min(prev_line_length, curr_line_length) + 1
-    end
-    for idx = 0, max_length do
-      byte_offset = idx
-      if
-        str_byte(prev_line, prev_line_length - byte_offset) ~= str_byte(curr_line, curr_line_length - byte_offset)
-      then
-        break
-      end
-    end
+  local prev_line_range, curr_line_range
+  if start_line_idx == prev_line_idx then
+    prev_line_range = prev_line_length - start_range.byte_idx
+  -- start_line_idx < prev_line_idx
+  else
+    prev_line_range = prev_line_length - 1
   end
+  if start_line_idx == curr_line_idx then
+    curr_line_range = curr_line_length - start_range.byte_idx
+  -- start_line_idx < curr_line_idx
+  else
+    curr_line_range = curr_line_length - 1
+  end
+
+  -- Maximum number of bytes to search backwards for mismatch
+  local max_length = min(prev_line_range, curr_line_range)
+
+  -- Negative offset to last shared byte between prev_line and curr_line
+  -- -1 offset indicates no shared byte
+  local byte_offset = -1
 
   -- Iterate from end to beginning of shortest line
-  local prev_end_byte_idx = prev_line_length - byte_offset + 1
-
-  -- Handle case where lines match
-  if prev_end_byte_idx == 0 then
-    prev_end_byte_idx = 1
+  for idx = 0, max_length do
+    byte_offset = idx
+    if
+      str_byte(prev_line, prev_line_length - byte_offset) ~= str_byte(curr_line, curr_line_length - byte_offset)
+    then
+      -- If there was a mismatched byte, need to go back to next byte (which did match)
+      byte_offset = byte_offset - 1
+      break
+    end
   end
-  local prev_byte_idx, prev_char_idx = align_end_position(prev_line, prev_end_byte_idx, offset_encoding)
+
+  local prev_end_byte_idx = prev_line_length - byte_offset
+
+  local prev_byte_idx, prev_char_idx = align_position(prev_line, prev_end_byte_idx, false, offset_encoding)
   local prev_end_range = { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
-  local curr_end_range
-  -- Deletion event, new_range cannot be before start
-  if curr_line_idx < start_line_idx then
-    curr_end_range = { line_idx = start_line_idx, byte_idx = 1, char_idx = 1 }
-  else
-    local curr_end_byte_idx = curr_line_length - byte_offset + 1
-    -- Handle case where lines match
-    if curr_end_byte_idx == 0 then
-      curr_end_byte_idx = 1
-    end
-    local curr_byte_idx, curr_char_idx = align_end_position(curr_line, curr_end_byte_idx, offset_encoding)
-    curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
-  end
+  local curr_end_byte_idx = curr_line_length - byte_offset
+
+  local curr_byte_idx, curr_char_idx = align_position(curr_line, curr_end_byte_idx, false, offset_encoding)
+  local curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
 
   return prev_end_range, curr_end_range
 end
