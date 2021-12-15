@@ -1011,7 +1011,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
     col -= wp->w_leftcol;
 
     if (col >= 0 && col < wp->w_width) {
-      coloff = col - scol + (local ? 0 : wp->w_wincol) + 1;
+      coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_border_adj[3]) + 1;
     } else {
       scol = ccol = ecol = 0;
       // character is left or right of the window
@@ -1022,7 +1022,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       }
     }
   }
-  *rowp = (local ? 0 : wp->w_winrow) + row + rowoff;
+  *rowp = (local ? 0 : wp->w_winrow + wp->w_border_adj[0]) + row + rowoff;
   *scolp = scol + coloff;
   *ccolp = ccol + coloff;
   *ecolp = ecol + coloff;
