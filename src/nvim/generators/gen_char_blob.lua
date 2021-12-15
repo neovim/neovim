@@ -12,7 +12,7 @@ end
 local options = {}
 
 while true do
-  local opt = string.match(arg[1], "-(%w)")
+  local opt = string.match(arg[1], "^-(%w)")
   if not opt then
     break
   end
@@ -37,25 +37,23 @@ for argi = 2, #arg, 2 do
   end
   varnames[varname] = source_file
 
-  local source = io.open(source_file, 'r')
-      or error(string.format("source_file %q doesn't exist", source_file))
-
   target:write(('static const uint8_t %s[] = {\n'):format(varname))
 
   local output
   if options.c then
     local luac = os.getenv("LUAC_PRG")
     if luac then
-      output = io.popen(luac:format(source_file)):read("*a")
+      output = io.popen(luac:format(source_file), "rb"):read("*a")
     else
       print("LUAC_PRG is undefined")
     end
   end
 
   if not output then
-    local f = io.open(source_file)
-    output = f:read("*a")
-    f:close()
+    local source = io.open(source_file, "r")
+        or error(string.format("source_file %q doesn't exist", source_file))
+    output = source:read("*a")
+    source:close()
   end
 
   local num_bytes = 0
@@ -78,7 +76,6 @@ for argi = 2, #arg, 2 do
   end
 
   target:write('  0};\n')
-  source:close()
 end
 
 target:close()
