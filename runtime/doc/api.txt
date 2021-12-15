@@ -1018,7 +1018,7 @@ nvim_get_mode()                                              *nvim_get_mode()*
                     {fast}
 
 nvim_get_option({name})                                    *nvim_get_option()*
-                Gets an option value string.
+                Gets the global value of an option.
 
                 Parameters: ~
                     {name}  Option name
@@ -1048,6 +1048,24 @@ nvim_get_option_info({name})                          *nvim_get_option_info()*
 
                 Return: ~
                     Option Information
+
+nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
+                Gets the value of an option. The behavior of this function
+                matches that of |:set|: the local value of an option is
+                returned if it exists; otherwise, the global value is
+                returned. Local values always correspond to the current buffer
+                or window. To get a buffer-local or window-local option for a
+                specific buffer or window, use |nvim_buf_get_option()| or
+                |nvim_win_get_option()|.
+
+                Parameters: ~
+                    {name}  Option name
+                    {opts}  Optional parameters
+                            • scope: One of 'global' or 'local'. Analagous to
+                              |:setglobal| and |:setlocal|, respectively.
+
+                Return: ~
+                    Option value
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
                 Gets info describing process `pid` .
@@ -1510,11 +1528,25 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                             key is an error.
 
 nvim_set_option({name}, {value})                           *nvim_set_option()*
-                Sets an option value.
+                Sets the global value of an option.
 
                 Parameters: ~
                     {name}   Option name
                     {value}  New option value
+
+                                                     *nvim_set_option_value()*
+nvim_set_option_value({name}, {value}, {*opts})
+                Sets the value of an option. The behavior of this function
+                matches that of |:set|: for global-local options, both the
+                global and local value are set unless otherwise specified with
+                {scope}.
+
+                Parameters: ~
+                    {name}   Option name
+                    {value}  New option value
+                    {opts}   Optional parameters
+                             • scope: One of 'global' or 'local'. Analagous to
+                               |:setglobal| and |:setlocal|, respectively.
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.
