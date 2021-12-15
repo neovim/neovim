@@ -1,27 +1,3 @@
-function! s:enhance_syntax() abort
-  syntax case match
-
-  syntax keyword healthError ERROR[:]
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight default link healthError Error
-
-  syntax keyword healthWarning WARNING[:]
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight default link healthWarning WarningMsg
-
-  syntax keyword healthSuccess OK[:]
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight default healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
-
-  syntax match healthHelp "|.\{-}|" contains=healthBar
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  syntax match healthBar  "|" contained conceal
-  highlight default link healthHelp Identifier
-
-  " We do not care about markdown syntax errors in :checkhealth output.
-  highlight! link markdownError Normal
-endfunction
-
 " Runs the specified healthchecks.
 " Runs all discovered healthchecks if a:plugin_names is empty.
 function! health#check(plugin_names) abort
@@ -29,13 +5,9 @@ function! health#check(plugin_names) abort
         \ ? s:discover_healthchecks()
         \ : s:get_healthcheck(a:plugin_names)
 
-  tabnew
-  setlocal wrap breakindent linebreak
-  setlocal filetype=markdown
-  setlocal conceallevel=2 concealcursor=nc
-  setlocal keywordprg=:help
-  let &l:iskeyword='!-~,^*,^|,^",192-255'
-  call s:enhance_syntax()
+  " create scratch-buffer
+  execute 'tab sbuffer' nvim_create_buf(v:true, v:true)
+  setfiletype checkhealth
 
   if empty(healthchecks)
     call setline(1, 'ERROR: No healthchecks found.')
@@ -70,8 +42,6 @@ function! health#check(plugin_names) abort
 
   " needed for plasticboy/vim-markdown, because it uses fdm=expr
   normal! zR
-  setlocal nomodified
-  setlocal bufhidden=hide
   redraw|echo ''
 endfunction
 

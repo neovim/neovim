@@ -156,7 +156,7 @@ describe('health.vim', function()
         test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
         ========================================================================
           - ERROR: Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
-            function health#check, line 24]])
+            function health#check, line 20]])
       eq(expected, received)
     end)
 
@@ -167,7 +167,7 @@ describe('health.vim', function()
         broken: health#broken#check
         ========================================================================
           - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
-            function health#check[24]..health#broken#check, line 1
+            function health#check[20]..health#broken#check, line 1
             caused an error
         ]])
     end)
@@ -186,7 +186,7 @@ describe('health.vim', function()
         test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
         ========================================================================
           - ERROR: Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
-            function health#check, line 24]])
+            function health#check, line 20]])
       eq(expected, received)
     end)
 
