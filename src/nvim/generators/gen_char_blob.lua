@@ -43,7 +43,7 @@ for argi = 2, #arg, 2 do
   if options.c then
     local luac = os.getenv("LUAC_PRG")
     if luac then
-      output = io.popen(luac:format(source_file), "rb"):read("*a")
+      output = io.popen(luac:format(source_file), "r"):read("*a")
     else
       print("LUAC_PRG is undefined")
     end
