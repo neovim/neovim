@@ -2213,4 +2213,43 @@ describe('builtin popupmenu', function()
     feed('<c-y>')
     assert_alive()
   end)
+
+  it('with one long double-width completion item and an odd number of available columns', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=menuone,noselect')
+    feed('i' .. string.rep(' ', 13))
+    funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
+    screen:expect([[
+                   ^                   |
+      {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+
+  it('with many long double-width completion items and an even number of available columns', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=noselect')
+    command('set pumheight=4')
+    feed('i' .. string.rep(' ', 12))
+    local items = {}
+    for _ = 1, 8 do
+      table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+    end
+    funcs.complete(13, items)
+    screen:expect([[
+                  ^                    |
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
 end)
