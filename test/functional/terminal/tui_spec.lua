@@ -677,8 +677,8 @@ describe('TUI', function()
       item 2997                                         |
       item 2998                                         |
       item 2999                                         |
-      item 3000 en{1:d}                                     |
-      {5:[No Name] [+]                   3000,13        Bot}|
+      item 3000 en{1:d}d                                    |
+      {5:[No Name] [+]                   5999,13        Bot}|
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
