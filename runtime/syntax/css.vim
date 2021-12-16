@@ -7,7 +7,7 @@
 "               Nikolai Weibull (Add CSS2 support)
 " URL:          https://github.com/vim-language-dept/css-syntax.vim
 " Maintainer:   Jay Sitter <jay@jaysitter.com>
-" Last Change:  2021 Oct 15
+" Last Change:  2021 Oct 20
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -116,7 +116,7 @@ syn keyword cssColor contained ActiveBorder ActiveCaption AppWorkspace ButtonFac
 syn case ignore
 
 syn match cssImportant contained "!\s*important\>"
-syn match cssCustomProp contained "--[a-zA-Z0-9-_]*"
+syn match cssCustomProp contained "\<--[a-zA-Z0-9-_]*\>"
 
 syn match cssColor contained "\<transparent\>"
 syn match cssColor contained "\<currentColor\>"
@@ -126,6 +126,7 @@ syn match cssColor contained "#\x\{6\}\>" contains=cssUnitDecorators
 syn match cssColor contained "#\x\{8\}\>" contains=cssUnitDecorators
 
 syn region cssURL contained matchgroup=cssFunctionName start="\<\(uri\|url\|local\|format\)\s*(" end=")" contains=cssStringQ,cssStringQQ oneline
+syn region cssMathGroup contained matchgroup=cssMathParens start="(" end=")" containedin=cssFunction,cssMathGroup contains=cssCustomProp,cssValue.*,cssFunction,cssColor,cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(var\|calc\)\s*(" end=")" contains=cssCustomProp,cssValue.*,cssFunction,cssColor,cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgb\|clip\|attr\|counter\|rect\|cubic-bezier\|steps\)\s*(" end=")" oneline  contains=cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgba\|hsl\|hsla\|color-stop\|from\|to\)\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma,cssFunction
@@ -395,9 +396,9 @@ syn match cssUIAttr contained '\<preserve-3d\>'
 syn match cssIEUIAttr contained '\<bicubic\>'
 
 " Webkit/iOS specific properties
-syn match cssUIProp contained '\<tap-highlight-color\|user-select\|touch-callout\>'
+syn match cssUIProp contained '\<\(tap-highlight-color\|user-select\|touch-callout\)\>'
 " IE specific properties
-syn match cssIEUIProp contained '\<interpolation-mode\|zoom\|filter\>'
+syn match cssIEUIProp contained '\<\(interpolation-mode\|zoom\|filter\)\>'
 
 " Webkit/Firebox specific properties/attributes
 syn keyword cssUIProp contained appearance
@@ -423,11 +424,15 @@ syn keyword cssAuralAttr contained male female child code digits continuous
 syn match cssMobileTextProp contained "\<text-size-adjust\>"
 
 syn keyword cssMediaProp contained width height orientation scan
-syn match cssMediaProp contained /\(\(max\|min\)-\)\=\(\(device\)-\)\=aspect-ratio/
-syn match cssMediaProp contained /\(\(max\|min\)-\)\=device-pixel-ratio/
-syn match cssMediaProp contained /\(\(max\|min\)-\)\=device-\(height\|width\)/
-syn match cssMediaProp contained /\(\(max\|min\)-\)\=\(height\|width\|resolution\|monochrome\|color\(-index\)\=\)/
+syn keyword cssMediaProp contained any-hover any-pointer color-gamut grid hover
+syn keyword cssMediaProp contained overflow-block overflow-inline pointer update
+syn match cssMediaProp contained /\<\(\(max\|min\)-\)\=\(\(device\)-\)\=aspect-ratio\>/
+syn match cssMediaProp contained /\<\(\(max\|min\)-\)\=device-pixel-ratio\>/
+syn match cssMediaProp contained /\<\(\(max\|min\)-\)\=device-\(height\|width\)\>/
+syn match cssMediaProp contained /\<\(\(max\|min\)-\)\=\(height\|width\|resolution\|monochrome\|color\(-index\)\=\)\>/
 syn keyword cssMediaAttr contained portrait landscape progressive interlace
+syn keyword cssMediaAttr contained coarse fast fine hover infinite p3 paged
+syn keyword cssMediaAttr contained rec2020 scroll slow srgb
 syn match cssKeyFrameProp contained /\(\d\+\(\.\d\+\)\?%\|\(\<from\|to\>\)\)/ nextgroup=cssDefinition
 syn match cssPageMarginProp /@\(\(top\|left\|right\|bottom\)-\(left\|center\|right\|middle\|bottom\)\)\(-corner\)\=/ contained nextgroup=cssDefinition
 syn keyword cssPageProp contained content size
@@ -445,17 +450,17 @@ syn match cssBraceError "}"
 syn match cssAttrComma ","
 
 " Pseudo class
-" http://www.w3.org/TR/css3-selectors/
+" https://www.w3.org/TR/selectors-4/
 syn match cssPseudoClass ":[A-Za-z0-9_-]*" contains=cssNoise,cssPseudoClassId,cssUnicodeEscape,cssVendor,cssPseudoClassFn
 syn keyword cssPseudoClassId contained link visited active hover before after left right
-syn keyword cssPseudoClassId contained root empty target enable disabled checked invalid
+syn keyword cssPseudoClassId contained root empty target enabled disabled checked invalid
 syn match cssPseudoClassId contained "\<first-\(line\|letter\)\>"
 syn match cssPseudoClassId contained "\<\(first\|last\|only\)-\(of-type\|child\)\>"
-syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(not\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ
+syn match cssPseudoClassId contained  "\<focus\(-within\|-visible\)\=\>"
+syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(not\|is\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ,cssTagName,cssAttributeSelector,cssClassName,cssIdentifier
 " ------------------------------------
 " Vendor specific properties
 syn match cssPseudoClassId contained  "\<selection\>"
-syn match cssPseudoClassId contained  "\<focus\(-inner\)\=\>"
 syn match cssPseudoClassId contained  "\<\(input-\)\=placeholder\>"
 
 " Misc highlight groups

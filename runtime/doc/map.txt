@@ -158,7 +158,7 @@ type "a", then "bar" will get inserted.
 "<unique>" can be used in any order.  They must appear right after the
 command, before any other arguments.
 
-				*:map-local* *:map-<buffer>* *E224* *E225*
+			*:map-local* *:map-<buffer>* *:map-buffer* *E224* *E225*
 If the first argument to one of these commands is "<buffer>" the mapping will
 be effective in the current buffer only.  Example: >
 	:map <buffer>  ,w  /[.,;]<CR>
@@ -211,7 +211,7 @@ Note: ":map <script>" and ":noremap <script>" do the same thing.  The
 "<script>" overrules the command name.  Using ":noremap <script>" is
 preferred, because it's clearer that remapping is (mostly) disabled.
 
-						*:map-<unique>* *E226* *E227*
+				*:map-<unique>* *:map-unique* *E226* *E227*
 If the first argument to one of these commands is "<unique>" and it is used to
 define a new mapping or abbreviation, the command will fail if the mapping or
 abbreviation already exists.  Example: >

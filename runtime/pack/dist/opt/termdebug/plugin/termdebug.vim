@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Nov 29
+" Last Change: 2021 Dec 16
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -609,7 +609,7 @@ endfunc
 " to the next ", unescaping characters:
 " - remove line breaks
 " - change \\t to \t
-" - change \0xhh to \xhh
+" - change \0xhh to \xhh (disabled for now)
 " - change \ooo to octal
 " - change \\ to \
 func s:DecodeMessage(quotedText)
@@ -618,12 +618,21 @@ func s:DecodeMessage(quotedText)
     return
   endif
   return a:quotedText
-        \->substitute('^"\|".*\|\\n', '', 'g')
-        \->substitute('\\t', "\t", 'g')
-        \->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
-        \->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
-        \->substitute('\\\\', '\', 'g')
+        \ ->substitute('^"\|".*\|\\n', '', 'g')
+        \ ->substitute('\\t', "\t", 'g')
+        " multi-byte characters arrive in octal form
+        " NULL-values must be kept encoded as those break the string otherwise
+        \ ->substitute('\\000', s:NullRepl, 'g')
+        \ ->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
+        " Note: GDB docs also mention hex encodings - the translations below work
+        "       but we keep them out for performance-reasons until we actually see
+        "       those in mi-returns
+        " \ ->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
+        " \ ->substitute('\\0x00', s:NullRepl, 'g')
+        \ ->substitute('\\\\', '\', 'g')
+        \ ->substitute(s:NullRepl, '\\000', 'g')
 endfunc
+const s:NullRepl = 'XXXNULLXXX'
 
 " Extract the "name" value from a gdb message with fullname="name".
 func s:GetFullname(msg)
@@ -1066,11 +1075,20 @@ let s:evalFromBalloonExprResult = ''
 
 " Handle the result of data-evaluate-expression
 func s:HandleEvaluate(msg)
-  let value = substitute(a:msg, '.*value="\(.*\)"', '\1', '')
-  let value = substitute(value, '\\"', '"', 'g')
-  " multi-byte characters arrive in octal form
-  let value = substitute(value, '\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
-  let value = substitute(value, '', '\1', '')
+  let value = a:msg
+        \ ->substitute('.*value="\(.*\)"', '\1', '')
+        \ ->substitute('\\"', '"', 'g')
+        \ ->substitute('\\\\', '\\', 'g')
+        "\ multi-byte characters arrive in octal form, replace everthing but NULL values
+        \ ->substitute('\\000', s:NullRepl, 'g')
+        \ ->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
+        "\ Note: GDB docs also mention hex encodings - the translations below work
+        "\       but we keep them out for performance-reasons until we actually see
+        "\       those in mi-returns
+        "\ ->substitute('\\0x00', s:NullRep, 'g')
+        "\ ->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
+        \ ->substitute(s:NullRepl, '\\000', 'g')
+        \ ->substitute('', '\1', '')
   if s:evalFromBalloonExpr
     if s:evalFromBalloonExprResult == ''
       let s:evalFromBalloonExprResult = s:evalexpr . ': ' . value
