@@ -23,6 +23,7 @@ local next_msg = helpers.next_msg
 local tmpname = helpers.tmpname
 local write_file = helpers.write_file
 local exec_lua = helpers.exec_lua
+local exc_exec = helpers.exc_exec
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -2239,6 +2240,14 @@ describe('API', function()
       ok(endswith(val[1], p"lua/vim/"))
 
       eq({}, meths.get_runtime_file("foobarlang/", true))
+    end)
+    it('can handle bad patterns', function()
+      if helpers.pending_win32(pending) then return end
+
+      eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
+
+      eq('Vim(echo):E5555: API call: Vim:E220: Missing }.',
+        exc_exec("echo nvim_get_runtime_file('{', v:false)"))
     end)
   end)
 
