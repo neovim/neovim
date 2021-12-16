@@ -297,11 +297,6 @@ local function restore_extmarks(bufnr, last)
       if not found[extmark[1]] then
         local opts = extmark[4]
         opts.id = extmark[1]
-        -- HACK: end_row should be end_line
-        if opts.end_row then
-          opts.end_line = opts.end_row
-          opts.end_row = nil
-        end
         pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
       end
     end
