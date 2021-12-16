@@ -1047,6 +1047,12 @@ from within Lua.
 In any of the above examples, to replicate the behavior |setlocal|, use
 `vim.opt_local`. Additionally, to replicate the behavior of |setglobal|, use
 `vim.opt_global`.
+
+To clear the local value of a |global-local| option set it to "nil". Example: >
+        vim.opt_local.makeprg = nil
+This is equivalent to >
+        :set makeprg<
+<
                                                                      *vim.opt*
 
 |vim.opt| returns an Option object.

@@ -1295,7 +1295,7 @@ describe('lua stdlib', function()
         vim.opt.shiftwidth = 8
         vim.opt_local.shiftwidth = 4
         table.insert(result, vim.opt_local.shiftwidth:get())
-        vim.opt_local.shiftwidth = nil
+        vim.opt_local.shiftwidth = vim.opt_global.shiftwidth:get()
         table.insert(result, vim.opt_local.shiftwidth:get())
         return result
       ]]
@@ -1317,7 +1317,7 @@ describe('lua stdlib', function()
 
       eq("make", result[1])
       eq("dance", result[2])
-      eq("make", result[3])
+      eq("", result[3])
     end)
 
     it('should allow you to retrieve window opts even if they have not been set', function()
