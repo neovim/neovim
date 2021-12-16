@@ -272,6 +272,10 @@ end
 ---@private
 local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
+    -- Producers *should* provide a column, but some LSP servers (for instance) do not. Rather
+    -- than throw an error later on, provide a dummy default value
+    diagnostic.col = diagnostic.col or 0
+
     diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity) or M.severity.ERROR
     diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
     diagnostic.end_col = diagnostic.end_col or diagnostic.col
