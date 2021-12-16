@@ -20,6 +20,7 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
+local exec_lua = helpers.exec_lua
 
 if helpers.pending_win32(pending) then return end
 
@@ -580,21 +581,34 @@ describe('TUI', function()
   end)
 
   it("paste: 'nomodifiable' buffer", function()
+    local has_luajit = exec_lua('return jit ~= nil')
     child_session:request('nvim_command', 'set nomodifiable')
     child_session:request('nvim_exec_lua', [[
       -- Stack traces for this test are non-deterministic, so disable them
       _G.debug.traceback = function(msg) return msg end
     ]], {})
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
-    screen:expect{grid=[[
-                                                        |
-      {4:~                                                 }|
-      {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:243: Vim:E21: }|
-      {8:Cannot make changes, 'modifiable' is off}          |
-      {10:Press ENTER or type command to continue}{1: }          |
-      {3:-- TERMINAL --}                                    |
-    ]]}
+    if has_luajit then
+      screen:expect{grid=[[
+                                                          |
+        {4:~                                                 }|
+        {5:                                                  }|
+        {8:paste: Error executing lua: vim.lua:0: Vim:E21: Ca}|
+        {8:nnot make changes, 'modifiable' is off}            |
+        {10:Press ENTER or type command to continue}{1: }          |
+        {3:-- TERMINAL --}                                    |
+      ]]}
+    else
+      screen:expect{grid=[[
+                                                          |
+        {4:~                                                 }|
+        {5:                                                  }|
+        {8:paste: Error executing lua: Vim:E21: Cannot make c}|
+        {8:hanges, 'modifiable' is off}                       |
+        {10:Press ENTER or type command to continue}{1: }          |
+        {3:-- TERMINAL --}                                    |
+      ]]}
+    end
     feed_data('\n')  -- <Enter>
     child_session:request('nvim_command', 'set modifiable')
     feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
