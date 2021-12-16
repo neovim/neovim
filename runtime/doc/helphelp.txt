@@ -164,7 +164,7 @@ If you would like to open the help in the current window, see this tip:
 
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
-
+						*help-buffer-options*
 When the help buffer is created, several local options are set to make sure
 the help text is displayed as it was intended:
     'iskeyword'		nearly all ASCII chars except ' ', '*', '"' and '|'
