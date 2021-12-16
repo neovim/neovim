@@ -50,6 +50,19 @@ check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
 check_function_exists(strptime HAVE_STRPTIME)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  check_c_source_compiles("
+#include <termios.h>
+int
+main(void)
+{
+  return forkpty(0, NULL, NULL, NULL);
+}
+" HAVE_FORKPTY)
+else()
+  set(HAVE_FORKPTY 1)
+endif()
+
 # Symbols
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)
 if(HAVE_LANGINFO_H)
