@@ -339,7 +339,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
-///               - end_line : ending line of the mark, 0-based inclusive.
+///               - end_row : ending line of the mark, 0-based inclusive.
 ///               - end_col : ending col of the mark, 0-based exclusive.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
@@ -431,16 +431,26 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   int line2 = -1;
-  if (opts->end_line.type == kObjectTypeInteger) {
-    Integer val = opts->end_line.data.integer;
+
+  // For backward compatibility we support "end_line" as an alias for "end_row"
+  if (HAS_KEY(opts->end_line)) {
+    if (HAS_KEY(opts->end_row)) {
+      api_set_error(err, kErrorTypeValidation, "cannot use both end_row and end_line");
+      goto error;
+    }
+    opts->end_row = opts->end_line;
+  }
+
+  if (opts->end_row.type == kObjectTypeInteger) {
+    Integer val = opts->end_row.data.integer;
     if (val < 0 || val > buf->b_ml.ml_line_count) {
-      api_set_error(err, kErrorTypeValidation, "end_line value outside range");
+      api_set_error(err, kErrorTypeValidation, "end_row value outside range");
       goto error;
     } else {
       line2 = (int)val;
     }
-  } else if (HAS_KEY(opts->end_line)) {
-    api_set_error(err, kErrorTypeValidation, "end_line is not an integer");
+  } else if (HAS_KEY(opts->end_row)) {
+    api_set_error(err, kErrorTypeValidation, "end_row is not an integer");
     goto error;
   }
 
@@ -571,10 +581,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   OPTION_TO_BOOL(right_gravity, right_gravity, true);
 
   // Only error out if they try to set end_right_gravity without
-  // setting end_col or end_line
+  // setting end_col or end_row
   if (line2 == -1 && col2 == -1 && HAS_KEY(opts->end_right_gravity)) {
     api_set_error(err, kErrorTypeValidation,
-                  "cannot set end_right_gravity without setting end_line or end_col");
+                  "cannot set end_right_gravity without setting end_row or end_col");
     goto error;
   }
 

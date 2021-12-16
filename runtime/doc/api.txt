@@ -2353,7 +2353,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                               |api-indexing|
                     {opts}    Optional parameters.
                               • id : id of the extmark to edit.
-                              • end_line : ending line of the mark, 0-based
+                              • end_row : ending line of the mark, 0-based
                                 inclusive.
                               • end_col : ending col of the mark, 0-based
                                 exclusive.

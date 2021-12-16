@@ -5,6 +5,7 @@ return {
   set_extmark = {
     "id";
     "end_line";
+    "end_row";
     "end_col";
     "hl_group";
     "virt_text";
