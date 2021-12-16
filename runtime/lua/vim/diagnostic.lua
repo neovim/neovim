@@ -272,6 +272,8 @@ end
 ---@private
 local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
+    assert(diagnostic.lnum, "Diagnostic line number is required")
+    assert(diagnostic.col, "Diagnostic column is required")
     diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity) or M.severity.ERROR
     diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
     diagnostic.end_col = diagnostic.end_col or diagnostic.col
