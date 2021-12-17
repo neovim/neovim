@@ -18,22 +18,20 @@
 #include "nvim/garray.h"
 #include "nvim/os/input.h"
 
-/*
- * Logging of NFA engine.
- *
- * The NFA engine can write four log files:
- * - Error log: Contains NFA engine's fatal errors.
- * - Dump log: Contains compiled NFA state machine's information.
- * - Run log: Contains information of matching procedure.
- * - Debug log: Contains detailed information of matching procedure. Can be
- *   disabled by undefining NFA_REGEXP_DEBUG_LOG.
- * The first one can also be used without debug mode.
- * The last three are enabled when compiled as debug mode and individually
- * disabled by commenting them out.
- * The log files can get quite big!
- * Do disable all of this when compiling Vim for debugging, undefine REGEXP_DEBUG in
- * regexp.c
- */
+// Logging of NFA engine.
+//
+// The NFA engine can write four log files:
+// - Error log: Contains NFA engine's fatal errors.
+// - Dump log: Contains compiled NFA state machine's information.
+// - Run log: Contains information of matching procedure.
+// - Debug log: Contains detailed information of matching procedure. Can be
+//   disabled by undefining NFA_REGEXP_DEBUG_LOG.
+// The first one can also be used without debug mode.
+// The last three are enabled when compiled as debug mode and individually
+// disabled by commenting them out.
+// The log files can get quite big!
+// To disable all of this when compiling Vim for debugging, undefine REGEXP_DEBUG in
+// regexp.c
 #ifdef REGEXP_DEBUG
 # define NFA_REGEXP_ERROR_LOG   "nfa_regexp_error.log"
 # define NFA_REGEXP_DUMP_LOG    "nfa_regexp_dump.log"
