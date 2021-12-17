@@ -279,7 +279,7 @@ func Test_ex_mode()
   endfunc
   let timer = timer_start(40, function('g:Foo'), {'repeat':-1})
   " This used to throw error E749.
-  exe "normal Qsleep 100m\rvi\r"
+  exe "normal gQsleep 100m\rvi\r"
   call timer_stop(timer)
 endfunc
 
