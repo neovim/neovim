@@ -1766,13 +1766,17 @@ function M._get_offset_encoding(bufnr)
   }
 
   local offset_encoding
+  local ok, _ = pcall(vim.api.nvim_buf_get_var, bufnr, "__lsp_offset_encoding_warn")
 
   for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
     local this_offset_encoding = client.offset_encoding or "utf-16"
     if not offset_encoding then
       offset_encoding = this_offset_encoding
     elseif offset_encoding ~= this_offset_encoding then
-      vim.notify("warning: multiple different client offset_encodings detected for buffer, this is not supported yet", vim.log.levels.WARN)
+      if not ok then
+        vim.notify("warning: multiple different client offset_encodings detected for buffer, this is not supported yet", vim.log.levels.WARN)
+        vim.api.nvim_buf_set_var(bufnr, "__lsp_offset_encoding_warn", true)
+      end
     end
   end
 
