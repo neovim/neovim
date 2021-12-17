@@ -15,6 +15,7 @@ local dedent = helpers.dedent
 local getreg = funcs.getreg
 
 local function reset()
+  clear()
   feed_command('enew!')
   insert([[
   Line of words 1
