@@ -2325,7 +2325,9 @@ static void found_tagfile_cb(char_u *fname, void *cookie)
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
-  do_tag(NULL, DT_FREE, 0, 0, 0);
+  if (curwin != NULL) {
+    do_tag(NULL, DT_FREE, 0, 0, 0);
+  }
   tag_freematch();
 
   tagstack_clear_entry(&ptag_entry);
