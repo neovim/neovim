@@ -932,6 +932,12 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, c
           last_mode = get_mode();
         }
 
+        //  If the event is CursorMoved, update the last cursor position
+        //  position to avoid immediately triggering the autocommand
+        if (event == EVENT_CURSORMOVED && !has_event(EVENT_CURSORMOVED)) {
+          curwin->w_last_cursormoved = curwin->w_cursor;
+        }
+
         ap->cmds = NULL;
         *prev_ap = ap;
         last_autopat[(int)event] = ap;
