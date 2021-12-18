@@ -151,7 +151,7 @@ Commands:
   |:sign-define| accepts a `numhl` argument, to highlight the line number
 
 Events:
-  |CursorMoved| also triggers when moving between windows
+  |CursorMoved| always triggers when moving between windows
   |Signal|
   |TabNewEntered|
   |TermClose|
