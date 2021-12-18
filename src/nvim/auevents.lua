@@ -75,6 +75,8 @@ return {
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
+    'RecordingEnter',         -- when starting to record a macro
+    'RecordingLeave',         -- just before a macro stops recording
     'RemoteReply',            -- upon string reception from a remote vim
     'SearchWrapped',          -- after the search wrapped around
     'SessionLoadPost',        -- after loading a session file
@@ -131,6 +133,8 @@ return {
     BufModifiedSet=true,
     DiagnosticChanged=true,
     DirChanged=true,
+    RecordingEnter=true,
+    RecordingLeave=true,
     Signal=true,
     TabClosed=true,
     TabNew=true,

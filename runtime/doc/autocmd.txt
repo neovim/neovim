@@ -828,6 +828,18 @@ RemoteReply			When a reply from a Vim that functions as
 SearchWrapped			After making a search with |n| or |N| if the
 				search wraps around the document back to
 				the start/finish respectively.
+							*RecordingEnter*
+RecordingEnter			When a macro starts recording.
+				The pattern is the current file name, and
+				|reg_recording()| is the current register that
+				is used.
+							*RecordingLeave*
+RecordingLeave			When a macro stops recording.
+				The pattern is the current file name, and
+				|reg_recording()| is the recorded
+				register.
+				|reg_recorded()| is only updated after this
+				event.
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.

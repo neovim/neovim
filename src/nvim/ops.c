@@ -912,13 +912,14 @@ int do_record(int c)
       showmode();
       regname = c;
       retval = OK;
+      apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
     }
-  } else {                        // stop recording
-    /*
-     * Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
-     * needs to be removed again to put it in a register.  exec_reg then
-     * adds the escaping back later.
-     */
+  } else {  // stop recording
+    // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
+    // needs to be removed again to put it in a register.  exec_reg then
+    // adds the escaping back later.
+    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    reg_recorded = reg_recording;
     reg_recording = 0;
     if (ui_has(kUIMessages)) {
       showmode();
@@ -932,10 +933,8 @@ int do_record(int c)
       // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
       vim_unescape_csi(p);
 
-      /*
-       * We don't want to change the default register here, so save and
-       * restore the current register name.
-       */
+      // We don't want to change the default register here, so save and
+      // restore the current register name.
       old_y_previous = y_previous;
 
       retval = stuff_yank(regname, p);

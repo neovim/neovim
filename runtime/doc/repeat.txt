@@ -103,7 +103,7 @@ Which is two characters shorter!
 
 When using "global" in Ex mode, a special case is using ":visual" as a
 command.  This will move to a matching line, go to Normal mode to let you
-execute commands there until you use |Q| to return to Ex mode.  This will be
+execute commands there until you use |gQ| to return to Ex mode.  This will be
 repeated for each matching line.  While doing this you cannot use ":global".
 To abort this type CTRL-C twice.
 
@@ -146,6 +146,10 @@ q			Stops recording.
 
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.
+
+							*Q*
+Q			Repeat the last recorded register [count] times.
+			See |reg_recorded()|.
 
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex

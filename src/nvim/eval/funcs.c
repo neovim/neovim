@@ -7398,6 +7398,11 @@ static void f_reg_recording(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   return_register(reg_recording, rettv);
 }
 
+static void f_reg_recorded(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  return_register(reg_recorded, rettv);
+}
+
 /// list2proftime - convert a List to proftime_T
 ///
 /// @param arg The input list, must be of type VAR_LIST and have

@@ -85,7 +85,7 @@ endfunc
 func Test_ex_mode_count_overflow()
   " this used to cause a crash
   let lines =<< trim END
-    call feedkeys("\<Esc>Q\<CR>")
+    call feedkeys("\<Esc>gQ\<CR>")
     v9|9silent! vi|333333233333y32333333%O
     call writefile(['done'], 'Xdidexmode')
     qall!

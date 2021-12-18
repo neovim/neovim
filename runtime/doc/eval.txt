@@ -2588,6 +2588,7 @@ readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
 readfile({fname} [, {type} [, {max}]])
 				List	get list of lines from file {fname}
 reg_executing()			String	get the executing register name
+reg_recorded()			String	get the last recorded register name
 reg_recording()			String	get the recording register name
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
@@ -7201,7 +7202,7 @@ mode([expr])	Return a string that indicates the current mode.
 		   Rvc	    Virtual Replace mode completion |compl-generic|
 		   Rvx	    Virtual Replace mode |i_CTRL-X| completion
 		   c	    Command-line editing
-		   cv	    Vim Ex mode |Q| or |gQ|
+		   cv	    Vim Ex mode |gQ|
 		   r	    Hit-enter prompt
 		   rm	    The -- more -- prompt
 		   r?	    A |:confirm| query of some sort
@@ -7824,6 +7825,11 @@ reg_executing()						*reg_executing()*
 		Returns the single letter name of the register being executed.
 		Returns an empty string when no register is being executed.
 		See |@|.
+
+reg_recorded()						*reg_recorded()*
+		Returns the single letter name of the last recorded register.
+		Returns an empty string string when nothing was recorded yet.
+		See |q| and |Q|.
 
 reg_recording()						*reg_recording()*
 		Returns the single letter name of the register being recorded.

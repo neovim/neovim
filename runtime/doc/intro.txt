@@ -563,8 +563,8 @@ The command CTRL-\ CTRL-G or <C-\><C-G> can be used to go to Insert mode when
 make sure Vim is in the mode indicated by 'insertmode', without knowing in
 what mode Vim currently is.
 
-				*gQ* *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
-Q or gQ			Switch to Ex mode.  This is like typing ":" commands
+				*gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+gQ			Switch to Ex mode.  This is like typing ":" commands
 			one after another, except:
 			- You don't have to keep pressing ":".
 			- The screen doesn't get updated after each command.

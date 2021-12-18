@@ -137,7 +137,7 @@ func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile
   s/^/x
-  call feedkeys("Qsc\<CR>y", 'tx')
+  call feedkeys("gQsc\<CR>y", 'tx')
   bwipe!
 endfunc
 

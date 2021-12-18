@@ -953,7 +953,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	error	    Other Error occurred (e.g. try to join last line)
 		    (mostly used in |Normal-mode| or |Cmdline-mode|).
 	esc	    hitting <Esc> in |Normal-mode|.
-	ex	    In |Visual-mode|, hitting |Q| results in an error.
 	hangul	    Ignored.
 	insertmode  Pressing <Esc> in 'insertmode'.
 	lang	    Calling the beep module for Lua/Mzscheme/TCL.
