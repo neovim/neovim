@@ -974,6 +974,40 @@ describe('API', function()
       eq('hello', nvim('get_option_value', 'makeprg', {}))
       eq('', nvim('get_option_value', 'makeprg', {scope = 'local'}))
     end)
+
+    it('clears the local value of an option with nil', function()
+      -- Set global value
+      nvim('set_option_value', 'shiftwidth', 42, {})
+      eq(42, nvim('get_option_value', 'shiftwidth', {}))
+
+      -- Set local value
+      nvim('set_option_value', 'shiftwidth', 8, {scope = 'local'})
+      eq(8, nvim('get_option_value', 'shiftwidth', {}))
+      eq(8, nvim('get_option_value', 'shiftwidth', {scope = 'local'}))
+      eq(42, nvim('get_option_value', 'shiftwidth', {scope = 'global'}))
+
+      -- Clear value without scope
+      nvim('set_option_value', 'shiftwidth', NIL, {})
+      eq(42, nvim('get_option_value', 'shiftwidth', {}))
+      eq(42, nvim('get_option_value', 'shiftwidth', {scope = 'local'}))
+
+      -- Clear value with explicit scope
+      nvim('set_option_value', 'shiftwidth', 8, {scope = 'local'})
+      nvim('set_option_value', 'shiftwidth', NIL, {scope = 'local'})
+      eq(42, nvim('get_option_value', 'shiftwidth', {}))
+      eq(42, nvim('get_option_value', 'shiftwidth', {scope = 'local'}))
+
+      -- Now try with options with a special "local is unset" value (e.g. 'undolevels')
+      nvim('set_option_value', 'undolevels', 1000, {})
+      eq(1000, nvim('get_option_value', 'undolevels', {scope = 'local'}))
+      nvim('set_option_value', 'undolevels', NIL, {scope = 'local'})
+      eq(-123456, nvim('get_option_value', 'undolevels', {scope = 'local'}))
+
+      nvim('set_option_value', 'autoread', true, {})
+      eq(true, nvim('get_option_value', 'autoread', {scope = 'local'}))
+      nvim('set_option_value', 'autoread', NIL, {scope = 'local'})
+      eq(-1, nvim('get_option_value', 'autoread', {scope = 'local'}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

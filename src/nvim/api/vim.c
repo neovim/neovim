@@ -696,7 +696,15 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     rv = INTEGER_OBJ(numval);
     break;
   case 2:
-    rv = BOOLEAN_OBJ(!!numval);
+    switch (numval) {
+      case 0:
+      case 1:
+        rv = BOOLEAN_OBJ(numval);
+        break;
+      default:
+        rv = INTEGER_OBJ(numval);
+        break;
+    }
     break;
   default:
     api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
@@ -749,7 +757,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     stringval = value.data.string.data;
     break;
   case kObjectTypeNil:
-    // Do nothing
+    scope |= OPT_CLEAR;
     break;
   default:
     api_set_error(err, kErrorTypeValidation, "invalid value for option");

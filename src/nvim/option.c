@@ -5059,6 +5059,9 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
 /// @param[in]  number  New value for the number or boolean option.
 /// @param[in]  string  New value for string option.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
+///                        If OPT_CLEAR is set, the value of the option
+///                        is cleared  (the exact semantcis of this depend
+///                        on the option).
 ///
 /// @return NULL on success, error message on error.
 char *set_option_value(const char *const name, const long number, const char *const string,
@@ -5084,7 +5087,7 @@ char *set_option_value(const char *const name, const long number, const char *co
     }
     if (flags & P_STRING) {
       const char *s = string;
-      if (s == NULL) {
+      if (s == NULL || opt_flags & OPT_CLEAR) {
         s = "";
       }
       return set_string_option(opt_idx, s, opt_flags);
@@ -5106,10 +5109,23 @@ char *set_option_value(const char *const name, const long number, const char *co
             return NULL;  // do nothing as we hit an error
           }
         }
+        long numval = number;
+        if (opt_flags & OPT_CLEAR) {
+          if ((int *)varp == &curbuf->b_p_ar) {
+            numval = -1;
+          } else if ((long *)varp == &curbuf->b_p_ul) {
+            numval = NO_LOCAL_UNDOLEVEL;
+          } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
+            numval = -1;
+          } else {
+            char *s = NULL;
+            (void)get_option_value(name, &numval, (char_u **)&s, OPT_GLOBAL);
+          }
+        }
         if (flags & P_NUM) {
-          return set_num_option(opt_idx, varp, number, NULL, 0, opt_flags);
+          return set_num_option(opt_idx, varp, numval, NULL, 0, opt_flags);
         } else {
-          return set_bool_option(opt_idx, varp, (int)number, opt_flags);
+          return set_bool_option(opt_idx, varp, (int)numval, opt_flags);
         }
       }
     }
