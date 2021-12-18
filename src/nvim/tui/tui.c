@@ -308,23 +308,39 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
+  int ret;
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
-    uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+    ret = uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+    if (ret) {
+      ELOG("uv_tty_init failed: %s", uv_strerror(ret));
+    }
 #ifdef WIN32
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+    ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+    if (ret) {
+      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
+    }
 #else
     int retry_count = 10;
     // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
     // few times. #12322
-    while (uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO) == UV_EINTR
+    while ((ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO)) == UV_EINTR
            && retry_count > 0) {
       retry_count--;
     }
+    if (ret) {
+      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
+    }
 #endif
   } else {
-    uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
-    uv_pipe_open(&data->output_handle.pipe, data->out_fd);
+    ret = uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
+    if (ret) {
+      ELOG("uv_pipe_init failed: %s", uv_strerror(ret));
+    }
+    ret = uv_pipe_open(&data->output_handle.pipe, data->out_fd);
+    if (ret) {
+      ELOG("uv_pipe_open failed: %s", uv_strerror(ret));
+    }
   }
   flush_buf(ui);
 }
@@ -1086,8 +1102,14 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
   // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
   // #13073
   if (data->is_starting && data->input.in_fd == STDERR_FILENO) {
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_NORMAL);
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+    int ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_NORMAL);
+    if (ret) {
+      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
+    }
+    ret = uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+    if (ret) {
+      ELOG("uv_tty_set_mode failed: %s", uv_strerror(ret));
+    }
   }
 #endif
   tui_set_mode(ui, (ModeShape)mode_idx);
@@ -2081,8 +2103,11 @@ static void flush_buf(UI *ui)
       fwrite(bufs[i].base, bufs[i].len, 1, data->screenshot);
     }
   } else {
-    uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
-             bufs, (unsigned)(bufp - bufs), NULL);
+    int ret = uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
+                       bufs, (unsigned)(bufp - bufs), NULL);
+    if (ret) {
+      ELOG("uv_write failed: %s", uv_strerror(ret));
+    }
     uv_run(&data->write_loop, UV_RUN_DEFAULT);
   }
   data->bufpos = 0;
