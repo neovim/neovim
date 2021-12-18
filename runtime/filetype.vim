@@ -486,6 +486,9 @@ au BufNewFile,BufRead dict.conf,.dictrc		setf dictconf
 " Dictd config
 au BufNewFile,BufRead dictd*.conf		setf dictdconf
 
+" DEP3 formatted patch files
+au BufNewFile,BufRead */debian/patches/*	call dist#ft#Dep3patch()
+
 " Diff files
 au BufNewFile,BufRead *.diff,*.rej		setf diff
 au BufNewFile,BufRead *.patch
