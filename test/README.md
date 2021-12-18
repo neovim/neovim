@@ -116,7 +116,7 @@ Filtering Tests
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER`.
+Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
@@ -130,6 +130,10 @@ end)
 To run only test with filter name:
 
     TEST_FILTER='foo.*api' make functionaltest
+
+To run all tests except ones matching a filter:
+
+    TEST_FILTER_OUT='foo.*api' make functionaltest
 
 ### Filter by file
 
