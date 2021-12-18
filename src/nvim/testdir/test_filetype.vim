@@ -1004,4 +1004,44 @@ func Test_fs_file()
   filetype off
 endfunc
 
+func Test_dep3patch_file()
+  filetype on
+
+  call assert_true(mkdir('debian/patches', 'p'))
+
+  " series files are not patches
+  call writefile(['Description: some awesome patch'], 'debian/patches/series')
+  split debian/patches/series
+  call assert_notequal('dep3patch', &filetype)
+  bwipe!
+
+  " diff/patch files without the right headers should still show up as ft=diff
+  call writefile([], 'debian/patches/foo.diff')
+  split debian/patches/foo.diff
+  call assert_equal('diff', &filetype)
+  bwipe!
+
+  " Files with the right headers are detected as dep3patch, even if they don't
+  " have a diff/patch extension
+  call writefile(['Subject: dep3patches'], 'debian/patches/bar')
+  split debian/patches/bar
+  call assert_equal('dep3patch', &filetype)
+  bwipe!
+
+  " Files in sub-directories are detected
+  call assert_true(mkdir('debian/patches/s390x', 'p'))
+  call writefile(['Subject: dep3patches'], 'debian/patches/s390x/bar')
+  split debian/patches/s390x/bar
+  call assert_equal('dep3patch', &filetype)
+  bwipe!
+
+  " The detection stops when seeing the "header end" marker
+  call writefile(['---', 'Origin: the cloud'], 'debian/patches/baz')
+  split debian/patches/baz
+  call assert_notequal('dep3patch', &filetype)
+  bwipe!
+
+  call delete('debian/patches', 'rf')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
