@@ -11,6 +11,7 @@
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark_defs.h"
@@ -494,7 +495,7 @@ static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
         return;
       }
       if (string.size
-          && mb_string2cells_len(string.data, string.size) > 1) {
+          && vim_strnsize(string.data, (int)string.size) > 1) {
         api_set_error(err, kErrorTypeValidation,
                       "border chars must be one cell");
         return;

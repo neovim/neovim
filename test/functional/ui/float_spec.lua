@@ -2410,27 +2410,60 @@ describe('float window', function()
     it('API has proper error messages', function()
       local buf = meths.create_buf(false,false)
       eq("Invalid key: 'bork'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,bork=true}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,bork=true}))
       eq("'win' key is only valid with relative='win'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
       eq("Only one of 'relative' and 'external' must be used",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
       eq("Invalid value of 'relative' key",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
       eq("Invalid value of 'anchor' key",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
       eq("'relative' requires 'row'/'col' or 'bufpos'",
-         pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=2,relative='editor'}))
       eq("'width' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=-1,height=2,relative='editor', row=0, col=0}))
+         pcall_err(meths.open_win, buf, false, {width=-1,height=2,relative='editor', row=0, col=0}))
       eq("'height' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=20,height=-1,relative='editor', row=0, col=0}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=-1,relative='editor', row=0, col=0}))
       eq("'height' key must be a positive Integer",
-         pcall_err(meths.open_win,buf, false, {width=20,height=0,relative='editor', row=0, col=0}))
+         pcall_err(meths.open_win, buf, false, {width=20,height=0,relative='editor', row=0, col=0}))
       eq("Must specify 'width'",
-         pcall_err(meths.open_win,buf, false, {relative='editor', row=0, col=0}))
+         pcall_err(meths.open_win, buf, false, {relative='editor', row=0, col=0}))
       eq("Must specify 'height'",
-         pcall_err(meths.open_win,buf, false, {relative='editor', row=0, col=0, width=2}))
+         pcall_err(meths.open_win, buf, false, {relative='editor', row=0, col=0, width=2}))
+      eq('invalid border style "foo"',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border='foo'}))
+      eq('invalid number of border chars',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={}}))
+      eq('invalid number of border chars',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={'', '', ''}}))
+      eq('invalid number of border chars',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={'', '', '', '', '', '', '', '', ''}}))
+      eq('invalid border char',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={1}}))
+      eq('invalid border char',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{1}}}))
+      eq('invalid border char',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{}}}))
+      eq('invalid border char',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{' ', 'Normal', 'Normal'}}}))
+      eq('border chars must be one cell',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{'哦', 'Normal'}}}))
+      eq('border chars must be one cell',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{'\a', 'Normal'}}}))
+      eq('border chars must be one cell',
+         pcall_err(meths.open_win, buf, false,
+                   {width=20, height=2, relative='editor', row=0, col=0, border={{'aa', 'Normal'}}}))
     end)
 
     it('can be placed relative window or cursor', function()
