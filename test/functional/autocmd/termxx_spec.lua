@@ -13,7 +13,7 @@ describe('autocmd TermClose', function()
   before_each(function()
     clear()
     nvim('set_option', 'shell', nvim_dir .. '/shell-test')
-    nvim('set_option', 'shellcmdflag', 'EXE')
+    command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 
   it('triggers when fast-exiting terminal job stops', function()
@@ -89,6 +89,17 @@ describe('autocmd TermClose', function()
     command('3bdelete!')
     retry(nil, nil, function() eq('3', eval('g:abuf')) end)
     feed('<c-c>:qa!<cr>')
+  end)
+
+  it('exposes v:event.status', function()
+    command('set shellcmdflag=EXIT')
+    command('autocmd TermClose * let g:status = v:event.status')
+
+    command('terminal 0')
+    retry(nil, nil, function() eq(0, eval('g:status')) end)
+
+    command('terminal 42')
+    retry(nil, nil, function() eq(42, eval('g:status')) end)
   end)
 end)
 

@@ -17,13 +17,14 @@ The ":messages" command can be used to view previously given messages.  This
 is especially useful when messages have been overwritten or truncated.  This
 depends on the 'shortmess' option.
 
-	:messages		Show all messages.
+	:mes[sages]		Show all messages.
 
-	:{count}messages	Show the {count} most recent messages.
+	:{count}mes[sages]	Show the {count} most recent messages.
 
-	:messages clear		Clear all messages.
+	:mes[sages] clear	Clear all messages.
 
-	:{count}messages clear	Clear messages, keeping only the {count} most
+	:{count}mes[sages] clear
+				Clear messages, keeping only the {count} most
 				recent ones.
 
 The number of remembered messages is fixed at 20 for the tiny version and 200
@@ -67,7 +68,7 @@ Or view a list of recent messages with: >
 See `:messages` above.
 
 LIST OF MESSAGES
-			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
+			*E222* *E228* *E232* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
 			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
@@ -761,6 +762,9 @@ and the screen is about to be redrawn:
 -> Press <Enter> or <Space> to redraw the screen and continue, without that
    key being used otherwise.
 -> Press ':' or any other Normal mode command character to start that command.
+   Note that after an external command some special keys, such as the cursor
+   keys, may not work normally, because the terminal is still set to a state
+   for executing the external command.
 -> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
    works the same way as at the |more-prompt|.  Only works when 'more' is on.
 -> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the

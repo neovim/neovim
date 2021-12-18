@@ -12,11 +12,6 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
-if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*-(Microsoft|microsoft-standard)")
-  # Windows Subsystem for Linux
-  set(HAVE_WSL 1)
-endif()
-
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
@@ -50,8 +45,23 @@ check_function_exists(readlink HAVE_READLINK)
 check_function_exists(setpgid HAVE_SETPGID)
 check_function_exists(setsid HAVE_SETSID)
 check_function_exists(sigaction HAVE_SIGACTION)
+check_function_exists(strnlen HAVE_STRNLEN)
 check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
+check_function_exists(strptime HAVE_STRPTIME)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  check_c_source_compiles("
+#include <termios.h>
+int
+main(void)
+{
+  return forkpty(0, NULL, NULL, NULL);
+}
+" HAVE_FORKPTY)
+else()
+  set(HAVE_FORKPTY 1)
+endif()
 
 # Symbols
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)
@@ -96,7 +106,7 @@ if (NOT "${HAVE_BE64TOH}")
     #   any case and ORDER_BIG_ENDIAN will not be examined.
     # - CMAKE_CROSSCOMPILING *and* HAVE_BE64TOH are both false. In this case
     #   be64toh function which uses cycle and arithmetic operations is used which
-    #   will work regardless of endianess. Function is sub-optimal though.
+    #   will work regardless of endianness. Function is sub-optimal though.
     check_c_source_runs("
       ${SI}
       ${MS}

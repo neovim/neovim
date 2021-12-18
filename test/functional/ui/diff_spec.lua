@@ -186,6 +186,19 @@ describe('Diff mode screen', function()
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
+
+    screen:try_resize(40, 9)
+    screen:expect([[
+      {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
+      {1:  }5                 {3:│}{1:  }5                |
+      {1:  }6                 {3:│}{1:  }6                |
+      {1:  }7                 {3:│}{1:  }7                |
+      {1:  }8                 {3:│}{1:  }8                |
+      {1:  }9                 {3:│}{1:  }9                |
+      {1:  }10                {3:│}{1:  }10               |
+      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                              |
+    ]])
   end)
 
   it('Add a line at the end of file 1', function()
@@ -231,6 +244,19 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
+    ]])
+
+    screen:try_resize(40, 9)
+    screen:expect([[
+      {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
+      {1:  }5                 {3:│}{1:  }5                |
+      {1:  }6                 {3:│}{1:  }6                |
+      {1:  }7                 {3:│}{1:  }7                |
+      {1:  }8                 {3:│}{1:  }8                |
+      {1:  }9                 {3:│}{1:  }9                |
+      {1:  }10                {3:│}{1:  }10               |
+      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                              |
     ]])
   end)
 
@@ -1049,13 +1075,15 @@ it('diff updates line numbers below filler lines', function()
     [9] = {background = Screen.colors.LightMagenta},
     [10] = {bold = true, foreground = Screen.colors.Brown},
     [11] = {foreground = Screen.colors.Brown},
+    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
+    [13] = {background = Screen.colors.Gray90};
   })
   source([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
     windo diffthis
-    setlocal number rnu foldcolumn=0
+    setlocal number rnu cursorline cursorlineopt=number foldcolumn=0
   ]])
   screen:expect([[
     {1:  }a                {3:│}{10:1   }^a               |
@@ -1107,4 +1135,114 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
+  command("set signcolumn number tgc cursorline cursorlineopt=number,line")
+  command("hi CursorLineNr guibg=red")
+  screen:expect{grid=[[
+    {1:  }a                {3:│}{11:  2 }a               |
+    {1:  }a                {3:│}{11:  1 }a               |
+    {1:  }a                {3:│}{12:3   }{13:^a               }|
+    {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
+    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+    {1:  }b                {3:│}{11:  2 }b               |
+    {1:  }b                {3:│}{11:  3 }b               |
+    {1:  }b                {3:│}{11:  4 }b               |
+    {1:  }b                {3:│}{11:  5 }b               |
+    {1:  }b                {3:│}{11:  6 }b               |
+    {6:~                  }{3:│}{6:~                   }|
+    {3:[No Name] [+]       }{7:[No Name] [+]       }|
+      signcolumn=auto                       |
+  ]]}
+end)
+
+it('Align the filler lines when changing text in diff mode', function()
+  clear()
+  local screen = Screen.new(40, 20)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
+    [2] = {background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1, bold = true};
+    [3] = {reverse = true};
+    [4] = {background = Screen.colors.LightBlue};
+    [5] = {background = Screen.colors.LightMagenta};
+    [6] = {background = Screen.colors.Red, bold = true};
+    [7] = {foreground = Screen.colors.Blue1, bold = true};
+    [8] = {reverse = true, bold = true};
+  })
+  source([[
+    call setline(1, range(1, 15))
+    vnew
+    call setline(1, range(9, 15))
+    windo diffthis
+    wincmd h
+    exe "normal Gl5\<C-E>"
+  ]])
+  screen:expect{grid=[[
+    {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
+    {1:  }9                 {3:│}{1:  }9                |
+    {1:  }10                {3:│}{1:  }10               |
+    {1:  }11                {3:│}{1:  }11               |
+    {1:  }12                {3:│}{1:  }12               |
+    {1:  }13                {3:│}{1:  }13               |
+    {1:  }14                {3:│}{1:  }14               |
+    {1:- }1^5                {3:│}{1:- }15               |
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+                                            |
+  ]]}
+  feed('ax<Esc>')
+  screen:expect{grid=[[
+    {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
+    {1:  }9                 {3:│}{1:  }9                |
+    {1:  }10                {3:│}{1:  }10               |
+    {1:  }11                {3:│}{1:  }11               |
+    {1:  }12                {3:│}{1:  }12               |
+    {1:  }13                {3:│}{1:  }13               |
+    {1:  }14                {3:│}{1:  }14               |
+    {1:  }{5:15}{6:^x}{5:               }{3:│}{1:  }{5:15               }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+                                            |
+  ]]}
+  feed('<C-W>lay<Esc>')
+  screen:expect{grid=[[
+    {1:  }{2:-----------------}{3:│}{1:  }{4:6                 }|
+    {1:  }{2:-----------------}{3:│}{1:  }{4:7                 }|
+    {1:  }{2:-----------------}{3:│}{1:  }{4:8                 }|
+    {1:  }9                {3:│}{1:  }9                 |
+    {1:  }10               {3:│}{1:  }10                |
+    {1:  }11               {3:│}{1:  }11                |
+    {1:  }12               {3:│}{1:  }12                |
+    {1:  }13               {3:│}{1:  }13                |
+    {1:  }14               {3:│}{1:  }14                |
+    {1:  }{5:15}{6:x}{5:              }{3:│}{1:  }{5:15}{6:^y}{5:               }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {7:~                  }{3:│}{7:~                   }|
+    {3:[No Name] [+]       }{8:[No Name] [+]       }|
+                                            |
+  ]]}
 end)

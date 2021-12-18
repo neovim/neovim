@@ -3,14 +3,14 @@
 source shared.vim
 source check.vim
 
-function! Test_System()
+func Test_System()
   if !executable('echo') || !executable('cat') || !executable('wc')
     return
   endif
-  let out = system('echo 123')
+  let out = 'echo 123'->system()
   call assert_equal("123\n", out)
 
-  let out = systemlist('echo 123')
+  let out = 'echo 123'->systemlist()
   if &shell =~# 'cmd.exe$'
     call assert_equal(["123\r"], out)
   else
@@ -93,7 +93,6 @@ function! Test_system_exmode()
 endfunc
 
 func Test_system_with_shell_quote()
-  throw 'skipped: enable after porting method patches'
   CheckMSWindows
 
   call mkdir('Xdir with spaces', 'p')

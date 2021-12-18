@@ -14,7 +14,8 @@ fi
 readonly NVIM_SOURCE_DIR="${NVIM_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 readonly VIM_SOURCE_DIR_DEFAULT="${NVIM_SOURCE_DIR}/.vim-src"
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
-readonly BASENAME="$(basename "${0}")"
+BASENAME="$(basename "${0}")"
+readonly BASENAME
 readonly BRANCH_PREFIX="vim-"
 
 CREATED_FILES=()
@@ -124,8 +125,12 @@ commit_message() {
 }
 
 find_git_remote() {
-  git_remote=$(git remote -v \
-    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}')
+  local git_remote
+  if [[ "${1-}" == fork ]]; then
+    git_remote=$(git remote -v | awk '$2 !~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}')
+  else
+    git_remote=$(git remote -v | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}')
+  fi
   if [[ -z "$git_remote" ]]; then
     git_remote="origin"
   fi
@@ -178,22 +183,30 @@ assign_commit_details() {
 # Patch surgery
 preprocess_patch() {
   local file="$1"
-  local nvim="nvim -u NORC -i NONE --headless"
+  local nvim="nvim -u NONE -n -i NONE --headless"
 
-  # Remove *.proto, Make*, gui_*, some if_*
-  local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
+  # Remove Filelist, README
+  local na_files='Filelist\|README.*'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove *.proto, Make*, INSTALL*, gui_*, beval.*, some if_*, gvim, libvterm, tee, VisVim, xpm, xxd
+  local na_src='auto\|configure.*\|GvimExt\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make*\|INSTALL*\|beval.*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove unwanted Vim doc files.
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|sponsor\.txt\|intro\.txt\|tags'
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|vim9\.txt\|sponsor\.txt\|intro\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove screen dumps, testdir/Make_*.mak files
-  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump'
+  # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='gen_opt_test.vim\|gui_.*\|Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump\|setup_gui.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove testdir/test_*.vim files
+  local na_src_testdir='balloon.*\|channel.*\|crypt.vim\|gui.*\|job_fails.vim\|json.vim\|mzscheme.vim\|netbeans.*\|paste.vim\|popupwin.*\|restricted.vim\|shortpathname.vim\|tcl.vim\|terminal.*\|xxd.vim'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
   local na_po='version.c'
@@ -259,8 +272,8 @@ stage_patch() {
   get_vimpatch "$1"
   local try_apply="${2:-}"
 
-  local git_remote
-  git_remote="$(find_git_remote)"
+  local nvim_remote
+  nvim_remote="$(find_git_remote)"
   local checked_out_branch
   checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
 
@@ -268,16 +281,16 @@ stage_patch() {
     msg_ok "Current branch '${checked_out_branch}' seems to be a vim-patch"
     echo "  branch; not creating a new branch."
   else
-    printf '\nFetching "%s/master".\n' "${git_remote}"
-    output="$(git fetch "${git_remote}" master 2>&1)" &&
+    printf '\nFetching "%s/master".\n' "${nvim_remote}"
+    output="$(git fetch "${nvim_remote}" master 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
 
     local nvim_branch="${BRANCH_PREFIX}${vim_version}"
     echo
-    echo "Creating new branch '${nvim_branch}' based on '${git_remote}/master'."
+    echo "Creating new branch '${nvim_branch}' based on '${nvim_remote}/master'."
     cd "${NVIM_SOURCE_DIR}"
-    output="$(git checkout -b "${nvim_branch}" "${git_remote}/master" 2>&1)" &&
+    output="$(git checkout -b "${nvim_branch}" "${nvim_remote}/master" 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
   fi
@@ -317,12 +330,14 @@ stage_patch() {
   return $ret
 }
 
-hub_pr() {
-  hub pull-request -m "$1"
+gh_pr() {
+  gh pr create --title "$1" --body "$2"
 }
 
 git_hub_pr() {
-  git hub pull new -m "$1"
+  local pr_message
+  pr_message="$(printf '%s\n\n%s\n' "$1" "$2")"
+  git hub pull new -m "${pr_message}"
 }
 
 # shellcheck disable=SC2015
@@ -332,14 +347,14 @@ submit_pr() {
   local push_first
   push_first=1
   local submit_fn
-  if check_executable hub; then
-    submit_fn="hub_pr"
+  if check_executable gh; then
+    submit_fn="gh_pr"
   elif check_executable git-hub; then
     push_first=0
     submit_fn="git_hub_pr"
   else
-    >&2 echo "${BASENAME}: 'hub' or 'git-hub' not found in PATH or not executable."
-    >&2 echo "              Get it here: https://hub.github.com/"
+    >&2 echo "${BASENAME}: 'gh' or 'git-hub' not found in PATH or not executable."
+    >&2 echo "              Get it here: https://cli.github.com/"
     exit 1
   fi
 
@@ -351,24 +366,33 @@ submit_pr() {
     exit 1
   fi
 
-  local git_remote
-  git_remote="$(find_git_remote)"
+  local nvim_remote
+  nvim_remote="$(find_git_remote)"
   local pr_body
-  pr_body="$(git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${git_remote}"/master..HEAD)"
+  pr_body="$(git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${nvim_remote}"/master..HEAD)"
   local patches
   # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
-  patches=("$(git log --grep=vim-patch --reverse --format='%s' "${git_remote}"/master..HEAD | sed 's/: .*//')")
+  patches=("$(git log --grep=vim-patch --reverse --format='%s' "${nvim_remote}"/master..HEAD | sed 's/: .*//')")
   # shellcheck disable=SC2206
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
-
-  local pr_message
-  pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
+  pr_title="$(printf 'vim-patch:%s' "${pr_title#,}")"
 
   if [[ $push_first -ne 0 ]]; then
-    echo "Pushing to 'origin/${checked_out_branch}'."
-    output="$(git push origin "${checked_out_branch}" 2>&1)" &&
+    local push_remote
+    push_remote="$(git config --get branch."${checked_out_branch}".pushRemote || true)"
+    if [[ -z "$push_remote" ]]; then
+      push_remote="$(git config --get remote.pushDefault || true)"
+      if [[ -z "$push_remote" ]]; then
+        push_remote="$(git config --get branch."${checked_out_branch}".remote || true)"
+        if [[ -z "$push_remote" ]] || [[ "$push_remote" == "$nvim_remote" ]]; then
+          push_remote="$(find_git_remote fork)"
+        fi
+      fi
+    fi
+    echo "Pushing to '${push_remote}/${checked_out_branch}'."
+    output="$(git push "${push_remote}" "${checked_out_branch}" 2>&1)" &&
       msg_ok "${output}" ||
       (msg_err "${output}"; false)
 
@@ -376,7 +400,7 @@ submit_pr() {
   fi
 
   echo "Creating pull request."
-  output="$(${submit_fn} "${pr_message}" 2>&1)" &&
+  output="$(${submit_fn} "${pr_title}" "${pr_body}" 2>&1)" &&
     msg_ok "${output}" ||
     (msg_err "${output}"; false)
 
@@ -570,7 +594,7 @@ list_missing_previous_vimpatches_for_patch() {
   local -a fnames
   while IFS= read -r line ; do
     fnames+=("$line")
-  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}")
+  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}" -- . ':!src/version.c')
   local i=0
   local n=${#fnames[@]}
   printf '=== getting missing patches for %d files ===\n' "$n"
@@ -585,18 +609,20 @@ list_missing_previous_vimpatches_for_patch() {
     _set_missing_vimpatches 1 -- "${fname}"
 
     set +u  # Avoid "unbound variable" with bash < 4.4 below.
-    local missing_vim_commit_info="${missing_vim_patches[0]}"
-    if [[ -z "${missing_vim_commit_info}" ]]; then
-      printf -- "-\n"
-    else
-      local missing_vim_commit="${missing_vim_commit_info%%:*}"
-      if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
-        printf -- "%s\n" "$missing_vim_commit_info"
-        missing_list+=("$missing_vim_commit_info")
+    for missing_vim_commit_info in "${missing_vim_patches[@]}"; do
+      if [[ -z "${missing_vim_commit_info}" ]]; then
+        printf -- "-\r"
       else
-        printf -- "-\n"
+        printf -- "-\r"
+        local missing_vim_commit="${missing_vim_commit_info%%:*}"
+        if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
+          printf -- "%s\n" "$missing_vim_commit_info"
+          missing_list+=("$missing_vim_commit_info")
+        else
+          printf -- "-\r"
+        fi
       fi
-    fi
+    done
     set -u
   done
 
@@ -657,7 +683,7 @@ review_commit() {
   msg_ok "Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
-  local nvim="nvim -u NORC -n -i NONE --headless"
+  local nvim="nvim -u NONE -n -i NONE --headless"
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'1,/^$/g/^ /-1join' +w +q "${NVIM_SOURCE_DIR}/n${patch_file}"
 
   local expected_commit_message

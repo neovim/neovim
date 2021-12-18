@@ -8,8 +8,8 @@ func Test_getchangelist()
 
   bwipe!
   enew
-  call assert_equal([], getchangelist(10))
-  call assert_equal([[], 0], getchangelist('%'))
+  call assert_equal([], 10->getchangelist())
+  call assert_equal([[], 0], getchangelist())
 
   call writefile(['line1', 'line2', 'line3'], 'Xfile1.txt')
   call writefile(['line1', 'line2', 'line3'], 'Xfile2.txt')

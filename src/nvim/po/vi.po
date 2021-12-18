@@ -3479,10 +3479,6 @@ msgstr "-y\t\t\tChế độ đơn giản (giống \"evim\", không có chế đ�
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tChế độ chỉ đọc (giống \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tChế độ hạn chế (giống \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tKhông có khả năng ghi nhớ thay đổi (ghi nhớ tập tin)"

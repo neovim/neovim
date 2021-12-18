@@ -12,8 +12,16 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 
 local ns = a.nvim_create_namespace("treesitter/highlighter")
 
--- These are conventions defined by nvim-treesitter, though it
--- needs to be user extensible also.
+local _default_highlights = {}
+local _link_default_highlight_once = function(from, to)
+  if not _default_highlights[from] then
+    _default_highlights[from] = true
+    vim.cmd(string.format("highlight default link %s %s", from, to))
+  end
+
+  return from
+end
+
 TSHighlighter.hl_map = {
     ["error"] = "Error",
 
@@ -60,20 +68,27 @@ TSHighlighter.hl_map = {
     ["include"] = "Include",
 }
 
+---@private
 local function is_highlight_name(capture_name)
   local firstc = string.sub(capture_name, 1, 1)
   return firstc ~= string.lower(firstc)
 end
 
+---@private
 function TSHighlighterQuery.new(lang, query_string)
   local self = setmetatable({}, { __index = TSHighlighterQuery })
 
   self.hl_cache = setmetatable({}, {
     __index = function(table, capture)
-      local hl = self:get_hl_from_capture(capture)
-      rawset(table, capture, hl)
+      local hl, is_vim_highlight = self:_get_hl_from_capture(capture)
+      if not is_vim_highlight then
+        hl = _link_default_highlight_once(lang .. hl, hl)
+      end
 
-      return hl
+      local id = a.nvim_get_hl_id_by_name(hl)
+
+      rawset(table, capture, id)
+      return id
     end
   })
 
@@ -86,23 +101,30 @@ function TSHighlighterQuery.new(lang, query_string)
   return self
 end
 
+---@private
 function TSHighlighterQuery:query()
   return self._query
 end
 
-function TSHighlighterQuery:get_hl_from_capture(capture)
+---@private
+--- Get the hl from capture.
+--- Returns a tuple { highlight_name: string, is_builtin: bool }
+function TSHighlighterQuery:_get_hl_from_capture(capture)
   local name = self._query.captures[capture]
 
   if is_highlight_name(name) then
     -- From "Normal.left" only keep "Normal"
-    return vim.split(name, '.', true)[1]
+    return vim.split(name, '.', true)[1], true
   else
-    -- Default to false to avoid recomputing
-    local hl = TSHighlighter.hl_map[name]
-    return hl and a.nvim_get_hl_id_by_name(hl) or 0
+    return TSHighlighter.hl_map[name] or 0, false
   end
 end
 
+--- Creates a new highlighter using @param tree
+---
+---@param tree The language tree to use for highlighting
+---@param opts Table used to configure the highlighter
+---           - queries: Table to overwrite queries used by the highlighter
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
@@ -113,8 +135,9 @@ function TSHighlighter.new(tree, opts)
   opts = opts or {}
   self.tree = tree
   tree:register_cbs {
-    on_changedtree = function(...) self:on_changedtree(...) end,
-    on_bytes = function(...) self:on_bytes(...) end
+    on_changedtree = function(...) self:on_changedtree(...) end;
+    on_bytes = function(...) self:on_bytes(...) end;
+    on_detach = function(...) self:on_detach(...) end;
   }
 
   self.bufnr = tree:source()
@@ -151,12 +174,14 @@ function TSHighlighter.new(tree, opts)
   return self
 end
 
+--- Removes all internal references to the highlighter
 function TSHighlighter:destroy()
   if TSHighlighter.active[self.bufnr] then
     TSHighlighter.active[self.bufnr] = nil
   end
 end
 
+---@private
 function TSHighlighter:get_highlight_state(tstree)
   if not self._highlight_states[tstree] then
     self._highlight_states[tstree] = {
@@ -168,20 +193,31 @@ function TSHighlighter:get_highlight_state(tstree)
   return self._highlight_states[tstree]
 end
 
+---@private
 function TSHighlighter:reset_highlight_state()
   self._highlight_states = {}
 end
 
+---@private
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
   a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
 end
 
+---@private
+function TSHighlighter:on_detach()
+  self:destroy()
+end
+
+---@private
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
     a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3]+1)
   end
 end
 
+--- Gets the query used for @param lang
+---
+---@param lang A language used by the highlighter.
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
     self._queries[lang] = TSHighlighterQuery.new(lang)
@@ -190,6 +226,7 @@ function TSHighlighter:get_query(lang)
   return self._queries[lang]
 end
 
+---@private
 local function on_line_impl(self, buf, line)
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then return end
@@ -203,12 +240,15 @@ local function on_line_impl(self, buf, line)
     local state = self:get_highlight_state(tstree)
     local highlighter_query = self:get_query(tree:lang())
 
+    -- Some injected languages may not have highlight queries.
+    if not highlighter_query:query() then return end
+
     if state.iter == nil then
       state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
 
     while line >= state.next_row do
-      local capture, node = state.iter()
+      local capture, node, metadata = state.iter()
 
       if capture == nil then break end
 
@@ -220,7 +260,7 @@ local function on_line_impl(self, buf, line)
                                { end_line = end_row, end_col = end_col,
                                  hl_group = hl,
                                  ephemeral = true,
-                                 priority = 100 -- Low but leaves room below
+                                 priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
                                 })
       end
       if start_row > line then
@@ -230,6 +270,7 @@ local function on_line_impl(self, buf, line)
   end, true)
 end
 
+---@private
 function TSHighlighter._on_line(_, _win, buf, line, _)
   local self = TSHighlighter.active[buf]
   if not self then return end
@@ -237,6 +278,7 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
   on_line_impl(self, buf, line)
 end
 
+---@private
 function TSHighlighter._on_buf(_, buf)
   local self = TSHighlighter.active[buf]
   if self then
@@ -244,6 +286,7 @@ function TSHighlighter._on_buf(_, buf)
   end
 end
 
+---@private
 function TSHighlighter._on_win(_, _win, buf, _topline)
   local self = TSHighlighter.active[buf]
   if not self then

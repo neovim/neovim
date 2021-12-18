@@ -1,16 +1,9 @@
 " VIM syntax file
 " Language:	nroff/groff
-" Maintainer:	Pedro Alejandro López-Valencia <palopezv@gmail.com>
-" URL:		http://vorbote.wordpress.com/
-" Last Change:	2012 Feb 2
-"
-" {{{1 Acknowledgements
-"
-" ACKNOWLEDGEMENTS:
-"
-" My thanks to Jérôme Plût <Jerome.Plut@ens.fr>, who was the
-" creator and maintainer of this syntax file for several years.
-" May I be as good at it as he has been.
+" Maintainer:	John Marshall <jmarshall@hey.com>
+" Previous Maintainer:	Pedro Alejandro LÃ³pez-Valencia <palopezv@gmail.com>
+" Previous Maintainer:	JÃ©rÃ´me PlÃ»t <Jerome.Plut@ens.fr>
+" Last Change:	2021 Mar 28
 "
 " {{{1 Todo
 "
@@ -31,6 +24,13 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+if exists("nroff_is_groff")
+	let b:nroff_is_groff = 1
+endif
+
+syn spell toplevel
+syn case match
+
 "
 " {{{1 plugin settings...
 "
@@ -48,7 +48,7 @@ endif
 "
 setlocal paragraphs+=XP
 "
-" {{{2 Activate navigation to preporcessor sections.
+" {{{2 Activate navigation to preprocessor sections.
 "
 if exists("b:preprocs_as_sections")
 	setlocal sections=EQTSPS[\ G1GS
@@ -169,9 +169,9 @@ endif
 " <jp />
 
 syn region nroffEquation start=/^\.\s*EQ\>/ end=/^\.\s*EN\>/
-syn region nroffTable start=/^\.\s*TS\>/ end=/^\.\s*TE\>/
+syn region nroffTable start=/^\.\s*TS\>/ end=/^\.\s*TE\>/ contains=@Spell
 syn region nroffPicture start=/^\.\s*PS\>/ end=/^\.\s*PE\>/
-syn region nroffRefer start=/^\.\s*\[\>/ end=/^\.\s*\]\>/
+syn region nroffRefer start=/^\.\s*\[\>/ end=/^\.\s*\]\>/ contains=@Spell
 syn region nroffGrap start=/^\.\s*G1\>/ end=/^\.\s*G2\>/
 syn region nroffGremlin start=/^\.\s*GS\>/ end=/^\.\s*GE|GF\>/
 
@@ -179,11 +179,11 @@ syn region nroffGremlin start=/^\.\s*GS\>/ end=/^\.\s*GE|GF\>/
 " ------------------------------------------------------------
 
 syn region nroffIgnore start=/^[.']\s*ig/ end=/^['.]\s*\./
-syn match nroffComment /\(^[.']\s*\)\=\\".*/ contains=nroffTodo
-syn match nroffComment /^'''.*/  contains=nroffTodo
+syn match nroffComment /\(^[.']\s*\)\=\\".*/ contains=nroffTodo,@Spell
+syn match nroffComment /^'''.*/  contains=nroffTodo,@Spell
 
 if exists("b:nroff_is_groff")
-	syn match nroffComment "\\#.*$" contains=nroffTodo
+	syn match nroffComment "\\#.*$" contains=nroffTodo,@Spell
 endif
 
 syn keyword nroffTodo TODO XXX FIXME contained
@@ -198,7 +198,7 @@ syn keyword nroffTodo TODO XXX FIXME contained
 "
 
 hi def link nroffEscChar nroffSpecialChar
-hi def link nroffEscCharAr nroffSpecialChar
+hi def link nroffEscCharArg nroffSpecialChar
 hi def link nroffSpecialChar SpecialChar
 hi def link nroffSpace Delimiter
 
@@ -211,7 +211,7 @@ hi def link nroffEscPar nroffEscape
 hi def link nroffEscRegPar nroffEscape
 hi def link nroffEscArg nroffEscape
 hi def link nroffSize nroffEscape
-hi def link nroffEscape Preproc
+hi def link nroffEscape PreProc
 
 hi def link nroffIgnore Comment
 hi def link nroffComment Comment

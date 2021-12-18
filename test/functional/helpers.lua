@@ -38,10 +38,16 @@ module.nvim_prog = (
 module.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
+  ..' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
   module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
-  '--cmd', module.nvim_set, '--embed'}
+  '--cmd', module.nvim_set,
+  '--cmd', 'unmap Y',
+  '--cmd', 'unmap <C-L>',
+  '--cmd', 'iunmap <C-U>',
+  '--cmd', 'iunmap <C-W>',
+  '--embed'}
+
 -- Directory containing nvim.
 module.nvim_dir = module.nvim_prog:gsub("[/\\][^/\\]+$", "")
 if module.nvim_dir == module.nvim_prog then
@@ -90,10 +96,7 @@ function module.get_session()
   return session
 end
 
-function module.set_session(s, keep)
-  if session and not keep then
-    session:close()
-  end
+function module.set_session(s)
   session = s
 end
 
@@ -360,7 +363,11 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function module.spawn(argv, merge, env)
+function module.spawn(argv, merge, env, keep)
+  if session and not keep then
+    session:close()
+  end
+
   local child_stream = ChildProcessStream.spawn(
       merge and module.merge_args(prepend_argv, argv) or argv,
       env)
@@ -416,7 +423,7 @@ end
 
 -- Builds an argument list for use in clear().
 --
---@see clear() for parameters.
+---@see clear() for parameters.
 function module.new_argv(...)
   local args = {unpack(module.nvim_argv)}
   table.insert(args, '--headless')
@@ -513,13 +520,15 @@ end
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
   assert(module.has_powershell())
-  local cmd = 'Remove-Item -Force '..table.concat(iswin()
+  local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+  local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'
   module.source([[
     let &shell = ']]..shell..[['
-    set shellquote= shellpipe=\| shellxquote=
-    let &shellredir = '| Out-File -Encoding UTF8'
+    set shellquote= shellxquote=
+    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
   ]])
 end
@@ -565,7 +574,7 @@ function module.buf_lines(bufnr)
   return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
 end
 
---@see buf_lines()
+---@see buf_lines()
 function module.curbuf_contents()
   module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
@@ -725,6 +734,19 @@ function module.pending_win32(pending_fn)
   end
 end
 
+function module.pending_c_parser(pending_fn)
+  local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
+  if not status then
+    if module.isCI() then
+      error("treesitter C parser not found, required on CI: " .. msg)
+    else
+      pending_fn 'no C parser, skipping'
+      return true
+    end
+  end
+  return false
+end
+
 -- Calls pending() and returns `true` if the system is too slow to
 -- run fragile or expensive tests. Else returns `false`.
 function module.skip_fragile(pending_fn, cond)
@@ -762,19 +784,6 @@ end
 
 function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
-end
-
-function module.redir_exec(cmd)
-  module.meths.set_var('__redir_exec_cmd', cmd)
-  module.command([[
-    redir => g:__redir_exec_output
-      silent! execute g:__redir_exec_cmd
-    redir END
-  ]])
-  local ret = module.meths.get_var('__redir_exec_output')
-  module.meths.del_var('__redir_exec_output')
-  module.meths.del_var('__redir_exec_cmd')
-  return ret
 end
 
 function module.get_pathsep()
@@ -863,6 +872,13 @@ function module.os_kill(pid)
   return os.execute((iswin()
     and 'taskkill /f /t /pid '..pid..' > nul'
     or  'kill -9 '..pid..' > /dev/null'))
+end
+
+-- Create folder with non existing parents
+function module.mkdir_p(path)
+  return os.execute((iswin()
+    and 'mkdir '..path
+    or 'mkdir -p '..path))
 end
 
 module = global_helpers.tbl_extend('error', module, global_helpers)

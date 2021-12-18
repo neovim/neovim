@@ -2,7 +2,7 @@
 " Language:        Haskell
 " Maintainer:      Daniel Campoverde <alx@sillybytes.net>
 " URL:             https://github.com/alx741/haskellcomplete.vim
-" Last Change:     2018 Aug 26
+" Last Change:     2019 May 14
 
 " Usage:           setlocal omnifunc=haskellcomplete#Complete
 
@@ -54,7 +54,7 @@ function! haskellcomplete#Complete(findstart, base)
 
     if b:completingLangExtension
         if a:base ==? ""
-            " Return all posible Lang extensions
+            " Return all possible Lang extensions
             return s:langExtensions
         else
             let l:matches = []
@@ -63,13 +63,14 @@ function! haskellcomplete#Complete(findstart, base)
                     call add(l:matches, extension)
                 endif
             endfor
+            let b:completingLangExtension = 0
             return l:matches
         endif
 
 
     elseif b:completingOptionsGHC
         if a:base ==? ""
-            " Return all posible GHC options
+            " Return all possible GHC options
             return s:optionsGHC
         else
             let l:matches = []
@@ -78,13 +79,14 @@ function! haskellcomplete#Complete(findstart, base)
                     call add(l:matches, flag)
                 endif
             endfor
+            let b:completingOptionsGHC = 0
             return l:matches
         endif
 
 
     elseif b:completingModule
         if a:base ==? ""
-            " Return all posible modules
+            " Return all possible modules
             return s:commonModules
         else
             let l:matches = []
@@ -93,6 +95,7 @@ function! haskellcomplete#Complete(findstart, base)
                     call add(l:matches, module)
                 endif
             endfor
+            let b:completingModule = 0
             return l:matches
         endif
 

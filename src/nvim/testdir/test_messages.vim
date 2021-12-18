@@ -1,5 +1,6 @@
 " Tests for :messages, :echomsg, :echoerr
 
+source check.vim
 source shared.vim
 
 func Test_messages()
@@ -31,6 +32,8 @@ func Test_messages()
   finally
     let &more = oldmore
   endtry
+
+  call assert_fails('message 1', 'E474:')
 endfunc
 
  " Patch 7.4.1696 defined the "clearmode()" command for clearing the mode
@@ -75,7 +78,7 @@ func Test_echomsg()
 endfunc
 
 func Test_echoerr()
-  throw 'skipped: Nvim does not support test_ignore_error()'
+  CheckFunction test_ignore_error
   call test_ignore_error('IgNoRe')
   call assert_equal("\nIgNoRe hello", execute(':echoerr "IgNoRe hello"'))
   call assert_equal("\n12345 IgNoRe", execute(':echoerr 12345 "IgNoRe"'))
@@ -84,7 +87,7 @@ func Test_echoerr()
   if has('float')
     call assert_equal("\n1.23 IgNoRe", execute(':echoerr 1.23 "IgNoRe"'))
   endif
-  call test_ignore_error('<lambda>')
+  eval '<lambda>'->test_ignore_error()
   call assert_match("function('<lambda>\\d*')", execute(':echoerr {-> 1234}'))
   call test_ignore_error('RESET')
 endfunc

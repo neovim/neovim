@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vim 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-23 18:45+0300\n"
+"POT-Creation-Date: 2021-01-18 17:46+0200\n"
 "PO-Revision-Date: 2020-08-23 20:19+0300\n"
 "Last-Translator: Анатолій Сахнік <sakhnik@gmail.com>\n"
 "Language-Team: Ukrainian\n"
@@ -22,6 +22,67 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+msgid "--Deleted--"
+msgstr "--Знищено--"
+
+#, c-format
+msgid "auto-removing autocommand: %s <buffer=%d>"
+msgstr "Автоматичне знищення автокоманди: %s <буфер=%d>"
+
+#, c-format
+msgid "E367: No such group: \"%s\""
+msgstr "E367: Немає такої групи: «%s»"
+
+msgid "E936: Cannot delete the current group"
+msgstr "E936: Не вдалося знищити цю групу"
+
+msgid "W19: Deleting augroup that is still in use"
+msgstr "W19: Знищення автогрупи, яка все ще використовується"
+
+#, c-format
+msgid "E215: Illegal character after *: %s"
+msgstr "E215: Недозволений символ після *: %s"
+
+#, c-format
+msgid "E216: No such event: %s"
+msgstr "E216: Немає такої події: %s"
+
+#, c-format
+msgid "E216: No such group or event: %s"
+msgstr "E216: Немає такої групи чи події: %s"
+
+msgid ""
+"\n"
+"--- Autocommands ---"
+msgstr ""
+"\n"
+"--- Автокоманди ---"
+
+#, c-format
+msgid "E680: <buffer=%d>: invalid buffer number "
+msgstr "E680: <буфер=%d>: некоректний номер буфера "
+
+msgid "E217: Can't execute autocommands for ALL events"
+msgstr "E217: Не можу виконувати автокоманди для УСІХ подій"
+
+msgid "No matching autocommands"
+msgstr "Немає відповідних автокоманд"
+
+msgid "E218: autocommand nesting too deep"
+msgstr "E218: Забагато вкладених автокоманд"
+
+#, c-format
+msgid "%s Autocommands for \"%s\""
+msgstr "%s Автокоманди для «%s»"
+
+#, c-format
+msgid "Executing %s"
+msgstr "Виконується %s"
+
+#, c-format
+msgid "autocommand %s"
+msgstr "автокоманда %s"
 
 msgid "[Location List]"
 msgstr "[Список місць]"
@@ -95,8 +156,14 @@ msgid ""
 "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr "E89: Буфер %<PRId64> має зміни (! щоб не зважати)"
 
+msgid "E948: Job still running (add ! to end the job)"
+msgstr "E948: Задача все ще виконується (! щоб закінчити)"
+
 msgid "E37: No write since last change (add ! to override)"
 msgstr "E37: Зміни не було записано (! щоб не зважати)"
+
+msgid "E948: Job still running"
+msgstr "E948: Задача все ще виконується"
 
 msgid "E37: No write since last change"
 msgstr "E37: Не записано після останніх змін"
@@ -465,6 +532,10 @@ msgid "E957: Invalid window number"
 msgstr "E957: Некоректний номер вікна"
 
 #, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: Неможливо заблокувати чи розблокувати змінну %s"
+
+#, c-format
 msgid "E734: Wrong variable type for %s="
 msgstr "E734: Неправильний тип змінної для %s="
 
@@ -543,10 +614,6 @@ msgstr "E690: Пропущено «in» після :for"
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Змінної немає: «%s»"
-
-#, c-format
-msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E940: Неможливо заблокувати чи розблокувати змінну %s"
 
 msgid "E109: Missing ':' after '?'"
 msgstr "E109: Бракує ':' після '?'"
@@ -949,9 +1016,6 @@ msgstr "E684: Індекс списку поза межами: %<PRId64>"
 #, c-format
 msgid "E686: Argument of %s must be a List"
 msgstr "E686: Аргумент у %s має бути списком"
-
-msgid "E928: String required"
-msgstr "E928: Потрібен String"
 
 #, c-format
 msgid "Error converting the call result: %s"
@@ -1591,6 +1655,10 @@ msgid "Close \"%s\"?"
 msgstr "Закрити «%s»?"
 
 #, c-format
+msgid "E947: Job still running in buffer \"%s\""
+msgstr "E947: Задача все ще запущена у буфері «%s»"
+
+#, c-format
 msgid "E162: No write since last change for buffer \"%s\""
 msgstr "E162: Буфер «%s» має незбережені зміни"
 
@@ -1613,18 +1681,6 @@ msgstr "E610: Немає аргументів для знищення"
 #, c-format
 msgid "E666: compiler not supported: %s"
 msgstr "E666: Компілятор не підтримується: %s"
-
-#, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "Пошук «%s» в «%s»"
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "Пошук «%s»"
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "не знайдено в '%s': «%s»"
 
 #, c-format
 msgid ":source error parsing command %s"
@@ -1702,11 +1758,15 @@ msgstr "Режим Ex. Для повернення до нормального �
 msgid "E501: At end-of-file"
 msgstr "E501: Кінець файлу"
 
-msgid "E169: Command too recursive"
-msgstr "E169: Команда занадто рекурсивна"
+#, c-format
+msgid "Executing: %s"
+msgstr "Виконується: %s"
 
 msgid "line %"
 msgstr "рядок %"
+
+msgid "E169: Command too recursive"
+msgstr "E169: Команда занадто рекурсивна"
 
 #, c-format
 msgid "E605: Exception not caught: %s"
@@ -1724,9 +1784,6 @@ msgstr "E464: Неоднозначний вжиток команди корис�
 msgid "E492: Not an editor command"
 msgstr "E492: Це не команда редактора"
 
-msgid "E981: Command not allowed in restricted mode"
-msgstr "E981: Команду не дозволено у обмеженому режимі"
-
 msgid "E493: Backwards range given"
 msgstr "E493: Інтервал задано навиворіт"
 
@@ -1735,6 +1792,11 @@ msgstr "Інтервал задано навиворіт, щоб помінят�
 
 msgid "E494: Use w or w>>"
 msgstr "E494: Спробуйте w або w>>"
+
+msgid ""
+"INTERNAL: Cannot use EX_DFLALL with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"
+msgstr ""
+"ВНУТРІШНЄ: Не можна вживати EX_DFLALL з ADDR_NONE, ADDR_UNSIGNED чи ADDR_QUICKFIX"
 
 msgid "E943: Command table needs to be updated, run 'make'"
 msgstr "E943: Потрібно поновити таблицю команд, запустіть 'make'"
@@ -1762,10 +1824,10 @@ msgstr "E174: Команда вже існує, ! щоб замінити її: 
 
 msgid ""
 "\n"
-"    Name              Args Address Complete   Definition"
+"    Name              Args Address Complete    Definition"
 msgstr ""
 "\n"
-"    Назва              Арг. Адреса   Доповнення Визначення"
+"    Назва             Арг. Адреса  Доповнення  Визначення"
 
 msgid "No user-defined commands found"
 msgstr "Не знайдено команд користувача"
@@ -2077,11 +2139,11 @@ msgstr "E347: У шляху пошуку більше немає файлів «
 msgid "E812: Autocommands changed buffer or buffer name"
 msgstr "E812: Автокоманди змінили буфер чи його назву"
 
-msgid "Illegal file name"
-msgstr "Недозволена назва файлу"
-
 msgid "is a directory"
 msgstr "каталог"
+
+msgid "Illegal file name"
+msgstr "Недозволена назва файлу"
 
 msgid "is not a file"
 msgstr "не файл"
@@ -2103,9 +2165,6 @@ msgstr "E201: Автокоманди *ReadPre не повинні змінюва
 
 msgid "E202: Conversion made file unreadable!"
 msgstr "E202: Конвертація унеможливила читання файлу!"
-
-msgid "[fifo/socket]"
-msgstr "[канал/сокет]"
 
 msgid "[fifo]"
 msgstr "[канал]"
@@ -2353,67 +2412,6 @@ msgstr "E462: Не вдалося підготувати «%s», щоб пере
 msgid "E321: Could not reload \"%s\""
 msgstr "E321: Не вдалося перечитати «%s»"
 
-msgid "--Deleted--"
-msgstr "--Знищено--"
-
-#, c-format
-msgid "auto-removing autocommand: %s <buffer=%d>"
-msgstr "Автоматичне знищення автокоманди: %s <буфер=%d>"
-
-#, c-format
-msgid "E367: No such group: \"%s\""
-msgstr "E367: Немає такої групи: «%s»"
-
-msgid "E936: Cannot delete the current group"
-msgstr "E936: Не вдалося знищити цю групу"
-
-msgid "W19: Deleting augroup that is still in use"
-msgstr "W19: Знищення автогрупи, яка все ще використовується"
-
-#, c-format
-msgid "E215: Illegal character after *: %s"
-msgstr "E215: Недозволений символ після *: %s"
-
-#, c-format
-msgid "E216: No such event: %s"
-msgstr "E216: Немає такої події: %s"
-
-#, c-format
-msgid "E216: No such group or event: %s"
-msgstr "E216: Немає такої групи чи події: %s"
-
-msgid ""
-"\n"
-"--- Autocommands ---"
-msgstr ""
-"\n"
-"--- Автокоманди ---"
-
-#, c-format
-msgid "E680: <buffer=%d>: invalid buffer number "
-msgstr "E680: <буфер=%d>: некоректний номер буфера "
-
-msgid "E217: Can't execute autocommands for ALL events"
-msgstr "E217: Не можу виконувати автокоманди для УСІХ подій"
-
-msgid "No matching autocommands"
-msgstr "Немає відповідних автокоманд"
-
-msgid "E218: autocommand nesting too deep"
-msgstr "E218: Забагато вкладених автокоманд"
-
-#, c-format
-msgid "%s Autocommands for \"%s\""
-msgstr "%s Автокоманди для «%s»"
-
-#, c-format
-msgid "Executing %s"
-msgstr "Виконується %s"
-
-#, c-format
-msgid "autocommand %s"
-msgstr "автокоманда %s"
-
 msgid "E219: Missing {."
 msgstr "E219: Бракує {."
 
@@ -2518,9 +2516,6 @@ msgstr "E685: Внутрішня помилка: %s"
 
 msgid "Interrupted"
 msgstr "Перервано"
-
-msgid "E14: Invalid address"
-msgstr "E14: Неправильна адреса"
 
 msgid "E474: Invalid argument"
 msgstr "E474: Некоректний аргумент"
@@ -2719,6 +2714,9 @@ msgstr "E45: Встановлено опцію 'readonly' (! щоб не зва�
 msgid "E46: Cannot change read-only variable \"%.*s\""
 msgstr "E46: Змінна тільки для читання: «%.*s»"
 
+msgid "E928: String required"
+msgstr "E928: Потрібен String"
+
 msgid "E715: Dictionary required"
 msgstr "E715: Потрібен словник"
 
@@ -2727,8 +2725,8 @@ msgid "E118: Too many arguments for function: %s"
 msgstr "E118: Забагато аргументів для функції: %s"
 
 #, c-format
-msgid "E716: Key not present in Dictionary: %s"
-msgstr "E716: Немає такого ключа у словнику: %s"
+msgid "E716: Key not present in Dictionary: \"%s\""
+msgstr "E716: Немає такого ключа у словнику: «%s»"
 
 msgid "E714: List required"
 msgstr "E714: Потрібен список"
@@ -3158,15 +3156,15 @@ msgid "E5106: Error while creating shared module: %.*s"
 msgstr "E5106: Помилка створення розділюваного модуля: %.*s"
 
 #, c-format
+msgid "E5106: Error while creating inspect module: %.*s"
+msgstr "E5106: Помилка створення модуля inspect: %.*s"
+
+#, c-format
 msgid "E5106: Error while creating vim module: %.*s"
 msgstr "E5106: Помилка створення модуля vim: %.*s"
 
 msgid "E970: Failed to initialize lua interpreter"
 msgstr "E970: Не вдалося ініціалізувати інтерпретатор lua"
-
-#, c-format
-msgid "E5117: Error while updating package paths: %.*s"
-msgstr "E5117: Помилка оновлення шляхів пакунку: %.*s"
 
 #, c-format
 msgid "E5114: Error while converting print argument #%i: %.*s"
@@ -3254,6 +3252,10 @@ msgstr "--embed конфліктує з -es/-Es"
 
 msgid "pre-vimrc command line"
 msgstr "команди перед vimrc"
+
+#, c-format
+msgid "Conflicting configs: \"%s\" \"%s\""
+msgstr "Суперечливі конфігурації: «%s» «%s»"
 
 #, c-format
 msgid "E282: Cannot read from \"%s\""
@@ -3366,9 +3368,6 @@ msgstr "  -v, --version         Надрукувати інформацію пр
 
 msgid "  -V[N][file]           Verbose [level][file]\n"
 msgstr "  -V[N][файл]           Більше повідомлень [рівень][файл]\n"
-
-msgid "  -Z                    Restricted mode\n"
-msgstr "  -Z                    Обмежений режим\n"
 
 msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
 msgstr ""
@@ -4005,8 +4004,7 @@ msgstr ""
 "Введіть  :qa!  і натисність <Enter> щоб відкинути всі зміни і вийти Nvim"
 
 msgid "Type  :qa  and press <Enter> to exit Nvim"
-msgstr ""
-"Введіть  :qa  і натисність <Enter> щоб вийти з Nvim"
+msgstr "Введіть  :qa  і натисність <Enter> щоб вийти з Nvim"
 
 #, c-format
 msgid "1 line %sed 1 time"
@@ -4071,10 +4069,10 @@ msgstr "E353: У регістрі %s нічого немає"
 
 msgid ""
 "\n"
-"--- Registers ---"
+"Type Name Content"
 msgstr ""
 "\n"
-"--- Регістри ---"
+"Тип  Наз. Вміст  "
 
 msgid ""
 "E883: search pattern and expression register may not contain two or more "
@@ -4187,9 +4185,6 @@ msgstr "E537: 'commentstring' має бути порожньою чи місти
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Послідовність виразів не завершено"
 
-msgid "E541: too many items"
-msgstr "E541: Забагато елементів"
-
 msgid "E542: unbalanced groups"
 msgstr "E542: Групи не збалансовано"
 
@@ -4277,6 +4272,9 @@ msgstr ""
 msgid "E5677: Error writing input to shell-command: %s"
 msgstr "E5677: Не вдалося записати на вхід команди оболонки: %s"
 
+msgid "%a %b %d %H:%M:%S %Y"
+msgstr "%H:%M:%S %a, %d %B %Y р."
+
 #, c-format
 msgid "E447: Can't find file \"%s\" in path"
 msgstr "E447: Файл «%s» не знайдено у шляху пошуку"
@@ -4284,8 +4282,11 @@ msgstr "E447: Файл «%s» не знайдено у шляху пошуку"
 msgid "E553: No more items"
 msgstr "E553: Немає більше елементів"
 
+msgid "E925: Current quickfix list was changed"
+msgstr "E925: Поточний список quickfix змінився"
+
 msgid "E926: Current location list was changed"
-msgstr "E926: Цей список місць було змінено"
+msgstr "E926: Поточний список місць змінився"
 
 #, c-format
 msgid "E372: Too many %%%c in format string"
@@ -4319,9 +4320,6 @@ msgstr "E379: Пропущена чи порожня назва каталогу
 msgid "E924: Current window was closed"
 msgstr "E924: Активне вікно було закрито"
 
-msgid "E925: Current quickfix was changed"
-msgstr "E925: Цей quickfix було змінено"
-
 #, c-format
 msgid "(%d of %d)%s%s: "
 msgstr "(%d з %d)%s%s: "
@@ -4348,6 +4346,9 @@ msgstr "E683: Пропущено назву файлу чи некоректни
 #, c-format
 msgid "Cannot open file \"%s\""
 msgstr "Не вдалося відкрити файл «%s»"
+
+msgid "cannot have both a list and a \"what\" argument"
+msgstr "не можна задавати одночасно список і аргумент «що»"
 
 msgid "E681: Buffer is not loaded"
 msgstr "E681: Буфер не завантажено"
@@ -4468,6 +4469,18 @@ msgstr ""
 
 msgid "Switching to backtracking RE engine for pattern: "
 msgstr "Перемикання до простого рушія регулярних виразів: "
+
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr "Пошук «%s» в «%s»"
+
+#, c-format
+msgid "Searching for \"%s\""
+msgstr "Пошук «%s»"
+
+#, c-format
+msgid "not found in '%s': \"%s\""
+msgstr "не знайдено в '%s': «%s»"
 
 msgid " TERMINAL"
 msgstr " ТЕРМІНАЛ"
@@ -5252,6 +5265,9 @@ msgstr "синхронізується по коментарях стилю С"
 msgid "no syncing"
 msgstr "без синхронізації"
 
+msgid "syncing starts at the first line"
+msgstr "синхронізація починається з першого рядка"
+
 msgid "syncing starts "
 msgstr "починається синхронізація за "
 
@@ -5282,6 +5298,9 @@ msgstr ""
 #, c-format
 msgid "E392: No such syntax cluster: %s"
 msgstr "E392: Немає такого синтаксичного кластера: %s"
+
+msgid "from the first line"
+msgstr "з першого рядка"
 
 msgid "minimal "
 msgstr "мінімальний "

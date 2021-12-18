@@ -1,12 +1,12 @@
 #ifndef NVIM_VIML_PARSER_PARSER_H
 #define NVIM_VIML_PARSER_PARSER_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <assert.h>
 
-#include "nvim/lib/kvec.h"
 #include "nvim/func_attr.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 
@@ -82,9 +82,9 @@ typedef struct {
 } ParserState;
 
 static inline void viml_parser_init(
-    ParserState *const ret_pstate,
-    const ParserLineGetter get_line, void *const cookie,
-    ParserHighlight *const colors)
+                                    ParserState *const ret_pstate,
+                                    const ParserLineGetter get_line, void *const cookie,
+                                    ParserHighlight *const colors)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
 
 /// Initialize a new parser state instance
@@ -94,10 +94,8 @@ static inline void viml_parser_init(
 /// @param[in]  cookie  Argument for the get_line function.
 /// @param[in]  colors  Where to save highlighting. May be NULL if it is not
 ///                     needed.
-static inline void viml_parser_init(
-    ParserState *const ret_pstate,
-    const ParserLineGetter get_line, void *const cookie,
-    ParserHighlight *const colors)
+static inline void viml_parser_init(ParserState *const ret_pstate, const ParserLineGetter get_line,
+                                    void *const cookie, ParserHighlight *const colors)
 {
   *ret_pstate = (ParserState) {
     .reader = {
@@ -194,8 +192,7 @@ static inline void viml_parser_advance(ParserState *const pstate,
 ///
 /// @param  pstate  Parser state to advance.
 /// @param[in]  len  Number of bytes to advance.
-static inline void viml_parser_advance(ParserState *const pstate,
-                                       const size_t len)
+static inline void viml_parser_advance(ParserState *const pstate, const size_t len)
 {
   assert(pstate->pos.line == kv_size(pstate->reader.lines) - 1);
   const ParserLine pline = kv_last(pstate->reader.lines);
@@ -219,10 +216,8 @@ static inline void viml_parser_highlight(ParserState *const pstate,
 /// @param[in]  start  Start position of the highlight.
 /// @param[in]  len  Highlighting chunk length.
 /// @param[in]  group  Highlight group.
-static inline void viml_parser_highlight(ParserState *const pstate,
-                                         const ParserPosition start,
-                                         const size_t len,
-                                         const char *const group)
+static inline void viml_parser_highlight(ParserState *const pstate, const ParserPosition start,
+                                         const size_t len, const char *const group)
 {
   if (pstate->colors == NULL || len == 0) {
     return;
@@ -231,9 +226,9 @@ static inline void viml_parser_highlight(ParserState *const pstate,
          || kv_Z(*pstate->colors, 0).start.line < start.line
          || kv_Z(*pstate->colors, 0).end_col <= start.col);
   kvi_push(*pstate->colors, ((ParserHighlightChunk) {
-      .start = start,
-      .end_col = start.col + len,
-      .group = group,
+    .start = start,
+    .end_col = start.col + len,
+    .group = group,
   }));
 }
 

@@ -74,9 +74,9 @@ higher.  Pressing "-" does the same thing, without the need to move to the
 You can press <F1> to get help on the things you can do in the netrw file
 browser.  This is what you get: >
 
-    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help 
+    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help
 
-    MAPS								 netrw-maps 
+    MAPS								 netrw-maps
      	 <F1>.............Help.......................................|netrw-help|
      	 <cr>.............Browsing...................................|netrw-cr|
      	 <del>............Deleting Files or Directories..............|netrw-delete|
@@ -84,7 +84,7 @@ browser.  This is what you get: >
      	 a................Hiding Files or Directories................|netrw-a|
      	 mb...............Bookmarking a Directory....................|netrw-mb|
      	 gb...............Changing to a Bookmarked Directory.........|netrw-gb|
-     	 c................Make Browsing Directory The Current Dir....|netrw-c|
+     	 cd...............Make Browsing Directory The Current Dir....|netrw-c|
      	 d................Make A New Directory.......................|netrw-d|
      	 D................Deleting Files or Directories..............|netrw-D|
      	 <c-h>............Edit File/Directory Hiding List............|netrw-ctrl-h|
@@ -121,7 +121,7 @@ The following normal-mode commands may be used to control the browser display:
 
 As a sampling of extra normal-mode commands:
 
-	c		Change Vim's notion of the current directory to be
+	cd		Change Vim's notion of the current directory to be
 			the same as the browser directory.  (see
 			|g:netrw_keepdir| to control this, too)
 	R		Rename the file or directory under the cursor; a
@@ -202,13 +202,27 @@ the other window.  This is called a local directory. >
 	:pwd
 	/home/Bram/VeryLongFileName
 
-So long as no ":lcd" command has been used, all windows share the same current
-directory.  Doing a ":cd" command in one window will also change the current
+So long as no `:lcd` command has been used, all windows share the same current
+directory.  Doing a `:cd` command in one window will also change the current
 directory of the other window.
-   For a window where ":lcd" has been used a different current directory is
-remembered.  Using ":cd" or ":lcd" in other windows will not change it.
-   When using a ":cd" command in a window that uses a different current
+   For a window where `:lcd` has been used a different current directory is
+remembered.  Using `:cd` or `:lcd` in other windows will not change it.
+   When using a `:cd` command in a window that uses a different current
 directory, it will go back to using the shared directory.
+
+
+TAB LOCAL DIRECTORY
+
+When you open a new tab page, it uses the directory of the window in the
+previous tab page from which the new tab page was opened. You can change the
+directory of the current tab page using the `:tcd` command. All the windows in
+a tab page share this directory except for windows with a window-local
+directory. Any new windows opened in this tab page will use this directory as
+the current working directory. Using a `:cd` command in a tab page will not
+change the working directory of tab pages which have a tab local directory.
+When the global working directory is changed using the ":cd" command in a tab
+page, it will also change the current tab page working directory.
+
 
 ==============================================================================
 *22.3*	Finding a file

@@ -5,10 +5,6 @@
 
 local nvim = vim.api
 
-local function pprint(o)
-  print(nvim.nvim_call_function('string', { o }))
-end
-
 local function systemlist(...)
   local rv = nvim.nvim_call_function('systemlist', ...)
   local err = nvim.nvim_get_vvar('shell_error')

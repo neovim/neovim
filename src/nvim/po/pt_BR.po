@@ -6229,10 +6229,6 @@ msgstr "-y\t\t\tModo fÃ¡cil (como \"evim\", o Vim nÃ£o modal)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tmodo somente-leitura (como \"view\")"
 
-#: ../main.c:2186
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tmodo restrito (como \"rvim\")"
-
 #: ../main.c:2187
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tNão permitir alterações (gravação de arquivos)"

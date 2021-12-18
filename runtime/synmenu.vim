@@ -404,6 +404,7 @@ an 50.90.120 &Syntax.PQ.Pam\ config :cal SetSyn("pamconf")<CR>
 an 50.90.130 &Syntax.PQ.PApp :cal SetSyn("papp")<CR>
 an 50.90.140 &Syntax.PQ.Pascal :cal SetSyn("pascal")<CR>
 an 50.90.150 &Syntax.PQ.Password\ file :cal SetSyn("passwd")<CR>
+an 50.90.490 &Syntax.PQ.Pbtxt :cal SetSyn("pbtxt")<CR>
 an 50.90.160 &Syntax.PQ.PCCTS :cal SetSyn("pccts")<CR>
 an 50.90.170 &Syntax.PQ.PDF :cal SetSyn("pdf")<CR>
 an 50.90.180 &Syntax.PQ.Perl.Perl :cal SetSyn("perl")<CR>

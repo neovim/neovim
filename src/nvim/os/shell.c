@@ -1,36 +1,36 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <string.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include <uv.h>
 
 #include "nvim/ascii.h"
+#include "nvim/charset.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
+#include "nvim/eval.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/libuv_process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/ex_cmds.h"
-#include "nvim/misc1.h"
+#include "nvim/main.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/path.h"
-#include "nvim/types.h"
-#include "nvim/main.h"
-#include "nvim/vim.h"
-#include "nvim/message.h"
-#include "nvim/memory.h"
-#include "nvim/ui.h"
 #include "nvim/screen.h"
-#include "nvim/memline.h"
-#include "nvim/option_defs.h"
-#include "nvim/charset.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/tag.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
@@ -47,8 +47,7 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
-static void save_patterns(int num_pat, char_u **pat, int *num_file,
-                          char_u ***file)
+static void save_patterns(int num_pat, char_u **pat, int *num_file, char_u ***file)
 {
   *file = xmalloc((size_t)num_pat * sizeof(char_u *));
   for (int i = 0; i < num_pat; i++) {
@@ -99,22 +98,21 @@ static bool have_dollars(int num, char_u **file)
 ///                      copied into *file.
 ///
 /// @returns             OK for success or FAIL for error.
-int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
-                        char_u ***file, int flags)
+int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file, int flags)
   FUNC_ATTR_NONNULL_ARG(3)
   FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;
-  char_u      *p;
+  char_u *p;
   bool dir;
   char_u *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
-  char_u      *tempname;
-  char_u      *command;
-  FILE        *fd;
-  char_u      *buffer;
+  char_u *tempname;
+  char_u *command;
+  FILE *fd;
+  char_u *buffer;
 #define STYLE_ECHO      0       // use "echo", the default
 #define STYLE_GLOB      1       // use "glob", for csh
 #define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
@@ -123,7 +121,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   int shell_style = STYLE_ECHO;
   int check_spaces;
   static bool did_find_nul = false;
-  bool ampersent = false;
+  bool ampersand = false;
   // vimglob() function to define for Posix shell
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
@@ -162,7 +160,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   // get a name for the temp file
   if ((tempname = vim_tempname()) == NULL) {
-    EMSG(_(e_notmp));
+    emsg(_(e_notmp));
     return FAIL;
   }
 
@@ -215,7 +213,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   }
 
   if (is_fish_shell) {
-    len += sizeof("egin;"" end") - 1;
+    len += sizeof("egin;" " end") - 1;
   }
 
   command = xmalloc(len);
@@ -245,7 +243,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       p--;
     }
     if (*p == '&') {                            // remove trailing '&'
-      ampersent = true;
+      ampersand = true;
       *p = ' ';
     }
     STRCAT(command, ">");
@@ -309,7 +307,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     shellopts |= kShellOptHideMess;
   }
 
-  if (ampersent) {
+  if (ampersand) {
     STRCAT(command, "&");               // put the '&' after the redirection
   }
 
@@ -319,9 +317,9 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (shell_style == STYLE_PRINT) {
     extra_shell_arg = (char_u *)"-G";       // Use zsh NULL_GLOB option
 
-  // If we use -f then shell variables set in .cshrc won't get expanded.
-  // vi can do it, so we will too, but it is only necessary if there is a "$"
-  // in one of the patterns, otherwise we can still use the fast option.
+    // If we use -f then shell variables set in .cshrc won't get expanded.
+    // vi can do it, so we will too, but it is only necessary if there is a "$"
+    // in one of the patterns, otherwise we can still use the fast option.
   } else if (shell_style == STYLE_GLOB && !have_dollars(num_pat, pat)) {
     extra_shell_arg = (char_u *)"-f";           // Use csh fast option
   }
@@ -331,7 +329,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
-  if (ampersent) {
+  if (ampersand) {
     os_delay(10L, true);
   }
 
@@ -344,7 +342,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     if (!(flags & EW_SILENT)) {
       msg_putchar('\n');                // clear bottom line quickly
       cmdline_row = Rows - 1;           // continue on last line
-      MSG(_(e_wildexpand));
+      msg(_(e_wildexpand));
       msg_start();                    // don't overwrite this message
     }
 
@@ -361,7 +359,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
-      MSG(_(e_wildexpand));
+      msg(_(e_wildexpand));
       msg_start();                      // don't overwrite this message
     }
     xfree(tempname);
@@ -392,7 +390,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   os_remove((char *)tempname);
   if (readlen != len) {
     // unexpected read error
-    EMSG2(_(e_notread), tempname);
+    semsg(_(e_notread), tempname);
     xfree(tempname);
     xfree(buffer);
     return FAIL;
@@ -409,7 +407,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       }
       p = skipwhite(p);                 // skip to next entry
     }
-  // file names are separated with NL
+    // file names are separated with NL
   } else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
     buffer[len] = NUL;                  // make sure the buffer ends in NUL
     p = buffer;
@@ -422,7 +420,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       }
       p = skipwhite(p);                 // skip leading white space
     }
-  // file names are separated with NUL
+    // file names are separated with NUL
   } else {
     // Some versions of zsh use spaces instead of NULs to separate
     // results.  Only do this when there is no NUL before the end of the
@@ -673,7 +671,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
-    MSG_PUTS(_("\nshell returned "));
+    msg_puts(_("\nshell returned "));
     msg_outnum(exitcode);
     msg_putchar('\n');
   }
@@ -684,6 +682,116 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   return exitcode;
 }
 
+/// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
+/// Invalidates cached tags.
+///
+/// @return shell command exit code
+int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
+{
+  int retval;
+  proftime_T wait_time;
+
+  if (p_verbose > 3) {
+    verbose_enter();
+    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
+    msg_putchar('\n');
+    verbose_leave();
+  }
+
+  if (do_profiling == PROF_YES) {
+    prof_child_enter(&wait_time);
+  }
+
+  if (*p_sh == NUL) {
+    emsg(_(e_shellempty));
+    retval = -1;
+  } else {
+    // The external command may update a tags file, clear cached tags.
+    tag_freematch();
+
+    retval = os_call_shell(cmd, opts, extra_shell_arg);
+  }
+
+  set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)retval);
+  if (do_profiling == PROF_YES) {
+    prof_child_exit(&wait_time);
+  }
+
+  return retval;
+}
+
+/// Get the stdout of an external command.
+/// If "ret_len" is NULL replace NUL characters with NL. When "ret_len" is not
+/// NULL store the length there.
+///
+/// @param  cmd      command to execute
+/// @param  infile   optional input file name
+/// @param  flags    can be kShellOptSilent or 0
+/// @param  ret_len  length of the stdout
+///
+/// @return an allocated string, or NULL for error.
+char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret_len)
+{
+  char_u *buffer = NULL;
+
+  if (check_secure()) {
+    return NULL;
+  }
+
+  // get a name for the temp file
+  char_u *tempname = vim_tempname();
+  if (tempname == NULL) {
+    emsg(_(e_notmp));
+    return NULL;
+  }
+
+  // Add the redirection stuff
+  char_u *command = make_filter_cmd(cmd, infile, tempname);
+
+  // Call the shell to execute the command (errors are ignored).
+  // Don't check timestamps here.
+  no_check_timestamps++;
+  call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
+  no_check_timestamps--;
+
+  xfree(command);
+
+  // read the names from the file into memory
+  FILE *fd = os_fopen((char *)tempname, READBIN);
+
+  if (fd == NULL) {
+    semsg(_(e_notopen), tempname);
+    goto done;
+  }
+
+  fseek(fd, 0L, SEEK_END);
+  size_t len = (size_t)ftell(fd);  // get size of temp file
+  fseek(fd, 0L, SEEK_SET);
+
+  buffer = xmalloc(len + 1);
+  size_t i = fread((char *)buffer, 1, len, fd);
+  fclose(fd);
+  os_remove((char *)tempname);
+  if (i != len) {
+    semsg(_(e_notread), tempname);
+    XFREE_CLEAR(buffer);
+  } else if (ret_len == NULL) {
+    // Change NUL into SOH, otherwise the string is truncated.
+    for (i = 0; i < len; i++) {
+      if (buffer[i] == NUL) {
+        buffer[i] = 1;
+      }
+    }
+
+    buffer[len] = NUL;          // make sure the buffer is terminated
+  } else {
+    *ret_len = len;
+  }
+
+done:
+  xfree(tempname);
+  return buffer;
+}
 /// os_system - synchronously execute a command in the shell
 ///
 /// example:
@@ -705,22 +813,14 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
 ///         started properly
-int os_system(char **argv,
-              const char *input,
-              size_t len,
-              char **output,
+int os_system(char **argv, const char *input, size_t len, char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
   return do_os_system(argv, input, len, output, nread, true, false);
 }
 
-static int do_os_system(char **argv,
-                        const char *input,
-                        size_t len,
-                        char **output,
-                        size_t *nread,
-                        bool silent,
-                        bool forward_output)
+static int do_os_system(char **argv, const char *input, size_t len, char **output, size_t *nread,
+                        bool silent, bool forward_output)
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
@@ -753,9 +853,9 @@ static int do_os_system(char **argv,
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
     if (!silent) {
-      MSG_PUTS(_("\nshell failed to start: "));
+      msg_puts(_("\nshell failed to start: "));
       msg_outtrans((char_u *)os_strerror(status));
-      MSG_PUTS(": ");
+      msg_puts(": ");
       msg_outtrans((char_u *)prog);
       msg_putchar('\n');
     }
@@ -851,8 +951,7 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
-    void *data, bool eof)
+static void system_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   DynamicBuffer *dbuf = data;
 
@@ -885,10 +984,10 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
 ///          Returns the previous decision if size=0.
 static bool out_data_decide_throttle(size_t size)
 {
-  static uint64_t   started     = 0;  // Start time of the current throttle.
-  static size_t     received    = 0;  // Bytes observed since last throttle.
-  static size_t     visit       = 0;  // "Pulse" count of the current throttle.
-  static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
+  static uint64_t started     = 0;  // Start time of the current throttle.
+  static size_t received    = 0;  // Bytes observed since last throttle.
+  static size_t visit       = 0;  // "Pulse" count of the current throttle.
+  static char pulse_msg[] = { ' ', ' ', ' ', '\0' };
 
   if (!size) {
     bool previous_decision = (visit > 0);
@@ -945,8 +1044,8 @@ static bool out_data_decide_throttle(size_t size)
 static void out_data_ring(char *output, size_t size)
 {
 #define MAX_CHUNK_SIZE (OUT_DATA_THRESHOLD / 2)
-  static char    last_skipped[MAX_CHUNK_SIZE];  // Saved output.
-  static size_t  last_skipped_len = 0;
+  static char last_skipped[MAX_CHUNK_SIZE];  // Saved output.
+  static size_t last_skipped_len = 0;
 
   assert(output != NULL || (size == 0 || size == SIZE_MAX));
 
@@ -1015,8 +1114,7 @@ end:
   ui_flush();
 }
 
-static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
-    bool eof)
+static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
@@ -1049,10 +1147,10 @@ static size_t tokenize(const char_u *const str, char **const argv)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t argc = 0;
-  const char *p = (const char *) str;
+  const char *p = (const char *)str;
 
   while (*p != NUL) {
-    const size_t len = word_length((const char_u *) p);
+    const size_t len = word_length((const char_u *)p);
 
     if (argv != NULL) {
       // Fill the slot
@@ -1060,7 +1158,7 @@ static size_t tokenize(const char_u *const str, char **const argv)
     }
 
     argc++;
-    p = (const char *) skipwhite((char_u *) (p + len));
+    p = (const char *)skipwhite((char_u *)(p + len));
   }
 
   return argc;
@@ -1115,7 +1213,7 @@ static void read_input(DynamicBuffer *buf)
       dynamic_buffer_ensure(buf, buf->len + len);
       buf->data[buf->len++] = NUL;
     } else {
-      char_u  *s = vim_strchr(lp + written, NL);
+      char_u *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : (size_t)(s - (lp + written));
       dynamic_buffer_ensure(buf, buf->len + len);
       memcpy(buf->data + buf->len, lp + written, len);
@@ -1193,7 +1291,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
   if (status) {
     // Can happen if system() tries to send input to a shell command that was
     // backgrounded (:call system("cat - &", "foo")). #3529 #5241
-    msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
+    msg_schedule_semsg(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
   stream_close(stream, NULL, NULL);

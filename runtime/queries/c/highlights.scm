@@ -14,6 +14,7 @@
   "union"
   "volatile"
   "goto"
+  "register"
 ] @keyword
 
 [
@@ -81,6 +82,8 @@
   "|="
   "&="
   "^="
+  ">>="
+  "<<="
   "--"
   "++"
 ] @operator
@@ -117,7 +120,6 @@
  (preproc_arg)
  (preproc_defined)
 ]  @function.macro
-; TODO (preproc_arg)  @embedded
 
 (field_identifier) @property
 (statement_identifier) @label
@@ -129,12 +131,21 @@
 (type_descriptor)
  ] @type
 
-(declaration type: [(identifier) (type_identifier)] @type)
-(cast_expression type: [(identifier) (type_identifier)] @type)
+(declaration (type_qualifier) @type)
+(cast_expression type: (type_descriptor) @type)
 (sizeof_expression value: (parenthesized_expression (identifier) @type))
 
 ((identifier) @constant
  (#match? @constant "^[A-Z][A-Z0-9_]+$"))
+
+;; Preproc def / undef
+(preproc_def
+  name: (_) @constant)
+(preproc_call
+  directive: (preproc_directive) @_u
+  argument: (_) @constant
+  (#eq? @_u "#undef"))
+
 
 (comment) @comment
 

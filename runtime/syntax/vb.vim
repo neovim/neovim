@@ -1,9 +1,11 @@
 " Vim syntax file
-" Language:	Visual Basic
-" Maintainer:	Tim Chase <vb.vim@tim.thechases.com>
-" Former Maintainer:	Robert M. Cortopassi <cortopar@mindspring.com>
-"	(tried multiple times to contact, but email bounced)
+" Language:     Visual Basic
+" Maintainer:   Doug Kearns <dougkearns@gmail.com>
+" Former Maintainer:    Tim Chase <vb.vim@tim.thechases.com>
+" Former Maintainer:    Robert M. Cortopassi <cortopar@mindspring.com>
+"       (tried multiple times to contact, but email bounced)
 " Last Change:
+"   2021 Nov 26  Incorporated additions from Doug Kearns
 "   2005 May 25  Synched with work by Thomas Barthel
 "   2004 May 30  Added a few keywords
 
@@ -13,7 +15,7 @@
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
-	finish
+        finish
 endif
 
 " VB is case insensitive
@@ -233,7 +235,7 @@ syn keyword vbKeyword Public PublicNotCreateable OnNewProcessSingleUse
 syn keyword vbKeyword InSameProcessMultiUse GlobalMultiUse Resume Seek
 syn keyword vbKeyword Set Static Step String Time WithEvents
 
-syn keyword vbTodo contained	TODO
+syn keyword vbTodo contained    TODO
 
 "Datatypes
 syn keyword vbTypes Boolean Byte Currency Date Decimal Double Empty
@@ -319,46 +321,54 @@ syn match vbNumber "\<\d\+\>"
 syn match vbNumber "\<\d\+\.\d*\>"
 "floating point number, starting with a dot
 syn match vbNumber "\.\d\+\>"
-"syn match  vbNumber		"{[[:xdigit:]-]\+}\|&[hH][[:xdigit:]]\+&"
-"syn match  vbNumber		":[[:xdigit:]]\+"
-"syn match  vbNumber		"[-+]\=\<\d\+\>"
-syn match  vbFloat		"[-+]\=\<\d\+[eE][\-+]\=\d\+"
-syn match  vbFloat		"[-+]\=\<\d\+\.\d*\([eE][\-+]\=\d\+\)\="
-syn match  vbFloat		"[-+]\=\<\.\d\+\([eE][\-+]\=\d\+\)\="
+"syn match  vbNumber            "{[[:xdigit:]-]\+}\|&[hH][[:xdigit:]]\+&"
+"syn match  vbNumber            ":[[:xdigit:]]\+"
+"syn match  vbNumber            "[-+]\=\<\d\+\>"
+syn match  vbFloat              "[-+]\=\<\d\+[eE][\-+]\=\d\+"
+syn match  vbFloat              "[-+]\=\<\d\+\.\d*\([eE][\-+]\=\d\+\)\="
+syn match  vbFloat              "[-+]\=\<\.\d\+\([eE][\-+]\=\d\+\)\="
 
-" String and Character contstants
+" String and Character constants
 syn region  vbString		start=+"+  end=+"\|$+
 syn region  vbComment		start="\(^\|\s\)REM\s" end="$" contains=vbTodo
 syn region  vbComment		start="\(^\|\s\)\'"   end="$" contains=vbTodo
-syn match   vbLineNumber	"^\d\+\(\s\|$\)"
-syn match   vbTypeSpecifier  "[a-zA-Z0-9][\$%&!#]"ms=s+1
+syn match   vbLineLabel		"^\h\w\+:"
+syn match   vbLineNumber	"^\d\+\(:\|\s\|$\)"
+syn match   vbTypeSpecifier  "\<\a\w*[@\$%&!#]"ms=s+1
 syn match   vbTypeSpecifier  "#[a-zA-Z0-9]"me=e-1
+" Conditional Compilation
+syn match  vbPreProc "^#const\>"
+syn region vbPreProc matchgroup=PreProc start="^#if\>"     end="\<then\>" transparent contains=TOP
+syn region vbPreProc matchgroup=PreProc start="^#elseif\>" end="\<then\>" transparent contains=TOP
+syn match  vbPreProc "^#else\>"
+syn match  vbPreProc "^#end\s*if\>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-hi def link vbBoolean		Boolean
-hi def link vbLineNumber		Comment
-hi def link vbComment		Comment
-hi def link vbConditional	Conditional
-hi def link vbConst			Constant
-hi def link vbDefine			Constant
-hi def link vbError			Error
-hi def link vbFunction		Identifier
-hi def link vbIdentifier		Identifier
-hi def link vbNumber			Number
-hi def link vbFloat			Float
-hi def link vbMethods		PreProc
-hi def link vbOperator		Operator
-hi def link vbRepeat			Repeat
-hi def link vbString			String
-hi def link vbStatement		Statement
-hi def link vbKeyword		Statement
-hi def link vbEvents			Special
-hi def link vbTodo			Todo
-hi def link vbTypes			Type
-hi def link vbTypeSpecifier	Type
-
+hi def link vbBoolean           Boolean
+hi def link vbLineNumber        Comment
+hi def link vbLineLabel         Comment
+hi def link vbComment           Comment
+hi def link vbConditional       Conditional
+hi def link vbConst             Constant
+hi def link vbDefine            Constant
+hi def link vbError             Error
+hi def link vbFunction          Identifier
+hi def link vbIdentifier        Identifier
+hi def link vbNumber            Number
+hi def link vbFloat             Float
+hi def link vbMethods           PreProc
+hi def link vbOperator          Operator
+hi def link vbRepeat            Repeat
+hi def link vbString            String
+hi def link vbStatement         Statement
+hi def link vbKeyword           Statement
+hi def link vbEvents            Special
+hi def link vbTodo              Todo
+hi def link vbTypes             Type
+hi def link vbTypeSpecifier     Type
+hi def link vbPreProc           PreProc
 
 let b:current_syntax = "vb"
 

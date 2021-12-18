@@ -3427,10 +3427,6 @@ msgstr "-y\t\t\t容易模式 (同 \"evim\"，无模式)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\t只读模式 (同 \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\t限制模式 (同 \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\t不可修改(写入文件)"

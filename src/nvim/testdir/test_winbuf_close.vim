@@ -160,7 +160,7 @@ func Test_winfixwidth_on_close()
 endfunction
 
 " Test that 'winfixheight' will be respected even there is non-leaf frame
-fun! Test_winfixheight_non_leaf_frame()
+func Test_winfixheight_non_leaf_frame()
   vsplit
   botright 11new
   let l:wid = win_getid()
@@ -173,7 +173,7 @@ fun! Test_winfixheight_non_leaf_frame()
 endf
 
 " Test that 'winfixwidth' will be respected even there is non-leaf frame
-fun! Test_winfixwidth_non_leaf_frame()
+func Test_winfixwidth_non_leaf_frame()
   split
   topleft 11vnew
   let l:wid = win_getid()
@@ -184,3 +184,13 @@ fun! Test_winfixwidth_non_leaf_frame()
   call assert_equal(11, winwidth(l:wid))
   %bwipe!
 endf
+
+func Test_tabwin_close()
+  enew
+  let l:wid = win_getid()
+  tabedit
+  call win_execute(l:wid, 'close')
+  " Should not crash.
+  call assert_true(v:true)
+  %bwipe!
+endfunc

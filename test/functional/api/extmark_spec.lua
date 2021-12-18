@@ -12,6 +12,7 @@ local feed = helpers.feed
 local clear = helpers.clear
 local command = helpers.command
 local meths = helpers.meths
+local assert_alive = helpers.assert_alive
 
 local function expect(contents)
   return eq(contents, helpers.curbuf_contents())
@@ -103,10 +104,10 @@ describe('API/extmarks', function()
   it("can end extranges past final newline using end_col = 0", function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
-      end_line = 1
+      end_row = 1
     })
     eq("end_col value outside range",
-       pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_line = 1 }))
+       pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = 1 }))
   end)
 
   it('adds, updates  and deletes marks', function()
@@ -419,7 +420,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks move with open line', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     -- testing marks below are also moved
     feed("yyP")
     set_extmark(ns, marks[1], 0, 4)
@@ -488,7 +489,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks move with line splits (using enter)', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     -- testing marks below are also moved
     feed("yyP")
     set_extmark(ns, marks[1], 0, 4)
@@ -499,7 +500,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks at last line move on insert new line', function()
-    -- open_line in misc1.c
+    -- open_line in change.c
     set_extmark(ns, marks[1], 0, 4)
     feed('0i<cr><esc>')
     check_undo_redo(ns, marks[1], 0, 4, 1, 4)
@@ -1381,13 +1382,55 @@ describe('API/extmarks', function()
   end)
 
   it('does not crash with append/delete/undo seqence', function()
-     meths.exec([[
+    meths.exec([[
       let ns = nvim_create_namespace('myplugin')
       call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
       undo]],false)
-    eq(2, meths.eval('1+1')) -- did not crash
+    assert_alive()
+  end)
+
+  it('works with left and right gravity', function()
+    -- right gravity should move with inserted text, while
+    -- left gravity should stay in place.
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = false})
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = true})
+    feed([[Aasdfasdf]])
+
+    eq({ {1, 0, 5}, {2, 0, 13} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    -- but both move when text is inserted before
+    feed([[<esc>Iasdf<esc>]])
+    -- eq({}, curbufmeths.get_lines(0, -1, true))
+    eq({ {1, 0, 9}, {2, 0, 17} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    -- clear text
+    curbufmeths.set_text(0, 0, 0, 17, {})
+
+    -- handles set_text correctly as well
+    eq({ {1, 0, 0}, {2, 0, 0} },
+        meths.buf_get_extmarks(0, ns, 0, -1, {}))
+    curbufmeths.set_text(0, 0, 0, 0, {'asdfasdf'})
+    eq({ {1, 0, 0}, {2, 0, 8} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    feed('u')
+    -- handles pasting
+    meths.exec([[let @a='asdfasdf']], false)
+    feed([["ap]])
+    eq({ {1, 0, 0}, {2, 0, 8} },
+        meths.buf_get_extmarks(0, ns, 0, -1, {}))
+  end)
+
+  it('can accept "end_row" or "end_line" #16548', function()
+    set_extmark(ns, marks[1], 0, 0, {
+      end_col = 0,
+      end_line = 1
+    })
+    eq({ {1, 0, 0, { end_col = 0, end_row = 1 }} }, get_extmarks(ns, 0, -1, {details=true}))
   end)
 end)
 

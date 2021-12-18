@@ -2161,6 +2161,12 @@ describe('plugin/shada.vim', function()
     reset()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
+
+    -- Need to set nohidden so that the buffer containing 'fname' is not unloaded
+    -- after loading 'fname_tmp', otherwise the '++opt not supported' test below
+    -- won't work since the BufReadCmd autocmd won't be triggered.
+    nvim_command('set nohidden')
+
     nvim_command('edit ' .. fname)
     eq({
       'History entry with timestamp ' .. epoch .. ':',

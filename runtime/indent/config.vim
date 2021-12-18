@@ -1,9 +1,10 @@
 " Vim indent file
-" Language:             Autoconf configure.{ac,in} file
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2006-12-20
-" TODO:                 how about nested [()]'s in one line
-"                   what's wrong with '\\\@!'?
+" Language:		Autoconf configure.{ac,in} file
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		24 Sep 2021
+
+" TODO: how about nested [()]'s in one line what's wrong with '\\\@!'?
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -15,6 +16,8 @@ runtime! indent/sh.vim          " will set b:did_indent
 setlocal indentexpr=GetConfigIndent()
 setlocal indentkeys=!^F,o,O,=then,=do,=else,=elif,=esac,=fi,=fin,=fil,=done
 setlocal nosmartindent
+
+let b:undo_indent = "setl inde< indk< si<"
 
 " Only define the function once.
 if exists("*GetConfigIndent")
@@ -62,8 +65,8 @@ function GetConfigIndent()
     let ind = s:GetOffsetOf(line, '\[')
   endif
 
-  " if previous line had an unmatched closing parantheses,
-  " indent to the matching opening parantheses
+  " if previous line had an unmatched closing parentheses,
+  " indent to the matching opening parentheses
   if line =~ '[^(]\+\\\@<!)$'
     call search(')', 'bW')
     let lnum = searchpair('\\\@<!(', '', ')', 'bWn')

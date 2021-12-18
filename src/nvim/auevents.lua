@@ -37,6 +37,7 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'DiagnosticChanged',      -- diagnostics in a buffer were modified
     'DiffUpdated',            -- diffs have been updated
     'DirChanged',             -- directory changed
     'EncodingChanged',        -- after changing the 'encoding' option
@@ -69,11 +70,13 @@ return {
     'InsertLeave',            -- just after leaving Insert mode
     'InsertLeavePre',         -- just before leaving Insert mode
     'MenuPopup',              -- just before popup menu is displayed
+    'ModeChanged',            -- after changing the mode
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
     'RemoteReply',            -- upon string reception from a remote vim
+    'SearchWrapped',          -- after the search wrapped around
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
@@ -126,6 +129,7 @@ return {
   -- syntax file
   nvim_specific = {
     BufModifiedSet=true,
+    DiagnosticChanged=true,
     DirChanged=true,
     Signal=true,
     TabClosed=true,

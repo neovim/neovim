@@ -19,5 +19,6 @@ if module.test_luajit_prg == '' then
   end
 end
 table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/include")
+table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/src/nvim/auto")
 
 return module

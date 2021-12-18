@@ -3,18 +3,19 @@
 
 // highlight.c: low level code for UI and syntax highlighting
 
-#include "nvim/vim.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight.c.generated.h"
@@ -24,28 +25,22 @@ static bool hlstate_active = false;
 
 static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
 
-static Map(HlEntry, int) *attr_entry_ids;
-static Map(int, int) *combine_attr_entries;
-static Map(int, int) *blend_attr_entries;
-static Map(int, int) *blendthrough_attr_entries;
+static Map(HlEntry, int) attr_entry_ids = MAP_INIT;
+static Map(int, int) combine_attr_entries = MAP_INIT;
+static Map(int, int) blend_attr_entries = MAP_INIT;
+static Map(int, int) blendthrough_attr_entries = MAP_INIT;
 
 /// highlight entries private to a namespace
-static Map(ColorKey, ColorItem) *ns_hl;
+static Map(ColorKey, ColorItem) ns_hl;
 
 void highlight_init(void)
 {
-  attr_entry_ids = map_new(HlEntry, int)();
-  combine_attr_entries = map_new(int, int)();
-  blend_attr_entries = map_new(int, int)();
-  blendthrough_attr_entries = map_new(int, int)();
-  ns_hl = map_new(ColorKey, ColorItem)();
-
   // index 0 is no attribute, add dummy entry:
   kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
                                     .id1 = 0, .id2 = 0 }));
 }
 
-/// @return TRUE if hl table was reset
+/// @return true if hl table was reset
 bool highlight_use_hlstate(void)
 {
   if (hlstate_active) {
@@ -70,7 +65,7 @@ static int get_attr_entry(HlEntry entry)
     entry.id2 = 0;
   }
 
-  int id = map_get(HlEntry, int)(attr_entry_ids, entry);
+  int id = map_get(HlEntry, int)(&attr_entry_ids, entry);
   if (id > 0) {
     return id;
   }
@@ -81,7 +76,7 @@ static int get_attr_entry(HlEntry entry)
     // compute new ones for all groups.
     // When called recursively, we are really out of numbers.
     if (recursive) {
-      EMSG(_("E424: Too many different highlighting attributes in use"));
+      emsg(_("E424: Too many different highlighting attributes in use"));
       return 0;
     }
     recursive = true;
@@ -103,7 +98,7 @@ static int get_attr_entry(HlEntry entry)
   id = (int)next_id;
   kv_push(attr_entries, entry);
 
-  map_put(HlEntry, int)(attr_entry_ids, entry, id);
+  map_put(HlEntry, int)(&attr_entry_ids, entry, id);
 
   Array inspect = hl_inspect(id);
 
@@ -151,9 +146,9 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
-      && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
+      && map_has(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id))) {
     return;
   }
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
@@ -161,7 +156,7 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
                    .link_id = link_id,
                    .version = p->hl_valid,
                    .is_default = (attrs.rgb_ae_attr & HL_DEFAULT) };
-  map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
+  map_put(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id), it);
 }
 
 int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
@@ -175,8 +170,8 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     ns_id = ns_hl_active;
   }
 
-  DecorProvider *p = get_provider(ns_id, true);
-  ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
+  DecorProvider *p = get_decor_provider(ns_id, true);
+  ColorItem it = map_get(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;
 
@@ -219,7 +214,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
     it.version = p->hl_valid-tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
-    map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
+    map_put(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id), it);
   }
 
   if (it.is_default && nodefault) {
@@ -311,7 +306,7 @@ void update_window_hl(win_T *wp, bool invalid)
   // syntax group! It needs at least 10 layers of special casing! Noooooo!
   //
   // haha, theme engine go brrr
-  int normality = syn_check_group((const char_u *)S_LEN("Normal"));
+  int normality = syn_check_group(S_LEN("Normal"));
   int ns_attr = ns_get_hl(-1, normality, false, false);
   if (ns_attr > 0) {
     // TODO(bfredl): hantera NormalNC and so on
@@ -341,25 +336,44 @@ void update_window_hl(win_T *wp, bool invalid)
     }
     wp->w_hl_attrs[hlf] = attr;
   }
+
+  wp->w_float_config.shadow = false;
+  if (wp->w_floating && wp->w_float_config.border) {
+    for (int i = 0; i < 8; i++) {
+      int attr = wp->w_hl_attrs[HLF_BORDER];
+      if (wp->w_float_config.border_hl_ids[i]) {
+        attr = hl_get_ui_attr(HLF_BORDER, wp->w_float_config.border_hl_ids[i],
+                              false);
+        HlAttrs a = syn_attr2entry(attr);
+        if (a.hl_blend) {
+          wp->w_float_config.shadow = true;
+        }
+      }
+      wp->w_float_config.border_attr[i] = attr;
+    }
+  }
+
+  // shadow might cause blending
+  check_blending(wp);
 }
 
 /// Gets HL_UNDERLINE highlight.
 int hl_get_underline(void)
 {
   return get_attr_entry((HlEntry){
-      .attr = (HlAttrs){
-          .cterm_ae_attr = (int16_t)HL_UNDERLINE,
-          .cterm_fg_color = 0,
-          .cterm_bg_color = 0,
-          .rgb_ae_attr = (int16_t)HL_UNDERLINE,
-          .rgb_fg_color = -1,
-          .rgb_bg_color = -1,
-          .rgb_sp_color = -1,
-          .hl_blend = -1,
-      },
-      .kind = kHlUI,
-      .id1 = 0,
-      .id2 = 0,
+    .attr = (HlAttrs){
+      .cterm_ae_attr = (int16_t)HL_UNDERLINE,
+      .cterm_fg_color = 0,
+      .cterm_bg_color = 0,
+      .rgb_ae_attr = (int16_t)HL_UNDERLINE,
+      .rgb_fg_color = -1,
+      .rgb_bg_color = -1,
+      .rgb_sp_color = -1,
+      .hl_blend = -1,
+    },
+    .kind = kHlUI,
+    .id1 = 0,
+    .id2 = 0,
   });
 }
 
@@ -375,28 +389,28 @@ void clear_hl_tables(bool reinit)
 {
   if (reinit) {
     kv_size(attr_entries) = 1;
-    map_clear(HlEntry, int)(attr_entry_ids);
-    map_clear(int, int)(combine_attr_entries);
-    map_clear(int, int)(blend_attr_entries);
-    map_clear(int, int)(blendthrough_attr_entries);
+    map_clear(HlEntry, int)(&attr_entry_ids);
+    map_clear(int, int)(&combine_attr_entries);
+    map_clear(int, int)(&blend_attr_entries);
+    map_clear(int, int)(&blendthrough_attr_entries);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();
   } else {
     kv_destroy(attr_entries);
-    map_free(HlEntry, int)(attr_entry_ids);
-    map_free(int, int)(combine_attr_entries);
-    map_free(int, int)(blend_attr_entries);
-    map_free(int, int)(blendthrough_attr_entries);
-    map_free(ColorKey, ColorItem)(ns_hl);
+    map_destroy(HlEntry, int)(&attr_entry_ids);
+    map_destroy(int, int)(&combine_attr_entries);
+    map_destroy(int, int)(&blend_attr_entries);
+    map_destroy(int, int)(&blendthrough_attr_entries);
+    map_destroy(ColorKey, ColorItem)(&ns_hl);
   }
 }
 
 void hl_invalidate_blends(void)
 {
-  map_clear(int, int)(blend_attr_entries);
-  map_clear(int, int)(blendthrough_attr_entries);
+  map_clear(int, int)(&blend_attr_entries);
+  map_clear(int, int)(&blendthrough_attr_entries);
   highlight_changed();
   update_window_hl(curwin, true);
 }
@@ -417,7 +431,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   // TODO(bfredl): could use a struct for clearer intent.
   int combine_tag = (char_attr << 16) + prim_attr;
-  int id = map_get(int, int)(combine_attr_entries, combine_tag);
+  int id = map_get(int, int)(&combine_attr_entries, combine_tag);
   if (id > 0) {
     return id;
   }
@@ -474,7 +488,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
-    map_put(int, int)(combine_attr_entries, combine_tag, id);
+    map_put(int, int)(&combine_attr_entries, combine_tag, id);
   }
 
   return id;
@@ -517,6 +531,10 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  if (front_attr < 0 || back_attr < 0) {
+    return -1;
+  }
+
   HlAttrs fattrs = get_colors_force(front_attr);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {
@@ -526,8 +544,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
   int combine_tag = (back_attr << 16) + front_attr;
   Map(int, int) *map = (*through
-                        ? blendthrough_attr_entries
-                        : blend_attr_entries);
+                        ? &blendthrough_attr_entries
+                        : &blend_attr_entries);
   int id = map_get(int, int)(map, combine_tag);
   if (id > 0) {
     return id;
@@ -630,23 +648,23 @@ static int hl_cterm2rgb_color(int nr)
   };
   static char_u ansi_table[16][4] = {
     //  R    G    B   idx
-    {   0,   0,   0,  1 } ,  // black
-    { 224,   0,   0,  2 } ,  // dark red
-    {   0, 224,   0,  3 } ,  // dark green
-    { 224, 224,   0,  4 } ,  // dark yellow / brown
-    {   0,   0, 224,  5 } ,  // dark blue
-    { 224,   0, 224,  6 } ,  // dark magenta
-    {   0, 224, 224,  7 } ,  // dark cyan
-    { 224, 224, 224,  8 } ,  // light grey
+    {   0,   0,   0,  1 },  // black
+    { 224,   0,   0,  2 },  // dark red
+    {   0, 224,   0,  3 },  // dark green
+    { 224, 224,   0,  4 },  // dark yellow / brown
+    {   0,   0, 224,  5 },  // dark blue
+    { 224,   0, 224,  6 },  // dark magenta
+    {   0, 224, 224,  7 },  // dark cyan
+    { 224, 224, 224,  8 },  // light grey
 
-    { 128, 128, 128,  9 } ,  // dark grey
-    { 255,  64,  64, 10 } ,  // light red
-    {  64, 255,  64, 11 } ,  // light green
-    { 255, 255,  64, 12 } ,  // yellow
-    {  64,  64, 255, 13 } ,  // light blue
-    { 255,  64, 255, 14 } ,  // light magenta
-    {  64, 255, 255, 15 } ,  // light cyan
-    { 255, 255, 255, 16 } ,  // white
+    { 128, 128, 128,  9 },  // dark grey
+    { 255,  64,  64, 10 },  // light red
+    {  64, 255,  64, 11 },  // light green
+    { 255, 255,  64, 12 },  // yellow
+    {  64,  64, 255, 13 },  // light blue
+    { 255,  64, 255, 14 },  // light magenta
+    {  64, 255, 255, 15 },  // light cyan
+    { 255, 255, 255, 16 },  // white
   };
 
   int r = 0;
@@ -772,7 +790,7 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   }
 
   if (ae.hl_blend > -1) {
-      PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
+    PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
   return hl;
@@ -782,8 +800,11 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
 {
   HlAttrs hlattrs = HLATTRS_INIT;
 
-  int32_t fg = -1, bg = -1, sp = -1;
+  int32_t fg = -1, bg = -1, ctermfg = -1, ctermbg = -1, sp = -1;
   int16_t mask = 0;
+  int16_t cterm_mask = 0;
+  bool cterm_mask_provided = false;
+
   for (size_t i = 0; i < dict.size; i++) {
     char *key = dict.items[i].key.data;
     Object val = dict.items[i].value;
@@ -813,6 +834,25 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       }
     }
 
+    // Handle cterm attrs
+    if (strequal(key, "cterm") && val.type == kObjectTypeDictionary) {
+      cterm_mask_provided = true;
+      Dictionary cterm_dict = val.data.dictionary;
+      for (size_t l = 0; l < cterm_dict.size; l++) {
+        char *cterm_dict_key = cterm_dict.items[l].key.data;
+        Object cterm_dict_val = cterm_dict.items[l].value;
+        for (int m = 0; flags[m].name; m++) {
+          if (strequal(flags[m].name, cterm_dict_key)) {
+            if (api_object_to_bool(cterm_dict_val, cterm_dict_key, false,
+                                   err)) {
+              cterm_mask |= flags[m].flag;
+            }
+            break;
+          }
+        }
+      }
+    }
+
     struct {
       const char *name;
       const char *shortname;
@@ -820,6 +860,8 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     } colors[] = {
       { "foreground", "fg", &fg },
       { "background", "bg", &bg },
+      { "ctermfg", NULL, &ctermfg },
+      { "ctermbg", NULL, &ctermbg },
       { "special", "sp", &sp },
       { NULL, NULL, NULL },
     };
@@ -843,13 +885,12 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       }
     }
 
-
     if (flags[j].name || colors[k].name) {
       // handled above
     } else if (link_id && strequal(key, "link")) {
       if (val.type == kObjectTypeString) {
         String str = val.data.string;
-        *link_id = syn_check_group((const char_u *)str.data, (int)str.size);
+        *link_id = syn_check_group(str.data, (int)str.size);
       } else if (val.type == kObjectTypeInteger) {
         // TODO(bfredl): validate range?
         *link_id = (int)val.data.integer;
@@ -864,13 +905,22 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     }
   }
 
+  // apply gui mask as default for cterm mask
+  if (!cterm_mask_provided) {
+    cterm_mask = mask;
+  }
   if (use_rgb) {
     hlattrs.rgb_ae_attr = mask;
     hlattrs.rgb_bg_color = bg;
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
+    hlattrs.cterm_bg_color =
+      ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
+    hlattrs.cterm_fg_color =
+      ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
+    hlattrs.cterm_ae_attr = cterm_mask;
   } else {
-    hlattrs.cterm_ae_attr = mask;
+    hlattrs.cterm_ae_attr = cterm_mask;
     hlattrs.cterm_bg_color = bg == -1 ? cterm_normal_bg_color : bg + 1;
     hlattrs.cterm_fg_color = fg == -1 ? cterm_normal_fg_color : fg + 1;
   }
@@ -895,34 +945,34 @@ static void hl_inspect_impl(Array *arr, int attr)
 
   HlEntry e = kv_A(attr_entries, attr);
   switch (e.kind) {
-    case kHlSyntax:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
-      PUT(item, "hi_name",
-          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
-      break;
+  case kHlSyntax:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
+    PUT(item, "hi_name",
+        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
+    break;
 
-    case kHlUI:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("ui")));
-      const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
-      PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
-      PUT(item, "hi_name",
-          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
-      break;
+  case kHlUI:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("ui")));
+    const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
+    PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
+    PUT(item, "hi_name",
+        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
+    break;
 
-    case kHlTerminal:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("term")));
-      break;
+  case kHlTerminal:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("term")));
+    break;
 
-    case kHlCombine:
-    case kHlBlend:
-    case kHlBlendThrough:
-      // attribute combination is associative, so flatten to an array
-      hl_inspect_impl(arr, e.id1);
-      hl_inspect_impl(arr, e.id2);
-      return;
+  case kHlCombine:
+  case kHlBlend:
+  case kHlBlendThrough:
+    // attribute combination is associative, so flatten to an array
+    hl_inspect_impl(arr, e.id1);
+    hl_inspect_impl(arr, e.id2);
+    return;
 
-     case kHlUnknown:
-      return;
+  case kHlUnknown:
+    return;
   }
   PUT(item, "id", INTEGER_OBJ(attr));
   ADD(*arr, DICTIONARY_OBJ(item));

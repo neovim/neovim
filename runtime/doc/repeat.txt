@@ -50,6 +50,11 @@ Multiple repeats					*multi-repeat*
 :[range]v[global]/{pattern}/[cmd]
 			Same as :g!.
 
+Example: >
+	:g/^Obsolete/d _
+Using the underscore after `:d` avoids clobbering registers or the clipboard.
+This also makes it faster.
+
 Instead of the '/' which surrounds the {pattern}, you can use any other
 single byte character, but not an alphabetic character, '\', '"' or '|'.
 This is useful if you want to include a '/' in the search pattern or
@@ -70,7 +75,7 @@ The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
 line is aborted and the global command continues with the next marked or
 unmarked line.
-								*E147* 
+								*E147*
 When the command is used recursively, it only works on one line.  Giving a
 range is then not allowed. This is useful to find all lines that match a
 pattern and do not match another pattern: >
@@ -117,6 +122,11 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			recorded macro and the yank will overwrite the
 			recorded macro.
 
+			Note: The recording happens while you type, replaying
+			the register happens as if the keys come from a
+			mapping.  This matters, for example, for undo, which
+			only syncs when commands were typed.
+
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
 			not stored in the register, unless it was the result
@@ -129,7 +139,7 @@ q			Stops recording.
 			used.
 			The register is executed like a mapping, that means
 			that the difference between 'wildchar' and 'wildcharm'
-			applies.
+			applies, and undo might not be synced in the same way.
 			For "@=" you are prompted to enter an expression.  The
 			result of the expression is then executed.
 			See also |@:|.
@@ -153,7 +163,7 @@ q			Stops recording.
 			[addr] (default is current line).
 
 :[addr]@							*:@@*
-:[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
+:[addr]@@		Repeat the previous :@{register}.  First set cursor at
 			line [addr] (default is current line).
 
 ==============================================================================
@@ -162,43 +172,42 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:so[urce] {file}	Read Ex commands from {file}.  These are commands that
-			start with a ":".
+:[range]so[urce] [file]	Runs |Ex| commands or Lua code (".lua" files) from
+			[file], or from the current buffer if no [file] is
+			given.
 			Triggers the |SourcePre| autocommand.
 							*:source!*
-:so[urce]! {file}	Read Vim commands from {file}.  These are commands
-			that are executed from Normal mode, like you type
-			them.
-			When used after |:global|, |:argdo|, |:windo|,
-			|:bufdo|, in a loop or when another command follows
-			the display won't be updated while executing the
-			commands.
-			Cannot be used in the |sandbox|.
+:[range]so[urce]! {file}
+			Runs |Normal-mode| commands from {file}. When used
+			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
+			a loop or when another command follows the display
+			won't be updated while executing the commands.
 
 							*:ru* *:runtime*
 :ru[ntime][!] [where] {file} ..
-			Read Ex commands from {file} in each directory given
-			by 'runtimepath' and/or 'packpath'.  There is no error
-			for non-existing files.
-			
+			Sources |Ex| commands or Lua code (".lua" files) read
+			from {file} (a relative path) in each directory given
+			by 'runtimepath' and/or 'packpath'.
+			Ignores non-existing files.
+
 			Example: >
 				:runtime syntax/c.vim
+				:runtime syntax/c.lua
 
-<			There can be multiple {file} arguments, separated by
-			spaces.  Each {file} is searched for in the first
+<			There can be multiple space-separated {file}
+			arguments. Each {file} is searched for in the first
 			directory from 'runtimepath', then in the second
-			directory, etc.  Use a backslash to include a space
-			inside {file} (although it's better not to use spaces
-			in file names, it causes trouble).
+			directory, etc.
 
 			When [!] is included, all found files are sourced.
-			When it is not included only the first found file is
-			sourced.
+			Else only the first found file is sourced.
 
-			When [where] is omitted only 'runtimepath' is used.
+			When [where] is omitted, first 'runtimepath' is
+			searched, then directories under "start" in 'packpath'
+			are searched.
 			Other values:
-				START	search under "start" in 'packpath'
-				OPT 	search under "opt" in 'packpath'
+				START	search only under "start" in 'packpath'
+				OPT 	search only under "opt" in 'packpath'
 				PACK	search under "start" and "opt" in
 					'packpath'
 				ALL	first use 'runtimepath', then search
@@ -206,10 +215,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			When {file} contains wildcards it is expanded to all
 			matching files.  Example: >
-				:runtime! plugin/*.vim
+				:runtime! plugin/**/*.vim
 <			This is what Vim uses to load the plugin files when
 			starting up.  This similar command: >
-				:runtime plugin/*.vim
+				:runtime plugin/**/*.vim
 <			would source the first file only.
 
 			When 'verbose' is one or higher, there is a message
@@ -234,6 +243,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Note that {name} is the directory name, not the name
 			of the .vim file.  All the files matching the pattern
 				pack/*/opt/{name}/plugin/**/*.vim ~
+			and
+				pack/*/opt/{name}/plugin/**/*.lua ~
 			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in
 			'runtimepath'.
@@ -247,14 +258,19 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			ftdetect scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
 			useful in your .vimrc.  The plugins will then be
-			loaded during initialization, see |load-plugins|.
+			loaded during initialization, see |load-plugins| (note
+			that the loading order will be reversed, because each
+			directory is inserted before others).
+			Note that for ftdetect scripts to be loaded
+			you will need to write `filetype plugin indent on`
+			AFTER all `packadd!` commands.
 
 			Also see |pack-add|.
 
 						*:packl* *:packloadall*
 :packl[oadall][!]	Load all packages in the "start" directory under each
 			entry in 'packpath'.
-			
+
 			First all the directories found are added to
 			'runtimepath', then the plugins found in the
 			directories are sourced.  This allows for a plugin to
@@ -366,7 +382,7 @@ nested as deep as the number of files that can be opened at one time (about
 You can use the "<sfile>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
-"other.vimrc" file in the same directory as your |init.vim| file, you can 
+"other.vimrc" file in the same directory as your |init.vim| file, you can
 source it from your |init.vim| file with this command: >
 	:source <sfile>:h/other.vimrc
 
@@ -388,7 +404,7 @@ because the <CR> from the first lines will be lost.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a
-file made on Windows), all lines will have a trailing <CR>.  This may cause
+file made on MS-Windows), all lines will have a trailing <CR>.  This may cause
 problems for some commands (e.g., mappings).  There is no automatic <EOL>
 detection, because it's common to start with a line that defines a mapping
 that ends in a <CR>, which will confuse the automaton.
@@ -500,16 +516,26 @@ You would now have these files under ~/.local/share/nvim/site:
 	pack/foo/start/foobar/syntax/some.vim
 	pack/foo/opt/foodebug/plugin/debugger.vim
 
-When Vim starts up, after processing your .vimrc, it scans all directories in
-'packpath' for plugins under the "pack/*/start" directory.  First all those
-directories are added to 'runtimepath'.  Then all the plugins are loaded.
-See |packload-two-steps| for how these two steps can be useful.
+							*runtime-search-path*
+When runtime files are searched for, first all paths in 'runtimepath' are
+searched, then all "pack/*/start/*" dirs are searched. However, package entries
+are not visible in `:set rtp` or `echo &rtp`, as the final concatenated path
+would be too long and get truncated. To list all used directories, use
+|nvim_list_runtime_paths()|. In addition |nvim_get_runtime_file()| can be used
+to query for specific files or sub-folders within the runtime path. For
+instance to list all runtime dirs and packages with lua paths, use >
 
-In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds 
-"~/.local/share/nvim/site/pack/foo/start/foobar" to 'runtimepath'.
+    :echo nvim_get_runtime_file("lua/", v:true)
+
+<When Vim starts up, after processing your .vimrc, it scans all directories in
+'packpath' for plugins under the "pack/*/start" directory, and all the plugins
+are loaded.
+
+In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and load it.
 
 If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
-find the syntax/some.vim file, because its directory is in 'runtimepath'.
+find the syntax/some.vim file, because its directory is in the runtime search
+path.
 
 Vim will also load ftdetect files, if there are any.
 
@@ -520,7 +546,7 @@ is used.
 Loading packages automatically will not happen if loading plugins is disabled,
 see |load-plugins|.
 
-To load packages earlier, so that 'runtimepath' gets updated: >
+To load packages earlier, so that plugin/ files are sourced:
 	:packloadall
 This also works when loading plugins is disabled.  The automatic loading will
 only happen once.
@@ -591,8 +617,8 @@ Creating Vim packages					*package-create*
 This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
-users can chose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the ones he wants with
+users can choose what they include or not.  Or you can decide to use one
+package with optional plugins, and tell the user to add the preferred ones with
 `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or
@@ -613,9 +639,9 @@ Your directory layout would be like this:
    opt/fooextra/doc/tags  	        " help tags
 
 This allows for the user to do: >
-	mkdir ~/.local/share/nvim/site/pack/myfoobar
-	cd ~/.local/share/nvim/site/pack/myfoobar
-	git clone https://github.com/you/foobar.git
+	mkdir ~/.local/share/nvim/site/pack
+	cd ~/.local/share/nvim/site/pack
+	git clone https://github.com/you/foobar.git myfoobar
 
 Here "myfoobar" is a name that the user can choose, the only condition is that
 it differs from other packages.
@@ -628,7 +654,7 @@ You could add this packadd command in one of your plugins, to be executed when
 the optional plugin is needed.
 
 Run the `:helptags` command to generate the doc/tags file.  Including this
-generated file in the package means that the user can drop the package in his
+generated file in the package means that the user can drop the package in the
 pack directory and the help command works right away.  Don't forget to re-run
 the command after changing the plugin help: >
 	:helptags path/start/foobar/doc
@@ -648,8 +674,8 @@ found automatically.  Your package would have these files:
 <	pack/foo/start/lib/autoload/foolib.vim >
 		func foolib#getit()
 
-This works, because loading packages will first add all found directories to
-'runtimepath' before sourcing the plugins.
+This works, because start packages will be used to look for autoload files,
+when sourcing the plugins.
 
 ==============================================================================
 Debugging scripts					*debug-scripts*
@@ -804,6 +830,23 @@ DEFINING BREAKPOINTS
 <		Note that this only works for commands that are executed when
 		sourcing the file, not for a function defined in that file.
 
+:breaka[dd] expr {expression}
+		Sets a breakpoint, that will break whenever the {expression}
+		evaluates to a different value. Example: >
+			:breakadd expr g:lnum
+<		Will break, whenever the global variable lnum changes.
+
+		Errors in evaluation are suppressed, you can use the name of a
+		variable that does not exist yet.  This also means you will
+		not notice anything if the expression has a mistake.
+
+		Note if you watch a |script-variable| this will break
+		when switching scripts, since the script variable is only
+		valid in the script where it has been defined and if that
+		script is called from several other scripts, this will stop
+		whenever that particular variable will become visible or
+		inaccessible again.
+
 The [lnum] is the line number of the breakpoint.  Vim will stop at or after
 this line.  When omitted line 1 is used.
 
@@ -879,11 +922,9 @@ OBSCURE
 Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
-functions and/or scripts.  The |+profile| feature is required for this.
-It is only included when Vim was compiled with "huge" features.
+functions and/or scripts.
 
-You can also use the |reltime()| function to measure time.  This only requires
-the |+reltime| feature, which is present more often.
+You can also use the |reltime()| function to measure time.
 
 For profiling syntax highlighting see |:syntime|.
 

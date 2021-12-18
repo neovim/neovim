@@ -31,3 +31,26 @@ func Test_fileformat_autocommand()
   au! BufReadPre Xfile
   bw!
 endfunc
+
+" Test for changing the fileformat using ++read
+func Test_fileformat_plusplus_read()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  w ++ff=dos Xfile1
+  enew!
+  set ff=unix
+  " A :read doesn't change the fileformat, but does apply to the read lines.
+  r ++fileformat=unix Xfile1
+  call assert_equal('unix', &fileformat)
+  call assert_equal("three\r", getline('$'))
+  3r ++edit Xfile1
+  call assert_equal('dos', &fileformat)
+  close!
+  call delete('Xfile1')
+  set fileformat&
+  call assert_fails('e ++fileformat Xfile1', 'E474:')
+  call assert_fails('e ++ff=abc Xfile1', 'E474:')
+  call assert_fails('e ++abc1 Xfile1', 'E474:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

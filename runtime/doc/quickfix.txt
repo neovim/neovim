@@ -74,7 +74,7 @@ processing a quickfix or location list command, it will be aborted.
 
 							*:cc*
 :cc[!] [nr]		Display error [nr].  If [nr] is omitted, the same
-			error is displayed again.  Without [!] this doesn't
+:[nr]cc[!]		error is displayed again.  Without [!] this doesn't
 			work when jumping to another buffer, the current buffer
 			has been changed, there is the only window for the
 			buffer and both 'hidden' and 'autowrite' are off.
@@ -83,10 +83,13 @@ processing a quickfix or location list command, it will be aborted.
 			there is another window for this buffer.
 			The 'switchbuf' settings are respected when jumping
 			to a buffer.
+			When used in the quickfix window the line number can
+			be used, including "." for the current line and "$"
+			for the last line.
 
 							*:ll*
 :ll[!] [nr]		Same as ":cc", except the location list for the
-			current window is used instead of the quickfix list.
+:[nr]ll[!]		current window is used instead of the quickfix list.
 
 						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that
@@ -125,8 +128,8 @@ processing a quickfix or location list command, it will be aborted.
 :[count]lab[ove]	Same as ":cabove", except the location list for the
 			current window is used instead of the quickfix list.
 
-							*:cbe* *:cbelow*
-:[count]cbe[low]	Go to the [count] error below the current line in the
+							*:cbel* *:cbelow*
+:[count]cbel[ow]	Go to the [count] error below the current line in the
 			current buffer.  If [count] is omitted, then 1 is
 			used.  If there are no errors, then an error message
 			is displayed.  Assumes that the entries in a quickfix
@@ -136,8 +139,36 @@ processing a quickfix or location list command, it will be aborted.
 			exceeds the number of entries below the current line,
 			then the last error in the file is selected.
 
-							*:lbe* *:lbelow*
-:[count]lbe[low]	Same as ":cbelow", except the location list for the
+							*:lbel* *:lbelow*
+:[count]lbel[ow]	Same as ":cbelow", except the location list for the
+			current window is used instead of the quickfix list.
+
+							*:cbe* *:cbefore*
+:[count]cbe[fore]	Go to the [count] error before the current cursor
+			position in the current buffer.  If [count] is
+			omitted, then 1 is used.  If there are no errors, then
+			an error message is displayed.  Assumes that the
+			entries in a quickfix list are sorted by their buffer,
+			line and column numbers.  If [count] exceeds the
+			number of entries before the current position, then
+			the first error in the file is selected.
+
+							*:lbe* *:lbefore*
+:[count]lbe[fore]	Same as ":cbefore", except the location list for the
+			current window is used instead of the quickfix list.
+
+							*:caf* *:cafter*
+:[count]caf[ter]	Go to the [count] error after the current cursor
+			position in the current buffer.  If [count] is
+			omitted, then 1 is used.  If there are no errors, then
+			an error message is displayed.  Assumes that the
+			entries in a quickfix list are sorted by their buffer,
+			line and column numbers.  If [count] exceeds the
+			number of entries after the current position, then
+			the last error in the file is selected.
+
+							*:laf* *:lafter*
+:[count]laf[ter]	Same as ":cafter", except the location list for the
 			current window is used instead of the quickfix list.
 
 							*:cnf* *:cnfile*
@@ -194,8 +225,7 @@ processing a quickfix or location list command, it will be aborted.
 			e.g., a compiler will not compile the same file again,
 			`git commit` will abort the committing process, `fc`
 			(built-in for shells like bash and zsh) will not
-			execute the command, etc.  will not compile the same
-			file again.
+			execute the command, etc.
 			{N} can also be zero, in which case Vim exits
 			normally.
 			WARNING: All changes in files are lost.  It works like
@@ -280,7 +310,7 @@ processing a quickfix or location list command, it will be aborted.
 							*:cex* *:cexpr* *E777*
 :cex[pr][!] {expr}	Create a quickfix list using the result of {expr} and
 			jump to the first error.
-			If {expr} is a String, then each new-line terminated
+			If {expr} is a String, then each newline terminated
 			line in the String is processed using the global value
 			of 'errorformat' and the result is added to the
 			quickfix list.
@@ -453,7 +483,7 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			When the current file can't be |abandon|ed and the [!]
 			is not present, the command fails.
-			When an error is detected execution stops.
+			When going to the next entry fails execution stops.
 			The last buffer (or where an error occurred) becomes
 			the current buffer.
 			{cmd} can contain '|' to concatenate several commands.
@@ -805,14 +835,19 @@ lists.  They set one of the existing error lists as the current one.
 			the current window instead of the quickfix list.
 
 						*:chistory* *:chi*
-:chi[story]		Show the list of error lists.  The current list is
+:[count]chi[story]	Show the list of error lists.  The current list is
 			marked with ">".  The output looks like:
-				  error list 1 of 3; 43 errors ~
-				> error list 2 of 3; 0 errors ~
-				  error list 3 of 3; 15 errors ~
+			  error list 1 of 3; 43 errors   :make  ~
+			> error list 2 of 3; 0 errors    :helpgrep tag  ~
+			  error list 3 of 3; 15 errors   :grep ex_help *.c ~
 
+			When [count] is given, then the count'th quickfix
+			list is made the current list. Example: >
+				" Make the 4th quickfix list current
+				:4chistory
+<
 						*:lhistory* *:lhi*
-:lhi[story]		Show the list of location lists, otherwise like
+:[count]lhi[story]	Show the list of location lists, otherwise like
 			`:chistory`.
 
 When adding a new error list, it becomes the current list.
@@ -890,11 +925,11 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">" on Windows.  This means that the output
-of the compiler is saved in a file and not shown on the screen directly.  For
-Unix "| tee" is used.  The compiler output is shown on the screen and saved in
-a file the same time.  Depending on the shell used "|& tee" or "2>&1| tee" is
-the default, so stderr output will be included.
+The 'shellpipe' option defaults to ">%s 2>&1" for Win32.
+This means that the output of the compiler is saved in a file and not shown on
+the screen directly.  For Unix "| tee" is used.  The compiler output is shown
+on the screen and saved in a file the same time.  Depending on the shell used
+"|& tee" or "2>&1| tee" is the default, so stderr output will be included.
 
 If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
 for compilers that write to an errorfile themselves.
@@ -959,8 +994,6 @@ commands can be combined to create a NewGrep command: >
 			the error list to the matches.  Files matching
 			'wildignore' are ignored; files in 'suffixes' are
 			searched last.
-			Without the 'g' flag each line is added only once.
-			With 'g' every match is added.
 
 			{pattern} is a Vim search pattern.  Instead of
 			enclosing it in / any non-ID character (see
@@ -971,17 +1004,27 @@ commands can be combined to create a NewGrep command: >
 			'smartcase' is not used.
 			If {pattern} is empty (e.g. // is specified), the last
 			used search pattern is used. |last-pattern|
+
+			Flags:
+			'g'  Without the 'g' flag each line is added only
+			     once.  With 'g' every match is added.
+
+			'j'  Without the 'j' flag Vim jumps to the first
+			     match.  With 'j' only the quickfix list is
+			     updated.  With the [!] any changes in the current
+			     buffer are abandoned.
+
+			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
+			A file that is opened for matching may use a buffer
+			number, but it is reused if possible to avoid
+			consuming buffer numbers.
+
 :{count}vim[grep] ...
 			When a number is put before the command this is used
 			as the maximum number of matches to find.  Use
 			":1vimgrep pattern file" to find only the first.
 			Useful if you only want to check if there is a match
 			and quit quickly when it's found.
-
-			Without the 'j' flag Vim jumps to the first match.
-			With 'j' only the quickfix list is updated.
-			With the [!] any changes in the current buffer are
-			abandoned.
 
 			Every second or so the searched file name is displayed
 			to give you an idea of the progress made.
@@ -1054,7 +1097,7 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 			allowed with |:bufdo|.
 			An example that uses the argument list and avoids
 			errors for files without matches: >
-                                :silent argdo try 
+				:silent argdo try
 				  \ | grepadd! something %
 				  \ | catch /E480:/
 				  \ | endtry"
@@ -1165,8 +1208,8 @@ not "b:current_compiler".  What the command actually does is the following:
 - Delete the "current_compiler" and "b:current_compiler" variables.
 - Define the "CompilerSet" user command.  With "!" it does ":set", without "!"
   it does ":setlocal".
-- Execute ":runtime! compiler/{name}.vim".  The plugins are expected to set
-  options with "CompilerSet" and set the "current_compiler" variable to the
+- Execute ":runtime! compiler/{name}.(vim|lua)".  The plugins are expected to
+  set options with "CompilerSet" and set the "current_compiler" variable to the
   name of the compiler.
 - Delete the "CompilerSet" user command.
 - Set "b:current_compiler" to the value of "current_compiler".
@@ -1230,7 +1273,7 @@ You can force the compiler to ignore makefiles by defining
 b:tex_ignore_makefile or g:tex_ignore_makefile variable (they are checked for
 existence only).
 
-If the compiler chose not to use make, it need to choose a right program for
+If the compiler chose not to use make, it needs to choose a right program for
 processing your input.  If b:tex_flavor or g:tex_flavor (in this precedence)
 variable exists, it defines TeX flavor for :make (actually, this is the name
 of executed command), and if both variables do not exist, it defaults to
@@ -1290,11 +1333,16 @@ Basic items
 	%o		module name (finds a string)
 	%l		line number (finds a number)
 	%c		column number (finds a number representing character
-			column of the error, (1 <tab> == 1 character column))
+			column of the error, byte index, a <tab> is 1
+			character column)
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))
-	%t		error type (finds a single character)
+	%t		error type (finds a single character):
+			    e - error message
+			    w - warning message
+			    i - info message
+			    n - note message
 	%n		error number (finds a number)
 	%m		error message (finds a string)
 	%r		matches the "rest" of a single-line file message %O/P/Q
@@ -1365,6 +1413,7 @@ prefixes are:
 	%E		start of a multi-line error message
 	%W		start of a multi-line warning message
 	%I		start of a multi-line informational message
+	%N		start of a multi-line note message
 	%A		start of a multi-line message (unspecified type)
 	%>		for next line start with current pattern again |efm-%>|
 	%C		continuation of a multi-line message
@@ -1617,7 +1666,7 @@ special problem here is that it doesn't print information on leaving the
 directory and that it doesn't print the absolute path.
 
 To solve the problem with relative paths and missing "leave directory"
-messages Vim uses following algorithm:
+messages Vim uses the following algorithm:
 
 1) Check if the given directory is a subdirectory of the current directory.
    If this is true, store it as the current directory.
@@ -1834,5 +1883,70 @@ be used.  See the description further above how to make such a filter known
 by Vim.
 
 
+=============================================================================
+10. Customizing the quickfix window		*quickfix-window-function*
+
+The default format for the lines displayed in the quickfix window and location
+list window is:
+
+    <filename>|<lnum> col <col>|<text>
+
+The values displayed in each line correspond to the "bufnr", "lnum", "col" and
+"text" fields returned by the |getqflist()| function.
+
+For some quickfix/location lists, the displayed text need to be customized.
+For example, if only the filename is present for a quickfix entry, then the
+two "|" field separator characters after the filename are not needed.  Another
+use case is to customize the path displayed for a filename. By default, the
+complete path (which may be too long) is displayed for files which are not
+under the current directory tree. The file path may need to be simplified to a
+common parent directory.
+
+The displayed text can be customized by setting the 'quickfixtextfunc' option
+to a Vim function.  This function will be called with a dict argument and
+should return a List of strings to be displayed in the quickfix or location
+list window. The dict argument will have the following fields:
+
+    quickfix	set to 1 when called for a quickfix list and 0 when called for
+		a location list.
+    winid	for a location list, set to the id of the window with the
+		location list. For a quickfix list, set to 0. Can be used in
+		getloclist() to get the location list entry.
+    id		quickfix or location list identifier
+    start_idx	index of the first entry for which text should be returned
+    end_idx	index of the last entry for which text should be returned
+
+The function should return a single line of text to display in the quickfix
+window for each entry from start_idx to end_idx. The function can obtain
+information about the entries using the |getqflist()| function and specifying
+the quickfix list identifier "id". For a location list, getloclist() function
+can be used with the 'winid' argument. If an empty list is returned, then the
+default format is used to display all the entries. If an item in the returned
+list is an empty string, then the default format is used to display the
+corresponding entry.
+
+If a quickfix or location list specific customization is needed, then the
+'quickfixtextfunc' attribute of the list can be set using the |setqflist()| or
+|setloclist()| function. This overrides the global 'quickfixtextfunc' option.
+
+The example below displays the list of old files (|v:oldfiles|) in a quickfix
+window. As there is no line, column number and error text information
+associated with each entry, the 'quickfixtextfunc' function returns only the
+filename.
+Example: >
+    " create a quickfix list from v:oldfiles
+    call setqflist([], ' ', {'lines' : v:oldfiles, 'efm' : '%f',
+					\ 'quickfixtextfunc' : 'QfOldFiles'})
+    func QfOldFiles(info)
+	" get information about a range of quickfix entries
+	let items = getqflist({'id' : a:info.id, 'items' : 1}).items
+	let l = []
+	for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
+	    " use the simplified file name
+	  call add(l, fnamemodify(bufname(items[idx].bufnr), ':p:.'))
+	endfor
+	return l
+    endfunc
+<
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -3,7 +3,7 @@
 " Maintainer:	Andrii Sokolov	<andriy145@gmail.com>
 " Original Author:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Former Maintainer:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
-" Contributors: Leonard König <leonard.r.koenig@gmail.com> (C string highlighting)
+" Contributors: Leonard König <leonard.r.koenig@gmail.com> (C string highlighting), Peter Stanhope <dev.rptr@gmail.com> (Add missing 64-bit mode registers)
 " Last Change:	2017 Jan 23
 " NASM Home:	http://www.nasm.us/
 
@@ -240,7 +240,8 @@ syn cluster nasmGrpPreProcs	contains=nasmMacroDef,@nasmGrpInMacros,@nasmGrpPreCo
 syn match   nasmGen08Register	"\<[A-D][HL]\>"
 syn match   nasmGen16Register	"\<\([A-D]X\|[DS]I\|[BS]P\)\>"
 syn match   nasmGen32Register	"\<E\([A-D]X\|[DS]I\|[BS]P\)\>"
-syn match   nasmGen64Register	"\<R\([A-D]X\|[DS]I\|[BS]P\|[89]\|1[0-5]\|[89][WD]\|1[0-5][WD]\)\>"
+syn match   nasmGen64Register	"\<R\([A-D]X\|[DS]I\|[BS]P\|[89]\|1[0-5]\|[89][WDB]\|1[0-5][WDB]\)\>"
+syn match   nasmExtRegister     "\<\([SB]PL\|[SD]IL\)\>"
 syn match   nasmSegRegister	"\<[C-GS]S\>"
 syn match   nasmSpcRegister	"\<E\=IP\>"
 syn match   nasmFpuRegister	"\<ST\o\>"

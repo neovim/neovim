@@ -1,8 +1,8 @@
 #ifndef NVIM_TYPES_H
 #define NVIM_TYPES_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;

@@ -1,12 +1,13 @@
 " Vim settings file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, 77, 66)
-" Version:	0.50
-" Last Change:	2015 Nov. 30
+" Version:	(v53) 2021 April 06
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-plugin from Vim
 " Credits:
-" Useful suggestions were made by Stefano Zacchiroli, Hendrik Merx, Ben
-" Fritz, and David Barnett.
+"  Version 0.1 was created in September 2000 by Ajit Thakkar.
+"  Since then, useful suggestions and contributions have been made, in order, by:
+"  Stefano Zacchiroli, Hendrik Merx, Ben Fritz, David Barnett, Eisuke Kawashima,
+"  Doug Kearns, and Fritz Reese.
 
 " Only do these settings when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -31,10 +32,10 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form
     let b:fortran_fixed_source = 1
-  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08\)$'
     " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
     let b:fortran_fixed_source = 0
-  elseif expand("%:e") ==? "f\|f77\|for"
+  elseif expand("%:e") =~? '^\%(f\|f77\|for\)$'
     " Fixed-form file extension defaults
     let b:fortran_fixed_source = 1
   else
@@ -65,12 +66,19 @@ endif
 " Set comments and textwidth according to source type
 if (b:fortran_fixed_source == 1)
   setlocal comments=:!,:*,:C
-  " Fixed format requires a textwidth of 72 for code
-  setlocal tw=72
+  " Fixed format requires a textwidth of 72 for code,
+  " but some vendor extensions allow longer lines
+  if exists("fortran_extended_line_length")
+    setlocal tw=132
+  elseif exists("fortran_cardimage_line_length")
+    setlocal tw=80
+  else
+    setlocal tw=72
   " If you need to add "&" on continued lines so that the code is
   " compatible with both free and fixed format, then you should do so
   " in column 73 and uncomment the next line
   " setlocal tw=73
+  endif
 else
   setlocal comments=:!
   " Free format allows a textwidth of 132
@@ -118,7 +126,7 @@ if !exists("b:match_words")
 endif
 
 " File filters for :browse e
-if has("gui_win32") && !exists("b:browsefilter")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "Fortran Files (*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn)\t*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn\n" .
     \ "All Files (*.*)\t*.*\n"
 endif

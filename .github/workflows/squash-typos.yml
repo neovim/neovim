@@ -1,0 +1,33 @@
+name: Squash Typo Pull Requests
+
+on:
+  pull_request_target:
+    types: labeled
+concurrency:
+  group: ${{ github.workflow }} 
+jobs:
+  build:
+    if: github.event.label.name == 'typo'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+
+    - name: Setup git config
+      run: |
+        git config --global user.name 'marvim'
+        git config --global user.email 'marvim@users.noreply.github.com'
+
+    - run: python scripts/squash_typos.py
+      env:
+        PR_NUMBER: ${{ github.event.number }}

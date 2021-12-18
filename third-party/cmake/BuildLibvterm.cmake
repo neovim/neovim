@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildLibvterm(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Failing to pass a command argument will result in no command being run
 function(BuildLibvterm)

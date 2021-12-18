@@ -35,11 +35,10 @@ if not described then
 end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
--- builds we must replace that with the unreleased version.
-local with_prefix = described:gsub("^v%d+%.%d+%.%d+", prefix)
-if described == with_prefix then
-  -- Prepend the prefix always, e.g. with "nightly-12208-g4041b62b9".
-  with_prefix = prefix .. "-" .. described
+-- builds we append that to the dev version
+local with_prefix = prefix
+if prefix:match('-dev$') ~= nil then
+  with_prefix = prefix .. '+' .. described:gsub('^v%d+%.%d+%.%d+-', '')
 end
 
 -- Read existing include file.

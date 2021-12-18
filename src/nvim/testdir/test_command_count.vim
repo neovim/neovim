@@ -33,7 +33,7 @@ func Test_command_count_0()
   delcommand RangeBuffers
   delcommand RangeBuffersAll
 
-  set hidden&
+  set nohidden
   set swapfile&
 endfunc
 
@@ -158,7 +158,9 @@ endfunc
 func Test_command_count_4()
   %argd
   let bufnr = bufnr('$')
-  arga aa bb cc dd ee ff
+  next aa bb cc dd ee ff
+  call assert_equal(bufnr, bufnr('%'))
+
   3argu
   let args = []
   .,$-argdo call add(args, expand('%'))

@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "nvim/os/stdpaths_defs.h"
-#include "nvim/os/os.h"
-#include "nvim/path.h"
-#include "nvim/memory.h"
 #include "nvim/ascii.h"
+#include "nvim/memory.h"
+#include "nvim/os/os.h"
+#include "nvim/os/stdpaths_defs.h"
+#include "nvim/path.h"
 
 /// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {
@@ -108,6 +108,17 @@ char *get_xdg_home(const XDGVarType idx)
   return dir;
 }
 
+/// Return subpath of $XDG_CACHE_HOME
+///
+/// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_CACHE_HOME/nvim/{fname}`
+char *stdpaths_user_cache_subpath(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return concat_fnames_realloc(get_xdg_home(kXDGCacheHome), fname, true);
+}
+
 /// Return subpath of $XDG_CONFIG_HOME
 ///
 /// @param[in]  fname  New component of the path.
@@ -126,8 +137,7 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// @param[in]  escape_commas  If true, all commas will be escaped.
 ///
 /// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`.
-char *stdpaths_user_data_subpath(const char *fname,
-                                 const size_t trailing_pathseps,
+char *stdpaths_user_data_subpath(const char *fname, const size_t trailing_pathseps,
                                  const bool escape_commas)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
@@ -136,7 +146,7 @@ char *stdpaths_user_data_subpath(const char *fname,
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {
     ret = xrealloc(ret, len + trailing_pathseps + numcommas + 1);
-    for (size_t i = 0 ; i < len + numcommas ; i++) {
+    for (size_t i = 0; i < len + numcommas; i++) {
       if (ret[i] == ',') {
         memmove(ret + i + 1, ret + i, len - i + numcommas);
         ret[i] = '\\';

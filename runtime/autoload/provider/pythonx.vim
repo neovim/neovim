@@ -23,7 +23,7 @@ function! provider#pythonx#Require(host) abort
 endfunction
 
 function! s:get_python_executable_from_host_var(major_version) abort
-  return expand(get(g:, 'python'.(a:major_version == 3 ? '3' : '').'_host_prog', ''))
+  return expand(get(g:, 'python'.(a:major_version == 3 ? '3' : '').'_host_prog', ''), v:true)
 endfunction
 
 function! s:get_python_candidates(major_version) abort
@@ -44,7 +44,7 @@ function! provider#pythonx#DetectByModule(module, major_version) abort
   let python_exe = s:get_python_executable_from_host_var(a:major_version)
 
   if !empty(python_exe)
-    return [exepath(expand(python_exe)), '']
+    return [exepath(expand(python_exe, v:true)), '']
   endif
 
   let candidates = s:get_python_candidates(a:major_version)
@@ -96,7 +96,7 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
     if prog_version !~ '^' . a:major_version
       return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python '
             \ . a:major_version . '.']
-    elseif prog_version =~ '^' . a:major_version && prog_version < min_version
+    elseif prog_version =~ '^' . a:major_version && str2nr(prog_version[2:]) < str2nr(min_version[2:])
       return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python >= '
             \ . min_version . '.']
     endif

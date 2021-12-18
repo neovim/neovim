@@ -3,14 +3,14 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/func_attr.h"
+#include "nvim/macros.h"
 #include "nvim/os/os_defs.h"
 
 // Definitions of various common control characters.
 
 #define CharOrd(x)      ((uint8_t)(x) < 'a' \
-                         ? (uint8_t)(x) - 'A'\
+                         ? (uint8_t)(x) - 'A' \
                          : (uint8_t)(x) - 'a')
 #define CharOrdLow(x)   ((uint8_t)(x) - 'a')
 #define CharOrdUp(x)    ((uint8_t)(x) - 'A')
@@ -89,6 +89,10 @@ static inline bool ascii_iswhite(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
+static inline bool ascii_iswhite_or_nul(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline bool ascii_isdigit(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
@@ -115,6 +119,14 @@ static inline bool ascii_isspace(int)
 static inline bool ascii_iswhite(int c)
 {
   return c == ' ' || c == '\t';
+}
+
+/// Checks if `c` is a space or tab character or NUL.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_iswhite_or_nul(int c)
+{
+  return ascii_iswhite(c) || c == NUL;
 }
 
 /// Check whether character is a decimal digit.
@@ -155,6 +167,14 @@ static inline bool ascii_isident(int c)
 static inline bool ascii_isbdigit(int c)
 {
   return (c == '0' || c == '1');
+}
+
+/// Checks if `c` is an octal digit, that is, 0-7.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isodigit(int c)
+{
+  return (c >= '0' && c <= '7');
 }
 
 /// Checks if `c` is a white-space character, that is,

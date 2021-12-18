@@ -1,12 +1,12 @@
-*pi_tar.txt*	Nvim
+*pi_tar.txt*	For Vim version 8.2.  Last change: 2020 Jan 07
 
 		       +====================+
 		       | Tar File Interface |
 		       +====================+
 
-Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
+Author:  Charles E. Campbell  <NcampObell@SdrPchip.AorgM-NOSPAM>
 	  (remove NOSPAM from Campbell's email first)
-Copyright 2005-2012:					*tar-copyright*
+Copyright 2005-2017:					*tar-copyright*
 	The VIM LICENSE (see |copyright|) applies to the files in this
 	package, including tarPlugin.vim, tar.vim, and pi_tar.txt.  Like
 	anything else that's except use "tar.vim" instead of "VIM".  Like
@@ -104,48 +104,67 @@ Copyright 2005-2012:					*tar-copyright*
 ==============================================================================
 4. History						*tar-history*
 
-
-   v28 Jun 23, 2011 * a few more decompression options (tbz tb2 txz)
-   v27 May 31, 2011 * moved cygwin detection before g:tar_copycmd handling
-   		    * inserted additional |:keepj| modifiers
-		    * changed silent  to  sil!  (|:silent|)
-   v26 Aug 09, 2010 * uses buffer-local instead of window variables to hold
-		      tarfile name
-		    * inserted keepj before 0d to protect jump list
-   v25 Jun 19, 2010 * (Jan Steffens) added support for xz compression
-   v24 Apr 07, 2009 * :Untarvim command implemented
-       Sep 28, 2009 * Added lzma support
-   v22 Aug 08, 2008 * security fixes
-   v16 Jun 06, 2008 * tarfile:: used instead of tarfile: when editing files
-		      inside tarballs.  Fixes a problem with tarballs called
-		      things like c:\abc.tar. (tnx to Bill McCarthy)
-   v14 May 09, 2008 * arno caught a security bug
-       May 28, 2008 * various security improvements.  Now requires patch 299
-		      which provides the fnameescape() function
-       May 30, 2008 * allows one to view *.gz and *.bz2 files that are in
-		    *.tar files.
-   v12 Sep 07, 2007 * &shq now used if not the empty string for g:tar_shq
-   v10 May 02, 2006 * now using "redraw then echo" to show messages, instead
-		      of "echo and prompt user"
-   v9 May 02, 2006 * improved detection of masquerading as tar file
-   v8 May 02, 2006 * allows editing of files that merely masquerade as tar
-		     files
-   v7 Mar 22, 2006 * work on making tar plugin work across network
-      Mar 27, 2006 * g:tar_cmd now available for users to change the name
-		     of the tar program to be used.  By default, of course,
-		     it's "tar".
-   v6 Dec 21, 2005 * writing to files not in directories caused problems -
-		     fixed (pointed out by Christian Robinson)
-   v5 Nov 22, 2005 * report option workaround installed
-   v3 Sep 16, 2005 * handles writing files in an archive back to the
-		     archive
-      Oct 18, 2005 * <amatch> used instead of <afile> in autocmds
-      Oct 18, 2005 * handles writing to compressed archives
-      Nov 03, 2005 * handles writing tarfiles across a network using
-		     netrw#NetWrite()
-   v2              * converted to use Vim7's new autoload feature by
-		     Bram Moolenaar
-   v1 (original)   * Michael Toren (see http://michael.toren.net/code/)
+	v31	Apr 02, 2017	* (klartext) reported that browsing encrypted
+				  files in a zip archive created unencrypted
+				  swap files.  I am applying a similar fix
+				  used on zip.vim to tar.vim: new buffers
+				  are opened with |:noswapfile|.
+		May 16, 2017	* When the mouse option isn't empty, the
+				  leftmouse can be used to select a file
+				  in the tar-file listing.
+	v30	Apr 22, 2014	* .tgz files are ambiguous: they may have been
+				  compressed with either gzip or bzip2.  Tar.vim
+				  disambiguates by using unix's "file" command.
+		Feb 18, 2016	* Changed =~ to =~# where appropriate
+		Feb 18, 2017	* Now also permits xz decompression
+	v28	Jun 23, 2011	* a few more decompression options (tbz tb2 txz)
+	v27	May 31, 2011	* moved cygwin detection before g:tar_copycmd
+				  handling
+				* inserted additional |:keepj| modifiers
+				* changed silent  to  sil!  (|:silent|)
+	v26	Aug 09, 2010	* uses buffer-local instead of window variables
+				  to hold tarfile name
+				* inserted keepj before 0d to protect jump list
+	v25	Jun 19, 2010	* (Jan Steffens) added support for xz
+				  compression
+	v24	Apr 07, 2009	* :Untarvim command implemented
+		Sep 28, 2009	* Added lzma support
+	v22	Aug 08, 2008	* security fixes
+	v16	Jun 06, 2008	* tarfile:: used instead of tarfile: when
+				  editing files inside tarballs.  Fixes a
+				  problem with tarballs called things like
+				  c:\abc.tar. (tnx to Bill McCarthy)
+	v14	May 09, 2008	* arno caught a security bug
+		May 28, 2008	* various security improvements.  Now requires
+				  patch 299 which provides the fnameescape()
+				  function
+		May 30, 2008	* allows one to view *.gz and *.bz2 files that
+				  are in *.tar files.
+	v12	Sep 07, 2007	* &shq now used if not the empty string for
+				  g:tar_shq
+	v10	May 02, 2006	* now using "redraw then echo" to show messages,
+				  instead of "echo and prompt user"
+	v9	May 02, 2006	* improved detection of masquerading as tar file
+	v8	May 02, 2006	* allows editing of files that merely masquerade
+				  as tar files
+	v7	Mar 22, 2006	* work on making tar plugin work across network
+		Mar 27, 2006	* g:tar_cmd now available for users to change
+				  the name of the tar program to be used.  By
+				  default, of course, it's "tar".
+	v6	Dec 21, 2005	* writing to files not in directories caused
+				  problems - fixed (pointed out by
+				  Christian Robinson)
+	v5	Nov 22, 2005	* report option workaround installed
+	v3	Sep 16, 2005	* handles writing files in an archive back to
+				  the archive
+		Oct 18, 2005	* <amatch> used instead of <afile> in autocmds
+		Oct 18, 2005	* handles writing to compressed archives
+		Nov 03, 2005	* handles writing tarfiles across a network
+				  using netrw#NetWrite()
+	v2			* converted to use Vim7's new autoload feature
+				  by Bram Moolenaar
+	v1	(original)	* Michael Toren
+				  (see http://michael.toren.net/code/)
 
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help

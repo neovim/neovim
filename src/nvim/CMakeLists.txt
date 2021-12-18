@@ -27,9 +27,10 @@ set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
+set(GENERATOR_HASHY ${GENERATOR_DIR}/hashy.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
-set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
+set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.c)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
@@ -42,12 +43,15 @@ set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
+set(GENERATED_KEYSETS ${GENERATED_DIR}/keysets.generated.h)
+set(GENERATED_KEYSETS_DEFS ${GENERATED_DIR}/keysets_defs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
 set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
 set(FUNCS_GENERATOR ${GENERATOR_DIR}/gen_eval.lua)
 set(EVENTS_GENERATOR ${GENERATOR_DIR}/gen_events.lua)
+set(KEYSETS_GENERATOR ${GENERATOR_DIR}/gen_keysets.lua)
 set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
 set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
@@ -56,6 +60,8 @@ set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
+set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
+set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -85,8 +91,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
-file(GLOB XDIFF_SOURCES xdiff/*.c)
-file(GLOB XDIFF_HEADERS xdiff/*.h)
+file(GLOB EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c)
+file(GLOB EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h)
 
 foreach(subdir
         os
@@ -169,8 +175,8 @@ foreach(sfile ${CONV_SOURCES})
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
-# xdiff: inlined external project, we don't maintain it. #9306
-list(APPEND CONV_SOURCES ${XDIFF_SOURCES})
+# xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
+list(APPEND CONV_SOURCES ${EXTERNAL_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
@@ -225,8 +231,6 @@ endfunction()
 set(use_git_version 0)
 if(NVIM_VERSION_MEDIUM)
   message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
-elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
-  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
 elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
   find_program(GIT_EXECUTABLE git)
   if(GIT_EXECUTABLE)
@@ -242,7 +246,7 @@ if(use_git_version)
   add_custom_target(update_version_stamp ALL
     COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
       ${relbuild}/config/auto/versiondef_git.h
-      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
 else()
@@ -259,6 +263,7 @@ foreach(sfile ${NVIM_SOURCES}
               "${GENERATED_UI_EVENTS_CALL}"
               "${GENERATED_UI_EVENTS_REMOTE}"
               "${GENERATED_UI_EVENTS_BRIDGE}"
+              "${GENERATED_KEYSETS}"
               )
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
@@ -284,7 +289,7 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
-    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
+    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
@@ -305,11 +310,11 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
 
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
-         ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
+         ${API_METADATA} ${LUA_API_C_BINDINGS}
   COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${GENERATED_API_DISPATCH}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
-                     ${MSGPACK_LUA_C_BINDINGS}
+                     ${LUA_API_C_BINDINGS}
                      ${API_HEADERS}
   DEPENDS
     ${API_HEADERS}
@@ -321,19 +326,26 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_FILE}
+  COMMAND ${CMAKE_COMMAND} -E env
+      "LUAC_PRG=${LUAC_PRG}"
+      ${LUA_PRG} ${CHAR_BLOB_GENERATOR} -c ${VIM_MODULE_FILE}
       ${LUA_VIM_MODULE_SOURCE} vim_module
       ${LUA_SHARED_MODULE_SOURCE} shared_module
       ${LUA_INSPECT_MODULE_SOURCE} inspect_module
+      ${LUA_F_MODULE_SOURCE} lua_F_module
+      ${LUA_META_MODULE_SOURCE} lua_meta_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_VIM_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
+    ${LUA_F_MODULE_SOURCE}
+    ${LUA_META_MODULE_SOURCE}
+  VERBATIM
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
-  "${MSGPACK_LUA_C_BINDINGS}"
+  "${LUA_API_C_BINDINGS}"
 )
 
 add_custom_command(
@@ -358,12 +370,14 @@ add_custom_command(
 list(APPEND NVIM_GENERATED_FOR_HEADERS
   "${GENERATED_EX_CMDS_ENUM}"
   "${GENERATED_EVENTS_ENUM}"
+  "${GENERATED_KEYSETS_DEFS}"
 )
 
 list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
+  "${GENERATED_KEYSETS}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
   "${VIM_MODULE_FILE}"
@@ -396,6 +410,12 @@ add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
   COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}
       ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
   DEPENDS ${EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+)
+
+add_custom_command(OUTPUT ${GENERATED_KEYSETS} ${GENERATED_KEYSETS_DEFS}
+  COMMAND ${LUA_PRG} ${KEYSETS_GENERATOR}
+      ${CMAKE_CURRENT_LIST_DIR} ${LUA_SHARED_MODULE_SOURCE} ${GENERATED_KEYSETS} ${GENERATED_KEYSETS_DEFS}
+  DEPENDS ${KEYSETS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/api/keysets.lua ${GENERATOR_HASHY}
 )
 
 add_custom_command(OUTPUT ${GENERATED_OPTIONS}
@@ -451,9 +471,11 @@ list(APPEND NVIM_LINK_LIBRARIES
 
 if(UNIX)
   list(APPEND NVIM_LINK_LIBRARIES
-    m
-    util
-  )
+    m)
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+    list(APPEND NVIM_LINK_LIBRARIES
+      util)
+  endif()
 endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
@@ -465,7 +487,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
+  ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -505,16 +527,50 @@ if(WIN32)
   set(EXTERNAL_BLOBS_SCRIPT
     "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
   foreach(DEP_FILE IN ITEMS
-                      ca-bundle.crt
-                      cat.exe
+                      curl-ca-bundle.crt
                       curl.exe
                       diff.exe
                       tee.exe
-                      tidy.exe
                       win32yank.exe
                       winpty-agent.exe
+                      winpty.dll
                       xxd.exe
 
+                      # Dependencies for neovim-qt
+                      bearer/qgenericbearer.dll
+                      iconengines/qsvgicon.dll
+                      imageformats/qgif.dll
+                      imageformats/qicns.dll
+                      imageformats/qico.dll
+                      imageformats/qjpeg.dll
+                      imageformats/qsvg.dll
+                      imageformats/qtga.dll
+                      imageformats/qtiff.dll
+                      imageformats/qwbmp.dll
+                      imageformats/qwebp.dll
+                      platforms/qwindows.dll
+                      styles/qwindowsvistastyle.dll
+                      translations/qt_ar.qm
+                      translations/qt_bg.qm
+                      translations/qt_ca.qm
+                      translations/qt_cs.qm
+                      translations/qt_da.qm
+                      translations/qt_de.qm
+                      translations/qt_en.qm
+                      translations/qt_es.qm
+                      translations/qt_fi.qm
+                      translations/qt_fr.qm
+                      translations/qt_gd.qm
+                      translations/qt_he.qm
+                      translations/qt_hu.qm
+                      translations/qt_it.qm
+                      translations/qt_ja.qm
+                      translations/qt_ko.qm
+                      translations/qt_lv.qm
+                      translations/qt_pl.qm
+                      translations/qt_ru.qm
+                      translations/qt_sk.qm
+                      translations/qt_uk.qm
                       D3Dcompiler_47.dll
                       libEGL.dll
                       libgcc_s_dw2-1.dll
@@ -522,14 +578,13 @@ if(WIN32)
                       libstdc++-6.dll
                       libwinpthread-1.dll
                       nvim-qt.exe
+                      opengl32sw.dll
                       Qt5Core.dll
                       Qt5Gui.dll
                       Qt5Network.dll
                       Qt5Svg.dll
                       Qt5Widgets.dll
-                      winpty.dll
 
-                      platforms/qwindows.dll
                       )
     get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
     set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"
@@ -563,7 +618,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+  ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -593,7 +648,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+    ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

@@ -436,16 +436,16 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('error on invalid optnames', function()
-    eq('Invalid key: silentt',
+    eq("Invalid key: 'silentt'",
       pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {silentt = true}))
-    eq('Invalid key: sidd',
+    eq("Invalid key: 'sidd'",
       pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {sidd = false}))
-    eq('Invalid key: nowaiT',
+    eq("Invalid key: 'nowaiT'",
       pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {nowaiT = false}))
   end)
 
   it('error on <buffer> option key', function()
-    eq('Invalid key: buffer',
+    eq("Invalid key: 'buffer'",
       pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true}))
   end)
 
@@ -454,8 +454,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     -- note: need '%' to escape hyphens, which have special meaning in lua
     it('throws an error when given non-boolean value for '..opt, function()
       local opts = {}
-      opts[opt] = 2
-      eq('Gave non-boolean value for an opt: '..opt,
+      opts[opt] = 'fooo'
+      eq(opt..' is not a boolean',
         pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', opts))
     end)
   end
@@ -808,5 +808,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     switch_to_buf(first)
     command('normal lhs')
     eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it("does not crash when setting keymap in a non-existing buffer #13541", function()
+    pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
+    helpers.assert_alive()
   end)
 end)

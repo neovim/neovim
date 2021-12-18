@@ -1,9 +1,8 @@
 " Test for gn command
 
 func Test_gn_command()
-  set belloff=all
   noautocmd new
-  " replace a single char by itsself quoted:
+  " replace a single char by itself quoted:
   call setline('.', 'abc x def x ghi x jkl')
   let @/ = 'x'
   exe "norm! cgn'x'\<esc>.."
@@ -157,7 +156,6 @@ func Test_gn_command()
   sil! %d _
 
   set wrapscan&vim
-  set belloff&vim
 endfunc
 
 func Test_gN_repeat()

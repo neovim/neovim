@@ -1,8 +1,8 @@
 #ifndef NVIM_MAIN_H
 #define NVIM_MAIN_H
 
-#include "nvim/normal.h"
 #include "nvim/event/loop.h"
+#include "nvim/normal.h"
 
 // Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
@@ -30,6 +30,7 @@ typedef struct {
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
+  bool input_neverscript;               // never treat stdin as script (-E/-Es)
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
   int window_count;                     // number of windows to use

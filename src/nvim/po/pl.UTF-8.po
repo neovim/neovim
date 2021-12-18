@@ -3417,10 +3417,6 @@ msgstr "-y\t\t\tTryb łatwy (jak \"evim\", bez trybów)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tTryb wyłącznie do odczytu (jak \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tTryb ograniczenia (jak \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tModyfikacje (zapisywanie plików) niedozwolone"

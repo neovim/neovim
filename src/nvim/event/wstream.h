@@ -1,9 +1,8 @@
 #ifndef NVIM_EVENT_WSTREAM_H
 #define NVIM_EVENT_WSTREAM_H
 
-#include <stdint.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 #include <uv.h>
 
 #include "nvim/event/loop.h"

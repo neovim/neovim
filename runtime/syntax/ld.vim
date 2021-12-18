@@ -48,7 +48,7 @@ syn match   ldSpecSections  '\.\%(text\|data\|bss\|symver\)\>'
 
 syn match   ldNumber        display '\<0[xX]\x\+\>'
 syn match   ldNumber        display '\d\+[KM]\>' contains=ldNumberMult
-syn match   ldNumberMult    display '[KM]\>'
+syn match   ldNumberMult    display '\(\d\+\)\@<=[KM]\>'
 syn match   ldOctal         contained display '\<0\o\+\>'
                             \ contains=ldOctalZero
 syn match   ldOctalZero     contained display '\<0'

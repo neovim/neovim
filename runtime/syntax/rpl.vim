@@ -2,7 +2,7 @@
 " Language:	RPL/2
 " Version:	0.15.15 against RPL/2 version 4.00pre7i
 " Last Change:	2012 Feb 03 by Thilo Six
-" Maintainer:	Joël BERTRAND <rpl2@free.fr>
+" Maintainer:	JoÃ«l BERTRAND <rpl2@free.fr>
 " URL:		http://www.makalis.fr/~bertrand/rpl2/download/vim/indent/rpl.vim
 " Credits:	Nothing
 

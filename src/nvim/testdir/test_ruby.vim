@@ -27,6 +27,19 @@ func Test_rubydo()
   %bwipe!
 endfunc
 
+func Test_rubydo_dollar_underscore()
+  throw 'skipped: TODO: '
+  new
+  call setline(1, ['one', 'two', 'three', 'four'])
+  2,3rubydo $_ = '[' + $_  + ']'
+  call assert_equal(['one', '[two]', '[three]', 'four'], getline(1, '$'))
+  bwipe!
+
+  call assert_fails('rubydo $_ = 0', 'E265:')
+  call assert_fails('rubydo (')
+  bwipe!
+endfunc
+
 func Test_rubyfile()
   " Check :rubyfile does not SEGV with Ruby level exception but just fails
   let tempfile = tempname() . '.rb'
@@ -47,7 +60,7 @@ func Test_ruby_set_cursor()
   " Check that movement after setting cursor position keeps current column.
   normal j
   call assert_equal([2, 6], [line('.'), col('.')])
-  call assert_equal([2, 5], rubyeval('$curwin.cursor'))
+  call assert_equal([2, 5], '$curwin.cursor'->rubyeval())
 
   " call assert_fails('ruby $curwin.cursor = [1]',
   "      \           'ArgumentError: array length must be 2')
@@ -391,3 +404,14 @@ func Test_ruby_p()
   let messages = GetMessages()
   call assert_equal(0, len(messages))
 endfunc
+
+func Test_rubyeval_error()
+  " On Linux or Windows the error matches:
+  "   "syntax error, unexpected end-of-input"
+  " whereas on macOS in CI, the error message makes less sense:
+  "   "SyntaxError: array length must be 2"
+  " Unclear why. The test does not check the error message.
+  call assert_fails('call rubyeval("(")')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

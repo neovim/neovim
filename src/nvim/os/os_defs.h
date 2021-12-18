@@ -13,10 +13,14 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
+#if !defined(NAME_MAX) && defined(_XOPEN_NAME_MAX)
+#define NAME_MAX _XOPEN_NAME_MAX
+#endif
+
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
-# define DEFAULT_MAXPATHL 4096
+#define DEFAULT_MAXPATHL 4096
 #if defined(PATH_MAX) && (PATH_MAX > DEFAULT_MAXPATHL)
 # define MAXPATHL PATH_MAX
 #else

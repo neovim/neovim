@@ -2,14 +2,14 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <limits.h>
 
 #include "nvim/assert.h"
-#include "nvim/vim.h"
-#include "nvim/ui.h"
 #include "nvim/ugrid.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ugrid.c.generated.h"
@@ -79,8 +79,7 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
   }
 }
 
-static void clear_region(UGrid *grid, int top, int bot, int left, int right,
-                         sattr_T attr)
+static void clear_region(UGrid *grid, int top, int bot, int left, int right, sattr_T attr)
 {
   for (int row = top; row <= bot; row++) {
     UGRID_FOREACH_CELL(grid, row, left, right+1, {

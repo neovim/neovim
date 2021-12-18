@@ -56,7 +56,7 @@ endfunc
 
 func Test_strgetchar()
   call assert_equal(char2nr('a'), strgetchar('axb', 0))
-  call assert_equal(char2nr('x'), strgetchar('axb', 1))
+  call assert_equal(char2nr('x'), 'axb'->strgetchar(1))
   call assert_equal(char2nr('b'), strgetchar('axb', 2))
 
   call assert_equal(-1, strgetchar('axb', -1))
@@ -66,7 +66,7 @@ endfunc
 
 func Test_strcharpart()
   call assert_equal('a', strcharpart('axb', 0, 1))
-  call assert_equal('x', strcharpart('axb', 1, 1))
+  call assert_equal('x', 'axb'->strcharpart(1, 1))
   call assert_equal('b', strcharpart('axb', 2, 1))
   call assert_equal('xb', strcharpart('axb', 1))
 
@@ -147,7 +147,7 @@ function Test_printf_spec_s()
   call assert_equal(string(value), printf('%s', value))
 
   " funcref
-  call assert_equal('printf', printf('%s', function('printf')))
+  call assert_equal('printf', printf('%s', 'printf'->function()))
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
@@ -399,7 +399,11 @@ function Test_printf_errors()
   call assert_fails('echo printf("%d", [])', 'E745:')
   call assert_fails('echo printf("%d", 1, 2)', 'E767:')
   call assert_fails('echo printf("%*d", 1)', 'E766:')
-  call assert_fails('echo printf("%d", 1.2)', 'E805:')
+  call assert_fails('echo printf("%s")', 'E766:')
+  if has('float')
+    call assert_fails('echo printf("%d", 1.2)', 'E805:')
+    call assert_fails('echo printf("%f")')
+  endif
 endfunc
 
 function Test_max_min_errors()
@@ -473,7 +477,7 @@ func Test_funcref()
   endfunc
   call assert_equal(2, OneByName())
   call assert_equal(1, OneByRef())
-  let OneByRef = funcref('One')
+  let OneByRef = 'One'->funcref()
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))
@@ -489,11 +493,31 @@ func Test_setmatches()
     let set[0]['conceal'] = 5
     let exp[0]['conceal'] = '5'
   endif
-  call setmatches(set)
+  eval set->setmatches()
   call assert_equal(exp, getmatches())
 endfunc
 
 func Test_empty_concatenate()
   call assert_equal('b', 'a'[4:0] . 'b')
   call assert_equal('b', 'b' . 'a'[4:0])
+endfunc
+
+func Test_broken_number()
+  let X = 'bad'
+  call assert_fails('echo 1X', 'E15:')
+  call assert_fails('echo 0b1X', 'E15:')
+  call assert_fails('echo 0b12', 'E15:')
+  call assert_fails('echo 0x1X', 'E15:')
+  call assert_fails('echo 011X', 'E15:')
+  call assert_equal(2, str2nr('2a'))
+  call assert_fails('inoremap <Char-0b1z> b', 'E474:')
+endfunc
+
+func Test_eval_after_if()
+  let s:val = ''
+  func SetVal(x)
+    let s:val ..= a:x
+  endfunc
+  if 0 | eval SetVal('a') | endif | call SetVal('b')
+  call assert_equal('b', s:val)
 endfunc

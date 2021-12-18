@@ -18,7 +18,7 @@ endif
 if exists('b:tex_ignore_makefile') || exists('g:tex_ignore_makefile') ||
 			\(!filereadable('Makefile') && !filereadable('makefile'))
 	" If buffer-local variable 'tex_flavor' exists, it defines TeX flavor,
-	" otherwize the same for global variable with same name, else it will be
+	" otherwise the same for global variable with same name, else it will be
 	" LaTeX
 	if exists("b:tex_flavor")
 		let current_compiler = b:tex_flavor

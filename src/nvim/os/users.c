@@ -5,10 +5,11 @@
 
 #include <uv.h>
 
+#include "auto/config.h"
 #include "nvim/ascii.h"
-#include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
 # include <pwd.h>
@@ -16,6 +17,9 @@
 #ifdef WIN32
 # include <lm.h>
 #endif
+
+// All user names (for ~user completion as done by shell).
+static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 
 // Add a user name to the list of users in garray_T *users.
 // Do nothing if user name is NULL or empty.
@@ -42,7 +46,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-# if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
   {
     struct passwd *pw;
 
@@ -52,7 +56,7 @@ int os_get_usernames(garray_T *users)
     }
     endpwent();
   }
-# elif defined(WIN32)
+#elif defined(WIN32)
   {
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;
@@ -63,7 +67,7 @@ int os_get_usernames(garray_T *users)
         char *user;
         int conversion_result = utf16_to_utf8(uinfo[i].usri0_name, -1, &user);
         if (conversion_result != 0) {
-          EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+          semsg("utf16_to_utf8 failed: %d", conversion_result);
           break;
         }
         add_user(users, user, false);
@@ -72,8 +76,8 @@ int os_get_usernames(garray_T *users)
       NetApiBufferFree(uinfo);
     }
   }
-# endif
-# if defined(HAVE_GETPWNAM)
+#endif
+#if defined(HAVE_GETPWNAM)
   {
     const char *user_env = os_getenv("USER");
 
@@ -103,7 +107,7 @@ int os_get_usernames(garray_T *users)
       }
     }
   }
-# endif
+#endif
 
   return OK;
 }
@@ -156,3 +160,60 @@ char *os_get_user_directory(const char *name)
   return NULL;
 }
 
+
+#if defined(EXITFREE)
+
+void free_users(void)
+{
+  ga_clear_strings(&ga_users);
+}
+
+#endif
+
+/// Find all user names for user completion.
+///
+/// Done only once and then cached.
+static void init_users(void)
+{
+  static int lazy_init_done = false;
+
+  if (lazy_init_done) {
+    return;
+  }
+
+  lazy_init_done = true;
+
+  os_get_usernames(&ga_users);
+}
+
+/// Given to ExpandGeneric() to obtain an user names.
+char_u *get_users(expand_T *xp, int idx)
+{
+  init_users();
+  if (idx < ga_users.ga_len) {
+    return ((char_u **)ga_users.ga_data)[idx];
+  }
+  return NULL;
+}
+
+/// Check whether name matches a user name.
+///
+/// @return 0 if name does not match any user name.
+///         1 if name partially matches the beginning of a user name.
+///         2 is name fully matches a user name.
+int match_user(char_u *name)
+{
+  int n = (int)STRLEN(name);
+  int result = 0;
+
+  init_users();
+  for (int i = 0; i < ga_users.ga_len; i++) {
+    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
+      return 2;       // full match
+    }
+    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
+      result = 1;       // partial match
+    }
+  }
+  return result;
+}

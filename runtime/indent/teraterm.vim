@@ -3,7 +3,7 @@
 "		Based on Tera Term Version 4.100
 " Maintainer:	Ken Takata
 " URL:		https://github.com/k-takata/vim-teraterm
-" Last Change:	2018-08-31
+" Last Change:	2021-10-18
 " Filenames:	*.ttl
 " License:	VIM License
 
@@ -17,6 +17,8 @@ setlocal noautoindent
 setlocal indentexpr=GetTeraTermIndent(v:lnum)
 setlocal indentkeys=!^F,o,O,e
 setlocal indentkeys+==elseif,=endif,=loop,=next,=enduntil,=endwhile
+
+let b:undo_indent = "setl ai< inde< indk< si<"
 
 if exists("*GetTeraTermIndent")
   finish

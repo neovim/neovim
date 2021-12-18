@@ -67,13 +67,13 @@ if exists ('g:ada_with_gnat_project_files')
     endfor
 endif
 
-" Section: add	standart exception {{{2
+" Section: add	standard exception {{{2
 "
 for Item in ['Constraint_Error', 'Program_Error', 'Storage_Error', 'Tasking_Error', 'Status_Error', 'Mode_Error', 'Name_Error', 'Use_Error', 'Device_Error', 'End_Error', 'Data_Error', 'Layout_Error', 'Length_Error', 'Pattern_Error', 'Index_Error', 'Translation_Error', 'Time_Error', 'Argument_Error', 'Tag_Error', 'Picture_Error', 'Terminator_Error', 'Conversion_Error', 'Pointer_Error', 'Dereference_Error', 'Update_Error']
     let g:ada#Keywords += [{
 	    \ 'word':  Item,
 	    \ 'menu':  'exception',
-	    \ 'info':  'Ada standart exception.',
+	    \ 'info':  'Ada standard exception.',
 	    \ 'kind':  'x',
 	    \ 'icase': 1}]
 endfor
@@ -210,7 +210,7 @@ function ada#Word (...)
    let l:Line = substitute (getline (l:Line_Nr), g:ada#Comment, '', '' )
 
    " Cope with tag searching for items in comments; if we are, don't loop
-   " backards looking for previous lines
+   " backwards looking for previous lines
    if l:Column_Nr > strlen(l:Line)
       " We were in a comment
       let l:Line = getline(l:Line_Nr)

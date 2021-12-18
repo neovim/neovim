@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2020 Jun 07
+" Last change:	2021 Jan 22
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -110,10 +110,6 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'lua'
     set ft=lua
 
-    " Perl 6
-  elseif s:name =~# 'perl6'
-    set ft=perl6
-
     " Perl
   elseif s:name =~# 'perl'
     set ft=perl
@@ -129,6 +125,10 @@ if s:line1 =~# "^#!"
     " Groovy
   elseif s:name =~# '^groovy\>'
     set ft=groovy
+
+    " Raku
+  elseif s:name =~# 'raku'
+    set ft=raku
 
     " Ruby
   elseif s:name =~# 'ruby'
@@ -150,7 +150,7 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'ocaml'
     set ft=ocaml
 
-    " Awk scripts
+    " Awk scripts; also finds "gawk"
   elseif s:name =~# 'awk\>'
     set ft=awk
 
@@ -181,6 +181,26 @@ if s:line1 =~# "^#!"
     " Clojure
   elseif s:name =~# 'clojure'
     set ft=clojure
+
+    " Free Pascal
+  elseif s:name =~# 'instantfpc\>'
+    set ft=pascal
+
+    " Fennel
+  elseif s:name =~# 'fennel\>'
+    set ft=fennel
+
+    " MikroTik RouterOS script
+  elseif s:name =~# 'rsc\>'
+    set ft=routeros
+
+    " Fish shell
+  elseif s:name =~# 'fish\>'
+    set ft=fish
+
+    " Gforth
+  elseif s:name =~# 'gforth\>'
+    set ft=forth
 
   endif
   unlet s:name
@@ -381,6 +401,10 @@ else
   " YAML
   elseif s:line1 =~# '^%YAML'
     set ft=yaml
+
+  " MikroTik RouterOS script
+  elseif s:line1 =~# '^#.*by RouterOS.*$'
+    set ft=routeros
 
   " CVS diff
   else

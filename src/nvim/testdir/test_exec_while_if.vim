@@ -1,6 +1,6 @@
-" Test for :execute, :while and :if
+" Test for :execute, :while, :for and :if
 
-function Test_exec_while_if()
+func Test_exec_while_if()
   new
 
   let i = 0
@@ -50,4 +50,6 @@ function Test_exec_while_if()
         \ "7x999999999888888887777777666666555554444333221",
         \ "8",
         \ "9x"], getline(1, 10))
-endfunction
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

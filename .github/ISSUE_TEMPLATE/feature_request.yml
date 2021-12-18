@@ -1,0 +1,21 @@
+name: Feature request
+description: Request an enhancement for Neovim
+labels: [enhancement]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Before requesting: search [existing issues](https://github.com/neovim/neovim/labels/enhancement) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ).
+
+  - type: input
+    attributes:
+      label: "Feature already in Vim?"
+      description: "Does the feature already exist in Vim? If possible, specify which version (or commit) that introduced it."
+      placeholder: "Yes, Vim 7.3.432"
+
+  - type: textarea
+    attributes:
+      label: "Feature description"
+    validations:
+      required: true

@@ -129,7 +129,7 @@ something else.
 		    :+tabclose	    " close the next tab page
 		    :1tabclose	    " close the first tab page
 		    :$tabclose	    " close the last tab page
-		    :tabclose -2    " close the two previous tab page
+		    :tabclose -2    " close the 2nd previous tab page 
 		    :tabclose +	    " close the next tab page
 		    :tabclose 3	    " close the third tab page
 		    :tabclose $	    " close the last tab page

@@ -3438,10 +3438,6 @@ msgstr "-y\t\t\t쉬운 상태 (\"evim\"과 같음, modeless)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\t읽기 전용 상태 (\"view\"와 같음)"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\t제한된 상태 (\"rvim\"과 같음)"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\t수정(파일 쓰기)이 허용되지 않음"

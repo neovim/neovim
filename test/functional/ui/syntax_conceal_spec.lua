@@ -913,4 +913,46 @@ describe('Screen', function()
     ]]}
     eq(grid_lines, {{2, 0, {{'c', 0, 3}}}})
   end)
+
+  -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in
+  -- test/functional/ui/syntax_conceal_spec.lua.
+  describe('concealed line after window scroll', function()
+    after_each(function()
+      command(':qall!')
+      os.remove('Xcolesearch')
+    end)
+
+    it('has the correct cursor column', function()
+      insert([[
+      3split
+      let m = matchadd('Conceal', '=')
+      setl conceallevel=2 concealcursor=nc
+      normal gg
+      "==expr==
+      ]])
+
+      command('write Xcolesearch')
+      feed(":so %<CR>")
+
+      -- Jump to something that is beyond the bottom of the window,
+      -- so there's a scroll down.
+      feed("/expr<CR>")
+
+      -- Are the concealed parts of the current line really hidden?
+      -- Is the window's cursor column properly updated for hidden
+      -- parts of the current line?
+      screen:expect{grid=[[
+        setl conceallevel2 concealcursornc                   |
+        normal gg                                            |
+        "{5:^expr}                                                |
+        {2:Xcolesearch                                          }|
+        normal gg                                            |
+        "=={5:expr}==                                            |
+                                                             |
+        {0:~                                                    }|
+        {3:Xcolesearch                                          }|
+        /expr                                                |
+      ]]}
+    end)
+  end)
 end)

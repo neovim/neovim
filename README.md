@@ -1,11 +1,10 @@
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
-[Documentation](https://neovim.io/doc) |
-[Chat](https://gitter.im/neovim/neovim) |
+[Documentation](https://neovim.io/doc/general/) |
+[Chat](https://app.element.io/#/room/#neovim:matrix.org) |
 [Twitter](https://twitter.com/Neovim)
 
-[![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3A%22CI%22)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
+[![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
 [![Codecov coverage](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
@@ -47,13 +46,15 @@ Install from package
 Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
-[Managed packages] are in Homebrew, [Debian], [Ubuntu], [Fedora], [Arch Linux],
-[Gentoo], and more!
+[Managed packages] are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Void Linux], [Gentoo], and more!
 
 Install from source
 -------------------
 
+See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
+
 The build is CMake-based, but a Makefile is provided as a convenience.
+After installing the dependencies, run the following command.
 
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
@@ -63,28 +64,11 @@ To install to a non-default location:
     make CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
-To skip bundled (`third-party/*`) dependencies:
-
-1. Install the dependencies using a package manager.
-   ```
-   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libutf8proc-dev
-   sudo luarocks build mpack
-   sudo luarocks build lpeg
-   sudo luarocks build inspect
-   ```
-2. Build with `USE_BUNDLED=OFF`:
-   ```
-   make CMAKE_BUILD_TYPE=RelWithDebInfo USE_BUNDLED=OFF
-   sudo make install
-   ```
-
-To inspect the build, these CMake features are useful:
+CMake hints for inspecting the build:
 
 - `cmake --build build --target help` lists all build targets.
 - `build/CMakeCache.txt` (or `cmake -LAH build/`) contains the resolved values of all CMake variables.
 - `build/compile_commands.json` shows the full compiler invocations for each translation unit.
-
-See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
 
 Transitioning from Vim
 --------------------
@@ -137,6 +121,8 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
 [Fedora]: https://apps.fedoraproject.org/packages/neovim
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
+[Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
+[Homebrew]: https://formulae.brew.sh/formula/neovim
 
 <!-- vim: set tw=80: -->

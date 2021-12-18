@@ -170,7 +170,7 @@ the editor.
 	`mouse_shape`:	(To be implemented.)
 
 	Some keys are missing in some modes.
-	
+
 	The following keys are deprecated:
 
 	`hl_id`:	Use `attr_id` instead.
@@ -213,16 +213,14 @@ the editor.
 
 ["mouse_on"]
 ["mouse_off"]
-	|'mouse'| was enabled/disabled in the current editor mode. Useful for
-	a terminal UI, or other situations where Nvim mouse would conflict
-	with other usages of the mouse. UIs may ignore this and always send
-	mouse input, because 'mouse' decides the behavior of |nvim_input()|
-	implicitly.
+	'mouse' was enabled/disabled in the current editor mode. Useful for
+	a terminal UI, or embedding into an application where Nvim mouse would
+	conflict with other usages of the mouse. Other UI:s may ignore this event.
 
 ["busy_start"]
 ["busy_stop"]
-	Nvim started or stopped being busy, and possibly not responsive to
-	user input. This could be indicated to the user by hiding the cursor.
+	Indicates to the UI that it must stop rendering the cursor. This event
+	is misnamed and does not actually have anything to do with busyness.
 
 ["suspend"]
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or
@@ -462,7 +460,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 
 ["set_scroll_region", top, bot, left, right]
 	Define the scroll region used by `scroll` below.
-	
+
 	Note: ranges are end-inclusive, which is inconsistent with API
 	conventions.
 
@@ -633,11 +631,13 @@ Tabline Events							   *ui-tabline*
 
 Activated by the `ext_tabline` |ui-option|.
 
-["tabline_update", curtab, tabs]
+["tabline_update", curtab, tabs, curbuf, buffers]
 	Tabline was updated. UIs should present this data in a custom tabline
-	widget.
-	curtab:	  Current Tabpage
-	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
+	widget. Note: options `curbuf` + `buffers` were added in API7.
+	curtab:   Current Tabpage
+	tabs:     List of Dicts [{ "tab": Tabpage, "name": String }, ...]
+	curbuf:   Current buffer handle.
+	buffers:  List of Dicts [{ "buffer": buffer handle, "name": String}, ...]
 
 ==============================================================================
 Cmdline Events							   *ui-cmdline*

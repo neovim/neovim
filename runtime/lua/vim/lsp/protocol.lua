@@ -5,14 +5,14 @@ local if_nil = vim.F.if_nil
 local protocol = {}
 
 --[=[
---@private
+---@private
 --- Useful for interfacing with:
 --- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
   nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
 end
---@private
+---@private
 function transform_schema_to_table()
   transform_schema_comments()
   nvim.command [[silent! '<,'>s/: \S\+//]]
@@ -32,6 +32,13 @@ local constants = {
     Information = 3;
     -- Reports a hint.
     Hint = 4;
+  };
+
+  DiagnosticTag = {
+    -- Unused or unnecessary code
+    Unnecessary = 1;
+    -- Deprecated or obsolete code
+    Deprecated = 2;
   };
 
   MessageType = {
@@ -292,8 +299,9 @@ local constants = {
 }
 
 for k, v in pairs(constants) do
-  vim.tbl_add_reverse_lookup(v)
-  protocol[k] = v
+  local tbl = vim.deepcopy(v)
+  vim.tbl_add_reverse_lookup(tbl)
+  protocol[k] = tbl
 end
 
 --[=[
@@ -520,6 +528,13 @@ export interface TextDocumentClientCapabilities {
   publishDiagnostics?: {
     --Whether the clients accepts diagnostics with related information.
     relatedInformation?: boolean;
+    --Client supports the tag property to provide meta data about a diagnostic.
+	  --Clients supporting tags have to handle unknown tags gracefully.
+    --Since 3.15.0
+    tagSupport?: {
+      --The tags supported by this client
+      valueSet: DiagnosticTag[];
+    };
   };
   --Capabilities specific to `textDocument/foldingRange` requests.
   --
@@ -623,8 +638,16 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = vim.tbl_values(protocol.CodeActionKind);
+            valueSet = (function()
+              local res = vim.tbl_values(protocol.CodeActionKind)
+              table.sort(res)
+              return res
+            end)();
           };
+        };
+        dataSupport = true;
+        resolveSupport = {
+          properties = { 'edit', }
         };
       };
       completion = {
@@ -643,7 +666,7 @@ function protocol.make_client_capabilities()
         completionItemKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.CompletionItemKind) do
+            for k in ipairs(protocol.CompletionItemKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -672,10 +695,11 @@ function protocol.make_client_capabilities()
       signatureHelp = {
         dynamicRegistration = false;
         signatureInformation = {
+          activeParameterSupport = true;
           documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-          -- parameterInformation = {
-          --   labelOffsetSupport = false;
-          -- };
+          parameterInformation = {
+            labelOffsetSupport = true;
+          };
         };
       };
       references = {
@@ -689,7 +713,7 @@ function protocol.make_client_capabilities()
         symbolKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.SymbolKind) do
+            for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -701,6 +725,18 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false;
         prepareSupport = true;
       };
+      publishDiagnostics = {
+        relatedInformation = true;
+        tagSupport = {
+          valueSet = (function()
+            local res = {}
+            for k in ipairs(protocol.DiagnosticTag) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+      };
     };
     workspace = {
       symbol = {
@@ -708,7 +744,7 @@ function protocol.make_client_capabilities()
         symbolKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.SymbolKind) do
+            for k in ipairs(protocol.SymbolKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -718,157 +754,31 @@ function protocol.make_client_capabilities()
       };
       workspaceFolders = true;
       applyEdit = true;
+      workspaceEdit = {
+        resourceOperations = {'rename', 'create', 'delete',},
+      };
     };
     callHierarchy = {
       dynamicRegistration = false;
     };
     experimental = nil;
+    window = {
+      workDoneProgress = true;
+      showMessage = {
+        messageActionItem = {
+          additionalPropertiesSupport = false;
+        };
+      };
+      showDocument = {
+        support = false;
+      };
+    };
   }
 end
 
---[=[
-export interface DocumentFilter {
-  --A language id, like `typescript`.
-  language?: string;
-  --A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-  scheme?: string;
-  --A glob pattern, like `*.{ts,js}`.
-  --
-  --Glob patterns can have the following syntax:
-  --- `*` to match one or more characters in a path segment
-  --- `?` to match on one character in a path segment
-  --- `**` to match any number of path segments, including none
-  --- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-  --- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-  --- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
-  pattern?: string;
-}
---]=]
-
---[[
---Static registration options to be returned in the initialize request.
-interface StaticRegistrationOptions {
-  --The id used to register the request. The id can be used to deregister
-  --the request again. See also Registration#id.
-  id?: string;
-}
-
-export interface DocumentFilter {
-  --A language id, like `typescript`.
-  language?: string;
-  --A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-  scheme?: string;
-  --A glob pattern, like `*.{ts,js}`.
-  --
-  --Glob patterns can have the following syntax:
-  --- `*` to match one or more characters in a path segment
-  --- `?` to match on one character in a path segment
-  --- `**` to match any number of path segments, including none
-  --- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-  --- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-  --- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
-  pattern?: string;
-}
-export type DocumentSelector = DocumentFilter[];
-export interface TextDocumentRegistrationOptions {
-  --A document selector to identify the scope of the registration. If set to null
-  --the document selector provided on the client side will be used.
-  documentSelector: DocumentSelector | null;
-}
-
---Code Action options.
-export interface CodeActionOptions {
-  --CodeActionKinds that this server may return.
-  --
-  --The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
-  --may list out every specific kind they provide.
-  codeActionKinds?: CodeActionKind[];
-}
-
-interface ServerCapabilities {
-  --Defines how text documents are synced. Is either a detailed structure defining each notification or
-  --for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`.
-  textDocumentSync?: TextDocumentSyncOptions | number;
-  --The server provides hover support.
-  hoverProvider?: boolean;
-  --The server provides completion support.
-  completionProvider?: CompletionOptions;
-  --The server provides signature help support.
-  signatureHelpProvider?: SignatureHelpOptions;
-  --The server provides goto definition support.
-  definitionProvider?: boolean;
-  --The server provides Goto Type Definition support.
-  --
-  --Since 3.6.0
-  typeDefinitionProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
-  --The server provides Goto Implementation support.
-  --
-  --Since 3.6.0
-  implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
-  --The server provides find references support.
-  referencesProvider?: boolean;
-  --The server provides document highlight support.
-  documentHighlightProvider?: boolean;
-  --The server provides document symbol support.
-  documentSymbolProvider?: boolean;
-  --The server provides workspace symbol support.
-  workspaceSymbolProvider?: boolean;
-  --The server provides code actions. The `CodeActionOptions` return type is only
-  --valid if the client signals code action literal support via the property
-  --`textDocument.codeAction.codeActionLiteralSupport`.
-  codeActionProvider?: boolean | CodeActionOptions;
-  --The server provides code lens.
-  codeLensProvider?: CodeLensOptions;
-  --The server provides document formatting.
-  documentFormattingProvider?: boolean;
-  --The server provides document range formatting.
-  documentRangeFormattingProvider?: boolean;
-  --The server provides document formatting on typing.
-  documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
-  --The server provides rename support. RenameOptions may only be
-  --specified if the client states that it supports
-  --`prepareSupport` in its initial `initialize` request.
-  renameProvider?: boolean | RenameOptions;
-  --The server provides document link support.
-  documentLinkProvider?: DocumentLinkOptions;
-  --The server provides color provider support.
-  --
-  --Since 3.6.0
-  colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
-  --The server provides folding provider support.
-  --
-  --Since 3.10.0
-  foldingRangeProvider?: boolean | FoldingRangeProviderOptions | (FoldingRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
-  --The server provides go to declaration support.
-  --
-  --Since 3.14.0
-  declarationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
-  --The server provides execute command support.
-  executeCommandProvider?: ExecuteCommandOptions;
-  --Workspace specific server capabilities
-  workspace?: {
-    --The server supports workspace folder.
-    --
-    --Since 3.6.0
-    workspaceFolders?: {
-      * The server has support for workspace folders
-      supported?: boolean;
-      * Whether the server wants to receive workspace folder
-      * change notifications.
-      *
-      * If a strings is provided the string is treated as a ID
-      * under which the notification is registered on the client
-      * side. The ID can be used to unregister for these events
-      * using the `client/unregisterCapability` request.
-      changeNotifications?: string | boolean;
-    }
-  }
-  --Experimental server capabilities.
-  experimental?: any;
-}
---]]
-
 --- Creates a normalized object describing LSP server capabilities.
+---@param server_capabilities table Table of capabilities supported by the server
+---@return table Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties
@@ -896,7 +806,7 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_did_change = textDocumentSync;
         text_document_will_save = false;
         text_document_will_save_wait_until = false;
-        text_document_save = false;
+        text_document_save = true;
         text_document_save_include_text = false;
       }
     elseif type(textDocumentSync) == 'table' then
@@ -933,6 +843,16 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.rename = true
   end
 
+  if server_capabilities.codeLensProvider == nil then
+    general_properties.code_lens = false
+    general_properties.code_lens_resolve = false
+  elseif type(server_capabilities.codeLensProvider) == 'table' then
+    general_properties.code_lens = true
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+  else
+    error("The server sent invalid codeLensProvider")
+  end
+
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
   elseif type(server_capabilities.codeActionProvider) == 'boolean'
@@ -947,8 +867,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.declarationProvider) == 'boolean' then
     general_properties.declaration = server_capabilities.declarationProvider
   elseif type(server_capabilities.declarationProvider) == 'table' then
-    -- TODO: support more detailed declarationProvider options.
-    general_properties.declaration = false
+    general_properties.declaration = server_capabilities.declarationProvider
   else
     error("The server sent invalid declarationProvider")
   end
@@ -958,8 +877,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
     general_properties.type_definition = server_capabilities.typeDefinitionProvider
   elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
-    -- TODO: support more detailed typeDefinitionProvider options.
-    general_properties.type_definition = false
+    general_properties.type_definition = server_capabilities.typeDefinitionProvider
   else
     error("The server sent invalid typeDefinitionProvider")
   end
@@ -969,8 +887,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.implementationProvider) == 'boolean' then
     general_properties.implementation = server_capabilities.implementationProvider
   elseif type(server_capabilities.implementationProvider) == 'table' then
-    -- TODO(ashkan) support more detailed implementation options.
-    general_properties.implementation = false
+    general_properties.implementation = server_capabilities.implementationProvider
   else
     error("The server sent invalid implementationProvider")
   end

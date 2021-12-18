@@ -1,7 +1,7 @@
 " markdown Text with R statements
 " Language: markdown with R code chunks
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Thu Apr 18, 2019  09:17PM
+" Last Change: Wed Apr 21, 2021  09:55AM
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -13,26 +13,44 @@ if exists("b:current_syntax")
   finish
 endif
 
-" Configuration if not using pandoc syntax:
-" Add syntax highlighting of YAML header
-let g:rmd_syn_hl_yaml = get(g:, 'rmd_syn_hl_yaml', 1)
-" Add syntax highlighting of citation keys
-let g:rmd_syn_hl_citations = get(g:, 'rmd_syn_hl_citations', 1)
-" Highlight the header of the chunk of R code
-let g:rmd_syn_hl_chunk = get(g:, 'g:rmd_syn_hl_chunk', 0)
+" Highlight the header of the chunks as R code
+let g:rmd_syn_hl_chunk = get(g:, 'rmd_syn_hl_chunk', 0)
 
 " Pandoc-syntax has more features, but it is slower.
 " https://github.com/vim-pandoc/vim-pandoc-syntax
 let g:pandoc#syntax#codeblocks#embeds#langs = get(g:, 'pandoc#syntax#codeblocks#embeds#langs', ['r'])
 runtime syntax/pandoc.vim
 if exists("b:current_syntax")
-  " Fix recognition of R code
-  syn region pandocDelimitedCodeBlock_r start=/^```{r\>.*}$/ end=/^```$/ contained containedin=pandocDelimitedCodeBlock contains=@R
+  " Recognize inline R code
   syn region rmdrInline matchgroup=rmdInlineDelim start="`r "  end="`" contains=@R containedin=pandocLaTeXRegion,yamlFlowString keepend
   hi def link rmdInlineDelim Delimiter
+
+  " Fix recognition of language chunks (code adapted from pandoc, 2021-03-28)
+  " Knitr requires braces in the block's header
+  for s:lng in g:pandoc#syntax#codeblocks#embeds#langs
+    let s:nm = matchstr(s:lng, '^[^=]*')
+    exe 'syn clear pandocDelimitedCodeBlock_'.s:nm
+    exe 'syn clear pandocDelimitedCodeBlockinBlockQuote_'.s:nm
+    if g:rmd_syn_hl_chunk
+      exe 'syn region rmd'.s:nm.'ChunkDelim matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>" matchgroup=rmdCodeDelim end="}$" keepend containedin=rmd'.s:nm.'Chunk contains=@R'
+      exe 'syn region rmd'.s:nm.'Chunk start="^\s*```\s*{\s*'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=rmd'.s:nm.'ChunkDelim,@'.toupper(s:nm)
+    else
+      exe 'syn region rmd'.s:nm.'Chunk matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=@'.toupper(s:nm)
+    endif
+  endfor
+  unlet s:lng
+  unlet s:nm
+  hi def link rmdInlineDelim Delimiter
+  hi def link rmdCodeDelim Delimiter
   let b:current_syntax = "rmd"
   finish
 endif
+
+" Configuration if not using pandoc syntax:
+" Add syntax highlighting of YAML header
+let g:rmd_syn_hl_yaml = get(g:, 'rmd_syn_hl_yaml', 1)
+" Add syntax highlighting of citation keys
+let g:rmd_syn_hl_citations = get(g:, 'rmd_syn_hl_citations', 1)
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -63,14 +81,16 @@ for s:type in g:rmd_fenced_languages
   unlet! b:current_syntax
   exe 'syn include @Rmd'.s:nm.' syntax/'.s:ft.'.vim'
   if g:rmd_syn_hl_chunk
-    exe 'syn region rmd'.s:nm.'ChunkDelim matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>" matchgroup=rmdCodeDelim end="}$" keepend containedin=rmd'.s:nm.'Chunk contains=@Rmd'.s:nm
+    exe 'syn region rmd'.s:nm.'ChunkDelim matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>" matchgroup=rmdCodeDelim end="}$" keepend containedin=rmd'.s:nm.'Chunk contains=@Rmdr'
     exe 'syn region rmd'.s:nm.'Chunk start="^\s*```\s*{\s*'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=rmd'.s:nm.'ChunkDelim,@Rmd'.s:nm
   else
     exe 'syn region rmd'.s:nm.'Chunk matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=@Rmd'.s:nm
   endif
-  exe 'syn region rmd'.s:nm.'Inline matchgroup=rmdInlineDelim start="`'.s:nm.' "  end="`" contains=@Rmd'.s:nm.' keepend'
 endfor
 unlet! s:type
+
+" Recognize inline R code
+syn region rmdrInline matchgroup=rmdInlineDelim start="`r "  end="`" contains=@Rmdr keepend
 
 hi def link rmdInlineDelim Delimiter
 hi def link rmdCodeDelim Delimiter

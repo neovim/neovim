@@ -16,7 +16,7 @@ function Test_glob()
   " Execute these commands in the sandbox, so that using the shell fails.
   " Setting 'shell' to an invalid name causes a memory leak.
   sandbox call assert_equal("", glob('Xxx\{'))
-  sandbox call assert_equal("", glob('Xxx\$'))
+  sandbox call assert_equal("", 'Xxx\$'->glob())
   w! Xxx\{
   " } to fix highlighting
   w! Xxx\$
@@ -28,7 +28,7 @@ endfunction
 
 function Test_globpath()
   sandbox call assert_equal(expand("sautest/autoload/globone.vim\nsautest/autoload/globtwo.vim"),
-  \ globpath('sautest/autoload', 'glob*.vim'))
+        \ globpath('sautest/autoload', 'glob*.vim'))
   sandbox call assert_equal([expand('sautest/autoload/globone.vim'), expand('sautest/autoload/globtwo.vim')],
-  \ globpath('sautest/autoload', 'glob*.vim', 0, 1))
+        \ 'glob*.vim'->globpath('sautest/autoload', 0, 1))
 endfunction

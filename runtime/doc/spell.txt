@@ -110,6 +110,23 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spellw[rong]! {word}	Add {word} as a wrong (bad) word to the internal word
 			list, like with |zW|.
 
+							*:spellra* *:spellrare*
+:[count]spellr[are] {word}
+			Add {word} as a rare word to 'spellfile', similar to
+			|zw|.  Without count the first name is used, with
+			a count of two the second entry, etc.
+
+			There are no normal mode commands to mark words as
+			rare as this is a fairly uncommon command and all
+			intuitive commands for this are already taken. If you
+			want you can add mappings with e.g.: >
+		nnoremap z?  :exe ':spellrare  ' . expand('<cWORD>')<CR>
+		nnoremap z/  :exe ':spellrare! ' . expand('<cWORD>')<CR>
+<			|:spellundo|, |zuw|, or |zuW| can be used to undo this.
+
+:spellr[rare]! {word}	Add {word} as a rare word to the internal word
+			list, similar to |zW|.
+
 :[count]spellu[ndo] {word}				*:spellu* *:spellundo*
 			Like |zuw|.  [count] used as with |:spellgood|.
 
@@ -854,7 +871,7 @@ time ":mkspell" is used.  Vim will then convert everything to 'encoding' and
 generate a spell file for 'encoding'.  If some of the used characters to not
 fit in 'encoding' you will get an error message.
 							*spell-affix-mbyte*
-When using a multi-byte encoding it's possible to use more different affix
+When using a multibyte encoding it's possible to use more different affix
 flags.  But Myspell doesn't support that, thus you may not want to use it
 anyway.  For compatibility use an 8-bit encoding.
 
@@ -1110,10 +1127,10 @@ flag to avoid lots of errors.
 CIRCUMFIX						*spell-CIRCUMFIX*
 
 The CIRCUMFIX flag means a prefix and suffix must be added at the same time.
-If a prefix has the CIRCUMFIX flag than only suffixes with the CIRCUMFIX flag
+If a prefix has the CIRCUMFIX flag then only suffixes with the CIRCUMFIX flag
 can be added, and the other way around.
-An alternative is to only specify the suffix, and give the that suffix two
-flags: The required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
+An alternative is to only specify the suffix, and give that suffix two flags:
+the required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
 
 
 PFXPOSTPONE						*spell-PFXPOSTPONE*
@@ -1411,7 +1428,7 @@ are spelling mistakes this may not be quite right.
 Common words can be specified with the COMMON item.  This will give better
 suggestions when editing a short file.  Example:
 
-	COMMON  the of to and a in is it you that he was for on are ~
+	COMMON  the of to and a in is it you that he she was for on are ~
 
 The words must be separated by white space, up to 25 per line.
 When multiple regions are specified in a ":mkspell" command the common words

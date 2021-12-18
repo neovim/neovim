@@ -3,8 +3,7 @@ local lfs = require('lfs')
 local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
   helpers.source, helpers.insert
-local redir_exec = helpers.redir_exec
-local exc_exec = helpers.exc_exec
+local pcall_err = helpers.pcall_err
 local command = helpers.command
 local feed_command = helpers.feed_command
 local funcs = helpers.funcs
@@ -96,25 +95,24 @@ describe(':write', function()
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
     if not iswin() then
-      eq(('\nE17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
-        redir_exec('write .'))
+      eq(('Vim(write):E17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        pcall_err(command, 'write .'))
     end
     meths.set_option('writeany', true)
     -- Message from buf_write
-    eq(('\nE502: "." is a directory'),
-       redir_exec('write .'))
+    eq(('Vim(write):E502: "." is a directory'), pcall_err(command, 'write .'))
     funcs.mkdir(fname_bak)
     meths.set_option('backupdir', '.')
     meths.set_option('backup', true)
     write_file(fname, 'content0')
-    eq(0, exc_exec('edit ' .. fname))
+    command('edit ' .. fname)
     funcs.setline(1, 'TTY')
     eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
-       exc_exec('write'))
+       pcall_err(command, 'write'))
     meths.set_option('backup', false)
     funcs.setfperm(fname, 'r--------')
     eq('Vim(write):E505: "Xtest-functional-ex_cmds-write" is read-only (add ! to override)',
-       exc_exec('write'))
+       pcall_err(command, 'write'))
     if iswin() then
       eq(0, os.execute('del /q/f ' .. fname))
       eq(0, os.execute('rd /q/s ' .. fname_bak))
@@ -127,6 +125,6 @@ describe(':write', function()
     if iswin() then return end
     lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
     eq('Vim(write):E166: Can\'t open linked file for writing',
-       exc_exec('write!'))
+       pcall_err(command, 'write!'))
   end)
 end)

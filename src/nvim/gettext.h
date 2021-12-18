@@ -10,7 +10,7 @@
 # else
 #  define N_(x) x
 # endif
-# define NGETTEXT(x, xs, n) ngettext(x, xs, n)
+# define NGETTEXT(x, xs, n) ngettext(x, xs, (unsigned long)n)
 // On a Mac, gettext's libintl.h defines "setlocale" to be replaced by
 // "libintl_setlocal" which leads to wrong return values. #9789
 # if defined(__APPLE__) && defined(setlocale)

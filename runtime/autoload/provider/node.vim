@@ -50,7 +50,7 @@ endfunction
 function! provider#node#Detect() abort
   let minver = [6, 0]
   if exists('g:node_host_prog')
-    return [expand(g:node_host_prog), '']
+    return [expand(g:node_host_prog, v:true), '']
   endif
   if !executable('node')
     return ['', 'node not found (or not executable)']

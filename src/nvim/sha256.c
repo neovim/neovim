@@ -51,8 +51,7 @@ void sha256_start(context_sha256_T *ctx)
   ctx->state[7] = 0x5BE0CD19;
 }
 
-static void sha256_process(context_sha256_T *ctx,
-                           const char_u data[SHA256_BUFFER_SIZE])
+static void sha256_process(context_sha256_T *ctx, const char_u data[SHA256_BUFFER_SIZE])
 {
   uint32_t temp1, temp2, W[SHA256_BUFFER_SIZE];
   uint32_t A, B, C, D, E, F, G, H;
@@ -88,7 +87,7 @@ static void sha256_process(context_sha256_T *ctx,
 
 #define R(t) \
   (W[t] = S1(W[t -  2]) + W[t -  7] + \
-           S0(W[t - 15]) + W[t - 16])
+          S0(W[t - 15]) + W[t - 16])
 
 #define P(a, b, c, d, e, f, g, h, x, K) { \
   temp1 = h + S3(e) + F1(e, f, g) + K + x; \
@@ -188,7 +187,7 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
 
   uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE-1);  // left < buf size
 
-  ctx->total[0] += (uint32_t) length;
+  ctx->total[0] += (uint32_t)length;
   ctx->total[0] &= 0xFFFFFFFF;
 
   if (ctx->total[0] < length) {
@@ -262,8 +261,8 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 ///
 /// @returns hex digest of "buf[buf_len]" in a static array.
 ///          if "salt" is not NULL also do "salt[salt_len]".
-const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len,
-                         const uint8_t *restrict salt, size_t salt_len)
+const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len, const uint8_t *restrict salt,
+                         size_t salt_len)
 {
   char_u sha256sum[SHA256_SUM_SIZE];
   static char hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL

@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+// uncrustify:off
+
 /*
  * NFA regular expression implementation.
  *
@@ -14,23 +16,22 @@
 
 #include "nvim/ascii.h"
 #include "nvim/garray.h"
+#include "nvim/os/input.h"
 
-/*
- * Logging of NFA engine.
- *
- * The NFA engine can write four log files:
- * - Error log: Contains NFA engine's fatal errors.
- * - Dump log: Contains compiled NFA state machine's information.
- * - Run log: Contains information of matching procedure.
- * - Debug log: Contains detailed information of matching procedure. Can be
- *   disabled by undefining NFA_REGEXP_DEBUG_LOG.
- * The first one can also be used without debug mode.
- * The last three are enabled when compiled as debug mode and individually
- * disabled by commenting them out.
- * The log files can get quite big!
- * Do disable all of this when compiling Vim for debugging, undefine REGEXP_DEBUG in
- * regexp.c
- */
+// Logging of NFA engine.
+//
+// The NFA engine can write four log files:
+// - Error log: Contains NFA engine's fatal errors.
+// - Dump log: Contains compiled NFA state machine's information.
+// - Run log: Contains information of matching procedure.
+// - Debug log: Contains detailed information of matching procedure. Can be
+//   disabled by undefining NFA_REGEXP_DEBUG_LOG.
+// The first one can also be used without debug mode.
+// The last three are enabled when compiled as debug mode and individually
+// disabled by commenting them out.
+// The log files can get quite big!
+// To disable all of this when compiling Vim for debugging, undefine REGEXP_DEBUG in
+// regexp.c
 #ifdef REGEXP_DEBUG
 # define NFA_REGEXP_ERROR_LOG   "nfa_regexp_error.log"
 # define NFA_REGEXP_DUMP_LOG    "nfa_regexp_dump.log"
@@ -46,14 +47,14 @@ enum {
   NFA_MATCH,
   NFA_EMPTY,                        /* matches 0-length */
 
-  NFA_START_COLL,                   /* [abc] start */
-  NFA_END_COLL,                     /* [abc] end */
-  NFA_START_NEG_COLL,               /* [^abc] start */
-  NFA_END_NEG_COLL,                 /* [^abc] end (postfix only) */
-  NFA_RANGE,                        /* range of the two previous items
-                                     * (postfix only) */
-  NFA_RANGE_MIN,                    /* low end of a range  */
-  NFA_RANGE_MAX,                    /* high end of a range  */
+  NFA_START_COLL,                   // [abc] start
+  NFA_END_COLL,                     // [abc] end
+  NFA_START_NEG_COLL,               // [^abc] start
+  NFA_END_NEG_COLL,                 // [^abc] end (postfix only)
+  NFA_RANGE,                        // range of the two previous items
+                                    // (postfix only)
+  NFA_RANGE_MIN,                    // low end of a range
+  NFA_RANGE_MAX,                    // high end of a range
 
   NFA_CONCAT,                       // concatenate two previous items (postfix
                                     // only)
@@ -86,9 +87,9 @@ enum {
   NFA_END_INVISIBLE,
   NFA_END_INVISIBLE_NEG,
   NFA_END_PATTERN,
-  NFA_COMPOSING,                    /* Next nodes in NFA are part of the
-                                       composing multibyte char */
-  NFA_END_COMPOSING,                /* End of a composing char in the NFA */
+  NFA_COMPOSING,                    // Next nodes in NFA are part of the
+                                    // composing multibyte char
+  NFA_END_COMPOSING,                // End of a composing char in the NFA
   NFA_ANY_COMPOSING,                // \%C: Any composing characters.
   NFA_OPT_CHARS,                    /* \%[abc] */
 
@@ -254,9 +255,9 @@ static char_u e_ill_char_class[] = N_(
     "E877: (NFA regexp) Invalid character class: %" PRId64);
 static char_u e_value_too_large[] = N_("E951: \\% value too large");
 
-/* Since the out pointers in the list are always
- * uninitialized, we use the pointers themselves
- * as storage for the Ptrlists. */
+// Since the out pointers in the list are always
+// uninitialized, we use the pointers themselves
+// as storage for the Ptrlists.
 typedef union Ptrlist Ptrlist;
 union Ptrlist {
   Ptrlist     *next;
@@ -308,9 +309,9 @@ struct nfa_pim_S {
 typedef struct {
   nfa_state_T *state;
   int count;
-  nfa_pim_T pim;                /* if pim.result != NFA_PIM_UNUSED: postponed
-                                 * invisible match */
-  regsubs_T subs;               /* submatch info, only party used */
+  nfa_pim_T pim;                // if pim.result != NFA_PIM_UNUSED: postponed
+                                // invisible match
+  regsubs_T subs;               // submatch info, only party used
 } nfa_thread_T;
 
 // nfa_list_T contains the alternative NFA execution states.
@@ -327,6 +328,11 @@ static int nfa_re_flags;  ///< re_flags passed to nfa_regcomp().
 static int *post_start;   ///< holds the postfix form of r.e.
 static int *post_end;
 static int *post_ptr;
+
+// Set when the pattern should use the NFA engine.
+// E.g. [[:upper:]] only allows 8bit characters for BT engine,
+// while NFA engine handles multibyte characters correctly.
+static bool wants_nfa;
 
 static int nstate;  ///< Number of states in the NFA. Also used when executing.
 static int istate;  ///< Index in the state vector, used in alloc_state()
@@ -367,8 +373,8 @@ nfa_regcomp_start (
   /* A reasonable estimation for maximum size */
   nstate_max = (STRLEN(expr) + 1) * 25;
 
-  /* Some items blow up in size, such as [A-z].  Add more space for that.
-   * When it is still not enough realloc_post_list() will be used. */
+  // Some items blow up in size, such as [A-z].  Add more space for that.
+  // When it is still not enough realloc_post_list() will be used.
   nstate_max += 1000;
 
   /* Size for postfix representation of expr. */
@@ -377,6 +383,7 @@ nfa_regcomp_start (
   post_start = (int *)xmalloc(postfix_size);
   post_ptr = post_start;
   post_end = post_start + nstate_max;
+  wants_nfa = false;
   rex.nfa_has_zend = false;
   rex.nfa_has_backref = false;
 
@@ -535,7 +542,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
     return NULL;     /* just in case */
   p = p->out;
   while (p->c > 0) {
-    len += MB_CHAR2LEN(p->c);
+    len += utf_char2len(p->c);
     p = p->out;
   }
   if (p->c != NFA_MCLOSE || p->out->c != NFA_MATCH)
@@ -559,7 +566,9 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
  */
 static void realloc_post_list(void)
 {
-  size_t new_max = (post_end - post_start) + 1000;
+  // For weird patterns the number of states can be very high. Increasing by
+  // 50% seems a reasonable compromise between memory use and speed.
+  const size_t new_max = (post_end - post_start) * 3 / 2;
   int *new_start = xrealloc(post_start, new_max * sizeof(int));
   post_ptr = new_start + (post_ptr - post_start);
   post_end = new_start + new_max;
@@ -1153,8 +1162,6 @@ static int nfa_regatom(void)
   int emit_range;
   int negated;
   int startc = -1;
-  int endc = -1;
-  int oldstartc = -1;
   int save_prev_at_start = prev_at_start;
 
   c = getchr();
@@ -1236,11 +1243,11 @@ static int nfa_regatom(void)
     p = vim_strchr(classchars, no_Magic(c));
     if (p == NULL) {
       if (extra == NFA_ADD_NL) {
-        EMSGN(_(e_ill_char_class), c);
+        semsg(_(e_ill_char_class), (int64_t)c);
         rc_did_emsg = true;
         return FAIL;
       }
-      IEMSGN("INTERNAL: Unknown character class char: %" PRId64, c);
+      siemsg("INTERNAL: Unknown character class char: %" PRId64, (int64_t)c);
       return FAIL;
     }
     // When '.' is followed by a composing char ignore the dot, so that
@@ -1278,7 +1285,7 @@ static int nfa_regatom(void)
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    EMSGN(_(e_misplaced), no_Magic(c));  // -V1037
+    semsg(_(e_misplaced), (int64_t)no_Magic(c));  // -V1037
     return FAIL;
 
   case Magic('='):
@@ -1288,7 +1295,7 @@ static int nfa_regatom(void)
   case Magic('*'):
   case Magic('{'):
     // these should follow an atom, not form an atom
-    EMSGN(_(e_misplaced), no_Magic(c));
+    semsg(_(e_misplaced), (int64_t)no_Magic(c));
     return FAIL;
 
   case Magic('~'):
@@ -1298,13 +1305,14 @@ static int nfa_regatom(void)
     // Previous substitute pattern.
     // Generated as "\%(pattern\)".
     if (reg_prev_sub == NULL) {
-      EMSG(_(e_nopresub));
+      emsg(_(e_nopresub));
       return FAIL;
     }
     for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
-      EMIT(PTR2CHAR(lp));
-      if (lp != reg_prev_sub)
+      EMIT(utf_ptr2char(lp));
+      if (lp != reg_prev_sub) {
         EMIT(NFA_CONCAT);
+      }
     }
     EMIT(NFA_NOPEN);
     break;
@@ -1375,7 +1383,7 @@ static int nfa_regatom(void)
       re_has_z = REX_SET;
       break;
     default:
-      emsgf(_("E867: (NFA) Unknown operator '\\z%c'"),
+      semsg(_("E867: (NFA) Unknown operator '\\z%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1418,8 +1426,8 @@ static int nfa_regatom(void)
     }
     break;
 
-    /* Catch \%^ and \%$ regardless of where they appear in the
-     * pattern -- regardless of whether or not it makes sense. */
+    // Catch \%^ and \%$ regardless of where they appear in the
+    // pattern -- regardless of whether or not it makes sense.
     case '^':
       EMIT(NFA_BOF);
       break;
@@ -1453,20 +1461,20 @@ static int nfa_regatom(void)
         if (nfa_regatom() == FAIL)
           return FAIL;
       }
-      getchr();                    /* get the ] */
-      if (n == 0)
-        EMSG2_RET_FAIL(_(e_empty_sb),
-            reg_magic == MAGIC_ALL);
+      (void)getchr();  // get the ]
+      if (n == 0) {
+        EMSG2_RET_FAIL(_(e_empty_sb), reg_magic == MAGIC_ALL);
+      }
       EMIT(NFA_OPT_CHARS);
       EMIT(n);
 
-      /* Emit as "\%(\%[abc]\)" to be able to handle
-       * "\%[abc]*" which would cause the empty string to be
-       * matched an unlimited number of times. NFA_NOPEN is
-       * added only once at a position, while NFA_SPLIT is
-       * added multiple times.  This is more efficient than
-       * not allowing NFA_SPLIT multiple times, it is used
-       * a lot. */
+      // Emit as "\%(\%[abc]\)" to be able to handle
+      // "\%[abc]*" which would cause the empty string to be
+      // matched an unlimited number of times. NFA_NOPEN is
+      // added only once at a position, while NFA_SPLIT is
+      // added multiple times.  This is more efficient than
+      // not allowing NFA_SPLIT multiple times, it is used
+      // a lot.
       EMIT(NFA_NOPEN);
       break;
     }
@@ -1481,7 +1489,7 @@ static int nfa_regatom(void)
       while (ascii_isdigit(c)) {
         if (n > (INT32_MAX - (c - '0')) / 10) {
           // overflow.
-          EMSG(_(e_value_too_large));
+          emsg(_(e_value_too_large));
           return FAIL;
         }
         n = n * 10 + (c - '0');
@@ -1508,7 +1516,7 @@ static int nfa_regatom(void)
           limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
-          EMSG(_(e_value_too_large));
+          emsg(_(e_value_too_large));
           return FAIL;
         }
         EMIT((int)n);
@@ -1521,7 +1529,7 @@ static int nfa_regatom(void)
         break;
       }
     }
-      emsgf(_("E867: (NFA) Unknown operator '\\%%%c'"),
+      semsg(_("E867: (NFA) Unknown operator '\\%%%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1564,7 +1572,7 @@ collection:
        * Failed to recognize a character class. Use the simple
        * version that turns [abc] into 'a' OR 'b' OR 'c'
        */
-      startc = endc = oldstartc = -1;
+      startc = -1;
       negated = false;
       if (*regparse == '^') {                           // negated range
         negated = true;
@@ -1581,7 +1589,7 @@ collection:
       // Emit the OR branches for each character in the []
       emit_range = false;
       while (regparse < endp) {
-        oldstartc = startc;
+        int oldstartc = startc;
         startc = -1;
         got_coll_char = false;
         if (*regparse == '[') {
@@ -1616,6 +1624,7 @@ collection:
               EMIT(NFA_CLASS_GRAPH);
               break;
             case CLASS_LOWER:
+              wants_nfa = true;
               EMIT(NFA_CLASS_LOWER);
               break;
             case CLASS_PRINT:
@@ -1628,6 +1637,7 @@ collection:
               EMIT(NFA_CLASS_SPACE);
               break;
             case CLASS_UPPER:
+              wants_nfa = true;
               EMIT(NFA_CLASS_UPPER);
               break;
             case CLASS_XDIGIT:
@@ -1665,13 +1675,13 @@ collection:
           }
           /* Try collating class like [. .]  */
           if (collclass != 0) {
-            startc = collclass;                  /* allow [.a.]-x as a range */
-            /* Will emit the proper atom at the end of the
-             * while loop. */
+            startc = collclass;                  // allow [.a.]-x as a range
+            // Will emit the proper atom at the end of the
+            // while loop.
           }
         }
-        /* Try a range like 'a-x' or '\t-z'. Also allows '-' as a
-         * start character. */
+        // Try a range like 'a-x' or '\t-z'. Also allows '-' as a
+        // start character.
         if (*regparse == '-' && oldstartc != -1) {
           emit_range = true;
           startc = oldstartc;
@@ -1679,11 +1689,10 @@ collection:
           continue;                         // reading the end of the range
         }
 
-        /* Now handle simple and escaped characters.
-         * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
-         * accepts "\t", "\e", etc., but only when the 'l' flag in
-         * 'cpoptions' is not included.
-         */
+        // Now handle simple and escaped characters.
+        // Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
+        // accepts "\t", "\e", etc., but only when the 'l' flag in
+        // 'cpoptions' is not included.
         if (*regparse == '\\'
             && regparse + 1 <= endp
             && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
@@ -1713,31 +1722,33 @@ collection:
           }
         }
 
-        /* Normal printable char */
-        if (startc == -1)
-          startc = PTR2CHAR(regparse);
+        // Normal printable char
+        if (startc == -1) {
+          startc = utf_ptr2char(regparse);
+        }
 
         /* Previous char was '-', so this char is end of range. */
         if (emit_range) {
-          endc = startc;
+          int endc = startc;
           startc = oldstartc;
           if (startc > endc) {
             EMSG_RET_FAIL(_(e_reverse_range));
           }
 
           if (endc > startc + 2) {
-            /* Emit a range instead of the sequence of
-             * individual characters. */
-            if (startc == 0)
-              /* \x00 is translated to \x0a, start at \x01. */
+            // Emit a range instead of the sequence of
+            // individual characters.
+            if (startc == 0) {
+              // \x00 is translated to \x0a, start at \x01.
               EMIT(1);
-            else
-              --post_ptr;                   /* remove NFA_CONCAT */
+            } else {
+              post_ptr--;                   // remove NFA_CONCAT
+            }
             EMIT(endc);
             EMIT(NFA_RANGE);
             EMIT(NFA_CONCAT);
-          } else if ((*mb_char2len)(startc) > 1
-                     || (*mb_char2len)(endc) > 1) {
+          } else if (utf_char2len(startc) > 1
+                     || utf_char2len(endc) > 1) {
             // Emit the characters in the range.
             // "startc" was already emitted, so skip it.
             for (c = startc + 1; c <= endc; c++) {
@@ -1745,8 +1756,8 @@ collection:
               EMIT(NFA_CONCAT);
             }
           } else {
-            /* Emit the range. "startc" was already emitted, so
-             * skip it. */
+            // Emit the range. "startc" was already emitted, so
+            // skip it.
             for (c = startc + 1; c <= endc; c++) {
               EMIT(c);
               EMIT(NFA_CONCAT);
@@ -1755,19 +1766,20 @@ collection:
           emit_range = false;
           startc = -1;
         } else {
-          /* This char (startc) is not part of a range. Just
-           * emit it.
-           * Normally, simply emit startc. But if we get char
-           * code=0 from a collating char, then replace it with
-           * 0x0a.
-           * This is needed to completely mimic the behaviour of
-           * the backtracking engine. */
+          // This char (startc) is not part of a range. Just
+          // emit it.
+          // Normally, simply emit startc. But if we get char
+          // code=0 from a collating char, then replace it with
+          // 0x0a.
+          // This is needed to completely mimic the behaviour of
+          // the backtracking engine.
           if (startc == NFA_NEWL) {
-            /* Line break can't be matched as part of the
-             * collection, add an OR below. But not for negated
-             * range. */
-            if (!negated)
+            // Line break can't be matched as part of the
+            // collection, add an OR below. But not for negated
+            // range.
+            if (!negated) {
               extra = NFA_ADD_NL;
+            }
           } else {
             if (got_coll_char == true && startc == 0) {
               EMIT(0x0a);
@@ -1817,18 +1829,18 @@ collection:
 
 nfa_do_multibyte:
     // plen is length of current char with composing chars
-    if ((*mb_char2len)(c) != (plen = utfc_ptr2len(old_regparse))
+    if (utf_char2len(c) != (plen = utfc_ptr2len(old_regparse))
         || utf_iscomposing(c)) {
       int i = 0;
 
-      /* A base character plus composing characters, or just one
-       * or more composing characters.
-       * This requires creating a separate atom as if enclosing
-       * the characters in (), where NFA_COMPOSING is the ( and
-       * NFA_END_COMPOSING is the ). Note that right now we are
-       * building the postfix form, not the NFA itself;
-       * a composing char could be: a, b, c, NFA_COMPOSING
-       * where 'b' and 'c' are chars with codes > 256. */
+      // A base character plus composing characters, or just one
+      // or more composing characters.
+      // This requires creating a separate atom as if enclosing
+      // the characters in (), where NFA_COMPOSING is the ( and
+      // NFA_END_COMPOSING is the ). Note that right now we are
+      // building the postfix form, not the NFA itself;
+      // a composing char could be: a, b, c, NFA_COMPOSING
+      // where 'b' and 'c' are chars with codes > 256. */
       for (;; ) {
         EMIT(c);
         if (i > 0)
@@ -1874,8 +1886,8 @@ static int nfa_regpiece(void)
   int my_post_start;
   int quest;
 
-  /* Save the current parse state, so that we can use it if <atom>{m,n} is
-   * next. */
+  // Save the current parse state, so that we can use it if <atom>{m,n} is
+  // next.
   save_parse_state(&old_state);
 
   /* store current pos in the postfix form, for \{m,n} involving 0s */
@@ -1944,7 +1956,7 @@ static int nfa_regpiece(void)
       break;
     }
     if (i == 0) {
-      emsgf(_("E869: (NFA) Unknown operator '\\@%c'"), op);
+      semsg(_("E869: (NFA) Unknown operator '\\@%c'"), op);
       return FAIL;
     }
     EMIT(i);
@@ -1959,12 +1971,11 @@ static int nfa_regpiece(void)
     break;
 
   case Magic('{'):
-    /* a{2,5} will expand to 'aaa?a?a?'
-     * a{-1,3} will expand to 'aa??a??', where ?? is the nongreedy
-     * version of '?'
-     * \v(ab){2,3} will expand to '(ab)(ab)(ab)?', where all the
-     * parenthesis have the same id
-     */
+    // a{2,5} will expand to 'aaa?a?a?'
+    // a{-1,3} will expand to 'aa??a??', where ?? is the nongreedy
+    // version of '?'
+    // \v(ab){2,3} will expand to '(ab)(ab)(ab)?', where all the
+    // parenthesis have the same id
 
     greedy = true;
     c2 = peekchr();
@@ -1975,8 +1986,8 @@ static int nfa_regpiece(void)
     if (!read_limits(&minval, &maxval))
       EMSG_RET_FAIL(_("E870: (NFA regexp) Error reading repetition limits"));
 
-    /*  <atom>{0,inf}, <atom>{0,} and <atom>{}  are equivalent to
-     *  <atom>*  */
+    //  <atom>{0,inf}, <atom>{0,} and <atom>{}  are equivalent to
+    //  <atom>*
     if (minval == 0 && maxval == MAX_LIMIT) {
       if (greedy)
         /* \{}, \{0,} */
@@ -1996,10 +2007,17 @@ static int nfa_regpiece(void)
       return OK;
     }
 
-    // The engine is very inefficient (uses too many states) when the maximum
-    // is much larger than the minimum and when the maximum is large. Bail out
-    // if we can use the other engine.
-    if ((nfa_re_flags & RE_AUTO) && (maxval > 500 || maxval > minval + 200)) {
+    // The engine is very inefficient (uses too many states) when the
+    // maximum is much larger than the minimum and when the maximum is
+    // large.  However, when maxval is MAX_LIMIT, it is okay, as this
+    // will emit NFA_STAR.
+    // Bail out if we can use the other engine, but only, when the
+    // pattern does not need the NFA engine like (e.g. [[:upper:]]\{2,\}
+    // does not work with with characters > 8 bit with the BT engine)
+    if ((nfa_re_flags & RE_AUTO)
+        && (maxval > 500 || maxval > minval + 200)
+        && (maxval != MAX_LIMIT && minval < 200)
+        && !wants_nfa) {
       return FAIL;
     }
 
@@ -2735,7 +2753,7 @@ static void st_error(int *postfix, int *end, int *p)
     fclose(df);
   }
 #endif
-  EMSG(_("E874: (NFA) Could not pop the stack!"));
+  emsg(_("E874: (NFA) Could not pop the stack!"));
 }
 
 /*
@@ -2955,8 +2973,8 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
       if (state->c < 0)
         /* don't know what this is */
         return -1;
-      /* normal character */
-      len += MB_CHAR2LEN(state->c);
+      // normal character
+      len += utf_char2len(state->c);
       break;
     }
 
@@ -3093,9 +3111,9 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
     case NFA_END_COLL:
     case NFA_END_NEG_COLL:
-      /* On the stack is the sequence starting with NFA_START_COLL or
-       * NFA_START_NEG_COLL and all possible characters. Patch it to
-       * add the output to the start. */
+      // On the stack is the sequence starting with NFA_START_COLL or
+      // NFA_START_NEG_COLL and all possible characters. Patch it to
+      // add the output to the start.
       if (nfa_calc_size == true) {
         nstate++;
         break;
@@ -3217,12 +3235,12 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (before)
         n = *++p;         /* get the count */
 
-      /* The \@= operator: match the preceding atom with zero width.
-       * The \@! operator: no match for the preceding atom.
-       * The \@<= operator: match for the preceding atom.
-       * The \@<! operator: no match for the preceding atom.
-       * Surrounds the preceding atom with START_INVISIBLE and
-       * END_INVISIBLE, similarly to MOPEN. */
+      // The \@= operator: match the preceding atom with zero width.
+      // The \@! operator: no match for the preceding atom.
+      // The \@<= operator: match for the preceding atom.
+      // The \@<! operator: no match for the preceding atom.
+      // Surrounds the preceding atom with START_INVISIBLE and
+      // END_INVISIBLE, similarly to MOPEN.
 
       if (nfa_calc_size == true) {
         nstate += pattern ? 4 : 2;
@@ -3253,11 +3271,12 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         patch(e.out, s1);
         PUSH(frag(s, list1(&s1->out)));
         if (before) {
-          if (n <= 0)
-            /* See if we can guess the maximum width, it avoids a
-             * lot of pointless tries. */
+          if (n <= 0) {
+            // See if we can guess the maximum width, it avoids a
+            // lot of pointless tries.
             n = nfa_max_width(e.start, 0);
-          s->val = n;           /* store the count */
+          }
+          s->val = n;           // store the count
         }
       }
       break;
@@ -3312,10 +3331,10 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         break;
       }
 
-      /* Allow "NFA_MOPEN" as a valid postfix representation for
-       * the empty regexp "". In this case, the NFA will be
-       * NFA_MOPEN -> NFA_MCLOSE. Note that this also allows
-       * empty groups of parenthesis, and empty mbyte chars */
+      // Allow "NFA_MOPEN" as a valid postfix representation for
+      // the empty regexp "". In this case, the NFA will be
+      // NFA_MOPEN -> NFA_MCLOSE. Note that this also allows
+      // empty groups of parenthesis, and empty mbyte chars
       if (stackp == stack) {
         s = alloc_state(mopen, NULL, NULL);
         if (s == NULL)
@@ -3328,8 +3347,8 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         break;
       }
 
-      /* At least one node was emitted before NFA_MOPEN, so
-       * at least one node will be between NFA_MOPEN and NFA_MCLOSE */
+      // At least one node was emitted before NFA_MOPEN, so
+      // at least one node will be between NFA_MOPEN and NFA_MCLOSE
       e = POP();
       s = alloc_state(mopen, e.start, NULL);         /* `(' */
       if (s == NULL)
@@ -3486,22 +3505,22 @@ static void nfa_postprocess(nfa_regprog_T *prog)
         int ch_invisible = failure_chance(prog->state[i].out, 0);
         int ch_follows = failure_chance(prog->state[i].out1->out, 0);
 
-        /* Postpone when the invisible match is expensive or has a
-         * lower chance of failing. */
+        // Postpone when the invisible match is expensive or has a
+        // lower chance of failing.
         if (c == NFA_START_INVISIBLE_BEFORE
             || c == NFA_START_INVISIBLE_BEFORE_NEG) {
-          /* "before" matches are very expensive when
-           * unbounded, always prefer what follows then,
-           * unless what follows will always match.
-           * Otherwise strongly prefer what follows. */
+          // "before" matches are very expensive when
+          // unbounded, always prefer what follows then,
+          // unless what follows will always match.
+          // Otherwise strongly prefer what follows.
           if (prog->state[i].val <= 0 && ch_follows > 0) {
             directly = false;
           } else {
             directly = ch_follows * 10 < ch_invisible;
           }
         } else {
-          /* normal invisible, first do the one with the
-           * highest failure chance */
+          // normal invisible, first do the one with the
+          // highest failure chance
           directly = ch_follows < ch_invisible;
         }
       }
@@ -3512,9 +3531,9 @@ static void nfa_postprocess(nfa_regprog_T *prog)
   }
 }
 
-/****************************************************************
-* NFA execution code.
-****************************************************************/
+/////////////////////////////////////////////////////////////////
+// NFA execution code.
+/////////////////////////////////////////////////////////////////
 
 /* Values for done in nfa_pim_T. */
 #define NFA_PIM_UNUSED   0      /* pim not used */
@@ -3996,8 +4015,8 @@ static regsubs_T *addstate(
   case NFA_ZEND:
   case NFA_SPLIT:
   case NFA_EMPTY:
-    /* These nodes are not added themselves but their "out" and/or
-     * "out1" may be added below.  */
+    // These nodes are not added themselves but their "out" and/or
+    // "out1" may be added below.
     break;
 
   case NFA_BOL:
@@ -4035,21 +4054,20 @@ static regsubs_T *addstate(
   case NFA_ZOPEN9:
   case NFA_NOPEN:
   case NFA_ZSTART:
-  /* These nodes need to be added so that we can bail out when it
-   * was added to this list before at the same position to avoid an
-   * endless loop for "\(\)*" */
+  // These nodes need to be added so that we can bail out when it
+  // was added to this list before at the same position to avoid an
+  // endless loop for "\(\)*"
 
   default:
     if (state->lastlist[nfa_ll_index] == l->id && state->c != NFA_SKIP) {
-      /* This state is already in the list, don't add it again,
-       * unless it is an MOPEN that is used for a backreference or
-       * when there is a PIM. For NFA_MATCH check the position,
-       * lower position is preferred. */
+      // This state is already in the list, don't add it again,
+      // unless it is an MOPEN that is used for a backreference or
+      // when there is a PIM. For NFA_MATCH check the position,
+      // lower position is preferred.
       if (!rex.nfa_has_backref && pim == NULL && !l->has_pim
           && state->c != NFA_MATCH) {
-
-        /* When called from addstate_here() do insert before
-         * existing states. */
+        // When called from addstate_here() do insert before
+        // existing states.
         if (add_here) {
           for (k = 0; k < l->n && k < listindex; ++k) {
             if (l->t[k].state->id == state->id) {
@@ -4072,10 +4090,11 @@ skip_add:
         }
       }
 
-      /* Do not add the state again when it exists with the same
-       * positions. */
-      if (has_state_with_pos(l, state, subs, pim))
+      // Do not add the state again when it exists with the same
+      // positions.
+      if (has_state_with_pos(l, state, subs, pim)) {
         goto skip_add;
+      }
     }
 
     // When there are backreferences or PIMs the number of states may
@@ -4085,7 +4104,7 @@ skip_add:
       const size_t newsize = newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        EMSG(_(e_maxmempat));
+        emsg(_(e_maxmempat));
         depth--;
         return NULL;
       }
@@ -4180,8 +4199,8 @@ skip_add:
     save_ptr = NULL;
     memset(&save_multipos, 0, sizeof(save_multipos));
 
-    /* Set the position (with "off" added) in the subexpression.  Save
-     * and restore it when it was in use.  Otherwise fill any gap. */
+    // Set the position (with "off" added) in the subexpression.  Save
+    // and restore it when it was in use.  Otherwise fill any gap.
     if (REG_MULTI) {
       if (subidx < sub->in_use) {
         save_multipos = sub->list.multi[subidx];
@@ -4280,8 +4299,8 @@ skip_add:
       sub = &subs->norm;
     }
 
-    /* We don't fill in gaps here, there must have been an MOPEN that
-     * has done that. */
+    // We don't fill in gaps here, there must have been an MOPEN that
+    // has done that.
     save_in_use = sub->in_use;
     if (sub->in_use <= subidx)
       sub->in_use = subidx + 1;
@@ -4346,9 +4365,9 @@ static regsubs_T *addstate_here(
   int count;
   int listidx = *ip;
 
-  /* First add the state(s) at the end, so that we know how many there are.
-   * Pass the listidx as offset (avoids adding another argument to
-   * addstate(). */
+  // First add the state(s) at the end, so that we know how many there are.
+  // Pass the listidx as offset (avoids adding another argument to
+  // addstate().
   regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
   if (r == NULL) {
     return NULL;
@@ -4369,13 +4388,13 @@ static regsubs_T *addstate_here(
     l->t[listidx] = l->t[l->n - 1];
   } else if (count > 1) {
     if (l->n + count - 1 >= l->len) {
-      /* not enough space to move the new states, reallocate the list
-       * and move the states to the right position */
+      // not enough space to move the new states, reallocate the list
+      // and move the states to the right position
       const int newlen = l->len * 3 / 2 + 50;
       const size_t newsize = newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        EMSG(_(e_maxmempat));
+        emsg(_(e_maxmempat));
         return NULL;
       }
       nfa_thread_T *const newl = xmalloc(newsize);
@@ -4392,8 +4411,8 @@ static regsubs_T *addstate_here(
       xfree(l->t);
       l->t = newl;
     } else {
-      /* make space for new states, then move them from the
-       * end to the current position */
+      // make space for new states, then move them from the
+      // end to the current position
       memmove(&(l->t[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - listidx - 1));
@@ -4504,7 +4523,7 @@ static int check_char_class(int class, int c)
 
   default:
     // should not be here :P
-    IEMSGN(_(e_ill_char_class), class);
+    siemsg(_(e_ill_char_class), (int64_t)class);
     return FAIL;
   }
   return FAIL;
@@ -4781,7 +4800,7 @@ static int recursive_regmatch(
     fprintf(log_fd, "MATCH = %s\n", !result ? "false" : "OK");
     fprintf(log_fd, "****************************\n");
   } else {
-    EMSG(_(e_log_open_failed));
+    emsg(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -4978,9 +4997,9 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     char_u *s2 = rex.line + col + regstart_len;  // skip regstart
     while (*s1) {
       int c1_len = PTR2LEN(s1);
-      int c1 = PTR2CHAR(s1);
+      int c1 = utf_ptr2char(s1);
       int c2_len = PTR2LEN(s2);
-      int c2 = PTR2CHAR(s2);
+      int c2 = utf_ptr2char(s2);
 
       if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
           || c1_len != c2_len) {
@@ -4992,7 +5011,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     }
     if (match
         // check that no composing char follows
-        && !utf_iscomposing(PTR2CHAR(s2))) {
+        && !utf_iscomposing(utf_ptr2char(s2))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         rex.reg_startpos[0].lnum = rex.lnum;
@@ -5063,7 +5082,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   FILE        *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
   if (debug == NULL) {
-    EMSG2("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
+    semsg("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
     return false;
   }
 #endif
@@ -5101,7 +5120,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         abs(start->id), code);
     fprintf(log_fd, "**********************************\n");
   } else {
-    EMSG(_(e_log_open_failed));
+    emsg(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -5243,9 +5262,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       switch (t->state->c) {
       case NFA_MATCH:
       {
-        // If the match ends before a composing characters and
-        // rex.reg_icombine is not set, that is not really a match.
-        if (!rex.reg_icombine && utf_iscomposing(curc)) {
+        // If the match is not at the start of the line, ends before a
+        // composing characters and rex.reg_icombine is not set, that
+        // is not really a match.
+        if (!rex.reg_icombine
+            && rex.input != rex.line
+            && utf_iscomposing(curc)) {
           break;
         }
         nfa_match = true;
@@ -5599,7 +5621,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // Only match composing character(s), ignore base
           // character.  Used for ".{composing}" and "{composing}"
           // (no preceding character).
-          len += mb_char2len(mc);
+          len += utf_char2len(mc);
         }
         if (rex.reg_icombine && len == 0) {
           // If \Z was present, then ignore composing characters.
@@ -5615,7 +5637,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         } else if (len > 0 || mc == sta->c) {
           // Check base character matches first, unless ignored.
           if (len == 0) {
-            len += mb_char2len(mc);
+            len += utf_char2len(mc);
             sta = sta->out;
           }
 
@@ -5624,9 +5646,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           while (len < clen) {
             mc = utf_ptr2char(rex.input + len);
             cchars[ccount++] = mc;
-            len += mb_char2len(mc);
-            if (ccount == MAX_MCO)
+            len += utf_char2len(mc);
+            if (ccount == MAX_MCO) {
               break;
+            }
           }
 
           // Check that each composing char in the pattern matches a
@@ -5786,12 +5809,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         break;
 
       case NFA_PRINT:           //  \p
-        result = vim_isprintc(PTR2CHAR(rex.input));
+        result = vim_isprintc(utf_ptr2char(rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SPRINT:          //  \P
-        result = !ascii_isdigit(curc) && vim_isprintc(PTR2CHAR(rex.input));
+        result = !ascii_isdigit(curc) && vim_isprintc(utf_ptr2char(rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -6050,21 +6073,27 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       {
         pos_T *pos = getmark_buf(rex.reg_buf, t->state->val, false);
 
-        // Compare the mark position to the match position.
-        result = (pos != NULL                        // mark doesn't exist
-                  && pos->lnum > 0          // mark isn't set in reg_buf
-                  && (pos->lnum == rex.lnum + rex.reg_firstlnum
-                      ? (pos->col == (colnr_T)(rex.input - rex.line)
-                         ? t->state->c == NFA_MARK
-                         : (pos->col < (colnr_T)(rex.input - rex.line)
-                            ? t->state->c == NFA_MARK_GT
-                            : t->state->c == NFA_MARK_LT))
-                      : (pos->lnum < rex.lnum + rex.reg_firstlnum
-                         ? t->state->c == NFA_MARK_GT
-                         : t->state->c == NFA_MARK_LT)));
-        if (result) {
-          add_here = true;
-          add_state = t->state->out;
+        // Compare the mark position to the match position, if the mark
+        // exists and mark is set in reg_buf.
+        if (pos != NULL && pos->lnum > 0) {
+          const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
+            && pos->col == MAXCOL
+            ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+            : pos->col;
+
+          result = pos->lnum == rex.lnum + rex.reg_firstlnum
+            ? (pos_col == (colnr_T)(rex.input - rex.line)
+               ? t->state->c == NFA_MARK
+               : (pos_col < (colnr_T)(rex.input - rex.line)
+                  ? t->state->c == NFA_MARK_GT
+                  : t->state->c == NFA_MARK_LT))
+            : (pos->lnum < rex.lnum + rex.reg_firstlnum
+               ? t->state->c == NFA_MARK_GT
+               : t->state->c == NFA_MARK_LT);
+          if (result) {
+            add_here = true;
+            add_state = t->state->out;
+          }
         }
         break;
       }
@@ -6118,7 +6147,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
 #ifdef REGEXP_DEBUG
         if (c < 0) {
-          IEMSGN("INTERNAL: Negative state char: %" PRId64, c);
+          siemsg("INTERNAL: Negative state char: %" PRId64, (int64_t)c);
         }
 #endif
         result = (c == curc);
@@ -6278,7 +6307,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           } else {
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
-            const int c = PTR2CHAR(rex.input + clen);
+            const int c = utf_ptr2char(rex.input + clen);
             if (c != prog->regstart
                 && (!rex.reg_ic
                     || utf_fold(c) != utf_fold(prog->regstart))) {
@@ -6400,7 +6429,7 @@ static long nfa_regtry(nfa_regprog_T *prog,
     fprintf(f, "\n\n");
     fclose(f);
   } else {
-    EMSG("Could not open temporary log file for writing");
+    emsg("Could not open temporary log file for writing");
   }
 #endif
 
@@ -6477,8 +6506,7 @@ static long nfa_regtry(nfa_regprog_T *prog,
 
         if (lpos->start != NULL && lpos->end != NULL)
           re_extmatch_out->matches[i] =
-            vim_strnsave(lpos->start,
-                (int)(lpos->end - lpos->start));
+            vim_strnsave(lpos->start, lpos->end - lpos->start);
       }
     }
   }
@@ -6487,7 +6515,7 @@ static long nfa_regtry(nfa_regprog_T *prog,
 }
 
 /// Match a regexp against a string ("line" points to the string) or multiple
-/// lines ("line" is NULL, use reg_getline()).
+/// lines (if "line" is NULL, use reg_getline()).
 ///
 /// @param line String in which to search or NULL
 /// @param startcol Column to start looking for match
@@ -6516,7 +6544,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
 
   /* Be paranoid... */
   if (prog == NULL || line == NULL) {
-    IEMSG(_(e_null));
+    iemsg(_(e_null));
     goto theend;
   }
 
@@ -6558,10 +6586,11 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
   }
 
   if (prog->regstart != NUL) {
-    /* Skip ahead until a character we know the match must start with.
-     * When there is none there is no match. */
-    if (skip_to_start(prog->regstart, &col) == FAIL)
+    // Skip ahead until a character we know the match must start with.
+    // When there is none there is no match.
+    if (skip_to_start(prog->regstart, &col) == FAIL) {
       return 0L;
+    }
 
     // If match_text is set it contains the full text that must match.
     // Nothing else to try. Doesn't handle combining chars well.
@@ -6591,6 +6620,24 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
 #endif
 
 theend:
+  if (retval > 0) {
+    // Make sure the end is never before the start.  Can happen when \zs and
+    // \ze are used.
+    if (REG_MULTI) {
+      const lpos_T *const start = &rex.reg_mmatch->startpos[0];
+      const lpos_T *const end = &rex.reg_mmatch->endpos[0];
+
+      if (end->lnum < start->lnum
+          || (end->lnum == start->lnum && end->col < start->col)) {
+        rex.reg_mmatch->endpos[0] = rex.reg_mmatch->startpos[0];
+      }
+    } else {
+      if (rex.reg_match->endp[0] < rex.reg_match->startp[0]) {
+        rex.reg_match->endp[0] = rex.reg_match->startp[0];
+      }
+    }
+  }
+
   return retval;
 }
 

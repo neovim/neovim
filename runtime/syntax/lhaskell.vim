@@ -1,11 +1,11 @@
 " Vim syntax file
 " Language:		Haskell with literate comments, Bird style,
-"			TeX style and plain text surrounding
+"			Markdown style, TeX style and plain text surrounding
 "			\begin{code} \end{code} blocks
 " Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
 " Original Author:	Arthur van Leeuwen <arthurvl@cs.uu.nl>
-" Last Change:		2010 Apr 11
-" Version:		1.04
+" Last Change:		2020 Feb 25
+" Version:		1.05
 "
 " Thanks to Ian Lynagh for thoughtful comments on initial versions and
 " for the inspiration for writing this in the first place.
@@ -44,8 +44,8 @@ endif
 " First off, see if we can inherit a user preference for lhs_markup
 if !exists("b:lhs_markup")
     if exists("lhs_markup")
-	if lhs_markup =~ '\<\%(tex\|none\)\>'
-	    let b:lhs_markup = matchstr(lhs_markup,'\<\%(tex\|none\)\>')
+	if lhs_markup =~ '\<\%(tex\|md\|none\)\>'
+	    let b:lhs_markup = matchstr(lhs_markup,'\<\%(tex\|md\|none\)\>')
 	else
 	    echohl WarningMsg | echo "Unknown value of lhs_markup" | echohl None
 	    let b:lhs_markup = "unknown"
@@ -54,7 +54,7 @@ if !exists("b:lhs_markup")
 	let b:lhs_markup = "unknown"
     endif
 else
-    if b:lhs_markup !~ '\<\%(tex\|none\)\>'
+    if b:lhs_markup !~ '\<\%(tex\|md\|none\)\>'
 	let b:lhs_markup = "unknown"
     endif
 endif
@@ -74,6 +74,8 @@ call cursor(1,1)
 if b:lhs_markup == "unknown"
     if search('\\documentclass\|\\begin{\(code}\)\@!\|\\\(sub\)*section\|\\chapter|\\part','W') != 0
 	let b:lhs_markup = "tex"
+    elseif search('```haskell','W') != 0
+        let b:lhs_markup = "md"
     else
 	let b:lhs_markup = "plain"
     endif
@@ -86,6 +88,10 @@ if b:lhs_markup == "tex"
     " Tex.vim removes "_" from 'iskeyword', but we need it for Haskell.
     setlocal isk+=_
     syntax cluster lhsTeXContainer contains=tex.*Zone,texAbstract
+elseif b:lhs_markup == "md"
+    runtime! syntax/markdown.vim
+    unlet b:current_syntax
+    syntax cluster lhsTeXContainer contains=markdown.*
 else
     syntax cluster lhsTeXContainer contains=.*
 endif
@@ -96,8 +102,11 @@ syntax include @haskellTop syntax/haskell.vim
 
 syntax region lhsHaskellBirdTrack start="^>" end="\%(^[^>]\)\@=" contains=@haskellTop,lhsBirdTrack containedin=@lhsTeXContainer
 syntax region lhsHaskellBeginEndBlock start="^\\begin{code}\s*$" matchgroup=NONE end="\%(^\\end{code}.*$\)\@=" contains=@haskellTop,beginCodeBegin containedin=@lhsTeXContainer
+syntax region lhsHaskellMDBlock start="^```haskell$" matchgroup=NONE end="^```$" keepend contains=@haskellTop,lhsMarkdownCode containedin=@lhsTeXContainer
 
 syntax match lhsBirdTrack "^>" contained
+
+syntax match lhsMarkdownCode "^\(```haskell\|^```\)$" contained
 
 syntax match beginCodeBegin "^\\begin" nextgroup=beginCodeCode contained
 syntax region beginCodeCode  matchgroup=texDelimiter start="{" end="}"
@@ -106,6 +115,8 @@ syntax region beginCodeCode  matchgroup=texDelimiter start="{" end="}"
 " Only when an item doesn't have highlighting yet
 
 hi def link lhsBirdTrack Comment
+
+hi def link lhsMarkdownCode Comment
 
 hi def link beginCodeBegin	      texCmdName
 hi def link beginCodeCode	      texSection

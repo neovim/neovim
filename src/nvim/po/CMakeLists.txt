@@ -26,6 +26,7 @@ if(NOT LANGUAGES)
     ru
     sk
     sv
+    tr
     uk
     vi
     zh_CN.UTF-8

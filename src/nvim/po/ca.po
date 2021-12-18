@@ -3469,10 +3469,6 @@ msgstr "-y\t\t\tMode senzill (com \"evim\", sense modes)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tMode només lectura (com \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tMode restringit (com \"rvim)"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tNo permet modificar (escriure) fitxers"

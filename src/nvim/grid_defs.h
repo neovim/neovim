@@ -7,11 +7,20 @@
 
 #include "nvim/types.h"
 
-#define MAX_MCO  6  // maximum value for 'maxcombine'
+#define MAX_MCO  6  // fixed value for 'maxcombine'
 
 // The characters and attributes drawn on grids.
 typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
 typedef int sattr_T;
+
+enum {
+  kZIndexDefaultGrid = 0,
+  kZIndexFloatDefault = 50,
+  kZIndexPopupMenu = 100,
+  kZIndexMessages = 200,
+  kZIndexCmdlinePopupMenu = 250,
+};
+
 
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
 ///
@@ -35,13 +44,14 @@ typedef int sattr_T;
 /// line_wraps[] is an array of boolean flags indicating if the screen line
 /// wraps to the next line. It can only be true if a window occupies the entire
 /// screen width.
-typedef struct {
+typedef struct ScreenGrid ScreenGrid;
+struct ScreenGrid {
   handle_T handle;
 
-  schar_T  *chars;
-  sattr_T  *attrs;
+  schar_T *chars;
+  sattr_T *attrs;
   unsigned *line_offset;
-  char_u   *line_wraps;
+  char_u *line_wraps;
 
   // last column that was drawn (not cleared with the default background).
   // only used when "throttled" is set. Not allocated by grid_alloc!
@@ -58,10 +68,13 @@ typedef struct {
   // external UI.
   bool throttled;
 
-  // offsets for the grid relative to the global screen. Used by screen.c
-  // for windows that don't have w_grid->chars etc allocated
+  // TODO(bfredl): maybe physical grids and "views" (i e drawing
+  // specifications) should be two separate types?
+  // offsets for the grid relative to another grid. Used for grids
+  // that are views into another, actually allocated grid 'target'
   int row_offset;
   int col_offset;
+  ScreenGrid *target;
 
   // whether the compositor should blend the grid with the background grid
   bool blending;
@@ -69,12 +82,21 @@ typedef struct {
   // whether the grid can be focused with mouse clicks.
   bool focusable;
 
+  // z-index: the order in the stack of grids.
+  int zindex;
+
   // Below is state owned by the compositor. Should generally not be set/read
-  // outside this module, except for specific compatibilty hacks
+  // outside this module, except for specific compatibility hacks
 
   // position of the grid on the composed screen.
   int comp_row;
   int comp_col;
+
+  // Requested width and height of the grid upon resize. Used by
+  // `ui_compositor` to correctly determine which regions need to
+  // be redrawn.
+  int comp_width;
+  int comp_height;
 
   // z-index of the grid. Grids with higher index is draw on top.
   // default_grid.comp_index is always zero.
@@ -83,9 +105,10 @@ typedef struct {
   // compositor should momentarily ignore the grid. Used internally when
   // moving around grids etc.
   bool comp_disabled;
-} ScreenGrid;
+};
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, false, true, 0, 0, 0,  false }
+                           false, 0, 0, NULL, false, true, 0, \
+                           0, 0, 0, 0, 0,  false }
 
 #endif  // NVIM_GRID_DEFS_H

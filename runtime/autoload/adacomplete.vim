@@ -14,7 +14,7 @@
 "		15.10.2006 MK Bram's suggestion for runtime integration
 "		05.11.2006 MK Bram suggested not to use include protection for
 "			      autoload
-"		05.11.2006 MK Bram suggested agaist using setlocal omnifunc 
+"		05.11.2006 MK Bram suggested against using setlocal omnifunc 
 "		05.11.2006 MK Bram suggested to save on spaces
 "    Help Page: ft-ada-omni
 "------------------------------------------------------------------------------

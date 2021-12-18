@@ -179,7 +179,7 @@ endfunc
 func s:WaitForCommon(expr, assert, timeout)
   " using reltime() is more accurate, but not always available
   let slept = 0
-  if has('reltime')
+  if exists('*reltimefloat')
     let start = reltime()
   endif
 
@@ -204,7 +204,7 @@ func s:WaitForCommon(expr, assert, timeout)
     endif
 
     sleep 10m
-    if has('reltime')
+    if exists('*reltimefloat')
       let slept = float2nr(reltimefloat(reltime(start)) * 1000)
     else
       let slept += 10
@@ -220,7 +220,7 @@ endfunc
 " feeds key-input and resumes process. Return time waited in milliseconds.
 " Without +timers it uses simply :sleep.
 func Standby(msec)
-  if has('timers')
+  if has('timers') && exists('*reltimefloat')
     let start = reltime()
     let g:_standby_timer = timer_start(a:msec, function('s:feedkeys'))
     call getchar()

@@ -11,9 +11,10 @@ Differences between Vim and Vi				*vi-differences*
 ==============================================================================
 1. Limits						*limits*
 
-Vim has only a few limits for the files that can be edited.
+Vim has only a few limits for the files that can be edited {Vi: can not handle
+<Nul> characters and characters above 128, has limited line length, many other
+limits}.
 
-							*E340*
 Maximum line length	   2147483647 characters
 Maximum number of lines	   2147483647 lines
 Maximum file size	   2147483647 bytes (2 Gbyte) when a long integer is
@@ -358,7 +359,7 @@ Editing binary files.					|edit-binary|
 			last line in the file.
 
 Multi-language support.					|multi-lang|
-	Files in double-byte or multi-byte encodings can be edited.  There is
+	Files in double-byte or multibyte encodings can be edited.  There is
 	UTF-8 support to be able to edit various languages at the same time,
 	without switching fonts. |UTF-8|
 	Messages and menus are available in different languages.

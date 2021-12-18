@@ -635,7 +635,7 @@ function! MSG(enr, emsg)
 	if v:errmsg == ""
 	    Xout "Message missing."
 	else
-	    let v:errmsg = escape(v:errmsg, '"')
+	    let v:errmsg = v:errmsg->escape('"')
 	    Xout "Unexpected message:" v:errmsg
 	endif
     endif
@@ -919,9 +919,203 @@ func Test_if_bar_fail()
     call assert_equal('acdfh-acfh', g:test15_result)
 endfunc
 
+"-------------------------------------------------------------------------------
+" Test 16:  Double :else or :elseif after :else				    {{{1
+"
+"	    Multiple :elses or an :elseif after an :else are forbidden.
+"-------------------------------------------------------------------------------
+
+func T16_F() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  else		" aborts function
+    Xpath 'c'
+  endif
+  Xpath 'd'
+endfunc
+
+func T16_G() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  elseif 1		" aborts function
+    Xpath 'c'
+  else
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_H() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  else		" aborts function
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_I() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  elseif 1		" aborts function
+    Xpath 'd'
+  else
+    Xpath 'e'
+  endif
+  Xpath 'f'
+endfunc
+
+func Test_Multi_Else()
+  XpathINIT
+  try
+    call T16_F()
+  catch /E583:/
+    Xpath 'e'
+  endtry
+  call assert_equal('be', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_G()
+  catch /E584:/
+    Xpath 'f'
+  endtry
+  call assert_equal('bf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_H()
+  catch /E583:/
+    Xpath 'f'
+  endtry
+  call assert_equal('cf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_I()
+  catch /E584:/
+    Xpath 'g'
+  endtry
+  call assert_equal('cg', g:Xpath)
+endfunc
 
 "-------------------------------------------------------------------------------
-" Test 16:  Recognizing {} in variable name.			    {{{1
+" Test 17:  Nesting of unmatched :if or :endif inside a :while		    {{{1
+"
+"	    The :while/:endwhile takes precedence in nesting over an unclosed
+"	    :if or an unopened :endif.
+"-------------------------------------------------------------------------------
+
+" While loops inside a function are continued on error.
+func T17_F()
+  let loops = 3
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if (loops == 1)
+      Xpath 'b' . loops
+      continue
+    elseif (loops == 0)
+      Xpath 'c' . loops
+      break
+    elseif 1
+      Xpath 'd' . loops
+    " endif missing!
+  endwhile	" :endwhile after :if 1
+  Xpath 'e'
+endfunc
+
+func T17_G()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+      Xpath 'b' . loops
+    " endif missing
+  endwhile	" :endwhile after :if 0
+endfunc
+
+func T17_H()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    " if missing!
+    endif	" :endif without :if in while
+    Xpath 'b' . loops
+  endwhile
+endfunc
+
+" Error continuation outside a function is at the outermost :endwhile or :endif.
+XpathINIT
+let v:errmsg = ''
+let loops = 2
+while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+	Xpath 'b' . loops
+    " endif missing! Following :endwhile fails.
+endwhile | Xpath 'c'
+Xpath 'd'
+call assert_match('E171:', v:errmsg)
+call assert_equal('a1d', g:Xpath)
+
+func Test_unmatched_if_in_while()
+  XpathINIT
+  call assert_fails('call T17_F()', 'E171:')
+  call assert_equal('a2d2a1b1a0c0e', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_G()', 'E171:')
+  call assert_equal('a1a0', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_H()', 'E580:')
+  call assert_equal('a1b1a0b0', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+" Test 87   using (expr) ? funcref : funcref				    {{{1
+"
+"	    Vim needs to correctly parse the funcref and even when it does
+"	    not execute the funcref, it needs to consume the trailing ()
+"-------------------------------------------------------------------------------
+
+func Add2(x1, x2)
+  return a:x1 + a:x2
+endfu
+
+func GetStr()
+  return "abcdefghijklmnopqrstuvwxyp"
+endfu
+
+func Test_funcref_with_condexpr()
+  call assert_equal(5, function('Add2')(2,3))
+
+  call assert_equal(3, 1 ? function('Add2')(1,2) : function('Add2')(2,3))
+  call assert_equal(5, 0 ? function('Add2')(1,2) : function('Add2')(2,3))
+  " Make sure, GetStr() still works.
+  call assert_equal('abcdefghijk', GetStr()[0:10])
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 90:  Recognizing {} in variable name.			    {{{1
 "-------------------------------------------------------------------------------
 
 func Test_curlies()
@@ -958,6 +1152,10 @@ func Test_type()
     call assert_equal(v:t_float, type(0.0))
     call assert_equal(v:t_bool, type(v:false))
     call assert_equal(v:t_bool, type(v:true))
+    call assert_equal(v:t_string, type(v:_null_string))
+    call assert_equal(v:t_list, type(v:_null_list))
+    call assert_equal(v:t_dict, type(v:_null_dict))
+    call assert_equal(v:t_blob, type(v:_null_blob))
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -1077,8 +1275,10 @@ func Test_num64()
     call assert_equal(-9223372036854775807, -1 / 0)
     call assert_equal(-9223372036854775807 - 1,  0 / 0)
 
-    call assert_equal( 0x7FFFffffFFFFffff, float2nr( 1.0e150))
-    call assert_equal(-0x7FFFffffFFFFffff, float2nr(-1.0e150))
+    if has('float')
+      call assert_equal( 0x7FFFffffFFFFffff, float2nr( 1.0e150))
+      call assert_equal(-0x7FFFffffFFFFffff, float2nr(-1.0e150))
+    endif
 
     let rng = range(0xFFFFffff, 0x100000001)
     call assert_equal([0xFFFFffff, 0x100000000, 0x100000001], rng)
@@ -1176,6 +1376,7 @@ func Test_bitwise_functions()
     " and
     call assert_equal(127, and(127, 127))
     call assert_equal(16, and(127, 16))
+    eval 127->and(16)->assert_equal(16)
     call assert_equal(0, and(127, 128))
     call assert_fails("call and(1.0, 1)", 'E805:')
     call assert_fails("call and([], 1)", 'E745:')
@@ -1186,6 +1387,7 @@ func Test_bitwise_functions()
     " or
     call assert_equal(23, or(16, 7))
     call assert_equal(15, or(8, 7))
+    eval 8->or(7)->assert_equal(15)
     call assert_equal(123, or(0, 123))
     call assert_fails("call or(1.0, 1)", 'E805:')
     call assert_fails("call or([], 1)", 'E745:')
@@ -1196,6 +1398,7 @@ func Test_bitwise_functions()
     " xor
     call assert_equal(0, xor(127, 127))
     call assert_equal(111, xor(127, 16))
+    eval 127->xor(16)->assert_equal(111)
     call assert_equal(255, xor(127, 128))
     call assert_fails("call xor(1.0, 1)", 'E805:')
     call assert_fails("call xor([], 1)", 'E745:')
@@ -1205,6 +1408,7 @@ func Test_bitwise_functions()
     call assert_fails("call xor(1, {})", 'E728:')
     " invert
     call assert_equal(65408, and(invert(127), 65535))
+    eval 127->invert()->and(65535)->assert_equal(65408)
     call assert_equal(65519, and(invert(16), 65535))
     call assert_equal(65407, and(invert(128), 65535))
     call assert_fails("call invert(1.0)", 'E805:')
@@ -1337,22 +1541,22 @@ func Test_compound_assignment_operators()
     call assert_equal('string', x)
     let x += 1
     call assert_equal(1, x)
-    let x -= 1.5
-    call assert_equal(-0.5, x)
 
     if has('float')
-        " Test for float
-        let x = 0.5
-        let x += 4.5
-        call assert_equal(5.0, x)
-        let x -= 1.5
-        call assert_equal(3.5, x)
-        let x *= 3.0
-        call assert_equal(10.5, x)
-        let x /= 2.5
-        call assert_equal(4.2, x)
-        call assert_fails('let x %= 0.5', 'E734')
-        call assert_fails('let x .= "f"', 'E734')
+      " Test for float
+      let x -= 1.5
+      call assert_equal(-0.5, x)
+      let x = 0.5
+      let x += 4.5
+      call assert_equal(5.0, x)
+      let x -= 1.5
+      call assert_equal(3.5, x)
+      let x *= 3.0
+      call assert_equal(10.5, x)
+      let x /= 2.5
+      call assert_equal(4.2, x)
+      call assert_fails('let x %= 0.5', 'E734')
+      call assert_fails('let x .= "f"', 'E734')
     endif
 
     " Test for environment variable
@@ -1391,6 +1595,20 @@ func Test_compound_assignment_operators()
     let @/ .= 's'
     call assert_equal('1s', @/)
     let @/ = ''
+endfunc
+
+func Test_unlet_env()
+    let $TESTVAR = 'yes'
+    call assert_equal('yes', $TESTVAR)
+    call assert_fails('lockvar $TESTVAR', 'E940')
+    call assert_fails('unlockvar $TESTVAR', 'E940')
+    call assert_equal('yes', $TESTVAR)
+    if 0
+        unlet $TESTVAR
+    endif
+    call assert_equal('yes', $TESTVAR)
+    unlet $TESTVAR
+    call assert_equal('', $TESTVAR)
 endfunc
 
 func Test_funccall_garbage_collect()
@@ -1476,5 +1694,5 @@ endfunc
 
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
-" vim: ts=8 sw=4 tw=80 fdm=marker
+" vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
 "-------------------------------------------------------------------------------

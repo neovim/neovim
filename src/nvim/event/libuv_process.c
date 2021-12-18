@@ -2,14 +2,13 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-
 #include <uv.h>
 
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/event/process.h"
-#include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/os/os.h"
@@ -41,13 +40,18 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 #endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
-  uvproc->uvopts.env = proc->env;
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;
   uvproc->uvstdio[0].flags = UV_IGNORE;
   uvproc->uvstdio[1].flags = UV_IGNORE;
   uvproc->uvstdio[2].flags = UV_IGNORE;
   uvproc->uv.data = proc;
+
+  if (proc->env) {
+    uvproc->uvopts.env = tv_dict_to_env(proc->env);
+  } else {
+    uvproc->uvopts.env = NULL;
+  }
 
   if (!proc->in.closed) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
@@ -63,7 +67,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 #ifdef WIN32
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped ?
-      (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
+                                (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
 #endif
     uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->out.uv.pipe);
@@ -77,7 +81,10 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   int status;
   if ((status = uv_spawn(&proc->loop->uv, &uvproc->uv, &uvproc->uvopts))) {
-    ELOG("uv_spawn failed: %s", uv_strerror(status));
+    ELOG("uv_spawn(%s) failed: %s", uvproc->uvopts.file, uv_strerror(status));
+    if (uvproc->uvopts.env) {
+      os_free_fullenv(uvproc->uvopts.env);
+    }
     return status;
   }
 
@@ -96,6 +103,10 @@ static void close_cb(uv_handle_t *handle)
   Process *proc = handle->data;
   if (proc->internal_close_cb) {
     proc->internal_close_cb(proc);
+  }
+  LibuvProcess *uvproc = (LibuvProcess *)proc;
+  if (uvproc->uvopts.env) {
+    os_free_fullenv(uvproc->uvopts.env);
   }
 }
 

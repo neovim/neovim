@@ -17,7 +17,7 @@ describe('searchpos', function()
     call('cursor', 1, 1)
     eq({1, 1, 2}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
     call('cursor', 1, 2)
-    eq({2, 1, 1}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
+    eq({2, 1, 1}, eval([['\%(\([a-z]\)\|\_.\)\{-}xyz'->searchpos('pcW')]]))
 
     command('set cpo-=c')
     call('cursor', 1, 2)

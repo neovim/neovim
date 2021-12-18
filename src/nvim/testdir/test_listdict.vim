@@ -139,7 +139,7 @@ func Test_list_func_remove()
   call assert_fails("call remove(l, 5)", 'E684:')
   call assert_fails("call remove(l, 1, 5)", 'E684:')
   call assert_fails("call remove(l, 3, 2)", 'E16:')
-  call assert_fails("call remove(1, 0)", 'E712:')
+  call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(l, l)", 'E745:')
 endfunc
 
@@ -506,6 +506,15 @@ func Test_dict_lock_extend()
   call assert_equal({'a': 99, 'b': 100}, d)
 endfunc
 
+" Cannot use += with a locked dict
+func Test_dict_lock_operator()
+  unlet! d
+  let d = {}
+  lockvar d
+  call assert_fails("let d += {'k' : 10}", 'E741:')
+  unlockvar d
+endfunc
+
 " No remove() of write-protected scope-level variable
 func! Tfunc(this_is_a_long_parameter_name)
   call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742')
@@ -564,7 +573,7 @@ func Test_lockvar_script_autoload()
   set rtp+=./sautest
   lockvar g:footest#x
   unlockvar g:footest#x
-  call assert_equal(-1, islocked('g:footest#x'))
+  call assert_equal(-1, 'g:footest#x'->islocked())
   call assert_equal(0, exists('g:footest#x'))
   call assert_equal(1, g:footest#x)
   let &rtp = old_rtp
@@ -607,6 +616,8 @@ func Test_reverse_sort_uniq()
   call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
   call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
   call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
+
+  call assert_fails('call reverse("")', 'E899:')
 endfunc
 
 " splitting a string to a List
@@ -680,7 +691,9 @@ func Test_listdict_extend()
   let l = [1, 2, 3]
   call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
   call assert_fails("call extend(l, [4, 5, 6], -4)", 'E684:')
-  call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+  if has('float')
+    call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+  endif
 
   " Test extend() with dictionaries.
 
@@ -704,11 +717,30 @@ func Test_listdict_extend()
   let d = {'a': 'A', 'b': 'B'}
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
-  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  if has('float')
+    call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  endif
   call assert_equal({'a': 'A', 'b': 'B'}, d)
 
   call assert_fails("call extend([1, 2], 1)", 'E712:')
   call assert_fails("call extend([1, 2], {})", 'E712:')
+
+  " Extend g: dictionary with an invalid variable name
+  call assert_fails("call extend(g:, {'-!' : 10})", 'E461:')
+
+  " Extend a list with itself.
+  let l = [1, 5, 7]
+  call extend(l, l, 0)
+  call assert_equal([1, 5, 7, 1, 5, 7], l)
+  let l = [1, 5, 7]
+  call extend(l, l, 1)
+  call assert_equal([1, 1, 5, 7, 5, 7], l)
+  let l = [1, 5, 7]
+  call extend(l, l, 2)
+  call assert_equal([1, 5, 1, 5, 7, 7], l)
+  let l = [1, 5, 7]
+  call extend(l, l, 3)
+  call assert_equal([1, 5, 7, 1, 5, 7], l)
 endfunc
 
 func s:check_scope_dict(x, fixed)
@@ -781,4 +813,41 @@ func Test_scope_dict()
 
   " Test for v:
   call s:check_scope_dict('v', v:true)
+endfunc
+
+" Test for a null list
+func Test_null_list()
+  let l = v:_null_list
+  call assert_equal('', join(l))
+  call assert_equal(0, len(l))
+  call assert_equal(1, empty(l))
+  call assert_fails('let s = join([1, 2], [])', 'E730:')
+  call assert_equal([], split(v:_null_string))
+  call assert_equal([], l[:2])
+  call assert_true([] == l)
+  call assert_equal('[]', string(l))
+  " call assert_equal(0, sort(l))
+  " call assert_equal(0, sort(l))
+  " call assert_equal(0, uniq(l))
+  let k = [] + l
+  call assert_equal([], k)
+  let k = l + []
+  call assert_equal([], k)
+  call assert_equal(0, len(copy(l)))
+  call assert_equal(0, count(l, 5))
+  call assert_equal([], deepcopy(l))
+  call assert_equal(5, get(l, 2, 5))
+  call assert_equal(-1, index(l, 2, 5))
+  " call assert_equal(0, insert(l, 2, -1))
+  call assert_equal(0, min(l))
+  call assert_equal(0, max(l))
+  " call assert_equal(0, remove(l, 0, 2))
+  call assert_equal([], repeat(l, 2))
+  " call assert_equal(0, reverse(l))
+  " call assert_equal(0, sort(l))
+  call assert_equal('[]', string(l))
+  " call assert_equal(0, extend(l, l, 0))
+  lockvar l
+  call assert_equal(1, islocked('l'))
+  unlockvar l
 endfunc

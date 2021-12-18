@@ -1,13 +1,14 @@
 #ifndef NVIM_EVENT_PROCESS_H
 #define NVIM_EVENT_PROCESS_H
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 
 typedef enum {
   kProcessTypeUv,
-  kProcessTypePty
+  kProcessTypePty,
 } ProcessType;
 
 typedef struct process Process;
@@ -23,8 +24,9 @@ struct process {
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;
   char **argv;
-  char **env;
+  dict_T *env;
   Stream in, out, err;
+  /// Exit handler. If set, user must call process_free().
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped;

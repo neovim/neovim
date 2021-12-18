@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
+local assert_alive = helpers.assert_alive
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -13,6 +14,8 @@ local function new_screen(opt)
     [3] = {bold = true, reverse = true},
     [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    [6] = {foreground = Screen.colors.Magenta},
+    [7] = {bold = true, foreground = Screen.colors.Brown},
   })
   return screen
 end
@@ -266,7 +269,7 @@ local function test_cmdline(linegrid)
       special = {'"', true},
     }, {
       firstc = "=",
-      content = {{"1"}, {"+"}, {"2"}},
+      content = {{"1", 6}, {"+", 7}, {"2", 6}},
       pos = 3,
     }}
 
@@ -758,6 +761,7 @@ local function test_cmdline(linegrid)
   end)
 
   it("doesn't send invalid events when aborting mapping #10000", function()
+    command('set notimeout')
     command('cnoremap ab c')
 
     feed(':xa')
@@ -840,5 +844,16 @@ describe('cmdline redraw', function()
     :012345678901234567890123|
     456789^                   |
     ]], unchanged=true}
+  end)
+end)
+
+describe("cmdline height", function()
+  it("does not crash resized screen #14263", function()
+    clear()
+    local screen = Screen.new(25, 10)
+    screen:attach()
+    command('set cmdheight=9999')
+    screen:try_resize(25, 5)
+    assert_alive()
   end)
 end)

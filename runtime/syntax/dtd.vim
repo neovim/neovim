@@ -1,10 +1,11 @@
 " Vim syntax file
-" Language:	DTD (Document Type Definition for XML)
-" Maintainer:	Johannes Zellner <johannes@zellner.org>
-"		Author and previous maintainer:
-"		Daniel Amyot <damyot@site.uottawa.ca>
-" Last Change:	Tue, 27 Apr 2004 14:54:59 CEST
-" Filenames:	*.dtd
+" Language: DTD (Document Type Definition for XML)
+" Maintainer: Christian Brabandt <cb@256bit.org>
+" Repository: https://github.com/chrisbra/vim-xml-ftplugin
+" Previous Maintainer: Johannes Zellner <johannes@zellner.org>
+" Author: Daniel Amyot <damyot@site.uottawa.ca>
+" Last Changed:	Sept 24, 2019
+" Filenames: *.dtd
 "
 " REFERENCES:
 "   http://www.w3.org/TR/html40/

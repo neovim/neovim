@@ -2,8 +2,9 @@
 " Maintainer: Christian Brabandt <cb@256bit.org>
 " Repository: https://github.com/chrisbra/vim-xml-ftplugin
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Changed: 2019 Dec 02
+" Last Changed: 2020 Nov 4th
 " Last Change:
+" 20200529 - Handle empty closing tags correctly
 " 20191202 - Handle docbk filetype
 " 20190726 - Correctly handle non-tagged data
 " 20190204 - correctly handle wrap tags
@@ -45,7 +46,7 @@ if !exists('b:xml_indent_open')
 endif
 
 if !exists('b:xml_indent_close')
-    let b:xml_indent_close = '.\{-}</'
+    let b:xml_indent_close = '.\{-}</\|/>.\{-}'
     " end pre tag, e.g. </address>
     " let b:xml_indent_close = '.\{-}</\(address\)\@!'
 endif
@@ -81,7 +82,7 @@ endfun
 
 " [-- return the sum of indents of a:lnum --]
 fun! <SID>XmlIndentSum(line, style, add)
-    if <SID>IsXMLContinuation(a:line) && a:style == 0
+    if <SID>IsXMLContinuation(a:line) && a:style == 0 && !<SID>IsXMLEmptyClosingTag(a:line)
         " no complete tag, add one additional indent level
         " but only for the current line
         return a:add + shiftwidth()
@@ -131,13 +132,25 @@ fun! XmlIndentGet(lnum, use_syntax_check)
         endif
         let syn_name_end   = synIDattr(synID(a:lnum, strlen(curline) - 1, 1), 'name')
         let syn_name_start = synIDattr(synID(a:lnum, match(curline, '\S') + 1, 1), 'name')
+        let prev_syn_name_end   = synIDattr(synID(ptag, strlen(pline) - 1, 1), 'name')
+        " not needed (yet?)
+        " let prev_syn_name_start = synIDattr(synID(ptag, match(pline, '\S') + 1, 1), 'name')
     endif
 
     if syn_name_end =~ 'Comment' && syn_name_start =~ 'Comment'
         return <SID>XmlIndentComment(a:lnum)
     elseif empty(syn_name_start) && empty(syn_name_end) && a:use_syntax_check
         " non-xml tag content: use indent from 'autoindent'
-        return pind + shiftwidth()
+        if pline =~ b:xml_indent_close
+            return pind
+        elseif !empty(prev_syn_name_end)
+            " only indent by an extra shiftwidth, if the previous line ends
+            " with an XML like tag
+           return pind + shiftwidth()
+        else
+            " no extra indent, looks like a text continuation line
+           return pind
+        endif
     endif
 
     " Get indent from previous tag line
@@ -157,15 +170,28 @@ func! <SID>HasNoTagEnd(line)
     return a:line !~ '>\s*$'
 endfunc
 
+func! <SID>IsXMLEmptyClosingTag(line)
+    " Checks whether the line ends with an empty closing tag such as <lb/>
+    return a:line =~? '<[^>]*/>\s*$'
+endfunc
+
 " return indent for a commented line,
 " the middle part might be indented one additional level
 func! <SID>XmlIndentComment(lnum)
-    let ptagopen = search(b:xml_indent_open, 'bnW')
+    let ptagopen = search('.\{-}<[:A-Z_a-z]\_[^/]\{-}>.\{-}', 'bnW')
     let ptagclose = search(b:xml_indent_close, 'bnW')
     if getline(a:lnum) =~ '<!--'
         " if previous tag was a closing tag, do not add
         " one additional level of indent
         if ptagclose > ptagopen && a:lnum > ptagclose
+            " If the previous tag was closed on the same line as it was
+            " declared, we should indent with its indent level.
+            if !<SID>IsXMLContinuation(getline(ptagclose))
+                return indent(ptagclose)
+            else
+                return indent(ptagclose) - shiftwidth()
+            endif
+        elseif ptagclose == ptagopen
             return indent(ptagclose)
         else
             " start of comment, add one indentation level

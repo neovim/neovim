@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: 2019 Jan 28
+"  Last Change: Mar 01, 2020
 
 let s:last_mps = ""
 let s:last_words = ":"
@@ -47,6 +47,8 @@ function matchit#Match_wrapper(word, forward, mode) range
   if a:mode == "v"
     execute "normal! gv\<Esc>"
   elseif a:mode == "o" && mode(1) !~# '[vV]'
+    exe "norm! v"
+  elseif a:mode == "n" && mode(1) =~# 'ni'
     exe "norm! v"
   endif
   " In s:CleanUp(), we may need to check whether the cursor moved forward.
@@ -211,6 +213,14 @@ function matchit#Match_wrapper(word, forward, mode) range
     execute "if " . skip . "| let skip = '0' | endif"
   endif
   let sp_return = searchpair(ini, mid, fin, flag, skip)
+  if &selection isnot# 'inclusive' && a:mode == 'v'
+    " move cursor one pos to the right, because selection is not inclusive
+    " add virtualedit=onemore, to make it work even when the match ends the " line
+    if !(col('.') < col('$')-1)
+      set ve=onemore
+    endif
+    norm! l
+  endif
   let final_position = "call cursor(" . line(".") . "," . col(".") . ")"
   " Restore cursor position and original screen.
   call winrestview(view)

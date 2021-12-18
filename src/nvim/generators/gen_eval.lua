@@ -25,7 +25,7 @@ local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
 local funcs = require('eval').funcs
 local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
 for _,fun in ipairs(metadata) do
-  if not (fun.remote_only or fun.lua_only) then
+  if fun.eval then
     funcs[fun.name] = {
       args=#fun.parameters,
       func='api_wrapper',
@@ -42,7 +42,7 @@ gperfpipe:write([[
 %language=ANSI-C
 %global-table
 %readonly-tables
-%define initializer-suffix ,0,0,NULL,NULL
+%define initializer-suffix ,0,0,BASE_NONE,NULL,NULL
 %define word-array-name functions
 %define hash-function-name hash_internal_func_gperf
 %define lookup-function-name find_internal_func_gperf
@@ -59,9 +59,10 @@ for name, def in pairs(funcs) do
   elseif #args == 1 then
     args[2] = 'MAX_FUNC_ARGS'
   end
+  local base = def.base or "BASE_NONE"
   local func = def.func or ('f_' .. name)
   local data = def.data or "NULL"
-  gperfpipe:write(('%s,  %s, %s, &%s, (FunPtr)%s\n')
-                  :format(name, args[1], args[2], func, data))
+  gperfpipe:write(('%s,  %s, %s, %s, &%s, (FunPtr)%s\n')
+                  :format(name, args[1], args[2], base, func, data))
 end
 gperfpipe:close()

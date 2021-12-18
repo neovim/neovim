@@ -2,12 +2,12 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 // fs.c -- filesystem access
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <assert.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include "auto/config.h"
 
@@ -17,19 +17,18 @@
 
 #include <uv.h>
 
-#include "nvim/os/os.h"
-#include "nvim/os/os_defs.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/assert.h"
-#include "nvim/misc1.h"
 #include "nvim/option.h"
+#include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
 #ifdef WIN32
-#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+# include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -37,18 +36,18 @@
 #endif
 
 #define RUN_UV_FS_FUNC(ret, func, ...) \
-    do { \
-      bool did_try_to_free = false; \
+  do { \
+    bool did_try_to_free = false; \
 uv_call_start: {} \
-      uv_fs_t req; \
-      ret = func(&fs_loop, &req, __VA_ARGS__); \
-      uv_fs_req_cleanup(&req); \
-      if (ret == UV_ENOMEM && !did_try_to_free) { \
-        try_to_free_memory(); \
-        did_try_to_free = true; \
-        goto uv_call_start; \
-      } \
-    } while (0)
+    uv_fs_t req; \
+    ret = func(&fs_loop, &req, __VA_ARGS__); \
+    uv_fs_req_cleanup(&req); \
+    if (ret == UV_ENOMEM && !did_try_to_free) { \
+      try_to_free_memory(); \
+      did_try_to_free = true; \
+      goto uv_call_start; \
+    } \
+  } while (0)
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
@@ -134,7 +133,7 @@ bool os_isdir(const char_u *name)
 bool os_isdir_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((const char *)name);
+  int32_t mode = os_getperm(name);
   if (mode < 0) {
     return false;
   }
@@ -199,16 +198,16 @@ int os_nodetype(const char *name)
   }
 
   switch (guess) {
-    case UV_TTY:          // FILE_TYPE_CHAR
-      return NODE_WRITABLE;
-    case UV_FILE:         // FILE_TYPE_DISK
-      return NODE_NORMAL;
-    case UV_NAMED_PIPE:   // not handled explicitly in Vim os_win32.c
-    case UV_UDP:          // unix only
-    case UV_TCP:          // unix only
-    case UV_UNKNOWN_HANDLE:
-    default:
-      return NODE_OTHER;  // Vim os_win32.c default
+  case UV_TTY:          // FILE_TYPE_CHAR
+    return NODE_WRITABLE;
+  case UV_FILE:         // FILE_TYPE_DISK
+    return NODE_NORMAL;
+  case UV_NAMED_PIPE:   // not handled explicitly in Vim os_win32.c
+  case UV_UDP:          // unix only
+  case UV_TCP:          // unix only
+  case UV_UNKNOWN_HANDLE:
+  default:
+    return NODE_OTHER;  // Vim os_win32.c default
   }
 #endif
 }
@@ -326,7 +325,7 @@ static bool is_executable_ext(const char *name, char **abspath)
                        sizeof(os_buf) - (size_t)(buf_end - os_buf), ENV_SEPSTR);
     if (ext_len != 0) {
       bool in_pathext = nameext_len == ext_len
-        && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
+                        && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
 
       if (((in_pathext || is_unix_shell) && is_executable(name, abspath))
           || is_executable(os_buf, abspath)) {
@@ -369,7 +368,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
   // is an executable file.
   char *p = path;
   bool rv = false;
-  for (;; ) {
+  for (;;) {
     char *e = xstrchrnul(p, ENV_SEPCHAR);
 
     // Combine the $PATH segment with `name`.
@@ -436,17 +435,17 @@ FILE *os_fopen(const char *path, const char *flags)
   // Per table in fopen(3) manpage.
   if (flags[1] == '\0' || flags[1] == 'b') {
     switch (flags[0]) {
-      case 'r':
-        iflags = O_RDONLY;
-        break;
-      case 'w':
-        iflags = O_WRONLY | O_CREAT | O_TRUNC;
-        break;
-      case 'a':
-        iflags = O_WRONLY | O_CREAT | O_APPEND;
-        break;
-      default:
-        abort();
+    case 'r':
+      iflags = O_RDONLY;
+      break;
+    case 'w':
+      iflags = O_WRONLY | O_CREAT | O_TRUNC;
+      break;
+    case 'a':
+      iflags = O_WRONLY | O_CREAT | O_APPEND;
+      break;
+    default:
+      abort();
     }
 #ifdef WIN32
     if (flags[1] == 'b') {
@@ -458,21 +457,19 @@ FILE *os_fopen(const char *path, const char *flags)
     // char 1 is always '+' ('b' is handled above).
     assert(flags[1] == '+');
     switch (flags[0]) {
-      case 'r':
-        iflags = O_RDWR;
-        break;
-      case 'w':
-        iflags = O_RDWR | O_CREAT | O_TRUNC;
-        break;
-      case 'a':
-        iflags = O_RDWR | O_CREAT | O_APPEND;
-        break;
-      default:
-        abort();
+    case 'r':
+      iflags = O_RDWR;
+      break;
+    case 'w':
+      iflags = O_RDWR | O_CREAT | O_TRUNC;
+      break;
+    case 'a':
+      iflags = O_RDWR | O_CREAT | O_APPEND;
+      break;
+    default:
+      abort();
     }
   }
-  // Per open(2) manpage.
-  assert((iflags|O_RDONLY) || (iflags|O_WRONLY) || (iflags|O_RDWR));
   // Per fopen(3) manpage: default to 0666, it will be umask-adjusted.
   int fd = os_open(path, iflags, 0666);
   if (fd < 0) {
@@ -555,8 +552,8 @@ os_dup_dup:
 /// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
 ///
 /// @return Number of bytes read or libuv error code (< 0).
-ptrdiff_t os_read(const int fd, bool *const ret_eof, char *const ret_buf,
-                  const size_t size, const bool non_blocking)
+ptrdiff_t os_read(const int fd, bool *const ret_eof, char *const ret_buf, const size_t size,
+                  const bool non_blocking)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *ret_eof = false;
@@ -611,8 +608,8 @@ ptrdiff_t os_read(const int fd, bool *const ret_eof, char *const ret_buf,
 /// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
 ///
 /// @return Number of bytes read or libuv error code (< 0).
-ptrdiff_t os_readv(const int fd, bool *const ret_eof, struct iovec *iov,
-                   size_t iov_size, const bool non_blocking)
+ptrdiff_t os_readv(const int fd, bool *const ret_eof, struct iovec *iov, size_t iov_size,
+                   const bool non_blocking)
   FUNC_ATTR_NONNULL_ALL
 {
   *ret_eof = false;
@@ -670,8 +667,7 @@ ptrdiff_t os_readv(const int fd, bool *const ret_eof, struct iovec *iov,
 /// @param[in]  non_blocking  Do not restart syscall if EAGAIN was encountered.
 ///
 /// @return Number of bytes written or libuv error code (< 0).
-ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
-                   const bool non_blocking)
+ptrdiff_t os_write(const int fd, const char *const buf, const size_t size, const bool non_blocking)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (buf == NULL) {
@@ -886,8 +882,7 @@ int os_mkdir(const char *path, int32_t mode)
 ///                          of the higher level directories.
 ///
 /// @return `0` for success, libuv error code for failure.
-int os_mkdir_recurse(const char *const dir, int32_t mode,
-                     char **const failed_dir)
+int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_dir)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Get end of directory name in "dir".
@@ -1060,8 +1055,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 /// Compare the inodes of two FileInfos
 ///
 /// @return `true` if the two FileInfos represent the same file.
-bool os_fileinfo_id_equal(const FileInfo *file_info_1,
-                          const FileInfo *file_info_2)
+bool os_fileinfo_id_equal(const FileInfo *file_info_1, const FileInfo *file_info_2)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
@@ -1121,7 +1115,7 @@ uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
 ///
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a `FileID` to fill in.
-/// @return `true` on sucess, `false` for failure.
+/// @return `true` on success, `false` for failure.
 bool os_fileid(const char *path, FileID *file_id)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1151,8 +1145,7 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_id Pointer to a `FileID`
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_fileid_equal_fileinfo(const FileID *file_id,
-                              const FileInfo *file_info)
+bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_id->inode == file_info->stat.st_ino
@@ -1218,11 +1211,10 @@ char *os_resolve_shortcut(const char *fname)
     wchar_t *p;
     const int r = utf8_to_utf16(fname, -1, &p);
     if (r != 0) {
-      EMSG2("utf8_to_utf16 failed: %d", r);
+      semsg("utf8_to_utf16 failed: %d", r);
     } else if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
-      hr = pslw->lpVtbl->QueryInterface(
-          pslw, &IID_IPersistFile, (void **)&ppf);
+      hr = pslw->lpVtbl->QueryInterface(pslw, &IID_IPersistFile, (void **)&ppf);
       if (hr != S_OK) {
         goto shortcut_errorw;
       }
@@ -1233,12 +1225,12 @@ char *os_resolve_shortcut(const char *fname)
         goto shortcut_errorw;
       }
 
-#  if 0  // This makes Vim wait a long time if the target does not exist.
+# if 0  // This makes Vim wait a long time if the target does not exist.
       hr = pslw->lpVtbl->Resolve(pslw, NULL, SLR_NO_UI);
       if (hr != S_OK) {
         goto shortcut_errorw;
       }
-#  endif
+# endif
 
       // Get the path to the link target.
       ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
@@ -1246,7 +1238,7 @@ char *os_resolve_shortcut(const char *fname)
       if (hr == S_OK && wsz[0] != NUL) {
         const int r2 = utf16_to_utf8(wsz, -1, &rfname);
         if (r2 != 0) {
-          EMSG2("utf16_to_utf8 failed: %d", r2);
+          semsg("utf16_to_utf8 failed: %d", r2);
         }
       }
 
@@ -1269,7 +1261,7 @@ shortcut_end:
   return rfname;
 }
 
-#define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
+# define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
 /// Returns true if the path contains a reparse point (junction or symbolic
 /// link). Otherwise false in returned.
 bool os_is_reparse_point_include(const char *path)
@@ -1281,7 +1273,7 @@ bool os_is_reparse_point_include(const char *path)
 
   const int r = utf8_to_utf16(path, -1, &utf16_path);
   if (r != 0) {
-    EMSG2("utf8_to_utf16 failed: %d", r);
+    semsg("utf8_to_utf16 failed: %d", r);
     return false;
   }
 

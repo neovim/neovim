@@ -199,7 +199,7 @@ function! xmlcomplete#CompleteTags(findstart, base)
 	" 1. Events attributes
 	if context =~ '\s'
 
-		" If attr contains =\s*[\"'] we catched value of attribute
+		" If attr contains =\s*[\"'] we catch value of attribute
 		if attr =~ "=\s*[\"']" || attr =~ "=\s*$"
 			" Let do attribute specific completion
 			let attrname = matchstr(attr, '.*\ze\s*=')

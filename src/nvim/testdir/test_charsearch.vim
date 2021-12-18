@@ -20,7 +20,7 @@ func Test_charsearch()
   " check that setcharsearch() changes the settings.
   3
   normal! ylfep
-  call setcharsearch({'char': 'k'})
+  eval {'char': 'k'}->setcharsearch()
   normal! ;p
   call setcharsearch({'forward': 0})
   normal! $;p

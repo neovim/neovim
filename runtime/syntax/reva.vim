@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Reva Forth
 " Version:	2011.2
-" Last Change:	2012/02/13
+" Last Change:	2019 Sep 27
 " Maintainer:	Ron Aaron <ron@ronware.org>
 " URL:		http://ronware.org/reva/
 " Filetypes:	*.rf *.frt
@@ -150,7 +150,7 @@ syn match revaInclude '\<\(include\|needs\)\s\+\S\+'
 " Define the default highlighting.
 if !exists("did_reva_syntax_inits")
     let did_reva_syntax_inits=1
-    " The default methods for highlighting. Can be overriden later.
+    " The default methods for highlighting. Can be overridden later.
     hi def link revaEOF cIf0
     hi def link revaHelpStuff  special
     hi def link revaHelpDesc Comment

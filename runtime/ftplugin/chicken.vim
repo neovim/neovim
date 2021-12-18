@@ -2,6 +2,7 @@
 " Last Change: 2018-03-05
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
+" Repository: https://git.foldling.org/vim-scheme.git
 " URL: https://foldling.org/vim/ftplugin/chicken.vim
 " Notes: These are supplemental settings, to be loaded after the core
 " Scheme ftplugin file (ftplugin/scheme.vim). Enable it by setting

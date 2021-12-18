@@ -59,9 +59,9 @@ func Test_matchadd_and_conceallevel_3()
   setlocal filetype=conf
   syntax on
 
-  1put='# This is a Test'
-  "             1234567890123456
-  let expect = '#ThisisaTest'
+  1put='# This is a Test  $'
+  "             1234567890123
+  let expect = '#ThisisaTest$'
 
   call cursor(1, 1)
   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
@@ -69,22 +69,25 @@ func Test_matchadd_and_conceallevel_3()
   let lnum = 2
   call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 13))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 14))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   " more matchadd()
-  "             1234567890123456
-  let expect = '#Thisisa Test'
+  "             12345678901234
+  let expect = '#Thisisa Test$'
 
   call matchadd('ErrorMsg', '\%2l Test', 20, -1, {'conceal': 'X'})
   redraw!
   call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 2))
-  call assert_equal(screenattr(lnum, 2) , screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 7))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 10))
-  call assert_equal(screenattr(lnum, 10), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 10), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 14))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 16))
   call assert_notequal(screenattr(lnum, 10), screenattr(lnum, 16))
 
@@ -132,15 +135,18 @@ func Test_syn_and_match_conceal()
   new
   setlocal concealcursor=n conceallevel=1
 
-  1put='# This is a Test'
-  "             1234567890123456
-  let expect = '#ZThisZisZaZTest'
+  1put='# This is a Test  '
 
-  call cursor(1, 1)
-  call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'Z'})
-  syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
-  redraw!
   let lnum = 2
+  call cursor(1, 1)
+
+  "             123456789012345678
+  let expect = '#ZThisZisZaZTestZZ'
+  call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'Z'})
+  syntax match MyConceal /\%2l / conceal containedin=ALL
+  hi MyConceal ctermbg=4 ctermfg=2
+  redraw!
+
   call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
@@ -148,8 +154,19 @@ func Test_syn_and_match_conceal()
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
-  "             1234567890123456
-  let expect = '#*This*is*a*Test'
+  syntax clear MyConceal
+  syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
+
+  "             123456789012345678
+  let expect = '#*This*is*a*Test**'
   call clearmatches()
   redraw!
 
@@ -159,6 +176,48 @@ func Test_syn_and_match_conceal()
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
+
+  "             123456789012345678
+  let expect = '#*ThisXis*a*Test**'
+  call matchadd('Conceal', '\%2l\%7c ', 10, -1, {'conceal': 'X'})
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
+
+  "             123456789012345678
+  let expect = '#*ThisXis*a*Test**'
+  call matchadd('ErrorMsg', '\%2l Test', 20, -1)
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 12), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 13), screenattr(lnum, 16))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 17))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 18))
+  call assert_notequal(screenattr(lnum, 18), screenattr(lnum, 19))
+
+  "             123456789012345678
+  let expect = '# ThisXis a Test'
+  syntax clear MyConceal
+  syntax match MyConceal /\%2l / conceal containedin=ALL
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 12), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 13), screenattr(lnum, 16))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 17))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 18))
+  call assert_notequal(screenattr(lnum, 18), screenattr(lnum, 19))
 
   syntax off
   quit!

@@ -1,6 +1,9 @@
 " Tests for regexp in latin1 encoding
-set encoding=latin1
+
+" set encoding=latin1
 scriptencoding latin1
+
+source check.vim
 
 func s:equivalence_test()
   let str = "AÀÁÂÃÄÅ B C D EÈÉÊË F G H IÌÍÎÏ J K L M NÑ OÒÓÔÕÖØ P Q R S T UÙÚÛÜ V W X YÝ Z aàáâãäå b c d eèéêë f g h iìíîï j k l m nñ oòóôõöø p q r s t uùúûü v w x yýÿ z"
@@ -22,11 +25,13 @@ func s:equivalence_test()
 endfunc
 
 func Test_equivalence_re1()
+  throw 'skipped: Nvim does not support enc=latin1'
   set re=1
   call s:equivalence_test()
 endfunc
 
 func Test_equivalence_re2()
+  throw 'skipped: Nvim does not support enc=latin1'
   set re=2
   call s:equivalence_test()
 endfunc
@@ -37,6 +42,17 @@ func Test_range_with_newline()
   call assert_equal(0, search("[ -*\\n- ]"))
   call assert_equal(0, search("[ -*\\t-\\n]"))
   bwipe!
+endfunc
+
+func Test_pattern_compile_speed()
+  CheckOption spellcapcheck
+  CheckFunction reltimefloat
+
+  let start = reltime()
+  " this used to be very slow, not it should be about a second
+  set spc=\\v(((((Nxxxxxxx&&xxxx){179})+)+)+){179}
+  call assert_inrange(0.01, 10.0, reltimefloat(reltime(start)))
+  set spc=
 endfunc
 
 func Test_get_equi_class()
@@ -87,6 +103,7 @@ func Test_multi_failure()
 endfunc
 
 func Test_recursive_addstate()
+  throw 'skipped: TODO: '
   " This will call addstate() recursively until it runs into the limit.
   let lnum = search('\v((){328}){389}')
   call assert_equal(0, lnum)
@@ -753,6 +770,13 @@ func Test_start_end_of_buffer_match()
   exe "normal 6gg/..\\%$\<CR>"
   call assert_equal([0, 20, 7, 0], getpos('.'))
   bwipe!
+endfunc
+
+func Test_ze_before_zs()
+  call assert_equal('', matchstr(' ', '\%#=1\ze \zs'))
+  call assert_equal('', matchstr(' ', '\%#=2\ze \zs'))
+  call assert_equal(repeat([''], 10), matchlist(' ', '\%#=1\ze \zs'))
+  call assert_equal(repeat([''], 10), matchlist(' ', '\%#=2\ze \zs'))
 endfunc
 
 " Check for detecting error

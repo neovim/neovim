@@ -3442,10 +3442,6 @@ msgstr "-y\t\t\tПростой режим (как \"evim\", безрежимны
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tТолько для чтения (как \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tОграниченный режим (как \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tБез возможности сохранения изменений (записи файлов)"

@@ -34,7 +34,7 @@ check_core_dumps() {
     cores="$(find /cores/ -type f -print)"
     local _sudo='sudo'
   else
-    cores="$(find ./ -type f -name 'core.*' -print)"
+    cores="$(find ./ -type f \( -name 'core.*' -o -name core -o -name nvim.core \) -print)"
     local _sudo=
   fi
 

@@ -185,7 +185,7 @@ func! Test_check_colors()
 
   " 9) Normal should be defined first, not use reverse, fg or bg
   call cursor(1,1)
-  let pat = 'hi\%[light] \+\%(link\|clear\)\@!\w\+\>'
+  let pat = 'hi\%[ghlight] \+\%(link\|clear\)\@!\w\+\>'
   call search(pat, 'cW') " Look for the first hi def, skipping `hi link` and `hi clear`
   if getline('.') !~# '\m\<Normal\>'
     let err['highlight']['Normal'] = 'Should be defined first'
@@ -226,7 +226,13 @@ fu! Result(err)
   endif
 endfu
 
-call Test_check_colors()
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
+try
+  call Test_check_colors()
+catch
+  echohl ErrorMsg
+  echomsg v:exception
+  echohl NONE
+finally
+  let &cpo = s:save_cpo
+  unlet s:save_cpo
+endtry

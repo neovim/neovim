@@ -49,13 +49,12 @@
 
 #include <assert.h>
 
-#include "nvim/marktree.h"
-#include "nvim/lib/kvec.h"
 #include "nvim/garray.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/marktree.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(mtnode_t)+(2 * T) * sizeof(void *))
-#define key_t SKRAPET
 
 #define RIGHT_GRAVITY (((uint64_t)1) << 63)
 #define ANTIGRAVITY(id) ((id)&(RIGHT_GRAVITY-1))
@@ -64,8 +63,6 @@
 #define PAIRED MARKTREE_PAIRED_FLAG
 #define END_FLAG MARKTREE_END_FLAG
 #define ID_INCR (((uint64_t)1) << 2)
-
-#define PROP_MASK (RIGHT_GRAVITY|PAIRED|END_FLAG)
 
 #define rawkey(itr) (itr->node->key[itr->i])
 
@@ -140,7 +137,9 @@ static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
       end = mid;
     }
   }
-  if (begin == x->n) { *rr = 1; return x->n - 1; }
+  if (begin == x->n) {
+    *rr = 1; return x->n - 1;
+  }
   if ((*rr = key_cmp(k, x->key[begin])) < 0) {
     begin--;
   }
@@ -222,9 +221,11 @@ static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
   }
 }
 
-uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity)
+uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity, uint8_t decor_level)
 {
   uint64_t id = (b->next_id+=ID_INCR);
+  assert(decor_level < DECOR_LEVELS);
+  id = id | ((uint64_t)decor_level << DECOR_OFFSET);
   uint64_t keyid = id;
   if (right_gravity) {
     // order all right gravity keys after the left ones, for effortless
@@ -235,11 +236,12 @@ uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity)
   return id;
 }
 
-uint64_t marktree_put_pair(MarkTree *b,
-                           int start_row, int start_col, bool start_right,
-                           int end_row, int end_col, bool end_right)
+uint64_t marktree_put_pair(MarkTree *b, int start_row, int start_col, bool start_right, int end_row,
+                           int end_col, bool end_right, uint8_t decor_level)
 {
   uint64_t id = (b->next_id+=ID_INCR)|PAIRED;
+  assert(decor_level < DECOR_LEVELS);
+  id = id | ((uint64_t)decor_level << DECOR_OFFSET);
   uint64_t start_id = id|(start_right?RIGHT_GRAVITY:0);
   uint64_t end_id = id|END_FLAG|(end_right?RIGHT_GRAVITY:0);
   marktree_put_key(b, start_row, start_col, start_id);
@@ -253,7 +255,6 @@ void marktree_put_key(MarkTree *b, int row, int col, uint64_t id)
 
   if (!b->root) {
     b->root = (mtnode_t *)xcalloc(1, ILEN);
-    b->id2node = pmap_new(uint64_t)();
     b->n_nodes++;
   }
   mtnode_t *r, *s;
@@ -359,6 +360,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
         y = y->level ? y->ptr[0] : NULL;
       }
     }
+    itr->i--;
   }
 
   b->n_keys--;
@@ -469,7 +471,7 @@ static mtnode_t *merge_node(MarkTree *b, mtnode_t *p, int i)
     unrelative(x->key[x->n].pos, &x->key[x->n+1+k].pos);
   }
   if (x->level) {
-    memmove(&x->ptr[x->n+1], y->ptr, (size_t)(y->n + 1) * sizeof(mtnode_t *));
+    memmove(&x->ptr[x->n+1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
     for (int k = 0; k < y->n+1; k++) {
       x->ptr[x->n+k+1]->parent = x;
     }
@@ -491,7 +493,7 @@ static void pivot_right(MarkTree *b, mtnode_t *p, int i)
   mtnode_t *x = p->ptr[i], *y = p->ptr[i+1];
   memmove(&y->key[1], y->key, (size_t)y->n * sizeof(mtkey_t));
   if (y->level) {
-    memmove(&y->ptr[1], y->ptr, (size_t)(y->n + 1) * sizeof(mtnode_t *));
+    memmove(&y->ptr[1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
   }
   y->key[0] = p->key[i];
   refkey(b, y, 0);
@@ -549,9 +551,9 @@ void marktree_clear(MarkTree *b)
     marktree_free_node(b->root);
     b->root = NULL;
   }
-  if (b->id2node) {
-    pmap_free(uint64_t)(b->id2node);
-    b->id2node = NULL;
+  if (b->id2node->table.keys) {
+    pmap_destroy(uint64_t)(b->id2node);
+    pmap_init(uint64_t, b->id2node);
   }
   b->n_keys = 0;
   b->n_nodes = 0;
@@ -568,11 +570,11 @@ void marktree_free_node(mtnode_t *x)
 }
 
 /// NB: caller must check not pair!
-uint64_t marktree_revise(MarkTree *b, MarkTreeIter *itr)
+uint64_t marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level)
 {
   uint64_t old_id = rawkey(itr).id;
   pmap_del(uint64_t)(b->id2node, ANTIGRAVITY(old_id));
-  uint64_t new_id = (b->next_id += ID_INCR);
+  uint64_t new_id = (b->next_id += ID_INCR) + ((uint64_t)decor_level << DECOR_OFFSET);
   rawkey(itr).id = new_id + (RIGHT_GRAVITY&old_id);
   refkey(b, itr->node, itr->i);
   return new_id;
@@ -597,8 +599,8 @@ bool marktree_itr_get(MarkTree *b, int row, int col, MarkTreeIter *itr)
                               itr, false, false, NULL);
 }
 
-bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr,
-                          bool last, bool gravity, mtpos_t *oldbase)
+bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, bool gravity,
+                          mtpos_t *oldbase)
 {
   mtkey_t k = { .pos = p, .id = gravity ? RIGHT_GRAVITY : 0 };
   if (last && !gravity) {
@@ -698,8 +700,7 @@ bool marktree_itr_next(MarkTree *b, MarkTreeIter *itr)
   return marktree_itr_next_skip(b, itr, false, NULL);
 }
 
-static bool marktree_itr_next_skip(MarkTree *b, MarkTreeIter *itr, bool skip,
-                                   mtpos_t oldbase[])
+static bool marktree_itr_next_skip(MarkTree *b, MarkTreeIter *itr, bool skip, mtpos_t oldbase[])
 {
   if (!itr->node) {
     return false;
@@ -822,8 +823,8 @@ mtmark_t marktree_itr_current(MarkTreeIter *itr)
     mtpos_t pos = marktree_itr_pos(itr);
     mtmark_t mark = { .row = pos.row,
                       .col = pos.col,
-                       .id = ANTIGRAVITY(keyid),
-                       .right_gravity = keyid & RIGHT_GRAVITY };
+                      .id = ANTIGRAVITY(keyid),
+                      .right_gravity = keyid & RIGHT_GRAVITY };
     return mark;
   }
   return (mtmark_t){ -1, -1, 0, false };
@@ -836,14 +837,12 @@ static void swap_id(uint64_t *id1, uint64_t *id2)
   *id2 = temp;
 }
 
-bool marktree_splice(MarkTree *b,
-                     int start_line, int start_col,
-                     int old_extent_line, int old_extent_col,
-                     int new_extent_line, int new_extent_col)
+bool marktree_splice(MarkTree *b, int start_line, int start_col, int old_extent_line,
+                     int old_extent_col, int new_extent_line, int new_extent_col)
 {
   mtpos_t start = { start_line, start_col };
-  mtpos_t old_extent = { (int)old_extent_line, old_extent_col };
-  mtpos_t new_extent = { (int)new_extent_line, new_extent_col };
+  mtpos_t old_extent = { old_extent_line, old_extent_col };
+  mtpos_t new_extent = { new_extent_line, new_extent_col };
 
   bool may_delete = (old_extent.row != 0 || old_extent.col != 0);
   bool same_line = old_extent.row == 0 && new_extent.row == 0;
@@ -852,7 +851,7 @@ bool marktree_splice(MarkTree *b,
   MarkTreeIter itr[1] = { 0 };
   MarkTreeIter enditr[1] = { 0 };
 
-  mtpos_t oldbase[MT_MAX_DEPTH];
+  mtpos_t oldbase[MT_MAX_DEPTH] = { 0 };
 
   marktree_itr_get_ext(b, start, itr, false, true, oldbase);
   if (!itr->node) {
@@ -906,7 +905,8 @@ continue_same_node:
           refkey(b, itr->node, itr->i);
           refkey(b, enditr->node, enditr->i);
         } else {
-          past_right = true; // NOLINT
+          past_right = true;  // NOLINT
+          (void)past_right;
           break;
         }
       }
@@ -996,10 +996,8 @@ past_continue_same_node:
   return moved;
 }
 
-void marktree_move_region(MarkTree *b,
-                          int start_row, colnr_T start_col,
-                          int extent_row, colnr_T extent_col,
-                          int new_row, colnr_T new_col)
+void marktree_move_region(MarkTree *b, int start_row, colnr_T start_col, int extent_row,
+                          colnr_T extent_col, int new_row, colnr_T new_col)
 {
   mtpos_t start = { start_row, start_col }, size = { extent_row, extent_col };
   mtpos_t end = size;
@@ -1116,8 +1114,7 @@ void marktree_check(MarkTree *b)
 }
 
 #ifndef NDEBUG
-static size_t check_node(MarkTree *b, mtnode_t *x,
-                         mtpos_t *last, bool *last_right)
+static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
 {
   assert(x->n <= 2 * T - 1);
   // TODO(bfredl): too strict if checking "in repair" post-delete tree.
@@ -1175,8 +1172,7 @@ char *mt_inspect_rec(MarkTree *b)
 void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
 {
   static char buf[1024];
-#define GA_PUT(x) ga_concat(ga, (char_u *)(x))
-  GA_PUT("[");
+  ga_concat(ga, "[");
   if (n->level) {
     mt_inspect_node(b, ga, n->ptr[0], off);
   }
@@ -1184,14 +1180,13 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
     mtpos_t p = n->key[i].pos;
     unrelative(off, &p);
     snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
-    GA_PUT(buf);
+    ga_concat(ga, buf);
     if (n->level) {
       mt_inspect_node(b, ga, n->ptr[i+1], p);
     } else {
-      GA_PUT(",");
+      ga_concat(ga, ",");
     }
   }
-  GA_PUT("]");
-#undef GA_PUT
+  ga_concat(ga, "]");
 }
 

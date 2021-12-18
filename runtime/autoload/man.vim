@@ -18,7 +18,7 @@ function! man#init() abort
   endtry
 endfunction
 
-function! man#open_page(count, count1, mods, ...) abort
+function! man#open_page(count, mods, ...) abort
   if a:0 > 2
     call s:error('too many arguments')
     return
@@ -39,9 +39,7 @@ function! man#open_page(count, count1, mods, ...) abort
   endif
   try
     let [sect, name] = s:extract_sect_and_name_ref(ref)
-    if a:count ==# a:count1
-      " v:count defaults to 0 which is a valid section, and v:count1 defaults to
-      " 1, also a valid section. If they are equal, count explicitly set.
+    if a:count >= 0
       let sect = string(a:count)
     endif
     let path = s:verify_exists(sect, name)
@@ -53,13 +51,14 @@ function! man#open_page(count, count1, mods, ...) abort
 
   let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
   try
-    set tagfunc=man#goto_tag
+    setlocal tagfunc=man#goto_tag
     let l:target = l:name . '(' . l:sect . ')'
     if a:mods !~# 'tab' && s:find_man()
       execute 'silent keepalt tag' l:target
     else
       execute 'silent keepalt' a:mods 'stag' l:target
     endif
+    call s:set_options(v:false)
   finally
     call setbufvar(l:buf, '&tagfunc', l:save_tfu)
   endtry
@@ -67,6 +66,7 @@ function! man#open_page(count, count1, mods, ...) abort
   let b:man_sect = sect
 endfunction
 
+" Called when a man:// buffer is opened.
 function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
@@ -123,6 +123,15 @@ function! s:system(cmd, ...) abort
   return opts.stdout
 endfunction
 
+function! s:set_options(pager) abort
+  setlocal filetype=man
+  setlocal noswapfile buftype=nofile bufhidden=hide
+  setlocal nomodified readonly nomodifiable
+  if a:pager
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
+  endif
+endfunction
+
 function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
@@ -136,11 +145,7 @@ function! s:get_page(path) abort
 endfunction
 
 function! s:put_page(page) abort
-  setlocal modifiable
-  setlocal noreadonly
-  setlocal noswapfile
-  " git-ls-files(1) is all one keyword/tag-target
-  setlocal iskeyword+=(,)
+  setlocal modifiable noreadonly noswapfile
   silent keepjumps %delete _
   silent put =a:page
   while getline(1) =~# '^\s*$'
@@ -152,7 +157,7 @@ function! s:put_page(page) abort
   silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
   1
   lua require("man").highlight_man_page()
-  setlocal filetype=man
+  call s:set_options(v:false)
 endfunction
 
 function! man#show_toc() abort
@@ -192,13 +197,21 @@ function! s:extract_sect_and_name_ref(ref) abort
     if empty(name)
       throw 'manpage reference cannot contain only parentheses'
     endif
-    return ['', name]
+    return ['', s:spaces_to_underscores(name)]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
   " TODO(nhooyr) Not sure if this is portable across OSs
   " but I have not seen a single uppercase section.
-  return [tolower(split(left[1], ')')[0]), left[0]]
+  return [tolower(split(left[1], ')')[0]), s:spaces_to_underscores(left[0])]
+endfunction
+
+" replace spaces in a man page name with underscores
+" intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
+" while editing SQL source code, it's nice to visually select 'CREATE TABLE'
+" and hit 'K', which requires this transformation
+function! s:spaces_to_underscores(str)
+  return substitute(a:str, ' ', '_', 'g')
 endfunction
 
 function! s:get_path(sect, name) abort
@@ -256,11 +269,11 @@ function! s:verify_exists(sect, name) abort
   if !empty($MANSECT)
     try
       let MANSECT = $MANSECT
-      unset $MANSECT
+      call setenv('MANSECT', v:null)
       return s:get_path('', a:name)
     catch /^command error (/
     finally
-      let $MANSECT = MANSECT
+      call setenv('MANSECT', MANSECT)
     endtry
   endif
 
@@ -401,6 +414,7 @@ function! s:format_candidate(path, psect) abort
   endif
 endfunction
 
+" Called when Nvim is invoked as $MANPAGER.
 function! man#init_pager() abort
   " https://github.com/neovim/neovim/issues/6828
   let og_modifiable = &modifiable
@@ -424,6 +438,7 @@ function! man#init_pager() abort
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
 
+  call s:set_options(v:true)
   let &l:modifiable = og_modifiable
 endfunction
 

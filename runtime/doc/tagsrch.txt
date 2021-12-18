@@ -179,6 +179,29 @@ commands explained above the tag stack will look like this:
 The |gettagstack()| function returns the tag stack of a specified window. The
 |settagstack()| function modifies the tag stack of a window.
 
+							*tagstack-examples*
+Write to the tag stack just like `:tag` but with a user-defined
+jumper#jump_to_tag function: >
+	" Store where we're jumping from before we jump.
+	let tag = expand('<cword>')
+	let pos = [bufnr()] + getcurpos()[1:]
+	let item = {'bufnr': pos[0], 'from': pos, 'tagname': tag}
+	if jumper#jump_to_tag(tag)
+		" Jump was successful, write previous location to tag stack.
+		let winid = win_getid()
+		let stack = gettagstack(winid)
+		let stack['items'] = [item]
+		call settagstack(winid, stack, 't')
+	endif
+<
+Set current index of the tag stack to 4: >
+	call settagstack(1005, {'curidx' : 4})
+<
+Push a new item onto the tag stack: >
+	let pos = [bufnr('myfile.txt'), 10, 1, 0]
+	let newtag = [{'tagname' : 'mytag', 'from' : pos}]
+	call settagstack(2, {'items' : newtag}, 'a')
+<
 							*E73*
 When you try to use the tag stack while it doesn't contain anything you will
 get an error message.
@@ -204,14 +227,14 @@ the same entry.
 			Example output:
 
 >
-	 nr pri kind tag		file
+	  # pri kind tag		file
 	  1 F	f    mch_delay		os_amiga.c
 			mch_delay(msec, ignoreinput)
 	> 2 F	f    mch_delay		os_msdos.c
 			mch_delay(msec, ignoreinput)
 	  3 F	f    mch_delay		os_unix.c
 			mch_delay(msec, ignoreinput)
-	Enter nr of choice (<CR> to abort):
+	Type number and <Enter> (empty cancels):
 <
 			See |tag-priority| for the "pri" column.  Note that
 			this depends on the current file, thus using
@@ -337,18 +360,18 @@ the same as above, with a "p" prepended.
 A static tag is a tag that is defined for a specific file.  In a C program
 this could be a static function.
 
-In Vi jumping to a tag sets the current search pattern.  This means that
-the "n" command after jumping to a tag does not search for the same pattern
-that it did before jumping to the tag.  Vim does not do this as we consider it
-to be a bug.  You can still find the tag search pattern in the search history.
-If you really want the old Vi behavior, set the 't' flag in 'cpoptions'.
+In Vi jumping to a tag sets the current search pattern.  This means that the
+"n" command after jumping to a tag does not search for the same pattern that
+it did before jumping to the tag.  Vim does not do this as we consider it to
+be a bug.  If you really want the old Vi behavior, set the 't' flag in
+'cpoptions'.
 
 							*tag-binary-search*
-Vim uses binary searching in the tags file to find the desired tag quickly
-(when enabled at compile time |+tag_binary|).  But this only works if the
-tags file was sorted on ASCII byte value.  Therefore, if no match was found,
-another try is done with a linear search.  If you only want the linear search,
-reset the 'tagbsearch' option.  Or better: Sort the tags file!
+Vim uses binary searching in the tags file to find the desired tag quickly.
+But this only works if the tags file was sorted on ASCII byte value.
+Therefore, if no match was found, another try is done with a linear search.
+If you only want the linear search, reset the 'tagbsearch' option.  Or better:
+Sort the tags file!
 
 Note that the binary searching is disabled when not looking for a tag with a
 specific name.  This happens when ignoring case and when a regular expression
@@ -419,8 +442,7 @@ would otherwise go unnoticed.  Example: >
 
 In Vi the ":tag" command sets the last search pattern when the tag is searched
 for.  In Vim this is not done, the previous search pattern is still remembered,
-unless the 't' flag is present in 'cpoptions'.  The search pattern is always
-put in the search history, so you can modify it if searching fails.
+unless the 't' flag is present in 'cpoptions'.
 
 							*tags-option*
 The 'tags' option is a list of file names.  Each of these files is searched
@@ -489,10 +511,13 @@ a tag for each "#defined" macro, typedefs, enums, etc.
 Some programs that generate tags files:
 ctags			As found on most Unix systems.  Only supports C.  Only
 			does the basic work.
+universal ctags		A maintained version of ctags based on exuberant
+			ctags. See https://ctags.io.
 							*Exuberant_ctags*
 exuberant ctags		This is a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
+			No new version since 2009.
 JTags			For Java, in Java.  It can be found at
 			http://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
@@ -514,7 +539,7 @@ The first format is a normal tag, which is completely compatible with Vi.  It
 is the only format produced by traditional ctags implementations.  This is
 often used for functions that are global, also referenced in other files.
 
-The lines in the tags file can end in <LF> or <CR><LF>.  On the Macintosh <CR>
+The lines in the tags file can end in <NL> or <CR><NL>.  On the Macintosh <CR>
 also works.  The <CR> and <NL> characters can never appear inside a line.
 
 The second format is new.  It includes additional information in optional
@@ -544,7 +569,7 @@ only supported by new versions of ctags (such as Exuberant ctags).
 		the bar) and ;" is used to have Vi ignore the rest of the
 		line.  Example:
 			APP	file.c	call cursor(3, 4)|;"	v
-			
+
 {field} ..	A list of optional fields.  Each field has the form:
 
 			<Tab>{fieldname}:{value}
@@ -640,9 +665,6 @@ These commands look for a string in the current file and in all encountered
 included files (recursively).  This can be used to find the definition of a
 variable, function or macro.  If you only want to search in the current
 buffer, use the commands listed at |pattern-searches|.
-
-These commands are not available when the |+find_in_path| feature was disabled
-at compile time.
 
 When a line is encountered that includes another file, that file is searched
 before continuing in the current buffer.  Files included by included files are
@@ -847,19 +869,25 @@ like |CTRL-]|.
 
 The function used for generating the taglist is specified by setting the
 'tagfunc' option.  The function will be called with three arguments:
-   a:pattern	The tag identifier used during the tag search.
-   a:flags	List of flags to control the function behavior.
+   a:pattern	The tag identifier or pattern used during the tag search.
+   a:flags	String containing flags to control the function behavior.
    a:info	Dict containing the following entries:
 		    buf_ffname	  Full filename which can be used for priority.
 		    user_data	  Custom data String, if stored in the tag
 				  stack previously by tagfunc.
 
-Currently two flags may be passed to the tag function:
+Currently up to three flags may be passed to the tag function:
   'c'		The function was invoked by a normal command being processed
 	        (mnemonic: the tag function may use the context around the
 		cursor to perform a better job of generating the tag list.)
   'i'		In Insert mode, the user was completing a tag (with
-		|i_CTRL-X_CTRL-]|).
+		|i_CTRL-X_CTRL-]| or 'completeopt' contains `t`).
+  'r'		The first argument to tagfunc should be interpreted as a
+		|pattern| (see |tag-regexp|), such as when using: >
+		  :tag /pat
+<		It is also given when completing in insert mode.
+		If this flag is not present, the argument is usually taken
+		literally as the full tag name.
 
 Note that when 'tagfunc' is set, the priority of the tags described in
 |tag-priority| does not apply.  Instead, the priority is exactly as the
@@ -888,8 +916,8 @@ The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
 >
-	function! TagFunc(pattern, flags, info)
-	  function! CompareFilenames(item1, item2)
+	function TagFunc(pattern, flags, info)
+	  function CompareFilenames(item1, item2)
 	    let f1 = a:item1['filename']
 	    let f2 = a:item2['filename']
 	    return f1 >=# f2 ?

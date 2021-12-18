@@ -141,7 +141,7 @@ commands, except "gJ", delete any leading white space on the next line.  If
 the 'joinspaces' option is on, these commands insert two spaces after a '.',
 '!' or '?'.
 The 'B' and 'M' flags in 'formatoptions' change the behavior for inserting
-spaces before and after a multi-byte character |fo-table|.
+spaces before and after a multibyte character |fo-table|.
 
 The '[ mark is set at the end of the first line that was joined, '] at the end
 of the resulting line.
@@ -197,7 +197,7 @@ gR			Enter Virtual Replace mode: Each character you type
 			start insert (for {Visual} see |Visual-mode|).
 
 							*v_r*
-{Visual}["x]r{char}	Replace all selected characters by {char}.
+{Visual}r{char}		Replace all selected characters by {char}.
 
 							*v_C*
 {Visual}["x]C		Delete the highlighted lines [into register x] and
@@ -445,6 +445,9 @@ SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 							*<*
 <{motion}		Shift {motion} lines one 'shiftwidth' leftwards.
 
+			If the 'shiftwidth' option is set to zero, the amount
+			of indent is calculated at the first non-blank
+			character in the line.
 							*<<*
 <<			Shift [count] lines one 'shiftwidth' leftwards.
 
@@ -455,6 +458,9 @@ SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 							*>*
  >{motion}		Shift {motion} lines one 'shiftwidth' rightwards.
 
+			If the 'shiftwidth' option is set to zero, the amount
+			of indent is calculated at the first non-blank
+			character in the line.
 							*>>*
  >>			Shift [count] lines one 'shiftwidth' rightwards.
 
@@ -562,9 +568,7 @@ with ".".  Vim does not recognize a comment (starting with '"') after the
 			option is empty (this is the default), use the
 			internal formatting function |C-indenting| and
 			|'lisp'|.  But when 'indentexpr' is not empty, it will
-			be used instead |indent-expression|.  When Vim was
-			compiled without internal formatting then the "indent"
-			program is used as a last resort.
+			be used instead |indent-expression|.
 
 							*==*
 ==			Filter [count] lines like with ={motion}.
@@ -604,6 +608,8 @@ Directory for temporary files is created in the first suitable directory of:
 			|cmdline-ranges|.
 
 			See |:s_flags| for [flags].
+			The delimiter doesn't need to be /, see
+			|pattern-delimiter|.
 
 :[range]s[ubstitute] [flags] [count]
 :[range]&[&][flags] [count]					*:&*
@@ -615,6 +621,8 @@ Directory for temporary files is created in the first suitable directory of:
 			The space between `:substitute` and the 'c', 'g',
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
+			Also see the two and three letter commands to repeat
+			:substitute below |:substitute-repeat|.
 
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string
@@ -738,12 +746,14 @@ This deletes "TESTING" from all lines, but only one per line.
 For compatibility with Vi these two exceptions are allowed:
 "\/{string}/" and "\?{string}?" do the same as "//{string}/r".
 "\&{string}&" does the same as "//{string}/".
-							*E146*
-Instead of the '/' which surrounds the pattern and replacement string, you
-can use any other single-byte character, but not an alphanumeric character,
-'\', '"' or '|'.  This is useful if you want to include a '/' in the search
-pattern or replacement string.  Example: >
+						*pattern-delimiter* *E146*
+Instead of the '/' which surrounds the pattern and replacement string, you can
+use another single-byte character.  This is useful if you want to include a
+'/' in the search pattern or replacement string.  Example: >
 	:s+/+//+
+
+You can use most characters, but not an alphanumeric character, '\', '"' or
+'|'.
 
 For the definition of a pattern, see |pattern|.  In Visual block mode, use
 |/\%V| in the pattern to have the substitute work in the block only.
@@ -835,20 +845,26 @@ either the first or second pattern in parentheses did not match, so either
 		*:sge* *:sgi* *:sgI* *:sgl* *:sgn* *:sgp* *:sgr* *:sI* *:si*
 		*:sic* *:sIc* *:sie* *:sIe* *:sIg* *:sIl* *:sin* *:sIn* *:sIp*
 		*:sip* *:sIr* *:sir* *:sr* *:src* *:srg* *:sri* *:srI* *:srl*
-		*:srn* *:srp*
+		*:srn* *:srp* *:substitute-repeat*
 2-letter and 3-letter :substitute commands ~
+
+These commands repeat the previous `:substitute` command with the given flags.
+The first letter is always "s", followed by one or two of the possible flag
+characters.  For example `:sce` works like `:s///ce`.  The table lists the
+possible combinations, not all flags are possible, because the command is
+short for another command.
 
      List of :substitute commands
      |      c    e    g    i    I    n    p    l    r
-     | c  :sc  :sce :scg :sci :scI :scn :scp :scl  ---
+     | c  :sc  :sce :scg :sci :scI :scn :scp :scl
      | e
      | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
-     | i  :sic :sie  --- :si  :siI :sin :sip  --- :sir
+     | i  :sic :sie      :si  :siI :sin :sip      :sir
      | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
      | n
      | p
      | l
-     | r  :src  --- :srg :sri :srI :srn :srp :srl :sr
+     | r  :src      :srg :sri :srI :srn :srp :srl :sr
 
 Exceptions:
      :scr  is  `:scriptnames`
@@ -897,22 +913,7 @@ This replaces an end-of-line with a new line containing the value of $HOME. >
 This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 
 
-4.3 Search and replace					*search-replace*
-
-							*:pro* *:promptfind*
-:promptf[ind] [string]
-			Put up a Search dialog.  When [string] is given, it is
-			used as the initial search string.
-			{only for Win32 GUI}
-
-						*:promptr* *:promptrepl*
-:promptr[epl] [string]
-			Put up a Search/Replace dialog.  When [string] is
-			given, it is used as the initial search string.
-			{only for Win32 GUI}
-
-
-4.4 Changing tabs					*change-tabs*
+4.3 Changing tabs					*change-tabs*
 							*:ret* *:retab* *:retab!*
 :[range]ret[ab][!] [new_tabstop]
 			Replace all sequences of white-space containing a
@@ -934,6 +935,10 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 			this (that's a good habit anyway).
 			`:retab!` may also change a sequence of spaces by
 			<Tab> characters, which can mess up a printf().
+			A list of tab widths separated by commas may be used
+			in place of a single tabstop.  Each value in the list
+			represents the width of one tabstop, except the final
+			value which applies to all following tabstops.
 
 							*retab-example*
 Example for using autocommands and ":retab" to edit a file which is stored
@@ -949,14 +954,18 @@ inside of strings can change!  Also see 'softtabstop' option. >
 5. Copying and moving text				*copy-move*
 
 							*quote*
-"{a-zA-Z0-9.%#:-"}	Use register {a-zA-Z0-9.%#:-"} for next delete, yank
-			or put (use uppercase character to append with
-			delete and yank) ({.%#:} only work with put).
+"{register}		Use {register} for next delete, yank or put.  Use
+			an uppercase character to append with delete and yank.
+			Registers ".", "%", "#" and ":" only work with put.
 
 							*:reg* *:registers*
-:reg[isters]		Display the contents of all numbered and named
-			registers.  If a register is written to for |:redir|
-			it will not be listed.
+:reg[isters]		Display the type and contents of all numbered and
+			named registers.  If a register is written to for
+			|:redir| it will not be listed.
+			Type can be one of:
+			"c"	for |characterwise| text
+			"l"	for |linewise| text
+			"b"	for |blockwise-visual| text
 
 
 :reg[isters] {arg}	Display the contents of the numbered and named
@@ -979,9 +988,13 @@ inside of strings can change!  Also see 'softtabstop' option. >
 
 							*Y*
 ["x]Y			yank [count] lines [into register x] (synonym for
-			yy, |linewise|).  If you like "Y" to work from the
-			cursor to the end of line (which is more logical,
-			but not Vi-compatible) use ":map Y y$".
+			yy, |linewise|).
+							*Y-default*
+			Mapped to "y$" by default. |default-mappings|
+
+							*zy*
+["x]zy{motion}		Yank {motion} text [into register x].  Only differs
+			from `y` when selecting a block of text, see |v_zy|.
 
 							*v_y*
 {Visual}["x]y		Yank the highlighted text [into register x] (for
@@ -991,10 +1004,14 @@ inside of strings can change!  Also see 'softtabstop' option. >
 {Visual}["x]Y		Yank the highlighted lines [into register x] (for
 			{Visual} see |Visual-mode|).
 
+							*v_zy*
+{Visual}["x]zy		Yank the highlighted text [into register x].  Trailing
+			whitespace at the end of each line of a selected block
+			won't be yanked.  Especially useful in combination
+			with `zp`.  (for {Visual} see |Visual-mode|)
+
 							*:y* *:yank* *E850*
-:[range]y[ank] [x]	Yank [range] lines [into register x]. Yanking to the
-			"* or "+ registers is possible only when the
-			|+clipboard| feature is included.
+:[range]y[ank] [x]	Yank [range] lines [into register x].
 
 :[range]y[ank] [x] {count}
 			Yank {count} lines, starting with last line number
@@ -1067,6 +1084,12 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			Using the mouse only works when 'mouse' contains 'n'
 			or 'a'.
 
+["x]zp		    or					*zp* *zP*
+["x]zP			Like "p" and "P", except without adding trailing spaces
+			when pasting a block.  Thus the inserted text will not
+			always be a rectangle.  Especially useful in
+			combination with |v_zy|.
+
 You can use these commands to copy text from one place to another.  Do this
 by first getting the text into a register with a yank, delete or change
 command, then inserting the register contents with a put command.  You can
@@ -1116,6 +1139,9 @@ this happen.  However, if the width of the block is not a multiple of a <Tab>
 width and the text after the inserted block contains <Tab>s, that text may be
 misaligned.
 
+Use |zP|/|zp| to paste a blockwise yanked register without appending trailing
+spaces.
+
 Note that after a charwise yank command, Vim leaves the cursor on the first
 yanked character that is closest to the start of the buffer.  This means that
 "yl" doesn't move the cursor, but "yh" moves the cursor one character left.
@@ -1126,7 +1152,7 @@ Rationale:	In Vi the "y" command followed by a backwards motion would
 With a linewise yank command the cursor is put in the first line, but the
 column is unmodified, thus it may not be on the first yanked character.
 
-There are ten types of registers:			*registers* *E354*
+There are ten types of registers:		*registers* *{register}* *E354*
 1. The unnamed register ""
 2. 10 numbered registers "0 to "9
 3. The small delete register "-
@@ -1386,7 +1412,7 @@ text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
   func! format#Format()
     " only reformat on explicit gq command
     if mode() != 'n'
-      " fall back to Vims internal reformatting
+      " fall back to Vim's internal reformatting
       return 1
     endif
     let lines = getline(v:lnum, v:lnum + v:count - 1)
@@ -1559,23 +1585,31 @@ can separate the option letters with commas for readability.
 
 letter	 meaning when present in 'formatoptions'    ~
 
+							*fo-t*
 t	Auto-wrap text using textwidth
+							*fo-c*
 c	Auto-wrap comments using textwidth, inserting the current comment
 	leader automatically.
+							*fo-r*
 r	Automatically insert the current comment leader after hitting
 	<Enter> in Insert mode.
+							*fo-o*
 o	Automatically insert the current comment leader after hitting 'o' or
 	'O' in Normal mode.
+							*fo-q*
 q	Allow formatting of comments with "gq".
 	Note that formatting will not change blank lines or lines containing
 	only the comment leader.  A new paragraph starts after such a line,
 	or when the comment leader changes.
+							*fo-w*
 w	Trailing white space indicates a paragraph continues in the next line.
 	A line that ends in a non-white character ends a paragraph.
+							*fo-a*
 a	Automatic formatting of paragraphs.  Every time text is inserted or
 	deleted the paragraph will be reformatted.  See |auto-format|.
 	When the 'c' flag is present this only happens for recognized
 	comments.
+							*fo-n*
 n	When formatting text, recognize numbered lists.  This actually uses
 	the 'formatlistpat' option, thus any kind of list can be used.  The
 	indent of the text after the number is used for the next line.  The
@@ -1586,6 +1620,7 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		1. the first item
 		   wraps
 		2. the second item
+<							*fo-2*
 2	When formatting text, use the indent of the second line of a paragraph
 	for the rest of the paragraph, instead of the indent of the first
 	line.  This supports paragraphs in which the first line has a
@@ -1595,36 +1630,46 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		second line of the same paragraph
 		third line.
 <	This also works inside comments, ignoring the comment leader.
+							*fo-v*
 v	Vi-compatible auto-wrapping in insert mode: Only break a line at a
 	blank that you have entered during the current insert command.  (Note:
 	this is not 100% Vi compatible.  Vi has some "unexpected features" or
 	bugs in this area.  It uses the screen column instead of the line
 	column.)
+							*fo-b*
 b	Like 'v', but only auto-wrap if you enter a blank at or before
 	the wrap margin.  If the line was longer than 'textwidth' when you
 	started the insert, or you do not enter a blank in the insert before
 	reaching 'textwidth', Vim does not perform auto-wrapping.
+							*fo-l*
 l	Long lines are not broken in insert mode: When a line was longer than
 	'textwidth' when the insert command started, Vim does not
 	automatically format it.
-m	Also break at a multi-byte character above 255.  This is useful for
+							*fo-m*
+m	Also break at a multibyte character above 255.  This is useful for
 	Asian text where every character is a word on its own.
-M	When joining lines, don't insert a space before or after a multi-byte
+							*fo-M*
+M	When joining lines, don't insert a space before or after a multibyte
 	character.  Overrules the 'B' flag.
-B	When joining lines, don't insert a space between two multi-byte
+							*fo-B*
+B	When joining lines, don't insert a space between two multibyte
 	characters.  Overruled by the 'M' flag.
+							*fo-1*
 1	Don't break a line after a one-letter word.  It's broken before it
 	instead (if possible).
+							*fo-]*
 ]	Respect textwidth rigorously. With this flag set, no line can be
 	longer than textwidth, unless line-break-prohibition rules make this
 	impossible.  Mainly for CJK scripts and works only if 'encoding' is
 	"utf-8".
+							*fo-j*
 j	Where it makes sense, remove a comment leader when joining lines.  For
 	example, joining:
 		int i;   // the index ~
 		         // in the list ~
 	Becomes:
 		int i;   // the index in the list ~
+							*fo-p*
 p	Don't break lines at single spaces that follow periods.  This is
 	intended to complement 'joinspaces' and |cpo-J|, for prose with
 	sentences separated by two spaces.  For example, with 'textwidth' set
@@ -1682,7 +1727,7 @@ Some examples:
 Automatic formatting				*auto-format* *autoformat*
 
 When the 'a' flag is present in 'formatoptions' text is formatted
-automatically when inserting text or deleting text.  This works nice for
+automatically when inserting text or deleting text.  This works nicely for
 editing text paragraphs.  A few hints on how to use this:
 
 - You need to properly define paragraphs.  The simplest is paragraphs that are
@@ -1728,13 +1773,23 @@ Vim has a sorting function and a sorting command.  The sorting function can be
 found here: |sort()|, |uniq()|.
 
 							*:sor* *:sort*
-:[range]sor[t][!] [b][f][i][n][o][r][u][x] [/{pattern}/]
+:[range]sor[t][!] [b][f][i][l][n][o][r][u][x] [/{pattern}/]
 			Sort lines in [range].  When no range is given all
 			lines are sorted.
 
 			With [!] the order is reversed.
 
 			With [i] case is ignored.
+
+			With [l] sort uses the current collation locale.
+			Implementation details: strcoll() is used to compare
+			strings. See |:language| to check or set the collation
+			locale. Example: >
+				:language collate en_US.UTF-8
+				:%sort l
+<			|v:collate| can also used to check the current locale.
+			Sorting using the locale typically ignores case.
+			This does not work properly on Mac.
 
 			Options [n][f][x][o][b] are mutually exclusive.
 
@@ -1745,8 +1800,7 @@ found here: |sort()|, |uniq()|.
 			With [f] sorting is done on the Float in the line.
 			The value of Float is determined similar to passing
 			the text (after or inside a {pattern} match) to
-			str2float() function. This option is available only
-			if Vim was compiled with Floating point support.
+			str2float() function.
 
 			With [x] sorting is done on the first hexadecimal
 			number in the line (after or inside a {pattern}
@@ -1769,6 +1823,8 @@ found here: |sort()|, |uniq()|.
 			When /{pattern}/ is specified and there is no [r] flag
 			the text matched with {pattern} is skipped, so that
 			you sort on what comes after the match.
+			'ignorecase' applies to the pattern, but 'smartcase'
+			is not used.
 			Instead of the slash any non-letter can be used.
 			For example, to sort on the second comma-separated
 			field: >
@@ -1802,8 +1858,7 @@ found here: |sort()|, |uniq()|.
 Note that using `:sort` with `:global` doesn't sort the matching lines, it's
 quite useless.
 
-The details about sorting depend on the library function used.  There is no
-guarantee that sorting obeys the current locale.  You will have to try it out.
+`:sort` does not use the current locale unless the l flag is used.
 Vim does do a "stable" sort.
 
 The sorting can be interrupted, but if you interrupt it too late in the

@@ -1,0 +1,61 @@
+name: Language server (LSP) client bug
+description: Report an issue with Neovim LSP
+labels: [bug, lsp]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage questions such as "How do I...?" or "Why isn't X language server/feature working?" belong on the [Neovim Discourse](https://neovim.discourse.group/c/7-category/7) and will be closed.
+
+  - type: input
+    attributes:
+      label: "Neovim version (nvim -v)"
+      placeholder: "0.6.0 commit db1b0ee3b30f"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Language server name/version"
+      placeholder: "rls 0.5.2"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Operating system/version"
+      placeholder: "emacs 23"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ':checkhealth'
+      description: |
+        Paste the results from `nvim -c ":checkhealth nvim lspconfig"`
+      render: markdown
+
+  - type: textarea
+    attributes:
+      label: 'Steps to reproduce using "nvim -u minimal_init.lua"'
+      description: |
+        - Download the minimal config with `curl -LO https://raw.githubusercontent.com/neovim/nvim-lspconfig/master/test/minimal_init.lua` and modify it to include any specific commands or servers pertaining to your issues.
+        - _Note_: if the issue is with an autocompletion or other LSP plugin, report to that plugin's issue tracker.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Expected behavior"
+      description: "Describe the behavior you expect. May include logs, images, or videos."
+  - type: textarea
+    attributes:
+      label: "Actual behavior"
+
+  - type: input
+    attributes:
+      label: "Log file"
+      placeholder: "https://gist.github.com/prakhar1989/1b0a2c9849b2e1e912fb"
+      description: |
+        - Upload `lsp.log` before and after the problem in a [secret gist](https://gist.github.com/). Paste the URL to the gist.
+        - You can set the log level by adding `vim.lsp.set_log_level("debug")` after setting up LSP in your config.
+        - You can find the location of the log with `:lua print(vim.lsp.get_log_path())`

@@ -20,6 +20,7 @@ describe('search highlighting', function()
       [2] = {background = colors.Yellow}, -- Search
       [3] = {reverse = true},
       [4] = {foreground = colors.Red}, -- Message
+      [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
 
@@ -35,6 +36,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       {1:~                                       }|
       /text                                   |
+    ]])
+  end)
+
+  it('is disabled in folded text', function()
+    insert("some text\nmore text")
+    feed_command('1,2fold')
+    feed("gg/text")
+    screen:expect([[
+      {6:+--  2 lines: some text·················}|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /text^                                   |
     ]])
   end)
 
@@ -455,6 +471,19 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
+    -- check hilights work also in folds
+    feed("zf4j")
+    command("%foldopen")
+    screen:expect([[
+        very {5:spec^ial}{2: te}{6:xt}                     |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {4:search hit BOTTOM, continuing at TOP}    |
+    ]])
+
     feed_command("call clearmatches()")
     screen:expect([[
         very spec{2:^ial te}xt                     |
@@ -478,7 +507,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       :syntax keyword MyGroup special         |
     ]])
+  end)
 
+  it('highlights entire pattern on :%g@a/b', function()
+    command('set inccommand=nosplit')
+    feed('ia/b/c<Esc>')
+    feed(':%g@a/b')
+    screen:expect([[
+      {3:a/b}/c                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      :%g@a/b^                                 |
+    ]])
   end)
 end)
 

@@ -3368,10 +3368,6 @@ msgstr ""
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr ""
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr ""
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr ""

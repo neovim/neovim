@@ -506,6 +506,20 @@ describe('clipboard (with fake clipboard.vim)', function()
       feed('p')
       eq('textstar', meths.get_current_line())
     end)
+
+    it('Block paste works currectly', function()
+      insert([[
+        aabbcc
+        ddeeff
+      ]])
+      feed('gg^<C-v>') -- Goto start of top line enter visual block mode
+      feed('3ljy^k') -- yank 4x2 block & goto initial location
+      feed('P') -- Paste it infront
+      expect([[
+        aabbaabbcc
+        ddeeddeeff
+      ]])
+    end)
   end)
 
   describe('clipboard=unnamedplus', function()
@@ -605,10 +619,10 @@ describe('clipboard (with fake clipboard.vim)', function()
       {0:~                                                           }|
       {4:                                                            }|
       :registers                                                  |
-      {1:--- Registers ---}                                           |
-      "*   some{2:^J}star data{2:^J}                                      |
-      "+   such{2:^J}plus{2:^J}stuff                                      |
-      ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']       |
+      {1:Type Name Content}                                           |
+        l  "*   some{2:^J}star data{2:^J}                                 |
+        c  "+   such{2:^J}plus{2:^J}stuff                                 |
+        c  ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']  |
       {3:Press ENTER or type command to continue}^                     |
     ]], {
       [0] = {bold = true, foreground = Screen.colors.Blue},
@@ -639,14 +653,12 @@ describe('clipboard (with fake clipboard.vim)', function()
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
     }, 'v'}, eval("g:test_clip['*']"))
     feed_command(':echo "Howdy!"')
     eq({{
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
       '',
       'Howdy!',
     }, 'v'}, eval("g:test_clip['*']"))

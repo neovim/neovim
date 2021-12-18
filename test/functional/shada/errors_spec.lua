@@ -342,6 +342,11 @@ describe('ShaDa error handling', function()
     eq('Vim(rshada):E575: Error while reading ShaDa file: variable entry at position 0 has wrong variable name type', exc_exec(sdrcmd()))
   end)
 
+  it('fails on variable item with BIN value and type value != VAR_TYPE_BLOB', function()
+    wshada('\006\000\007\147\196\001\065\196\000\000')
+    eq('Vim(rshada):E575: Error while reading ShaDa file: variable entry at position 0 has wrong variable type', exc_exec(sdrcmd()))
+  end)
+
   it('fails on replacement item with NIL value', function()
     wshada('\003\000\001\192')
     eq('Vim(rshada):E575: Error while reading ShaDa file: sub string entry at position 0 is not an array', exc_exec(sdrcmd()))

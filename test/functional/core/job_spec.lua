@@ -5,6 +5,7 @@ local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim
   helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
+local assert_alive = helpers.assert_alive
 local command = helpers.command
 local funcs = helpers.funcs
 local os_kill = helpers.os_kill
@@ -31,9 +32,9 @@ describe('jobs', function()
     nvim('set_var', 'channel', channel)
     source([[
     function! Normalize(data) abort
-      " Windows: remove ^M
+      " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
@@ -63,6 +64,7 @@ describe('jobs', function()
 
   it('append environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
@@ -75,8 +77,24 @@ describe('jobs', function()
     })
   end)
 
+  it('append environment with pty #env', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
+    nvim('command', "let g:job_opts.pty = v:true")
+    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    if iswin() then
+      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+    else
+      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+    end
+    expect_msg_seq({
+      {'notification', 'stdout', {0, {'hello world abc', ''}}},
+    })
+  end)
+
   it('replace environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     nvim('command', "let g:job_opts.clear_env = 1")
 
@@ -99,6 +117,32 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'hello world', ''}}}
       })
     end
+  end)
+
+  it('handles case-insensitively matching #env vars', function()
+    nvim('command', "let $TOTO = 'abc'")
+    -- Since $Toto is being set in the job, it should take precedence over the
+    -- global $TOTO on Windows
+    nvim('command', "let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
+    if iswin() then
+      nvim('command', [[let j = jobstart('set | find /I "toto="', g:job_opts)]])
+    else
+      nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
+    end
+    nvim('command', "call jobwait([j])")
+    nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
+    local actual = eval('g:output')
+    local expected
+    if iswin() then
+      -- Toto is normalized to TOTO so we can detect duplicates, and because
+      -- Windows doesn't care about case
+      expected = {'TOTO=def', ''}
+    else
+      expected = {'TOTO=abc', 'Toto=def', ''}
+    end
+    table.sort(actual)
+    table.sort(expected)
+    eq(expected, actual)
   end)
 
   it('uses &shell and &shellcmdflag if passed a string', function()
@@ -302,6 +346,12 @@ describe('jobs', function()
   it("disallows jobsend on a job that closed stdin", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
+    eq(false, pcall(function()
+      nvim('command', 'call jobsend(j, ["some data"])')
+    end))
+
+    command("let g:job_opts.stdin = 'null'")
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     eq(false, pcall(function()
       nvim('command', 'call jobsend(j, ["some data"])')
     end))
@@ -821,7 +871,7 @@ describe('jobs', function()
     -- loop tick. This is also prevented by try-block, so feed must be used.
     feed_command("call DoIt()")
     feed('<cr>') -- press RETURN
-    eq(2,eval('1+1'))
+    assert_alive()
   end)
 
   it('jobstop() kills entire process tree #6530', function()
@@ -946,8 +996,10 @@ describe('jobs', function()
       return rv
     end
 
+    local j
     local function send(str)
-      nvim('command', 'call jobsend(j, "'..str..'")')
+      -- check no nvim_chan_free double free with pty job (#14198)
+      meths.chan_send(j, str)
     end
 
     before_each(function()
@@ -962,6 +1014,7 @@ describe('jobs', function()
       nvim('command', 'let g:job_opts.pty = 1')
       nvim('command', 'let exec = [expand("<cfile>:p")]')
       nvim('command', "let j = jobstart(exec, g:job_opts)")
+      j = eval'j'
       eq('tty ready', next_chunk())
     end)
 

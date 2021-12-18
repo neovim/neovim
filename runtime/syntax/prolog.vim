@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:    PROLOG
 " Maintainer:  Anton Kochkov <anton.kochkov@gmail.com>
-" Last Change: 2019 Aug 29
+" Last Change: 2021 Jan 05
 
 " There are two sets of highlighting in here:
 " If the "prolog_highlighting_clean" variable exists, it is rather sparse.
@@ -21,16 +21,16 @@ syn case match
 " Very simple highlighting for comments, clause heads and
 " character codes.  It respects prolog strings and atoms.
 
-syn region   prologCComment start=+/\*+ end=+\*/+
-syn match    prologComment  +%.*+
+syn region   prologCComment start=+/\*+ end=+\*/+ contains=@Spell
+syn match    prologComment  +%.*+ contains=@Spell
 
 if !exists("prolog_highlighting_no_keyword")
   syn keyword  prologKeyword  module meta_predicate multifile dynamic
 endif
 syn match    prologCharCode +0'\\\=.+
-syn region   prologString   start=+"+ skip=+\\\\\|\\"+ end=+"+
+syn region   prologString   start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell
 syn region   prologAtom     start=+'+ skip=+\\\\\|\\'+ end=+'+
-syn region   prologClause   matchgroup=prologClauseHead start=+^\s*[a-z]\w*+ matchgroup=Normal end=+\.\s\|\.$+ contains=ALLBUT,prologClause
+syn region   prologClause   matchgroup=prologClauseHead start=+^\s*[a-z]\w*+ matchgroup=Normal end=+\.\s\|\.$+ contains=ALLBUT,prologClause contains=@NoSpell
 
 if !exists("prolog_highlighting_clean")
 

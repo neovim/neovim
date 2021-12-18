@@ -9,26 +9,27 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
-#include "nvim/eval/typval.h"
-#include "nvim/popupmnu.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/edit.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
-#include "nvim/ui_compositor.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/memory.h"
-#include "nvim/window.h"
-#include "nvim/edit.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
-static pumitem_T *pum_array = NULL; // items of displayed pum
+static pumitem_T *pum_array = NULL;  // items of displayed pum
 static int pum_size;                // nr of items in "pum_array"
 static int pum_selected;            // index of selected item or -1
 static int pum_first = 0;           // index of top item
@@ -97,8 +98,7 @@ static void pum_compute_size(void)
 ///                      if false, a new item is selected, but the array
 ///                      is the same
 /// @param cmd_startcol only for cmdline mode: column of completed match
-void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
-                 int cmd_startcol)
+void pum_display(pumitem_T *array, int size, int selected, bool array_changed, int cmd_startcol)
 {
   int context_lines;
   int above_row;
@@ -139,8 +139,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         cursor_col = curwin->w_wcol;
       }
 
-      pum_anchor_grid = (int)curwin->w_grid.handle;
-      if (!ui_has(kUIMultigrid)) {
+      pum_anchor_grid = (int)curwin->w_grid.target->handle;
+      pum_win_row += curwin->w_grid.row_offset;
+      cursor_col += curwin->w_grid.col_offset;
+      if (!ui_has(kUIMultigrid) && curwin->w_grid.target != &default_grid) {
         pum_anchor_grid = (int)default_grid.handle;
         pum_win_row += curwin->w_winrow;
         cursor_col += curwin->w_wincol;
@@ -231,7 +233,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         context_lines = 3;
       } else {
         context_lines = curwin->w_cline_row
-          + curwin->w_cline_height - curwin->w_wrow;
+                        + curwin->w_cline_height - curwin->w_wrow;
       }
 
       pum_row = pum_win_row + context_lines;
@@ -396,7 +398,7 @@ void pum_redraw(void)
   char_u *p = NULL;
   int totwidth, width, w;
   int thumb_pos = 0;
-  int thumb_heigth = 1;
+  int thumb_height = 1;
   int round;
   int n;
 
@@ -419,6 +421,10 @@ void pum_redraw(void)
   }
 
   grid_assign_handle(&pum_grid);
+
+  pum_grid.zindex = ((State == CMDLINE)
+                     ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu);
+
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col-col_off,
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
@@ -434,10 +440,10 @@ void pum_redraw(void)
   }
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
-    int row_off = pum_above ? pum_height : 0;
+    int row_off = pum_above ? -pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_to_string(anchor),
                           pum_anchor_grid, pum_row-row_off, pum_col-col_off,
-                          false);
+                          false, pum_grid.zindex);
   }
 
 
@@ -447,11 +453,11 @@ void pum_redraw(void)
   }
 
   if (pum_scrollbar) {
-    thumb_heigth = pum_height * pum_height / pum_size;
-    if (thumb_heigth == 0) {
-      thumb_heigth = 1;
+    thumb_height = pum_height * pum_height / pum_size;
+    if (thumb_height == 0) {
+      thumb_height = 1;
     }
-    thumb_pos = (pum_first * (pum_height - thumb_heigth)
+    thumb_pos = (pum_first * (pum_height - thumb_height)
                  + (pum_size - pum_height) / 2)
                 / (pum_size - pum_height);
   }
@@ -481,17 +487,17 @@ void pum_redraw(void)
       s = NULL;
 
       switch (round) {
-        case 1:
-          p = pum_array[idx].pum_text;
-          break;
+      case 1:
+        p = pum_array[idx].pum_text;
+        break;
 
-        case 2:
-          p = pum_array[idx].pum_kind;
-          break;
+      case 2:
+        p = pum_array[idx].pum_kind;
+        break;
 
-        case 3:
-          p = pum_array[idx].pum_extra;
-          break;
+      case 3:
+        p = pum_array[idx].pum_extra;
+        break;
       }
 
       if (p != NULL) {
@@ -508,7 +514,7 @@ void pum_redraw(void)
             char_u saved = *p;
 
             *p = NUL;
-            st = (char_u *)transstr((const char *)s);
+            st = (char_u *)transstr((const char *)s, true);
             *p = saved;
 
             if (pum_rl) {
@@ -614,11 +620,11 @@ void pum_redraw(void)
     if (pum_scrollbar > 0) {
       if (pum_rl) {
         grid_putchar(&pum_grid, ' ', row, col_off - pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     i >= thumb_pos && i < thumb_pos + thumb_height
                      ? attr_thumb : attr_scroll);
       } else {
         grid_putchar(&pum_grid, ' ', row, col_off + pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     i >= thumb_pos && i < thumb_pos + thumb_height
                      ? attr_thumb : attr_scroll);
       }
     }
@@ -729,7 +735,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bt[2] == 'f')
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!BUFEMPTY()) {
+          while (!buf_is_empty(curbuf)) {
             ml_delete((linenr_T)1, false);
           }
         } else {
@@ -742,6 +748,7 @@ static int pum_set_selected(int n, int repeat)
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
             set_option_value("swf", 0L, NULL, OPT_LOCAL);
+            set_option_value("bl", 0L, NULL, OPT_LOCAL);
             set_option_value("bt", 0L, "nofile", OPT_LOCAL);
             set_option_value("bh", 0L, "wipe", OPT_LOCAL);
             set_option_value("diff", 0L, NULL, OPT_LOCAL);
@@ -808,7 +815,7 @@ static int pum_set_selected(int n, int repeat)
               no_u_sync++;
               win_enter(curwin_save, true);
               no_u_sync--;
-              update_topline();
+              update_topline(curwin);
             }
 
             // Update the screen before drawing the popup menu.

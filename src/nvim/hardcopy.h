@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <stdlib.h>  // for size_t
 
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
 #include "nvim/globals.h"  // for TriState
 #include "nvim/types.h"  // for char_u
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
 
 /*
  * Structure to hold printing color and font attributes.
@@ -34,19 +34,19 @@ typedef struct {
   int modec;
   int do_syntax;
   int user_abort;
-  char_u      *jobname;
-  char_u      *outfile;
-  char_u      *arguments;
+  char_u *jobname;
+  char_u *outfile;
+  char_u *arguments;
 } prt_settings_T;
 
 /*
  * Generic option table item, only used for printer at the moment.
  */
 typedef struct {
-  const char  *name;
+  const char *name;
   int hasnum;
   int number;
-  char_u      *string;          /* points into option string */
+  char_u *string;          // points into option string
   int strlen;
   int present;
 } option_table_T;
@@ -67,13 +67,13 @@ typedef struct {
 #define OPT_PRINT_FORMFEED     13
 #define OPT_PRINT_NUM_OPTIONS  14
 
-/* For prt_get_unit(). */
+// For prt_get_unit().
 #define PRT_UNIT_NONE  -1
 #define PRT_UNIT_PERC  0
 #define PRT_UNIT_INCH  1
 #define PRT_UNIT_MM    2
 #define PRT_UNIT_POINT 3
-#define PRT_UNIT_NAMES {"pc", "in", "mm", "pt"}
+#define PRT_UNIT_NAMES { "pc", "in", "mm", "pt" }
 
 #define PRINT_NUMBER_WIDTH 8
 

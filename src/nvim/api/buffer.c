@@ -1,41 +1,39 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// Much of this code was adapted from 'if_py_both.h' from the original
+// Some of this code was adapted from 'if_py_both.h' from the original
 // vim source
+#include <lauxlib.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
-
-#include <lauxlib.h>
 
 #include "nvim/api/buffer.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/lua/executor.h"
-#include "nvim/vim.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
+#include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/lua/executor.h"
+#include "nvim/map.h"
+#include "nvim/map_defs.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/misc1.h"
-#include "nvim/ex_cmds.h"
-#include "nvim/map_defs.h"
-#include "nvim/map.h"
-#include "nvim/mark.h"
-#include "nvim/extmark.h"
-#include "nvim/decoration.h"
-#include "nvim/fileio.h"
 #include "nvim/move.h"
-#include "nvim/syntax.h"
-#include "nvim/window.h"
+#include "nvim/ops.h"
 #include "nvim/undo.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/buffer_updates.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -80,34 +78,6 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
   return buf->b_ml.ml_line_count;
 }
 
-/// Gets a buffer line
-///
-/// @deprecated use nvim_buf_get_lines instead.
-///             for positive indices (including 0) use
-///                 "nvim_buf_get_lines(buffer, index, index+1, true)"
-///             for negative indices use
-///                 "nvim_buf_get_lines(buffer, index-1, index, true)"
-///
-/// @param buffer   Buffer handle
-/// @param index    Line index
-/// @param[out] err Error details, if any
-/// @return Line string
-String buffer_get_line(Buffer buffer, Integer index, Error *err)
-{
-  String rv = { .size = 0 };
-
-  index = convert_index(index);
-  Array slice = nvim_buf_get_lines(0, buffer, index, index+1, true, err);
-
-  if (!ERROR_SET(err) && slice.size) {
-    rv = slice.items[0].data.string;
-  }
-
-  xfree(slice.items);
-
-  return rv;
-}
-
 /// Activates buffer-update events on a channel, or as Lua callbacks.
 ///
 /// Example (Lua): capture buffer updates in a global `events` variable
@@ -139,6 +109,24 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
+///             - on_bytes: lua callback invoked on change.
+///               This callback receives more granular information about the
+///               change compared to on_lines.
+///               Return `true` to detach.
+///               Args:
+///               - the string "bytes"
+///               - buffer handle
+///               - b:changedtick
+///               - start row of the changed text (zero-indexed)
+///               - start column of the changed text
+///               - byte offset of the changed text (from the start of
+///                   the buffer)
+///               - old end row of the changed text
+///               - old end column of the changed text
+///               - old end byte length of the changed text
+///               - new end row of the changed text
+///               - new end column of the changed text
+///               - new end byte length of the changed text
 ///             - on_changedtick: Lua callback invoked on changedtick
 ///               increment without text change. Args:
 ///               - the string "changedtick"
@@ -147,16 +135,19 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///             - on_detach: Lua callback invoked on detach. Args:
 ///               - the string "detach"
 ///               - buffer handle
+///             - on_reload: Lua callback invoked on reload. The entire buffer
+///                          content should be considered changed. Args:
+///               - the string "detach"
+///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
+///             - preview: also attach to command preview (i.e. 'inccommand')
+///               events.
 /// @param[out] err Error details, if any
 /// @return False if attach failed (invalid parameter, or buffer isn't loaded);
 ///         otherwise True. TODO: LUA_API_NO_EVAL
-Boolean nvim_buf_attach(uint64_t channel_id,
-                        Buffer buffer,
-                        Boolean send_buffer,
-                        DictionaryOf(LuaRef) opts,
-                        Error *err)
+Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
+                        DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(4)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -167,44 +158,57 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 
   bool is_lua = (channel_id == LUA_INTERNAL_CALL);
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
+  struct {
+    const char *name;
+    LuaRef *dest;
+  } cbs[] = {
+    { "on_lines", &cb.on_lines },
+    { "on_bytes", &cb.on_bytes },
+    { "on_changedtick", &cb.on_changedtick },
+    { "on_detach", &cb.on_detach },
+    { "on_reload", &cb.on_reload },
+    { NULL, NULL },
+  };
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (is_lua && strequal("on_lines", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+    bool key_used = false;
+    if (is_lua) {
+      for (size_t j = 0; cbs[j].name; j++) {
+        if (strequal(cbs[j].name, k.data)) {
+          if (v->type != kObjectTypeLuaRef) {
+            api_set_error(err, kErrorTypeValidation,
+                          "%s is not a function", cbs[j].name);
+            goto error;
+          }
+          *(cbs[j].dest) = v->data.luaref;
+          v->data.luaref = LUA_NOREF;
+          key_used = true;
+          break;
+        }
       }
-      cb.on_lines = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_bytes", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+
+      if (key_used) {
+        continue;
+      } else if (strequal("utf_sizes", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
+          goto error;
+        }
+        cb.utf_sizes = v->data.boolean;
+        key_used = true;
+      } else if (strequal("preview", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "preview must be boolean");
+          goto error;
+        }
+        cb.preview = v->data.boolean;
+        key_used = true;
       }
-      cb.on_bytes = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_changedtick", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_changedtick = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_detach", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_detach = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("utf_sizes", k.data)) {
-      if (v->type != kObjectTypeBoolean) {
-        api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
-        goto error;
-      }
-      cb.utf_sizes = v->data.boolean;
-    } else {
+    }
+
+    if (!key_used) {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
@@ -213,11 +217,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
   return buf_updates_register(buf, channel_id, cb, send_buffer);
 
 error:
-  // TODO(bfredl): ASAN build should check that the ref table is empty?
-  api_free_luaref(cb.on_lines);
-  api_free_luaref(cb.on_bytes);
-  api_free_luaref(cb.on_changedtick);
-  api_free_luaref(cb.on_detach);
+  buffer_update_callbacks_free(cb);
   return false;
 }
 
@@ -231,9 +231,7 @@ error:
 /// @param[out] err Error details, if any
 /// @return False if detach failed (because the buffer isn't loaded);
 ///         otherwise True.
-Boolean nvim_buf_detach(uint64_t channel_id,
-                        Buffer buffer,
-                        Error *err)
+Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -246,9 +244,7 @@ Boolean nvim_buf_detach(uint64_t channel_id,
   return true;
 }
 
-void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last,
-                            Error *err)
-  FUNC_API_LUA_ONLY
+void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -256,68 +252,6 @@ void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last,
   }
 
   redraw_buf_range_later(buf, (linenr_T)first+1, (linenr_T)last);
-}
-
-/// Sets a buffer line
-///
-/// @deprecated use nvim_buf_set_lines instead.
-///             for positive indices use
-///                 "nvim_buf_set_lines(buffer, index, index+1, true, [line])"
-///             for negative indices use
-///                 "nvim_buf_set_lines(buffer, index-1, index, true, [line])"
-///
-/// @param buffer   Buffer handle
-/// @param index    Line index
-/// @param line     Contents of the new line
-/// @param[out] err Error details, if any
-void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
-{
-  Object l = STRING_OBJ(line);
-  Array array = { .items = &l, .size = 1 };
-  index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index+1, true,  array, err);
-}
-
-/// Deletes a buffer line
-///
-/// @deprecated use nvim_buf_set_lines instead.
-///             for positive indices use
-///                 "nvim_buf_set_lines(buffer, index, index+1, true, [])"
-///             for negative indices use
-///                 "nvim_buf_set_lines(buffer, index-1, index, true, [])"
-/// @param buffer   buffer handle
-/// @param index    line index
-/// @param[out] err Error details, if any
-void buffer_del_line(Buffer buffer, Integer index, Error *err)
-{
-  Array array = ARRAY_DICT_INIT;
-  index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index+1, true, array, err);
-}
-
-/// Retrieves a line range from the buffer
-///
-/// @deprecated use nvim_buf_get_lines(buffer, newstart, newend, false)
-///             where newstart = start + int(not include_start) - int(start < 0)
-///                   newend = end + int(include_end) - int(end < 0)
-///                   int(bool) = 1 if bool is true else 0
-/// @param buffer         Buffer handle
-/// @param start          First line index
-/// @param end            Last line index
-/// @param include_start  True if the slice includes the `start` parameter
-/// @param include_end    True if the slice includes the `end` parameter
-/// @param[out] err       Error details, if any
-/// @return Array of lines
-ArrayOf(String) buffer_get_line_slice(Buffer buffer,
-                                      Integer start,
-                                      Integer end,
-                                      Boolean include_start,
-                                      Boolean include_end,
-                                      Error *err)
-{
-  start = convert_index(start) + !include_start;
-  end = convert_index(end) + include_end;
-  return nvim_buf_get_lines(0, buffer, start , end, false, err);
 }
 
 /// Gets a line-range from the buffer.
@@ -371,7 +305,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   }
 
   rv.size = (size_t)(end - start);
-  rv.items = xcalloc(sizeof(Object), rv.size);
+  rv.items = xcalloc(rv.size, sizeof(Object));
 
   if (!buf_collect_lines(buf, rv.size, start,
                          (channel_id != VIML_INTERNAL_CALL), &rv, err)) {
@@ -391,35 +325,27 @@ end:
   return rv;
 }
 
-
-/// Replaces a line range on the buffer
-///
-/// @deprecated use nvim_buf_set_lines(buffer, newstart, newend, false, lines)
-///             where newstart = start + int(not include_start) + int(start < 0)
-///                   newend = end + int(include_end) + int(end < 0)
-///                   int(bool) = 1 if bool is true else 0
-///
-/// @param buffer         Buffer handle, or 0 for current buffer
-/// @param start          First line index
-/// @param end            Last line index
-/// @param include_start  True if the slice includes the `start` parameter
-/// @param include_end    True if the slice includes the `end` parameter
-/// @param replacement    Array of lines to use as replacement (0-length
-//                        array will delete the line range)
-/// @param[out] err       Error details, if any
-void buffer_set_line_slice(Buffer buffer,
-                           Integer start,
-                           Integer end,
-                           Boolean include_start,
-                           Boolean include_end,
-                           ArrayOf(String) replacement,
-                           Error *err)
+static bool check_string_array(Array arr, bool disallow_nl, Error *err)
 {
-  start = convert_index(start) + !include_start;
-  end = convert_index(end) + include_end;
-  nvim_buf_set_lines(0, buffer, start, end, false, replacement, err);
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "All items in the replacement array must be strings");
+      return false;
+    }
+    // Disallow newlines in the middle of the line.
+    if (disallow_nl) {
+      const String l = arr.items[i].data.string;
+      if (memchr(l.data, NL, l.size)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "String cannot contain newlines");
+        return false;
+      }
+    }
+  }
+  return true;
 }
-
 
 /// Sets (replaces) a line-range in the buffer.
 ///
@@ -440,14 +366,10 @@ void buffer_set_line_slice(Buffer buffer,
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
-void nvim_buf_set_lines(uint64_t channel_id,
-                        Buffer buffer,
-                        Integer start,
-                        Integer end,
-                        Boolean strict_indexing,
-                        ArrayOf(String) replacement,
-                        Error *err)
+void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integer end,
+                        Boolean strict_indexing, ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -472,22 +394,9 @@ void nvim_buf_set_lines(uint64_t channel_id,
     return;
   }
 
-  for (size_t i = 0; i < replacement.size; i++) {
-    if (replacement.items[i].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "All items in the replacement array must be strings");
-      return;
-    }
-    // Disallow newlines in the middle of the line.
-    if (channel_id != VIML_INTERNAL_CALL) {
-      const String l = replacement.items[i].data.string;
-      if (memchr(l.data, NL, l.size)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "String cannot contain newlines");
-        return;
-      }
-    }
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  if (!check_string_array(replacement, disallow_nl, err)) {
+    return;
   }
 
   size_t new_len = replacement.size;
@@ -506,7 +415,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   try_start();
   aco_save_T aco;
-  aucmd_prepbuf(&aco, (buf_T *)buf);
+  aucmd_prepbuf(&aco, buf);
 
   if (!MODIFIABLE(buf)) {
     api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
@@ -517,6 +426,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;
   }
+
+  bcount_t deleted_bytes = get_region_bytecount(curbuf, start, end, 0, 0);
 
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
@@ -537,6 +448,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
+  bcount_t inserted_bytes = 0;
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
@@ -549,6 +461,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
+
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
@@ -568,6 +482,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       goto end;
     }
 
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+
     // Same as with replacing, but we also need to free lines
     xfree(lines[i]);
     lines[i] = NULL;
@@ -582,7 +498,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
               (linenr_T)(end - 1),
               MAXLNUM,
               (long)extra,
-              kExtmarkUndo);
+              kExtmarkNOOP);
+
+  extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
+                 deleted_bytes, (int)new_len, 0, inserted_bytes,
+                 kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
@@ -592,6 +512,250 @@ end:
     xfree(lines[i]);
   }
 
+  xfree(lines);
+  aucmd_restbuf(&aco);
+  try_end(err);
+}
+
+/// Sets (replaces) a range in the buffer
+///
+/// This is recommended over nvim_buf_set_lines when only modifying parts of a
+/// line, as extmarks will be preserved on non-modified parts of the touched
+/// lines.
+///
+/// Indexing is zero-based and end-exclusive.
+///
+/// To insert text at a given index, set `start` and `end` ranges to the same
+/// index. To delete a range, set `replacement` to an array containing
+/// an empty string, or simply an empty array.
+///
+/// Prefer nvim_buf_set_lines when adding or deleting entire lines only.
+///
+/// @param channel_id
+/// @param buffer           Buffer handle, or 0 for current buffer
+/// @param start_row        First line index
+/// @param start_column     First column
+/// @param end_row          Last line index
+/// @param end_column       Last column
+/// @param replacement      Array of lines to use as replacement
+/// @param[out] err         Error details, if any
+void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
+                       Integer end_row, Integer end_col, ArrayOf(String) replacement, Error *err)
+  FUNC_API_SINCE(7)
+{
+  FIXED_TEMP_ARRAY(scratch, 1);
+  if (replacement.size == 0) {
+    scratch.items[0] = STRING_OBJ(STATIC_CSTR_AS_STRING(""));
+    replacement = scratch;
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  bool oob = false;
+
+  // check range is ordered and everything!
+  // start_row, end_row within buffer len (except add text past the end?)
+  start_row = normalize_index(buf, start_row, &oob);
+  if (oob || start_row == buf->b_ml.ml_line_count + 1) {
+    api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
+    return;
+  }
+
+  end_row = normalize_index(buf, end_row, &oob);
+  if (oob || end_row == buf->b_ml.ml_line_count + 1) {
+    api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
+    return;
+  }
+
+  char *str_at_start = (char *)ml_get_buf(buf, start_row, false);
+  if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
+    api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
+    return;
+  }
+
+  char *str_at_end = (char *)ml_get_buf(buf, end_row, false);
+  size_t len_at_end = strlen(str_at_end);
+  if (end_col < 0 || (size_t)end_col > len_at_end) {
+    api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
+    return;
+  }
+
+  if (start_row > end_row || (end_row == start_row && start_col > end_col)) {
+    api_set_error(err, kErrorTypeValidation, "start is higher than end");
+    return;
+  }
+
+  bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
+  if (!check_string_array(replacement, disallow_nl, err)) {
+    return;
+  }
+
+  size_t new_len = replacement.size;
+
+  bcount_t new_byte = 0;
+  bcount_t old_byte = 0;
+
+  // calculate byte size of old region before it gets modified/deleted
+  if (start_row == end_row) {
+    old_byte = (bcount_t)end_col - start_col;
+  } else {
+    const char *bufline;
+    old_byte += (bcount_t)strlen(str_at_start) - start_col;
+    for (int64_t i = 1; i < end_row - start_row; i++) {
+      int64_t lnum = start_row + i;
+
+      bufline = (char *)ml_get_buf(buf, lnum, false);
+      old_byte += (bcount_t)(strlen(bufline))+1;
+    }
+    old_byte += (bcount_t)end_col+1;
+  }
+
+  String first_item = replacement.items[0].data.string;
+  String last_item = replacement.items[replacement.size-1].data.string;
+
+  size_t firstlen = (size_t)start_col+first_item.size;
+  size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
+  if (replacement.size == 1) {
+    firstlen += last_part_len;
+  }
+  char *first = xmallocz(firstlen);
+  char *last = NULL;
+  memcpy(first, str_at_start, (size_t)start_col);
+  memcpy(first+start_col, first_item.data, first_item.size);
+  memchrsub(first+start_col, NUL, NL, first_item.size);
+  if (replacement.size == 1) {
+    memcpy(first+start_col+first_item.size, str_at_end+end_col, last_part_len);
+  } else {
+    last = xmallocz(last_item.size+last_part_len);
+    memcpy(last, last_item.data, last_item.size);
+    memchrsub(last, NUL, NL, last_item.size);
+    memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
+  }
+
+  char **lines = xcalloc(new_len, sizeof(char *));
+  lines[0] = first;
+  new_byte += (bcount_t)(first_item.size);
+  for (size_t i = 1; i < new_len-1; i++) {
+    const String l = replacement.items[i].data.string;
+
+    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
+    // NL-used-for-NUL.
+    lines[i] = xmemdupz(l.data, l.size);
+    memchrsub(lines[i], NUL, NL, l.size);
+    new_byte += (bcount_t)(l.size)+1;
+  }
+  if (replacement.size > 1) {
+    lines[replacement.size-1] = last;
+    new_byte += (bcount_t)(last_item.size)+1;
+  }
+
+  try_start();
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, buf);
+
+  if (!MODIFIABLE(buf)) {
+    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
+    goto end;
+  }
+
+  // Small note about undo states: unlike set_lines, we want to save the
+  // undo state of one past the end_row, since end_row is inclusive.
+  if (u_save((linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to save undo information");
+    goto end;
+  }
+
+  ptrdiff_t extra = 0;  // lines added to text, can be negative
+  size_t old_len = (size_t)(end_row-start_row+1);
+
+  // If the size of the range is reducing (ie, new_len < old_len) we
+  // need to delete some old_len. We do this at the start, by
+  // repeatedly deleting line "start".
+  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
+  for (size_t i = 0; i < to_delete; i++) {
+    if (ml_delete((linenr_T)start_row, false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to delete line");
+      goto end;
+    }
+  }
+
+  if (to_delete > 0) {
+    extra -= (ptrdiff_t)to_delete;
+  }
+
+  // For as long as possible, replace the existing old_len with the
+  // new old_len. This is a more efficient operation, as it requires
+  // less memory allocation and freeing.
+  size_t to_replace = old_len < new_len ? old_len : new_len;
+  for (size_t i = 0; i < to_replace; i++) {
+    int64_t lnum = start_row + (int64_t)i;
+
+    if (lnum >= MAXLNUM) {
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
+      goto end;
+    }
+
+    if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to replace line");
+      goto end;
+    }
+    // Mark lines that haven't been passed to the buffer as they need
+    // to be freed later
+    lines[i] = NULL;
+  }
+
+  // Now we may need to insert the remaining new old_len
+  for (size_t i = to_replace; i < new_len; i++) {
+    int64_t lnum = start_row + (int64_t)i - 1;
+
+    if (lnum >= MAXLNUM) {
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
+      goto end;
+    }
+
+    if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to insert line");
+      goto end;
+    }
+
+    // Same as with replacing, but we also need to free lines
+    xfree(lines[i]);
+    lines[i] = NULL;
+    extra++;
+  }
+
+  // Adjust marks. Invalidate any which lie in the
+  // changed range, and move any in the remainder of the buffer.
+  mark_adjust((linenr_T)start_row,
+              (linenr_T)end_row,
+              MAXLNUM,
+              (long)extra,
+              kExtmarkNOOP);
+
+  colnr_T col_extent = (colnr_T)(end_col
+                                 - ((end_row == start_row) ? start_col : 0));
+  extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
+                 (int)(end_row-start_row), col_extent, old_byte,
+                 (int)new_len-1, (colnr_T)last_item.size, new_byte,
+                 kExtmarkUndo);
+
+
+  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1,
+                (long)extra, true);
+
+  // adjust cursor like an extmark ( i e it was inside last_part_len)
+  if (curwin->w_cursor.lnum == end_row && curwin->w_cursor.col > end_col) {
+    curwin->w_cursor.col -= col_extent - (colnr_T)last_item.size;
+  }
+  fix_cursor((linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
+
+end:
+  for (size_t i = 0; i < new_len; i++) {
+    xfree(lines[i]);
+  }
   xfree(lines);
   aucmd_restbuf(&aco);
   try_end(err);
@@ -644,7 +808,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(buf->b_vars, name, err);
@@ -692,8 +856,8 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 /// @see |nvim_set_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs,
-                         Dictionary opts, Error *err)
+void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs, Dict(keymap) *opts,
+                         Error *err)
   FUNC_API_SINCE(6)
 {
   modify_keymap(buffer, false, mode, lhs, rhs, opts, err);
@@ -708,8 +872,7 @@ void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
   String rhs = { .data = "", .size = 0 };
-  Dictionary opts = ARRAY_DICT_INIT;
-  modify_keymap(buffer, true, mode, lhs, rhs, opts, err);
+  modify_keymap(buffer, true, mode, lhs, rhs, NULL, err);
 }
 
 /// Gets a map of buffer-local |user-commands|.
@@ -719,22 +882,13 @@ void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_buf_get_commands(Buffer buffer, Dictionary opts, Error *err)
+Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);
-  bool builtin = false;
-
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object v = opts.items[i].value;
-    if (!strequal("builtin", k.data)) {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return (Dictionary)ARRAY_DICT_INIT;
-    }
-    if (strequal("builtin", k.data)) {
-      builtin = v.data.boolean;
-    }
+  bool builtin = api_object_to_bool(opts->builtin, "builtin", false, err);
+  if (ERROR_SET(err)) {
+    return (Dictionary)ARRAY_DICT_INIT;
   }
 
   if (global) {
@@ -787,48 +941,6 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
   dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
-/// Sets a buffer-scoped (b:) variable
-///
-/// @deprecated
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Variable name
-/// @param value      Variable value
-/// @param[out] err   Error details, if any
-/// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(buf->b_vars, name, value, false, true, err);
-}
-
-/// Removes a buffer-scoped (b:) variable
-///
-/// @deprecated
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Variable name
-/// @param[out] err   Error details, if any
-/// @return Old value
-Object buffer_del_var(Buffer buffer, String name, Error *err)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(buf->b_vars, name, NIL, true, true, err);
-}
-
 
 /// Gets a buffer option value
 ///
@@ -842,7 +954,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return get_option_from(buf, SREQ_BUF, name, err);
@@ -856,8 +968,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 /// @param name       Option name
 /// @param value      Option value
 /// @param[out] err   Error details, if any
-void nvim_buf_set_option(uint64_t channel_id, Buffer buffer,
-                         String name, Object value, Error *err)
+void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -867,28 +978,6 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer,
   }
 
   set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
-}
-
-/// Gets the buffer number
-///
-/// @deprecated The buffer number now is equal to the object id,
-///             so there is no need to use this function.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param[out] err   Error details, if any
-/// @return Buffer number
-Integer nvim_buf_get_number(Buffer buffer, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_DEPRECATED_SINCE(2)
-{
-  Integer rv = 0;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return rv;
-  }
-
-  return buf->b_fnum;
 }
 
 /// Gets the full file name for the buffer
@@ -928,7 +1017,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
-  int ren_ret = rename_buffer((char_u *) name.data);
+  int ren_ret = rename_buffer((char_u *)name.data);
   aucmd_restbuf(&aco);
 
   if (try_end(err)) {
@@ -962,6 +1051,7 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 ///          - unload: Unloaded only, do not delete. See |:bunload|
 void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -988,12 +1078,11 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     return;
   }
 
-  int result = do_buffer(
-      unload ? DOBUF_UNLOAD : DOBUF_WIPE,
-      DOBUF_FIRST,
-      FORWARD,
-      buf->handle,
-      force);
+  int result = do_buffer(unload ? DOBUF_UNLOAD : DOBUF_WIPE,
+                         DOBUF_FIRST,
+                         FORWARD,
+                         buf->handle,
+                         force);
 
   if (result == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
@@ -1017,33 +1106,98 @@ Boolean nvim_buf_is_valid(Buffer buffer)
   return ret;
 }
 
-/// Inserts a sequence of lines to a buffer at a certain index
+/// Deletes a named mark in the buffer. See |mark-motions|.
 ///
-/// @deprecated use nvim_buf_set_lines(buffer, lnum, lnum, true, lines)
-///
-/// @param buffer     Buffer handle
-/// @param lnum       Insert the lines after `lnum`. If negative, appends to
-///                   the end of the buffer.
-/// @param lines      Array of lines
-/// @param[out] err   Error details, if any
-void buffer_insert(Buffer buffer,
-                   Integer lnum,
-                   ArrayOf(String) lines,
-                   Error *err)
+/// @note only deletes marks set in the buffer, if the mark is not set
+/// in the buffer it will return false.
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_del_mark()|
+Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
+  FUNC_API_SINCE(8)
 {
-  // "lnum" will be the index of the line after inserting,
-  // no matter if it is negative or not
-  nvim_buf_set_lines(0, buffer, lnum, lnum, true, lines, err);
+  bool res = false;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return res;
+  }
+
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return res;
+  }
+
+  pos_T *pos = getmark_buf(buf, *name.data, false);
+
+  // pos point to NULL when there's no mark with name
+  if (pos == NULL) {
+    api_set_error(err, kErrorTypeValidation, "Invalid mark name: '%c'",
+                  *name.data);
+    return res;
+  }
+
+  // pos->lnum is 0 when the mark is not valid in the buffer, or is not set.
+  if (pos->lnum != 0) {
+    // since the mark belongs to the buffer delete it.
+    res = set_mark(buf, name, 0, 0, err);
+  }
+
+  return res;
 }
 
-/// Return a tuple (row,col) representing the position of the named mark.
+/// Sets a named mark in the given buffer, all marks are allowed
+/// file/uppercase, visual, last change, etc. See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @note Passing 0 as line deletes the mark
+///
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @param line       Line number
+/// @param col        Column/row number
+/// @param opts       Optional parameters. Reserved for future use.
+/// @return true if the mark was set, else false.
+/// @see |nvim_buf_del_mark()|
+/// @see |nvim_buf_get_mark()|
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dictionary opts,
+                          Error *err)
+  FUNC_API_SINCE(8)
+{
+  bool res = false;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return res;
+  }
+
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return res;
+  }
+
+  res = set_mark(buf, name, line, col, err);
+
+  return res;
+}
+
+/// Returns a tuple (row,col) representing the position of the named mark. See
+/// |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Mark name
 /// @param[out] err   Error details, if any
-/// @return (row, col) tuple
+/// @return (row, col) tuple, (0, 0) if the mark is not set, or is an
+/// uppercase/file mark set in another buffer.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_buf_del_mark()|
 ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -1084,682 +1238,6 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
-static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
-{
-  Array rv = ARRAY_DICT_INIT;
-  if (id) {
-    ADD(rv, INTEGER_OBJ((Integer)extmark.mark_id));
-  }
-  ADD(rv, INTEGER_OBJ(extmark.row));
-  ADD(rv, INTEGER_OBJ(extmark.col));
-
-  if (add_dict) {
-    Dictionary dict = ARRAY_DICT_INIT;
-
-    if (extmark.end_row >= 0) {
-      PUT(dict, "end_row", INTEGER_OBJ(extmark.end_row));
-      PUT(dict, "end_col", INTEGER_OBJ(extmark.end_col));
-    }
-
-    if (extmark.decor) {
-      Decoration *decor = extmark.decor;
-      if (decor->hl_id) {
-        String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
-        PUT(dict, "hl_group", STRING_OBJ(name));
-      }
-      if (kv_size(decor->virt_text)) {
-        Array chunks = ARRAY_DICT_INIT;
-        for (size_t i = 0; i < decor->virt_text.size; i++) {
-          Array chunk = ARRAY_DICT_INIT;
-          VirtTextChunk *vtc = &decor->virt_text.items[i];
-          ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
-          if (vtc->hl_id > 0) {
-            ADD(chunk,
-                STRING_OBJ(cstr_to_string(
-                    (const char *)syn_id2name(vtc->hl_id))));
-          }
-          ADD(chunks, ARRAY_OBJ(chunk));
-        }
-        PUT(dict, "virt_text", ARRAY_OBJ(chunks));
-      }
-
-      PUT(dict, "priority", INTEGER_OBJ(decor->priority));
-    }
-
-    if (dict.size) {
-      ADD(rv, DICTIONARY_OBJ(dict));
-    }
-  }
-
-  return rv;
-}
-
-/// Returns position for a given extmark id
-///
-/// @param buffer  Buffer handle, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param id  Extmark id
-/// @param opts  Optional parameters. Keys:
-///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
-/// @param[out] err   Error details, if any
-/// @return (row, col) tuple or empty list () if extmark id was absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dictionary opts,
-                                            Error *err)
-  FUNC_API_SINCE(7)
-{
-  Array rv = ARRAY_DICT_INIT;
-
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return rv;
-  }
-
-  if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
-    return rv;
-  }
-
-  bool details = false;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation, "details is not an boolean");
-        return rv;
-      }
-    } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return rv;
-    }
-  }
-
-
-  ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
-  if (extmark.row < 0) {
-    return rv;
-  }
-  return extmark_to_array(extmark, false, (bool)details);
-}
-
-/// Gets extmarks in "traversal order" from a |charwise| region defined by
-/// buffer positions (inclusive, 0-indexed |api-indexing|).
-///
-/// Region can be given as (row,col) tuples, or valid extmark ids (whose
-/// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
-/// respectively, thus the following are equivalent:
-///
-/// <pre>
-///   nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-///   nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
-/// </pre>
-///
-/// If `end` is less than `start`, traversal works backwards. (Useful
-/// with `limit`, to get the first marks prior to a given position.)
-///
-/// Example:
-///
-/// <pre>
-///   local a   = vim.api
-///   local pos = a.nvim_win_get_cursor(0)
-///   local ns  = a.nvim_create_namespace('my-plugin')
-///   -- Create new extmark at line 1, column 1.
-///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
-///   -- Create new extmark at line 3, column 1.
-///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
-///   -- Get extmarks only from line 3.
-///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
-///   -- Get all marks in this buffer + namespace.
-///   local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-///   print(vim.inspect(ms))
-/// </pre>
-///
-/// @param buffer  Buffer handle, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param start  Start of range, given as (row, col) or valid extmark id
-///               (whose position defines the bound)
-/// @param end  End of range, given as (row, col) or valid extmark id
-///             (whose position defines the bound)
-/// @param opts  Optional parameters. Keys:
-///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
-/// @param[out] err   Error details, if any
-/// @return List of [extmark_id, row, col] tuples in "traversal order".
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
-                            Object start, Object end,
-                            Dictionary opts, Error *err)
-  FUNC_API_SINCE(7)
-{
-  Array rv = ARRAY_DICT_INIT;
-
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return rv;
-  }
-
-  if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
-    return rv;
-  }
-
-  Integer limit = -1;
-  bool details = false;
-
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("limit", k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation, "limit is not an integer");
-        return rv;
-      }
-      limit = v->data.integer;
-    } else if (strequal("details", k.data)) {
-      if (v->type == kObjectTypeBoolean) {
-        details = v->data.boolean;
-      } else if (v->type == kObjectTypeInteger) {
-        details = v->data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation, "details is not an boolean");
-        return rv;
-      }
-    } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return rv;
-    }
-  }
-
-  if (limit == 0) {
-    return rv;
-  } else if (limit < 0) {
-    limit = INT64_MAX;
-  }
-
-
-  bool reverse = false;
-
-  int l_row;
-  colnr_T l_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_row, &l_col, err)) {
-    return rv;
-  }
-
-  int u_row;
-  colnr_T u_col;
-  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_row, &u_col, err)) {
-    return rv;
-  }
-
-  if (l_row > u_row || (l_row == u_row && l_col > u_col)) {
-    reverse = true;
-  }
-
-
-  ExtmarkInfoArray marks = extmark_get(buf, (uint64_t)ns_id, l_row, l_col,
-                                       u_row, u_col, (int64_t)limit, reverse);
-
-  for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, (bool)details)));
-  }
-
-  kv_destroy(marks);
-  return rv;
-}
-
-/// Creates or updates an extmark.
-///
-/// To create a new extmark, pass id=0. The extmark id will be returned.
-/// To move an existing mark, pass its id.
-///
-/// It is also allowed to create a new mark by passing in a previously unused
-/// id, but the caller must then keep track of existing and unused ids itself.
-/// (Useful over RPC, to avoid waiting for the return value.)
-///
-/// Using the optional arguments, it is possible to use this to highlight
-/// a range of text, and also to associate virtual text to the mark.
-///
-/// @param buffer  Buffer handle, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param line  Line number where to place the mark
-/// @param col  Column where to place the mark
-/// @param opts  Optional parameters.
-///               - id : id of the extmark to edit.
-///               - end_line : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based inclusive.
-///               - hl_group : name of the highlight group used to highlight
-///                   this mark.
-///               - virt_text : virtual text to link to this mark.
-///               - ephemeral : for use with |nvim_set_decoration_provider|
-///                   callbacks. The mark will only be used for the current
-///                   redraw cycle, and not be permantently stored in the
-///                   buffer.
-/// @param[out]  err   Error details, if any
-/// @return Id of the created/updated extmark
-Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
-                             Integer line, Integer col,
-                             Dictionary opts, Error *err)
-  FUNC_API_SINCE(7)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
-    return 0;
-  }
-
-  if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
-    return 0;
-  }
-
-  size_t len = 0;
-  if (line < 0 || line > buf->b_ml.ml_line_count) {
-    api_set_error(err, kErrorTypeValidation, "line value outside range");
-    return 0;
-  } else if (line < buf->b_ml.ml_line_count) {
-    len = STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
-  }
-
-  if (col == -1) {
-    col = (Integer)len;
-  } else if (col < -1 || col > (Integer)len) {
-    api_set_error(err, kErrorTypeValidation, "col value outside range");
-    return 0;
-  }
-
-  bool ephemeral = false;
-
-  uint64_t id = 0;
-  int line2 = -1, hl_id = 0;
-  DecorPriority priority = DECOR_PRIORITY_BASE;
-  colnr_T col2 = 0;
-  VirtText virt_text = KV_INITIAL_VALUE;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("id", k.data)) {
-      if (v->type != kObjectTypeInteger || v->data.integer <= 0) {
-        api_set_error(err, kErrorTypeValidation,
-                      "id is not a positive integer");
-        goto error;
-      }
-
-      id = (uint64_t)v->data.integer;
-    } else if (strequal("end_line", k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_line is not an integer");
-        goto error;
-      }
-      if (v->data.integer < 0 || v->data.integer > buf->b_ml.ml_line_count) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_line value outside range");
-        goto error;
-      }
-
-      line2 = (int)v->data.integer;
-    } else if (strequal("end_col", k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_col is not an integer");
-        goto error;
-      }
-      if (v->data.integer < 0 || v->data.integer > MAXCOL) {
-        api_set_error(err, kErrorTypeValidation,
-                      "end_col value outside range");
-        goto error;
-      }
-
-      col2 = (colnr_T)v->data.integer;
-    } else if (strequal("hl_group", k.data)) {
-      String hl_group;
-      switch (v->type) {
-        case kObjectTypeString:
-          hl_group = v->data.string;
-          hl_id = syn_check_group(
-              (char_u *)(hl_group.data),
-              (int)hl_group.size);
-          break;
-        case kObjectTypeInteger:
-          hl_id = (int)v->data.integer;
-          break;
-        default:
-          api_set_error(err, kErrorTypeValidation,
-                        "hl_group is not valid.");
-          goto error;
-      }
-    } else if (strequal("virt_text", k.data)) {
-      if (v->type != kObjectTypeArray) {
-        api_set_error(err, kErrorTypeValidation,
-                      "virt_text is not an Array");
-        goto error;
-      }
-      virt_text = parse_virt_text(v->data.array, err);
-      if (ERROR_SET(err)) {
-        goto error;
-      }
-    } else if (strequal("ephemeral", k.data)) {
-      ephemeral = api_object_to_bool(*v, "ephemeral", false, err);
-      if (ERROR_SET(err)) {
-        goto error;
-      }
-    } else if (strequal("priority",  k.data)) {
-      if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation,
-                      "priority is not a Number of the correct size");
-        goto error;
-      }
-
-      if (v->data.integer < 0 || v->data.integer > UINT16_MAX) {
-        api_set_error(err, kErrorTypeValidation,
-                      "priority is not a valid value");
-        goto error;
-      }
-      priority = (DecorPriority)v->data.integer;
-    } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      goto error;
-    }
-  }
-
-  if (col2 >= 0) {
-    if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = STRLEN(ml_get_buf(buf, (linenr_T)line2 + 1, false));
-    } else if (line2 == buf->b_ml.ml_line_count) {
-      // We are trying to add an extmark past final newline
-      len = 0;
-    } else {
-      // reuse len from before
-      line2 = (int)line;
-    }
-    if (col2 > (Integer)len) {
-      api_set_error(err, kErrorTypeValidation, "end_col value outside range");
-      goto error;
-    }
-  } else if (line2 >= 0) {
-    col2 = 0;
-  }
-
-  // TODO(bfredl): synergize these two branches even more
-  if (ephemeral && decor_state.buf == buf) {
-    int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
-    VirtText *vt_allocated = NULL;
-    if (kv_size(virt_text)) {
-      vt_allocated = xmalloc(sizeof *vt_allocated);
-      *vt_allocated = virt_text;
-    }
-    decor_add_ephemeral(attr_id, (int)line, (colnr_T)col,
-                        (int)line2, (colnr_T)col2, priority, vt_allocated);
-  } else {
-    if (ephemeral) {
-      api_set_error(err, kErrorTypeException, "not yet implemented");
-      goto error;
-    }
-    Decoration *decor = NULL;
-    if (kv_size(virt_text)) {
-      decor = xcalloc(1, sizeof(*decor));
-      decor->hl_id = hl_id;
-      decor->virt_text = virt_text;
-    } else if (hl_id) {
-      decor = decor_hl(hl_id);
-      decor->priority = priority;
-    }
-
-    id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, decor, kExtmarkNoUndo);
-  }
-
-  return (Integer)id;
-
-error:
-  clear_virttext(&virt_text);
-  return 0;
-}
-
-/// Removes an extmark.
-///
-/// @param buffer Buffer handle, or 0 for current buffer
-/// @param ns_id Namespace id from |nvim_create_namespace()|
-/// @param id Extmark id
-/// @param[out] err   Error details, if any
-/// @return true if the extmark was found, else false
-Boolean nvim_buf_del_extmark(Buffer buffer,
-                             Integer ns_id,
-                             Integer id,
-                             Error *err)
-  FUNC_API_SINCE(7)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return false;
-  }
-  if (!ns_initialized((uint64_t)ns_id)) {
-    api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
-    return false;
-  }
-
-  return extmark_del(buf, (uint64_t)ns_id, (uint64_t)id);
-}
-
-/// Adds a highlight to buffer.
-///
-/// Useful for plugins that dynamically generate highlights to a buffer
-/// (like a semantic highlighter or linter). The function adds a single
-/// highlight to a buffer. Unlike |matchaddpos()| highlights follow changes to
-/// line numbering (as lines are inserted/removed above the highlighted line),
-/// like signs and marks do.
-///
-/// Namespaces are used for batch deletion/updating of a set of highlights. To
-/// create a namespace, use |nvim_create_namespace()| which returns a namespace
-/// id. Pass it in to this function as `ns_id` to add highlights to the
-/// namespace. All highlights in the same namespace can then be cleared with
-/// single call to |nvim_buf_clear_namespace()|. If the highlight never will be
-/// deleted by an API call, pass `ns_id = -1`.
-///
-/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
-/// highlight, the allocated id is then returned. If `hl_group` is the empty
-/// string no highlight is added, but a new `ns_id` is still returned. This is
-/// supported for backwards compatibility, new code should use
-/// |nvim_create_namespace()| to create a new empty namespace.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      namespace to use or -1 for ungrouped highlight
-/// @param hl_group   Name of the highlight group to use
-/// @param line       Line to highlight (zero-indexed)
-/// @param col_start  Start of (byte-indexed) column range to highlight
-/// @param col_end    End of (byte-indexed) column range to highlight,
-///                   or -1 to highlight to end of line
-/// @param[out] err   Error details, if any
-/// @return The ns_id that was used
-Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer src_id,
-                               String hl_group,
-                               Integer line,
-                               Integer col_start,
-                               Integer col_end,
-                               Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return 0;
-  }
-
-  if (line < 0 || line >= MAXLNUM) {
-    api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return 0;
-  }
-  if (col_start < 0 || col_start > MAXCOL) {
-    api_set_error(err, kErrorTypeValidation, "Column value outside range");
-    return 0;
-  }
-  if (col_end < 0 || col_end > MAXCOL) {
-    col_end = MAXCOL;
-  }
-
-  uint64_t ns_id = src2ns(&src_id);
-
-  if (!(line < buf->b_ml.ml_line_count)) {
-    // safety check, we can't add marks outside the range
-    return src_id;
-  }
-
-  int hl_id = 0;
-  if (hl_group.size > 0) {
-    hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
-  } else {
-    return src_id;
-  }
-
-  int end_line = (int)line;
-  if (col_end == MAXCOL) {
-    col_end = 0;
-    end_line++;
-  }
-
-  extmark_set(buf, ns_id, 0,
-              (int)line, (colnr_T)col_start,
-              end_line, (colnr_T)col_end,
-              decor_hl(hl_id), kExtmarkNoUndo);
-  return src_id;
-}
-
-/// Clears namespaced objects (highlights, extmarks, virtual text) from
-/// a region.
-///
-/// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
-/// buffer, specify line_start=0 and line_end=-1.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      Namespace to clear, or -1 to clear all namespaces.
-/// @param line_start Start of range of lines to clear
-/// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
-///                   to end of buffer.
-/// @param[out] err   Error details, if any
-void nvim_buf_clear_namespace(Buffer buffer,
-                              Integer ns_id,
-                              Integer line_start,
-                              Integer line_end,
-                              Error *err)
-  FUNC_API_SINCE(5)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return;
-  }
-
-  if (line_start < 0 || line_start >= MAXLNUM) {
-    api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return;
-  }
-  if (line_end < 0 || line_end > MAXLNUM) {
-    line_end = MAXLNUM;
-  }
-  extmark_clear(buf, (ns_id < 0 ? 0 : (uint64_t)ns_id),
-                (int)line_start, 0,
-                (int)line_end-1, MAXCOL);
-}
-
-/// Clears highlights and virtual text from namespace and range of lines
-///
-/// @deprecated use |nvim_buf_clear_namespace()|.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      Namespace to clear, or -1 to clear all.
-/// @param line_start Start of range of lines to clear
-/// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
-///                   to end of file.
-/// @param[out] err   Error details, if any
-void nvim_buf_clear_highlight(Buffer buffer,
-                              Integer ns_id,
-                              Integer line_start,
-                              Integer line_end,
-                              Error *err)
-  FUNC_API_SINCE(1)
-{
-  nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
-}
-
-
-/// Set the virtual text (annotation) for a buffer line.
-///
-/// By default (and currently the only option) the text will be placed after
-/// the buffer text. Virtual text will never cause reflow, rather virtual
-/// text will be truncated at the end of the screen line. The virtual text will
-/// begin one cell (|lcs-eol| or space) after the ordinary text.
-///
-/// Namespaces are used to support batch deletion/updating of virtual text.
-/// To create a namespace, use |nvim_create_namespace()|. Virtual text is
-/// cleared using |nvim_buf_clear_namespace()|. The same `ns_id` can be used for
-/// both virtual text and highlights added by |nvim_buf_add_highlight()|, both
-/// can then be cleared with a single call to |nvim_buf_clear_namespace()|. If
-/// the virtual text never will be cleared by an API call, pass `ns_id = -1`.
-///
-/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
-/// virtual text, the allocated id is then returned.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      Namespace to use or 0 to create a namespace,
-///                   or -1 for a ungrouped annotation
-/// @param line       Line to annotate with virtual text (zero-indexed)
-/// @param chunks     A list of [text, hl_group] arrays, each representing a
-///                   text chunk with specified highlight. `hl_group` element
-///                   can be omitted for no highlight.
-/// @param opts       Optional parameters. Currently not used.
-/// @param[out] err   Error details, if any
-/// @return The ns_id that was used
-Integer nvim_buf_set_virtual_text(Buffer buffer,
-                                  Integer src_id,
-                                  Integer line,
-                                  Array chunks,
-                                  Dictionary opts,
-                                  Error *err)
-  FUNC_API_SINCE(5)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return 0;
-  }
-
-  if (line < 0 || line >= MAXLNUM) {
-    api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return 0;
-  }
-
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
-    return 0;
-  }
-
-  uint64_t ns_id = src2ns(&src_id);
-
-  VirtText virt_text = parse_virt_text(chunks, err);
-  if (ERROR_SET(err)) {
-    return 0;
-  }
-
-
-  VirtText *existing = decor_find_virttext(buf, (int)line, ns_id);
-
-  if (existing) {
-    clear_virttext(existing);
-    *existing = virt_text;
-    return src_id;
-  }
-
-  Decoration *decor = xcalloc(1, sizeof(*decor));
-  decor->virt_text = virt_text;
-
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkNoUndo);
-  return src_id;
-}
 
 /// call a function with buffer as temporary current buffer
 ///
@@ -1767,7 +1245,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 /// If the current window already shows "buffer", the window is not switched
 /// If a window inside the current tabpage (including a float) already shows the
 /// buffer One of these windows will be set as current window temporarily.
-/// Otherwise a temporary scratch window (calleed the "autocmd window" for
+/// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
 /// This is useful e.g. to call vimL functions that only work with the current
@@ -1789,7 +1267,7 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   }
   try_start();
   aco_save_T aco;
-  aucmd_prepbuf(&aco, (buf_T *)buf);
+  aucmd_prepbuf(&aco, buf);
 
   Array args = ARRAY_DICT_INIT;
   Object res = nlua_call_ref(fun, NULL, args, true, err);
@@ -1820,6 +1298,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
   PUT(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
+  PUT(rv, "virt_blocks", INTEGER_OBJ((Integer)buf->b_virt_line_blocks));
 
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {
@@ -1844,7 +1323,6 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
       curwin->w_cursor.lnum += extra;
       check_cursor_col();
     } else if (extra < 0) {
-      curwin->w_cursor.lnum = lo;
       check_cursor();
     } else {
       check_cursor_col();
@@ -1872,9 +1350,4 @@ static int64_t normalize_index(buf_T *buf, int64_t index, bool *oob)
   // Convert the index to a vim line number
   index++;
   return index;
-}
-
-static int64_t convert_index(int64_t index)
-{
-  return index < 0 ? index - 1 : index;
 }

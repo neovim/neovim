@@ -11,7 +11,13 @@ func Test_load_menu()
     call assert_report('error while loading menus: ' . v:exception)
   endtry
   call assert_match('browse confirm w', execute(':menu File.Save'))
+
+  let v:errmsg = ''
+  doautocmd LoadBufferMenu VimEnter
+  call assert_equal('', v:errmsg)
+
   source $VIMRUNTIME/delmenu.vim
+  call assert_equal('', v:errmsg)
 endfunc
 
 func Test_translate_menu()
