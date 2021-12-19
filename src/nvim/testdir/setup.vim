@@ -9,7 +9,7 @@ let s:did_load = 1
 " Align Nvim defaults to Vim.
 set backspace=
 set directory^=.
-set fillchars=vert:\|,fold:-
+set fillchars=vert:\|,fold:-,foldsep:\|
 set laststatus=1
 set listchars=eol:$
 set joinspaces

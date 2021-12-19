@@ -881,4 +881,116 @@ func Test_fold_relative_move()
   set fdm& sw& wrap& tw&
 endfunc
 
+" Test for using multibyte characters as 'foldopen', 'foldclose' and
+" 'foldsetp' items in 'fillchars'
+func s:mbyte_fillchar_tests(fo, fc, fs)
+  setlocal foldcolumn=3
+
+  normal zE
+  1,2fold
+  call assert_equal([a:fc .. '  +--  2 ', '   three  '],
+        \ ScreenLines([1, 2], 10))
+  1,2foldopen
+  call assert_equal([a:fo .. '  one ', a:fs .. '  two '],
+        \ ScreenLines([1, 2], 7))
+  1,2foldclose
+  redraw!
+  call assert_equal([a:fc .. '  +--  2 ', '   three  '],
+        \  ScreenLines([1, 2], 10))
+
+  " Two level fold
+  normal zE
+  2,3fold
+  1,4fold
+  call assert_equal([a:fc .. '  +--  4 ', '   five   '],
+        \ ScreenLines([1, 2], 10))
+  1,4foldopen
+  call assert_equal([a:fo .. '  one    ', a:fs .. a:fc .. ' +---  2'],
+        \ ScreenLines([1, 2], 10))
+  1,4foldopen
+  call assert_equal([a:fo .. '  one    ', a:fs .. a:fo .. ' two    ',
+        \ a:fs .. a:fs .. ' three  '], ScreenLines([1, 3], 10))
+  2,3foldclose
+  call assert_equal([a:fo .. '  one    ', a:fs .. a:fc .. ' +---  2'],
+        \ ScreenLines([1, 2], 10))
+  1,4foldclose
+  call assert_equal([a:fc .. '  +--  4 ', '   five   '],
+        \ ScreenLines([1, 2], 10))
+
+  " Three level fold
+  normal zE
+  3,4fold
+  2,5fold
+  1,6fold
+  call assert_equal([a:fc .. '  +--  6 '], ScreenLines(1, 10))
+  " open all the folds
+  normal zR
+  call assert_equal([
+        \ a:fo .. '  one    ',
+        \ a:fs .. a:fo .. ' two    ',
+        \ '2' .. a:fo .. ' three  ',
+        \ '23 four   ',
+        \ a:fs .. a:fs .. ' five   ',
+        \ a:fs .. '  six    ',
+        \ ], ScreenLines([1, 6], 10))
+  " close the innermost fold
+  3,4foldclose
+  call assert_equal([
+        \ a:fo .. '  one    ',
+        \ a:fs .. a:fo .. ' two    ',
+        \ a:fs .. a:fs .. a:fc .. '+----  ',
+        \ a:fs .. a:fs .. ' five   ',
+        \ a:fs .. '  six    ',
+        \ ], ScreenLines([1, 5], 10))
+  " close the next fold
+  2,5foldclose
+  call assert_equal([
+        \ a:fo .. '  one    ',
+        \ a:fs .. a:fc .. ' +---  4',
+        \ a:fs .. '  six    ',
+        \ ], ScreenLines([1, 3], 10))
+
+  " set the fold column size to 2
+  setlocal fdc=2
+  normal zR
+  call assert_equal([
+        \ a:fo .. ' one  ',
+        \ a:fo .. ' two  ',
+        \ a:fo .. ' three',
+        \ '3 four ',
+        \ '2 five ',
+        \ a:fs .. ' six  ',
+        \ ], ScreenLines([1, 6], 7))
+
+  " set the fold column size to 1
+  setlocal fdc=1
+  normal zR
+  call assert_equal([
+        \ a:fo .. 'one   ',
+        \ a:fo .. 'two   ',
+        \ a:fo .. 'three ',
+        \ '3four  ',
+        \ '2five  ',
+        \ a:fs .. 'six   ',
+        \ ], ScreenLines([1, 6], 7))
+
+  setlocal foldcolumn&
+endfunc
+
+func Test_foldcolumn_multibyte_char()
+  new
+  call setline(1, ['one', 'two', 'three', 'four', 'five', 'six'])
+  setlocal foldenable foldmethod=manual
+
+  " First test with the default setting
+  call s:mbyte_fillchar_tests('-', '+', '|')
+
+  " Use multi-byte characters
+  set fillchars+=foldopen:▾,foldsep:│,foldclose:▸
+  call s:mbyte_fillchar_tests('▾', '▸', '│')
+
+  bw!
+  set foldenable& fdc& fdm& fillchars&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
