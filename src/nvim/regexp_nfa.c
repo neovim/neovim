@@ -2565,20 +2565,20 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
     ga_concat(indent, (char_u *)"| ");
   else
     ga_concat(indent, (char_u *)"  ");
-  ga_append(indent, '\0');
+  ga_append(indent, NUL);
 
   nfa_print_state2(debugf, state->out, indent);
 
   /* replace last part of indent for state->out1 */
   indent->ga_len -= 3;
   ga_concat(indent, (char_u *)"  ");
-  ga_append(indent, '\0');
+  ga_append(indent, NUL);
 
   nfa_print_state2(debugf, state->out1, indent);
 
   /* shrink indent */
   indent->ga_len -= 3;
-  ga_append(indent, '\0');
+  ga_append(indent, NUL);
 }
 
 /*
