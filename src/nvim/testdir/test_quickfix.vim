@@ -5446,4 +5446,40 @@ func Test_win_gettype()
   lclose
 endfunc
 
+" Test for opening the quickfix window in two tab pages and then closing one
+" of the quickfix windows. This should not make the quickfix buffer unlisted.
+" (github issue #9300).
+func Test_two_qf_windows()
+  cexpr "F1:1:line1"
+  copen
+  tabnew
+  copen
+  call assert_true(&buflisted)
+  cclose
+  tabfirst
+  call assert_true(&buflisted)
+  let bnum = bufnr()
+  cclose
+  " if all the quickfix windows are closed, then buffer should be unlisted.
+  call assert_false(buflisted(bnum))
+  %bw!
+
+  " Repeat the test for a location list
+  lexpr "F2:2:line2"
+  lopen
+  let bnum = bufnr()
+  tabnew
+  exe "buffer" bnum
+  tabfirst
+  lclose
+  tablast
+  call assert_true(buflisted(bnum))
+  tabclose
+  lopen
+  call assert_true(buflisted(bnum))
+  lclose
+  call assert_false(buflisted(bnum))
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

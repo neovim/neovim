@@ -2475,7 +2475,7 @@ static qfline_T *qf_get_entry(qf_list_T *qfl, int errornr, int dir, int *new_qfi
   return qf_ptr;
 }
 
-// Find a window displaying a Vim help file.
+// Find a window displaying a Vim help file in the current tab page.
 static win_T *qf_find_help_win(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2549,8 +2549,8 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
   return OK;
 }
 
-/// Find a non-quickfix window in the current tabpage using the given location
-/// list stack.
+/// Find a non-quickfix window using the given location list stack in the
+/// current tabpage.
 /// Returns NULL if a matching window is not found.
 static win_T *qf_find_win_with_loclist(const qf_info_T *ll)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -2563,7 +2563,7 @@ static win_T *qf_find_win_with_loclist(const qf_info_T *ll)
   return NULL;
 }
 
-// Find a window containing a normal buffer
+/// Find a window containing a normal buffer in the current tab page.
 static win_T *qf_find_win_with_normal_buf(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2619,7 +2619,7 @@ static void qf_goto_win_with_ll_file(win_T *use_win, int qf_fnum, qf_info_T *ll_
   win_T *win = use_win;
 
   if (win == NULL) {
-    // Find the window showing the selected file
+    // Find the window showing the selected file in the current tab page.
     FOR_ALL_WINDOWS_IN_TAB(win2, curtab) {
       if (win2->w_buffer->b_fnum == qf_fnum) {
         win = win2;
@@ -3887,8 +3887,8 @@ static int is_qf_win(const win_T *win, const qf_info_T *qi)
   return false;
 }
 
-/// Find a window displaying the quickfix/location stack 'qi'
-/// Only searches in the current tabpage.
+/// Find a window displaying the quickfix/location stack 'qi' in the current tab
+/// page.
 static win_T *qf_find_win(const qf_info_T *qi)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3901,8 +3901,8 @@ static win_T *qf_find_win(const qf_info_T *qi)
   return NULL;
 }
 
-// Find a quickfix buffer.
-// Searches in windows opened in all the tabs.
+/// Find a quickfix buffer.
+/// Searches in windows opened in all the tab pages.
 static buf_T *qf_find_buf(qf_info_T *qi)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
