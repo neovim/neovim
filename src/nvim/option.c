@@ -3610,7 +3610,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
           c2 = c3 = 0;
           s = p + len + 1;
           c1 = get_encoded_char_adv(&s);
-          if (c1 == 0 || utf_char2cells(c1) > 1) {
+          if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
           }
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
@@ -3618,12 +3618,12 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
               return e_invarg;
             }
             c2 = get_encoded_char_adv(&s);
-            if (c2 == 0 || utf_char2cells(c2) > 1) {
+            if (c2 == 0 || char2cells(c2) > 1) {
               return e_invarg;
             }
             if (!(*s == ',' || *s == NUL)) {
               c3 = get_encoded_char_adv(&s);
-              if (c3 == 0 || utf_char2cells(c3) > 1) {
+              if (c3 == 0 || char2cells(c3) > 1) {
                 return e_invarg;
               }
             }
@@ -3657,7 +3657,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
               c1 = get_encoded_char_adv(&s);
-              if (c1 == 0 || utf_char2cells(c1) > 1) {
+              if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
               multispace_len++;

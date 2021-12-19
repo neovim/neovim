@@ -272,6 +272,8 @@ func Test_eob_fillchars()
   call assert_fails(':set fillchars=eob:xy', 'E474:')
   call assert_fails(':set fillchars=eob:\255', 'E474:')
   call assert_fails(':set fillchars=eob:<ff>', 'E474:')
+  call assert_fails(":set fillchars=eob:\x01", 'E474:')
+  call assert_fails(':set fillchars=eob:\\x01', 'E474:')
   " default is ~
   new
   redraw
