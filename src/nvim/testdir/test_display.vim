@@ -274,12 +274,13 @@ func Test_eob_fillchars()
   call assert_fails(':set fillchars=eob:<ff>', 'E474:')
   " default is ~
   new
+  redraw
   call assert_equal('~', Screenline(2))
   set fillchars=eob:+
-  redraw!
+  redraw
   call assert_equal('+', Screenline(2))
   set fillchars=eob:\ 
-  redraw!
+  redraw
   call assert_equal(' ', nr2char(screenchar(2, 1)))
   set fillchars&
   close
