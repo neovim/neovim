@@ -2197,12 +2197,13 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "win_execute(win_id, command)" function
 static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  tabpage_T *tp;
-  win_T *wp = win_id2wp_tp(argvars, &tp);
   // Return an empty string if something fails.
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
+  int id = tv_get_number(argvars);
+  tabpage_T *tp;
+  win_T *wp = win_id2wp_tp(id, &tp);
   if (wp != NULL && tp != NULL) {
     WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, fptr, 1));
   }
@@ -4130,7 +4131,7 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    wparg = win_id2wp(argvars);
+    wparg = win_id2wp(tv_get_number(&argvars[0]));
     if (wparg == NULL) {
       return;
     }
@@ -5917,10 +5918,10 @@ static void f_line(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int fnum;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    tabpage_T *tp;
-
     // use window specified in the second argument
-    win_T *wp = win_id2wp_tp(&argvars[1], &tp);
+    int id = (int)tv_get_number(&argvars[1]);
+    tabpage_T *tp;
+    win_T *wp = win_id2wp_tp(id, &tp);
     if (wp != NULL && tp != NULL) {
       switchwin_T switchwin;
       if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
