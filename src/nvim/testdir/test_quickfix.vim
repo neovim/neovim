@@ -4507,6 +4507,13 @@ func Xqfbuf_test(cchar)
   call assert_equal(qfbnum, bufnr(''))
   Xclose
 
+  " When quickfix buffer is wiped out, getqflist() should return 0
+  %bw!
+  Xexpr ""
+  Xopen
+  bw!
+  call assert_equal(0, g:Xgetlist({'qfbufnr': 0}).qfbufnr)
+
   if a:cchar == 'l'
     %bwipe
     " For a location list, when both the file window and the location list

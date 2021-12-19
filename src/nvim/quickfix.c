@@ -6021,12 +6021,18 @@ static int qf_winid(qf_info_T *qi)
 }
 
 // Returns the number of the buffer displayed in the quickfix/location list
-// window. If there is no buffer associated with the list, then returns 0.
+// window. If there is no buffer associated with the list or the buffer is
+// wiped out, then returns 0.
 static int qf_getprop_qfbufnr(const qf_info_T *qi, dict_T *retdict)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  return tv_dict_add_nr(retdict, S_LEN("qfbufnr"),
-                        (qi == NULL) ? 0 : qi->qf_bufnr);
+  int bufnum = 0;
+
+  if (qi != NULL && buflist_findnr(qi->qf_bufnr) != NULL) {
+      bufnum = qi->qf_bufnr;
+  }
+
+  return tv_dict_add_nr(retdict, S_LEN("qfbufnr"), bufnum);
 }
 
 /// Convert the keys in 'what' to quickfix list property flags.
