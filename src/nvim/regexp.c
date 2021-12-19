@@ -468,6 +468,8 @@ static int toggle_Magic(int x)
 #define EMSG_RET_FAIL(m) return (emsg(m), rc_did_emsg = true, FAIL)
 #define EMSG2_RET_NULL(m, c) \
     return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
+#define EMSG3_RET_NULL(m, c, a) \
+    return (semsg((const char *)(m), (c) ? "" : "\\", (a)), rc_did_emsg = true, (void *)NULL)
 #define EMSG2_RET_FAIL(m, c) \
     return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
 #define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_( \
@@ -1762,13 +1764,9 @@ static char_u *regpiece(int *flagp)
   if (re_multi_type(peekchr()) != NOT_MULTI) {
     // Can't have a multi follow a multi.
     if (peekchr() == Magic('*')) {
-      snprintf((char *)IObuff, IOSIZE, _("E61: Nested %s*"),
-               reg_magic >= MAGIC_ON ? "" : "\\");
-    } else {
-      snprintf((char *)IObuff, IOSIZE, _("E62: Nested %s%c"),
-               reg_magic == MAGIC_ALL ? "" : "\\", no_Magic(peekchr()));
+      EMSG2_RET_NULL(_("E61: Nested %s*"), reg_magic >= MAGIC_ON);
     }
-    EMSG_RET_NULL((char *)IObuff);
+    EMSG3_RET_NULL(_("E62: Nested %s%c"), reg_magic == MAGIC_ALL, no_Magic(peekchr()));
   }
 
   return ret;
@@ -1927,10 +1925,8 @@ static char_u *regatom(int *flagp)
   case Magic('{'):
   case Magic('*'):
     c = no_Magic(c);
-    snprintf((char *)IObuff, IOSIZE, _("E64: %s%c follows nothing"),
-             (c == '*' ? reg_magic >= MAGIC_ON : reg_magic == MAGIC_ALL)
-             ? "" : "\\", c);
-    EMSG_RET_NULL((char *)IObuff);
+    EMSG3_RET_NULL(_("E64: %s%c follows nothing"),
+                   (c == '*' ? reg_magic >= MAGIC_ON : reg_magic == MAGIC_ALL), c);
   // NOTREACHED
 
   case Magic('~'):              /* previous substitute pattern */
@@ -2537,7 +2533,9 @@ do_multibyte:
 static bool re_mult_next(char *what)
 {
   if (re_multi_type(peekchr()) == MULTI_MULT) {
-    EMSG2_RET_FAIL(_("E888: (NFA regexp) cannot repeat %s"), what);
+    semsg(_("E888: (NFA regexp) cannot repeat %s"), what);
+    rc_did_emsg = true;
+    return false;
   }
   return true;
 }
@@ -3149,9 +3147,7 @@ static int read_limits(long *minval, long *maxval)
     regparse++;         // Allow either \{...} or \{...\}
   }
   if (*regparse != '}') {
-    snprintf((char *)IObuff, IOSIZE, _("E554: Syntax error in %s{...}"),
-             reg_magic == MAGIC_ALL ? "" : "\\");
-    EMSG_RET_FAIL((char *)IObuff);
+    EMSG2_RET_FAIL(_("E554: Syntax error in %s{...}"), reg_magic == MAGIC_ALL);
   }
 
   /*
