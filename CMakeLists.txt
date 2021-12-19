@@ -543,7 +543,9 @@ endif()
 
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
-if(NOT WIN32)
+option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
+
+if(COMPILE_LUA AND NOT WIN32)
   if(PREFER_LUA)
     foreach(CURRENT_LUAC_PRG luac5.1 luac)
       find_program(_CHECK_LUAC_PRG ${CURRENT_LUAC_PRG})
