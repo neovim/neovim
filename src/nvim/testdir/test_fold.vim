@@ -974,7 +974,66 @@ func s:mbyte_fillchar_tests(fo, fc, fs)
         \ a:fs .. 'six   ',
         \ ], ScreenLines([1, 6], 7))
 
-  setlocal foldcolumn&
+  " Enable number and sign columns and place some signs
+  setlocal fdc=3
+  setlocal number
+  setlocal signcolumn=auto
+  sign define S1 text=->
+  sign place 10 line=3 name=S1
+  call assert_equal([
+        \ a:fo .. '      1 one  ',
+        \ a:fs .. a:fo .. '     2 two  ',
+        \ '2' .. a:fo .. ' ->  3 three',
+        \ '23     4 four ',
+        \ a:fs .. a:fs .. '     5 five ',
+        \ a:fs .. '      6 six  '
+        \ ], ScreenLines([1, 6], 14))
+
+  " Test with 'rightleft'
+  if has('rightleft')
+    setlocal rightleft
+    let lines = ScreenLines([1, 6], winwidth(0))
+    call assert_equal('o 1      ' .. a:fo,
+          \  strcharpart(lines[0], strchars(lines[0]) - 10, 10))
+    call assert_equal('t 2     ' .. a:fo .. a:fs,
+          \  strcharpart(lines[1], strchars(lines[1]) - 10, 10))
+    call assert_equal('t 3  >- ' .. a:fo .. '2',
+          \  strcharpart(lines[2], strchars(lines[2]) - 10, 10))
+    call assert_equal('f 4     32',
+          \  strcharpart(lines[3], strchars(lines[3]) - 10, 10))
+    call assert_equal('f 5     ' .. a:fs .. a:fs,
+          \  strcharpart(lines[4], strchars(lines[4]) - 10, 10))
+    call assert_equal('s 6      ' .. a:fs,
+          \  strcharpart(lines[5], strchars(lines[5]) - 10, 10))
+    setlocal norightleft
+  endif
+
+  sign unplace *
+  sign undefine S1
+  setlocal number& signcolumn&
+
+  " Add a test with more than 9 folds (and then delete some folds)
+  normal zE
+  for i in range(1, 10)
+    normal zfGzo
+  endfor
+  normal zR
+  call assert_equal([
+        \ a:fo .. a:fo .. ' one ',
+        \ '9> two '
+        \ ], ScreenLines([1, 2], 7))
+  normal 1Gzd
+  call assert_equal([
+        \ a:fo .. a:fo .. ' one ',
+        \ '89 two '
+        \ ], ScreenLines([1, 2], 7))
+  normal 1Gzdzdzdzdzdzdzd
+  call assert_equal([
+        \ a:fo .. a:fo .. ' one ',
+        \ a:fs .. a:fs .. ' two '
+        \ ], ScreenLines([1, 2], 7))
+
+  setlocal foldcolumn& number& signcolumn&
 endfunc
 
 func Test_foldcolumn_multibyte_char()

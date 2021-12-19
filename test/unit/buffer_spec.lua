@@ -312,12 +312,12 @@ describe('buffer functions', function()
     statusline_test('should put fillchar `~` in between text', 10,
       'abc%=def',            'abc~~~~def',
       {fillchar=('~'):byte()})
+    statusline_test('should put fillchar `━` in between text', 10,
+      'abc%=def',            'abc━━━━def',
+      {fillchar=0x2501, expected_byte_length=18})
     statusline_test('should handle zero-fillchar as a space', 10,
       'abcde%=',             'abcde     ',
       {fillchar=0})
-    statusline_test('should handle multibyte-fillchar as a dash', 10,
-      'abcde%=',             'abcde-----',
-      {fillchar=0x80})
     statusline_test('should print the tail file name', 80,
       '%t',                  'buffer_spec.lua',
       {file_name='test/unit/buffer_spec.lua', expected_cell_count=15})
