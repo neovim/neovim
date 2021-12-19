@@ -29,8 +29,6 @@
 #define uint32_t_eq kh_int_hash_equal
 #define int_hash kh_int_hash_func
 #define int_eq kh_int_hash_equal
-#define linenr_T_hash kh_int_hash_func
-#define linenr_T_eq kh_int_hash_equal
 #define handle_T_hash kh_int_hash_func
 #define handle_T_eq kh_int_hash_equal
 
