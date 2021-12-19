@@ -1006,7 +1006,7 @@ describe('API', function()
       nvim('set_option_value', 'autoread', true, {})
       eq(true, nvim('get_option_value', 'autoread', {scope = 'local'}))
       nvim('set_option_value', 'autoread', NIL, {scope = 'local'})
-      eq(-1, nvim('get_option_value', 'autoread', {scope = 'local'}))
+      eq(NIL, nvim('get_option_value', 'autoread', {scope = 'local'}))
     end)
   end)
 

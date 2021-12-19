@@ -702,7 +702,9 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
         rv = BOOLEAN_OBJ(numval);
         break;
       default:
-        rv = INTEGER_OBJ(numval);
+        // Boolean options that return something other than 0 or 1 should return nil. Currently this
+        // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+        rv = NIL;
         break;
     }
     break;
