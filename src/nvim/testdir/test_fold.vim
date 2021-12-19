@@ -924,6 +924,7 @@ func s:mbyte_fillchar_tests(fo, fc, fs)
   1,6fold
   call assert_equal([a:fc .. '  +--  6 '], ScreenLines(1, 10))
   " open all the folds
+  if !has('nvim')  " Skip this part: Nvim doesn't force an empty column
   normal zR
   call assert_equal([
         \ a:fo .. '  one    ',
@@ -961,6 +962,7 @@ func s:mbyte_fillchar_tests(fo, fc, fs)
         \ '2 five ',
         \ a:fs .. ' six  ',
         \ ], ScreenLines([1, 6], 7))
+  endif  " if !has('nvim')
 
   " set the fold column size to 1
   setlocal fdc=1
@@ -974,6 +976,7 @@ func s:mbyte_fillchar_tests(fo, fc, fs)
         \ a:fs .. 'six   ',
         \ ], ScreenLines([1, 6], 7))
 
+  if !has('nvim')  " Skip this part: Nvim doesn't force an empty column
   " Enable number and sign columns and place some signs
   setlocal fdc=3
   setlocal number
@@ -1032,6 +1035,7 @@ func s:mbyte_fillchar_tests(fo, fc, fs)
         \ a:fo .. a:fo .. ' one ',
         \ a:fs .. a:fs .. ' two '
         \ ], ScreenLines([1, 2], 7))
+  endif  " if !has('nvim')
 
   setlocal foldcolumn& number& signcolumn&
 endfunc
