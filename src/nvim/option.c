@@ -5060,7 +5060,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
 /// @param[in]  string  New value for string option.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 ///                        If OPT_CLEAR is set, the value of the option
-///                        is cleared  (the exact semantcis of this depend
+///                        is cleared  (the exact semantics of this depend
 ///                        on the option).
 ///
 /// @return NULL on success, error message on error.
