@@ -97,15 +97,17 @@ end
 ---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
 ---@return number `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
-  if encoding ~= 'utf-8' then
-    local col32, col16 = vim.str_utfindex(line, index)
-    if encoding == 'utf-32' then
-      return col32
-    else
-      return col16
-    end
+  if not encoding then encoding = 'utf-16' end
+  if encoding == 'utf-8' then
+    if index then return index else return #line end
+  elseif encoding == 'utf-16' then
+    local _, col16 = vim.str_utfindex(line, index)
+    return col16
+  elseif encoding == 'utf-32' then
+    local col32, _ = vim.str_utfindex(line, index)
+    return col32
   else
-    return index
+    error("Invalid encoding: " .. vim.inspect(encoding))
   end
 end
 
@@ -117,10 +119,15 @@ end
 ---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
 ---@return number byte (utf-8) index of `encoding` index `index` in `line`
 function M._str_byteindex_enc(line, index, encoding)
-  if encoding ~= 'utf-8' then
-    return vim.str_byteindex(line, index, not encoding or encoding ~= 'utf-32')
+  if not encoding then encoding = 'utf-16' end
+  if encoding == 'utf-8' then
+    if index then return index else return #line end
+  elseif encoding == 'utf-16' then
+    return vim.str_byteindex(line, index, true)
+  elseif encoding == 'utf-32' then
+    return vim.str_byteindex(line, index)
   else
-    return index
+    error("Invalid encoding: " .. vim.inspect(encoding))
   end
 end
 
