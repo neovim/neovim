@@ -1667,12 +1667,17 @@ int vim_chdirfile(char_u *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (os_chdir(dir) == 0) {
-    if (cause != kCdCauseOther && pathcmp(dir, (char *)NameBuff, -1) != 0) {
-      do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
-    }
-  } else {
+  if (pathcmp(dir, (char *)NameBuff, -1) == 0) {
+    // nothing to do
+    return OK;
+  }
+
+  if (os_chdir(dir) != 0) {
     return FAIL;
+  }
+
+  if (cause != kCdCauseOther) {
+    do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
   }
 
   return OK;
