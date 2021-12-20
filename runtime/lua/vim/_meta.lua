@@ -596,11 +596,6 @@ local create_option_metatable = function(set_type)
       local value
       if self._value ~= nil then
         value = convert_value_to_vim(self._name, self._info, self._value)
-      elseif set_type == SET_TYPES.LOCAL then
-        -- Equivalent to :set option< in Vimscript, which removes the local value
-        -- of the option so that the global value will be used. This only
-        -- works for global-local options
-        return a.nvim_set_option_value(self._name, nil, {scope = "local"})
       end
 
       a.nvim_set_option_value(self._name, value, {scope = scope})
