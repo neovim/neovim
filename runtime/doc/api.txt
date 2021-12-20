@@ -152,6 +152,18 @@ will block.  Non-deferred ({fast}) functions such as |nvim_get_mode()| and
 |nvim_input()| are served immediately (i.e. without waiting in the input
 queue).  Lua code can use |vim.in_fast_event()| to detect a {fast} context.
 
+
+							*api-columns*
+The existence of multibyte characters makes it important to separate the
+number of bytes and the number of displayed columns for a given text. The
+following definitions will be used to help with this distinction for an
+arbitrary cursor position:
+
+  Column/Text Column/cursor position: number of bytes of the text between the
+  start of the line to the cursor.
+
+  Virtual column: number of columns needed to display the text.
+
 ==============================================================================
 API metadata						*api-metadata*
 
