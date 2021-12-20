@@ -1082,15 +1082,13 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Return the current directory
   cwd = xmalloc(MAXPATHL);
-  if (cwd != NULL) {
-    if (os_dirname(cwd, MAXPATHL) != FAIL) {
+  if (os_dirname(cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
-      slash_adjust(cwd);
+    slash_adjust(cwd);
 #endif
-      rettv->vval.v_string = vim_strsave(cwd);
-    }
-    xfree(cwd);
+    rettv->vval.v_string = vim_strsave(cwd);
   }
+  xfree(cwd);
 
   if (curwin->w_localdir != NULL) {
     scope = kCdScopeWindow;
