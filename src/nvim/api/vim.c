@@ -696,7 +696,17 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     rv = INTEGER_OBJ(numval);
     break;
   case 2:
-    rv = BOOLEAN_OBJ(!!numval);
+    switch (numval) {
+      case 0:
+      case 1:
+        rv = BOOLEAN_OBJ(numval);
+        break;
+      default:
+        // Boolean options that return something other than 0 or 1 should return nil. Currently this
+        // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+        rv = NIL;
+        break;
+    }
     break;
   default:
     api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
@@ -749,7 +759,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     stringval = value.data.string.data;
     break;
   case kObjectTypeNil:
-    // Do nothing
+    scope |= OPT_CLEAR;
     break;
   default:
     api_set_error(err, kErrorTypeValidation, "invalid value for option");
