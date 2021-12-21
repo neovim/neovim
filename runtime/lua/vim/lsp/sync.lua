@@ -44,49 +44,8 @@ local M = {}
 -- local string.byte, unclear if this is necessary for JIT compilation
 local str_byte = string.byte
 local min = math.min
-local str_utfindex = vim.str_utfindex
 local str_utf_start = vim.str_utf_start
 local str_utf_end = vim.str_utf_end
-
----@private
--- Given a line, byte idx, and offset_encoding convert to the
--- utf-8, utf-16, or utf-32 index.
----@param line string the line to index into
----@param byte integer the byte idx
----@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
---@returns integer the utf idx for the given encoding
-local function byte_to_utf(line, byte, offset_encoding)
-  -- convert to 0 based indexing for str_utfindex
-  byte = byte - 1
-
-  local utf_idx
-  local _
-  -- Convert the byte range to utf-{8,16,32} and convert 1-based (lua) indexing to 0-based
-  if offset_encoding == 'utf-16' then
-    _, utf_idx = str_utfindex(line, byte)
-  elseif offset_encoding == 'utf-32' then
-    utf_idx, _ = str_utfindex(line, byte)
-  else
-    utf_idx = byte
-  end
-
-  -- convert to 1 based indexing
-  return utf_idx + 1
-end
-
----@private
-local function compute_line_length(line, offset_encoding)
-  local length
-  local _
-  if offset_encoding == 'utf-16' then
-     _, length = str_utfindex(line)
-  elseif offset_encoding == 'utf-32' then
-    length, _ = str_utfindex(line)
-  else
-    length = #line
-  end
-  return length
-end
 
 ---@private
 -- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
@@ -120,9 +79,9 @@ local function align_position(line, byte, start, offset_encoding)
     char = 1
   -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
-    char = compute_line_length(line, offset_encoding) + 1
+    char = vim.lsp.util._str_utfindex_enc(line, nil, offset_encoding) + 1
   else
-    char = byte_to_utf(line, byte, offset_encoding)
+    char = vim.lsp.util._str_utfindex_enc(line, byte - 1, offset_encoding) + 1
   end
 
   return byte, char
@@ -306,7 +265,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   local start_line = lines[start_range.line_idx]
   local range_length
   if start_line and #start_line > 0 then
-    range_length = compute_line_length(start_line, offset_encoding) - start_range.char_idx + 1 + line_ending_length
+    range_length = vim.lsp.util._str_utfindex_enc(start_line, nil, offset_encoding) - start_range.char_idx + 1 + line_ending_length
   else
     -- Length of newline character
     range_length = line_ending_length
@@ -316,7 +275,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
     -- Length full line plus newline character
     if #lines[idx] > 0 then
-      range_length = range_length + compute_line_length(lines[idx], offset_encoding) + #line_ending
+      range_length = range_length + vim.lsp.util._str_utfindex_enc(lines[idx], nil, offset_encoding) + #line_ending
     else
       range_length = range_length + line_ending_length
     end
