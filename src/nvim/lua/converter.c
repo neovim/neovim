@@ -1242,7 +1242,12 @@ LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
   { \
     type ret; \
-    ret = (type)lua_tonumber(lstate, -1); \
+    if (lua_type(lstate, -1) != LUA_TNUMBER) { \
+      api_set_error(err, kErrorTypeValidation, "Expected Lua number"); \
+      ret = (type)-1; \
+    } else { \
+      ret = (type)lua_tonumber(lstate, -1); \
+    } \
     lua_pop(lstate, 1); \
     return ret; \
   }

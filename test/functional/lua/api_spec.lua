@@ -183,6 +183,8 @@ describe('luaeval(vim.api.…)', function()
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 'test', 1, false)")]])))
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Number is not integral',
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 1.5, 1, false)")]])))
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected Lua number',
+       remove_trace(exc_exec([[call luaeval("vim.api.nvim_win_is_valid(nil)")]])))
 
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_float('test')")]])))
