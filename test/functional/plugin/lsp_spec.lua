@@ -301,6 +301,43 @@ describe('LSP', function()
       }
     end)
 
+    it('should detach buffer in response to nvim_buf_detach', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="finish", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_finish";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+          ]]
+          eq(true, exec_lua("return lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)"))
+          eq(true, exec_lua("return lsp.buf_is_attached(BUFFER, TEST_RPC_CLIENT_ID)"))
+          exec_lua [[
+            vim.api.nvim_command(BUFFER.."bwipeout")
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          client.notify('finish')
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == 'finish' then
+            exec_lua("return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)")
+            eq(false, exec_lua("return lsp.buf_is_attached(BUFFER, TEST_RPC_CLIENT_ID)"))
+            client.stop()
+          end
+        end;
+      }
+    end)
+
     it('client should return settings via workspace/configuration handler', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
