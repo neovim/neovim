@@ -1462,11 +1462,11 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
   return file_count;
 }
 
-/*
- * Append the full path to name with path separators made into percent
- * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
- */
-char *make_percent_swname(const char *dir, const char *name)
+// Append the full path to name with path separators made into percent
+// signs, to "dir". An unnamed buffer is handled as "" (<currentdir>/"")
+// The last character in "dir" must be an extra slash or backslash, it is
+// removed.
+char *make_percent_swname(char *dir, const char *name)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *d = NULL;
@@ -1478,6 +1478,7 @@ char *make_percent_swname(const char *dir, const char *name)
         *d = '%';
       }
     }
+    dir[STRLEN(dir) - 1] = NUL;  // remove one trailing slash
     d = concat_fnames(dir, s, TRUE);
     xfree(s);
     xfree(f);
