@@ -105,15 +105,16 @@ local function align_end_position(line, byte, offset_encoding)
     char = compute_line_length(line, offset_encoding) + 1
   else
     -- Modifying line, find the nearest utf codepoint
-    local offset = str_utf_end(line, byte)
+    local offset = str_utf_start(line, byte)
     -- If the byte does not fall on the start of the character, then
     -- align to the start of the next character.
-    if offset > 0 then
-      char = byte_to_utf(line, byte, offset_encoding) + 1
-      byte = byte + offset
-    else
+    if offset < 0 then
+      byte = byte + str_utf_end(line, byte) + 1
+    end
+    if byte <= #line then
       char = byte_to_utf(line, byte, offset_encoding)
-      byte = byte + offset
+    else
+      char = compute_line_length(line, offset_encoding) + 1
     end
     -- Extending line, find the nearest utf codepoint for the last valid character
   end
@@ -167,7 +168,7 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
     char_idx = compute_line_length(prev_line, offset_encoding)  + 1
   else
     byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
-    char_idx = byte_to_utf(prev_line, start_byte_idx, offset_encoding)
+    char_idx = byte_to_utf(prev_line, byte_idx, offset_encoding)
   end
 
   -- Return the start difference (shared for new and prev lines)

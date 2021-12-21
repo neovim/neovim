@@ -164,6 +164,201 @@ describe('incremental synchronization', function()
       }
       test_edit({"a"}, {"rb"}, expected_text_changes, 'utf-16', '\n')
     end)
+    it('deleting a line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0
+            },
+            ['end'] = {
+              character = 0,
+              line = 1
+            }
+          },
+          rangeLength = 12,
+          text = ''
+        }
+      }
+      test_edit({"hello world"}, {"dd"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('deleting an empty line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 0,
+              line = 2
+            }
+          },
+          rangeLength = 1,
+          text = ''
+        }
+      }
+      test_edit({"hello world", ""}, {"jdd"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('adding a line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 0,
+              line = 1
+            }
+          },
+          rangeLength = 0,
+          text = 'hello world\n'
+        }
+      }
+      test_edit({"hello world"}, {"yyp"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('adding an empty line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 0,
+              line = 1
+            }
+          },
+          rangeLength = 0,
+          text = '\n'
+        }
+      }
+      test_edit({"hello world"}, {"o"}, expected_text_changes, 'utf-16', '\n')
+    end)
+  end)
+  describe('multi line edit', function()
+    it('deletion and insertion', function()
+      local expected_text_changes = {
+        -- delete "_fsda" from end of line 1
+        {
+          range = {
+            ['start'] = {
+              character = 4,
+              line = 1
+            },
+            ['end'] = {
+              character = 9,
+              line = 1
+            }
+          },
+          rangeLength = 5,
+          text = ''
+        },
+        -- delete "hello world\n" from line 2
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 2
+            },
+            ['end'] = {
+              character = 0,
+              line = 3
+            }
+          },
+          rangeLength = 12,
+          text = ''
+        },
+        -- delete "1234" from beginning of line 2
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 2
+            },
+            ['end'] = {
+              character = 4,
+              line = 2
+            }
+          },
+          rangeLength = 4,
+          text = ''
+        },
+        -- add " asdf" to end of line 1
+        {
+          range = {
+            ['start'] = {
+              character = 4,
+              line = 1
+            },
+            ['end'] = {
+              character = 4,
+              line = 1
+            }
+          },
+          rangeLength = 0,
+          text = ' asdf'
+        },
+        -- delete " asdf\n" from line 2
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 2
+            },
+            ['end'] = {
+              character = 0,
+              line = 3
+            }
+          },
+          rangeLength = 6,
+          text = ''
+        },
+        -- undo entire deletion
+        {
+          range = {
+            ['start'] = {
+              character = 4,
+              line = 1
+            },
+            ['end'] = {
+              character = 9,
+              line = 1
+            }
+          },
+          rangeLength = 5,
+          text = "_fdsa\nhello world\n1234 asdf"
+        },
+        -- redo entire deletion
+        {
+          range = {
+            ['start'] = {
+              character = 4,
+              line = 1
+            },
+            ['end'] = {
+              character = 9,
+              line = 3
+            }
+          },
+          rangeLength = 27,
+          text = ' asdf'
+        },
+      }
+      local original_lines = {
+        "\\begin{document}",
+        "test_fdsa",
+        "hello world",
+        "1234 asdf",
+        "\\end{document}"
+      }
+      test_edit(original_lines, {"jf_vejjbhhdu<C-R>"}, expected_text_changes, 'utf-16', '\n')
+    end)
   end)
 
   describe('multi-operation edits', function()
@@ -296,6 +491,80 @@ describe('incremental synchronization', function()
         }
       }
       test_edit({"🔥"}, {"x"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('replacing a multibyte character with matching prefix', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 1,
+              line = 1
+            }
+          },
+          rangeLength = 1,
+          text = '⟩'
+        }
+      }
+      -- ⟨ is e29fa8, ⟩ is e29fa9
+      local original_lines = {
+        "\\begin{document}",
+        "⟨",
+        "\\end{document}",
+      }
+      test_edit(original_lines, {"jr⟩"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('replacing a multibyte character with matching suffix', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 1,
+              line = 1
+            }
+          },
+          rangeLength = 1,
+          text = 'ḟ'
+        }
+      }
+      -- ฟ is e0b89f, ḟ is e1b89f
+      local original_lines = {
+        "\\begin{document}",
+        "ฟ",
+        "\\end{document}",
+      }
+      test_edit(original_lines, {"jrḟ"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('inserting before a multibyte character', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1
+            },
+            ['end'] = {
+              character = 0,
+              line = 1
+            }
+          },
+          rangeLength = 0,
+          text = ' '
+        }
+      }
+      local original_lines = {
+        "\\begin{document}",
+        "→",
+        "\\end{document}",
+      }
+      test_edit(original_lines, {"ji "}, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting a multibyte character from a long line', function()
       local expected_text_changes = {
