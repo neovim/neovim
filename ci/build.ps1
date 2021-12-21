@@ -80,6 +80,16 @@ elseif ($compiler -eq 'MSVC') {
   $cmakeGenerator = 'Visual Studio 16 2019'
 }
 
+if ($compiler -eq 'MSVC') {
+  $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+  if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+    & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x${bits} -no_logo && set" | foreach-object {
+      $name, $value = $_ -split '=', 2
+      set-content env:\"$name" $value
+    }
+  }
+}
+
 if (-not $NoTests) {
   python -m ensurepip
   python -m pip install pynvim ; exitIfFailed
@@ -92,11 +102,6 @@ if (-not $NoTests) {
   npm.cmd install -g neovim
   Get-Command -CommandType Application neovim-node-host.cmd
   npm.cmd link neovim
-}
-
-if ($compiler -eq 'MSVC') {
-  # Required for LuaRocks (https://github.com/luarocks/luarocks/issues/1039#issuecomment-507296940).
-  $env:VCINSTALLDIR = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/16.11.31729/"
 }
 
 function convertToCmakeArgs($vars) {
