@@ -122,8 +122,9 @@ See |sign_define()| for the equivalent Vim script function.
 		in.  Most useful is defining a background color.
 
 	numhl={group}
-                Highlighting group used for 'number' column at the associated
-                line.  Overrides |hl-LineNr|, |hl-CursorLineNr|.
+		Highlighting group used for the line number on the line where
+		the sign is placed.  Overrides |hl-LineNr|, |hl-LineNrAbove|,
+		|hl-LineNrBelow|, and |hl-CursorLineNr|.
 
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the
