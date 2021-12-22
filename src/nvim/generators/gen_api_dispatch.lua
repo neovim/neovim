@@ -441,8 +441,8 @@ local function process_function(fn)
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
     local lc_param_type = real_type(param[1]):lower()
-    local extra = ((param_type == "Object" or param_type == "Dictionary") and "false, ") or ""
-    if param[1] == "DictionaryOf(LuaRef)" then
+    local extra = param_type == "Dictionary" and "false, " or ""
+    if param[1] == "Object" or param[1] == "DictionaryOf(LuaRef)" then
       extra = "true, "
     end
     local errshift = 0

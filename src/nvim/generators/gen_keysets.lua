@@ -26,6 +26,17 @@ local defspipe = io.open(defs_file, 'wb')
 
 local keysets = require'api.keysets'
 
+local keywords = {
+  register = true,
+}
+
+local function sanitize(key)
+  if keywords[key] then
+    return key .. "_"
+  end
+  return key
+end
+
 for name, keys in pairs(keysets) do
   local neworder, hashfun = hashy.hashy_hash(name, keys, function (idx)
     return name.."_table["..idx.."].str"
@@ -33,7 +44,7 @@ for name, keys in pairs(keysets) do
 
   defspipe:write("typedef struct {\n")
   for _, key in ipairs(neworder) do
-    defspipe:write("  Object "..key..";\n")
+    defspipe:write("  Object "..sanitize(key)..";\n")
   end
   defspipe:write("} KeyDict_"..name..";\n\n")
 
@@ -41,7 +52,7 @@ for name, keys in pairs(keysets) do
 
   funcspipe:write("KeySetLink "..name.."_table[] = {\n")
   for _, key in ipairs(neworder) do
-    funcspipe:write('  {"'..key..'", offsetof(KeyDict_'..name..", "..key..")},\n")
+    funcspipe:write('  {"'..key..'", offsetof(KeyDict_'..name..", "..sanitize(key)..")},\n")
   end
     funcspipe:write('  {NULL, 0},\n')
   funcspipe:write("};\n\n")
