@@ -22,7 +22,7 @@ typedef enum {
   OPT_ONECOLUMN = 64,  ///< list options one per line
   OPT_NO_REDRAW = 128,  ///< ignore redraw flags on option
   OPT_SKIPRTP = 256,  ///< "skiprtp" in 'sessionoptions'
-  OPT_CLEAR = 512, ///< Clear local value of an option.
+  OPT_CLEAR = 512,  ///< Clear local value of an option.
 } OptionFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
