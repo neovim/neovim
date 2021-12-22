@@ -2069,14 +2069,14 @@ func Test_cindent_2()
   let &wm = &columns - 20
 
   let code =<< trim [CODE]
-  {
-
-  /* this is
-   * a real serious important big
-   * comment
-   */
-  	/* insert " about life, the universe, and the rest" after "serious" */
-  }
+    {
+  
+    /* this is
+     * a real serious important big
+     * comment
+     */
+    	/* insert " about life, the universe, and the rest" after "serious" */
+    }
   [CODE]
 
   call append(0, code)
@@ -3243,32 +3243,32 @@ func Test_cindent_30()
   setl cindent ts=4 sw=4
   setl cino=+20
 
-  let code =<< trim [CODE]
-  	void
-  foo()
-  {
-  	if (a)
-  	{
-  	} else
-  		asdf;
-  }
-  [CODE]
+  let code =<< [CODE]
+	void
+foo()
+{
+	if (a)
+	{
+	} else
+		asdf;
+}
+[CODE]
 
   call append(0, code)
   normal gg
   normal ]]=][
 
-  let expected =<< trim [CODE]
-  	void
-  foo()
-  {
-  	if (a)
-  	{
-  	} else
-  		asdf;
-  }
+  let expected =<< [CODE]
+	void
+foo()
+{
+	if (a)
+	{
+	} else
+		asdf;
+}
 
-  [CODE]
+[CODE]
 
   call assert_equal(expected, getline(1, '$'))
   enew! | close
@@ -3461,7 +3461,7 @@ func Test_cindent_34()
   normal =][
 
   let expected =<< trim [CODE]
-
+  
   	void
   func(int a
   #if defined(FOO)
