@@ -541,6 +541,11 @@ static bool cin_is_cpp_namespace(char_u *s)
   bool has_name_start = false;
 
   s = cin_skipcomment(s);
+
+  if (STRNCMP(s, "inline", 6) == 0 && (s[6] == NUL || !vim_iswordc(s[6]))) {
+    s = cin_skipcomment(skipwhite(s + 6));
+  }
+
   if (STRNCMP(s, "namespace", 9) == 0 && (s[9] == NUL || !vim_iswordc(s[9]))) {
     p = cin_skipcomment(skipwhite(s + 9));
     while (*p != NUL) {
