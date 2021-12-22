@@ -5296,4 +5296,11 @@ func Test_cindent_pragma()
   enew! | close
 endfunc
 
+func Test_backslash_at_end_of_line()
+  new
+  exe "norm v>O'\\\<C-m>-"
+  exe "norm \<C-q>="
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
