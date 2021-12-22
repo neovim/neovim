@@ -1412,8 +1412,8 @@ static int cin_skip2pos(pos_T *trypos)
 static pos_T *find_start_brace(void)  // XXX
 {
   pos_T cursor_save;
-  pos_T       *trypos;
-  pos_T       *pos;
+  pos_T *trypos;
+  pos_T *pos;
   static pos_T pos_copy;
 
   cursor_save = curwin->w_cursor;
@@ -1428,7 +1428,7 @@ static pos_T *find_start_brace(void)  // XXX
       break;
     }
     if (pos != NULL) {
-      curwin->w_cursor.lnum = pos->lnum;
+      curwin->w_cursor = *pos;
     }
   }
   curwin->w_cursor = cursor_save;
