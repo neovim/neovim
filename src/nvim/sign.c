@@ -1740,7 +1740,7 @@ char_u *get_sign_name(expand_T *xp, int idx)
   case EXP_SUBCMD:
     return (char_u *)cmds[idx];
   case EXP_DEFINE: {
-    char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", "numhl=",
+    char *define_arg[] = { "culhl=", "icon=", "linehl=", "numhl=", "text=", "texthl=",
                            NULL };
     return (char_u *)define_arg[idx];
   }
@@ -1849,6 +1849,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     case SIGNCMD_DEFINE:
       if (STRNCMP(last, "texthl", 6) == 0
           || STRNCMP(last, "linehl", 6) == 0
+          || STRNCMP(last, "culhl", 5) == 0
           || STRNCMP(last, "numhl", 5) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
       } else if (STRNCMP(last, "icon", 4) == 0) {

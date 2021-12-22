@@ -218,15 +218,13 @@ func Test_sign_completion()
   call assert_equal('"sign define jump list place undefine unplace', @:)
 
   call feedkeys(":sign define Sign \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign icon= linehl= numhl= text= texthl=', @:)
+  call assert_equal('"sign define Sign culhl= icon= linehl= numhl= text= texthl=', @:)
 
-  call feedkeys(":sign define Sign linehl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign linehl=SpellBad SpellCap ' .
-	      \ 'SpellLocal SpellRare', @:)
-
-  call feedkeys(":sign define Sign texthl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign texthl=SpellBad SpellCap ' .
-	      \ 'SpellLocal SpellRare', @:)
+  for hl in ['culhl', 'linehl', 'numhl', 'texthl']
+    call feedkeys(":sign define Sign "..hl.."=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"sign define Sign '..hl..'=SpellBad SpellCap ' .
+                \ 'SpellLocal SpellRare', @:)
+  endfor
 
   call writefile(repeat(["Sun is shining"], 30), "XsignOne")
   call writefile(repeat(["Sky is blue"], 30), "XsignTwo")
@@ -417,20 +415,21 @@ func Test_sign_funcs()
 
   " Tests for sign_define()
   let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error',
-              \ 'culhl': 'Visual'}
+              \ 'culhl': 'Visual', 'numhl': 'Number'}
   call assert_equal(0, "sign1"->sign_define(attr))
-  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error',
-	      \ 'linehl' : 'Search', 'culhl': 'Visual', 'text' : '=>'}],
+  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error', 'linehl': 'Search',
+	      \ 'culhl': 'Visual', 'numhl': 'Number', 'text' : '=>'}],
               \ sign_getdefined())
 
   " Define a new sign without attributes and then update it
   call sign_define("sign2")
   let attr = {'text' : '!!', 'linehl' : 'DiffAdd', 'texthl' : 'DiffChange',
-	      \ 'culhl': 'DiffDelete', 'icon' : 'sign2.ico'}
+	      \ 'culhl': 'DiffDelete', 'numhl': 'Number', 'icon' : 'sign2.ico'}
   call Sign_define_ignore_error("sign2", attr)
   call assert_equal([{'name' : 'sign2', 'texthl' : 'DiffChange',
 	      \ 'linehl' : 'DiffAdd', 'culhl' : 'DiffDelete', 'text' : '!!',
-              \ 'icon' : 'sign2.ico'}], "sign2"->sign_getdefined())
+              \ 'numhl': 'Number', 'icon' : 'sign2.ico'}],
+              \ "sign2"->sign_getdefined())
 
   " Test for a sign name with digits
   call assert_equal(0, sign_define(0002, {'linehl' : 'StatusLine'}))
