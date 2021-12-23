@@ -645,8 +645,8 @@ end
 ---@param on_error Callback with parameters (code, ...), invoked
 --- when the client operation throws an error. `code` is a number describing
 --- the error. Other arguments may be passed depending on the error kind.  See
---- |vim.lsp.client_errors| for possible errors.
---- Use `vim.lsp.client_errors[code]` to get human-friendly name.
+--- |vim.lsp.rpc.client_errors| for possible errors.
+--- Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
 ---
 ---@param before_init Callback with parameters (initialize_params, config)
 --- invoked before the LSP "initialize" phase, where `params` contains the
@@ -757,8 +757,8 @@ function lsp.start_client(config)
   ---
   ---@param code (number) Error code
   ---@param err (...) Other arguments may be passed depending on the error kind
-  ---@see |vim.lsp.client_errors| for possible errors. Use
-  ---`vim.lsp.client_errors[code]` to get a human-friendly name.
+  ---@see |vim.lsp.rpc.client_errors| for possible errors. Use
+  ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
     err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))

@@ -835,10 +835,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                          throws an error. `code` is a number
                                          describing the error. Other arguments
                                          may be passed depending on the error
-                                         kind. See |vim.lsp.client_errors| for
-                                         possible errors. Use
-                                         `vim.lsp.client_errors[code]` to get
-                                         human-friendly name.
+                                         kind. See |vim.lsp.rpc.client_errors|
+                                         for possible errors. Use
+                                         `vim.lsp.rpc.client_errors[code]` to
+                                         get human-friendly name.
                     {before_init}        Callback with parameters
                                          (initialize_params, config) invoked
                                          before the LSP "initialize" phase,
