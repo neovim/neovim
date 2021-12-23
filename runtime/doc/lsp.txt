@@ -485,6 +485,16 @@ buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
                     {bufnr}      (number) Buffer handle, or 0 for current
                     {client_id}  (number) Client id
 
+buf_detach_client({bufnr}, {client_id})          *vim.lsp.buf_detach_client()*
+                Detaches client from the specified buffer. Note: While the
+                server is notified that the text document (buffer) was closed,
+                it is still able to send notifications should it ignore this
+                notification.
+
+                Parameters: ~
+                    {bufnr}      number Buffer handle, or 0 for current
+                    {client_id}  number Client id
+
 buf_get_clients({bufnr})                           *vim.lsp.buf_get_clients()*
                 Gets a map of client_id:client pairs for the given buffer,
                 where each value is a |vim.lsp.client| object.
