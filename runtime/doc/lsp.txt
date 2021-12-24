@@ -394,6 +394,9 @@ in the following order:
 2. Handler defined in |vim.lsp.start_client()|, if any.
 3. Handler defined in |vim.lsp.handlers|, if any.
 
+                                                            *vim.lsp.log_levels*
+Log levels are defined in |vim.log.levels|
+
 
 VIM.LSP.PROTOCOL                                              *vim.lsp.protocol*
 

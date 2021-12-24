@@ -881,6 +881,15 @@ vim.types                                               *vim.types*
         `vim.types.dictionary` will not change or that `vim.types` table will
         only contain values for these three types.
 
+                                                   *log_levels* *vim.log.levels*
+Log levels are one of the values defined in `vim.log.levels`:
+
+        vim.log.levels.DEBUG
+        vim.log.levels.ERROR
+        vim.log.levels.INFO
+        vim.log.levels.TRACE
+        vim.log.levels.WARN
+
 ------------------------------------------------------------------------------
 LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
 

@@ -1708,14 +1708,14 @@ end
 --
 -- Can be used to lookup the number from the name or the
 -- name from the number.
--- Levels by name: "trace", "debug", "info", "warn", "error"
--- Level numbers begin with "trace" at 0
+-- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+-- Level numbers begin with "TRACE" at 0
 lsp.log_levels = log.levels
 
 --- Sets the global log level for LSP logging.
 ---
---- Levels by name: "trace", "debug", "info", "warn", "error"
---- Level numbers begin with "trace" at 0
+--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+--- Level numbers begin with "TRACE" at 0
 ---
 --- Use `lsp.log_levels` for reverse lookup.
 ---
