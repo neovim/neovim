@@ -4163,11 +4163,12 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		Can also be used as a |method|: >
 			Getpattern()->expand()
 
-expandcmd({expr})					*expandcmd()*
-		Expand special items in {expr} like what is done for an Ex
-		command such as `:edit`.  This expands special keywords, like
-		with |expand()|, and environment variables, anywhere in
-		{expr}.  "~user" and "~/path" are only expanded at the start.
+expandcmd({string})					*expandcmd()*
+		Expand special items in String {string} like what is done for
+		an Ex command such as `:edit`.  This expands special keywords,
+		like with |expand()|, and environment variables, anywhere in
+		{string}.  "~user" and "~/path" are only expanded at the
+		start.
 		Returns the expanded string.  Example: >
 			:echo expandcmd('make %<.o')
 
@@ -4555,8 +4556,8 @@ fullcommand({name})						*fullcommand()*
 		Get the full command name from a short abbreviated command
 		name; see |20.2| for details on command abbreviations.
 
-		{name} may start with a `:` and can include a [range], these
-		are skipped and not returned.
+		The string argument {name} may start with a `:` and can
+		include a [range], these are skipped and not returned.
 		Returns an empty string if a command doesn't exist or if it's
 		ambiguous (for user-defined functions).
 
