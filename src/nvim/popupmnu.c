@@ -542,17 +542,8 @@ void pum_redraw(void)
               xfree(st);
               col -= width;
             } else {
-              int size = (int)STRLEN(st);
-              int cells = (int)mb_string2cells(st);
-
-              // only draw the text that fits
-              while (size > 0 && col + cells > pum_width + pum_col) {
-                size--;
-                size -= utf_head_off(st, st + size);
-                cells -= utf_ptr2cells(st + size);
-              }
-
-              grid_puts_len(&pum_grid, st, size, row, col, attr);
+              // use grid_puts_len() to truncate the text
+              grid_puts(&pum_grid, st, row, col, attr);
               xfree(st);
               col += width;
             }
