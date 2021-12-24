@@ -4584,6 +4584,9 @@ void ex_global(exarg_T *eap)
       // a match on this line?
       match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
                                 (colnr_T)0, NULL, NULL);
+      if (regmatch.regprog == NULL) {
+        break;  // re-compiling regprog failed
+      }
       if ((type == 'g' && match) || (type == 'v' && !match)) {
         ml_setmarked(lnum);
         ndone++;
