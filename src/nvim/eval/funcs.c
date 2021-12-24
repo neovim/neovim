@@ -3918,8 +3918,8 @@ static void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
 
-/// Common between getreg() and getregtype(): get the register name from the
-/// first argument.
+/// Common between getreg(), getreginfo() and getregtype(): get the register
+/// name from the first argument.
 /// Returns zero on error.
 static int getreg_get_regname(typval_T *argvars)
 {
@@ -7331,18 +7331,12 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "getreginfo()" function
 static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *strregname;
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = tv_get_string_chk(&argvars[0]);
-    if (strregname == NULL) {
-      return;
-    }
-  } else {
-    strregname = (const char *)get_vim_var_str(VV_REG);
+  int regname = getreg_get_regname(argvars);
+  if (regname == 0) {
+    return;
   }
 
-  int regname = (strregname == NULL ? '"' : *strregname);
-  if (regname == 0 || regname == '@') {
+  if (regname == '@') {
     regname = '"';
   }
 
