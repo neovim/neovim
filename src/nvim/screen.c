@@ -5965,6 +5965,13 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
         clear_next_cell = true;
       }
 
+      // When at the start of the text and overwriting the right half of a
+      // two-cell character in the same grid, truncate that into a '>'.
+      if (ptr == text && col > 0 && grid->chars[off][0] == 0) {
+        grid->chars[off - 1][0] = '>';
+        grid->chars[off - 1][1] = 0;
+      }
+
       schar_copy(grid->chars[off], buf);
       grid->attrs[off] = attr;
       if (mbyte_cells == 2) {
