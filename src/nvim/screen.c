@@ -5933,6 +5933,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
       // Only 1 cell left, but character requires 2 cells:
       // display a '>' in the last column to avoid wrapping. */
       c = '>';
+      u8c = '>';
+      u8cc[0] = 0;
       mbyte_cells = 1;
     }
 
