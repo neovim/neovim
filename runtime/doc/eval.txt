@@ -2410,10 +2410,11 @@ foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
 foreground()			Number	bring the Vim window to the foreground
+fullcommand({name})		String	get full command from {name}
 funcref({name} [, {arglist}] [, {dict}])
-				Funcref reference to function {name}
+				Funcref	reference to function {name}
 function({name} [, {arglist}] [, {dict}])
-				Funcref named reference to function {name}
+				Funcref	named reference to function {name}
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
@@ -4550,6 +4551,21 @@ foreground()	Move the Vim window to the foreground.  Useful when sent from
 		|remote_foreground()| instead.
 		{only in the Win32 GUI and console version}
 
+fullcommand({name})						*fullcommand()*
+		Get the full command name from a short abbreviated command
+		name; see |20.2| for details on command abbreviations.
+
+		{name} may start with a `:` and can include a [range], these
+		are skipped and not returned.
+		Returns an empty string if a command doesn't exist or if it's
+		ambiguous (for user-defined functions).
+
+		For example `fullcommand('s')`, `fullcommand('sub')`,
+		`fullcommand(':%substitute')` all return "substitute".
+
+		Can also be used as a |method|: >
+			GetName()->fullcommand()
+<
 						*funcref()*
 funcref({name} [, {arglist}] [, {dict}])
 		Just like |function()|, but the returned Funcref will lookup
