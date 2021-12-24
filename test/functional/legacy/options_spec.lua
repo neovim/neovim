@@ -83,4 +83,9 @@ describe('set', function()
       Press ENTER or type command to continue^   |
     ]])
   end)
+
+  it('foldcolumn and signcolumn to empty string is disallowed', function()
+    matches('E474: Invalid argument: fdc=', exc_exec('set fdc='))
+    matches('E474: Invalid argument: scl=', exc_exec('set scl='))
+  end)
 end)
