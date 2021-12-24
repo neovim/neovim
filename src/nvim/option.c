@@ -2953,7 +2953,7 @@ ambw_end:
     }
   } else if (varp == &curwin->w_p_fdc || varp == &curwin->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
-    if (check_opt_strings(*varp, p_fdc_values, false) != OK) {
+    if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_pt) {
@@ -3332,6 +3332,9 @@ static int int_cmp(const void *a, const void *b)
 /// @return OK when the value is valid, FAIL otherwise
 int check_signcolumn(char_u *val)
 {
+  if (*val == NUL) {
+    return FAIL;
+  }
   // check for basic match
   if (check_opt_strings(val, p_scl_values, false) == OK) {
     return OK;
