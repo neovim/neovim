@@ -102,7 +102,7 @@ build/.ran-cmake: | deps
 	cd build && $(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	touch $@
 
-deps: | build/.ran-third-party-cmake
+deps: build/.ran-third-party-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
 endif
@@ -120,7 +120,7 @@ build/.ran-third-party-cmake::
 	touch $@
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
-oldtest: | nvim build/runtime/doc/tags
+oldtest: nvim build/runtime/doc/tags
 	+$(SINGLE_MAKE) -C src/nvim/testdir clean
 ifeq ($(strip $(TEST_FILE)),)
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
@@ -137,16 +137,16 @@ build/runtime/doc/tags helptags: | nvim
 	+$(BUILD_TOOL) -C build runtime/doc/tags
 
 # Builds help HTML _and_ checks for invalid help tags.
-helphtml: | nvim build/runtime/doc/tags
+helphtml: nvim build/runtime/doc/tags
 	+$(BUILD_TOOL) -C build doc_html
 
-functionaltest: | nvim
+functionaltest: nvim
 	+$(BUILD_TOOL) -C build functionaltest
 
-functionaltest-lua: | nvim
+functionaltest-lua: nvim
 	+$(BUILD_TOOL) -C build functionaltest-lua
 
-lualint: | build/.ran-cmake deps
+lualint: build/.ran-cmake deps
 	$(BUILD_TOOL) -C build lualint
 
 shlint:
@@ -172,10 +172,10 @@ _opt_commitlint:
 	@test -x build/bin/nvim && { $(MAKE) commitlint; exit $$?; } \
 		|| echo "SKIP: commitlint (build/bin/nvim not found)"
 
-unittest: | nvim
+unittest: nvim
 	+$(BUILD_TOOL) -C build unittest
 
-benchmark: | nvim
+benchmark: nvim
 	+$(BUILD_TOOL) -C build benchmark
 
 test: functionaltest unittest
