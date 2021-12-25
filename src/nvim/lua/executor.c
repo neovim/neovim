@@ -535,7 +535,7 @@ static void nlua_common_package_init(lua_State *lstate)
 {
   {
     const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/shared.lua")
+    if (luaL_loadbuffer(lstate, code, sizeof(shared_module) - 1, "@vim/shared.lua")
         || nlua_pcall(lstate, 0, 0)) {
       nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
       return;
@@ -544,7 +544,7 @@ static void nlua_common_package_init(lua_State *lstate)
 
   {
     const char *code = (char *)&lua_load_package_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/_load_package.lua")
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_load_package_module) - 1, "@vim/_load_package.lua")
         || lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5106: Error while creating _load_package module: %.*s"));
       return;
@@ -556,7 +556,7 @@ static void nlua_common_package_init(lua_State *lstate)
     lua_getfield(lstate, -1, "loaded");  // [package, loaded]
 
     const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/inspect.lua")
+    if (luaL_loadbuffer(lstate, code, sizeof(inspect_module) - 1, "@vim/inspect.lua")
         || nlua_pcall(lstate, 0, 1)) {
       nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
       return;
@@ -564,7 +564,6 @@ static void nlua_common_package_init(lua_State *lstate)
 
     // [package, loaded, inspect]
     lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
-    lua_pop(lstate, 2);  // []
   }
 
   {
