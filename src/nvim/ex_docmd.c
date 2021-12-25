@@ -7807,14 +7807,17 @@ bool changedir_func(char_u *new_dir, CdScope scope)
     prev_dir = pdir;
   }
 
+  // For UNIX ":cd" means: go to home directory.
+  // On other systems too if 'cdhome' is set.
 #if defined(UNIX)
-  // On Unix ":cd" means: go to home directory.
   if (*new_dir == NUL) {
+#else
+  if (*new_dir == NUL && p_cdh) {
+#endif
     // Use NameBuff for home directory name.
     expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
     new_dir = NameBuff;
   }
-#endif
 
   bool dir_differs = new_dir == NULL || pdir == NULL
     || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
@@ -7834,9 +7837,9 @@ void ex_cd(exarg_T *eap)
 {
   char_u *new_dir;
   new_dir = eap->arg;
-#if !defined(UNIX) && !defined(VMS)
-  // for non-UNIX ":cd" means: print current directory
-  if (*new_dir == NUL) {
+#if !defined(UNIX)
+  // for non-UNIX ":cd" means: print current directory unless 'cdhome' is set
+  if (*new_dir == NUL && !p_cdh) {
     ex_pwd(NULL);
   } else
 #endif
