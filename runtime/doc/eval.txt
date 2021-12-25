@@ -4559,7 +4559,7 @@ fullcommand({name})						*fullcommand()*
 		The string argument {name} may start with a `:` and can
 		include a [range], these are skipped and not returned.
 		Returns an empty string if a command doesn't exist or if it's
-		ambiguous (for user-defined functions).
+		ambiguous (for user-defined commands).
 
 		For example `fullcommand('s')`, `fullcommand('sub')`,
 		`fullcommand(':%substitute')` all return "substitute".
