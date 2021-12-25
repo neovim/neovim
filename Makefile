@@ -1,9 +1,6 @@
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR  := $(dir $(MAKEFILE_PATH))
 
-filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
-filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
-
 # See contrib/local.mk.example
 -include local.mk
 
@@ -101,11 +98,11 @@ build/.ran-cmake: | deps
 	touch $@
 
 deps: build/.ran-third-party-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
+ifeq ($(USE_BUNDLED),)
 	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
 endif
 
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
+ifeq ($(USE_BUNDLED),)
 $(DEPS_BUILD_DIR):
 	mkdir -p "$@"
 build/.ran-third-party-cmake:: $(DEPS_BUILD_DIR)
