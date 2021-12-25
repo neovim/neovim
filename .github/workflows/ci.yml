@@ -10,6 +10,11 @@ on:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
 
+# Cancel any in-progress CI runs for a PR if it is updated
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   unixish:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
