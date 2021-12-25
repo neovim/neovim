@@ -276,7 +276,7 @@ return {
     },
     {
       full_name='cdhome', abbreviation='cdh',
-      short_desc=N_("change directory to the home directory by :cd"),
+      short_desc=N_(":cd without argument goes to the home directory"),
       type='bool', scope={'global'},
       secure=true,
       varname='p_cdh',
