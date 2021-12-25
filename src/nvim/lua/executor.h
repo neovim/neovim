@@ -4,6 +4,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+#include "nvim/assert.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
