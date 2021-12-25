@@ -72,8 +72,6 @@ ifeq ($(CMAKE_GENERATOR),Ninja)
 endif
 
 DEPS_CMAKE_FLAGS ?=
-# Back-compat: USE_BUNDLED_DEPS was the old name.
-USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
 
 ifneq (,$(USE_BUNDLED))
   BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
