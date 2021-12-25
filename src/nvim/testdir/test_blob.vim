@@ -346,4 +346,12 @@ func Test_blob_sort()
   endif
 endfunc
 
+" The following used to cause an out-of-bounds memory access
+func Test_blob2string()
+  let v = '0z' .. repeat('01010101.', 444)
+  let v ..= '01'
+  exe 'let b = ' .. v
+  call assert_equal(v, string(b))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
