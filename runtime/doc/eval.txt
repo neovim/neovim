@@ -5420,8 +5420,9 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		When {regname} was not set the result is an empty string.
-		The {regname} argument is a string.
+<		When register {regname} was not set the result is an empty
+		string.
+		The {regname} argument must be a string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)

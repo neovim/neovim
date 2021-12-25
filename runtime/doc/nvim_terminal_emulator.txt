@@ -391,6 +391,8 @@ GDB command						 *termdebug-customizing*
 To change the name of the gdb command, set the "termdebugger" variable before
 invoking `:Termdebug`: >
 	let termdebugger = "mygdb"
+If the command needs an argument use a List: >
+	let g:termdebugger = ['rr', 'replay', '--']
 
 To not use neovim floating windows for previewing variable evaluation, set the
 `g:termdebug_useFloatingHover` variable like this: >

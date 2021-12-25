@@ -104,6 +104,10 @@ call s:Highlight(1, '', &background)
 hi default debugBreakpoint term=reverse ctermbg=red guibg=red
 hi default debugBreakpointDisabled term=reverse ctermbg=gray guibg=gray
 
+func s:GetCommand()
+  return type(g:termdebugger) == v:t_list ? copy(g:termdebugger) : [g:termdebugger]
+endfunc
+
 func s:StartDebug(bang, ...)
   " First argument is the command to debug, second core file or process ID.
   call s:StartDebug_internal({'gdb_args': a:000, 'bang': a:bang})
@@ -119,8 +123,9 @@ func s:StartDebug_internal(dict)
     echoerr 'Terminal debugger already running, cannot run two'
     return
   endif
-  if !executable(g:termdebugger)
-    echoerr 'Cannot execute debugger program "' .. g:termdebugger .. '"'
+  let gdbcmd = s:GetCommand()
+  if !executable(gdbcmd[0])
+    echoerr 'Cannot execute debugger program "' .. gdbcmd[0] .. '"'
     return
   endif
 
@@ -192,7 +197,7 @@ endfunc
 
 func s:CheckGdbRunning()
   if nvim_get_chan_info(s:gdb_job_id) == {}
-      echoerr string(g:termdebugger) . ' exited unexpectedly'
+      echoerr string(s:GetCommand()[0]) . ' exited unexpectedly'
       call s:CloseBuffers()
       return ''
   endif
@@ -245,7 +250,7 @@ func s:StartDebug_term(dict)
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let gdb_cmd = [g:termdebugger]
+  let gdb_cmd = s:GetCommand()
   " Add -quiet to avoid the intro message causing a hit-enter prompt.
   let gdb_cmd += ['-quiet']
   " Disable pagination, it causes everything to stop at the gdb
@@ -379,7 +384,7 @@ func s:StartDebug_prompt(dict)
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let gdb_cmd = [g:termdebugger]
+  let gdb_cmd = s:GetCommand()
   " Add -quiet to avoid the intro message causing a hit-enter prompt.
   let gdb_cmd += ['-quiet']
   " Disable pagination, it causes everything to stop at the gdb, needs to be run early
