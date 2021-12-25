@@ -144,7 +144,6 @@ endfun
 
 " Test Virtual replace mode.
 func Test_virtual_replace()
-  throw 'skipped: TODO: '
   if exists('&t_kD')
     let save_t_kD = &t_kD
   endif
@@ -166,7 +165,6 @@ func Test_virtual_replace()
 	      \ ], getline(1, 6))
   normal G
   mark a
-  inoremap <C-D> <Del>
   exe "normal o0\<C-D>\nabcdefghi\njk\tlmn\n    opq\trst\n\<C-D>uvwxyz\n"
   exe "normal 'ajgR0\<C-D> 1\nA\nBCDEFGHIJ\n\tKL\nMNO\nPQR" . repeat("\<BS>", 29)
   call assert_equal([' 1',
