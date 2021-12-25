@@ -5933,6 +5933,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
       // Only 1 cell left, but character requires 2 cells:
       // display a '>' in the last column to avoid wrapping. */
       c = '>';
+      u8c = '>';
+      u8cc[0] = 0;
       mbyte_cells = 1;
     }
 
@@ -5961,6 +5963,13 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
                          && grid_off2cells(grid, off, max_off) == 1
                          && grid_off2cells(grid, off + 1, max_off) > 1))) {
         clear_next_cell = true;
+      }
+
+      // When at the start of the text and overwriting the right half of a
+      // two-cell character in the same grid, truncate that into a '>'.
+      if (ptr == text && col > 0 && grid->chars[off][0] == 0) {
+        grid->chars[off - 1][0] = '>';
+        grid->chars[off - 1][1] = 0;
       }
 
       schar_copy(grid->chars[off], buf);

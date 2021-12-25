@@ -386,7 +386,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 void pum_redraw(void)
 {
   int row = 0;
-  int col;
+  int grid_col;
   int attr_norm = win_hl_attr(curwin, HLF_PNI);
   int attr_select = win_hl_attr(curwin, HLF_PSI);
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
@@ -479,7 +479,7 @@ void pum_redraw(void)
 
     // Display each entry, use two spaces for a Tab.
     // Do this 3 times: For the main text, kind and extra info
-    col = col_off;
+    grid_col = col_off;
     totwidth = 0;
 
     for (round = 1; round <= 3; ++round) {
@@ -537,24 +537,15 @@ void pum_redraw(void)
                 }
               }
               grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row,
-                            col - size + 1, attr);
+                            grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
-              col -= width;
+              grid_col -= width;
             } else {
-              int size = (int)STRLEN(st);
-              int cells = (int)mb_string2cells(st);
-
-              // only draw the text that fits
-              while (size > 0 && col + cells > pum_width + pum_col) {
-                size--;
-                size -= utf_head_off(st, st + size);
-                cells -= utf_ptr2cells(st + size);
-              }
-
-              grid_puts_len(&pum_grid, st, size, row, col, attr);
+              // use grid_puts_len() to truncate the text
+              grid_puts(&pum_grid, st, row, grid_col, attr);
               xfree(st);
-              col += width;
+              grid_col += width;
             }
 
             if (*p != TAB) {
@@ -563,12 +554,12 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col - 1,
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col - 1,
                             attr);
-              col -= 2;
+              grid_col -= 2;
             } else {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col, attr);
-              col += 2;
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col, attr);
+              grid_col += 2;
             }
             totwidth += 2;
             // start text at next char
@@ -599,21 +590,21 @@ void pum_redraw(void)
 
       if (pum_rl) {
         grid_fill(&pum_grid, row, row + 1, col_off - pum_base_width - n + 1,
-                  col + 1, ' ', ' ', attr);
-        col = col_off - pum_base_width - n + 1;
+                  grid_col + 1, ' ', ' ', attr);
+        grid_col = col_off - pum_base_width - n + 1;
       } else {
-        grid_fill(&pum_grid, row, row + 1, col,
+        grid_fill(&pum_grid, row, row + 1, grid_col,
                   col_off + pum_base_width + n, ' ', ' ', attr);
-        col = col_off + pum_base_width + n;
+        grid_col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (pum_rl) {
-      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, col + 1,
+      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, grid_col + 1,
                 ' ', ' ', attr);
     } else {
-      grid_fill(&pum_grid, row, row + 1, col, col_off + pum_width, ' ', ' ',
+      grid_fill(&pum_grid, row, row + 1, grid_col, col_off + pum_width, ' ', ' ',
                 attr);
     }
 
