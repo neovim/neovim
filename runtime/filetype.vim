@@ -1746,6 +1746,7 @@ au BufNewFile,BufRead *.ice			setf slice
 
 " Microsoft Visual Studio Solution
 au BufNewFile,BufRead *.sln			setf solution
+au BufNewFile,BufRead *.slnf			setf json
 
 " Spice
 au BufNewFile,BufRead *.sp,*.spice		setf spice
