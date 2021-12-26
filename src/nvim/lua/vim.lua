@@ -103,6 +103,9 @@ setmetatable(vim, {
     elseif key == 'lsp' then
       t.lsp = require('vim.lsp')
       return t.lsp
+    elseif key == 'path' then
+      t.path = require('vim.path')
+      return t.path
     elseif key == 'highlight' then
       t.highlight = require('vim.highlight')
       return t.highlight
