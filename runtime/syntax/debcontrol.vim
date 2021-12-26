@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2020 Oct 26
+" Last Change: 2021 Nov 26
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -91,6 +91,11 @@ syn case ignore
 
 " Handle all fields from deb-src-control(5)
 
+" Catch-all for the legal fields
+syn region debcontrolField matchgroup=debcontrolKey start="^\%(\%(XSBC-Original-\)\=Maintainer\|Standards-Version\|Bugs\|Origin\|X[SB]-Python-Version\|\%(XS-\)\=Vcs-Mtn\|\%(XS-\)\=Testsuite\%(-Triggers\)\=\|Build-Profiles\|Tag\|Subarchitecture\|Kernel-Version\|Installer-Menu-Item\): " end="$" contains=debcontrolVariable,debcontrolEmail oneline
+syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Uploaders\|X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
+syn region debcontrolMultiFieldSpell matchgroup=debcontrolKey start="^Description: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
+
 " Fields for which we do strict syntax checking
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Architecture: *" end="$" contains=debcontrolArchitecture,debcontrolSpace oneline
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Multi-Arch: *" end="$" contains=debcontrolMultiArch oneline
@@ -99,19 +104,14 @@ syn region debcontrolStrictField matchgroup=debcontrolKey start="^Priority: *" e
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Section: *" end="$" contains=debcontrolSection oneline
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XC-\)\=Package-Type: *" end="$" contains=debcontrolPackageType oneline
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Homepage: *" end="$" contains=debcontrolHTTPUrl oneline keepend
-syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-\)\=Vcs-\%(Browser\|Arch\|Bzr\|Darcs\|Hg\): *" end="$" contains=debcontrolHTTPUrl oneline keepend
-syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-\)\=Vcs-Svn: *" end="$" contains=debcontrolVcsSvn,debcontrolHTTPUrl oneline keepend
-syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-\)\=Vcs-Cvs: *" end="$" contains=debcontrolVcsCvs oneline keepend
-syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-\)\=Vcs-Git: *" end="$" contains=debcontrolVcsGit oneline keepend
+syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-\%(Browser\|Arch\|Bzr\|Darcs\|Hg\): *" end="$" contains=debcontrolHTTPUrl oneline keepend
+syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-Svn: *" end="$" contains=debcontrolVcsSvn,debcontrolHTTPUrl oneline keepend
+syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-Cvs: *" end="$" contains=debcontrolVcsCvs oneline keepend
+syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(XS-[-a-zA-Z0-9]\+-\)\=Vcs-Git: *" end="$" contains=debcontrolVcsGit oneline keepend
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^Rules-Requires-Root: *" end="$" contains=debcontrolR3 oneline
 syn region debcontrolStrictField matchgroup=debcontrolKey start="^\%(Build-\)\=Essential: *" end="$" contains=debcontrolYesNo oneline
 
 syn region debcontrolStrictField matchgroup=debcontrolDeprecatedKey start="^\%(XS-\)\=DM-Upload-Allowed: *" end="$" contains=debcontrolDmUpload oneline
-
-" Catch-all for the other legal fields
-syn region debcontrolField matchgroup=debcontrolKey start="^\%(\%(XSBC-Original-\)\=Maintainer\|Standards-Version\|Bugs\|Origin\|X[SB]-Python-Version\|\%(XS-\)\=Vcs-Mtn\|\%(XS-\)\=Testsuite\%(-Triggers\)\=\|Build-Profiles\|Tag\|Subarchitecture\|Kernel-Version\|Installer-Menu-Item\): " end="$" contains=debcontrolVariable,debcontrolEmail oneline
-syn region debcontrolMultiField matchgroup=debcontrolKey start="^\%(Build-\%(Conflicts\|Depends\)\%(-Arch\|-Indep\)\=\|\%(Pre-\)\=Depends\|Recommends\|Suggests\|Breaks\|Enhances\|Replaces\|Conflicts\|Provides\|Built-Using\|Uploaders\|X[SBC]\{0,3\}\%(Private-\)\=-[-a-zA-Z0-9]\+\): *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment
-syn region debcontrolMultiFieldSpell matchgroup=debcontrolKey start="^Description: *" skip="^[ \t]" end="^$"me=s-1 end="^[^ \t#]"me=s-1 contains=debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
 
 " Associate our matches and regions with pretty colours
 hi def link debcontrolKey           Keyword
