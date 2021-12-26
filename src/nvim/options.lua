@@ -275,6 +275,14 @@ return {
       defaults={if_true="internal,keepascii"}
     },
     {
+      full_name='cdhome', abbreviation='cdh',
+      short_desc=N_(":cd without argument goes to the home directory"),
+      type='bool', scope={'global'},
+      secure=true,
+      varname='p_cdh',
+      defaults={if_true=false}
+    },
+    {
       full_name='cdpath', abbreviation='cd',
       short_desc=N_("list of directories searched with \":cd\""),
       type='string', list='comma', scope={'global'},

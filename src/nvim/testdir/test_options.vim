@@ -732,4 +732,25 @@ func Test_opt_reset_scroll()
   call delete('Xscroll')
 endfunc
 
+" Test for the 'cdhome' option
+func Test_opt_cdhome()
+  if has('unix') || has('vms')
+    throw 'Skipped: only works on non-Unix'
+  endif
+
+  set cdhome&
+  call assert_equal(0, &cdhome)
+  set cdhome
+
+  " This paragraph is copied from Test_cd_no_arg().
+  let path = getcwd()
+  cd
+  call assert_equal($HOME, getcwd())
+  call assert_notequal(path, getcwd())
+  exe 'cd ' .. fnameescape(path)
+  call assert_equal(path, getcwd())
+
+  set cdhome&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

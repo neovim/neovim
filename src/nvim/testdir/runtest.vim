@@ -64,6 +64,9 @@ if has('reltime')
   let s:start_time = reltime()
 endif
 
+" Always use forward slashes.
+set shellslash
+
 " Common with all tests on all systems.
 source setup.vim
 
@@ -103,9 +106,6 @@ lang mess C
 
 " Nvim: append runtime from build dir, which contains the generated doc/tags.
 let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
-
-" Always use forward slashes.
-set shellslash
 
 let s:t_bold = &t_md
 let s:t_normal = &t_me

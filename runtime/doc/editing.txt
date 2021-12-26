@@ -1253,10 +1253,12 @@ working directory.  If a local working directory (tab or window) does not
 exist, the next-higher scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*
-:cd[!]			On non-Unix systems: Print the current directory
-			name.  On Unix systems: Change the current directory
-			to the home directory.  Use |:pwd| to print the
-			current directory on all systems.
+:cd[!]			On non-Unix systems when 'cdhome' is off: Print the
+			current directory name.
+			Otherwise: Change the current directory to the home
+			directory.  Clear any window-local directory.
+			Use |:pwd| to print the current directory on all
+			systems.
 
 :cd[!] {path}		Change the current directory to {path}.
 			If {path} is relative, it is searched for in the

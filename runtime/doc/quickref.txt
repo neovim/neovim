@@ -629,6 +629,7 @@ Short explanation of each option:		*option-list*
 'buflisted'	  'bl'	    whether the buffer shows up in the buffer list
 'buftype'	  'bt'	    special type of buffer
 'casemap'	  'cmp'     specifies how case of letters is changed
+'cdhome'	  'cdh'	    change directory to the home directory by ":cd"
 'cdpath'	  'cd'	    list of directories searched with ":cd"
 'cedit'			    key used to open the command-line window
 'charconvert'	  'ccv'     expression for character encoding conversion
