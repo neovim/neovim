@@ -66,7 +66,7 @@ describe(':terminal mouse', function()
         ]])
       end)
 
-      it('will forward mouse clicks to the program', function()
+      it('will forward mouse press, drag and release to the program', function()
         if helpers.pending_win32(pending) then return end
         feed('<LeftMouse><1,2>')
         screen:expect([[
@@ -76,6 +76,36 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
            "#{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+             @##{1: }                                           |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><3,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                @$#{1: }                                        |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftRelease><3,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                   #$#{1: }                                     |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
@@ -90,6 +120,60 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
           `!!{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+      end)
+
+      it('dragging and scrolling do not interfere with each other', function()
+        if helpers.pending_win32(pending) then return end
+        feed('<LeftMouse><1,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+           "#{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<ScrollWheelUp><1,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+             `"#{1: }                                           |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                @##{1: }                                        |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<ScrollWheelUp><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                   `##{1: }                                     |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftRelease><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                      ###{1: }                                  |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
