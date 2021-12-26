@@ -2920,7 +2920,7 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  rettv->vval.v_string = vim_strsave(ea.cmdidx < 0
+  rettv->vval.v_string = vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
                                      ? get_user_commands(NULL, ea.useridx)
                                      : cmdnames[ea.cmdidx].cmd_name);
 }
