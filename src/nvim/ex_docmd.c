@@ -2900,6 +2900,31 @@ int cmd_exists(const char *const name)
   return ea.cmdidx == CMD_SIZE ? 0 : (full ? 2 : 1);
 }
 
+// "fullcommand" function
+void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  exarg_T ea;
+  char_u *name = argvars[0].vval.v_string;
+
+  while (name[0] != NUL && name[0] == ':') {
+    name++;
+  }
+  name = skip_range(name, NULL);
+
+  rettv->v_type = VAR_STRING;
+
+  ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
+  ea.cmdidx = (cmdidx_T)0;
+  char_u *p = find_command(&ea, NULL);
+  if (p == NULL || ea.cmdidx == CMD_SIZE) {
+    return;
+  }
+
+  rettv->vval.v_string = vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
+                                     ? get_user_commands(NULL, ea.useridx)
+                                     : cmdnames[ea.cmdidx].cmd_name);
+}
+
 /// This is all pretty much copied from do_one_cmd(), with all the extra stuff
 /// we don't need/want deleted.  Maybe this could be done better if we didn't
 /// repeat all this stuff.  The only problem is that they may not stay

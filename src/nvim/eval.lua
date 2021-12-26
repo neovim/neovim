@@ -133,6 +133,7 @@ return {
     foldtext={},
     foldtextresult={args=1, base=1},
     foreground={},
+    fullcommand={args=1, base=1},
     funcref={args={1, 3}, base=1},
     ['function']={args={1, 3}, base=1},
     garbagecollect={args={0, 1}},
