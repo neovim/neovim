@@ -1295,6 +1295,12 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
+  // ignore left release action if it was not proccessed above
+  // to prevent leaving Terminal mode after entering to it using a mouse
+  if (c == K_LEFTRELEASE && mouse_win->w_buffer->terminal == term) {
+    return false;
+  }
+
 end:
   ins_char_typebuf(c);
   return true;
