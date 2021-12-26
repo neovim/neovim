@@ -3918,34 +3918,46 @@ static void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
 
+/// Common between getreg(), getreginfo() and getregtype(): get the register
+/// name from the first argument.
+/// Returns zero on error.
+static int getreg_get_regname(typval_T *argvars)
+{
+  const char_u *strregname;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    strregname = (const char_u *)tv_get_string_chk(&argvars[0]);
+    if (strregname == NULL) {  // type error; errmsg already given
+      return 0;
+    }
+  } else {
+    // Default to v:register
+    strregname = get_vim_var_str(VV_REG);
+  }
+
+  return *strregname == 0 ? '"' : *strregname;
+}
+
 /// "getreg()" function
 static void f_getreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *strregname;
   int arg2 = false;
   bool return_list = false;
-  bool error = false;
 
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = tv_get_string_chk(&argvars[0]);
-    error = strregname == NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      arg2 = tv_get_number_chk(&argvars[1], &error);
-      if (!error && argvars[2].v_type != VAR_UNKNOWN) {
-        return_list = tv_get_number_chk(&argvars[2], &error);
-      }
-    }
-  } else {
-    strregname = _(get_vim_var_str(VV_REG));
-  }
-
-  if (error) {
+  int regname = getreg_get_regname(argvars);
+  if (regname == 0) {
     return;
   }
 
-  int regname = (uint8_t)(strregname == NULL ? '"' : *strregname);
-  if (regname == 0) {
-    regname = '"';
+  if (argvars[0].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_UNKNOWN) {
+    bool error = false;
+    arg2 = (int)tv_get_number_chk(&argvars[1], &error);
+    if (!error && argvars[2].v_type != VAR_UNKNOWN) {
+      return_list = (bool)tv_get_number_chk(&argvars[2], &error);
+    }
+    if (error) {
+      return;
+    }
   }
 
   if (return_list) {
@@ -3962,28 +3974,16 @@ static void f_getreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/*
- * "getregtype()" function
- */
+/// "getregtype()" function
 static void f_getregtype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *strregname;
+  // on error return an empty string
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
 
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = tv_get_string_chk(&argvars[0]);
-    if (strregname == NULL) {  // Type error; errmsg already given.
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = NULL;
-      return;
-    }
-  } else {
-    // Default to v:register.
-    strregname = _(get_vim_var_str(VV_REG));
-  }
-
-  int regname = (uint8_t)(strregname == NULL ? '"' : *strregname);
+  int regname = getreg_get_regname(argvars);
   if (regname == 0) {
-    regname = '"';
+    return;
   }
 
   colnr_T reglen = 0;
@@ -7331,18 +7331,12 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "getreginfo()" function
 static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *strregname;
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    strregname = tv_get_string_chk(&argvars[0]);
-    if (strregname == NULL) {
-      return;
-    }
-  } else {
-    strregname = (const char *)get_vim_var_str(VV_REG);
+  int regname = getreg_get_regname(argvars);
+  if (regname == 0) {
+    return;
   }
 
-  int regname = (strregname == NULL ? '"' : *strregname);
-  if (regname == 0 || regname == '@') {
+  if (regname == '@') {
     regname = '"';
   }
 
