@@ -2239,7 +2239,7 @@ au BufNewFile,BufRead crontab,crontab.*,*/etc/cron.d/*		call s:StarSetf('crontab
 au BufNewFile,BufRead */etc/dnsmasq.d/*		call s:StarSetf('dnsmasq')
 
 " Dockerfile
-au BufNewFile,BufRead Dockerfile.*		call s:StarSetf('dockerfile')
+au BufNewFile,BufRead Dockerfile.*,Containerfile.*	call s:StarSetf('dockerfile')
 
 " Dracula
 au BufNewFile,BufRead drac.*			call s:StarSetf('dracula')
