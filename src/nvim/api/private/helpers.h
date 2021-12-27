@@ -155,8 +155,18 @@ typedef struct {
     msglist_T *private_msg_list; \
     msg_list = &private_msg_list; \
     private_msg_list = NULL; \
-    code \
-      msg_list = saved_msg_list;  /* Restore the exception context. */ \
+    code; \
+    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+  } while (0)
+
+// Execute code with cursor position saved and restored and textlock active.
+#define TEXTLOCK_WRAP(code) \
+  do { \
+    const pos_T save_cursor = curwin->w_cursor; \
+    textlock++; \
+    code; \
+    textlock--; \
+    curwin->w_cursor = save_cursor; \
   } while (0)
 
 // Useful macro for executing some `code` for each item in an array.

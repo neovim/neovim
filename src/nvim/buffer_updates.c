@@ -188,9 +188,9 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
       // the first argument is always the buffer handle
       args.items[0] = BUFFER_OBJ(buf->handle);
 
-      textlock++;
-      nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL);
-      textlock--;
+      TEXTLOCK_WRAP({
+        nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL);
+      });
     }
 
     if (keep) {
@@ -305,9 +305,11 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
         args.items[6] = INTEGER_OBJ((Integer)deleted_codepoints);
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
-      textlock++;
-      Object res = nlua_call_ref(cb.on_lines, "lines", args, false, NULL);
-      textlock--;
+
+      Object res;
+      TEXTLOCK_WRAP({
+        res = nlua_call_ref(cb.on_lines, "lines", args, false, NULL);
+      });
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         buffer_update_callbacks_free(cb);
@@ -354,9 +356,10 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
       ADD_C(args, INTEGER_OBJ(new_col));
       ADD_C(args, INTEGER_OBJ(new_byte));
 
-      textlock++;
-      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, false, NULL);
-      textlock--;
+      Object res;
+      TEXTLOCK_WRAP({
+        res = nlua_call_ref(cb.on_bytes, "bytes", args, false, NULL);
+      });
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         buffer_update_callbacks_free(cb);
@@ -389,10 +392,10 @@ void buf_updates_changedtick(buf_T *buf)
       // next argument is b:changedtick
       ADD_C(args, INTEGER_OBJ(buf_get_changedtick(buf)));
 
-      textlock++;
-      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
-                                 args, false, NULL);
-      textlock--;
+      Object res;
+      TEXTLOCK_WRAP({
+        res = nlua_call_ref(cb.on_changedtick, "changedtick", args, false, NULL);
+      });
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         buffer_update_callbacks_free(cb);
