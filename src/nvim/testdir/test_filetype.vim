@@ -146,7 +146,7 @@ let s:filename_checks = {
     \ 'diff': ['file.diff', 'file.rej'],
     \ 'dircolors': ['.dir_colors', '.dircolors', '/etc/DIR_COLORS', 'any/etc/DIR_COLORS'],
     \ 'dnsmasq': ['/etc/dnsmasq.conf', '/etc/dnsmasq.d/file', 'any/etc/dnsmasq.conf', 'any/etc/dnsmasq.d/file'],
-    \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile'],
+    \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile', 'Dockerfile.debian'],
     \ 'dosbatch': ['file.bat', 'file.sys'],
     \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/pacman.conf', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
     \ 'dot': ['file.dot', 'file.gv'],
