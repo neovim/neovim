@@ -3280,7 +3280,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   int col_off1;                 // margin offset for first screen line
   int col_off2;                 // margin offset for wrapped screen line
   int width1;                   // text width for first screen line
-  int width2;                   // test width for wrapped screen line
+  int width2;                   // text width for wrapped screen line
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = (curwin->w_curswant == MAXCOL);
@@ -3402,6 +3402,13 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
     colnr_T virtcol = curwin->w_virtcol;
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
       virtcol -= vim_strsize(get_showbreak_value(curwin));
+    }
+
+    int c = utf_ptr2char(get_cursor_pos_ptr());
+    if (dir == FORWARD && virtcol < curwin->w_curswant
+        && (curwin->w_curswant <= (colnr_T)width1)
+        && !vim_isprintc(c) && c > 255) {
+      oneright();
     }
 
     if (virtcol > curwin->w_curswant
