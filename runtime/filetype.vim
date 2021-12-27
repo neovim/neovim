@@ -392,7 +392,8 @@ au BufNewFile,BufRead configure.in,configure.ac setf config
 " CUDA Compute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
-" Dockerfilb; Podman uses the same syntax with name Containerfile
+" Dockerfile; Podman uses the same syntax with name Containerfile
+" Also see Dockerfile.* below.
 au BufNewFile,BufRead Containerfile,Dockerfile,*.Dockerfile	setf dockerfile
 
 " WildPackets EtherPeek Decoder
@@ -2236,6 +2237,9 @@ au BufNewFile,BufRead crontab,crontab.*,*/etc/cron.d/*		call s:StarSetf('crontab
 
 " dnsmasq(8) configuration
 au BufNewFile,BufRead */etc/dnsmasq.d/*		call s:StarSetf('dnsmasq')
+
+" Dockerfile
+au BufNewFile,BufRead Dockerfile.*,Containerfile.*	call s:StarSetf('dockerfile')
 
 " Dracula
 au BufNewFile,BufRead drac.*			call s:StarSetf('dracula')
