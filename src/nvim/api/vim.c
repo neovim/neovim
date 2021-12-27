@@ -169,7 +169,7 @@ void nvim__set_hl_ns(Integer ns_id, Error *err)
   // event path for redraws caused by "fast" events. This could tie in with
   // better throttling of async events causing redraws, such as non-batched
   // nvim_buf_set_extmark calls from async contexts.
-  if (!provider_active && !ns_hl_changed) {
+  if (!provider_active && !ns_hl_changed && must_redraw < NOT_VALID) {
     multiqueue_put(main_loop.events, on_redraw_event, 0);
   }
   ns_hl_changed = true;
