@@ -55,7 +55,7 @@ end
 
 function Path:is_relative_to(root)
   local path_parts = self:parts()
-  local root_parts = Path:new(root):parts()
+  local root_parts = Path.new(root):parts()
 
   local root_parts_len = #root_parts
   local path_parts_len = #path_parts
@@ -105,27 +105,27 @@ function Path:parent()
   local result = self.path:gsub(strip_sep_pat, ''):gsub(strip_dir_pat, '')
   if #result == 0 then
     if self.is_windows then
-      return Path:new(self.path:sub(1, 2))
+      return Path.new(self.path:sub(1, 2))
     else
-      return Path:new('/')
+      return Path.new('/')
     end
   end
-  return Path:new(result)
+  return Path.new(result)
 end
 
-function Path:new(path)
+function Path.new(path)
   local path_obj = {
-    path = path,
     is_windows = uv.os_uname().version:match('Windows')
   }
-  setmetatable(path_obj, Path)
+  local self = setmetatable(path_obj, Path)
+
+  self.path = path
 
   if path_obj.is_windows then
-    if Path.is_absolute(path_obj) then
+    if self.is_absolute() then
       path = path:sub(1, 1):upper() .. path:sub(2)
     end
-    path = path:gsub('\\', '/')
-    path_obj.path = path
+    self.path = path:gsub('\\', '/')
   end
 
   return path_obj
@@ -133,13 +133,13 @@ end
 
 setmetatable(Path, {
   __call = function(_, path)
-    return Path:new(path)
+    return Path.new(path)
   end
 })
 
 local function join(...)
   local to_join = vim.map(tostring, vim.tbl_flatten(...))
-  return Path:new(table.concat(to_join, '/'))
+  return Path.new(table.concat(to_join, '/'))
 end
 
 return {
