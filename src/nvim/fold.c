@@ -2332,7 +2332,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
        * firstlnum.
        */
       while (!got_int) {
-        // set concat to 1 if it's allowed to concatenated this fold
+        // set concat to 1 if it's allowed to concatenate this fold
         // with a previous one that touches it.
         if (flp->start != 0 || flp->had_end <= MAX_LEVEL) {
           concat = 0;

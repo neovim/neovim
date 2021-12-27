@@ -67,8 +67,8 @@
 #include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
-#include "nvim/strings.h"
 #include "nvim/state.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
@@ -7489,9 +7489,8 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
   if ((eap->cmdidx == CMD_new
        || eap->cmdidx == CMD_tabnew
        || eap->cmdidx == CMD_tabedit
-       || eap->cmdidx == CMD_vnew
-       ) && *eap->arg == NUL) {
-    // ":new" or ":tabnew" without argument: edit an new empty buffer
+       || eap->cmdidx == CMD_vnew) && *eap->arg == NUL) {
+    // ":new" or ":tabnew" without argument: edit a new empty buffer
     setpcmark();
     (void)do_ecmd(0, NULL, NULL, eap, ECMD_ONE,
                   ECMD_HIDE + (eap->forceit ? ECMD_FORCEIT : 0),
@@ -7845,7 +7844,7 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   }
 
   bool dir_differs = new_dir == NULL || pdir == NULL
-    || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
+                     || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
   if (new_dir != NULL && (!dir_differs || vim_chdir(new_dir) == 0)) {
     post_chdir(scope, dir_differs);
     retval = true;

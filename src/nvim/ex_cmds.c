@@ -3025,7 +3025,7 @@ void ex_append(exarg_T *eap)
   // "start" is set to eap->line2+1 unless that position is invalid (when
   // eap->line2 pointed to the end of the buffer and nothing was appended)
   // "end" is set to lnum when something has been appended, otherwise
-  // it is the same than "start"  -- Acevedo
+  // it is the same as "start"  -- Acevedo
   curbuf->b_op_start.lnum = (eap->line2 < curbuf->b_ml.ml_line_count) ?
                             eap->line2 + 1 : curbuf->b_ml.ml_line_count;
   if (eap->cmdidx != CMD_append) {

@@ -3947,7 +3947,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
   int len;
   buf_T *errbuf;
 
-  // If the 'quickfixtextfunc' function returned an non-empty custom string
+  // If the 'quickfixtextfunc' function returned a non-empty custom string
   // for this entry, then use it.
   if (qftf_str != NULL && *qftf_str != NUL) {
     STRLCPY(IObuff, qftf_str, IOSIZE);

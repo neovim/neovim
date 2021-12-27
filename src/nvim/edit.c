@@ -1600,8 +1600,8 @@ static void ins_ctrl_v(void)
  */
 static int pc_status;
 #define PC_STATUS_UNSET 0       // pc_bytes was not set
-#define PC_STATUS_RIGHT 1       // right halve of double-wide char
-#define PC_STATUS_LEFT  2       // left halve of double-wide char
+#define PC_STATUS_RIGHT 1       // right half of double-wide char
+#define PC_STATUS_LEFT  2       // left half of double-wide char
 #define PC_STATUS_SET   3       // pc_bytes was filled
 static char_u pc_bytes[MB_MAXBYTES + 1];  // saved bytes
 static int pc_attr;
