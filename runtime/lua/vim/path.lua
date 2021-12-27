@@ -109,20 +109,18 @@ function Path:parent()
 end
 
 function Path:new(path)
-  local path_obj = {}
+  local path_obj = { path = path }
   setmetatable(path_obj, self)
   self.__index = self
 
   self.is_windows = uv.os_uname().version:match('Windows')
 
-  self.path = path
-
   if self.is_windows then
-    if self:is_absolute() then
+    if self.is_absolute(path_obj) then
       path = path:sub(1, 1):upper() .. path:sub(2)
     end
     path = path:gsub('\\', '/')
-    self.path = path
+    path_obj.path = path
   end
 
   return path_obj
