@@ -12,7 +12,7 @@ function Path:exists()
 end
 
 function Path:expanduser()
-  if self.path == '/' or self.path:match '^~/' then
+  if self.path:match '^~/' then
     return os.getenv('HOME') .. self.path:sub(2)
   else
     return self.path
@@ -114,21 +114,19 @@ function Path:parent()
 end
 
 function Path.new(path)
-  local path_obj = {
-    is_windows = uv.os_uname().version:match('Windows')
-  }
-  local self = setmetatable(path_obj, Path)
+  local self = setmetatable({
+    is_windows = uv.os_uname().version:match('Windows') or false,
+    path = path
+  }, Path)
 
-  self.path = path
-
-  if path_obj.is_windows then
+  if self.is_windows then
     if self.is_absolute() then
       path = path:sub(1, 1):upper() .. path:sub(2)
     end
     self.path = path:gsub('\\', '/')
   end
 
-  return path_obj
+  return self
 end
 
 setmetatable(Path, {
