@@ -1885,6 +1885,7 @@ static FILE *fopen_noinh_readbin(char *filename)
 typedef struct {
   char_u *buf;
   size_t offset;
+  linenr_T sourcing_lnum;
 } GetStrLineCookie;
 
 /// Get one full line from a sourced string (in-memory, no file).
@@ -1894,7 +1895,7 @@ typedef struct {
 ///         some error.
 static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
-  GetStrLineCookie *p = cookie;
+  GetStrLineCookie *const p = cookie;
   if (STRLEN(p->buf) <= p->offset) {
     return NULL;
   }
@@ -1903,6 +1904,7 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   garray_T ga;
   ga_init(&ga, sizeof(char_u), 400);
   ga_concat_len(&ga, (const char *)line, (size_t)(eol - line));
+  sourcing_lnum = ++p->sourcing_lnum;
   if (do_concat && vim_strchr(p_cpo, CPO_CONCAT) == NULL) {
     while (eol[0] != NUL) {
       line = eol + 1;
@@ -1910,6 +1912,7 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
       if (!concat_continued_line(&ga, 400, line, (size_t)(next_eol - line))) {
         break;
       }
+      p->sourcing_lnum++;
       eol = next_eol;
     }
   }
@@ -1993,6 +1996,7 @@ static void cmd_source_buffer(const exarg_T *const eap)
   const GetStrLineCookie cookie = {
     .buf = ga.ga_data,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
   if (curbuf->b_fname
       && path_with_extension((const char *)curbuf->b_fname, "lua")) {
@@ -2013,6 +2017,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
   GetStrLineCookie cookie = {
     .buf = (char_u *)cmd,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
   return source_using_linegetter((void *)&cookie, get_str_line, traceback_name);
 }
@@ -2395,9 +2400,12 @@ void free_scriptnames(void)
 
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
 {
-  return fgetline == getsourceline
-        ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : sourcing_lnum;
+  if (fgetline == getsourceline) {
+    return ((struct source_cookie *)cookie)->sourcing_lnum;
+  } else if (fgetline == get_str_line) {
+    return ((GetStrLineCookie *)cookie)->sourcing_lnum;
+  }
+  return sourcing_lnum;
 }
 
 
