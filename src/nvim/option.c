@@ -3861,7 +3861,7 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
     .script_ctx = {
       script_ctx.sc_sid,
       script_ctx.sc_seq,
-      script_ctx.sc_lnum + sourcing_lnum
+      script_ctx.sc_lnum + SOURCING_LNUM
     },
     current_channel_id
   };

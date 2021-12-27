@@ -243,6 +243,7 @@
 #include "nvim/path.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/scriptfile.h"
 #include "nvim/spell.h"
 #include "nvim/spell_defs.h"
 #include "nvim/spellfile.h"
@@ -575,8 +576,6 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
   char_u *p;
   int n;
   int len;
-  char_u *save_sourcing_name = sourcing_name;
-  linenr_T save_sourcing_lnum = sourcing_lnum;
   slang_T *lp = NULL;
   int c = 0;
   int res;
@@ -611,8 +610,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
   }
 
   // Set sourcing_name, so that error messages mention the file name.
-  sourcing_name = fname;
-  sourcing_lnum = 0;
+  estack_push(ETYPE_SPELL, fname, 0);
 
   // <HEADER>: <fileID>
   const int scms_ret = spell_check_magic_string(fd);
@@ -809,8 +807,7 @@ endOK:
   if (fd != NULL) {
     fclose(fd);
   }
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
+  estack_pop();
 
   return lp;
 }

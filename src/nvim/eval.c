@@ -45,6 +45,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/scriptfile.h"
 #include "nvim/search.h"
 #include "nvim/sign.h"
 #include "nvim/syntax.h"
@@ -5924,21 +5925,23 @@ void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rettv)
 void prepare_assert_error(garray_T *gap)
 {
   char buf[NUMBUFLEN];
+  char_u *sname = estack_sfile();
 
   ga_init(gap, 1, 100);
-  if (sourcing_name != NULL) {
-    ga_concat(gap, (char *)sourcing_name);
-    if (sourcing_lnum > 0) {
+  if (sname != NULL) {
+    ga_concat(gap, (const char *)sname);
+    if (SOURCING_LNUM > 0) {
       ga_concat(gap, " ");
     }
   }
-  if (sourcing_lnum > 0) {
-    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)sourcing_lnum);
+  if (SOURCING_LNUM > 0) {
+    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)SOURCING_LNUM);
     ga_concat(gap, buf);
   }
-  if (sourcing_name != NULL || sourcing_lnum > 0) {
+  if (sname != NULL || SOURCING_LNUM > 0) {
     ga_concat(gap, ": ");
   }
+  xfree(sname);
 }
 
 // Append "p[clen]" to "gap", escaping unprintable characters.
@@ -10284,9 +10287,9 @@ void func_line_start(void *cookie)
   funccall_T *fcp = (funccall_T *)cookie;
   ufunc_T *fp = fcp->func;
 
-  if (fp->uf_profiling && sourcing_lnum >= 1
-      && sourcing_lnum <= fp->uf_lines.ga_len) {
-    fp->uf_tml_idx = sourcing_lnum - 1;
+  if (fp->uf_profiling && SOURCING_LNUM >= 1
+      && SOURCING_LNUM <= fp->uf_lines.ga_len) {
+    fp->uf_tml_idx = SOURCING_LNUM - 1;
     // Skip continuation lines.
     while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL) {
       fp->uf_tml_idx--;
@@ -10953,8 +10956,8 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
     .script_ctx = current_sctx,
-    .sourcing_name = sourcing_name,
-    .sourcing_lnum = sourcing_lnum,
+    .sourcing_name = SOURCING_NAME,
+    .sourcing_lnum = SOURCING_LNUM,
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
     .autocmd_bufnr = autocmd_bufnr,
@@ -11056,8 +11059,8 @@ bool eval_has_provider(const char *feat)
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
 void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  if (sourcing_name) {
-    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
+  if (SOURCING_NAME) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, SOURCING_NAME, SOURCING_LNUM);
   } else {
     snprintf(buf, bufsize, "?");
   }

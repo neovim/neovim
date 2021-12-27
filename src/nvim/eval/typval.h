@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "nvim/exception_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
@@ -352,6 +353,8 @@ struct ufunc {
                            ///< used for s: variables
   int uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T *uf_scoped;       ///< l: local variables for closure
+  char_u *uf_name_exp;  ///< if "uf_name[]" starts with SNR the name with
+                        ///< "<SNR>" as a string, otherwise NULL
   char_u uf_name[];  ///< Name of function (actual size equals name);
                      ///< can start with <SNR>123_
                      ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
@@ -368,6 +371,34 @@ struct partial_S {
   typval_T *pt_argv;  ///< Arguments in allocated array.
   dict_T *pt_dict;  ///< Dict for "self".
 };
+
+typedef struct AutoPatCmd_S AutoPatCmd;
+
+// Entry in the execution stack "exestack".
+typedef enum {
+  ETYPE_TOP,              // toplevel
+  ETYPE_SCRIPT,           // sourcing script, use es_info.sctx
+  ETYPE_UFUNC,            // user function, use es_info.ufunc
+  ETYPE_AUCMD,            // autocomand, use es_info.aucmd
+  ETYPE_MODELINE,         // modeline, use es_info.sctx
+  ETYPE_EXCEPT,           // exception, use es_info.exception
+  ETYPE_ARGS,             // command line argument
+  ETYPE_ENV,              // environment variable
+  ETYPE_INTERNAL,         // internal operation
+  ETYPE_SPELL,            // loading spell file
+} etype_T;
+
+typedef struct {
+  long      es_lnum;      // replaces "sourcing_lnum"
+  char_u    *es_name;     // replaces "sourcing_name"
+  etype_T   es_type;
+  union {
+    sctx_T  *sctx;        // script and modeline info
+    ufunc_T *ufunc;       // function info
+    AutoPatCmd *aucmd;    // autocommand info
+    except_T   *except;   // exception info
+  } es_info;
+} estack_T;
 
 /// Structure used for explicit stack while garbage collecting hash tables
 typedef struct ht_stack_S {

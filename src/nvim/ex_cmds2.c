@@ -47,6 +47,7 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/scriptfile.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -1943,18 +1944,18 @@ scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
 {
-  char_u *save_sourcing_name = sourcing_name;
-  linenr_T save_sourcing_lnum = sourcing_lnum;
+  char_u *save_sourcing_name = SOURCING_NAME;
+  linenr_T save_sourcing_lnum = SOURCING_LNUM;
   char_u sourcing_name_buf[256];
   if (save_sourcing_name == NULL) {
-    sourcing_name = (char_u *)traceback_name;
+    SOURCING_NAME = (char_u *)traceback_name;
   } else {
     snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
              "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
              save_sourcing_lnum);
-    sourcing_name = sourcing_name_buf;  // -V507 reassigned below, before return.
+    SOURCING_NAME = sourcing_name_buf;  // -V507 reassigned below, before return.
   }
-  sourcing_lnum = 0;
+  SOURCING_LNUM = 0;
 
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
@@ -1964,8 +1965,8 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   save_funccal(&entry);
   int retval = do_cmdline(NULL, fgetline, cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  sourcing_lnum = save_sourcing_lnum;
-  sourcing_name = save_sourcing_name;
+  SOURCING_LNUM = save_sourcing_lnum;
+  SOURCING_NAME = save_sourcing_name;
   current_sctx = save_current_sctx;
   restore_funccal();
   return retval;
@@ -2032,8 +2033,6 @@ int do_source_str(const char *cmd, const char *traceback_name)
 int do_source(char *fname, int check_other, int is_vimrc)
 {
   struct source_cookie cookie;
-  char_u *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
   char_u *p;
   char_u *fname_exp;
   char_u *firstline = NULL;
@@ -2088,11 +2087,11 @@ int do_source(char *fname, int check_other, int is_vimrc)
   if (cookie.fp == NULL) {
     if (p_verbose > 0) {
       verbose_enter();
-      if (sourcing_name == NULL) {
+      if (SOURCING_NAME == NULL) {
         smsg(_("could not source \"%s\""), fname);
       } else {
         smsg(_("line %" PRId64 ": could not source \"%s\""),
-             (int64_t)sourcing_lnum, fname);
+             (int64_t)SOURCING_LNUM, fname);
       }
       verbose_leave();
     }
@@ -2104,11 +2103,11 @@ int do_source(char *fname, int check_other, int is_vimrc)
   // - For a vimrc file, may want to call vimrc_found().
   if (p_verbose > 1) {
     verbose_enter();
-    if (sourcing_name == NULL) {
+    if (SOURCING_NAME == NULL) {
       smsg(_("sourcing \"%s\""), fname);
     } else {
       smsg(_("line %" PRId64 ": sourcing \"%s\""),
-           (int64_t)sourcing_lnum, fname);
+           (int64_t)SOURCING_LNUM, fname);
     }
     verbose_leave();
   }
@@ -2138,10 +2137,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   cookie.level = ex_nesting_level;
 
   // Keep the sourcing name/lnum, for recursive calls.
-  save_sourcing_name = sourcing_name;
-  sourcing_name = fname_exp;
-  save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 0;
+  estack_push(ETYPE_SCRIPT, fname_exp, 0);
 
   // start measuring script load time if --startuptime was passed and
   // time_fd was successfully opened afterwards.
@@ -2230,13 +2226,13 @@ int do_source(char *fname, int check_other, int is_vimrc)
     // For now change currennt_sctx before sourcing lua files
     // So verbose doesn't say everything was done in line 1 since we don't know
     const sctx_T current_sctx_backup = current_sctx;
-    const linenr_T sourcing_lnum_backup = sourcing_lnum;
+    const linenr_T sourcing_lnum_backup = SOURCING_LNUM;
     current_sctx.sc_lnum = 0;
-    sourcing_lnum = 0;
+    SOURCING_LNUM = 0;
     // Source the file as lua
     nlua_exec_file((const char *)fname);
     current_sctx = current_sctx_backup;
-    sourcing_lnum = sourcing_lnum_backup;
+    SOURCING_LNUM = sourcing_lnum_backup;
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline(firstline, getsourceline, (void *)&cookie,
@@ -2259,13 +2255,12 @@ int do_source(char *fname, int check_other, int is_vimrc)
   if (got_int) {
     emsg(_(e_interr));
   }
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
+  estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
     smsg(_("finished sourcing %s"), fname);
-    if (sourcing_name != NULL) {
-      smsg(_("continuing in %s"), sourcing_name);
+    if (SOURCING_NAME != NULL) {
+      smsg(_("continuing in %s"), SOURCING_NAME);
     }
     verbose_leave();
   }
@@ -2397,7 +2392,7 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
 {
   return fgetline == getsourceline
         ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : sourcing_lnum;
+        : SOURCING_LNUM;
 }
 
 
@@ -2414,14 +2409,14 @@ char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (sp->dbg_tick < debug_tick) {
-    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, SOURCING_LNUM);
     sp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
     script_line_end();
   }
   // Set the current sourcing line number.
-  sourcing_lnum = sp->sourcing_lnum + 1;
+  SOURCING_LNUM = sp->sourcing_lnum + 1;
   // Get current line.  If there is a read-ahead line, use it, otherwise get
   // one now.
   if (sp->finished) {
@@ -2479,10 +2474,10 @@ char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
   }
 
   // Did we encounter a breakpoint?
-  if (sp->breakpoint != 0 && sp->breakpoint <= sourcing_lnum) {
-    dbg_breakpoint(sp->fname, sourcing_lnum);
+  if (sp->breakpoint != 0 && sp->breakpoint <= SOURCING_LNUM) {
+    dbg_breakpoint(sp->fname, SOURCING_LNUM);
     // Find next breakpoint.
-    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, sp->fname, SOURCING_LNUM);
     sp->dbg_tick = debug_tick;
   }
 
@@ -2604,12 +2599,12 @@ void script_line_start(void)
     return;
   }
   si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && sourcing_lnum >= 1) {
+  if (si->sn_prof_on && SOURCING_LNUM >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
     (void)ga_grow(&si->sn_prl_ga,
-                  (int)(sourcing_lnum - si->sn_prl_ga.ga_len));
-    si->sn_prl_idx = sourcing_lnum - 1;
+                  (int)(SOURCING_LNUM - si->sn_prl_ga.ga_len));
+    si->sn_prl_idx = SOURCING_LNUM - 1;
     while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
            && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {
       // Zero counters for a line that was not used before.

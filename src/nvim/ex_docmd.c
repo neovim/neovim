@@ -62,6 +62,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/scriptfile.h"
 #include "nvim/search.h"
 #include "nvim/shada.h"
 #include "nvim/sign.h"
@@ -367,7 +368,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     breakpoint = func_breakpoint(real_cookie);
     dbg_tick = func_dbg_tick(real_cookie);
   } else if (getline_equal(fgetline, cookie, getsourceline)) {
-    fname = sourcing_name;
+    fname = SOURCING_NAME;
     breakpoint = source_breakpoint(real_cookie);
     dbg_tick = source_dbg_tick(real_cookie);
   }
@@ -460,20 +461,20 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
       if (breakpoint != NULL && dbg_tick != NULL
           && *dbg_tick != debug_tick) {
         *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
-                                          fname, sourcing_lnum);
+                                          fname, SOURCING_LNUM);
         *dbg_tick = debug_tick;
       }
 
       next_cmdline = ((wcmd_T *)(lines_ga.ga_data))[current_line].line;
-      sourcing_lnum = ((wcmd_T *)(lines_ga.ga_data))[current_line].lnum;
+      SOURCING_LNUM = ((wcmd_T *)(lines_ga.ga_data))[current_line].lnum;
 
       // Did we encounter a breakpoint?
       if (breakpoint != NULL && *breakpoint != 0
-          && *breakpoint <= sourcing_lnum) {
-        dbg_breakpoint(fname, sourcing_lnum);
+          && *breakpoint <= SOURCING_LNUM) {
+        dbg_breakpoint(fname, SOURCING_LNUM);
         // Find next breakpoint.
         *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
-                                          fname, sourcing_lnum);
+                                          fname, SOURCING_LNUM);
         *dbg_tick = debug_tick;
       }
       if (do_profiling == PROF_YES) {
@@ -577,8 +578,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
       }
     }
 
-    if ((p_verbose >= 15 && sourcing_name != NULL) || p_verbose >= 16) {
-      msg_verbose_cmd(sourcing_lnum, cmdline_copy);
+    if ((p_verbose >= 15 && SOURCING_NAME != NULL) || p_verbose >= 16) {
+      msg_verbose_cmd(SOURCING_LNUM, cmdline_copy);
     }
 
     /*
@@ -687,7 +688,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
      */
     if (cstack.cs_looplevel == 0) {
       if (!GA_EMPTY(&lines_ga)) {
-        sourcing_lnum = ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
+        SOURCING_LNUM = ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
         GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
       }
       current_line = 0;
@@ -805,8 +806,6 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     // commands are executed.
     if (current_exception) {
       char *p = NULL;
-      char_u *saved_sourcing_name;
-      int saved_sourcing_lnum;
       struct msglist *messages = NULL;
       struct msglist *next;
 
@@ -831,10 +830,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
         break;
       }
 
-      saved_sourcing_name = sourcing_name;
-      saved_sourcing_lnum = sourcing_lnum;
-      sourcing_name = current_exception->throw_name;
-      sourcing_lnum = current_exception->throw_lnum;
+      estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
       current_exception->throw_name = NULL;
 
       discard_current_exception();              // uses IObuff if 'verbose'
@@ -854,9 +850,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
         emsg(p);
         xfree(p);
       }
-      xfree(sourcing_name);
-      sourcing_name = saved_sourcing_name;
-      sourcing_lnum = saved_sourcing_lnum;
+      xfree(SOURCING_NAME);
+      estack_pop();
     } else if (got_int || (did_emsg && force_abort)) {
       // On an interrupt or an aborting error not converted to an exception,
       // disable the conversion of errors to exceptions.  (Interrupts are not
@@ -977,7 +972,7 @@ static char_u *get_loop_line(int c, void *cookie, int indent, bool do_concat)
   KeyTyped = false;
   cp->current_line++;
   wp = (wcmd_T *)(cp->lines_gap->ga_data) + cp->current_line;
-  sourcing_lnum = wp->lnum;
+  SOURCING_LNUM = wp->lnum;
   return vim_strsave(wp->line);
 }
 
@@ -988,7 +983,7 @@ static void store_loop_line(garray_T *gap, char_u *line)
 {
   wcmd_T *p = GA_APPEND_VIA_PTR(wcmd_T, gap);
   p->line = vim_strsave(line);
-  p->lnum = sourcing_lnum;
+  p->lnum = SOURCING_LNUM;
 }
 
 /// If "fgetline" is get_loop_line(), return TRUE if the getline it uses equals
@@ -2748,7 +2743,7 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
             xp->xp_luaref = uc->uc_compl_luaref;
             xp->xp_arg = uc->uc_compl_arg;
             xp->xp_script_ctx = uc->uc_script_ctx;
-            xp->xp_script_ctx.sc_lnum += sourcing_lnum;
+            xp->xp_script_ctx.sc_lnum += SOURCING_LNUM;
           }
           /* Do not search for further abbreviations
            * if this is an exact match. */
@@ -5242,7 +5237,7 @@ int uc_add_command(char_u *name, size_t name_len, char_u *rep, uint32_t argt, lo
   cmd->uc_def = def;
   cmd->uc_compl = compl;
   cmd->uc_script_ctx = current_sctx;
-  cmd->uc_script_ctx.sc_lnum += sourcing_lnum;
+  cmd->uc_script_ctx.sc_lnum += SOURCING_LNUM;
   cmd->uc_compl_arg = compl_arg;
   cmd->uc_compl_luaref = compl_luaref;
   cmd->uc_addr_type = addr_type;
@@ -9195,29 +9190,30 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-      result = sourcing_name;
+      result = estack_sfile();
       if (result == NULL) {
         *errormsg = _("E498: no :source file name to substitute for \"<sfile>\"");
         return NULL;
       }
+      resultbuf = result;       // remember allocated string
       break;
 
     case SPEC_SLNUM:            // line in file for ":so" command
-      if (sourcing_name == NULL || sourcing_lnum == 0) {
+      if (SOURCING_NAME == NULL || SOURCING_LNUM == 0) {
         *errormsg = _("E842: no line number to use for \"<slnum>\"");
         return NULL;
       }
-      snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, sourcing_lnum);
+      snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, SOURCING_LNUM);
       result = (char_u *)strbuf;
       break;
 
     case SPEC_SFLNUM:  // line in script file
-      if (current_sctx.sc_lnum + sourcing_lnum == 0) {
+      if (current_sctx.sc_lnum + SOURCING_LNUM == 0) {
         *errormsg = _("E961: no line number to use for \"<sflnum>\"");
         return NULL;
       }
       snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
-               current_sctx.sc_lnum + sourcing_lnum);
+               current_sctx.sc_lnum + SOURCING_LNUM);
       result = (char_u *)strbuf;
       break;
 

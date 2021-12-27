@@ -47,7 +47,7 @@ typedef struct AutoPat {
 ///
 /// Struct used to keep status while executing autocommands for an event.
 ///
-typedef struct AutoPatCmd {
+struct AutoPatCmd_S {
   AutoPat *curpat;          // next AutoPat to examine
   AutoCmd *nextcmd;         // next AutoCmd to execute
   int group;                    // group being used
@@ -57,8 +57,8 @@ typedef struct AutoPatCmd {
   event_T event;                // current event
   int arg_bufnr;                // initially equal to <abuf>, set to zero when
                                 // buf is deleted
-  struct AutoPatCmd *next;    // chain of active apc-s for auto-invalidation
-} AutoPatCmd;
+  AutoPatCmd *next;    // chain of active apc-s for auto-invalidation
+};
 
 
 // Set by the apply_autocmds_group function if the given event is equal to

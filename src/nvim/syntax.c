@@ -6824,7 +6824,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (dodefault && (forceit || hlgroup->sg_deflink == 0)) {
         hlgroup->sg_deflink = to_id;
         hlgroup->sg_deflink_sctx = current_sctx;
-        hlgroup->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+        hlgroup->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
       }
     }
 
@@ -6833,7 +6833,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // for the group, unless '!' is used
       if (to_id > 0 && !forceit && !init
           && hl_has_settings(from_id - 1, dodefault)) {
-        if (sourcing_name == NULL && !dodefault) {
+        if (SOURCING_NAME == NULL && !dodefault) {
           emsg(_("E414: group has settings, highlight link ignored"));
         }
       } else if (hlgroup->sg_link != to_id
@@ -6844,7 +6844,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         }
         hlgroup->sg_link = to_id;
         hlgroup->sg_script_ctx = current_sctx;
-        hlgroup->sg_script_ctx.sc_lnum += sourcing_lnum;
+        hlgroup->sg_script_ctx.sc_lnum += SOURCING_LNUM;
         hlgroup->sg_cleared = false;
         redraw_all_later(SOME_VALID);
 
@@ -7224,7 +7224,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       set_hl_attr(idx);
     }
     HL_TABLE()[idx].sg_script_ctx = current_sctx;
-    HL_TABLE()[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
+    HL_TABLE()[idx].sg_script_ctx.sc_lnum += SOURCING_LNUM;
   }
   xfree(key);
   xfree(arg);

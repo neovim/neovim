@@ -8120,16 +8120,16 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // If this is called from a provider function, restore the scope
     // information of the caller.
     save_current_sctx = current_sctx;
-    save_sourcing_name = sourcing_name;
-    save_sourcing_lnum = sourcing_lnum;
+    save_sourcing_name = SOURCING_NAME;
+    save_sourcing_lnum = SOURCING_LNUM;
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccal(&funccal_entry);
 
     current_sctx = provider_caller_scope.script_ctx;
-    sourcing_name = provider_caller_scope.sourcing_name;
-    sourcing_lnum = provider_caller_scope.sourcing_lnum;
+    SOURCING_NAME = provider_caller_scope.sourcing_name;
+    SOURCING_LNUM = provider_caller_scope.sourcing_lnum;
     autocmd_fname = provider_caller_scope.autocmd_fname;
     autocmd_match = provider_caller_scope.autocmd_match;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
@@ -8146,8 +8146,8 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
-    sourcing_name = save_sourcing_name;
-    sourcing_lnum = save_sourcing_lnum;
+    SOURCING_NAME = save_sourcing_name;
+    SOURCING_LNUM = save_sourcing_lnum;
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
     autocmd_bufnr = save_autocmd_bufnr;

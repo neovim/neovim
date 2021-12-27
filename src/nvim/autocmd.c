@@ -18,6 +18,7 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/regexp.h"
+#include "nvim/scriptfile.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/ui_compositor.h"
@@ -957,7 +958,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, c
       ac = xmalloc(sizeof(AutoCmd));
       ac->cmd = vim_strsave(cmd);
       ac->script_ctx = current_sctx;
-      ac->script_ctx.sc_lnum += sourcing_lnum;
+      ac->script_ctx.sc_lnum += SOURCING_LNUM;
       ac->next = NULL;
       *prev_ac = ac;
       ac->once = once;
@@ -1378,8 +1379,6 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   bool save_changed;
   buf_T *old_curbuf;
   bool retval = false;
-  char_u *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
   char_u *save_autocmd_fname;
   int save_autocmd_bufnr;
   char_u *save_autocmd_match;
@@ -1541,10 +1540,9 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
 
   // Don't redraw while doing autocommands.
   RedrawingDisabled++;
-  save_sourcing_name = sourcing_name;
-  sourcing_name = NULL;  // don't free this one
-  save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 0;  // no line number here
+
+  // name and lnum are filled in later
+  estack_push(ETYPE_AUCMD, NULL, 0);
 
   const sctx_T save_current_sctx = current_sctx;
 
@@ -1641,9 +1639,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   autocmd_busy = save_autocmd_busy;
   filechangeshell_busy = false;
   autocmd_nested = save_autocmd_nested;
-  xfree(sourcing_name);
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
+  xfree(SOURCING_NAME);
+  estack_pop();
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
   autocmd_bufnr = save_autocmd_bufnr;
@@ -1746,8 +1743,9 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
   AutoPat *ap;
   AutoCmd *cp;
   char *s;
+  char_u **sourcing_namep = &SOURCING_NAME;
 
-  XFREE_CLEAR(sourcing_name);
+  XFREE_CLEAR(*sourcing_namep);
 
   for (ap = apc->curpat; ap != NULL && !got_int; ap = ap->next) {
     apc->curpat = NULL;
@@ -1772,12 +1770,12 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
         const size_t sourcing_name_len
           = (STRLEN(s) + strlen(name) + (size_t)ap->patlen + 1);
 
-        sourcing_name = xmalloc(sourcing_name_len);
-        snprintf((char *)sourcing_name, sourcing_name_len, s, name,
-                 (char *)ap->pat);
+        *sourcing_namep = xmalloc(sourcing_name_len);
+        snprintf((char *)*sourcing_namep, sourcing_name_len, s,  // NOLINT(whitespace/operators)
+                 name, (char *)ap->pat);
         if (p_verbose >= 8) {
           verbose_enter();
-          smsg(_("Executing %s"), sourcing_name);
+          smsg(_("Executing %s"), *sourcing_namep);
           verbose_leave();
         }
 

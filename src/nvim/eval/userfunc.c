@@ -20,6 +20,7 @@
 #include "nvim/os/input.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/scriptfile.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -200,6 +201,18 @@ static void register_closure(ufunc_T *fp)
   [current_funccal->fc_funcs.ga_len++] = fp;
 }
 
+static void set_ufunc_name(ufunc_T *fp, char_u *name)
+{
+  STRCPY(fp->uf_name, name);
+
+  if (name[0] == K_SPECIAL) {
+    fp->uf_name_exp = xmalloc(STRLEN(name) + 3);
+    if (fp->uf_name_exp != NULL) {
+      STRCPY(fp->uf_name_exp, "<SNR>");
+      STRCAT(fp->uf_name_exp, fp->uf_name + 3);
+    }
+  }
+}
 
 /// Get a name for a lambda.  Returned in static memory.
 char_u *get_lambda_name(void)
@@ -289,7 +302,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     }
 
     fp->uf_refcount = 1;
-    STRCPY(fp->uf_name, name);
+    set_ufunc_name(fp, name);
     hash_add(&func_hashtab, UF2HIKEY(fp));
     fp->uf_args = newargs;
     ga_init(&fp->uf_def_args, (int)sizeof(char_u *), 1);
@@ -311,7 +324,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     fp->uf_flags = flags;
     fp->uf_calls = 0;
     fp->uf_script_ctx = current_sctx;
-    fp->uf_script_ctx.sc_lnum += sourcing_lnum - newlines.ga_len;
+    fp->uf_script_ctx.sc_lnum += SOURCING_LNUM - newlines.ga_len;
 
     pt->pt_func = fp;
     pt->pt_refcount = 1;
@@ -743,6 +756,7 @@ static void func_clear_items(ufunc_T *fp)
   ga_clear_strings(&(fp->uf_args));
   ga_clear_strings(&(fp->uf_def_args));
   ga_clear_strings(&(fp->uf_lines));
+  XFREE_CLEAR(fp->uf_name_exp);
 
   if (fp->uf_cb_free != NULL) {
     fp->uf_cb_free(fp->uf_cb_state);
@@ -806,8 +820,6 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
                     linenr_T firstline, linenr_T lastline, dict_T *selfdict)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
-  char_u *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
   bool using_sandbox = false;
   funccall_T *fc;
   int save_did_emsg;
@@ -997,44 +1009,21 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   // Don't redraw while executing the function.
   RedrawingDisabled++;
-  save_sourcing_name = sourcing_name;
-  save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 1;
 
   if (fp->uf_flags & FC_SANDBOX) {
     using_sandbox = true;
     sandbox++;
   }
 
-  // need space for new sourcing_name:
-  // * save_sourcing_name
-  // * "["number"].." or "function "
-  // * "<SNR>" + fp->uf_name - 3
-  // * terminating NUL
-  size_t len = (save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
-               + STRLEN(fp->uf_name) + 27;
-  sourcing_name = xmalloc(len);
-  {
-    if (save_sourcing_name != NULL
-        && STRNCMP(save_sourcing_name, "function ", 9) == 0) {
-      vim_snprintf((char *)sourcing_name,
-                   len,
-                   "%s[%" PRId64 "]..",
-                   save_sourcing_name,
-                   (int64_t)save_sourcing_lnum);
-    } else {
-      STRCPY(sourcing_name, "function ");
-    }
-    cat_func_name(sourcing_name + STRLEN(sourcing_name), fp);
+  estack_push_ufunc(ETYPE_UFUNC, fp, 1);
+  if (p_verbose >= 12) {
+    no_wait_return++;
+    verbose_enter_scroll();
 
-    if (p_verbose >= 12) {
-      ++no_wait_return;
-      verbose_enter_scroll();
-
-      smsg(_("calling %s"), sourcing_name);
-      if (p_verbose >= 14) {
-        msg_puts("(");
-        for (int i = 0; i < argcount; i++) {
+    smsg(_("calling %s"), SOURCING_NAME);
+    if (p_verbose >= 14) {
+      msg_puts("(");
+      for (int i = 0; i < argcount; i++) {
           if (i > 0) {
             msg_puts(", ");
           }
@@ -1057,15 +1046,16 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
               xfree(tofree);
             }
           }
-        }
-        msg_puts(")");
       }
-      msg_puts("\n");  // don't overwrite this either
-
-      verbose_leave_scroll();
-      --no_wait_return;
+      msg_puts(")");
     }
+    msg_puts("\n");  // don't overwrite this either
+
+    verbose_leave_scroll();
+    --no_wait_return;
   }
+
+  estack_pop();
 
   const bool do_profiling_yes = do_profiling == PROF_YES;
 
@@ -1148,10 +1138,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     verbose_enter_scroll();
 
     if (aborting()) {
-      smsg(_("%s aborted"), sourcing_name);
+      smsg(_("%s aborted"), SOURCING_NAME);
     } else if (fc->rettv->v_type == VAR_NUMBER) {
       smsg(_("%s returning #%" PRId64 ""),
-           sourcing_name, (int64_t)fc->rettv->vval.v_number);
+           SOURCING_NAME, (int64_t)fc->rettv->vval.v_number);
     } else {
       char_u buf[MSG_BUF_LEN];
 
@@ -1167,32 +1157,21 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
           trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
-        smsg(_("%s returning %s"), sourcing_name, s);
+        smsg(_("%s returning %s"), SOURCING_NAME, s);
         xfree(tofree);
       }
     }
-    msg_puts("\n");  // don't overwrite this either
-
-    verbose_leave_scroll();
-    --no_wait_return;
   }
-
-  xfree(sourcing_name);
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
   current_sctx = save_current_sctx;
-  if (do_profiling_yes) {
-    script_prof_restore(&wait_start);
-  }
   if (using_sandbox) {
     sandbox--;
   }
 
-  if (p_verbose >= 12 && sourcing_name != NULL) {
-    ++no_wait_return;
+  if (p_verbose >= 12 && SOURCING_NAME != NULL) {
+    no_wait_return++;
     verbose_enter_scroll();
 
-    smsg(_("continuing in %s"), sourcing_name);
+    smsg(_("continuing in %s"), SOURCING_NAME);
     msg_puts("\n");  // don't overwrite this either
 
     verbose_leave_scroll();
@@ -1637,9 +1616,8 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
     msg_puts("   ");
   }
   msg_puts(force ? "function! " : "function ");
-  if (fp->uf_name[0] == K_SPECIAL) {
-    msg_puts_attr("<SNR>", HL_ATTR(HLF_8));
-    msg_puts((const char *)fp->uf_name + 3);
+  if (fp->uf_name_exp != NULL) {
+    msg_puts((char *)fp->uf_name_exp);
   } else {
     msg_puts((const char *)fp->uf_name);
   }
@@ -2199,7 +2177,7 @@ void ex_function(exarg_T *eap)
   }
 
   // Save the starting line number.
-  sourcing_lnum_top = sourcing_lnum;
+  sourcing_lnum_top = SOURCING_LNUM;
 
   indent = 2;
   nesting = 0;
@@ -2241,10 +2219,10 @@ void ex_function(exarg_T *eap)
       ui_ext_cmdline_block_append((size_t)indent, (const char *)theline);
     }
 
-    // Detect line continuation: sourcing_lnum increased more than one.
+    // Detect line continuation: SOURCING_LNUM increased more than one.
     sourcing_lnum_off = get_sourced_lnum(eap->getline, eap->cookie);
-    if (sourcing_lnum < sourcing_lnum_off) {
-      sourcing_lnum_off -= sourcing_lnum;
+    if (SOURCING_LNUM < sourcing_lnum_off) {
+      sourcing_lnum_off -= SOURCING_LNUM;
     } else {
       sourcing_lnum_off = 0;
     }
@@ -2503,13 +2481,13 @@ void ex_function(exarg_T *eap)
 
       // Check that the autoload name matches the script name.
       int j = FAIL;
-      if (sourcing_name != NULL) {
+      if (SOURCING_NAME != NULL) {
         scriptname = (char_u *)autoload_name((const char *)name, STRLEN(name));
         p = vim_strchr(scriptname, '/');
         plen = (int)STRLEN(p);
-        slen = (int)STRLEN(sourcing_name);
+        slen = (int)STRLEN(SOURCING_NAME);
         if (slen > plen && fnamecmp(p,
-                                    sourcing_name + slen - plen) == 0) {
+                                    SOURCING_NAME + slen - plen) == 0) {
           j = OK;
         }
         xfree(scriptname);
@@ -2544,7 +2522,7 @@ void ex_function(exarg_T *eap)
     }
 
     // insert the new function in the function list
-    STRCPY(fp->uf_name, name);
+    set_ufunc_name(fp, name);
     if (overwrite) {
       hi = hash_find(&func_hashtab, name);
       hi->hi_key = UF2HIKEY(fp);
@@ -3164,8 +3142,8 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name,
-                                          sourcing_lnum);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name,
+                                          SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
@@ -3186,7 +3164,7 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
       retval = NULL;
     } else {
       retval = vim_strsave(((char_u **)(gap->ga_data))[fcp->linenr++]);
-      sourcing_lnum = fcp->linenr;
+      SOURCING_LNUM = fcp->linenr;
       if (do_profiling == PROF_YES) {
         func_line_start(cookie);
       }
@@ -3194,11 +3172,11 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
   }
 
   // Did we encounter a breakpoint?
-  if (fcp->breakpoint != 0 && fcp->breakpoint <= sourcing_lnum) {
-    dbg_breakpoint(fp->uf_name, sourcing_lnum);
+  if (fcp->breakpoint != 0 && fcp->breakpoint <= SOURCING_LNUM) {
+    dbg_breakpoint(fp->uf_name, SOURCING_LNUM);
     // Find next breakpoint.
     fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name,
-                                          sourcing_lnum);
+                                          SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
 
