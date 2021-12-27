@@ -1,6 +1,7 @@
 local uv = vim.loop
 
 local Path = {}
+Path.__index = Path
 
 function Path:__tostring()
   return self.path
@@ -11,7 +12,7 @@ function Path:exists()
 end
 
 function Path:expanduser()
-  if self.path:match '^~' then
+  if self.path == '/' or self.path:match '^~/' then
     return os.getenv('HOME') .. self.path:sub(2)
   else
     return self.path
@@ -27,7 +28,7 @@ function Path:parts()
     return vim.split(self.path, '/')
   else
     local parts = vim.split(self.path, '/')
-    if self.path:slice(1) == '/' then
+    if self.path:sub(1, 1) == '/' then
       parts[1] = '/'
     end
     return parts
@@ -58,6 +59,10 @@ function Path:is_relative_to(root)
 
   local root_parts_len = #root_parts
   local path_parts_len = #path_parts
+
+  if root_parts_len > path_parts_len then
+    return false
+  end
 
   for i = 1,math.min(root_parts_len, path_parts_len) do
     if root_parts[i] ~= path_parts[i] then
@@ -113,11 +118,10 @@ function Path:new(path)
     path = path,
     is_windows = uv.os_uname().version:match('Windows')
   }
-  setmetatable(path_obj, self)
-  self.__index = self
+  setmetatable(path_obj, Path)
 
   if path_obj.is_windows then
-    if self.is_absolute(path_obj) then
+    if Path.is_absolute(path_obj) then
       path = path:sub(1, 1):upper() .. path:sub(2)
     end
     path = path:gsub('\\', '/')
@@ -135,7 +139,7 @@ setmetatable(Path, {
 
 local function join(...)
   local to_join = vim.map(tostring, vim.tbl_flatten(...))
-  return table.concat(to_join, '/')
+  return Path:new(table.concat(to_join, '/'))
 end
 
 return {
