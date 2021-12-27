@@ -1110,5 +1110,25 @@ func Test_visual_block_with_virtualedit()
   call delete('XTest_beval')
 endfunc
 
+func Test_visual_reselect_with_count()
+  " this was causing an illegal memory access
+  let lines =<< trim END
+
+
+
+      :
+      r<sfile>
+      exe "%norm e3\<c-v>kr\t"
+      :
+
+      :
+  END
+  call writefile(lines, 'XvisualReselect')
+  source XvisualReselect
+
+  bwipe!
+  call delete('XvisualReselect')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
