@@ -42,20 +42,17 @@ ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
   $(error DEPS_BUILD_DIR must not contain whitespace)
 endif
 
-ifeq (,$(BUILD_TOOL))
-  ifeq (Ninja,$(CMAKE_GENERATOR))
-    ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
-      BUILD_TOOL = ninja
-    else
-      # User's version of CMake doesn't support Ninja
-      BUILD_TOOL = $(MAKE)
-      CMAKE_GENERATOR := Unix Makefiles
-    endif
+ifeq (Ninja,$(CMAKE_GENERATOR))
+  ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
+    BUILD_TOOL = ninja
   else
+    # User's version of CMake doesn't support Ninja
     BUILD_TOOL = $(MAKE)
+    CMAKE_GENERATOR := Unix Makefiles
   endif
+else
+  BUILD_TOOL = $(MAKE)
 endif
-
 
 # Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
 ifeq ($(CMAKE_GENERATOR),Ninja)
