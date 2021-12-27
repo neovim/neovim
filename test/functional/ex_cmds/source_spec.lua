@@ -13,6 +13,7 @@ local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local exec_capture = helpers.exec_capture
 local neq = helpers.neq
+local matches = helpers.matches
 
 describe(':source', function()
   before_each(function()
@@ -26,7 +27,7 @@ describe(':source', function()
         \ k: "v"
        "\ (o_o)
         \ }
-      let c = expand("<SID>")
+      let c = expand("<SID>") | set cursorline
       let s:s = 0zbeef.cafe
       let d = s:s]])
 
@@ -35,6 +36,7 @@ describe(':source', function()
     eq("{'k': 'v'}", meths.exec('echo b', true))
     eq("<SNR>1_", meths.exec('echo c', true))
     eq("0zBEEFCAFE", meths.exec('echo d', true))
+    matches('line 6$', exec_capture('verbose set cursorline?'))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec('source'))
@@ -43,7 +45,7 @@ describe(':source', function()
   it('selection in current buffer', function()
     insert([[
       let a = 2
-      let a = 3
+      let a = 3 | set cursorline
       let a = 4
       let b = #{
        "\ (>_<)
@@ -58,6 +60,11 @@ describe(':source', function()
     feed('ggjV')
     feed_command(':source')
     eq('3', meths.exec('echo a', true))
+    matches('line 2$', exec_capture('verbose set cursorline?'))
+
+    -- Disable 'cursorline' to make sure the LastSet line nr is changed.
+    feed_command('set nocursorline')
+    eq('nocursorline', exec_capture('verbose set cursorline?'))
 
     -- Source from 2nd line to end of file
     feed('ggjVG')
@@ -65,6 +72,7 @@ describe(':source', function()
     eq('4', meths.exec('echo a', true))
     eq("{'K': 'V'}", meths.exec('echo b', true))
     eq("<SNR>1_C()", meths.exec('echo D()', true))
+    matches('line 2$', exec_capture('verbose set cursorline?'))
 
     -- Source last line only
     feed_command(':$source')

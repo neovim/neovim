@@ -8,6 +8,7 @@ local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
 local exec = helpers.exec
+local exec_capture = helpers.exec_capture
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
@@ -94,8 +95,8 @@ describe('API', function()
 
     it(':verbose set {option}?', function()
       nvim('exec', 'set nowrap', false)
-      eq('nowrap\n\tLast set from anonymous :source (script id 1)',
-        nvim('exec', 'verbose set wrap?', true))
+      eq('nowrap\n\tLast set from anonymous :source (script id 1) line 1',
+         nvim('exec', 'verbose set wrap?', true))
     end)
 
     it('multiline input', function()
@@ -242,13 +243,13 @@ describe('API', function()
       local sourcing_fname = tmpname()
       write_file(sourcing_fname, 'call nvim_exec("source '..fname..'", v:false)\n')
       meths.exec('set verbose=2', false)
-      local traceback_output = 'line 0: sourcing "'..sourcing_fname..'"\n'..
-        'line 0: sourcing "'..fname..'"\n'..
+      local traceback_output = 'line 1: sourcing "'..sourcing_fname..'"\n'..
+        'line 1: sourcing "'..fname..'"\n'..
         'hello\n'..
         'finished sourcing '..fname..'\n'..
         'continuing in nvim_exec() called at '..sourcing_fname..':1\n'..
         'finished sourcing '..sourcing_fname..'\n'..
-        'continuing in nvim_exec() called at nvim_exec():0'
+        'continuing in nvim_exec() called at nvim_exec():1'
       eq(traceback_output,
         meths.exec('call nvim_exec("source '..sourcing_fname..'", v:false)', true))
       os.remove(fname)
@@ -281,7 +282,7 @@ describe('API', function()
       ]]}
     end)
 
-    it('does\'t display messages when output=true', function()
+    it('doesn\'t display messages when output=true', function()
       local screen = Screen.new(40, 8)
       screen:attach()
       screen:set_default_attr_ids({
@@ -298,6 +299,64 @@ describe('API', function()
         {0:~                                       }|
                                                 |
       ]]}
+    end)
+
+    it(':verbose shows correct line numbers', function()
+      -- Should work like test_vimscript.vim's Test_function_defined_line
+      exec [[
+        " F1
+        func F1()
+            " F2
+            func F2()
+                "
+                "
+                "
+                return
+            endfunc
+            " F3
+            execute "func F3()\n\n\n\nreturn\nendfunc"
+            " F4
+            execute "func F4()\n
+                        \\n
+                        \\n
+                        \\n
+                        \return\n
+                        \endfunc"
+        endfunc
+        " F5
+        execute "func F5()\n\n\n\nreturn\nendfunc"
+        " F6
+        execute "func F6()\n
+                    \\n
+                    \\n
+                    \\n
+                    \return\n
+                    \endfunc"
+        call F1()
+      ]]
+      matches('line 2\n', exec_capture('verbose func F1'))
+      matches('line 4\n', exec_capture('verbose func F2'))
+      matches('line 11\n', exec_capture('verbose func F3'))
+      matches('line 13\n', exec_capture('verbose func F4'))
+      matches('line 21\n', exec_capture('verbose func F5'))
+      matches('line 23\n', exec_capture('verbose func F6'))
+
+      -- Should only show line numbers of the relevant script.
+      -- (from within the inner nvim_exec, in this case)
+      matches('line 1$', exec_capture [[
+        " intentional comment
+        call nvim_exec("set cursorline\n\nset hlsearch", 0)
+        verbose set cursorline?
+      ]])
+      matches('line 3$', exec_capture('verbose set hlsearch?'))
+
+      -- Works from an anonymous Lua context with 'verbose' >= 1.
+      exec('set verbose=1')
+      exec_lua [[
+        -- intentional comment
+        vim.api.nvim_exec("set cursorline", false)
+      ]]
+      matches('line 1$', exec_capture('set cursorline?'))
     end)
   end)
 

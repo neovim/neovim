@@ -1792,6 +1792,7 @@ static FILE *fopen_noinh_readbin(char *filename)
 typedef struct {
   char *buf;
   size_t offset;
+  linenr_T sourcing_lnum;
 } GetStrLineCookie;
 
 /// Get one full line from a sourced string (in-memory, no file).
@@ -1801,7 +1802,7 @@ typedef struct {
 ///         some error.
 static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
-  GetStrLineCookie *p = cookie;
+  GetStrLineCookie *const p = cookie;
   if (STRLEN(p->buf) <= p->offset) {
     return NULL;
   }
@@ -1810,14 +1811,16 @@ static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
   garray_T ga;
   ga_init(&ga, sizeof(char_u), 400);
   ga_concat_len(&ga, line, (size_t)(eol - line));
+  sourcing_lnum = ++p->sourcing_lnum;
   if (do_concat && vim_strchr(p_cpo, CPO_CONCAT) == NULL) {
     while (eol[0] != NUL) {
       line = eol + 1;
-      const char_u *const next_eol = skip_to_newline((char_u *)line);
-      if (!concat_continued_line(&ga, 400, (char_u *)line, (size_t)(next_eol - (char_u *)line))) {
+      const char *const next_eol = (char *)skip_to_newline((char_u *)line);
+      if (!concat_continued_line(&ga, 400, (char_u *)line, (size_t)(next_eol - line))) {
         break;
       }
-      eol = (char *)next_eol;
+      p->sourcing_lnum++;
+      eol = next_eol;
     }
   }
   ga_append(&ga, NUL);
@@ -1887,7 +1890,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = sid;
   current_sctx.sc_seq = sid > 0 ? ++last_current_SID_seq : 0;
-  current_sctx.sc_lnum = save_sourcing_lnum;
+  current_sctx.sc_lnum = 0;
   funccal_entry_T entry;
   save_funccal(&entry);
   const int retval = do_cmdline(NULL, fgetline, cookie,
@@ -1920,13 +1923,14 @@ static void cmd_source_buffer(const exarg_T *const eap)
     ga_append(&ga, NL);
   }
   ((char_u *)ga.ga_data)[ga.ga_len - 1] = NUL;
-  const GetStrLineCookie cookie = {
+  GetStrLineCookie cookie = {
     .buf = ga.ga_data,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
 
   if (curbuf->b_fname && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
+    nlua_source_using_linegetter(get_str_line, &cookie, ":source (no file)");
   } else {
     scid_T sid = map_get(handle_T, scid_T)(&buf_sids, curbuf->handle);
     if (sid == 0) {
@@ -1934,7 +1938,8 @@ static void cmd_source_buffer(const exarg_T *const eap)
       sid = script_new_sid(kSidTraceNone);
       map_put(handle_T, scid_T)(&buf_sids, curbuf->handle, sid);
     }
-    source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)", sid);
+    cookie.sourcing_lnum = eap->line1 - 1;
+    source_using_linegetter(&cookie, get_str_line, ":source (no file)", sid);
   }
   ga_clear(&ga);
 }
@@ -1947,6 +1952,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
   GetStrLineCookie cookie = {
     .buf = (char *)cmd,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
   const scid_T sid = script_new_sid(
       current_sctx.sc_sid == SID_LUA || current_sctx.sc_sid >= SID_TRACE_LUA
@@ -2375,9 +2381,12 @@ void free_scriptnames(void)
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
   FUNC_ATTR_PURE
 {
-  return fgetline == getsourceline
-        ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : sourcing_lnum;
+  if (fgetline == getsourceline) {
+    return ((struct source_cookie *)cookie)->sourcing_lnum;
+  } else if (fgetline == get_str_line) {
+    return ((GetStrLineCookie *)cookie)->sourcing_lnum;
+  }
+  return sourcing_lnum;
 }
 
 

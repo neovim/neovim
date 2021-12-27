@@ -51,6 +51,12 @@ endfunction\
 let &tw = s:return80()\
 let g:sid2 = expand('<SID>')\
 ", true)
+
+vim.api.nvim_exec([=[
+  function SetOption()
+    set cuc
+  endfunc
+]=], false)
 ]])
     exec(':source '..script_file)
   end)
@@ -107,7 +113,7 @@ n  \key2       * :echo "test"<CR>
 --- Autocommands ---
 test_group  FileType
     c         setl cindent
-	Last set from anonymous :source (script id 2305843009213693959) (sourced from %s:7)]],
+	Last set from anonymous :source (script id 2305843009213693959) (sourced from %s:7) line 3]],
        script_location), result)
 
     eq("1337", exec_capture(":doautocmd User Foo"))
@@ -135,7 +141,7 @@ test_group  FileType
     local result = exec_capture(':verbose function Close_Window')
     eq(string.format([[
    function Close_Window() abort
-	Last set from anonymous :source (script id 2305843009213693960) (sourced from %s:18)
+	Last set from anonymous :source (script id 2305843009213693960) (sourced from %s:18) line 2
 1    wincmd -
    endfunction]],
        script_location), result)
@@ -145,7 +151,7 @@ test_group  FileType
     local result = exec_capture(':verbose set tw?')
     eq(string.format([[
   textwidth=80
-	Last set from anonymous :source (script id 2305843009213693961) (sourced from %s:25)]],
+	Last set from anonymous :source (script id 2305843009213693961) (sourced from %s:25) line 5]],
        script_location), result)
 
     -- Different anon execs in the same file should have unique SIDs as usual.
@@ -153,6 +159,13 @@ test_group  FileType
 
     -- Also shouldn't add duplicate names to :scriptnames output.
     eq(string.format("4611686018427387906: %s", script_location), exec_capture(':scriptnames'))
+
+    -- Setting an option in a nested context (function, in this case).
+    call_viml_function('SetOption', {})
+    eq(string.format([[
+  cursorcolumn
+	Last set from anonymous :source (script id 2305843009213693962) (sourced from %s:33) line 2]],
+       script_location), exec_capture('verbose set cuc?'))
   end)
 
   describe(':scriptnames', function()
@@ -172,13 +185,13 @@ test_group  FileType
       -- Still check that :verbose output is correct.
       eq(string.format([[
   cursorline
-	Last set from anonymous :source (script id 2305843009213693975) (sourced from %s:1)]],
+	Last set from anonymous :source (script id 2305843009213693977) (sourced from %s:1) line 1]],
         script2_location), exec_capture('set cursorline?'))
 
       exec('source ' .. script2_location)
       eq(string.format([[
 4611686018427387906: %s
-4611686018427387931: %s]],
+4611686018427387933: %s]],
         script_location, script2_location), exec_capture(':scriptnames'))
     end)
   end)
