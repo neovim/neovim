@@ -84,10 +84,10 @@ endif
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 nvim: build/.ran-cmake deps
-	+$(BUILD_TOOL) -C build
+	$(BUILD_TOOL) -C build
 
 libnvim: build/.ran-cmake deps
-	+$(BUILD_TOOL) -C build libnvim
+	$(BUILD_TOOL) -C build libnvim
 
 cmake:
 	touch CMakeLists.txt
@@ -99,7 +99,7 @@ build/.ran-cmake: | deps
 
 deps: build/.ran-third-party-cmake
 ifeq ($(USE_BUNDLED),)
-	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
+	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
 endif
 
 ifeq ($(USE_BUNDLED),)
@@ -116,30 +116,30 @@ build/.ran-third-party-cmake::
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: nvim build/runtime/doc/tags
-	+$(SINGLE_MAKE) -C src/nvim/testdir clean
+	$(SINGLE_MAKE) -C src/nvim/testdir clean
 ifeq ($(strip $(TEST_FILE)),)
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
+	$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
 else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
+	$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 src/nvim/testdir/%.vim: phony_force
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
+	$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
 build/runtime/doc/tags helptags: | nvim
-	+$(BUILD_TOOL) -C build runtime/doc/tags
+	$(BUILD_TOOL) -C build runtime/doc/tags
 
 # Builds help HTML _and_ checks for invalid help tags.
 helphtml: nvim build/runtime/doc/tags
-	+$(BUILD_TOOL) -C build doc_html
+	$(BUILD_TOOL) -C build doc_html
 
 functionaltest: nvim
-	+$(BUILD_TOOL) -C build functionaltest
+	$(BUILD_TOOL) -C build functionaltest
 
 functionaltest-lua: nvim
-	+$(BUILD_TOOL) -C build functionaltest-lua
+	$(BUILD_TOOL) -C build functionaltest-lua
 
 lualint: build/.ran-cmake deps
 	$(BUILD_TOOL) -C build lualint
@@ -168,15 +168,15 @@ _opt_commitlint:
 		|| echo "SKIP: commitlint (build/bin/nvim not found)"
 
 unittest: nvim
-	+$(BUILD_TOOL) -C build unittest
+	$(BUILD_TOOL) -C build unittest
 
 benchmark: nvim
-	+$(BUILD_TOOL) -C build benchmark
+	$(BUILD_TOOL) -C build benchmark
 
 test: functionaltest unittest
 
 clean:
-	+test -d build && $(BUILD_TOOL) -C build clean || true
+	test -d build && $(BUILD_TOOL) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean
 	$(MAKE) -C runtime/doc clean
 	$(MAKE) -C runtime/indent clean
@@ -186,19 +186,19 @@ distclean:
 	$(MAKE) clean
 
 install: checkprefix nvim
-	+$(BUILD_TOOL) -C build install
+	$(BUILD_TOOL) -C build install
 
 clint: build/.ran-cmake
-	+$(BUILD_TOOL) -C build clint
+	$(BUILD_TOOL) -C build clint
 
 clint-full: build/.ran-cmake
-	+$(BUILD_TOOL) -C build clint-full
+	$(BUILD_TOOL) -C build clint-full
 
 check-single-includes: build/.ran-cmake
-	+$(BUILD_TOOL) -C build check-single-includes
+	$(BUILD_TOOL) -C build check-single-includes
 
 generated-sources: build/.ran-cmake
-	+$(BUILD_TOOL) -C build generated-sources
+	$(BUILD_TOOL) -C build generated-sources
 
 appimage:
 	bash scripts/genappimage.sh
