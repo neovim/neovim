@@ -219,7 +219,7 @@ typedef struct {
 #define SCORE_THRES3    100     // word count threshold for COMMON3
 
 // When trying changed soundfold words it becomes slow when trying more than
-// two changes.  With less then two changes it's slightly faster but we miss a
+// two changes.  With less than two changes it's slightly faster but we miss a
 // few good suggestions.  In rare cases we need to try three of four changes.
 #define SCORE_SFMAX1    200     // maximum score for first try
 #define SCORE_SFMAX2    300     // maximum score for second try
