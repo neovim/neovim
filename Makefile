@@ -50,12 +50,7 @@ ifeq (Ninja,$(CMAKE_GENERATOR))
     BUILD_TOOL = $(MAKE)
     CMAKE_GENERATOR := Unix Makefiles
   endif
-else
-  BUILD_TOOL = $(MAKE)
-endif
-
-# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
-ifeq ($(CMAKE_GENERATOR),Ninja)
+	# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
   ifneq ($(VERBOSE),)
     BUILD_TOOL += -v
   endif
@@ -63,6 +58,8 @@ ifeq ($(CMAKE_GENERATOR),Ninja)
   ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
     BUILD_TOOL += -n
   endif
+else
+  BUILD_TOOL = $(MAKE)
 endif
 
 DEPS_CMAKE_FLAGS ?=
