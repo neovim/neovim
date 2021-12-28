@@ -1663,14 +1663,17 @@ static void exe_pre_commands(mparm_T *parmp)
   char **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
   int i;
+  ESTACK_CHECK_DECLARATION
 
   if (cnt > 0) {
     curwin->w_cursor.lnum = 0;     // just in case..
     estack_push(ETYPE_ARGS, (char_u *)_("pre-vimrc command line"), 0);
+    ESTACK_CHECK_SETUP
     current_sctx.sc_sid = SID_CMDARG;
     for (i = 0; i < cnt; i++) {
       do_cmdline_cmd(cmds[i]);
     }
+    ESTACK_CHECK_NOW
     estack_pop();
     current_sctx.sc_sid = 0;
     TIME_MSG("--cmd commands");
@@ -1683,6 +1686,7 @@ static void exe_pre_commands(mparm_T *parmp)
 static void exe_commands(mparm_T *parmp)
 {
   int i;
+  ESTACK_CHECK_DECLARATION
 
   /*
    * We start commands on line 0, make "vim +/pat file" match a
@@ -1694,6 +1698,7 @@ static void exe_commands(mparm_T *parmp)
     curwin->w_cursor.lnum = 0;
   }
   estack_push(ETYPE_ARGS, (char_u *)"command line", 0);
+  ESTACK_CHECK_SETUP
   current_sctx.sc_sid = SID_CARG;
   current_sctx.sc_seq = 0;
   for (i = 0; i < parmp->n_commands; i++) {
@@ -1702,6 +1707,7 @@ static void exe_commands(mparm_T *parmp)
       xfree(parmp->commands[i]);
     }
   }
+  ESTACK_CHECK_NOW
   estack_pop();
   current_sctx.sc_sid = 0;
   if (curwin->w_cursor.lnum == 0) {
@@ -1913,13 +1919,18 @@ static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *initstr = os_getenv(env);
+  ESTACK_CHECK_DECLARATION
+
   if (initstr != NULL) {
     estack_push(ETYPE_ENV, (char_u *)env, 0);
+    ESTACK_CHECK_SETUP
     const sctx_T save_current_sctx = current_sctx;
     current_sctx.sc_sid = SID_ENV;
     current_sctx.sc_seq = 0;
     current_sctx.sc_lnum = 0;
     do_cmdline_cmd((char *)initstr);
+
+    ESTACK_CHECK_NOW
     estack_pop();
     current_sctx = save_current_sctx;
     return OK;

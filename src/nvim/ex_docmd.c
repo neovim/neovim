@@ -326,6 +326,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
   void *real_cookie;
   int getline_is_func;
   static int call_depth = 0;            // recursiveness
+  ESTACK_CHECK_DECLARATION
 
   // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
   // location for storing error messages to be converted to an exception.
@@ -833,6 +834,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
       estack_push(ETYPE_EXCEPT, current_exception->throw_name, current_exception->throw_lnum);
       current_exception->throw_name = NULL;
 
+      ESTACK_CHECK_SETUP
       discard_current_exception();              // uses IObuff if 'verbose'
       suppress_errthrow = true;
       force_abort = true;
@@ -851,6 +853,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
         xfree(p);
       }
       xfree(SOURCING_NAME);
+      ESTACK_CHECK_NOW
       estack_pop();
     } else if (got_int || (did_emsg && force_abort)) {
       // On an interrupt or an aborting error not converted to an exception,

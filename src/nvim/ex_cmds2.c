@@ -2042,6 +2042,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   scriptitem_T *si = NULL;
   proftime_T wait_start;
   bool trigger_source_post = false;
+  ESTACK_CHECK_DECLARATION
 
   p = expand_env_save((char_u *)fname);
   if (p == NULL) {
@@ -2138,6 +2139,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   // Keep the sourcing name/lnum, for recursive calls.
   estack_push(ETYPE_SCRIPT, fname_exp, 0);
+  ESTACK_CHECK_SETUP
 
   // start measuring script load time if --startuptime was passed and
   // time_fd was successfully opened afterwards.
@@ -2255,6 +2257,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   if (got_int) {
     emsg(_(e_interr));
   }
+  ESTACK_CHECK_NOW
   estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
