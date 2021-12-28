@@ -925,7 +925,7 @@ static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
     if (*s == ')' && cin_nocode(s + 1)) {
       // ')' at the end: may have found a match
       // Check for the previous line not to end in a backslash:
-      //       #if defined(x) && \
+      //       #if defined(x) && {backslash}
       //           defined(y)
       lnum = first_lnum - 1;
       s = ml_get(lnum);
