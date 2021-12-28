@@ -5261,6 +5261,24 @@ bool garbage_collect(bool testing)
     garbage_collect_at_exit = false;
   }
 
+  // The execution stack can grow big, limit the size.
+  if (exestack.ga_maxlen - exestack.ga_len > 500) {
+    size_t new_len;
+    // Keep 150% of the current size, with a minimum of the growth size.
+    int n = exestack.ga_len / 2;
+    if (n < exestack.ga_growsize) {
+      n = exestack.ga_growsize;
+    }
+
+    // Don't make it bigger though.
+    if (exestack.ga_len + n < exestack.ga_maxlen) {
+      new_len = exestack.ga_itemsize * (exestack.ga_len + n);
+      char_u *pp = xrealloc(exestack.ga_data, new_len);
+      exestack.ga_maxlen = exestack.ga_len + n;
+      exestack.ga_data = pp;
+    }
+  }
+
   // We advance by two (COPYID_INC) because we add one for items referenced
   // through previous_funccal.
   const int copyID = get_copyID();
