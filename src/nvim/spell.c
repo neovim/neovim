@@ -219,7 +219,7 @@ typedef struct {
 #define SCORE_THRES3    100     // word count threshold for COMMON3
 
 // When trying changed soundfold words it becomes slow when trying more than
-// two changes.  With less then two changes it's slightly faster but we miss a
+// two changes.  With less than two changes it's slightly faster but we miss a
 // few good suggestions.  In rare cases we need to try three of four changes.
 #define SCORE_SFMAX1    200     // maximum score for first try
 #define SCORE_SFMAX2    300     // maximum score for second try
@@ -1628,7 +1628,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 }
 
 // For spell checking: concatenate the start of the following line "line" into
-// "buf", blanking-out special characters.  Copy less then "maxlen" bytes.
+// "buf", blanking-out special characters.  Copy less than "maxlen" bytes.
 // Keep the blanks at the start of the next line, this is used in win_line()
 // to skip those bytes if the word was OK.
 void spell_cat_line(char_u *buf, char_u *line, int maxlen)
@@ -6106,7 +6106,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
       for (; ((ws = smp[n].sm_lead_w)[0] & 0xff) == (c & 0xff)
            && ws[0] != NUL; ++n) {
         // Quickly skip entries that don't match the word.  Most
-        // entries are less then three chars, optimize for that.
+        // entries are less than three chars, optimize for that.
         if (c != ws[0]) {
           continue;
         }
@@ -7057,7 +7057,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
             arridx[depth] = idxs[n];
             curi[depth] = 1;
 
-            // Check if this characters matches with the pattern.
+            // Check if this character matches with the pattern.
             // If not skip the whole tree below it.
             // Always ignore case here, dump_word() will check
             // proper case later.  This isn't exactly right when

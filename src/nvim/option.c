@@ -1345,7 +1345,7 @@ int do_set(char_u *arg, int opt_flags)
 
             if (nextchar == '&') {  // set to default val
               newval = options[opt_idx].def_val;
-              // expand environment variables and ~ (since the
+              // expand environment variables and ~ since the
               // default value was already expanded, only
               // required when an environment variable was set
               // later
@@ -4132,7 +4132,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         }
       }
 
-      // Arabic requires a utf-8 encoding, inform the user if its not
+      // Arabic requires a utf-8 encoding, inform the user if it's not
       // set.
       if (STRCMP(p_enc, "utf-8") != 0) {
         static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");

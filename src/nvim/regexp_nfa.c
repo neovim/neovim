@@ -2013,7 +2013,7 @@ static int nfa_regpiece(void)
     // will emit NFA_STAR.
     // Bail out if we can use the other engine, but only, when the
     // pattern does not need the NFA engine like (e.g. [[:upper:]]\{2,\}
-    // does not work with with characters > 8 bit with the BT engine)
+    // does not work with characters > 8 bit with the BT engine)
     if ((nfa_re_flags & RE_AUTO)
         && (maxval > 500 || maxval > minval + 200)
         && (maxval != MAX_LIMIT && minval < 200)
@@ -4367,7 +4367,7 @@ static regsubs_T *addstate_here(
 
   // First add the state(s) at the end, so that we know how many there are.
   // Pass the listidx as offset (avoids adding another argument to
-  // addstate().
+  // addstate()).
   regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
   if (r == NULL) {
     return NULL;

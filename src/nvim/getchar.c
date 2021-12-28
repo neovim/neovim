@@ -146,7 +146,7 @@ static int KeyNoremap = 0;                  // remapping flags
 
 // typebuf.tb_buf has three parts: room in front (for result of mappings), the
 // middle for typeahead and room for new characters (which needs to be 3 *
-// MAXMAPLEN) for the Amiga).
+// MAXMAPLEN for the Amiga).
 #define TYPELEN_INIT    (5 * (MAXMAPLEN + 3))
 static char_u typebuf_init[TYPELEN_INIT];       // initial typebuf.tb_buf
 static char_u noremapbuf_init[TYPELEN_INIT];    // initial typebuf.tb_noremap
@@ -861,7 +861,7 @@ void init_default_mappings(void)
 //
 // If noremap is REMAP_YES, new string can be mapped again.
 // If noremap is REMAP_NONE, new string cannot be mapped again.
-// If noremap is REMAP_SKIP, fist char of new string cannot be mapped again,
+// If noremap is REMAP_SKIP, first char of new string cannot be mapped again,
 // but abbreviations are allowed.
 // If noremap is REMAP_SCRIPT, new string cannot be mapped again, except for
 //                             script-local mappings.
@@ -1693,7 +1693,7 @@ typedef enum {
   map_result_fail,    // failed, break loop
   map_result_get,     // get a character from typeahead
   map_result_retry,   // try to map again
-  map_result_nomatch  // no matching mapping, get char
+  map_result_nomatch,  // no matching mapping, get char
 } map_result_T;
 
 /// Handle mappings in the typeahead buffer.
@@ -2470,7 +2470,7 @@ static int vgetorpeek(bool advance)
 ///  Return the number of obtained characters.
 ///  Return -1 when end of input script reached.
 ///
-/// @param wait_time  milli seconds
+/// @param wait_time  milliseconds
 int inchar(char_u *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
