@@ -2363,3 +2363,52 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   return result;
 }
+
+/// Create a new user command |user-commands|
+///
+/// {name} is the name of the new command. The name must begin with an uppercase letter.
+///
+/// {command} is the replacement text or Lua function to execute.
+///
+/// Example:
+/// <pre>
+///    :call nvim_add_user_command('SayHello', 'echo "Hello world!"', {})
+///    :SayHello
+///    Hello world!
+/// </pre>
+///
+/// @param  name    Name of the new user command. Must begin with an uppercase letter.
+/// @param  command Replacement command to execute when this user command is executed. When called
+///                 from Lua, the command can also be a Lua function. The function is called with a
+///                 single table argument that contains the following keys:
+///                 - args: (string) The args passed to the command, if any |<args>|
+///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
+///                 - line1: (number) The starting line of the command range |<line1>|
+///                 - line2: (number) The final line of the command range |<line2>|
+///                 - range: (number) The number of items in the command range: 0, 1, or 2 |<range>|
+///                 - count: (number) Any count supplied |<count>|
+///                 - reg: (string) The optional register, if specified |<reg>|
+///                 - mods: (string) Command modifiers, if any |<mods>|
+/// @param  opts    Optional command attributes. See |command-attributes| for more details. To use
+///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
+///                 "true". When using a Lua function for {command} you can also provide a "desc"
+///                 key that will be displayed when listing commands. In addition to the string
+///                 options listed in |:command-complete|, the "complete" key also accepts a Lua
+///                 function which works like the "customlist" completion mode
+///                 |:command-complete-customlist|.
+/// @param[out] err Error details, if any.
+void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  add_user_command(name, command, opts, 0, err);
+}
+
+/// Delete a user-defined command.
+///
+/// @param  name    Name of the command to delete.
+/// @param[out] err Error details, if any.
+void nvim_del_user_command(String name, Error *err)
+  FUNC_API_SINCE(9)
+{
+  nvim_buf_del_user_command(-1, name, err);
+}

@@ -961,6 +961,10 @@ Object copy_object(Object obj)
 
   case kObjectTypeDictionary:
     return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
+
+  case kObjectTypeLuaRef:
+    return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
+
   default:
     abort();
   }
@@ -1341,4 +1345,185 @@ const char *get_default_stl_hl(win_T *wp)
   } else {
     return "StatusLineNC";
   }
+}
+
+void add_user_command(String name, Object command, Dict(user_command) *opts, int flags, Error *err)
+{
+  uint32_t argt = 0;
+  long def = -1;
+  cmd_addr_T addr_type_arg = ADDR_NONE;
+  int compl = EXPAND_NOTHING;
+  char *compl_arg = NULL;
+  char *rep = NULL;
+  LuaRef luaref = LUA_NOREF;
+  LuaRef compl_luaref = LUA_NOREF;
+
+  if (HAS_KEY(opts->range) && HAS_KEY(opts->count)) {
+    api_set_error(err, kErrorTypeValidation, "'range' and 'count' are mutually exclusive");
+    goto err;
+  }
+
+  if (opts->nargs.type == kObjectTypeInteger) {
+    switch (opts->nargs.data.integer) {
+    case 0:
+      // Default value, nothing to do
+      break;
+    case 1:
+      argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+  } else if (opts->nargs.type == kObjectTypeString) {
+    if (opts->nargs.data.string.size > 1) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+
+    switch (opts->nargs.data.string.data[0]) {
+    case '*':
+      argt |= EX_EXTRA;
+      break;
+    case '?':
+      argt |= EX_EXTRA | EX_NOSPC;
+      break;
+    case '+':
+      argt |= EX_EXTRA | EX_NEEDARG;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+  } else if (HAS_KEY(opts->nargs)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+    goto err;
+  }
+
+  if (HAS_KEY(opts->complete) && !argt) {
+    api_set_error(err, kErrorTypeValidation, "'complete' used without 'nargs'");
+    goto err;
+  }
+
+  if (opts->range.type == kObjectTypeBoolean) {
+    if (opts->range.data.boolean) {
+      argt |= EX_RANGE;
+      addr_type_arg = ADDR_LINES;
+    }
+  } else if (opts->range.type == kObjectTypeString) {
+    if (opts->range.data.string.data[0] == '%' && opts->range.data.string.size == 1) {
+      argt |= EX_RANGE | EX_DFLALL;
+      addr_type_arg = ADDR_LINES;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
+      goto err;
+    }
+  } else if (opts->range.type == kObjectTypeInteger) {
+    argt |= EX_RANGE | EX_ZEROR;
+    def = opts->range.data.integer;
+    addr_type_arg = ADDR_LINES;
+  } else if (HAS_KEY(opts->range)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
+    goto err;
+  }
+
+  if (opts->count.type == kObjectTypeBoolean) {
+    if (opts->count.data.boolean) {
+      argt |= EX_COUNT | EX_ZEROR | EX_RANGE;
+      addr_type_arg = ADDR_OTHER;
+      def = 0;
+    }
+  } else if (opts->count.type == kObjectTypeInteger) {
+    argt |= EX_COUNT | EX_ZEROR | EX_RANGE;
+    addr_type_arg = ADDR_OTHER;
+    def = opts->count.data.integer;
+  } else if (HAS_KEY(opts->count)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'count'");
+    goto err;
+  }
+
+  if (opts->addr.type == kObjectTypeString) {
+    if (parse_addr_type_arg((char_u *)opts->addr.data.string.data, (int)opts->addr.data.string.size,
+                            &addr_type_arg) != OK) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
+      goto err;
+    }
+
+    if (addr_type_arg != ADDR_LINES) {
+      argt |= EX_ZEROR;
+    }
+  } else if (HAS_KEY(opts->addr)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
+    goto err;
+  }
+
+  if (api_object_to_bool(opts->bang, "bang", false, err)) {
+    argt |= EX_BANG;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  if (api_object_to_bool(opts->bar, "bar", false, err)) {
+    argt |= EX_TRLBAR;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+
+  if (api_object_to_bool(opts->register_, "register", false, err)) {
+    argt |= EX_REGSTR;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  bool force = api_object_to_bool(opts->force, "force", false, err);
+  if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  if (opts->complete.type == kObjectTypeLuaRef) {
+    compl = EXPAND_USER_LUA;
+    compl_luaref = api_new_luaref(opts->complete.data.luaref);
+  } else if (opts->complete.type == kObjectTypeString) {
+    if (parse_compl_arg((char_u *)opts->complete.data.string.data,
+                        (int)opts->complete.data.string.size, &compl, &argt,
+                        (char_u **)&compl_arg) != OK) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
+      goto err;
+    }
+  } else if (HAS_KEY(opts->complete)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
+    goto err;
+  }
+
+  switch (command.type) {
+  case kObjectTypeLuaRef:
+    luaref = api_new_luaref(command.data.luaref);
+    if (opts->desc.type == kObjectTypeString) {
+      rep = opts->desc.data.string.data;
+    } else {
+      snprintf((char *)IObuff, IOSIZE, "<Lua function %d>", luaref);
+      rep = (char *)IObuff;
+    }
+    break;
+  case kObjectTypeString:
+    rep = command.data.string.data;
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "'command' must be a string or Lua function");
+    goto err;
+  }
+
+  if (uc_add_command((char_u *)name.data, name.size, (char_u *)rep, argt, def, flags,
+                     compl, (char_u *)compl_arg, compl_luaref, addr_type_arg, luaref,
+                     force) != OK) {
+    api_set_error(err, kErrorTypeException, "Failed to create user command");
+    goto err;
+  }
+
+  return;
+
+err:
+  NLUA_CLEAR_REF(luaref);
+  NLUA_CLEAR_REF(compl_luaref);
 }

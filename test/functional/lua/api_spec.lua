@@ -8,6 +8,7 @@ local clear = helpers.clear
 local eval = helpers.eval
 local NIL = helpers.NIL
 local eq = helpers.eq
+local exec_lua = helpers.exec_lua
 
 before_each(clear)
 
@@ -111,6 +112,12 @@ describe('luaeval(vim.api.…)', function()
     eq(7, eval([[type(luaeval('vim.api.nvim__id(nil)'))]]))
 
     eq({foo=1, bar={42, {{baz=true}, 5}}}, funcs.luaeval('vim.api.nvim__id({foo=1, bar={42, {{baz=true}, 5}}})'))
+
+    eq(true, funcs.luaeval('vim.api.nvim__id(vim.api.nvim__id)(true)'))
+    eq(42, exec_lua [[
+      local f = vim.api.nvim__id({42, vim.api.nvim__id})
+      return f[2](f[1])
+    ]])
   end)
 
   it('correctly converts container objects with type_idx to API objects', function()
@@ -159,12 +166,8 @@ describe('luaeval(vim.api.…)', function()
 
   it('errors out correctly when working with API', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua type',
-       remove_trace(exc_exec([[call luaeval("vim.api.nvim__id(vim.api.nvim__id)")]])))
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua table',
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id({1, foo=42})")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua type',
-       remove_trace(exc_exec([[call luaeval("vim.api.nvim__id({42, vim.api.nvim__id})")]])))
     -- Errors in number of arguments
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id()")]])))

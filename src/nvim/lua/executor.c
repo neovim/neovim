@@ -18,6 +18,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/func_attr.h"
@@ -914,6 +915,24 @@ void nlua_typval_call(const char *str, size_t len, typval_T *const args, int arg
   }
 }
 
+void nlua_call_user_expand_func(expand_T *xp, typval_T *ret_tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_State *const lstate = global_lstate;
+
+  nlua_pushref(lstate, xp->xp_luaref);
+  lua_pushstring(lstate, (char *)xp->xp_pattern);
+  lua_pushstring(lstate, (char *)xp->xp_line);
+  lua_pushinteger(lstate, xp->xp_col);
+
+  if (nlua_pcall(lstate, 3, 1)) {
+    nlua_error(lstate, _("E5108: Error executing Lua function: %.*s"));
+    return;
+  }
+
+  nlua_pop_typval(lstate, ret_tv);
+}
+
 static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name,
                              typval_T *const args, int argcount, bool special, typval_T *ret_tv)
 {
@@ -1430,5 +1449,50 @@ void nlua_execute_on_key(int c)
   // [ ]
   assert(top == lua_gettop(lstate));
 #endif
+}
+
+void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
+{
+  lua_State *const lstate = global_lstate;
+
+  nlua_pushref(lstate, cmd->uc_luaref);
+
+  lua_newtable(lstate);
+  lua_pushboolean(lstate, eap->forceit == 1);
+  lua_setfield(lstate, -2, "bang");
+
+  lua_pushinteger(lstate, eap->line1);
+  lua_setfield(lstate, -2, "line1");
+
+  lua_pushinteger(lstate, eap->line2);
+  lua_setfield(lstate, -2, "line2");
+
+  lua_pushstring(lstate, (const char *)eap->arg);
+  lua_setfield(lstate, -2, "args");
+
+  lua_pushstring(lstate, (const char *)&eap->regname);
+  lua_setfield(lstate, -2, "reg");
+
+  lua_pushinteger(lstate, eap->addr_count);
+  lua_setfield(lstate, -2, "range");
+
+  if (eap->addr_count > 0) {
+    lua_pushinteger(lstate, eap->line2);
+  } else {
+    lua_pushinteger(lstate, cmd->uc_def);
+  }
+  lua_setfield(lstate, -2, "count");
+
+  // The size of this buffer is chosen empirically to be large enough to hold
+  // every possible modifier (with room to spare). If the list of possible
+  // modifiers grows this may need to be updated.
+  char buf[200] = { 0 };
+  (void)uc_mods(buf);
+  lua_pushstring(lstate, buf);
+  lua_setfield(lstate, -2, "mods");
+
+  if (nlua_pcall(lstate, 1, 0)) {
+    nlua_error(lstate, _("Error executing Lua callback: %.*s"));
+  }
 }
 

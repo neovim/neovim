@@ -1247,8 +1247,8 @@ See |:verbose-cmd| for more information.
 
 
 Command attributes ~
-
-User-defined commands are treated by Vim just like any other Ex commands.  They
+							*command-attributes*
+User-defined commands are treated by Nvim just like any other Ex commands.  They
 can have arguments, or have a range specified.  Arguments are subject to
 completion as filenames, buffers, etc.  Exactly how this works depends upon the
 command's attributes, which are specified when the command is defined.
