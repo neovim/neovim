@@ -135,7 +135,6 @@ struct terminal {
     int row, col;
     bool visible;
   } cursor;
-  int pressed_button;               // which mouse button is pressed
   bool pending_resize;              // pending width/height
 
   bool color_set[16];
@@ -1209,21 +1208,12 @@ static VTermKey convert_key(int key, VTermModifier *statep)
   }
 }
 
-static void mouse_action(Terminal *term, int button, int row, int col, bool drag, VTermModifier mod)
+static void mouse_action(Terminal *term, int button, int row, int col, bool pressed,
+                         VTermModifier mod)
 {
-  if (term->pressed_button && (term->pressed_button != button || !drag)) {
-    // release the previous button
-    vterm_mouse_button(term->vt, term->pressed_button, 0, mod);
-    term->pressed_button = 0;
-  }
-
-  // move the mouse
   vterm_mouse_move(term->vt, row, col, mod);
-
-  if (!term->pressed_button) {
-    // press the button if not already pressed
-    vterm_mouse_button(term->vt, button, 1, mod);
-    term->pressed_button = button;
+  if (button) {
+    vterm_mouse_button(term->vt, button, pressed, mod);
   }
 }
 
@@ -1242,32 +1232,35 @@ static bool send_mouse_event(Terminal *term, int c)
     // event in the terminal window and mouse events was enabled by the
     // program. translate and forward the event
     int button;
-    bool drag = false;
+    bool pressed = false;
 
     switch (c) {
     case K_LEFTDRAG:
-      drag = true;   FALLTHROUGH;
     case K_LEFTMOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_LEFTRELEASE:
       button = 1; break;
     case K_MOUSEMOVE:
-      drag = true; button = 0; break;
+      button = 0; break;
     case K_MIDDLEDRAG:
-      drag = true; FALLTHROUGH;
     case K_MIDDLEMOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_MIDDLERELEASE:
       button = 2; break;
     case K_RIGHTDRAG:
-      drag = true;  FALLTHROUGH;
     case K_RIGHTMOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_RIGHTRELEASE:
       button = 3; break;
     case K_MOUSEDOWN:
-      button = 4; break;
+      pressed = true; button = 4; break;
     case K_MOUSEUP:
-      button = 5; break;
+      pressed = true; button = 5; break;
     default:
       return false;
     }
 
-    mouse_action(term, button, row, col - offset, drag, 0);
+    mouse_action(term, button, row, col - offset, pressed, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
                                    sizeof(term->textbuf));
     terminal_send(term, term->textbuf, len);
