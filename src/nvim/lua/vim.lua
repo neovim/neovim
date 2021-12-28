@@ -424,7 +424,7 @@ end
 --- Without a runtime, writes to :Messages
 ---@see :help nvim_notify
 ---@param msg string Content of the notification to show to the user
----@param log_level number|nil enum from vim.log.levels
+---@param log_level number|nil enum from |vim.log.levels|
 ---@param opts table|nil additional options (timeout, etc)
 function vim.notify(msg, log_level, opts) -- luacheck: no unused
   if log_level == vim.log.levels.ERROR then

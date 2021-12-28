@@ -38,7 +38,7 @@ Layout
 - `/test/functional` : functional tests
 - `/test/unit` : unit tests
 - `/test/config` : contains `*.in` files which are transformed into `*.lua`
-  files using `configure_file` CMake command: this is for acessing CMake
+  files using `configure_file` CMake command: this is for accessing CMake
   variables in lua tests.
 - `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
   parser: normally used to make macros not accessible via this mechanism
@@ -197,7 +197,7 @@ Guidelines
   (success + fail + error + pending) is the same in all environments.
     - *Note:* `pending()` is ignored if it is missing an argument, unless it is
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
-      Provide empty function argument if the `pending()` call is outside of `it()`
+      Provide empty function argument if the `pending()` call is outside `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
 - Really long `source([=[...]=])` blocks may break Vim's Lua syntax
   highlighting. Try `:syntax sync fromstart` to fix it.

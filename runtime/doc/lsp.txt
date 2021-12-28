@@ -214,7 +214,7 @@ For |lsp-request|, each |lsp-handler| has this signature: >
                             request, a table with information about the error
                             is sent. Otherwise, it is `nil`. See |lsp-response|.
             {result}    (Result | Params | nil)
-                            When the language server is able to succesfully
+                            When the language server is able to successfully
                             complete a request, this contains the `result` key
                             of the response. See |lsp-response|.
             {ctx}       (table)
@@ -236,7 +236,7 @@ For |lsp-request|, each |lsp-handler| has this signature: >
             {config}    (table)
                             Configuration for the handler.
 
-                            Each handler can define it's own configuration
+                            Each handler can define its own configuration
                             table that allows users to customize the behavior
                             of a particular handler.
 
@@ -274,7 +274,7 @@ For |lsp-notification|, each |lsp-handler| has this signature: >
             {config}    (table)
                             Configuration for the handler.
 
-                            Each handler can define it's own configuration
+                            Each handler can define its own configuration
                             table that allows users to customize the behavior
                             of a particular handler.
 
@@ -369,7 +369,7 @@ Handlers can be set by:
     For example: >
 
   vim.lsp.start_client {
-    ..., -- Other configuration ommitted.
+    ..., -- Other configuration omitted.
     handlers = {
         ["textDocument/definition"] = my_custom_server_definition
     },
@@ -393,6 +393,9 @@ in the following order:
 1. Handler passed to |vim.lsp.buf_request()|, if any.
 2. Handler defined in |vim.lsp.start_client()|, if any.
 3. Handler defined in |vim.lsp.handlers|, if any.
+
+                                                            *vim.lsp.log_levels*
+Log levels are defined in |vim.log.levels|
 
 
 VIM.LSP.PROTOCOL                                              *vim.lsp.protocol*
@@ -444,7 +447,7 @@ LspCodeLens
    |nvim_buf_set_extmark()|.
 
 LspCodeLensSeparator                                 *hl-LspCodeLensSeparator*
-   Used to color the seperator between two or more code lens.
+   Used to color the separator between two or more code lens.
 
                                                      *lsp-highlight-signature*
 
@@ -835,10 +838,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                          throws an error. `code` is a number
                                          describing the error. Other arguments
                                          may be passed depending on the error
-                                         kind. See |vim.lsp.client_errors| for
-                                         possible errors. Use
-                                         `vim.lsp.client_errors[code]` to get
-                                         human-friendly name.
+                                         kind. See |vim.lsp.rpc.client_errors|
+                                         for possible errors. Use
+                                         `vim.lsp.rpc.client_errors[code]` to
+                                         get human-friendly name.
                     {before_init}        Callback with parameters
                                          (initialize_params, config) invoked
                                          before the LSP "initialize" phase,
@@ -1301,7 +1304,7 @@ hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
                     {config}  table Configuration table.
                               • border: (default=nil)
                                 • Add borders to the floating window
-                                • See |vim.api.nvim_open_win()|
+                                • See |nvim_open_win()|
 
                                            *vim.lsp.handlers.signature_help()*
 signature_help({_}, {result}, {ctx}, {config})

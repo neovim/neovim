@@ -1877,7 +1877,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
                         "\x1b[?c");
     } else if (konsolev > 0 && konsolev < 180770) {
       // Konsole before version 18.07.70: set up a nonce profile. This has
-      // side-effects on temporary font resizing. #6798
+      // side effects on temporary font resizing. #6798
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
                                                                 TMUX_WRAP(tmux,
                                                                           "\x1b]50;CursorShape=%?"
