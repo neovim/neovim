@@ -82,6 +82,14 @@ typedef struct {
   garray_T dout_ga;     // used for internal diff
 } diffout_T;
 
+// used for recording hunks from xdiff
+typedef struct {
+  linenr_T lnum_orig;
+  long     count_orig;
+  linenr_T lnum_new;
+  long     count_new;
+} diffhunk_T;
+
 // two diff inputs and one result
 typedef struct {
   diffin_T dio_orig;      // original file input
@@ -852,7 +860,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
     }
 
     // Read the diff output and add each entry to the diff list.
-    diff_read(idx_orig, idx_new, &dio->dio_diff);
+    diff_read(idx_orig, idx_new, dio);
 
     clear_diffin(&dio->dio_new);
     clear_diffout(&dio->dio_diff);
@@ -1078,7 +1086,7 @@ static int diff_file_internal(diffio_T *diffio)
 
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
-  emit_cb.out_line = xdiff_out;
+  emit_cfg.hunk_func = xdiff_out;
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {
@@ -1519,20 +1527,20 @@ void ex_diffoff(exarg_T *eap)
 /// @param idx_orig idx of original file
 /// @param idx_new idx of new file
 /// @dout diff output
-static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
+static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
 {
   FILE *fd = NULL;
   int line_idx = 0;
   diff_T *dprev = NULL;
   diff_T *dp = curtab->tp_first_diff;
   diff_T *dn, *dpl;
+  diffout_T *dout = &dio->dio_diff;
   char_u linebuf[LBUFLEN];  // only need to hold the diff line
   char_u *line;
   long off;
   int i;
-  linenr_T lnum_orig, lnum_new;
-  long count_orig, count_new;
   int notset = true;  // block "*dp" not set yet
+  diffhunk_T *hunk;
   enum {
     DIFF_ED,
     DIFF_UNIFIED,
@@ -1549,70 +1557,79 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
   }
 
+  if (!dio->dio_internal) {
+    hunk = xmalloc(sizeof(*hunk));
+  }
+
   for (;;) {
-    if (fd == NULL) {
+    if (dio->dio_internal) {
       if (line_idx >= dout->dout_ga.ga_len) {
         break;      // did last line
       }
-      line = ((char_u **)dout->dout_ga.ga_data)[line_idx++];
+      hunk = ((diffhunk_T **)dout->dout_ga.ga_data)[line_idx++];
     } else {
-      if (vim_fgets(linebuf, LBUFLEN, fd)) {
-        break;      // end of file
-      }
-      line = linebuf;
-    }
-
-    if (diffstyle == DIFF_NONE) {
-      // Determine diff style.
-      // ed like diff looks like this:
-      // {first}[,{last}]c{first}[,{last}]
-      // {first}a{first}[,{last}]
-      // {first}[,{last}]d{first}
-      //
-      // unified diff looks like this:
-      // --- file1       2018-03-20 13:23:35.783153140 +0100
-      // +++ file2       2018-03-20 13:23:41.183156066 +0100
-      // @@ -1,3 +1,5 @@
-      if (isdigit(*line)) {
-        diffstyle = DIFF_ED;
-      } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
-        diffstyle = DIFF_UNIFIED;
-      } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
-                 && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
-                 && (STRNCMP(line, "+++ ", 4) == 0)
-                 && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
-                 && (STRNCMP(line, "@@ ", 3) == 0)) {
-        diffstyle = DIFF_UNIFIED;
+      if (fd == NULL) {
+        if (line_idx >= dout->dout_ga.ga_len) {
+          break;      // did last line
+        }
+        line = ((char_u **)dout->dout_ga.ga_data)[line_idx++];
       } else {
-        // Format not recognized yet, skip over this line.  Cygwin diff
-        // may put a warning at the start of the file.
-        continue;
+        if (vim_fgets(linebuf, LBUFLEN, fd)) {
+          break;      // end of file
+        }
+        line = linebuf;
       }
-    }
 
-    if (diffstyle == DIFF_ED) {
-      if (!isdigit(*line)) {
-        continue;   // not the start of a diff block
+      if (diffstyle == DIFF_NONE) {
+        // Determine diff style.
+        // ed like diff looks like this:
+        // {first}[,{last}]c{first}[,{last}]
+        // {first}a{first}[,{last}]
+        // {first}[,{last}]d{first}
+        //
+        // unified diff looks like this:
+        // --- file1       2018-03-20 13:23:35.783153140 +0100
+        // +++ file2       2018-03-20 13:23:41.183156066 +0100
+        // @@ -1,3 +1,5 @@
+        if (isdigit(*line)) {
+          diffstyle = DIFF_ED;
+        } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
+          diffstyle = DIFF_UNIFIED;
+        } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
+                   && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
+                   && (STRNCMP(line, "+++ ", 4) == 0)
+                   && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
+                   && (STRNCMP(line, "@@ ", 3) == 0)) {
+          diffstyle = DIFF_UNIFIED;
+        } else {
+          // Format not recognized yet, skip over this line.  Cygwin diff
+          // may put a warning at the start of the file.
+          continue;
+        }
       }
-      if (parse_diff_ed(line, &lnum_orig, &count_orig,
-                        &lnum_new, &count_new) == FAIL) {
-        continue;
-      }
-    } else {
-      assert(diffstyle == DIFF_UNIFIED);
-      if (STRNCMP(line, "@@ ", 3) != 0) {
-        continue;   // not the start of a diff block
-      }
-      if (parse_diff_unified(line, &lnum_orig, &count_orig,
-                             &lnum_new, &count_new) == FAIL) {
-        continue;
+
+      if (diffstyle == DIFF_ED) {
+        if (!isdigit(*line)) {
+          continue;   // not the start of a diff block
+        }
+        if (parse_diff_ed(line, hunk) == FAIL) {
+          continue;
+        }
+      } else {
+        assert(diffstyle == DIFF_UNIFIED);
+        if (STRNCMP(line, "@@ ", 3) != 0) {
+          continue;   // not the start of a diff block
+        }
+        if (parse_diff_unified(line, hunk) == FAIL) {
+          continue;
+        }
       }
     }
 
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
-           && lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
+           && hunk->lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
       if (notset) {
         diff_copy_entry(dprev, dp, idx_orig, idx_new);
       }
@@ -1622,19 +1639,19 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
 
     if ((dp != NULL)
-        && (lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
-        && (lnum_orig + count_orig >= dp->df_lnum[idx_orig])) {
+        && (hunk->lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
+        && (hunk->lnum_orig + hunk->count_orig >= dp->df_lnum[idx_orig])) {
       // New block overlaps with existing block(s).
       // First find last block that overlaps.
       for (dpl = dp; dpl->df_next != NULL; dpl = dpl->df_next) {
-        if (lnum_orig + count_orig < dpl->df_next->df_lnum[idx_orig]) {
+        if (hunk->lnum_orig + hunk->count_orig < dpl->df_next->df_lnum[idx_orig]) {
           break;
         }
       }
 
       // If the newly found block starts before the old one, set the
       // start back a number of lines.
-      off = dp->df_lnum[idx_orig] - lnum_orig;
+      off = dp->df_lnum[idx_orig] - hunk->lnum_orig;
 
       if (off > 0) {
         for (i = idx_orig; i < idx_new; ++i) {
@@ -1642,15 +1659,15 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
             dp->df_lnum[i] -= off;
           }
         }
-        dp->df_lnum[idx_new] = lnum_new;
-        dp->df_count[idx_new] = count_new;
+        dp->df_lnum[idx_new] = hunk->lnum_new;
+        dp->df_count[idx_new] = hunk->count_new;
       } else if (notset) {
         // new block inside existing one, adjust new block
-        dp->df_lnum[idx_new] = lnum_new + off;
-        dp->df_count[idx_new] = count_new - off;
+        dp->df_lnum[idx_new] = hunk->lnum_new + off;
+        dp->df_count[idx_new] = hunk->count_new - off;
       } else {
         // second overlap of new block with existing block
-        dp->df_count[idx_new] += count_new - count_orig
+        dp->df_count[idx_new] += hunk->count_new - hunk->count_orig
                                  + dpl->df_lnum[idx_orig] +
                                  dpl->df_count[idx_orig]
                                  - (dp->df_lnum[idx_orig] +
@@ -1659,7 +1676,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
       // Adjust the size of the block to include all the lines to the
       // end of the existing block or the new diff, whatever ends last.
-      off = (lnum_orig + count_orig)
+      off = (hunk->lnum_orig + hunk->count_orig)
             - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
 
       if (off < 0) {
@@ -1691,10 +1708,10 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       // Allocate a new diffblock.
       dp = diff_alloc_new(curtab, dprev, dp);
 
-      dp->df_lnum[idx_orig] = lnum_orig;
-      dp->df_count[idx_orig] = count_orig;
-      dp->df_lnum[idx_new] = lnum_new;
-      dp->df_count[idx_new] = count_new;
+      dp->df_lnum[idx_orig] = hunk->lnum_orig;
+      dp->df_count[idx_orig] = hunk->count_orig;
+      dp->df_lnum[idx_new] = hunk->lnum_new;
+      dp->df_count[idx_new] = hunk->count_new;
 
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
@@ -1716,6 +1733,10 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     dprev = dp;
     dp = dp->df_next;
     notset = true;
+  }
+
+  if (!dio->dio_internal) {
+    xfree(hunk);
   }
 
   if (fd != NULL) {
@@ -3026,8 +3047,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 /// Handle an ED style diff line.
 /// Return FAIL if the line does not contain diff info.
 ///
-static int parse_diff_ed(char_u *line, linenr_T *lnum_orig, long *count_orig, linenr_T *lnum_new,
-                         long *count_new)
+static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
 {
   char_u *p;
   long f1, l1, f2, l2;
@@ -3061,18 +3081,18 @@ static int parse_diff_ed(char_u *line, linenr_T *lnum_orig, long *count_orig, li
   }
 
   if (difftype == 'a') {
-    *lnum_orig = f1 + 1;
-    *count_orig = 0;
+    hunk->lnum_orig = f1 + 1;
+    hunk->count_orig = 0;
   } else {
-    *lnum_orig = f1;
-    *count_orig = l1 - f1 + 1;
+    hunk->lnum_orig = f1;
+    hunk->count_orig = l1 - f1 + 1;
   }
   if (difftype == 'd') {
-    *lnum_new = f2 + 1;
-    *count_new = 0;
+    hunk->lnum_new = f2 + 1;
+    hunk->count_new = 0;
   } else {
-    *lnum_new = f2;
-    *count_new = l2 - f2 + 1;
+    hunk->lnum_new = f2;
+    hunk->count_new = l2 - f2 + 1;
   }
   return OK;
 }
@@ -3081,8 +3101,7 @@ static int parse_diff_ed(char_u *line, linenr_T *lnum_orig, long *count_orig, li
 /// Parses unified diff with zero(!) context lines.
 /// Return FAIL if there is no diff information in "line".
 ///
-static int parse_diff_unified(char_u *line, linenr_T *lnum_orig, long *count_orig,
-                              linenr_T *lnum_new, long *count_new)
+static int parse_diff_unified(char_u *line, diffhunk_T *hunk)
 {
   char_u *p;
   long oldline, oldcount, newline, newcount;
@@ -3120,10 +3139,10 @@ static int parse_diff_unified(char_u *line, linenr_T *lnum_orig, long *count_ori
       newline = 1;
     }
 
-    *lnum_orig = oldline;
-    *count_orig = oldcount;
-    *lnum_new = newline;
-    *count_new = newcount;
+    hunk->lnum_orig = oldline;
+    hunk->count_orig = oldcount;
+    hunk->lnum_new = newline;
+    hunk->count_new = newcount;
 
     return OK;
   }
@@ -3135,25 +3154,17 @@ static int parse_diff_unified(char_u *line, linenr_T *lnum_orig, long *count_ori
 /// Callback function for the xdl_diff() function.
 /// Stores the diff output in a grow array.
 ///
-static int xdiff_out(void *priv, mmbuffer_t *mb, int nbuf)
+static int xdiff_out(long start_a, long count_a, long start_b, long count_b,
+                     void *priv)
 {
   diffout_T *dout = (diffout_T *)priv;
-  char_u *p;
-
-  // The header line always comes by itself, text lines in at least two
-  // parts.  We drop the text part.
-  if (nbuf > 1) {
-    return 0;
-  }
-
-  // sanity check
-  if (STRNCMP(mb[0].ptr, "@@ ", 3) != 0) {
-    return 0;
-  }
+  diffhunk_T *p = xmalloc(sizeof(*p));
 
   ga_grow(&dout->dout_ga, 1);
-
-  p = vim_strnsave((char_u *)mb[0].ptr, mb[0].size);
-  ((char_u **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
+  p->lnum_orig  = start_a + 1;
+  p->count_orig = count_a;
+  p->lnum_new   = start_b + 1;
+  p->count_new  = count_b;
+  ((diffhunk_T **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
   return 0;
 }
