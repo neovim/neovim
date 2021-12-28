@@ -383,7 +383,7 @@ error:
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
 /// @param do_lt      Also translate <lt>. Ignored if `special` is false.
-/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
+/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\r" char.
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
@@ -1163,7 +1163,7 @@ static void term_close(void *data)
 /// Send data to channel `id`. For a job, it writes it to the
 /// stdin of the process. For the stdio channel |channel-stdio|,
 /// it writes to Nvim's stdout.  For an internal terminal instance
-/// (|nvim_open_term()|) it writes directly to terimal output.
+/// (|nvim_open_term()|) it writes directly to terminal output.
 /// See |channel-bytes| for more information.
 ///
 /// This function writes raw data, not RPC messages.  If the channel
@@ -2394,11 +2394,14 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 - mods: (string) Command modifiers, if any |<mods>|
 /// @param  opts    Optional command attributes. See |command-attributes| for more details. To use
 ///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
-///                 "true". When using a Lua function for {command} you can also provide a "desc"
-///                 key that will be displayed when listing commands. In addition to the string
-///                 options listed in |:command-complete|, the "complete" key also accepts a Lua
-///                 function which works like the "customlist" completion mode
-///                 |:command-complete-customlist|.
+///                 "true". In addition to the string options listed in |:command-complete|, the
+///                 "complete" key also accepts a Lua function which works like the "customlist"
+///                 completion mode |:command-completion-customlist|.
+///
+///                 Additional parameters.
+///                 - desc: (string) Used for listing the command when a Lua function is used for
+///                                  {command}.
+///                 - force: (boolean) Override any previous definition.
 /// @param[out] err Error details, if any.
 void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)

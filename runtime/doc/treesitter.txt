@@ -210,7 +210,7 @@ Here is a list of built-in predicates :
 <
 	`match?`					*ts-predicate-match?*
 	`vim-match?`					*ts-predicate-vim-match?*
-		This will match if the provived vim regex matches the text
+		This will match if the provided vim regex matches the text
 		corresponding to a node : >
 			((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <		Note: the `^` and `$` anchors will respectively match the

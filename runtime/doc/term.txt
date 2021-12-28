@@ -133,7 +133,7 @@ capabilities as if they had been in the terminfo definition.
 
 If terminfo does not (yet) have this flag, Nvim will fall back to $TERM and
 other environment variables.  It will add constructed "setrgbf" and "setrgbb"
-capabilities in the case of the the "rxvt", "linux", "st", "tmux", and "iterm"
+capabilities in the case of the "rxvt", "linux", "st", "tmux", and "iterm"
 terminal types, or when Konsole, genuine Xterm, a libvte terminal emulator
 version 0.36 or later, or a terminal emulator that sets the COLORTERM
 environment variable to "truecolor" is detected.
