@@ -579,6 +579,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
   slang_T *lp = NULL;
   int c = 0;
   int res;
+  bool did_estack_push = false;
 
   fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
@@ -611,6 +612,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
 
   // Set sourcing_name, so that error messages mention the file name.
   estack_push(ETYPE_SPELL, fname, 0);
+  did_estack_push = true;
 
   // <HEADER>: <fileID>
   const int scms_ret = spell_check_magic_string(fd);
@@ -807,7 +809,9 @@ endOK:
   if (fd != NULL) {
     fclose(fd);
   }
-  estack_pop();
+  if (did_estack_push) {
+    estack_pop();
+  }
 
   return lp;
 }

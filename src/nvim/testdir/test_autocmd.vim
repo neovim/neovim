@@ -2382,6 +2382,28 @@ endfunc
 
 " FileChangedShell tested in test_filechanged.vim
 
+func Test_FileType_spell()
+  if !isdirectory('/tmp')
+    throw "Skipped: requires /tmp directory"
+  endif
+
+  " this was crashing with an invalid free()
+  setglobal spellfile=/tmp/en.utf-8.add
+  augroup crash
+    autocmd!
+    autocmd BufNewFile,BufReadPost crashfile setf somefiletype
+    autocmd BufNewFile,BufReadPost crashfile set ft=anotherfiletype
+    autocmd FileType anotherfiletype setlocal spell
+  augroup END
+  func! NoCrash() abort
+    edit /tmp/crashfile
+  endfunc
+  call NoCrash()
+
+  au! crash
+  setglobal spellfile=
+endfunc
+
 func LogACmd()
   call add(g:logged, line('$'))
 endfunc
