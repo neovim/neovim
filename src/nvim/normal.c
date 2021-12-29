@@ -4893,7 +4893,7 @@ static void nv_next(cmdarg_T *cap)
 
   // Redraw the buffer to ensure the highlighting of the current match under
   // the cursor as well as the old match both get properly updated
-  redraw_later(NOT_VALID);
+  redraw_later(curwin, NOT_VALID);
 }
 
 /// Search for "pat" in direction "dir" ('/' or '?', 0 for repeat).
