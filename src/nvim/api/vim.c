@@ -2395,7 +2395,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 key that will be displayed when listing commands. In addition to the string
 ///                 options listed in |:command-complete|, the "complete" key also accepts a Lua
 ///                 function which works like the "customlist" completion mode
-///                 |:command-complete-customlist|.
+///                 |:command-completion-customlist|.
 /// @param[out] err Error details, if any.
 void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)

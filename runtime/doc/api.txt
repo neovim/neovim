@@ -674,7 +674,7 @@ nvim_add_user_command({name}, {command}, {*opts})
                                string options listed in |:command-complete|,
                                the "complete" key also accepts a Lua function
                                which works like the "customlist" completion
-                               mode |:command-complete-customlist|.
+                               mode |:command-completion-customlist|.
 
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
