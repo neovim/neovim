@@ -267,14 +267,14 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     msg_attr_keep((char *)IObuff, 0, true, false);
   }
 
-  /*
-   * Set "'[" and "']" marks.
-   */
-  curbuf->b_op_start = oap->start;
-  curbuf->b_op_end.lnum = oap->end.lnum;
-  curbuf->b_op_end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
-  if (curbuf->b_op_end.col > 0) {
-    curbuf->b_op_end.col--;
+  if (!cmdmod.lockmarks) {
+    // Set "'[" and "']" marks.
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end.lnum = oap->end.lnum;
+    curbuf->b_op_end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
+    if (curbuf->b_op_end.col > 0) {
+      curbuf->b_op_end.col--;
+    }
   }
 
   changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
@@ -694,9 +694,11 @@ void op_reindent(oparg_T *oap, Indenter how)
                   "%" PRId64 " lines indented ", i),
          (int64_t)i);
   }
-  // set '[ and '] marks
-  curbuf->b_op_start = oap->start;
-  curbuf->b_op_end = oap->end;
+  if (!cmdmod.lockmarks) {
+    // set '[ and '] marks
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
 }
 
 /*
@@ -1736,13 +1738,15 @@ int op_delete(oparg_T *oap)
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 
 setmarks:
-  if (oap->motion_type == kMTBlockWise) {
-    curbuf->b_op_end.lnum = oap->end.lnum;
-    curbuf->b_op_end.col = oap->start.col;
-  } else {
-    curbuf->b_op_end = oap->start;
+  if (!cmdmod.lockmarks) {
+    if (oap->motion_type == kMTBlockWise) {
+      curbuf->b_op_end.lnum = oap->end.lnum;
+      curbuf->b_op_end.col = oap->start.col;
+    } else {
+      curbuf->b_op_end = oap->start;
+    }
+    curbuf->b_op_start = oap->start;
   }
-  curbuf->b_op_start = oap->start;
 
   return OK;
 }
@@ -2007,9 +2011,11 @@ static int op_replace(oparg_T *oap, int c)
   check_cursor();
   changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0L, true);
 
-  // Set "'[" and "']" marks.
-  curbuf->b_op_start = oap->start;
-  curbuf->b_op_end = oap->end;
+  if (!cmdmod.lockmarks) {
+    // Set "'[" and "']" marks.
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
 
   return OK;
 }
@@ -2078,11 +2084,11 @@ void op_tilde(oparg_T *oap)
     redraw_curbuf_later(INVERTED);
   }
 
-  /*
-   * Set '[ and '] marks.
-   */
-  curbuf->b_op_start = oap->start;
-  curbuf->b_op_end = oap->end;
+  if (!cmdmod.lockmarks) {
+    // Set '[ and '] marks.
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
 
   if (oap->line_count > p_report) {
     smsg(NGETTEXT("%" PRId64 " line changed",
@@ -2774,14 +2780,14 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     }
   }
 
-  /*
-   * Set "'[" and "']" marks.
-   */
-  curbuf->b_op_start = oap->start;
-  curbuf->b_op_end = oap->end;
-  if (yank_type == kMTLineWise) {
-    curbuf->b_op_start.col = 0;
-    curbuf->b_op_end.col = MAXCOL;
+  if (!cmdmod.lockmarks) {
+    // Set "'[" and "']" marks.
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+    if (yank_type == kMTLineWise) {
+      curbuf->b_op_start.col = 0;
+      curbuf->b_op_end.col = MAXCOL;
+    }
   }
 
   return;
@@ -2914,6 +2920,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   char_u *insert_string = NULL;
   bool allocated = false;
   long cnt;
+  const pos_T orig_start = curbuf->b_op_start;
+  const pos_T orig_end = curbuf->b_op_end;
   unsigned int cur_ve_flags = get_ve_flags();
 
   if (flags & PUT_FIXINDENT) {
@@ -3618,6 +3626,10 @@ error:
   curwin->w_set_curswant = TRUE;
 
 end:
+  if (cmdmod.lockmarks) {
+    curbuf->b_op_start = orig_start;
+    curbuf->b_op_end = orig_end;
+  }
   if (allocated) {
     xfree(insert_string);
   }
@@ -3964,7 +3976,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   // and setup the array of space strings lengths
   for (t = 0; t < (linenr_T)count; t++) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
-    if (t == 0 && setmark) {
+    if (t == 0 && setmark && !cmdmod.lockmarks) {
       // Set the '[ mark.
       curwin->w_buffer->b_op_start.lnum = curwin->w_cursor.lnum;
       curwin->w_buffer->b_op_start.col = (colnr_T)STRLEN(curr);
@@ -4085,7 +4097,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
   ml_replace(curwin->w_cursor.lnum, newp, false);
 
-  if (setmark) {
+  if (setmark && !cmdmod.lockmarks) {
     // Set the '] mark.
     curwin->w_buffer->b_op_end.lnum = curwin->w_cursor.lnum;
     curwin->w_buffer->b_op_end.col = sumsize;
@@ -4223,8 +4235,10 @@ static void op_format(oparg_T *oap, int keep_cursor)
     redraw_curbuf_later(INVERTED);
   }
 
-  // Set '[ mark at the start of the formatted area
-  curbuf->b_op_start = oap->start;
+  if (!cmdmod.lockmarks) {
+    // Set '[ mark at the start of the formatted area
+    curbuf->b_op_start = oap->start;
+  }
 
   // For "gw" remember the cursor position and put it back below (adjusted
   // for joined and split lines).
@@ -4246,8 +4260,10 @@ static void op_format(oparg_T *oap, int keep_cursor)
   old_line_count = curbuf->b_ml.ml_line_count - old_line_count;
   msgmore(old_line_count);
 
-  // put '] mark on the end of the formatted area
-  curbuf->b_op_end = curwin->w_cursor;
+  if (!cmdmod.lockmarks) {
+    // put '] mark on the end of the formatted area
+    curbuf->b_op_end = curwin->w_cursor;
+  }
 
   if (keep_cursor) {
     curwin->w_cursor = saved_cursor;
@@ -4845,7 +4861,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 
     // Set '[ mark if something changed. Keep the last end
     // position from do_addsub().
-    if (change_cnt > 0) {
+    if (change_cnt > 0 && !cmdmod.lockmarks) {
       curbuf->b_op_start = startpos;
     }
 
@@ -5199,11 +5215,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
   }
 
-  // set the '[ and '] marks
-  curbuf->b_op_start = startpos;
-  curbuf->b_op_end = endpos;
-  if (curbuf->b_op_end.col > 0) {
-    curbuf->b_op_end.col--;
+  if (!cmdmod.lockmarks) {
+    // set the '[ and '] marks
+    curbuf->b_op_start = startpos;
+    curbuf->b_op_end = endpos;
+    if (curbuf->b_op_end.col > 0) {
+      curbuf->b_op_end.col--;
+    }
   }
 
 theend:
@@ -6016,6 +6034,8 @@ static void op_function(const oparg_T *oap)
 {
   const TriState save_virtual_op = virtual_op;
   const bool save_finish_op = finish_op;
+  const pos_T orig_start = curbuf->b_op_start;
+  const pos_T orig_end = curbuf->b_op_end;
 
   if (*p_opfunc == NUL) {
     emsg(_("E774: 'operatorfunc' is empty"));
@@ -6049,6 +6069,10 @@ static void op_function(const oparg_T *oap)
 
     virtual_op = save_virtual_op;
     finish_op = save_finish_op;
+    if (cmdmod.lockmarks) {
+      curbuf->b_op_start = orig_start;
+      curbuf->b_op_end = orig_end;
+    }
   }
 }
 

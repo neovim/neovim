@@ -2380,6 +2380,40 @@ func Test_autocmd_was_using_freed_memory()
   pclose
 endfunc
 
+func Test_BufWrite_lockmarks()
+  edit! Xtest
+  call setline(1, ['a', 'b', 'c', 'd'])
+
+  " :lockmarks preserves the marks
+  call SetChangeMarks(2, 3)
+  lockmarks write
+  call assert_equal([2, 3], [line("'["), line("']")])
+
+  " *WritePre autocmds get the correct line range, but lockmarks preserves the
+  " original values for the user
+  augroup lockmarks
+    au!
+    au BufWritePre,FilterWritePre * call assert_equal([1, 4], [line("'["), line("']")])
+    au FileWritePre * call assert_equal([3, 4], [line("'["), line("']")])
+  augroup END
+
+  lockmarks write
+  call assert_equal([2, 3], [line("'["), line("']")])
+
+  if executable('cat')
+    lockmarks %!cat
+    call assert_equal([2, 3], [line("'["), line("']")])
+  endif
+
+  lockmarks 3,4write Xtest2
+  call assert_equal([2, 3], [line("'["), line("']")])
+
+  au! lockmarks
+  augroup! lockmarks
+  call delete('Xtest')
+  call delete('Xtest2')
+endfunc
+
 " FileChangedShell tested in test_filechanged.vim
 
 func LogACmd()
