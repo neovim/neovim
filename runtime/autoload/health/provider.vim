@@ -523,7 +523,7 @@ function! s:check_virtualenv() abort
         let hint = '$PATH ambiguities in subshells typically are '
           \.'caused by your shell config overriding the $PATH previously set by the '
           \.'virtualenv. Either prevent them from doing so, or use this workaround: '
-          \.'https://vi.stackexchange.com/a/7654'
+          \.'https://vi.stackexchange.com/a/34996'
         let hints[hint] = v:true
       endif
     endfor
@@ -710,7 +710,7 @@ function! s:check_perl() abort
 
   let latest_cpan = s:system(latest_cpan_cmd)
   if s:shell_error || empty(latest_cpan)
-    call health#report_error('Failed to run: '. latest_cpan_cmd,
+    call health#report_error('Failed to run: '. join(latest_cpan_cmd, " "),
           \ ["Make sure you're connected to the internet.",
           \  'Are you behind a firewall or proxy?'])
     return

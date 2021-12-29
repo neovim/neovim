@@ -15,6 +15,58 @@ func Test_blockinsert_indent()
   bwipe!
 endfunc
 
+func Test_blockinsert_autoindent()
+  new
+  let lines =<< trim END
+      var d = {
+      a: () => 0,
+      b: () => 0,
+      c: () => 0,
+      }
+  END
+  call setline(1, lines)
+  filetype plugin indent on
+  setlocal sw=2 et ft=vim
+  setlocal indentkeys+=:
+  exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  let expected =<< trim END
+      var d = {
+        a: (): asdf => 0,
+      b: (): asdf => 0,
+      c: (): asdf => 0,
+      }
+  END
+  call assert_equal(expected, getline(1, 5))
+
+  " insert on the next column should do exactly the same
+  :%dele
+  call setline(1, lines)
+  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 5))
+
+  :%dele
+  call setline(1, lines)
+  setlocal sw=8 noet
+  exe "norm! 2Gf)\<c-v>2jA: asdf\<esc>"
+  let expected =<< trim END
+      var d = {
+      	a: (): asdf => 0,
+      b: (): asdf => 0,
+      c: (): asdf => 0,
+      }
+  END
+  call assert_equal(expected, getline(1, 5))
+
+  " insert on the next column should do exactly the same
+  :%dele
+  call setline(1, lines)
+  exe "norm! 2Gf)l\<c-v>2jI: asdf\<esc>"
+  call assert_equal(expected, getline(1, 5))
+
+  filetype off
+  bwipe!
+endfunc
+
 func Test_blockinsert_delete()
   new
   let _bs = &bs

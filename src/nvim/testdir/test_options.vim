@@ -209,7 +209,7 @@ func Test_set_completion()
 
   " Expand abbreviation of options.
   call feedkeys(":set ts\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"set tabstop thesaurus', @:)
+  call assert_equal('"set tabstop thesaurus thesaurusfunc', @:)
 
   " Expand current value
   call feedkeys(":set fileencodings=\<C-A>\<C-B>\"\<CR>", 'tx')
@@ -235,8 +235,7 @@ func Test_set_completion()
   call feedkeys(":set filetype=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"set filetype=sshdconfig', @:)
   call feedkeys(":set filetype=a\<C-A>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
-  call assert_equal('"set filetype=' .. join(getcompletion('a*', 'filetype')), @:)
+  call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
 endfunc
 
 func Test_set_errors()
@@ -539,7 +538,7 @@ func Test_copy_winopt()
   call assert_equal(4,&numberwidth)
   bw!
 
-  set hidden&
+  set nohidden
 endfunc
 
 func Test_shortmess_F()
@@ -731,6 +730,27 @@ func Test_opt_reset_scroll()
 
   " clean up
   call delete('Xscroll')
+endfunc
+
+" Test for the 'cdhome' option
+func Test_opt_cdhome()
+  if has('unix') || has('vms')
+    throw 'Skipped: only works on non-Unix'
+  endif
+
+  set cdhome&
+  call assert_equal(0, &cdhome)
+  set cdhome
+
+  " This paragraph is copied from Test_cd_no_arg().
+  let path = getcwd()
+  cd
+  call assert_equal($HOME, getcwd())
+  call assert_notequal(path, getcwd())
+  exe 'cd ' .. fnameescape(path)
+  call assert_equal(path, getcwd())
+
+  set cdhome&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

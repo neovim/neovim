@@ -435,6 +435,15 @@ chance that a normal word like "lex:" is caught.  There is one exception:
 version 3.0).  Using "ex:" at the start of the line will be ignored (this
 could be short for "example:").
 
+If the modeline is disabled within a modeline, subsequent modelines will be
+ignored.  This is to allow turning off modeline on a per-file basis.  This is
+useful when a line looks like a modeline but isn't.  For example, it would be
+good to start a YAML file containing strings like "vim:" with
+    # vim: nomodeline ~
+so as to avoid modeline misdetection.  Following options on the same line
+after modeline deactivation, if any, are still evaluated (but you would
+normally not have any).
+
 							*modeline-local*
 The options are set like with ":setlocal": The new value only applies to the
 buffer and window that contain the file.  Although it's possible to set global
@@ -675,9 +684,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'autowrite' 'aw'	boolean	(default off)
 			global
 	Write the contents of the file, if it has been modified, on each
-	:next, :rewind, :last, :first, :previous, :stop, :suspend, :tag, :!,
-	:make, CTRL-] and CTRL-^ command; and when a :buffer, CTRL-O, CTRL-I,
-	'{A-Z0-9}, or `{A-Z0-9} command takes one to another file.
+	`:next`, `:rewind`, `:last`, `:first`, `:previous`, `:stop`,
+	`:suspend`, `:tag`, `:!`, `:make`, CTRL-] and CTRL-^ command; and when
+	a :buffer, CTRL-O, CTRL-I, '{A-Z0-9}, or `{A-Z0-9} command takes one
+	to another file.
+	A buffer is not written if it becomes hidden, e.g. when 'bufhidden' is
+	set to "hide" and `:next` is used
 	Note that for some commands the 'autowrite' option is not used, see
 	'autowriteall' for that.
 	Some buffers will not be written, specifically when 'buftype' is
@@ -824,12 +836,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup//")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
-	  where this is possible.  The directory must exist, Vim will not
-	  create it for you.
+	  where this is possible.  If none of the directories exist Nvim will
+	  attempt to create the last directory in the list.
 	- Empty means that no backup file will be created ('patchmode' is
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
@@ -941,7 +953,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	error	    Other Error occurred (e.g. try to join last line)
 		    (mostly used in |Normal-mode| or |Cmdline-mode|).
 	esc	    hitting <Esc> in |Normal-mode|.
-	ex	    In |Visual-mode|, hitting |Q| results in an error.
 	hangul	    Ignored.
 	insertmode  Pressing <Esc> in 'insertmode'.
 	lang	    Calling the beep module for Lua/Mzscheme/TCL.
@@ -1038,7 +1049,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			    continuation (positive).
 		sbr	    Display the 'showbreak' value before applying the
 			    additional indent.
-	The default value for min is 20 and shift is 0.
+		list:{n}    Adds an additional indent for lines that match a
+			    numbered or bulleted list (using the
+			    'formatlistpat' setting).
+		list:-1	    Uses the length of a match with 'formatlistpat'
+			    for indentation.
+	The default value for min is 20, shift and list is 0.
 
 						*'browsedir'* *'bsdir'*
 'browsedir' 'bsdir'	string	(default: "last")
@@ -1101,6 +1117,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Also see |win_gettype()|, which returns the type of the window.
 
 	Be careful with changing this option, it can have many side effects!
+	One such effect is that Vim will not check the timestamp of the file,
+	if the file is changed by another program this will not be noticed.
 
 	A "quickfix" buffer is only used for the error list and the location
 	list.  This value is set by the |:cwindow| and |:lwindow| commands and
@@ -1141,13 +1159,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 			case mapping, the current locale is not effective.
 			This probably only matters for Turkish.
 
+						*'cdhome'* *'cdh'*
+'cdhome' 'cdh'		boolean	(default: off)
+			global
+	When on, |:cd|, |:tcd| and |:lcd| without an argument changes the
+	current working directory to the |$HOME| directory like in Unix.
+	When off, those commands just print the current directory name.
+	On Unix this option has no effect.
+
 						*'cdpath'* *'cd'* *E344* *E346*
 'cdpath' 'cd'		string	(default: equivalent to $CDPATH or ",,")
 			global
 	This is a list of directories which will be searched when using the
-	|:cd| and |:lcd| commands, provided that the directory being searched
-	for has a relative path, not an absolute part starting with "/", "./"
-	or "../", the 'cdpath' option is not used then.
+	|:cd|, |:tcd| and |:lcd| commands, provided that the directory being
+	searched for has a relative path, not an absolute part starting with
+	"/", "./" or "../", the 'cdpath' option is not used then.
 	The 'cdpath' option's value has the same form and semantics as
 	|'path'|.  Also see |file-searching|.
 	The default value is taken from $CDPATH, with a "," prepended to look
@@ -1395,9 +1421,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is set it overrules 'shellslash' for completion:
 	- When this option is set to "slash", a forward slash is used for path
 	  completion in insert mode. This is useful when editing HTML tag, or
-	  Makefile with 'noshellslash' on Windows.
+	  Makefile with 'noshellslash' on MS-Windows.
 	- When this option is set to "backslash", backslash is used. This is
-	  useful when editing a batch file with 'shellslash' set on Windows.
+	  useful when editing a batch file with 'shellslash' set on MS-Windows.
 	- When this option is empty, same character is used as for
 	  'shellslash'.
 	For Insert mode completion the buffer-local value is used.  For
@@ -1802,11 +1828,28 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'cursorline'* *'cul'* *'nocursorline'* *'nocul'*
 'cursorline' 'cul'	boolean	(default off)
 			local to window
-	Highlight the screen line of the cursor with CursorLine
-	|hl-CursorLine|.  Useful to easily spot the cursor.  Will make screen
-	redrawing slower.
+	Highlight the text line of the cursor with CursorLine |hl-CursorLine|.
+	Useful to easily spot the cursor.  Will make screen redrawing slower.
 	When Visual mode is active the highlighting isn't used to make it
 	easier to see the selected text.
+
+
+						*'cursorlineopt'* *'culopt'*
+'cursorlineopt' 'culopt' string (default: "number,line")
+			local to window
+	Comma separated list of settings for how 'cursorline' is displayed.
+	Valid values:
+	"line"		Highlight the text line of the cursor with
+			CursorLine |hl-CursorLine|.
+	"screenline"	Highlight only the screen line of the cursor with
+			CursorLine |hl-CursorLine|.
+	"number"	Highlight the line number of the cursor with
+			CursorLineNr |hl-CursorLineNr|.
+
+	Special value:
+	"both"		Alias for the values "line,number".
+
+	"line" and "screenline" cannot be used together.
 
 
 						*'debug'*
@@ -2138,8 +2181,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global or local to buffer |global-local|
 	External program to use for "=" command.  When this option is empty
 	the internal formatting functions are used; either 'lisp', 'cindent'
-	or 'indentexpr'.  When Vim was compiled without internal formatting,
-	the "indent" program is used.
+	or 'indentexpr'.
 	Environment variables are expanded |:set_env|.  See |option-backslash|
 	about including spaces and backslashes.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -3057,19 +3099,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |help-translated|.
 
 				     *'hidden'* *'hid'* *'nohidden'* *'nohid'*
-'hidden' 'hid'		boolean	(default off)
+'hidden' 'hid'		boolean	(default on)
 			global
-	When off a buffer is unloaded when it is |abandon|ed.  When on a
-	buffer becomes hidden when it is |abandon|ed.  If the buffer is still
-	displayed in another window, it does not become hidden, of course.
-	The commands that move through the buffer list sometimes make a buffer
-	hidden although the 'hidden' option is off: When the buffer is
-	modified, 'autowrite' is off or writing is not possible, and the '!'
-	flag was used.  See also |windows.txt|.
-	To only make one buffer hidden use the 'bufhidden' option.
-	This option is set for one command with ":hide {command}" |:hide|.
-	WARNING: It's easy to forget that you have changes in hidden buffers.
-	Think twice when using ":q!" or ":qa!".
+	When off a buffer is unloaded (including loss of undo information)
+	when it is |abandon|ed.  When on a buffer becomes hidden when it is
+	|abandon|ed.  A buffer displayed in another window does not become
+	hidden, of course.
+	Commands that move through the buffer list sometimes hide a buffer
+	although the 'hidden' option is off: when the buffer is modified,
+	'autowrite' is off or writing is not possible, and the '!' flag was
+	used.  See also |windows|.
+	To hide a specific buffer use the 'bufhidden' option.
+	'hidden' is set for one command with ":hide {command}" |:hide|.
 
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
@@ -3192,13 +3233,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option to a valid keymap name.
 
 						*'inccommand'* *'icm'*
-'inccommand' 'icm'	string	(default "")
+'inccommand' 'icm'	string	(default "nosplit")
 			global
 
-	"nosplit": Shows the effects of a command incrementally, as you type.
-	"split"	 : Also shows partial off-screen results in a preview window.
+	When nonempty, shows the effects of |:substitute|, |:smagic|, and
+	|:snomagic| as you type.
 
-	Works for |:substitute|, |:smagic|, |:snomagic|. |hl-Substitute|
+	Possible values:
+		nosplit	Shows the effects of a command incrementally in the
+			buffer.
+		split	Like "nosplit", but also shows partial off-screen
+			results in a preview window.
 
 	If the preview is too slow (exceeds 'redrawtime') then 'inccommand' is
 	automatically disabled until |Command-line-mode| is done.
@@ -3477,7 +3522,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|jumplist-stack|
 
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
-'joinspaces' 'js'	boolean	(default on)
+'joinspaces' 'js'	boolean	(default off)
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
 	Otherwise only one space is inserted.
@@ -3674,9 +3719,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'list'* *'nolist'*
 'list'			boolean	(default off)
 			local to window
-	List mode: Show tabs as CTRL-I is displayed, display $ after end of
-	line.  Useful to see the difference between tabs and spaces and for
-	trailing blanks.  Further changed by the 'listchars' option.
+	List mode: By default, show tabs as ">", trailing spaces as "-", and
+	non-breakable space characters as "+". Useful to see the difference
+	between tabs and spaces and for trailing blanks. Further changed by
+	the 'listchars' option.
 
 	The cursor is displayed at the start of the space a Tab character
 	occupies, not at the end as usual in Normal mode.  To get this cursor
@@ -3722,16 +3768,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
 			are left blank.
+							*lcs-multispace*
+	  multispace:c...
+	 		One or more characters to use cyclically to show for
+	 		multiple consecutive spaces.  Overrides the "space"
+			setting, except for single spaces.  When omitted, the
+			"space" setting is used.  For example,
+			`:set listchars=multispace:---+` shows ten consecutive
+			spaces as:
+				---+---+--
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
-			leading spaces are blank.  Overrides the "space"
-			setting for leading spaces.  You can combine it with
-			"tab:", for example: >
+			leading spaces are blank.  Overrides the "space" and
+			"multispace" settings for leading spaces.  You can
+			combine it with "tab:", for example: >
 				:set listchars+=tab:>-,lead:.
 <							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
-			trailing spaces are blank.  Overrides the "space"
-			setting for trailing spaces.
+			trailing spaces are blank.  Overrides the "space" and
+			"multispace" settings for trailing spaces.
 							*lcs-extends*
 	  extends:c	Character to show in the last column, when 'wrap' is
 			off and the line continues beyond the right of the
@@ -3751,12 +3806,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The characters ':' and ',' should not be used.  UTF-8 characters can
 	be used.  All characters must be single width.
 
+	Each character can be specified as hex: >
+		set listchars=eol:\\x24
+		set listchars=eol:\\u21b5
+		set listchars=eol:\\U000021b5
+<	Note that a double backslash is used.  The number of hex characters
+	must be exactly 2 for \\x, 4 for \\u and 8 for \\U.
+
 	Examples: >
 	    :set lcs=tab:>-,trail:-
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
 <	|hl-NonText| highlighting will be used for "eol", "extends" and
-	"precedes". |hl-Whitespace| for "nbsp", "space", "tab" and "trail".
+	"precedes". |hl-Whitespace| for "nbsp", "space", "tab", "multispace",
+	"lead" and "trail".
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)
@@ -3777,8 +3840,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only switch it off when working with old Vi scripts.  In any other
 	situation write patterns that work when 'magic' is on.  Include "\M"
 	when you want to |/\M|.
-	In |Vim9| script the value of 'magic' is ignored, patterns behave like
-	it is always set.
 
 						*'makeef'* *'mef'*
 'makeef' 'mef'		string	(default: "")
@@ -4301,7 +4362,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default: see 'runtimepath')
-	Directories used to find packages.  See |packages|.
+	Directories used to find packages.  See |packages| and |rtp-packages|.
 
 
 						*'paragraphs'* *'para'*
@@ -4332,19 +4393,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 		- abbreviations are disabled
 		- 'autoindent' is reset
 		- 'expandtab' is reset
-		- 'formatoptions' is used like it is empty
+		- 'hkmap' is reset
 		- 'revins' is reset
 		- 'ruler' is reset
 		- 'showmatch' is reset
-		- 'smartindent' is reset
 		- 'smarttab' is reset
 		- 'softtabstop' is set to 0
 		- 'textwidth' is set to 0
 		- 'wrapmargin' is set to 0
+		- 'varsofttabstop' is made empty
 	These options keep their value, but their effect is disabled:
 		- 'cindent'
+		- 'formatoptions' is used like it is empty
 		- 'indentexpr'
 		- 'lisp'
+		- 'smartindent'
 	NOTE: When you start editing another file while the 'paste' option is
 	on, settings from the modelines or autocommands may change the
 	settings again, causing trouble when pasting text.  You might want to
@@ -4540,11 +4603,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	List of items that control the format of the output of |:hardcopy|.
 	See |popt-option|.
 
-						*'prompt'* *'noprompt'*
-'prompt'		boolean	(default on)
-			global
-	When on a ":" prompt is used in Ex mode.
-
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global
@@ -4607,7 +4665,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	customize the information displayed in the quickfix or location window
 	for each entry in the corresponding quickfix or location list.  See
 	|quickfix-window-function| for an explanation of how to write the
-	function and an example.
+	function and an example. The value can be the name of a function or a
+	lambda.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -4862,9 +4921,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   ordering.  This is for preferences to overrule or add to the 
 	   distributed defaults or system-wide settings (rarely needed).
 
-	More entries are added when using |packages|.  If it gets very long
-	then `:set rtp` will be truncated, use `:echo &rtp` to see the full
-	string.
+							*rtp-packages*
+	"start" packages will additionally be used to search for runtime files
+	after these, but package entries are not visible in `:set rtp`.
+	See |runtime-search-path| for more information. "opt" packages
+	will be explicitly added to &rtp when |:packadd| is used.
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
@@ -5237,11 +5298,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
-	To use powershell: >
+	To use PowerShell: >
 		let &shell = has('win32') ? 'powershell' : 'pwsh'
-		set shellquote= shellpipe=\| shellxquote=
-		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-		set shellredir=\|\ Out-File\ -Encoding\ UTF8
+		let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+		let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		set shellquote= shellxquote=
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -5457,7 +5519,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'showbreak'* *'sbr'* *E595*
 'showbreak' 'sbr'	string	(default "")
-			global
+			global or local to window |global-local|
 	String to put at the start of lines that have been wrapped.  Useful
 	values are "> " or "+++ ": >
 		:set showbreak=>\ 
@@ -5471,7 +5533,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that tabs after the showbreak will be displayed differently.
 	If you want the 'showbreak' to appear in between line numbers, add the
 	"n" flag to 'cpoptions'.
-
+	A window-local value overrules a global value.  If the global value is
+	set and you want no value in the current window use NONE: >
+		:setlocal showbreak=NONE
+<
 				     *'showcmd'* *'sc'* *'noshowcmd'* *'nosc'*
 'showcmd' 'sc'		boolean	(Vim default: on, Vi default: off)
 			global
@@ -5731,6 +5796,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the name "cjk" is included East Asian characters are excluded from
 	spell checking.  This is useful when editing text that also has Asian
 	words.
+	Note that the "medical" dictionary does not exist, it is just an
+	example of a longer name.
 							*E757*
 	As a special case the name of a .spl file can be given as-is.  The
 	first "_xx" in the name is removed and used as the region name
@@ -5938,13 +6005,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	      return value of expr contains % items they will get expanded.
 	      The expression can contain the } character, the end of
 	      expression is denoted by %}.
-	      The For example: >
+	      For example: >
 		func! Stl_filename() abort
 		    return "%t"
 		endfunc
 <	        `stl=%{Stl_filename()}`   results in `"%t"`
 	        `stl=%{%Stl_filename()%}` results in `"Name of current file"`
-	} -   End of `{%` expression
+	%} -  End of `{%` expression
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
@@ -6098,9 +6165,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	specify special kinds of buffers.   See |special-buffers|.
 
 						*'switchbuf'* *'swb'*
-'switchbuf' 'swb'	string	(default "")
+'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
+	Mostly for |quickfix| commands some values are also used for other
+ 	commands, as mentioned below.
 	Possible values (comma separated list):
 	   useopen	If included, jump to the first open window that
 			contains the specified buffer (if there is one).
@@ -6400,19 +6469,28 @@ A jump table for the options with a short description can be found at |Q_op|.
 'thesaurus' 'tsr'	string	(default "")
 			global or local to buffer |global-local|
 	List of file names, separated by commas, that are used to lookup words
-	for thesaurus completion commands |i_CTRL-X_CTRL-T|.
+	for thesaurus completion commands |i_CTRL-X_CTRL-T|.  See
+	|compl-thesaurus|.
 
-	Each line in the file should contain words with similar meaning,
-	separated by non-keyword characters (white space is preferred).
-	Maximum line length is 510 bytes.
+	This option is not used if 'thesaurusfunc' is set, either for the
+	buffer or globally.
 
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file
-	name.  See |option-backslash| about using backslashes.
-	The use of |:set+=| and |:set-=| is preferred when adding or removing
-	directories from the list.  This avoids problems when a future version
-	uses another default.
-	Backticks cannot be used in this option for security reasons.
+	name.  See |option-backslash| about using backslashes.  The use of
+	|:set+=| and |:set-=| is preferred when adding or removing directories
+	from the list.  This avoids problems when a future version uses
+	another default.  Backticks cannot be used in this option for security
+	reasons.
+
+						*'thesaurusfunc'* *'tsrfu'*
+'thesaurusfunc' 'tsrfu'	string	(default: empty)
+			global or local to buffer |global-local|
+	This option specifies a function to be used for thesaurus completion
+	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T| See |compl-thesaurusfunc|.
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 			     *'tildeop'* *'top'* *'notildeop'* *'notop'*
 'tildeop' 'top'		boolean	(default off)
@@ -6516,17 +6594,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo//")
 			global
 	List of directory names for undo files, separated with commas.
-	See |'backupdir'| for details of the format.
+	See 'backupdir' for details of the format.
 	"." means using the directory of the file.  The undo file name for
 	"file.txt" is ".file.txt.un~".
 	For other directories the file name is the full path of the edited
 	file, with path separators replaced with "%".
 	When writing: The first directory that exists is used.  "." always
-	works, no directories after "." will be used for writing.  If none of 
-	the directories exist Neovim will attempt to create last directory in 
+	works, no directories after "." will be used for writing.  If none of
+	the directories exist Nvim will attempt to create the last directory in
 	the list.
 	When reading all entries are tried to find an undo file.  The first
 	undo file that exists is used.  When it cannot be read an error is
@@ -6534,6 +6612,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |undo-persistence|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+
+	Note that unlike 'directory' and 'backupdir', 'undodir' always acts as
+	though the trailing slashes are present (see 'backupdir' for what this
+	means).
 
 				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
 'undofile' 'udf'	boolean	(default off)
@@ -6675,14 +6757,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view//")
 			global
 	Name of the directory where to store files for |:mkview|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'viewoptions'* *'vop'*
-'viewoptions' 'vop'	string	(default: "folds,options,cursor,curdir")
+'viewoptions' 'vop'	string	(default: "folds,cursor,curdir")
 			global
 	Changes the effect of the |:mkview| command.  It is a comma separated
 	list of words.  Each word enables saving and restoring something:
@@ -6721,6 +6803,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The `g$` command will move to the end of the screen line.
 	It doesn't make sense to combine "all" with "onemore", but you will
 	not get a warning for it.
+	When combined with other words, "none" is ignored.
 
 			*'visualbell'* *'vb'* *'novisualbell'* *'novb'* *beep*
 'visualbell' 'vb'	boolean	(default off)
@@ -6771,8 +6854,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	More info here: |cmdline-completion|.
 	The character is not recognized when used inside a macro.  See
 	'wildcharm' for that.
+	Some keys will not work, such as CTRL-C, <CR> and Enter.
 	Although 'wc' is a number option, you can set it to a special key: >
-		:set wc=<Esc>
+		:set wc=<Tab>
 <
 
 						*'wildcharm'* *'wcm'*
@@ -7091,8 +7175,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Allows writing to any file with no need for "!" override.
 
 			     *'writebackup'* *'wb'* *'nowritebackup'* *'nowb'*
-'writebackup' 'wb'	boolean	(default on with |+writebackup| feature, off
-					otherwise)
+'writebackup' 'wb'	boolean	(default on)
 			global
 	Make a backup before overwriting a file.  The backup is removed after
 	the file was successfully written, unless the 'backup' option is

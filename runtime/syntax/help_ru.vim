@@ -1,12 +1,12 @@
 " Vim syntax file
 " Language:     Russian Vim program help files *.rux
-" Maintainer:   Restorer (restorers@users.sourceforge.net)
+" Maintainer:   Restorer (restorers@users.sourceforge.net DEFUNCT)
 " Last Change:  04 Aprl 2017
 " 
 
 " Проверяем язык локали и установки опции 'helplang'
 " Если не русский, то выходим из скрипта.
-if ('ru' !~? v:lang || 'russian' !~? v:lang) && 'ru' !~? &helplang
+if (v:lang !~? 'ru' || v:lang !~? 'russian') && &helplang !~? 'ru'
   finish
 endif
 

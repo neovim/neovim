@@ -43,6 +43,7 @@ endfunc
 
 func Test_linebreak_with_list()
   throw 'skipped: Nvim does not support enc=latin1'
+  set listchars=
   call s:test_windows('setl ts=4 sbr=+ list listchars=')
   call setline(1, "\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP ")
   let lines = s:screen_lines([1, 4], winwidth(0))
@@ -54,6 +55,7 @@ func Test_linebreak_with_list()
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
+  set listchars&vim
 endfunc
 
 func Test_linebreak_with_nolist()

@@ -48,10 +48,10 @@ typedef struct ScreenGrid ScreenGrid;
 struct ScreenGrid {
   handle_T handle;
 
-  schar_T  *chars;
-  sattr_T  *attrs;
+  schar_T *chars;
+  sattr_T *attrs;
   unsigned *line_offset;
-  char_u   *line_wraps;
+  char_u *line_wraps;
 
   // last column that was drawn (not cleared with the default background).
   // only used when "throttled" is set. Not allocated by grid_alloc!
@@ -86,7 +86,7 @@ struct ScreenGrid {
   int zindex;
 
   // Below is state owned by the compositor. Should generally not be set/read
-  // outside this module, except for specific compatibilty hacks
+  // outside this module, except for specific compatibility hacks
 
   // position of the grid on the composed screen.
   int comp_row;

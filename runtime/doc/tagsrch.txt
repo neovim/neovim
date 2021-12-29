@@ -367,11 +367,11 @@ be a bug.  If you really want the old Vi behavior, set the 't' flag in
 'cpoptions'.
 
 							*tag-binary-search*
-Vim uses binary searching in the tags file to find the desired tag quickly
-(when enabled at compile time |+tag_binary|).  But this only works if the
-tags file was sorted on ASCII byte value.  Therefore, if no match was found,
-another try is done with a linear search.  If you only want the linear search,
-reset the 'tagbsearch' option.  Or better: Sort the tags file!
+Vim uses binary searching in the tags file to find the desired tag quickly.
+But this only works if the tags file was sorted on ASCII byte value.
+Therefore, if no match was found, another try is done with a linear search.
+If you only want the linear search, reset the 'tagbsearch' option.  Or better:
+Sort the tags file!
 
 Note that the binary searching is disabled when not looking for a tag with a
 specific name.  This happens when ignoring case and when a regular expression
@@ -665,9 +665,6 @@ These commands look for a string in the current file and in all encountered
 included files (recursively).  This can be used to find the definition of a
 variable, function or macro.  If you only want to search in the current
 buffer, use the commands listed at |pattern-searches|.
-
-These commands are not available when the |+find_in_path| feature was disabled
-at compile time.
 
 When a line is encountered that includes another file, that file is searched
 before continuing in the current buffer.  Files included by included files are

@@ -1,9 +1,9 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
-" Date:		Feb 08, 2016 - Jan 07, 2020
+" Date:		Feb 09, 2021
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
-" Copyright:    Copyright (C) 1999-2013 Charles E. Campbell {{{1
+" Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
 "               notice is copied with it. Like anything else that's free,
@@ -20,7 +20,7 @@
 if &cp || exists("g:loaded_netrwPlugin")
  finish
 endif
-let g:loaded_netrwPlugin = "v170"
+let g:loaded_netrwPlugin = "v171"
 let s:keepcpo = &cpo
 set cpo&vim
 "DechoRemOn
@@ -83,11 +83,11 @@ if !exists("g:netrw_nogx")
   endif
   nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
  endif
- if maparg('gx','v') == ""
+ if maparg('gx','x') == ""
   if !hasmapto('<Plug>NetrwBrowseXVis')
-   vmap <unique> gx <Plug>NetrwBrowseXVis
+   xmap <unique> gx <Plug>NetrwBrowseXVis
   endif
-  vno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
+  xno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
  endif
 endif
 if exists("g:netrw_usetab") && g:netrw_usetab
@@ -129,7 +129,9 @@ fun! s:LocalBrowse(dirname)
   elseif isdirectory(a:dirname)
 "   call Decho("(LocalBrowse) dirname<".a:dirname."> ft=".&ft."  (isdirectory, not amiga)")
 "   call Dredir("LocalBrowse ft last set: ","verbose set ft")
-   sil! call netrw#LocalBrowseCheck(a:dirname)
+   " Jul 13, 2021: for whatever reason, preceding the following call with
+   " a   sil!  causes an unbalanced if-endif vim error
+   call netrw#LocalBrowseCheck(a:dirname)
    if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
     exe w:netrw_bannercnt
    endif
@@ -151,10 +153,22 @@ endfun
 "             has already been called.
 fun! s:VimEnter(dirname)
 "  call Dfunc("s:VimEnter(dirname<".a:dirname.">) expand(%)<".expand("%").">")
+  if has('nvim') || v:version < 802
+  " Johann Höchtl: reported that the call range... line causes an E488: Trailing characters
+  "                error with neovim. I suspect its because neovim hasn't updated with recent
+  "                vim patches. As is, this code will have problems with popup terminals
+  "                instantiated before the VimEnter event runs.
+  " Ingo Karkat  : E488 also in Vim 8.1.1602
   let curwin       = winnr()
   let s:vimentered = 1
   windo call s:LocalBrowse(expand("%:p"))
   exe curwin."wincmd w"
+ else
+  " the following complicated expression comes courtesy of lacygoill; largely does the same thing as the windo and 
+  " wincmd which are commented out, but avoids some side effects. Allows popup terminal before VimEnter.
+  let s:vimentered = 1
+  call range(1, winnr('$'))->map({_, v -> win_execute(win_getid(v), 'call expand("%:p")->s:LocalBrowse()')})
+ endif
 "  call Dret("s:VimEnter")
 endfun
 

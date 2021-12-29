@@ -2,7 +2,7 @@
 #
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
-# Copyright (C) 2017
+# Copyright (C) 2021
 # This file is distributed under the same license as the Vim package.
 # FIRST AUTHOR Ivan Pešić <ivan.pesic@gmail.com>, 2017.
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Serbian)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-14 01:49+0400\n"
-"PO-Revision-Date: 2021-02-14 01:54+0400\n"
+"POT-Creation-Date: 2021-06-13 13:16+0400\n"
+"PO-Revision-Date: 2021-06-13 13:50+0400\n"
 "Last-Translator: Ivan Pešić <ivan.pesic@gmail.com>\n"
 "Language-Team: Serbian\n"
 "Language: sr\n"
@@ -96,6 +96,9 @@ msgstr "Извршавање %s"
 #, c-format
 msgid "autocommand %s"
 msgstr "аутокоманда %s"
+
+msgid "E972: Blob value does not have the right number of bytes"
+msgstr "E972: Блоб вредност нема одговарајући број бајтова"
 
 msgid "E831: bf_key_init() called with empty password"
 msgstr "E831: bf_key_init() је позвана са празном лозинком"
@@ -866,7 +869,7 @@ msgid "E976: using Blob as a String"
 msgstr "E976: коришћење Blob као String"
 
 msgid "E908: using an invalid value as a String"
-msgstr "E908: користи се недозвољена вредност као String"
+msgstr "E908: Користи се неважећа вредност као Стринг: %s"
 
 msgid "E698: variable nested too deep for making a copy"
 msgstr "E698: променљива је предубоко угњеждена да би се направила копија"
@@ -913,7 +916,7 @@ msgid "E928: String required"
 msgstr "E928: Захтева се String"
 
 msgid "E808: Number or Float required"
-msgstr "E808: Захтева се Number или Float"
+msgstr "E808: Захтева се Број или Покретни"
 
 msgid "add() argument"
 msgstr "add() аргумент"
@@ -1129,6 +1132,9 @@ msgid ""
 msgstr ""
 "\n"
 "# Преградне линије, копиране дословно:\n"
+
+msgid "E503: \"%s\" is not a file or writable device"
+msgstr "E503: „%s” није фајл или уређај на који може да се уписује"
 
 msgid "Save As"
 msgstr "Сачувај као"
@@ -4635,11 +4641,11 @@ msgstr "E531: Користите \":gui\" да покренете GUI"
 msgid "E589: 'backupext' and 'patchmode' are equal"
 msgstr "E589: 'backupext' и 'patchmode' су истоветни"
 
-msgid "E834: Conflicts with value of 'listchars'"
-msgstr "E834: У конфликту са вредношћу 'listchars'"
-
 msgid "E835: Conflicts with value of 'fillchars'"
 msgstr "E835: У конфликту са вредношћу 'fillchars'"
+
+msgid "E834: Conflicts with value of 'listchars'"
+msgstr "E834: У конфликту са вредношћу 'listchars'"
 
 msgid "E617: Cannot be changed in the GTK+ 2 GUI"
 msgstr "E617: Не може да се промени у GTK+ 2 GUI"
@@ -5064,7 +5070,7 @@ msgstr "E554: Синтаксна грешка у %s{...}"
 
 #, c-format
 msgid "E888: (NFA regexp) cannot repeat %s"
-msgstr "E888: (NFA regexp) не може да се понови %s"
+msgstr "E888: (НКА регуларни израз) не може да се понови %s"
 
 msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
@@ -5130,15 +5136,15 @@ msgid "External submatches:\n"
 msgstr "Спољна подпоклапања:\n"
 
 msgid "E865: (NFA) Regexp end encountered prematurely"
-msgstr "E865: Крај (NFA) Regexp израза је достигнут прерано"
+msgstr "E865: (НКА) прерано је достигнут крај регуларног израза"
 
 #, c-format
 msgid "E866: (NFA regexp) Misplaced %c"
-msgstr "E866: (NFA regexp) %c је на погрешном месту"
+msgstr "E866: (НКА регуларни израз) %c је на погрешном месту"
 
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %d"
-msgstr "E877: (NFA regexp) Неважећа карактер класа: %d"
+msgstr "E877: (НКА регуларни израз) Неважећа карактер класа: %d"
 
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
@@ -6422,6 +6428,13 @@ msgstr "E853: Име аргумента је дуплирано: %s"
 msgid "E989: Non-default argument follows default argument"
 msgstr "E989: Неподразумевани аргумент следи иза подразумеваног аргумента"
 
+msgid "E126: Missing :endfunction"
+msgstr "E126: Недостаје :endfunction"
+
+#, c-format
+msgid "W22: Text found after :endfunction: %s"
+msgstr "W22: Пронађен текст након :endfunction: %s"
+
 #, c-format
 msgid "E451: Expected }: %s"
 msgstr "E451: Очекује се }: %s"
@@ -6496,17 +6509,6 @@ msgstr "E862: Овде не може да се користи g:"
 #, c-format
 msgid "E932: Closure function should not be at top level: %s"
 msgstr "E932: Затварајућа функција не би требало да буде на највишем нивоу: %s"
-
-msgid "E126: Missing :endfunction"
-msgstr "E126: Недостаје :endfunction"
-
-#, c-format
-msgid "W1001: Text found after :enddef: %s"
-msgstr "W1001: Пронађен је текст након :enddef: %s"
-
-#, c-format
-msgid "W22: Text found after :endfunction: %s"
-msgstr "W22: Пронађен текст након :endfunction: %s"
 
 #, c-format
 msgid "E707: Function name conflicts with variable: %s"
@@ -6983,8 +6985,8 @@ msgid "E475: Invalid value for argument %s: %s"
 msgstr "E475: Неважећа вредност за аргумент %s: %s"
 
 #, c-format
-msgid "E15: Invalid expression: %s"
-msgstr "E15: Неважећи израз: %s"
+msgid "E15: Invalid expression: \"%s\""
+msgstr "E15: Неважећи израз: „%s”"
 
 msgid "E16: Invalid range"
 msgstr "E16: Неважећи опсег"

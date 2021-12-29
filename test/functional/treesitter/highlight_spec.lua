@@ -570,4 +570,47 @@ describe('treesitter highlighting', function()
     ]]}
     screen:expect{ unchanged=true }
   end)
+
+  it("supports highlighting with priority", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    int x = INT_MAX;
+    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define foo void main() { \
+                  return 42;  \
+                }
+    ]])
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query..'\n((translation_unit) @Error (set! "priority" 101))\n'}})
+    ]]
+    -- expect everything to have Error highlight
+    screen:expect{grid=[[
+      {12:int}{8: x = INT_MAX;}                                                 |
+      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
+      {8:#define foo void main() { \}                                      |
+      {8:              return 42;  \}                                      |
+      {8:            }}                                                    |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]], attr_ids={
+      [1] = {bold = true, foreground = Screen.colors.Blue1};
+      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      -- bold will not be overwritten at the moment
+      [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
+    }}
+    end)
 end)

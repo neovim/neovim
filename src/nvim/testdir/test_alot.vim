@@ -7,6 +7,7 @@ source test_cd.vim
 source test_changedtick.vim
 source test_compiler.vim
 source test_cursor_func.vim
+source test_cursorline.vim
 source test_ex_equal.vim
 source test_ex_undo.vim
 source test_ex_z.vim

@@ -1,15 +1,13 @@
 #ifndef NVIM_API_PRIVATE_HELPERS_H
 #define NVIM_API_PRIVATE_HELPERS_H
 
-#include <stdbool.h>
-
 #include "nvim/api/private/defs.h"
-#include "nvim/vim.h"
-#include "nvim/getchar.h"
-#include "nvim/memory.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval.h"
+#include "nvim/getchar.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/memory.h"
+#include "nvim/vim.h"
 
 #define OBJECT_OBJ(o) o
 
@@ -59,6 +57,9 @@
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 
+// currently treat key=vim.NIL as if the key was missing
+#define HAS_KEY(o) ((o).type != kObjectTypeNil)
+
 #define PUT(dict, k, v) \
   kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
 
@@ -73,7 +74,7 @@
   name.size = fixsize; \
   name.items = name##__items; \
 
-#define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+#define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof(s) - 1 })
 
 /// Create a new String instance, putting data in allocated memory
 ///
@@ -101,6 +102,14 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
+EXTERN PMap(handle_T) buffer_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) window_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) tabpage_handles INIT(= MAP_INIT);
+
+#define handle_get_buffer(h) pmap_get(handle_T)(&buffer_handles, (h))
+#define handle_get_window(h) pmap_get(handle_T)(&window_handles, (h))
+#define handle_get_tabpage(h) pmap_get(handle_T)(&tabpage_handles, (h))
+
 /// Structure used for saving state for :try
 ///
 /// Used when caller is supposed to be operating when other VimL code is being
@@ -126,10 +135,13 @@ typedef struct {
     msg_list = &private_msg_list; \
     private_msg_list = NULL; \
     code \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+      msg_list = saved_msg_list;  /* Restore the exception context. */ \
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
+# include "keysets.h.generated.h"
 #endif
+
+
 #endif  // NVIM_API_PRIVATE_HELPERS_H

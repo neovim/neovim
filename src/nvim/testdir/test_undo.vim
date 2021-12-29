@@ -368,7 +368,6 @@ endfunc
 
 " Check that reading a truncted undo file doesn't hang.
 func Test_undofile_truncated()
-  throw 'skipped: TODO: '
   new
   call setline(1, 'hello')
   set ul=100
@@ -491,7 +490,7 @@ funct Test_undofile()
   call delete('Xundodir', 'd')
 
   " Test undofile() with 'undodir' set to a non-existing directory.
-  " call assert_equal('', undofile('Xundofoo'))
+  " call assert_equal('', 'Xundofoo'->undofile())
 
   if isdirectory('/tmp')
     set undodir=/tmp

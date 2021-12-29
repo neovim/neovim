@@ -47,6 +47,8 @@ The color of the column is set with the SignColumn highlight group
 
 	:highlight SignColumn guibg=darkgrey
 <
+If 'cursorline' is enabled, then the CursorLineSign highlight group is used
+|hl-CursorLineSign|.
 							*sign-identifier*
 Each placed sign is identified by a number called the sign identifier. This
 identifier is used to jump to the sign or to remove the sign. The identifier
@@ -120,8 +122,9 @@ See |sign_define()| for the equivalent Vim script function.
 		in.  Most useful is defining a background color.
 
 	numhl={group}
-                Highlighting group used for 'number' column at the associated
-                line.  Overrides |hl-LineNr|, |hl-CursorLineNr|.
+		Highlighting group used for the line number on the line where
+		the sign is placed.  Overrides |hl-LineNr|, |hl-LineNrAbove|,
+		|hl-LineNrBelow|, and |hl-CursorLineNr|.
 
 	text={text}						*E239*
 		Define the text that is displayed when there is no icon or the
@@ -130,6 +133,10 @@ See |sign_define()| for the equivalent Vim script function.
 
 	texthl={group}
 		Highlighting group used for the text item.
+
+	culhl={group}
+		Highlighting group used for the text item when the cursor is
+		on the same line as the sign and 'cursorline' is enabled.
 
 	Example: >
 		:sign define MySign text=>> texthl=Search linehl=DiffText
@@ -377,6 +384,9 @@ sign_define({list})
 		   text		text that is displayed when there is no icon
 				or the GUI is not being used.
 		   texthl	highlight group used for the text item
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled.
 		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
 				|hl-CursorLineNr|.
@@ -404,6 +414,9 @@ sign_define({list})
 				\  'text' : '!!'}
 				\ ])
 <
+		Can also be used as a |method|: >
+			GetSignList()->sign_define()
+
 sign_getdefined([{name}])				*sign_getdefined()*
 		Get a list of defined signs and their attributes.
 		This is similar to the |:sign-list| command.
@@ -416,14 +429,19 @@ sign_getdefined([{name}])				*sign_getdefined()*
 		following entries:
 		   icon		full path to the bitmap file of the sign
 		   linehl	highlight group used for the whole line the
-				sign is placed in.
+				sign is placed in; not present if not set.
 		   name		name of the sign
 		   text		text that is displayed when there is no icon
 				or the GUI is not being used.
-		   texthl	highlight group used for the text item
+		   texthl	highlight group used for the text item; not
+				present if not set.
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled; not present if not
+				set.
 		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
-				|hl-CursorLineNr|.
+				|hl-CursorLineNr|; not present if not set.
 
 		Returns an empty List if there are no signs and when {name} is
 		not found.
@@ -435,13 +453,16 @@ sign_getdefined([{name}])				*sign_getdefined()*
 			" Get the attribute of the sign named mySign
 			echo sign_getdefined("mySign")
 <
-sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
+		Can also be used as a |method|: >
+			GetSignList()->sign_getdefined()
+
+sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
 		Return a list of signs placed in a buffer or all the buffers.
 		This is similar to the |:sign-place-list| command.
 
-		If the optional buffer name {expr} is specified, then only the
+		If the optional buffer name {buf} is specified, then only the
 		list of signs placed in that buffer is returned.  For the use
-		of {expr}, see |bufname()|. The optional {dict} can contain
+		of {buf}, see |bufname()|. The optional {dict} can contain
 		the following entries:
 		   group	select only signs in this group
 		   id		select sign with this identifier
@@ -495,13 +516,16 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			" Get a List of all the placed signs
 			echo sign_getplaced()
 <
+		Can also be used as a |method|: >
+			GetBufname()->sign_getplaced()
+<
 							*sign_jump()*
-sign_jump({id}, {group}, {expr})
-		Open the buffer {expr} or jump to the window that contains
-		{expr} and position the cursor at sign {id} in group {group}.
+sign_jump({id}, {group}, {buf})
+		Open the buffer {buf} or jump to the window that contains
+		{buf} and position the cursor at sign {id} in group {group}.
 		This is similar to the |:sign-jump| command.
 
-		For the use of {expr}, see |bufname()|.
+		For the use of {buf}, see |bufname()|.
 
 		Returns the line number of the sign. Returns -1 if the
 		arguments are invalid.
@@ -510,11 +534,13 @@ sign_jump({id}, {group}, {expr})
 			" Jump to sign 10 in the current buffer
 			call sign_jump(10, '', '')
 <
-
+		Can also be used as a |method|: >
+			GetSignid()->sign_jump()
+<
 							*sign_place()*
-sign_place({id}, {group}, {name}, {expr} [, {dict}])
+sign_place({id}, {group}, {name}, {buf} [, {dict}])
 		Place the sign defined as {name} at line {lnum} in file or
-		buffer {expr} and assign {id} and {group} to sign.  This is
+		buffer {buf} and assign {id} and {group} to sign.  This is
 		similar to the |:sign-place| command.
 
 		If the sign identifier {id} is zero, then a new identifier is
@@ -525,12 +551,12 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 		and |sign-group| for more information.
 
 		{name} refers to a defined sign.
-		{expr} refers to a buffer name or number. For the accepted
+		{buf} refers to a buffer name or number. For the accepted
 		values, see |bufname()|.
 
 		The optional {dict} argument supports the following entries:
 			lnum		line number in the file or buffer
-					{expr} where the sign is to be placed.
+					{buf} where the sign is to be placed.
 					For the accepted values, see |line()|.
 			priority	priority of the sign. See
 					|sign-priority| for more information.
@@ -560,7 +586,9 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 			call sign_place(10, 'g3', 'sign4', 'json.c',
 					\ {'lnum' : 40, 'priority' : 90})
 <
-
+		Can also be used as a |method|: >
+			GetSignid()->sign_place(group, name, expr)
+<
 							*sign_placelist()*
 sign_placelist({list})
 		Place one or more signs.  This is similar to the
@@ -578,7 +606,7 @@ sign_placelist({list})
 				then a new unique identifier is allocated.
 				Otherwise the specified number is used. See
 				|sign-identifier| for more information.
-		    lnum	line number in the buffer {expr} where the
+		    lnum	line number in the buffer {buf} where the
 				sign is to be placed. For the accepted values,
 				see |line()|.
 		    name	name of the sign to place. See |sign_define()|
@@ -620,6 +648,8 @@ sign_placelist({list})
 				\  'lnum' : 50}
 				\ ])
 <
+		Can also be used as a |method|: >
+			GetSignlist()->sign_placelist()
 
 sign_undefine([{name}])					*sign_undefine()*
 sign_undefine({list})
@@ -644,6 +674,8 @@ sign_undefine({list})
 			" Delete all the signs
 			call sign_undefine()
 <
+		Can also be used as a |method|: >
+			GetSignlist()->sign_undefine()
 
 sign_unplace({group} [, {dict}])			*sign_unplace()*
 		Remove a previously placed sign in one or more buffers.  This
@@ -686,6 +718,9 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 
 			" Remove all the placed signs from all the buffers
 			call sign_unplace('*')
+
+<		Can also be used as a |method|: >
+			GetSigngroup()->sign_unplace()
 <
 sign_unplacelist({list})				*sign_unplacelist()*
 		Remove previously placed signs from one or more buffers.  This
@@ -714,6 +749,9 @@ sign_unplacelist({list})				*sign_unplacelist()*
 				\ {'id' : 10, 'buffer' : "a.vim"},
 				\ {'id' : 20, 'buffer' : 'b.vim'},
 				\ ])
+<
+		Can also be used as a |method|: >
+			GetSignlist()->sign_unplacelist()
 <
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -7,10 +7,10 @@ func Test_System()
   if !executable('echo') || !executable('cat') || !executable('wc')
     return
   endif
-  let out = system('echo 123')
+  let out = 'echo 123'->system()
   call assert_equal("123\n", out)
 
-  let out = systemlist('echo 123')
+  let out = 'echo 123'->systemlist()
   if &shell =~# 'cmd.exe$'
     call assert_equal(["123\r"], out)
   else
@@ -121,8 +121,7 @@ func Test_system_with_shell_quote()
         let msg = printf('shell=%s shellxquote=%s', &shell, &shellxquote)
 
         try
-          " let out = 'echo 123'->system()
-          let out = system('echo 123')
+          let out = 'echo 123'->system()
         catch
           call assert_report(printf('%s: %s', msg, v:exception))
           continue

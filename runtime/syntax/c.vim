@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 11
+" Last Change:	2021 Dec 07
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -196,7 +196,6 @@ syn match	cNumber		display contained "0x\x\+\(u\=l\{0,2}\|ll\=u\)\>"
 " Flag the first zero of an octal number as something special
 syn match	cOctal		display contained "0\o\+\(u\=l\{0,2}\|ll\=u\)\>" contains=cOctalZero
 syn match	cOctalZero	display contained "\<0"
-syn match	cFloat		display contained "\d\+f"
 "floating point number, with dot, optional exponent
 syn match	cFloat		display contained "\d\+\.\d*\(e[-+]\=\d\+\)\=[fl]\="
 "floating point number, starting with a dot, optional exponent
@@ -413,6 +412,9 @@ if exists("c_autodoc")
   syn cluster cCommentGroup add=cAutodocReal
   syn cluster cPreProcGroup add=cAutodocReal
 endif
+
+" be able to fold #pragma regions
+syn region	cPragma		start="^\s*#pragma\s\+region\>" end="^\s*#pragma\s\+endregion\>" transparent keepend extend fold
 
 " Highlight User Labels
 syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserCont,cUserLabel,cBitField,cOctalZero,cCppOutWrapper,cCppInWrapper,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cCppParen,cCppBracket,cCppString

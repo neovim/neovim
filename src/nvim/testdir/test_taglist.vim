@@ -14,7 +14,7 @@ func Test_taglist()
   split Xtext
 
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo"), {i, v -> v.name}))
-  call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xtext"), {i, v -> v.name}))
+  call assert_equal(['FFoo', 'BFoo'], map("Foo"->taglist("Xtext"), {i, v -> v.name}))
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xfoo"), {i, v -> v.name}))
   call assert_equal(['BFoo', 'FFoo'], map(taglist("Foo", "Xbar"), {i, v -> v.name}))
 

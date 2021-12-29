@@ -30,6 +30,7 @@
 #cmakedefine HAVE_SETPGID
 #cmakedefine HAVE_SETSID
 #cmakedefine HAVE_SIGACTION
+#cmakedefine HAVE_STRNLEN
 #cmakedefine HAVE_STRCASECMP
 #cmakedefine HAVE_STRINGS_H
 #cmakedefine HAVE_STRNCASECMP
@@ -39,7 +40,6 @@
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_TERMIOS_H
 #cmakedefine HAVE_WORKING_LIBINTL
-#cmakedefine HAVE_WSL
 #cmakedefine UNIX
 #cmakedefine CASE_INSENSITIVE_FILENAME
 #cmakedefine USE_FNAME_CASE
@@ -50,6 +50,7 @@
 #  undef HAVE_SYS_UIO_H
 # endif
 #endif
+#cmakedefine HAVE_FORKPTY
 
 #cmakedefine FEAT_TUI
 

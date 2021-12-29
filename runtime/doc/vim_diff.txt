@@ -6,16 +6,16 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Nvim differs from Vim in many ways, although editor and VimL features are
-mostly identical.  This document is a complete and centralized reference of
-the differences.
+Nvim differs from Vim in many ways, although editor and Vimscript (not
+Vim9script) features are mostly identical.  This document is a complete and
+centralized reference of the differences.
 
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-config*
 
-- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for configuration.
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for your |config|.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
 - Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
   session information.  |shada|
@@ -30,7 +30,7 @@ the differences.
 - 'autoread' is enabled
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
 - 'backspace' defaults to "indent,eol,start"
-- 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
+- 'backupdir' defaults to .,~/.local/share/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
 - 'compatible' is always disabled
 - 'complete' excludes "i"
@@ -41,9 +41,11 @@ the differences.
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,sep:│"
 - 'formatoptions' defaults to "tcqj"
 - 'fsync' is disabled
+- 'hidden' is enabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
 - 'incsearch' is enabled
+- 'joinspaces' is disabled
 - 'langnoremap' is enabled
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
@@ -56,12 +58,13 @@ the differences.
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
 - 'startofline' is disabled
+- 'switchbuf' defaults to "uselast"
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
-- 'viewoptions' includes "unix,slash"
-- 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
+- 'undodir' defaults to ~/.local/share/nvim/undo// (|xdg|), auto-created
+- 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
@@ -72,23 +75,47 @@ the differences.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
+
+Default Mappings ~
+							*default-mappings*
+Nvim creates the following default mappings at |startup|. You can disable any
+of these in your config by simply removing the mapping, e.g. ":unmap Y".
+>
+	nnoremap Y y$
+	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
+	inoremap <C-U> <C-G>u<C-U>
+	inoremap <C-W> <C-G>u<C-W>
+<
+Default Autocommands ~
+							*default-autocmds*
+Default autocommands exist in the following groups. Use ":autocmd! {group}" to
+remove them and ":autocmd {group}" to see how they're defined.
+
+nvim_terminal:
+- BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
+
+nvim_cmdwin:
+- CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
+
 ==============================================================================
 3. New Features						       *nvim-features*
 
 MAJOR COMPONENTS ~
 
 API				|API|
-Lua scripting			|lua|
 Job control			|job-control|
-Remote plugins			|remote-plugin|
+LSP framework			|lsp|
+Lua scripting			|lua|
+Parsing engine			|treesitter|
 Providers
   Clipboard			|provider-clipboard|
   Node.js plugins		|provider-nodejs|
   Python plugins		|provider-python|
   Ruby plugins			|provider-ruby|
+Remote plugins			|remote-plugin|
 Shared data			|shada|
-Embedded terminal		|terminal|
-VimL parser			|nvim_parse_expression()|
+Terminal emulator		|terminal|
+Vimscript parser		|nvim_parse_expression()|
 XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
@@ -137,7 +164,7 @@ FEATURES ~
 
 Command-line highlighting:
   The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
-  using a built-in VimL expression parser. |expr-highlight|
+  using a built-in Vimscript expression parser. |expr-highlight|
 					*E5408* *E5409*
   |input()|, |inputdialog()| support custom highlighting. |input()-highlight|
 					*g:Nvim_color_cmdline*
@@ -150,15 +177,18 @@ Commands:
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
+  |:match| can be invoked before highlight group is defined
 
 Events:
+  |RecordingEnter|
+  |RecordingLeave|
+  |SearchWrapped|
   |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
   |UIEnter|
   |UILeave|
-  |WinClosed|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
@@ -167,6 +197,7 @@ Functions:
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
+  |matchadd()| can be called before highlight group is defined
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
@@ -218,6 +249,8 @@ Variables:
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time. |feature-compile|
+
+Some Vim features were changed in Nvim, and vice versa.
 
 If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously. See |provider-python|.
@@ -325,7 +358,8 @@ Motion:
   The |jumplist| avoids useless/phantom jumps.
 
 Normal commands:
-  |Q| is the same as |gQ|
+  |Q| replays the last recorded macro instead of switching to Ex mode.
+  Instead |gQ| can be used to enter Ex mode.
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
@@ -358,6 +392,14 @@ Startup:
     - works by default: "-" file is optional
     - works in more cases: |-Es|, file args
 
+Syntax highlighting:
+  syncolor.vim has been removed. Nvim now sets up default highlighting groups
+  automatically for both light and dark backgrounds, regardless of whether or
+  not syntax highlighting is enabled. This means that |:syntax-on| and
+  |:syntax-enable| are now identical. Users who previously used an
+  after/syntax/syncolor.vim file should transition that file into a
+  colorscheme. |:colorscheme|
+
 TUI:
 			*:set-termcap*
   Start Nvim with 'verbose' level 3 to show terminal capabilities: >
@@ -380,11 +422,20 @@ TUI:
 UI/Display:
   |Visual| selection highlights the character at cursor. |visual-use|
 
-VimL (Vim script) compatibility:
+Vimscript compatibility:
   `count` does not alias to |v:count|
   `errmsg` does not alias to |v:errmsg|
   `shell_error` does not alias to |v:shell_error|
   `this_session` does not alias to |v:this_session|
+
+Working directory (Vim implemented some of these later than Nvim):
+- |DirChanged| can be triggered when switching to another window.
+- |getcwd()| and |haslocaldir()| may throw errors if the tab page or window
+  cannot be found.  *E5000* *E5001* *E5002*
+- |haslocaldir()| checks for tab-local directory if and only if -1 is passed as
+  window number, and its only possible returns values are 0 and 1.
+- `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
+  working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
@@ -421,7 +472,11 @@ Commands:
   :mode (no longer accepts an argument)
   :open
   :Print
+  :promptfind
+  :promptrepl
+  :scriptversion (always version 1)
   :shell
+  :sleep! (does not hide the cursor; same as :sleep)
   :smile
   :tearoff
 
@@ -431,6 +486,7 @@ Compile-time features:
   X11 integration (see |x11-selection|)
 
 Eval:
+  Vim9script
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
@@ -470,6 +526,7 @@ Options:
   'maxmem' Nvim delegates memory-management to the OS.
   'maxmemtot' Nvim delegates memory-management to the OS.
   'maxcombine' (6 is always used)
+  *'prompt'* *'noprompt'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*

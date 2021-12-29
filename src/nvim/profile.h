@@ -7,8 +7,8 @@
 typedef uint64_t proftime_T;
 
 #define TIME_MSG(s) do { \
-    if (time_fd != NULL) time_msg(s, NULL); \
-  } while (0)
+  if (time_fd != NULL) time_msg(s, NULL); \
+} while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.h.generated.h"

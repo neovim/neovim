@@ -17,9 +17,9 @@
 
 #include "auto/config.h"
 #include "nvim/log.h"
-#include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/types.h"
 
 #define LOG_FILE_ENV "NVIM_LOG_FILE"
 
@@ -124,8 +124,8 @@ void log_unlock(void)
 /// @param line_num   Source line number, or -1
 /// @param eol        Append linefeed "\n"
 /// @param fmt        printf-style format string
-bool logmsg(int log_level, const char *context, const char *func_name,
-            int line_num, bool eol, const char *fmt, ...)
+bool logmsg(int log_level, const char *context, const char *func_name, int line_num, bool eol,
+            const char *fmt, ...)
   FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
   if (log_level < MIN_LOG_LEVEL) {
@@ -215,8 +215,7 @@ FILE *open_log_file(void)
 }
 
 #ifdef HAVE_EXECINFO_BACKTRACE
-void log_callstack_to_file(FILE *log_file, const char *const func_name,
-                           const int line_num)
+void log_callstack_to_file(FILE *log_file, const char *const func_name, const int line_num)
 {
   void *trace[100];
   int trace_size = backtrace(trace, ARRAY_SIZE(trace));
@@ -268,8 +267,7 @@ end:
 #endif
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
-                           const char *func_name, int line_num, bool eol,
-                           const char *fmt, ...)
+                           const char *func_name, int line_num, bool eol, const char *fmt, ...)
   FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;
@@ -281,9 +279,8 @@ static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
   return ret;
 }
 
-static bool v_do_log_to_file(FILE *log_file, int log_level,
-                             const char *context, const char *func_name,
-                             int line_num, bool eol, const char *fmt,
+static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
+                             const char *func_name, int line_num, bool eol, const char *fmt,
                              va_list args)
 {
   static const char *log_levels[] = {
@@ -317,10 +314,10 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
     ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
               log_levels[log_level], date_time, millis, pid,
               (context == NULL ? "?:" : context))
-    : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
-              log_levels[log_level], date_time, millis, pid,
-              (context == NULL ? "" : context),
-              func_name, line_num);
+                               : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
+                                         log_levels[log_level], date_time, millis, pid,
+                                         (context == NULL ? "" : context),
+                                         func_name, line_num);
   if (rv < 0) {
     return false;
   }

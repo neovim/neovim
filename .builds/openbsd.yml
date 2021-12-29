@@ -1,17 +1,17 @@
 # sourcehut CI: https://builds.sr.ht/~jmk/neovim
 
-image: openbsd/6.7
+image: openbsd/6.9
 
 packages:
-- autoconf-2.69p2
-- automake-1.15.1
+- autoconf-2.71
+- automake-1.16.3
 - cmake
-- gettext-runtime-0.20.1p1
-- gettext-tools-0.20.1p3
+- gettext-runtime-0.21p1
+- gettext-tools-0.21p1
 - gmake
 - libtool
-- ninja-1.10.0
-- unzip-6.0p13
+- ninja-1.10.2p0
+- unzip-6.0p14
 
 sources:
 - https://github.com/neovim/neovim
@@ -23,8 +23,8 @@ environment:
 
 tasks:
 - build-deps: |
-    export AUTOCONF_VERSION=2.69
-    export AUTOMAKE_VERSION=1.15
+    export AUTOCONF_VERSION=2.71
+    export AUTOMAKE_VERSION=1.16
     mkdir neovim/.deps
     cd neovim/.deps
     cmake -G Ninja ../third-party/

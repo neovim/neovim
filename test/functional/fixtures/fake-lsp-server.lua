@@ -43,11 +43,11 @@ end
 local function read_message()
   local line = io.read("*l")
   local length = line:lower():match("content%-length:%s*(%d+)")
-  return vim.fn.json_decode(io.read(2 + length):sub(2))
+  return vim.json.decode(io.read(2 + length):sub(2))
 end
 
 local function send(payload)
-  io.stdout:write(format_message_with_content_length(vim.fn.json_encode(payload)))
+  io.stdout:write(format_message_with_content_length(vim.json.encode(payload)))
 end
 
 local function respond(id, err, result)
@@ -126,6 +126,89 @@ function tests.check_workspace_configuration()
   }
 end
 
+function tests.prepare_rename_nil()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_placeholder()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {placeholder = 'placeholder'}
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_range()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {
+          start = { line = 1, character = 8 },
+          ['end'] = { line = 1, character = 12 },
+        }
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_error()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return {}, nil
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.basic_check_capabilities()
   skeleton {
     on_init = function(params)
@@ -159,6 +242,84 @@ function tests.capabilities_for_client_supports_method()
       }
     end;
     body = function()
+    end;
+  }
+end
+
+function tests.check_forward_request_cancelled()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request("error_code_test", function()
+        return {code = -32800}, nil, {method = "error_code_test", client_id=1}
+      end)
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_forward_content_modified()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request("error_code_test", function()
+        return {code = -32801}, nil, {method = "error_code_test", client_id=1}
+      end)
+      expect_notification('finish')
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_pending_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_cancel_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, {code = -32800}, nil)
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_tracked_requests_cleared()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
     end;
   }
 end
@@ -462,6 +623,66 @@ end
 
 function tests.invalid_header()
   io.stdout:write("Content-length: \r\n")
+end
+
+function tests.decode_nil()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify("workspace/executeCommand", {
+        arguments = { "EXTRACT_METHOD", {metadata = {field = vim.NIL}}, 3, 0, 6123, vim.NIL },
+        command = "refactor.perform",
+        title = "EXTRACT_METHOD"
+      })
+      notify('finish')
+    end;
+  }
+end
+
+
+function tests.code_action_with_resolve()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      local cmd = {
+        title = 'Command 1',
+        command = 'dummy1'
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { cmd, }
+      end)
+      expect_request('codeAction/resolve', function()
+        return nil, cmd
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.clientside_commands()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {}
+      }
+    end;
+    body = function()
+      notify('start')
+      notify('shutdown')
+    end;
+  }
 end
 
 -- Tests will be indexed by TEST_NAME

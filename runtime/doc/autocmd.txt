@@ -57,7 +57,7 @@ The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
 
 Note: The ":autocmd" command can only be followed by another command when the
-'|' appears before {cmd}.  This works: >
+'|' appears where the pattern is expected.  This works: >
 	:augroup mine | au! BufRead | augroup END
 But this sees "augroup" as part of the defined command: >
 	:augroup mine | au! BufRead * | augroup END
@@ -232,7 +232,7 @@ BufDelete			Before deleting a buffer from the buffer list.
 							*BufEnter*
 BufEnter			After entering a buffer.  Useful for setting
 				options for a file type.  Also executed when
-				starting to edit a buffer, after the
+				starting to edit a buffer.
 				After |BufAdd|.
 				After |BufReadPost|.
 							*BufFilePost*
@@ -499,8 +499,10 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				mode or to another window.  Also when the text
 				of the cursor line has been changed, e.g. with
 				"x", "rx" or "p".
-				Not triggered when there is typeahead or when
-				an operator is pending.
+				Not triggered when there is typeahead, while
+				executing a script file, when an operator is
+				pending, or when moving to another window while
+				remaining at the same cursor position.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
@@ -517,11 +519,17 @@ DiffUpdated			After diffs have been updated.  Depending on
 				change or when doing |:diffupdate|.
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
+				The pattern can be:
+					"window"  to trigger on `:lcd`
+					"tabpage" to trigger on `:tcd`
+					"global"  to trigger on `:cd`
+					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
 				    scope: "global", "tab", "window"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
+				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
@@ -628,7 +636,7 @@ FilterReadPre			Before reading a file from a filter command.
 							*FilterWritePost*
 FilterWritePost			After writing a file for a filter command or
 				making a diff with an external diff (see
-				DiffUpdated for internal diff).
+				|DiffUpdated| for internal diff).
 				Vim checks the pattern against the name of
 				the current buffer as with FilterWritePre.
 				Not triggered when 'shelltemp' is off.
@@ -681,23 +689,6 @@ InsertCharPre			When a character is typed in Insert mode,
 
 				Cannot change the text. |textlock|
 				Not triggered when 'paste' is set.
-							*TextYankPost*
-TextYankPost			Just after a |yank| or |deleting| command, but not
-				if the black hole register |quote_| is used nor
-				for |setreg()|. Pattern must be *.
-				Sets these |v:event| keys:
-				    inclusive
-				    operator
-				    regcontents
-				    regname
-				    regtype
-				    visual
-				The `inclusive` flag combined with the |'[|
-				and |']| marks can be used to calculate the
-				precise region of the operation.
-
-				Non-recursive (event cannot trigger itself).
-				Cannot change the text. |textlock|
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -727,7 +718,27 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
-							*OptionSet*
+							*ModeChanged*
+ModeChanged			After changing the mode. The pattern is
+				matched against `'old_mode:new_mode'`, for
+				example match against `*:c` to simulate
+				|CmdlineEnter|.
+				The following values of |v:event| are set:
+					old_mode The mode before it changed.
+					new_mode The new mode as also returned
+						by |mode()| called with a
+						non-zero argument.
+				When ModeChanged is triggered, old_mode will
+				have the value of new_mode when the event was
+				last triggered.
+				This will be triggered on every minor mode
+				change.
+				Usage example to use relative line numbers
+				when entering visual mode: >
+		:au ModeChanged [vV\x16]*:* let &l:rnu = mode() =~# '^[vV\x16]'
+		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
+		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
+<							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
 				against the long option name.  |<amatch>|
@@ -798,10 +809,11 @@ QuickFixCmdPost			Like QuickFixCmdPre, but after a quickfix
 							*QuitPre*
 QuitPre				When using `:quit`, `:wq` or `:qall`, before
 				deciding whether it closes the current window
-				or quits Vim.  Can be used to close any
-				non-essential window if the current window is
-				the last ordinary window.
-				See also |ExitPre|, ||WinClosed|.
+				or quits Vim.  For `:wq` the buffer is written
+				before QuitPre is triggered.  Can be used to
+				close any non-essential window if the current
+				window is the last ordinary window.
+				See also |ExitPre|, |WinClosed|.
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
 				server was received |server2client()|.  The
@@ -812,6 +824,22 @@ RemoteReply			When a reply from a Vim that functions as
 				Note that even if an autocommand is defined,
 				the reply should be read with |remote_read()|
 				to consume it.
+							*SearchWrapped*
+SearchWrapped			After making a search with |n| or |N| if the
+				search wraps around the document back to
+				the start/finish respectively.
+							*RecordingEnter*
+RecordingEnter			When a macro starts recording.
+				The pattern is the current file name, and
+				|reg_recording()| is the current register that
+				is used.
+							*RecordingLeave*
+RecordingLeave			When a macro stops recording.
+				The pattern is the current file name, and
+				|reg_recording()| is the recorded
+				register.
+				|reg_recorded()| is only updated after this
+				event.
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
@@ -831,16 +859,16 @@ ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
 				Can be used to check for any changed files.
 							*SourcePre*
-SourcePre			Before sourcing a Vim script. |:source|
+SourcePre			Before sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 							*SourcePost*
-SourcePost			After sourcing a Vim script. |:source|
+SourcePost			After sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 				Not triggered when sourcing was interrupted.
 				Also triggered after a SourceCmd autocommand
 				was triggered.
 							*SourceCmd*
-SourceCmd			When sourcing a Vim script. |:source|
+SourceCmd			When sourcing a vim/lua file. |:source|
 				<afile> is the name of the file being sourced.
 				The autocommand must source this file.
 				|Cmd-event|
@@ -914,6 +942,8 @@ TermLeave			After leaving |Terminal-mode|.
 				After TermClose.
 							*TermClose*
 TermClose			When a |terminal| job ends.
+				Sets these |v:event| keys:
+				    status
 							*TermResponse*
 TermResponse			After the response to t_RV is received from
 				the terminal.  The value of |v:termresponse|
@@ -943,6 +973,23 @@ TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+							*TextYankPost*
+TextYankPost			Just after a |yank| or |deleting| command, but not
+				if the black hole register |quote_| is used nor
+				for |setreg()|. Pattern must be *.
+				Sets these |v:event| keys:
+				    inclusive
+				    operator
+				    regcontents
+				    regname
+				    regtype
+				    visual
+				The `inclusive` flag combined with the |'[|
+				and |']| marks can be used to calculate the
+				precise region of the operation.
+
+				Non-recursive (event cannot trigger itself).
+				Cannot change the text. |textlock|
 							*User*
 User				Not executed automatically.  Use |:doautocmd|
 				to trigger this, typically for "custom events"
@@ -991,8 +1038,9 @@ VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
 							*WinClosed*
-WinClosed			After closing a window. <afile> expands to the
-				|window-ID|.
+WinClosed			After closing a window.  The pattern is
+				matched against the |window-ID|.  Both
+				<amatch> and <afile> are set to the |window-ID|.
 				After WinLeave.
 				Non-recursive (event cannot trigger itself).
 				See also |ExitPre|, |QuitPre|.
@@ -1226,6 +1274,13 @@ Example: >
 
 This prevents having the autocommands defined twice (e.g., after sourcing the
 vimrc file again).
+
+						*FileExplorer*
+There is one group that is recognized by Vim: FileExplorer.  If this group
+exists Vim assumes that editing a directory is possible and will trigger a
+plugin that lists the files in that directory.  This is used by the |netrw|
+plugin.  This allows you to do: >
+	browse edit
 
 ==============================================================================
 9. Executing autocommands				*autocmd-execute*

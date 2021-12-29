@@ -6,26 +6,25 @@
 /// code for digraphs
 
 #include <assert.h>
-#include <stdbool.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/digraph.h"
 #include "nvim/charset.h"
+#include "nvim/digraph.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
-#include "nvim/getchar.h"
-#include "nvim/misc1.h"
-#include "nvim/mbyte.h"
-#include "nvim/message.h"
-#include "nvim/memory.h"
 #include "nvim/garray.h"
+#include "nvim/getchar.h"
+#include "nvim/mbyte.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/normal.h"
+#include "nvim/os/input.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/os/input.h"
+#include "nvim/vim.h"
 
 typedef int result_T;
 
@@ -40,7 +39,7 @@ typedef struct digraph {
 # include "digraph.c.generated.h"
 #endif
 // digraphs added by the user
-static garray_T user_digraphs = {0, 0, (int)sizeof(digr_T), 10, NULL};
+static garray_T user_digraphs = { 0, 0, (int)sizeof(digr_T), 10, NULL };
 
 /// Note: Characters marked with XX are not included literally, because some
 /// compilers cannot handle them (Amiga SAS/C is the most picky one).
@@ -49,7 +48,7 @@ static digr_T digraphdefault[] =
 // digraphs for Unicode from RFC1345
 // (also work for ISO-8859-1 aka latin1)
 {
-  { 'N', 'U', 0x0a }, // LF for NUL
+  { 'N', 'U', 0x0a },  // LF for NUL
   { 'S', 'H', 0x01 },
   { 'S', 'X', 0x02 },
   { 'E', 'X', 0x03 },
@@ -1452,12 +1451,12 @@ static digr_T digraphdefault[] =
 /// @return The digraph.
 int do_digraph(int c)
 {
-  static int backspaced; // character before K_BS
+  static int backspaced;  // character before K_BS
   static int lastchar;   // last typed character
 
   if (c == -1) {         // init values
     backspaced = -1;
-  } else if (p_dg)   {
+  } else if (p_dg) {
     if (backspaced >= 0) {
       c = getdigraph(backspaced, c, false);
     }
@@ -1502,10 +1501,10 @@ char_u *get_digraph_for_char(int val_arg)
 /// Get a digraph.  Used after typing CTRL-K on the command line or in normal
 /// mode.
 ///
-/// @param cmdline TRUE when called from the cmdline
+/// @param cmdline true when called from the cmdline
 ///
 /// @returns composed character, or NUL when ESC was used.
-int get_digraph(int cmdline)
+int get_digraph(bool cmdline)
 {
   int cc;
   no_mapping++;
@@ -1557,7 +1556,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
   // Search user digraphs first.
   digr_T *dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len; ++i) {
-    if (((int) dp->char1 == char1) && ((int) dp->char2 == char2)) {
+    if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
       retval = dp->result;
       break;
     }
@@ -1569,7 +1568,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
     dp = digraphdefault;
 
     for (int i = 0; dp->char1 != 0; ++i) {
-      if (((int) dp->char1 == char1) && ((int) dp->char2 == char2)) {
+      if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         retval = dp->result;
         break;
       }
@@ -1628,18 +1627,18 @@ void putdigraph(char_u *str)
     char2 = *str++;
 
     if (char2 == 0) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
 
     if ((char1 == ESC) || (char2 == ESC)) {
-      EMSG(_("E104: Escape not allowed in digraph"));
+      emsg(_("E104: Escape not allowed in digraph"));
       return;
     }
     str = skipwhite(str);
 
     if (!ascii_isdigit(*str)) {
-      EMSG(_(e_number_exp));
+      emsg(_(e_number_exp));
       return;
     }
     int n = getdigits_int(&str, true, 0);
@@ -1821,7 +1820,7 @@ typedef struct {
 /// @return NULL if OK, an error message for failure.  This only needs to be
 ///         used when setting the option, not later when the value has already
 ///         been checked.
-char_u* keymap_init(void)
+char *keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
@@ -1843,14 +1842,14 @@ char_u* keymap_init(void)
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime((char_u *)buf, 0) == FAIL) {
+    if (source_runtime(buf, 0) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime((char_u *)buf, 0) == FAIL) {
+      if (source_runtime(buf, 0) == FAIL) {
         xfree(buf);
-        return (char_u *)N_("E544: Keymap file not found");
+        return N_("E544: Keymap file not found");
       }
     }
     xfree(buf);
@@ -1873,7 +1872,7 @@ void ex_loadkeymap(exarg_T *eap)
   char_u *save_cpo = p_cpo;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    EMSG(_("E105: Using :loadkeymap not in a sourced file"));
+    emsg(_("E105: Using :loadkeymap not in a sourced file"));
     return;
   }
 
@@ -1908,7 +1907,7 @@ void ex_loadkeymap(exarg_T *eap)
           || (*kp->from == NUL)
           || (*kp->to == NUL)) {
         if (*kp->to == NUL) {
-          EMSG(_("E791: Empty keymap entry"));
+          emsg(_("E791: Empty keymap entry"));
         }
         xfree(kp->from);
         xfree(kp->to);

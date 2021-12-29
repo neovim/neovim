@@ -28,7 +28,9 @@ augroup filetypeplugin
       " When there is a dot it is used to separate filetype names.  Thus for
       " "aaa.bbb" load "aaa" and then "bbb".
       for name in split(s, '\.')
-	exe 'runtime! ftplugin/' . name . '.vim ftplugin/' . name . '_*.vim ftplugin/' . name . '/*.vim'
+        exe 'runtime! ftplugin/' . name . '.vim ftplugin/' . name . '_*.vim ftplugin/' . name . '/*.vim'
+        " Load lua ftplugins
+        exe printf('runtime! ftplugin/%s.lua ftplugin/%s_*.lua ftplugin/%s/*.lua', name, name, name)
       endfor
     endif
   endfunc

@@ -2,7 +2,7 @@
 " Language:		Python
 " Maintainer:		Bram Moolenaar <Bram@vim.org>
 " Original Author:	David Bustos <bustos@caltech.edu>
-" Last Change:		2019 Feb 21
+" Last Change:		2021 Sep 26
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -16,6 +16,8 @@ setlocal autoindent	" indentexpr isn't much help otherwise
 
 setlocal indentexpr=GetPythonIndent(v:lnum)
 setlocal indentkeys+=<:>,=elif,=except
+
+let b:undo_indent = "setl ai< inde< indk< lisp<"
 
 " Only define the function once.
 if exists("*GetPythonIndent")
@@ -191,7 +193,7 @@ function GetPythonIndent(lnum)
   if getline(a:lnum) =~ '^\s*\(elif\|else\)\>'
 
     " Unless the previous line was a one-liner
-    if getline(plnumstart) =~ '^\s*\(for\|if\|try\)\>'
+    if getline(plnumstart) =~ '^\s*\(for\|if\|elif\|try\)\>'
       return plindent
     endif
 

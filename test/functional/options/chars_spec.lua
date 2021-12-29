@@ -67,36 +67,52 @@ describe("'fillchars'", function()
       shouldfail('eob:xy') -- two ascii chars
       shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
-    it('has global value', function()
-      screen:try_resize(50, 5)
-      insert("foo\nbar")
-      command('set laststatus=0')
-      command('1,2fold')
-      command('vsplit')
-      command('set fillchars=fold:x')
-      screen:expect([[
-        ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
-        ~                        │~                       |
-        ~                        │~                       |
-        ~                        │~                       |
-                                                          |
-      ]])
-    end)
-    it('has local window value', function()
-      screen:try_resize(50, 5)
-      insert("foo\nbar")
-      command('set laststatus=0')
-      command('1,2fold')
-      command('vsplit')
-      command('setl fillchars=fold:x')
-      screen:expect([[
-        ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
-        ~                        │~                       |
-        ~                        │~                       |
-        ~                        │~                       |
-                                                          |
-      ]])
-    end)
+  end)
+  it('has global value', function()
+    screen:try_resize(50, 5)
+    insert("foo\nbar")
+    command('set laststatus=0')
+    command('1,2fold')
+    command('vsplit')
+    command('set fillchars=fold:x')
+    screen:expect([[
+      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
+  end)
+  it('has window-local value', function()
+    screen:try_resize(50, 5)
+    insert("foo\nbar")
+    command('set laststatus=0')
+    command('1,2fold')
+    command('vsplit')
+    command('setl fillchars=fold:x')
+    screen:expect([[
+      ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
+  end)
+  it('using :set clears window-local value', function()
+    screen:try_resize(50, 5)
+    insert("foo\nbar")
+    command('set laststatus=0')
+    command('setl fillchars=fold:x')
+    command('1,2fold')
+    command('vsplit')
+    command('set fillchars&')
+    screen:expect([[
+      ^+--  2 lines: foo········│+--  2 lines: fooxxxxxxx|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
   end)
 end)
 
@@ -122,7 +138,7 @@ describe("'listchars'", function()
                                                         |
     ]])
   end)
-  it('has value local to window', function()
+  it('has window-local value', function()
     feed('i<tab><tab><tab><esc>')
     command('set list laststatus=0')
     command('setl listchars=tab:<->')
@@ -130,6 +146,20 @@ describe("'listchars'", function()
     command('setl listchars<')
     screen:expect([[
       >       >       ^>        │<------><------><------>|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
+  end)
+  it('using :set clears window-local value', function()
+    feed('i<tab><tab><tab><esc>')
+    command('set list laststatus=0')
+    command('setl listchars=tab:<->')
+    command('vsplit')
+    command('set listchars=tab:>-,eol:$')
+    screen:expect([[
+      >------->-------^>-------$│<------><------><------>|
       ~                        │~                       |
       ~                        │~                       |
       ~                        │~                       |

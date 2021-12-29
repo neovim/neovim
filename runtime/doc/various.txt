@@ -14,6 +14,10 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
+							*CTRL-L-default*
+			By default, also clears search highlighting
+			|:nohlsearch| and updates diffs |:diffupdate|.
+			|default-mappings|
 
 							*:mod* *:mode*
 :mod[e]			Clears and redraws the screen.
@@ -112,9 +116,9 @@ g8			Print the hex values of the bytes used in the
 
 							*:l* *:list*
 :[range]l[ist] [count] [flags]
-			Same as :print, but display unprintable characters
-			with '^' and put $ after the line.  This can be
-			further changed with the 'listchars' option.
+			Same as :print, but show tabs as ">", trailing spaces
+			as "-", and non-breakable space characters as "+" by
+			default.  Further changed by the 'listchars' option.
 			See |ex-flags| for [flags].
 
 							*:nu* *:number*
@@ -162,9 +166,13 @@ g8			Print the hex values of the bytes used in the
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
-:[range]z#[+-^.=][count]				*:z#*
-			Like ":z", but number the lines.
-			{not in all versions of Vi, not with these arguments}
+							*:z!*
+:[range]z![+-^.=][count]
+			Like ":z", but when [count] is not specified, it
+			defaults to the Vim window height minus one.
+
+:[range]z[!]#[+-^.=][count]				*:z#*
+			Like ":z" or ":z!", but number the lines.
 
 							*:=*
 := [flags]		Print the last line number.
@@ -379,7 +387,7 @@ g8			Print the hex values of the bytes used in the
 			   |:marks|      - filter by text in the current file,
 					   or file name for other files
 			   |:oldfiles|   - filter by file name
-			   |:set|        - filter by variable name
+			   |:set|        - filter by option name
 
 			Only normal messages are filtered, error messages are
 			not.
@@ -456,20 +464,14 @@ defined while executing a function, user command or autocommand, the script in
 which it was defined is reported.
 
 							*K*
-[count]K       		Run a program to lookup the keyword under the
-			cursor.  The name of the program is given with the
-			'keywordprg' (kp) option (default is "man").  The
-			keyword is formed of letters, numbers and the
-			characters in 'iskeyword'.  The keyword under or
-			right of the cursor is used.  The same can be done
-			with the command >
-				:!{program} {keyword}
+[count]K       		Runs the program given by 'keywordprg' to lookup the
+			|word| (defined by 'iskeyword') under or right of the
+			cursor. Default is "man". Works like this: >
+				:tabnew | terminal {program} {keyword}
 <			Special cases:
 			- If 'keywordprg' begins with ":" it is invoked as
 			  a Vim command with [count].
-			- If 'keywordprg' is empty, the ":help" command is
-			  used.  It's a good idea to include more characters
-			  in 'iskeyword' then, to be able to find more help.
+			- If 'keywordprg' is empty, |:help| is used.
 			- When 'keywordprg' is equal to "man", a [count]
 			  before "K" is inserted after the "man" command and
 			  before the keyword.  For example, using "2K" while
@@ -506,7 +508,8 @@ gO			Show a filetype-specific, navigable "outline" of the
 			Queued messages are processed during the sleep.
 
 							*:sl!* *:sleep!*
-:[N]sl[eep]! [N] [m]	Same as above, but hide the cursor.
+:[N]sl[eep]! [N][m]	Same as above. Unlike Vim, it does not hide the
+			cursor. |vim-differences|
 
 ==============================================================================
 2. Using Vim like less or more					*less*

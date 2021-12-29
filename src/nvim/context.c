@@ -3,13 +3,15 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include "nvim/api/private/converter.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
@@ -314,7 +316,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array)
   object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
 
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    EMSG(_("E474: Failed to convert list to msgpack string buffer"));
+    emsg(_("E474: Failed to convert list to msgpack string buffer"));
   }
   sbuf.alloc = sbuf.size;
 

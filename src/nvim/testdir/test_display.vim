@@ -262,3 +262,46 @@ func Test_display_scroll_at_topline()
 
   call StopVimInTerminal(buf)
 endfunc
+
+" Test for 'eob' (EndOfBuffer) item in 'fillchars'
+func Test_eob_fillchars()
+  " default value (skipped)
+  " call assert_match('eob:\~', &fillchars)
+  " invalid values
+  call assert_fails(':set fillchars=eob:', 'E474:')
+  call assert_fails(':set fillchars=eob:xy', 'E474:')
+  call assert_fails(':set fillchars=eob:\255', 'E474:')
+  call assert_fails(':set fillchars=eob:<ff>', 'E474:')
+  call assert_fails(":set fillchars=eob:\x01", 'E474:')
+  call assert_fails(':set fillchars=eob:\\x01', 'E474:')
+  " default is ~
+  new
+  redraw
+  call assert_equal('~', Screenline(2))
+  set fillchars=eob:+
+  redraw
+  call assert_equal('+', Screenline(2))
+  set fillchars=eob:\ 
+  redraw
+  call assert_equal(' ', nr2char(screenchar(2, 1)))
+  set fillchars&
+  close
+endfunc
+
+func Test_display_linebreak_breakat()
+  new
+  vert resize 25
+  let _breakat = &breakat
+  setl signcolumn=yes linebreak breakat=) showbreak=+\ 
+  call setline(1, repeat('x', winwidth(0) - 2) .. ')abc')
+  let lines = ScreenLines([1, 2], 25)
+  let expected = [
+          \ '  xxxxxxxxxxxxxxxxxxxxxxx',
+          \ '  + )abc                 '
+          \ ]
+  call assert_equal(expected, lines)
+  %bw!
+  let &breakat=_breakat
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

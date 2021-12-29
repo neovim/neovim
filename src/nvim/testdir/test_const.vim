@@ -244,18 +244,33 @@ func Test_const_with_eval_name()
     call assert_fails('const {s2} = "bar"', 'E995:')
 endfunc
 
-func Test_lock_depth_is_1()
-    const l = [1, 2, 3]
-    const d = {'foo': 10}
-
-    " Modify list - setting item is OK, adding/removing items not
-    let l[0] = 42
+func Test_lock_depth_is_2()
+    " Modify list - error when changing item or adding/removing items
+    const l = [1, 2, [3, 4]]
+    call assert_fails('let l[0] = 42', 'E741:')
+    call assert_fails('let l[2][0] = 42', 'E741:')
     call assert_fails('call add(l, 4)', 'E741:')
     call assert_fails('unlet l[1]', 'E741:')
 
-    " Modify dict - changing item is OK, adding/removing items not
-    let d['foo'] = 'hello'
-    let d.foo = 44
+    " Modify blob - error when changing
+    const b = 0z001122
+    call assert_fails('let b[0] = 42', 'E741:')
+
+    " Modify dict - error when changing item or adding/removing items
+    const d = {'foo': 10}
+    call assert_fails("let d['foo'] = 'hello'", 'E741:')
+    call assert_fails("let d.foo = 'hello'", 'E741:')
     call assert_fails("let d['bar'] = 'hello'", 'E741:')
     call assert_fails("unlet d['foo']", 'E741:')
+
+    " Modifying list or dict item contents is OK.
+    let lvar = ['a', 'b']
+    let bvar = 0z1122
+    const l2 = [0, lvar, bvar]
+    let l2[1][0] = 'c'
+    let l2[2][1] = 0x33
+    call assert_equal([0, ['c', 'b'], 0z1133], l2)
+
+    const d2 = #{a: 0, b: lvar, c: 4}
+    let d2.b[1] = 'd'
 endfunc

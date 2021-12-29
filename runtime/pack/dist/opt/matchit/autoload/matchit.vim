@@ -1,6 +1,11 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: Mar 01, 2020
+"  Last Change: Jun 10, 2021
+
+" Neovim does not support scriptversion
+if has("vimscript-4")
+  scriptversion 4
+endif
 
 let s:last_mps = ""
 let s:last_words = ":"
@@ -30,11 +35,11 @@ function s:RestoreOptions()
   " In s:CleanUp(), :execute "set" restore_options .
   let restore_options = ""
   if get(b:, 'match_ignorecase', &ic) != &ic
-    let restore_options .= (&ic ? " " : " no") . "ignorecase"
+    let restore_options ..= (&ic ? " " : " no") .. "ignorecase"
     let &ignorecase = b:match_ignorecase
   endif
   if &ve != ''
-    let restore_options = " ve=" . &ve . restore_options
+    let restore_options = " ve=" .. &ve .. restore_options
     set ve=
   endif
   return restore_options
@@ -42,22 +47,23 @@ endfunction
 
 function matchit#Match_wrapper(word, forward, mode) range
   let restore_options = s:RestoreOptions()
-  " If this function was called from Visual mode, make sure that the cursor
-  " is at the correct end of the Visual range:
-  if a:mode == "v"
-    execute "normal! gv\<Esc>"
-  elseif a:mode == "o" && mode(1) !~# '[vV]'
-    exe "norm! v"
-  elseif a:mode == "n" && mode(1) =~# 'ni'
-    exe "norm! v"
-  endif
   " In s:CleanUp(), we may need to check whether the cursor moved forward.
   let startpos = [line("."), col(".")]
-  " Use default behavior if called with a count.
+  " if a count has been applied, use the default [count]% mode (see :h N%)
   if v:count
-    exe "normal! " . v:count . "%"
+    exe "normal! " .. v:count .. "%"
     return s:CleanUp(restore_options, a:mode, startpos)
   end
+  if a:mode =~# "v" && mode(1) =~# 'ni'
+    exe "norm! gv"
+  elseif a:mode == "o" && mode(1) !~# '[vV]'
+    exe "norm! v"
+  " If this function was called from Visual mode, make sure that the cursor
+  " is at the correct end of the Visual range:
+  elseif a:mode == "v"
+    execute "normal! gv\<Esc>"
+    let startpos = [line("."), col(".")]
+  endif
 
   " First step:  if not already done, set the script variables
   "   s:do_BR   flag for whether there are backrefs
@@ -78,30 +84,30 @@ function matchit#Match_wrapper(word, forward, mode) range
     " quote the special chars in 'matchpairs', replace [,:] with \| and then
     " append the builtin pairs (/*, */, #if, #ifdef, #ifndef, #else, #elif,
     " #endif)
-    let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
+    let default = escape(&mps, '[$^.*~\\/?]') .. (strlen(&mps) ? "," : "") ..
       \ '\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     " s:all = pattern with all the keywords
-    let match_words = match_words . (strlen(match_words) ? "," : "") . default
+    let match_words = match_words .. (strlen(match_words) ? "," : "") .. default
     let s:last_words = match_words
-    if match_words !~ s:notslash . '\\\d'
+    if match_words !~ s:notslash .. '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
     else
       let s:do_BR = 1
       let s:pat = s:ParseWords(match_words)
     endif
-    let s:all = substitute(s:pat, s:notslash . '\zs[,:]\+', '\\|', 'g')
+    let s:all = substitute(s:pat, s:notslash .. '\zs[,:]\+', '\\|', 'g')
     " Just in case there are too many '\(...)' groups inside the pattern, make
     " sure to use \%(...) groups, so that error E872 can be avoided
     let s:all = substitute(s:all, '\\(', '\\%(', 'g')
-    let s:all = '\%(' . s:all . '\)'
+    let s:all = '\%(' .. s:all .. '\)'
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
     " Reconstruct the version with unresolved backrefs.
-    let s:patBR = substitute(match_words.',',
-      \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-    let s:patBR = substitute(s:patBR, s:notslash.'\zs:\{2,}', ':', 'g')
+    let s:patBR = substitute(match_words .. ',',
+      \ s:notslash .. '\zs[,:]*,[,:]*', ',', 'g')
+    let s:patBR = substitute(s:patBR, s:notslash .. '\zs:\{2,}', ':', 'g')
   endif
 
   " Second step:  set the following local variables:
@@ -128,12 +134,15 @@ function matchit#Match_wrapper(word, forward, mode) range
     let curcol = match(matchline, regexp)
     " If there is no match, give up.
     if curcol == -1
+      " Make sure macros abort properly
+      "exe "norm! \<esc>"
+      call feedkeys("\e", 'tni')
       return s:CleanUp(restore_options, a:mode, startpos)
     endif
     let endcol = matchend(matchline, regexp)
     let suf = strlen(matchline) - endcol
-    let prefix = (curcol ? '^.*\%'  . (curcol + 1) . 'c\%(' : '^\%(')
-    let suffix = (suf ? '\)\%' . (endcol + 1) . 'c.*$'  : '\)$')
+    let prefix = (curcol ? '^.*\%' .. (curcol + 1) .. 'c\%(' : '^\%(')
+    let suffix = (suf ? '\)\%' .. (endcol + 1) .. 'c.*$'  : '\)$')
   endif
   if exists("b:match_debug")
     let b:match_match = matchstr(matchline, regexp)
@@ -150,7 +159,7 @@ function matchit#Match_wrapper(word, forward, mode) range
   " 'while:endwhile' or whatever.  A bit of a kluge:  s:Choose() returns
   " group . "," . groupBR, and we pick it apart.
   let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, s:patBR)
-  let i = matchend(group, s:notslash . ",")
+  let i = matchend(group, s:notslash .. ",")
   let groupBR = strpart(group, i)
   let group = strpart(group, 0, i-1)
   " Now, matchline =~ prefix . substitute(group,':','\|','g') . suffix
@@ -159,32 +168,32 @@ function matchit#Match_wrapper(word, forward, mode) range
   endif
   if exists("b:match_debug")
     let b:match_wholeBR = groupBR
-    let i = matchend(groupBR, s:notslash . ":")
+    let i = matchend(groupBR, s:notslash .. ":")
     let b:match_iniBR = strpart(groupBR, 0, i-1)
   endif
 
   " Fourth step:  Set the arguments for searchpair().
-  let i = matchend(group, s:notslash . ":")
-  let j = matchend(group, '.*' . s:notslash . ":")
+  let i = matchend(group, s:notslash .. ":")
+  let j = matchend(group, '.*' .. s:notslash .. ":")
   let ini = strpart(group, 0, i-1)
-  let mid = substitute(strpart(group, i,j-i-1), s:notslash.'\zs:', '\\|', 'g')
+  let mid = substitute(strpart(group, i,j-i-1), s:notslash .. '\zs:', '\\|', 'g')
   let fin = strpart(group, j)
   "Un-escape the remaining , and : characters.
-  let ini = substitute(ini, s:notslash . '\zs\\\(:\|,\)', '\1', 'g')
-  let mid = substitute(mid, s:notslash . '\zs\\\(:\|,\)', '\1', 'g')
-  let fin = substitute(fin, s:notslash . '\zs\\\(:\|,\)', '\1', 'g')
+  let ini = substitute(ini, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
+  let mid = substitute(mid, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
+  let fin = substitute(fin, s:notslash .. '\zs\\\(:\|,\)', '\1', 'g')
   " searchpair() requires that these patterns avoid \(\) groups.
-  let ini = substitute(ini, s:notslash . '\zs\\(', '\\%(', 'g')
-  let mid = substitute(mid, s:notslash . '\zs\\(', '\\%(', 'g')
-  let fin = substitute(fin, s:notslash . '\zs\\(', '\\%(', 'g')
+  let ini = substitute(ini, s:notslash .. '\zs\\(', '\\%(', 'g')
+  let mid = substitute(mid, s:notslash .. '\zs\\(', '\\%(', 'g')
+  let fin = substitute(fin, s:notslash .. '\zs\\(', '\\%(', 'g')
   " Set mid.  This is optimized for readability, not micro-efficiency!
-  if a:forward && matchline =~ prefix . fin . suffix
-    \ || !a:forward && matchline =~ prefix . ini . suffix
+  if a:forward && matchline =~ prefix .. fin .. suffix
+    \ || !a:forward && matchline =~ prefix .. ini .. suffix
     let mid = ""
   endif
   " Set flag.  This is optimized for readability, not micro-efficiency!
-  if a:forward && matchline =~ prefix . fin . suffix
-    \ || !a:forward && matchline !~ prefix . ini . suffix
+  if a:forward && matchline =~ prefix .. fin .. suffix
+    \ || !a:forward && matchline !~ prefix .. ini .. suffix
     let flag = "bW"
   else
     let flag = "W"
@@ -193,14 +202,14 @@ function matchit#Match_wrapper(word, forward, mode) range
   if exists("b:match_skip")
     let skip = b:match_skip
   elseif exists("b:match_comment") " backwards compatibility and testing!
-    let skip = "r:" . b:match_comment
+    let skip = "r:" .. b:match_comment
   else
     let skip = 's:comment\|string'
   endif
   let skip = s:ParseSkip(skip)
   if exists("b:match_debug")
     let b:match_ini = ini
-    let b:match_tail = (strlen(mid) ? mid.'\|' : '') . fin
+    let b:match_tail = (strlen(mid) ? mid .. '\|' : '') .. fin
   endif
 
   " Fifth step:  actually start moving the cursor and call searchpair().
@@ -210,25 +219,29 @@ function matchit#Match_wrapper(word, forward, mode) range
   if skip =~ 'synID' && !(has("syntax") && exists("g:syntax_on"))
     let skip = "0"
   else
-    execute "if " . skip . "| let skip = '0' | endif"
+    execute "if " .. skip .. "| let skip = '0' | endif"
   endif
   let sp_return = searchpair(ini, mid, fin, flag, skip)
   if &selection isnot# 'inclusive' && a:mode == 'v'
     " move cursor one pos to the right, because selection is not inclusive
-    " add virtualedit=onemore, to make it work even when the match ends the " line
+    " add virtualedit=onemore, to make it work even when the match ends the
+    " line
     if !(col('.') < col('$')-1)
-      set ve=onemore
+      let eolmark=1 " flag to set a mark on eol (since we cannot move there)
     endif
     norm! l
   endif
-  let final_position = "call cursor(" . line(".") . "," . col(".") . ")"
+  let final_position = "call cursor(" .. line(".") .. "," .. col(".") .. ")"
   " Restore cursor position and original screen.
   call winrestview(view)
   normal! m'
   if sp_return > 0
     execute final_position
   endif
-  return s:CleanUp(restore_options, a:mode, startpos, mid.'\|'.fin)
+  if exists('eolmark') && eolmark
+    call setpos("''", [0, line('.'), col('$'), 0]) " set mark on the eol
+  endif
+  return s:CleanUp(restore_options, a:mode, startpos, mid .. '\|' .. fin)
 endfun
 
 " Restore options and do some special handling for Operator-pending mode.
@@ -270,16 +283,16 @@ endfun
 "   a:matchline =  "123<tag>12" or "123</tag>12"
 " then extract "tag" from a:matchline and return "<tag>:</tag>" .
 fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
-  if a:matchline !~ a:prefix .
-    \ substitute(a:group, s:notslash . '\zs:', '\\|', 'g') . a:suffix
+  if a:matchline !~ a:prefix ..
+    \ substitute(a:group, s:notslash .. '\zs:', '\\|', 'g') .. a:suffix
     return a:group
   endif
-  let i = matchend(a:groupBR, s:notslash . ':')
+  let i = matchend(a:groupBR, s:notslash .. ':')
   let ini = strpart(a:groupBR, 0, i-1)
   let tailBR = strpart(a:groupBR, i)
   let word = s:Choose(a:group, a:matchline, ":", "", a:prefix, a:suffix,
     \ a:groupBR)
-  let i = matchend(word, s:notslash . ":")
+  let i = matchend(word, s:notslash .. ":")
   let wordBR = strpart(word, i)
   let word = strpart(word, 0, i-1)
   " Now, a:matchline =~ a:prefix . word . a:suffix
@@ -289,10 +302,10 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
     let table = ""
     let d = 0
     while d < 10
-      if tailBR =~ s:notslash . '\\' . d
-        let table = table . d
+      if tailBR =~ s:notslash .. '\\' .. d
+        let table = table .. d
       else
-        let table = table . "-"
+        let table = table .. "-"
       endif
       let d = d + 1
     endwhile
@@ -300,13 +313,13 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
   let d = 9
   while d
     if table[d] != "-"
-      let backref = substitute(a:matchline, a:prefix.word.a:suffix,
-        \ '\'.table[d], "")
+      let backref = substitute(a:matchline, a:prefix .. word .. a:suffix,
+        \ '\' .. table[d], "")
         " Are there any other characters that should be escaped?
       let backref = escape(backref, '*,:')
       execute s:Ref(ini, d, "start", "len")
-      let ini = strpart(ini, 0, start) . backref . strpart(ini, start+len)
-      let tailBR = substitute(tailBR, s:notslash . '\zs\\' . d,
+      let ini = strpart(ini, 0, start) .. backref .. strpart(ini, start+len)
+      let tailBR = substitute(tailBR, s:notslash .. '\zs\\' .. d,
         \ escape(backref, '\\&'), 'g')
     endif
     let d = d-1
@@ -320,7 +333,7 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
       let b:match_word = ""
     endif
   endif
-  return ini . ":" . tailBR
+  return ini .. ":" .. tailBR
 endfun
 
 " Input a comma-separated list of groups with backrefs, such as
@@ -328,25 +341,25 @@ endfun
 " and return a comma-separated list of groups with backrefs replaced:
 "   return '\(foo\):end\(foo\),\(bar\):end\(bar\)'
 fun! s:ParseWords(groups)
-  let groups = substitute(a:groups.",", s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-  let groups = substitute(groups, s:notslash . '\zs:\{2,}', ':', 'g')
+  let groups = substitute(a:groups .. ",", s:notslash .. '\zs[,:]*,[,:]*', ',', 'g')
+  let groups = substitute(groups, s:notslash .. '\zs:\{2,}', ':', 'g')
   let parsed = ""
   while groups =~ '[^,:]'
-    let i = matchend(groups, s:notslash . ':')
-    let j = matchend(groups, s:notslash . ',')
+    let i = matchend(groups, s:notslash .. ':')
+    let j = matchend(groups, s:notslash .. ',')
     let ini = strpart(groups, 0, i-1)
-    let tail = strpart(groups, i, j-i-1) . ":"
+    let tail = strpart(groups, i, j-i-1) .. ":"
     let groups = strpart(groups, j)
-    let parsed = parsed . ini
-    let i = matchend(tail, s:notslash . ':')
+    let parsed = parsed .. ini
+    let i = matchend(tail, s:notslash .. ':')
     while i != -1
       " In 'if:else:endif', ini='if' and word='else' and then word='endif'.
       let word = strpart(tail, 0, i-1)
       let tail = strpart(tail, i)
-      let i = matchend(tail, s:notslash . ':')
-      let parsed = parsed . ":" . s:Resolve(ini, word, "word")
+      let i = matchend(tail, s:notslash .. ':')
+      let parsed = parsed .. ":" .. s:Resolve(ini, word, "word")
     endwhile " Now, tail has been used up.
-    let parsed = parsed . ","
+    let parsed = parsed .. ","
   endwhile " groups =~ '[^,:]'
   let parsed = substitute(parsed, ',$', '', '')
   return parsed
@@ -364,14 +377,14 @@ endfun
 " let j      = matchend(getline("."), regexp)
 " let match  = matchstr(getline("."), regexp)
 fun! s:Wholematch(string, pat, start)
-  let group = '\%(' . a:pat . '\)'
-  let prefix = (a:start ? '\(^.*\%<' . (a:start + 2) . 'c\)\zs' : '^')
+  let group = '\%(' .. a:pat .. '\)'
+  let prefix = (a:start ? '\(^.*\%<' .. (a:start + 2) .. 'c\)\zs' : '^')
   let len = strlen(a:string)
-  let suffix = (a:start+1 < len ? '\(\%>'.(a:start+1).'c.*$\)\@=' : '$')
-  if a:string !~ prefix . group . suffix
+  let suffix = (a:start+1 < len ? '\(\%>' .. (a:start+1) .. 'c.*$\)\@=' : '$')
+  if a:string !~ prefix .. group .. suffix
     let prefix = ''
   endif
-  return prefix . group . suffix
+  return prefix .. group .. suffix
 endfun
 
 " No extra arguments:  s:Ref(string, d) will
@@ -392,7 +405,7 @@ fun! s:Ref(string, d, ...)
     let match = a:string
     while cnt
       let cnt = cnt - 1
-      let index = matchend(match, s:notslash . '\\(')
+      let index = matchend(match, s:notslash .. '\\(')
       if index == -1
         return ""
       endif
@@ -404,7 +417,7 @@ fun! s:Ref(string, d, ...)
     endif
     let cnt = 1
     while cnt
-      let index = matchend(match, s:notslash . '\\(\|\\)') - 1
+      let index = matchend(match, s:notslash .. '\\(\|\\)') - 1
       if index == -2
         return ""
       endif
@@ -418,7 +431,7 @@ fun! s:Ref(string, d, ...)
   if a:0 == 1
     return len
   elseif a:0 == 2
-    return "let " . a:1 . "=" . start . "| let " . a:2 . "=" . len
+    return "let " .. a:1 .. "=" .. start .. "| let " .. a:2 .. "=" .. len
   else
     return strpart(a:string, start, len)
   endif
@@ -431,9 +444,9 @@ endfun
 fun! s:Count(string, pattern, ...)
   let pat = escape(a:pattern, '\\')
   if a:0 > 1
-    let foo = substitute(a:string, '[^'.a:pattern.']', "a:1", "g")
+    let foo = substitute(a:string, '[^' .. a:pattern .. ']', "a:1", "g")
     let foo = substitute(a:string, pat, a:2, "g")
-    let foo = substitute(foo, '[^' . a:2 . ']', "", "g")
+    let foo = substitute(foo, '[^' .. a:2 .. ']', "", "g")
     return strlen(foo)
   endif
   let result = 0
@@ -456,7 +469,7 @@ endfun
 " unless it is preceded by "\".
 fun! s:Resolve(source, target, output)
   let word = a:target
-  let i = matchend(word, s:notslash . '\\\d') - 1
+  let i = matchend(word, s:notslash .. '\\\d') - 1
   let table = "----------"
   while i != -2 " There are back references to be replaced.
     let d = word[i]
@@ -477,28 +490,28 @@ fun! s:Resolve(source, target, output)
       if table[s] == "-"
         if w + b < 10
           " let table[s] = w + b
-          let table = strpart(table, 0, s) . (w+b) . strpart(table, s+1)
+          let table = strpart(table, 0, s) .. (w+b) .. strpart(table, s+1)
         endif
         let b = b + 1
         let s = s + 1
       else
         execute s:Ref(backref, b, "start", "len")
         let ref = strpart(backref, start, len)
-        let backref = strpart(backref, 0, start) . ":". table[s]
-        \ . strpart(backref, start+len)
+        let backref = strpart(backref, 0, start) .. ":" .. table[s]
+        \ .. strpart(backref, start+len)
         let s = s + s:Count(substitute(ref, '\\\\', '', 'g'), '\(', '1')
       endif
     endwhile
-    let word = strpart(word, 0, i-1) . backref . strpart(word, i+1)
-    let i = matchend(word, s:notslash . '\\\d') - 1
+    let word = strpart(word, 0, i-1) .. backref .. strpart(word, i+1)
+    let i = matchend(word, s:notslash .. '\\\d') - 1
   endwhile
-  let word = substitute(word, s:notslash . '\zs:', '\\', 'g')
+  let word = substitute(word, s:notslash .. '\zs:', '\\', 'g')
   if a:output == "table"
     return table
   elseif a:output == "word"
     return word
   else
-    return table . word
+    return table .. word
   endif
 endfun
 
@@ -508,21 +521,21 @@ endfun
 " If <patn> is the first pattern that matches a:string then return <patn>
 " if no optional arguments are given; return <patn>,<altn> if a:1 is given.
 fun! s:Choose(patterns, string, comma, branch, prefix, suffix, ...)
-  let tail = (a:patterns =~ a:comma."$" ? a:patterns : a:patterns . a:comma)
-  let i = matchend(tail, s:notslash . a:comma)
+  let tail = (a:patterns =~ a:comma .. "$" ? a:patterns : a:patterns .. a:comma)
+  let i = matchend(tail, s:notslash .. a:comma)
   if a:0
-    let alttail = (a:1 =~ a:comma."$" ? a:1 : a:1 . a:comma)
-    let j = matchend(alttail, s:notslash . a:comma)
+    let alttail = (a:1 =~ a:comma .. "$" ? a:1 : a:1 .. a:comma)
+    let j = matchend(alttail, s:notslash .. a:comma)
   endif
   let current = strpart(tail, 0, i-1)
   if a:branch == ""
     let currpat = current
   else
-    let currpat = substitute(current, s:notslash . a:branch, '\\|', 'g')
+    let currpat = substitute(current, s:notslash .. a:branch, '\\|', 'g')
   endif
-  while a:string !~ a:prefix . currpat . a:suffix
+  while a:string !~ a:prefix .. currpat .. a:suffix
     let tail = strpart(tail, i)
-    let i = matchend(tail, s:notslash . a:comma)
+    let i = matchend(tail, s:notslash .. a:comma)
     if i == -1
       return -1
     endif
@@ -530,15 +543,15 @@ fun! s:Choose(patterns, string, comma, branch, prefix, suffix, ...)
     if a:branch == ""
       let currpat = current
     else
-      let currpat = substitute(current, s:notslash . a:branch, '\\|', 'g')
+      let currpat = substitute(current, s:notslash .. a:branch, '\\|', 'g')
     endif
     if a:0
       let alttail = strpart(alttail, j)
-      let j = matchend(alttail, s:notslash . a:comma)
+      let j = matchend(alttail, s:notslash .. a:comma)
     endif
   endwhile
   if a:0
-    let current = current . a:comma . strpart(alttail, 0, j-1)
+    let current = current .. a:comma .. strpart(alttail, 0, j-1)
   endif
   return current
 endfun
@@ -562,7 +575,7 @@ fun! matchit#Match_debug()
   " fin = 'endif' piece, with all backrefs resolved from match
   amenu &Matchit.&word  :echo b:match_word<CR>
   " '\'.d in ini refers to the same thing as '\'.table[d] in word.
-  amenu &Matchit.t&able :echo '0:' . b:match_table . ':9'<CR>
+  amenu &Matchit.t&able :echo '0:' .. b:match_table .. ':9'<CR>
 endfun
 
 " Jump to the nearest unmatched "(" or "if" or "<tag>" if a:spflag == "bW"
@@ -598,26 +611,26 @@ fun! matchit#MultiMatch(spflag, mode)
   endif
   if (match_words != s:last_words) || (&mps != s:last_mps) ||
     \ exists("b:match_debug")
-    let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
+    let default = escape(&mps, '[$^.*~\\/?]') .. (strlen(&mps) ? "," : "") ..
       \ '\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     let s:last_mps = &mps
-    let match_words = match_words . (strlen(match_words) ? "," : "") . default
+    let match_words = match_words .. (strlen(match_words) ? "," : "") .. default
     let s:last_words = match_words
-    if match_words !~ s:notslash . '\\\d'
+    if match_words !~ s:notslash .. '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
     else
       let s:do_BR = 1
       let s:pat = s:ParseWords(match_words)
     endif
-    let s:all = '\%(' . substitute(s:pat, '[,:]\+', '\\|', 'g') . '\)'
+    let s:all = '\%(' .. substitute(s:pat, '[,:]\+', '\\|', 'g') .. '\)'
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
     " Reconstruct the version with unresolved backrefs.
-    let s:patBR = substitute(match_words.',',
-      \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-    let s:patBR = substitute(s:patBR, s:notslash.'\zs:\{2,}', ':', 'g')
+    let s:patBR = substitute(match_words .. ',',
+      \ s:notslash .. '\zs[,:]*,[,:]*', ',', 'g')
+    let s:patBR = substitute(s:patBR, s:notslash .. '\zs:\{2,}', ':', 'g')
   endif
 
   " Second step:  figure out the patterns for searchpair()
@@ -625,23 +638,23 @@ fun! matchit#MultiMatch(spflag, mode)
   " - TODO:  A lot of this is copied from matchit#Match_wrapper().
   " - maybe even more functionality should be split off
   " - into separate functions!
-  let openlist = split(s:pat . ',', s:notslash . '\zs:.\{-}' . s:notslash . ',')
-  let midclolist = split(',' . s:pat, s:notslash . '\zs,.\{-}' . s:notslash . ':')
-  call map(midclolist, {-> split(v:val, s:notslash . ':')})
+  let openlist = split(s:pat .. ',', s:notslash .. '\zs:.\{-}' .. s:notslash .. ',')
+  let midclolist = split(',' .. s:pat, s:notslash .. '\zs,.\{-}' .. s:notslash .. ':')
+  call map(midclolist, {-> split(v:val, s:notslash .. ':')})
   let closelist = []
   let middlelist = []
   call map(midclolist, {i,v -> [extend(closelist, v[-1 : -1]),
         \ extend(middlelist, v[0 : -2])]})
-  call map(openlist,   {i,v -> v =~# s:notslash . '\\|' ? '\%(' . v . '\)' : v})
-  call map(middlelist, {i,v -> v =~# s:notslash . '\\|' ? '\%(' . v . '\)' : v})
-  call map(closelist,  {i,v -> v =~# s:notslash . '\\|' ? '\%(' . v . '\)' : v})
+  call map(openlist,   {i,v -> v =~# s:notslash .. '\\|' ? '\%(' .. v .. '\)' : v})
+  call map(middlelist, {i,v -> v =~# s:notslash .. '\\|' ? '\%(' .. v .. '\)' : v})
+  call map(closelist,  {i,v -> v =~# s:notslash .. '\\|' ? '\%(' .. v .. '\)' : v})
   let open   = join(openlist, ',')
   let middle = join(middlelist, ',')
   let close  = join(closelist, ',')
   if exists("b:match_skip")
     let skip = b:match_skip
   elseif exists("b:match_comment") " backwards compatibility and testing!
-    let skip = "r:" . b:match_comment
+    let skip = "r:" .. b:match_comment
   else
     let skip = 's:comment\|string'
   endif
@@ -650,18 +663,18 @@ fun! matchit#MultiMatch(spflag, mode)
 
   " Third step: call searchpair().
   " Replace '\('--but not '\\('--with '\%(' and ',' with '\|'.
-  let openpat = substitute(open, '\%(' . s:notslash . '\)\@<=\\(', '\\%(', 'g')
+  let openpat = substitute(open, '\%(' .. s:notslash .. '\)\@<=\\(', '\\%(', 'g')
   let openpat = substitute(openpat, ',', '\\|', 'g')
-  let closepat = substitute(close, '\%(' . s:notslash . '\)\@<=\\(', '\\%(', 'g')
+  let closepat = substitute(close, '\%(' .. s:notslash .. '\)\@<=\\(', '\\%(', 'g')
   let closepat = substitute(closepat, ',', '\\|', 'g')
-  let middlepat = substitute(middle, '\%(' . s:notslash . '\)\@<=\\(', '\\%(', 'g')
+  let middlepat = substitute(middle, '\%(' .. s:notslash .. '\)\@<=\\(', '\\%(', 'g')
   let middlepat = substitute(middlepat, ',', '\\|', 'g')
 
   if skip =~ 'synID' && !(has("syntax") && exists("g:syntax_on"))
     let skip = '0'
   else
     try
-      execute "if " . skip . "| let skip = '0' | endif"
+      execute "if " .. skip .. "| let skip = '0' | endif"
     catch /^Vim\%((\a\+)\)\=:E363/
       " We won't find anything, so skip searching, should keep Vim responsive.
       return {}
@@ -744,11 +757,11 @@ fun! s:ParseSkip(str)
   let skip = a:str
   if skip[1] == ":"
     if skip[0] == "s"
-      let skip = "synIDattr(synID(line('.'),col('.'),1),'name') =~? '" .
-        \ strpart(skip,2) . "'"
+      let skip = "synIDattr(synID(line('.'),col('.'),1),'name') =~? '" ..
+        \ strpart(skip,2) .. "'"
     elseif skip[0] == "S"
-      let skip = "synIDattr(synID(line('.'),col('.'),1),'name') !~? '" .
-        \ strpart(skip,2) . "'"
+      let skip = "synIDattr(synID(line('.'),col('.'),1),'name') !~? '" ..
+        \ strpart(skip,2) .. "'"
     elseif skip[0] == "r"
       let skip = "strpart(getline('.'),0,col('.'))=~'" . strpart(skip,2). "'"
     elseif skip[0] == "R"

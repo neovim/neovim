@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
 local eq, eval, expect, source =
   helpers.eq, helpers.eval, helpers.expect, helpers.source
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
@@ -26,7 +27,7 @@ describe(':recover', function()
     -- Also check filename ending with ".swp". #9504
     eq('Vim(recover):E306: Cannot open '..swapname2,
       pcall_err(command, 'recover '..swapname2))  -- Should not segfault. #2117
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
 end)

@@ -3,7 +3,7 @@
 " License:	VIM License
 " Maintainer:	Nirbheek Chauhan <nirbheek.chauhan@gmail.com>
 "		Liam Beguin <liambeguin@gmail.com>
-" Last Change:	2019 Oct 18
+" Last Change:	2021 Aug 16
 " Credits:	Zvezdan Petkovic <zpetkovic@acm.org>
 "		Neil Schemenauer <nas@meson.ca>
 "		Dmitry Vasiliev
@@ -56,9 +56,11 @@ syn match   mesonEscape	"\\$"
 " Meson only supports integer numbers
 " http://mesonbuild.com/Syntax.html#numbers
 syn match   mesonNumber	"\<\d\+\>"
+syn match   mesonNumber	"\<0x\x\+\>"
+syn match   mesonNumber	"\<0o\o\+\>"
 
 " booleans
-syn keyword mesonConstant	false true
+syn keyword mesonBoolean	false true
 
 " Built-in functions
 syn keyword mesonBuiltin
@@ -97,6 +99,7 @@ syn keyword mesonBuiltin
   \ install_headers
   \ install_man
   \ install_subdir
+  \ install_emptydir
   \ is_disabler
   \ is_variable
   \ jar
@@ -118,6 +121,7 @@ syn keyword mesonBuiltin
   \ summary
   \ target_machine
   \ test
+  \ unset_variable
   \ vcs_tag
   \ warning
   \ range
@@ -133,15 +137,15 @@ endif
 " The default highlight links.  Can be overridden later.
 hi def link mesonStatement	Statement
 hi def link mesonConditional	Conditional
-hi def link mesonRepeat	Repeat
+hi def link mesonRepeat		Repeat
 hi def link mesonOperator	Operator
 hi def link mesonComment	Comment
 hi def link mesonTodo		Todo
-hi def link mesonString	String
-hi def link mesonEscape	Special
-hi def link mesonNumber	Number
+hi def link mesonString		String
+hi def link mesonEscape		Special
+hi def link mesonNumber		Number
 hi def link mesonBuiltin	Function
-hi def link mesonConstant	Number
+hi def link mesonBoolean	Boolean
 if exists("meson_space_error_higlight")
   hi def link mesonSpaceError	Error
 endif

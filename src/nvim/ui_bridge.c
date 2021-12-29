@@ -5,18 +5,18 @@
 // Used by the built-in TUI and libnvim-based UIs.
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <limits.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
-#include "nvim/vim.h"
-#include "nvim/ui.h"
 #include "nvim/memory.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/ui.h"
+#include "nvim/ui_bridge.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -26,8 +26,7 @@
 
 // Schedule a function call on the UI bridge thread.
 #define UI_BRIDGE_CALL(ui, name, argc, ...) \
-  ((UIBridgeData *)ui)->scheduler( \
-      event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
+  ((UIBridgeData *)ui)->scheduler(event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
 
 #define INT2PTR(i) ((void *)(intptr_t)i)
 #define PTR2INT(p) ((Integer)(intptr_t)p)
@@ -41,6 +40,8 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   UIBridgeData *rv = xcalloc(1, sizeof(UIBridgeData));
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
+  rv->bridge.width = ui->width;
+  rv->bridge.height = ui->height;
   rv->bridge.stop = ui_bridge_stop;
   rv->bridge.grid_resize = ui_bridge_grid_resize;
   rv->bridge.grid_clear = ui_bridge_grid_clear;
@@ -136,8 +137,8 @@ static void ui_bridge_stop_event(void **argv)
   ui->stop(ui);
 }
 
-static void ui_bridge_hl_attr_define(UI *ui, Integer id, HlAttrs attrs,
-                                     HlAttrs cterm_attrs, Array info)
+static void ui_bridge_hl_attr_define(UI *ui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs,
+                                     Array info)
 {
   HlAttrs *a = xmalloc(sizeof(HlAttrs));
   *a = attrs;
@@ -161,11 +162,9 @@ static void ui_bridge_raw_line_event(void **argv)
   xfree(argv[8]);
   xfree(argv[9]);
 }
-static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row,
-                               Integer startcol, Integer endcol,
-                               Integer clearcol, Integer clearattr,
-                               LineFlags flags, const schar_T *chunk,
-                               const sattr_T *attrs)
+static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
+                               Integer clearcol, Integer clearattr, LineFlags flags,
+                               const schar_T *chunk, const sattr_T *attrs)
 {
   size_t ncol = (size_t)(endcol-startcol);
   schar_T *c = xmemdup(chunk, ncol * sizeof(schar_T));

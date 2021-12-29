@@ -25,10 +25,14 @@ In the User Manual:
 ==============================================================================
 1. Quick start						*:syn-qstart*
 
-						*:syn-enable* *:syntax-enable*
+				*:syn-enable* *:syntax-enable* *:syn-on* *:syntax-on*
 This command switches on syntax highlighting: >
 
 	:syntax enable
+
+Alternatively: >
+
+	:syntax on
 
 What this command actually does is to execute the command >
 	:source $VIMRUNTIME/syntax/syntax.vim
@@ -42,19 +46,11 @@ are in the "/usr/vim/vim82/syntax" directory, set $VIMRUNTIME to
 This command also sources the |menu.vim| script when the GUI is running or
 will start soon.  See |'go-M'| about avoiding that.
 
-							*:syn-on* *:syntax-on*
-The `:syntax enable` command will keep most of your current color settings.
-This allows using `:highlight` commands to set your preferred colors before or
-after using this command.  If you want Vim to overrule your settings with the
-defaults, use: >
-	:syntax on
-<
 					*:hi-normal* *:highlight-normal*
 If you are running in the GUI, you can get white text on a black background
 with: >
 	:highlight Normal guibg=Black guifg=White
 For a color terminal see |:hi-normal-cterm|.
-For setting up your own colors syntax highlighting see |syncolor|.
 
 NOTE: The syntax files on MS-Windows have lines that end in <CR><NL>.
 The files for Unix end in <NL>.  This means you should use the right type of
@@ -277,12 +273,6 @@ located.  This is used here as the variable |$VIMRUNTIME|.
     |
     +-	Source first syntax/synload.vim in 'runtimepath'
     |	|
-    |	+-  Setup the colors for syntax highlighting.  If a color scheme is
-    |	|   defined it is loaded again with ":colors {name}".  Otherwise
-    |	|   ":runtime! syntax/syncolor.vim" is used.  ":syntax on" overrules
-    |	|   existing colors, ":syntax enable" only sets groups that weren't
-    |	|   set yet.
-    |	|
     |	+-  Set up syntax autocmds to load the appropriate syntax file when
     |	|   the 'syntax' option is set. *synload-1*
     |	|
@@ -371,9 +361,6 @@ the desired value, or restored to their default by removing the variable using
 Remarks:
 - Some truly ancient browsers may not show the background colors.
 - From most browsers you can also print the file (in color)!
-- The latest TOhtml may actually work with older versions of Vim, but some
-  features such as conceal support will not function, and the colors may be
-  incorrect for an old Vim without GUI support compiled in.
 
 Here is an example how to run the script over all .c and .h files from a
 Unix shell: >
@@ -900,7 +887,7 @@ For Visual Basic use: >
 
 BAAN						    *baan.vim* *baan-syntax*
 
-The baan.vim gives syntax support for BaanC of release BaanIV upto SSA ERP LN
+The baan.vim gives syntax support for BaanC of release BaanIV up to SSA ERP LN
 for both 3 GL and 4 GL programming. Large number of standard defines/constants
 are supported.
 
@@ -1058,33 +1045,47 @@ This works immediately.
 
 CLOJURE							*ft-clojure-syntax*
 
-The default syntax groups can be augmented through the
-*g:clojure_syntax_keywords* and *b:clojure_syntax_keywords* variables. The
-value should be a |Dictionary| of syntax group names to a |List| of custom
-identifiers:
+						*g:clojure_syntax_keywords*
+
+Syntax highlighting of public vars in "clojure.core" is provided by default,
+but additional symbols can be highlighted by adding them to the
+|g:clojure_syntax_keywords| variable.  The value should be a |Dictionary| of
+syntax group names, each containing a |List| of identifiers.
 >
 	let g:clojure_syntax_keywords = {
-	    \ 'clojureMacro': ["defproject", "defcustom"],
-	    \ 'clojureFunc': ["string/join", "string/replace"]
+	    \   'clojureMacro': ["defproject", "defcustom"],
+	    \   'clojureFunc': ["string/join", "string/replace"]
 	    \ }
 <
 Refer to the Clojure syntax script for valid syntax group names.
 
-If the |buffer-variable| *b:clojure_syntax_without_core_keywords* is set, only
-language constants and special forms are matched.
+There is also *b:clojure_syntax_keywords* which is a buffer-local variant of
+this variable intended for use by plugin authors to highlight symbols
+dynamically.
 
-Setting *g:clojure_fold* enables folding Clojure code via the syntax engine.
-Any list, vector, or map that extends over more than one line can be folded
-using the standard Vim |fold-commands|.
+By setting the *b:clojure_syntax_without_core_keywords* variable, vars from
+"clojure.core" will not be highlighted by default.  This is useful for
+namespaces that have set `(:refer-clojure :only [])`
 
-Please note that this option does not work with scripts that redefine the
-bracket syntax regions, such as rainbow-parentheses plugins.
 
-This option is off by default.
+							*g:clojure_fold*
+
+Setting |g:clojure_fold| to `1` will enable the folding of Clojure code.  Any
+list, vector or map that extends over more than one line can be folded using
+the standard Vim |fold-commands|.
+
+
+						*g:clojure_discard_macro*
+
+Set this variable to `1` to enable basic highlighting of Clojure's "discard
+reader macro".
 >
-	" Default
-	let g:clojure_fold = 0
+	#_(defn foo [x]
+	    (println x))
 <
+Note that this option will not correctly highlight stacked discard macros
+(e.g. `#_#_`).
+
 
 COBOL						*cobol.vim* *ft-cobol-syntax*
 
@@ -1109,11 +1110,13 @@ The ColdFusion syntax file is based on the HTML syntax file.
 
 CPP						*cpp.vim* *ft-cpp-syntax*
 
-Most of things are same as |ft-c-syntax|.
+Most things are the same as |ft-c-syntax|.
 
 Variable		Highlight ~
 cpp_no_cpp11		don't highlight C++11 standard items
 cpp_no_cpp14		don't highlight C++14 standard items
+cpp_no_cpp17		don't highlight C++17 standard items
+cpp_no_cpp20		don't highlight C++20 standard items
 
 
 CSH						*csh.vim* *ft-csh-syntax*
@@ -1397,11 +1400,17 @@ To select syntax highlighting file for Euphoria, as well as for
 auto-detecting the *.e and *.E file extensions as Euphoria file type,
 add the following line to your startup file: >
 
-	:let filetype_euphoria="euphoria3"
+	:let g:filetype_euphoria = "euphoria3"
 
-	or
+<	or >
 
-	:let filetype_euphoria="euphoria4"
+	:let g:filetype_euphoria = "euphoria4"
+
+Elixir and Euphoria share the *.ex file extension.  If the filetype is 
+specifically set as Euphoria with the g:filetype_euphoria variable, or the
+file is determined to be Euphoria based on keywords in the file, then the
+filetype will be set as Euphoria. Otherwise, the filetype will default to
+Elixir.
 
 
 ERLANG						*erlang.vim* *ft-erlang-syntax*
@@ -1417,6 +1426,22 @@ put the following line in your vimrc: >
 To enable highlighting some special atoms, put this in your vimrc: >
 
       :let g:erlang_highlight_special_atoms = 1
+
+
+ELIXIR						*elixir.vim* *ft-elixir-syntax*
+
+Elixir is a dynamic, functional language for building scalable and maintainable
+applications.
+
+The following file extensions are auto-detected as Elixir file types:
+
+	*.ex, *.exs, *.eex, *.leex, *.lock
+
+Elixir and Euphoria share the *.ex file extension. If the filetype is 
+specifically set as Euphoria with the g:filetype_euphoria variable, or the
+file is determined to be Euphoria based on keywords in the file, then the
+filetype will be set as Euphoria. Otherwise, the filetype will default to
+Elixir.
 
 
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
@@ -1470,6 +1495,14 @@ this mode define the following variable in your vimrc file >
 The enhanced mode also takes advantage of additional color features for a dark
 gvim display.  Here, statements are colored LightYellow instead of Yellow, and
 conditionals are LightBlue for better distinction.
+
+
+FORTH						*forth.vim* *ft-forth-syntax*
+
+Files matching "*.fs" could be F# or Forth.  If the automatic detection
+doesn't work for you, or you don't edit F# at all, use this in your
+startup vimrc: >
+   :let filetype_fs = "forth"
 
 
 FORTRAN					*fortran.vim* *ft-fortran-syntax*
@@ -3128,6 +3161,14 @@ buffer by buffer basis.
 For more detailed instructions see |ft_sql.txt|.
 
 
+SQUIRREL				*squirrel.vim* *ft-squirrel-syntax*
+
+Squirrel is a high level imperative, object-oriented programming language,
+designed to be a light-weight scripting language that fits in the size, memory
+bandwidth, and real-time requirements of applications like video games.  Files
+with the following extensions are recognized as squirrel files: .nut.
+
+
 TCSH						*tcsh.vim* *ft-tcsh-syntax*
 
 This covers the shell named "tcsh".  It is a superset of csh.  See |csh.vim|
@@ -3398,8 +3439,8 @@ syntax highlighting script handles this with the following logic:
  Tex: Match Check Control~
 
 	Sometimes one actually wants mismatched parentheses, square braces,
-	and or curly braces; for example, \text{(1,10] is a range from but
-	not including 1 to and including 10}.  This wish, of course, conflicts
+	and or curly braces; for example, \text{(1,10]} is a range from but
+	not including 1 to and including 10.  This wish, of course, conflicts
 	with the desire to provide delimiter mismatch detection.  To
 	accommodate these conflicting goals, syntax/tex.vim provides >
 		g:tex_matchcheck = '[({[]'
@@ -4037,7 +4078,7 @@ match in the same position overrules an earlier one).  The "transparent"
 argument makes the "myVim" match use the same highlighting as "myString".  But
 it does not contain anything.  If the "contains=NONE" argument would be left
 out, then "myVim" would use the contains argument from myString and allow
-"myWord" to be contained, which will be highlighted as a Constant.  This
+"myWord" to be contained, which will be highlighted as a Comment.  This
 happens because a contained match doesn't match inside itself in the same
 position, thus the "myVim" match doesn't overrule the "myWord" match here.
 
@@ -4414,7 +4455,7 @@ it marks the "\(\I\i*\)" sub-expression as external; in the end pattern, it
 changes the \z1 back-reference into an external reference referring to the
 first external sub-expression in the start pattern.  External references can
 also be used in skip patterns: >
-  :syn region foo start="start \(\I\i*\)" skip="not end \z1" end="end \z1"
+  :syn region foo start="start \z(\I\i*\)" skip="not end \z1" end="end \z1"
 
 Note that normal and external sub-expressions are completely orthogonal and
 indexed separately; for instance, if the pattern "\z(..\)\(..\)" is applied
@@ -4745,19 +4786,19 @@ in their own color.
 			This is basically the same as >
 				:echo g:colors_name
 <			In case g:colors_name has not been defined :colo will
-			output "default".  When compiled without the |+eval|
-			feature it will output "unknown".
+			output "default".
 
 :colo[rscheme] {name}	Load color scheme {name}.  This searches 'runtimepath'
-			for the file "colors/{name}.vim".  The first one that
+			for the file "colors/{name}.(vim|lua)".  The first one that
 			is found is loaded.
+			Note: "colors/{name}.vim" is tried first.
 			Also searches all plugins in 'packpath', first below
 			"start" and then under "opt".
 
 			Doesn't work recursively, thus you can't use
 			":colorscheme" in a color scheme script.
 
-			To customize a colorscheme use another name, e.g.
+			To customize a color scheme use another name, e.g.
 			"~/.config/nvim/colors/mine.vim", and use `:runtime` to
 			load the original colorscheme: >
 				runtime colors/evening.vim
@@ -5077,9 +5118,19 @@ Substitute	|:substitute| replacement text highlighting
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
+							*hl-LineNrAbove*
+LineNrAbove	Line number for when the 'relativenumber'
+		option is set, above the cursor line.
+							*hl-LineNrBelow*
+LineNrBelow	Line number for when the 'relativenumber'
+		option is set, below the cursor line.
 							*hl-CursorLineNr*
-CursorLineNr	Like LineNr when 'cursorline' or 'relativenumber' is set for
-		the cursor line.
+CursorLineNr	Like LineNr when 'cursorline' is set and 'cursorlineopt'
+		contains "number" or is "both", for the cursor line.
+							*hl-CursorLineSign*
+CursorLineSign	Like SignColumn when 'cursorline' is set for the cursor line.
+							*hl-CursorLineFold*
+CursorLineFold	Like FoldColumn when 'cursorline' is set for the cursor line.
 							*hl-MatchParen*
 MatchParen	The character under the cursor or just before it, if it
 		is a paired bracket, and its match. |pi_paren.txt|
@@ -5274,50 +5325,9 @@ back to their Vim default.
 Note that if you are using a color scheme, the colors defined by the color
 scheme for syntax highlighting will be lost.
 
-What this actually does is: >
-
-	let g:syntax_cmd = "reset"
-	runtime! syntax/syncolor.vim
-
-Note that this uses the 'runtimepath' option.
-
-							*syncolor*
-If you want to use different colors for syntax highlighting, you can add a Vim
-script file to set these colors.  Put this file in a directory in
-'runtimepath' which comes after $VIMRUNTIME, so that your settings overrule
-the default colors.  This way these colors will be used after the ":syntax
-reset" command.
-
-For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.
-Example: >
-
-	if &background == "light"
-	  highlight comment ctermfg=darkgreen guifg=darkgreen
-	else
-	  highlight comment ctermfg=green guifg=green
-	endif
-
-								*E679*
-Do make sure this syncolor.vim script does not use a "syntax on", set the
-'background' option or uses a "colorscheme" command, because it results in an
-endless loop.
-
 Note that when a color scheme is used, there might be some confusion whether
 your defined colors are to be used or the colors from the scheme.  This
 depends on the color scheme file.  See |:colorscheme|.
-
-							*syntax_cmd*
-The "syntax_cmd" variable is set to one of these values when the
-syntax/syncolor.vim files are loaded:
-   "on"		":syntax on" command.  Highlight colors are overruled but
-		links are kept
-   "enable"	":syntax enable" command.  Only define colors for groups that
-		don't have highlighting yet.  Use ":syntax default".
-   "reset"	":syntax reset" command or loading a color scheme.  Define all
-		the colors.
-   "skip"	Don't define colors.  Used to skip the default settings when a
-		syncolor.vim file earlier in 'runtimepath' has already set
-		them.
 
 ==============================================================================
 16. Highlighting tags					*tag-highlight*
@@ -5402,9 +5412,6 @@ This is aimed at authors of a syntax file.
 If your syntax causes redrawing to be slow, here are a few hints on making it
 faster.  To see slowness switch on some features that usually interfere, such
 as 'relativenumber' and |folding|.
-
-Note: this is only available when compiled with the |+profile| feature.
-You many need to build Vim with "huge" features.
 
 To find out what patterns are consuming most time, get an overview with this
 sequence: >

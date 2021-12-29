@@ -104,7 +104,7 @@ func Test_true_false_arg()
   call Try_arg_true_false('maparg("asdf", "i", %v%)', "", "asdff")
   call Try_arg_true_false('FilterMapArg(maparg("asdf", "i", 1, %v%))', "asdff", {'rhs': 'asdff'})
 
-  call Try_arg_true_false('hasmapto("asdf", "i", %v%)', 0, 1)
+  call Try_arg_true_false('"asdf"->hasmapto("i", %v%)', 0, 1)
 
   new colored
   call setline(1, '<here>')

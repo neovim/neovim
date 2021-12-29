@@ -10,7 +10,7 @@
 
 typedef enum {
   kWinpty,
-  kConpty
+  kConpty,
 } PtyType;
 
 typedef struct pty_process {

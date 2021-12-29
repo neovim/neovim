@@ -14,20 +14,20 @@ typedef int colnr_T;
 #define PRIdCOLNR "d"
 
 /// Maximal (invalid) line number
-enum { MAXLNUM = 0x7fffffff };
+enum { MAXLNUM = 0x7fffffff, };
 /// Maximal column number
-enum { MAXCOL = INT_MAX };
+enum { MAXCOL = INT_MAX, };
 // Minimum line number
-enum { MINLNUM = 1 };
+enum { MINLNUM = 1, };
 // minimum column number
-enum { MINCOL = 1 };
+enum { MINCOL = 1, };
 
 /*
  * position in file or buffer
  */
 typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
+  linenr_T lnum;        // line number
+  colnr_T col;          // column number
   colnr_T coladd;
 } pos_T;
 
@@ -36,8 +36,8 @@ typedef struct {
  * Same, but without coladd.
  */
 typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
+  linenr_T lnum;        // line number
+  colnr_T col;          // column number
 } lpos_T;
 
 #endif  // NVIM_POS_H

@@ -96,7 +96,7 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
     if prog_version !~ '^' . a:major_version
       return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python '
             \ . a:major_version . '.']
-    elseif prog_version =~ '^' . a:major_version && prog_version < min_version
+    elseif prog_version =~ '^' . a:major_version && str2nr(prog_version[2:]) < str2nr(min_version[2:])
       return [0, prog_path . ' is Python ' . prog_version . ' and cannot provide Python >= '
             \ . min_version . '.']
     endif

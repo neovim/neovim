@@ -3,10 +3,10 @@
 
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 
-/* flags for buf_copy_options() */
-#define BCO_ENTER       1       /* going to enter the buffer */
-#define BCO_ALWAYS      2       /* always copy the options */
-#define BCO_NOHELP      4       /* don't touch the help related options */
+// flags for buf_copy_options()
+#define BCO_ENTER       1       // going to enter the buffer
+#define BCO_ALWAYS      2       // always copy the options
+#define BCO_NOHELP      4       // don't touch the help related options
 
 /// Flags for option-setting functions
 ///
@@ -22,6 +22,7 @@ typedef enum {
   OPT_ONECOLUMN = 64,  ///< list options one per line
   OPT_NO_REDRAW = 128,  ///< ignore redraw flags on option
   OPT_SKIPRTP = 256,  ///< "skiprtp" in 'sessionoptions'
+  OPT_CLEAR = 512,  ///< Clear local value of an option.
 } OptionFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

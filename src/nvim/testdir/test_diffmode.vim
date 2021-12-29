@@ -387,7 +387,7 @@ func Test_diffoff()
   call setline(1, ['One', '', 'Two', 'Three'])
   diffthis
   redraw
-  call assert_notequal(normattr, screenattr(1, 1))
+  call assert_notequal(normattr, 1->screenattr(1))
   diffoff!
   redraw
   call assert_equal(normattr, screenattr(1, 1))
@@ -540,7 +540,7 @@ func Test_diffopt_hiddenoff()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_diffoff_hidden()
@@ -577,7 +577,7 @@ func Test_diffoff_hidden()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_setting_cursor()
@@ -725,7 +725,7 @@ func Test_diff_filler()
   diffthis
   redraw
 
-  call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'diff_filler(v:val)'))
+  call assert_equal([0, 0, 0, 0, 0, 0, 0, 1, 0], map(range(-1, 7), 'v:val->diff_filler()'))
   wincmd w
   call assert_equal([0, 0, 0, 0, 2, 0, 0, 0], map(range(-1, 6), 'diff_filler(v:val)'))
 
@@ -741,16 +741,16 @@ func Test_diff_hlID()
   diffthis
   redraw
 
-  call assert_equal(synIDattr(diff_hlID(-1, 1), "name"), "")
+  call diff_hlID(-1, 1)->synIDattr("name")->assert_equal("")
 
   call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))
-  call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
+  call diff_hlID(1, 1)->synIDattr("name")->assert_equal("DiffChange")
   call assert_equal(diff_hlID(1, 2), hlID("DiffText"))
-  call assert_equal(synIDattr(diff_hlID(1, 2), "name"), "DiffText")
-  call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
+  call diff_hlID(1, 2)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(2, 1)->synIDattr("name")->assert_equal("")
   call assert_equal(diff_hlID(3, 1), hlID("DiffAdd"))
-  call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "DiffAdd")
-  call assert_equal(synIDattr(diff_hlID(4, 1), "name"), "")
+  call diff_hlID(3, 1)->synIDattr("name")->assert_equal("DiffAdd")
+  call diff_hlID(4, 1)->synIDattr("name")->assert_equal("")
 
   wincmd w
   call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))
@@ -965,6 +965,33 @@ func Test_diff_screen()
   call delete('XdiffSetup')
 endfunc
 
+func Test_diff_with_scroll_and_change()
+  CheckScreendump
+
+  let lines =<< trim END
+	call setline(1, range(1, 15))
+	vnew
+	call setline(1, range(9, 15))
+	windo diffthis
+	wincmd h
+	exe "normal Gl5\<C-E>"
+  END
+  call writefile(lines, 'Xtest_scroll_change')
+  let buf = RunVimInTerminal('-S Xtest_scroll_change', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_01', {})
+
+  call term_sendkeys(buf, "ax\<Esc>")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_02', {})
+
+  call term_sendkeys(buf, "\<C-W>lay\<Esc>")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_03', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_scroll_change')
+endfunc
+
 func Test_diff_with_cursorline()
   CheckScreendump
 
@@ -988,6 +1015,37 @@ func Test_diff_with_cursorline()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_diff_cursorline')
+endfunc
+
+func Test_diff_with_cursorline_breakindent()
+  CheckScreendump
+
+  call writefile([
+	\ 'hi CursorLine ctermbg=red ctermfg=white',
+	\ 'set noequalalways wrap diffopt=followwrap cursorline breakindent',
+	\ '50vnew',
+	\ 'call setline(1, ["  ","  ","  ","  "])',
+	\ 'exe "norm 20Afoo\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abar\<Esc>"',
+	\ 'vnew',
+	\ 'call setline(1, ["  ","  ","  ","  "])',
+	\ 'exe "norm 20Abee\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abaz\<Esc>"',
+	\ 'windo diffthis',
+	\ '2wincmd w',
+	\ ], 'Xtest_diff_cursorline_breakindent')
+  let buf = RunVimInTerminal('-S Xtest_diff_cursorline_breakindent', {})
+
+  call term_sendkeys(buf, "gg0")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_01', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_02', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_03', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_04', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cursorline_breakindent')
 endfunc
 
 func Test_diff_with_syntax()

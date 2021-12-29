@@ -1,6 +1,7 @@
 # Tools
 /venv/
 compile_commands.json
+/.luarc.json
 
 # IDEs
 /.vs/
@@ -13,6 +14,7 @@ compile_commands.json
 /tmp/
 /.clangd/
 /.cache/clangd/
+/.ccls-cache/
 
 .DS_Store
 *.mo

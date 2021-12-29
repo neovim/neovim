@@ -15,14 +15,14 @@ endfunc
 
 func Test_getenv()
   unlet! $TESTENV
-  call assert_equal(v:null, getenv('TESTENV'))
+  call assert_equal(v:null, 'TESTENV'->getenv())
   let $TESTENV = 'foo'
   call assert_equal('foo', getenv('TESTENV'))
 endfunc
 
 func Test_setenv()
   unlet! $TESTENV
-  call setenv('TEST ENV', 'foo')
+  eval 'foo'->setenv('TEST ENV')
   call assert_equal('foo', getenv('TEST ENV'))
   call setenv('TEST ENV', v:null)
   call assert_equal(v:null, getenv('TEST ENV'))

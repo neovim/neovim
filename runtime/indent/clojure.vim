@@ -1,11 +1,11 @@
 " Vim indent file
 " Language:           Clojure
-" Maintainer:         Alex Vear <av@axvr.io>
+" Maintainer:         Alex Vear <alex@vear.uk>
 " Former Maintainers: Sung Pae <self@sungpae.com>
 "                     Meikel Brandmeyer <mb@kotka.de>
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)
-" Last Change:        2021-02-13
+" Last Change:        2021-10-26
 
 if exists("b:did_indent")
 	finish
@@ -24,7 +24,7 @@ setlocal indentkeys=!,o,O
 if exists("*searchpairpos")
 
 	if !exists('g:clojure_maxlines')
-		let g:clojure_maxlines = 100
+		let g:clojure_maxlines = 300
 	endif
 
 	if !exists('g:clojure_fuzzy_indent')
@@ -71,14 +71,10 @@ if exists("*searchpairpos")
 		return s:current_char() =~# '\v[\(\)\[\]\{\}]' && !s:ignored_region()
 	endfunction
 
-	" Returns 1 if string matches a pattern in 'patterns', which may be a
-	" list of patterns, or a comma-delimited string of implicitly anchored
-	" patterns.
+	" Returns 1 if string matches a pattern in 'patterns', which should be
+	" a list of patterns.
 	function! s:match_one(patterns, string)
-		let list = type(a:patterns) == type([])
-		           \ ? a:patterns
-		           \ : map(split(a:patterns, ','), '"^" . v:val . "$"')
-		for pat in list
+		for pat in a:patterns
 			if a:string =~# pat | return 1 | endif
 		endfor
 	endfunction
@@ -215,9 +211,10 @@ if exists("*searchpairpos")
 	endfunction
 
 	" Check if form is a reader conditional, that is, it is prefixed by #?
-	" or @#?
+	" or #?@
 	function! s:is_reader_conditional_special_case(position)
 		return getline(a:position[0])[a:position[1] - 3 : a:position[1] - 2] == "#?"
+			\|| getline(a:position[0])[a:position[1] - 4 : a:position[1] - 2] == "#?@"
 	endfunction
 
 	" Returns 1 for opening brackets, -1 for _anything else_.

@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Nov 24, 2020
-" Version:		196
+" Last Change:		Oct 26, 2021
+" Version:		199
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
@@ -13,33 +13,35 @@ if exists("b:current_syntax")
   finish
 endif
 
-" trying to answer the question: which shell is /bin/sh, really?
-" If the user has not specified any of g:is_kornshell, g:is_bash, g:is_posix, g:is_sh, then guess.
-if getline(1) =~ '\<ksh$'
+" If the shell script itself specifies which shell to use, use it
+if getline(1) =~ '\<ksh\>'
  let b:is_kornshell = 1
-elseif getline(1) =~ '\<bash$'
+elseif getline(1) =~ '\<bash\>'
  let b:is_bash      = 1
-elseif getline(1) =~ '\<dash$'
+elseif getline(1) =~ '\<dash\>'
  let b:is_dash      = 1
 elseif !exists("g:is_kornshell") && !exists("g:is_bash") && !exists("g:is_posix") && !exists("g:is_sh") && !exists("g:is_dash")
+ " user did not specify which shell to use, and 
+ " the script itself does not specify which shell to use. FYI: /bin/sh is ambiguous.
+ " Assuming /bin/sh is executable, and if its a link, find out what it links to.
  let s:shell = ""
  if executable("/bin/sh")
   let s:shell = resolve("/bin/sh")
  elseif executable("/usr/bin/sh")
   let s:shell = resolve("/usr/bin/sh")
  endif
- if     s:shell =~ 'ksh$'
+ if     s:shell =~ '\<ksh\>'
   let b:is_kornshell= 1
- elseif s:shell =~ 'bash$'
+ elseif s:shell =~ '\<bash\>'
   let b:is_bash = 1
- elseif s:shell =~ 'dash$'
+ elseif s:shell =~ '\<dash\>'
   let b:is_dash = 1
  endif
  unlet s:shell
 endif
 
 " handling /bin/sh with is_kornshell/is_sh {{{1
-" b:is_sh is set when "#! /bin/sh" is found;
+" b:is_sh will be set when "#! /bin/sh" is found;
 " However, it often is just a masquerade by bash (typically Linux)
 " or kornshell (typically workstations with Posix "sh").
 " So, when the user sets "g:is_bash", "g:is_kornshell",
@@ -98,12 +100,14 @@ if g:sh_fold_enabled && &fdm == "manual"
  setl fdm=syntax
 endif
 
-" set up the syntax-highlighting iskeyword
+" set up the syntax-highlighting for iskeyword
 if (v:version == 704 && has("patch-7.4.1142")) || v:version > 704
- if exists("b:is_bash")
-  exe "syn iskeyword ".&iskeyword.",-,:"
- else
-  exe "syn iskeyword ".&iskeyword.",-"
+ if !exists("g:sh_syntax_isk") || (exists("g:sh_syntax_isk") && g:sh_syntax_isk)
+  if exists("b:is_bash")
+   exe "syn iskeyword ".&iskeyword.",-,:"
+  else
+   exe "syn iskeyword ".&iskeyword.",-"
+  endif
  endif
 endif
 
@@ -143,7 +147,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 endif
 syn cluster shCommandSubList	contains=shAlias,shArithmetic,shCmdParenRegion,shCommandSub,shComment,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shHereDoc,shNumber,shOperator,shOption,shPosnParm,shHereString,shRedir,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shCurlyList	contains=shNumber,shComma,shDeref,shDerefSimple,shDerefSpecial
-" COMBAK: removing shEscape fromshDblQuoteList fails ksh04:43
+" COMBAK: removing shEscape from shDblQuoteList fails ksh04:43
 syn cluster shDblQuoteList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shDeref,shDerefSimple,shPosnParm,shCtrlSeq,shSpecial,shSpecialDQ
 syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial,shDerefWordError,shDerefPSR,shDerefPPS
 syn cluster shDerefVarList	contains=shDerefOffset,shDerefOp,shDerefVarArray,shDerefOpError
@@ -374,12 +378,11 @@ elseif !exists("g:sh_no_error")
  syn region  shExDoubleQuote	matchGroup=Error start=+\$"+ skip=+\\\\\|\\.+ end=+"+	contains=shStringSpecial
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell	nextgroup=shSpecialStart,shSpecialSQ
-syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\.+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
-syn region  shDoubleQuote	matchgroup=shQuote start=+"+ matchgroup=shSpecial skip=+\\"+ matchgroup=shQuote end=+"+		contained	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
+syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\.+ end=+"+			contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
 syn match   shStringSpecial	"[^[:print:] \t]"			contained
-syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"			nextgroup=shComment
-syn match   shSpecialSQ	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		contained	nextgroup=shBkslshSnglQuote,@shNoZSList
-syn match   shSpecialDQ	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		contained	nextgroup=shBkslshDblQuote,@shNoZSList
+syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\(\\[\\"'`$()#]\)\+"			nextgroup=shComment
+syn match   shSpecialSQ	"[^\\]\zs\%(\\\\\)*\(\\[\\"'`$()#]\)\+"		contained	nextgroup=shBkslshSnglQuote,@shNoZSList
+syn match   shSpecialDQ	"[^\\]\zs\%(\\\\\)*\(\\[\\"'`$()#]\)\+"		contained	nextgroup=shBkslshDblQuote,@shNoZSList
 syn match   shSpecialStart	"\%(\\\\\)*\\[\\"'`$()#]"			contained	nextgroup=shBkslshSnglQuote,shBkslshDblQuote,@shNoZSList
 syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecialNoZS	contained	"\%(\\\\\)*\\[\\"'`$()#]"
@@ -398,10 +401,11 @@ endif
 syn match	shComment		"^\s*\zs#.*$"	contains=@shCommentGroup
 syn match	shComment		"\s\zs#.*$"	contains=@shCommentGroup
 syn match	shComment	contained	"#.*$"	contains=@shCommentGroup
-syn match	shQuickComment	contained	"#.*$"
+syn match	shQuickComment	contained	"#.*$"          contains=@shCommentGroup
 syn match	shBQComment	contained	"#.\{-}\ze`"	contains=@shCommentGroup
 
 " Here Documents: {{{1
+"  (modified by Felipe Contreras)
 " =========================================
 ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc01 start="<<\s*\z([^ \t|>]\+\)"		matchgroup=shHereDoc01 end="^\z1\s*$"	contains=@shDblQuoteList
 ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc02 start="<<-\s*\z([^ \t|>]\+\)"		matchgroup=shHereDoc02 end="^\s*\z1\s*$"	contains=@shDblQuoteList

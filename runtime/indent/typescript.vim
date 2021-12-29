@@ -460,7 +460,7 @@ function! Fixedgq(lnum, count)
         return 1
     endif
 
-    " Put all the lines on one line and do normal spliting after that
+    " Put all the lines on one line and do normal splitting after that
     if l:count > 1
         while l:count > 1
             let l:count -= 1

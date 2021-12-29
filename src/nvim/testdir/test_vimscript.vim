@@ -635,7 +635,7 @@ function! MSG(enr, emsg)
 	if v:errmsg == ""
 	    Xout "Message missing."
 	else
-	    let v:errmsg = escape(v:errmsg, '"')
+	    let v:errmsg = v:errmsg->escape('"')
 	    Xout "Unexpected message:" v:errmsg
 	endif
     endif
@@ -1152,6 +1152,10 @@ func Test_type()
     call assert_equal(v:t_float, type(0.0))
     call assert_equal(v:t_bool, type(v:false))
     call assert_equal(v:t_bool, type(v:true))
+    call assert_equal(v:t_string, type(v:_null_string))
+    call assert_equal(v:t_list, type(v:_null_list))
+    call assert_equal(v:t_dict, type(v:_null_dict))
+    call assert_equal(v:t_blob, type(v:_null_blob))
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -1372,6 +1376,7 @@ func Test_bitwise_functions()
     " and
     call assert_equal(127, and(127, 127))
     call assert_equal(16, and(127, 16))
+    eval 127->and(16)->assert_equal(16)
     call assert_equal(0, and(127, 128))
     call assert_fails("call and(1.0, 1)", 'E805:')
     call assert_fails("call and([], 1)", 'E745:')
@@ -1382,6 +1387,7 @@ func Test_bitwise_functions()
     " or
     call assert_equal(23, or(16, 7))
     call assert_equal(15, or(8, 7))
+    eval 8->or(7)->assert_equal(15)
     call assert_equal(123, or(0, 123))
     call assert_fails("call or(1.0, 1)", 'E805:')
     call assert_fails("call or([], 1)", 'E745:')
@@ -1392,6 +1398,7 @@ func Test_bitwise_functions()
     " xor
     call assert_equal(0, xor(127, 127))
     call assert_equal(111, xor(127, 16))
+    eval 127->xor(16)->assert_equal(111)
     call assert_equal(255, xor(127, 128))
     call assert_fails("call xor(1.0, 1)", 'E805:')
     call assert_fails("call xor([], 1)", 'E745:')
@@ -1401,6 +1408,7 @@ func Test_bitwise_functions()
     call assert_fails("call xor(1, {})", 'E728:')
     " invert
     call assert_equal(65408, and(invert(127), 65535))
+    eval 127->invert()->and(65535)->assert_equal(65408)
     call assert_equal(65519, and(invert(16), 65535))
     call assert_equal(65407, and(invert(128), 65535))
     call assert_fails("call invert(1.0)", 'E805:')

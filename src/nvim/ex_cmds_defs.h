@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
+#include "nvim/pos.h"      // for linenr_T
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -58,7 +58,7 @@
 #define EX_SBOXOK        0x40000  // allowed in the sandbox
 #define EX_CMDWIN        0x80000  // allowed in cmdline window; when missing
                                   // disallows editing another buffer when
-                                  // curbuf_lock is set
+                                  // current buffer is locked
 #define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000  // allow flags after count in argument
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
@@ -78,15 +78,15 @@ typedef enum {
   ADDR_QUICKFIX,        // quickfix list entry number
   ADDR_UNSIGNED,        // positive count or zero, defaults to 1
   ADDR_OTHER,           // something else, use line number for '$', '%', etc.
-  ADDR_NONE             // no range used
+  ADDR_NONE,  // no range used
 } cmd_addr_T;
 
 typedef struct exarg exarg_T;
 
-/* behavior for bad character, "++bad=" argument */
-#define BAD_REPLACE     '?'     /* replace it with '?' (default) */
-#define BAD_KEEP        -1      /* leave it */
-#define BAD_DROP        -2      /* erase it */
+// behavior for bad character, "++bad=" argument
+#define BAD_REPLACE     '?'     // replace it with '?' (default)
+#define BAD_KEEP        -1      // leave it
+#define BAD_DROP        -2      // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
 
@@ -130,23 +130,23 @@ typedef struct {
   eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
   int cs_lflags;                    // loop flags: CSL_ flags
 } cstack_T;
-# define cs_rettv       cs_pend.csp_rv
-# define cs_exception   cs_pend.csp_ex
+#define cs_rettv       cs_pend.csp_rv
+#define cs_exception   cs_pend.csp_ex
 
 // Flags for the cs_lflags item in cstack_T.
 enum {
-  CSL_HAD_LOOP =    1,  // just found ":while" or ":for"
+  CSL_HAD_LOOP = 1,  // just found ":while" or ":for"
   CSL_HAD_ENDLOOP = 2,  // just found ":endwhile" or ":endfor"
-  CSL_HAD_CONT =    4,  // just found ":continue"
-  CSL_HAD_FINA =    8,  // just found ":finally"
+  CSL_HAD_CONT = 4,  // just found ":continue"
+  CSL_HAD_FINA = 8,  // just found ":finally"
 };
 
 /// Arguments used for Ex commands.
 struct exarg {
-  char_u      *arg;             ///< argument of the command
-  char_u      *nextcmd;         ///< next command (NULL if none)
-  char_u      *cmd;             ///< the name of the command (except for :make)
-  char_u      **cmdlinep;       ///< pointer to pointer of allocated cmdline
+  char_u *arg;             ///< argument of the command
+  char_u *nextcmd;         ///< next command (NULL if none)
+  char_u *cmd;             ///< the name of the command (except for :make)
+  char_u **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
@@ -156,7 +156,7 @@ struct exarg {
   linenr_T line2;               ///< the second line number or count
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
-  char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
+  char_u *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
   int append;                   ///< TRUE with ":w >>file" command
   int usefilter;                ///< TRUE with ":w !command" and ":r!command"
@@ -168,9 +168,9 @@ struct exarg {
   int force_enc;                ///< ++enc= argument (index in cmd[])
   int bad_char;                 ///< BAD_KEEP, BAD_DROP or replacement byte
   int useridx;                  ///< user command index
-  char_u *errmsg;               ///< returned error message
+  char *errmsg;                 ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
-  void   *cookie;               ///< argument for getline()
+  void *cookie;               ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
   long verbose_save;            ///< saved value of p_verbose
   int save_msg_silent;          ///< saved value of msg_silent
@@ -192,6 +192,7 @@ struct expand {
   int xp_context;               // type of expansion
   size_t xp_pattern_len;        // bytes in xp_pattern before cursor
   char_u *xp_arg;               // completion function
+  LuaRef xp_luaref;             // Ref to Lua completion function
   sctx_T xp_script_ctx;         // SCTX for completion function
   int xp_backslash;             // one of the XP_BS_ values
 #ifndef BACKSLASH_IN_FILENAME

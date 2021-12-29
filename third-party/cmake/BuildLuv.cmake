@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildLuv(PATCH_COMMAND ... CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build luv, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run
@@ -71,6 +69,7 @@ set(LUV_CONFIGURE_COMMAND_COMMON
   -DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3
   -DWITH_SHARED_LIBUV=ON
   -DBUILD_SHARED_LIBS=OFF
+  -DBUILD_STATIC_LIBS=ON
   -DBUILD_MODULE=OFF)
 
 if(USE_BUNDLED_LUAJIT)

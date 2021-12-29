@@ -462,8 +462,9 @@ the current window, try this custom `:HelpCurwin` command:
 	    execute mods .. ' helpclose'
 	    let s:did_open_help = v:true
 	  endif
-	  if !getcompletion(a:subject, 'help')->empty()
+	  if !empty(getcompletion(a:subject, 'help'))
 	    execute mods .. ' edit ' .. &helpfile
+	    set buftype=help
 	  endif
 	  return 'help ' .. a:subject
 	endfunction

@@ -5720,9 +5720,6 @@ msgstr ""
 "\n"
 "--- Terminal-taster ---"
 
-msgid "Cannot open $VIMRUNTIME/rgb.txt"
-msgstr "Kan ikke åbne $VIMRUNTIME/rgb.txt"
-
 #, c-format
 msgid "Kill job in \"%s\"?"
 msgstr "Dræb job i \"%s\"?"

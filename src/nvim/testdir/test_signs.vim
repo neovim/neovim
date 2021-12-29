@@ -15,13 +15,13 @@ func Test_sign()
   " the icon name when listing signs.
   sign define Sign1 text=x
 
-  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error icon=../../pixmaps/stock_vim_find_help.png')
+  call Sign_command_ignore_error('sign define Sign2 text=xy texthl=Title linehl=Error culhl=Search icon=../../pixmaps/stock_vim_find_help.png')
 
   " Test listing signs.
   let a=execute('sign list')
   call assert_match('^\nsign Sign1 text=x \nsign Sign2 ' .
 	      \ 'icon=../../pixmaps/stock_vim_find_help.png .*text=xy ' .
-	      \ 'linehl=Error texthl=Title$', a)
+	      \ 'linehl=Error texthl=Title culhl=Search$', a)
 
   let a=execute('sign list Sign1')
   call assert_equal("\nsign Sign1 text=x ", a)
@@ -126,6 +126,30 @@ func Test_sign()
   " call assert_fails("sign define Sign4 text= linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=\\ ab  linehl=Comment", 'E239:')
 
+  " an empty highlight argument for an existing sign clears it
+  sign define SignY texthl=TextHl culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_equal('TextHl', sl.texthl)
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY texthl= culhl=CulHl linehl=LineHl
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'texthl'))
+  call assert_equal('CulHl', sl.culhl)
+  call assert_equal('LineHl', sl.linehl)
+
+  sign define SignY linehl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'linehl'))
+  call assert_equal('CulHl', sl.culhl)
+
+  sign define SignY culhl=
+  let sl = sign_getdefined('SignY')[0]
+  call assert_false(has_key(sl, 'culhl'))
+
+  sign undefine SignY
+
   " define sign with whitespace
   sign define Sign4 text=\ X linehl=Comment
   sign undefine Sign4
@@ -194,15 +218,13 @@ func Test_sign_completion()
   call assert_equal('"sign define jump list place undefine unplace', @:)
 
   call feedkeys(":sign define Sign \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign icon= linehl= numhl= text= texthl=', @:)
+  call assert_equal('"sign define Sign culhl= icon= linehl= numhl= text= texthl=', @:)
 
-  call feedkeys(":sign define Sign linehl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign linehl=SpellBad SpellCap ' .
-	      \ 'SpellLocal SpellRare', @:)
-
-  call feedkeys(":sign define Sign texthl=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign define Sign texthl=SpellBad SpellCap ' .
-	      \ 'SpellLocal SpellRare', @:)
+  for hl in ['culhl', 'linehl', 'numhl', 'texthl']
+    call feedkeys(":sign define Sign "..hl.."=Spell\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"sign define Sign '..hl..'=SpellBad SpellCap ' .
+                \ 'SpellLocal SpellRare', @:)
+  endfor
 
   call writefile(repeat(["Sun is shining"], 30), "XsignOne")
   call writefile(repeat(["Sky is blue"], 30), "XsignTwo")
@@ -392,25 +414,28 @@ func Test_sign_funcs()
   call sign_undefine()
 
   " Tests for sign_define()
-  let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error'}
-  call assert_equal(0, sign_define("sign1", attr))
-  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error',
-	      \ 'linehl' : 'Search', 'text' : '=>'}], sign_getdefined())
+  let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error',
+              \ 'culhl': 'Visual', 'numhl': 'Number'}
+  call assert_equal(0, "sign1"->sign_define(attr))
+  call assert_equal([{'name' : 'sign1', 'texthl' : 'Error', 'linehl': 'Search',
+	      \ 'culhl': 'Visual', 'numhl': 'Number', 'text' : '=>'}],
+              \ sign_getdefined())
 
   " Define a new sign without attributes and then update it
   call sign_define("sign2")
   let attr = {'text' : '!!', 'linehl' : 'DiffAdd', 'texthl' : 'DiffChange',
-	      \ 'icon' : 'sign2.ico'}
+	      \ 'culhl': 'DiffDelete', 'numhl': 'Number', 'icon' : 'sign2.ico'}
   call Sign_define_ignore_error("sign2", attr)
   call assert_equal([{'name' : 'sign2', 'texthl' : 'DiffChange',
-	      \ 'linehl' : 'DiffAdd', 'text' : '!!', 'icon' : 'sign2.ico'}],
-	      \ sign_getdefined("sign2"))
+	      \ 'linehl' : 'DiffAdd', 'culhl' : 'DiffDelete', 'text' : '!!',
+              \ 'numhl': 'Number', 'icon' : 'sign2.ico'}],
+              \ "sign2"->sign_getdefined())
 
   " Test for a sign name with digits
   call assert_equal(0, sign_define(0002, {'linehl' : 'StatusLine'}))
   call assert_equal([{'name' : '2', 'linehl' : 'StatusLine'}],
 	      \ sign_getdefined(0002))
-  call sign_undefine(0002)
+  eval 0002->sign_undefine()
 
   " Tests for invalid arguments to sign_define()
   call assert_fails('call sign_define("sign4", {"text" : "===>"})', 'E239:')
@@ -434,7 +459,7 @@ func Test_sign_funcs()
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
-	      \ sign_getplaced('%', {'lnum' : 20}))
+	      \ '%'->sign_getplaced({'lnum' : 20}))
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
@@ -490,10 +515,10 @@ func Test_sign_funcs()
 	      \ 'E745:')
 
   " Tests for sign_unplace()
-  call sign_place(20, '', 'sign2', 'Xsign', {"lnum" : 30})
+  eval 20->sign_place('', 'sign2', 'Xsign', {"lnum" : 30})
   call assert_equal(0, sign_unplace('',
 	      \ {'id' : 20, 'buffer' : 'Xsign'}))
-  call assert_equal(-1, sign_unplace('',
+  call assert_equal(-1, ''->sign_unplace(
 	      \ {'id' : 30, 'buffer' : 'Xsign'}))
   call sign_place(20, '', 'sign2', 'Xsign', {"lnum" : 30})
   call assert_fails("call sign_unplace('',
@@ -1693,7 +1718,7 @@ func Test_sign_jump_func()
   let r = sign_jump(5, '', 'foo')
   call assert_equal(2, r)
   call assert_equal(2, line('.'))
-  let r = sign_jump(6, 'g1', 'foo')
+  let r = 6->sign_jump('g1', 'foo')
   call assert_equal(5, r)
   call assert_equal(5, line('.'))
   let r = sign_jump(5, '', 'bar')
@@ -1921,8 +1946,7 @@ func Test_sign_funcs_multi()
 	      \ 'group' : 'g1', 'priority' : 10}], s[0].signs)
 
   " Change an existing sign without specifying the group
-  call assert_equal([5], sign_placelist([
-	      \ {'id' : 5, 'name' : 'sign1', 'buffer' : 'Xsign'}]))
+  call assert_equal([5], [{'id' : 5, 'name' : 'sign1', 'buffer' : 'Xsign'}]->sign_placelist())
   let s = sign_getplaced('Xsign', {'id' : 5, 'group' : ''})
   call assert_equal([{'id' : 5, 'name' : 'sign1', 'lnum' : 11,
 	      \ 'group' : '', 'priority' : 10}], s[0].signs)
@@ -1955,7 +1979,7 @@ func Test_sign_funcs_multi()
 	      \ {'id' : 1, 'group' : 'g1'}, {'id' : 1, 'group' : 'g2'}]))
 
   " Invalid arguments
-  call assert_equal([], sign_unplacelist([]))
+  call assert_equal([], []->sign_unplacelist())
   call assert_fails('call sign_unplacelist({})', "E714:")
   call assert_fails('call sign_unplacelist([[]])', "E715:")
   call assert_fails('call sign_unplacelist(["abc"])', "E715:")

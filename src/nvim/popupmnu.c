@@ -9,26 +9,27 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
-#include "nvim/eval/typval.h"
-#include "nvim/popupmnu.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/edit.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
-#include "nvim/ui_compositor.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/memory.h"
-#include "nvim/window.h"
-#include "nvim/edit.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
-static pumitem_T *pum_array = NULL; // items of displayed pum
+static pumitem_T *pum_array = NULL;  // items of displayed pum
 static int pum_size;                // nr of items in "pum_array"
 static int pum_selected;            // index of selected item or -1
 static int pum_first = 0;           // index of top item
@@ -97,8 +98,7 @@ static void pum_compute_size(void)
 ///                      if false, a new item is selected, but the array
 ///                      is the same
 /// @param cmd_startcol only for cmdline mode: column of completed match
-void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
-                 int cmd_startcol)
+void pum_display(pumitem_T *array, int size, int selected, bool array_changed, int cmd_startcol)
 {
   int context_lines;
   int above_row;
@@ -233,7 +233,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         context_lines = 3;
       } else {
         context_lines = curwin->w_cline_row
-          + curwin->w_cline_height - curwin->w_wrow;
+                        + curwin->w_cline_height - curwin->w_wrow;
       }
 
       pum_row = pum_win_row + context_lines;
@@ -386,7 +386,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
 void pum_redraw(void)
 {
   int row = 0;
-  int col;
+  int grid_col;
   int attr_norm = win_hl_attr(curwin, HLF_PNI);
   int attr_select = win_hl_attr(curwin, HLF_PSI);
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
@@ -440,7 +440,7 @@ void pum_redraw(void)
   }
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
-    int row_off = pum_above ? pum_height : 0;
+    int row_off = pum_above ? -pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_to_string(anchor),
                           pum_anchor_grid, pum_row-row_off, pum_col-col_off,
                           false, pum_grid.zindex);
@@ -479,7 +479,7 @@ void pum_redraw(void)
 
     // Display each entry, use two spaces for a Tab.
     // Do this 3 times: For the main text, kind and extra info
-    col = col_off;
+    grid_col = col_off;
     totwidth = 0;
 
     for (round = 1; round <= 3; ++round) {
@@ -487,17 +487,17 @@ void pum_redraw(void)
       s = NULL;
 
       switch (round) {
-        case 1:
-          p = pum_array[idx].pum_text;
-          break;
+      case 1:
+        p = pum_array[idx].pum_text;
+        break;
 
-        case 2:
-          p = pum_array[idx].pum_kind;
-          break;
+      case 2:
+        p = pum_array[idx].pum_kind;
+        break;
 
-        case 3:
-          p = pum_array[idx].pum_extra;
-          break;
+      case 3:
+        p = pum_array[idx].pum_extra;
+        break;
       }
 
       if (p != NULL) {
@@ -514,7 +514,7 @@ void pum_redraw(void)
             char_u saved = *p;
 
             *p = NUL;
-            st = (char_u *)transstr((const char *)s);
+            st = (char_u *)transstr((const char *)s, true);
             *p = saved;
 
             if (pum_rl) {
@@ -537,24 +537,15 @@ void pum_redraw(void)
                 }
               }
               grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row,
-                            col - size + 1, attr);
+                            grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
-              col -= width;
+              grid_col -= width;
             } else {
-              int size = (int)STRLEN(st);
-              int cells = (int)mb_string2cells(st);
-
-              // only draw the text that fits
-              while (size > 0 && col + cells > pum_width + pum_col) {
-                size--;
-                size -= utf_head_off(st, st + size);
-                cells -= utf_ptr2cells(st + size);
-              }
-
-              grid_puts_len(&pum_grid, st, size, row, col, attr);
+              // use grid_puts_len() to truncate the text
+              grid_puts(&pum_grid, st, row, grid_col, attr);
               xfree(st);
-              col += width;
+              grid_col += width;
             }
 
             if (*p != TAB) {
@@ -563,12 +554,12 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col - 1,
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col - 1,
                             attr);
-              col -= 2;
+              grid_col -= 2;
             } else {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, col, attr);
-              col += 2;
+              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col, attr);
+              grid_col += 2;
             }
             totwidth += 2;
             // start text at next char
@@ -599,21 +590,21 @@ void pum_redraw(void)
 
       if (pum_rl) {
         grid_fill(&pum_grid, row, row + 1, col_off - pum_base_width - n + 1,
-                  col + 1, ' ', ' ', attr);
-        col = col_off - pum_base_width - n + 1;
+                  grid_col + 1, ' ', ' ', attr);
+        grid_col = col_off - pum_base_width - n + 1;
       } else {
-        grid_fill(&pum_grid, row, row + 1, col,
+        grid_fill(&pum_grid, row, row + 1, grid_col,
                   col_off + pum_base_width + n, ' ', ' ', attr);
-        col = col_off + pum_base_width + n;
+        grid_col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (pum_rl) {
-      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, col + 1,
+      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, grid_col + 1,
                 ' ', ' ', attr);
     } else {
-      grid_fill(&pum_grid, row, row + 1, col, col_off + pum_width, ' ', ' ',
+      grid_fill(&pum_grid, row, row + 1, grid_col, col_off + pum_width, ' ', ' ',
                 attr);
     }
 
@@ -735,7 +726,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bt[2] == 'f')
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!BUFEMPTY()) {
+          while (!buf_is_empty(curbuf)) {
             ml_delete((linenr_T)1, false);
           }
         } else {

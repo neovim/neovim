@@ -9,7 +9,7 @@ func Test_setbufline_getbufline()
   hide
   call assert_equal(0, setbufline(b, 1, ['foo', 'bar']))
   call assert_equal(['foo'], getbufline(b, 1))
-  call assert_equal(['bar'], getbufline(b, 2))
+  call assert_equal(['bar'], getbufline(b, '$'))
   call assert_equal(['foo', 'bar'], getbufline(b, 1, 2))
   exe "bd!" b
   call assert_equal([], getbufline(b, 1, 2))
@@ -21,7 +21,7 @@ func Test_setbufline_getbufline()
   call assert_equal(1, setbufline(b, 5, ['x']))
   call assert_equal(1, setbufline(1234, 1, ['x']))
   call assert_equal(0, setbufline(b, 4, ['d', 'e']))
-  call assert_equal(['c'], getbufline(b, 3))
+  call assert_equal(['c'], b->getbufline(3))
   call assert_equal(['d'], getbufline(b, 4))
   call assert_equal(['e'], getbufline(b, 5))
   call assert_equal([], getbufline(b, 6))
@@ -82,6 +82,7 @@ func Test_appendbufline()
   call setline(1, ['a', 'b', 'c'])
   let b = bufnr('%')
   wincmd w
+  call assert_equal(1, appendbufline(b, -1, ['x']))
   call assert_equal(1, appendbufline(b, 4, ['x']))
   call assert_equal(1, appendbufline(1234, 1, ['x']))
   call assert_equal(0, appendbufline(b, 3, ['d', 'e']))
@@ -102,10 +103,13 @@ func Test_deletebufline()
   call assert_equal(0, deletebufline(b, 2, 8))
   call assert_equal(['aaa'], getbufline(b, 1, 2))
   exe "bd!" b
-  call assert_equal(1, deletebufline(b, 1))
+  call assert_equal(1, b->deletebufline(1))
+
+  call assert_equal(1, deletebufline(-1, 1))
 
   split Xtest
   call setline(1, ['a', 'b', 'c'])
+  call cursor(line('$'), 1)
   let b = bufnr('%')
   wincmd w
   call assert_equal(1, deletebufline(b, 4))
@@ -131,11 +135,11 @@ func Test_appendbufline_redraw()
   endif
   let lines =<< trim END
     new foo
-    let winnr=bufwinnr('foo')
-    let buf=bufnr('foo')
+    let winnr = 'foo'->bufwinnr()
+    let buf = bufnr('foo')
     wincmd p
     call appendbufline(buf, '$', range(1,200))
-    exe winnr. 'wincmd w'
+    exe winnr .. 'wincmd w'
     norm! G
     wincmd p
     call deletebufline(buf, 1, '$')

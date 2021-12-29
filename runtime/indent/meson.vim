@@ -20,6 +20,8 @@ setlocal autoindent	" indentexpr isn't much help otherwise
 setlocal indentexpr=GetMesonIndent(v:lnum)
 setlocal indentkeys+==elif,=else,=endforeach,=endif,0)
 
+let b:undo_indent = "setl ai< inde< indk< lisp<"
+
 " Only define the function once.
 if exists("*GetMesonIndent")
   finish

@@ -175,10 +175,8 @@ This switches on three very clever mechanisms:
 
 
 				*restore-cursor* *last-position-jump*  >
-    autocmd BufReadPost *
-      \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
-      \ |   exe "normal! g`\""
-      \ | endif
+    autocmd BufRead * autocmd FileType <buffer> ++once
+      \ if &ft !~# 'commit\|rebase' && line("'\"") > 1 && line("'\"") <= line("$") | exe 'normal! g`"' | endif
 
 Another autocommand.  This time it is used after reading any file.  The
 complicated stuff after it checks if the '" mark is defined, and jumps to it
@@ -411,7 +409,7 @@ Examples for the "stuff" filetype on Unix: >
 The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
 part of the plugin file doesn't matter, you can use it to have several plugins
-for the same filetype.  Note that it must end in ".vim".
+for the same filetype.  Note that it must end in ".vim" or ".lua".
 
 
 Further reading:

@@ -47,7 +47,7 @@ func FuncWithRef(a)
 endfunc
 
 func Test_user_func()
-  let g:FuncRef=function("FuncWithRef")
+  let g:FuncRef = function("FuncWithRef")
   let g:counter = 0
   inoremap <expr> ( ListItem()
   inoremap <expr> [ ListReset()
@@ -61,6 +61,14 @@ func Test_user_func()
   call assert_equal('ok', Compute(45, 5, "retval"))
   call assert_equal(9, g:retval)
   call assert_equal(333, g:FuncRef(333))
+
+  let g:retval = "nop"
+  call assert_equal('xxx4asdf', "xxx"->Table(4, "asdf"))
+  call assert_equal('fail', 45->Compute(0, "retval"))
+  call assert_equal('nop', g:retval)
+  call assert_equal('ok', 45->Compute(5, "retval"))
+  call assert_equal(9, g:retval)
+  " call assert_equal(333, 333->g:FuncRef())
 
   enew
 
@@ -148,6 +156,14 @@ func Test_default_arg()
 	\ .. "1    return deepcopy(a:)\n"
 	\ .. "   endfunction",
 	\ execute('func Args2'))
+endfunc
+
+func s:addFoo(lead)
+  return a:lead .. 'foo'
+endfunc
+
+func Test_user_method()
+  eval 'bar'->s:addFoo()->assert_equal('barfoo')
 endfunc
 
 func Test_failed_call_in_try()

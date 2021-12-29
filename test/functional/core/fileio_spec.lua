@@ -15,6 +15,7 @@ local read_file = helpers.read_file
 local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
 local iswin = helpers.iswin
+local assert_alive = helpers.assert_alive
 
 describe('fileio', function()
   before_each(function()
@@ -26,6 +27,7 @@ describe('fileio', function()
     os.remove('Xtest_startup_file1~')
     os.remove('Xtest_startup_file2')
     os.remove('Xtest_тест.md')
+    os.remove('Xtest-u8-int-max')
     rmdir('Xtest_startup_swapdir')
     rmdir('Xtest_backupdir')
   end)
@@ -127,6 +129,13 @@ describe('fileio', function()
     funcs.writefile(text, fname, 's')
     table.insert(text, '')
     eq(text, funcs.readfile(fname, 'b'))
+  end)
+  it('read invalid u8 over INT_MAX doesn\'t segfault', function()
+    clear()
+    command('call writefile(0zFFFFFFFF, "Xtest-u8-int-max")')
+    -- This should not segfault
+    command('edit ++enc=utf32 Xtest-u8-int-max')
+    assert_alive()
   end)
 end)
 

@@ -72,7 +72,7 @@ if ($compiler -eq 'MINGW') {
   & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
@@ -168,6 +168,11 @@ if (-not $NoTests) {
   if ($uploadToCodecov) {
     bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
   }
+}
+
+# Ensure choco's cpack is not in PATH otherwise, it conflicts with CMake's
+if (Test-Path -Path $env:ChocolateyInstall\bin\cpack.exe) {
+  Remove-Item -Path $env:ChocolateyInstall\bin\cpack.exe -Force
 }
 
 # Build artifacts

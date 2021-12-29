@@ -1,11 +1,11 @@
 " Vim filetype plugin file
 " Language:           Clojure
-" Maintainer:         Alex Vear <av@axvr.io>
+" Maintainer:         Alex Vear <alex@vear.uk>
 " Former Maintainers: Sung Pae <self@sungpae.com>
 "                     Meikel Brandmeyer <mb@kotka.de>
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)
-" Last Change:        2021-02-13
+" Last Change:        2021-10-26
 
 if exists("b:did_ftplugin")
 	finish
@@ -17,7 +17,7 @@ set cpo&vim
 
 let b:undo_ftplugin = 'setlocal iskeyword< define< formatoptions< comments< commentstring< lispwords<'
 
-setlocal iskeyword+=?,-,*,!,+,/,=,<,>,.,:,$
+setlocal iskeyword+=?,-,*,!,+,/,=,<,>,.,:,$,%,&,\|
 
 " There will be false positives, but this is better than missing the whole set
 " of user-defined def* definitions.
@@ -43,7 +43,7 @@ setlocal commentstring=;\ %s
 " specially and hence are not indented specially.
 "
 " -*- LISPWORDS -*-
-" Generated from https://github.com/clojure-vim/clojure.vim/blob/f8594e7030cdfb0b7990ac92953c77a08a7220f0/clj/src/vim_clojure_static/generate.clj
+" Generated from https://github.com/clojure-vim/clojure.vim/blob/62b215f079ce0f3834fd295c7a7f6bd8cc54bcc3/clj/src/vim_clojure_static/generate.clj
 setlocal lispwords=as->,binding,bound-fn,case,catch,cond->,cond->>,condp,def,definline,definterface,defmacro,defmethod,defmulti,defn,defn-,defonce,defprotocol,defrecord,defstruct,deftest,deftest-,deftype,doseq,dotimes,doto,extend,extend-protocol,extend-type,fn,for,if,if-let,if-not,if-some,let,letfn,locking,loop,ns,proxy,reify,set-test,testing,when,when-first,when-let,when-not,when-some,while,with-bindings,with-in-str,with-local-vars,with-open,with-precision,with-redefs,with-redefs-fn,with-test
 
 " Provide insert mode completions for special forms and clojure.core. As
@@ -64,8 +64,8 @@ if exists('loaded_matchit')
 	let b:undo_ftplugin .= ' | unlet! b:match_words b:match_skip'
 endif
 
-" Win32 can filter files in the browse dialog
-if has("gui_win32") && !exists("b:browsefilter")
+" Filter files in the browse dialog
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 	let b:browsefilter = "Clojure Source Files (*.clj)\t*.clj\n" .
 	                   \ "ClojureScript Source Files (*.cljs)\t*.cljs\n" .
 	                   \ "Java Source Files (*.java)\t*.java\n" .

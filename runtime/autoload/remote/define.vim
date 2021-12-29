@@ -240,7 +240,11 @@ function! s:GetAutocmdPrefix(name, opts)
   endif
 
   if has_key(a:opts, 'nested') && a:opts.nested
-    call add(rv, 'nested')
+    call add(rv, '++nested')
+  endif
+
+  if has_key(a:opts, 'once') && a:opts.once
+    call add(rv, '++once')
   endif
 
   return join(rv, ' ')

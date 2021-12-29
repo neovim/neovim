@@ -1,19 +1,11 @@
 #ifndef NVIM_DECORATION_H
 #define NVIM_DECORATION_H
 
-#include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/pos.h"
 
 // actual Decoration data is in extmark_defs.h
-
-typedef struct {
-  char *text;
-  int hl_id;
-} VirtTextChunk;
-
-typedef kvec_t(VirtTextChunk) VirtText;
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
 typedef uint16_t DecorPriority;
 #define DECOR_PRIORITY_BASE 0x1000
@@ -32,21 +24,33 @@ typedef enum {
   kHlModeBlend,
 } HlMode;
 
-struct Decoration
-{
-  int hl_id;  // highlight group
+typedef kvec_t(VirtTextChunk) VirtText;
+#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
+
+
+typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
+
+
+struct Decoration {
   VirtText virt_text;
+  VirtLines virt_lines;
+
+  int hl_id;  // highlight group
   VirtTextPos virt_text_pos;
-  bool virt_text_hide;
   HlMode hl_mode;
+
+  // TODO(bfredl): at some point turn this into FLAGS
+  bool virt_text_hide;
   bool hl_eol;
+  bool shared;  // shared decoration, don't free
+  bool virt_lines_above;
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
-  bool shared;  // shared decoration, don't free
   int col;  // fixed col value, like win_col
+  int virt_text_width;  // width of virt_text
 };
-#define DECORATION_INIT { 0, KV_INITIAL_VALUE, kVTEndOfLine, false, \
-                          kHlModeUnknown, false, DECOR_PRIORITY_BASE, false, 0 }
+#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, \
+                          false, false, false, false, DECOR_PRIORITY_BASE, 0, 0 }
 
 typedef struct {
   int start_row;
@@ -67,7 +71,7 @@ typedef struct {
   int row;
   int col_until;
   int current;
-  VirtText *virt_text;
+  int eol_col;
 } DecorState;
 
 typedef struct {
@@ -87,9 +91,9 @@ EXTERN DecorState decor_state INIT(= { 0 });
 EXTERN bool provider_active INIT(= false);
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-                                 { ns_id, false, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, -1 }
+  { ns_id, false, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, -1 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"

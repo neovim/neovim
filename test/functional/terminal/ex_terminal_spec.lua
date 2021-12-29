@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local feed = helpers.feed
@@ -95,19 +96,28 @@ describe(':terminal', function()
     eq(3, #jumps)
   end)
 
+  it('nvim_get_mode() in :terminal', function()
+    command(':terminal')
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    feed('i')
+    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    feed([[<C-\><C-N>]])
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+  end)
+
   it(':stopinsert RPC request exits terminal-mode #7807', function()
     command(':terminal')
     feed('i[tui] insert-mode')
     eq({ blocking=false, mode='t' }, nvim('get_mode'))
     command('stopinsert')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
   end)
 
   it(':stopinsert in normal mode doesn\'t break insert mode #9889', function()
     command(':terminal')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
     command(':stopinsert')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
     feed('a')
     eq({ blocking=false, mode='t' }, nvim('get_mode'))
   end)
@@ -215,7 +225,7 @@ describe(':terminal (with fake shell)', function()
       -- handler), :terminal cleanup is pending on the main-loop.
       -- This write should be ignored (not crash, #5445).
       feed('iiYYYYYYY')
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
   end)
 
   it('works with findfile()', function()

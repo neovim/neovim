@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local insert = helpers.insert
@@ -9,7 +10,6 @@ local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
-local eval = helpers.eval
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -2211,6 +2211,136 @@ describe('builtin popupmenu', function()
     feed('$i')
     funcs.complete(col - max_len, items)
     feed('<c-y>')
-    eq(2, eval('1+1'))
+    assert_alive()
+  end)
+
+  it('truncates double-width character correctly when there is no scrollbar', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=menuone,noselect')
+    feed('i' .. string.rep(' ', 13))
+    funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
+    screen:expect([[
+                   ^                   |
+      {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+
+  it('truncates double-width character correctly when there is scrollbar', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=noselect')
+    command('set pumheight=4')
+    feed('i' .. string.rep(' ', 12))
+    local items = {}
+    for _ = 1, 8 do
+      table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+    end
+    funcs.complete(13, items)
+    screen:expect([[
+                  ^                    |
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+      {1:~                               }|
+      {1:~                               }|
+      {2:-- INSERT --}                    |
+    ]])
+  end)
+end)
+
+describe('builtin popupmenu with ui/ext_multigrid', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(32, 20)
+    screen:attach({ext_multigrid=true})
+    screen:set_default_attr_ids({
+      -- popup selected item / scrollbar track
+      ['s'] = {background = Screen.colors.WebGray},
+      -- popup non-selected item
+      ['n'] = {background = Screen.colors.LightMagenta},
+      -- popup scrollbar knob
+      ['c'] = {background = Screen.colors.Grey0},
+      [1] = {bold = true, foreground = Screen.colors.Blue},
+      [2] = {bold = true},
+      [3] = {reverse = true},
+      [4] = {bold = true, reverse = true},
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    })
+  end)
+
+  it('truncates double-width character correctly when there is no scrollbar', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=menuone,noselect')
+    feed('i' .. string.rep(' ', 13))
+    funcs.complete(14, {'哦哦哦哦哦哦哦哦哦哦'})
+    screen:expect({grid=[[
+      ## grid 1
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [3:--------------------------------]|
+      ## grid 2
+                     ^                   |
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+      ## grid 3
+        {2:-- INSERT --}                    |
+      ## grid 4
+        {n: 哦哦哦哦哦哦哦哦哦>}|
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 12, false, 100}}})
+  end)
+
+  it('truncates double-width character correctly when there is scrollbar', function()
+    screen:try_resize(32,8)
+    command('set completeopt+=noselect')
+    command('set pumheight=4')
+    feed('i' .. string.rep(' ', 12))
+    local items = {}
+    for _ = 1, 8 do
+      table.insert(items, {word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1})
+    end
+    funcs.complete(13, items)
+    screen:expect({grid=[[
+      ## grid 1
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [2:--------------------------------]|
+        [3:--------------------------------]|
+      ## grid 2
+                    ^                    |
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+        {1:~                               }|
+      ## grid 3
+        {2:-- INSERT --}                    |
+      ## grid 4
+        {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+        {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
+        {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+        {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
   end)
 end)

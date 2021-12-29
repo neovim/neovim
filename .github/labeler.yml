@@ -4,38 +4,58 @@
 
 "lua":
   - runtime/lua/**/*
-  - src/nvim/lua
+  - src/nvim/lua/*
 
 "tui":
   - src/nvim/tui/tui.*
 
-"tree-sitter":
+"treesitter":
   - src/nvim/lua/treesitter.*
   - runtime/lua/vim/treesitter.lua
   - runtime/lua/vim/treesitter/*
 
-"topic: spell":
+"diagnostic":
+  - runtime/lua/vim/diagnostic.lua
+
+"dependencies":
+  - third-party/**/*
+
+"spell":
   - src/nvim/spell*
 
-"topic: :terminal":
+"terminal":
   - src/nvim/terminal.*
 
-"topic: column":
+"column":
   - src/nvim/mark.h
   - src/nvim/mark.c
   - src/nvim/sign*
 
-"topic: folds":
+"folds":
   - src/nvim/fold*
 
-"topic: mouse":
+"mouse":
   - src/nvim/mouse*
 
-"topic: documentation":
-  - runtime/doc/*
+"documentation":
+  - all: ["runtime/doc/*"]
 
-"topic: clipboard":
+"clipboard":
   - runtime/autoload/provider/clipboard.vim
 
-"topic: diff":
+"diff":
   - src/nvim/diff.*
+
+"build":
+  - CMakeLists.txt
+  - "**/CMakeLists.txt"
+  - "**/*.cmake"
+
+"tests":
+  - all: ["test/**/*"]
+
+"ci":
+  - .github/labeler.yml
+  - .github/workflows/**/*
+  - .builds/*
+  - ci/**/*

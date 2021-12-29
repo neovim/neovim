@@ -773,13 +773,14 @@ function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
   self.float_pos[grid] = nil
 end
 
-function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol)
+function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol, linecount)
   self.win_viewport[grid] = {
     win = win,
     topline = topline,
     botline = botline,
     curline = curline,
-    curcol = curcol
+    curcol = curcol,
+    linecount = linecount
   }
 end
 
@@ -1306,7 +1307,7 @@ local function fmt_ext_state(name, state)
     for k,v in pairs(state) do
       str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
              ..v.topline..", botline = "..v.botline..", curline = "..v.curline
-             ..", curcol = "..v.curcol.."};\n")
+             ..", curcol = "..v.curcol..", linecount = "..v.linecount.."};\n")
     end
     return str .. "}"
   elseif name == "float_pos" then

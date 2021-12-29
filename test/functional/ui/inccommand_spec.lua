@@ -1487,6 +1487,29 @@ describe("inccommand=nosplit", function()
     ]])
     eq(eval('v:null'), eval('v:exiting'))
   end)
+
+  it("does not break bar-separated command #8796", function()
+    source([[
+      function! F()
+        if v:false | return | endif
+      endfun
+    ]])
+    command('call timer_start(10, {-> F()}, {"repeat":-1})')
+    feed(':%s/')
+    sleep(20)  -- Allow some timer activity.
+    screen:expect([[
+      Inc substitution on |
+      two lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :%s/^                |
+    ]])
+  end)
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()

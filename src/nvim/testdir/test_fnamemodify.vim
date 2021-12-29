@@ -13,7 +13,7 @@ func Test_fnamemodify()
   call assert_equal('a', fnamemodify('../testdir/a', ':.'))
   call assert_equal('~/testdir/test.out', fnamemodify('test.out', ':~'))
   call assert_equal('~/testdir/a', fnamemodify('../testdir/a', ':~'))
-  call assert_equal('a', fnamemodify('../testdir/a', ':t'))
+  call assert_equal('a', '../testdir/a'->fnamemodify(':t'))
   call assert_equal('', fnamemodify('.', ':p:t'))
   call assert_equal('test.out', fnamemodify('test.out', ':p:t'))
   call assert_equal('out', fnamemodify('test.out', ':p:e'))
@@ -72,4 +72,8 @@ func Test_fnamemodify_er()
   " :e never includes the whole filename, so "a.b":e:e:e --> "b"
   call assert_equal('b.c', fnamemodify('a.b.c.d.e', ':r:r:e:e:e'))
   call assert_equal('b.c', fnamemodify('a.b.c.d.e', ':r:r:e:e:e:e'))
+
+  call assert_equal('', fnamemodify(v:_null_string, v:_null_string))
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

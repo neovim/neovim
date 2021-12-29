@@ -62,7 +62,7 @@ let g:loaded_2html_plugin = 'vim8.1_v2'
 "   7.3_v14 (Vim 7.3.1246): Allow suppressing line number anchors using
 "			    g:html_line_ids=0. Allow customizing
 "			    important IDs (like line IDs and fold IDs) using
-"			    g:html_id_expr evalutated when the buffer conversion
+"			    g:html_id_expr evaluated when the buffer conversion
 "			    is started.
 "   7.3_v13 (Vim 7.3.1088): Keep foldmethod at manual in the generated file and
 "			    insert modeline to set it to manual.

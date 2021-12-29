@@ -38,7 +38,7 @@ Layout
 - `/test/functional` : functional tests
 - `/test/unit` : unit tests
 - `/test/config` : contains `*.in` files which are transformed into `*.lua`
-  files using `configure_file` CMake command: this is for acessing CMake
+  files using `configure_file` CMake command: this is for accessing CMake
   variables in lua tests.
 - `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
   parser: normally used to make macros not accessible via this mechanism
@@ -116,7 +116,7 @@ Filtering Tests
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER`.
+Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
@@ -130,6 +130,10 @@ end)
 To run only test with filter name:
 
     TEST_FILTER='foo.*api' make functionaltest
+
+To run all tests except ones matching a filter:
+
+    TEST_FILTER_OUT='foo.*api' make functionaltest
 
 ### Filter by file
 
@@ -193,7 +197,7 @@ Guidelines
   (success + fail + error + pending) is the same in all environments.
     - *Note:* `pending()` is ignored if it is missing an argument, unless it is
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
-      Provide empty function argument if the `pending()` call is outside of `it()`
+      Provide empty function argument if the `pending()` call is outside `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
 - Really long `source([=[...]=])` blocks may break Vim's Lua syntax
   highlighting. Try `:syntax sync fromstart` to fix it.
@@ -256,7 +260,14 @@ Number; !must be defined to function properly):
 
 - `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
 
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner.
+
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
+
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
+
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 
 - `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
   to `build/bin/nvim`).

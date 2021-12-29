@@ -1,5 +1,9 @@
 " Tests for various Visual modes.
 
+source shared.vim
+source check.vim
+source screendump.vim
+
 func Test_block_shift_multibyte()
   " Uses double-wide character.
   split
@@ -140,7 +144,6 @@ endfun
 
 " Test Virtual replace mode.
 func Test_virtual_replace()
-  throw 'skipped: TODO: '
   if exists('&t_kD')
     let save_t_kD = &t_kD
   endif
@@ -162,7 +165,6 @@ func Test_virtual_replace()
 	      \ ], getline(1, 6))
   normal G
   mark a
-  inoremap <C-D> <Del>
   exe "normal o0\<C-D>\nabcdefghi\njk\tlmn\n    opq\trst\n\<C-D>uvwxyz\n"
   exe "normal 'ajgR0\<C-D> 1\nA\nBCDEFGHIJ\n\tKL\nMNO\nPQR" . repeat("\<BS>", 29)
   call assert_equal([' 1',
@@ -857,6 +859,15 @@ func Test_visual_block_mode()
   set tabstop& shiftwidth&
 endfunc
 
+func Test_visual_force_motion_feedkeys()
+    onoremap <expr> i- execute('let g:mode = mode(1)')
+    call feedkeys('dvi-', 'x')
+    call assert_equal('nov', g:mode)
+    call feedkeys('di-', 'x')
+    call assert_equal('no', g:mode)
+    ounmap i-
+endfunc
+
 " Test block-insert using cursor keys for movement
 func Test_visual_block_insert_cursor_keys()
   new
@@ -1005,5 +1016,99 @@ func Test_visual_put_in_block_using_zp()
   call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
   bwipe!
 endfunc
+
+func Test_visual_put_in_block_using_zy_and_zp()
+  new
+
+  " Test 1) Paste using zp - after the cursor without trailing spaces
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;hzp
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 2) Paste using zP - in front of the cursor without trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;zP
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 3) Paste using p - with trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;hp
+  call assert_equal(['/path/subdir        ;text', '/path/longsubdir    ;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 4) Paste using P - with trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;P
+  call assert_equal(['/path/subdir        ;text', '/path/longsubdir    ;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 5) Yank with spaces inside the block
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /sub    dir/           columntext',
+    \ 'texttext  /lon    gsubdir/       columntext',
+    \ 'texttext  /lon    glongsubdir/   columntext'])
+  exe "normal! 5G0f/\<c-v>2jf/zy"
+  norm! 1G0f;zP
+  call assert_equal(['/path/sub    dir/;text', '/path/lon    gsubdir/;text', '/path/lon    glongsubdir/;text'], getline(1, 3))
+  bwipe!
+endfunc
+
+func Test_visual_put_blockedit_zy_and_zp()
+  new
+
+  call setline(1, ['aa', 'bbbbb', 'ccc', '', 'XX', 'GGHHJ', 'RTZU'])
+  exe "normal! gg0\<c-v>2j$zy"
+  norm! 5gg0zP
+  call assert_equal(['aa', 'bbbbb', 'ccc', '', 'aaXX', 'bbbbbGGHHJ', 'cccRTZU'], getline(1, 7))
+  "
+  " now with blockmode editing
+  sil %d
+  :set ve=block
+  call setline(1, ['aa', 'bbbbb', 'ccc', '', 'XX', 'GGHHJ', 'RTZU'])
+  exe "normal! gg0\<c-v>2j$zy"
+  norm! 5gg0zP
+  call assert_equal(['aa', 'bbbbb', 'ccc', '', 'aaXX', 'bbbbbGGHHJ', 'cccRTZU'], getline(1, 7))
+  set ve&vim
+  bw!
+endfunc
+
+func Test_visual_block_with_virtualedit()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['aaaaaa', 'bbbb', 'cc'])
+    set virtualedit=block
+    normal G
+  END
+  call writefile(lines, 'XTest_block')
+
+  let buf = RunVimInTerminal('-S XTest_block', {'rows': 8, 'cols': 50})
+  call term_sendkeys(buf, "\<C-V>gg$")
+  call VerifyScreenDump(buf, 'Test_visual_block_with_virtualedit', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('XTest_beval')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

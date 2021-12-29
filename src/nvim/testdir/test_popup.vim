@@ -250,7 +250,7 @@ endfunc
 
 func Test_noinsert_complete()
   func! s:complTest1() abort
-    call complete(1, ['source', 'soundfold'])
+    eval ['source', 'soundfold']->complete(1)
     return ''
   endfunc
 
@@ -403,7 +403,7 @@ func DummyCompleteFour(findstart, base)
     return 0
   else
     call complete_add('four1')
-    call complete_add('four2')
+    eval 'four2'->complete_add()
     call complete_check()
     call complete_add('four3')
     call complete_add('four4')
@@ -950,6 +950,10 @@ func Test_popup_complete_info_01()
         \ ["\<C-X>", 'ctrl_x'],
         \ ["\<C-X>\<C-N>", 'keyword'],
         \ ["\<C-X>\<C-P>", 'keyword'],
+        \ ["\<C-X>\<C-E>", 'scroll'],
+        \ ["\<C-X>\<C-Y>", 'scroll'],
+        \ ["\<C-X>\<C-E>\<C-E>\<C-Y>", 'scroll'],
+        \ ["\<C-X>\<C-Y>\<C-E>\<C-Y>", 'scroll'],
         \ ["\<C-X>\<C-L>", 'whole_line'],
         \ ["\<C-X>\<C-F>", 'files'],
         \ ["\<C-X>\<C-]>", 'tags'],
@@ -989,7 +993,7 @@ func GetCompleteInfo()
   if empty(g:compl_what)
     let g:compl_info = complete_info()
   else
-    let g:compl_info = complete_info(g:compl_what)
+    let g:compl_info = g:compl_what->complete_info()
   endif
   return ''
 endfunc

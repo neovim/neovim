@@ -51,7 +51,7 @@ func Test_join_marks()
 
   /^This line/;'}-join
   call assert_equal([0, 4, 11, 0], getpos("'["))
-  call assert_equal([0, 4, 67, 0], getpos("']"))
+  call assert_equal([0, 4, 66, 0], getpos("']"))
   enew!
 endfunc
 

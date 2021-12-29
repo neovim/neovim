@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = helpers.assert_alive
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
@@ -354,13 +355,13 @@ describe('XDG-based defaults', function()
           .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
       ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. data_dir .. '/backup',
+      eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. data_dir .. '/backup//',
          (meths.get_option('backupdir'):gsub('\\', '/')))
       eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/swap//',
          (meths.get_option('directory')):gsub('\\', '/'))
-      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/undo',
+      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/undo//',
          (meths.get_option('undodir')):gsub('\\', '/'))
-      eq(root_path .. ('/X'):rep(4096) .. '/'  ..  data_dir .. '/view',
+      eq(root_path .. ('/X'):rep(4096) .. '/'  ..  data_dir .. '/view//',
          (meths.get_option('viewdir')):gsub('\\', '/'))
     end)
   end)
@@ -404,13 +405,13 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
       ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup//'),
           meths.get_option('backupdir'):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
           meths.get_option('directory'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo//'),
           meths.get_option('undodir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view//'),
           meths.get_option('viewdir'):gsub('\\', '/'))
       meths.command('set all&')
       eq(('$XDG_DATA_HOME/nvim'
@@ -424,13 +425,13 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
       ):gsub('\\', '/'), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup//'),
           meths.get_option('backupdir'):gsub('\\', '/'))
       eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
           meths.get_option('directory'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo//'),
           meths.get_option('undodir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view//'),
           meths.get_option('viewdir'):gsub('\\', '/'))
     end)
   end)
@@ -483,13 +484,13 @@ describe('XDG-based defaults', function()
           .. ',\\,-\\,-\\,' .. path_sep ..'nvim' .. path_sep ..'after'
           .. ',\\, \\, \\,' .. path_sep ..'nvim' .. path_sep ..'after'
       ), meths.get_option('runtimepath'))
-      eq('.,\\,=\\,=\\,' .. path_sep .. data_dir .. '' .. path_sep ..'backup',
+      eq('.,\\,=\\,=\\,' .. path_sep .. data_dir .. '' .. path_sep ..'backup' .. (path_sep):rep(2),
           meths.get_option('backupdir'))
       eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'swap' .. (path_sep):rep(2),
           meths.get_option('directory'))
-      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'undo',
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'undo' .. (path_sep):rep(2),
           meths.get_option('undodir'))
-      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'view',
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'view' .. (path_sep):rep(2),
           meths.get_option('viewdir'))
     end)
   end)
@@ -510,8 +511,7 @@ describe('stdpath()', function()
     eq(datadir, funcs.fnamemodify(funcs.stdpath('data'), ':t'))
     eq('table', type(funcs.stdpath('config_dirs')))
     eq('table', type(funcs.stdpath('data_dirs')))
-    -- Check for crash. #8393
-    eq(2, eval('1+1'))
+    assert_alive()  -- Check for crash. #8393
   end)
 
   context('returns a String', function()

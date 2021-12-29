@@ -90,10 +90,11 @@ argument.
 		See |info-message| about capturing the text.
 
 							*--clean*
---clean		Equivalent to "-u NONE -i NONE":
+--clean		Mimics a fresh install of Nvim:
 		- Skips initializations from files and environment variables.
 		- No 'shada' file is read or written.
 		- Excludes user directories from 'runtimepath'
+		- Loads builtin plugins, unlike "-u NONE -i NONE".
 
 							*--noplugin*
 --noplugin	Skip loading plugins.  Resets the 'loadplugins' option.
@@ -329,12 +330,12 @@ argument.
 -w{number}	Set the 'window' option to {number}.
 
 							*-w*
--w {scriptout}	All the characters that you type are recorded in the file
-		"scriptout", until you exit Vim.  This is useful if you want
-		to create a script file to be used with "vim -s" or
-		":source!".  When the "scriptout" file already exists, new
-		characters are appended.  See also |complex-repeat|.
-		{scriptout} cannot start with a digit.
+-w {scriptout}	All keys that you type are recorded in the file "scriptout",
+		until you exit Vim.  Useful to create a script file to be used
+		with "vim -s" or ":source!".  Appends to the "scriptout" file
+		if it already exists. {scriptout} cannot start with a digit.
+		See also |vim.on_key()|.
+		See also |complex-repeat|.
 
 							*-W*
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
@@ -388,8 +389,8 @@ argument.
 ==============================================================================
 Initialization					*initialization* *startup*
 
-At startup, Vim checks environment variables and files and sets values
-accordingly.  Vim proceeds in this order:
+At startup, Nvim checks environment variables and files and sets values
+accordingly, proceeding as follows:
 
 1. Set the 'shell' option			*SHELL* *COMSPEC*
 	The environment variable SHELL, if it exists, is used to set the
@@ -406,21 +407,21 @@ accordingly.  Vim proceeds in this order:
 	Nvim started with |--embed| waits for the UI to connect before
 	proceeding to load user configuration.
 
-4. Load user config (execute Ex commands from files, environment, …).
-	An environment variable (e.g. $VIMINIT) is read as one Ex command
-	line, where multiple commands must be separated with '|' or <NL>.
-					*config* *init.vim* *init.lua* *vimrc* *exrc*
-	A file that contains initialization commands is generically called
-	a "vimrc" or config file.  It can be a Vimscript or Lua file named
-	"init.vim" or "init.lua" respectively.  It is an error to use both at
-	the same time.  Each line in a "init.vim" is executed as an Ex command
-	line.  See also |vimrc-intro| and |base-directories|.
+4. Setup |default-mappings| and  |default-autocmds|.
 
-	The Nvim config file is "init.vim", located at:
-		Unix		~/.config/nvim/init.vim
-		Windows		~/AppData/Local/nvim/init.vim
-	or if |$XDG_CONFIG_HOME| is defined:
-				$XDG_CONFIG_HOME/nvim/init.vim
+5. Load user config (execute Ex commands from files, environment, …).
+	$VIMINIT environment variable is read as one Ex command line (separate
+	multiple commands with '|' or <NL>).
+					*config* *init.vim* *init.lua* *vimrc* *exrc*
+	A file containing initialization commands is generically called
+	a "vimrc" or config file.  It can be either Vimscript ("init.vim") or
+	Lua ("init.lua"), but not both. *E5422*
+	See also |vimrc-intro| and |base-directories|.
+
+	The config file is located at:
+	Unix			~/.config/nvim/init.vim		(or init.lua)
+	Windows			~/AppData/Local/nvim/init.vim	(or init.lua)
+	|$XDG_CONFIG_HOME|	$XDG_CONFIG_HOME/nvim/init.vim	(or init.lua)
 
 	If Nvim was started with "-u {file}" then {file} is used as the config
 	and all initializations until 5. are skipped. $MYVIMRC is not set.
@@ -452,7 +453,7 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".nvimrc"
 	-  The file ".exrc"
 
-5. Enable filetype and indent plugins.
+6. Enable filetype and indent plugins.
 	This does the same as the commands: >
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
@@ -460,19 +461,21 @@ accordingly.  Vim proceeds in this order:
 <	Skipped if ":filetype … off" was called or if the "-u NONE" command
 	line argument was given.
 
-6. Enable syntax highlighting.
+7. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
 <	Skipped if ":syntax off" was called or if the "-u NONE" command
 	line argument was given.
 
-7. Load the plugin scripts.					*load-plugins*
+8. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
-<	The result is that all directories in the 'runtimepath' option will be
-	searched for the "plugin" sub-directory and all files ending in ".vim"
-	will be sourced (in alphabetical order per directory), also in
-	subdirectories.
+		:runtime! plugin/**/*.lua
+<	The result is that all directories in 'runtimepath' will be searched
+	for the "plugin" sub-directory and all files ending in ".vim" or
+	".lua" will be sourced (in alphabetical order per directory),
+	also in subdirectories. First "*.vim" are sourced, then "*.lua" files.
+
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:
@@ -480,7 +483,6 @@ accordingly.  Vim proceeds in this order:
 	- The |--noplugin| command line argument is used.
 	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.
-	- When Vim was compiled without the |+eval| feature.
 	Note that using "-c 'set noloadplugins'" doesn't work, because the
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" or "--cmd 'set loadplugins'" |--cmd|.
@@ -495,38 +497,33 @@ accordingly.  Vim proceeds in this order:
 	if packages have been found, but that should not add a directory
 	ending in "after".
 
-8. Set 'shellpipe' and 'shellredir'
+9. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
-	This means that Vim will figure out the values of 'shellpipe' and
+	This means that Nvim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-9. Set 'updatecount' to zero, if "-n" command argument used
+10. Set 'updatecount' to zero, if "-n" command argument used
 
-10. Set binary options
-	If the "-b" flag was given to Vim, the options for binary editing will
-	be set now.  See |-b|.
+11. Set binary options if the |-b| flag was given.
 
-11. Read the ShaDa file
-	See |shada-file|.
+12. Read the |shada-file|.
 
-12. Read the quickfix file
-	If the "-q" flag was given to Vim, the quickfix file is read.  If this
-	fails, Vim exits.
+13. Read the quickfix file if the |-q| flag was given, or exit on failure.
 
-13. Open all windows
+14. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
 	displayed yet).
 	When switching screens, it happens now.  Redrawing starts.
-	If the "-q" flag was given to Vim, the first error is jumped to.
+	If the |-q| flag was given, the first error is jumped to.
 	Buffers for all windows will be loaded, without triggering |BufAdd|
 	autocommands.
 
-14. Execute startup commands
-	If a "-t" flag was given to Vim, the tag is jumped to.
-	The commands given with the |-c| and |+cmd| arguments are executed.
+15. Execute startup commands
+	If a |-t| flag was given, the tag is jumped to.
+	Commands given with |-c| and |+cmd| are executed.
 	If the 'insertmode' option is set, Insert mode is entered.
 	The starting flag is reset, has("vim_starting") will now return zero.
 	The |v:vim_did_enter| variable is set to 1.

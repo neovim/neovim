@@ -36,7 +36,7 @@ describe("'spell'", function()
     feed('ggJJJJJJ0')
     screen:expect([[
     {1:^Lorem} {1:ipsum} dolor sit {1:amet}, {1:consectetur} {1:adipiscing} {1:elit}, {1:sed} do {1:eiusmod} {1:tempor} {1:i}|
-    {1:ncididunt} {1:ut} {1:labore} {1:et} {1:dolore} {1:magna} {1:aliqua}. {1:Ut} {1:enim} ad minim {1:veniam}, {1:quis} {1:nostru}|
+    {1:ncididunt} {1:ut} {1:labore} et {1:dolore} {1:magna} {1:aliqua}. {1:Ut} {1:enim} ad minim {1:veniam}, {1:quis} {1:nostru}|
     {1:d} {1:exercitation} {1:ullamco} {1:laboris} {1:nisi} {1:ut} {1:aliquip} ex ea {1:commodo} {1:consequat}. {1:Duis} {1:aut}|
     {1:e} {1:irure} dolor in {1:reprehenderit} in {1:voluptate} {1:velit} {1:esse} {1:cillum} {1:dolore} {1:eu} {1:fugiat} {1:n}|
     {1:ulla} {1:pariatur}. {1:Excepteur} {1:sint} {1:occaecat} {1:cupidatat} non {1:proident}, {1:sunt} in culpa {1:qui}|
@@ -44,6 +44,7 @@ describe("'spell'", function()
     {0:~                                                                               }|
                                                                                     |
     ]])
+
   end)
 
   it('has correct highlight at start of line', function()

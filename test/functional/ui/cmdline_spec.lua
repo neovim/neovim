@@ -14,6 +14,8 @@ local function new_screen(opt)
     [3] = {bold = true, reverse = true},
     [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    [6] = {foreground = Screen.colors.Magenta},
+    [7] = {bold = true, foreground = Screen.colors.Brown},
   })
   return screen
 end
@@ -267,7 +269,7 @@ local function test_cmdline(linegrid)
       special = {'"', true},
     }, {
       firstc = "=",
-      content = {{"1"}, {"+"}, {"2"}},
+      content = {{"1", 6}, {"+", 7}, {"2", 6}},
       pos = 3,
     }}
 

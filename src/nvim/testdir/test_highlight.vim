@@ -426,6 +426,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
 
   call NewWindow('topleft 5', 10)
+  set showbreak=xxx
   setlocal breakindent breakindentopt=min:0,shift:1 showbreak=>
   call setline(1, ' ' . repeat('a', 9) . 'bcd')
   call matchadd('Search', '\n')
@@ -483,6 +484,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
 
   call CloseWindow()
   set showbreak=
+  setlocal showbreak=
   exe hiCursorLine
 endfunc
 
@@ -646,6 +648,23 @@ func Test_1_highlight_Normalgroup_exists()
   elseif has('win32')
     " expect any font
     call assert_match('hi Normal\s*font=.*', hlNormal)
+  endif
+endfunc
+
+function Test_no_space_before_xxx()
+  " Note: we need to create this highlight group in the test because it does not exist in Neovim
+  execute('hi StatusLineTermNC ctermfg=green')
+  let l:org_columns = &columns
+  set columns=17
+  let l:hi_StatusLineTermNC = join(split(execute('hi StatusLineTermNC')))
+  call assert_match('StatusLineTermNC xxx', l:hi_StatusLineTermNC)
+  let &columns = l:org_columns
+endfunction
+
+" Test for :highlight command errors
+func Test_highlight_cmd_errors()
+  if has('gui_running') || has('nvim')
+    call assert_fails('hi ' .. repeat('a', 201) .. ' ctermfg=black', 'E1249:')
   endif
 endfunc
 

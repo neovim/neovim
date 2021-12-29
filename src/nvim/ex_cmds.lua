@@ -2568,6 +2568,12 @@ module.cmds = {
     func='ex_spellrepall',
   },
   {
+    command='spellrare',
+    flags=bit.bor(BANG, RANGE, NEEDARG, EXTRA, TRLBAR),
+    addr_type='ADDR_OTHER',
+    func='ex_spell',
+  },
+  {
     command='spellundo',
     flags=bit.bor(BANG, RANGE, NEEDARG, EXTRA, TRLBAR),
     addr_type='ADDR_OTHER',
@@ -3265,7 +3271,7 @@ module.cmds = {
   },
   {
     command='z',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, FLAGS, TRLBAR, CMDWIN),
+    flags=bit.bor(RANGE, WHOLEFOLD, BANG, EXTRA, FLAGS, TRLBAR, CMDWIN),
     addr_type='ADDR_LINES',
     func='ex_z',
   },

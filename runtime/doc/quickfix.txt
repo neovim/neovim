@@ -837,9 +837,9 @@ lists.  They set one of the existing error lists as the current one.
 						*:chistory* *:chi*
 :[count]chi[story]	Show the list of error lists.  The current list is
 			marked with ">".  The output looks like:
-				  error list 1 of 3; 43 errors ~
-				> error list 2 of 3; 0 errors ~
-				  error list 3 of 3; 15 errors ~
+			  error list 1 of 3; 43 errors   :make  ~
+			> error list 2 of 3; 0 errors    :helpgrep tag  ~
+			  error list 3 of 3; 15 errors   :grep ex_help *.c ~
 
 			When [count] is given, then the count'th quickfix
 			list is made the current list. Example: >
@@ -1208,8 +1208,8 @@ not "b:current_compiler".  What the command actually does is the following:
 - Delete the "current_compiler" and "b:current_compiler" variables.
 - Define the "CompilerSet" user command.  With "!" it does ":set", without "!"
   it does ":setlocal".
-- Execute ":runtime! compiler/{name}.vim".  The plugins are expected to set
-  options with "CompilerSet" and set the "current_compiler" variable to the
+- Execute ":runtime! compiler/{name}.(vim|lua)".  The plugins are expected to
+  set options with "CompilerSet" and set the "current_compiler" variable to the
   name of the compiler.
 - Delete the "CompilerSet" user command.
 - Set "b:current_compiler" to the value of "current_compiler".
@@ -1333,7 +1333,8 @@ Basic items
 	%o		module name (finds a string)
 	%l		line number (finds a number)
 	%c		column number (finds a number representing character
-			column of the error, (1 <tab> == 1 character column))
+			column of the error, byte index, a <tab> is 1
+			character column)
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))
@@ -1919,7 +1920,10 @@ The function should return a single line of text to display in the quickfix
 window for each entry from start_idx to end_idx. The function can obtain
 information about the entries using the |getqflist()| function and specifying
 the quickfix list identifier "id". For a location list, getloclist() function
-can be used with the 'winid' argument.
+can be used with the 'winid' argument. If an empty list is returned, then the
+default format is used to display all the entries. If an item in the returned
+list is an empty string, then the default format is used to display the
+corresponding entry.
 
 If a quickfix or location list specific customization is needed, then the
 'quickfixtextfunc' attribute of the list can be set using the |setqflist()| or

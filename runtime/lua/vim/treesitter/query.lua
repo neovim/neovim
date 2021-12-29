@@ -36,9 +36,9 @@ end
 
 --- Gets the list of files used to make up a query
 ---
---- @param lang The language
---- @param query_name The name of the query to load
---- @param is_included Internal parameter, most of the time left as `nil`
+---@param lang The language
+---@param query_name The name of the query to load
+---@param is_included Internal parameter, most of the time left as `nil`
 function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
@@ -48,7 +48,7 @@ function M.get_query_files(lang, query_name, is_included)
   local base_langs = {}
 
   -- Now get the base languages by looking at the first line of every file
-  -- The syntax is the folowing :
+  -- The syntax is the following :
   -- ;+ inherits: ({language},)*{language}
   --
   -- {language} ::= {lang} | ({lang})
@@ -112,19 +112,19 @@ local explicit_queries = setmetatable({}, {
 --- This allows users to override any runtime files and/or configuration
 --- set by plugins.
 ---
---- @param lang string: The language to use for the query
---- @param query_name string: The name of the query (i.e. "highlights")
---- @param text string: The query text (unparsed).
+---@param lang string: The language to use for the query
+---@param query_name string: The name of the query (i.e. "highlights")
+---@param text string: The query text (unparsed).
 function M.set_query(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse_query(lang, text)
 end
 
 --- Returns the runtime query {query_name} for {lang}.
 ---
---- @param lang The language to use for the query
---- @param query_name The name of the query (i.e. "highlights")
+---@param lang The language to use for the query
+---@param query_name The name of the query (i.e. "highlights")
 ---
---- @return The corresponding query, parsed.
+---@return The corresponding query, parsed.
 function M.get_query(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -151,10 +151,10 @@ end
 ---   -` info.captures` also points to `captures`.
 ---   - `info.patterns` contains information about predicates.
 ---
---- @param lang The language
---- @param query A string containing the query (s-expr syntax)
+---@param lang The language
+---@param query A string containing the query (s-expr syntax)
 ---
---- @returns The query
+---@returns The query
 function M.parse_query(lang, query)
   language.require_language(lang)
   local self = setmetatable({}, Query)
@@ -164,22 +164,36 @@ function M.parse_query(lang, query)
   return self
 end
 
--- TODO(vigoux): support multiline nodes too
-
 --- Gets the text corresponding to a given node
 ---
---- @param node the node
---- @param bsource The buffer or string from which the node is extracted
+---@param node the node
+---@param source The buffer or string from which the node is extracted
 function M.get_node_text(node, source)
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
 
   if type(source) == "number" then
-    if start_row ~= end_row then
+    local lines
+    local eof_row = a.nvim_buf_line_count(source)
+    if start_row >= eof_row then
       return nil
     end
-    local line = a.nvim_buf_get_lines(source, start_row, start_row+1, true)[1]
-    return string.sub(line, start_col+1, end_col)
+
+    if end_col == 0 then
+      lines = a.nvim_buf_get_lines(source, start_row, end_row, true)
+      end_col = -1
+    else
+      lines = a.nvim_buf_get_lines(source, start_row, end_row + 1, true)
+    end
+
+    if #lines == 1 then
+      lines[1]      = string.sub(lines[1], start_col+1, end_col)
+    else
+      lines[1]      = string.sub(lines[1], start_col+1)
+      lines[#lines] = string.sub(lines[#lines], 1, end_col)
+    end
+
+    return table.concat(lines, "\n")
   elseif type(source) == "string" then
     return source:sub(start_byte+1, end_byte)
   end
@@ -211,11 +225,6 @@ local predicate_handlers = {
   ["lua-match?"] = function(match, _, source, predicate)
       local node = match[predicate[2]]
       local regex = predicate[3]
-      local start_row, _, end_row, _ = node:range()
-      if start_row ~= end_row then
-        return false
-      end
-
       return string.find(M.get_node_text(node, source), regex)
   end,
 
@@ -239,13 +248,8 @@ local predicate_handlers = {
 
     return function(match, _, source, pred)
       local node = match[pred[2]]
-      local start_row, start_col, end_row, end_col = node:range()
-      if start_row ~= end_row then
-        return false
-      end
-
       local regex = compiled_vim_regexes[pred[3]]
-      return regex:match_line(source, start_row, start_col, end_col)
+      return regex:match_str(M.get_node_text(node, source))
     end
   end)(),
 
@@ -327,9 +331,9 @@ local directive_handlers = {
 
 --- Adds a new predicate to be used in queries
 ---
---- @param name the name of the predicate, without leading #
---- @param handler the handler function to be used
----    signature will be (match, pattern, bufnr, predicate)
+---@param name the name of the predicate, without leading #
+---@param handler the handler function to be used
+---      signature will be (match, pattern, bufnr, predicate)
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format("Overriding %s", name))
@@ -340,9 +344,9 @@ end
 
 --- Adds a new directive to be used in queries
 ---
---- @param name the name of the directive, without leading #
---- @param handler the handler function to be used
----    signature will be (match, pattern, bufnr, predicate)
+---@param name the name of the directive, without leading #
+---@param handler the handler function to be used
+---      signature will be (match, pattern, bufnr, predicate)
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format("Overriding %s", name))
@@ -351,7 +355,12 @@ function M.add_directive(name, handler, force)
   directive_handlers[name] = handler
 end
 
---- Returns the list of currently supported predicates
+---@return The list of supported directives.
+function M.list_directives()
+  return vim.tbl_keys(directive_handlers)
+end
+
+---@return The list of supported predicates.
 function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
@@ -441,7 +450,7 @@ end
 ---
 --- {source} is needed if the query contains predicates, then the caller
 --- must ensure to use a freshly parsed tree consistent with the current
---- text of the buffer (if relevent). {start_row} and {end_row} can be used to limit
+--- text of the buffer (if relevant). {start_row} and {end_row} can be used to limit
 --- matches inside a row range (this is typically used with root node
 --- as the node, i e to get syntax highlight matches in the current
 --- viewport). When omitted the start and end row values are used from the given node.
@@ -460,13 +469,13 @@ end
 --- end
 --- </pre>
 ---
---- @param node The node under which the search will occur
---- @param source The source buffer or string to exctract text from
---- @param start The starting line of the search
---- @param stop The stopping line of the search (end-exclusive)
+---@param node The node under which the search will occur
+---@param source The source buffer or string to extract text from
+---@param start The starting line of the search
+---@param stop The stopping line of the search (end-exclusive)
 ---
---- @returns The matching capture id
---- @returns The captured node
+---@returns The matching capture id
+---@returns The captured node
 function Query:iter_captures(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()
@@ -517,13 +526,13 @@ end
 --- end
 --- </pre>
 ---
---- @param node The node under which the search will occur
---- @param source The source buffer or string to search
---- @param start The starting line of the search
---- @param stop The stopping line of the search (end-exclusive)
+---@param node The node under which the search will occur
+---@param source The source buffer or string to search
+---@param start The starting line of the search
+---@param stop The stopping line of the search (end-exclusive)
 ---
---- @returns The matching pattern id
---- @returns The matching match
+---@returns The matching pattern id
+---@returns The matching match
 function Query:iter_matches(node, source, start, stop)
   if type(source) == "number" and source == 0 then
     source = vim.api.nvim_get_current_buf()

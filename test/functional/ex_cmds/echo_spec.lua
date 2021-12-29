@@ -10,7 +10,7 @@ local source = helpers.source
 local dedent = helpers.dedent
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local matches = helpers.matches
 
 describe(':echo :echon :echomsg :echoerr', function()
@@ -199,10 +199,8 @@ describe(':echo :echon :echomsg :echoerr', function()
         let d.tdr = TestDictRef
       ]])
       eq(dedent([[
-
-          function('TestDict', {'tdr': function('TestDict', {...@1})})
           function('TestDict', {'tdr': function('TestDict', {...@1})})]]),
-         redir_exec('echo String(d.tdr)'))
+         exec_capture('echo String(d.tdr)'))
     end)
 
     it('dumps automatically created partials', function()
@@ -229,10 +227,8 @@ describe(':echo :echon :echomsg :echoerr', function()
     function()
       meths.set_var('d', {v=true})
       eq(dedent([[
-
-          {'p': function('<SNR>2_Test2', {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}
           {'p': function('<SNR>2_Test2', {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]]),
-        redir_exec('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
+        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
     end)
 
     it('does not show errors when dumping partials referencing the same dictionary',
@@ -256,10 +252,8 @@ describe(':echo :echon :echomsg :echoerr', function()
       -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
       eq(dedent([=[
-
-          function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])
           function('Test1', [[[...@2], function('Test1', [[...@2]])], function('Test1', [[[...@4], function('Test1', [[...@4]])]])])]=]),
-        redir_exec('echo String(function("Test1", l))'))
+        exec_capture('echo String(function("Test1", l))'))
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in self and arguments',
@@ -270,10 +264,8 @@ describe(':echo :echon :echomsg :echoerr', function()
       eval('add(l, function("Test1", l))')
       eval('add(l, function("Test1", d))')
       eq(dedent([=[
-
-          {'p': function('<SNR>2_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}
           {'p': function('<SNR>2_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]=]),
-        redir_exec('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
+        exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
     end)
   end)
 
@@ -303,8 +295,8 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('dumps recursive lists without error', function()
       meths.set_var('l', {})
       eval('add(l, l)')
-      eq('\n[[...@0]]\n[[...@0]]', redir_exec('echo String(l)'))
-      eq('\n[[[...@1]]]\n[[[...@1]]]', redir_exec('echo String([l])'))
+      eq('[[...@0]]', exec_capture('echo String(l)'))
+      eq('[[[...@1]]]', exec_capture('echo String([l])'))
     end)
   end)
 
@@ -333,10 +325,10 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('dumps recursive dictionaries without the error', function()
       meths.set_var('d', {d=1})
       eval('extend(d, {"d": d})')
-      eq('\n{\'d\': {...@0}}\n{\'d\': {...@0}}',
-         redir_exec('echo String(d)'))
-      eq('\n{\'out\': {\'d\': {...@1}}}\n{\'out\': {\'d\': {...@1}}}',
-         redir_exec('echo String({"out": d})'))
+      eq('{\'d\': {...@0}}',
+         exec_capture('echo String(d)'))
+      eq('{\'out\': {\'d\': {...@1}}}',
+         exec_capture('echo String({"out": d})'))
     end)
   end)
 

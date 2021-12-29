@@ -38,10 +38,10 @@ typedef struct _queue {
 // elements results in undefined behavior.
 #define QUEUE_FOREACH(q, h, code) \
   (q) = (h)->next; \
-  while((q) != (h)) { \
+  while ((q) != (h)) { \
     QUEUE *next = q->next; \
     code \
-    (q) = next; \
+      (q) = next; \
   }
 
 

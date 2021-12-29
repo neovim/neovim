@@ -6,7 +6,7 @@ if exists('b:current_syntax')
 endif
 
 syntax case  ignore
-syntax match manReference      display '[^()[:space:]]\+([0-9nx][a-z]*)'
+syntax match manReference      display '[^()[:space:]]\+(\%([0-9][a-z]*\|[nlpox]\))'
 syntax match manSectionHeading display '^\S.*$'
 syntax match manHeader         display '^\%1l.*$'
 syntax match manSubHeading     display '^ \{3\}\S.*$'
@@ -27,11 +27,7 @@ if &filetype != 'man'
   finish
 endif
 
-if !exists('b:man_sect')
-  call man#init_pager()
-endif
-
-if b:man_sect =~# '^[023]'
+if get(b:, 'man_sect', '') =~# '^[023]'
   syntax case match
   syntax include @c $VIMRUNTIME/syntax/c.vim
   syntax match manCFuncDefinition display '\<\h\w*\>\ze\(\s\|\n\)*(' contained
