@@ -90,7 +90,7 @@ Mouse input has the following behavior:
 - If another window is clicked, terminal focus will be lost and nvim will jump
   to the clicked window
 - If the mouse wheel is used while the mouse is positioned in another window,
-  the terminal wont lose focus and the hovered window will be scrolled.
+  the terminal won't lose focus and the hovered window will be scrolled.
 
 ==============================================================================
 Configuration					*terminal-config*
@@ -426,7 +426,7 @@ When 'background' is "dark":
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
 
-Shorcuts						*termdebug_shortcuts*
+Shortcuts						*termdebug_shortcuts*
 
 You can define your own shortcuts (mappings) to control gdb, that can work in
 any window, using the TermDebugSendCommand() function.  Example: >

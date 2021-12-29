@@ -759,9 +759,9 @@ vim.stricmp({a}, {b})                                   *vim.stricmp()*
         respectively.
 
 vim.str_utfindex({str}[, {index}])                      *vim.str_utfindex()*
-        Convert byte index to UTF-32 and UTF-16 indicies. If {index} is not
-        supplied, the length of the string is used. All indicies are zero-based.
-        Returns two values: the UTF-32 and UTF-16 indicies respectively.
+        Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
+        supplied, the length of the string is used. All indices are zero-based.
+        Returns two values: the UTF-32 and UTF-16 indices respectively.
 
         Embedded NUL bytes are treated as terminating the string. Invalid
         UTF-8 bytes, and embedded surrogates are counted as one code
@@ -880,6 +880,15 @@ vim.types                                               *vim.types*
         values corresponding to `vim.types.float`, `vim.types.array` and
         `vim.types.dictionary` will not change or that `vim.types` table will
         only contain values for these three types.
+
+                                                   *log_levels* *vim.log.levels*
+Log levels are one of the values defined in `vim.log.levels`:
+
+        vim.log.levels.DEBUG
+        vim.log.levels.ERROR
+        vim.log.levels.INFO
+        vim.log.levels.TRACE
+        vim.log.levels.WARN
 
 ------------------------------------------------------------------------------
 LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
