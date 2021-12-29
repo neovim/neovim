@@ -6,7 +6,7 @@ endif
 function! s:screenline(lnum) abort
   let line = []
   for c in range(1, winwidth(0))
-    call add(line, nr2char(screenchar(a:lnum, c)))
+    call add(line, nr2char(a:lnum->screenchar(c)))
   endfor
   return s:trim(join(line, ''))
 endfunction
@@ -36,4 +36,4 @@ function! Test_match_using_multibyte_conceal_char()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc

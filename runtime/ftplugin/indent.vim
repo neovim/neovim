@@ -1,7 +1,8 @@
 " Vim filetype plugin file
-" Language:             indent(1) configuration file
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2008-07-09
+" Language:		indent(1) configuration file
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Latest Revision:	2008-07-09
 
 if exists("b:did_ftplugin")
   finish

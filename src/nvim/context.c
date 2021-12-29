@@ -3,13 +3,15 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include "nvim/api/private/converter.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
@@ -126,7 +128,7 @@ bool ctx_restore(Context *ctx, const int flags)
   }
 
   char_u *op_shada;
-  get_option_value((char_u *)"shada", NULL, &op_shada, OPT_GLOBAL);
+  get_option_value("shada", NULL, &op_shada, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
   if (flags & kCtxRegs) {
@@ -254,7 +256,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
       size_t cmd_len = sizeof("func! ") + STRLEN(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
-      String func_body = nvim_command_output(cstr_as_string(cmd), &err);
+      String func_body = nvim_exec(cstr_as_string(cmd), true, &err);
       xfree(cmd);
       if (!ERROR_SET(&err)) {
         ADD(ctx->funcs, STRING_OBJ(func_body));
@@ -314,7 +316,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array)
   object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
 
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    EMSG(_("E474: Failed to convert list to msgpack string buffer"));
+    emsg(_("E474: Failed to convert list to msgpack string buffer"));
   }
   sbuf.alloc = sbuf.size;
 

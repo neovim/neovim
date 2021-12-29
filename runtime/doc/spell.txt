@@ -110,6 +110,23 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spellw[rong]! {word}	Add {word} as a wrong (bad) word to the internal word
 			list, like with |zW|.
 
+							*:spellra* *:spellrare*
+:[count]spellr[are] {word}
+			Add {word} as a rare word to 'spellfile', similar to
+			|zw|.  Without count the first name is used, with
+			a count of two the second entry, etc.
+
+			There are no normal mode commands to mark words as
+			rare as this is a fairly uncommon command and all
+			intuitive commands for this are already taken. If you
+			want you can add mappings with e.g.: >
+		nnoremap z?  :exe ':spellrare  ' . expand('<cWORD>')<CR>
+		nnoremap z/  :exe ':spellrare! ' . expand('<cWORD>')<CR>
+<			|:spellundo|, |zuw|, or |zuW| can be used to undo this.
+
+:spellr[rare]! {word}	Add {word} as a rare word to the internal word
+			list, similar to |zW|.
+
 :[count]spellu[ndo] {word}				*:spellu* *:spellundo*
 			Like |zuw|.  [count] used as with |:spellgood|.
 
@@ -186,6 +203,9 @@ starts with a capital.  This doesn't work for the first word in the file.
 When there is a line break right after a sentence the highlighting of the next
 line may be postponed.  Use |CTRL-L| when needed.  Also see |set-spc-auto| for
 how it can be set automatically when 'spelllang' is set.
+
+The 'spelloptions' option has a few more flags that influence the way spell
+checking works.
 
 Vim counts the number of times a good word is encountered.  This is used to
 sort the suggestions: words that have been seen before get a small bonus,
@@ -504,7 +524,7 @@ then Vim will try to guess.
 
 			Multiple {inname} arguments can be given to combine
 			regions into one Vim spell file.  Example: >
-		:mkspell ~/.vim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
+		:mkspell ~/.config/nvim/spell/en /tmp/en_US /tmp/en_CA /tmp/en_AU
 <			This combines the English word lists for US, CA and AU
 			into one en.spl file.
 			Up to eight regions can be combined. *E754* *E755*
@@ -617,11 +637,12 @@ ask you where to write the file (there must be a writable directory in
 'runtimepath' for this).
 
 The plugin has a default place where to look for spell files, on the Vim ftp
-server.  If you want to use another location or another protocol, set the
-g:spellfile_URL variable to the directory that holds the spell files.  The
-|netrw| plugin is used for getting the file, look there for the specific
-syntax of the URL.  Example: >
-	let g:spellfile_URL = 'http://ftp.vim.org/vim/runtime/spell'
+server.  The protocol used is SSL (https://) for security.  If you want to use
+another location or another protocol, set the g:spellfile_URL variable to the
+directory that holds the spell files.  You can use http:// or ftp://, but you
+are taking a security risk then.  The |netrw| plugin is used for getting the
+file, look there for the specific syntax of the URL.  Example: >
+	let g:spellfile_URL = 'https://ftp.nluug.nl/vim/runtime/spell'
 You may need to escape special characters.
 
 The plugin will only ask about downloading a language once.  If you want to
@@ -850,7 +871,7 @@ time ":mkspell" is used.  Vim will then convert everything to 'encoding' and
 generate a spell file for 'encoding'.  If some of the used characters to not
 fit in 'encoding' you will get an error message.
 							*spell-affix-mbyte*
-When using a multi-byte encoding it's possible to use more different affix
+When using a multibyte encoding it's possible to use more different affix
 flags.  But Myspell doesn't support that, thus you may not want to use it
 anyway.  For compatibility use an 8-bit encoding.
 
@@ -888,9 +909,9 @@ when using "cp1250" on Unix.
 						*spell-LOW* *spell-UPP*
 Three lines in the affix file are needed.  Simplistic example:
 
-	FOL  ·ÎÒ ~
-	LOW  ·ÎÒ ~
-	UPP  ¡À— ~
+	FOL  √°√´√± ~
+	LOW  √°√´√± ~
+	UPP  √Å√ã√ë ~
 
 All three lines must have exactly the same number of characters.
 
@@ -905,9 +926,9 @@ The "UPP" line specifies the characters with upper-case.  That is, a character
 is upper-case where it's different from the character at the same position in
 "FOL".
 
-An exception is made for the German sharp s ﬂ.  The upper-case version is
+An exception is made for the German sharp s √ü.  The upper-case version is
 "SS".  In the FOL/LOW/UPP lines it should be included, so that it's recognized
-as a word character, but use the ﬂ character in all three.
+as a word character, but use the √ü character in all three.
 
 ASCII characters should be omitted, Vim always handles these in the same way.
 When the encoding is UTF-8 no word characters need to be specified.
@@ -1106,10 +1127,10 @@ flag to avoid lots of errors.
 CIRCUMFIX						*spell-CIRCUMFIX*
 
 The CIRCUMFIX flag means a prefix and suffix must be added at the same time.
-If a prefix has the CIRCUMFIX flag than only suffixes with the CIRCUMFIX flag
+If a prefix has the CIRCUMFIX flag then only suffixes with the CIRCUMFIX flag
 can be added, and the other way around.
-An alternative is to only specify the suffix, and give the that suffix two
-flags: The required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
+An alternative is to only specify the suffix, and give that suffix two flags:
+the required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
 
 
 PFXPOSTPONE						*spell-PFXPOSTPONE*
@@ -1377,7 +1398,7 @@ suggestions would spend most time trying all kind of weird compound words.
 							*spell-SYLLABLE*
 The SYLLABLE item defines characters or character sequences that are used to
 count the number of syllables in a word.  Example:
-	SYLLABLE a·eÈiÌoÛˆıu˙¸˚y/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
+	SYLLABLE a√°e√©i√≠o√≥√∂√µu√∫√º√ªy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui ~
 
 Before the first slash is the set of characters that are counted for one
 syllable, also when repeated and mixed, until the next character that is not
@@ -1407,7 +1428,7 @@ are spelling mistakes this may not be quite right.
 Common words can be specified with the COMMON item.  This will give better
 suggestions when editing a short file.  Example:
 
-	COMMON  the of to and a in is it you that he was for on are ~
+	COMMON  the of to and a in is it you that he she was for on are ~
 
 The words must be separated by white space, up to 25 per line.
 When multiple regions are specified in a ":mkspell" command the common words
@@ -1458,8 +1479,8 @@ alike.  This is mostly used for a letter with different accents.  This is used
 to prefer suggestions with these letters substituted.  Example:
 
 	MAP 2 ~
-	MAP eÈÎÍË ~
-	MAP u¸˘˙˚ ~
+	MAP e√©√´√™√® ~
+	MAP u√º√π√∫√ª ~
 
 The first line specifies the number of MAP lines following.  Vim ignores the
 number, but the line must be there.

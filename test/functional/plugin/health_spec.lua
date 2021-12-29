@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local global_helpers = require('test.helpers')
 local Screen = require('test.functional.ui.screen')
 
 local clear = helpers.clear
@@ -35,6 +36,7 @@ describe(':checkhealth', function()
     clear()
     eq('nvim', getcompletion('nvim', 'checkhealth')[1])
     eq('provider', getcompletion('prov', 'checkhealth')[1])
+    eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
   end)
 end)
 
@@ -48,42 +50,34 @@ describe('health.vim', function()
     command("set runtimepath+=test/functional/fixtures")
   end)
 
-  it("health#report_*()", function()
-    helpers.source([[
-      let g:health_report = execute([
-        \ "call health#report_start('Check Bar')",
-        \ "call health#report_ok('Bar status')",
-        \ "call health#report_ok('Other Bar status')",
-        \ "call health#report_warn('Zub')",
-        \ "call health#report_start('Baz')",
-        \ "call health#report_warn('Zim', ['suggestion 1', 'suggestion 2'])"
-        \ ])
-    ]])
-    local result = helpers.eval("g:health_report")
-
-    helpers.eq(helpers.dedent([[
-
-
-      ## Check Bar
-        - OK: Bar status
-        - OK: Other Bar status
-        - WARNING: Zub
-
-      ## Baz
-        - WARNING: Zim
-          - ADVICE:
-            - suggestion 1
-            - suggestion 2]]),
-      result)
-  end)
-
-
   describe(":checkhealth", function()
-    it("concatenates multiple reports", function()
-      command("checkhealth success1 success2")
+    it("functions health#report_*() render correctly", function()
+      command("checkhealth full_render")
       helpers.expect([[
 
-        health#success1#check
+      full_render: health#full_render#check
+      ========================================================================
+      ## report 1
+        - OK: life is fine
+        - WARNING: no what installed
+          - ADVICE:
+            - pip what
+            - make what
+
+      ## report 2
+        - INFO: stuff is stable
+        - ERROR: why no hardcopy
+          - ADVICE:
+            - :help |:hardcopy|
+            - :help |:TOhtml|
+      ]])
+    end)
+
+    it("concatenates multiple reports", function()
+      command("checkhealth success1 success2 test_plug")
+      helpers.expect([[
+
+        success1: health#success1#check
         ========================================================================
         ## report 1
           - OK: everything is fine
@@ -91,23 +85,109 @@ describe('health.vim', function()
         ## report 2
           - OK: nothing to see here
 
-        health#success2#check
+        success2: health#success2#check
         ========================================================================
         ## another 1
           - OK: ok
+
+        test_plug: require("test_plug.health").check()
+        ========================================================================
+        ## report 1
+          - OK: everything is fine
+
+        ## report 2
+          - OK: nothing to see here
         ]])
+    end)
+
+    it("lua plugins, skips vimscript healthchecks with the same name", function()
+      command("checkhealth test_plug")
+      -- Existing file in test/functional/fixtures/lua/test_plug/autoload/health/test_plug.vim
+      -- and the Lua healthcheck is used instead.
+      helpers.expect([[
+
+        test_plug: require("test_plug.health").check()
+        ========================================================================
+        ## report 1
+          - OK: everything is fine
+
+        ## report 2
+          - OK: nothing to see here
+        ]])
+    end)
+
+    it("lua plugins submodules", function()
+      command("checkhealth test_plug.submodule")
+      helpers.expect([[
+
+        test_plug.submodule: require("test_plug.submodule.health").check()
+        ========================================================================
+        ## report 1
+          - OK: everything is fine
+
+        ## report 2
+          - OK: nothing to see here
+        ]])
+    end)
+
+    it("lua plugins submodules with expression '*'", function()
+      command("checkhealth test_plug*")
+      local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
+      -- avoid dealing with path separators
+      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
+      local expected = helpers.dedent([[
+
+        test_plug: require("test_plug.health").check()
+        ========================================================================
+        ## report 1
+          - OK: everything is fine
+
+        ## report 2
+          - OK: nothing to see here
+
+        test_plug.submodule: require("test_plug.submodule.health").check()
+        ========================================================================
+        ## report 1
+          - OK: everything is fine
+
+        ## report 2
+          - OK: nothing to see here
+
+        test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
+        ========================================================================
+          - ERROR: Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
+            function health#check, line 20]])
+      eq(expected, received)
     end)
 
     it("gracefully handles broken healthcheck", function()
       command("checkhealth broken")
       helpers.expect([[
 
-        health#broken#check
+        broken: health#broken#check
         ========================================================================
           - ERROR: Failed to run healthcheck for "broken" plugin. Exception:
-            function health#check[21]..health#broken#check, line 1
+            function health#check[20]..health#broken#check, line 1
             caused an error
         ]])
+    end)
+
+    it("gracefully handles broken lua healthcheck", function()
+      command("checkhealth test_plug.submodule_failed")
+      local buf_lines = helpers.curbuf('get_lines', 0, -1, true)
+      local received = table.concat(buf_lines, '\n', 1, #buf_lines - 5)
+      -- avoid dealing with path separators
+      local lua_err = "attempt to perform arithmetic on a nil value"
+      local last_line = buf_lines[#buf_lines - 4]
+      assert(string.find(last_line, lua_err) ~= nil, "Lua error not present")
+
+      local expected = global_helpers.dedent([[
+
+        test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
+        ========================================================================
+          - ERROR: Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
+            function health#check, line 20]])
+      eq(expected, received)
     end)
 
     it("highlights OK, ERROR", function()
@@ -116,35 +196,34 @@ describe('health.vim', function()
       screen:set_default_attr_ids({
         Ok = { foreground = Screen.colors.Grey3, background = 6291200 },
         Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      })
-      screen:set_default_attr_ignore({
         Heading = { bold=true, foreground=Screen.colors.Magenta },
         Heading2 = { foreground = Screen.colors.SlateBlue },
-        Bar = { foreground=Screen.colors.Purple },
+        Bar = { foreground = 0x6a0dad },
         Bullet = { bold=true, foreground=Screen.colors.Brown },
       })
       command("checkhealth foo success1")
       command("1tabclose")
       command("set laststatus=0")
-      screen:expect([[
+      screen:expect{grid=[[
         ^                                                                        |
-        health#foo#check                                                        |
-        ========================================================================|
-          - {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
+        {Heading:foo: }                                                                   |
+        {Bar:========================================================================}|
+        {Bullet:  -} {Error:ERROR}: No healthcheck found for "foo" plugin.                       |
                                                                                 |
-        health#success1#check                                                   |
-        ========================================================================|
-        ## report 1                                                             |
-          - {Ok:OK:} everything is fine                                              |
+        {Heading:success1: health#success1#check}                                         |
+        {Bar:========================================================================}|
+        {Heading2:##}{Heading: report 1}                                                             |
+        {Bullet:  -} {Ok:OK}: everything is fine                                              |
                                                                                 |
-      ]])
+      ]]}
     end)
 
     it("gracefully handles invalid healthcheck", function()
       command("checkhealth non_existent_healthcheck")
+      -- luacheck: ignore 613
       helpers.expect([[
 
-        health#non_existent_healthcheck#check
+        non_existent_healthcheck: 
         ========================================================================
           - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.
         ]])

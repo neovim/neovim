@@ -1,7 +1,7 @@
 " Vim compiler file
-" Compiler:	xmllint
+" Compiler:	Libxml2 Command-Line Tool
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2013 Jul 8
+" Last Change:	2020 Jul 30
 
 if exists("current_compiler")
   finish
@@ -13,14 +13,16 @@ if exists(":CompilerSet") != 2		" older Vim always used :setlocal
 endif
 
 let s:cpo_save = &cpo
-set cpo-=C
+set cpo&vim
 
 CompilerSet makeprg=xmllint\ --valid\ --noout
-
-CompilerSet errorformat=%+E%f:%l:\ %.%#\ error\ :\ %m,
-		    \%+W%f:%l:\ %.%#\ warning\ :\ %m,
-		    \%-Z%p^,
-		    \%-G%.%#
+CompilerSet errorformat=%E%f:%l:\ %.%#\ error\ :\ %m,
+		       \%W%f:%l:\ %.%#\ warning\ :\ %m,
+		       \%-Z%p^,
+		       \%C%.%#,
+		       \%terror:\ %m,
+		       \%tarning:\ %m,
+		       \%-G%.%#
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

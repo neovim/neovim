@@ -1,7 +1,0 @@
-
-
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
-
-
-
-This document was merged into |api.txt| and |develop.txt|.

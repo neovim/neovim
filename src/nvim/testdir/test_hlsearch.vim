@@ -1,6 +1,6 @@
 " Test for v:hlsearch
 
-function! Test_hlsearch()
+func Test_hlsearch()
   new
   call setline(1, repeat(['aaa'], 10))
   set hlsearch nolazyredraw
@@ -30,7 +30,7 @@ function! Test_hlsearch()
   call garbagecollect(1)
   call getchar(1)
   enew!
-endfunction
+endfunc
 
 func Test_hlsearch_hangs()
   if !has('reltime') || !has('float')

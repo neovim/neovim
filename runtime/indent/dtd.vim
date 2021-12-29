@@ -1,11 +1,14 @@
 " Vim indent file
-" Language:    	    DTD (Document Type Definition for XML)
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2011-07-08
+" Language:		DTD (Document Type Definition for XML)
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		24 Sep 2021
 
 setlocal indentexpr=GetDTDIndent()
 setlocal indentkeys=!^F,o,O,>
 setlocal nosmartindent
+
+let b:undo_indent = "setl inde< indk< si<"
 
 if exists("*GetDTDIndent")
   finish
@@ -119,16 +122,16 @@ function GetDTDIndent()
     " Next comes the content model.  If the token we’ve found isn’t a
     " parenthesis it must be either ANY, EMPTY or some random junk.  Either
     " way, we’re done indenting this element, so set it to that of the first
-    " line so that the terminating “>” winds up having the same indention.
+    " line so that the terminating “>” winds up having the same indentation.
     if token != '('
       return indent
     endif
 
     " Now go through the content model.  We need to keep track of the nesting
     " of parentheses.  As soon as we hit 0 we’re done.  If that happens we must
-    " have a complete content model.  Thus set indention to be the same as that
+    " have a complete content model.  Thus set indentation to be the same as that
     " of the first line so that the terminating “>” winds up having the same
-    " indention.  Otherwise, we’ll indent to the innermost parentheses not yet
+    " indentation.  Otherwise, we’ll indent to the innermost parentheses not yet
     " matched.
     let [indent_of_innermost, end] = s:indent_to_innermost_parentheses(line, end)
     if indent_of_innermost != -1

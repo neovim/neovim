@@ -1,12 +1,13 @@
 " Test 'statusline'
 "
 " Not tested yet:
-"   %a
 "   %N
 "   %T
 "   %X
 
 source view_util.vim
+source check.vim
+source term_util.vim
 
 func s:get_statusline()
   return ScreenLines(&lines - 1, &columns)[0]
@@ -29,7 +30,9 @@ endfunc
 
 " Function used to display syntax group.
 func SyntaxItem()
-  return synIDattr(synID(line("."),col("."),1),"name")
+  call assert_equal(s:expected_curbuf, g:actual_curbuf)
+  call assert_equal(s:expected_curwin, g:actual_curwin)
+  return synIDattr(synID(line("."), col("."),1), "name")
 endfunc
 
 func Test_caught_error_in_statusline()
@@ -58,7 +61,19 @@ func Test_statusline_will_be_disabled_with_error()
 endfunc
 
 func Test_statusline()
-  new Xstatusline
+  CheckFeature quickfix
+
+  " %a: Argument list ({current} of {max})
+  set statusline=%a
+  call assert_match('^\s*$', s:get_statusline())
+  arglocal a1 a2
+  rewind
+  call assert_match('^ (1 of 2)\s*$', s:get_statusline())
+  next
+  call assert_match('^ (2 of 2)\s*$', s:get_statusline())
+  e Xstatusline
+  call assert_match('^ ((2) of 2)\s*$', s:get_statusline())
+
   only
   set laststatus=2
   set splitbelow
@@ -218,11 +233,33 @@ func Test_statusline()
 
   "%{: Evaluate expression between '%{' and '}' and substitute result.
   syntax on
+  let s:expected_curbuf = string(bufnr(''))
+  let s:expected_curwin = string(win_getid())
   set statusline=%{SyntaxItem()}
   call assert_match('^vimNumber\s*$', s:get_statusline())
   s/^/"/
   call assert_match('^vimLineComment\s*$', s:get_statusline())
   syntax off
+
+  "%{%expr%}: evaluates enxpressions present in result of expr
+  func! Inner_eval()
+    return '%n some other text'
+  endfunc
+  func! Outer_eval()
+    return 'some text %{%Inner_eval()%}'
+  endfunc
+  set statusline=%{%Outer_eval()%}
+  call assert_match('^some text ' . bufnr() . ' some other text\s*$', s:get_statusline())
+  delfunc Inner_eval
+  delfunc Outer_eval
+
+  "%{%expr%}: Doesn't get stuck in recursion
+  func! Recurse_eval()
+    return '%{%Recurse_eval()%}'
+  endfunc
+  set statusline=%{%Recurse_eval()%}
+  call assert_match('^%{%Recurse_eval()%}\s*$', s:get_statusline())
+  delfunc Recurse_eval
 
   "%(: Start of item group.
   set statusline=ab%(cd%q%)de
@@ -332,6 +369,38 @@ func Test_statusline()
   set statusline=%!2*3+1
   call assert_match('7\s*$', s:get_statusline())
 
+  func GetNested()
+    call assert_equal(string(win_getid()), g:actual_curwin)
+    call assert_equal(string(bufnr('')), g:actual_curbuf)
+    return 'nested'
+  endfunc
+  func GetStatusLine()
+    call assert_equal(win_getid(), g:statusline_winid)
+    return 'the %{GetNested()} line'
+  endfunc
+  set statusline=%!GetStatusLine()
+  call assert_match('the nested line', s:get_statusline())
+  call assert_false(exists('g:actual_curwin'))
+  call assert_false(exists('g:actual_curbuf'))
+  call assert_false(exists('g:statusline_winid'))
+  delfunc GetNested
+  delfunc GetStatusLine
+
+  " Test statusline works with 80+ items
+  function! StatusLabel()
+    redrawstatus
+    return '[label]'	
+  endfunc
+  let statusline = '%{StatusLabel()}'
+  for i in range(150)
+    let statusline .= '%#TabLine' . (i % 2 == 0 ? 'Fill' : 'Sel') . '#' . string(i)[0]
+  endfor
+  let &statusline = statusline
+  redrawstatus
+  set statusline&
+  delfunc StatusLabel
+
+
   " Check statusline in current and non-current window
   " with the 'fillchars' option.
   set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
@@ -347,3 +416,87 @@ func Test_statusline()
   set laststatus&
   set splitbelow&
 endfunc
+
+func Test_statusline_visual()
+  func CallWordcount()
+    call wordcount()
+  endfunc
+  new x1
+  setl statusline=count=%{CallWordcount()}
+  " buffer must not be empty
+  call setline(1, 'hello')
+
+  " window with more lines than x1
+  new x2
+  call setline(1, range(10))
+  $
+  " Visual mode in line below liast line in x1 should not give ml_get error
+  call feedkeys("\<C-V>", "xt")
+  redraw
+
+  delfunc CallWordcount
+  bwipe! x1
+  bwipe! x2
+endfunc
+
+func Test_statusline_removed_group()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  let lines =<< trim END
+    scriptencoding utf-8
+    set laststatus=2
+    let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'
+  END
+  call writefile(lines, 'XTest_statusline')
+
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 10, 'cols': 50})
+  call term_wait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_statusline_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_statusline')
+endfunc
+
+func Test_statusline_using_mode()
+  CheckScreendump
+
+  let lines =<< trim END
+    setlocal statusline=-%{mode()}-
+    split
+    setlocal statusline=+%{mode()}+
+  END
+  call writefile(lines, 'XTest_statusline')
+
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 7, 'cols': 50})
+  call VerifyScreenDump(buf, 'Test_statusline_mode_1', {})
+
+  call term_sendkeys(buf, ":")
+  call VerifyScreenDump(buf, 'Test_statusline_mode_2', {})
+
+  " clean up
+  call term_sendkeys(buf, "close\<CR>")
+  call StopVimInTerminal(buf)
+  call delete('XTest_statusline')
+endfunc
+
+func Test_statusline_after_split_vsplit()
+  only
+
+  " Make the status line of each window show the window number.
+  set ls=2 stl=%{winnr()}
+
+  split | redraw
+  vsplit | redraw
+
+  " The status line of the third window should read '3' here.
+  call assert_equal('3', nr2char(screenchar(&lines - 1, 1)))
+
+  only
+  set ls& stl&
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

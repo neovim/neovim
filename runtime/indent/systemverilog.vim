@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:    SystemVerilog
 " Maintainer:  kocha <kocha.lsifrontend@gmail.com>
-" Last Change: 12-Aug-2013. 
+" Last Change: 05-Feb-2017 by Bilal Wasim
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -64,7 +64,7 @@ function SystemVerilogIndent()
     let vverb = 0
   endif
 
-  " Indent accoding to last line
+  " Indent according to last line
   " End of multiple-line comment
   if last_line =~ '\*/\s*$' && last_line !~ '/\*.\{-}\*/'
     let ind = ind - offset_comment1
@@ -74,7 +74,7 @@ function SystemVerilogIndent()
 
   " Indent after if/else/for/case/always/initial/specify/fork blocks
   elseif last_line =~ '`\@<!\<\(if\|else\)\>' ||
-    \ last_line =~ '^\s*\<\(for\|case\%[[zx]]\|do\|foreach\|randcase\)\>' ||
+    \ last_line =~ '^\s*\<\(for\|case\%[[zx]]\|do\|foreach\|forever\|randcase\)\>' ||
     \ last_line =~ '^\s*\<\(always\|always_comb\|always_ff\|always_latch\)\>' ||
     \ last_line =~ '^\s*\<\(initial\|specify\|fork\|final\)\>'
     if last_line !~ '\(;\|\<end\>\)\s*' . sv_comment . '*$' ||
@@ -129,9 +129,9 @@ function SystemVerilogIndent()
   " De-indent for the end of one-line block
   elseif ( last_line !~ '\<begin\>' ||
     \ last_line =~ '\(//\|/\*\).*\<begin\>' ) &&
-    \ last_line2 =~ '\<\(`\@<!if\|`\@<!else\|for\|always\|initial\|do\|foreach\|final\)\>.*' .
+    \ last_line2 =~ '\<\(`\@<!if\|`\@<!else\|for\|always\|initial\|do\|foreach\|forever\|final\)\>.*' .
       \ sv_comment . '*$' &&
-    \ last_line2 !~ '\(//\|/\*\).*\<\(`\@<!if\|`\@<!else\|for\|always\|initial\|do\|foreach\|final\)\>' &&
+    \ last_line2 !~ '\(//\|/\*\).*\<\(`\@<!if\|`\@<!else\|for\|always\|initial\|do\|foreach\|forever\|final\)\>' &&
     \ last_line2 !~ sv_openstat . '\s*' . sv_comment . '*$' &&
     \ ( last_line2 !~ '\<begin\>' ||
     \ last_line2 =~ '\(//\|/\*\).*\<begin\>' )
@@ -194,7 +194,7 @@ function SystemVerilogIndent()
       \ last_line !~ '^\s*\<\(property\|checker\|program\)\>' &&
       \ last_line !~ '^\s*\()*\s*;\|)\+\)\s*' . sv_comment . '*$' &&
       \ ( last_line =~
-      \ '\<\(`\@<!if\|`\@<!else\|for\|case\%[[zx]]\|always\|initial\|do\|foreach\|randcase\|final\)\>' ||
+      \ '\<\(`\@<!if\|`\@<!else\|for\|case\%[[zx]]\|always\|initial\|do\|foreach\|forever\|randcase\|final\)\>' ||
       \ last_line =~ ')\s*' . sv_comment . '*$' ||
       \ last_line =~ sv_openstat . '\s*' . sv_comment . '*$' )
       let ind = ind - offset
@@ -220,7 +220,7 @@ function SystemVerilogIndent()
 
   endif
 
-  " Return the indention
+  " Return the indentation
   return ind
 endfunction
 

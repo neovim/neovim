@@ -370,7 +370,8 @@ into "barfoo".
 was specified in this example.  This is different from ":substitute", which
 works on one line without a range.
    The command isn't perfect, since it also matches lines where "//" appears
-halfway in a line, and the substitution will also take place before the "//".
+halfway through a line, and the substitution will also take place before the
+"//".
 
 Just like with ":substitute", any pattern can be used.  When you learn more
 complicated patterns later, you can use them here.
@@ -634,9 +635,9 @@ using it.  To check the current value of 'textwidth': >
 	:set textwidth
 
 Now lines will be broken to take only up to 78 characters.  However, when you
-insert text halfway through a line or delete a few words, the line will get
-too long or too short as Vim won't automatically reformat the text.  To tell
-Vim to format the current paragraph:
+insert text halfway through a line, or when you delete a few words, the lines
+will get too long or too short.  Vim doesn't automatically reformat the text.
+To tell Vim to format the current paragraph: >
 
 	gqap
 
@@ -686,7 +687,7 @@ with any motion command, with text objects and in Visual mode.
 lowercase.  This can be shortened to "guu".  "gUgU" is shortened to "gUU" and
 "g~g~" to "g~~".  Example: >
 
-				g~~ 
+				g~~
 <	Some GIRLS have Fun    ---->   sOME girls HAVE fUN ~
 
 ==============================================================================

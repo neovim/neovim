@@ -48,7 +48,7 @@ position.
 ==============================================================================
 2. Starting and stopping Visual mode			*visual-start*
 
-						*v* *characterwise-visual*
+						*v* *charwise-visual*
 [count]v		Start Visual mode per character.
 			With [count] select the same number of characters or
 			lines as used for the last Visual operation, but at
@@ -74,7 +74,7 @@ position.
 
 If you use <Esc>, click the left mouse button or use any command that
 does a jump to another buffer while in Visual mode, the highlighting stops
-and no text is affected.  Also when you hit "v" in characterwise Visual mode,
+and no text is affected.  Also when you hit "v" in charwise Visual mode,
 "CTRL-V" in blockwise Visual mode or "V" in linewise Visual mode.  If you hit
 CTRL-Z the highlighting stops and the editor is suspended or a new shell is
 started |CTRL-Z|.
@@ -103,6 +103,7 @@ gn			Search forward for the last used search pattern, like
 			E.g., "dgn" deletes the text of the next match.
 			If Visual mode is active, extends the selection
 			until the end of the next match.
+			'wrapscan' applies
 			Note: Unlike `n` the search direction does not depend
 			on the previous search command.
 
@@ -111,7 +112,7 @@ gN			Like |gn| but searches backward, like with `N`.
 
 							*<LeftMouse>*
 <LeftMouse>		Set the current cursor position.  If Visual mode is
-			active it is stopped.  Only when 'mouse' option is
+			active it is stopped.  Only when 'mouse' option
 			contains 'n' or 'a'.  If the position is within 'so'
 			lines from the last line on the screen the text is
 			scrolled up.  If the position is within 'so' lines from
@@ -122,7 +123,7 @@ gN			Like |gn| but searches backward, like with `N`.
 <RightMouse>		Start Visual mode if it is not active.  The text from
 			the cursor position to the position of the click is
 			highlighted.  If Visual mode was already active move
-			the start or end of the highlighted text, which ever
+			the start or end of the highlighted text, whichever
 			is closest, to the position of the click.  Only when
 			'mouse' option contains 'n' or 'a'.
 
@@ -159,7 +160,10 @@ If you want to highlight exactly the same area as the last time, you can use
 
 							*v_<Esc>*
 <Esc>			In Visual mode: Stop Visual mode.
-
+						*v_META* *v_ALT*
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have a
+		visual-mode mapping.
 							*v_CTRL-C*
 CTRL-C			In Visual mode: Stop Visual mode.  When insert mode is
 			pending (the mode message shows
@@ -222,7 +226,7 @@ The objects that can be used are:
 	is	inner sentence					|v_is|
 	ap	a paragraph (with white space)			|v_ap|
 	ip	inner paragraph					|v_ip|
-	ab	a () block (with parenthesis)			|v_ab|
+	ab	a () block (with parentheses)			|v_ab|
 	ib	inner () block					|v_ib|
 	aB	a {} block (with braces)			|v_aB|
 	iB	inner {} block					|v_iB|
@@ -333,7 +337,7 @@ Visual-block Shift						*v_b_>*
 The block is shifted by 'shiftwidth'.  The RHS of the block is irrelevant.  The
 LHS of the block determines the point from which to apply a right shift, and
 padding includes TABs optimally according to 'ts' and 'et'.  The LHS of the
-block determines the point upto which to shift left.
+block determines the point up to which to shift left.
 See |v_b_>_example|.
 See |v_b_<_example|.
 
@@ -356,7 +360,8 @@ same amount of text as the last time:
   last line the same number of characters as in the last line the last time.
 The start of the text is the Cursor position.  If the "$" command was used as
 one of the last commands to extend the highlighted text, the repeating will
-be applied up to the rightmost column of the longest line.
+be applied up to the rightmost column of the longest line.  Any count passed
+to the `.` command is not used.
 
 
 ==============================================================================
@@ -415,7 +420,7 @@ abcdefghijklmnopqrstuvwxyz
 
 abcdefghijklmnSTRINGopqrstuvwxyz
 abc	      STRING  defghijklmnopqrstuvwxyz
-abcdef  ghi   STRING	jklmnopqrstuvwxyz
+abcdef  ghi   STRING  	jklmnopqrstuvwxyz
 abcdefghijklmnSTRINGopqrstuvwxyz
 
 2. fo<C-v>3j$ASTRING<ESC>					*v_b_A_example*
@@ -477,7 +482,7 @@ Commands in Select mode:
 Otherwise, typed characters are handled as in Visual mode.
 
 When using an operator in Select mode, and the selection is linewise, the
-selected lines are operated upon, but like in characterwise selection.  For
+selected lines are operated upon, but like in charwise selection.  For
 example, when a whole line is deleted, it can later be pasted in the middle of
 a line.
 
@@ -510,7 +515,7 @@ gV			Avoid the automatic reselection of the Visual area
 			selection.
 
 							*gh*
-gh			Start Select mode, characterwise.  This is like "v",
+gh			Start Select mode, charwise.  This is like "v",
 			but starts Select mode instead of Visual mode.
 			Mnemonic: "get highlighted".
 

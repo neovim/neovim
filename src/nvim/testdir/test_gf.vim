@@ -1,3 +1,4 @@
+" Test for the gf and gF (goto file) commands
 
 " This is a test if a URL is recognized by "gf", with the cursor before and
 " after the "://".  Also test ":\\".
@@ -58,6 +59,14 @@ func Test_gF()
   call assert_equal('Xfile', bufname('%'))
   call assert_equal(3, getcurpos()[1])
 
+  enew!
+  call setline(1, ['one', 'the Xfile line 2, and more', 'three'])
+  w! Xfile2
+  normal 2GfX
+  normal gF
+  call assert_equal('Xfile', bufname('%'))
+  call assert_equal(2, getcurpos()[1])
+
   set isfname&
   call delete('Xfile')
   call delete('Xfile2')
@@ -98,4 +107,53 @@ func Test_gf()
 
   call delete('Xtest1')
   call delete('Xtestgf')
+endfunc
+
+func Test_gf_visual()
+  call writefile(['one', 'two', 'three', 'four'], "Xtest_gf_visual")
+  new
+  call setline(1, 'XXXtest_gf_visualXXX')
+  set hidden
+
+  " Visually select Xtest_gf_visual and use gf to go to that file
+  norm! ttvtXgf
+  call assert_equal('Xtest_gf_visual', bufname('%'))
+
+  " if multiple lines are selected, then gf should fail
+  call setline(1, ["one", "two"])
+  normal VGgf
+  call assert_equal('Xtest_gf_visual', @%)
+
+  " following line number is used for gF
+  bwipe!
+  new
+  call setline(1, 'XXXtest_gf_visual:3XXX')
+  norm! 0ttvt:gF
+  call assert_equal('Xtest_gf_visual', bufname('%'))
+  call assert_equal(3, getcurpos()[1])
+
+  " line number in visual area is used for file name
+  if has('unix')
+    bwipe!
+    call writefile([], "Xtest_gf_visual:3")
+    new
+    call setline(1, 'XXXtest_gf_visual:3XXX')
+    norm! 0ttvtXgF
+    call assert_equal('Xtest_gf_visual:3', bufname('%'))
+  call delete('Xtest_gf_visual:3')
+  endif
+
+  bwipe!
+  call delete('Xtest_gf_visual')
+  set nohidden
+endfunc
+
+func Test_gf_error()
+  new
+  call assert_fails('normal gf', 'E446:')
+  call assert_fails('normal gF', 'E446:')
+  call setline(1, '/doesnotexist')
+  call assert_fails('normal gf', 'E447:')
+  call assert_fails('normal gF', 'E447:')
+  bwipe!
 endfunc

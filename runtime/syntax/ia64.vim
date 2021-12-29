@@ -1,10 +1,9 @@
 " Vim syntax file
-" Language:     IA-64 (Itanium) assembly language
-" Maintainer:   Parth Malwankar <pmalwankar@yahoo.com>
-" URL:		http://www.geocities.com/pmalwankar (Home Page with link to my Vim page)
-"		http://www.geocities.com/pmalwankar/vim.htm (for VIM)
-" File Version: 0.7
-" Last Change:  2006 Sep 08
+" Language:		IA-64 (Itanium) assembly language
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Parth Malwankar <pmalwankar@yahoo.com>
+" File Version:		0.8
+" Last Change:		2020 Sep 25
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -15,16 +14,16 @@ endif
 "ignore case for assembly
 syn case ignore
 
-"  Identifier Keyword characters (defines \k)
-setlocal iskeyword=@,48-57,#,$,.,:,?,@-@,_,~
-
 syn sync minlines=5
 
 " Read the MASM syntax to start with
 " This is needed as both IA-64 as well as IA-32 instructions are supported
 source <sfile>:p:h/masm.vim
 
-syn region ia64Comment start="//" end="$" contains=ia64Todo
+"  Identifier Keyword characters (defines \k)
+syn iskeyword @,48-57,#,$,.,:,?,@-@,_,~
+
+syn region ia64Comment start="//"  end="$"   contains=ia64Todo
 syn region ia64Comment start="/\*" end="\*/" contains=ia64Todo
 
 syn match ia64Identifier	"[a-zA-Z_$][a-zA-Z0-9_$]*"
@@ -266,22 +265,22 @@ syn match ia64data "stringz\=\(\(\(\.ua\)\=\(\.msb\|\.lsb\)\=\)\|\(\(\.msb\|\.ls
 "put masm groups with our groups
 hi def link masmOperator	ia64operator
 hi def link masmDirective	ia64Directive
-hi def link masmOpcode	ia64Opcode
+hi def link masmOpcode		ia64Opcode
 hi def link masmIdentifier	ia64Identifier
-hi def link masmFloat	ia64Float
+hi def link masmFloat		ia64Float
 
 "ia64 specific stuff
-hi def link ia64Label	Define
-hi def link ia64Comment	Comment
+hi def link ia64Label		Define
+hi def link ia64Comment		Comment
 hi def link ia64Directive	Type
-hi def link ia64opcode	Statement
+hi def link ia64opcode		Statement
 hi def link ia64registers	Operator
-hi def link ia64string	String
+hi def link ia64string		String
 hi def link ia64Hex		Number
-hi def link ia64Binary	Number
-hi def link ia64Octal	Number
-hi def link ia64Float	Float
-hi def link ia64Decimal	Number
+hi def link ia64Binary		Number
+hi def link ia64Octal		Number
+hi def link ia64Float		Float
+hi def link ia64Decimal		Number
 hi def link ia64Identifier	Identifier
 hi def link ia64data		Type
 hi def link ia64delimiter	Delimiter

@@ -1,15 +1,15 @@
 #ifndef NVIM_API_PRIVATE_DEFS_H
 #define NVIM_API_PRIVATE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
 
-#define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
-#define STRING_INIT {.data = NULL, .size = 0}
+#define ARRAY_DICT_INIT { .size = 0, .capacity = 0, .items = NULL }
+#define STRING_INIT { .data = NULL, .size = 0 }
 #define OBJECT_INIT { .type = kObjectTypeNil }
 #define ERROR_INIT { .type = kErrorTypeNone, .msg = NULL }
 #define REMOTE_TYPE(type) typedef handle_T type
@@ -19,13 +19,14 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # define ArrayOf(...) Array
 # define DictionaryOf(...) Dictionary
+# define Dict(name) KeyDict_##name
 #endif
 
 // Basic types
 typedef enum {
   kErrorTypeNone = -1,
   kErrorTypeException,
-  kErrorTypeValidation
+  kErrorTypeValidation,
 } ErrorType;
 
 typedef enum {
@@ -129,5 +130,14 @@ struct key_value_pair {
   Object value;
 };
 
+typedef Object *(*field_hash)(void *retval, const char *str, size_t len);
+typedef struct {
+  char *str;
+  size_t ptr_off;
+} KeySetLink;
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keysets_defs.generated.h"
+#endif
 
 #endif  // NVIM_API_PRIVATE_DEFS_H

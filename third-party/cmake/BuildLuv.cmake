@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildLuv(PATCH_COMMAND ... CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build luv, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run
@@ -55,7 +53,7 @@ endfunction()
 
 set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
-  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
+  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
 
 # Replace luv default rockspec with the alternate one under the "rockspecs"
 # directory
@@ -65,10 +63,13 @@ set(LUV_PATCH_COMMAND
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}
   -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
+  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
   -DLUA_BUILD_TYPE=System
+  -DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3
   -DWITH_SHARED_LIBUV=ON
   -DBUILD_SHARED_LIBS=OFF
+  -DBUILD_STATIC_LIBS=ON
   -DBUILD_MODULE=OFF)
 
 if(USE_BUNDLED_LUAJIT)
@@ -106,28 +107,23 @@ elseif(MSVC)
     # Same as Unix without fPIC
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS}"
     # Make sure we use the same generator, otherwise we may
-    # accidentaly end up using different MSVC runtimes
-    -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
-    # Use static runtime
-    -DCMAKE_C_FLAGS_DEBUG="-MTd"
-    -DCMAKE_C_FLAGS_RELEASE="-MT")
+    # accidentally end up using different MSVC runtimes
+    -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
 else()
   set(LUV_CONFIGURE_COMMAND
     ${LUV_CONFIGURE_COMMAND_COMMON}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} ${LUV_INCLUDE_FLAGS} -fPIC")
+  if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
+      (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
+      set(LUV_CONFIGURE_COMMAND ${LUV_CONFIGURE_COMMAND} -DCMAKE_MAKE_PROGRAM=gmake)
+  endif()
 endif()
 
-if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
-        (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
-        set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
-          "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3"
-          "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
-else()
-  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
-    "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3" --build .)
-endif()
-set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install)
+set(LUV_BUILD_COMMAND
+  ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE})
+set(LUV_INSTALL_COMMAND
+  ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 
 BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}
   CONFIGURE_COMMAND ${LUV_CONFIGURE_COMMAND}

@@ -3,14 +3,14 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/func_attr.h"
+#include "nvim/macros.h"
 #include "nvim/os/os_defs.h"
 
 // Definitions of various common control characters.
 
 #define CharOrd(x)      ((uint8_t)(x) < 'a' \
-                         ? (uint8_t)(x) - 'A'\
+                         ? (uint8_t)(x) - 'A' \
                          : (uint8_t)(x) - 'a')
 #define CharOrdLow(x)   ((uint8_t)(x) - 'a')
 #define CharOrdUp(x)    ((uint8_t)(x) - 'A')
@@ -23,26 +23,26 @@
 #define NL              '\012'
 #define NL_STR          "\012"
 #define FF              '\014'
-#define CAR             '\015'  /* CR is used by Mac OS X */
+#define CAR             '\015'  // CR is used by Mac OS X
 #define ESC             '\033'
 #define ESC_STR         "\033"
 #define DEL             0x7f
 #define DEL_STR         "\177"
 #define CSI             0x9b    // Control Sequence Introducer
 #define CSI_STR         "\233"
-#define DCS             0x90    /* Device Control String */
-#define STERM           0x9c    /* String Terminator */
+#define DCS             0x90    // Device Control String
+#define STERM           0x9c    // String Terminator
 
 #define POUND           0xA3
 
-#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40) /* '?' -> DEL, '@' -> ^@, etc. */
+#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
 #define Meta(x)         ((x) | 0x80)
 
 #define CTRL_F_STR      "\006"
 #define CTRL_H_STR      "\010"
 #define CTRL_V_STR      "\026"
 
-#define Ctrl_AT         0   /* @ */
+#define Ctrl_AT         0   // @
 #define Ctrl_A          1
 #define Ctrl_B          2
 #define Ctrl_C          3
@@ -69,16 +69,14 @@
 #define Ctrl_X          24
 #define Ctrl_Y          25
 #define Ctrl_Z          26
-/* CTRL- [ Left Square Bracket == ESC*/
-#define Ctrl_BSL        28  /* \ BackSLash */
-#define Ctrl_RSB        29  /* ] Right Square Bracket */
-#define Ctrl_HAT        30  /* ^ */
+// CTRL- [ Left Square Bracket == ESC
+#define Ctrl_BSL        28  // \ BackSLash
+#define Ctrl_RSB        29  // ] Right Square Bracket
+#define Ctrl_HAT        30  // ^
 #define Ctrl__          31
 
 
-/*
- * Character that separates dir names in a path.
- */
+// Character that separates dir names in a path.
 #ifdef BACKSLASH_IN_FILENAME
 # define PATHSEP        psepc
 # define PATHSEPSTR     pseps
@@ -88,6 +86,10 @@
 #endif
 
 static inline bool ascii_iswhite(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline bool ascii_iswhite_or_nul(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
@@ -117,6 +119,14 @@ static inline bool ascii_isspace(int)
 static inline bool ascii_iswhite(int c)
 {
   return c == ' ' || c == '\t';
+}
+
+/// Checks if `c` is a space or tab character or NUL.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_iswhite_or_nul(int c)
+{
+  return ascii_iswhite(c) || c == NUL;
 }
 
 /// Check whether character is a decimal digit.
@@ -159,6 +169,14 @@ static inline bool ascii_isbdigit(int c)
   return (c == '0' || c == '1');
 }
 
+/// Checks if `c` is an octal digit, that is, 0-7.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isodigit(int c)
+{
+  return (c >= '0' && c <= '7');
+}
+
 /// Checks if `c` is a white-space character, that is,
 /// one of \f, \n, \r, \t, \v.
 ///
@@ -168,4 +186,4 @@ static inline bool ascii_isspace(int c)
   return (c >= 9 && c <= 13) || c == ' ';
 }
 
-#endif /* NVIM_ASCII_H */
+#endif  // NVIM_ASCII_H

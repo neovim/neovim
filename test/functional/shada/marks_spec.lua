@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
   helpers.meths, helpers.curwinmeths, helpers.curbufmeths, helpers.command,
   helpers.funcs, helpers.eq
-local exc_exec, redir_exec = helpers.exc_exec, helpers.redir_exec
+local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -144,10 +144,10 @@ describe('ShaDa support code', function()
     nvim_command('normal! gg')
     nvim_command('enew')
     nvim_command('normal! gg')
-    local saved = redir_exec('jumps')
+    local saved = exec_capture('jumps')
     nvim_command('qall')
     reset()
-    eq(saved, redir_exec('jumps'))
+    eq(saved, exec_capture('jumps'))
   end)
 
   it('when dumping jump list also dumps current position', function()

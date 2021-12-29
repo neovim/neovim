@@ -1,15 +1,17 @@
 " Test for edit functions
-"
+
 if exists("+t_kD")
   let &t_kD="[3;*~"
 endif
+
+source check.vim
 
 " Needed for testing basic rightleft: Test_edit_rightleft
 source view_util.vim
 
 " Needs to come first until the bug in getchar() is
 " fixed: https://groups.google.com/d/msg/vim_dev/fXL9yme4H4c/bOR-U6_bAQAJ
-func! Test_edit_00b()
+func Test_edit_00b()
   new
   call setline(1, ['abc '])
   inoreabbr <buffer> h here some more
@@ -21,7 +23,7 @@ func! Test_edit_00b()
   bw!
 endfunc
 
-func! Test_edit_01()
+func Test_edit_01()
   " set for Travis CI?
   "  set nocp noesckeys
   new
@@ -59,7 +61,7 @@ func! Test_edit_01()
   bw!
 endfunc
 
-func! Test_edit_02()
+func Test_edit_02()
   " Change cursor position in InsertCharPre command
   new
   call setline(1, 'abc')
@@ -99,7 +101,7 @@ func! Test_edit_02()
   bw!
 endfunc
 
-func! Test_edit_03()
+func Test_edit_03()
   " Change cursor after <c-o> command to end of line
   new
   call setline(1, 'abc')
@@ -118,7 +120,7 @@ func! Test_edit_03()
   bw!
 endfunc
 
-func! Test_edit_04()
+func Test_edit_04()
   " test for :stopinsert
   new
   call setline(1, 'abc')
@@ -130,7 +132,7 @@ func! Test_edit_04()
   bw!
 endfunc
 
-func! Test_edit_05()
+func Test_edit_05()
   " test for folds being opened
   new
   call setline(1, ['abcX', 'abcX', 'zzzZ'])
@@ -152,7 +154,7 @@ func! Test_edit_05()
   bw!
 endfunc
 
-func! Test_edit_06()
+func Test_edit_06()
   " Test in diff mode
   if !has("diff") || !executable("diff")
     return
@@ -174,7 +176,7 @@ func! Test_edit_06()
   bw!
 endfunc
 
-func! Test_edit_07()
+func Test_edit_07()
   " 1) Test with completion <c-l> when popupmenu is visible
   new
   call setline(1, 'J')
@@ -199,11 +201,11 @@ func! Test_edit_07()
   endfu
   au InsertCharPre <buffer> :call DoIt()
   call feedkeys("A\<f5>\<c-p>u\<cr>\<c-l>\<cr>", 'tx')
-  call assert_equal(["Jan\<c-l>",''], getline(1,'$'))
+  call assert_equal(["Jan\<c-l>",''], 1->getline('$'))
   %d
   call setline(1, 'J')
   call feedkeys("A\<f5>\<c-p>u\<down>\<c-l>\<cr>", 'tx')
-  call assert_equal(["January"], getline(1,'$'))
+  call assert_equal(["January"], 1->getline('$'))
 
   delfu ListMonths
   delfu DoIt
@@ -226,7 +228,7 @@ func! Test_edit_08()
   unlet g:bufnr
 endfunc
 
-func! Test_edit_09()
+func Test_edit_09()
   " test i_CTRL-\ combinations
   new
   call setline(1, ['abc', 'def', 'ghi'])
@@ -256,7 +258,7 @@ func! Test_edit_09()
   bw!
 endfunc
 
-func! Test_edit_10()
+func Test_edit_10()
   " Test for starting selectmode
   new
   set selectmode=key keymodel=startsel
@@ -268,7 +270,7 @@ func! Test_edit_10()
   bw!
 endfunc
 
-func! Test_edit_11()
+func Test_edit_11()
   " Test that indenting kicks in
   new
   set cindent
@@ -312,7 +314,7 @@ func! Test_edit_11()
   bw!
 endfunc
 
-func! Test_edit_11_indentexpr()
+func Test_edit_11_indentexpr()
   " Test that indenting kicks in
   new
   " Use indentexpr instead of cindenting
@@ -339,14 +341,14 @@ func! Test_edit_11_indentexpr()
   bw!
 endfunc
 
-func! Test_edit_12()
+func Test_edit_12()
   " Test changing indent in replace mode
   new
   call setline(1, ["\tabc", "\tdef"])
   call cursor(2, 4)
   call feedkeys("R^\<c-d>", 'tnix')
   call assert_equal(["\tabc", "def"], getline(1, '$'))
-  call assert_equal([0, 2, 2, 0], getpos('.'))
+  call assert_equal([0, 2, 2, 0], '.'->getpos())
   %d
   call setline(1, ["\tabc", "\t\tdef"])
   call cursor(2, 2)
@@ -391,7 +393,7 @@ func! Test_edit_12()
   bw!
 endfunc
 
-func! Test_edit_13()
+func Test_edit_13()
   " Test smartindenting
   if exists("+smartindent")
     new
@@ -479,7 +481,7 @@ func! Test_edit_CTRL_()
 endfunc
 
 " needs to come first, to have the @. register empty
-func! Test_edit_00a_CTRL_A()
+func Test_edit_00a_CTRL_A()
   " Test pressing CTRL-A
   new
   call setline(1, repeat([''], 5))
@@ -499,7 +501,7 @@ func! Test_edit_00a_CTRL_A()
   bw!
 endfunc
 
-func! Test_edit_CTRL_EY()
+func Test_edit_CTRL_EY()
   " Ctrl-E/ Ctrl-Y in insert mode completion to scroll
   10new
   call setline(1, range(1, 100))
@@ -515,7 +517,7 @@ func! Test_edit_CTRL_EY()
   bw!
 endfunc
 
-func! Test_edit_CTRL_G()
+func Test_edit_CTRL_G()
   new
   call setline(1, ['foobar', 'foobar', 'foobar'])
   call cursor(2, 4)
@@ -533,7 +535,7 @@ func! Test_edit_CTRL_G()
   bw!
 endfunc
 
-func! Test_edit_CTRL_I()
+func Test_edit_CTRL_I()
   " Tab in completion mode
   let path=expand("%:p:h")
   new
@@ -557,7 +559,7 @@ func! Test_edit_CTRL_I()
   bw!
 endfunc
 
-func! Test_edit_CTRL_K()
+func Test_edit_CTRL_K()
   " Test pressing CTRL-K (basically only dictionary completion and digraphs
   " the rest is already covered
   call writefile(['A', 'AA', 'AAA', 'AAAA'], 'Xdictionary.txt')
@@ -630,7 +632,7 @@ func! Test_edit_CTRL_K()
   bw!
 endfunc
 
-func! Test_edit_CTRL_L()
+func Test_edit_CTRL_L()
   " Test Ctrl-X Ctrl-L (line completion)
   new
   set complete=.
@@ -686,7 +688,7 @@ func! Test_edit_CTRL_L()
   bw!
 endfunc
 
-func! Test_edit_CTRL_N()
+func Test_edit_CTRL_N()
   " Check keyword completion
   new
   set complete=.
@@ -707,7 +709,7 @@ func! Test_edit_CTRL_N()
   bw!
 endfunc
 
-func! Test_edit_CTRL_O()
+func Test_edit_CTRL_O()
   " Check for CTRL-O in insert mode
   new
   inoreabbr <buffer> h here some more
@@ -733,22 +735,21 @@ func! Test_edit_CTRL_O()
 endfunc
 
 func! Test_edit_CTRL_R()
-  throw 'skipped: Nvim does not support test_override()'
   " Insert Register
   new
-  call test_override("ALL", 1)
+  " call test_override("ALL", 1)
   set showcmd
   call feedkeys("AFOOBAR eins zwei\<esc>", 'tnix')
   call feedkeys("O\<c-r>.", 'tnix')
   call feedkeys("O\<c-r>=10*500\<cr>\<esc>", 'tnix')
   call feedkeys("O\<c-r>=getreg('=', 1)\<cr>\<esc>", 'tnix')
   call assert_equal(["getreg('=', 1)", '5000', "FOOBAR eins zwei", "FOOBAR eins zwei"], getline(1, '$'))
-  call test_override("ALL", 0)
+  " call test_override("ALL", 0)
   set noshowcmd
   bw!
 endfunc
 
-func! Test_edit_CTRL_S()
+func Test_edit_CTRL_S()
   " Test pressing CTRL-S (basically only spellfile completion)
   " the rest is already covered
   new
@@ -792,7 +793,7 @@ func! Test_edit_CTRL_S()
   bw!
 endfunc
 
-func! Test_edit_CTRL_T()
+func Test_edit_CTRL_T()
   " Check for CTRL-T and CTRL-X CTRL-T in insert mode
   " 1) increase indent
   new
@@ -869,7 +870,57 @@ func! Test_edit_CTRL_T()
   bw!
 endfunc
 
-func! Test_edit_CTRL_U()
+" Test 'thesaurusfunc'
+func MyThesaurus(findstart, base)
+  let mythesaurus = [
+        \ #{word: "happy",
+        \   synonyms: "cheerful,blissful,flying high,looking good,peppy"},
+        \ #{word: "kind",
+        \   synonyms: "amiable,bleeding-heart,heart in right place"}]
+  if a:findstart
+    " locate the start of the word
+    let line = getline('.')
+    let start = col('.') - 1
+    while start > 0 && line[start - 1] =~ '\a'
+      let start -= 1
+    endwhile
+    return start
+  else
+    " find strings matching with "a:base"
+    let res = []
+    for w in mythesaurus
+      if w.word =~ '^' . a:base
+        call add(res, w.word)
+        call extend(res, split(w.synonyms, ","))
+      endif
+    endfor
+    return res
+  endif
+endfunc
+
+func Test_thesaurus_func()
+  new
+  set thesaurus=notused
+  set thesaurusfunc=NotUsed
+  setlocal thesaurusfunc=MyThesaurus
+  call setline(1, "an ki")
+  call cursor(1, 1)
+  call feedkeys("A\<c-x>\<c-t>\<c-n>\<cr>\<esc>", 'tnix')
+  call assert_equal(['an amiable', ''], getline(1, '$'))
+
+  setlocal thesaurusfunc=NonExistingFunc
+  call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
+
+  setlocal thesaurusfunc=
+  set thesaurusfunc=NonExistingFunc
+  call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
+  %bw!
+
+  set thesaurusfunc=
+  set thesaurus=
+endfunc
+
+func Test_edit_CTRL_U()
   " Test 'completefunc'
   new
   " -1, -2 and -3 are special return values
@@ -928,7 +979,7 @@ func! Test_edit_CTRL_U()
   bw!
 endfunc
 
-func! Test_edit_CTRL_Z()
+func Test_edit_CTRL_Z()
   " Ctrl-Z when insertmode is not set inserts it literally
   new
   call setline(1, 'abc')
@@ -938,7 +989,7 @@ func! Test_edit_CTRL_Z()
   " TODO: How to Test Ctrl-Z in insert mode, e.g. suspend?
 endfunc
 
-func! Test_edit_DROP()
+func Test_edit_DROP()
   if !has("dnd")
     return
   endif
@@ -954,8 +1005,7 @@ func! Test_edit_DROP()
   bw!
 endfunc
 
-func! Test_edit_CTRL_V()
-  throw 'skipped: Nvim does not support test_override()'
+func Test_edit_CTRL_V()
   if has("ebcdic")
     return
   endif
@@ -965,7 +1015,7 @@ func! Test_edit_CTRL_V()
   " force some redraws
   set showmode showcmd
   "call test_override_char_avail(1)
-  call test_override('ALL', 1)
+  " call test_override('ALL', 1)
   call feedkeys("A\<c-v>\<c-n>\<c-v>\<c-l>\<c-v>\<c-b>\<esc>", 'tnix')
   call assert_equal(["abc\x0e\x0c\x02"], getline(1, '$'))
 
@@ -978,12 +1028,12 @@ func! Test_edit_CTRL_V()
     set norl
   endif
 
-  call test_override('ALL', 0)
+  " call test_override('ALL', 0)
   set noshowmode showcmd
   bw!
 endfunc
 
-func! Test_edit_F1()
+func Test_edit_F1()
   " Pressing <f1>
   new
   call feedkeys(":set im\<cr>\<f1>\<c-l>", 'tnix')
@@ -993,7 +1043,7 @@ func! Test_edit_F1()
   bw
 endfunc
 
-func! Test_edit_F21()
+func Test_edit_F21()
   " Pressing <f21>
   " sends a netbeans command
   if has("netbeans_intg")
@@ -1004,7 +1054,7 @@ func! Test_edit_F21()
   endif
 endfunc
 
-func! Test_edit_HOME_END()
+func Test_edit_HOME_END()
   " Test Home/End Keys
   new
   set foldopen+=hor
@@ -1019,7 +1069,7 @@ func! Test_edit_HOME_END()
   bw!
 endfunc
 
-func! Test_edit_INS()
+func Test_edit_INS()
   " Test for Pressing <Insert>
   new
   call setline(1, ['abc', 'def'])
@@ -1033,7 +1083,7 @@ func! Test_edit_INS()
   bw!
 endfunc
 
-func! Test_edit_LEFT_RIGHT()
+func Test_edit_LEFT_RIGHT()
   " Left, Shift-Left, Right, Shift-Right
   new
   call setline(1, ['abc def ghi', 'ABC DEF GHI', 'ZZZ YYY XXX'])
@@ -1080,7 +1130,7 @@ func! Test_edit_LEFT_RIGHT()
   bw!
 endfunc
 
-func! Test_edit_MOUSE()
+func Test_edit_MOUSE()
   " This is a simple test, since we not really using the mouse here
   if !has("mouse")
     return
@@ -1135,7 +1185,7 @@ func! Test_edit_MOUSE()
   bw!
 endfunc
 
-func! Test_edit_PAGEUP_PAGEDOWN()
+func Test_edit_PAGEUP_PAGEDOWN()
   10new
   call setline(1, repeat(['abc def ghi'], 30))
   call cursor(1, 1)
@@ -1234,7 +1284,7 @@ func! Test_edit_PAGEUP_PAGEDOWN()
   bw!
 endfunc
 
-func! Test_edit_forbidden()
+func Test_edit_forbidden()
   new
   " 1) edit in the sandbox is not allowed
   call setline(1, 'a')
@@ -1244,6 +1294,7 @@ func! Test_edit_forbidden()
   call assert_fails(':Sandbox', 'E48:')
   delcom Sandbox
   call assert_equal(['a'], getline(1,'$'))
+
   " 2) edit with textlock set
   fu! DoIt()
     call feedkeys("i\<del>\<esc>", 'tnix')
@@ -1263,6 +1314,7 @@ func! Test_edit_forbidden()
   catch /^Vim\%((\a\+)\)\=:E117/ " catch E117: unknown function
   endtry
   au! InsertCharPre
+
   " 3) edit when completion is shown
   fun! Complete(findstart, base)
     if a:findstart
@@ -1280,6 +1332,7 @@ func! Test_edit_forbidden()
   endtry
   delfu Complete
   set completefunc=
+
   if has("rightleft") && exists("+fkmap")
     " 4) 'R' when 'fkmap' and 'revins' is set.
     set revins fkmap
@@ -1294,7 +1347,7 @@ func! Test_edit_forbidden()
   bw!
 endfunc
 
-func! Test_edit_rightleft()
+func Test_edit_rightleft()
   " Cursor in rightleft mode moves differently
   if !exists("+rightleft")
     return
@@ -1439,34 +1492,58 @@ func Test_edit_alt()
   call delete('XAltFile')
 endfunc
 
-func Test_leave_insert_autocmd()
+func Test_edit_InsertLeave()
   new
+  au InsertLeavePre * let g:did_au_pre = 1
   au InsertLeave * let g:did_au = 1
+  let g:did_au_pre = 0
   let g:did_au = 0
   call feedkeys("afoo\<Esc>", 'tx')
+  call assert_equal(1, g:did_au_pre)
   call assert_equal(1, g:did_au)
   call assert_equal('foo', getline(1))
 
+  let g:did_au_pre = 0
   let g:did_au = 0
   call feedkeys("Sbar\<C-C>", 'tx')
+  call assert_equal(1, g:did_au_pre)
   call assert_equal(0, g:did_au)
   call assert_equal('bar', getline(1))
 
   inoremap x xx<Esc>
+  let g:did_au_pre = 0
   let g:did_au = 0
   call feedkeys("Saax", 'tx')
+  call assert_equal(1, g:did_au_pre)
   call assert_equal(1, g:did_au)
   call assert_equal('aaxx', getline(1))
 
   inoremap x xx<C-C>
+  let g:did_au_pre = 0
   let g:did_au = 0
   call feedkeys("Sbbx", 'tx')
+  call assert_equal(1, g:did_au_pre)
   call assert_equal(0, g:did_au)
   call assert_equal('bbxx', getline(1))
 
   bwipe!
-  au! InsertLeave
+  au! InsertLeave InsertLeavePre
   iunmap x
+endfunc
+
+func Test_edit_InsertLeave_undo()
+  new XtestUndo
+  set undofile
+  au InsertLeave * wall
+  exe "normal ofoo\<Esc>"
+  call assert_equal(2, line('$'))
+  normal u
+  call assert_equal(1, line('$'))
+
+  bwipe!
+  au! InsertLeave
+  call delete('XtestUndo')
+  set undofile&
 endfunc
 
 " Test for inserting characters using CTRL-V followed by a number.
@@ -1499,3 +1576,166 @@ func Test_edit_startinsert()
   set backspace&
   bwipe!
 endfunc
+
+func Test_edit_noesckeys()
+  CheckNotGui
+  new
+
+  " <Left> moves cursor when 'esckeys' is set
+  exe "set t_kl=\<Esc>OD"
+  " set esckeys
+  call feedkeys("axyz\<Esc>ODX", "xt")
+  " call assert_equal("xyXz", getline(1))
+
+  " <Left> exits Insert mode when 'esckeys' is off
+  " set noesckeys
+  call setline(1, '')
+  call feedkeys("axyz\<Esc>ODX", "xt")
+  call assert_equal(["DX", "xyz"], getline(1, 2))
+
+  bwipe!
+  " set esckeys
+endfunc
+
+" Test for editing a directory
+func Test_edit_is_a_directory()
+  CheckEnglish
+  let dirname = getcwd() . "/Xdir"
+  call mkdir(dirname, 'p')
+
+  new
+  redir => msg
+  exe 'edit' dirname
+  redir END
+  call assert_match("is a directory$", split(msg, "\n")[0])
+  bwipe!
+
+  let dirname .= '/'
+
+  new
+  redir => msg
+  exe 'edit' dirname
+  redir END
+  call assert_match("is a directory$", split(msg, "\n")[0])
+  bwipe!
+
+  call delete(dirname, 'rf')
+endfunc
+
+func Test_edit_browse()
+  " in the GUI this opens a file picker, we only test the terminal behavior
+  CheckNotGui
+
+  " ":browse xxx" checks for the FileExplorer augroup and assumes editing "."
+  " works then.
+  augroup FileExplorer
+    au!
+  augroup END
+
+  " When the USE_FNAME_CASE is defined this used to cause a crash.
+  browse enew
+  bwipe!
+
+  browse split
+  bwipe!
+endfunc
+
+func Test_read_invalid()
+  " set encoding=latin1
+  " This was not properly checking for going past the end.
+  call assert_fails('r`=', 'E484')
+  set encoding=utf-8
+endfunc
+
+" Test for ModeChanged pattern
+func Test_mode_changes()
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'n', 'V', 'v', 's', 'n']
+  func! TestMode()
+    call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
+    call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
+    call assert_equal(mode(1), get(v:event, "new_mode"))
+    let g:index += 1
+  endfunc
+
+  au ModeChanged * :call TestMode()
+  let g:n_to_any = 0
+  au ModeChanged n:* let g:n_to_any += 1
+  call feedkeys("i\<esc>vVca\<CR>\<C-X>\<C-L>\<esc>ggdG", 'tnix')
+
+  let g:V_to_v = 0
+  au ModeChanged V:v let g:V_to_v += 1
+  call feedkeys("Vv\<C-G>\<esc>", 'tnix')
+  call assert_equal(len(filter(g:mode_seq[1:], {idx, val -> val == 'n'})), g:n_to_any)
+  call assert_equal(1, g:V_to_v)
+  call assert_equal(len(g:mode_seq) - 1, g:index)
+
+  let g:n_to_i = 0
+  au ModeChanged n:i let g:n_to_i += 1
+  let g:n_to_niI = 0
+  au ModeChanged i:niI let g:n_to_niI += 1
+  let g:niI_to_i = 0
+  au ModeChanged niI:i let g:niI_to_i += 1
+  let g:nany_to_i = 0
+  au ModeChanged n*:i let g:nany_to_i += 1
+  let g:i_to_n = 0
+  au ModeChanged i:n let g:i_to_n += 1
+  let g:nori_to_any = 0
+  au ModeChanged [ni]:* let g:nori_to_any += 1
+  let g:i_to_any = 0
+  au ModeChanged i:* let g:i_to_any += 1
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'niI', 'i', 'n']
+  call feedkeys("a\<C-O>l\<esc>", 'tnix')
+  call assert_equal(len(g:mode_seq) - 1, g:index)
+  call assert_equal(1, g:n_to_i)
+  call assert_equal(1, g:n_to_niI)
+  call assert_equal(1, g:niI_to_i)
+  call assert_equal(2, g:nany_to_i)
+  call assert_equal(1, g:i_to_n)
+  call assert_equal(2, g:i_to_any)
+  call assert_equal(3, g:nori_to_any)
+
+  if has('terminal')
+    let g:mode_seq += ['c', 'n', 't', 'nt', 'c', 'nt', 'n']
+    call feedkeys(":term\<CR>\<C-W>N:bd!\<CR>", 'tnix')
+    call assert_equal(len(g:mode_seq) - 1, g:index)
+    call assert_equal(1, g:n_to_i)
+    call assert_equal(1, g:n_to_niI)
+    call assert_equal(1, g:niI_to_i)
+    call assert_equal(2, g:nany_to_i)
+    call assert_equal(1, g:i_to_n)
+    call assert_equal(2, g:i_to_any)
+    call assert_equal(5, g:nori_to_any)
+  endif
+
+  au! ModeChanged
+  delfunc TestMode
+  unlet! g:mode_seq
+  unlet! g:index
+  unlet! g:n_to_any
+  unlet! g:V_to_v
+  unlet! g:n_to_i
+  unlet! g:n_to_niI
+  unlet! g:niI_to_i
+  unlet! g:nany_to_i
+  unlet! g:i_to_n
+  unlet! g:nori_to_any
+  unlet! g:i_to_any
+endfunc
+
+func Test_recursive_ModeChanged()
+  au! ModeChanged * norm 0u
+  sil! norm 
+  au!
+endfunc
+
+func Test_ModeChanged_starts_visual()
+  " This was triggering ModeChanged before setting VIsual, causing a crash.
+  au! ModeChanged * norm 0u
+  sil! norm 
+
+  au! ModeChanged
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

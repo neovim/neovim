@@ -198,9 +198,9 @@ is not possible in most terminals.
 You can start the X-Windows version of gvim with an argument to specify the
 size and position of the window: >
 
-	gvim -geometry {width}x{height}+{x_offset}+{y_offset}
+	gvim -geometry {width}x{height}+{x-offset}+{y-offset}
 
-{width} and {height} are in characters, {x_offset} and {y_offset} are in
+{width} and {height} are in characters, {x-offset} and {y-offset} are in
 pixels.  Example: >
 
 	gvim -geometry 80x25+100+300

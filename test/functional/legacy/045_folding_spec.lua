@@ -14,9 +14,6 @@ describe('folding', function()
     screen = Screen.new(20, 8)
     screen:attach()
   end)
-  after_each(function()
-    screen:detach()
-  end)
 
   it('creation, opening, moving (to the end) and closing', function()
     insert([[
@@ -62,7 +59,7 @@ describe('folding', function()
     feed('kYpj')
     feed_command('call append("$", foldlevel("."))')
 
-    helpers.wait()
+    helpers.poke_eventloop()
     screen:expect([[
         dd {{{            |
         ee {{{ }}}        |
@@ -91,7 +88,7 @@ describe('folding', function()
     feed_command('call append("$", foldlevel(2))')
     feed('zR')
 
-    helpers.wait()
+    helpers.poke_eventloop()
     screen:expect([[
       aa                  |
         bb                |

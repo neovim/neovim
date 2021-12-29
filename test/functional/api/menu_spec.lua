@@ -15,10 +15,6 @@ describe("update_menu notification", function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   local function expect_sent(expected)
     screen:expect{condition=function()
       if screen.update_menu ~= expected then

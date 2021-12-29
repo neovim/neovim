@@ -15,7 +15,7 @@ end
 local function diff(text, nodedent)
   local fname = helpers.tmpname()
   command('w! '..fname)
-  helpers.wait()
+  helpers.poke_eventloop()
   local data = io.open(fname):read('*all')
   if nodedent then
     helpers.eq(text, data)

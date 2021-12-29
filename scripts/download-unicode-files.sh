@@ -30,7 +30,7 @@ for filename in $data_files ; do
 done
 
 for filename in $emoji_files ; do
-  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/emoji/latest/$filename"
+  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/UNIDATA/emoji/$filename"
   (
     cd "$UNIDIR"
     git add $filename

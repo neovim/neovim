@@ -287,7 +287,7 @@ func Test_map_timeout_with_timer_interrupt()
   set timeout timeoutlen=200
 
   func ExitCb(job, status)
-    let g:timer = timer_start(1, {_ -> feedkeys("3\<Esc>", 't')})
+    let g:timer = timer_start(1, {-> feedkeys("3\<Esc>", 't')})
   endfunc
 
   call job_start([&shell, &shellcmdflag, 'echo'], {'exit_cb': 'ExitCb'})
@@ -390,3 +390,182 @@ func Test_motionforce_omap()
   delfunc Select
   delfunc GetCommand
 endfunc
+
+func Test_error_in_map_expr()
+  if !has('terminal') || (has('win32') && has('gui_running'))
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim [CODE]
+  func Func()
+    " fail to create list
+    let x = [
+  endfunc
+  nmap <expr> ! Func()
+  set updatetime=50
+  [CODE]
+  call writefile(lines, 'Xtest.vim')
+
+  let buf = term_start(GetVimCommandCleanTerm() .. ' -S Xtest.vim', {'term_rows': 8})
+  let job = term_getjob(buf)
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 8))})
+
+  " GC must not run during map-expr processing, which can make Vim crash.
+  call term_sendkeys(buf, '!')
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "\<CR>")
+  call term_wait(buf, 100)
+  call assert_equal('run', job_status(job))
+
+  call term_sendkeys(buf, ":qall!\<CR>")
+  call WaitFor({-> job_status(job) ==# 'dead'})
+  if has('unix')
+    call assert_equal('', job_info(job).termsig)
+  endif
+
+  call delete('Xtest.vim')
+  exe buf .. 'bwipe!'
+endfunc
+
+func Test_expr_map_gets_cursor()
+  new
+  call setline(1, ['one', 'some w!rd'])
+  func StoreColumn()
+    let g:exprLine = line('.')
+    let g:exprCol = col('.')
+    return 'x'
+  endfunc
+  nnoremap <expr> x StoreColumn()
+  2
+  nmap ! f!<Ignore>x
+  call feedkeys("!", 'xt')
+  call assert_equal('some wrd', getline(2))
+  call assert_equal(2, g:exprLine)
+  call assert_equal(7, g:exprCol)
+
+  bwipe!
+  unlet g:exprLine
+  unlet g:exprCol
+  delfunc StoreColumn
+  nunmap x
+  nunmap !
+endfunc
+
+" Test for mapping errors
+func Test_map_error()
+  call assert_fails('unmap', 'E474:')
+  call assert_fails("exe 'map ' .. repeat('a', 51) .. ' :ls'", 'E474:')
+  call assert_fails('unmap abc', 'E31:')
+  call assert_fails('unabbr abc', 'E24:')
+  call assert_equal('', maparg(''))
+  call assert_fails('echo maparg("abc", [])', 'E730:')
+
+  " unique map
+  map ,w /[#&!]<CR>
+  call assert_fails("map <unique> ,w /[#&!]<CR>", 'E227:')
+  " unique buffer-local map
+  call assert_fails("map <buffer> <unique> ,w /[.,;]<CR>", 'E225:')
+  unmap ,w
+
+  " unique abbreviation
+  abbr SP special
+  call assert_fails("abbr <unique> SP special", 'E226:')
+  " unique buffer-local map
+  call assert_fails("abbr <buffer> <unique> SP special", 'E224:')
+  unabbr SP
+
+  call assert_fails('mapclear abc', 'E474:')
+  call assert_fails('abclear abc', 'E474:')
+endfunc
+
+" Test for <special> key mapping
+func Test_map_special()
+  throw 'skipped: Nvim does not support cpoptions flag "<"'
+  new
+  let old_cpo = &cpo
+  set cpo+=<
+  imap <F12> Blue
+  call feedkeys("i\<F12>", "x")
+  call assert_equal("<F12>", getline(1))
+  call feedkeys("ddi<F12>", "x")
+  call assert_equal("Blue", getline(1))
+  iunmap <F12>
+  imap <special> <F12> Green
+  call feedkeys("ddi\<F12>", "x")
+  call assert_equal("Green", getline(1))
+  call feedkeys("ddi<F12>", "x")
+  call assert_equal("<F12>", getline(1))
+  iunmap <special> <F12>
+  let &cpo = old_cpo
+  %bwipe!
+endfunc
+
+" Test for hasmapto()
+func Test_hasmapto()
+  call assert_equal(0, hasmapto('/^\k\+ ('))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'n'))
+  nmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ ('))
+  call assert_equal(1, hasmapto('/^\k\+ (', 'n'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'v'))
+
+  call assert_equal(0, hasmapto('/^\k\+ (', 'n', 1))
+endfunc
+
+" Test for command-line completion of maps
+func Test_mapcomplete()
+  call assert_equal(['<buffer>', '<expr>', '<nowait>', '<script>',
+	      \ '<silent>', '<special>', '<unique>'],
+	      \ getcompletion('', 'mapping'))
+  call assert_equal([], getcompletion(',d', 'mapping'))
+
+  call feedkeys(":abbr! \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match("abbr! \x01", @:)
+endfunc
+
+func Test_map_cmdkey_redo()
+  func SelectDash()
+    call search('^---\n\zs', 'bcW')
+    norm! V
+    call search('\n\ze---$', 'W')
+  endfunc
+
+  let text =<< trim END
+      ---
+      aaa
+      ---
+      bbb
+      bbb
+      ---
+      ccc
+      ccc
+      ccc
+      ---
+  END
+  new Xcmdtext
+  call setline(1, text)
+
+  onoremap <silent> i- <Cmd>call SelectDash()<CR>
+  call feedkeys('2Gdi-', 'xt')
+  call assert_equal(['---', '---'], getline(1, 2))
+  call feedkeys('j.', 'xt')
+  call assert_equal(['---', '---', '---'], getline(1, 3))
+  call feedkeys('j.', 'xt')
+  call assert_equal(['---', '---', '---', '---'], getline(1, 4))
+
+  bwipe!
+  call delete('Xcmdtext')
+  delfunc SelectDash
+  ounmap i-
+endfunc
+
+func Test_abbreviate_multi_byte()
+  new
+  iabbrev foo bar
+  call feedkeys("ifoo…\<Esc>", 'xt')
+  call assert_equal("bar…", getline(1))
+  iunabbrev foo
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

@@ -64,13 +64,13 @@ o  Invocations
    + 'rightleft' ('rl') sets window orientation to right-to-left.
    + 'delcombine' ('deco'), boolean, if editing UTF-8 encoded languages,
      allows one to remove a composing character which gets superimposed
-     on those that proceeded them (some languages require this).
+     on those that preceded them (some languages require this).
    + 'rightleftcmd' ('rlc') sets the command-line within certain modes
      (such as search) to be utilized in right-to-left orientation as well.
 
 o  Typing backwards					*ins-reverse*
    ----------------
-   In lieu of using full-fledged the 'rightleft' option, one can opt for
+   In lieu of using the full-fledged 'rightleft' option, one can opt for
    reverse insertion.  When the 'revins' (reverse insert) option is set,
    inserting happens backwards.  This can be used to type right-to-left
    text.  When inserting characters the cursor is not moved and the text

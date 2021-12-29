@@ -1,6 +1,3 @@
-# Download and install binary dependencies for windows
-include(CMakeParseArguments)
-
 # This is similar to the build recipes, but instead downloads a third party
 # binary and installs it under the DEPS_PREFIX.
 # The INSTALL_COMMAND is executed in the folder where downloaded files are
@@ -39,7 +36,6 @@ function(GetBinaryDep)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
     COMMAND "${_gettool_INSTALL_COMMAND}")

@@ -1,15 +1,21 @@
-" Vim syntax file
 " Language:     Dot
 " Filenames:    *.dot
 " Maintainer:   Markus Mottl  <markus.mottl@gmail.com>
 " URL:          http://www.ocaml.info/vim/syntax/dot.vim
-" Last Change:  2011 May 17 - improved identifier matching + two new keywords
+" Last Change:  2021 Mar 24 - better attr + escape string matching, new keywords (Farbod Salamat-Zadeh)
+"               2011 May 17 - improved identifier matching + two new keywords
 "               2001 May 04 - initial version
 
-" quit when a syntax file was already loaded
-if exists("b:current_syntax")
+" For version 5.x: Clear all syntax items
+" For version 6.x: Quit when a syntax file was already loaded
+if version < 600
+  syntax clear
+elseif exists("b:current_syntax")
   finish
 endif
+
+let s:keepcpo = &cpo
+set cpo&vim
 
 " Errors
 syn match    dotParErr     ")"
@@ -29,39 +35,43 @@ syn keyword  dotTodo contained TODO FIXME XXX
 " Strings
 syn region   dotString    start=+"+ skip=+\\\\\|\\"+ end=+"+
 
+" Escape strings
+syn match    dotEscString /\v\\(N|G|E|T|H|L)/ containedin=dotString
+syn match    dotEscString /\v\\(n|l|r)/       containedin=dotString
+
 " General keywords
-syn keyword  dotKeyword  digraph node edge subgraph
+syn keyword  dotKeyword graph digraph subgraph node edge strict
 
-" Graph attributes
-syn keyword  dotType center layers margin mclimit name nodesep nslimit
-syn keyword  dotType ordering page pagedir rank rankdir ranksep ratio
-syn keyword  dotType rotate size
-
-" Node attributes
-syn keyword  dotType distortion fillcolor fontcolor fontname fontsize
-syn keyword  dotType height layer orientation peripheries regular
-syn keyword  dotType shape shapefile sides skew width
-
-" Edge attributes
-syn keyword  dotType arrowhead arrowsize arrowtail constraint decorateP
-syn keyword  dotType dir headclip headlabel headport labelangle labeldistance
-syn keyword  dotType labelfontcolor labelfontname labelfontsize
-syn keyword  dotType minlen port_label_distance samehead sametail
-syn keyword  dotType tailclip taillabel tailport weight
-
-" Shared attributes (graphs, nodes, edges)
-syn keyword  dotType color
-
-" Shared attributes (graphs and edges)
-syn keyword  dotType bgcolor label URL
-
-" Shared attributes (nodes and edges)
-syn keyword  dotType fontcolor fontname fontsize layer style
+" Node, edge and graph attributes
+syn keyword  dotType _background area arrowhead arrowsize arrowtail bb bgcolor
+      \ center charset class clusterrank color colorscheme comment compound
+      \ concentrate constraint Damping decorate defaultdist dim dimen dir
+      \ diredgeconstraints distortion dpi edgehref edgetarget edgetooltip
+      \ edgeURL epsilon esep fillcolor fixedsize fontcolor fontname fontnames
+      \ fontpath fontsize forcelabels gradientangle group head_lp headclip
+      \ headhref headlabel headport headtarget headtooltip headURL height href
+      \ id image imagepath imagepos imagescale inputscale K label label_scheme
+      \ labelangle labeldistance labelfloat labelfontcolor labelfontname
+      \ labelfontsize labelhref labeljust labelloc labeltarget labeltooltip
+      \ labelURL landscape layer layerlistsep layers layerselect layersep 
+      \ layout len levels levelsgap lhead lheight lp ltail lwidth margin
+      \ maxiter mclimit mindist minlen mode model mosek newrank nodesep 
+      \ nojustify normalize notranslate nslimit nslimit1 ordering orientation
+      \ outputorder overlap overlap_scaling overlap_shrink pack packmode pad
+      \ page pagedir pencolor penwidth peripheries pin pos quadtree quantum
+      \ rank rankdir ranksep ratio rects regular remincross repulsiveforce
+      \ resolution root rotate rotation samehead sametail samplepoints scale
+      \ searchsize sep shape shapefile showboxes sides size skew smoothing
+      \ sortv splines start style stylesheet tail_lp tailclip tailhref 
+      \ taillabel tailport tailtarget tailtooltip tailURL target tooltip
+      \ truecolor URL vertices viewport voro_margin weight width xdotversion 
+      \ xlabel xlp z
 
 " Special chars
 syn match    dotKeyChar  "="
 syn match    dotKeyChar  ";"
 syn match    dotKeyChar  "->"
+syn match    dotKeyChar  "--"
 
 " Identifier
 syn match    dotIdentifier /\<\w\+\(:\w\+\)\?\>/
@@ -71,27 +81,41 @@ syn sync minlines=50
 syn sync maxlines=500
 
 " Define the default highlighting.
-" Only when an item doesn't have highlighting yet
+" For version 5.7 and earlier: only when not done already
+" For version 5.8 and later: only when an item doesn't have highlighting yet
+if version >= 508 || !exists("did_dot_syntax_inits")
+  if version < 508
+    let did_dot_syntax_inits = 1
+    command -nargs=+ HiLink hi link <args>
+  else
+    command -nargs=+ HiLink hi def link <args>
+  endif
 
-hi def link dotParErr	 Error
-hi def link dotBraceErr	 Error
-hi def link dotBrackErr	 Error
+  HiLink dotParErr	 Error
+  HiLink dotBraceErr	 Error
+  HiLink dotBrackErr	 Error
 
-hi def link dotComment	 Comment
-hi def link dotTodo	 Todo
+  HiLink dotComment	 Comment
+  HiLink dotTodo	 Todo
 
-hi def link dotParEncl	 Keyword
-hi def link dotBrackEncl	 Keyword
-hi def link dotBraceEncl	 Keyword
+  HiLink dotParEncl	 Keyword
+  HiLink dotBrackEncl	 Keyword
+  HiLink dotBraceEncl	 Keyword
 
-hi def link dotKeyword	 Keyword
-hi def link dotType	 Type
-hi def link dotKeyChar	 Keyword
+  HiLink dotKeyword	 Keyword
+  HiLink dotType	 Type
+  HiLink dotKeyChar	 Keyword
 
-hi def link dotString	 String
-hi def link dotIdentifier	 Identifier
+  HiLink dotString	 String
+  HiLink dotEscString	 Keyword
+  HiLink dotIdentifier	 Identifier
 
+  delcommand HiLink
+endif
 
 let b:current_syntax = "dot"
+
+let &cpo = s:keepcpo
+unlet s:keepcpo
 
 " vim: ts=8

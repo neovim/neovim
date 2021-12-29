@@ -1,7 +1,7 @@
 " Vim syntax file
 " This file works only for Vim6.x
 " Language:	Tilde
-" Maintainer:	Tobias Rundström <tobi@tildesoftware.net>
+" Maintainer:	Tobias RundstrÃ¶m <tobi@tildesoftware.net>
 " URL:		http://www.tildesoftware.net
 " CVS:		$Id: tilde.vim,v 1.1 2004/06/13 19:31:51 vimboss Exp $
 

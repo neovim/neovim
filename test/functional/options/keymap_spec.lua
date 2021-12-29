@@ -30,7 +30,7 @@ describe("'keymap' / :lmap", function()
       command('lmapclear <buffer>')
       command('set keymap=dvorak')
       command('set nomore')
-      local bindings = funcs.nvim_command_output('lmap')
+      local bindings = funcs.nvim_exec('lmap', true)
       eq(dedent([[
 
       l  "            @_

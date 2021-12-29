@@ -3,6 +3,7 @@
 " Maintainer:       Nikolai Pavlov <zyx.vim@gmail.com>
 " First author:     Nikolai Weibull <now@bitwi.se>
 " Latest Revision:  2015-03-28
+" 		    removed duplicate yamlKeyValueDelimiter (pull #4799)
 
 if exists('b:current_syntax')
     finish
@@ -149,7 +150,6 @@ execute 'syn match yamlBlockMappingKey /\%#=1\s*\zs'.s:ns_plain_out.'\%(\s\+'.s:
 syn match yamlBlockMappingMerge /^\s*\zs<<\ze:\%(\s\|$\)/ nextgroup=yamlKeyValueDelimiter
 syn match yamlBlockMappingMerge /<<\ze\s*:\%(\s\|$\)/ nextgroup=yamlKeyValueDelimiter contained
 
-syn match   yamlKeyValueDelimiter /\s*:/ contained
 syn match   yamlKeyValueDelimiter /\s*:/ contained
 
 syn cluster yamlScalarWithSpecials contains=yamlPlainScalar,yamlBlockMappingKey,yamlFlowMappingKey

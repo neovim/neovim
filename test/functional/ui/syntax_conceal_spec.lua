@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
+local eq = helpers.eq
 local insert = helpers.insert
 
 describe('Screen', function()
@@ -17,11 +18,8 @@ describe('Screen', function()
       [3] = {reverse = true},
       [4] = {bold = true},
       [5] = {background = Screen.colors.Yellow},
+      [6] = {background = Screen.colors.LightGrey},
     } )
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   describe("match and conceal", function()
@@ -822,6 +820,139 @@ describe('Screen', function()
                                                                |
         ]])
       end)
+    end)
+
+    it('redraws properly with concealcursor in visual mode', function()
+      command('set concealcursor=v conceallevel=2')
+
+      feed('10Ofoo barf bar barf eggs<esc>')
+      feed(':3<cr>o    a<Esc>ggV')
+      screen:expect{grid=[[
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+            a                                                |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
+      feed(string.rep('j', 15))
+      screen:expect{grid=[[
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
+      feed(string.rep('k', 15))
+      screen:expect{grid=[[
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+            a                                                |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
+    end)
+  end)
+
+  it('redraws not too much with conceallevel=1', function()
+    command('set conceallevel=1')
+    command('set redrawdebug+=nodelta')
+
+    insert([[
+    aaa
+    bbb
+    ccc
+    ]])
+    screen:expect{grid=[[
+      aaa                                                  |
+      bbb                                                  |
+      ccc                                                  |
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+
+    -- XXX: hack to get notifications, and check only a single line is
+    --      updated.  Could use next_msg() also.
+    local orig_handle_grid_line = screen._handle_grid_line
+    local grid_lines = {}
+    function screen._handle_grid_line(self, grid, row, col, items)
+      table.insert(grid_lines, {row, col, items})
+      orig_handle_grid_line(self, grid, row, col, items)
+    end
+    feed('k')
+    screen:expect{grid=[[
+      aaa                                                  |
+      bbb                                                  |
+      ^ccc                                                  |
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+    eq(grid_lines, {{2, 0, {{'c', 0, 3}}}})
+  end)
+
+  -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in
+  -- test/functional/ui/syntax_conceal_spec.lua.
+  describe('concealed line after window scroll', function()
+    after_each(function()
+      command(':qall!')
+      os.remove('Xcolesearch')
+    end)
+
+    it('has the correct cursor column', function()
+      insert([[
+      3split
+      let m = matchadd('Conceal', '=')
+      setl conceallevel=2 concealcursor=nc
+      normal gg
+      "==expr==
+      ]])
+
+      command('write Xcolesearch')
+      feed(":so %<CR>")
+
+      -- Jump to something that is beyond the bottom of the window,
+      -- so there's a scroll down.
+      feed("/expr<CR>")
+
+      -- Are the concealed parts of the current line really hidden?
+      -- Is the window's cursor column properly updated for hidden
+      -- parts of the current line?
+      screen:expect{grid=[[
+        setl conceallevel2 concealcursornc                   |
+        normal gg                                            |
+        "{5:^expr}                                                |
+        {2:Xcolesearch                                          }|
+        normal gg                                            |
+        "=={5:expr}==                                            |
+                                                             |
+        {0:~                                                    }|
+        {3:Xcolesearch                                          }|
+        /expr                                                |
+      ]]}
     end)
   end)
 end)

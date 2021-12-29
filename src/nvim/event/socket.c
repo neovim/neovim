@@ -3,30 +3,28 @@
 
 #include <assert.h>
 #include <stdint.h>
-
 #include <uv.h>
 
-#include "nvim/event/loop.h"
-#include "nvim/event/socket.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
-#include "nvim/os/os.h"
 #include "nvim/ascii.h"
-#include "nvim/vim.h"
-#include "nvim/strings.h"
-#include "nvim/path.h"
+#include "nvim/charset.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/socket.h"
+#include "nvim/event/wstream.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
-#include "nvim/macros.h"
-#include "nvim/charset.h"
-#include "nvim/log.h"
+#include "nvim/os/os.h"
+#include "nvim/path.h"
+#include "nvim/strings.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/socket.c.generated.h"
 #endif
 
-int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
-                        const char *endpoint)
+int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
   FUNC_ATTR_NONNULL_ALL
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
@@ -56,9 +54,9 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
 
     int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
                                 &(struct addrinfo){
-                                  .ai_family = AF_UNSPEC,
-                                  .ai_socktype = SOCK_STREAM,
-                                });
+      .ai_family = AF_UNSPEC,
+      .ai_socktype = SOCK_STREAM,
+    });
     if (retval != 0) {
       ELOG("Host lookup failed: %s", endpoint);
       return retval;
@@ -106,7 +104,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
         uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
                            &(int){ sizeof(sas) });
         uint16_t port = (uint16_t)(
-            (sas.ss_family == AF_INET)
+                                   (sas.ss_family == AF_INET)
             ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
             : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
         // v:servername uses the string from watcher->addr
@@ -183,7 +181,7 @@ static void connection_cb(uv_stream_t *handle, int status)
 {
   SocketWatcher *watcher = handle->data;
   CREATE_EVENT(watcher->events, connection_event, 2, watcher,
-      (void *)(uintptr_t)status);
+               (void *)(uintptr_t)status);
 }
 
 static void close_cb(uv_handle_t *handle)
@@ -203,9 +201,8 @@ static void connect_cb(uv_connect_t *req, int status)
   }
 }
 
-bool socket_connect(Loop *loop, Stream *stream,
-                    bool is_tcp, const char *address,
-                    int timeout, const char **error)
+bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address, int timeout,
+                    const char **error)
 {
   bool success = false;
   int status;
@@ -243,7 +240,6 @@ tcp_retry:
     uv_tcp_nodelay(tcp, true);
     uv_tcp_connect(&req,  tcp, addrinfo->ai_addr, connect_cb);
     uv_stream = (uv_stream_t *)tcp;
-
   } else {
     uv_pipe_t *pipe = &stream->uv.pipe;
     uv_pipe_init(&loop->uv, pipe, 0);

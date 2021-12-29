@@ -346,12 +346,13 @@ scroll:
 
 	g0		to first visible character in this line
 	g^		to first non-blank visible character in this line
-	gm		to middle of this line
+	gm		to middle of screen line
+	gM		to middle of the text in this line
 	g$		to last visible character in this line
 
-		|<--	 window    -->|
-	some long    text, part of which is visible ~
-		 g0  g^    gm	     g$
+		|<--	  window     -->|
+	some long    text, part of which is visible in one line ~
+		 g0  g^    gm	   gM g$
 
 
 BREAKING AT WORDS				*edit-no-break*

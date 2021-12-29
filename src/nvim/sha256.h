@@ -1,8 +1,8 @@
 #ifndef NVIM_SHA256_H
 #define NVIM_SHA256_H
 
-#include <stdint.h>      // for uint32_t
 #include <stddef.h>
+#include <stdint.h>      // for uint32_t
 
 #include "nvim/types.h"  // for char_u
 

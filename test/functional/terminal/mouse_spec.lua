@@ -31,22 +31,24 @@ describe(':terminal mouse', function()
     ]])
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe('when the terminal has focus', function()
     it('will exit focus on mouse-scroll', function()
-      eq('t', eval('mode()'))
+      eq('t', eval('mode(1)'))
       feed('<ScrollWheelUp><0,0>')
-      eq('n', eval('mode()'))
+      eq('nt', eval('mode(1)'))
     end)
 
     it('will exit focus on <C-\\> + mouse-scroll', function()
-      eq('t', eval('mode()'))
+      eq('t', eval('mode(1)'))
       feed('<C-\\>')
       feed('<ScrollWheelUp><0,0>')
-      eq('n', eval('mode()'))
+      eq('nt', eval('mode(1)'))
+    end)
+
+    it('does not leave terminal mode on left-release', function()
+      if helpers.pending_win32(pending) then return end
+      feed('<LeftRelease>')
+      eq('t', eval('mode(1)'))
     end)
 
     describe('with mouse events enabled by the program', function()
@@ -64,7 +66,7 @@ describe(':terminal mouse', function()
         ]])
       end)
 
-      it('will forward mouse clicks to the program', function()
+      it('will forward mouse press, drag and release to the program', function()
         if helpers.pending_win32(pending) then return end
         feed('<LeftMouse><1,2>')
         screen:expect([[
@@ -74,6 +76,36 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
            "#{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+             @##{1: }                                           |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><3,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                @$#{1: }                                        |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftRelease><3,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                   #$#{1: }                                     |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
@@ -88,6 +120,90 @@ describe(':terminal mouse', function()
           line30                                            |
           mouse enabled                                     |
           `!!{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+      end)
+
+      it('dragging and scrolling do not interfere with each other', function()
+        if helpers.pending_win32(pending) then return end
+        feed('<LeftMouse><1,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+           "#{1: }                                              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<ScrollWheelUp><1,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+             `"#{1: }                                           |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftDrag><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                @##{1: }                                        |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<ScrollWheelUp><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                   `##{1: }                                     |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<LeftRelease><2,2>')
+        screen:expect([[
+          line27                                            |
+          line28                                            |
+          line29                                            |
+          line30                                            |
+          mouse enabled                                     |
+                      ###{1: }                                  |
+          {3:-- TERMINAL --}                                    |
+        ]])
+      end)
+
+      it('will forward mouse clicks to the program with the correct even if set nu', function()
+        if helpers.pending_win32(pending) then return end
+        nvim('command', 'set number')
+        -- When the display area such as a number is clicked, it returns to the
+        -- normal mode.
+        feed('<LeftMouse><3,0>')
+        eq('nt', eval('mode(1)'))
+        screen:expect([[
+          {7: 11 }^line28                                        |
+          {7: 12 }line29                                        |
+          {7: 13 }line30                                        |
+          {7: 14 }mouse enabled                                 |
+          {7: 15 }rows: 6, cols: 46                             |
+          {7: 16 }{2: }                                             |
+                                                            |
+        ]])
+        -- If click on the coordinate (0,1) of the region of the terminal
+        -- (i.e. the coordinate (4,1) of vim), 'CSI !"' is sent to the terminal.
+        feed('i<LeftMouse><4,1>')
+        screen:expect([[
+          {7: 11 }line28                                        |
+          {7: 12 }line29                                        |
+          {7: 13 }line30                                        |
+          {7: 14 }mouse enabled                                 |
+          {7: 15 }rows: 6, cols: 46                             |
+          {7: 16 } !"{1: }                                          |
           {3:-- TERMINAL --}                                    |
         ]])
       end)
@@ -152,7 +268,7 @@ describe(':terminal mouse', function()
       end)
 
       it('wont lose focus if another window is scrolled', function()
-        feed('<ScrollWheelUp><0,0><ScrollWheelUp><0,0>')
+        feed('<ScrollWheelUp><4,0><ScrollWheelUp><4,0>')
         screen:expect([[
           {7: 21 }line                 │line30                  |
           {7: 22 }line                 │rows: 5, cols: 25       |
@@ -162,7 +278,7 @@ describe(':terminal mouse', function()
           ==========                ==========              |
           {3:-- TERMINAL --}                                    |
         ]])
-        feed('<S-ScrollWheelDown><0,0>')
+        feed('<S-ScrollWheelDown><4,0>')
         screen:expect([[
           {7: 26 }line                 │line30                  |
           {7: 27 }line                 │rows: 5, cols: 25       |

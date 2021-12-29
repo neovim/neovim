@@ -67,7 +67,7 @@ describe('Command-line option', function()
                                                 |
                                                 |
       ]], {
-        [1] = {foreground = 4210943},
+        [1] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
         [2] = {bold = true, reverse = true}
       })
       feed('i:cq<CR>')

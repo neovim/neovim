@@ -36,6 +36,7 @@ func Test_define_var_with_lock()
     call assert_fails('let s = "vim"', 'E741:')
     call assert_fails('let F = funcref("s:noop")', 'E741:')
     call assert_fails('let l = [1, 2, 3]', 'E741:')
+    call assert_fails('call filter(l, "v:val % 2 == 0")', 'E741:')
     call assert_fails('let d = {"foo": 10}', 'E741:')
     if has('channel')
         call assert_fails('let j = test_null_job()', 'E741:')
@@ -108,7 +109,7 @@ func Test_define_script_var_with_lock()
     unlet s:x
 endfunc
 
-func Test_descructuring_with_lock()
+func Test_destructuring_with_lock()
     const [a, b, c] = [1, 1.1, 'vim']
 
     call assert_fails('let a = 1', 'E741:')
@@ -176,6 +177,26 @@ func Test_cannot_modify_existing_variable()
     call assert_fails('const [i2, f2, s2] = [1, 1.1, "vim"]', 'E995:')
 endfunc
 
+func Test_const_with_condition()
+  const x = 0
+  if 0 | const x = 1 | endif
+  call assert_equal(0, x)
+endfunc
+
+func Test_lockvar()
+  let x = 'hello'
+  lockvar x
+  call assert_fails('let x = "there"', 'E741')
+  if 0 | unlockvar x | endif
+  call assert_fails('let x = "there"', 'E741')
+  unlockvar x
+  let x = 'there'
+
+  if 0 | lockvar x | endif
+  let x = 'again'
+endfunc
+
+
 func Test_const_with_index_access()
     let l = [1, 2, 3]
     call assert_fails('const l[0] = 4', 'E996:')
@@ -223,15 +244,33 @@ func Test_const_with_eval_name()
     call assert_fails('const {s2} = "bar"', 'E995:')
 endfunc
 
-func Test_lock_depth_is_1()
-    const l = [1, 2, 3]
+func Test_lock_depth_is_2()
+    " Modify list - error when changing item or adding/removing items
+    const l = [1, 2, [3, 4]]
+    call assert_fails('let l[0] = 42', 'E741:')
+    call assert_fails('let l[2][0] = 42', 'E741:')
+    call assert_fails('call add(l, 4)', 'E741:')
+    call assert_fails('unlet l[1]', 'E741:')
+
+    " Modify blob - error when changing
+    const b = 0z001122
+    call assert_fails('let b[0] = 42', 'E741:')
+
+    " Modify dict - error when changing item or adding/removing items
     const d = {'foo': 10}
+    call assert_fails("let d['foo'] = 'hello'", 'E741:')
+    call assert_fails("let d.foo = 'hello'", 'E741:')
+    call assert_fails("let d['bar'] = 'hello'", 'E741:')
+    call assert_fails("unlet d['foo']", 'E741:')
 
-    " Modify list
-    call add(l, 4)
-    let l[0] = 42
+    " Modifying list or dict item contents is OK.
+    let lvar = ['a', 'b']
+    let bvar = 0z1122
+    const l2 = [0, lvar, bvar]
+    let l2[1][0] = 'c'
+    let l2[2][1] = 0x33
+    call assert_equal([0, ['c', 'b'], 0z1133], l2)
 
-    " Modify dict
-    let d['bar'] = 'hello'
-    let d.foo = 44
+    const d2 = #{a: 0, b: lvar, c: 4}
+    let d2.b[1] = 'd'
 endfunc

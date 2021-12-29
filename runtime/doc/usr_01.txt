@@ -41,11 +41,11 @@ the commands and options used for it.  Use these two commands:
 	Press  CTRL-O  to jump back (repeat to go further back).
 
 Many links are in vertical bars, like this: |bars|.  The bars themselves may
-be hidden or invisible, see below.  An option name, like 'number', a command
+be hidden or invisible; see below.  An option name, like 'number', a command
 in double quotes like ":write" and any other word can also be used as a link.
 Try it out: Move the cursor to  CTRL-]  and press CTRL-] on it.
 
-Other subjects can be found with the ":help" command, see |help.txt|.
+Other subjects can be found with the ":help" command; see |help.txt|.
 
 The bars and stars are usually hidden with the |conceal| feature.  They also
 use |hl-Ignore|, using the same color for the text as the background.  You can
@@ -69,7 +69,7 @@ For more info see |vimrc|.
 *01.3*	Using the Vim tutor			         *tutor* *vimtutor*
 
 Instead of reading the text (boring!) you can use :Tutor to learn your first
-Vim commands.  This is a 30 minute tutorial that teaches the most basic Vim
+Vim commands.  This is a 30-minute tutorial that teaches the most basic Vim
 functionality hands-on.
 
 To start the tutorial, execute >

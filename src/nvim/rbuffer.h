@@ -38,17 +38,17 @@
 // create infinite loops
 #define RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) \
   for (size_t rcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
-    for (  /* NOLINT(readability/braces) */ \
-        char *rptr = rbuffer_read_ptr(buf, &rcnt); \
-        buf->size; \
-        rptr = rbuffer_read_ptr(buf, &rcnt))
+  for (  /* NOLINT(readability/braces) */ \
+         char *rptr = rbuffer_read_ptr(buf, &rcnt); \
+         buf->size; \
+         rptr = rbuffer_read_ptr(buf, &rcnt))
 
 #define RBUFFER_UNTIL_FULL(buf, wptr, wcnt) \
   for (size_t wcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
-    for (  /* NOLINT(readability/braces) */ \
-        char *wptr = rbuffer_write_ptr(buf, &wcnt); \
-        rbuffer_space(buf); \
-        wptr = rbuffer_write_ptr(buf, &wcnt))
+  for (  /* NOLINT(readability/braces) */ \
+         char *wptr = rbuffer_write_ptr(buf, &wcnt); \
+         rbuffer_space(buf); \
+         wptr = rbuffer_write_ptr(buf, &wcnt))
 
 
 // Iteration
@@ -56,23 +56,23 @@
   for (size_t i = 0;  /* NOLINT(readability/braces) */ \
        i < buf->size; \
        i = buf->size) \
-      for (char c = 0;  /* NOLINT(readability/braces) */ \
-           i < buf->size ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
-           i++)
+  for (char c = 0;  /* NOLINT(readability/braces) */ \
+       i < buf->size ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
+       i++)
 
 #define RBUFFER_EACH_REVERSE(buf, c, i) \
   for (size_t i = buf->size;  /* NOLINT(readability/braces) */ \
        i != SIZE_MAX; \
        i = SIZE_MAX) \
-      for (char c = 0;  /* NOLINT(readability/braces) */ \
-           i-- > 0 ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
-           )
+  for (char c = 0;  /* NOLINT(readability/braces) */ \
+       i-- > 0 ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
+       )
 
 typedef struct rbuffer RBuffer;
 /// Type of function invoked during certain events:
 ///   - When the RBuffer switches to the full state
 ///   - When the RBuffer switches to the non-full state
-typedef void(*rbuffer_callback)(RBuffer *buf, void *data);
+typedef void (*rbuffer_callback)(RBuffer *buf, void *data);
 
 struct rbuffer {
   rbuffer_callback full_cb, nonfull_cb;

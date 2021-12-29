@@ -2,9 +2,16 @@
 #   intro: https://codingnest.com/basic-cmake/
 #   best practices (3.0+): https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1
 
-# Version should match the tested CMAKE_URL in .travis.yml.
-cmake_minimum_required(VERSION 2.8.12)
+# Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
+cmake_minimum_required(VERSION 3.10)
 project(nvim C)
+
+if(POLICY CMP0065)
+  cmake_policy(SET CMP0065 NEW)
+endif()
+if(POLICY CMP0060)
+  cmake_policy(SET CMP0060 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -16,9 +23,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
+    # *contain* system include paths. To avoid this, we prefix what would be
+    # "/usr/include" as "/_usr/include".
+    # This check is also performed in the third-party/CMakeLists.txt and in the
+    # else clause following here.
+    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
 else()
-  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
@@ -76,6 +97,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Ignore case when comparing filenames on Windows and Mac.
+  set(CASE_INSENSITIVE_FILENAME TRUE)
   # Enable fixing case-insensitive filenames for Windows and Mac.
   set(USE_FNAME_CASE TRUE)
 endif()
@@ -113,47 +136,32 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 5)
+set(NVIM_VERSION_MINOR 7)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 6)         # Bump this after any API change.
+set(NVIM_API_LEVEL 9)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE false)
-
-file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-if(NVIM_VERSION_COMMIT) # is a git repo
-  git_describe(NVIM_VERSION_MEDIUM)
-  # `git describe` annotates the most recent tagged release; for pre-release
-  # builds we must replace that with the unreleased version.
-  string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+"
-         "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
-         NVIM_VERSION_MEDIUM
-         ${NVIM_VERSION_MEDIUM})
-endif()
+set(NVIM_API_PRERELEASE true)
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Minimize logging for release-type builds.
-if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
-endif()
-
 # Log level (MIN_LOG_LEVEL in log.h)
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+  # Minimize logging for release-type builds.
+  if(CMAKE_BUILD_TYPE STREQUAL "Release"
+      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
+    set(MIN_LOG_LEVEL 3)
+  else()
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+    set(MIN_LOG_LEVEL 1)
+  endif()
 else()
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
     message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
@@ -275,8 +283,8 @@ else()
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
     -Wmissing-prototypes)
 
-  check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
-  if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+  check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
+  if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
     add_compile_options(-Wimplicit-fallthrough)
   endif()
 
@@ -309,9 +317,16 @@ if(UNIX)
 
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
     add_compile_options(-fstack-protector-strong)
+    link_libraries(-fstack-protector-strong)
   elseif(HAS_FSTACK_PROTECTOR_FLAG)
     add_compile_options(-fstack-protector --param ssp-buffer-size=4)
+    link_libraries(-fstack-protector --param ssp-buffer-size=4)
   endif()
+endif()
+
+check_c_compiler_flag(-fno-common HAVE_FNO_COMMON)
+if (HAVE_FNO_COMMON)
+  add_compile_options(-fno-common)
 endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
@@ -323,10 +338,10 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
+option(CI_BUILD "CI, extra flags will be set" OFF)
 
-if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/QuickBuild CI build enabled")
+if(CI_BUILD)
+  message(STATUS "CI build enabled")
   add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
@@ -353,8 +368,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   add_definitions(-D_GNU_SOURCE)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-  # Required for luajit.
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT PREFER_LUA AND LUAJIT_VERSION LESS "2.1.0-beta3")
+  # Required for luajit < 2.1.0-beta3.
   set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} -pagezero_size 10000 -image_base 100000000")
   set(CMAKE_SHARED_LINKER_FLAGS
@@ -374,6 +389,25 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
 find_package(LibLUV 1.30.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
+
+find_package(TreeSitter REQUIRED)
+include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
+
+list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
+check_c_source_compiles("
+#include <tree_sitter/api.h>
+int
+main(void)
+{
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_set_match_limit(cursor, 32);
+  return 0;
+}
+" TS_HAS_SET_MATCH_LIMIT)
+if(TS_HAS_SET_MATCH_LIMIT)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_MATCH_LIMIT")
+endif()
 
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
@@ -454,15 +488,15 @@ if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MA
   message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
+if(ENABLE_LIBICONV)
+  find_package(Iconv REQUIRED)
+  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
+endif()
+
 if(ENABLE_LIBINTL)
   # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
   find_package(LibIntl REQUIRED)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
-endif()
-
-if(ENABLE_LIBICONV)
-  find_package(Iconv REQUIRED)
-  include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
@@ -486,18 +520,19 @@ include(LuaHelpers)
 set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
-    # If LUA_PRG is set find_program() will not search
-    unset(LUA_PRG CACHE)
+    unset(_CHECK_LUA_PRG CACHE)
     unset(LUA_PRG_WORKS)
-    find_program(LUA_PRG ${CURRENT_LUA_PRG})
+    find_program(_CHECK_LUA_PRG ${CURRENT_LUA_PRG})
 
-    if(LUA_PRG)
-      check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+    if(_CHECK_LUA_PRG)
+      check_lua_deps(${_CHECK_LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
       if(LUA_PRG_WORKS)
+        set(LUA_PRG "${_CHECK_LUA_PRG}" CACHE FILEPATH "Path to a program.")
         break()
       endif()
     endif()
   endforeach()
+  unset(_CHECK_LUA_PRG CACHE)
 else()
   check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
 endif()
@@ -507,6 +542,29 @@ if(NOT LUA_PRG_WORKS)
 endif()
 
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
+
+option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
+
+if(COMPILE_LUA AND NOT WIN32)
+  if(PREFER_LUA)
+    foreach(CURRENT_LUAC_PRG luac5.1 luac)
+      find_program(_CHECK_LUAC_PRG ${CURRENT_LUAC_PRG})
+      if(_CHECK_LUAC_PRG)
+        set(LUAC_PRG "${_CHECK_LUAC_PRG} -s -o - %s" CACHE STRING "Format for compiling to Lua bytecode")
+        break()
+      endif()
+    endforeach()
+  elseif(LUA_PRG MATCHES "luajit")
+    check_lua_module(${LUA_PRG} "jit.bcsave" LUAJIT_HAS_JIT_BCSAVE)
+    if(LUAJIT_HAS_JIT_BCSAVE)
+      set(LUAC_PRG "${LUA_PRG} -b -s %s -" CACHE STRING "Format for compiling to Lua bytecode")
+    endif()
+  endif()
+endif()
+
+if(LUAC_PRG)
+  message(STATUS "Using Lua compiler: ${LUAC_PRG}")
+endif()
 
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
@@ -555,15 +613,10 @@ if(BUSTED_PRG)
   # console pool: to do so we need to use the USES_TERMINAL
   # option, but this is only available in CMake 3.2
   set(TEST_TARGET_ARGS)
-  if(NOT (${CMAKE_VERSION} VERSION_LESS 3.2.0))
-    list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
-  endif()
+  list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
-  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test streams-test ${GENERATED_HELP_TAGS})
-  if(NOT WIN32)
-    list(APPEND FUNCTIONALTEST_PREREQS tty-test)
-  endif()
+  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
 
   # Useful for automated build systems, if they want to manually run the tests.
@@ -659,7 +712,7 @@ endif()
 
 if(LUACHECK_PRG)
   add_custom_target(lualint
-    COMMAND ${LUACHECK_PRG} -q runtime/ src/ test/
+    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 else()
   add_custom_target(lualint false
@@ -677,3 +730,14 @@ set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 include(CPack)
+
+#add uninstall target
+if(NOT TARGET uninstall)
+    configure_file(
+        "cmake/UninstallHelper.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake"
+        IMMEDIATE @ONLY)
+
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake)
+endif()

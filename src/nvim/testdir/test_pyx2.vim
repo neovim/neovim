@@ -35,7 +35,7 @@ endfunc
 
 func Test_pyxeval()
   pyx import sys
-  call assert_match(s:py2pattern, split(pyxeval('sys.version'))[0])
+  call assert_match(s:py2pattern, split('sys.version'->pyxeval())[0])
 endfunc
 
 
@@ -71,4 +71,12 @@ func Test_pyxfile()
     redir END
     call assert_match(s:py3pattern, split(var)[0])
   endif
+endfunc
+
+func Test_Catch_Exception_Message()
+  try
+    pyx raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
 endfunc

@@ -31,6 +31,18 @@ describe(':ls', function()
       -- Terminal buffer [F]inished.
       eq('\n  3 %aF', string.match(ls_output, '\n *3....'))
     end)
+
+    retry(nil, 5000, function()
+      local ls_output = eval('execute("ls R")')
+      -- Just the [R]unning terminal buffer.
+      eq('\n  2 #aR ', string.match(ls_output, '^\n *2 ... '))
+    end)
+
+    retry(nil, 5000, function()
+      local ls_output = eval('execute("ls F")')
+      -- Just the [F]inished terminal buffer.
+      eq('\n  3 %aF ', string.match(ls_output, '^\n *3 ... '))
+    end)
   end)
 
 end)

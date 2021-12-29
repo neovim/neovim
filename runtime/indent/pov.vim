@@ -44,7 +44,7 @@ function GetPoVRayIndent()
     return -1
   endif
 
-  " Search backwards for the frist non-empty, non-comment line.
+  " Search backwards for the first non-empty, non-comment line.
   let plnum = prevnonblank(v:lnum - 1)
   let plind = indent(plnum)
   while plnum > 0 && synIDattr(synID(plnum, plind+1, 0), "name") =~? "comment"

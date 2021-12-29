@@ -24,10 +24,6 @@ describe('screen', function()
     } )
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('default initial screen', function()
       screen:expect([[
       ^                                                     |
@@ -65,10 +61,6 @@ local function screen_tests(linegrid)
       [6] = {bold = true, foreground = Screen.colors.Fuchsia},
       [7] = {bold = true, foreground = Screen.colors.SeaGreen},
     } )
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   describe(':suspend', function()
@@ -915,6 +907,7 @@ local function screen_tests(linegrid)
 
   -- Regression test for #8357
   it('does not have artifacts after temporary chars in insert mode', function()
+    command('set timeoutlen=10000')
     command('inoremap jk <esc>')
     feed('ifooj')
     screen:expect([[
@@ -986,7 +979,7 @@ describe('Screen default colors', function()
   it('can be set to light', function()
     startup(true, false)
     screen:expect{condition=function()
-      eq({rgb_bg=Screen.colors.White, rgb_fg=0, rgb_sp=Screen.colors.Red,
+      eq({rgb_fg=Screen.colors.White, rgb_bg=0, rgb_sp=Screen.colors.Red,
           cterm_bg=0, cterm_fg=0}, screen.default_colors)
     end}
   end)
@@ -1001,5 +994,41 @@ describe('Screen default colors', function()
     screen:expect{condition=function()
       eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
     end}
+  end)
+end)
+
+
+describe('screen with msgsep deactivated on startup', function()
+  local screen
+
+  before_each(function()
+    clear('--cmd', 'set display-=msgsep')
+    screen = Screen.new()
+    screen:attach()
+    screen:set_default_attr_ids {
+      [0] = {bold=true, foreground=255};
+      [7] = {bold = true, foreground = Screen.colors.SeaGreen};
+    }
+  end)
+
+  it('execute command with multi-line output', function()
+    feed ':ls<cr>'
+    screen:expect([[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      :ls                                                  |
+        1 %a   "[No Name]"                    line 1       |
+      {7:Press ENTER or type command to continue}^              |
+    ]])
+    feed '<cr>'  -- skip the "Press ENTER..." state or tests will hang
   end)
 end)

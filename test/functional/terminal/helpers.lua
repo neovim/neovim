@@ -52,7 +52,7 @@ local function screen_setup(extra_rows, command, cols, opts)
     [3] = {bold = true},
     [4] = {foreground = 12},
     [5] = {bold = true, reverse = true},
-    [6] = {background = 11},
+    -- 6 was a duplicate item
     [7] = {foreground = 130},
     [8] = {foreground = 15, background = 1}, -- error message
     [9] = {foreground = 4},

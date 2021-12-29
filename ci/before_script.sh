@@ -3,12 +3,14 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  exit
-fi
-
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
+
+# Enable ipv6 on Travis. ref: a39c8b7ce30d
+if test -n "${TRAVIS_OS_NAME}" && ! test "${TRAVIS_OS_NAME}" = osx ; then
+  echo "before_script.sh: enable ipv6"
+  sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+fi
 
 # Test some of the configuration variables.
 if [[ -n "${GCOV}" ]] && [[ ! $(type -P "${GCOV}") ]]; then
@@ -34,6 +36,11 @@ fi
 
 # Compile dependencies.
 build_deps
+
+# Install cluacov for Lua coverage.
+if [[ "$USE_LUACOV" == 1 ]]; then
+  "${DEPS_BUILD_DIR}/usr/bin/luarocks" install cluacov
+fi
 
 rm -rf "${LOG_DIR}"
 mkdir -p "${LOG_DIR}"

@@ -1,9 +1,5 @@
 " Test for linebreak and list option (non-utf8)
 
-" Nvim does not allow setting 'encoding', so skip this test.
-finish
-
-set encoding=latin1
 scriptencoding latin1
 
 if !exists("+linebreak") || !has("conceal")
@@ -16,9 +12,9 @@ function s:screen_lines(lnum, width) abort
   return ScreenLines(a:lnum, a:width)
 endfunction
 
-function! s:compare_lines(expect, actual)
+func s:compare_lines(expect, actual)
   call assert_equal(join(a:expect, "\n"), join(a:actual, "\n"))
-endfunction
+endfunc
 
 function s:test_windows(...)
   call NewWindow(10, 20)
@@ -46,6 +42,8 @@ func Test_set_linebreak()
 endfunc
 
 func Test_linebreak_with_list()
+  throw 'skipped: Nvim does not support enc=latin1'
+  set listchars=
   call s:test_windows('setl ts=4 sbr=+ list listchars=')
   call setline(1, "\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP ")
   let lines = s:screen_lines([1, 4], winwidth(0))
@@ -57,6 +55,7 @@ func Test_linebreak_with_list()
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
+  set listchars&vim
 endfunc
 
 func Test_linebreak_with_nolist()
@@ -100,6 +99,37 @@ func Test_linebreak_with_conceal()
 \ "~                   ",
 \ ]
   call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfunc
+
+func Test_linebreak_with_visual_operations()
+  call s:test_windows()
+  let line = '1234567890 2234567890 3234567890'
+  call setline(1, line)
+
+  " yank
+  exec "norm! ^w\<C-V>ey"
+  call assert_equal('2234567890', @@)
+  exec "norm! w\<C-V>ey"
+  call assert_equal('3234567890', @@)
+
+  " increment / decrement
+  exec "norm! ^w\<C-V>\<C-A>w\<C-V>\<C-X>"
+  call assert_equal('1234567890 3234567890 2234567890', getline(1))
+
+  " replace
+  exec "norm! ^w\<C-V>3lraw\<C-V>3lrb"
+  call assert_equal('1234567890 aaaa567890 bbbb567890', getline(1))
+
+  " tilde
+  exec "norm! ^w\<C-V>2l~w\<C-V>2l~"
+  call assert_equal('1234567890 AAAa567890 BBBb567890', getline(1))
+
+  " delete and insert
+  exec "norm! ^w\<C-V>3lc2345\<Esc>w\<C-V>3lc3456\<Esc>"
+  call assert_equal('1234567890 2345567890 3456567890', getline(1))
+  call assert_equal('BBBb', @@)
+
   call s:close_windows()
 endfunc
 
@@ -186,6 +216,7 @@ func Test_norm_after_block_visual()
 endfunc
 
 func Test_block_replace_after_wrapping()
+  throw 'skipped: Nvim does not support enc=latin1'
   call s:test_windows()
   call setline(1, repeat("a", 150))
   exe "norm! 0yypk147|\<C-V>jr0"

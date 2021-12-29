@@ -1,13 +1,14 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include "nvim/buffer_updates.h"
-#include "nvim/memline.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/lua/executor.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
+#include "nvim/extmark.h"
+#include "nvim/lua/executor.h"
+#include "nvim/memline.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer_updates.c.generated.h"
@@ -16,8 +17,7 @@
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool buf_updates_register(buf_T *buf, uint64_t channel_id,
-                          BufUpdateCallbacks cb, bool send_buffer)
+bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb, bool send_buffer)
 {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
@@ -49,7 +49,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
   if (send_buffer) {
     Array args = ARRAY_DICT_INIT;
     args.size = 6;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);
@@ -67,7 +67,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
 
     if (line_count >= 1) {
       linedata.size = line_count;
-      linedata.items = xcalloc(sizeof(Object), line_count);
+      linedata.items = xcalloc(line_count, sizeof(Object));
 
       buf_collect_lines(buf, line_count, 1, true, &linedata, NULL);
     }
@@ -85,16 +85,16 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
 
 bool buf_updates_active(buf_T *buf)
 {
-    return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
+  return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
 }
 
 void buf_updates_send_end(buf_T *buf, uint64_t channelid)
 {
-    Array args = ARRAY_DICT_INIT;
-    args.size = 1;
-    args.items = xcalloc(sizeof(Object), args.size);
-    args.items[0] = BUFFER_OBJ(buf->handle);
-    rpc_send_event(channelid, "nvim_buf_detach_event", args);
+  Array args = ARRAY_DICT_INIT;
+  args.size = 1;
+  args.items = xcalloc(args.size, sizeof(Object));
+  args.items[0] = BUFFER_OBJ(buf->handle);
+  rpc_send_event(channelid, "nvim_buf_detach_event", args);
 }
 
 void buf_updates_unregister(buf_T *buf, uint64_t channelid)
@@ -134,7 +134,7 @@ void buf_updates_unregister(buf_T *buf, uint64_t channelid)
   }
 }
 
-void buf_updates_unregister_all(buf_T *buf)
+void buf_updates_unload(buf_T *buf, bool can_reload)
 {
   size_t size = kv_size(buf->update_channels);
   if (size) {
@@ -145,9 +145,20 @@ void buf_updates_unregister_all(buf_T *buf)
     kv_init(buf->update_channels);
   }
 
+  size_t j = 0;
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
-    if (cb.on_detach != LUA_NOREF) {
+    LuaRef thecb = LUA_NOREF;
+
+    bool keep = false;
+    if (can_reload && cb.on_reload != LUA_NOREF) {
+      keep = true;
+      thecb = cb.on_reload;
+    } else if (cb.on_detach != LUA_NOREF) {
+      thecb = cb.on_detach;
+    }
+
+    if (thecb != LUA_NOREF) {
       Array args = ARRAY_DICT_INIT;
       Object items[1];
       args.size = 1;
@@ -157,20 +168,26 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      executor_exec_lua_cb(cb.on_detach, "detach", args, false);
+      nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL);
       textlock--;
     }
-    free_update_callbacks(cb);
+
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    } else {
+      buffer_update_callbacks_free(cb);
+    }
   }
-  kv_destroy(buf->update_callbacks);
-  kv_init(buf->update_callbacks);
+  kv_size(buf->update_callbacks) = j;
+  if (kv_size(buf->update_callbacks) == 0) {
+    kv_destroy(buf->update_callbacks);
+    kv_init(buf->update_callbacks);
+  }
 }
 
-void buf_updates_send_changes(buf_T *buf,
-                              linenr_T firstline,
-                              int64_t num_added,
-                              int64_t num_removed,
-                              bool send_tick)
+
+void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
+                              int64_t num_removed, bool send_tick)
 {
   size_t deleted_codepoints, deleted_codeunits;
   size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints,
@@ -190,7 +207,7 @@ void buf_updates_send_changes(buf_T *buf,
     // send through the changes now channel contents now
     Array args = ARRAY_DICT_INIT;
     args.size = 6;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);
@@ -207,11 +224,11 @@ void buf_updates_send_changes(buf_T *buf,
     // linedata of lines being swapped in
     Array linedata = ARRAY_DICT_INIT;
     if (num_added > 0) {
-        STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
-        linedata.size = (size_t)num_added;
-        linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
-        buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
-                          NULL);
+      STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
+      linedata.size = (size_t)num_added;
+      linedata.items = xcalloc((size_t)num_added, sizeof(Object));
+      buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
+                        NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);
     args.items[5] = BOOLEAN_OBJ(false);
@@ -227,7 +244,7 @@ void buf_updates_send_changes(buf_T *buf,
   // change notifications are so frequent that many dead channels will be
   // cleared up quickly.
   if (badchannelid != 0) {
-    ELOG("Disabling buffer updates for dead channel %"PRIu64, badchannelid);
+    ELOG("Disabling buffer updates for dead channel %" PRIu64, badchannelid);
     buf_updates_unregister(buf, badchannelid);
   }
 
@@ -236,7 +253,7 @@ void buf_updates_send_changes(buf_T *buf,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF) {
+    if (cb.on_lines != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
       Array args = ARRAY_DICT_INIT;
       Object items[8];
       args.size = 6;  // may be increased to 8 below
@@ -265,11 +282,11 @@ void buf_updates_send_changes(buf_T *buf,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true);
+      Object res = nlua_call_ref(cb.on_lines, "lines", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-        free_update_callbacks(cb);
+        buffer_update_callbacks_free(cb);
         keep = false;
       }
       api_free_object(res);
@@ -281,6 +298,54 @@ void buf_updates_send_changes(buf_T *buf,
   kv_size(buf->update_callbacks) = j;
 }
 
+void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcount_t start_byte,
+                             int old_row, colnr_T old_col, bcount_t old_byte, int new_row,
+                             colnr_T new_col, bcount_t new_byte)
+{
+  if (!buf_updates_active(buf)
+      || (old_byte == 0 && new_byte == 0)) {
+    return;
+  }
+
+  // notify each of the active callbacks
+  size_t j = 0;
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    bool keep = true;
+    if (cb.on_bytes != LUA_NOREF && (cb.preview || !(State & CMDPREVIEW))) {
+      FIXED_TEMP_ARRAY(args, 11);
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      // next argument is b:changedtick
+      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+
+      args.items[2] = INTEGER_OBJ(start_row);
+      args.items[3] = INTEGER_OBJ(start_col);
+      args.items[4] = INTEGER_OBJ(start_byte);
+      args.items[5] = INTEGER_OBJ(old_row);
+      args.items[6] = INTEGER_OBJ(old_col);
+      args.items[7] = INTEGER_OBJ(old_byte);
+      args.items[8] = INTEGER_OBJ(new_row);
+      args.items[9] = INTEGER_OBJ(new_col);
+      args.items[10] = INTEGER_OBJ(new_byte);
+
+      textlock++;
+      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, true, NULL);
+      textlock--;
+
+      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+        buffer_update_callbacks_free(cb);
+        keep = false;
+      }
+    }
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    }
+  }
+  kv_size(buf->update_callbacks) = j;
+}
 void buf_updates_changedtick(buf_T *buf)
 {
   // notify each of the active channels
@@ -293,10 +358,7 @@ void buf_updates_changedtick(buf_T *buf)
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
     if (cb.on_changedtick != LUA_NOREF) {
-      Array args = ARRAY_DICT_INIT;
-      Object items[2];
-      args.size = 2;
-      args.items = items;
+      FIXED_TEMP_ARRAY(args, 2);
 
       // the first argument is always the buffer handle
       args.items[0] = BUFFER_OBJ(buf->handle);
@@ -305,12 +367,12 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
-                                        args, true);
+      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
+                                 args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-        free_update_callbacks(cb);
+        buffer_update_callbacks_free(cb);
         keep = false;
       }
       api_free_object(res);
@@ -324,22 +386,25 @@ void buf_updates_changedtick(buf_T *buf)
 
 void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 {
-    Array args = ARRAY_DICT_INIT;
-    args.size = 2;
-    args.items = xcalloc(sizeof(Object), args.size);
+  Array args = ARRAY_DICT_INIT;
+  args.size = 2;
+  args.items = xcalloc(args.size, sizeof(Object));
 
-    // the first argument is always the buffer handle
-    args.items[0] = BUFFER_OBJ(buf->handle);
+  // the first argument is always the buffer handle
+  args.items[0] = BUFFER_OBJ(buf->handle);
 
-    // next argument is b:changedtick
-    args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+  // next argument is b:changedtick
+  args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
-    // don't try and clean up dead channels here
-    rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
+  // don't try and clean up dead channels here
+  rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
 }
 
-static void free_update_callbacks(BufUpdateCallbacks cb)
+void buffer_update_callbacks_free(BufUpdateCallbacks cb)
 {
-  executor_free_luaref(cb.on_lines);
-  executor_free_luaref(cb.on_changedtick);
+  api_free_luaref(cb.on_lines);
+  api_free_luaref(cb.on_bytes);
+  api_free_luaref(cb.on_changedtick);
+  api_free_luaref(cb.on_reload);
+  api_free_luaref(cb.on_detach);
 }

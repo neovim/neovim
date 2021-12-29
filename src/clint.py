@@ -68,7 +68,7 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
-    http://neovim.io/development-wiki/style-guide/style-guide.xml
+    http://neovim.io/develop/style-guide.xml
 
   Note: This is Google's cpplint.py modified for use with the Neovim project,
   which follows the Google C++ coding convention except with the following
@@ -264,11 +264,13 @@ _error_suppressions_2 = set()
 
 # The allowed line length of files.
 # This is set by --linelength flag.
-_line_length = 80
+_line_length = 100
 
 # The allowed extensions for file names
 # This is set by --extensions flag.
 _valid_extensions = set(['c', 'h'])
+
+_RE_COMMENTLINE = re.compile(r'^\s*//')
 
 
 def ParseNolintSuppressions(filename, raw_line, linenum, error):
@@ -348,7 +350,7 @@ def IsErrorInSuppressedErrorsList(category, linenum):
       category: str, the category of the error.
       linenum: int, the current line number.
     Returns:
-      bool, True iff the error should be suppressed due to presense in
+      bool, True iff the error should be suppressed due to presence in
             suppressions file.
     """
     return (category, linenum) in _error_suppressions_2
@@ -1358,7 +1360,9 @@ def CheckForOldStyleComments(filename, line, linenum, error):
       linenum: The number of the line to check.
       error: The function to call with any errors found.
     """
-    if line.find('/*') >= 0 and line[-1] != '\\':
+    # hack: allow /* inside comment line. Could be extended to allow them inside
+    # any // comment.
+    if line.find('/*') >= 0 and line[-1] != '\\' and not _RE_COMMENTLINE.match(line):
         error(filename, linenum, 'readability/old_style_comment', 5,
               '/*-style comment found, it should be replaced with //-style.  '
               '/*-style comments are only allowed inside macros.  '
@@ -1769,7 +1773,7 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
             fncall = match.group(1)
             break
 
-    # Except in if/for/while/switch, there should never be space
+    # Except in if/for/while/switch/case, there should never be space
     # immediately inside parens (eg "f( 3, 4 )").  We make an exception
     # for nested parens ( (a+b) + c ).  Likewise, there should never be
     # a space before a ( when it's a function argument.  I assume it's a
@@ -1783,7 +1787,7 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
     # Note that we assume the contents of [] to be short enough that
     # they'll never need to wrap.
     if (  # Ignore control structures.
-            not Search(r'\b(if|for|while|switch|return|sizeof)\b', fncall) and
+            not Search(r'\b(if|for|while|switch|case|return|sizeof)\b', fncall) and
             # Ignore pointers/references to functions.
             not Search(r' \([^)]+\)\([^)]*(\)|,$)', fncall) and
             # Ignore pointers/references to arrays.
@@ -2540,6 +2544,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
                    r'(?<!\bPMap)'
                    r'(?<!\bArrayOf)'
                    r'(?<!\bDictionaryOf)'
+                   r'(?<!\bDict)'
                    r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
                    r' +'
                    r'-?(?:\*+|&)?(?:\w+|\+\+|--|\()', cast_line)

@@ -5,6 +5,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, neq = helpers.command, helpers.neq
 local meths = helpers.meths
 local curbufmeths, eq = helpers.curbufmeths, helpers.eq
+local pcall_err = helpers.pcall_err
 
 describe('Buffer highlighting', function()
   local screen
@@ -34,11 +35,8 @@ describe('Buffer highlighting', function()
       [17] = {foreground = Screen.colors.Magenta, background = Screen.colors.LightRed},
       [18] = {background = Screen.colors.LightRed},
       [19] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightRed},
+      [20] = {underline = true, bold = true, foreground = Screen.colors.Cyan4},
     })
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   local add_highlight = curbufmeths.add_highlight
@@ -209,21 +207,272 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      command(':3move 4')
-      screen:expect([[
+      -- TODO(bfedl): this behaves a bit weirdly due to the highlight on
+      -- the deleted line wrapping around. we should invalidate
+      -- highlights when they are completely inside deleted text
+      command('3move 4')
+      screen:expect{grid=[[
         a {5:longer} example                        |
                                                 |
-        {9:from }{8:diff}{7:erent} sources                  |
-        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {8:from different sources}                  |
+        {8:^in }{20:order}{8: to demonstrate}                 |
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
+      --screen:expect([[
+      --  a {5:longer} example                        |
+      --                                          |
+      --  {9:from }{8:diff}{7:erent} sources                  |
+      --  ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+      --  {1:~                                       }|
+      --  {1:~                                       }|
+      --  {1:~                                       }|
+      --                                          |
+      --]])
+
+      command('undo')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        ^                                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #4  {MATCH:.*}|
+      ]]}
+
+      command('undo')
+      screen:expect{grid=[[
+        ^a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 line less; before #3  {MATCH:.*}|
+      ]]}
+
+      command('undo')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:^combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 more line; before #2  {MATCH:.*}|
+      ]]}
+    end)
+
+    it('and moving lines around', function()
+      command('2move 3')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      command('1,2move 4')
+      screen:expect{grid=[[
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        a {5:longer} example                        |
+        {7:^combin}{8:ing}{9: hi}ghlights                    |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      command('undo')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        2 change3; before #3  {MATCH:.*}|
+      ]]}
+
+      command('undo')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        ^in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #2  {MATCH:.*}|
+      ]]}
+    end)
+
+    it('and adjusting columns', function()
+      -- insert before
+      feed('ggiquite <esc>')
+      screen:expect{grid=[[
+        quite^ a {5:longer} example                  |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        ^a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #2  {MATCH:.*}|
+      ]]}
+
+      -- change/insert in the middle
+      feed('+fesAAAA')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAA^r} to {7:de}{5:monstr}{7:ate}              |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      feed('<esc>tdD')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAAr} t^o                          |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAAr} to^ {7:de}{5:monstr}{7:ate}              |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #4  {MATCH:.*}|
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ord^er} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #3  {MATCH:.*}|
+      ]]}
+    end)
+
+    it('and joining lines', function()
+      feed('ggJJJ')
+      screen:expect{grid=[[
+        a {5:longer} example in {6:order} to {7:de}{5:monstr}{7:ate}|
+         {7:combin}{8:ing}{9: hi}ghlights^ {9:from }{8:diff}{7:erent} sou|
+        rces                                    |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      feed('uuu')
+      screen:expect{grid=[[
+        ^a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 more line; before #2  {MATCH:.*}|
+      ]]}
+    end)
+
+    it('and splitting lines', function()
+      feed('2Gtti<cr>')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+        ^ to {7:de}{5:monstr}{7:ate}                         |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      feed('<esc>tsi<cr>')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+         to {7:de}{5:mo}                                |
+        {5:^nstr}{7:ate}                                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      feed('<esc>u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+         to {7:de}{5:mo^nstr}{7:ate}                         |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        1 line less; before #3  {MATCH:.*}|
+      ]]}
+
+      feed('<esc>u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}^ to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 line less; before #2  {MATCH:.*}|
+      ]]}
     end)
   end)
 
-  it('prioritizes latest added highlight', function()
+  pending('prioritizes latest added highlight', function()
     insert([[
       three overlapping colors]])
     add_highlight(0, "Identifier", 0, 6, 17)
@@ -252,6 +501,93 @@ describe('Buffer highlighting', function()
       {1:~                                       }|
                                               |
     ]])
+  end)
+
+  it('prioritizes earlier highlight groups (TEMP)', function()
+    insert([[
+      three overlapping colors]])
+    add_highlight(0, "Identifier", 0, 6, 17)
+    add_highlight(0, "String", 0, 14, 23)
+    local id = add_highlight(0, "Special", 0, 0, 9)
+
+    screen:expect{grid=[[
+      {4:three }{6:overlapp}{2:ing color}^s                |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    clear_namespace(id, 0, 1)
+    screen:expect{grid=[[
+      three {6:overlapp}{2:ing color}^s                |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+  end)
+
+  it('respects priority', function()
+    local set_extmark = curbufmeths.set_extmark
+    local id = meths.create_namespace('')
+    insert [[foobar]]
+
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 5,
+      hl_group = "Statement",
+      priority = 100
+    })
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 6,
+      hl_group = "String",
+      priority = 1
+    })
+
+    screen:expect [[
+      {3:fooba}{2:^r}                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]
+
+    clear_namespace(id, 0, -1)
+
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 6,
+      hl_group = "String",
+      priority = 1
+    })
+    set_extmark(id, 0, 0, {
+      end_line = 0,
+      end_col = 5,
+      hl_group = "Statement",
+      priority = 100
+    })
+
+    screen:expect [[
+      {3:fooba}{2:^r}                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]
   end)
 
   it('works with multibyte text', function()
@@ -300,7 +636,7 @@ describe('Buffer highlighting', function()
     ]])
   end)
 
-  describe('virtual text annotations', function()
+  describe('virtual text decorations', function()
     local set_virtual_text = curbufmeths.set_virtual_text
     local id1, id2
     before_each(function()
@@ -378,16 +714,55 @@ describe('Buffer highlighting', function()
       ]])
 
       feed("2Gdd")
-      screen:expect([[
+      -- TODO(bfredl): currently decorations get moved from a deleted line
+      -- to the next one. We might want to add "invalidation" when deleting
+      -- over a decoration.
+      screen:expect{grid=[[
         1 + 2                                   |
         ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        , 5, 5, 5, 5, 5, 5,  {12:暗x事zz速野谷質結育}|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
+      --screen:expect([[
+      --  1 + 2                                   |
+      --  ^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+      --  , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+      --  x = 4                                   |
+      --  {1:~                                       }|
+      --  {1:~                                       }|
+      --  {1:~                                       }|
+      --                                          |
+      --]])
+    end)
+
+    it('validates contents', function()
+      -- this used to leak memory
+      eq('Chunk is not an array', pcall_err(set_virtual_text, id1, 0, {"texty"}, {}))
+      eq('Chunk is not an array', pcall_err(set_virtual_text, id1, 0, {{"very"}, "texty"}, {}))
+    end)
+
+    it('can be retrieved', function()
+      local get_extmarks = curbufmeths.get_extmarks
+      local line_count = curbufmeths.line_count
+
+      local s1 = {{'Köttbullar', 'Comment'}, {'Kräuterbutter'}}
+      local s2 = {{'こんにちは', 'Comment'}}
+
+      -- TODO: only a virtual text from the same ns curretly overrides
+      -- an existing virtual text. We might add a prioritation system.
+      set_virtual_text(id1, 0, s1, {})
+      eq({{1, 0, 0, { priority = 0, virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
+
+      -- TODO: is this really valid? shouldn't the max be line_count()-1?
+      local lastline = line_count()
+      set_virtual_text(id1, line_count(), s2, {})
+      eq({{3, lastline, 0, { priority = 0, virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
+
+      eq({}, get_extmarks(id1, {lastline+9000,0}, {lastline+9000, -1}, {}))
     end)
 
     it('is not highlighted by visual selection', function()
@@ -483,8 +858,8 @@ describe('Buffer highlighting', function()
     it('works with cursorline', function()
       command("set cursorline")
 
-      screen:expect([[
-        {14:^1 + 2 }{15:=}{16: 3}{14:                               }|
+      screen:expect{grid=[[
+        {14:^1 + 2 }{3:=}{2: 3}{14:                               }|
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
@@ -492,32 +867,32 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
-        {14:^3 + }{11:ERROR:}{14: invalid syntax               }|
+        {14:^3 + }{11:ERROR:} invalid syntax{14:               }|
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         {14:^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
-        {14:, 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s}|
+        {14:, 5, 5, 5, 5, 5, 5,  }Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
     end)
 
     it('works with color column', function()
@@ -535,11 +910,11 @@ describe('Buffer highlighting', function()
 
       command("set colorcolumn=9")
       screen:expect{grid=[[
-        ^1 + 2 {3:=}{2: }{17:3}                               |
+        ^1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5,{18: }5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-        x = 4 {12:暗}{19:x}{12:事}                             |
+        x = 4 {12:暗x事}                             |
         {1:~                                       }|
         {1:~                                       }|
                                                 |

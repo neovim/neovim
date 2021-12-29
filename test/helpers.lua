@@ -55,18 +55,44 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-function module.eq(expected, actual, context)
-  return assert.are.same(expected, actual, context)
+--- Invokes `fn` and includes the tail of `logfile` in the error message if it
+--- fails.
+---
+---@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
+---@param fn       Function to invoke
+---@param ...      Function arguments
+local function dumplog(logfile, fn, ...)
+  -- module.validate({
+  --   logfile={logfile,'s',true},
+  --   fn={fn,'f',false},
+  -- })
+  local status, rv = pcall(fn, ...)
+  if status == false then
+    logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+    local logtail = module.read_nvim_log(logfile)
+    error(string.format('%s\n%s', tostring(rv), logtail))
+  end
 end
-function module.neq(expected, actual, context)
-  return assert.are_not.same(expected, actual, context)
+function module.eq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are.same, expected, actual, context)
 end
-function module.ok(res, msg)
-  return assert.is_true(res, msg)
+function module.neq(expected, actual, context, logfile)
+  return dumplog(logfile, assert.are_not.same, expected, actual, context)
 end
-function module.near(actual, expected, tolerance)
-  return assert.is.near(actual, expected, tolerance)
+function module.ok(res, msg, logfile)
+  return dumplog(logfile, assert.is_true, res, msg)
 end
+
+-- TODO(bfredl): this should "failure" not "error" (issue with dumplog() )
+local function epicfail(state, arguments, _)
+  state.failure_message = arguments[1]
+  return false
+end
+assert:register("assertion", "epicfail", epicfail)
+function module.fail(msg, logfile)
+  return dumplog(logfile, assert.epicfail, msg)
+end
+
 function module.matches(pat, actual)
   if nil ~= string.match(actual, pat) then
     return true
@@ -74,7 +100,28 @@ function module.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
--- Invokes `fn` and returns the error string, or raises an error if `fn` succeeds.
+--- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
+---
+---@param pat  (string) Lua pattern to search for in the log file.
+---@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
+function module.assert_log(pat, logfile)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  local nrlines = 10
+  local lines = module.read_file_list(logfile, -nrlines) or {}
+  for _,line in ipairs(lines) do
+    if line:match(pat) then return end
+  end
+  local logtail = module.read_nvim_log(logfile)
+  error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
+    pat, nrlines, logfile, logtail))
+end
+
+-- Invokes `fn` and returns the error string (with truncated paths), or raises
+-- an error if `fn` succeeds.
+--
+-- Replaces line/column numbers with zero:
+--     shared.lua:0: in function 'gsplit'
+--     shared.lua:0: in function <shared.lua:0>'
 --
 -- Usage:
 --    -- Match exact string.
@@ -82,14 +129,44 @@ end
 --    -- Match Lua pattern.
 --    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
 --
-function module.pcall_err(fn, ...)
+function module.pcall_err_withfile(fn, ...)
   assert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
   if status == true then
     error('expected failure, but got success')
   end
-  local errmsg = tostring(rv):gsub('^[^:]+:%d+: ', '')
+  -- From:
+  --    C:/long/path/foo.lua:186: Expected string, got number
+  -- to:
+  --    .../foo.lua:0: Expected string, got number
+  local errmsg = tostring(rv):gsub('([%s<])vim[/\\]([^%s:/\\]+):%d+', '%1\xffvim\xff%2:0')
+                             :gsub('[^%s<]-[/\\]([^%s:/\\]+):%d+', '.../%1:0')
+                             :gsub('\xffvim\xff', 'vim/')
+  -- Scrub numbers in paths/stacktraces:
+  --    shared.lua:0: in function 'gsplit'
+  --    shared.lua:0: in function <shared.lua:0>'
+  errmsg = errmsg:gsub('([^%s]):%d+', '%1:0')
+  -- Scrub tab chars:
+  errmsg = errmsg:gsub('\t', '    ')
+  -- In Lua 5.1, we sometimes get a "(tail call): ?" on the last line.
+  --    We remove this so that the tests are not lua dependent.
+  errmsg = errmsg:gsub('%s*%(tail call%): %?', '')
+
   return errmsg
+end
+
+function module.pcall_err_withtrace(fn, ...)
+  local errmsg = module.pcall_err_withfile(fn, ...)
+
+  return errmsg:gsub('.../helpers.lua:0: ', '')
+end
+
+function module.pcall_err(...)
+  return module.remove_trace(module.pcall_err_withtrace(...))
+end
+
+function module.remove_trace(s)
+  return (s:gsub("\n%s*stack traceback:.*", ""))
 end
 
 -- initial_path:  directory to recurse into
@@ -155,14 +232,25 @@ function module.check_logs()
           end
         end
         fd:close()
-        os.remove(file)
         if #lines > 0 then
+          local status, f
           local out = io.stdout
+          if os.getenv('SYMBOLIZER') then
+            status, f = pcall(module.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
+          end
           out:write(start_msg .. '\n')
-          out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
+          if status then
+            for line in f:lines() do
+              out:write('= '..line..'\n')
+            end
+            f:close()
+          else
+            out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
+          end
           out:write(select(1, start_msg:gsub('.', '=')) .. '\n')
           table.insert(runtime_errors, file)
         end
+        os.remove(file)
       end
     end
   end
@@ -245,24 +333,6 @@ module.tmpname = (function()
   end)
 end)()
 
-function module.map(func, tab)
-  local rettab = {}
-  for k, v in pairs(tab) do
-    rettab[k] = func(v)
-  end
-  return rettab
-end
-
-function module.filter(filter_func, tab)
-  local rettab = {}
-  for _, entry in pairs(tab) do
-    if filter_func(entry) then
-      table.insert(rettab, entry)
-    end
-  end
-  return rettab
-end
-
 function module.hasenv(name)
   local env = os.getenv(name)
   if env and env ~= '' then
@@ -296,14 +366,18 @@ function module.check_cores(app, force)
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
-  elseif os.getenv('TRAVIS_OS_NAME') == 'osx' then
+  elseif 'darwin' == module.uname() then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    re = '/core[^/]*$'
+    if 'freebsd' == module.uname() then
+      re = '/nvim.core$'
+    else
+      re = '/core[^/]*$'
+    end
     exc_re = { '^/%.deps$', '^/%'..deps_prefix()..'$', local_tmpdir, '^/%node_modules$' }
     db_cmd = gdb_db_cmd
     random_skip = true
@@ -667,9 +741,20 @@ function module.read_file_list(filename, start)
   if not file then
     return nil
   end
+
+  -- There is no need to read more than the last 2MB of the log file, so seek
+  -- to that.
+  local file_size = file:seek("end")
+  local offset = file_size - 2000000
+  if offset < 0 then
+    offset = 0
+  end
+  file:seek("set", offset)
+
   local lines = {}
   local i = 1
-  for line in file:lines() do
+  local line = file:read("*l")
+  while line ~= nil do
     if i >= start then
       table.insert(lines, line)
       if #lines > maxlines then
@@ -677,6 +762,7 @@ function module.read_file_list(filename, start)
       end
     end
     i = i + 1
+    line = file:read("*l")
   end
   file:close()
   return lines
@@ -715,17 +801,19 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'quickbuild' or name == 'travis')
+  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut' or name == 'github')
   local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
   local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
-  local qb = ((any or name == 'quickbuild') and nil ~= lfs.attributes('/usr/home/quickbuild'))
-  return tr or av or qb
+  local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
+  local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
+  return tr or av or sh or gh
+
 end
 
--- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
+-- Gets the (tail) contents of `logfile`.
 -- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log()
-  local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+function module.read_nvim_log(logfile, ci_rename)
+  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
   local keep = is_ci and 999 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
@@ -736,12 +824,12 @@ function module.read_nvim_log()
     log = log..line..'\n'
   end
   log = log..('-'):rep(78)..'\n'
-  if is_ci then
+  if is_ci and ci_rename then
     os.rename(logfile, logfile .. '.displayed')
   end
   return log
 end
 
-module = shared.tbl_extend('error', module, Paths, shared)
+module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
 
 return module

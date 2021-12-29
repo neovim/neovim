@@ -11,6 +11,7 @@ func Test_filter_map_list_expr_string()
   call assert_equal([2, 4, 6, 8], map([1, 2, 3, 4], 'v:val * 2'))
   call assert_equal([0, 2, 4, 6], map([1, 2, 3, 4], 'v:key * 2'))
   call assert_equal([9, 9, 9, 9], map([1, 2, 3, 4], 9))
+  call assert_equal([7, 7, 7], map([1, 2, 3], ' 7 '))
 endfunc
 
 " dict with expression string
@@ -80,7 +81,11 @@ func Test_filter_map_dict_expr_funcref()
   call assert_equal({"foo": "f", "bar": "b", "baz": "b"}, map(copy(dict), function('s:filter4')))
 endfunc
 
-func Test_map_fails()
+func Test_map_filter_fails()
   call assert_fails('call map([1], "42 +")', 'E15:')
   call assert_fails('call filter([1], "42 +")', 'E15:')
+  call assert_fails("let l = map('abc', '\"> \" . v:val')", 'E896:')
+  call assert_fails("let l = filter('abc', '\"> \" . v:val')", 'E896:')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

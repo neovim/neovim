@@ -47,6 +47,7 @@ N is used to indicate an optional count that can be given before the command.
 |g$|	N  g$		to last character in screen line (differs from "$"
 			   when lines wrap)
 |gm|	   gm		to middle of the screen line
+|gM|	   gM		to middle of the line
 |bar|	N  |		to column N (default: 1)
 |f|	N  f{char}	to the Nth occurrence of {char} to the right
 |F|	N  F{char}	to the Nth occurrence of {char} to the left
@@ -291,7 +292,7 @@ moving around:
 |i_CTRL-A|	CTRL-A		  insert previously inserted text
 |i_CTRL-@|	CTRL-@		  insert previously inserted text and stop
 				     Insert mode
-|i_CTRL-R|	CTRL-R {0-9a-z%#:.-="}  insert the contents of a register
+|i_CTRL-R|	CTRL-R {register} insert the contents of a register
 
 |i_CTRL-N|	CTRL-N		  insert next match of identifier before the
 				     cursor
@@ -488,6 +489,7 @@ In Insert or Command-line mode:
 |q|	      q{a-z}	record typed characters into register {a-z}
 |q|	      q{A-Z}	record typed characters, appended to register {a-z}
 |q|	      q		stop recording
+|Q|	      Q		replay last recorded macro
 |@|	   N  @{a-z}	execute the contents of register {a-z} (N times)
 |@@|	   N  @@	   repeat previous @{a-z} (N times)
 |:@|	   :@{a-z}	execute the contents of register {a-z} as an Ex
@@ -620,13 +622,14 @@ Short explanation of each option:		*option-list*
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
-'breakindent'	  'bri'     wrapped line repeats indent 
+'breakindent'	  'bri'     wrapped line repeats indent
 'breakindentopt'  'briopt'  settings for 'breakindent'
 'browsedir'	  'bsdir'   which directory to start browsing in
 'bufhidden'	  'bh'	    what to do when buffer is no longer in window
 'buflisted'	  'bl'	    whether the buffer shows up in the buffer list
 'buftype'	  'bt'	    special type of buffer
 'casemap'	  'cmp'     specifies how case of letters is changed
+'cdhome'	  'cdh'	    change directory to the home directory by ":cd"
 'cdpath'	  'cd'	    list of directories searched with ":cd"
 'cedit'			    key used to open the command-line window
 'charconvert'	  'ccv'     expression for character encoding conversion
@@ -658,6 +661,7 @@ Short explanation of each option:		*option-list*
 'cursorbind'	  'crb'     move cursor in window as it moves in other windows
 'cursorcolumn'	  'cuc'	    highlight the screen column of the cursor
 'cursorline'	  'cul'	    highlight the screen line of the cursor
+'cursorlineopt'	  'culopt'  settings for 'cursorline'
 'debug'			    set to "msg" to see all error messages
 'define'	  'def'     pattern to be used to find a macro definition
 'delcombine'	  'deco'    delete combining characters on their own
@@ -679,7 +683,7 @@ Short explanation of each option:		*option-list*
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
 'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
-'fileencoding'	  'fenc'    file encoding for multi-byte text
+'fileencoding'	  'fenc'    file encoding for multibyte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O
 'fileformats'	  'ffs'     automatically detected values for 'fileformat'
@@ -710,7 +714,6 @@ Short explanation of each option:		*option-list*
 'grepprg'	  'gp'	    program to use for ":grep"
 'guicursor'	  'gcr'     GUI: settings for cursor shape and blinking
 'guifont'	  'gfn'     GUI: Name(s) of font(s) to be used
-'guifontset'	  'gfs'     GUI: Names of multi-byte fonts to be used
 'guifontwide'	  'gfw'     list of font names for double-wide characters
 'guioptions'	  'go'	    GUI: Which components and options are used
 'guitablabel'	  'gtl'     GUI: custom label for a tab page
@@ -742,6 +745,7 @@ Short explanation of each option:		*option-list*
 'iskeyword'	  'isk'     characters included in keywords
 'isprint'	  'isp'     printable characters
 'joinspaces'	  'js'	    two spaces after a period with a join command
+'jumpoptions'	  'jop'     specifies how jumping is done
 'keymap'	  'kmp'     name of a keyboard mapping
 'keymodel'	  'km'	    enable starting/stopping selection with keys
 'keywordprg'	  'kp'	    program to use for the "K" command
@@ -808,7 +812,6 @@ Short explanation of each option:		*option-list*
 'printmbcharset'  'pmbcs'   CJK character set to be used for :hardcopy
 'printmbfont'	  'pmbfn'   font names to be used for CJK output of :hardcopy
 'printoptions'	  'popt'    controls the format of :hardcopy output
-'prompt'	  'prompt'  enable prompt in Ex mode
 'pumheight'	  'ph'	    maximum height of the popup menu
 'pumwidth'	  'pw'	    minimum width of the popup menu
 'pythondll'		    name of the Python 2 dynamic library
@@ -868,6 +871,7 @@ Short explanation of each option:		*option-list*
 'spellcapcheck'   'spc'     pattern to locate end of a sentence
 'spellfile'	  'spf'     files where |zg| and |zw| store words
 'spelllang'	  'spl'     language(s) to do spell checking for
+'spelloptions'	  'spo'     options for spell checking
 'spellsuggest'	  'sps'     method(s) used to suggest spelling corrections
 'splitbelow'	  'sb'	    new window from split is below the current one
 'splitright'	  'spr'     new window is put right of the current one
@@ -893,6 +897,7 @@ Short explanation of each option:		*option-list*
 'terse'			    shorten some messages
 'textwidth'	  'tw'	    maximum width of text that is being inserted
 'thesaurus'	  'tsr'     list of thesaurus files for keyword completion
+'thesaurusfunc'	  'tsrfu'   function to be used for thesaurus completion
 'tildeop'	  'top'     tilde command "~" behaves like an operator
 'timeout'	  'to'	    time out on mappings and key codes
 'timeoutlen'	  'tm'	    time out time in milliseconds
@@ -994,7 +999,7 @@ Short explanation of each option:		*option-list*
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}
 				execute Normal mode commands
-|Q|		   Q		switch to "Ex" mode
+|gQ|		   gQ		switch to "Ex" mode
 
 |:redir|	:redir >{file}		redirect messages to {file}
 |:silent|	:silent[!] {command}	execute {command} silently
@@ -1013,8 +1018,7 @@ Short explanation of each option:		*option-list*
 				      three digits)
 |c_CTRL-K|	CTRL-K {char1} {char2}
 				   enter digraph (See |Q_di|)
-|c_CTRL-R|	CTRL-R {0-9a-z"%#:-=}
-				   insert the contents of a register
+|c_CTRL-R|	CTRL-R {register}  insert the contents of a register
 
 |c_<Left>|	<Left>/<Right>	   cursor left/right
 |c_<S-Left>|	<S-Left>/<S-Right> cursor one word left/right
@@ -1104,7 +1108,6 @@ Context-sensitive completion on the command-line:
 ------------------------------------------------------------------------------
 *Q_st*		Starting Vim
 
-|-vim|	   vim [options]		start editing with an empty buffer
 |-file|	   vim [options] {file} ..	start editing one or more files
 |--|	   vim [options] -		read file from stdin
 |-tag|	   vim [options] -t {tag}	edit the file associated with {tag}

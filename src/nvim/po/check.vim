@@ -25,6 +25,7 @@ func! GetMline()
 
   " remove '%', not used for formatting.
   let idline = substitute(idline, "'%'", '', 'g')
+  let idline = substitute(idline, "%%", '', 'g')
 
   " remove '%' used for plural forms.
   let idline = substitute(idline, '\\nPlural-Forms: .\+;\\n', '', '')
@@ -47,6 +48,17 @@ let wsv = winsaveview()
 let error = 0
 
 while 1
+  let lnum = line('.')
+  if getline(lnum) =~ 'msgid "Text;.*;"'
+    if getline(lnum + 1) !~ '^msgstr "\([^;]\+;\)\+"'
+      echomsg 'Mismatching ; in line ' . (lnum + 1)
+      echomsg 'Did you forget the trailing semicolon?'
+      if error == 0
+	let error = lnum + 1
+      endif
+    endif
+  endif
+
   if getline(line('.') - 1) !~ "no-c-format"
     " go over the "msgid" and "msgid_plural" lines
     let prevfromline = 'foobar'
@@ -150,7 +162,10 @@ endwhile
 " Check that the file is well formed according to msgfmts understanding
 if executable("msgfmt")
   let filename = expand("%")
-  let a = system("msgfmt --statistics OLD_PO_FILE_INPUT=yes " . filename)
+  " Newer msgfmt does not take OLD_PO_FILE_INPUT argument, must be in
+  " environment.
+  let $OLD_PO_FILE_INPUT = 'yes'
+  let a = system("msgfmt --statistics " . filename)
   if v:shell_error != 0
     let error = matchstr(a, filename.':\zs\d\+\ze:')+0
     for line in split(a, '\n') | echomsg line | endfor

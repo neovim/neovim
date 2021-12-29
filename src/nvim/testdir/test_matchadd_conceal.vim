@@ -1,9 +1,11 @@
 " Test for matchadd() and conceal feature
-if !has('conceal')
-  finish
-endif
+
+source check.vim
+CheckFeature conceal
 
 source shared.vim
+source term_util.vim
+source view_util.vim
 
 function! Test_simple_matchadd()
   new
@@ -25,9 +27,9 @@ function! Test_simple_matchadd()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc
 
-function! Test_simple_matchadd_and_conceal()
+func Test_simple_matchadd_and_conceal()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -47,9 +49,9 @@ function! Test_simple_matchadd_and_conceal()
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_and_conceallevel_3()
+func Test_matchadd_and_conceallevel_3()
   new
 
   setlocal conceallevel=3
@@ -57,9 +59,9 @@ function! Test_matchadd_and_conceallevel_3()
   setlocal filetype=conf
   syntax on
 
-  1put='# This is a Test'
-  "             1234567890123456
-  let expect = '#ThisisaTest'
+  1put='# This is a Test  $'
+  "             1234567890123
+  let expect = '#ThisisaTest$'
 
   call cursor(1, 1)
   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
@@ -67,30 +69,33 @@ function! Test_matchadd_and_conceallevel_3()
   let lnum = 2
   call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
-  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 13))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 14))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 16))
 
   " more matchadd()
-  "             1234567890123456
-  let expect = '#Thisisa Test'
+  "             12345678901234
+  let expect = '#Thisisa Test$'
 
   call matchadd('ErrorMsg', '\%2l Test', 20, -1, {'conceal': 'X'})
   redraw!
   call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 2))
-  call assert_equal(screenattr(lnum, 2) , screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 7))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 10))
-  call assert_equal(screenattr(lnum, 10), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 10), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 14))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 16))
   call assert_notequal(screenattr(lnum, 10), screenattr(lnum, 16))
 
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_default_conceal_char()
+func Test_default_conceal_char()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -124,21 +129,24 @@ function! Test_default_conceal_char()
 
   let &listchars = listchars_save
   quit!
-endfunction
+endfunc
 
-function! Test_syn_and_match_conceal()
+func Test_syn_and_match_conceal()
   new
   setlocal concealcursor=n conceallevel=1
 
-  1put='# This is a Test'
-  "             1234567890123456
-  let expect = '#ZThisZisZaZTest'
+  1put='# This is a Test  '
 
-  call cursor(1, 1)
-  call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'Z'})
-  syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
-  redraw!
   let lnum = 2
+  call cursor(1, 1)
+
+  "             123456789012345678
+  let expect = '#ZThisZisZaZTestZZ'
+  call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'Z'})
+  syntax match MyConceal /\%2l / conceal containedin=ALL
+  hi MyConceal ctermbg=4 ctermfg=2
+  redraw!
+
   call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
@@ -146,8 +154,19 @@ function! Test_syn_and_match_conceal()
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
-  "             1234567890123456
-  let expect = '#*This*is*a*Test'
+  syntax clear MyConceal
+  syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
+
+  "             123456789012345678
+  let expect = '#*This*is*a*Test**'
   call clearmatches()
   redraw!
 
@@ -158,11 +177,53 @@ function! Test_syn_and_match_conceal()
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
 
+  "             123456789012345678
+  let expect = '#*ThisXis*a*Test**'
+  call matchadd('Conceal', '\%2l\%7c ', 10, -1, {'conceal': 'X'})
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_equal(screenattr(lnum, 1), screenattr(lnum, 16))
+
+  "             123456789012345678
+  let expect = '#*ThisXis*a*Test**'
+  call matchadd('ErrorMsg', '\%2l Test', 20, -1)
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 12), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 13), screenattr(lnum, 16))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 17))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 18))
+  call assert_notequal(screenattr(lnum, 18), screenattr(lnum, 19))
+
+  "             123456789012345678
+  let expect = '# ThisXis a Test'
+  syntax clear MyConceal
+  syntax match MyConceal /\%2l / conceal containedin=ALL
+  redraw!
+
+  call assert_equal(expect, Screenline(lnum))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 12))
+  call assert_notequal(screenattr(lnum, 12), screenattr(lnum, 13))
+  call assert_equal(screenattr(lnum, 13), screenattr(lnum, 16))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 17))
+  call assert_equal(screenattr(lnum, 2), screenattr(lnum, 18))
+  call assert_notequal(screenattr(lnum, 18), screenattr(lnum, 19))
+
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_clearmatches()
+func Test_clearmatches()
   new
   setlocal concealcursor=n conceallevel=1
 
@@ -199,9 +260,9 @@ function! Test_clearmatches()
   call assert_equal({'group': 'Conceal', 'pattern': '\%2l ', 'priority': 10, 'id': a[0].id, 'conceal': 'Z'}, a[0])
 
   quit!
-endfunction
+endfunc
 
-function! Test_using_matchaddpos()
+func Test_using_matchaddpos()
   new
   setlocal concealcursor=n conceallevel=1
   " set filetype and :syntax on to change screenattr()
@@ -230,9 +291,9 @@ function! Test_using_matchaddpos()
 
   syntax off
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_repeat_conceal_with_syntax_off()
+func Test_matchadd_repeat_conceal_with_syntax_off()
   new
 
   " To test targets in the same line string is replaced with conceal char
@@ -249,9 +310,9 @@ function! Test_matchadd_repeat_conceal_with_syntax_off()
   call assert_equal('t_tt', Screenline(2))
 
   quit!
-endfunction
+endfunc
 
-function! Test_matchadd_and_syn_conceal()
+func Test_matchadd_and_syn_conceal()
   new
   let cnt='Inductive bool : Type := | true : bool | false : bool.'
   let expect = 'Inductive - : Type := | true : - | false : -.'
@@ -273,3 +334,70 @@ function! Test_matchadd_and_syn_conceal()
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
 endfunction
+
+func Test_cursor_column_in_concealed_line_after_window_scroll()
+  CheckRunVimInTerminal
+
+  " Test for issue #5012 fix.
+  " For a concealed line with cursor, there should be no window's cursor
+  " position invalidation during win_update() after scrolling attempt that is
+  " not successful and no real topline change happens. The invalidation would
+  " cause a window's cursor position recalc outside of win_line() where it's
+  " not possible to take conceal into account.
+  let lines =<< trim END
+    3split
+    let m = matchadd('Conceal', '=')
+    setl conceallevel=2 concealcursor=nc
+    normal gg
+    "==expr==
+  END
+  call writefile(lines, 'Xcolesearch')
+  let buf = RunVimInTerminal('Xcolesearch', {})
+  call term_wait(buf, 100)
+
+  " Jump to something that is beyond the bottom of the window,
+  " so there's a scroll down.
+  call term_sendkeys(buf, ":so %\<CR>")
+  call term_wait(buf, 100)
+  call term_sendkeys(buf, "/expr\<CR>")
+  call term_wait(buf, 100)
+
+  " Are the concealed parts of the current line really hidden?
+  let cursor_row = term_scrape(buf, '.')->map({_, e -> e.chars})->join('')
+  call assert_equal('"expr', cursor_row)
+
+  " BugFix check: Is the window's cursor column properly updated for hidden
+  " parts of the current line?
+  call assert_equal(2, term_getcursor(buf)[1])
+
+  call StopVimInTerminal(buf)
+  call delete('Xcolesearch')
+endfunc
+
+func Test_cursor_column_in_concealed_line_after_leftcol_change()
+  CheckRunVimInTerminal
+
+  " Test for issue #5214 fix.
+  let lines =<< trim END
+    0put = 'ab' .. repeat('-', &columns) .. 'c'
+    call matchadd('Conceal', '-')
+    set nowrap ss=0 cole=3 cocu=n
+  END
+  call writefile(lines, 'Xcurs-columns')
+  let buf = RunVimInTerminal('-S Xcurs-columns', {})
+
+  " Go to the end of the line (3 columns beyond the end of the screen).
+  " Horizontal scroll would center the cursor in the screen line, but conceal
+  " makes it go to screen column 1.
+  call term_sendkeys(buf, "$")
+  call term_wait(buf)
+
+  " Are the concealed parts of the current line really hidden?
+  call WaitForAssert({-> assert_equal('c', term_getline(buf, '.'))})
+
+  " BugFix check: Is the window's cursor column properly updated for conceal?
+  call assert_equal(1, term_getcursor(buf)[1])
+
+  call StopVimInTerminal(buf)
+  call delete('Xcurs-columns')
+endfunc

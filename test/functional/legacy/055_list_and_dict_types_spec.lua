@@ -229,7 +229,7 @@ describe('list and dictionary types', function()
       try
 	      let n = d[1500]
       catch
-	      $put =substitute(v:exception, '\v(.{14}).*( \d{4}).*', '\1\2', '')
+	      $put = substitute(v:exception, '\v(.{14}).*( \"\d{4}\").*', '\1\2', '')
       endtry
       " Lookup each items.
       for i in range(1500)
@@ -260,7 +260,7 @@ describe('list and dictionary types', function()
     expect([[
 
       3000 2900 2001 1600 1501
-      Vim(let):E716: 1500
+      Vim(let):E716: "1500"
       NONE 2999
       33=999
       {'33': 999}]])

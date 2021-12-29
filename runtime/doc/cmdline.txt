@@ -119,7 +119,7 @@ CTRL-K {char1} {char2}					*c_CTRL-K*
 		enter digraph (see |digraphs|).  When {char1} is a special
 		key, the code for that key is inserted in <> form.
 
-CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
+CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		Insert the contents of a numbered or named register.  Between
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
@@ -153,7 +153,12 @@ CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
 				too.
 				When the result is a Float it's automatically
 				converted to a String.
-		See |registers| about registers.
+				Note that when you only want to move the
+				cursor and not insert anything, you must make
+				sure the expression evaluates to an empty
+				string.  E.g.: >
+					<C-R><C-R>=setcmdpos(2)[-1]<CR>
+<		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -178,8 +183,8 @@ CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-R {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		Insert register or object under the cursor.  Works like
 		|c_CTRL-R| but inserts the text literally.  For example, if
 		register a contains "xy^Hz" (where ^H is a backspace),
@@ -215,6 +220,9 @@ CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
 
+							*c_CTRL-Z*
+CTRL-Z		Trigger 'wildmode'. Same as 'wildcharm', but always available.
+
 CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
 
@@ -224,6 +232,10 @@ CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 		present in 'cpoptions', start entered command.
 		Note: If your <Esc> key is hard to hit on your keyboard, train
 		yourself to use CTRL-[.
+						*c_META* *c_ALT*
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have a
+		command-line mode mapping.
 							*c_CTRL-C*
 CTRL-C		quit command-line without executing
 
@@ -436,6 +448,10 @@ emulate it.  For example, this mimics autolist=ambiguous:
 This will find the longest match with the first 'wildchar', then list all
 matching files with the next.
 
+					*complete-script-local-functions*
+When completing user function names, prepend "s:" to find script-local
+functions.
+
 							*suffixes*
 For file name completion you can use the 'suffixes' option to set a priority
 between files with almost the same name.  If there are multiple matches,
@@ -521,7 +537,6 @@ that see the '"' as part of their argument:
     :normal
     :ownsyntax
     :popup
-    :promptfind (and the like)
     :registers
     :return
     :sort
@@ -546,24 +561,27 @@ followed by another Vim command:
     :command
     :cscope
     :debug
+    :eval
     :folddoopen
     :folddoclosed
     :function
     :global
     :help
+    :helpgrep
     :lcscope
     :ldo
     :lfdo
+    :lhelpgrep
     :make
     :normal
-    :promptfind
-    :promptrepl
+    :perlfile
     :pyfile
     :python
     :registers
     :read !
     :scscope
     :sign
+    :terminal
     :vglobal
     :windo
     :write !
@@ -743,13 +761,15 @@ three lines: >
 		3:d<CR>		is translated into: .,.+2d<CR>
 <
 
-Visual Mode and Range					*v_:*
-
+Visual Mode and Range
+							*v_:*
 {Visual}:	Starts a command-line with the Visual selected lines as a
 		range.  The code `:'<,'>` is used for this range, which makes
 		it possible to select a similar line from the command-line
 		history for repeating a command on different Visually selected
 		lines.
+
+:*						*:star* *:star-visual-range*
 		When Visual mode was already ended, a short way to use the
 		Visual area for a range is `:*`.
 
@@ -816,34 +836,39 @@ it, no matter how many backslashes.
 	   \\#			\#
 Also see |`=|.
 
-			       *:<cword>* *<cword>* *:<cWORD>* *<cWORD>*
-			       *:<cexpr>* *<cexpr>* *:<cfile>* *<cfile>*
-			       *:<afile>* *<afile>* *:<abuf>* *<abuf>*
-			       *:<amatch>* *<amatch>*
-			       *:<sfile>* *<sfile>* *:<slnum>* *<slnum>*
-			       *:<sflnum>* *<sflnum>* *E499* *E500*
+							*E499* *E500*
 Note: these are typed literally, they are not special keys!
+							*:<cword>* *<cword>*
 	<cword>    is replaced with the word under the cursor (like |star|)
+							*:<cWORD>* *<cWORD>*
 	<cWORD>    is replaced with the WORD under the cursor (see |WORD|)
+							*:<cexpr>* *<cexpr>*
 	<cexpr>    is replaced with the word under the cursor, including more
 		   to form a C expression.  E.g., when the cursor is on "arg"
 		   of "ptr->arg" then the result is "ptr->arg"; when the
 		   cursor is on "]" of "list[idx]" then the result is
 		   "list[idx]".  This is used for |v:beval_text|.
+							*:<cfile>* *<cfile>*
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
+							*:<afile>* *<afile>*
 	<afile>    When executing autocommands, is replaced with the file name
 		   of the buffer being manipulated, or the file for a read or
 		   write.  *E495*
+							*:<abuf>* *<abuf>*
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
 		   buffer).  *E496*
+							*:<amatch>* *<amatch>*
 	<amatch>   When executing autocommands, is replaced with the match for
 		   which this autocommand was executed.  *E497*
-		   It differs from <afile> only when the file name isn't used
-		   to match with (for FileType, Syntax and SpellFileMissing
+		   It differs from <afile> when the file name isn't used to
+		   match with (for FileType, Syntax and SpellFileMissing
 		   events).
+		   When the match is with a file name, it is expanded to the
+ 		   full path.
+							*:<sfile>* *<sfile>*
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with:
@@ -852,10 +877,12 @@ Note: these are typed literally, they are not special keys!
 		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
 		   Note that filename-modifiers are useless when <sfile> is
 		   used inside a function.
+							*:<slnum>* *<slnum>*
 	<slnum>	   When executing a ":source" command, is replaced with the
 		   line number.  *E842*
 		   When executing a function it's the line number relative to
 		   the start of the function.
+							*:<sflnum>* *<sflnum>*
 	<sflnum>   When executing a script, is replaced with the line number.
 		   It differs from <slnum> in that <sflnum> is replaced with
 		   the script line number in any situation.  *E961*
@@ -890,7 +917,7 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for Windows), that part is not removed.
+		Unix; "x:\" for Win32), that part is not removed.
 		When there is no head (path is relative to current directory)
 		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
@@ -968,7 +995,7 @@ name).  This is included for backwards compatibility with version 3.0, the
 
 Note: Where a file name is expected wildcards expansion is done.  On Unix the
 shell is used for this, unless it can be done internally (for speed).
-Unless in |restricted-mode|, backticks work also, like in >
+Backticks work also, like in >
 	:n `echo *.c`
 But expansion is only done if there are any wildcards before expanding the
 '%', '#', etc..  This avoids expanding wildcards inside a file name.  If you
@@ -1047,7 +1074,7 @@ in Normal mode and Insert mode.
 It is possible to use ":", "/" and other commands that use the command-line,
 but it's not possible to open another command-line window then.  There is no
 nesting.
-							*E11*
+							*E11* *E1188*
 The command-line window is not a normal window.  It is not possible to move to
 another window or edit another buffer.  All commands that would do this are
 disabled in the command-line window.  Of course it _is_ possible to execute
@@ -1066,7 +1093,8 @@ CTRL-C		Continue in Command-line mode.  The command-line under the
 		in Normal mode.  There is no redraw, thus the window will
 		remain visible.
 :quit		Discard the command line and go back to Normal mode.
-		":close", ":exit", ":xit" and CTRL-\ CTRL-N also work.
+		":close", CTRL-W c, ":exit", ":xit" and CTRL-\ CTRL-N also
+		work.
 :qall		Quit Vim, unless there are changes in some buffer.
 :qall!		Quit Vim, discarding changes to any buffer.
 
@@ -1119,14 +1147,17 @@ Thus you can resize the command-line window, but not others.
 The |getcmdwintype()| function returns the type of the command-line being
 edited as described in |cmdwin-char|.
 
+Nvim defines this default CmdWinEnter autocmd in the "nvim_cmdwin" group: >
+    autocmd CmdWinEnter [:>] syntax sync minlines=1 maxlines=1
+<
+You can disable this in your config with "autocmd! nvim_cmdwin". |default-autocmds|
+
 
 AUTOCOMMANDS
 
-Two autocommand events are used: |CmdwinEnter| and |CmdwinLeave|.  Since this
-window is of a special type, the WinEnter, WinLeave, BufEnter and BufLeave
-events are not triggered.  You can use the Cmdwin events to do settings
-specifically for the command-line window.  Be careful not to cause side
-effects!
+Two autocommand events are used: |CmdwinEnter| and |CmdwinLeave|.  You can use
+the Cmdwin events to do settings specifically for the command-line window.
+Be careful not to cause side effects!
 Example: >
 	:au CmdwinEnter :  let b:cpt_save = &cpt | set cpt=.
 	:au CmdwinLeave :  let &cpt = b:cpt_save

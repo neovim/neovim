@@ -20,7 +20,9 @@ An alternative is using the 'keymap' option.
 1. Defining digraphs					*digraphs-define*
 
 						*:dig* *:digraphs*
-:dig[raphs]		show currently defined digraphs.
+:dig[raphs][!]		Show currently defined digraphs.
+			With [!] headers are used to make it a bit easier to
+			find a specific character.
 							*E104* *E39*
 :dig[raphs] {char1}{char2} {number} ...
 			Add digraph {char1}{char2} to the list.  {number} is
@@ -28,6 +30,8 @@ An alternative is using the 'keymap' option.
 			it is the Unicode character, see |digraph-encoding|.
 			Example: >
 	:digr e: 235 a: 228
+<			You can use `:exe` to enter a hex number: >
+	:exe 'digr += ' .. 0x2A72
 <			Avoid defining a digraph with '_' (underscore) as the
 			first character, it has a special meaning in the
 			future.
@@ -161,7 +165,7 @@ ROUBLE
 The rouble sign was added in 2014 as 0x20bd.  Vim supports the digraphs =R and
 =P for this.  Note that R= and P= are other characters.
 
-							*digraph-table*
+						*digraph-table* *digraph-table-mbyte*
 char  digraph	hex	dec	official name ~
 ^@	NU	0x00	  0	NULL (NUL)
 ^A	SH	0x01	  1	START OF HEADING (SOH)
@@ -337,12 +341,6 @@ $	DO	0x24	 36	DOLLAR SIGN
 ý	y'	0xfd	253	LATIN SMALL LETTER Y WITH ACUTE
 þ	th	0xfe	254	LATIN SMALL LETTER THORN (Icelandic)
 ÿ	y:	0xff	255	LATIN SMALL LETTER Y WITH DIAERESIS
-
-If your Vim is compiled with |multibyte| support and you are using a multibyte
-'encoding', Vim provides this enhanced set of additional digraphs:
-
-							*digraph-table-mbyte*
-char  digraph	hex	dec	official name ~
 Ā	A-	0100	0256	LATIN CAPITAL LETTER A WITH MACRON
 ā	a-	0101	0257	LATIN SMALL LETTER A WITH MACRON
 Ă	A(	0102	0258	LATIN CAPITAL LETTER A WITH BREVE
@@ -911,6 +909,7 @@ char  digraph	hex	dec	official name ~
 ‟	9"	201F	8223	DOUBLE HIGH-REVERSED-9 QUOTATION MARK
 †	/-	2020	8224	DAGGER
 ‡	/=	2021	8225	DOUBLE DAGGER
+•	oo	2022	8226	BULLET
 ‥	..	2025	8229	TWO DOT LEADER
 …	,.	2026	8230	HORIZONTAL ELLIPSIS
 ‰	%0	2030	8240	PER MILLE SIGN

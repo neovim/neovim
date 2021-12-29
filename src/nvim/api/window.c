@@ -1,24 +1,26 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 
-#include "nvim/ascii.h"
-#include "nvim/globals.h"
-#include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/vim.h"
+#include "nvim/api/window.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
-#include "nvim/option.h"
-#include "nvim/window.h"
-#include "nvim/screen.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/screen.h"
+#include "nvim/syntax.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Gets the current buffer in a window
 ///
@@ -37,43 +39,16 @@ Buffer nvim_win_get_buf(Window window, Error *err)
   return win->w_buffer->handle;
 }
 
-/// Sets the current buffer in a window, without side-effects
+/// Sets the current buffer in a window, without side effects
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
+  FUNC_API_CHECK_TEXTLOCK
 {
-  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
-
-  if (!win || !buf) {
-    return;
-  }
-
-  if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  window);
-  }
-
-  try_start();
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-  if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to set buffer %d",
-                  buffer);
-  }
-
-  // If window is not current, state logic will not validate its cursor.
-  // So do it now.
-  validate_cursor();
-
-  restore_win(save_curwin, save_curtab, false);
+  win_set_buf(window, buffer, false, err);
 }
 
 /// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
@@ -142,7 +117,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  redraw_win_later(win, VALID);
+  redraw_later(win, VALID);
 }
 
 /// Gets the window height
@@ -247,7 +222,7 @@ Object nvim_win_get_var(Window window, String name, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(win->w_vars, name, err);
@@ -288,48 +263,6 @@ void nvim_win_del_var(Window window, String name, Error *err)
   dict_set_var(win->w_vars, name, NIL, true, false, err);
 }
 
-/// Sets a window-scoped (w:) variable
-///
-/// @deprecated
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     Variable name
-/// @param value    Variable value
-/// @param[out] err Error details, if any
-/// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object window_set_var(Window window, String name, Object value, Error *err)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(win->w_vars, name, value, false, true, err);
-}
-
-/// Removes a window-scoped (w:) variable
-///
-/// @deprecated
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     variable name
-/// @param[out] err Error details, if any
-/// @return Old value
-Object window_del_var(Window window, String name, Error *err)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(win->w_vars, name, NIL, true, true, err);
-}
-
 /// Gets a window option value
 ///
 /// @param window   Window handle, or 0 for current window
@@ -342,7 +275,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return get_option_from(win, SREQ_WIN, name, err);
@@ -356,8 +289,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// @param name     Option name
 /// @param value    Option value
 /// @param[out] err Error details, if any
-void nvim_win_set_option(uint64_t channel_id, Window window,
-                         String name, Object value, Error *err)
+void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -422,7 +354,7 @@ Integer nvim_win_get_number(Window window, Error *err)
   }
 
   int tabnr;
-  win_get_tabwin(window, &tabnr, &rv);
+  win_get_tabwin(win->handle, &tabnr, &rv);
 
   return rv;
 }
@@ -441,96 +373,33 @@ Boolean nvim_win_is_valid(Window window)
 }
 
 
-/// Configures window layout. Currently only for floating and external windows
-/// (including changing a split window to those layouts).
+/// Closes the window and hide the buffer it contains (like |:hide| with a
+/// |window-ID|).
 ///
-/// When reconfiguring a floating window, absent option keys will not be
-/// changed.  `row`/`col` and `relative` must be reconfigured together.
+/// Like |:hide| the buffer becomes hidden unless another window is editing it,
+/// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
+/// |nvim_win_close|, which will close the buffer.
 ///
-/// @see |nvim_open_win()|
-///
-/// @param      window  Window handle, or 0 for current window
-/// @param      config  Map defining the window configuration,
-///                     see |nvim_open_win()|
-/// @param[out] err     Error details, if any
-void nvim_win_set_config(Window window, Dictionary config, Error *err)
-  FUNC_API_SINCE(6)
+/// @param window   Window handle, or 0 for current window
+/// @param[out] err Error details, if any
+void nvim_win_hide(Window window, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
     return;
   }
-  bool new_float = !win->w_floating;
-  // reuse old values, if not overriden
-  FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
-  if (!parse_float_config(config, &fconfig, !new_float, err)) {
-    return;
-  }
-  if (new_float) {
-    if (!win_new_float(win, fconfig, err)) {
-      return;
-    }
-    redraw_later(NOT_VALID);
+  tabpage_T *tabpage = win_find_tabpage(win);
+  TryState tstate;
+  try_enter(&tstate);
+  if (tabpage == curtab) {
+    win_close(win, false);
   } else {
-    win_config_float(win, fconfig);
-    win->w_pos_changed = true;
+    win_close_othertab(win, false, tabpage);
   }
-  if (fconfig.style == kWinStyleMinimal) {
-    win_set_minimal_style(win);
-    didset_window_options(win);
-  }
-}
-
-/// Gets window configuration.
-///
-/// The returned value may be given to |nvim_open_win()|.
-///
-/// `relative` is empty for normal windows.
-///
-/// @param      window Window handle, or 0 for current window
-/// @param[out] err Error details, if any
-/// @return     Map defining the window configuration, see |nvim_open_win()|
-Dictionary nvim_win_get_config(Window window, Error *err)
-  FUNC_API_SINCE(6)
-{
-  Dictionary rv = ARRAY_DICT_INIT;
-
-  win_T *wp = find_window_by_handle(window, err);
-  if (!wp) {
-    return rv;
-  }
-
-  FloatConfig *config = &wp->w_float_config;
-
-  PUT(rv, "focusable", BOOLEAN_OBJ(config->focusable));
-  PUT(rv, "external", BOOLEAN_OBJ(config->external));
-
-  if (wp->w_floating) {
-    PUT(rv, "width", INTEGER_OBJ(config->width));
-    PUT(rv, "height", INTEGER_OBJ(config->height));
-    if (!config->external) {
-      if (config->relative == kFloatRelativeWindow) {
-        PUT(rv, "win", INTEGER_OBJ(config->window));
-        if (config->bufpos.lnum >= 0) {
-          Array pos = ARRAY_DICT_INIT;
-          ADD(pos, INTEGER_OBJ(config->bufpos.lnum));
-          ADD(pos, INTEGER_OBJ(config->bufpos.col));
-          PUT(rv, "bufpos", ARRAY_OBJ(pos));
-        }
-      }
-      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
-          float_anchor_str[config->anchor])));
-      PUT(rv, "row", FLOAT_OBJ(config->row));
-      PUT(rv, "col", FLOAT_OBJ(config->col));
-    }
-  }
-
-  const char *rel = (wp->w_floating && !config->external
-                     ? float_relative_str[config->relative] : "");
-  PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
-
-  return rv;
+  vim_ignored = try_leave(&tstate, err);
 }
 
 /// Closes the window (like |:close| with a |window-ID|).
@@ -542,6 +411,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_SINCE(6)
+  FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -562,4 +432,40 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   try_enter(&tstate);
   ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
   vim_ignored = try_leave(&tstate, err);
+}
+
+/// Calls a function with window as temporary current window.
+///
+/// @see |win_execute()|
+/// @see |nvim_buf_call()|
+///
+/// @param window     Window handle, or 0 for current window
+/// @param fun        Function to call inside the window (currently lua callable
+///                   only)
+/// @param[out] err   Error details, if any
+/// @return           Return value of function. NB: will deepcopy lua values
+///                   currently, use upvalues to send lua references in and out.
+Object nvim_win_call(Window window, LuaRef fun, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_LUA_ONLY
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return NIL;
+  }
+  tabpage_T *tabpage = win_find_tabpage(win);
+
+  win_T *save_curwin;
+  tabpage_T *save_curtab;
+
+  try_start();
+  Object res = OBJECT_INIT;
+  if (switch_win_noblock(&save_curwin, &save_curtab, win, tabpage, true) ==
+      OK) {
+    Array args = ARRAY_DICT_INIT;
+    res = nlua_call_ref(fun, NULL, args, true, err);
+  }
+  restore_win_noblock(save_curwin, save_curtab, true);
+  try_end(err);
+  return res;
 }

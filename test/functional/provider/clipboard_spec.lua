@@ -88,6 +88,11 @@ describe('clipboard', function()
   before_each(function()
     clear()
     screen = Screen.new(72, 4)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [2] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
     screen:attach()
     command("set display-=msgsep")
   end)
@@ -103,22 +108,22 @@ describe('clipboard', function()
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
       ^                                                                        |
-      ~                                                                       |
-      ~                                                                       |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
-    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+    ]])
   end)
 
   it('`:redir @+>|bogus_cmd|redir END` + invalid g:clipboard must not recurse #7184',
   function()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | bogus_cmd | redir END')
-    screen:expect([[
-      ~                                                                       |
+    screen:expect{grid=[[
+      {0:~                                                                       }|
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
-      E492: Not an editor command: bogus_cmd | redir END                      |
-      Press ENTER or type command to continue^                                 |
-    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+      {1:E492: Not an editor command: bogus_cmd | redir END}                      |
+      {2:Press ENTER or type command to continue}^                                 |
+    ]]}
   end)
 
   it('invalid g:clipboard shows hint if :redir is not active', function()
@@ -131,10 +136,10 @@ describe('clipboard', function()
     feed_command('let @+="foo"')
     screen:expect([[
       ^                                                                        |
-      ~                                                                       |
-      ~                                                                       |
+      {0:~                                                                       }|
+      {0:~                                                                       }|
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
-    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+    ]])
   end)
 
   it('valid g:clipboard', function()
@@ -145,6 +150,16 @@ describe('clipboard', function()
       ['paste'] = { ['+'] = 'any command', ['*'] = 'some other' },
     })
     eq('clippy!', eval('provider#clipboard#Executable()'))
+    eq('', eval('provider#clipboard#Error()'))
+  end)
+
+  it('g:clipboard using lists', function()
+    source([[let g:clipboard = {
+            \  'name': 'custom',
+            \  'copy': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \  'paste': { '+': ['any', 'command'], '*': ['some', 'other'] },
+            \}]])
+    eq('custom', eval('provider#clipboard#Executable()'))
     eq('', eval('provider#clipboard#Error()'))
   end)
 
@@ -266,13 +281,17 @@ describe('clipboard (with fake clipboard.vim)', function()
   function()
     local screen = Screen.new(72, 4)
     screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    })
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
       ^                                                                        |
-      ~                                                                       |
-      ~                                                                       |
-      E492: Not an editor command: bogus_cmd | redir END                      |
-    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+      {0:~                                                                       }|
+      {0:~                                                                       }|
+      {1:E492: Not an editor command: bogus_cmd | redir END}                      |
+    ]])
   end)
 
   it('has independent "* and unnamed registers by default', function()
@@ -487,6 +506,20 @@ describe('clipboard (with fake clipboard.vim)', function()
       feed('p')
       eq('textstar', meths.get_current_line())
     end)
+
+    it('Block paste works currectly', function()
+      insert([[
+        aabbcc
+        ddeeff
+      ]])
+      feed('gg^<C-v>') -- Goto start of top line enter visual block mode
+      feed('3ljy^k') -- yank 4x2 block & goto initial location
+      feed('P') -- Paste it infront
+      expect([[
+        aabbaabbcc
+        ddeeddeeff
+      ]])
+    end)
   end)
 
   describe('clipboard=unnamedplus', function()
@@ -586,10 +619,10 @@ describe('clipboard (with fake clipboard.vim)', function()
       {0:~                                                           }|
       {4:                                                            }|
       :registers                                                  |
-      {1:--- Registers ---}                                           |
-      "*   some{2:^J}star data{2:^J}                                      |
-      "+   such{2:^J}plus{2:^J}stuff                                      |
-      ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']       |
+      {1:Type Name Content}                                           |
+        l  "*   some{2:^J}star data{2:^J}                                 |
+        c  "+   such{2:^J}plus{2:^J}stuff                                 |
+        c  ":   let g:test_clip['+'] = ['such', 'plus', 'stuff']  |
       {3:Press ENTER or type command to continue}^                     |
     ]], {
       [0] = {bold = true, foreground = Screen.colors.Blue},
@@ -620,14 +653,12 @@ describe('clipboard (with fake clipboard.vim)', function()
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
     }, 'v'}, eval("g:test_clip['*']"))
     feed_command(':echo "Howdy!"')
     eq({{
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
       '',
       'Howdy!',
     }, 'v'}, eval("g:test_clip['*']"))
@@ -637,6 +668,9 @@ describe('clipboard (with fake clipboard.vim)', function()
     feed_command('set mouse=a')
 
     local screen = Screen.new(30, 5)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+    })
     screen:attach()
     insert([[
       the source
@@ -646,10 +680,10 @@ describe('clipboard (with fake clipboard.vim)', function()
     screen:expect([[
       the ^source                    |
       a target                      |
-      ~                             |
-      ~                             |
+      {0:~                             }|
+      {0:~                             }|
                                     |
-    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+    ]])
 
     feed('<MiddleMouse><0,1>')
     expect([[

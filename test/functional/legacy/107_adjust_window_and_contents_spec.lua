@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local clear = helpers.clear
 local insert = helpers.insert
 local command = helpers.command
@@ -16,7 +16,7 @@ describe('107', function()
     screen:attach()
 
     insert('start:')
-    wait()
+    poke_eventloop()
     command('new')
     command('call setline(1, range(1,256))')
     command('let r=[]')

@@ -3,19 +3,20 @@
 
 #include <assert.h>
 
-#include "nvim/lib/kvec.h"
-
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/state.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/getchar.h"
-#include "nvim/option_defs.h"
-#include "nvim/ui.h"
-#include "nvim/os/input.h"
-#include "nvim/ex_docmd.h"
+#include "nvim/autocmd.h"
 #include "nvim/edit.h"
+#include "nvim/eval.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/getchar.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/input.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
@@ -75,6 +76,34 @@ getkey:
   }
 }
 
+/// process events on main_loop, but interrupt if input is available
+///
+/// This should be used to handle K_EVENT in states accepting input
+/// otherwise bursts of events can block break checking indefinitely.
+void state_handle_k_event(void)
+{
+  while (true) {
+    Event event = multiqueue_get(main_loop.events);
+    if (event.handler) {
+      event.handler(event.argv);
+    }
+
+    if (multiqueue_empty(main_loop.events)) {
+      // don't breakcheck before return, caller should return to main-loop
+      // and handle input already.
+      return;
+    }
+
+    // TODO(bfredl): as an further micro-optimization, we could check whether
+    // event.handler already checked input.
+    os_breakcheck();
+    if (input_available() || got_int) {
+      return;
+    }
+  }
+}
+
+
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
@@ -109,13 +138,16 @@ int get_real_state(void)
 /// @returns[allocated] mode string
 char *get_mode(void)
 {
-  char *buf = xcalloc(4, sizeof(char));
+  char *buf = xcalloc(MODE_MAX_LENGTH, sizeof(char));
 
   if (VIsual_active) {
     if (VIsual_select) {
       buf[0] = (char)(VIsual_mode + 's' - 'v');
     } else {
       buf[0] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[1] = 's';
+      }
     }
   } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
              || State == CONFIRM) {
@@ -131,6 +163,11 @@ char *get_mode(void)
     if (State & VREPLACE_FLAG) {
       buf[0] = 'R';
       buf[1] = 'v';
+      if (ins_compl_active()) {
+        buf[2] = 'c';
+      } else if (ctrl_x_mode_not_defined_yet()) {
+        buf[2] = 'x';
+      }
     } else {
       if (State & REPLACE_FLAG) {
         buf[0] = 'R';
@@ -143,12 +180,10 @@ char *get_mode(void)
         buf[1] = 'x';
       }
     }
-  } else if ((State & CMDLINE) || exmode_active) {
+  } else if (State & CMDLINE) {
     buf[0] = 'c';
-    if (exmode_active == EXMODE_VIM) {
+    if (exmode_active) {
       buf[1] = 'v';
-    } else if (exmode_active == EXMODE_NORMAL) {
-      buf[1] = 'e';
     }
   } else if (State & TERM_FOCUS) {
     buf[0] = 't';
@@ -156,14 +191,46 @@ char *get_mode(void)
     buf[0] = 'n';
     if (finish_op) {
       buf[1] = 'o';
-      // to be able to detect force-linewise/blockwise/characterwise operations
+      // to be able to detect force-linewise/blockwise/charwise operations
       buf[2] = (char)motion_force;
     } else if (restart_edit == 'I' || restart_edit == 'R'
                || restart_edit == 'V') {
       buf[1] = 'i';
       buf[2] = (char)restart_edit;
+    } else if (curbuf->terminal) {
+      buf[1] = 't';
     }
   }
 
   return buf;
+}
+
+/// Fires a ModeChanged autocmd.
+void trigger_modechanged(void)
+{
+  if (!has_event(EVENT_MODECHANGED)) {
+    return;
+  }
+
+  char *mode = get_mode();
+  if (STRCMP(mode, last_mode) == 0) {
+    xfree(mode);
+    return;
+  }
+
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
+  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+
+  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
+  char_u *pat = concat_str(pat_pre, (char_u *)mode);
+  xfree(pat_pre);
+
+  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
+  xfree(last_mode);
+  last_mode = mode;
+
+  xfree(pat);
+  restore_v_event(v_event, &save_v_event);
 }

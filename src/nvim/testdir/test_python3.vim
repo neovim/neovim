@@ -1,5 +1,5 @@
 " Test for python 3 commands.
-" TODO: move tests from test88.in here.
+" TODO: move tests from test87.in here.
 
 if !has('python3')
   finish
@@ -59,7 +59,7 @@ func Test_vim_function()
 
   try
     py3 f = vim.Function(b'\x80\xfdR' + vim.eval('s:foo()').encode())
-    call assert_equal(name, py3eval('f.name'))
+    call assert_equal(name, 'f.name'->py3eval())
   catch
     call assert_false(v:exception)
   endtry
@@ -164,3 +164,29 @@ func Test_Write_To_Current_Buffer_Fixes_Cursor_Str()
 
   bwipe!
 endfunction
+
+func Test_Catch_Exception_Message()
+  try
+    py3 raise RuntimeError( 'TEST' )
+  catch /.*/
+    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+  endtry
+endfunc
+
+func Test_unicode()
+  " this crashed Vim once
+  throw "Skipped: nvim does not support changing 'encoding'"
+
+  set encoding=utf32
+  py3 print('hello')
+
+  if !has('win32')
+    set encoding=debug
+    py3 print('hello')
+
+    set encoding=euc-tw
+    py3 print('hello')
+  endif
+
+  set encoding=utf8
+endfunc

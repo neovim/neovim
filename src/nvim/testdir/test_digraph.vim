@@ -1,8 +1,8 @@
 " Tests for digraphs
 
-if !has("digraphs")
-  finish
-endif
+source check.vim
+CheckFeature digraphs
+source term_util.vim
 
 func Put_Dig(chars)
   exe "norm! o\<c-k>".a:chars
@@ -211,6 +211,8 @@ func Test_digraphs()
   call Put_Dig("00")
   call Put_Dig("el")
   call assert_equal(['␀', 'ü', '∞', 'l'], getline(line('.')-3,line('.')))
+  call assert_fails('digraph xy z', 'E39:')
+  call assert_fails('digraph x', 'E474:')
   bw!
 endfunc
 
@@ -433,6 +435,18 @@ func Test_digraphs_output()
   call assert_equal('Z% Ж  1046',  matchstr(out, '\C\<Z%\D*1046\>'))
   call assert_equal('u- ū  363',   matchstr(out, '\C\<u-\D*363\>'))
   call assert_equal('SH ^A   1',   matchstr(out, '\C\<SH\D*1\>'))
+  call assert_notmatch('Latin supplement', out)
+
+  let out_bang_without_custom = execute(':digraph!')
+  digraph lt 60
+  let out_bang_with_custom = execute(':digraph!')
+  call assert_notmatch('lt', out_bang_without_custom)
+  call assert_match("^\n"
+        \        .. "NU ^@  10 .*\n"
+        \        .. "Latin supplement\n"
+        \        .. "!I ¡  161 .*\n"
+        \        .. ".*\n"
+        \        .. 'Custom\n.*\<lt <   60\>', out_bang_with_custom)
   bw!
 endfunc
 
@@ -463,6 +477,32 @@ func Test_show_digraph()
   call Put_Dig("e=")
   call assert_equal("\n<е> 1077, Hex 0435, Oct 2065, Digr e=", execute('ascii'))
   bwipe!
+endfunc
+
+func Test_show_digraph_cp1251()
+  throw 'skipped: Nvim supports ''utf8'' encoding only'
+  new
+  set encoding=cp1251
+  call Put_Dig("='")
+  call assert_equal("\n<\xfa>  <|z>  <M-z>  250,  Hex fa,  Oct 372, Digr ='", execute('ascii'))
+  set encoding=utf-8
+  bwipe!
+endfunc
+
+" Test for the characters displayed on the screen when entering a digraph
+func Test_entering_digraph()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, "i\<C-K>")
+  call term_wait(buf)
+  call assert_equal('?', term_getline(buf, 1))
+  call term_sendkeys(buf, "1")
+  call term_wait(buf)
+  call assert_equal('1', term_getline(buf, 1))
+  call term_sendkeys(buf, "2")
+  call term_wait(buf)
+  call assert_equal('½', term_getline(buf, 1))
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

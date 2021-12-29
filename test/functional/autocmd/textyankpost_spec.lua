@@ -27,7 +27,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(1, eval('g:count'))
 
@@ -40,7 +41,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'baz ' },
       regname = '',
-      regtype = 'v'
+      regtype = 'v',
+      visual = false
     }, eval('g:event'))
     eq(2, eval('g:count'))
 
@@ -50,7 +52,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo', 'baz' },
       regname = '',
-      regtype = "\0223" -- ^V + block width
+      regtype = "\0223", -- ^V + block width
+      visual = true
     }, eval('g:event'))
     eq(3, eval('g:count'))
   end)
@@ -62,7 +65,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
 
     command('set debug=msg')
@@ -92,7 +96,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(1, eval('g:count'))
     eq({ 'foo\nbar' }, funcs.getreg('+',1,1))
@@ -105,7 +110,8 @@ describe('TextYankPost', function()
       operator = 'd',
       regcontents = { 'foo' },
       regname = '',
-      regtype = 'v'
+      regtype = 'v',
+      visual = false
     }, eval('g:event'))
     eq(1, eval('g:count'))
 
@@ -115,7 +121,8 @@ describe('TextYankPost', function()
       operator = 'd',
       regcontents = { '\nbar' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(2, eval('g:count'))
 
@@ -125,7 +132,8 @@ describe('TextYankPost', function()
       operator = 'c',
       regcontents = { 'baz' },
       regname = '',
-      regtype = 'v'
+      regtype = 'v',
+      visual = false
     }, eval('g:event'))
     eq(3, eval('g:count'))
   end)
@@ -153,7 +161,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'bar' },
       regname = 'b',
-      regtype = 'v'
+      regtype = 'v',
+      visual = false
     }, eval('g:event'))
 
     feed('"*yy')
@@ -162,7 +171,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
 
     command("set clipboard=unnamed")
@@ -174,7 +184,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
 
     feed('"*yy')
@@ -183,7 +194,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
   end)
 
@@ -194,7 +206,8 @@ describe('TextYankPost', function()
       operator = 'd',
       regcontents = { 'foo\nbar' },
       regname = '+',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(1, eval('g:count'))
 
@@ -204,7 +217,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'baz text' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(2, eval('g:count'))
 
@@ -214,7 +228,8 @@ describe('TextYankPost', function()
       operator = 'y',
       regcontents = { 'baz ' },
       regname = '',
-      regtype = 'v'
+      regtype = 'v',
+      visual = false
     }, eval('g:event'))
     eq(3, eval('g:count'))
 
@@ -224,7 +239,8 @@ describe('TextYankPost', function()
       operator = 'd',
       regcontents = { 'baz text' },
       regname = '',
-      regtype = 'V'
+      regtype = 'V',
+      visual = false
     }, eval('g:event'))
     eq(4, eval('g:count'))
   end)

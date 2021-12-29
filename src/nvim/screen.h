@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/grid_defs.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 /*
  * flags for update_screen()
@@ -14,12 +14,12 @@
  */
 #define VALID                   10  /* buffer not changed, or changes marked
                                        with b_mod_* */
-#define INVERTED                20  /* redisplay inverted part that changed */
-#define INVERTED_ALL            25  /* redisplay whole inverted part */
-#define REDRAW_TOP              30  /* display first w_upd_rows screen lines */
-#define SOME_VALID              35  /* like NOT_VALID but may scroll */
-#define NOT_VALID               40  /* buffer needs complete redraw */
-#define CLEAR                   50  /* screen messed up, clear it */
+#define INVERTED                20  // redisplay inverted part that changed
+#define INVERTED_ALL            25  // redisplay whole inverted part
+#define REDRAW_TOP              30  // display first w_upd_rows screen lines
+#define SOME_VALID              35  // like NOT_VALID but may scroll
+#define NOT_VALID               40  // buffer needs complete redraw
+#define CLEAR                   50  // screen messed up, clear it
 
 /// By default, all widows are draw on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
@@ -31,6 +31,9 @@
 EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
+
+// Maximum columns for terminal highlight attributes
+#define TERM_ATTRS_MAX 1024
 
 /// Status line click definition
 typedef struct {
@@ -55,6 +58,9 @@ extern StlClickDefinition *tab_page_click_defs;
 
 /// Size of the tab_page_click_defs array
 extern long tab_page_click_defs_size;
+
+#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
+#define W_ENDROW(wp)   (wp->w_winrow + wp->w_height)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"

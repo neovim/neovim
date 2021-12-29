@@ -26,6 +26,14 @@ describe('assert function:', function()
       call('assert_beeps', 'normal 0')
       expected_errors({'command did not beep: normal 0'})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, 'normal h'->assert_beeps())
+        call assert_equal(1, 'normal 0'->assert_beeps())
+      ]]
+      expected_errors({tmpname .. ' line 2: command did not beep: normal 0'})
+    end)
   end)
 
   -- assert_equal({expected}, {actual}, [, {msg}])
@@ -38,6 +46,9 @@ describe('assert function:', function()
         call assert_equal(4, n)
         let l = [1, 2, 3]
         call assert_equal([1, 2, 3], l)
+        call assert_equal(v:_null_list, v:_null_list)
+        call assert_equal(v:_null_list, [])
+        call assert_equal([], v:_null_list)
         fu Func()
         endfu
         let F1 = function('Func')
@@ -92,6 +103,11 @@ describe('assert function:', function()
       call('assert_equal', 'foo', 'bar', 'testing')
       expected_errors({"testing: Expected 'foo' but got 'bar'"})
     end)
+
+    it('should shorten a long message', function()
+      call ('assert_equal', 'XxxxxxxxxxxxxxxxxxxxxxX', 'XyyyyyyyyyyyyyyyyyyyyyyyyyX')
+      expected_errors({"Expected 'X\\[x occurs 21 times]X' but got 'X\\[y occurs 25 times]X'"})
+    end)
   end)
 
   -- assert_notequal({expected}, {actual}[, {msg}])
@@ -125,6 +141,14 @@ describe('assert function:', function()
       call('assert_false', {})
       expected_errors({'Expected False but got []'})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, v:false->assert_false())
+        call assert_equal(1, 123->assert_false())
+      ]]
+      expected_errors({tmpname .. ' line 2: Expected False but got 123'})
+    end)
   end)
 
   -- assert_true({actual}, [, {msg}])
@@ -139,6 +163,14 @@ describe('assert function:', function()
     it('should change v:errors when actual is not true', function()
       eq(1, call('assert_true', 1.5))
       expected_errors({'Expected True but got 1.5'})
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, v:true->assert_true())
+        call assert_equal(1, 0->assert_true())
+      ]]
+      expected_errors({tmpname .. ' line 2: Expected True but got 0'})
     end)
   end)
 
@@ -215,6 +247,15 @@ describe('assert function:', function()
       call('assert_match', 'bar.*foo', 'foobar', 'wrong')
       expected_errors({"wrong: Pattern 'bar.*foo' does not match 'foobar'"})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'foobar'->assert_match('bar.*foo', 'wrong'))
+      ]]
+      expected_errors({
+        tmpname .. " line 1: wrong: Pattern 'bar.*foo' does not match 'foobar'"
+      })
+    end)
   end)
 
   -- assert_notmatch({pat}, {text}[, {msg}])
@@ -229,14 +270,21 @@ describe('assert function:', function()
       call('assert_notmatch', 'foo', 'foobar')
       expected_errors({"Pattern 'foo' does match 'foobar'"})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'foobar'->assert_notmatch('foo'))
+      ]]
+      expected_errors({tmpname .. " line 1: Pattern 'foo' does match 'foobar'"})
+    end)
   end)
 
   -- assert_fails({cmd}, [, {error}])
   describe('assert_fails', function()
     it('should change v:errors when error does not match v:errmsg', function()
-      eq(1, eval([[assert_fails('xxx', {})]]))
-      command([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
-      expected_errors({"Expected {} but got 'E731: using Dictionary as a String'"})
+      eq(1, eval([[assert_fails('xxx', 'E12345')]]))
+      command([[call assert_match("Expected 'E12345' but got 'E492:", v:errors[0])]])
+      expected_errors({"Expected 'E12345' but got 'E492: Not an editor command: xxx': xxx"})
     end)
 
     it('should not change v:errors when cmd errors', function()
@@ -250,14 +298,23 @@ describe('assert function:', function()
     end)
 
     it('can specify and get a message about what failed', function()
-      eq(1, eval([[assert_fails('xxx', {}, 'stupid')]]))
-      command([[call assert_match("stupid: Expected {} but got 'E731:", v:errors[0])]])
-      expected_errors({"stupid: Expected {} but got 'E731: using Dictionary as a String'"})
+      eq(1, eval([[assert_fails('xxx', 'E9876', 'stupid')]]))
+      command([[call assert_match("stupid: Expected 'E9876' but got 'E492:", v:errors[0])]])
+      expected_errors({"stupid: Expected 'E9876' but got 'E492: Not an editor command: xxx': stupid"})
     end)
 
     it('can specify and get a message even when cmd succeeds', function()
       eq(1, eval([[assert_fails('echo', '', 'echo command')]]))
       expected_errors({'command did not fail: echo command'})
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'echo'->assert_fails('', 'echo command'))
+      ]]
+      expected_errors({
+        tmpname .. ' line 1: command did not fail: echo command'
+      })
     end)
   end)
 
@@ -284,6 +341,15 @@ describe('assert function:', function()
       eq('Vim(call):E119: Not enough arguments for function: assert_inrange',
          exc_exec("call assert_inrange(1, 1)"))
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, 5->assert_inrange(5, 7))
+        call assert_equal(0, 7->assert_inrange(5, 7))
+        call assert_equal(1, 8->assert_inrange(5, 7))
+      ]]
+      expected_errors({tmpname .. ' line 3: Expected range 5 - 7, but got 8'})
+    end)
   end)
 
   -- assert_report({msg})
@@ -293,6 +359,13 @@ describe('assert function:', function()
       command("call assert_match('something is wrong', v:errors[0])")
       command('call remove(v:errors, 0)')
       expected_empty()
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'also wrong'->assert_report())
+      ]]
+      expected_errors({tmpname .. ' line 1: also wrong'})
     end)
   end)
 

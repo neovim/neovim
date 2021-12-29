@@ -10,6 +10,7 @@ filetype indent on
 syn on
 set nowrapscan
 set report=9999
+set modeline
 
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
@@ -116,6 +117,7 @@ for fname in glob('testdir/*.in', 1, 1)
       echoerr 'Test ' . fname . ' FAILED!'
     else
       exe 'write ' . root . '.out'
+      echo "Test " . fname . " OK\n"
     endif
 
     quit!  " close the indented file

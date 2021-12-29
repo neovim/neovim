@@ -1,10 +1,22 @@
 " Functions about view shared by several tests
 
 " Only load this script once.
-if exists('*ScreenLines')
+if exists('*Screenline')
   finish
 endif
 
+" Get line "lnum" as displayed on the screen.
+" Trailing white space is trimmed.
+func Screenline(lnum)
+  let chars = []
+  for c in range(1, winwidth(0))
+    call add(chars, nr2char(screenchar(a:lnum, c)))
+  endfor
+  let line = join(chars, '')
+  return matchstr(line, '^.\{-}\ze\s*$')
+endfunc
+
+" Get text on the screen, including composing characters.
 " ScreenLines(lnum, width) or
 " ScreenLines([start, end], width)
 function! ScreenLines(lnum, width) abort
@@ -18,7 +30,7 @@ function! ScreenLines(lnum, width) abort
   endif
   let lines = []
   for l in range(start, end)
-    let lines += [join(map(range(1, a:width), 'nr2char(screenchar(l, v:val))'), '')]
+    let lines += [join(map(range(1, a:width), 'screenstring(l, v:val)'), '')]
   endfor
   return lines
 endfunction

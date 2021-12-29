@@ -7,22 +7,27 @@ func Test_taglist()
 	\ "BFoo\tXbar\t1",
 	\ "BBar\tXbar\t2",
 	\ "Kindly\tXbar\t3;\"\tv\tfile:",
+	\ "Lambda\tXbar\t3;\"\tλ\tfile:",
 	\ "Command\tXbar\tcall cursor(3, 4)|;\"\td",
 	\ ], 'Xtags')
   set tags=Xtags
   split Xtext
 
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo"), {i, v -> v.name}))
-  call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xtext"), {i, v -> v.name}))
+  call assert_equal(['FFoo', 'BFoo'], map("Foo"->taglist("Xtext"), {i, v -> v.name}))
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xfoo"), {i, v -> v.name}))
   call assert_equal(['BFoo', 'FFoo'], map(taglist("Foo", "Xbar"), {i, v -> v.name}))
 
-  let kind = taglist("Kindly")
-  call assert_equal(1, len(kind))
-  call assert_equal('v', kind[0]['kind'])
-  call assert_equal('3', kind[0]['cmd'])
-  call assert_equal(1, kind[0]['static'])
-  call assert_equal('Xbar', kind[0]['filename'])
+  let kindly = taglist("Kindly")
+  call assert_equal(1, len(kindly))
+  call assert_equal('v', kindly[0]['kind'])
+  call assert_equal('3', kindly[0]['cmd'])
+  call assert_equal(1, kindly[0]['static'])
+  call assert_equal('Xbar', kindly[0]['filename'])
+
+  let lambda = taglist("Lambda")
+  call assert_equal(1, len(lambda))
+  call assert_equal('λ', lambda[0]['kind'])
 
   let cmd = taglist("Command")
   call assert_equal(1, len(cmd))
@@ -120,4 +125,100 @@ func Test_tagsfile_without_trailing_newline()
 
   call delete('Xtags')
   set tags&
+endfunc
+
+" Test for ignoring comments in a tags file
+func Test_tagfile_ignore_comments()
+  call writefile([
+	\ "!_TAG_PROGRAM_NAME	/Test tags generator/",
+	\ "FBar\tXfoo\t2" .. ';"' .. "\textrafield\tf",
+	\ "!_TAG_FILE_FORMAT	2	/extended format/",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal(1, len(l))
+  call assert_equal('FBar', l[0].name)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for using an excmd in a tags file to position the cursor (instead of a
+" search pattern or a line number)
+func Test_tagfile_excmd()
+  call writefile([
+	\ "vFoo\tXfoo\tcall cursor(3, 4)" .. '|;"' .. "\tv",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : 'call cursor(3, 4)',
+	      \ 'static' : 0,
+	      \ 'name' : 'vFoo',
+	      \ 'kind' : 'v',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for duplicate fields in a tag in a tags file
+func Test_duplicate_field()
+  call writefile([
+	\ "vFoo\tXfoo\t4" .. ';"' .. "\ttypename:int\ttypename:int\tv",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : '4',
+	      \ 'static' : 0,
+	      \ 'name' : 'vFoo',
+	      \ 'kind' : 'v',
+	      \ 'typename' : 'int',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for tag address with ;
+func Test_tag_addr_with_semicolon()
+  call writefile([
+	      \ "Func1\tXfoo\t6;/^Func1/" .. ';"' .. "\tf"
+	      \ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : '6;/^Func1/',
+	      \ 'static' : 0,
+	      \ 'name' : 'Func1',
+	      \ 'kind' : 'f',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for format error in a tags file
+func Test_format_error()
+  call writefile(['vFoo-Xfoo-4'], 'Xtags')
+  set tags=Xtags
+
+  let caught_exception = v:false
+  try
+    let l = taglist('.*')
+  catch /E431:/
+    " test succeeded
+    let caught_exception = v:true
+  catch
+    call assert_report('Caught ' . v:exception . ' in ' . v:throwpoint)
+  endtry
+  call assert_true(caught_exception)
+
+  set tags&
+  call delete('Xtags')
 endfunc

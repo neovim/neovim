@@ -1,11 +1,11 @@
-" DoxyGen syntax hilighting extension for c/c++/idl/java
+" DoxyGen syntax highlighting extension for c/c++/idl/java
 " Language:     doxygen on top of c, cpp, idl, java, php
 " Maintainer:   Michael Geddes <vimmer@frog.wheelycreek.net>
 " Author:       Michael Geddes
-" Last Change: November 2017 (\throws by Candy Gumdrop)
-" Version:      1.27
+" Last Change: December 2020
+" Version:      1.30
 "
-" Copyright 2004-2017 Michael Geddes
+" Copyright 2004-2020 Michael Geddes
 " Please feel free to use, modify & distribute all or part of this script,
 " providing this copyright message remains.
 " I would appreciate being acknowledged in any derived scripts, and would
@@ -54,7 +54,7 @@ let s:cpo_save = &cpo
 try
   set cpo&vim
 
-  " Start of Doxygen syntax hilighting:
+  " Start of Doxygen syntax highlighting:
   "
 
   " C/C++ Style line comments
@@ -170,7 +170,7 @@ endif
 
   fun! s:DxyCreateSmallSpecial( kword, name )
 
-    let mx='[-:0-9A-Za-z_%=&+*/!~>|]\@<!\([-0-9A-Za-z_%=+*/!~>|#]\+[-0-9A-Za-z_%=+*/!~>|]\@!\|\\[\\<>&.]@\|[.,][0-9a-zA-Z_]\@=\|::\|([^)]*)\|&[0-9a-zA-Z]\{2,7};\)\+'
+    let mx='[-:0-9A-Za-z_%=&+*/!~>|]\@<!\([-0-9A-Za-z_%=+*/!~>|#]\+[-0-9A-Za-z_%=+*/!~>|]\@!\|\\[\\<>&.]@\|[.,]\w\@=\|::\|([^)]*)\|&[0-9a-zA-Z]\{2,7};\)\+'
     exe 'syn region doxygenSpecial'.a:name.'Word contained start=+'.a:kword.'+ end=+\(\_s\+'.mx.'\)\@<=[-a-zA-Z_0-9+*/^%|~!=&\\]\@!+ skipwhite contains=doxygenContinueCommentWhite,doxygen'.a:name.'Word'
     exe 'syn match doxygen'.a:name.'Word contained "\_s\@<='.mx.'" contains=doxygenHtmlSpecial,@Spell keepend'
   endfun
@@ -186,7 +186,7 @@ endif
   syn match doxygenSmallSpecial contained +[@\\]\(\<[npcbea]\>\|\<em\>\|\<ref\>\|\<link\>\|f\$\|[$\\&<>#]\)\@=+ nextgroup=doxygenOtherLink,doxygenHyperLink,doxygenHashLink,doxygenFormula,doxygenSymbol,doxygenSpecial.*Word
 
   " Now for special characters
-  syn match doxygenSpecial contained +[@\\]\(\<[npcbea]\>\|\<em\>\|\<ref\|\<link\>\>\|\<f\$\|[$\\&<>#]\)\@!+ nextgroup=doxygenParam,doxygenRetval,doxygenBriefWord,doxygenBold,doxygenBOther,doxygenOther,doxygenOtherTODO,doxygenOtherWARN,doxygenOtherBUG,doxygenPage,doxygenGroupDefine,doxygenCodeRegion,doxygenVerbatimRegion,doxygenDotRegion
+  syn match doxygenSpecial contained +[@\\]\(\<[npcbea]\>\|\<em\>\|\<ref\|\<link\>\>\|\<f\$\|[$\\&<>#]\)\@!+ nextgroup=doxygenParam,doxygenTParam,doxygenRetval,doxygenBriefWord,doxygenBold,doxygenBOther,doxygenOther,doxygenOtherTODO,doxygenOtherWARN,doxygenOtherBUG,doxygenPage,doxygenGroupDefine,doxygenCodeRegion,doxygenVerbatimRegion,doxygenDotRegion
   " doxygenOtherLink,doxygenSymbol,doxygenFormula,doxygenErrorSpecial,doxygenSpecial.*Word
   "
   syn match doxygenGroupDefine contained +@\@<=[{}]+
@@ -199,13 +199,14 @@ endif
   syn keyword doxygenParam contained param nextgroup=doxygenParamName,doxygenParamDirection skipwhite
   syn keyword doxygenTParam contained tparam nextgroup=doxygenParamName skipwhite
   syn match doxygenParamName contained +[A-Za-z0-9_:]\++ nextgroup=doxygenSpecialMultilineDesc skipwhite
-  syn keyword doxygenRetval contained retval throw throws exception nextgroup=doxygenParamName skipwhite
+  syn keyword doxygenRetval contained retval throw throws exception nextgroup=doxygenReturnValue skipwhite
+  syn match doxygenReturnValue contained +\S\++ nextgroup=doxygenSpecialMultilineDesc skipwhite
 
   " Match one line identifiers.
   syn keyword doxygenOther contained addindex anchor
   \ dontinclude endhtmlonly endlatexonly showinitializer hideinitializer
-  \ example htmlonly image include includelineno ingroup internal latexonly line
-  \ overload relates relatesalso sa skip skipline
+  \ example htmlonly image include includelineno ingroup latexonly line
+  \ overload relates related relatesalso relatedalso sa skip skipline
   \ until verbinclude version addtogroup htmlinclude copydoc dotfile
   \ xmlonly endxmlonly
   \ nextgroup=doxygenSpecialOnelineDesc copybrief copydetails copyright dir extends
@@ -241,8 +242,8 @@ endif
 
   syn keyword doxygenOther contained par nextgroup=doxygenHeaderLine
   syn region doxygenHeaderLine start=+.+ end=+^+ contained skipwhite nextgroup=doxygenSpecialMultilineDesc
-
-  syn keyword doxygenOther contained arg author authors date deprecated li return returns see invariant note post pre remarks since test nextgroup=doxygenSpecialMultilineDesc
+  " Match the start of other multiline comments.
+  syn keyword doxygenOther contained arg author authors date deprecated li return returns result see invariant note post pre remarks since test internal nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherTODO contained todo attention nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherWARN contained warning nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherBUG contained bug nextgroup=doxygenSpecialMultilineDesc
@@ -255,8 +256,8 @@ endif
   syn match doxygenLinkRest +[^*@\\]\|\*/\@!\|[@\\]\(endlink\>\)\@!+ contained skipnl nextgroup=doxygenLinkRest,doxygenContinueLinkComment
   syn match doxygenContinueLinkComment contained +^\s*\*\=[^/]+me=e-1 nextgroup=doxygenLinkRest
   syn match doxygenLinkError "\*/" contained
-  " #Link hilighting.
-  syn match doxygenHashLink /\([a-zA-Z_][0-9a-zA-Z_]*\)\?#\(\.[0-9a-zA-Z_]\@=\|[a-zA-Z0-9_]\+\|::\|()\)\+/ contained contains=doxygenHashSpecial
+  " #Link highlighting.
+  syn match doxygenHashLink /\(\h\w*\)\?#\(\.\w\@=\|\w\+\|::\|()\)\+/ contained contains=doxygenHashSpecial
   syn match doxygenHashSpecial /#/ contained
   syn match doxygenHyperLink /\(\s\|^\s*\*\?\)\@<=\(http\|https\|ftp\):\/\/[-0-9a-zA-Z_?&=+#%/.!':;@~]\+/ contained
 
@@ -264,12 +265,12 @@ endif
   syn match doxygenPage "[\\@]page\>"me=s+1 contained skipwhite nextgroup=doxygenPagePage
   syn keyword doxygenPagePage page contained skipwhite nextgroup=doxygenPageIdent
   syn region doxygenPageDesc  start=+.\++ end=+$+ contained skipwhite contains=doxygenSmallSpecial,@doxygenHtmlGroup keepend skipwhite skipnl nextgroup=doxygenBody
-  syn match doxygenPageIdent "\<[a-zA-Z_0-9]\+\>" contained nextgroup=doxygenPageDesc
+  syn match doxygenPageIdent "\<\w\+\>" contained nextgroup=doxygenPageDesc
 
   " Handle section
   syn keyword doxygenOther defgroup section subsection subsubsection weakgroup contained skipwhite nextgroup=doxygenSpecialIdent
   syn region doxygenSpecialSectionDesc  start=+.\++ end=+$+ contained skipwhite contains=doxygenSmallSpecial,@doxygenHtmlGroup keepend skipwhite skipnl nextgroup=doxygenContinueCommentWhite
-  syn match doxygenSpecialIdent "\<[a-zA-Z_0-9]\+\>" contained nextgroup=doxygenSpecialSectionDesc
+  syn match doxygenSpecialIdent "\<\w\+\>" contained nextgroup=doxygenSpecialSectionDesc
 
   " Does the one-line description for the one-line type identifiers.
   syn region doxygenSpecialTypeOnelineDesc  start=+.\++ end=+$+ contained skipwhite contains=doxygenSmallSpecial,@doxygenHtmlGroup keepend
@@ -305,7 +306,7 @@ endif
   syn region doxygenFormula contained matchgroup=doxygenFormulaEnds start=+f\[+ end=+[@\\]f]+ contains=doxygenFormulaSpecial,doxygenFormulaOperator,doxygenAtom
   syn region doxygenAtom contained transparent matchgroup=doxygenFormulaOperator start=+{+ end=+}+ contains=doxygenAtom,doxygenFormulaSpecial,doxygenFormulaOperator
 
-  " Add TODO hilighting.
+  " Add TODO highlighting.
   syn keyword doxygenTODO contained TODO README XXX FIXME
 
   " Supported HTML subset.  Not perfect, but okay.
@@ -421,7 +422,7 @@ endif
             if &guifont == ''
               let font="font='FreeSerif 12'"
             else
-              let font="font='".substitute(&guifont, '^.\{-}\([0-9]\+\)$', 'FreeSerif \1','')."'"
+              let font="font='".substitute(&guifont, '^.\{-}\(\d\+\)$', 'FreeSerif \1','')."'"
             endif
 
           elseif has('gui_win32') || has('gui_win16') || has('gui_win95')
@@ -475,6 +476,7 @@ endif
           SynColor doxygenSpecialHeading cterm=bold ctermfg=LightBlue guifg=LightBlue gui=bold
           SynColor doxygenPrev ctermfg=LightGreen guifg=LightGreen
         endif
+        SynLink  doxygenValue doxygenParamName
       else
         SynLink doxygenComment SpecialComment
         SynLink doxygenBrief Statement
@@ -486,7 +488,10 @@ endif
         SynLink doxygenSpecialOnelineDesc Statement
         SynLink doxygenSpecialHeading Statement
         SynLink doxygenPrev SpecialComment
+        SynLink doxygenValue Constant
       endif
+      SynLink doxygenTParam doxygenParam
+
     endfun
 
     call s:Doxygen_Hilights()
@@ -550,6 +555,7 @@ endif
     SynLink doxygenLinkRest               doxygenSpecialMultilineDesc
     SynLink doxygenHyperLink              doxygenLinkWord
     SynLink doxygenHashLink               doxygenLinkWord
+    SynLink doxygenReturnValue            doxygenValue
 
     SynLink doxygenPage                   doxygenSpecial
     SynLink doxygenPagePage               doxygenBOther

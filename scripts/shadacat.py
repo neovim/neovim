@@ -66,7 +66,7 @@ except IndexError:
     def filt(entry): return True
 else:
     _filt = filt
-    def filt(entry): return eval(_filt, globals(), {'entry': entry})
+    def filt(entry): return eval(_filt, globals(), {'entry': entry})  # noqa
 
 poswidth = len(str(os.stat(fname).st_size or 1000))
 

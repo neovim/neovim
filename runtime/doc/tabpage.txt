@@ -129,7 +129,7 @@ something else.
 		    :+tabclose	    " close the next tab page
 		    :1tabclose	    " close the first tab page
 		    :$tabclose	    " close the last tab page
-		    :tabclose -2    " close the two previous tab page
+		    :tabclose -2    " close the 2nd previous tab page 
 		    :tabclose +	    " close the next tab page
 		    :tabclose 3	    " close the third tab page
 		    :tabclose $	    " close the last tab page
@@ -190,6 +190,9 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 {count}<C-PageDown>
 {count}gt	Go to tab page {count}.  The first tab page has number one.
 
+CTRL-<Tab>					*CTRL-<Tab>*
+CTRL-W g<Tab>					*g<Tab>* *CTRL-W_g<Tab>*
+g<Tab>		Go to previous (last accessed) tab page.
 
 :tabp[revious]				*:tabp* *:tabprevious* *gT* *:tabN*
 :tabN[ext]				*:tabNext* *CTRL-<PageUp>*

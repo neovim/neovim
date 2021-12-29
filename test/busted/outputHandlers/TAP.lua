@@ -7,7 +7,7 @@ return function(options)
   local handler = require 'busted.outputHandlers.TAP'(options)
 
   local suiteEnd = function()
-    io.write(global_helpers.read_nvim_log())
+    io.write(global_helpers.read_nvim_log(nil, true))
     return nil, true
   end
   busted.subscribe({ 'suite', 'end' }, suiteEnd)

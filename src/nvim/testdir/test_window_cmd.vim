@@ -69,22 +69,10 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
-func Test_next_split_all()
-  " This was causing an illegal memory access.
-  n x
-  norm axxx
-  split
-  split
-  s/x
-  s/x
-  all
-  bwipe!
-endfunc
-
 func Test_window_quit()
   e Xa
   split Xb
-  call assert_equal(2, winnr('$'))
+  call assert_equal(2, '$'->winnr())
   call assert_equal('Xb', bufname(winbufnr(1)))
   call assert_equal('Xa', bufname(winbufnr(2)))
 
@@ -100,7 +88,7 @@ func Test_window_horizontal_split()
   3wincmd s
   call assert_equal(2, winnr('$'))
   call assert_equal(3, winheight(0))
-  call assert_equal(winwidth(1), winwidth(2))
+  call assert_equal(winwidth(1), 2->winwidth())
 
   call assert_fails('botright topleft wincmd s', 'E442:')
   bw
@@ -117,48 +105,71 @@ func Test_window_vertical_split()
   bw
 endfunc
 
+" Test the ":wincmd ^" and "<C-W>^" commands.
 func Test_window_split_edit_alternate()
-  e Xa
-  e Xb
 
+  " Test for failure when the alternate buffer/file no longer exists.
+  edit Xfoo | %bw
+  call assert_fails(':wincmd ^', 'E23')
+
+  " Test for the expected behavior when we have two named buffers.
+  edit Xfoo | edit Xbar
   wincmd ^
-  call assert_equal('Xa', bufname(winbufnr(1)))
-  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xfoo', bufname(winbufnr(1)))
+  call assert_equal('Xbar', bufname(winbufnr(2)))
+  only
 
-  bw Xa Xb
+  " Test for the expected behavior when the alternate buffer is not named.
+  enew | let l:nr1 = bufnr('%')
+  edit Xfoo | let l:nr2 = bufnr('%')
+  wincmd ^
+  call assert_equal(l:nr1, winbufnr(1))
+  call assert_equal(l:nr2, winbufnr(2))
+  only
+
+  " FIXME: this currently fails on AppVeyor, but passes locally
+  if !has('win32')
+    " Test the Normal mode command.
+    call feedkeys("\<C-W>\<C-^>", 'tx')
+    call assert_equal(l:nr2, winbufnr(1))
+    call assert_equal(l:nr1, winbufnr(2))
+  endif
+
+  %bw!
 endfunc
 
-func Test_window_preview()
-  " Open a preview window
-  pedit Xa
-  call assert_equal(2, winnr('$'))
-  call assert_equal(0, &previewwindow)
+" Test the ":[count]wincmd ^" and "[count]<C-W>^" commands.
+func Test_window_split_edit_bufnr()
 
-  " Go to the preview window
-  wincmd P
-  call assert_equal(1, &previewwindow)
+  %bwipeout
+  let l:nr = bufnr('%') + 1
+  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92')
+  call assert_fails(':' . l:nr . 'wincmd ^', 'E16')
+  call assert_fails(':0wincmd ^', 'E16')
 
-  " Close preview window
-  wincmd z
-  call assert_equal(1, winnr('$'))
-  call assert_equal(0, &previewwindow)
+  edit Xfoo | edit Xbar | edit Xbaz
+  let l:foo_nr = bufnr('Xfoo')
+  let l:bar_nr = bufnr('Xbar')
+  let l:baz_nr = bufnr('Xbaz')
 
-  call assert_fails('wincmd P', 'E441:')
-endfunc
+  " FIXME: this currently fails on AppVeyor, but passes locally
+  if !has('win32')
+    call feedkeys(l:foo_nr . "\<C-W>\<C-^>", 'tx')
+    call assert_equal('Xfoo', bufname(winbufnr(1)))
+    call assert_equal('Xbaz', bufname(winbufnr(2)))
+    only
 
-func Test_window_preview_from_help()
-  filetype on
-  call writefile(['/* some C code */'], 'Xpreview.c')
-  help
-  pedit Xpreview.c
-  wincmd P
-  call assert_equal(1, &previewwindow)
-  call assert_equal('c', &filetype)
-  wincmd z
+    call feedkeys(l:bar_nr . "\<C-W>\<C-^>", 'tx')
+    call assert_equal('Xbar', bufname(winbufnr(1)))
+    call assert_equal('Xfoo', bufname(winbufnr(2)))
+    only
 
-  filetype off
-  close
-  call delete('Xpreview.c')
+    execute l:baz_nr . 'wincmd ^'
+    call assert_equal('Xbaz', bufname(winbufnr(1)))
+    call assert_equal('Xbar', bufname(winbufnr(2)))
+  endif
+
+  %bw!
 endfunc
 
 func Test_window_exchange()
@@ -256,7 +267,7 @@ func Test_window_height()
 
   wincmd +
   call assert_equal(wh1, winheight(1))
-  call assert_equal(wh2, winheight(2))
+  call assert_equal(wh2, 2->winheight())
 
   2wincmd _
   call assert_equal(2, winheight(1))
@@ -441,11 +452,22 @@ func Test_window_newtab()
   wincmd T
   call assert_equal(2, tabpagenr('$'))
   call assert_equal(['Xb', 'Xa'], map(tabpagebuflist(1), 'bufname(v:val)'))
-  call assert_equal(['Xc'      ], map(tabpagebuflist(2), 'bufname(v:val)'))
+  call assert_equal(['Xc'      ], map(2->tabpagebuflist(), 'bufname(v:val)'))
 
   %bw!
 endfunc
 
+func Test_next_split_all()
+  " This was causing an illegal memory access.
+  n x
+  norm axxx
+  split
+  split
+  s/x
+  s/x
+  all
+  bwipe!
+endfunc
 
 " Tests for adjusting window and contents
 func GetScreenStr(row)
@@ -485,9 +507,14 @@ func Test_window_contents()
   call test_garbagecollect_now()
 endfunc
 
+func Test_window_colon_command()
+  " This was reading invalid memory.
+  exe "norm! v\<C-W>:\<C-U>echo v:version"
+endfunc
+
 func Test_access_freed_mem()
-  " This was accessing freed memory
-  au * 0 vs xxx
+  " This was accessing freed memory (but with what events?)
+  au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
   arg 0
   argadd
   all
@@ -523,22 +550,38 @@ endfunc
 func Test_winrestcmd()
   2split
   3vsplit
-  let a = winrestcmd()
+  let restcmd = winrestcmd()
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
   wincmd =
   call assert_notequal(2, winheight(0))
   call assert_notequal(3, winwidth(0))
-  exe a
+  exe restcmd
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
+  only
+
+  wincmd v
+  wincmd s
+  wincmd v
+  redraw
+  let restcmd = winrestcmd()
+  wincmd _
+  wincmd |
+  exe restcmd
+  redraw
+  call assert_equal(restcmd, winrestcmd())
+
   only
 endfunc
 
 function! Fun_RenewFile()
   " Need to wait a bit for the timestamp to be older.
-  sleep 2
-  silent execute '!echo "1" > tmp.txt'
+  let old_ftime = getftime("tmp.txt")
+  while getftime("tmp.txt") == old_ftime
+    sleep 100m
+    silent execute '!echo "1" > tmp.txt'
+  endwhile
   sp
   wincmd p
   edit! tmp.txt
@@ -568,7 +611,7 @@ func Test_window_prevwin()
   " reset
   q
   call delete('tmp.txt')
-  set hidden&vim autoread&vim
+  set nohidden autoread&vim
   delfunc Fun_RenewFile
 endfunc
 
@@ -700,6 +743,42 @@ func Test_relative_cursor_second_line_after_resize()
   let &so = so_save
 endfunc
 
+func Test_split_noscroll()
+  let so_save = &so
+  enew
+  call setline(1, range(1, 8))
+  normal 100%
+  split
+
+  1wincmd w
+  let winid1 = win_getid()
+  let info1 = getwininfo(winid1)[0]
+
+  2wincmd w
+  let winid2 = win_getid()
+  let info2 = getwininfo(winid2)[0]
+
+  call assert_equal(1, info1.topline)
+  call assert_equal(1, info2.topline)
+
+  " window that fits all lines by itself, but not when split: closing other
+  " window should restore fraction.
+  only!
+  call setline(1, range(1, &lines - 10))
+  exe &lines / 4
+  let winid1 = win_getid()
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+  new
+  redraw
+  close
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+
+  bwipe!
+  let &so = so_save
+endfunc
+
 " Tests for the winnr() function
 func Test_winnr()
   only | tabonly
@@ -738,16 +817,126 @@ func Test_winnr()
 
   tabnew
   call assert_equal(8, tabpagewinnr(1, 'j'))
-  call assert_equal(2, tabpagewinnr(1, 'k'))
+  call assert_equal(2, 1->tabpagewinnr('k'))
   call assert_equal(4, tabpagewinnr(1, 'h'))
   call assert_equal(6, tabpagewinnr(1, 'l'))
 
   only | tabonly
 endfunc
 
-func Test_window_colon_command()
-  " This was reading invalid memory.
-  exe "norm! v\<C-W>:\<C-U>echo v:version"
+func Test_winrestview()
+  split runtest.vim
+  normal 50%
+  let view = winsaveview()
+  close
+  split runtest.vim
+  eval view->winrestview()
+  call assert_equal(view, winsaveview())
+
+  bwipe!
+endfunc
+
+func Test_win_splitmove()
+  edit a
+  leftabove split b
+  leftabove vsplit c
+  leftabove split d
+  call assert_equal(0, win_splitmove(winnr(), winnr('l')))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'd')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'd')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('k'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'd')
+  call assert_equal(bufname(winbufnr(2)), 'c')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'rightbelow': v:true}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'a')
+  call assert_equal(bufname(winbufnr(4)), 'd')
+  only | bd
+
+  call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')
+  call assert_fails('call win_splitmove(123, winnr())', 'E957:')
+  call assert_fails('call win_splitmove(winnr(), winnr())', 'E957:')
+
+  tabnew
+  call assert_fails('call win_splitmove(1, win_getid(1, 1))', 'E957:')
+  tabclose
+endfunc
+
+func Test_floatwin_splitmove()
+  vsplit
+  let win2 = win_getid()
+  let popup_winid = nvim_open_win(0, 0, {'relative': 'win',
+        \ 'row': 3, 'col': 3, 'width': 12, 'height': 3})
+  call assert_fails('call win_splitmove(popup_winid, win2)', 'E957:')
+  call assert_fails('call win_splitmove(win2, popup_winid)', 'E957:')
+
+  call nvim_win_close(popup_winid, 1)
+  bwipe
+endfunc
+
+func Test_window_resize()
+  " Vertical :resize (absolute, relative, min and max size).
+  vsplit
+  vert resize 8
+  call assert_equal(8, winwidth(0))
+  vert resize +2
+  call assert_equal(10, winwidth(0))
+  vert resize -2
+  call assert_equal(8, winwidth(0))
+  vert resize
+  call assert_equal(&columns - 2, winwidth(0))
+  vert resize 0
+  call assert_equal(1, winwidth(0))
+  vert resize 99999
+  call assert_equal(&columns - 2, winwidth(0))
+
+  %bwipe!
+
+  " Horizontal :resize (with absolute, relative size, min and max size).
+  split
+  resize 8
+  call assert_equal(8, winheight(0))
+  resize +2
+  call assert_equal(10, winheight(0))
+  resize -2
+  call assert_equal(8, winheight(0))
+  resize
+  call assert_equal(&lines - 4, winheight(0))
+  resize 0
+  call assert_equal(1, winheight(0))
+  resize 99999
+  call assert_equal(&lines - 4, winheight(0))
+
+  " :resize with explicit window number.
+  let other_winnr = winnr('j')
+  exe other_winnr .. 'resize 10'
+  call assert_equal(10, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3, winheight(0))
+  exe other_winnr .. 'resize +1'
+  exe other_winnr .. 'resize +1'
+  call assert_equal(12, winheight(other_winnr))
+  call assert_equal(&lines - 10 - 3 -2, winheight(0))
+  close
+
+  vsplit
+  wincmd l
+  let other_winnr = winnr('h')
+  call assert_notequal(winnr(), other_winnr)
+  exe 'vert ' .. other_winnr .. 'resize -' .. &columns
+  call assert_equal(0, winwidth(other_winnr))
+
+  %bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

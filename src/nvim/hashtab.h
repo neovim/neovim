@@ -51,6 +51,7 @@ typedef struct hashitem_S {
 /// Initial size for a hashtable.
 /// Our items are relatively small and growing is expensive, thus start with 16.
 /// Must be a power of 2.
+/// This allows for storing 10 items (2/3 of 16) before a resize is needed.
 #define HT_INIT_SIZE 16
 
 /// An array-based hashtable.
@@ -76,18 +77,18 @@ typedef struct hashtable_S {
 /// @param  hi  Name of the variable with current hashtab entry.
 /// @param  code  Cycle body.
 #define HASHTAB_ITER(ht, hi, code) \
-    do { \
-      hashtab_T *const hi##ht_ = (ht); \
-      size_t hi##todo_ = hi##ht_->ht_used; \
-      for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
-        if (!HASHITEM_EMPTY(hi)) { \
-          { \
-            code \
-          } \
-          hi##todo_--; \
+  do { \
+    hashtab_T *const hi##ht_ = (ht); \
+    size_t hi##todo_ = hi##ht_->ht_used; \
+    for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
+      if (!HASHITEM_EMPTY(hi)) { \
+        hi##todo_--; \
+        { \
+          code \
         } \
       } \
-    } while (0)
+    } \
+  } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hashtab.h.generated.h"

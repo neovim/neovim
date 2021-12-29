@@ -22,9 +22,10 @@ local defsfname = autodir .. '/ex_cmds_defs.generated.h'
 local enumfile = io.open(enumfname, 'w')
 local defsfile = io.open(defsfname, 'w')
 
-local defs = require('ex_cmds')
-
-local first = true
+local bit = require 'bit'
+local ex_cmds = require('ex_cmds')
+local defs = ex_cmds.cmds
+local flags = ex_cmds.flags
 
 local byte_a = string.byte('a')
 local byte_z = string.byte('z')
@@ -41,8 +42,7 @@ static const uint16_t cmdidxs1[%u] = {
 -- fit in a byte.
 local cmdidxs2_out = string.format([[
 static const char_u cmdidxs2[%u][%u] = {
-/*             a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v   w   x   y   z */
-
+  /*           a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v   w   x   y   z */
 ]], a_to_z, a_to_z)
 
 enumfile:write([[
@@ -50,21 +50,25 @@ typedef enum CMD_index {
 ]])
 defsfile:write(string.format([[
 static const int command_count = %u;
-]], #defs))
-defsfile:write(string.format([[
 static CommandDefinition cmdnames[%u] = {
-]], #defs))
+]], #defs, #defs))
 local cmds, cmdidxs1, cmdidxs2 = {}, {}, {}
 for _, cmd in ipairs(defs) do
+  if bit.band(cmd.flags, flags.RANGE) == flags.RANGE then
+    assert(cmd.addr_type ~= 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Using RANGE with ADDR_NONE\n', cmd.command))
+  else
+    assert(cmd.addr_type == 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Missing ADDR_NONE\n', cmd.command))
+  end
+  if bit.band(cmd.flags, flags.DFLALL) == flags.DFLALL then
+    assert(cmd.addr_type ~= 'ADDR_OTHER' and cmd.addr_type ~= 'ADDR_NONE',
+           string.format('ex_cmds.lua:%s: Missing misplaced DFLALL\n', cmd.command))
+  end
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   local byte_cmd = cmd.command:sub(1, 1):byte()
   if byte_a <= byte_cmd and byte_cmd <= byte_z then
     table.insert(cmds, cmd.command)
-  end
-  if first then
-    first = false
-  else
-    defsfile:write(',\n')
   end
   enumfile:write('  ' .. enumname .. ',\n')
   defsfile:write(string.format([[
@@ -72,8 +76,9 @@ for _, cmd in ipairs(defs) do
     .cmd_name = (char_u *) "%s",
     .cmd_func = (ex_func_T)&%s,
     .cmd_argt = %uL,
-    .cmd_addr_type = %i
-  }]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
+    .cmd_addr_type = %s
+  },
+]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
 end
 for i = #cmds, 1, -1 do
   local cmd = cmds[i]
@@ -104,15 +109,14 @@ for i = byte_a, byte_z do
   end
   cmdidxs2_out = cmdidxs2_out .. ' },\n'
 end
-defsfile:write([[
-
-};
-]])
 enumfile:write([[
   CMD_SIZE,
   CMD_USER = -1,
   CMD_USER_BUF = -2
 } cmdidx_T;
 ]])
-defsfile:write(cmdidxs1_out .. '};\n')
-defsfile:write(cmdidxs2_out .. '};\n')
+defsfile:write(string.format([[
+};
+%s};
+%s};
+]], cmdidxs1_out, cmdidxs2_out))

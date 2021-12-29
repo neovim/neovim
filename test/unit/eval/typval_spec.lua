@@ -14,7 +14,7 @@ local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
 local concat_tables = helpers.concat_tables
-local map = helpers.map
+local map = helpers.tbl_map
 
 local a = eval_helpers.alloc_logging_helpers
 local int = eval_helpers.int
@@ -48,8 +48,7 @@ local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
 
 local function vimconv_alloc()
   return ffi.gc(
-    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
-    function(vc)
+    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))), function(vc)
       lib.convert_setup(vc, nil, nil)
       lib.xfree(vc)
     end)
@@ -1235,13 +1234,13 @@ describe('typval.c', function()
         local l = list()
         local l2 = list()
 
-        -- NULL lists are not equal to empty lists
-        eq(false, lib.tv_list_equal(l, nil, true, false))
-        eq(false, lib.tv_list_equal(nil, l, false, false))
-        eq(false, lib.tv_list_equal(nil, l, false, true))
-        eq(false, lib.tv_list_equal(l, nil, true, true))
+        -- NULL lists are equal to empty lists
+        eq(true, lib.tv_list_equal(l, nil, true, false))
+        eq(true, lib.tv_list_equal(nil, l, false, false))
+        eq(true, lib.tv_list_equal(nil, l, false, true))
+        eq(true, lib.tv_list_equal(l, nil, true, true))
 
-        -- Yet NULL lists are equal themselves
+        -- NULL lists are equal themselves
         eq(true, lib.tv_list_equal(nil, nil, true, false))
         eq(true, lib.tv_list_equal(nil, nil, false, false))
         eq(true, lib.tv_list_equal(nil, nil, false, true))
@@ -2026,6 +2025,26 @@ describe('typval.c', function()
           alloc_log:check({})
         end)
       end)
+      describe('float()', function()
+        itp('works', function()
+          local d = dict({test=10})
+          alloc_log:clear()
+          eq({test=10}, dct2tbl(d))
+          eq(OK, lib.tv_dict_add_float(d, 'testt', 3, 1.5))
+          local dis = dict_items(d)
+          alloc_log:check({a.di(dis.tes, 'tes')})
+          eq({test=10, tes=1.5}, dct2tbl(d))
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_float(d, 'testt', 3, 1.5) end,
+                              'E685: Internal error: hash_add()'))
+          alloc_log:clear()
+          lib.emsg_skip = lib.emsg_skip + 1
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_float(d, 'testt', 3, 1.5) end,
+                              nil))
+          lib.emsg_skip = lib.emsg_skip - 1
+          alloc_log:clear_tmp_allocs()
+          alloc_log:check({})
+        end)
+      end)
       describe('str()', function()
         itp('works', function()
           local d = dict({test=10})
@@ -2512,7 +2531,7 @@ describe('typval.c', function()
           value='tr',
           dict={},
         })
-        lib.tv_item_lock(p_tv, -1, true)
+        lib.tv_item_lock(p_tv, -1, true, false)
         eq(lib.VAR_UNLOCKED, p_tv.vval.v_partial.pt_dict.dv_lock)
       end)
       itp('does not change VAR_FIXED values', function()
@@ -2523,14 +2542,14 @@ describe('typval.c', function()
         d_tv.vval.v_dict.dv_lock = lib.VAR_FIXED
         l_tv.v_lock = lib.VAR_FIXED
         l_tv.vval.v_list.lv_lock = lib.VAR_FIXED
-        lib.tv_item_lock(d_tv, 1, true)
-        lib.tv_item_lock(l_tv, 1, true)
+        lib.tv_item_lock(d_tv, 1, true, false)
+        lib.tv_item_lock(l_tv, 1, true, false)
         eq(lib.VAR_FIXED, d_tv.v_lock)
         eq(lib.VAR_FIXED, l_tv.v_lock)
         eq(lib.VAR_FIXED, d_tv.vval.v_dict.dv_lock)
         eq(lib.VAR_FIXED, l_tv.vval.v_list.lv_lock)
-        lib.tv_item_lock(d_tv, 1, false)
-        lib.tv_item_lock(l_tv, 1, false)
+        lib.tv_item_lock(d_tv, 1, false, false)
+        lib.tv_item_lock(l_tv, 1, false, false)
         eq(lib.VAR_FIXED, d_tv.v_lock)
         eq(lib.VAR_FIXED, l_tv.v_lock)
         eq(lib.VAR_FIXED, d_tv.vval.v_dict.dv_lock)
@@ -2542,9 +2561,9 @@ describe('typval.c', function()
         local d_tv = lua2typvalt(null_dict)
         local s_tv = lua2typvalt(null_string)
         alloc_log:clear()
-        lib.tv_item_lock(l_tv, 1, true)
-        lib.tv_item_lock(d_tv, 1, true)
-        lib.tv_item_lock(s_tv, 1, true)
+        lib.tv_item_lock(l_tv, 1, true, false)
+        lib.tv_item_lock(d_tv, 1, true, false)
+        lib.tv_item_lock(s_tv, 1, true, false)
         eq(null_list, typvalt2lua(l_tv))
         eq(null_dict, typvalt2lua(d_tv))
         eq(null_string, typvalt2lua(s_tv))
@@ -2604,7 +2623,7 @@ describe('typval.c', function()
     describe('check_lock()', function()
       local function tv_check_lock(lock, name, name_len, emsg)
         return check_emsg(function()
-          return lib.tv_check_lock(lock, name, name_len)
+          return lib.var_check_lock(lock, name, name_len)
         end, emsg)
       end
       itp('works', function()
@@ -2629,13 +2648,13 @@ describe('typval.c', function()
         local l2 = lua2typvalt(empty_list)
         local nl = lua2typvalt(null_list)
 
-        -- NULL lists are not equal to empty lists
-        eq(false, lib.tv_equal(l, nl, true, false))
-        eq(false, lib.tv_equal(nl, l, false, false))
-        eq(false, lib.tv_equal(nl, l, false, true))
-        eq(false, lib.tv_equal(l, nl, true, true))
+        -- NULL lists are equal to empty lists
+        eq(true, lib.tv_equal(l, nl, true, false))
+        eq(true, lib.tv_equal(nl, l, false, false))
+        eq(true, lib.tv_equal(nl, l, false, true))
+        eq(true, lib.tv_equal(l, nl, true, true))
 
-        -- Yet NULL lists are equal themselves
+        -- NULL lists are equal themselves
         eq(true, lib.tv_equal(nl, nl, true, false))
         eq(true, lib.tv_equal(nl, nl, false, false))
         eq(true, lib.tv_equal(nl, nl, false, true))
@@ -2818,6 +2837,7 @@ describe('typval.c', function()
             {lib.VAR_FUNC, 'E729: using Funcref as a String'},
             {lib.VAR_LIST, 'E730: using List as a String'},
             {lib.VAR_DICT, 'E731: using Dictionary as a String'},
+            {lib.VAR_BOOL, nil},
             {lib.VAR_SPECIAL, nil},
             {lib.VAR_UNKNOWN, 'E908: using an invalid value as a String'},
           }) do
@@ -2848,8 +2868,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2877,8 +2897,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2911,8 +2931,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', -1},
             {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', -1},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 1},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
           }) do
             lib.curwin.w_cursor.lnum = 46
@@ -2941,8 +2961,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E893: Using a List as a Float', 0},
             {lib.VAR_DICT, {v_dict=NULL}, 'E894: Using a Dictionary as a Float', 0},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, 'E907: Using a special value as a Float', 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, 'E907: Using a special value as a Float', 0},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, 'E907: Using a special value as a Float', 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, 'E362: Using a boolean value as a Float', 0},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, 'E362: Using a boolean value as a Float', 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_float(UNKNOWN)', 0},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -2973,8 +2993,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr in place of Neovim allocated string, cannot
@@ -2985,7 +3005,8 @@ describe('typval.c', function()
             local ret = v[4]
             eq(ret, check_emsg(function()
               local res = lib.tv_get_string(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3016,8 +3037,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3027,7 +3048,8 @@ describe('typval.c', function()
             local ret = v[4]
             eq(ret, check_emsg(function()
               local res = lib.tv_get_string_chk(tv)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3057,8 +3079,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3069,7 +3091,8 @@ describe('typval.c', function()
             eq(ret, check_emsg(function()
               local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
               local res = lib.tv_get_string_buf(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)
@@ -3099,8 +3122,8 @@ describe('typval.c', function()
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3111,7 +3134,8 @@ describe('typval.c', function()
             eq(ret, check_emsg(function()
               local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
               local res = lib.tv_get_string_buf_chk(tv, buf)
-              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL
+                  or tv.v_type == lib.VAR_BOOL then
                 eq(buf, res)
               else
                 neq(buf, res)

@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin = helpers.iswin
 local funcs = helpers.funcs
+local meths = helpers.meths
 local eq = helpers.eq
 local eval = helpers.eval
 local retry = helpers.retry
@@ -14,6 +15,44 @@ describe("'wildmenu'", function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach()
+  end)
+
+  it('C-E to cancel wildmenu completion restore original input', function()
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<C-E>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign ^                   |
+    ]])
+  end)
+
+  it('C-Y to apply selection and end wildmenu completion', function()
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+    feed('<tab><C-Y>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign jump^               |
+    ]])
   end)
 
   it(':sign <tab> shows wildmenu completions', function()
@@ -122,6 +161,7 @@ describe("'wildmenu'", function()
 
     if not iswin() then
       command('set shell=sh')  -- Need a predictable "$" prompt.
+      command('let $PS1 = "$"')
     end
     command('set laststatus=0')
     command('vsplit')
@@ -221,6 +261,106 @@ describe("'wildmenu'", function()
     ]])
   end)
 
+  it('wildmode=longest,list', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:try_resize(25, 7)
+
+    command('set wildmenu wildmode=longest,list')
+
+    -- give wildmode-longest something to expand to
+    feed(':sign u<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      :sign un^                 |
+    ]])
+    feed('<tab>') -- trigger wildmode list
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign un                 |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+
+    -- give wildmode-longest something it cannot expand, use list
+    feed(':sign un<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign un                 |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<tab>')
+    screen:expect_unchanged()
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
+  it('wildmode=list,longest', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:try_resize(25, 7)
+
+    command('set wildmenu wildmode=list,longest')
+    feed(':sign u<tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign u                  |
+      undefine  unplace        |
+      :sign u^                  |
+    ]])
+    feed('<tab>') -- trigger wildmode longest
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :sign u                  |
+      undefine  unplace        |
+      :sign un^                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
   it('multiple <C-D> renders correctly', function()
     screen:try_resize(25, 7)
 
@@ -257,6 +397,64 @@ describe("'wildmenu'", function()
       [No Name]                |
                                |
     ]])
+  end)
+
+  it('works with c_CTRL_Z standard mapping', function()
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Blue1};
+      [2] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow};
+      [3] = {bold = true, reverse = true};
+    }
+
+    -- Wildcharm? where we are going we aint't no need no wildcharm.
+    eq(0, meths.get_option'wildcharm')
+    -- Don't mess the defaults yet (neovim is about backwards compatibility)
+    eq(9, meths.get_option'wildchar')
+    -- Lol what is cnoremap? Some say it can define mappings.
+    command 'set wildchar=0'
+    eq(0, meths.get_option'wildchar')
+
+    command 'cnoremap <f2> <c-z>'
+    feed(':syntax <f2>')
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {2:case}{3:  clear  cluster  >  }|
+      :syntax case^             |
+    ]]}
+    feed '<esc>'
+
+    command 'set wildmode=longest:full,full'
+    -- this will get cleaner once we have native lua expr mappings:
+    command [[cnoremap <expr> <tab> luaeval("not rawset(_G, 'coin', not coin).coin") ? "<c-z>" : "c"]]
+
+    feed ':syntax <tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      :syntax c^                |
+    ]]}
+
+    feed '<tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {3:case  clear  cluster  >  }|
+      :syntax c^                |
+    ]]}
+
+    feed '<tab>'
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      :syntax cc^               |
+    ]]}
   end)
 end)
 

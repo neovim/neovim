@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
+local assert_alive = helpers.assert_alive
+local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local feed = helpers.feed
 local feed_command, eval = helpers.feed_command, helpers.eval
@@ -29,7 +30,7 @@ describe(':terminal', function()
     -- Invoke a command that emits frequent terminal activity.
     feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 9999 !terminal_output!<cr>]])
     feed([[<C-\><C-N>]])
-    wait()
+    poke_eventloop()
     -- Wait for some terminal activity.
     retry(nil, 4000, function()
       ok(funcs.line('$') > 6)
@@ -60,7 +61,7 @@ describe(':terminal', function()
       feed_command([[terminal while true; do echo foo; sleep .1; done]])
     end
     feed([[<C-\><C-N>M]])  -- move cursor away from last line
-    wait()
+    poke_eventloop()
     eq(3, eval("line('$')"))  -- window height
     eq(2, eval("line('.')"))  -- cursor is in the middle
     feed_command('vsplit')
@@ -76,11 +77,11 @@ describe(':terminal', function()
       -- Create a new line (in the shell). For a normal buffer this
       -- increments the jumplist; for a terminal-buffer it should not. #3723
       feed('i')
-      wait()
+      poke_eventloop()
       feed('<CR><CR><CR><CR>')
-      wait()
+      poke_eventloop()
       feed([[<C-\><C-N>]])
-      wait()
+      poke_eventloop()
       -- Wait for >=1 lines to be created.
       retry(nil, 4000, function()
         ok(funcs.line('$') > lines_before)
@@ -95,19 +96,28 @@ describe(':terminal', function()
     eq(3, #jumps)
   end)
 
+  it('nvim_get_mode() in :terminal', function()
+    command(':terminal')
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+    feed('i')
+    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    feed([[<C-\><C-N>]])
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
+  end)
+
   it(':stopinsert RPC request exits terminal-mode #7807', function()
     command(':terminal')
     feed('i[tui] insert-mode')
     eq({ blocking=false, mode='t' }, nvim('get_mode'))
     command('stopinsert')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
   end)
 
   it(':stopinsert in normal mode doesn\'t break insert mode #9889', function()
     command(':terminal')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
     command(':stopinsert')
-    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+    eq({ blocking=false, mode='nt' }, nvim('get_mode'))
     feed('a')
     eq({ blocking=false, mode='t' }, nvim('get_mode'))
   end)
@@ -210,12 +220,12 @@ describe(':terminal (with fake shell)', function()
   it('ignores writes if the backing stream closes', function()
       terminal_with_fake_shell()
       feed('iiXXXXXXX')
-      wait()
+      poke_eventloop()
       -- Race: Though the shell exited (and streams were closed by SIGCHLD
       -- handler), :terminal cleanup is pending on the main-loop.
       -- This write should be ignored (not crash, #5445).
       feed('iiYYYYYYY')
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
   end)
 
   it('works with findfile()', function()
@@ -245,12 +255,14 @@ describe(':terminal (with fake shell)', function()
   it('works with gf', function()
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+    retry(nil, 4 * screen.timeout, function()
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
       :terminal echo "scripts/shadacat.py"              |
     ]])
+    end)
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[ggf"lgf]])

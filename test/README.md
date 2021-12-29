@@ -38,7 +38,7 @@ Layout
 - `/test/functional` : functional tests
 - `/test/unit` : unit tests
 - `/test/config` : contains `*.in` files which are transformed into `*.lua`
-  files using `configure_file` CMake command: this is for acessing CMake
+  files using `configure_file` CMake command: this is for accessing CMake
   variables in lua tests.
 - `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
   parser: normally used to make macros not accessible via this mechanism
@@ -77,11 +77,14 @@ To run all legacy Vim tests:
 
     make oldtest
 
-To run a *single* legacy test set `TEST_FILE`, for example:
+To run a *single* legacy test file you can use either:
 
-    TEST_FILE=test_syntax.res make oldtest
+    make oldtest TEST_FILE=test_syntax.vim
 
-- The `.res` extension (instead of `.vim`) is required.
+or:
+
+    make src/nvim/testdir/test_syntax.vim
+
 - Specify only the test file name, not the full path.
 
 
@@ -113,7 +116,7 @@ Filtering Tests
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER`.
+Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
@@ -126,7 +129,11 @@ end)
 
 To run only test with filter name:
 
-    TEST_TAG='foo.*api' make functionaltest
+    TEST_FILTER='foo.*api' make functionaltest
+
+To run all tests except ones matching a filter:
+
+    TEST_FILTER_OUT='foo.*api' make functionaltest
 
 ### Filter by file
 
@@ -190,7 +197,7 @@ Guidelines
   (success + fail + error + pending) is the same in all environments.
     - *Note:* `pending()` is ignored if it is missing an argument, unless it is
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
-      Provide empty function argument if the `pending()` call is outside of `it()`
+      Provide empty function argument if the `pending()` call is outside `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
 - Really long `source([=[...]=])` blocks may break Vim's Lua syntax
   highlighting. Try `:syntax sync fromstart` to fix it.
@@ -253,7 +260,14 @@ Number; !must be defined to function properly):
 
 - `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
 
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner.
+
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
+
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
+
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
 
 - `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
   to `build/bin/nvim`).
@@ -315,11 +329,12 @@ Number; !must be defined to function properly):
 - `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running
   `test/unit/testtest_spec.lua` used to check how testing infrastructure works.
 
-- `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level: `0`
-  disables tracing (the fastest, but you get no data if tests crash and there
-  was no core dump generated), `1` or empty/undefined leaves only C function
-  cals and returns in the trace (faster then recording everything), `2` records
-  all function calls, returns and lua source lines exuecuted.
+- `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level:
+  - `0` disables tracing (the fastest, but you get no data if tests crash and
+    there no core dump was generated),
+  - `1` leaves only C function calls and returns in the trace (faster than
+    recording everything),
+  - `2` records all function calls, returns and executed Lua source lines.
 
 - `NVIM_TEST_TRACE_ON_ERROR` (U) (1): makes unit tests yield trace on error in
   addition to regular error message.

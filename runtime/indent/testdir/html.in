@@ -2,6 +2,16 @@
 
 
 " START_INDENT
+<html>
+    <body>
+<style>
+div#d1 { color: red; }
+div#d2 { color: green; }
+</style>
+    <script>
+	var v1 = "v1";
+var v2 = "v2";
+    </script>
 <div>
 <div>
 text
@@ -23,4 +33,34 @@ bar">
 text
 </div>
 
+<dl>
+<dd>
+dd text
+</dd>
+<dt>
+dt text
+</dt>
+</dl>
+
+    </body>
+</html>
+
 " END_INDENT
+
+% START_INDENT
+% INDENT_EXE let g:html_indent_style1 = "inc"
+% INDENT_EXE let g:html_indent_script1 = "zero"
+% INDENT_EXE call HtmlIndent_CheckUserSettings()
+<html>
+    <body>
+<style>
+div#d1 { color: red; }
+div#d2 { color: green; }
+</style>
+    <script>
+	var v1 = "v1";
+var v2 = "v2";
+    </script>
+</body>
+</html>
+% END_INDENT

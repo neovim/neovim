@@ -11,7 +11,7 @@ typedef struct message {
   argv_callback handler;
   void *argv[EVENT_HANDLER_MAX_ARGC];
 } Event;
-typedef void(*event_scheduler)(Event event, void *data);
+typedef void (*event_scheduler)(Event event, void *data);
 
 #define VA_EVENT_INIT(event, h, a) \
   do { \

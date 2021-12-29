@@ -4210,10 +4210,6 @@ msgstr ""
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: argumento n„o-numÈrico passado a :z"
 
-#: ../ex_cmds.c:3398
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Comandos do shell n„o s„o permitidos no rvim"
-
 #: ../ex_cmds.c:3492
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Expressıes regulares n„o podem ser delimitadas por letras"
@@ -6232,10 +6228,6 @@ msgstr "-y\t\t\tModo f√°cil (como \"evim\", o Vim n√£o modal)"
 #: ../main.c:2185
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tmodo somente-leitura (como \"view\")"
-
-#: ../main.c:2186
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tmodo restrito (como \"rvim\")"
 
 #: ../main.c:2187
 msgid "-m\t\t\tModifications (writing files) not allowed"

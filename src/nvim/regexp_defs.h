@@ -15,8 +15,8 @@
 #include <stdbool.h>
 
 #include "nvim/pos.h"
-#include "nvim/types.h"
 #include "nvim/profile.h"
+#include "nvim/types.h"
 
 /*
  * The number of sub-matches is limited to 10.
@@ -53,7 +53,7 @@ typedef struct reg_extmatch reg_extmatch_T;
 /// always 0.
 /// When there is no match, the line number is -1.
 typedef struct {
-  regprog_T           *regprog;
+  regprog_T *regprog;
   lpos_T startpos[NSUBEXP];
   lpos_T endpos[NSUBEXP];
   int rmm_ic;
@@ -72,6 +72,7 @@ struct regprog {
   unsigned regflags;
   unsigned re_engine;  ///< Automatic, backtracking or NFA engine.
   unsigned re_flags;   ///< Second argument for vim_regcomp().
+  bool re_in_use;      ///< prog is being executed
 };
 
 /*
@@ -84,14 +85,15 @@ typedef struct {
   regengine_T *engine;
   unsigned regflags;
   unsigned re_engine;
-  unsigned re_flags;  ///< Second argument for vim_regcomp().
+  unsigned re_flags;
+  bool re_in_use;
 
   int regstart;
   char_u reganch;
-  char_u              *regmust;
+  char_u *regmust;
   int regmlen;
   char_u reghasz;
-  char_u program[1];                    /* actually longer.. */
+  char_u program[1];                    // actually longer..
 } bt_regprog_T;
 
 // Structure representing a NFA state.
@@ -99,10 +101,10 @@ typedef struct {
 typedef struct nfa_state nfa_state_T;
 struct nfa_state {
   int c;
-  nfa_state_T         *out;
-  nfa_state_T         *out1;
+  nfa_state_T *out;
+  nfa_state_T *out1;
   int id;
-  int lastlist[2];                   /* 0: normal, 1: recursive */
+  int lastlist[2];                   // 0: normal, 1: recursive
   int val;
 };
 
@@ -114,21 +116,22 @@ typedef struct {
   regengine_T *engine;
   unsigned regflags;
   unsigned re_engine;
-  unsigned re_flags;  ///< Second argument for vim_regcomp().
+  unsigned re_flags;
+  bool re_in_use;
 
-  nfa_state_T         *start;           /* points into state[] */
+  nfa_state_T *start;           // points into state[]
 
-  int reganch;                          /* pattern starts with ^ */
-  int regstart;                         /* char at start of pattern */
-  char_u              *match_text;      /* plain text to match with */
+  int reganch;                          // pattern starts with ^
+  int regstart;                         // char at start of pattern
+  char_u *match_text;      // plain text to match with
 
-  int has_zend;                         /* pattern contains \ze */
-  int has_backref;                      /* pattern contains \1 .. \9 */
+  int has_zend;                         // pattern contains \ze
+  int has_backref;                      // pattern contains \1 .. \9
   int reghasz;
-  char_u              *pattern;
-  int nsubexp;                          /* number of () */
+  char_u *pattern;
+  int nsubexp;                          // number of ()
   int nstate;
-  nfa_state_T state[1];                 /* actually longer.. */
+  nfa_state_T state[1];                 // actually longer..
 } nfa_regprog_T;
 
 /*
@@ -137,10 +140,10 @@ typedef struct {
  * When there is no match, the pointer is NULL.
  */
 typedef struct {
-  regprog_T           *regprog;
-  char_u              *startp[NSUBEXP];
-  char_u              *endp[NSUBEXP];
-  bool                 rm_ic;
+  regprog_T *regprog;
+  char_u *startp[NSUBEXP];
+  char_u *endp[NSUBEXP];
+  bool rm_ic;
 } regmatch_T;
 
 /*
@@ -150,16 +153,16 @@ typedef struct {
  */
 struct reg_extmatch {
   int16_t refcnt;
-  char_u              *matches[NSUBEXP];
+  char_u *matches[NSUBEXP];
 };
 
 struct regengine {
-  regprog_T   *(*regcomp)(char_u *, int);
+  regprog_T *(*regcomp)(char_u *, int);
   void (*regfree)(regprog_T *);
   int (*regexec_nl)(regmatch_T *, char_u *, colnr_T, bool);
   long (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T,
                         proftime_T *, int *);
-  char_u      *expr;
+  char_u *expr;
 };
 
 #endif  // NVIM_REGEXP_DEFS_H

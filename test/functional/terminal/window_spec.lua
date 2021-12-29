@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
 local feed, clear = helpers.feed, helpers.clear
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local command = helpers.command
 local retry = helpers.retry
@@ -127,7 +127,7 @@ describe(':terminal window', function()
 
     it('wont show any folds', function()
       feed([[<C-\><C-N>ggvGzf]])
-      wait()
+      poke_eventloop()
       screen:expect([[
         ^tty ready                                         |
         line1                                             |

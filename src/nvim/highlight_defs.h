@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include "nvim/macros.h"
+#include "nvim/types.h"
 
 typedef int32_t RgbValue;
 
@@ -18,6 +19,11 @@ typedef enum {
   HL_UNDERCURL       = 0x10,
   HL_STANDOUT        = 0x20,
   HL_STRIKETHROUGH   = 0x40,
+  HL_NOCOMBINE       = 0x80,
+  HL_BG_INDEXED    = 0x0100,
+  HL_FG_INDEXED    = 0x0200,
+  HL_DEFAULT       = 0x0400,
+  HL_GLOBAL        = 0x0800,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes
@@ -43,60 +49,64 @@ typedef struct attr_entry {
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names below!
 typedef enum {
-  HLF_8 = 0         // Meta & special keys listed with ":map", text that is
+  HLF_8 = 0,        // Meta & special keys listed with ":map", text that is
                     // displayed different from what it is
-  , HLF_EOB         // after the last line in the buffer
-  , HLF_TERM        // terminal cursor focused
-  , HLF_TERMNC      // terminal cursor unfocused
-  , HLF_AT          // @ characters at end of screen, characters that
-                    // don't really exist in the text
-  , HLF_D           // directories in CTRL-D listing
-  , HLF_E           // error messages
-  , HLF_I           // incremental search
-  , HLF_L           // last search string
-  , HLF_LFM         // last found match
-  , HLF_M           // "--More--" message
-  , HLF_CM          // Mode (e.g., "-- INSERT --")
-  , HLF_N           // line number for ":number" and ":#" commands
-  , HLF_CLN         // current line number
-  , HLF_R           // return to continue message and yes/no questions
-  , HLF_S           // status lines
-  , HLF_SNC         // status lines of not-current windows
-  , HLF_C           // column to separate vertically split windows
-  , HLF_T           // Titles for output from ":set all", ":autocmd" etc.
-  , HLF_V           // Visual mode
-  , HLF_VNC         // Visual mode, autoselecting and not clipboard owner
-  , HLF_W           // warning messages
-  , HLF_WM          // Wildmenu highlight
-  , HLF_FL          // Folded line
-  , HLF_FC          // Fold column
-  , HLF_ADD         // Added diff line
-  , HLF_CHD         // Changed diff line
-  , HLF_DED         // Deleted diff line
-  , HLF_TXD         // Text Changed in diff line
-  , HLF_SC          // Sign column
-  , HLF_CONCEAL     // Concealed text
-  , HLF_SPB         // SpellBad
-  , HLF_SPC         // SpellCap
-  , HLF_SPR         // SpellRare
-  , HLF_SPL         // SpellLocal
-  , HLF_PNI         // popup menu normal item
-  , HLF_PSI         // popup menu selected item
-  , HLF_PSB         // popup menu scrollbar
-  , HLF_PST         // popup menu scrollbar thumb
-  , HLF_TP          // tabpage line
-  , HLF_TPS         // tabpage line selected
-  , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursorcolumn'
-  , HLF_CUL         // 'cursorline'
-  , HLF_MC          // 'colorcolumn'
-  , HLF_QFL         // selected quickfix line
-  , HLF_0           // Whitespace
-  , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
-  , HLF_MSGSEP      // message separator line
-  , HLF_NFLOAT      // Floating window
-  , HLF_MSG         // Message area
-  , HLF_COUNT       // MUST be the last one
+  HLF_EOB,        // after the last line in the buffer
+  HLF_TERM,       // terminal cursor focused
+  HLF_TERMNC,     // terminal cursor unfocused
+  HLF_AT,          // @ characters at end of screen, characters that don't really exist in the text
+  HLF_D,          // directories in CTRL-D listing
+  HLF_E,          // error messages
+  HLF_I,          // incremental search
+  HLF_L,          // last search string
+  HLF_LFM,        // last found match
+  HLF_M,          // "--More--" message
+  HLF_CM,         // Mode (e.g., "-- INSERT --")
+  HLF_N,          // line number for ":number" and ":#" commands
+  HLF_LNA,        // LineNrAbove
+  HLF_LNB,        // LineNrBelow
+  HLF_CLN,        // current line number when 'cursorline' is set
+  HLF_CLS,        // current line sign column
+  HLF_CLF,        // current line fold
+  HLF_R,          // return to continue message and yes/no questions
+  HLF_S,          // status lines
+  HLF_SNC,        // status lines of not-current windows
+  HLF_C,          // column to separate vertically split windows
+  HLF_T,          // Titles for output from ":set all", ":autocmd" etc.
+  HLF_V,          // Visual mode
+  HLF_VNC,        // Visual mode, autoselecting and not clipboard owner
+  HLF_W,          // warning messages
+  HLF_WM,         // Wildmenu highlight
+  HLF_FL,         // Folded line
+  HLF_FC,         // Fold column
+  HLF_ADD,        // Added diff line
+  HLF_CHD,        // Changed diff line
+  HLF_DED,        // Deleted diff line
+  HLF_TXD,        // Text Changed in diff line
+  HLF_SC,         // Sign column
+  HLF_CONCEAL,    // Concealed text
+  HLF_SPB,        // SpellBad
+  HLF_SPC,        // SpellCap
+  HLF_SPR,        // SpellRare
+  HLF_SPL,        // SpellLocal
+  HLF_PNI,        // popup menu normal item
+  HLF_PSI,        // popup menu selected item
+  HLF_PSB,        // popup menu scrollbar
+  HLF_PST,        // popup menu scrollbar thumb
+  HLF_TP,         // tabpage line
+  HLF_TPS,        // tabpage line selected
+  HLF_TPF,        // tabpage line filler
+  HLF_CUC,        // 'cursorcolumn'
+  HLF_CUL,        // 'cursorline'
+  HLF_MC,         // 'colorcolumn'
+  HLF_QFL,        // selected quickfix line
+  HLF_0,          // Whitespace
+  HLF_INACTIVE,   // NormalNC: Normal text in non-current windows
+  HLF_MSGSEP,     // message separator line
+  HLF_NFLOAT,     // Floating window
+  HLF_MSG,        // Message area
+  HLF_BORDER,     // Floating window border
+  HLF_COUNT,  // MUST be the last one
 } hlf_T;
 
 EXTERN const char *hlf_names[] INIT(= {
@@ -109,11 +119,15 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_E] = "ErrorMsg",
   [HLF_I] = "IncSearch",
   [HLF_L] = "Search",
-  [HLF_M] = "MoreMsg",
   [HLF_LFM] = "SearchLastFoundMatch",
+  [HLF_M] = "MoreMsg",
   [HLF_CM] = "ModeMsg",
   [HLF_N] = "LineNr",
+  [HLF_LNA] = "LineNrAbove",
+  [HLF_LNB] = "LineNrBelow",
   [HLF_CLN] = "CursorLineNr",
+  [HLF_CLS] = "CursorLineSign",
+  [HLF_CLF] = "CursorLineFold",
   [HLF_R] = "Question",
   [HLF_S] = "StatusLine",
   [HLF_SNC] = "StatusLineNC",
@@ -151,6 +165,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_MSGSEP] = "MsgSeparator",
   [HLF_NFLOAT] = "NormalFloat",
   [HLF_MSG] = "MsgArea",
+  [HLF_BORDER] = "FloatBorder",
 });
 
 
@@ -179,6 +194,23 @@ typedef struct {
   HlKind kind;
   int id1;
   int id2;
+  int winid;
 } HlEntry;
+
+typedef struct {
+  int ns_id;
+  int syn_id;
+} ColorKey;
+#define ColorKey(n, s) (ColorKey) { .ns_id = (int)(n), .syn_id = (s) }
+
+typedef struct {
+  int attr_id;
+  int link_id;
+  int version;
+  bool is_default;
+} ColorItem;
+#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, \
+                                 .version = -1, .is_default = false }
+
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

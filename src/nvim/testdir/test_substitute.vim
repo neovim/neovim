@@ -1,6 +1,6 @@
 " Tests for multi-line regexps with ":s".
 
-function! Test_multiline_subst()
+func Test_multiline_subst()
   enew!
   call append(0, ["1 aa",
 	      \ "bb",
@@ -38,9 +38,9 @@ function! Test_multiline_subst()
   call assert_equal('7x7f', getline(12))
   call assert_equal('xxxxx', getline(13))
   enew!
-endfunction
+endfunc
 
-function! Test_substitute_variants()
+func Test_substitute_variants()
   " Validate that all the 2-/3-letter variants which embed the flags into the
   " command name actually work.
   enew!
@@ -137,7 +137,7 @@ func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile
   s/^/x
-  call feedkeys("Qsc\<CR>y", 'tx')
+  call feedkeys("gQsc\<CR>y", 'tx')
   bwipe!
 endfunc
 
@@ -149,6 +149,7 @@ func Run_SubCmd_Tests(tests)
   for t in a:tests
     let start = line('.') + 1
     let end = start + len(t[2]) - 1
+    " TODO: why is there a one second delay the first time we get here?
     exe "normal o" . t[0]
     call cursor(start, 1)
     exe t[1]
@@ -240,16 +241,16 @@ func Test_sub_cmd_3()
   call Run_SubCmd_Tests(tests)
 endfunc
 
-" Test for submatch() on :substitue.
+" Test for submatch() on :substitute.
 func Test_sub_cmd_4()
   set magic&
   set cpo&
 
   " List entry format: [input, cmd, output]
   let tests = [ ['aAa', "s/A/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \ 			['a\a']],
+	      \				['a\a']],
 	      \ ['bBb', "s/B/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \   			['b\b']],
+	      \				['b\b']],
 	      \ ['cCc', "s/C/\\=substitute(submatch(0), '.', '\<C-V>\<C-M>', '')/",
 	      \				["c\<C-V>", 'c']],
 	      \ ['dDd', "s/D/\\=substitute(submatch(0), '.', '\\\<C-V>\<C-M>', '')/",
@@ -425,6 +426,8 @@ func Test_substitute_errors()
   call assert_fails('s/FOO/bar/', 'E486:')
   call assert_fails('s/foo/bar/@', 'E488:')
   call assert_fails('s/\(/bar/', 'E476:')
+  call assert_fails('s afooabara', 'E146:')
+  call assert_fails('s\\a', 'E10:')
 
   setl nomodifiable
   call assert_fails('s/foo/bar/', 'E21:')
@@ -544,7 +547,7 @@ func Test_sub_replace_5()
 		\ substitute('A123456789',
 		\ 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)',
 		\ '\=string([submatch(0, 1), submatch(9, 1), ' .
-		\ 'submatch(8, 1), submatch(7, 1), submatch(6, 1), ' .
+		\ 'submatch(8, 1), 7->submatch(1), submatch(6, 1), ' .
 		\ 'submatch(5, 1), submatch(4, 1), submatch(3, 1), ' .
 		\ 'submatch(2, 1), submatch(1, 1)])',
 		\ ''))
@@ -610,6 +613,25 @@ func Test_sub_replace_10()
    call assert_equal('aaa', substitute('123', '.\ze', 'a', 'g'))
    call assert_equal('aa2a3a', substitute('123', '1\|\ze', 'a', 'g'))
    call assert_equal('1aaa', substitute('123', '1\zs\|[23]', 'a', 'g'))
+endfunc
+
+func SubReplacer(text, submatches)
+  return a:text .. a:submatches[0] .. a:text
+endfunc
+func SubReplacer20(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, submatches)
+  return a:t3 .. a:submatches[0] .. a:t11
+endfunc
+
+func Test_substitute_partial()
+  call assert_equal('1foo2foo3', substitute('123', '2', function('SubReplacer', ['foo']), 'g'))
+
+  " 19 arguments plus one is just OK
+  let Replacer = function('SubReplacer20', repeat(['foo'], 19))
+  call assert_equal('1foo2foo3', substitute('123', '2', Replacer, 'g'))
+
+  " 20 arguments plus one is too many
+  let Replacer = function('SubReplacer20', repeat(['foo'], 20))
+  call assert_fails("call substitute('123', '2', Replacer, 'g')", 'E118')
 endfunc
 
 func Test_sub_cmd_9()
@@ -717,3 +739,29 @@ one two
 
   close!
 endfunc
+
+func Test_sub_beyond_end()
+  new
+  call setline(1, '#')
+  let @/ = '^#\n\zs'
+  s///e
+  call assert_equal('#', getline(1))
+  bwipe!
+endfunc
+
+func Test_submatch_list_concatenate()
+  let pat = 'A\(.\)'
+  let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}
+  call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
+endfunc
+
+func Test_substitute_skipped_range()
+  new
+  if 0
+    /1/5/2/2/\n
+  endif
+  call assert_equal([0, 1, 1, 0, 1], getcurpos())
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

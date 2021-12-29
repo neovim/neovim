@@ -1201,10 +1201,6 @@ msgstr "E143: Autokomendy nieoczekiwanie skasowały nowy bufor %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nienumeryczny argument dla :z"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Komendy powłoki są niedozwolone w rvim"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Wzorce regularne nie mogą być rozgraniczane literami"
@@ -3420,10 +3416,6 @@ msgstr "-y\t\t\tTryb łatwy (jak \"evim\", bez trybów)"
 #: ../main.c:2207
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tTryb wyłącznie do odczytu (jak \"view\")"
-
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tTryb ograniczenia (jak \"rvim\")"
 
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"

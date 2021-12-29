@@ -5,7 +5,8 @@ endif
 let g:loaded_ruby_provider = 1
 
 function! provider#ruby#Detect() abort
-  return s:prog
+  let e = empty(s:prog) ? 'missing ruby or ruby-host' : ''
+  return [s:prog, e]
 endfunction
 
 function! provider#ruby#Prog() abort
@@ -45,7 +46,7 @@ endfunction
 
 function! s:detect()
   if exists("g:ruby_host_prog")
-    return expand(g:ruby_host_prog)
+    return expand(g:ruby_host_prog, v:true)
   elseif has('win32')
     return exepath('neovim-ruby-host.bat')
   else

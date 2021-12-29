@@ -115,6 +115,14 @@ status line, the '^' character is used for the current window, and '=' for
 other windows.  If 'mouse' is enabled, a status line can be dragged to resize
 windows.
 
+							*filler-lines*
+The lines after the last buffer line in a window are called filler lines.  By
+default, these lines start with a tilde (~) character. The 'eob' item in the
+'fillchars' option can be used to change this character. By default, these
+characters are highlighted as NonText (|hl-NonText|). The EndOfBuffer
+highlight group (|hl-EndOfBuffer|) can be used to change the highlighting of
+the filler characters.
+
 ==============================================================================
 3. Opening and closing a window				*opening-window* *E36*
 
@@ -124,7 +132,7 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 :[N]sp[lit] [++opt] [+cmd] [file]			*:sp* *:split*
 		Split current window in two.  The result is two viewports on
 		the same file.
-		
+
 		Make the new window N high (default is to use half the height
 		of the current window).  Reduces the current window height to
 		create room (and others, if the 'equalalways' option is set,
@@ -177,15 +185,12 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		This behaves like a ":split" first, and then an ":enew"
 		command.
 
-:[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
-		Like |:new|, but split vertically.  If 'equalalways' is set
-		and 'eadirection' isn't "ver" the windows will be spread out
-		horizontally, unless a width was specified.
-
 :[N]new [++opt] [+cmd] {file}
 :[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
 		Create a new window and start editing file {file} in it.  This
-		behaves like a ":split" first, and then an ":e" command.
+		behaves almost like a ":split" first, and then an ":edit"
+		command, but the alternate file name in the original window is
+		set to {file}.
 		If [+cmd] is given, execute the command when the file has been
 		loaded |+cmd|.
 		Also see |++opt|.
@@ -193,7 +198,12 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		height).  Reduces the current window height to create room
 		(and others, if the 'equalalways' option is set).
 
-:[N]sv[iew] [++opt] [+cmd] {file}		*:sv* *:sview* *splitview*
+:[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
+		Like |:new|, but split vertically.  If 'equalalways' is set
+		and 'eadirection' isn't "ver" the windows will be spread out
+		horizontally, unless a width was specified.
+
+:[N]sv[iew] [++opt] [+cmd] [file]		*:sv* *:sview* *splitview*
 		Same as ":split", but set 'readonly' option for this buffer.
 
 :[N]sf[ind] [++opt] [+cmd] {file}	     *:sf* *:sfi* *:sfind* *splitfind*
@@ -201,9 +211,11 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		|:find|.  Doesn't split if {file} is not found.
 
 CTRL-W CTRL-^					*CTRL-W_CTRL-^* *CTRL-W_^*
-CTRL-W ^	Does ":split #", split window in two and edit alternate file.
-		When a count is given, it becomes ":split #N", split window
-		and edit buffer N.
+CTRL-W ^	Split the current window in two and edit the alternate file.
+		When a count N is given, split the current window and edit
+		buffer N.  Similar to ":sp #" and ":sp #N", but it allows the
+		other buffer to be unnamed.  This command matches the behavior
+		of |CTRL-^|, except that it splits a window first.
 
 CTRL-W ge						*CTRL-W_ge*
 		Detach the current window as an external window.
@@ -261,14 +273,15 @@ Closing a window
 ----------------
 
 :q[uit]
-:{count}q[uit]
+:{count}q[uit]						*:count_quit*
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		Without {count}: Quit the current window. If {count} is
 		given quit the {count} window
 
-		When quitting the last window (not counting a help window),
-		exit Vim.
+							*edit-window*
+		When quitting the last edit window (not counting help or
+		preview windows), exit Vim.
 
 		When 'hidden' is set, and there is only one window for the
 		current buffer, it becomes hidden. When 'hidden' is not set,
@@ -285,6 +298,10 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		    :+quit  " quit the next window
 		    :+2quit " quit the second next window
 <
+		When closing a help window, and this is not the only window,
+		Vim will try to restore the previous window layout, see
+		|:helpclose|.
+
 :q[uit]!
 :{count}q[uit]!
 		Without {count}: Quit the current window.  If {count} is
@@ -304,9 +321,9 @@ CTRL-W c					*CTRL-W_c* *:clo* *:close*
 		[!] is used, the buffer becomes hidden (unless there is another
 		window editing it).
 
-		When there is only one window in the current tab page and
-		there is another tab page, this closes the current tab page.
-		|tab-page|.
+		When there is only one |edit-window| in the current tab page
+		and there is another tab page, this closes the current tab
+		page.  |tab-page|.
 
 		This command fails when:			*E444*
 		- There is only one window on the screen.
@@ -348,7 +365,8 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 CTRL-W o						*CTRL-W_o* *E445*
 CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
 		Make the current window the only one on the screen. All other
-		windows are closed. For {count} see |:quit|.
+		windows are closed.  For {count} see the `:quit` command
+ 		above |:count_quit|.
 
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.
@@ -478,14 +496,14 @@ CTRL-W J	Move the current window to be at the very bottom, using the
 CTRL-W H	Move the current window to be at the far left, using the
 		full height of the screen.  This works like closing the
 		current window and then creating another one with
-		":vert topleft split", except that the current window contents
+		`:vert topleft split`, except that the current window contents
 		is used for the new window.
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
 		height of the screen.  This works like closing the
 		current window and then creating another one with
-		":vert botright split", except that the current window
+		`:vert botright split`, except that the current window
 		contents is used for the new window.
 
 						*CTRL-W_T*
@@ -516,6 +534,10 @@ CTRL-W +	Increase current window height by N (default 1).
 CTRL-W CTRL-_					*CTRL-W_CTRL-_* *CTRL-W__*
 CTRL-W _	Set current window height to N (default: highest possible).
 
+:{winnr}res[ize] [+-]N
+		Like `:resize` above, but apply the size to window {winnr}
+		instead of the current window.
+
 z{nr}<CR>	Set current window height to {nr}.
 
 						*CTRL-W_<*
@@ -524,7 +546,7 @@ CTRL-W <	Decrease current window width by N (default 1).
 						*CTRL-W_>*
 CTRL-W >	Increase current window width by N (default 1).
 
-:vertical res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
+:vert[ical] res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
 CTRL-W |	Set current window width to N (default: widest possible).
 
 You can also resize a window by dragging a status line up or down with the
@@ -741,7 +763,7 @@ can also get to them with the buffer list commands, like ":bnext".
 
 Examples: >
 
-	:windo set nolist nofoldcolumn | normal zn
+	:windo set nolist foldcolumn=0 | normal! zn
 
 This resets the 'list' option and disables folding in all windows. >
 
@@ -749,7 +771,7 @@ This resets the 'list' option and disables folding in all windows. >
 
 This resets the 'fileencoding' in each buffer and writes it if this changed
 the buffer.  The result is that all buffers will use the 'encoding' encoding
-(if conversion works properly).
+(if conversion succeeds).
 
 ==============================================================================
 9. Tag or file name under the cursor			*window-tag*
@@ -1019,6 +1041,9 @@ list of buffers. |unlisted-buffer|
 			x	buffers with a read error
 			%	current buffer
 			#	alternate buffer
+			R	terminal buffers with a running job
+			F	terminal buffers with a finished job
+			t	show time last used and sort buffers
 		Combining flags means they are "and"ed together, e.g.:
 			h+	hidden buffers which are modified
 			a+	active buffers which are modified
@@ -1029,10 +1054,17 @@ list of buffers. |unlisted-buffer|
 <
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}
-		Add file name {fname} to the buffer list, without loading it.
+		Add file name {fname} to the buffer list, without loading it,
+		if it wasn't listed yet.  If the buffer was previously
+		deleted, not wiped, it will be made listed again.
 		If "lnum" is specified, the cursor will be positioned at that
 		line when the buffer is first entered.  Note that other
 		commands after the + will be ignored.
+
+						 *:balt*
+:balt [+lnum] {fname}
+		Like `:badd` and also set the alternate file for the current
+		window to {fname}.
 
 :[N]bd[elete][!]			*:bd* *:bdel* *:bdelete* *E516*
 :bd[elete][!] [N]

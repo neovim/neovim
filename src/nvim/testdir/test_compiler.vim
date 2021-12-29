@@ -37,22 +37,31 @@ func Test_compiler()
   bw!
 endfunc
 
+func GetCompilerNames()
+  return glob('$VIMRUNTIME/compiler/*.vim', 0, 1)
+       \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
+       \ ->sort()
+endfunc
+
 func Test_compiler_without_arg()
-  let a=split(execute('compiler'))
-  call assert_match('^.*runtime/compiler/ant.vim$',   a[0])
-  call assert_match('^.*runtime/compiler/bcc.vim$',   a[1])
-  call assert_match('^.*runtime/compiler/xmlwf.vim$', a[-1])
+  let runtime = substitute($VIMRUNTIME, '\\', '/', 'g')
+  let a = split(execute('compiler'))
+  let exp = GetCompilerNames()
+  call assert_match(runtime .. '/compiler/' .. exp[0] .. '.vim$',  a[0])
+  call assert_match(runtime .. '/compiler/' .. exp[1] .. '.vim$',  a[1])
+  call assert_match(runtime .. '/compiler/' .. exp[-1] .. '.vim$', a[-1])
 endfunc
 
 func Test_compiler_completion()
+  let clist = GetCompilerNames()->join(' ')
   call feedkeys(":compiler \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"compiler ant bcc .* xmlwf$', @:)
+  call assert_match('^"compiler ' .. clist .. '$', @:)
 
   call feedkeys(":compiler p\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"compiler pbx perl php pylint pyunit', @:)
+  call assert_match('"compiler pbx perl\( p[a-z]\+\)\+ pylint pyunit', @:)
 
   call feedkeys(":compiler! p\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"compiler! pbx perl php pylint pyunit', @:)
+  call assert_match('"compiler! pbx perl\( p[a-z]\+\)\+ pylint pyunit', @:)
 endfunc
 
 func Test_compiler_error()

@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('autoformat join', function()
   setup(clear)
@@ -21,7 +21,7 @@ Results:]])
 
     feed('gg')
     feed('0gqj<cr>')
-    wait()
+    poke_eventloop()
 
     command([[let a=string(getpos("'[")).'/'.string(getpos("']"))]])
     command("g/^This line/;'}-join")

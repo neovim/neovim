@@ -49,11 +49,14 @@ func Test_dict()
   let d['a'] = 'aaa'
   call assert_equal('none', d[''])
   call assert_equal('aaa', d['a'])
+
+  let d[ 'b' ] = 'bbb'
+  call assert_equal('bbb', d[ 'b' ])
 endfunc
 
 func Test_strgetchar()
   call assert_equal(char2nr('a'), strgetchar('axb', 0))
-  call assert_equal(char2nr('x'), strgetchar('axb', 1))
+  call assert_equal(char2nr('x'), 'axb'->strgetchar(1))
   call assert_equal(char2nr('b'), strgetchar('axb', 2))
 
   call assert_equal(-1, strgetchar('axb', -1))
@@ -63,7 +66,7 @@ endfunc
 
 func Test_strcharpart()
   call assert_equal('a', strcharpart('axb', 0, 1))
-  call assert_equal('x', strcharpart('axb', 1, 1))
+  call assert_equal('x', 'axb'->strcharpart(1, 1))
   call assert_equal('b', strcharpart('axb', 2, 1))
   call assert_equal('xb', strcharpart('axb', 1))
 
@@ -122,22 +125,7 @@ func Test_option_value()
 endfunc
 
 function Test_printf_64bit()
-  if has('num64')
-    call assert_equal("123456789012345", printf('%d', 123456789012345))
-  endif
-endfunc
-
-func Test_setmatches()
-  hi def link 1 Comment
-  hi def link 2 PreProc
-  let set = [{"group": 1, "pattern": 2, "id": 3, "priority": 4}]
-  let exp = [{"group": '1', "pattern": '2', "id": 3, "priority": 4}]
-  if has('conceal')
-    let set[0]['conceal'] = 5
-    let exp[0]['conceal'] = '5'
-  endif
-  call setmatches(set)
-  call assert_equal(exp, getmatches())
+  call assert_equal("123456789012345", printf('%d', 123456789012345))
 endfunc
 
 function Test_printf_spec_s()
@@ -159,10 +147,23 @@ function Test_printf_spec_s()
   call assert_equal(string(value), printf('%s', value))
 
   " funcref
-  call assert_equal('printf', printf('%s', function('printf')))
+  call assert_equal('printf', printf('%s', 'printf'->function()))
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
+endfunc
+
+function Test_printf_spec_b()
+  call assert_equal("0", printf('%b', 0))
+  call assert_equal("00001100", printf('%08b', 12))
+  call assert_equal("11111111", printf('%08b', 0xff))
+  call assert_equal("   1111011", printf('%10b', 123))
+  call assert_equal("0001111011", printf('%010b', 123))
+  call assert_equal(" 0b1111011", printf('%#10b', 123))
+  call assert_equal("0B01111011", printf('%#010B', 123))
+  call assert_equal("1001001100101100000001011010010", printf('%b', 1234567890))
+  call assert_equal("11100000100100010000110000011011101111101111001", printf('%b', 123456789012345))
+  call assert_equal("1111111111111111111111111111111111111111111111111111111111111111", printf('%b', -1))
 endfunc
 
 function Test_printf_misc()
@@ -278,6 +279,9 @@ function Test_printf_misc()
   call assert_equal('0abc', printf('%04S', 'abc'))
   call assert_equal('abc ', printf('%-4s', 'abc'))
   call assert_equal('abc ', printf('%-4S', 'abc'))
+
+  call assert_equal('🐍', printf('%.2S', '🐍🐍'))
+  call assert_equal('', printf('%.1S', '🐍🐍'))
 
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
@@ -395,7 +399,11 @@ function Test_printf_errors()
   call assert_fails('echo printf("%d", [])', 'E745:')
   call assert_fails('echo printf("%d", 1, 2)', 'E767:')
   call assert_fails('echo printf("%*d", 1)', 'E766:')
-  call assert_fails('echo printf("%d", 1.2)', 'E805:')
+  call assert_fails('echo printf("%s")', 'E766:')
+  if has('float')
+    call assert_fails('echo printf("%d", 1.2)', 'E805:')
+    call assert_fails('echo printf("%f")')
+  endif
 endfunc
 
 function Test_max_min_errors()
@@ -469,12 +477,47 @@ func Test_funcref()
   endfunc
   call assert_equal(2, OneByName())
   call assert_equal(1, OneByRef())
-  let OneByRef = funcref('One')
+  let OneByRef = 'One'->funcref()
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
+  let OneByRef = funcref("One", repeat(["foo"], 20))
+  call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
+endfunc
+
+func Test_setmatches()
+  hi def link 1 Comment
+  hi def link 2 PreProc
+  let set = [{"group": 1, "pattern": 2, "id": 3, "priority": 4}]
+  let exp = [{"group": '1', "pattern": '2', "id": 3, "priority": 4}]
+  if has('conceal')
+    let set[0]['conceal'] = 5
+    let exp[0]['conceal'] = '5'
+  endif
+  eval set->setmatches()
+  call assert_equal(exp, getmatches())
 endfunc
 
 func Test_empty_concatenate()
   call assert_equal('b', 'a'[4:0] . 'b')
   call assert_equal('b', 'b' . 'a'[4:0])
+endfunc
+
+func Test_broken_number()
+  let X = 'bad'
+  call assert_fails('echo 1X', 'E15:')
+  call assert_fails('echo 0b1X', 'E15:')
+  call assert_fails('echo 0b12', 'E15:')
+  call assert_fails('echo 0x1X', 'E15:')
+  call assert_fails('echo 011X', 'E15:')
+  call assert_equal(2, str2nr('2a'))
+  call assert_fails('inoremap <Char-0b1z> b', 'E474:')
+endfunc
+
+func Test_eval_after_if()
+  let s:val = ''
+  func SetVal(x)
+    let s:val ..= a:x
+  endfunc
+  if 0 | eval SetVal('a') | endif | call SetVal('b')
+  call assert_equal('b', s:val)
 endfunc

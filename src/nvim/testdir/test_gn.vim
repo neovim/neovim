@@ -1,9 +1,8 @@
 " Test for gn command
 
 func Test_gn_command()
-  set belloff=all
   noautocmd new
-  " replace a single char by itsself quoted:
+  " replace a single char by itself quoted:
   call setline('.', 'abc x def x ghi x jkl')
   let @/ = 'x'
   exe "norm! cgn'x'\<esc>.."
@@ -129,9 +128,60 @@ func Test_gn_command()
   call assert_equal([' nnoremap', '', 'match'], getline(1,'$'))
   sil! %d_
 
+  " make sure it works correctly for one-char wide search items
+  call setline('.', ['abcdefghi'])
+  let @/ = 'a'
+  exe "norm! 0fhvhhgNgU"
+  call assert_equal(['ABCDEFGHi'], getline(1,'$'))
+  call setline('.', ['abcdefghi'])
+  let @/ = 'b'
+  " this gn wraps around the end of the file
+  exe "norm! 0fhvhhgngU"
+  call assert_equal(['aBCDEFGHi'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['abcdefghi'])
+  let @/ = 'f'
+  exe "norm! 0vllgngU"
+  call assert_equal(['ABCDEFghi'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['12345678'])
+  let @/ = '5'
+  norm! gg0f7vhhhhgnd
+  call assert_equal(['12348'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['12345678'])
+  let @/ = '5'
+  norm! gg0f2vf7gNd
+  call assert_equal(['1678'], getline(1,'$'))
+  sil! %d _
+
   set wrapscan&vim
-  set belloff&vim
-endfu
+endfunc
+
+func Test_gN_repeat()
+  new
+  call setline(1, 'this list is a list with a list of a list.')
+  /list
+  normal $gNgNgNx
+  call assert_equal('list with a list of a list', @")
+  bwipe!
+endfunc
+
+func Test_gN_then_gn()
+  new
+
+  call setline(1, 'this list is a list with a list of a last.')
+  /l.st
+  normal $gNgNgnx
+  call assert_equal('last', @")
+
+  call setline(1, 'this list is a list with a lust of a last.')
+  /l.st
+  normal $gNgNgNgnx
+  call assert_equal('lust of a last', @")
+
+  bwipe!
+endfunc
 
 func Test_gn_multi_line()
   new

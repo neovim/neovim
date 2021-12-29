@@ -1,15 +1,27 @@
 #ifndef NVIM_LOG_H
 #define NVIM_LOG_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "auto/config.h"
+#include "nvim/macros.h"
 
-#define DEBUG_LOG_LEVEL 0
-#define INFO_LOG_LEVEL 1
-#define WARN_LOG_LEVEL 2
-#define ERROR_LOG_LEVEL 3
+// USDT probes. Example invocation:
+//     NVIM_PROBE(nvim_foo_bar, 1, string.data);
+#if defined(HAVE_SYS_SDT_H)
+# include <sys/sdt.h>  // NOLINT
+# define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)
+#else
+# define NVIM_PROBE(name, n, ...)
+#endif
+
+
+#define TRACE_LOG_LEVEL 0
+#define DEBUG_LOG_LEVEL 1
+#define INFO_LOG_LEVEL 2
+#define WARN_LOG_LEVEL 3
+#define ERROR_LOG_LEVEL 4
 
 #define DLOG(...)
 #define DLOGN(...)
@@ -21,7 +33,7 @@
 #define ELOGN(...)
 
 #ifndef MIN_LOG_LEVEL
-#  define MIN_LOG_LEVEL INFO_LOG_LEVEL
+# define MIN_LOG_LEVEL INFO_LOG_LEVEL
 #endif
 
 #define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, \
@@ -66,6 +78,10 @@
 #ifdef HAVE_EXECINFO_BACKTRACE
 # define LOG_CALLSTACK() log_callstack(__func__, __LINE__)
 # define LOG_CALLSTACK_TO_FILE(fp) log_callstack_to_file(fp, __func__, __LINE__)
+#endif
+
+#if NVIM_HAS_INCLUDE("sanitizer/asan_interface.h")
+# include "sanitizer/asan_interface.h"
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

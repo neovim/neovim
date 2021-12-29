@@ -34,5 +34,5 @@ function GetTreetopIndent()
     let ind -= shiftwidth()
   end
 
-  retur ind
+  return ind
 endfunction

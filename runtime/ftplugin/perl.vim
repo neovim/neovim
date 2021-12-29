@@ -1,9 +1,9 @@
 " Vim filetype plugin file
 " Language:      Perl
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2015-02-09
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" Last Change:   2020 Apr 15
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1

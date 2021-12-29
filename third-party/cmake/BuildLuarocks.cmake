@@ -52,13 +52,17 @@ if(NOT MSVC)
   set(LUAROCKS_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
 endif()
 
+# Lua version, used with rocks directories.
+# Defaults to 5.1 for bundled LuaJIT/Lua.
+set(LUA_VERSION "5.1")
+
 if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 
   if(USE_BUNDLED_LUAJIT)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR}
-      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.0
-      --lua-suffix=jit)
+      --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.1
+      --with-lua-interpreter=luajit)
   elseif(USE_BUNDLED_LUA)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR})
@@ -66,9 +70,23 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
     find_package(LuaJit)
     if(LUAJIT_FOUND)
       list(APPEND LUAROCKS_OPTS
-        --lua-version=5.1
         --with-lua-include=${LUAJIT_INCLUDE_DIRS}
-        --lua-suffix=jit)
+        --with-lua-interpreter=luajit)
+    endif()
+
+    # Get LUA_VERSION used with rocks output.
+    if(LUAJIT_FOUND)
+      set(LUA_EXE "luajit")
+    else()
+      set(LUA_EXE "lua")
+    endif()
+    execute_process(
+      COMMAND ${LUA_EXE} -e "print(string.sub(_VERSION, 5))"
+      OUTPUT_VARIABLE LUA_VERSION
+      ERROR_VARIABLE ERR
+      RESULT_VARIABLE RES)
+    if(NOT RES EQUAL 0)
+      message(FATAL_ERROR "Could not get LUA_VERSION with ${LUA_EXE}: ${ERR}")
     endif()
   endif()
 
@@ -89,7 +107,7 @@ elseif(MSVC OR MINGW)
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
-    /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0
+    /INC ${DEPS_INSTALL_DIR}/include/luajit-2.1
     /P ${DEPS_INSTALL_DIR}/luarocks /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
@@ -111,7 +129,7 @@ if(USE_BUNDLED_LUAJIT)
 elseif(USE_BUNDLED_LUA)
   add_dependencies(luarocks lua)
 endif()
-set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks)
+set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
@@ -184,8 +202,13 @@ if(USE_BUNDLED_BUSTED)
     set(LUV_ARGS "CFLAGS=-O0 -g3 -fPIC")
     if(USE_BUNDLED_LIBUV)
       list(APPEND LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR})
+      # workaround for bug introduced in
+      # https://github.com/luarocks/luarocks/commit/83126ba324846b754ffc5e0345341f01262b3f86
+      if(MSVC)
+        list(APPEND LUV_ARGS LIBUV_LIBDIR=${HOSTDEPS_INSTALL_DIR}/lib)
+      endif()
     endif()
-    SET(LUV_PRIVATE_ARGS LUA_COMPAT53_INCDIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3)
+    SET(LUV_PRIVATE_ARGS LUA_COMPAT53_INCDIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3/c-api)
     add_custom_command(OUTPUT ${ROCKS_DIR}/luv
       COMMAND ${LUAROCKS_BINARY}
       ARGS make ${LUAROCKS_BUILDARGS} ${LUV_ARGS} ${LUV_PRIVATE_ARGS}
@@ -199,10 +222,10 @@ if(USE_BUNDLED_BUSTED)
   endif()
   add_custom_target(luv DEPENDS ${ROCKS_DIR}/luv)
 
-  # nvim-client
+  # nvim-client: https://github.com/neovim/lua-client
   add_custom_command(OUTPUT ${ROCKS_DIR}/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build nvim-client 0.2.0-1 ${LUAROCKS_BUILDARGS}
+    ARGS build nvim-client 0.2.2-1 ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client DEPENDS ${ROCKS_DIR}/nvim-client)
 

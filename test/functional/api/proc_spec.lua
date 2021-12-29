@@ -10,7 +10,7 @@ local request = helpers.request
 local retry = helpers.retry
 local NIL = helpers.NIL
 
-describe('api', function()
+describe('API', function()
   before_each(clear)
 
   describe('nvim_get_proc_children', function()

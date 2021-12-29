@@ -33,7 +33,7 @@ using a count: "4x" deletes four characters.
 move word command.  In fact, the "d" command may be followed by any motion
 command, and it deletes from the current location to the place where the
 cursor winds up.
-   The "4w" command, for example, moves the cursor over four words.  The d4w
+   The "4w" command, for example, moves the cursor over four words.  The "d4w"
 command deletes four words.
 
 	To err is human. To really foul up you need a computer. ~
@@ -91,14 +91,14 @@ This "c2wbe<Esc>" contains these bits:
 	be	insert this text
 	<Esc>	back to Normal mode
 
-If you have paid attention, you will have noticed something strange: The space
-before "human" isn't deleted.  There is a saying that for every problem there
-is an answer that is simple, clear, and wrong.  That is the case with the
-example used here for the "cw" command.  The c operator works just like the
-d operator, with one exception: "cw".  It actually works like "ce", change to
-end of word.  Thus the space after the word isn't included.  This is an
-exception that dates back to the old Vi.  Since many people are used to it
-now, the inconsistency has remained in Vim.
+You will have noticed something strange: The space before "human" isn't
+deleted.  There is a saying that for every problem there is an answer that is
+simple, clear, and wrong.  That is the case with the example used here for the
+"cw" command.  The c operator works just like the d operator, with one
+exception: "cw".  It actually works like "ce", change to end of word.  Thus
+the space after the word isn't included.  This is an exception that dates back
+to the old Vi.  Since many people are used to it now, the inconsistency has
+remained in Vim.
 
 
 MORE CHANGES
@@ -114,7 +114,7 @@ Insert mode and append new text.
 SHORTCUTS
 
 Some operator-motion commands are used so often that they have been given a
-single letter command:
+single-letter command:
 
 	x  stands for  dl  (delete character under the cursor)
 	X  stands for  dh  (delete character left of the cursor)
@@ -138,6 +138,7 @@ REPLACING WITH ONE CHARACTER
 The "r" command is not an operator.  It waits for you to type a character, and
 will replace the character under the cursor with it.  You could do the same
 with "cl" or with the "s" command, but with "r" you don't have to press <Esc>
+to get back out of insert mode.
 
 	there is somerhing grong here ~
 	rT	     rt    rw
@@ -160,11 +161,11 @@ line break.
 ==============================================================================
 *04.3*	Repeating a change
 
-The "." command is one of the most simple yet powerful commands in Vim.  It
+The "." command is one of the simplest yet powerful commands in Vim.  It
 repeats the last change.  For instance, suppose you are editing an HTML file
 and want to delete all the <B> tags.  You position the cursor on the first <
 and delete the <B> with the command "df>".  You then go to the < of the next
-</B> and kill it using the "." command.  The "." command executes the last
+</B> and delete it using the "." command.  The "." command executes the last
 change command (in this case, "df>").  To delete another tag, position the
 cursor on the < and use the "." command.
 
@@ -176,8 +177,8 @@ cursor on the < and use the "." command.
 	f<   find next <		       ------------->
 	.    repeat df>					    -->
 
-The "." command works for all changes you make, except for the "u" (undo),
-CTRL-R (redo) and commands that start with a colon (:).
+The "." command works for all changes you make, except for "u" (undo), CTRL-R
+(redo) and commands that start with a colon (:).
 
 Another example: You want to change the word "four" to "five".  It appears
 several times in your text.  You can do this quickly with this sequence of
@@ -269,8 +270,8 @@ where they open a new line below or above the cursor.
 ==============================================================================
 *04.5*	Moving text
 
-When you delete something with the "d", "x", or another command, the text is
-saved.  You can paste it back by using the p command.  (The Vim name for
+When you delete something with "d", "x", or another command, the text is
+saved.  You can paste it back by using the "p" command.  (The Vim name for
 this is put).
    Take a look at how this works.  First you will delete an entire line, by
 putting the cursor on the line you want to delete and typing "dd".  Now you
@@ -362,11 +363,11 @@ Use "y$" to yank to the end of the line.
 
 If you are using the GUI version of Vim (gvim), you can find the "Copy" item
 in the "Edit" menu.  First select some text with Visual mode, then use the
-Edit/Copy menu.  The selected text is now copied to the clipboard.  You can
-paste the text in other programs.  In Vim itself too.
+Edit/Copy menu item.  The selected text is now copied to the clipboard.  You
+can paste the text in other programs.  In Vim itself too.
 
 If you have copied text to the clipboard in another application, you can paste
-it in Vim with the Edit/Paste menu.  This works in Normal mode and Insert
+it in Vim with the Edit/Paste menu item.  This works in Normal mode and Insert
 mode.  In Visual mode the selected text is replaced with the pasted text.
 
 The "Cut" menu item deletes the text before it's put on the clipboard.  The
@@ -385,7 +386,7 @@ To put text from the clipboard back into the text: >
 	"*p
 
 This only works on versions of Vim that include clipboard support.  More about
-the clipboard in section |09.3| and here: |clipboard|.
+the clipboard can be found in section |09.3| and here: |clipboard|.
 
 ==============================================================================
 *04.8*	Text objects
@@ -401,8 +402,8 @@ to do this: "daw".
 
 The "d" of "daw" is the delete operator.  "aw" is a text object.  Hint: "aw"
 stands for "A Word".  Thus "daw" is "Delete A Word".  To be precise, the white
-space after the word is also deleted (the white space before the word at the
-end of the line).
+space after the word is also deleted (or the white space before the word if at
+the end of the line).
 
 Using text objects is the third way to make changes in Vim.  We already had
 operator-motion and Visual mode.  Now we add operator-text object.
@@ -429,11 +430,11 @@ sentence "Another line.":
 	some text. ~
 
 "cis" consists of the "c" (change) operator and the "is" text object.  This
-stands for "Inner Sentence".  There is also the "as" (a sentence) object.  The
-difference is that "as" includes the white space after the sentence and "is"
-doesn't.  If you would delete a sentence, you want to delete the white space
-at the same time, thus use "das".  If you want to type new text the white
-space can remain, thus you use "cis".
+stands for "Inner Sentence".  There is also the "as" ("A Sentence") object.
+The difference is that "as" includes the white space after the sentence and
+"is" doesn't.  If you would delete a sentence, you want to delete the white
+space at the same time, thus use "das".  If you want to type new text the
+white space can remain, thus you use "cis".
 
 You can also use text objects in Visual mode.  It will include the text object
 in the Visual selection.  Visual mode continues, thus you can do this several
@@ -462,21 +463,21 @@ of characters to replace.  It will not continue on the next line.
 
 You can switch between Insert mode and Replace mode with the <Insert> key.
 
-When you use <BS> (backspace) to make correction, you will notice that the
-old text is put back.  Thus it works like an undo command for the last typed
-character.
+When you use <BS> (backspace) to make a correction, you will notice that the
+old text is put back.  Thus it works like an undo command for the previously
+typed character.
 
 ==============================================================================
 *04.10*	Conclusion
 
 The operators, movement commands and text objects give you the possibility to
-make lots of combinations.  Now that you know how it works, you can use N
+make lots of combinations.  Now that you know how they work, you can use N
 operators with M movement commands to make N * M commands!
 
-You can find a list of operators here: |operator|
+You can find a list of operators here: |operator|.
 
 For example, there are many other ways to delete pieces of text.  Here are a
-few often used ones:
+few common ones:
 
 x	delete character under the cursor (short for "dl")
 X	delete character before the cursor (short for "dh")
@@ -492,14 +493,14 @@ If you use "c" instead of "d" they become change commands.  And with "y" you
 yank the text.  And so forth.
 
 
-There are a few often used commands to make changes that didn't fit somewhere
+There are a few common commands to make changes that didn't fit somewhere
 else:
 
-	~	change case of the character under the cursor, and move the
+	~	Change case of the character under the cursor, and move the
 		cursor to the next character.  This is not an operator (unless
 		'tildeop' is set), thus you can't use it with a motion
-		command.  It does work in Visual mode and changes case for
-		all the selected text then.
+		command.  It does work in Visual mode, where it changes case
+		for all the selected text.
 
 	I	Start Insert mode after moving the cursor to the first
 		non-blank in the line.

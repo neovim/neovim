@@ -25,13 +25,19 @@ func Test_move_cursor()
   call cursor(9, 1)
   call assert_equal([4, 1, 0, 1], getcurpos()[1:])
 
+  call setline(1, ["\<TAB>"])
+  call cursor(1, 1, 1)
+  call assert_equal([1, 1, 1], getcurpos()[1:3])
+
+  call assert_equal(-1, cursor(-1, -1))
+
   quit!
 endfunc
 
 " Very short version of what matchparen does.
 function s:Highlight_Matching_Pair()
   let save_cursor = getcurpos()
-  call setpos('.', save_cursor)
+  eval save_cursor->setpos('.')
 endfunc
 
 func Test_curswant_with_autocommand()
@@ -66,6 +72,7 @@ func Test_curswant_with_cursorline()
 endfunc
 
 func Test_screenpos()
+  throw 'skipped: TODO: '
   rightbelow new
   rightbelow 20vsplit
   call setline(1, ["\tsome text", "long wrapping line here", "next line"])
@@ -75,11 +82,11 @@ func Test_screenpos()
   call assert_equal({'row': winrow,
     \ 'col': wincol + 0,
     \ 'curscol': wincol + 7,
-    \ 'endcol': wincol + 7}, screenpos(winid, 1, 1))
+    \ 'endcol': wincol + 7}, winid->screenpos(1, 1))
   call assert_equal({'row': winrow,
     \ 'col': wincol + 13,
     \ 'curscol': wincol + 13,
-    \ 'endcol': wincol + 13}, screenpos(winid, 1, 7))
+    \ 'endcol': wincol + 13}, winid->screenpos(1, 7))
   call assert_equal({'row': winrow + 2,
     \ 'col': wincol + 1,
     \ 'curscol': wincol + 1,
@@ -89,6 +96,26 @@ func Test_screenpos()
     \ 'col': wincol + 9,
     \ 'curscol': wincol + 9,
     \ 'endcol': wincol + 9}, screenpos(winid, 2, 22))
+  close
+  bwipe!
+
+  call assert_equal({'col': 1, 'row': 1, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  nmenu WinBar.TEST :
+  call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  nunmenu WinBar.TEST
+endfunc
+
+func Test_screenpos_number()
+  rightbelow new
+  rightbelow 73vsplit
+  call setline (1, repeat('x', 66))
+  setlocal number
+  redraw
+  let winid = win_getid()
+  let [winrow, wincol] = win_screenpos(winid)
+  let pos = screenpos(winid, 1, 66)
+  call assert_equal(winrow, pos.row)
+  call assert_equal(wincol + 66 + 3, pos.col)
   close
   bwipe!
 endfunc

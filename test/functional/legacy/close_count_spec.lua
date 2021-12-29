@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
@@ -110,23 +110,23 @@ describe('close_count', function()
     command('for i in range(5)|new|endfor')
     command('4wincmd w')
     feed('<C-W>c<cr>')
-    wait()
+    poke_eventloop()
     command('let buffers = []')
     command('windo call add(buffers, bufnr("%"))')
     eq({25, 24, 23, 21, 1}, eval('buffers'))
     feed('1<C-W>c<cr>')
-    wait()
+    poke_eventloop()
     command('let buffers = []')
     command('windo call add(buffers, bufnr("%"))')
     eq({24, 23, 21, 1}, eval('buffers'))
     feed('9<C-W>c<cr>')
-    wait()
+    poke_eventloop()
     command('let buffers = []')
     command('windo call add(buffers, bufnr("%"))')
     eq({24, 23, 21}, eval('buffers'))
     command('1wincmd w')
     feed('2<C-W>c<cr>')
-    wait()
+    poke_eventloop()
     command('let buffers = []')
     command('windo call add(buffers, bufnr("%"))')
     eq({24, 21}, eval('buffers'))

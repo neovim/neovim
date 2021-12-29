@@ -121,13 +121,12 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   local screen = Screen.new(30, 4)
   screen:set_default_attr_ids({
     -- "Normal" highlight emitted by the child nvim process.
-    N_child = {foreground = tonumber('0x4040ff'), background = tonumber('0xffff40')},
-    -- "Search" highlight emitted by the child nvim process.
-    S_child = {background = tonumber('0xffff40'), italic = true, foreground = tonumber('0x4040ff')},
+    N_child = {foreground = tonumber('0x4040ff'), background = tonumber('0xffff40'), fg_indexed=true, bg_indexed=true},
     -- "Search" highlight in the parent nvim process.
     S = {background = Screen.colors.Green, italic = true, foreground = Screen.colors.Red},
     -- "Question" highlight in the parent nvim process.
-    Q = {background = tonumber('0xffff40'), bold = true, foreground = Screen.colors.SeaGreen4},
+    -- note: bg is indexed as it comes from the (cterm) child, while fg isn't as it comes from (rgb) parent
+    Q = {background = tonumber('0xffff40'), bold = true, foreground = Screen.colors.SeaGreen4, bg_indexed=true},
   })
   screen:attach({rgb=true})
   -- Child nvim process in :terminal (with cterm colors).
@@ -160,6 +159,54 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   ]])
 end)
 
+describe(':terminal highlight forwarding', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 7)
+    screen:set_rgb_cterm(true)
+    screen:set_default_attr_ids({
+      [1] = {{reverse = true}, {reverse = true}},
+      [2] = {{bold = true}, {bold = true}},
+      [3] = {{fg_indexed = true, foreground = tonumber('0xe0e000')}, {foreground = 3}},
+      [4] = {{foreground = tonumber('0xff8000')}, {}},
+    })
+    screen:attach()
+    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      {1: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {2:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('will handle cterm and rgb attributes', function()
+    if helpers.pending_win32(pending) then return end
+    thelpers.set_fg(3)
+    thelpers.feed_data('text')
+    thelpers.feed_termcode('[38:2:255:128:0m')
+    thelpers.feed_data('color')
+    thelpers.clear_attrs()
+    thelpers.feed_data('text')
+    screen:expect{grid=[[
+      tty ready                                         |
+      {3:text}{4:color}text{1: }                                    |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {2:-- TERMINAL --}                                    |
+    ]]}
+  end)
+end)
+
+
 describe(':terminal highlight with custom palette', function()
   local screen
 
@@ -167,7 +214,7 @@ describe(':terminal highlight with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = tonumber('0x123456')},
+      [1] = {foreground = tonumber('0x123456')}, -- no fg_indexed when overriden
       [2] = {foreground = 12},
       [3] = {bold = true, reverse = true},
       [5] = {background = 11},

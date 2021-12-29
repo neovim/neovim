@@ -6,12 +6,14 @@ local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.fee
 local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 local pcall_err = helpers.pcall_err
+local exec_lua = helpers.exec_lua
+local assert_alive = helpers.assert_alive
 
 describe(':terminal scrollback', function()
   local screen
@@ -19,10 +21,6 @@ describe(':terminal scrollback', function()
   before_each(function()
     clear()
     screen = thelpers.screen_setup(nil, nil, 30)
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   describe('when the limit is exceeded', function()
@@ -351,7 +349,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
     feed_command('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
-    wait()
+    poke_eventloop()
     screen:expect([[
       line6                         |
       line7                         |
@@ -406,8 +404,6 @@ describe("'scrollback' option", function()
     feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
-
-    screen:detach()
   end)
 
   it('deletes lines (only) if necessary', function()
@@ -416,6 +412,7 @@ describe("'scrollback' option", function()
       command([[let $PROMPT='$$']])
       screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
+      command('let $PS1 = "$"')
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
@@ -429,7 +426,7 @@ describe("'scrollback' option", function()
 
     retry(nil, nil, function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
-    wait()
+    poke_eventloop()
     retry(nil, nil, function() expect_lines(16) end)
     curbufmeths.set_option('scrollback', 10000)
     retry(nil, nil, function() expect_lines(16) end)
@@ -455,7 +452,7 @@ describe("'scrollback' option", function()
         38: line                      |
         39: line                      |
         40: line                      |
-        {IGNORE}|
+        {MATCH:.*}|
         {3:-- TERMINAL --}                |
       ]]}
     end
@@ -464,8 +461,6 @@ describe("'scrollback' option", function()
     -- Verify off-screen state
     eq((iswin() and '36: line' or '35: line'), eval("getline(line('w0') - 1)"))
     eq((iswin() and '27: line' or '26: line'), eval("getline(line('w0') - 10)"))
-
-    screen:detach()
   end)
 
   it('defaults to 10000 in :terminal buffers', function()
@@ -533,4 +528,72 @@ describe("'scrollback' option", function()
     eq(734, curbufmeths.get_option('scrollback'))
   end)
 
+end)
+
+describe("pending scrollback line handling", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 7)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Brown},
+      [2] = {reverse = true},
+      [3] = {bold = true},
+    }
+  end)
+
+  it("does not crash after setting 'number' #14891", function()
+    exec_lua [[
+      local a = vim.api
+      local buf = a.nvim_create_buf(true, true)
+      local chan = a.nvim_open_term(buf, {})
+      a.nvim_win_set_option(0, "number", true)
+      a.nvim_chan_send(chan, ("a\n"):rep(11) .. "a")
+      a.nvim_win_set_buf(0, buf)
+    ]]
+    screen:expect [[
+      {1:  1 }^a                         |
+      {1:  2 } a                        |
+      {1:  3 }  a                       |
+      {1:  4 }   a                      |
+      {1:  5 }    a                     |
+      {1:  6 }     a                    |
+                                    |
+    ]]
+    feed('G')
+    screen:expect [[
+      {1:  7 }      a                   |
+      {1:  8 }       a                  |
+      {1:  9 }        a                 |
+      {1: 10 }         a                |
+      {1: 11 }          a               |
+      {1: 12 }           ^a              |
+                                    |
+    ]]
+    assert_alive()
+  end)
+
+  it("does not crash after nvim_buf_call #14891", function()
+    exec_lua [[
+      local a = vim.api
+      local bufnr = a.nvim_create_buf(false, true)
+      a.nvim_buf_call(bufnr, function()
+        vim.fn.termopen({"echo", ("hi\n"):rep(11)})
+      end)
+      a.nvim_win_set_buf(0, bufnr)
+      vim.cmd("startinsert")
+    ]]
+    screen:expect [[
+      hi                            |
+      hi                            |
+      hi                            |
+                                    |
+                                    |
+      [Process exited 0]{2: }           |
+      {3:-- TERMINAL --}                |
+    ]]
+    assert_alive()
+  end)
 end)

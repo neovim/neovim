@@ -323,7 +323,7 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Ensimmäisen puskurin ohi ei voi edetä"
 
 #, fuzzy, c-format
-#~ msgid "E89: %s will be killed(add ! to override)"
+#~ msgid "E89: %s will be killed (add ! to override)"
 #~ msgstr "E189: %s on jo olemassa (lisää komentoon ! ohittaaksesi)"
 
 #, fuzzy, c-format
@@ -1514,10 +1514,6 @@ msgstr "E143: Autocommand poisti uuden puskurin odotuksen vastaisesti %s"
 
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z:n argumentti ei ole numero"
-
-#, fuzzy
-#~ msgid "E145: Shell commands not allowed in restricted mode"
-#~ msgstr "E145: Kuoren komennot eivät toimi rvimissä"
 
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Säännöllistä ilmausta ei voi rajata kirjaimilla"
@@ -3253,10 +3249,6 @@ msgstr ""
 #~ msgstr "                              kahta tilaa varten "
 
 #, fuzzy
-#~ msgid "  -Z                    Restricted mode\n"
-#~ msgstr "                              kahta tilaa varten "
-
-#, fuzzy
 #~ msgid "  -m                    Modifications (writing files) not allowed\n"
 #~ msgstr "-m\t\t\tMuokkaukset (kirjoittaminen tiedostoon) pois käytöstä"
 
@@ -4206,8 +4198,6 @@ msgstr "E537: commentstringin pitää olla tyhjä tai sisältää %s"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Sulkematon lausekesarja"
 
-msgid "E541: too many items"
-msgstr "E541: liikaa kohteita"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: epätasapainoisia ryhmiä"
@@ -6964,9 +6954,6 @@ msgstr "Lista tai luku tarvitaan"
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinääritila"
-
-#~ msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-#~ msgstr "-Z\t\t\tRajoitettu tila (kuten rvimillä)"
 
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tKirjoitussuojattu tila (kuten view'lla)"

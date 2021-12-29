@@ -1,8 +1,8 @@
 #ifndef NVIM_OS_TIME_H
 #define NVIM_OS_TIME_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 
 typedef uint64_t Timestamp;

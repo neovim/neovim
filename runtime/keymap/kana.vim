@@ -364,7 +364,7 @@ ppu っぷ
 ppe っぺ
 ppo っぽ
 
-" Proceded by a small `tu' and followed by a small 'ya', 'yu' or 'yo'
+" Preceded by a small `tu' and followed by a small 'ya', 'yu' or 'yo'
 kkya っきゃ
 kkyu っきゅ
 kkyo っきょ
@@ -683,7 +683,7 @@ PPU ップ
 PPE ッペ
 PPO ッポ
 
-" Proceded by a small `tu' and followed by a small 'ya', 'yu' or 'yo'
+" Preceded by a small `tu' and followed by a small 'ya', 'yu' or 'yo'
 KKYA ッキャ
 KKYU ッキュ
 KKYO ッキョ

@@ -3,23 +3,25 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/ascii.h"
-#include "nvim/types.h"
 #include "nvim/eval/typval.h"
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/extmark.h"
+#include "nvim/macros.h"
+#include "nvim/normal.h"  // for MotionType and oparg_T
 #include "nvim/os/time.h"
-#include "nvim/normal.h" // for MotionType and oparg_T
-#include "nvim/ex_cmds_defs.h" // for exarg_T
+#include "nvim/types.h"
 
 typedef int (*Indenter)(void);
 
-/* flags for do_put() */
-#define PUT_FIXINDENT    1      /* make indent look nice */
-#define PUT_CURSEND      2      /* leave cursor after end of new text */
-#define PUT_CURSLINE     4      /* leave cursor on last line of new text */
-#define PUT_LINE         8      /* put register as lines */
-#define PUT_LINE_SPLIT   16     /* split line for linewise register */
-#define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
+// flags for do_put()
+#define PUT_FIXINDENT    1      // make indent look nice
+#define PUT_CURSEND      2      // leave cursor after end of new text
+#define PUT_CURSLINE     4      // leave cursor on last line of new text
+#define PUT_LINE         8      // put register as lines
+#define PUT_LINE_SPLIT   16     // split line for linewise register
+#define PUT_LINE_FORWARD 32     // put linewise register below Visual sel.
+#define PUT_BLOCK_INNER  64     // in block mode, do not add trailing spaces
 
 /*
  * Registers:
@@ -75,7 +77,7 @@ typedef int (*Indenter)(void);
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
   kGRegExprSrc = 2,  ///< Return expression itself for "=" register.
-  kGRegList    = 4   ///< Return list.
+  kGRegList    = 4,  ///< Return list.
 };
 
 /// Definition of one register
@@ -87,6 +89,13 @@ typedef struct yankreg {
   Timestamp timestamp;  ///< Time when register was last modified.
   dict_T *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
+
+/// Modes for get_yank_register()
+typedef enum {
+  YREG_PASTE,
+  YREG_YANK,
+  YREG_PUT,
+} yreg_mode_t;
 
 /// Convert register name into register index
 ///

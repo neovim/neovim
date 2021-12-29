@@ -16,8 +16,9 @@ local ws = S(' \t') + nl
 local fill = ws ^ 0
 local c_comment = P('//') * (not_nl ^ 0)
 local c_preproc = P('#') * (not_nl ^ 0)
+local dllexport = P('DLLEXPORT') * (ws ^ 1)
 local typed_container =
-  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
+  (P('ArrayOf(') + P('DictionaryOf(') + P('Dict(')) * ((any - P(')')) ^ 1) * P(')')
 local c_id = (
   typed_container +
   (letter * (alpha ^ 0))
@@ -33,6 +34,7 @@ local c_param = Ct(c_param_type * C(c_id))
 local c_param_list = c_param * (fill * (P(',') * fill * c_param) ^ 0)
 local c_params = Ct(c_void + c_param_list)
 local c_proto = Ct(
+  (dllexport ^ -1) *
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   Cg(Cc(false), 'fast') *
@@ -42,6 +44,8 @@ local c_proto = Ct(
   (fill * Cg((P('FUNC_API_FAST') * Cc(true)), 'fast') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
+  (fill * Cg((P('FUNC_API_LUA_ONLY') * Cc(true)), 'lua_only') ^ -1) *
+  (fill * Cg((P('FUNC_API_CHECK_TEXTLOCK') * Cc(true)), 'check_textlock') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
   (fill * Cg((P('FUNC_API_BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
   (fill * Cg((P('FUNC_API_COMPOSITOR_IMPL') * Cc(true)), 'compositor_impl') ^ -1) *

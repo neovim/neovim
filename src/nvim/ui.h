@@ -1,12 +1,12 @@
 #ifndef NVIM_UI_H
 #define NVIM_UI_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/globals.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
 
 typedef enum {
@@ -53,7 +53,12 @@ struct ui_t {
   bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
   int width;
   int height;
-  int pum_height;
+  int pum_nlines;  /// actual nr. lines shown in PUM
+  bool pum_pos;  /// UI reports back pum position?
+  double pum_row;
+  double pum_col;
+  double pum_height;
+  double pum_width;
   void *data;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -65,6 +70,7 @@ struct ui_t {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
+
 # include "ui_events_call.h.generated.h"
 #endif
 

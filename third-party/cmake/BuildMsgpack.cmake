@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildMsgpack(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build msgpack, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run
@@ -68,7 +66,7 @@ elseif(MSVC)
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1}"
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     # Make sure we use the same generator, otherwise we may
-    # accidentaly end up using different MSVC runtimes
+    # accidentally end up using different MSVC runtimes
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
 endif()
 

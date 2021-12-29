@@ -69,8 +69,6 @@ local get_flags = function(o)
     {'alloced'},
     {'nodefault'},
     {'no_mkrc'},
-    {'vi_def'},
-    {'vim'},
     {'secure'},
     {'gettext'},
     {'noglob'},
@@ -120,8 +118,11 @@ local get_value = function(v)
   return '(char_u *) ' .. value_dumpers[type(v)](v)
 end
 
-local get_defaults = function(d)
-  return ('{' .. get_value(d.vi) .. ', ' .. get_value(d.vim) .. '}')
+local get_defaults = function(d,n)
+  if d == nil then
+    error("option '"..n.."' should have a default value")
+  end
+  return get_value(d)
 end
 
 local defines = {}
@@ -140,9 +141,6 @@ local dump_option = function(i, o)
     w('    .var=(char_u *)&' .. o.varname)
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
-  end
-  if o.enable_if then
-    w('#endif')
   end
   if #o.scope == 1 and o.scope[1] == 'global' then
     w('    .indir=PV_NONE')
@@ -163,15 +161,21 @@ local dump_option = function(i, o)
     defines['PV_' .. varname:sub(3):upper()] = pv_name
     w('    .indir=' .. pv_name)
   end
+  if o.enable_if then
+    w('#else')
+    w('    .var=NULL')
+    w('    .indir=PV_NONE')
+    w('#endif')
+  end
   if o.defaults then
     if o.defaults.condition then
       w(get_cond(o.defaults.condition))
     end
-    w('    .def_val=' .. get_defaults(o.defaults.if_true))
+    w('    .def_val=' .. get_defaults(o.defaults.if_true, o.full_name))
     if o.defaults.condition then
       if o.defaults.if_false then
         w('#else')
-        w('    .def_val=' .. get_defaults(o.defaults.if_false))
+        w('    .def_val=' .. get_defaults(o.defaults.if_false, o.full_name))
       end
       w('#endif')
     end

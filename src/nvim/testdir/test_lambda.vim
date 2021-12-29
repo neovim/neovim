@@ -61,7 +61,7 @@ endfunction
 
 function Test_lambda_fails()
   call assert_equal(3, {a, b -> a + b}(1, 2))
-  call assert_fails('echo {a, a -> a + a}(1, 2)', 'E15:')
+  call assert_fails('echo {a, a -> a + a}(1, 2)', 'E853:')
   call assert_fails('echo {a, b -> a + b)}(1, 2)', 'E15:')
 endfunc
 
@@ -181,7 +181,7 @@ function! Test_lambda_scope()
   let l:D = s:NewCounter2()
 
   call assert_equal(1, l:C())
-  call assert_fails(':call l:D()', 'E15:') " E121: then E15:
+  call assert_fails(':call l:D()', 'E121:')
   call assert_equal(2, l:C())
 endfunction
 

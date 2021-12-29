@@ -19,10 +19,6 @@ describe(":drop", function()
     command("set laststatus=2 shortmess-=F")
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("works like :e when called with only one window open", function()
     feed_command("drop tmp1.vim")
     screen:expect([[
@@ -35,7 +31,7 @@ describe(":drop", function()
       {0:~                                  }|
       {0:~                                  }|
       {1:tmp1.vim                           }|
-      "tmp1.vim" [New File]              |
+      "tmp1.vim" [New]                   |
     ]])
   end)
 
@@ -59,6 +55,7 @@ describe(":drop", function()
   end)
 
   it("splits off a new window when a buffer can't be abandoned", function()
+    command("set nohidden")
     feed_command("edit tmp1")
     feed_command("vsplit")
     feed_command("edit tmp2")
@@ -74,7 +71,7 @@ describe(":drop", function()
       {0:~                   }{2:│}{0:~             }|
       {0:~                   }{2:│}{0:~             }|
       {2:tmp2 [+]             tmp1          }|
-      "tmp3" [New File]                  |
+      "tmp3" [New]                       |
     ]])
   end)
 

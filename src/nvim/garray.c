@@ -5,16 +5,16 @@
 ///
 /// Functions for handling growing arrays.
 
-#include <string.h>
 #include <inttypes.h>
+#include <string.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
-#include "nvim/garray.h"
 #include "nvim/strings.h"
+#include "nvim/vim.h"
 
 // #include "nvim/globals.h"
 #include "nvim/memline.h"
@@ -143,14 +143,14 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// @param sep
 ///
 /// @returns the concatenated strings
-char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
+char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   FUNC_ATTR_NONNULL_RET
 {
-  const size_t nelem = (size_t) gap->ga_len;
+  const size_t nelem = (size_t)gap->ga_len;
   const char **strings = gap->ga_data;
 
   if (nelem == 0) {
-    return (char_u *) xstrdup("");
+    return xstrdup("");
   }
 
   size_t len = 0;
@@ -169,7 +169,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   }
   strcpy(s, strings[nelem - 1]);
 
-  return (char_u *) ret;
+  return ret;
 }
 
 /// For a growing array that contains a list of strings: concatenate all the
@@ -178,9 +178,9 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
 /// @param gap
 ///
 /// @returns the concatenated strings
-char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
+char_u *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 {
-  return ga_concat_strings_sep(gap, ",");
+  return (char_u *)ga_concat_strings_sep(gap, ",");
 }
 
 /// Concatenate a string to a growarray which contains characters.
@@ -192,13 +192,13 @@ char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 ///
 /// @param gap
 /// @param s
-void ga_concat(garray_T *gap, const char_u *restrict s)
+void ga_concat(garray_T *gap, const char *restrict s)
 {
   if (s == NULL) {
     return;
   }
 
-  ga_concat_len(gap, (const char *restrict) s, strlen((char *) s));
+  ga_concat_len(gap, s, STRLEN(s));
 }
 
 /// Concatenate a string to a growarray which contains characters
@@ -206,15 +206,14 @@ void ga_concat(garray_T *gap, const char_u *restrict s)
 /// @param[out]  gap  Growarray to modify.
 /// @param[in]  s  String to concatenate.
 /// @param[in]  len  String length.
-void ga_concat_len(garray_T *const gap, const char *restrict s,
-                   const size_t len)
+void ga_concat_len(garray_T *const gap, const char *restrict s, const size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   if (len) {
-    ga_grow(gap, (int) len);
+    ga_grow(gap, (int)len);
     char *data = gap->ga_data;
     memcpy(data + gap->ga_len, s, len);
-    gap->ga_len += (int) len;
+    gap->ga_len += (int)len;
   }
 }
 

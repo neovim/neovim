@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildLibvterm(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Failing to pass a command argument will result in no command being run
 function(BuildLibvterm)
@@ -27,7 +25,6 @@ function(BuildLibvterm)
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     PATCH_COMMAND "${_libvterm_PATCH_COMMAND}"
-    CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND "${_libvterm_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libvterm_BUILD_COMMAND}"
@@ -58,6 +55,7 @@ else()
   set(LIBVTERM_INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                            PREFIX=${DEPS_INSTALL_DIR}
                                            CFLAGS=-fPIC
+                                           LDFLAGS+=-static
                                            ${DEFAULT_MAKE_CFLAGS}
                                            install)
 endif()

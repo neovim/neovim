@@ -19,7 +19,7 @@ static void flush_wait(void)
 
 static void help(void)
 {
-  puts("A simple implementation of a shell for testing termopen().");
+  puts("Fake shell");
   puts("");
   puts("Usage:");
   puts("  shell-test --help");
@@ -42,6 +42,8 @@ static void help(void)
   puts("      96: foo bar");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
+  puts("  shell-test EXIT {code}");
+  puts("    Exits immediately with exit code \"{code}\".");
 }
 
 int main(int argc, char **argv)
@@ -103,7 +105,6 @@ int main(int argc, char **argv)
       char input[256];
       char cmd[100];
       int arg;
-      int input_argc;
 
       while (1) {
         fprintf(stderr, "interact $ ");
@@ -112,8 +113,7 @@ int main(int argc, char **argv)
           break;  // EOF
         }
 
-        input_argc = sscanf(input, "%99s %d", cmd, &arg);
-        if(1 == input_argc) {
+        if(1 == sscanf(input, "%99s %d", cmd, &arg)) {
           arg = 0;
         }
         if (strcmp(cmd, "exit") == 0) {
@@ -122,6 +122,15 @@ int main(int argc, char **argv)
           fprintf(stderr, "command not found: %s\n", cmd);
         }
       }
+    } else if (strcmp(argv[1], "EXIT") == 0) {
+      int code = 1;
+      if (argc >= 3) {
+        if (sscanf(argv[2], "%d", &code) != 1) {
+          fprintf(stderr, "Invalid exit code: %s\n", argv[2]);
+          return 2;
+        }
+      }
+      return code;
     } else {
       fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;

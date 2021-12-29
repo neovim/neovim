@@ -24,13 +24,33 @@ func GetSyntaxItem(pat)
   return c
 endfunc
 
+func AssertHighlightGroups(lnum, startcol, expected, trans = 1, msg = "")
+  " Assert that the characters starting at a given (line, col)
+  " sequentially match the expected highlight groups.
+  " If groups are provided as a string, each character is assumed to be a
+  " group and spaces represent no group, useful for visually describing tests.
+  let l:expectedGroups = type(a:expected) == v:t_string
+        \ ? a:expected->split('\zs')->map({_, v -> trim(v)})
+        \ : a:expected
+  let l:errors = 0
+  let l:msg = (a:msg->empty() ? "" : a:msg .. ": ")
+        \ .. "Wrong highlight group at " .. a:lnum .. ","
+
+  for l:i in range(a:startcol, a:startcol + l:expectedGroups->len() - 1)
+    let l:errors += synID(a:lnum, l:i, a:trans)
+         \ ->synIDattr("name")
+         \ ->assert_equal(l:expectedGroups[l:i - 1],
+         \    l:msg .. l:i)
+  endfor
+endfunc
+
 func Test_syn_iskeyword()
   new
   call setline(1, [
 	\ 'CREATE TABLE FOOBAR(',
 	\ '    DLTD_BY VARCHAR2(100)',
 	\ ');',
-  	\ ''])
+	\ ''])
 
   syntax on
   set ft=sql
@@ -90,7 +110,7 @@ func Test_syntime()
   let a = execute('syntime report')
   call assert_equal("\nNo Syntax items defined for this buffer", a)
 
-  view ../memfile_test.c
+  view samples/memfile_test.c
   setfiletype cpp
   redraw
   let a = execute('syntime report')
@@ -153,7 +173,7 @@ endfunc
 
 func Test_syntax_completion()
   call feedkeys(":syn \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"syn case clear cluster conceal enable include iskeyword keyword list manual match off on region reset spell sync', @:)
+  call assert_equal('"syn case clear cluster conceal enable foldlevel include iskeyword keyword list manual match off on region reset spell sync', @:)
 
   call feedkeys(":syn case \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syn case ignore match', @:)
@@ -308,6 +328,8 @@ func Test_syntax_arg_skipped()
     syn sync ccomment
   endif
   call assert_notmatch('on C-style comments', execute('syntax sync'))
+  syn sync fromstart
+  call assert_match('syncing starts at the first line', execute('syntax sync'))
 
   syn clear
 endfunc
@@ -369,7 +391,11 @@ func Test_ownsyntax()
   call setline(1, '#define FOO')
   syntax on
   set filetype=c
+
   ownsyntax perl
+  " this should not crash
+  set
+
   call assert_equal('perlComment', synIDattr(synID(line('.'), col('.'), 1), 'name'))
   call assert_equal('c',    b:current_syntax)
   call assert_equal('perl', w:current_syntax)
@@ -471,81 +497,6 @@ func Test_bg_detection()
   hi Normal ctermbg=NONE
 endfunc
 
-func Test_synstack_synIDtrans()
-  new
-  setfiletype c
-  syntax on
-  call setline(1, ' /* A comment with a TODO */')
-
-  call assert_equal([], synstack(1, 1))
-
-  norm f/
-  call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
-  call assert_equal(['Comment', 'Comment'],        map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
-
-  norm fA
-  call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
-  call assert_equal(['Comment'],  map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
-
-  norm fT
-  call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
-  call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
-
-  syn clear
-  bw!
-endfunc
-
-" Check highlighting for a small piece of C code with a screen dump.
-func Test_syntax_c()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
-  call writefile([
-	\ '/* comment line at the top */',
-	\ '  int',
-	\ 'main(int argc, char **argv)// another comment',
-	\ '{',
-	\ '#if 0',
-	\ '   int   not_used;',
-	\ '#else',
-	\ '   int   used;',
-	\ '#endif',
-	\ '   printf("Just an example piece of C code\n");',
-	\ '   return 0x0ff;',
-	\ '}',
-	\ '   static void',
-	\ 'myFunction(const double count, struct nothing, long there) {',
-	\ '  // 123: nothing to read here',
-	\ '  for (int i = 0; i < count; ++i) {',
-	\ '    break;',
-	\ '  }',
-	\ '}',
-	\ ], 'Xtest.c')
-
-  " This makes the default for 'background' use "dark", check that the
-  " response to t_RB corrects it to "light".
-  let $COLORFGBG = '15;0'
-
-  let buf = RunVimInTerminal('Xtest.c', {})
-  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
-  call StopVimInTerminal(buf)
-
-  let $COLORFGBG = ''
-  call delete('Xtest.c')
-endfun
-
-" Using \z() in a region with NFA failing should not crash.
-func Test_syn_wrong_z_one()
-  new
-  call setline(1, ['just some text', 'with foo and bar to match with'])
-  syn region FooBar start="foo\z(.*\)bar" end="\z1"
-  " call test_override("nfa_fail", 1)
-  redraw!
-  redraw!
-  " call test_override("ALL", 0)
-  bwipe!
-endfunc
-
 func Test_syntax_hangs()
   if !has('reltime') || !has('float') || !has('syntax')
     return
@@ -579,3 +530,219 @@ func Test_syntax_hangs()
   set redrawtime&
   bwipe!
 endfunc
+
+func Test_synstack_synIDtrans()
+  new
+  setfiletype c
+  syntax on
+  call setline(1, ' /* A comment with a TODO */')
+
+  call assert_equal([], synstack(1, 1))
+
+  norm f/
+  eval synstack(line("."), col("."))->map('synIDattr(v:val, "name")')->assert_equal(['cComment', 'cCommentStart'])
+  eval synstack(line("."), col("."))->map('synIDattr(synIDtrans(v:val), "name")')->assert_equal(['Comment', 'Comment'])
+
+  norm fA
+  call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment'],  map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fT
+  call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  syn clear
+  bw!
+endfunc
+
+" Check highlighting for a small piece of C code with a screen dump.
+func Test_syntax_c()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call writefile([
+	\ '/* comment line at the top */',
+	\ 'int main(int argc, char **argv) { // another comment',
+	\ '#if 0',
+	\ '   int   not_used;',
+	\ '#else',
+	\ '   int   used;',
+	\ '#endif',
+	\ '   printf("Just an example piece of C code\n");',
+	\ '   return 0x0ff;',
+	\ '}',
+	\ '   static void',
+	\ 'myFunction(const double count, struct nothing, long there) {',
+	\ '  // 123: nothing to read here',
+	\ '  for (int i = 0; i < count; ++i) {',
+	\ '    break;',
+	\ '  }',
+	\ "  Note: asdf",
+	\ '}',
+	\ ], 'Xtest.c')
+
+  " This makes the default for 'background' use "dark", check that the
+  " response to t_RB corrects it to "light".
+  let $COLORFGBG = '15;0'
+
+  let buf = RunVimInTerminal('Xtest.c', {})
+  call term_sendkeys(buf, ":syn keyword Search Note\r")
+  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
+  call StopVimInTerminal(buf)
+
+  let $COLORFGBG = ''
+  call delete('Xtest.c')
+endfun
+
+" Using \z() in a region with NFA failing should not crash.
+func Test_syn_wrong_z_one()
+  new
+  call setline(1, ['just some text', 'with foo and bar to match with'])
+  syn region FooBar start="foo\z(.*\)bar" end="\z1"
+  " call test_override("nfa_fail", 1)
+  redraw!
+  redraw!
+  " call test_override("ALL", 0)
+  bwipe!
+endfunc
+
+func Test_syntax_after_bufdo()
+  call writefile(['/* aaa comment */'], 'Xaaa.c')
+  call writefile(['/* bbb comment */'], 'Xbbb.c')
+  call writefile(['/* ccc comment */'], 'Xccc.c')
+  call writefile(['/* ddd comment */'], 'Xddd.c')
+
+  let bnr = bufnr('%')
+  new Xaaa.c
+  badd Xbbb.c
+  badd Xccc.c
+  badd Xddd.c
+  exe "bwipe " . bnr
+  let l = []
+  bufdo call add(l, bufnr('%'))
+  call assert_equal(4, len(l))
+
+  syntax on
+
+  " This used to only enable syntax HL in the last buffer.
+  bufdo tab split
+  tabrewind
+  for tab in range(1, 4)
+    norm fm
+    call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+    tabnext
+  endfor
+
+  bwipe! Xaaa.c
+  bwipe! Xbbb.c
+  bwipe! Xccc.c
+  bwipe! Xddd.c
+  syntax off
+  call delete('Xaaa.c')
+  call delete('Xbbb.c')
+  call delete('Xccc.c')
+  call delete('Xddd.c')
+endfunc
+
+func Test_syntax_foldlevel()
+  new
+  call setline(1, [
+   \ 'void f(int a)',
+   \ '{',
+   \ '    if (a == 1) {',
+   \ '        a = 0;',
+   \ '    } else if (a == 2) {',
+   \ '        a = 1;',
+   \ '    } else {',
+   \ '        a = 2;',
+   \ '    }',
+   \ '    if (a > 0) {',
+   \ '        if (a == 1) {',
+   \ '            a = 0;',
+   \ '        } /* missing newline */ } /* end of outer if */ else {',
+   \ '        a = 1;',
+   \ '    }',
+   \ '    if (a == 1)',
+   \ '    {',
+   \ '        a = 0;',
+   \ '    }',
+   \ '    else if (a == 2)',
+   \ '    {',
+   \ '        a = 1;',
+   \ '    }',
+   \ '    else',
+   \ '    {',
+   \ '        a = 2;',
+   \ '    }',
+   \ '}',
+   \ ])
+  setfiletype c
+  syntax on
+  set foldmethod=syntax
+
+  call assert_fails('syn foldlevel start start', 'E390')
+  call assert_fails('syn foldlevel not_an_option', 'E390')
+
+  set foldlevel=1
+
+  syn foldlevel start
+  redir @c
+  syn foldlevel
+  redir END
+  call assert_equal("\nsyntax foldlevel start", @c)
+  syn sync fromstart
+  call assert_match('from the first line$', execute('syn sync'))
+  let a = map(range(3,9), 'foldclosed(v:val)')
+  call assert_equal([3,3,3,3,3,3,3], a) " attached cascade folds together
+  let a = map(range(10,15), 'foldclosed(v:val)')
+  call assert_equal([10,10,10,10,10,10], a) " over-attached 'else' hidden
+  let a = map(range(16,27), 'foldclosed(v:val)')
+  let unattached_results = [-1,17,17,17,-1,21,21,21,-1,25,25,25]
+  call assert_equal(unattached_results, a) " unattached cascade folds separately
+
+  syn foldlevel minimum
+  redir @c
+  syn foldlevel
+  redir END
+  call assert_equal("\nsyntax foldlevel minimum", @c)
+  syn sync fromstart
+  let a = map(range(3,9), 'foldclosed(v:val)')
+  call assert_equal([3,3,5,5,7,7,7], a) " attached cascade folds separately
+  let a = map(range(10,15), 'foldclosed(v:val)')
+  call assert_equal([10,10,10,13,13,13], a) " over-attached 'else' visible
+  let a = map(range(16,27), 'foldclosed(v:val)')
+  call assert_equal(unattached_results, a) " unattached cascade folds separately
+
+  set foldlevel=2
+
+  syn foldlevel start
+  syn sync fromstart
+  let a = map(range(11,14), 'foldclosed(v:val)')
+  call assert_equal([11,11,11,-1], a) " over-attached 'else' hidden
+
+  syn foldlevel minimum
+  syn sync fromstart
+  let a = map(range(11,14), 'foldclosed(v:val)')
+  call assert_equal([11,11,-1,-1], a) " over-attached 'else' visible
+
+  quit!
+endfunc
+
+func Test_syn_include_contains_TOP()
+  let l:case = "TOP in included syntax means its group list name"
+  new
+  syntax include @INCLUDED syntax/c.vim
+  syntax region FencedCodeBlockC start=/```c/ end=/```/ contains=@INCLUDED
+
+  call setline(1,  ['```c', '#if 0', 'int', '#else', 'int', '#endif', '```' ])
+  let l:expected = ["cCppOutIf2"]
+  eval AssertHighlightGroups(3, 1, l:expected, 1)
+  " cCppOutElse has contains=TOP
+  let l:expected = ["cType"]
+  eval AssertHighlightGroups(5, 1, l:expected, 1, l:case)
+  syntax clear
+  bw!
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

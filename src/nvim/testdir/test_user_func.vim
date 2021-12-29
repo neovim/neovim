@@ -47,7 +47,7 @@ func FuncWithRef(a)
 endfunc
 
 func Test_user_func()
-  let g:FuncRef=function("FuncWithRef")
+  let g:FuncRef = function("FuncWithRef")
   let g:counter = 0
   inoremap <expr> ( ListItem()
   inoremap <expr> [ ListReset()
@@ -61,6 +61,14 @@ func Test_user_func()
   call assert_equal('ok', Compute(45, 5, "retval"))
   call assert_equal(9, g:retval)
   call assert_equal(333, g:FuncRef(333))
+
+  let g:retval = "nop"
+  call assert_equal('xxx4asdf', "xxx"->Table(4, "asdf"))
+  call assert_equal('fail', 45->Compute(0, "retval"))
+  call assert_equal('nop', g:retval)
+  call assert_equal('ok', 45->Compute(5, "retval"))
+  call assert_equal(9, g:retval)
+  " call assert_equal(333, 333->g:FuncRef())
 
   enew
 
@@ -93,4 +101,71 @@ func Test_user_func()
   delfunc ListReset
   unlet g:retval g:counter
   enew!
+endfunc
+
+func Log(val, base = 10)
+  return log(a:val) / log(a:base)
+endfunc
+
+func Args(mandatory, optional = v:null, ...)
+  return deepcopy(a:)
+endfunc
+
+func Args2(a = 1, b = 2, c = 3)
+  return deepcopy(a:)
+endfunc
+
+func MakeBadFunc()
+  func s:fcn(a, b=1, c)
+  endfunc
+endfunc
+
+func Test_default_arg()
+  if has('float')
+    call assert_equal(1.0, Log(10))
+    call assert_equal(log(10), Log(10, exp(1)))
+    call assert_fails("call Log(1,2,3)", 'E118')
+  endif
+
+  let res = Args(1)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, v:null)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2,3)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 1)
+
+  call assert_fails("call MakeBadFunc()", 'E989')
+  call assert_fails("fu F(a=1 ,) | endf", 'E475')
+
+  " Since neovim does not have v:none, the ability to use the default
+  " argument with the intermediate argument set to v:none has been omitted.
+  " Therefore, this test is not performed.
+  " let d = Args2(7, v:none, 9)
+  " call assert_equal([7, 2, 9], [d.a, d.b, d.c])
+
+  call assert_equal("\n"
+	\ .. "   function Args2(a = 1, b = 2, c = 3)\n"
+	\ .. "1    return deepcopy(a:)\n"
+	\ .. "   endfunction",
+	\ execute('func Args2'))
+endfunc
+
+func s:addFoo(lead)
+  return a:lead .. 'foo'
+endfunc
+
+func Test_user_method()
+  eval 'bar'->s:addFoo()->assert_equal('barfoo')
+endfunc
+
+func Test_failed_call_in_try()
+  try | call UnknownFunc() | catch | endtry
 endfunc

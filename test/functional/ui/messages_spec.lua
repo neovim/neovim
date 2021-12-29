@@ -29,6 +29,7 @@ describe('ui/ext_messages', function()
       [6] = {bold = true, reverse = true},
       [7] = {background = Screen.colors.Yellow},
       [8] = {foreground = Screen.colors.Red},
+      [9] = {special = Screen.colors.Red, undercurl = true},
     })
   end)
   after_each(function()
@@ -122,7 +123,7 @@ describe('ui/ext_messages', function()
     feed('G$x')
     screen:expect{grid=[[
         line 1                   |
-        {IGNORE}|
+        {MATCH:.*}|
         {1:~                        }|
         {1:~                        }|
         {1:~                        }|
@@ -323,7 +324,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={
-      {content = {{"/line      [1/2] W"}}, kind = "search_count"}
+      {content = {{"/line      W [1/2]"}}, kind = "search_count"}
     }}
 
     feed('n')
@@ -455,6 +456,8 @@ describe('ui/ext_messages', function()
       {1:~                        }|
     ]], messages={
       {kind="echomsg", content={{"stuff"}}},
+    }, showmode={
+      { "-- INSERT --", 3 }
     }}
   end)
 
@@ -747,8 +750,13 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={{
-        content = {{'E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: such\nmultiline\nerror', 2}},
-        kind = "lua_error"
+        content = {{[[E5108: Error executing lua [string ":lua"]:1: such
+multiline
+error
+stack traceback:
+	[C]: in function 'error'
+	[string ":lua"]:1: in main chunk]], 2}},
+        kind = "lua_error",
      }}}
   end)
 
@@ -795,6 +803,45 @@ describe('ui/ext_messages', function()
       pos = 9,
     }}}
   end)
+
+  it('hides prompt_for_number messages', function()
+    command('set spell')
+    feed('ihelllo<esc>')
+
+    feed('z=')
+    screen:expect{grid=[[
+      {9:helllo}                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:^~                        }|
+    ]], messages={
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""}
+    }}
+
+    feed('1')
+    screen:expect{grid=[[
+      {9:helllo}                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:^~                        }|
+    ]], messages={
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""},
+      { content = { { "1" } }, kind = "" }
+    }}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^Hello                    |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]]}
+
+  end)
+
 end)
 
 describe('ui/builtin messages', function()
@@ -811,6 +858,8 @@ describe('ui/builtin messages', function()
       [5] = {foreground = Screen.colors.Blue1},
       [6] = {bold = true, foreground = Screen.colors.Magenta},
       [7] = {background = Screen.colors.Grey20},
+      [8] = {reverse = true},
+      [9] = {background = Screen.colors.LightRed}
     })
   end)
 
@@ -861,7 +910,7 @@ describe('ui/builtin messages', function()
 
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
-       meths.command_output("hi ErrorMsg"))
+       meths.exec("hi ErrorMsg", true))
   end)
 
   it(':syntax list langGroup output', function()
@@ -900,7 +949,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                    match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
                    match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
                    links to Comment]],
-       meths.command_output('syntax list vimComment'))
+       meths.exec('syntax list vimComment', true))
     -- luacheck: pop
   end)
 
@@ -938,6 +987,115 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {7:                                          0,0-1 100%        }|
     ]]}
   end)
+
+  it('supports echo with CRLF line separators', function()
+    feed(':echo "line 1\\r\\nline 2"<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {3:                                                            }|
+      line 1                                                      |
+      line 2                                                      |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>:echo "abc\\rz"<cr>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      zbc                                                         |
+    ]]}
+  end)
+
+  it('redraws NOT_VALID correctly after message', function()
+    -- edge case: only one window was set NOT_VALID. Orginal report
+    -- used :make, but fake it using one command to set the current
+    -- window NOT_VALID and another to show a long message.
+    command("set more")
+    feed(':new<cr><c-w><c-w>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^                                                            |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+      :new                                                        |
+    ]]}
+
+    feed(':set colorcolumn=10 | digraphs<cr>')
+    screen:expect{grid=[[
+      :set colorcolumn=10 | digraphs                              |
+      NU {5:^@}  10    SH {5:^A}   1    SX {5:^B}   2    EX {5:^C}   3            |
+      ET {5:^D}   4    EQ {5:^E}   5    AK {5:^F}   6    BL {5:^G}   7            |
+      BS {5:^H}   8    HT {5:^I}   9    LF {5:^@}  10    VT {5:^K}  11            |
+      FF {5:^L}  12    CR {5:^M}  13    SO {5:^N}  14    SI {5:^O}  15            |
+      DL {5:^P}  16    D1 {5:^Q}  17    D2 {5:^R}  18    D3 {5:^S}  19            |
+      {4:-- More --}^                                                  |
+    ]]}
+
+    feed('q')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^         {9: }                                                  |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]]}
+
+    -- edge case: just covers statusline
+    feed(':set colorcolumn=5 | lua error("x\\n\\nx")<cr>')
+    screen:expect{grid=[[
+      {2:E5108: Error executing lua [string ":lua"]:1: x}             |
+                                                                  |
+      {2:x}                                                           |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {2:        [string ":lua"]:1: in main chunk}                    |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                  |
+      {1:~                                                           }|
+      {8:[No Name]                                                   }|
+      ^    {9: }                                                       |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]]}
+
+    -- edge case: just covers lowest window line
+    feed(':set colorcolumn=5 | lua error("x\\n\\n\\nx")<cr>')
+    screen:expect{grid=[[
+      {2:E5108: Error executing lua [string ":lua"]:1: x}             |
+                                                                  |
+                                                                  |
+      {2:x}                                                           |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {4:-- More --}^                                                  |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+                                                                  |
+                                                                  |
+      {2:x}                                                           |
+      {2:stack traceback:}                                            |
+      {2:        [C]: in function 'error'}                            |
+      {2:        [string ":lua"]:1: in main chunk}                    |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
+  end)
 end)
 
 describe('ui/ext_messages', function()
@@ -966,7 +1124,7 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|
       {1:~                                                                               }|
       {1:~                                                                               }|
-      {IGNORE}|
+      {MATCH:.*}|
       {1:~                                                                               }|
       {1:~                 }Nvim is open source and freely distributable{1:                  }|
       {1:~                           }https://neovim.io/#chat{1:                             }|
@@ -976,8 +1134,8 @@ describe('ui/ext_messages', function()
       {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
       {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
       {1:~                                                                               }|
-      {IGNORE}|
-      {IGNORE}|
+      {MATCH:.*}|
+      {MATCH:.*}|
       {1:~                                                                               }|
       {1:~                                                                               }|
       {1:~                                                                               }|
@@ -1022,7 +1180,7 @@ describe('ui/ext_messages', function()
                                                                                       |
                                                                                       |
                                                                                       |
-      {IGNORE}|
+      {MATCH:.*}|
                                                                                       |
                         Nvim is open source and freely distributable                  |
                                   https://neovim.io/#chat                             |
@@ -1032,8 +1190,8 @@ describe('ui/ext_messages', function()
                        type  :q{5:<Enter>}               to exit                          |
                        type  :help{5:<Enter>}            for help                         |
                                                                                       |
-      {IGNORE}|
-      {IGNORE}|
+      {MATCH:.*}|
+      {MATCH:.*}|
                                                                                       |
                                                                                       |
                                                                                       |
@@ -1125,7 +1283,7 @@ aliquip ex ea commodo consequat.]])
 
   it('can be quit', function()
     screen:try_resize(25,5)
-    feed(':echon join(map(range(0, &lines*2), "v:val"), "\\n")<cr>')
+    feed(':echon join(map(range(0, &lines*10), "v:val"), "\\n")<cr>')
     screen:expect{grid=[[
       0                        |
       1                        |
@@ -1146,97 +1304,96 @@ aliquip ex ea commodo consequat.]])
   it('handles wrapped lines with line scroll', function()
     feed(':lua error(_G.x)<cr>')
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua chun}|
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:E5108: Error executing lua [string }|
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
       {4:-- More --}^                         |
     ]]}
 
     feed('j')
     screen:expect{grid=[[
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
       {2:a aliqua.}                          |
+      {2:Ut enim ad minim veniam, quis nostr}|
       {4:-- More --}^                         |
     ]]}
 
     feed('k')
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua chun}|
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:E5108: Error executing lua [string }|
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
       {4:-- More --}^                         |
     ]]}
 
     feed('j')
     screen:expect{grid=[[
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
       {2:a aliqua.}                          |
+      {2:Ut enim ad minim veniam, quis nostr}|
       {4:-- More --}^                         |
     ]]}
-
   end)
 
   it('handles wrapped lines with page scroll', function()
     feed(':lua error(_G.x)<cr>')
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua chun}|
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:E5108: Error executing lua [string }|
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
       {4:-- More --}^                         |
     ]]}
     feed('d')
     screen:expect{grid=[[
-      {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
       {2:a aliqua.}                          |
       {2:Ut enim ad minim veniam, quis nostr}|
       {2:ud xercitation}                     |
       {2:ullamco laboris nisi ut}            |
+      {2:aliquip ex ea commodo consequat.}   |
       {4:-- More --}^                         |
     ]]}
     feed('u')
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua chun}|
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:E5108: Error executing lua [string }|
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
       {4:-- More --}^                         |
     ]]}
     feed('d')
     screen:expect{grid=[[
-      {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
       {2:a aliqua.}                          |
       {2:Ut enim ad minim veniam, quis nostr}|
       {2:ud xercitation}                     |
       {2:ullamco laboris nisi ut}            |
+      {2:aliquip ex ea commodo consequat.}   |
       {4:-- More --}^                         |
     ]]}
   end)
@@ -1246,49 +1403,49 @@ aliquip ex ea commodo consequat.]])
 
     feed(':lua error(_G.x)<cr>')
     screen:expect{grid=[[
-      {3:E5105: Error while calling lua chun}|
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:E5108: Error executing lua [string }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
       {6:-- More --}{5:^                         }|
     ]]}
 
     feed('j')
     screen:expect{grid=[[
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
       {3:a aliqua.}{5:                          }|
+      {3:Ut enim ad minim veniam, quis nostr}|
       {6:-- More --}{5:^                         }|
     ]]}
 
     feed('k')
     screen:expect{grid=[[
-      {3:E5105: Error while calling lua chun}|
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:E5108: Error executing lua [string }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
       {6:-- More --}{5:^                         }|
     ]]}
 
     feed('j')
     screen:expect{grid=[[
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
       {3:a aliqua.}{5:                          }|
+      {3:Ut enim ad minim veniam, quis nostr}|
       {6:-- More --}{5:^                         }|
     ]]}
   end)
@@ -1297,46 +1454,46 @@ aliquip ex ea commodo consequat.]])
     command("hi MsgArea guisp=Yellow")
     feed(':lua error(_G.x)<cr>')
     screen:expect{grid=[[
-      {3:E5105: Error while calling lua chun}|
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:E5108: Error executing lua [string }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
       {6:-- More --}{5:^                         }|
     ]]}
     feed('d')
     screen:expect{grid=[[
-      {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
       {3:a aliqua.}{5:                          }|
       {3:Ut enim ad minim veniam, quis nostr}|
       {3:ud xercitation}{5:                     }|
       {3:ullamco laboris nisi ut}{5:            }|
+      {3:aliquip ex ea commodo consequat.}{5:   }|
       {6:-- More --}{5:^                         }|
     ]]}
     feed('u')
     screen:expect{grid=[[
-      {3:E5105: Error while calling lua chun}|
-      {3:k: [string "<VimL compiled string>"}|
-      {3:]:1: Lorem ipsum dolor sit amet, co}|
-      {3:nsectetur}{5:                          }|
+      {3:E5108: Error executing lua [string }|
+      {3:":lua"]:1: Lorem ipsum dolor sit am}|
+      {3:et, consectetur}{5:                    }|
       {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
       {6:-- More --}{5:^                         }|
     ]]}
     feed('d')
     screen:expect{grid=[[
-      {3:adipisicing elit, sed do eiusmod te}|
       {3:mpor}{5:                               }|
       {3:incididunt ut labore et dolore magn}|
       {3:a aliqua.}{5:                          }|
       {3:Ut enim ad minim veniam, quis nostr}|
       {3:ud xercitation}{5:                     }|
       {3:ullamco laboris nisi ut}{5:            }|
+      {3:aliquip ex ea commodo consequat.}{5:   }|
       {6:-- More --}{5:^                         }|
     ]]}
   end)
@@ -1473,23 +1630,23 @@ aliquip ex ea commodo consequat.]])
   it('can be resized', function()
     feed(':lua error(_G.x)<cr>')
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua chun}|
-      {2:k: [string "<VimL compiled string>"}|
-      {2:]:1: Lorem ipsum dolor sit amet, co}|
-      {2:nsectetur}                          |
+      {2:E5108: Error executing lua [string }|
+      {2:":lua"]:1: Lorem ipsum dolor sit am}|
+      {2:et, consectetur}                    |
       {2:adipisicing elit, sed do eiusmod te}|
       {2:mpor}                               |
       {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
       {4:-- More --}^                         |
     ]]}
 
     -- responds to resize, but text is not reflown
     screen:try_resize(45, 5)
     screen:expect{grid=[[
-      {2:nsectetur}                                    |
       {2:adipisicing elit, sed do eiusmod te}          |
       {2:mpor}                                         |
       {2:incididunt ut labore et dolore magn}          |
+      {2:a aliqua.}                                    |
       {4:-- More --}^                                   |
     ]]}
 
@@ -1497,14 +1654,14 @@ aliquip ex ea commodo consequat.]])
     -- text is not reflown; existing lines get cut
     screen:try_resize(30, 12)
     screen:expect{grid=[[
-      {2:E5105: Error while calling lua}|
-      {2:k: [string "<VimL compiled str}|
-      {2:]:1: Lorem ipsum dolor sit ame}|
-      {2:nsectetur}                     |
+      {2:E5108: Error executing lua [st}|
+      {2:":lua"]:1: Lorem ipsum dolor s}|
+      {2:et, consectetur}               |
       {2:adipisicing elit, sed do eiusm}|
       {2:mpore}                         |
       {2:incididunt ut labore et dolore}|
-      {2: magn}                         |
+      {2:a aliqua.}                     |
+                                    |
                                     |
                                     |
                                     |
@@ -1515,17 +1672,17 @@ aliquip ex ea commodo consequat.]])
     -- wrapped at the new screen size.
     feed('<cr>')
     screen:expect{grid=[[
-      {2:k: [string "<VimL compiled str}|
-      {2:]:1: Lorem ipsum dolor sit ame}|
-      {2:nsectetur}                     |
+      {2:":lua"]:1: Lorem ipsum dolor s}|
+      {2:et, consectetur}               |
       {2:adipisicing elit, sed do eiusm}|
       {2:mpore}                         |
       {2:incididunt ut labore et dolore}|
-      {2: magna aliqua.}                |
+      {2:a aliqua.}                     |
       {2:Ut enim ad minim veniam, quis }|
       {2:nostrud xercitation}           |
       {2:ullamco laboris nisi ut}       |
       {2:aliquip ex ea commodo consequa}|
+      {2:t.}                            |
       {4:-- More --}^                    |
     ]]}
 

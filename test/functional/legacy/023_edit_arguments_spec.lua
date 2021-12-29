@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, insert = helpers.clear, helpers.insert
 local command, expect = helpers.command, helpers.expect
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe(':edit', function()
   setup(clear)
@@ -13,7 +13,7 @@ describe(':edit', function()
       The result should be in Xfile1: "fooPIPEbar", in Xfile2: "fooSLASHbar"
       foo|bar
       foo/bar]])
-    wait()
+    poke_eventloop()
 
     -- Prepare some test files
     command('$-1w! Xfile1')

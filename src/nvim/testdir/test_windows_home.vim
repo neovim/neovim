@@ -1,8 +1,7 @@
 " Test for $HOME on Windows.
 
-if !has('win32')
-  finish
-endif
+source check.vim
+CheckMSWindows
 
 let s:env = {}
 

@@ -108,7 +108,7 @@ syn match AspVBSMethods contained "Response\.\w*"
 " Colorize boolean constants:
 syn keyword AspVBSMethods contained true false
 
-" AspVBScript Number Contstants
+" AspVBScript Number Constants
 " Integer number, or floating point number without a dot.
 syn match  AspVBSNumber	contained	"\<\d\+\>"
 " Floating point number, with dot
@@ -116,7 +116,7 @@ syn match  AspVBSNumber	contained	"\<\d\+\.\d*\>"
 " Floating point number, starting with a dot
 syn match  AspVBSNumber	contained	"\.\d\+\>"
 
-" String and Character Contstants
+" String and Character Constants
 " removed (skip=+\\\\\|\\"+) because VB doesn't have backslash escaping in
 " strings (or does it?)
 syn region  AspVBSString	contained	  start=+"+  end=+"+ keepend
@@ -143,7 +143,7 @@ syn cluster AspVBScriptTop contains=AspVBSStatement,AspVBSFunction,AspVBSMethods
 syn region AspVBSFold start="^\s*\(class\)\s\+.*$" end="^\s*end\s\+\(class\)\>.*$" fold contained transparent keepend
 syn region AspVBSFold start="^\s*\(private\|public\)\=\(\s\+default\)\=\s\+\(sub\|function\)\s\+.*$" end="^\s*end\s\+\(function\|sub\)\>.*$" fold contained transparent keepend
 
-" Define AspVBScript delimeters
+" Define AspVBScript delimiters
 " <%= func("string_with_%>_in_it") %> This is illegal in ASP syntax.
 syn region  AspVBScriptInsideHtmlTags keepend matchgroup=Delimiter start=+<%=\=+ end=+%>+ contains=@AspVBScriptTop, AspVBSFold
 syn region  AspVBScriptInsideHtmlTags keepend matchgroup=Delimiter start=+<script\s\+language="\=vbscript"\=[^>]*\s\+runatserver[^>]*>+ end=+</script>+ contains=@AspVBScriptTop

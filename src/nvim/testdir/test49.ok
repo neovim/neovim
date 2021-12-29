@@ -1,6 +1,4 @@
 Results of test49.vim:
-*** Test  16: OK (8722)
-*** Test  17: OK (285127993)
 *** Test  18: OK (67224583)
 *** Test  19: OK (69275973)
 *** Test  20: OK (1874575085)
@@ -8,16 +6,11 @@ Results of test49.vim:
 *** Test  22: OK (4161)
 *** Test  23: OK (49)
 *** Test  24: OK (41)
-*** Test  25: OK (260177811)
-*** Test  26: OK (1681500476)
 *** Test  27: OK (1996459)
 *** Test  28: OK (1996459)
 *** Test  29: OK (170428555)
 *** Test  30: OK (190905173)
 *** Test  31: OK (190905173)
-*** Test  32: OK (354833067)
---- Test  33: sum = 178275600 (ok)
-*** Test  33: OK (1216907538)
 *** Test  34: OK (2146584868)
 *** Test  35: OK (2146584868)
 *** Test  36: OK (1071644672)
@@ -25,17 +18,8 @@ Results of test49.vim:
 *** Test  38: OK (357908480)
 *** Test  39: OK (357908480)
 *** Test  40: OK (357908480)
-*** Test  41: OK (3076095)
-*** Test  42: OK (1505155949)
-*** Test  43: OK (1157763329)
-*** Test  44: OK (1031761407)
-*** Test  45: OK (1157763329)
-*** Test  46: OK (739407)
-*** Test  47: OK (371213935)
-*** Test  48: OK (756255461)
 *** Test  49: OK (179000669)
 *** Test  50: OK (363550045)
-*** Test  51: OK (40744667)
 *** Test  52: OK (1247112011)
 *** Test  53: OK (131071)
 *** Test  54: OK (2047)
@@ -53,13 +37,6 @@ Results of test49.vim:
 *** Test  66: OK (5464)
 *** Test  67: OK (212514423)
 *** Test  68: OK (212514423)
-*** Test  69: OK (8995471)
-*** Test  70: OK (69544277)
-*** Test  71: OK (34886997)
-*** Test  72: OK (1789569365)
-*** Test  73: OK (9032615)
-*** Test  74: OK (224907669)
-*** Test  75: OK (2000403408)
 *** Test  76: OK (1610087935)
 *** Test  77: OK (1388671)
 *** Test  78: OK (134217728)
@@ -72,11 +49,6 @@ Results of test49.vim:
 *** Test  85: OK (198689)
 --- Test  86: No Crash for vimgrep on BufUnload
 *** Test  86: OK (0)
---- Test  87: 3
---- Test  87: 5
---- Test  87: abcdefghijk
---- Test  87: Successfully executed funcref Add2
-*** Test  87: OK (0)
 --- Test  88: All tests were run with throwing exceptions on error.
 	      The $VIMNOERRTHROW control is not configured.
 --- Test  88: All tests were run with throwing exceptions on interrupt.

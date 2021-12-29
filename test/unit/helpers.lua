@@ -13,7 +13,7 @@ local syscall = nil
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
-local map = global_helpers.map
+local map = global_helpers.tbl_map
 local eq = global_helpers.eq
 local trim = global_helpers.trim
 
@@ -96,8 +96,8 @@ local init = only_separate(function()
     c.func(unpack(c.args))
   end
   libnvim.time_init()
-  libnvim.early_init()
   libnvim.event_init()
+  libnvim.early_init(nil)
   if child_calls_mod then
     for _, c in ipairs(child_calls_mod) do
       c.func(unpack(c.args))
@@ -545,7 +545,7 @@ local tracehelp = dedent([[
 local function child_sethook(wr)
   local trace_level = os.getenv('NVIM_TEST_TRACE_LEVEL')
   if not trace_level or trace_level == '' then
-    trace_level = 1
+    trace_level = 0
   else
     trace_level = tonumber(trace_level)
   end
@@ -708,7 +708,7 @@ local function check_child_err(rd)
     local eres = sc.read(rd, 2)
     if eres ~= '$\n' then
       if #trace == 0 then
-        err = '\nTest crashed, no trace available\n'
+        err = '\nTest crashed, no trace available (check NVIM_TEST_TRACE_LEVEL)\n'
       else
         err = '\nTest crashed, trace:\n' .. tracehelp
         for i = 1, #trace do

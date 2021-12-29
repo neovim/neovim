@@ -155,40 +155,41 @@ if exists("g:ada_abbrev")
 endif
 
 " Section: Commands, Mapping, Menus {{{1
-"
-call ada#Map_Popup (
-   \ 'Tag.List',
-   \  'l',
-   \ 'call ada#List_Tag ()')
-call ada#Map_Popup (
-   \'Tag.Jump',
-   \'j',
-   \'call ada#Jump_Tag ()')
-call ada#Map_Menu (
-   \'Tag.Create File',
-   \':AdaTagFile',
-   \'call ada#Create_Tags (''file'')')
-call ada#Map_Menu (
-   \'Tag.Create Dir',
-   \':AdaTagDir',
-   \'call ada#Create_Tags (''dir'')')
+if !exists(':AdaTagFile')
+  call ada#Map_Popup (
+     \ 'Tag.List',
+     \  'l',
+     \ 'call ada#List_Tag ()')
+  call ada#Map_Popup (
+     \'Tag.Jump',
+     \'j',
+     \'call ada#Jump_Tag ()')
+  call ada#Map_Menu (
+     \'Tag.Create File',
+     \':AdaTagFile',
+     \'call ada#Create_Tags (''file'')')
+  call ada#Map_Menu (
+     \'Tag.Create Dir',
+     \':AdaTagDir',
+     \'call ada#Create_Tags (''dir'')')
 
-call ada#Map_Menu (
-   \'Highlight.Toggle Space Errors',
-   \ ':AdaSpaces',
-   \'call ada#Switch_Syntax_Option (''space_errors'')')
-call ada#Map_Menu (
-   \'Highlight.Toggle Lines Errors',
-   \ ':AdaLines',
-   \'call ada#Switch_Syntax_Option (''line_errors'')')
-call ada#Map_Menu (
-   \'Highlight.Toggle Rainbow Color',
-   \ ':AdaRainbow',
-   \'call ada#Switch_Syntax_Option (''rainbow_color'')')
-call ada#Map_Menu (
-   \'Highlight.Toggle Standard Types',
-   \ ':AdaTypes',
-   \'call ada#Switch_Syntax_Option (''standard_types'')')
+  call ada#Map_Menu (
+     \'Highlight.Toggle Space Errors',
+     \ ':AdaSpaces',
+     \'call ada#Switch_Syntax_Option (''space_errors'')')
+  call ada#Map_Menu (
+     \'Highlight.Toggle Lines Errors',
+     \ ':AdaLines',
+     \'call ada#Switch_Syntax_Option (''line_errors'')')
+  call ada#Map_Menu (
+     \'Highlight.Toggle Rainbow Color',
+     \ ':AdaRainbow',
+     \'call ada#Switch_Syntax_Option (''rainbow_color'')')
+  call ada#Map_Menu (
+     \'Highlight.Toggle Standard Types',
+     \ ':AdaTypes',
+     \'call ada#Switch_Syntax_Option (''standard_types'')')
+endif
 
 " 1}}}
 " Reset cpoptions

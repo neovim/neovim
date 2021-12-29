@@ -13,7 +13,7 @@ from the connected program.
 Terminal buffers behave like normal buffers, except:
 - With 'modifiable', lines can be edited but not deleted.
 - 'scrollback' controls how many lines are kept.
-- Output is followed if the cursor is on the last line.
+- Output is followed ("tailed") if cursor is on the last line.
 - 'modified' is the default. You can set 'nomodified' to avoid a warning when
   closing the terminal buffer.
 - 'bufhidden' defaults to "hide".
@@ -47,8 +47,16 @@ Input						*terminal-input*
 
 To send input, enter |Terminal-mode| using any command that would enter "insert
 mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
-except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
-to normal-mode. |CTRL-\_CTRL-N|
+except <C-\> are sent to the underlying program. If <C-\> is pressed, the
+next key is sent unless it is <C-N>. Use <C-\><C-N> to return to normal-mode.
+|CTRL-\_CTRL-N|
+
+Terminal-mode forces these local options:
+
+    'cursorlineopt' = number
+    'nocursorcolumn'
+    'scrolloff' = 0
+    'sidescrolloff' = 0
 
 Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
 to automate any terminal interaction.
@@ -82,10 +90,10 @@ Mouse input has the following behavior:
 - If another window is clicked, terminal focus will be lost and nvim will jump
   to the clicked window
 - If the mouse wheel is used while the mouse is positioned in another window,
-  the terminal wont lose focus and the hovered window will be scrolled.
+  the terminal won't lose focus and the hovered window will be scrolled.
 
 ==============================================================================
-Configuration					*terminal-configuration*
+Configuration					*terminal-config*
 
 Options:		'modified', 'scrollback'
 Events:			|TermOpen|, |TermEnter|, |TermLeave|, |TermClose|
@@ -127,6 +135,10 @@ Example: >
   programs can set this by emitting an escape sequence.
 - |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
   input to the terminal.
+- The |TermClose| event gives the terminal job exit code in the |v:event|
+  "status" field. For example, this autocmd closes terminal buffers if the job
+  exited without error: >
+    autocmd TermClose * if !v:event.status | exe 'bdelete! '..expand('<abuf>') | endif
 
 Use |jobwait()| to check if the terminal job has finished: >
     let running = jobwait([&channel], 0)[0] == -1
@@ -159,7 +171,7 @@ program window	A terminal window for the executed program.  When "run" is
 
 The current window is used to show the source code.  When gdb pauses the
 source file location will be displayed, if possible.  A sign is used to
-highlight the current position, using highlight group debugPC.	 
+highlight the current position, using highlight group debugPC.
 
 If the buffer in the current window is modified, another window will be opened
 to display the current gdb position.
@@ -210,7 +222,7 @@ Put focus on the gdb window and type: >
 	run
 Vim will start running in the program window. Put focus there and type: >
 	:help gui
-Gdb will run into the ex_help breakpoint.  The source window now shows the 
+Gdb will run into the ex_help breakpoint.  The source window now shows the
 ex_cmds.c file.  A red "1 " marker will appear in the signcolumn where the
 breakpoint was set.  The line where the debugger stopped is highlighted.  You
 can now step through the program.  You will see the highlighting move as the
@@ -305,7 +317,58 @@ Other commands ~
  *:Program*    jump to the window with the running program
  *:Source*     jump to the window with the source code, create it if there
 	     isn't one
+ *:Asm*	     jump to the window with the disassembly, create it if there
+	     isn't one
 
+
+Events ~
+							*termdebug-events*
+Four autocommands can be used: >
+	au User TermdebugStartPre  echomsg 'debugging starting'
+	au User TermdebugStartPost echomsg 'debugging started'
+	au User TermdebugStopPre   echomsg 'debugging stopping'
+	au User TermdebugStopPost  echomsg 'debugging stopped'
+<
+						*TermdebugStartPre*
+TermdebugStartPre		Before starting debugging.
+				Not triggered if the debugger is already
+				running or |g:termdebugger| cannot be
+				executed.
+						*TermdebugStartPost*
+TermdebugStartPost		After debugging has initialized.
+				If a "!" bang is passed to `:Termdebug` or
+				`:TermdebugCommand` the event is triggered
+				before running the provided command in gdb.
+						*TermdebugStopPre*
+TermdebugStopPre		Before debugging ends, when gdb is terminated,
+				most likely after issuing a "quit" command in
+				the gdb window.
+						*TermdebugStopPost*
+TermdebugStopPost		After debugging has ended, gdb-related windows
+				are closed, debug buffers wiped out and
+				the state before the debugging was restored.
+
+
+Prompt mode ~
+						*termdebug-prompt*
+When on MS-Windows, gdb will run in a buffer with 'buftype' set to "prompt".
+This works slightly differently:
+- The gdb window will be in Insert mode while typing commands.  Go to Normal
+  mode with <Esc>, then you can move around in the buffer, copy/paste, etc.
+  Go back to editing the gdb command with any command that starts Insert mode,
+  such as `a` or `i`.
+- A separate :terminal window will be opened to run the debugged program in.
+
+						*termdebug_use_prompt*
+Prompt mode can be used with: >
+	let g:termdebug_use_prompt = 1
+
+<
+						*termdebug_disasm_window*
+If you want the Asm window shown by default, set this to 1. Setting to
+any value greater than 1 will set the Asm window height to that value: >
+	let g:termdebug_disasm_window = 15
+<
 
 Communication ~
 						*termdebug-communication*
@@ -328,6 +391,8 @@ GDB command						 *termdebug-customizing*
 To change the name of the gdb command, set the "termdebugger" variable before
 invoking `:Termdebug`: >
 	let termdebugger = "mygdb"
+If the command needs an argument use a List: >
+	let g:termdebugger = ['rr', 'replay', '--']
 
 To not use neovim floating windows for previewing variable evaluation, set the
 `g:termdebug_useFloatingHover` variable like this: >
@@ -363,7 +428,7 @@ When 'background' is "dark":
   hi debugBreakpoint term=reverse ctermbg=red guibg=red
 
 
-Shorcuts						*termdebug_shortcuts*
+Shortcuts						*termdebug_shortcuts*
 
 You can define your own shortcuts (mappings) to control gdb, that can work in
 any window, using the TermDebugSendCommand() function.  Example: >

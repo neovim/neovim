@@ -9,9 +9,13 @@ local nvim_prog = helpers.nvim_prog
 local request = helpers.request
 local retry = helpers.retry
 local rmdir = helpers.rmdir
+local mkdir = helpers.mkdir
 local sleep = helpers.sleep
 local read_file = helpers.read_file
 local trim = helpers.trim
+local currentdir = helpers.funcs.getcwd
+local iswin = helpers.iswin
+local assert_alive = helpers.assert_alive
 
 describe('fileio', function()
   before_each(function()
@@ -23,7 +27,9 @@ describe('fileio', function()
     os.remove('Xtest_startup_file1~')
     os.remove('Xtest_startup_file2')
     os.remove('Xtest_тест.md')
+    os.remove('Xtest-u8-int-max')
     rmdir('Xtest_startup_swapdir')
+    rmdir('Xtest_backupdir')
   end)
 
   it('fsync() codepaths #8304', function()
@@ -88,6 +94,27 @@ describe('fileio', function()
     eq('foo', bar_contents);
   end)
 
+  it('backup with full path #11214', function()
+    clear()
+    mkdir('Xtest_backupdir')
+    command('set backup')
+    command('set backupdir=Xtest_backupdir//')
+    command('write Xtest_startup_file1')
+    feed('ifoo<esc>')
+    command('write')
+    feed('Abar<esc>')
+    command('write')
+
+    -- Backup filename = fullpath, separators replaced with "%".
+    local backup_file_name = string.gsub(currentdir()..'/Xtest_startup_file1',
+      iswin() and '[:/\\]' or '/', '%%') .. '~'
+    local foo_contents = trim(read_file('Xtest_backupdir/'..backup_file_name))
+    local foobar_contents = trim(read_file('Xtest_startup_file1'))
+
+    eq('foobar', foobar_contents);
+    eq('foo', foo_contents);
+  end)
+
   it('readfile() on multibyte filename #10586', function()
     clear()
     local text = {
@@ -102,6 +129,13 @@ describe('fileio', function()
     funcs.writefile(text, fname, 's')
     table.insert(text, '')
     eq(text, funcs.readfile(fname, 'b'))
+  end)
+  it('read invalid u8 over INT_MAX doesn\'t segfault', function()
+    clear()
+    command('call writefile(0zFFFFFFFF, "Xtest-u8-int-max")')
+    -- This should not segfault
+    command('edit ++enc=utf32 Xtest-u8-int-max')
+    assert_alive()
   end)
 end)
 

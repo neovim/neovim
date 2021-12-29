@@ -1,7 +1,7 @@
 -- ShaDa errors handling support
 local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, eq, exc_exec, redir_exec =
-  helpers.command, helpers.eq, helpers.exc_exec, helpers.redir_exec
+local nvim_command, eq, exc_exec =
+  helpers.command, helpers.eq, helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
@@ -342,6 +342,11 @@ describe('ShaDa error handling', function()
     eq('Vim(rshada):E575: Error while reading ShaDa file: variable entry at position 0 has wrong variable name type', exc_exec(sdrcmd()))
   end)
 
+  it('fails on variable item with BIN value and type value != VAR_TYPE_BLOB', function()
+    wshada('\006\000\007\147\196\001\065\196\000\000')
+    eq('Vim(rshada):E575: Error while reading ShaDa file: variable entry at position 0 has wrong variable type', exc_exec(sdrcmd()))
+  end)
+
   it('fails on replacement item with NIL value', function()
     wshada('\003\000\001\192')
     eq('Vim(rshada):E575: Error while reading ShaDa file: sub string entry at position 0 is not an array', exc_exec(sdrcmd()))
@@ -492,23 +497,6 @@ $
     eq('Vim(rshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier', exc_exec(sdrcmd()))
     eq('Vim(wshada):E576: Error while reading ShaDa file: last entry specified that it occupies 47 bytes, but file ended earlier', exc_exec('wshada ' .. shada_fname))
     eq(0, exc_exec('wshada! ' .. shada_fname))
-  end)
-
-  it('errors when a funcref is stored in a variable', function()
-    nvim_command('let F = function("tr")')
-    nvim_command('set shada+=!')
-    eq('\nE5004: Error while dumping variable g:F, itself: attempt to dump function reference'
-       .. '\nE574: Failed to write variable F',
-       redir_exec('wshada'))
-  end)
-
-  it('errors when a self-referencing list is stored in a variable', function()
-    nvim_command('let L = []')
-    nvim_command('call add(L, L)')
-    nvim_command('set shada+=!')
-    eq('\nE5005: Unable to dump variable g:L: container references itself in index 0'
-       .. '\nE574: Failed to write variable L',
-       redir_exec('wshada'))
   end)
 
   it('errors with too large items', function()

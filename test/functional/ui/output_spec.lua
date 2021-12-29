@@ -1,15 +1,17 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
+local assert_alive = helpers.assert_alive
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 local eq = helpers.eq
-local eval = helpers.eval
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local has_powershell = helpers.has_powershell
+local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
   local screen
@@ -30,7 +32,6 @@ describe("shell command :!", function()
 
   after_each(function()
     child_session.feed_data("\3") -- Ctrl-C
-    screen:detach()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()
@@ -51,8 +52,7 @@ describe("shell command :!", function()
 
   it("throttles shell-command output greater than ~10KB", function()
     if 'openbsd' == helpers.uname() then
-      pending('FIXME #10804', function() end)
-      return
+      pending('FIXME #10804')
     end
     child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
@@ -86,18 +86,17 @@ describe("shell command :!", function()
 
   it("cat a binary file #4142", function()
     feed(":exe 'silent !cat '.shellescape(v:progpath)<CR>")
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
   it([[display \x08 char #4142]], function()
     feed(":silent !echo \08<CR>")
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
   it('handles control codes', function()
     if iswin() then
-      pending('missing printf', function() end)
-      return
+      pending('missing printf')
     end
     local screen = Screen.new(50, 4)
     screen:attach()
@@ -230,4 +229,56 @@ describe("shell command :!", function()
       ]])
     end)
   end)
+  if has_powershell() then
+    it('powershell supports literal strings', function()
+      set_shell_powershell()
+      local screen = Screen.new(45, 4)
+      screen:attach()
+      feed_command([[!'Write-Output $a']])
+      screen:expect([[
+        :!'Write-Output $a'                          |
+        Write-Output $a                              |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
+      feed_command([[!$a = 1; Write-Output '$a']])
+      screen:expect([[
+        :!$a = 1; Write-Output '$a'                  |
+        $a                                           |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
+      feed_command([[!"Write-Output $a"]])
+      screen:expect([[
+        :!"Write-Output $a"                          |
+        Write-Output                                 |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
+      feed_command([[!$a = 1; Write-Output "$a"]])
+      screen:expect([[
+        :!$a = 1; Write-Output "$a"                  |
+        1                                            |
+                                                     |
+        Press ENTER or type command to continue^      |
+      ]])
+      if iswin() then
+        feed_command([[!& 'cmd.exe' /c 'echo $a']])
+        screen:expect([[
+          :!& 'cmd.exe' /c 'echo $a'                   |
+          $a                                           |
+                                                       |
+          Press ENTER or type command to continue^      |
+        ]])
+      else
+        feed_command([[!& '/bin/sh' -c 'echo ''$a''']])
+        screen:expect([[
+          :!& '/bin/sh' -c 'echo ''$a'''               |
+          $a                                           |
+                                                       |
+          Press ENTER or type command to continue^      |
+        ]])
+      end
+    end)
+  end
 end)

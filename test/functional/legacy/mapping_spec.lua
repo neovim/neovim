@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local feed_command, expect, wait = helpers.feed_command, helpers.expect, helpers.wait
+local feed_command, expect, poke_eventloop = helpers.feed_command, helpers.expect, helpers.poke_eventloop
 
 describe('mapping', function()
   before_each(clear)
@@ -29,9 +29,9 @@ describe('mapping', function()
     feed_command('cunmap <c-c>')
     feed('GA<cr>')
     feed('TEST2: CTRL-C |')
-    wait()
+    poke_eventloop()
     feed('<c-c>A|<cr><esc>')
-    wait()
+    poke_eventloop()
     feed_command('unmap <c-c>')
     feed_command('unmap! <c-c>')
 
@@ -46,7 +46,7 @@ describe('mapping', function()
     feed('GV')
     -- XXX: For some reason the mapping is only triggered
     -- when <C-c> is in a separate feed command.
-    wait()
+    poke_eventloop()
     feed('<c-c>')
     feed_command('vunmap <c-c>')
 

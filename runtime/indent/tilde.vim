@@ -1,5 +1,5 @@
 "Description: Indent scheme for the tilde weblanguage
-"Author: Tobias Rundström <tobi@tobi.nu>
+"Author: Tobias RundstrÃ¶m <tobi@tobi.nu>
 "URL: http://tilde.tildesoftware.net
 "Last Change: May  8 09:15:09 CEST 2002
 

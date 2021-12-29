@@ -4,13 +4,13 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
 #include <winpty_constants.h>
 
-#include "nvim/os/os.h"
 #include "nvim/ascii.h"
-#include "nvim/memory.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+#include "nvim/memory.h"
+#include "nvim/os/os.h"
+#include "nvim/os/pty_conpty_win.h"
 #include "nvim/os/pty_process_win.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -23,6 +23,11 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   PtyProcess *ptyproc = (PtyProcess *)context;
   Process *proc = (Process *)ptyproc;
 
+  if (ptyproc->type == kConpty
+      && ptyproc->object.conpty != NULL) {
+    os_conpty_free(ptyproc->object.conpty);
+    ptyproc->object.conpty = NULL;
+  }
   uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
   ptyproc->wait_eof_timer.data = (void *)ptyproc;
   uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
@@ -38,6 +43,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   winpty_config_t *cfg = NULL;
   winpty_spawn_config_t *spawncfg = NULL;
   winpty_t *winpty_object = NULL;
+  conpty_t *conpty_object = NULL;
   char *in_name = NULL;
   char *out_name = NULL;
   HANDLE process_handle = NULL;
@@ -45,51 +51,60 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
+  wchar_t *env = NULL;
   const char *emsg = NULL;
 
   assert(proc->err.closed);
 
-  cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
-  if (cfg == NULL) {
-    emsg = "winpty_config_new failed";
-    goto cleanup;
+  if (os_has_conpty_working()) {
+    if ((conpty_object =
+           os_conpty_init(&in_name, &out_name,
+                          ptyproc->width, ptyproc->height)) != NULL) {
+      ptyproc->type = kConpty;
+    }
   }
 
-  winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
-  winpty_object = winpty_open(cfg, &err);
-  if (winpty_object == NULL) {
-    emsg = "winpty_open failed";
-    goto cleanup;
-  }
+  if (ptyproc->type == kWinpty) {
+    cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
+    if (cfg == NULL) {
+      emsg = "winpty_config_new failed";
+      goto cleanup;
+    }
 
-  status = utf16_to_utf8(winpty_conin_name(winpty_object), -1, &in_name);
-  if (status != 0) {
-    emsg = "utf16_to_utf8(winpty_conin_name) failed";
-    goto cleanup;
-  }
+    winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
+    winpty_object = winpty_open(cfg, &err);
+    if (winpty_object == NULL) {
+      emsg = "winpty_open failed";
+      goto cleanup;
+    }
 
-  status = utf16_to_utf8(winpty_conout_name(winpty_object), -1, &out_name);
-  if (status != 0) {
-    emsg = "utf16_to_utf8(winpty_conout_name) failed";
-    goto cleanup;
+    status = utf16_to_utf8(winpty_conin_name(winpty_object), -1, &in_name);
+    if (status != 0) {
+      emsg = "utf16_to_utf8(winpty_conin_name) failed";
+      goto cleanup;
+    }
+
+    status = utf16_to_utf8(winpty_conout_name(winpty_object), -1, &out_name);
+    if (status != 0) {
+      emsg = "utf16_to_utf8(winpty_conout_name) failed";
+      goto cleanup;
+    }
   }
 
   if (!proc->in.closed) {
     in_req = xmalloc(sizeof(uv_connect_t));
-    uv_pipe_connect(
-        in_req,
-        &proc->in.uv.pipe,
-        in_name,
-        pty_process_connect_cb);
+    uv_pipe_connect(in_req,
+                    &proc->in.uv.pipe,
+                    in_name,
+                    pty_process_connect_cb);
   }
 
   if (!proc->out.closed) {
     out_req = xmalloc(sizeof(uv_connect_t));
-    uv_pipe_connect(
-        out_req,
-        &proc->out.uv.pipe,
-        out_name,
-        pty_process_connect_cb);
+    uv_pipe_connect(out_req,
+                    &proc->out.uv.pipe,
+                    out_name,
+                    pty_process_connect_cb);
   }
 
   if (proc->cwd != NULL) {
@@ -107,42 +122,62 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
-  spawncfg = winpty_spawn_config_new(
-      WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
-      NULL,  // Optional application name
-      cmd_line,
-      cwd,
-      NULL,  // Optional environment variables
-      &err);
-  if (spawncfg == NULL) {
-    emsg = "winpty_spawn_config_new failed";
+  if (proc->env != NULL) {
+    status = build_env_block(proc->env, &env);
+  }
+
+  if (status != 0) {
+    emsg = "build_env_block failed";
     goto cleanup;
   }
 
-  DWORD win_err = 0;
-  if (!winpty_spawn(winpty_object,
-                    spawncfg,
-                    &process_handle,
-                    NULL,  // Optional thread handle
-                    &win_err,
-                    &err)) {
-    if (win_err) {
-      status = (int)win_err;
-      emsg = "failed to spawn process";
-    } else {
-      emsg = "winpty_spawn failed";
+  if (ptyproc->type == kConpty) {
+    if (!os_conpty_spawn(conpty_object,
+                         &process_handle,
+                         NULL,
+                         cmd_line,
+                         cwd,
+                         env)) {
+      emsg = "os_conpty_spawn failed";
+      status = (int)GetLastError();
+      goto cleanup;
     }
-    goto cleanup;
+  } else {
+    spawncfg = winpty_spawn_config_new(WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
+                                       NULL,  // Optional application name
+                                       cmd_line,
+                                       cwd,
+                                       env,
+                                       &err);
+    if (spawncfg == NULL) {
+      emsg = "winpty_spawn_config_new failed";
+      goto cleanup;
+    }
+
+    DWORD win_err = 0;
+    if (!winpty_spawn(winpty_object,
+                      spawncfg,
+                      &process_handle,
+                      NULL,  // Optional thread handle
+                      &win_err,
+                      &err)) {
+      if (win_err) {
+        status = (int)win_err;
+        emsg = "failed to spawn process";
+      } else {
+        emsg = "winpty_spawn failed";
+      }
+      goto cleanup;
+    }
   }
   proc->pid = (int)GetProcessId(process_handle);
 
-  if (!RegisterWaitForSingleObject(
-      &ptyproc->finish_wait,
-      process_handle,
-      pty_process_finish1,
-      ptyproc,
-      INFINITE,
-      WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
+  if (!RegisterWaitForSingleObject(&ptyproc->finish_wait,
+                                   process_handle,
+                                   pty_process_finish1,
+                                   ptyproc,
+                                   INFINITE,
+                                   WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
     abort();
   }
 
@@ -152,25 +187,31 @@ int pty_process_spawn(PtyProcess *ptyproc)
     uv_run(&proc->loop->uv, UV_RUN_ONCE);
   }
 
-  ptyproc->winpty_object = winpty_object;
+  (ptyproc->type == kConpty) ?
+  (void *)(ptyproc->object.conpty = conpty_object) :
+  (void *)(ptyproc->object.winpty = winpty_object);
   ptyproc->process_handle = process_handle;
   winpty_object = NULL;
+  conpty_object = NULL;
   process_handle = NULL;
 
 cleanup:
   if (status) {
     // In the case of an error of MultiByteToWideChar or CreateProcessW.
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = os_translate_sys_error(status);
   } else if (err != NULL) {
     status = (int)winpty_error_code(err);
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = translate_winpty_error(status);
   }
   winpty_error_free(err);
   winpty_config_free(cfg);
   winpty_spawn_config_free(spawncfg);
   winpty_free(winpty_object);
+  os_conpty_free(conpty_object);
   xfree(in_name);
   xfree(out_name);
   if (process_handle != NULL) {
@@ -179,6 +220,7 @@ cleanup:
   xfree(in_req);
   xfree(out_req);
   xfree(cmd_line);
+  xfree(env);
   xfree(cwd);
   return status;
 }
@@ -188,12 +230,14 @@ const char *pty_process_tty_name(PtyProcess *ptyproc)
   return "?";
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
-                        uint16_t height)
+void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ptyproc->winpty_object != NULL) {
-    winpty_set_size(ptyproc->winpty_object, width, height, NULL);
+  if (ptyproc->type == kConpty
+      && ptyproc->object.conpty != NULL) {
+    os_conpty_set_size(ptyproc->object.conpty, width, height);
+  } else if (ptyproc->object.winpty != NULL) {
+    winpty_set_size(ptyproc->object.winpty, width, height, NULL);
   }
 }
 
@@ -212,9 +256,10 @@ void pty_process_close(PtyProcess *ptyproc)
 void pty_process_close_master(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ptyproc->winpty_object != NULL) {
-    winpty_free(ptyproc->winpty_object);
-    ptyproc->winpty_object = NULL;
+  if (ptyproc->type == kWinpty
+      && ptyproc->object.winpty != NULL) {
+    winpty_free(ptyproc->object.winpty);
+    ptyproc->object.winpty = NULL;
   }
 }
 
@@ -294,19 +339,17 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
   utf8_cmd_line_len += argc;
   char *utf8_cmd_line = xmalloc(utf8_cmd_line_len);
   *utf8_cmd_line = NUL;
-  while (1) {
-    QUEUE *head = QUEUE_HEAD(&args_q);
-    QUEUE_REMOVE(head);
-    ArgNode *arg_node = QUEUE_DATA(head, ArgNode, node);
+  QUEUE *q;
+  QUEUE_FOREACH(q, &args_q, {
+    ArgNode *arg_node = QUEUE_DATA(q, ArgNode, node);
     xstrlcat(utf8_cmd_line, arg_node->arg, utf8_cmd_line_len);
     xfree(arg_node->arg);
     xfree(arg_node);
-    if (QUEUE_EMPTY(&args_q)) {
-      break;
-    } else {
+    QUEUE_REMOVE(q);
+    if (!QUEUE_EMPTY(&args_q)) {
       xstrlcat(utf8_cmd_line, " ", utf8_cmd_line_len);
     }
-  }
+  })
 
   int result = utf8_to_utf16(utf8_cmd_line, -1, cmd_line);
   xfree(utf8_cmd_line);
@@ -405,14 +448,86 @@ int translate_winpty_error(int winpty_errno)
   }
 
   switch (winpty_errno) {
-    case WINPTY_ERROR_OUT_OF_MEMORY:                return UV_ENOMEM;
-    case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:  return UV_EAI_FAIL;
-    case WINPTY_ERROR_LOST_CONNECTION:              return UV_ENOTCONN;
-    case WINPTY_ERROR_AGENT_EXE_MISSING:            return UV_ENOENT;
-    case WINPTY_ERROR_UNSPECIFIED:                   return UV_UNKNOWN;
-    case WINPTY_ERROR_AGENT_DIED:                   return UV_ESRCH;
-    case WINPTY_ERROR_AGENT_TIMEOUT:                return UV_ETIMEDOUT;
-    case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
-    default:                                        return UV_UNKNOWN;
+  case WINPTY_ERROR_OUT_OF_MEMORY:
+    return UV_ENOMEM;
+  case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:
+    return UV_EAI_FAIL;
+  case WINPTY_ERROR_LOST_CONNECTION:
+    return UV_ENOTCONN;
+  case WINPTY_ERROR_AGENT_EXE_MISSING:
+    return UV_ENOENT;
+  case WINPTY_ERROR_UNSPECIFIED:
+    return UV_UNKNOWN;
+  case WINPTY_ERROR_AGENT_DIED:
+    return UV_ESRCH;
+  case WINPTY_ERROR_AGENT_TIMEOUT:
+    return UV_ETIMEDOUT;
+  case WINPTY_ERROR_AGENT_CREATION_FAILED:
+    return UV_EAI_FAIL;
+  default:
+    return UV_UNKNOWN;
   }
+}
+
+typedef struct EnvNode {
+  wchar_t *str;
+  size_t len;
+  QUEUE node;
+} EnvNode;
+
+/// Build the environment block to pass to CreateProcessW.
+///
+/// @param[in]  denv  Dict of environment name/value pairs
+/// @param[out]  env  Allocated environment block
+///
+/// @returns zero on success or error code of MultiByteToWideChar function.
+static int build_env_block(dict_T *denv, wchar_t **env_block)
+{
+  const size_t denv_size = (size_t)tv_dict_len(denv);
+  size_t env_block_len = 0;
+  int rc;
+  char **env = tv_dict_to_env(denv);
+
+  QUEUE *q;
+  QUEUE env_q;
+  QUEUE_INIT(&env_q);
+  // Convert env vars to wchar_t and calculate how big the final env block
+  // needs to be
+  for (size_t i = 0; i < denv_size; i++) {
+    EnvNode *env_node = xmalloc(sizeof(*env_node));
+    rc = utf8_to_utf16(env[i], -1, &env_node->str);
+    if (rc != 0) {
+      goto cleanup;
+    }
+    env_node->len = wcslen(env_node->str) + 1;
+    env_block_len += env_node->len;
+    QUEUE_INSERT_TAIL(&env_q, &env_node->node);
+  }
+
+  // Additional '\0' after the final entry
+  env_block_len++;
+
+  *env_block = xmalloc(sizeof(**env_block) * env_block_len);
+  wchar_t *pos = *env_block;
+
+  QUEUE_FOREACH(q, &env_q, {
+    EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
+    memcpy(pos, env_node->str, env_node->len * sizeof(*pos));
+    pos += env_node->len;
+  })
+
+  *pos = L'\0';
+
+cleanup:
+  q = QUEUE_HEAD(&env_q);
+  while (q != &env_q) {
+    QUEUE *next = q->next;
+    EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
+    XFREE_CLEAR(env_node->str);
+    QUEUE_REMOVE(q);
+    xfree(env_node);
+    q = next;
+  }
+
+  return rc;
 }

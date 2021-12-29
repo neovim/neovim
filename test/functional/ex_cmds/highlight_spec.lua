@@ -13,10 +13,6 @@ describe(':highlight', function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('invalid color name', function()
     eq('Vim(highlight):E421: Color name or number not recognized: ctermfg=#181818',
        exc_exec("highlight normal ctermfg=#181818"))

@@ -2,7 +2,7 @@
 " Language:		Python
 " Maintainer:		Bram Moolenaar <Bram@vim.org>
 " Original Author:	David Bustos <bustos@caltech.edu>
-" Last Change:		2019 Feb 21
+" Last Change:		2021 Sep 26
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -17,6 +17,8 @@ setlocal autoindent	" indentexpr isn't much help otherwise
 setlocal indentexpr=GetPythonIndent(v:lnum)
 setlocal indentkeys+=<:>,=elif,=except
 
+let b:undo_indent = "setl ai< inde< indk< lisp<"
+
 " Only define the function once.
 if exists("*GetPythonIndent")
   finish
@@ -27,6 +29,11 @@ set cpo&vim
 " Come here when loading the script the first time.
 
 let s:maxoff = 50	" maximum number of lines to look backwards for ()
+
+" See if the specified line is already user-dedented from the expected value.
+function s:Dedented(lnum, expected)
+  return indent(a:lnum) <= a:expected - shiftwidth()
+endfunction
 
 function GetPythonIndent(lnum)
 
@@ -158,12 +165,12 @@ function GetPythonIndent(lnum)
   " If the previous line was a stop-execution statement...
   if getline(plnum) =~ '^\s*\(break\|continue\|raise\|return\|pass\)\>'
     " See if the user has already dedented
-    if indent(a:lnum) > indent(plnum) - shiftwidth()
-      " If not, recommend one dedent
-      return indent(plnum) - shiftwidth()
+    if s:Dedented(a:lnum, indent(plnum))
+      " If so, trust the user
+      return -1
     endif
-    " Otherwise, trust the user
-    return -1
+    " If not, recommend one dedent
+    return indent(plnum) - shiftwidth()
   endif
 
   " If the current line begins with a keyword that lines up with "try"
@@ -186,12 +193,12 @@ function GetPythonIndent(lnum)
   if getline(a:lnum) =~ '^\s*\(elif\|else\)\>'
 
     " Unless the previous line was a one-liner
-    if getline(plnumstart) =~ '^\s*\(for\|if\|try\)\>'
+    if getline(plnumstart) =~ '^\s*\(for\|if\|elif\|try\)\>'
       return plindent
     endif
 
     " Or the user has already dedented
-    if indent(a:lnum) <= plindent - shiftwidth()
+    if s:Dedented(a:lnum, plindent)
       return -1
     endif
 
@@ -203,7 +210,12 @@ function GetPythonIndent(lnum)
   "       + c)
   " here
   if parlnum > 0
-    return plindent
+    " ...unless the user has already dedented
+    if s:Dedented(a:lnum, plindent)
+        return -1
+    else
+        return plindent
+    endif
   endif
 
   return -1

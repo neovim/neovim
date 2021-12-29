@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
-" Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	May 14, 2019
-" Version:	114
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
+" Last Change:	Jun 29, 2020
+" Version:	119
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -147,6 +147,16 @@ if exists("g:tex_nospell") && g:tex_nospell
 else
  let s:tex_nospell = 0
 endif
+if exists("g:tex_matchcheck")
+ let s:tex_matchcheck= g:tex_matchcheck
+else
+ let s:tex_matchcheck= '[({[]'
+endif
+if exists("g:tex_excludematcher")
+ let s:tex_excludematcher= g:tex_excludematcher
+else
+ let s:tex_excludematcher= 0
+endif
 
 " Clusters: {{{1
 " --------
@@ -156,8 +166,12 @@ if !s:tex_no_error
 endif
 syn cluster texEnvGroup			contains=texMatcher,texMathDelim,texSpecialChar,texStatement
 syn cluster texFoldGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texBoldStyle,texItalStyle,texEmphStyle,texNoSpell
-syn cluster texBoldGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texBoldStyle,texBoldItalStyle,texNoSpell
-syn cluster texItalGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMatcher,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texItalStyle,texEmphStyle,texItalBoldStyle,texNoSpell
+syn cluster texBoldGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texBoldStyle,texBoldItalStyle,texNoSpell
+syn cluster texItalGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texInputFile,texLength,texLigature,texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ,texNewCmd,texNewEnv,texOnlyMath,texOption,texParen,texRefZone,texSection,texBeginEnd,texSectionZone,texSpaceCode,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone,@texMathZones,texTitle,texAbstract,texItalStyle,texEmphStyle,texItalBoldStyle,texNoSpell
+if !s:tex_excludematcher
+ syn cluster texBoldGroup add=texMatcher
+ syn cluster texItalGroup add=texMatcher
+endif
 if !s:tex_nospell
  syn cluster texMatchGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMatcher,texNewCmd,texNewEnv,texOnlyMath,texParen,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texBoldStyle,texBoldItalStyle,texItalStyle,texItalBoldStyle,texZone,texInputFile,texOption,@Spell
  syn cluster texMatchNMGroup		contains=texAccent,texBadMath,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMatcherNM,texNewCmd,texNewEnv,texOnlyMath,texParen,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texBoldStyle,texBoldItalStyle,texItalStyle,texItalBoldStyle,texZone,texInputFile,texOption,@Spell
@@ -196,27 +210,41 @@ if !exists("g:tex_no_math")
  endif
 endif
 
-" Try to flag {} and () mismatches: {{{1
+" Try to flag {}, [], and () mismatches: {{{1
 if s:tex_fast =~# 'm'
   if !s:tex_no_error
-   syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup,texError
-   syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup,texError,@NoSpell
-   syn region texMatcherNM	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchNMGroup,texError
-   syn region texMatcherNM	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchNMGroup,texError,@NoSpell
+   if s:tex_matchcheck =~ '{'
+    syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup,texError
+    syn region texMatcherNM	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchNMGroup,texError
+   endif
+   if s:tex_matchcheck =~ '\['
+    syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup,texError,@NoSpell
+    syn region texMatcherNM	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchNMGroup,texError,@NoSpell
+   endif
   else
-   syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup
-   syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup
-   syn region texMatcherNM	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchNMGroup
-   syn region texMatcherNM	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchNMGroup
+   if s:tex_matchcheck =~ '{'
+    syn region texMatcher	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchGroup
+    syn region texMatcherNM	matchgroup=Delimiter start="{" skip="\\\\\|\\[{}]"	end="}"			transparent contains=@texMatchNMGroup
+   endif
+   if s:tex_matchcheck =~ '\['
+    syn region texMatcher	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchGroup
+    syn region texMatcherNM	matchgroup=Delimiter start="\["				end="]"			transparent contains=@texMatchNMGroup
+   endif
   endif
-  if !s:tex_nospell
-   syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup,@Spell
-  else
-   syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup
+  if s:tex_matchcheck =~ '('
+   if !s:tex_nospell
+    syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup,@Spell
+   else
+    syn region texParen		start="("	end=")"								transparent contains=@texMatchGroup
+   endif
   endif
 endif
 if !s:tex_no_error
- syn match  texError		"[}\])]"
+ if s:tex_matchcheck =~ '('
+  syn match  texError		"[}\]]"
+ else
+  syn match  texError		"[}\])]"
+ endif
 endif
 if s:tex_fast =~# 'M'
   if !exists("g:tex_no_math")
@@ -305,11 +333,6 @@ if s:tex_conceal !~# 'b'
 endif
 syn match texTypeStyle		"\\textmd\>"
 syn match texTypeStyle		"\\textrm\>"
-syn match texTypeStyle		"\\textsc\>"
-syn match texTypeStyle		"\\textsf\>"
-syn match texTypeStyle		"\\textsl\>"
-syn match texTypeStyle		"\\texttt\>"
-syn match texTypeStyle		"\\textup\>"
 
 syn match texTypeStyle		"\\mathbb\>"
 syn match texTypeStyle		"\\mathbf\>"
@@ -386,12 +409,18 @@ if s:tex_fast =~# 'b'
     syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup,@Spell
     syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
     syn region texEmphStyle	matchgroup=texTypeStyle start="\\emph\s*{"   matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup,@Spell
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\texts[cfl]\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\textup\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\texttt\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
    else                                                                                              
     syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup
     syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
     syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
     syn region texItalBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup
     syn region texEmphStyle	matchgroup=texTypeStyle start="\\emph\s*{"   matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\texts[cfl]\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texEmphGroup
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\textup\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texEmphGroup
+    syn region texEmphStyle	matchgroup=texTypeStyle start="\\texttt\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texEmphGroup
    endif
   endif
 endif
@@ -624,7 +653,7 @@ if s:tex_fast =~# 'r'
   syn region texRefOption	contained	matchgroup=Delimiter start='\[' end=']'		contains=@texRefGroup,texRefZone	nextgroup=texRefOption,texCite
   syn region texCite		contained	matchgroup=Delimiter start='{' end='}'		contains=@texRefGroup,texRefZone,texCite
 endif
-syn match  texRefZone		'\\cite\%([tp]\*\=\)\=' nextgroup=texRefOption,texCite
+syn match  texRefZone		'\\cite\%([tp]\*\=\)\=\>' nextgroup=texRefOption,texCite
 
 " Handle newcommand, newenvironment : {{{1
 syn match  texNewCmd				"\\newcommand\>"			nextgroup=texCmdName skipwhite skipnl
@@ -745,6 +774,8 @@ if has("conceal") && &enc == 'utf-8'
     \ ['lceil'		, '⌈'],
     \ ['ldots'		, '…'],
     \ ['le'		, '≤'],
+    \ ['left|'		, '|'],
+    \ ['left\\|'	, '‖'],
     \ ['left('		, '('],
     \ ['left\['		, '['],
     \ ['left\\{'	, '{'],
@@ -795,6 +826,8 @@ if has("conceal") && &enc == 'utf-8'
     \ ['quad'		, ' '],
     \ ['qquad'		, ' '],
     \ ['rfloor'		, '⌋'],
+    \ ['right|'		, '|'],
+    \ ['right\\|'	, '‖'],
     \ ['right)'		, ')'],
     \ ['right]'		, ']'],
     \ ['right\\}'	, '}'],
@@ -1047,6 +1080,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:SuperSub('texSuperscript','\^','R','ᴿ')
   call s:SuperSub('texSuperscript','\^','T','ᵀ')
   call s:SuperSub('texSuperscript','\^','U','ᵁ')
+  call s:SuperSub('texSuperscript','\^','V','ⱽ')
   call s:SuperSub('texSuperscript','\^','W','ᵂ')
   call s:SuperSub('texSuperscript','\^',',','︐')
   call s:SuperSub('texSuperscript','\^',':','︓')

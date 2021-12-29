@@ -1,10 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
-local eval = helpers.eval
+local exc_exec = helpers.exc_exec
 local expect = helpers.expect
 local feed = helpers.feed
 local feed_command = helpers.feed_command
@@ -18,13 +19,14 @@ local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('ruby') then
+  local reason = missing_provider('ruby')
+  if reason then
     it(':ruby reports E319 if provider is missing', function()
       local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
       matches(expected, pcall_err(command, 'ruby puts "foo"'))
       matches(expected, pcall_err(command, 'rubyfile foo'))
     end)
-    pending("Missing neovim RubyGem.", function() end)
+    pending(string.format('Missing neovim RubyGem (%s)', reason), function() end)
     return
   end
 end
@@ -105,6 +107,27 @@ describe('ruby provider', function()
     helpers.add_builddir_to_rtp()
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
     feed_command('help help')
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
+  end)
+end)
+
+describe('rubyeval()', function()
+  it('evaluates ruby objects', function()
+    eq({1, 2, {['key'] = 'val'}}, funcs.rubyeval('[1, 2, {key: "val"}]'))
+  end)
+
+  it('returns nil for empty strings', function()
+    eq(helpers.NIL, funcs.rubyeval(''))
+  end)
+
+  it('errors out when given non-string', function()
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(10)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_dict)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:_null_list)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(0.0)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(function("tr"))'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:true)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:false)'))
+    eq('Vim(call):E474: Invalid argument', exc_exec('call rubyeval(v:null)'))
   end)
 end)
