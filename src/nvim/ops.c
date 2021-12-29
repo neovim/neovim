@@ -915,10 +915,33 @@ int do_record(int c)
       apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
     }
   } else {  // stop recording
+    save_v_event_T save_v_event;
+    // Set the v:event dictionary with information about the recording.
+    dict_T *dict = get_v_event(&save_v_event);
+
+    // The recorded text contents.
+    list_T *const list = tv_list_alloc(1);
+    p = get_recorded();
+    if (p != NULL) {
+      // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
+      vim_unescape_csi(p);
+
+      tv_list_append_string(list, (const char *)p, -1);
+    }
+    tv_list_set_lock(list, VAR_FIXED);
+    (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
+
+    // Name of requested register, or empty string for unnamed operation.
+    char buf[NUMBUFLEN+2];
+    buf[0] = (char)regname;
+    buf[1] = NUL;
+    (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
+
     // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
     apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    restore_v_event(dict, &save_v_event);
     reg_recorded = reg_recording;
     reg_recording = 0;
     if (ui_has(kUIMessages)) {
@@ -926,13 +949,9 @@ int do_record(int c)
     } else {
       msg("");
     }
-    p = get_recorded();
     if (p == NULL) {
       retval = FAIL;
     } else {
-      // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
-      vim_unescape_csi(p);
-
       // We don't want to change the default register here, so save and
       // restore the current register name.
       old_y_previous = y_previous;
