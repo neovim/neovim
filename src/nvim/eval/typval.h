@@ -386,6 +386,7 @@ typedef enum {
   ETYPE_ENV,              // environment variable
   ETYPE_INTERNAL,         // internal operation
   ETYPE_SPELL,            // loading spell file
+  ETYPE_RPC_REQUEST,      // making RPC request
 } etype_T;
 
 typedef struct {

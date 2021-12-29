@@ -1944,20 +1944,24 @@ scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
 {
-  char_u *save_sourcing_name = SOURCING_NAME;
+  ESTACK_CHECK_DECLARATION
   linenr_T save_sourcing_lnum = SOURCING_LNUM;
   char_u sourcing_name_buf[256];
-  if (save_sourcing_name == NULL) {
-    SOURCING_NAME = (char_u *)traceback_name;
+  char_u *sname;
+  if (SOURCING_NAME == NULL) {
+    sname = (char_u *)traceback_name;
   } else {
     snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
-             "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
+             "%s called at %s:%" PRIdLINENR, traceback_name, SOURCING_NAME,
              save_sourcing_lnum);
-    SOURCING_NAME = sourcing_name_buf;  // -V507 reassigned below, before return.
+    sname = sourcing_name_buf;
   }
+  estack_push(ETYPE_SCRIPT, sname, 0);
+  ESTACK_CHECK_SETUP
   SOURCING_LNUM = 0;
 
   const sctx_T save_current_sctx = current_sctx;
+  ESTACK_CHECK_SETUP
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
@@ -1965,10 +1969,11 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   save_funccal(&entry);
   int retval = do_cmdline(NULL, fgetline, cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  SOURCING_LNUM = save_sourcing_lnum;
-  SOURCING_NAME = save_sourcing_name;
+  ESTACK_CHECK_NOW
+  estack_pop();
   current_sctx = save_current_sctx;
   restore_funccal();
+  xfree(sname);
   return retval;
 }
 
@@ -3193,3 +3198,5 @@ void ex_drop(exarg_T *eap)
     ex_rewind(eap);
   }
 }
+
+

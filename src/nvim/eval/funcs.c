@@ -54,6 +54,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/scriptfile.h"
 #include "nvim/search.h"
 #include "nvim/sha256.h"
 #include "nvim/sign.h"
@@ -8111,17 +8112,19 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   sctx_T save_current_sctx;
-  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
-  linenr_T save_sourcing_lnum;
+  uint8_t *save_autocmd_fname, *save_autocmd_match;
   int save_autocmd_bufnr;
   funccal_entry_T funccal_entry;
 
+  const char *method = tv_get_string(&argvars[1]);
+
   if (l_provider_call_nesting) {
+    ESTACK_CHECK_DECLARATION
     // If this is called from a provider function, restore the scope
     // information of the caller.
     save_current_sctx = current_sctx;
-    save_sourcing_name = SOURCING_NAME;
-    save_sourcing_lnum = SOURCING_LNUM;
+    estack_push(ETYPE_RPC_REQUEST, (char_u *)method, 0);
+    ESTACK_CHECK_SETUP
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
     save_autocmd_bufnr = autocmd_bufnr;
@@ -8136,18 +8139,16 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
 
-
   Error err = ERROR_INIT;
 
   uint64_t chan_id = (uint64_t)argvars[0].vval.v_number;
-  const char *method = tv_get_string(&argvars[1]);
 
   Object result = rpc_send_call(chan_id, method, args, &err);
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
-    SOURCING_NAME = save_sourcing_name;
-    SOURCING_LNUM = save_sourcing_lnum;
+    ESTACK_CHECK_NOW
+    estack_pop();
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
     autocmd_bufnr = save_autocmd_bufnr;
