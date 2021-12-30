@@ -350,7 +350,8 @@ static void get_healthcheck_cb(char_u *path, void *cookie)
 }
 
 // Return an user command when it can do incsearch highlighting, NULL otherwise.
-static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name)
+// Will also advance the pointer to the end of the command name, if appropriate.
+static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name, char_u **p)
 {
   // not an user-defined command
   if (*cmd_name < 'A' || *cmd_name > 'Z') {
@@ -358,8 +359,7 @@ static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name)
   }
 
   // find the first whitespace character
-  char_u *p;
-  for (p = cmd_name; ASCII_ISALNUM(*p); p++) {}
+  for (*p = cmd_name; ASCII_ISALNUM(**p); (*p)++) {}
 
   ucmd_T *uc;
   garray_T *gap;
@@ -368,14 +368,14 @@ static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name)
   gap = &curbuf->b_ucmds;
   for (int i = 0; i < gap->ga_len; i++) {
     uc = USER_CMD_GA(gap, i);
-    if (STRNCMP(cmd_name, uc->uc_name, p - cmd_name) == 0) {
+    if (STRNCMP(cmd_name, uc->uc_name, *p - cmd_name) == 0) {
       return uc->uc_argt & EX_INCSEARCH ? uc : NULL;
     }
   }
   gap = &ucmds;
   for (int i = 0; i < gap->ga_len; i++) {
     uc = USER_CMD_GA(gap, i);
-    if (STRNCMP(cmd_name, uc->uc_name, p - cmd_name) == 0) {
+    if (STRNCMP(cmd_name, uc->uc_name, *p - cmd_name) == 0) {
       return uc->uc_argt & EX_INCSEARCH ? uc : NULL;
     }
   }
@@ -432,17 +432,15 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
 
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
-    usrcmd = usrcmd_can_incsearch(cmd);
+    // check if it's an user command and advance the pointer already
+    usrcmd = usrcmd_can_incsearch(cmd, &p);
     if (usrcmd == NULL) {
       goto theend;
     }
   }
 
   // Skip over the command name to find the pattern separator, if any.
-  // User commands can contain digits, so take that into account.
-  if (usrcmd != NULL) {
-    for (p = cmd; ASCII_ISALNUM(*p); p++) {}
-  } else {
+  if (usrcmd == NULL) {
     for (p = cmd; ASCII_ISALPHA(*p); p++) {}
   }
   if (*skipwhite(p) == NUL) {
