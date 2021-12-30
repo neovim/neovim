@@ -1435,6 +1435,9 @@ There are some special cases as well:
 	-register   The first argument to the command can be an optional
 		    register name (like :del, :put, :yank).
 	-buffer	    The command will only be available in the current buffer.
+	-incsearch  The command will highlight any argument, treating it as
+		    a regex pattern, as it happens for |:substitute|,
+		    |:global|, |:vimgrep| and related commands.
 
 In the cases of the -count and -register attributes, if the optional argument
 is supplied, it is removed from the argument list and is available to the

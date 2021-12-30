@@ -349,6 +349,39 @@ static void get_healthcheck_cb(char_u *path, void *cookie)
   }
 }
 
+// Return an user command when it can do incsearch highlighting, NULL otherwise.
+static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name)
+{
+  // not an user-defined command
+  if (*cmd_name < 'A' || *cmd_name > 'Z') {
+    return NULL;
+  }
+
+  // find the first whitespace character
+  char_u *p;
+  for (p = cmd_name; ASCII_ISALNUM(*p); p++) {}
+
+  ucmd_T *uc;
+  garray_T *gap;
+
+  // look for buffer-local user commands first, then global ones.
+  gap = &curbuf->b_ucmds;
+  for (int i = 0; i < gap->ga_len; i++) {
+    uc = USER_CMD_GA(gap, i);
+    if (STRNCMP(cmd_name, uc->uc_name, p - cmd_name) == 0) {
+      return uc->uc_argt & EX_INCSEARCH ? uc : NULL;
+    }
+  }
+  gap = &ucmds;
+  for (int i = 0; i < gap->ga_len; i++) {
+    uc = USER_CMD_GA(gap, i);
+    if (STRNCMP(cmd_name, uc->uc_name, p - cmd_name) == 0) {
+      return uc->uc_argt & EX_INCSEARCH ? uc : NULL;
+    }
+  }
+  return NULL;
+}
+
 // Return true when 'incsearch' highlighting is to be done.
 // Sets search_first_line and search_last_line to the address range.
 static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *s,
@@ -366,6 +399,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   pos_T save_cursor;
   bool use_last_pat;
   bool retval = false;
+  ucmd_T *usrcmd = NULL;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -398,11 +432,19 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
 
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
-    goto theend;
+    usrcmd = usrcmd_can_incsearch(cmd);
+    if (usrcmd == NULL) {
+      goto theend;
+    }
   }
 
-  // Skip over "substitute" to find the pattern separator.
-  for (p = cmd; ASCII_ISALPHA(*p); p++) {}
+  // Skip over the command name to find the pattern separator, if any.
+  // User commands can contain digits, so take that into account.
+  if (usrcmd != NULL) {
+    for (p = cmd; ASCII_ISALNUM(*p); p++) {}
+  } else {
+    for (p = cmd; ASCII_ISALPHA(*p); p++) {}
+  }
   if (*skipwhite(p) == NUL) {
     goto theend;
   }
@@ -427,7 +469,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     if (*p == NUL) {
       goto theend;
     }
-  } else if (STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
+  } else if (usrcmd != NULL
+             || STRNCMP(cmd, "vimgrep", MAX(p - cmd, 3)) == 0
              || STRNCMP(cmd, "vimgrepadd", MAX(p - cmd, 8)) == 0
              || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
              || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0
@@ -486,8 +529,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
       search_first_line = ea.line1;
       search_last_line = ea.line2;
     }
-  } else if (cmd[0] == 's' && cmd[1] != 'o') {
-    // :s defaults to the current line
+  } else if ((usrcmd != NULL && !(usrcmd->uc_argt & EX_DFLALL))
+             || (cmd[0] == 's' && cmd[1] != 'o')) {
+    // :s defaults to the current line, and also user commands can do that
     search_first_line = curwin->w_cursor.lnum;
     search_last_line = curwin->w_cursor.lnum;
   }

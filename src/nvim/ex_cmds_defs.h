@@ -61,6 +61,7 @@
                                   // current buffer is locked
 #define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000  // allow flags after count in argument
+#define EX_INCSEARCH    0x400000  // can do incsearch on argument
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed

@@ -5519,6 +5519,8 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int
     *argt |= EX_REGSTR;
   } else if (STRNICMP(attr, "bar", len) == 0) {
     *argt |= EX_TRLBAR;
+  } else if (STRNICMP(attr, "incsearch", len) == 0) {
+    *argt |= EX_INCSEARCH;
   } else {
     int i;
     char_u *val = NULL;
@@ -6307,7 +6309,8 @@ char_u *get_user_cmd_flags(expand_T *xp, int idx)
 {
   static char *user_cmd_flags[] = { "addr",   "bang",     "bar",
                                     "buffer", "complete", "count",
-                                    "nargs",  "range",    "register" };
+                                    "nargs",  "range",    "register",
+                                    "incsearch" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_flags)) {
     return NULL;
