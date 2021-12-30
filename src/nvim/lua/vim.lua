@@ -115,6 +115,9 @@ setmetatable(vim, {
     elseif key == 'ui' then
       t.ui = require('vim.ui')
       return t.ui
+    elseif key == 'keymap' then
+      t.keymap = require('vim.keymap')
+      return t.keymap
     end
   end
 })

@@ -1847,4 +1847,81 @@ add({filetypes})                                          *vim.filetype.add()*
                     {filetypes}  table A table containing new filetype maps
                                  (see example).
 
+
+==============================================================================
+Lua module: keymap                                                *lua-keymap*
+
+del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
+                Remove an existing mapping. Examples: >
+
+                   vim.keymap.del('n', 'lhs')
+
+                   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+<
+
+                Parameters: ~
+                    {opts}  table A table of optional arguments:
+                            • buffer: (number or boolean) Remove a mapping
+                              from the given buffer. When "true" or 0, use the
+                              current buffer.
+
+                See also: ~
+                    |vim.keymap.set()|
+
+set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
+                Add a new |mapping|. Examples: >
+
+                   -- Can add mapping to Lua functions
+                   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
+
+                   -- Can use it to map multiple modes
+                   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
+
+                   -- Can add mapping for specific buffer
+                   vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
+
+                   -- Expr mappings
+                   vim.keymap.set('i', '<Tab>', function()
+                     return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
+                   end, { expr = true })
+                   -- <Plug> mappings
+                   vim.keymap.set('n', '[%', '<Plug>(MatchitNormalMultiBackward)')
+<
+
+                Note that in a mapping like: >
+
+                    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
+<
+
+                the require('jkl') gets evaluated during this call in order to
+                access the function. If you want to avoid this cost at startup
+                you can wrap it in a function, for example: >
+
+                    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
+<
+
+                Parameters: ~
+                    {mode}  string|table Same mode short names as
+                            |nvim_set_keymap()|. Can also be list of modes to
+                            create mapping on multiple modes.
+                    {lhs}   string Left-hand side |{lhs}| of the mapping.
+                    {rhs}   string|function Right-hand side |{rhs}| of the
+                            mapping. Can also be a Lua function.
+                    {opts}  table A table of |:map-arguments| such as
+                            "silent". In addition to the options listed in
+                            |nvim_set_keymap()|, this table also accepts the
+                            following keys:
+                            • replace_keycodes: (boolean, default true) When
+                              both this and expr is "true",
+                              |nvim_replace_termcodes()| is applied to the
+                              result of Lua expr maps.
+                            • remap: (boolean) Make the mapping recursive.
+                              This is the inverse of the "noremap" option from
+                              |nvim_set_keymap()|. Default `true` if `lhs` is
+                              a string starting with `<plug>`
+                              (case-insensitive), `false` otherwise.
+
+                See also: ~
+                    |nvim_set_keymap()|
+
  vim:tw=78:ts=8:ft=help:norl:
