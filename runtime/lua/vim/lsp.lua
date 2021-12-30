@@ -258,8 +258,10 @@ local function validate_client_config(config)
       or type(config.flags.debounce_text_changes) == 'number'),
     "flags.debounce_text_changes must be nil or a number with the debounce time in milliseconds"
   )
-
-  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  local cmd, cmd_args
+  if config.cmd then
+    cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  end
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
@@ -798,11 +800,27 @@ function lsp.start_client(config)
     end
   end
 
+  local handles
+  -- Start the language server
+  if config.cmd then
+    local server = lsp_rpc.spawn_server(cmd, cmd_args, {
+      cwd = config.cmd_cwd;
+      env = config.cmd_env;
+    })
+    handles = server.handles
+  else
+    local handle = uv.new_tcp()
+    handle:connect("127.0.0.1", 6008, function (err)
+      print(err)
+    end)
+    handles = {
+      inbound = handle,
+      outbound = handle,
+      status = handle,
+    }
+  end
   -- Start the RPC client.
-  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
-    cwd = config.cmd_cwd;
-    env = config.cmd_env;
-  })
+  local rpc = lsp_rpc.start(handles, dispatch)
 
   -- Return nil if client fails to start
   if not rpc then return end
