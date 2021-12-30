@@ -44,6 +44,7 @@ return {
     "nargs";
     "range";
     "register";
+    "incsearch";
   };
   float_config = {
     "row";

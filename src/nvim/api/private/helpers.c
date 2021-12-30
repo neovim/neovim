@@ -1363,6 +1363,11 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     goto err;
   }
 
+  if (!HAS_KEY(opts->range) && HAS_KEY(opts->incsearch)) {
+    api_set_error(err, kErrorTypeValidation, "'incsearch' needs the 'range' attribute");
+    goto err;
+  }
+
   if (opts->nargs.type == kObjectTypeInteger) {
     switch (opts->nargs.data.integer) {
     case 0:
@@ -1469,9 +1474,14 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     goto err;
   }
 
-
   if (api_object_to_bool(opts->register_, "register", false, err)) {
     argt |= EX_REGSTR;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  if (api_object_to_bool(opts->incsearch, "incsearch", false, err)) {
+    argt |= EX_INCSEARCH;
   } else if (ERROR_SET(err)) {
     goto err;
   }
