@@ -1425,7 +1425,7 @@ Possible values are (second column is the short name used in listing):
 Special cases ~
 					*:command-bang* *:command-bar*
 					*:command-register* *:command-buffer*
-					*:command-keepscript*
+					*:command-incsearch*
 There are some special cases as well:
 
 	-bang	    The command can take a ! modifier (like :q or :w)
@@ -1438,6 +1438,7 @@ There are some special cases as well:
 	-incsearch  The command will highlight any argument, treating it as
 		    a regex pattern, as it happens for |:substitute|,
 		    |:global|, |:vimgrep| and related commands.
+		    Must be used together with |command-range|.
 
 In the cases of the -count and -register attributes, if the optional argument
 is supplied, it is removed from the argument list and is available to the

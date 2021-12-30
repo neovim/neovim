@@ -5636,6 +5636,12 @@ invalid_count:
     }
   }
 
+  // incsearch needs range, or it's an error
+  if (*argt & EX_INCSEARCH && !(*argt & EX_RANGE)) {
+    emsg(_("E177: -incsearch used without -range"));
+    return FAIL;
+  }
+
   return OK;
 }
 
