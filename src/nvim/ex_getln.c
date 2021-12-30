@@ -1024,11 +1024,13 @@ static int command_line_execute(VimState *state, int key)
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
-  if (s->c == K_EVENT || s->c == K_COMMAND) {
+  if (s->c == K_EVENT || s->c == K_COMMAND || s->c == K_LUA) {
     if (s->c == K_EVENT) {
       state_handle_k_event();
-    } else {
+    } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+    } else {
+      map_execute_lua();
     }
 
     if (!cmdline_was_last_drawn) {

@@ -528,6 +528,10 @@ static int terminal_execute(VimState *state, int key)
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
     break;
 
+  case K_LUA:
+    map_execute_lua();
+    break;
+
   case Ctrl_N:
     if (s->got_bsl) {
       return 0;

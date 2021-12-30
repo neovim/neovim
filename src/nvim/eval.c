@@ -7299,12 +7299,19 @@ void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, long buf
     noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
 
-  if (compatible) {
-    tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+  if (mp->m_luaref != LUA_NOREF) {
+    tv_dict_add_nr(dict, S_LEN("callback"), mp->m_luaref);
   } else {
-    tv_dict_add_allocated_str(dict, S_LEN("rhs"),
-                              str2special_save((const char *)mp->m_str, false,
-                                               true));
+    if (compatible) {
+      tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+    } else {
+      tv_dict_add_allocated_str(dict, S_LEN("rhs"),
+                                str2special_save((const char *)mp->m_str, false,
+                                                 true));
+    }
+  }
+  if (mp->m_desc != NULL) {
+    tv_dict_add_allocated_str(dict, S_LEN("desc"), xstrdup(mp->m_desc));
   }
   tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);

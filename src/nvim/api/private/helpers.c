@@ -594,6 +594,7 @@ Array string_to_array(const String input, bool crlf)
 void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String rhs,
                    Dict(keymap) *opts, Error *err)
 {
+  LuaRef lua_funcref = LUA_NOREF;
   bool global = (buffer == -1);
   if (global) {
     buffer = 0;
@@ -604,6 +605,9 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
     return;
   }
 
+  if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
+    lua_funcref = api_new_luaref(opts->callback.data.luaref);
+  }
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
 #define KEY_TO_BOOL(name) \
@@ -623,9 +627,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   parsed_args.buffer = !global;
 
   set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
-                     (char_u *)rhs.data, rhs.size,
+                     (char_u *)rhs.data, rhs.size, lua_funcref,
                      CPO_TO_CPO_FLAGS, &parsed_args);
-
+  if (opts != NULL && opts->desc.type == kObjectTypeString) {
+    parsed_args.desc = xstrdup(opts->desc.data.string.data);
+  } else {
+    parsed_args.desc = NULL;
+  }
   if (parsed_args.lhs_len > MAXMAPLEN) {
     api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;
@@ -658,7 +666,8 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   bool is_noremap = parsed_args.noremap;
   assert(!(is_unmap && is_noremap));
 
-  if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
+  if (!is_unmap && lua_funcref == LUA_NOREF
+      && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
     if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
       parsed_args.rhs_is_noop = true;
     } else {
@@ -668,9 +677,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
       api_set_error(err, kErrorTypeValidation, "Parsing of nonempty RHS failed: %s", rhs.data);
       goto fail_and_free;
     }
-  } else if (is_unmap && parsed_args.rhs_len) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+  } else if (is_unmap && (parsed_args.rhs_len || parsed_args.rhs_lua != LUA_NOREF)) {
+    if (parsed_args.rhs_len) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Gave nonempty RHS for unmap");
+    }
     goto fail_and_free;
   }
 
@@ -700,9 +713,12 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
     goto fail_and_free;
   }  // switch
 
+  parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
 fail_and_free:
+  NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
+  XFREE_CLEAR(parsed_args.desc);
   return;
 }
 
@@ -1052,8 +1068,9 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
+/// @param  from_lua  Whether it is called from internal lua api.
 /// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
 {
   Array mappings = ARRAY_DICT_INIT;
   dict_T *const dict = tv_dict_alloc();
@@ -1073,8 +1090,19 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        ADD(mappings, vim_to_object((typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
-
+        Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
+                                                         .vval.v_dict = dict } });
+        if (from_lua) {
+          Dictionary d = api_dict.data.dictionary;
+          for (size_t j = 0; j < d.size; j++) {
+            if (strequal("callback", d.items[j].key.data)) {
+              d.items[j].value.type = kObjectTypeLuaRef;
+              d.items[j].value.data.luaref = api_new_luaref((LuaRef)d.items[j].value.data.integer);
+              break;
+            }
+          }
+        }
+        ADD(mappings, api_dict);
         tv_dict_clear(dict);
       }
     }
