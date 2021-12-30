@@ -10509,6 +10509,7 @@ int modify_fname(char_u *src, bool tilde_file, size_t *usedlen, char_u **fnamep,
   char_u dirname[MAXPATHL];
   int c;
   int has_fullname = 0;
+  int has_homerelative = 0;
 
 repeat:
   // ":p" - full path/file_name
@@ -10582,7 +10583,7 @@ repeat:
     }
     pbuf = NULL;
     // Need full path first (use expand_env() to remove a "~/")
-    if (!has_fullname) {
+    if (!has_fullname && !has_homerelative) {
       if (c == '.' && **fnamep == '~') {
         p = pbuf = expand_env_save(*fnamep);
       } else {
@@ -10596,10 +10597,24 @@ repeat:
 
     if (p != NULL) {
       if (c == '.') {
+        size_t namelen;
+
         os_dirname(dirname, MAXPATHL);
-        s = path_shorten_fname(p, dirname);
-        if (s != NULL) {
-          *fnamep = s;
+        if (has_homerelative) {
+          s = vim_strsave(dirname);
+          home_replace(NULL, s, dirname, MAXPATHL, true);
+          xfree(s);
+        }
+        namelen = STRLEN(dirname);
+
+        // Do not call shorten_fname() here since it removes the prefix
+        // even though the path does not have a prefix.
+        if (fnamencmp(p, dirname, namelen) == 0) {
+          p += namelen;
+          while (*p && vim_ispathsep(*p)) {
+            ++p;
+          }
+          *fnamep = p;
           if (pbuf != NULL) {
             xfree(*bufp);               // free any allocated file name
             *bufp = pbuf;
@@ -10614,6 +10629,7 @@ repeat:
           *fnamep = s;
           xfree(*bufp);
           *bufp = s;
+          has_homerelative = true;
         }
       }
       xfree(pbuf);
