@@ -582,7 +582,8 @@ local function start(handles, dispatchers)
 
   return {
     request = request;
-    notify = notify
+    notify = notify;
+    handle = handles.status;
   }
 end
 
