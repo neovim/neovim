@@ -253,7 +253,7 @@ syn match  shTestSingleQuote	contained	'\\.'	nextgroup=shTestSingleQuote
 syn match  shTestSingleQuote	contained	"'[^']*'"
 if exists("b:is_kornshell") || exists("b:is_bash")
  syn region  shDblBrace matchgroup=Delimiter start="\[\["	skip=+\%(\\\\\)*\\$+ end="\]\]"	contains=@shTestList,shAstQuote,shNoQuote,shComment
- syn region  shDblParen matchgroup=Delimiter start="(("	skip=+\%(\\\\\)*\\$+ end="))"	contains=@shTestList,shComment
+ syn region  shDblParen matchgroup=Delimiter start="(("	skip=+\%(\\\\\)*\\$+ end="))"	contains=@shTestList,shComment,shDblParen
 endif
 
 " Character Class In Range: {{{1
@@ -571,6 +571,7 @@ endif
 " Arithmetic Parenthesized Expressions: {{{1
 "syn region shParen matchgroup=shArithRegion start='[^$]\zs(\%(\ze[^(]\|$\)' end=')' contains=@shArithParenList
 syn region shParen matchgroup=shArithRegion start='\$\@!(\%(\ze[^(]\|$\)' end=')' contains=@shArithParenList
+syn region shParen matchgroup=shArithRegion start='\$\@!(' end=')' contains=@shArithParenList contained containedin=@shArithParenList
 
 " Additional sh Keywords: {{{1
 " ===================
