@@ -1656,16 +1656,25 @@ validate({opt})                                               *vim.validate()*
                      => error('arg1: expected even number, got 3')
 <
 
+                If multiple types are valid they can be given as a list. >
+
+                  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+                     => NOP (success)
+
+                  vim.validate{arg1={1, {'string', table'}}}
+                     => error('arg1: expected string|table, got number')
+<
+
                 Parameters: ~
-                    {opt}  Map of parameter names to validations. Each key is
-                           a parameter name; each value is a tuple in one of
-                           these forms:
+                    {opt}  table of parameter names to validations. Each key
+                           is a parameter name; each value is a tuple in one
+                           of these forms:
                            1. (arg_value, type_name, optional)
                               • arg_value: argument value
-                              • type_name: string type name, one of: ("table",
-                                "t", "string", "s", "number", "n", "boolean",
-                                "b", "function", "f", "nil", "thread",
-                                "userdata")
+                              • type_name: string|table type name, one of:
+                                ("table", "t", "string", "s", "number", "n",
+                                "boolean", "b", "function", "f", "nil",
+                                "thread", "userdata") or list of them.
                               • optional: (optional) boolean, if true, `nil`
                                 is valid
 

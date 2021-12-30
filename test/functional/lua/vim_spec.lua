@@ -906,6 +906,7 @@ describe('lua stdlib', function()
     exec_lua("vim.validate{arg1={nil, 'thread', true }}")
     exec_lua("vim.validate{arg1={{}, 't' }, arg2={ 'foo', 's' }}")
     exec_lua("vim.validate{arg1={2, function(a) return (a % 2) == 0  end, 'even number' }}")
+    exec_lua("vim.validate{arg1={5, {'n', 's'} }, arg2={ 'foo', {'n', 's'} }}")
 
     matches('expected table, got number',
       pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
@@ -935,6 +936,8 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
     matches('arg1: expected %?, got 3',
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
+    matches('arg1: expected number|string, got nil',
+      pcall_err(exec_lua, "vim.validate{ arg1={ nil, {'n', 's'} }}"))
 
     -- Pass an additional message back.
     matches('arg1: expected %?, got 3. Info: TEST_MSG',
