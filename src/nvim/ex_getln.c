@@ -351,7 +351,7 @@ static void get_healthcheck_cb(char_u *path, void *cookie)
 
 // Return an user command when it can do incsearch highlighting, NULL otherwise.
 // Will also advance the pointer to the end of the command name, if appropriate.
-static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name, char_u **p)
+static ucmd_T *uc_can_incsearch(char *cmd_name, char **p)
 {
   // not an user-defined command
   if (*cmd_name < 'A' || *cmd_name > 'Z') {
@@ -361,7 +361,7 @@ static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name, char_u **p)
   // find the end of the command (bang, whitespace, separator...)
   for (*p = cmd_name; ASCII_ISALNUM(**p); (*p)++) {}
   // check that there's some argument (and not only a bang)
-  if (*skipwhite(*p + (**p == '!')) == NUL) {
+  if (*skipwhite((char_u*)*p + (**p == '!')) == NUL) {
     return NULL;
   }
 
@@ -437,7 +437,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
     // check if it's an user command and advance the pointer already
-    usrcmd = usrcmd_can_incsearch(cmd, &p);
+    usrcmd = uc_can_incsearch((char*)cmd, (char**)&p);
     if (usrcmd == NULL) {
       goto theend;
     }
