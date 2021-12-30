@@ -358,8 +358,12 @@ static ucmd_T *usrcmd_can_incsearch(char_u *cmd_name, char_u **p)
     return NULL;
   }
 
-  // find the first whitespace character
+  // find the end of the command (bang, whitespace, separator...)
   for (*p = cmd_name; ASCII_ISALNUM(**p); (*p)++) {}
+  // check that there's some argument (and not only a bang)
+  if (*skipwhite(*p + (**p == '!')) == NUL) {
+    return NULL;
+  }
 
   ucmd_T *uc;
   garray_T *gap;
