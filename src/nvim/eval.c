@@ -10611,14 +10611,17 @@ repeat:
         // even though the path does not have a prefix.
         if (fnamencmp(p, dirname, namelen) == 0) {
           p += namelen;
-          while (*p && vim_ispathsep(*p)) {
-            ++p;
-          }
-          *fnamep = p;
-          if (pbuf != NULL) {
-            xfree(*bufp);               // free any allocated file name
-            *bufp = pbuf;
-            pbuf = NULL;
+          if (vim_ispathsep(*p)) {
+            while (*p && vim_ispathsep(*p)) {
+              p++;
+            }
+            *fnamep = p;
+            if (pbuf != NULL) {
+              // free any allocated file name
+              xfree(*bufp);
+              *bufp = pbuf;
+              pbuf = NULL;
+            }
           }
         }
       } else {
