@@ -2368,7 +2368,7 @@ int path_is_absolute(const char_u *fname)
 {
 #ifdef WIN32
   if (*fname == NUL) {
-    return true;
+    return false;
   }
   // A name like "d:/foo" and "//server/share" is absolute
   return ((isalpha(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
