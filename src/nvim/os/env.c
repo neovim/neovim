@@ -1111,10 +1111,9 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
           *dst_p++ = '~';
         }
 
-        // If it's just the home directory, add  "/".
-        if (!vim_ispathsep(src[0]) && --dstlen > 0) {
-          *dst_p++ = '/';
-        }
+        // Do not add directory separator into dst, because dst is
+        // expected to just return the directory name without the
+        // directory separator '/'.
         break;
       }
       if (p == homedir_env_mod) {

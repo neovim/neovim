@@ -10584,7 +10584,7 @@ repeat:
     pbuf = NULL;
     // Need full path first (use expand_env() to remove a "~/")
     if (!has_fullname && !has_homerelative) {
-      if (c == '.' && **fnamep == '~') {
+      if ((c == '.' || c == '~') && **fnamep == '~') {
         p = pbuf = expand_env_save(*fnamep);
       } else {
         p = pbuf = (char_u *)FullName_save((char *)*fnamep, FALSE);
