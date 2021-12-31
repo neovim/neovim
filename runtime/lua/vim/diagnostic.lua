@@ -644,7 +644,11 @@ function M.set(namespace, bufnr, diagnostics, opts)
   vim.validate {
     namespace = {namespace, 'n'},
     bufnr = {bufnr, 'n'},
-    diagnostics = {diagnostics, 't'},
+    diagnostics = {
+      diagnostics,
+      vim.tbl_islist,
+      "a list of diagnostics",
+    },
     opts = {opts, 't', true},
   }
 
@@ -810,7 +814,11 @@ M.handlers.signs = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
@@ -873,7 +881,11 @@ M.handlers.underline = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
@@ -921,7 +933,11 @@ M.handlers.virtual_text = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
@@ -1081,7 +1097,11 @@ function M.show(namespace, bufnr, diagnostics, opts)
   vim.validate {
     namespace = { namespace, 'n', true },
     bufnr = { bufnr, 'n', true },
-    diagnostics = { diagnostics, 't', true },
+    diagnostics = {
+      diagnostics,
+      function(v) return v == nil or vim.tbl_islist(v) end,
+      "a list of diagnostics",
+    },
     opts = { opts, 't', true },
   }
 
@@ -1526,7 +1546,13 @@ local errlist_type_map = {
 ---@param diagnostics table List of diagnostics |diagnostic-structure|.
 ---@return array of quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
-  vim.validate { diagnostics = {diagnostics, 't'} }
+  vim.validate {
+    diagnostics = {
+      diagnostics,
+      vim.tbl_islist,
+      "a list of diagnostics",
+    },
+  }
 
   local list = {}
   for _, v in ipairs(diagnostics) do
@@ -1557,7 +1583,13 @@ end
 ---            |getloclist()|.
 ---@return array of diagnostics |diagnostic-structure|
 function M.fromqflist(list)
-  vim.validate { list = {list, 't'} }
+  vim.validate {
+    list = {
+      list,
+      vim.tbl_islist,
+      "a list of quickfix items",
+    },
+  }
 
   local diagnostics = {}
   for _, item in ipairs(list) do
