@@ -76,6 +76,8 @@ CTRL-U		Delete all entered characters before the cursor in the current
 		line.  If there are no newly entered characters and
 		'backspace' is not empty, delete all characters before the
 		cursor in the current line.
+		If C-indenting is enabled the indent will be adjusted if the
+		line becomes blank.
 		See |i_backspacing| about joining lines.
 						*i_CTRL-U-default*
 		By default, sets a new undo point before deleting.
@@ -1877,6 +1879,9 @@ The effect of [count] takes place after Insert mode is exited.
 When 'autoindent' is on, the indent for a new line is obtained from the
 previous line.  When 'smartindent' or 'cindent' is on, the indent for a line
 is automatically adjusted for C programs.
+
+'formatoptions' can be set to copy the comment leader when opening a new
+line.
 
 'textwidth' can be set to the maximum width for a line.  When a line becomes
 too long when appending characters a line break is automatically inserted.
