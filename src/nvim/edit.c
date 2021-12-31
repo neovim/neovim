@@ -1076,6 +1076,10 @@ static int insert_handle_key(InsertState *s)
 
   case K_COMMAND:       // some command
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+    goto check_pum;
+
+  case K_LUA:
+    map_execute_lua();
 
 check_pum:
     // TODO(bfredl): Not entirely sure this indirection is necessary

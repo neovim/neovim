@@ -29,6 +29,8 @@ return {
     "script";
     "expr";
     "unique";
+    "callback";
+    "desc";
   };
   get_commands = {
     "builtin";

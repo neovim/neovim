@@ -334,6 +334,7 @@ static const struct nv_cmd {
   { K_SELECT,  nv_select,      0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
   { K_COMMAND, nv_colon,       0,                      0 },
+  { K_LUA, nv_colon,           0,                      0 },
 };
 
 // Number of commands in nv_cmds[].
@@ -4043,21 +4044,22 @@ static void nv_regreplay(cmdarg_T *cap)
   }
 }
 
-/// Handle a ":" command and <Cmd>.
+/// Handle a ":" command and <Cmd> or Lua keymaps.
 static void nv_colon(cmdarg_T *cap)
 {
   int old_p_im;
   bool cmd_result;
   bool is_cmdkey = cap->cmdchar == K_COMMAND;
+  bool is_lua = cap->cmdchar == K_LUA;
 
-  if (VIsual_active && !is_cmdkey) {
+  if (VIsual_active && !is_cmdkey && !is_lua) {
     nv_operator(cap);
   } else {
     if (cap->oap->op_type != OP_NOP) {
       // Using ":" as a movement is charwise exclusive.
       cap->oap->motion_type = kMTCharWise;
       cap->oap->inclusive = false;
-    } else if (cap->count0 && !is_cmdkey) {
+    } else if (cap->count0 && !is_cmdkey && !is_lua) {
       // translate "count:" into ":.,.+(count - 1)"
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
@@ -4073,9 +4075,13 @@ static void nv_colon(cmdarg_T *cap)
 
     old_p_im = p_im;
 
+    if (is_lua) {
+      cmd_result = map_execute_lua();
+    } else {
     // get a command line and execute it
-    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
-                            cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+      cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+                              cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
+    }
 
     // If 'insertmode' changed, enter or exit Insert mode
     if (p_im != old_p_im) {

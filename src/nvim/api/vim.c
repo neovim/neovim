@@ -1538,10 +1538,10 @@ Dictionary nvim_get_mode(void)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of maparg()-like dictionaries describing mappings.
 ///          The "buffer" key is always zero.
-ArrayOf(Dictionary) nvim_get_keymap(String mode)
+ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
   FUNC_API_SINCE(3)
 {
-  return keymap_array(mode, NULL);
+  return keymap_array(mode, NULL, channel_id == LUA_INTERNAL_CALL);
 }
 
 /// Sets a global |mapping| for the given mode.
@@ -1566,7 +1566,10 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map. Accepts all |:map-arguments|
-///               as keys excluding |<buffer>| but including |noremap|.
+///               as keys excluding |<buffer>| but including |noremap| and "desc".
+///               |desc| can be used to give a description to keymap.
+///               When called from Lua, also accepts a "callback" key that takes
+///               a Lua function to call when the mapping is executed.
 ///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
 void nvim_set_keymap(String mode, String lhs, String rhs, Dict(keymap) *opts, Error *err)
