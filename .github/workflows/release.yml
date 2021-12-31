@@ -80,7 +80,6 @@ jobs:
           fetch-depth: 0
       - name: Install brew packages
         run: |
-          rm -f /usr/local/bin/2to3
           brew update >/dev/null
           brew install automake ninja
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
