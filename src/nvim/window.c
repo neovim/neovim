@@ -958,6 +958,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int wmh1;
   bool did_set_fraction = false;
 
+  // aucmd_win should always remain floating
+  if (new_wp != NULL && new_wp == aucmd_win) {
+    return FAIL;
+  }
+
   if (flags & WSP_TOP) {
     oldwin = firstwin;
   } else if (flags & WSP_BOT || curwin->w_floating) {

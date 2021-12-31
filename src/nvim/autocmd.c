@@ -1147,6 +1147,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     globaldir = NULL;
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
+    make_snapshot(SNAP_AUCMD_IDX);
     if (need_append) {
       win_append(lastwin, aucmd_win);
       pmap_put(handle_T)(&window_handles, aucmd_win->handle, aucmd_win);
@@ -1212,6 +1213,8 @@ win_found:
       close_tabpage(curtab);
     }
 
+    restore_snapshot(SNAP_AUCMD_IDX, false);
+    win_comp_pos();  // recompute window positions
     unblock_autocmds();
 
     win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
