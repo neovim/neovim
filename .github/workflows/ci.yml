@@ -23,7 +23,7 @@ jobs:
       matrix:
         include:
           - flavor: asan
-            cc: clang-12
+            cc: clang-13
             runner: ubuntu-20.04
             os: linux
           - flavor: lint
@@ -31,7 +31,7 @@ jobs:
             runner: ubuntu-20.04
             os: linux
           - flavor: tsan
-            cc: clang-12
+            cc: clang-13
             runner: ubuntu-20.04
             os: linux
           - cc: clang
@@ -63,7 +63,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 12
+          sudo ./llvm.sh 13
           rm llvm.sh
 
       - name: Install brew packages
