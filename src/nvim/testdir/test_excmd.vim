@@ -1,6 +1,8 @@
 " Tests for various Ex commands.
 
 source check.vim
+source shared.vim
+source term_util.vim
 
 func Test_ex_delete()
   new
@@ -122,6 +124,27 @@ func Test_append_cmd()
   close!
 endfunc
 
+func Test_append_cmd_empty_buf()
+  CheckRunVimInTerminal
+  let lines =<< trim END
+    func Timer(timer)
+      append
+    aaaaa
+    bbbbb
+    .
+    endfunc
+    call timer_start(10, 'Timer')
+  END
+  call writefile(lines, 'Xtest_append_cmd_empty_buf')
+  let buf = RunVimInTerminal('-S Xtest_append_cmd_empty_buf', {'rows': 6})
+  call WaitForAssert({-> assert_equal('bbbbb', term_getline(buf, 2))})
+  call WaitForAssert({-> assert_equal('aaaaa', term_getline(buf, 1))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_append_cmd_empty_buf')
+endfunc
+
 " Test for the :insert command
 func Test_insert_cmd()
   set noautoindent " test assumes noautoindent, but it's on by default in Nvim
@@ -149,6 +172,27 @@ func Test_insert_cmd()
   call assert_true(&autoindent)
   set autoindent&
   close!
+endfunc
+
+func Test_insert_cmd_empty_buf()
+  CheckRunVimInTerminal
+  let lines =<< trim END
+    func Timer(timer)
+      insert
+    aaaaa
+    bbbbb
+    .
+    endfunc
+    call timer_start(10, 'Timer')
+  END
+  call writefile(lines, 'Xtest_insert_cmd_empty_buf')
+  let buf = RunVimInTerminal('-S Xtest_insert_cmd_empty_buf', {'rows': 6})
+  call WaitForAssert({-> assert_equal('bbbbb', term_getline(buf, 2))})
+  call WaitForAssert({-> assert_equal('aaaaa', term_getline(buf, 1))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_insert_cmd_empty_buf')
 endfunc
 
 " Test for the :change command
