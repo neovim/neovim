@@ -4139,7 +4139,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
              || (offset != 0
                  && offset > size +
                  buf->b_ml.ml_chunksize[curix].mlcs_totalsize
-                 + ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
+                 + (long)ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     size += buf->b_ml.ml_chunksize[curix].mlcs_totalsize;
     if (offset && ffdos) {
