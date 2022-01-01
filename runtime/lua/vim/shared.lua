@@ -587,7 +587,7 @@ do
         -- Check user-provided validation function.
         local valid, optional_message = t(val)
         if not valid then
-          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val)
+          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), type(val))
           if optional_message ~= nil then
             error_message = error_message .. string.format(". Info: %s", optional_message)
           end
