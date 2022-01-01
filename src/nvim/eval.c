@@ -69,6 +69,7 @@ static char *e_nowhitespace
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static char *e_write2 = N_("E80: Error while writing: %s");
+static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
 
 // TODO(ZyX-I): move to eval/executor
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
@@ -2651,7 +2652,7 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
           fi->fi_string = vim_strsave((char_u *)"");
         }
       } else {
-        emsg(_(e_listblobreq));
+        emsg(_(e_string_list_or_blob_required));
         tv_clear(&tv);
       }
     }
