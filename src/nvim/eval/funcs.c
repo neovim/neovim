@@ -3991,7 +3991,6 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   MotionType reg_type = get_reg_type(regname, &reglen);
   format_reg_type(reg_type, reglen, buf, ARRAY_SIZE(buf));
 
-  rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)xstrdup(buf);
 }
 
