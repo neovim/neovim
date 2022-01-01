@@ -606,7 +606,8 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   }
 
   if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
-    lua_funcref = api_new_luaref(opts->callback.data.luaref);
+    lua_funcref = opts->callback.data.luaref;
+    opts->callback.data.luaref = LUA_NOREF;
   }
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
