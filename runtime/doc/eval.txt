@@ -372,8 +372,8 @@ Changing the order of items in a list: >
 
 For loop ~
 
-The |:for| loop executes commands for each item in a |List| or |Blob|.
-A variable is set to each item in the sequence.  Example with a List: >
+The |:for| loop executes commands for each item in a |List|, |String| or |Blob|.
+A variable is set to each item in sequence.  Example with a List: >
 	:for item in mylist
 	:   call Doit(item)
 	:endfor
@@ -390,7 +390,7 @@ If all you want to do is modify each item in the list then the |map()|
 function will be a simpler method than a for loop.
 
 Just like the |:let| command, |:for| also accepts a list of variables.  This
-requires the argument to be a list of lists. >
+requires the argument to be a List of Lists. >
 	:for [lnum, col] in [[1, 3], [2, 8], [3, 0]]
 	:   call Doit(lnum, col)
 	:endfor
@@ -407,6 +407,12 @@ It is also possible to put remaining items in a List variable: >
 	:endfor
 
 For a Blob one byte at a time is used.
+
+For a String one character, including any composing characters, is used as a
+String.  Example: >
+	for c in text
+	  echo 'This character is ' .. c
+	endfor
 
 
 List functions ~
