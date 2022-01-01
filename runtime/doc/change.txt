@@ -1595,7 +1595,8 @@ r	Automatically insert the current comment leader after hitting
 	<Enter> in Insert mode.
 							*fo-o*
 o	Automatically insert the current comment leader after hitting 'o' or
-	'O' in Normal mode.
+	'O' in Normal mode.  In case comment is unwanted in a specific place
+	use CTRL-U to quickly delete it. |i_CTRL-U|
 							*fo-q*
 q	Allow formatting of comments with "gq".
 	Note that formatting will not change blank lines or lines containing
