@@ -1119,6 +1119,11 @@ describe('vim.diagnostic', function()
   end)
 
   describe('set()', function()
+    it('validates its arguments', function()
+      matches("expected a list of diagnostics",
+        pcall_err(exec_lua, [[vim.diagnostic.set(1, 0, {lnum = 1, col = 2})]]))
+    end)
+
     it('can perform updates after insert_leave', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
       nvim("input", "o")
