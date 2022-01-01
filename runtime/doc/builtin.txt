@@ -4919,23 +4919,25 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 
 matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 		Same as |matchfuzzy()|, but returns the list of matched
-		strings and the list of character positions where characters
-		in {str} matches.
+		strings, the list of character positions where characters
+		in {str} matches and a list of matching scores.  You can
+		use |byteidx()| to convert a character position to a byte
+		position.
 
 		If {str} matches multiple times in a string, then only the
 		positions for the best match is returned.
 
 		If there are no matching strings or there is an error, then a
-		list with two empty list items is returned.
+		list with three empty list items is returned.
 
 		Example: >
 			:echo matchfuzzypos(['testing'], 'tsg')
-<		results in [['testing'], [[0, 2, 6]]] >
+<		results in [['testing'], [[0, 2, 6]], [99]] >
 			:echo matchfuzzypos(['clay', 'lacy'], 'la')
-<		results in [['lacy', 'clay'], [[0, 1], [1, 2]]] >
+<		results in [['lacy', 'clay'], [[0, 1], [1, 2]], [153, 133]] >
 			:echo [{'text': 'hello', 'id' : 10}]
 				\ ->matchfuzzypos('ll', {'key' : 'text'})
-<		results in [{'id': 10, 'text': 'hello'}] [[2, 3]]
+<		results in [[{'id': 10, 'text': 'hello'}], [[2, 3]], [127]]
 
 matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the

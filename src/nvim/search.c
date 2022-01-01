@@ -5173,10 +5173,10 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
 
     // For matchfuzzy(), return a list of matched strings.
     //          ['str1', 'str2', 'str3']
-    // For matchfuzzypos(), return a list with two items.
+    // For matchfuzzypos(), return a list with three items.
     // The first item is a list of matched strings. The second item
     // is a list of lists where each list item is a list of matched
-    // character positions.
+    // character positions. The third item is a list of matching scores.
     //      [['str1', 'str2', 'str3'], [[1, 3], [1, 3], [1, 3]]]
     list_T *l;
     if (retmatchpos) {
@@ -5197,7 +5197,7 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
 
     // next copy the list of matching positions
     if (retmatchpos) {
-      const listitem_T *const li = tv_list_find(fmatchlist, -1);
+      const listitem_T *li = tv_list_find(fmatchlist, -2);
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
       l = TV_LIST_ITEM_TV(li)->vval.v_list;
       for (i = 0; i < len; i++) {
@@ -5205,6 +5205,17 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
           break;
         }
         tv_list_append_list(l, ptrs[i].lmatchpos);
+      }
+
+      // copy the matching scores
+      li = tv_list_find(fmatchlist, -1);
+      assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
+      l = TV_LIST_ITEM_TV(li)->vval.v_list;
+      for (i = 0; i < len; i++) {
+        if (ptrs[i].score == SCORE_NONE) {
+          break;
+        }
+        tv_list_append_number(l, ptrs[i].score);
       }
     }
   }
@@ -5257,11 +5268,13 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   }
 
   // get the fuzzy matches
-  tv_list_alloc_ret(rettv, retmatchpos ? 2 : kListLenUnknown);
+  tv_list_alloc_ret(rettv, retmatchpos ? 3 : kListLenUnknown);
   if (retmatchpos) {
-    // For matchfuzzypos(), a list with two items are returned. First item
-    // is a list of matching strings and the second item is a list of
-    // lists with matching positions within each string.
+    // For matchfuzzypos(), a list with three items are returned. First
+    // item is a list of matching strings, the second item is a list of
+    // lists with matching positions within each string and the third item
+    // is the list of scores of the matches.
+    tv_list_append_list(rettv->vval.v_list, tv_list_alloc(kListLenUnknown));
     tv_list_append_list(rettv->vval.v_list, tv_list_alloc(kListLenUnknown));
     tv_list_append_list(rettv->vval.v_list, tv_list_alloc(kListLenUnknown));
   }
