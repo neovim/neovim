@@ -48,8 +48,6 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-typedef uint32_t matchidx_T;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.c.generated.h"
 #endif
@@ -4843,13 +4841,11 @@ typedef struct {
 #define SCORE_NONE -9999
 
 #define FUZZY_MATCH_RECURSION_LIMIT 10
-/// Maximum number of characters that can be fuzzy matched
-#define MAXMATCHES 256
 
 /// Compute a score for a fuzzy matched string. The matching character locations
 /// are in 'matches'.
 static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
-                                     const matchidx_T *const matches, const int numMatches)
+                                     const uint32_t *const matches, const int numMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   // Initialize score
@@ -4868,10 +4864,10 @@ static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
 
   // Apply ordering bonuses
   for (int i = 0; i < numMatches; i++) {
-    const matchidx_T currIdx = matches[i];
+    const uint32_t currIdx = matches[i];
 
     if (i > 0) {
-      const matchidx_T prevIdx = matches[i - 1];
+      const uint32_t prevIdx = matches[i - 1];
 
       // Sequential
       if (currIdx == prevIdx + 1) {
@@ -4887,7 +4883,7 @@ static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
       const char_u *p = str;
       int neighbor;
 
-      for (matchidx_T sidx = 0; sidx < currIdx; sidx++) {
+      for (uint32_t sidx = 0; sidx < currIdx; sidx++) {
         neighbor = utf_ptr2char(p);
         MB_PTR_ADV(p);
       }
@@ -4913,16 +4909,16 @@ static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
 
 /// Perform a recursive search for fuzzy matching 'fuzpat' in 'str'.
 /// @return the number of matching characters.
-static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchidx_T strIdx,
+static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, uint32_t strIdx,
                                  int *const outScore, const char_u *const strBegin,
-                                 const int strLen, const matchidx_T *const srcMatches,
-                                 matchidx_T *const matches, const int maxMatches, int nextMatch,
+                                 const int strLen, const uint32_t *const srcMatches,
+                                 uint32_t *const matches, const int maxMatches, int nextMatch,
                                  int *const recursionCount)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Recursion params
   bool recursiveMatch = false;
-  matchidx_T bestRecursiveMatches[MAXMATCHES];
+  uint32_t bestRecursiveMatches[MAX_FUZZY_MATCHES];
   int bestRecursiveScore = 0;
 
   // Count recursions
@@ -4932,7 +4928,7 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchi
   }
 
   // Detect end of strings
-  if (*fuzpat == '\0' || *str == '\0') {
+  if (*fuzpat == NUL || *str == NUL) {
     return 0;
   }
 
@@ -4956,7 +4952,7 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchi
       }
 
       // Recursive call that "skips" this match
-      matchidx_T recursiveMatches[MAXMATCHES];
+      uint32_t recursiveMatches[MAX_FUZZY_MATCHES];
       int recursiveScore = 0;
       const char_u *const next_char = str + utfc_ptr2len(str);
       if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
@@ -4965,7 +4961,8 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchi
                                 recursionCount)) {
         // Pick best recursive score
         if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
-          memcpy(bestRecursiveMatches, recursiveMatches, MAXMATCHES * sizeof(recursiveMatches[0]));
+          memcpy(bestRecursiveMatches, recursiveMatches,
+                 MAX_FUZZY_MATCHES * sizeof(recursiveMatches[0]));
           bestRecursiveScore = recursiveScore;
         }
         recursiveMatch = true;
@@ -5008,13 +5005,13 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchi
 /// normalized and varies with pattern.
 /// Recursion is limited internally (default=10) to prevent degenerate cases
 /// (pat_arg="aaaaaa" str="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
-/// Uses char_u for match indices. Therefore patterns are limited to MAXMATCHES
-/// characters.
+/// Uses char_u for match indices. Therefore patterns are limited to
+/// MAX_FUZZY_MATCHES characters.
 ///
 /// @return true if 'pat_arg' matches 'str'. Also returns the match score in
 /// 'outScore' and the matching character positions in 'matches'.
-static bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matchseq,
-                        int *const outScore, matchidx_T *const matches, const int maxMatches)
+bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matchseq,
+                 int *const outScore, uint32_t *const matches, const int maxMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const int len = mb_charlen(str);
@@ -5108,7 +5105,7 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
   fuzzyItem_T *const ptrs = xcalloc(len, sizeof(fuzzyItem_T));
   long i = 0;
   bool found_match = false;
-  matchidx_T matches[MAXMATCHES];
+  uint32_t matches[MAX_FUZZY_MATCHES];
 
   // For all the string items in items, get the fuzzy matching score
   TV_LIST_ITER(items, li, {
@@ -5250,8 +5247,8 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
     // To search a dict, either a callback function or a key can be
     // specified.
     dict_T *const d = argvars[2].vval.v_dict;
-    const dictitem_T *di;
-    if ((di = tv_dict_find(d, "key", -1)) != NULL) {
+    const dictitem_T *const di = tv_dict_find(d, "key", -1);
+    if (di != NULL) {
       if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL
           || *di->di_tv.vval.v_string == NUL) {
         semsg(_(e_invarg2), tv_get_string(&di->di_tv));
@@ -5262,7 +5259,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
       semsg(_(e_invargval), "text_cb");
       return;
     }
-    if ((di = tv_dict_find(d, "matchseq", -1)) != NULL) {
+    if (tv_dict_find(d, "matchseq", -1) != NULL) {
       matchseq = true;
     }
   }

@@ -5194,49 +5194,93 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid, char_u *ti
 
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.
-static bool vgr_match_buflines(qf_list_T *qfl, char_u *fname, buf_T *buf, regmmatch_T *regmatch,
-                               long *tomatch, int duplicate_name, int flags)
-  FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
+static bool vgr_match_buflines(qf_list_T *qfl, char_u *fname, buf_T *buf, char_u *spat,
+                               regmmatch_T *regmatch, long *tomatch, int duplicate_name, int flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5, 6)
 {
   bool found_match = false;
 
   for (long lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
     colnr_T col = 0;
-    while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, NULL,
-                             NULL) > 0) {
-      // Pass the buffer number so that it gets used even for a
-      // dummy buffer, unless duplicate_name is set, then the
-      // buffer will be wiped out below.
-      if (qf_add_entry(qfl,
-                       NULL,  // dir
-                       fname,
-                       NULL,
-                       duplicate_name ? 0 : buf->b_fnum,
-                       ml_get_buf(buf, regmatch->startpos[0].lnum + lnum,
-                                  false),
-                       regmatch->startpos[0].lnum + lnum,
-                       regmatch->endpos[0].lnum + lnum,
-                       regmatch->startpos[0].col + 1,
-                       regmatch->endpos[0].col + 1,
-                       false,  // vis_col
-                       NULL,   // search pattern
-                       0,      // nr
-                       0,      // type
-                       true)    // valid
-          == QF_FAIL) {
-        got_int = true;
-        break;
+    if (!(flags & VGR_FUZZY)) {
+      // Regular expression match
+      while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, NULL, NULL) > 0) {
+        // Pass the buffer number so that it gets used even for a
+        // dummy buffer, unless duplicate_name is set, then the
+        // buffer will be wiped out below.
+        if (qf_add_entry(qfl,
+                         NULL,   // dir
+                         fname,
+                         NULL,
+                         duplicate_name ? 0 : buf->b_fnum,
+                         ml_get_buf(buf, regmatch->startpos[0].lnum + lnum, false),
+                         regmatch->startpos[0].lnum + lnum,
+                         regmatch->endpos[0].lnum + lnum,
+                         regmatch->startpos[0].col + 1,
+                         regmatch->endpos[0].col + 1,
+                         false,  // vis_col
+                         NULL,   // search pattern
+                         0,      // nr
+                         0,      // type
+                         true)   // valid
+            == QF_FAIL) {
+          got_int = true;
+          break;
+        }
+        found_match = true;
+        if (--*tomatch == 0) {
+          break;
+        }
+        if ((flags & VGR_GLOBAL) == 0 || regmatch->endpos[0].lnum > 0) {
+          break;
+        }
+        col = regmatch->endpos[0].col + (col == regmatch->endpos[0].col);
+        if (col > (colnr_T)STRLEN(ml_get_buf(buf, lnum, false))) {
+          break;
+        }
       }
-      found_match = true;
-      if (--*tomatch == 0) {
-        break;
-      }
-      if ((flags & VGR_GLOBAL) == 0 || regmatch->endpos[0].lnum > 0) {
-        break;
-      }
-      col = regmatch->endpos[0].col + (col == regmatch->endpos[0].col);
-      if (col > (colnr_T)STRLEN(ml_get_buf(buf, lnum, false))) {
-        break;
+    } else {
+      const size_t pat_len = STRLEN(spat);
+      char_u *const str = ml_get_buf(buf, lnum, false);
+      int score;
+      uint32_t matches[MAX_FUZZY_MATCHES];
+      const size_t sz = sizeof(matches) / sizeof(matches[0]);
+
+      // Fuzzy string match
+      while (fuzzy_match(str + col, spat, false, &score, matches, (int)sz) > 0) {
+        // Pass the buffer number so that it gets used even for a
+        // dummy buffer, unless duplicate_name is set, then the
+        // buffer will be wiped out below.
+        if (qf_add_entry(qfl,
+                         NULL,   // dir
+                         fname,
+                         NULL,
+                         duplicate_name ? 0 : buf->b_fnum,
+                         str,
+                         lnum,
+                         0,
+                         (colnr_T)matches[0] + col + 1,
+                         0,
+                         false,  // vis_col
+                         NULL,   // search pattern
+                         0,      // nr
+                         0,      // type
+                         true)   // valid
+            == QF_FAIL) {
+          got_int = true;
+          break;
+        }
+        found_match = true;
+        if (--*tomatch == 0) {
+          break;
+        }
+        if ((flags & VGR_GLOBAL) == 0) {
+          break;
+        }
+        col = (colnr_T)matches[pat_len - 1] + col + 1;
+        if (col > (colnr_T)STRLEN(str)) {
+          break;
+        }
       }
     }
     line_breakcheck();
@@ -5418,8 +5462,7 @@ void ex_vimgrep(exarg_T *eap)
     } else {
       // Try for a match in all lines of the buffer.
       // For ":1vimgrep" look for first match only.
-      found_match = vgr_match_buflines(qf_get_curlist(qi),
-                                       fname, buf, &regmatch, &tomatch,
+      found_match = vgr_match_buflines(qf_get_curlist(qi), fname, buf, s, &regmatch, &tomatch,
                                        duplicate_name, flags);
 
       if (using_dummy) {

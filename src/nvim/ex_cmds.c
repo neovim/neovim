@@ -6141,12 +6141,14 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
     p++;
 
     // Find the flags
-    while (*p == 'g' || *p == 'j') {
+    while (*p == 'g' || *p == 'j' || *p == 'f') {
       if (flags != NULL) {
         if (*p == 'g') {
           *flags |= VGR_GLOBAL;
-        } else {
+        } else if (*p == 'j') {
           *flags |= VGR_NOJUMP;
+        } else {
+          *flags |= VGR_FUZZY;
         }
       }
       p++;
