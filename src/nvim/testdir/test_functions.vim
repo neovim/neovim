@@ -1731,32 +1731,6 @@ func Test_nr2char()
   call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
 endfunc
 
-" Test for matchfuzzy()
-func Test_matchfuzzy()
-  call assert_fails('call matchfuzzy(10, "abc")', 'E714:')
-  " Needs v8.2.1183.
-  " call assert_fails('call matchfuzzy(["abc"], [])', 'E730:')
-  call assert_fails('call matchfuzzy(["abc"], [])', 'E475:')
-  call assert_equal([], matchfuzzy([], 'abc'))
-  call assert_equal([], matchfuzzy(['abc'], ''))
-  call assert_equal(['abc'], matchfuzzy(['abc', 10], 'ac'))
-  call assert_equal([], matchfuzzy([10, 20], 'ac'))
-  call assert_equal(['abc'], matchfuzzy(['abc'], 'abc'))
-  call assert_equal(['crayon', 'camera'], matchfuzzy(['camera', 'crayon'], 'cra'))
-  call assert_equal(['aabbaa', 'aaabbbaaa', 'aaaabbbbaaaa', 'aba'], matchfuzzy(['aba', 'aabbaa', 'aaabbbaaa', 'aaaabbbbaaaa'], 'aa'))
-  call assert_equal(['one'], matchfuzzy(['one', 'two'], 'one'))
-  call assert_equal(['oneTwo', 'onetwo'], matchfuzzy(['onetwo', 'oneTwo'], 'oneTwo'))
-  call assert_equal(['one_two', 'onetwo'], matchfuzzy(['onetwo', 'one_two'], 'oneTwo'))
-  call assert_equal(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], matchfuzzy(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], 'aa'))
-  call assert_equal([], matchfuzzy([repeat('a', 300)], repeat('a', 257)))
-
-  %bw!
-  eval ['somebuf', 'anotherone', 'needle', 'yetanotherone']->map({_, v -> bufadd(v) + bufload(v)})
-  let l = getbufinfo()->map({_, v -> v.name})->matchfuzzy('ndl')
-  call assert_equal(1, len(l))
-  call assert_match('needle', l[0])
-endfunc
-
 " Test for getcurpos() and setpos()
 func Test_getcurpos_setpos()
   new

@@ -48,6 +48,8 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
+typedef uint32_t matchidx_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.c.generated.h"
 #endif
@@ -4811,24 +4813,109 @@ the_end:
 /// There is not an explicit bonus for an exact match. Unmatched letters receive
 /// a penalty. So shorter strings and closer matches are worth more.
 typedef struct {
-  const listitem_T *item;
+  listitem_T *item;
   int score;
+  list_T *lmatchpos;
 } fuzzyItem_T;
 
-static bool fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, int *const outScore,
-                                  const char_u *const strBegin, const char_u *const srcMatches,
-                                  char_u *const matches, const int maxMatches, int nextMatch,
-                                  int *const recursionCount, const int recursionLimit)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 3, 4, 6, 9) FUNC_ATTR_WARN_UNUSED_RESULT
+/// bonus for adjacent matches
+#define SEQUENTIAL_BONUS 15
+/// bonus if match occurs after a separator
+#define SEPARATOR_BONUS 30
+/// bonus if match is uppercase and prev is lower
+#define CAMEL_BONUS 30
+/// bonus if the first letter is matched
+#define FIRST_LETTER_BONUS 15
+/// penalty applied for every letter in str before the first match
+#define LEADING_LETTER_PENALTY -5
+/// maximum penalty for leading letters
+#define MAX_LEADING_LETTER_PENALTY -15
+/// penalty for every letter that doesn't match
+#define UNMATCHED_LETTER_PENALTY -1
+/// Score for a string that doesn't fuzzy match the pattern
+#define SCORE_NONE -9999
+
+#define FUZZY_MATCH_RECURSION_LIMIT 10
+/// Maximum number of characters that can be fuzzy matched
+#define MAXMATCHES 256
+
+/// Compute a score for a fuzzy matched string. The matching character locations
+/// are in 'matches'.
+static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
+                                     const matchidx_T *const matches, const int numMatches)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  // Initialize score
+  int score = 100;
+
+  // Apply leading letter penalty
+  int penalty = LEADING_LETTER_PENALTY * matches[0];
+  if (penalty < MAX_LEADING_LETTER_PENALTY) {
+    penalty = MAX_LEADING_LETTER_PENALTY;
+  }
+  score += penalty;
+
+  // Apply unmatched penalty
+  const int unmatched = strSz - numMatches;
+  score += UNMATCHED_LETTER_PENALTY * unmatched;
+
+  // Apply ordering bonuses
+  for (int i = 0; i < numMatches; i++) {
+    const matchidx_T currIdx = matches[i];
+
+    if (i > 0) {
+      const matchidx_T prevIdx = matches[i - 1];
+
+      // Sequential
+      if (currIdx == prevIdx + 1) {
+        score += SEQUENTIAL_BONUS;
+      }
+    }
+
+    // Check for bonuses based on neighbor character value
+    if (currIdx > 0) {
+      // Camel case
+      const char_u *p = str;
+      int neighbor;
+
+      for (matchidx_T sidx = 0; sidx < currIdx; sidx++) {
+        neighbor = utf_ptr2char(p);
+        mb_ptr2char_adv(&p);
+      }
+      const int curr = utf_ptr2char(p);
+
+      if (mb_islower(neighbor) && mb_isupper(curr)) {
+        score += CAMEL_BONUS;
+      }
+
+      // Separator
+      const bool neighborSeparator = neighbor == '_' || neighbor == ' ';
+      if (neighborSeparator) {
+        score += SEPARATOR_BONUS;
+      }
+    } else {
+      // First letter
+      score += FIRST_LETTER_BONUS;
+    }
+  }
+  return score;
+}
+
+static bool fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, matchidx_T strIdx,
+                                  int *const outScore, const char_u *const strBegin,
+                                  const int strLen, const matchidx_T *const srcMatches,
+                                  matchidx_T *const matches, const int maxMatches, int nextMatch,
+                                  int *const recursionCount)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Recursion params
   bool recursiveMatch = false;
-  char_u bestRecursiveMatches[256];
+  matchidx_T bestRecursiveMatches[MAXMATCHES];
   int bestRecursiveScore = 0;
 
   // Count recursions
   (*recursionCount)++;
-  if (*recursionCount >= recursionLimit) {
+  if (*recursionCount >= FUZZY_MATCH_RECURSION_LIMIT) {
     return false;
   }
 
@@ -4839,119 +4926,59 @@ static bool fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, int *
 
   // Loop through fuzpat and str looking for a match
   bool first_match = true;
-  while (*fuzpat != '\0' && *str != '\0') {
+  while (*fuzpat != NUL && *str != NUL) {
+    const int c1 = utf_ptr2char(fuzpat);
+    const int c2 = utf_ptr2char(str);
+
     // Found match
-    if (mb_tolower(*fuzpat) == mb_tolower(*str)) {
+    if (mb_tolower(c1) == mb_tolower(c2)) {
       // Supplied matches buffer was too short
       if (nextMatch >= maxMatches) {
         return false;
       }
 
       // "Copy-on-Write" srcMatches into matches
-      if (first_match && srcMatches) {
-        memcpy(matches, srcMatches, nextMatch);
+      if (first_match && srcMatches != NULL) {
+        memcpy(matches, srcMatches, nextMatch * sizeof(srcMatches[0]));
         first_match = false;
       }
 
       // Recursive call that "skips" this match
-      char_u recursiveMatches[256];
+      matchidx_T recursiveMatches[MAXMATCHES];
       int recursiveScore = 0;
-      if (fuzzy_match_recursive(fuzpat, str + 1, &recursiveScore, strBegin, matches,
-                                recursiveMatches, sizeof(recursiveMatches), nextMatch,
-                                recursionCount, recursionLimit)) {
+      const char_u *const next_char = str + utfc_ptr2len(str);
+      if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
+                                matches, recursiveMatches,
+                                sizeof(recursiveMatches) / sizeof(recursiveMatches[0]), nextMatch,
+                                recursionCount)) {
         // Pick best recursive score
         if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
-          memcpy(bestRecursiveMatches, recursiveMatches, 256);
+          memcpy(bestRecursiveMatches, recursiveMatches, MAXMATCHES * sizeof(recursiveMatches[0]));
           bestRecursiveScore = recursiveScore;
         }
         recursiveMatch = true;
       }
 
       // Advance
-      matches[nextMatch++] = (char_u)(str - strBegin);
-      fuzpat++;
+      matches[nextMatch++] = strIdx;
+      mb_ptr2char_adv(&fuzpat);
     }
-    str++;
+    mb_ptr2char_adv(&str);
+    strIdx++;
   }
 
   // Determine if full fuzpat was matched
-  const bool matched = *fuzpat == '\0';
+  const bool matched = *fuzpat == NUL;
 
   // Calculate score
   if (matched) {
-    // bonus for adjacent matches
-    const int sequential_bonus = 15;
-    // bonus if match occurs after a separator
-    const int separator_bonus = 30;
-    // bonus if match is uppercase and prev is lower
-    const int camel_bonus = 30;
-    // bonus if the first letter is matched
-    const int first_letter_bonus = 15;
-    // penalty applied for every letter in str before the first match
-    const int leading_letter_penalty = -5;
-    // maximum penalty for leading letters
-    const int max_leading_letter_penalty = -15;
-    // penalty for every letter that doesn't matter
-    const int unmatched_letter_penalty = -1;
-
-    // Iterate str to end
-    while (*str != '\0') {
-      str++;
-    }
-
-    // Initialize score
-    *outScore = 100;
-
-    // Apply leading letter penalty
-    int penalty = leading_letter_penalty * matches[0];
-    if (penalty < max_leading_letter_penalty) {
-      penalty = max_leading_letter_penalty;
-    }
-    *outScore += penalty;
-
-    // Apply unmatched penalty
-    const int unmatched = (int)(str - strBegin) - nextMatch;
-    *outScore += unmatched_letter_penalty * unmatched;
-
-    // Apply ordering bonuses
-    for (int i = 0; i < nextMatch; i++) {
-      const char_u currIdx = matches[i];
-
-      if (i > 0) {
-        const char_u prevIdx = matches[i - 1];
-
-        // Sequential
-        if (currIdx == (prevIdx + 1)) {
-          *outScore += sequential_bonus;
-        }
-      }
-
-      // Check for bonuses based on neighbor character value
-      if (currIdx > 0) {
-        // Camel case
-        const char_u neighbor = strBegin[currIdx - 1];
-        const char_u curr = strBegin[currIdx];
-
-        if (islower(neighbor) && isupper(curr)) {
-          *outScore += camel_bonus;
-        }
-
-        // Separator
-        const bool neighborSeparator = neighbor == '_' || neighbor == ' ';
-        if (neighborSeparator) {
-          *outScore += separator_bonus;
-        }
-      } else {
-        // First letter
-        *outScore += first_letter_bonus;
-      }
-    }
+    *outScore = fuzzy_match_compute_score(strBegin, strLen, matches, nextMatch);
   }
 
   // Return best result
   if (recursiveMatch && (!matched || bestRecursiveScore > *outScore)) {
     // Recursive score is better than "this"
-    memcpy(matches, bestRecursiveMatches, maxMatches);
+    memcpy(matches, bestRecursiveMatches, maxMatches * sizeof(matches[0]));
     *outScore = bestRecursiveScore;
     return true;
   } else if (matched) {
@@ -4969,21 +4996,22 @@ static bool fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, int *
 /// normalized and varies with pattern.
 /// Recursion is limited internally (default=10) to prevent degenerate cases
 /// (fuzpat="aaaaaa" str="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
-/// Uses char_u for match indices. Therefore patterns are limited to 256
+/// Uses char_u for match indices. Therefore patterns are limited to MAXMATCHES
 /// characters.
 ///
-/// Returns true if fuzpat is found AND calculates a score.
-static bool fuzzy_match(const char_u *const str, const char_u *const fuzpat, int *const outScore)
+/// @return true if 'fuzpat' matches 'str'. Also returns the match score in
+/// 'outScore' and the matching character positions in 'matches'.
+static bool fuzzy_match(char_u *const str, const char_u *const fuzpat, int *const outScore,
+                        matchidx_T *const matches, const int maxMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u matches[256];
   int recursionCount = 0;
-  int recursionLimit = 10;
+  const int len = mb_charlen(str);
 
   *outScore = 0;
 
-  return fuzzy_match_recursive(fuzpat, str, outScore, str, NULL, matches, sizeof(matches), 0,
-                               &recursionCount, recursionLimit);
+  return fuzzy_match_recursive(fuzpat, str, 0, outScore, str, len, NULL, matches, maxMatches, 0,
+                               &recursionCount);
 }
 
 /// Sort the fuzzy matches in the descending order of the match score.
@@ -4996,70 +5024,188 @@ static int fuzzy_item_compare(const void *const s1, const void *const s2)
   return v1 == v2 ? 0 : v1 > v2 ? -1 : 1;
 }
 
-/// Fuzzy search the string 'str' in 'strlist' and return the matching strings
-/// in 'fmatchlist'.
-static void match_fuzzy(const list_T *const strlist, const char_u *const str,
-                        list_T *const fmatchlist)
-  FUNC_ATTR_NONNULL_ARG(2, 3)
+/// Fuzzy search the string 'str' in a list of 'items' and return the matching
+/// strings in 'fmatchlist'.
+/// If 'items' is a list of strings, then search for 'str' in the list.
+/// If 'items' is a list of dicts, then either use 'key' to lookup the string
+/// for each item or use 'item_cb' Funcref function to get the string.
+/// If 'retmatchpos' is true, then return a list of positions where 'str'
+/// matches for each item.
+static void match_fuzzy(list_T *const items, char_u *const str, const char_u *const key,
+                        Callback *const item_cb, const bool retmatchpos, list_T *const fmatchlist)
+  FUNC_ATTR_NONNULL_ARG(2, 4, 6)
 {
-  const long len = tv_list_len(strlist);
+  const long len = tv_list_len(items);
   if (len == 0) {
     return;
   }
 
-  fuzzyItem_T *const ptrs = xmalloc(sizeof(fuzzyItem_T) * len);
+  fuzzyItem_T *const ptrs = xcalloc(len, sizeof(fuzzyItem_T));
   long i = 0;
   bool found_match = false;
+  matchidx_T matches[MAXMATCHES];
 
-  // For all the string items in strlist, get the fuzzy matching score
-  TV_LIST_ITER_CONST(strlist, li, {
+  // For all the string items in items, get the fuzzy matching score
+  TV_LIST_ITER(items, li, {
     ptrs[i].item = li;
-    ptrs[i].score = -9999;
-    // ignore non-string items in the list
+    ptrs[i].score = SCORE_NONE;
+    char_u *itemstr = NULL;
+    typval_T rettv;
+    rettv.v_type = VAR_UNKNOWN;
     const typval_T *const tv = TV_LIST_ITEM_TV(li);
-    if (tv->v_type == VAR_STRING && tv->vval.v_string != NULL) {
-      int score;
-      if (fuzzy_match(tv->vval.v_string, str, &score)) {
-        ptrs[i].score = score;
-        found_match = true;
+    if (tv->v_type == VAR_STRING) {  // list of strings
+      itemstr = tv->vval.v_string;
+    } else if (tv->v_type == VAR_DICT && (key != NULL || item_cb->type != kCallbackNone)) {
+      // For a dict, either use the specified key to lookup the string or
+      // use the specified callback function to get the string.
+      if (key != NULL) {
+        itemstr = (char_u *)tv_dict_get_string(tv->vval.v_dict, (const char *)key, false);
+      } else {
+        typval_T argv[2];
+
+        // Invoke the supplied callback (if any) to get the dict item
+        tv->vval.v_dict->dv_refcount++;
+        argv[0].v_type = VAR_DICT;
+        argv[0].vval.v_dict = tv->vval.v_dict;
+        argv[1].v_type = VAR_UNKNOWN;
+        if (callback_call(item_cb, 1, argv, &rettv)) {
+          if (rettv.v_type == VAR_STRING) {
+            itemstr = rettv.vval.v_string;
+          }
+        }
+        tv_dict_unref(tv->vval.v_dict);
       }
     }
+
+    int score;
+    if (itemstr != NULL
+        && fuzzy_match(itemstr, str, &score, matches, sizeof(matches) / sizeof(matches[0]))) {
+      // Copy the list of matching positions in itemstr to a list, if
+      // 'retmatchpos' is set.
+      if (retmatchpos) {
+        const int strsz = mb_charlen(str);
+        ptrs[i].lmatchpos = tv_list_alloc(strsz);
+        for (int j = 0; j < strsz; j++) {
+          tv_list_append_number(ptrs[i].lmatchpos, matches[j]);
+        }
+      }
+      ptrs[i].score = score;
+      found_match = true;
+    }
     i++;
+    tv_clear(&rettv);
   });
 
   if (found_match) {
     // Sort the list by the descending order of the match score
-    qsort(ptrs, (size_t)len, sizeof(fuzzyItem_T), fuzzy_item_compare);
+    qsort(ptrs, len, sizeof(fuzzyItem_T), fuzzy_item_compare);
 
-    // Copy the matching strings with 'score != -9999' to the return list
+    // For matchfuzzy(), return a list of matched strings.
+    //          ['str1', 'str2', 'str3']
+    // For matchfuzzypos(), return a list with two items.
+    // The first item is a list of matched strings. The second item
+    // is a list of lists where each list item is a list of matched
+    // character positions.
+    //      [['str1', 'str2', 'str3'], [[1, 3], [1, 3], [1, 3]]]
+    list_T *l;
+    if (retmatchpos) {
+      const listitem_T *const li = tv_list_find(fmatchlist, 0);
+      assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
+      l = TV_LIST_ITEM_TV(li)->vval.v_list;
+    } else {
+      l = fmatchlist;
+    }
+
+    // Copy the matching strings with a valid score to the return list
     for (i = 0; i < len; i++) {
-      if (ptrs[i].score == -9999) {
+      if (ptrs[i].score == SCORE_NONE) {
         break;
       }
-      const typval_T *const tv = TV_LIST_ITEM_TV(ptrs[i].item);
-      tv_list_append_string(fmatchlist, (const char *)tv->vval.v_string, -1);
+      tv_list_append_tv(l, TV_LIST_ITEM_TV(ptrs[i].item));
+    }
+
+    // next copy the list of matching positions
+    if (retmatchpos) {
+      const listitem_T *const li = tv_list_find(fmatchlist, -1);
+      assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
+      l = TV_LIST_ITEM_TV(li)->vval.v_list;
+      for (i = 0; i < len; i++) {
+        if (ptrs[i].score == SCORE_NONE) {
+          break;
+        }
+        tv_list_append_list(l, ptrs[i].lmatchpos);
+      }
     }
   }
-
   xfree(ptrs);
 }
 
-/// "matchfuzzy()" function
-void f_matchfuzzy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// Do fuzzy matching. Returns the list of matched strings in 'rettv'.
+/// If 'retmatchpos' is true, also returns the matching character positions.
+static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
+                          const bool retmatchpos)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (argvars[0].v_type != VAR_LIST) {
-    emsg(_(e_listreq));
-    return;
-  }
-  if (argvars[0].vval.v_list == NULL) {
+  // validate and get the arguments
+  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
+    semsg(_(e_listarg), retmatchpos ? "matchfuzzypos()" : "matchfuzzy()");
     return;
   }
   if (argvars[1].v_type != VAR_STRING || argvars[1].vval.v_string == NULL) {
     semsg(_(e_invarg2), tv_get_string(&argvars[1]));
     return;
   }
-  match_fuzzy(argvars[0].vval.v_list, (const char_u *)tv_get_string(&argvars[1]),
-              tv_list_alloc_ret(rettv, kListLenUnknown));
+
+  Callback cb = CALLBACK_NONE;
+  const char_u *key = NULL;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
+      emsg(_(e_dictreq));
+      return;
+    }
+
+    // To search a dict, either a callback function or a key can be
+    // specified.
+    dict_T *const d = argvars[2].vval.v_dict;
+    const dictitem_T *const di = tv_dict_find(d, "key", -1);
+    if (di != NULL) {
+      if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL
+          || *di->di_tv.vval.v_string == NUL) {
+        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        return;
+      }
+      key = (const char_u *)tv_get_string(&di->di_tv);
+    } else if (!tv_dict_get_callback(d, "text_cb", -1, &cb)) {
+      semsg(_(e_invargval), "text_cb");
+      return;
+    }
+  }
+
+  // get the fuzzy matches
+  tv_list_alloc_ret(rettv, retmatchpos ? 2 : kListLenUnknown);
+  if (retmatchpos) {
+    // For matchfuzzypos(), a list with two items are returned. First item
+    // is a list of matching strings and the second item is a list of
+    // lists with matching positions within each string.
+    tv_list_append_list(rettv->vval.v_list, tv_list_alloc(kListLenUnknown));
+    tv_list_append_list(rettv->vval.v_list, tv_list_alloc(kListLenUnknown));
+  }
+
+  match_fuzzy(argvars[0].vval.v_list, (char_u *)tv_get_string(&argvars[1]), key, &cb, retmatchpos,
+              rettv->vval.v_list);
+  callback_free(&cb);
+}
+
+/// "matchfuzzy()" function
+void f_matchfuzzy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  do_fuzzymatch(argvars, rettv, false);
+}
+
+/// "matchfuzzypos()" function
+void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  do_fuzzymatch(argvars, rettv, true);
 }
 
 /// Find identifiers or defines in included files.
