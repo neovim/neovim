@@ -269,7 +269,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
-  (void)memset(hp->bh_data, 0, (unsigned long)mfp->mf_page_size * page_count);
+  (void)memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
 
   return hp;
 }

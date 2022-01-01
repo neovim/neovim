@@ -4370,7 +4370,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
         ++i;
       }
       len = (int)STRLEN(p);
-      new_cmdline = xmalloc(STRLEN(program) + (long)i * (len - 2) + 1);
+      new_cmdline = xmalloc(STRLEN(program) + (size_t)i * (len - 2) + 1);
       ptr = new_cmdline;
       while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
         i = (int)(pos - program);
