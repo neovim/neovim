@@ -4866,8 +4866,15 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		the strings in {list} that fuzzy match {str}. The strings in
 		the returned list are sorted based on the matching score.
 
+		The optional {dict} argument always supports the following
+		items:
+		    matchseq	When this item is present and {str} contains
+				multiple words separated by white space, then
+				returns only matches that contain the words in
+				the given sequence.
+
 		If {list} is a list of dictionaries, then the optional {dict}
-		argument supports the following items:
+		argument supports the following additional items:
 		    key		key of the item which is fuzzy matched against
 				{str}. The value of this item should be a
 				string.
@@ -4880,6 +4887,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		{str} is treated as a literal string and regular expression
 		matching is NOT supported.  The maximum supported {str} length
 		is 256.
+
+		When {str} has multiple words each separated by white space,
+		then the list of strings that have all the words is returned.
 
 		If there are no matching strings or there is an error, then an
 		empty list is returned. If length of {str} is greater than
@@ -4900,7 +4910,12 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		   :echo v:oldfiles->matchfuzzy("test")
 <		results in a list of file names fuzzy matching "test". >
 		   :let l = readfile("buffer.c")->matchfuzzy("str")
-<		results in a list of lines in "buffer.c" fuzzy matching "str".
+<		results in a list of lines in "buffer.c" fuzzy matching "str". >
+		   :echo ['one two', 'two one']->matchfuzzy('two one')
+<		results in ['two one', 'one two']. >
+		   :echo ['one two', 'two one']->matchfuzzy('two one',
+						\ {'matchseq': 1})
+<		results in ['two one'].
 
 matchfuzzypos({list}, {str} [, {dict}])			*matchfuzzypos()*
 		Same as |matchfuzzy()|, but returns the list of matched
