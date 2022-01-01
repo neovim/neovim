@@ -847,7 +847,11 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
   case VTERM_PROP_TITLE: {
     buf_T *buf = handle_get_buffer(term->buf_handle);
+#if VTERM_VERSION_MAJOR > 0 || (VTERM_VERSION_MAJOR == 0 && VTERM_VERSION_MINOR >= 2)
+    buf_set_term_title(buf, val->string.str);
+#else
     buf_set_term_title(buf, val->string);
+#endif
     break;
   }
 
