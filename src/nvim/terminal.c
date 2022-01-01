@@ -120,6 +120,10 @@ struct terminal {
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
 
+  char *title;     // VTermStringFragment buffer
+  size_t title_len;    // number of rows pushed to sb_buffer
+  size_t title_size;   // sb_buffer size
+
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
   // refresh_timer_cb may be called after the buffer was freed, and there's
@@ -636,6 +640,7 @@ void terminal_destroy(Terminal **termpp)
       xfree(term->sb_buffer[i]);
     }
     xfree(term->sb_buffer);
+    xfree(term->title);
     vterm_free(term->vt);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -887,7 +892,34 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
   case VTERM_PROP_TITLE: {
     buf_T *buf = handle_get_buffer(term->buf_handle);
+#if VTERM_VERSION_MAJOR > 0 || (VTERM_VERSION_MAJOR == 0 && VTERM_VERSION_MINOR >= 2)
+    VTermStringFragment frag = val->string;
+
+    if (frag.initial && frag.final) {
+      buf_set_term_title(buf, frag.str, frag.len);
+      break;
+    }
+
+    if (frag.initial) {
+      term->title_len = 0;
+      term->title_size = MAX(frag.len, 1024);
+      term->title = xmalloc(sizeof(char *) * term->title_size);
+    } else if (term->title_len + frag.len > term->title_size) {
+      term->title_size *= 2;
+      term->title = xrealloc(term->title, sizeof(char *) * term->title_size);
+    }
+
+    memcpy(term->title + term->title_len, frag.str, frag.len);
+    term->title_len += frag.len;
+
+    if (frag.final) {
+      buf_set_term_title(buf, term->title, term->title_len);
+      xfree(term->title);
+      term->title = NULL;
+    }
+#else
     buf_set_term_title(buf, val->string, strlen(val->string));
+#endif
     break;
   }
 
