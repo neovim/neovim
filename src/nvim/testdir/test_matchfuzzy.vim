@@ -45,6 +45,8 @@ func Test_matchfuzzy()
   call assert_equal(['.vim/vimrc', '.vim/vimrc_colors', '.vim/v_i_m_r_c'], ['.vim/vimrc', '.vim/vimrc_colors', '.vim/v_i_m_r_c']->matchfuzzy('vimrc'))
   " gap penalty
   call assert_equal(['xxayybxxxx', 'xxayyybxxx', 'xxayyyybxx'], ['xxayyyybxx', 'xxayyybxxx', 'xxayybxxxx']->matchfuzzy('ab'))
+  " path separator vs word separator
+  call assert_equal(['color/setup.vim', 'color\\setup.vim', 'color setup.vim', 'color_setup.vim', 'colorsetup.vim'], matchfuzzy(['colorsetup.vim', 'color setup.vim', 'color/setup.vim', 'color_setup.vim', 'color\\setup.vim'], 'setup.vim'))
 
   " match multiple words (separated by space)
   call assert_equal(['foo bar baz'], ['foo bar baz', 'foo', 'foo bar', 'baz bar']->matchfuzzy('baz foo'))
