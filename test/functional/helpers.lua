@@ -448,7 +448,6 @@ function module.new_argv(...)
         'PATH',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
-        'GCOV_ERROR_FILE',
         'XDG_DATA_DIRS',
         'TMPDIR',
       }) do
