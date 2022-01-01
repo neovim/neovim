@@ -350,7 +350,7 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
   end)
 
   it('creating a terminal buffer #16394', function()
-    feed_command([[autocmd TermOpen * ++once call v:lua.register_callback(expand("<abuf>"))]])
+    feed_command('autocmd TermOpen * ++once call v:lua.register_callback(str2nr(expand("<abuf>")))')
     feed_command('terminal')
     sleep(500)
     eq('', exec_lua([[return _G.cb_error]]))
