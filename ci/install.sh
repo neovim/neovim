@@ -8,10 +8,6 @@ if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  export PATH="/usr/local/opt/ccache/libexec:$PATH"
-fi
-
 # Use default CC to avoid compilation problems when installing Python modules.
 echo "Install neovim module for Python 3."
 CC=cc python3 -m pip -q install --user --upgrade pynvim

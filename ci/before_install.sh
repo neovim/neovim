@@ -17,8 +17,7 @@ echo 'Python info:'
   pyenv versions
 ) 2>&1 | sed 's/^/  /' || true
 
-# Use pyenv, but not for OSX on Travis, where it only has the "system" version.
-if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
+if command -v pyenv; then
   echo 'Setting Python versions via pyenv'
 
   # Prefer Python 2 over 3 (more conservative).
@@ -38,7 +37,7 @@ fi
 
 echo "Install node (LTS)"
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
+if [ ! -f ~/.nvm/nvm.sh ]; then
   curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
 fi
 
