@@ -4818,8 +4818,9 @@ typedef struct {
   list_T *lmatchpos;
 } fuzzyItem_T;
 
-/// bonus for adjacent matches
-#define SEQUENTIAL_BONUS 15
+/// bonus for adjacent matches; this is higher than SEPARATOR_BONUS so that
+/// matching a whole word is preferred.
+#define SEQUENTIAL_BONUS 40
 /// bonus if match occurs after a separator
 #define SEPARATOR_BONUS 30
 /// bonus if match is uppercase and prev is lower
