@@ -249,6 +249,7 @@ return {
     matcharg={args=1, base=1},
     matchdelete={args={1, 2}, base=1},
     matchend={args={2, 4}, base=1},
+    matchfuzzy={args=2, base=1},
     matchlist={args={2, 4}, base=1},
     matchstr={args={2, 4}, base=1},
     matchstrpos={args={2,4}, base=1},

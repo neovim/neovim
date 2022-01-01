@@ -296,6 +296,7 @@ matcharg({nr})			List	arguments of |:match|
 matchdelete({id} [, {win}])	Number	delete match identified by {id}
 matchend({expr}, {pat}[, {start}[, {count}]])
 				Number	position where {pat} ends in {expr}
+matchfuzzy({list}, {str})	List	fuzzy match {str} in {list}
 matchlist({expr}, {pat}[, {start}[, {count}]])
 				List	match and submatches of {pat} in {expr}
 matchstr({expr}, {pat}[, {start}[, {count}]])
@@ -4856,6 +4857,27 @@ matchend({expr}, {pat} [, {start} [, {count}]])			*matchend()*
 
 		Can also be used as a |method|: >
 			GetText()->matchend('word')
+
+matchfuzzy({list}, {str})			*matchfuzzy()*
+		Returns a list with all the strings in {list} that fuzzy
+		match {str}. The strings in the returned list are sorted
+		based on the matching score. {str} is treated as a literal
+		string and regular expression matching is NOT supported.
+		The maximum supported {str} length is 256.
+
+		If there are no matching strings or there is an error, then an
+		empty list is returned. If length of {str} is greater than
+		256, then returns an empty list.
+
+		Example: >
+		   :echo matchfuzzy(["clay", "crow"], "cay")
+<		results in ["clay"]. >
+		   :echo getbufinfo()->map({_, v -> v.name})->matchfuzzy("ndl")
+<		results in a list of buffer names fuzzy matching "ndl". >
+		   :echo v:oldfiles->matchfuzzy("test")
+<		results in a list of file names fuzzy matching "test". >
+		   :let l = readfile("buffer.c")->matchfuzzy("str")
+<		results in a list of lines in "buffer.c" fuzzy matching "str".
 
 matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the
