@@ -25,12 +25,7 @@ run_test 'make shlint' shlint
 exit_suite --continue
 
 enter_suite single-includes
-CLICOLOR_FORCE=1 run_test_wd \
-  --allow-hang \
-  10s \
-  'make check-single-includes' \
-  'csi_clean' \
-  single-includes
+run_test 'make check-single-includes' single-includes
 exit_suite --continue
 
 end_tests
