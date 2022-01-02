@@ -1000,10 +1000,10 @@ function M.jump_to_location(location)
 
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
   api.nvim_set_current_buf(bufnr)
-  api.nvim_buf_set_option(0, 'buflisted', true)
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
-  local col = get_line_byte_from_position(0, range.start)
+  local col = get_line_byte_from_position(bufnr, range.start)
   api.nvim_win_set_cursor(0, {row + 1, col})
   -- Open folds under the cursor
   vim.cmd("normal! zv")
