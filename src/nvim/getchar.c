@@ -2298,6 +2298,12 @@ static int vgetorpeek(bool advance)
             c = ESC;
           }
           tc = c;
+
+          // TODO(zeertzjq): port Vim patches 8.2.{0274,0293,0325}
+
+          // no chars to block abbreviations for
+          typebuf.tb_no_abbr_cnt = 0;
+
           break;
         }
 
