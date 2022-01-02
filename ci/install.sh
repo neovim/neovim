@@ -20,8 +20,6 @@ echo "Install neovim RubyGem."
 gem install --no-document --bindir "$HOME/.local/bin" --user-install --pre neovim
 
 echo "Install neovim npm package"
-source ~/.nvm/nvm.sh
-nvm use 10
 npm install -g neovim
 npm link neovim
 
