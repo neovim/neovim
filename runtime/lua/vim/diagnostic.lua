@@ -1372,16 +1372,16 @@ function M.reset(namespace, bufnr)
       diagnostic_cache[iter_bufnr][iter_namespace] = nil
       M.hide(iter_namespace, iter_bufnr)
     end
-  end
 
-  vim.api.nvim_buf_call(bufnr, function()
-    vim.api.nvim_command(
-      string.format(
-        "doautocmd <nomodeline> DiagnosticChanged %s",
-        vim.fn.fnameescape(vim.api.nvim_buf_get_name(bufnr))
+    vim.api.nvim_buf_call(iter_bufnr, function()
+      vim.api.nvim_command(
+        string.format(
+          "doautocmd <nomodeline> DiagnosticChanged %s",
+          vim.fn.fnameescape(vim.api.nvim_buf_get_name(iter_bufnr))
+        )
       )
-    )
-  end)
+    end)
+  end
 end
 
 --- Add all diagnostics to the quickfix list.
