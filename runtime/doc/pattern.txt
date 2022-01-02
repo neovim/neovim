@@ -1421,5 +1421,38 @@ Finally, these constructs are unique to Perl:
 		are suggested to use ":match" for manual matching and
 		":2match" for another plugin.
 
+==============================================================================
+11. Fuzzy matching					*fuzzy-match*
+
+Fuzzy matching refers to matching strings using a non-exact search string.
+Fuzzy matching will match a string, if all the characters in the search string
+are present anywhere in the string in the same order. Case is ignored.  In a
+matched string, other characters can be present between two consecutive
+characters in the search string. If the search string has multiple words, then
+each word is matched separately. So the words in the search string can be
+present in any order in a string.
+
+Fuzzy matching assigns a score for each matched string based on the following
+criteria:
+    - The number of sequentially matching characters.
+    - The number of characters (distance) between two consecutive matching
+      characters.
+    - Matches at the beginning of a word
+    - Matches at a camel case character (e.g. Case in CamelCase)
+    - Matches after a path separator or a hyphen.
+    - The number of unmatched characters in a string.
+The matching string with the highest score is returned first.
+
+For example, when you search for the "get pat" string using fuzzy matching, it
+will match the strings "GetPattern", "PatternGet", "getPattern", "patGetter",
+"getSomePattern", "MatchpatternGet" etc.
+
+The functions |matchfuzzy()| and |matchfuzzypos()| can be used to fuzzy search
+a string in a List of strings. The matchfuzzy() function returns a List of
+matching strings. The matchfuzzypos() functions returns the List of matches,
+the matching positions and the fuzzy match scores.
+
+The "f" flag of `:vimgrep` enables fuzzy matching.
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

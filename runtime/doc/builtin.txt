@@ -4862,7 +4862,7 @@ matchend({expr}, {pat} [, {start} [, {count}]])			*matchend()*
 			GetText()->matchend('word')
 
 matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
-		If {list} is a list of strings, then returns a list with all
+		If {list} is a list of strings, then returns a |List| with all
 		the strings in {list} that fuzzy match {str}. The strings in
 		the returned list are sorted based on the matching score.
 
@@ -4894,6 +4894,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		If there are no matching strings or there is an error, then an
 		empty list is returned. If length of {str} is greater than
 		256, then returns an empty list.
+
+		Refer to |fuzzy-match| for more information about fuzzy
+		matching strings.
 
 		Example: >
 		   :echo matchfuzzy(["clay", "crow"], "cay")
