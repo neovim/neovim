@@ -11,22 +11,10 @@ FAIL_SUMMARY=""
 END_MARKER="$BUILD_DIR/.tests_finished"
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
-ANSI_CLEAR="\033[0K"
-
-if test "$TRAVIS" = "true"; then
-  ci_fold() {
+ci_fold() {
+  if test "$GITHUB_ACTIONS" = "true"; then
     local action="$1"
     local name="$2"
-    name="$(echo -n "$name" | tr '\n\0' '--' | sed 's/[^A-Za-z0-9]\{1,\}/-/g')"
-    name="$(echo -n "$name" | sed 's/-$//')"
-    echo -en "travis_fold:${action}:${name}\r${ANSI_CLEAR}"
-  }
-elif test "$GITHUB_ACTIONS" = "true"; then
-  ci_fold() {
-    local action="$1"
-    local name="$2"
-    name="$(echo -n "$name" | tr '\n\0' '--' | sed 's/[^A-Za-z0-9]\{1,\}/-/g')"
-    name="$(echo -n "$name" | sed 's/-$//')"
     case "$action" in
       start)
         echo "::group::${name}"
@@ -37,12 +25,8 @@ elif test "$GITHUB_ACTIONS" = "true"; then
       *)
         :;;
     esac
-  }
-else
-  ci_fold() {
-    return 0
-  }
-fi
+  fi
+}
 
 enter_suite() {
   set +x
@@ -50,7 +34,7 @@ enter_suite() {
   rm -f "${END_MARKER}"
   local suite_name="$1"
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
-  ci_fold start "${NVIM_TEST_CURRENT_SUITE}"
+  ci_fold "start" "$suite_name"
   set -x
 }
 
@@ -60,7 +44,7 @@ exit_suite() {
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"
   else
-    ci_fold end "${NVIM_TEST_CURRENT_SUITE}"
+    ci_fold "end" ""
   fi
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   if test "$1" != "--continue" ; then
