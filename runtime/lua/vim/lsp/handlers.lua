@@ -439,14 +439,20 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      local client = vim.lsp.get_client_by_id(ctx.client_id)
-      local client_name = client and client.name or string.format("client_id=%d", ctx.client_id)
       -- LSP spec:
       -- interface ResponseError:
       --  code: integer;
       --  message: string;
       --  data?: string | number | boolean | array | object | null;
-      return err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
+
+      -- Per LSP, don't show ContentModified error to the user.
+      if err.code ~= protocol.ErrorCodes.ContentModified then
+        local client = vim.lsp.get_client_by_id(ctx.client_id)
+        local client_name = client and client.name or string.format("client_id=%d", ctx.client_id)
+
+        err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
+      end
+      return
     end
 
     return fn(err, result, ctx, config)
