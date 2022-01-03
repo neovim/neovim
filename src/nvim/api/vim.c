@@ -383,7 +383,7 @@ error:
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
 /// @param do_lt      Also translate <lt>. Ignored if `special` is false.
-/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
+/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\r" char.
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
