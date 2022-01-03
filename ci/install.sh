@@ -3,11 +3,6 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  python3 -m pip -q install --user --upgrade flake8
-  exit
-fi
-
 # Use default CC to avoid compilation problems when installing Python modules.
 echo "Install neovim module for Python 3."
 CC=cc python3 -m pip -q install --user --upgrade pynvim
