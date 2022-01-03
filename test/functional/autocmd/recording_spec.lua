@@ -59,7 +59,7 @@ describe('RecordingLeave', function()
       call feedkeys("qqyyq", 'xt')
     ]]
     eq('q', eval 'g:regname')
-    eq({'yy'}, eval 'g:regcontents')
+    eq('yy', eval 'g:regcontents')
   end)
 
   it('resets v:event', function()

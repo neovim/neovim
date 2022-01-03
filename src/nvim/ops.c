@@ -920,16 +920,12 @@ int do_record(int c)
     dict_T *dict = get_v_event(&save_v_event);
 
     // The recorded text contents.
-    list_T *const list = tv_list_alloc(1);
     p = get_recorded();
     if (p != NULL) {
       // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
       vim_unescape_csi(p);
-
-      tv_list_append_string(list, (const char *)p, -1);
+      (void)tv_dict_add_str(dict, S_LEN("regcontents"), (const char *)p);
     }
-    tv_list_set_lock(list, VAR_FIXED);
-    (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
     // Name of requested register, or empty string for unnamed operation.
     char buf[NUMBUFLEN+2];
