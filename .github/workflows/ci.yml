@@ -34,7 +34,6 @@ jobs:
 
       - name: Setup interpreter packages
         run: |
-          ./ci/before_install.sh
           ./ci/install.sh
 
       - name: Cache dependencies
@@ -109,7 +108,6 @@ jobs:
 
       - name: Setup interpreter packages
         run: |
-          ./ci/before_install.sh
           ./ci/install.sh
 
       - name: Cache dependencies
@@ -200,7 +198,6 @@ jobs:
 
       - name: Setup interpreter packages
         run: |
-          ./ci/before_install.sh
           ./ci/install.sh
 
       - name: Cache dependencies
