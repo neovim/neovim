@@ -275,7 +275,7 @@ int main(void)
 
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
-  add_compile_options(/W3)
+  add_compile_options(/W1 /WX)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
   add_definitions(-DWIN32)
 else()
