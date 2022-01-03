@@ -1774,8 +1774,8 @@ au BufNewFile,BufRead *.sqr,*.sqi		setf sqr
 au BufNewFile,BufRead *.nut			setf squirrel
 
 " OpenSSH configuration
-au BufNewFile,BufRead ssh_config,*/.ssh/config		setf sshconfig
-au BufNewFile,BufRead */etc/ssh/ssh_config.d/*.conf	setf sshconfig
+au BufNewFile,BufRead ssh_config,*/.ssh/config,*/.ssh/*.conf	setf sshconfig
+au BufNewFile,BufRead */etc/ssh/ssh_config.d/*.conf		setf sshconfig
 
 " OpenSSH server configuration
 au BufNewFile,BufRead sshd_config			setf sshdconfig
