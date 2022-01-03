@@ -36,6 +36,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
+#include "nvim/decoration.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
@@ -5469,6 +5470,11 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (sign->se_lnum > curline) {
+      // Counted all signs, now add extmark signs
+      if (curline > 0) {
+        linesum += decor_signcols(buf, &decor_state, (int)curline-1, (int)curline-1,
+                                  maximum-linesum);
+      }
       if (linesum > signcols) {
         signcols = linesum;
         if (signcols >= maximum) {
@@ -5482,6 +5488,19 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
       linesum++;
     }
   }
+
+  if (curline > 0) {
+    linesum += decor_signcols(buf, &decor_state, (int)curline-1, (int)curline-1, maximum-linesum);
+  }
+  if (linesum > signcols) {
+    signcols = linesum;
+    if (signcols >= maximum) {
+      return maximum;
+    }
+  }
+
+  // Check extmarks between signs
+  linesum = decor_signcols(buf, &decor_state, 0, (int)buf->b_ml.ml_line_count-1, maximum);
 
   if (linesum > signcols) {
     signcols = linesum;

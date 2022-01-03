@@ -445,6 +445,27 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - strict: boolean that indicates extmark should not be placed
 ///                   if the line or column value is past the end of the
 ///                   buffer or end of the line respectively. Defaults to true.
+///               - sign_text: string of length 1-2 used to display in the
+///                   sign column.
+///                   Note: ranges are unsupported and decorations are only
+///                   applied to start_row
+///               - sign_hl_group: name of the highlight group used to
+///                   highlight the sign column text.
+///                   Note: ranges are unsupported and decorations are only
+///                   applied to start_row
+///               - number_hl_group: name of the highlight group used to
+///                   highlight the number column.
+///                   Note: ranges are unsupported and decorations are only
+///                   applied to start_row
+///               - line_hl_group: name of the highlight group used to
+///                   highlight the whole line.
+///                   Note: ranges are unsupported and decorations are only
+///                   applied to start_row
+///               - cursorline_hl_group: name of the highlight group used to
+///                   highlight the line when the cursor is on the same line
+///                   as the mark and 'cursorline' is enabled.
+///                   Note: ranges are unsupported and decorations are only
+///                   applied to start_row
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -519,10 +540,25 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
-  if (HAS_KEY(opts->hl_group)) {
-    decor.hl_id = object_to_hl_id(opts->hl_group, "hl_group", err);
-    if (ERROR_SET(err)) {
-      goto error;
+  struct {
+    const char *name;
+    Object *opt;
+    int *dest;
+  } hls[] = {
+    { "hl_group"           , &opts->hl_group           , &decor.hl_id            },
+    { "sign_hl_group"      , &opts->sign_hl_group      , &decor.sign_hl_id       },
+    { "number_hl_group"    , &opts->number_hl_group    , &decor.number_hl_id     },
+    { "line_hl_group"      , &opts->line_hl_group      , &decor.line_hl_id       },
+    { "cursorline_hl_group", &opts->cursorline_hl_group, &decor.cursorline_hl_id },
+    { NULL, NULL, NULL },
+  };
+
+  for (int j = 0; hls[j].name && hls[j].dest; j++) {
+    if (HAS_KEY(*hls[j].opt)) {
+      *hls[j].dest = object_to_hl_id(*hls[j].opt, hls[j].name, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
     }
   }
 
@@ -622,6 +658,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
+  if (opts->sign_text.type == kObjectTypeString) {
+    if (!init_sign_text(&decor.sign_text,
+                        (char_u *)opts->sign_text.data.string.data)) {
+      api_set_error(err, kErrorTypeValidation, "sign_text is not a valid value");
+      goto error;
+    }
+  } else if (HAS_KEY(opts->sign_text)) {
+    api_set_error(err, kErrorTypeValidation, "sign_text is not a String");
+    goto error;
+  }
+
   bool right_gravity = true;
   OPTION_TO_BOOL(right_gravity, right_gravity, true);
 
@@ -709,6 +756,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
 error:
   clear_virttext(&decor.virt_text);
+  xfree(decor.sign_text);
   return 0;
 }
 

@@ -87,6 +87,11 @@ static inline bool mt_end(mtkey_t key)
   return key.flags & MT_FLAG_END;
 }
 
+static inline bool mt_start(mtkey_t key)
+{
+  return mt_paired(key) && !mt_end(key);
+}
+
 static inline bool mt_right(mtkey_t key)
 {
   return key.flags & MT_FLAG_RIGHT_GRAVITY;

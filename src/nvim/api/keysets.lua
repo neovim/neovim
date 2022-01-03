@@ -22,6 +22,11 @@ return {
     "virt_lines_above";
     "virt_lines_leftcol";
     "strict";
+    "sign_text";
+    "sign_hl_group";
+    "number_hl_group";
+    "line_hl_group";
+    "cursorline_hl_group";
   };
   keymap = {
     "noremap";

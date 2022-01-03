@@ -2208,6 +2208,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   buf_T *buf = wp->w_buffer;
   bool end_fill = (lnum == buf->b_ml.ml_line_count+1);
 
+  has_decor = decor_redraw_line(buf, lnum-1, &decor_state);
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -2228,9 +2230,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       }
     }
-
-    has_decor = decor_redraw_line(wp->w_buffer, lnum-1,
-                                  &decor_state);
 
     for (size_t k = 0; k < kv_size(*providers); k++) {
       DecorProvider *p = kv_A(*providers, k);
@@ -2460,6 +2459,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   memset(sattrs, 0, sizeof(sattrs));
   num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
+  if (decor_state.has_sign_decor) {
+    decor_redraw_signs(buf, &decor_state, lnum-1, &num_signs, sattrs);
+  }
 
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
