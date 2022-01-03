@@ -266,8 +266,6 @@ get_vimpatch() {
   msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
 }
 
-# shellcheck disable=SC2015
-# ^ "Note that A && B || C is not if-then-else."
 stage_patch() {
   get_vimpatch "$1"
   local try_apply="${2:-}"
@@ -282,23 +280,32 @@ stage_patch() {
     echo "  branch; not creating a new branch."
   else
     printf '\nFetching "%s/master".\n' "${nvim_remote}"
-    output="$(git fetch "${nvim_remote}" master 2>&1)" &&
-      msg_ok "${output}" ||
-      (msg_err "${output}"; false)
+    if output="$(git fetch "$nvim_remote" master 2>&1)"; then
+      msg_ok "$output"
+    else
+      msg_err "$output"
+      exit 1
+    fi
 
     local nvim_branch="${BRANCH_PREFIX}${vim_version}"
     echo
     echo "Creating new branch '${nvim_branch}' based on '${nvim_remote}/master'."
     cd "${NVIM_SOURCE_DIR}"
-    output="$(git checkout -b "${nvim_branch}" "${nvim_remote}/master" 2>&1)" &&
-      msg_ok "${output}" ||
-      (msg_err "${output}"; false)
+    if output="$(git checkout -b "$nvim_branch" "$nvim_remote/master" 2>&1)"; then
+      msg_ok "$output"
+    else
+      msg_err "$output"
+      exit 1
+    fi
   fi
 
   printf "\nCreating empty commit with correct commit message.\n"
-  output="$(commit_message | git commit --allow-empty --file 2>&1 -)" &&
-    msg_ok "${output}" ||
-    (msg_err "${output}"; false)
+  if output="$(commit_message | git commit --allow-empty --file 2>&1 -)"; then
+    msg_ok "$output"
+  else
+    msg_err "$output"
+    exit 1
+  fi
 
   local ret=0
   if test -n "$try_apply" ; then
@@ -340,8 +347,6 @@ git_hub_pr() {
   git hub pull new -m "${pr_message}"
 }
 
-# shellcheck disable=SC2015
-# ^ "Note that A && B || C is not if-then-else."
 submit_pr() {
   require_executable git
   local push_first
@@ -392,17 +397,23 @@ submit_pr() {
       fi
     fi
     echo "Pushing to '${push_remote}/${checked_out_branch}'."
-    output="$(git push "${push_remote}" "${checked_out_branch}" 2>&1)" &&
-      msg_ok "${output}" ||
-      (msg_err "${output}"; false)
+    if output="$(git push "$push_remote" "$checked_out_branch" 2>&1)"; then
+      msg_ok "$output"
+    else
+      msg_err "$output"
+      exit 1
+    fi
 
     echo
   fi
 
   echo "Creating pull request."
-  output="$(${submit_fn} "${pr_title}" "${pr_body}" 2>&1)" &&
-    msg_ok "${output}" ||
-    (msg_err "${output}"; false)
+  if output="$($submit_fn "$pr_title" "$pr_body" 2>&1)"; then
+    msg_ok "$output"
+  else
+    msg_err "$output"
+    exit 1
+  fi
 
   echo
   echo "Cleaning up files."
@@ -565,13 +576,13 @@ show_vimpatches() {
     runtime_commits[$commit]=1
   done
 
-  list_missing_vimpatches 1 "$@" | while read -r vim_commit; do
+  while read -r vim_commit; do
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
       printf '  • %s\n' "${vim_commit}"
     fi
-  done
+  done <<< "$(list_missing_vimpatches 1 "$@")"
 
   cat << EOF
 
@@ -692,14 +703,14 @@ review_commit() {
   message_length="$(wc -l <<< "${expected_commit_message}")"
   local commit_message
   commit_message="$(tail -n +4 "${NVIM_SOURCE_DIR}/n${patch_file}" | head -n "${message_length}")"
-  if [[ "${commit_message#${git_patch_prefix}}" == "${expected_commit_message}" ]]; then
+  if [[ "${commit_message#"$git_patch_prefix"}" == "${expected_commit_message}" ]]; then
     msg_ok "Found expected commit message."
   else
     msg_err "Wrong commit message."
     echo "  Expected:"
     echo "${expected_commit_message}"
     echo "  Actual:"
-    echo "${commit_message#${git_patch_prefix}}"
+    echo "${commit_message#"$git_patch_prefix"}"
   fi
 
   get_vimpatch "${vim_version}"
