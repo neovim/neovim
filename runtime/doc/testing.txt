@@ -12,7 +12,7 @@ and for testing plugins.
 
 1. Testing Vim				|testing|
 2. Test functions			|test-functions-details|
-3. Assert funtions			|assert-functions-details|
+3. Assert functions			|assert-functions-details|
 
 ==============================================================================
 1. Testing Vim						*testing*
