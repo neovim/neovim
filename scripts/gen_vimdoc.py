@@ -128,12 +128,14 @@ CONFIG = {
             'shared.lua',
             'uri.lua',
             'ui.lua',
+            'filetype.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/ui.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/filetype.lua'),
         ]),
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
@@ -148,6 +150,7 @@ CONFIG = {
             'shared': 'vim',
             'uri': 'vim',
             'ui': 'vim.ui',
+            'filetype': 'vim.filetype',
         },
         'append_only': [
             'shared.lua',

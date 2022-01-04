@@ -434,6 +434,15 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     // [package, loaded, module]
     lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
 
+    code = (char *)&lua_filetype_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_filetype_module) - 1, "@vim/filetype.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating vim.filetype module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim.filetype");  // [package, loaded]
+
     lua_pop(lstate, 2);  // []
   }
 

@@ -2407,10 +2407,12 @@ au BufNewFile,BufRead *.txt
         \|   setf text
         \| endif       
 
-" Use the filetype detect plugins.  They may overrule any of the previously
-" detected filetypes.
-runtime! ftdetect/*.vim
-runtime! ftdetect/*.lua
+if !exists('g:did_load_ftdetect')
+  " Use the filetype detect plugins.  They may overrule any of the previously
+  " detected filetypes.
+  runtime! ftdetect/*.vim
+  runtime! ftdetect/*.lua
+endif
 
 " NOTE: The above command could have ended the filetypedetect autocmd group
 " and started another one. Let's make sure it has ended to get to a consistent

@@ -1780,4 +1780,71 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                  1-based index of `item` within `item` . `nil`
                                  if the user aborted the dialog.
 
+
+==============================================================================
+Lua module: filetype                                            *lua-filetype*
+
+add({filetypes})                                          *vim.filetype.add()*
+                Add new filetype mappings.
+
+                Filetype mappings can be added either by extension or by
+                filename (either the "tail" or the full file path). The full
+                file path is checked first, followed by the file name. If a
+                match is not found using the filename, then the filename is
+                matched against the list of patterns (sorted by priority)
+                until a match is found. Lastly, if pattern matching does not
+                find a filetype, then the file extension is used.
+
+                The filetype can be either a string (in which case it is used
+                as the filetype directly) or a function. If a function, it
+                takes the full path and buffer number of the file as arguments
+                (along with captures from the matched pattern, if any) and
+                should return a string that will be used as the buffer's
+                filetype.
+
+                Filename patterns can specify an optional priority to resolve
+                cases when a file path matches multiple patterns. Higher
+                priorities are matched first. When omitted, the priority
+                defaults to 0.
+
+                See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
+
+                Note that Lua filetype detection is only enabled when
+                |g:do_filetype_lua| is set to 1.
+
+                Example: >
+
+                  vim.filetype.add({
+                    extension = {
+                      foo = "fooscript",
+                      bar = function(path, bufnr)
+                        if some_condition() then
+                          return "barscript"
+                        end
+                        return "bar"
+                      end,
+                    },
+                    filename = {
+                      [".foorc"] = "toml",
+                      ["/etc/foo/config"] = "toml",
+                    },
+                    pattern = {
+                      [".*&zwj;/etc/foo/.*"] = "fooscript",
+                      -- Using an optional priority
+                      [".*&zwj;/etc/foo/.*%.conf"] = { "dosini", { priority = 10 } },
+                      ["README.(%a+)$"] = function(path, bufnr, ext)
+                        if ext == "md" then
+                          return "markdown"
+                        elseif ext == "rst" then
+                          return "rst"
+                        end
+                      end,
+                    },
+                  })
+<
+
+                Parameters: ~
+                    {filetypes}  table A table containing new filetype maps
+                                 (see example).
+
  vim:tw=78:ts=8:ft=help:norl:
