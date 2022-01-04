@@ -787,6 +787,12 @@ local extension = {
   xml = function() vim.fn["dist#ft#FTxml"]() end,
   y = function() vim.fn["dist#ft#FTy"]() end,
   zsql = function() vim.fn["dist#ft#SQL"]() end,
+  txt = function(path, bufnr)
+    --helpfiles match *.txt, but should have a modeline as last line
+    if not getline(bufnr, -1):match("vim:.*ft=help") then
+      return "text"
+    end
+  end,
   -- END EXTENSION
 }
 
@@ -1325,6 +1331,7 @@ local pattern = {
   ["tmac%..*"] = starsetf('nroff'),
   ["zlog.*"] = starsetf('zsh'),
   ["zsh.*"] = starsetf('zsh'),
+  ["ae%d+%.txt"] = 'mail',
   -- END PATTERN
 }
 -- luacheck: pop
