@@ -19,11 +19,13 @@ local function starsetf(ft)
   }}
 end
 
+---@private
 local function getline(bufnr, lnum)
   return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1]
 end
 
 -- Filetypes based on file extension
+-- luacheck: push no unused args
 local extension = {
   -- BEGIN EXTENSION
   ["8th"] = "8th",
@@ -1325,6 +1327,7 @@ local pattern = {
   ["zsh.*"] = starsetf('zsh'),
   -- END PATTERN
 }
+-- luacheck: pop
 
 ---@private
 local function sort_by_priority(t)
