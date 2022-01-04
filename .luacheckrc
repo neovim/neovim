@@ -26,6 +26,10 @@ read_globals = {
   "vim",
 }
 
+globals = {
+  "vim.g",
+}
+
 exclude_files = {
   'test/functional/fixtures/lua/syntax_error.lua',
 }
