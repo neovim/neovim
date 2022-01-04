@@ -73,8 +73,11 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
         vim.rpcrequest(1, "init", result)
-        client.config.flags.allow_incremental_sync = options.allow_incremental_sync or false
       end;
+      flags = {
+        allow_incremental_sync = options.allow_incremental_sync or false;
+        debounce_text_changes = 0;
+      };
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
