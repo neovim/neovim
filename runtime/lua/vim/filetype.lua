@@ -19,6 +19,10 @@ local function starsetf(ft)
   }}
 end
 
+local function getline(bufnr, lnum)
+  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1]
+end
+
 -- Filetypes based on file extension
 local extension = {
   -- BEGIN EXTENSION
@@ -635,6 +639,13 @@ local extension = {
   tssop = "tssop",
   tutor = "tutor",
   twig = "twig",
+  ts = function(path, bufnr)
+    if getline(bufnr, 1):find("<%?xml") then
+      return "xml"
+    else
+      return "typescript"
+    end
+  end,
   tsx = "typescriptreact",
   uc = "uc",
   uit = "uil",
