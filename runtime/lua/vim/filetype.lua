@@ -635,6 +635,7 @@ local extension = {
   tssop = "tssop",
   tutor = "tutor",
   twig = "twig",
+  ts = "typescript",
   tsx = "typescriptreact",
   uc = "uc",
   uit = "uil",
