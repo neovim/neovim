@@ -639,7 +639,7 @@ local extension = {
   tssop = "tssop",
   tutor = "tutor",
   twig = "twig",
-  ts = function(name, bufnr)
+  ts = function(path, bufnr)
     if getline(bufnr, 1):find("<%?xml") then
       return "xml"
     else
