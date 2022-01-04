@@ -249,13 +249,15 @@ arguments separated by " " (space) instead of "\t" (tab).
                                                         *:lua*
 :[range]lua {chunk}
                         Executes Lua chunk {chunk}.
-
+                        if {chunk} starts with "=" the rest of the chunk is
+                        evaluated as an expression and printed. `:lua =expr`
+                        is equivalent to `:lua print(vim.inspect(expr))`
                         Examples: >
                             :lua vim.api.nvim_command('echo "Hello, Nvim!"')
 <                        To see the Lua version: >
                             :lua print(_VERSION)
 <                        To see the LuaJIT version: >
-                            :lua print(jit.version)
+                            :lua =jit.version
 <
                                                         *:lua-heredoc*
 :[range]lua << [endmarker]
