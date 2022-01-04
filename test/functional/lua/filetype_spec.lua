@@ -2,6 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local clear = helpers.clear
+local pathroot = helpers.pathroot
+
+local root = pathroot()
 
 describe('vim.filetype', function()
   before_each(function()
@@ -21,7 +24,7 @@ describe('vim.filetype', function()
           rs = 'radicalscript',
         },
       })
-      vim.api.nvim_buf_set_name(0, '/home/user/src/main.rs')
+      vim.api.nvim_buf_set_name(0, 'main.rs')
       vim.filetype.match(0)
       return vim.bo.filetype
     ]])
@@ -37,7 +40,7 @@ describe('vim.filetype', function()
           ['main.rs'] = 'somethingelse',
         },
       })
-      vim.api.nvim_buf_set_name(0, '/home/usr/src/main.rs')
+      vim.api.nvim_buf_set_name(0, 'main.rs')
       vim.filetype.match(0)
       return vim.bo.filetype
     ]])
@@ -50,35 +53,37 @@ describe('vim.filetype', function()
           ['s_O_m_e_F_i_l_e'] = 'nim',
         },
       })
-      vim.api.nvim_buf_set_name(0, '/home/user/src/s_O_m_e_F_i_l_e')
+      vim.api.nvim_buf_set_name(0, 's_O_m_e_F_i_l_e')
       vim.filetype.match(0)
       return vim.bo.filetype
     ]])
 
-    eq('dosini', exec_lua [[
+    eq('dosini', exec_lua([[
+      local root = ...
       vim.filetype.add({
         filename = {
           ['config'] = 'toml',
-          ['~/.config/fun/config'] = 'dosini',
+          [root .. '/.config/fun/config'] = 'dosini',
         },
       })
-      vim.api.nvim_buf_set_name(0, '~/.config/fun/config')
+      vim.api.nvim_buf_set_name(0, root .. '/.config/fun/config')
       vim.filetype.match(0)
       return vim.bo.filetype
-    ]])
+    ]], root))
   end)
 
   it('works with patterns', function()
-    eq('markdown', exec_lua [[
+    eq('markdown', exec_lua([[
+      local root = ...
       vim.filetype.add({
         pattern = {
-          ['~/blog/.*%.txt'] = 'markdown',
+          [root .. '/blog/.*%.txt'] = 'markdown',
         }
       })
-      vim.api.nvim_buf_set_name(0, '~/blog/why_neovim_is_awesome.txt')
+      vim.api.nvim_buf_set_name(0, root .. '/blog/why_neovim_is_awesome.txt')
       vim.filetype.match(0)
       return vim.bo.filetype
-    ]])
+    ]], root))
   end)
 
   it('works with functions', function()
