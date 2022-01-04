@@ -19,8 +19,8 @@ local function starsetf(ft)
   }}
 end
 
-local function getline(buf, line)
-  return api.nvim_buf_get_lines(buf, line-1, line, true)[1]
+local function getline(bufnr, lnum)
+  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1]
 end
 
 -- Filetypes based on file extension
