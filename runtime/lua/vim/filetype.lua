@@ -642,8 +642,8 @@ local extension = {
   ts = function(name, bufnr)
     if getline(bufnr, 1):find("<%?xml") then
       return "xml"
-    end
-    return "typescript"
+    else
+      return "typescript"
   end,
   tsx = "typescriptreact",
   uc = "uc",
