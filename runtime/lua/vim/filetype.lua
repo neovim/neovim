@@ -644,6 +644,7 @@ local extension = {
       return "xml"
     else
       return "typescript"
+    end
   end,
   tsx = "typescriptreact",
   uc = "uc",
