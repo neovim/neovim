@@ -2396,12 +2396,10 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
 ///                 "true". In addition to the string options listed in |:command-complete|, the
 ///                 "complete" key also accepts a Lua function which works like the "customlist"
-///                 completion mode |:command-completion-customlist|.
-///
-///                 Additional parameters.
+///                 completion mode |:command-completion-customlist|. Additional parameters:
 ///                 - desc: (string) Used for listing the command when a Lua function is used for
 ///                                  {command}.
-///                 - force: (boolean) Override any previous definition.
+///                 - force: (boolean, default true) Override any previous definition.
 /// @param[out] err Error details, if any.
 void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
