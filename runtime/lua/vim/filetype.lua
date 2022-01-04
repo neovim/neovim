@@ -640,7 +640,7 @@ local extension = {
   tutor = "tutor",
   twig = "twig",
   ts = function(name, bufnr)
-    if string.find(getline(bufnr, 1), "<%?xml") then
+    if getline(bufnr, 1):find("<%?xml") then
       return "xml"
     end
     return "typescript"
