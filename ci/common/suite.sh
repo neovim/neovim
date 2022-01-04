@@ -73,13 +73,8 @@ fail() {
 
 run_test() {
   local cmd="$1"
-  test $# -gt 0 && shift
-  local test_name="$1"
-  : ${test_name:=$cmd}
-  test $# -gt 0 && shift
-  if ! eval "$cmd" ; then
-    fail "${test_name}" "$@"
-  fi
+  local test_name="$2"
+  eval "$cmd" || fail "$test_name"
 }
 
 ended_successfully() {

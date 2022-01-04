@@ -9,23 +9,23 @@ source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/suite.sh"
 
 enter_suite 'clint'
-run_test 'make clint-full' clint
+run_test 'make clint-full' 'clint-full'
 exit_suite --continue
 
 enter_suite 'lualint'
-run_test 'make lualint' lualint
+run_test 'make lualint' 'lualint'
 exit_suite --continue
 
 enter_suite 'pylint'
-run_test 'make pylint' pylint
+run_test 'make pylint' 'pylint'
 exit_suite --continue
 
 enter_suite 'shlint'
-run_test 'make shlint' shlint
+run_test 'make shlint' 'shlint'
 exit_suite --continue
 
 enter_suite single-includes
-run_test 'make check-single-includes' single-includes
+run_test 'make check-single-includes' 'check-single-includes'
 exit_suite --continue
 
 end_tests
