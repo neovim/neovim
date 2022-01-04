@@ -23,11 +23,6 @@ local function getline(buf, line)
   return api.nvim_buf_get_lines(buf, line-1, line, true)
 end
 
-local function starts_with(buf, prefix)
-  local first_line = getline(buf, 1)
-  return first_line:sub(1, #prefix) == prefix
-end
-
 -- Filetypes based on file extension
 local extension = {
   -- BEGIN EXTENSION
@@ -644,11 +639,11 @@ local extension = {
   tssop = "tssop",
   tutor = "tutor",
   twig = "twig",
-  ts = function(name, buf)
-    if starts_with(buf, '<?xml') then
-      return 'xml'
+  ts = function(name, bufnr)
+    if string.find(getline(bufnr, 1), "<%?xml") then
+      return "xml"
     end
-    return 'typescript'
+    return "typescript"
   end,
   tsx = "typescriptreact",
   uc = "uc",
