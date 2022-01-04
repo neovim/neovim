@@ -18,7 +18,7 @@ local growsize = 95
 -- constructing a class wrapper around garray. It could for example associate
 -- ga_clear_strings to the underlying garray cdata if the garray is a string
 -- array. But for now I estimate that that kind of magic might make testing
--- less "transparant" (i.e.: the interface would become quite different as to
+-- less "transparent" (i.e.: the interface would become quite different as to
 -- how one would use it from C.
 
 -- accessors

@@ -453,7 +453,7 @@ end
 
 --- Send request to the server to resolve document highlights for the current
 --- text document position. This request can be triggered by a  key mapping or
---- by events such as `CursorHold`, eg:
+--- by events such as `CursorHold`, e.g.:
 ---
 --- <pre>
 --- autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()

@@ -77,7 +77,7 @@ end
 
 --- Determines whether this tree is valid.
 --- If the tree is invalid, `parse()` must be called
---- to get the an updated tree.
+--- to get the updated tree.
 function LanguageTree:is_valid()
   return self._valid
 end

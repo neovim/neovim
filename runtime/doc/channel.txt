@@ -44,7 +44,7 @@ functions like |chansend()| consume channel ids.
 2. Reading and writing raw bytes			      *channel-bytes*
 
 Channels opened by Vimscript functions operate with raw bytes by default. For
-a job channel using RPC, bytes can still be read over its stderr. Similarily,
+a job channel using RPC, bytes can still be read over its stderr. Similarly,
 only bytes can be written to Nvim's own stderr.
 
 						*channel-callback*

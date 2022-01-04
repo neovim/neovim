@@ -57,7 +57,7 @@ typedef enum {
 } LexExprTokenType;
 
 typedef enum {
-  kExprCmpEqual,  ///< Equality, unequality.
+  kExprCmpEqual,  ///< Equality, inequality.
   kExprCmpMatches,  ///< Matches regex, not matches regex.
   kExprCmpGreater,  ///< `>` or `<=`
   kExprCmpGreaterOrEqual,  ///< `>=` or `<`.

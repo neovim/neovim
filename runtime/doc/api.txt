@@ -45,7 +45,7 @@ start with a TCP/IP socket instead, use |--listen| with a TCP-style address: >
 More endpoints can be started with |serverstart()|.
 
 Note that localhost TCP sockets are generally less secure than named pipes,
-and can lead to vunerabilities like remote code execution.
+and can lead to vulnerabilities like remote code execution.
 
 Connecting to the socket is the easiest way a programmer can test the API,
 which can be done through any msgpack-rpc client library or full-featured
@@ -198,7 +198,7 @@ any of these approaches:
 
   2. Start Nvim with |--api-info|. Useful for statically-compiled clients.
      Example (requires Python "pyyaml" and "msgpack-python" modules): >
-     nvim --api-info | python -c 'import msgpack, sys, yaml; print yaml.dump(msgpack.unpackb(sys.stdin.read()))'
+     nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
 <
   3. Use the |api_info()| Vimscript function. >
      :lua print(vim.inspect(vim.fn.api_info()))
@@ -468,7 +468,7 @@ extmark position and enter some text, the extmark migrates forward. >
      f o o z|b a r    line (| = cursor)
             4         extmark (after typing "z")
 
-If an extmark is on the last index of a line and you inputsa newline at that
+If an extmark is on the last index of a line and you inputs a newline at that
 point, the extmark will accordingly migrate to the next line: >
 
      f o o z b a r|   line (| = cursor)
@@ -674,7 +674,7 @@ nvim_add_user_command({name}, {command}, {*opts})
                                string options listed in |:command-complete|,
                                the "complete" key also accepts a Lua function
                                which works like the "customlist" completion
-                               mode |:command-complete-customlist|.
+                               mode |:command-completion-customlist|.
 
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
