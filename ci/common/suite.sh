@@ -33,7 +33,6 @@ enter_suite() {
   FAILED=0
   rm -f "${END_MARKER}"
   local suite_name="$1"
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
   ci_fold "start" "$suite_name"
   set -x
 }
@@ -41,12 +40,10 @@ enter_suite() {
 exit_suite() {
   set +x
   if test $FAILED -ne 0 ; then
-    echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"
   else
     ci_fold "end" ""
   fi
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   if test "$1" != "--continue" ; then
     exit $FAILED
   else
@@ -64,7 +61,7 @@ fail() {
   : ${fail_char:=F}
   : ${message:=Test $test_name failed}
 
-  local full_msg="$fail_char $NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
+  local full_msg="$fail_char $test_name : $message"
   FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
