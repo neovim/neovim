@@ -29,13 +29,6 @@ body:
 
   - type: textarea
     attributes:
-      label: ':checkhealth'
-      description: |
-        Paste the results from `nvim -c ":checkhealth nvim lspconfig"`
-      render: markdown
-
-  - type: textarea
-    attributes:
       label: 'Steps to reproduce using "nvim -u minimal_init.lua"'
       description: |
         - Download the minimal config with `curl -LO https://raw.githubusercontent.com/neovim/nvim-lspconfig/master/test/minimal_init.lua` and modify it to include any specific commands or servers pertaining to your issues.
