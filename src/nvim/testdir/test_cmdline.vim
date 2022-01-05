@@ -503,6 +503,13 @@ func Test_fullcommand()
   call assert_equal('', fullcommand(v:_null_string))
 
   call assert_equal('syntax', 'syn'->fullcommand())
+
+  command -buffer BufferLocalCommand :
+  command GlobalCommand :
+  call assert_equal('GlobalCommand', fullcommand('GlobalCom'))
+  call assert_equal('BufferLocalCommand', fullcommand('BufferL'))
+  delcommand BufferLocalCommand
+  delcommand GlobalCommand
 endfunc
 
 func Test_shellcmd_completion()
