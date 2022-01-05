@@ -9,7 +9,7 @@ end
 
 vim.cmd [[
 augroup filetypedetect
-au BufRead,BufNewFile * call v:lua.vim.filetype.match(str2nr(expand('<abuf>')))
+au BufRead,BufNewFile * call v:lua.vim.filetype.match(expand('<afile>'))
 
 " These *must* be sourced after the autocommand above is created
 runtime! ftdetect/*.vim

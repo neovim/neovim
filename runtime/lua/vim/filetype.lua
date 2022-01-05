@@ -1449,15 +1449,20 @@ local function dispatch(ft, path, bufnr, ...)
 end
 
 ---@private
-function M.match(bufnr)
-  local path = api.nvim_buf_get_name(bufnr)
+function M.match(name, bufnr)
+  -- When fired from the main filetypedetect autocommand the {bufnr} argument is omitted, so we use
+  -- the current buffer. The {bufnr} argument is provided to allow extensibility in case callers
+  -- wish to perform filetype detection on buffers other than the current one.
+  bufnr = bufnr or api.nvim_get_current_buf()
+
   -- First check for the simple case where the full path exists as a key
+  local path = vim.fn.fnamemodify(name, ":p")
   if dispatch(filename[path], path, bufnr) then
     return
   end
 
   -- Next check against just the file name
-  local tail = vim.fn.fnamemodify(path, ":t")
+  local tail = vim.fn.fnamemodify(name, ":t")
   if dispatch(filename[tail], path, bufnr) then
     return
   end
@@ -1477,7 +1482,7 @@ function M.match(bufnr)
   end
 
   -- Finally, check file extension
-  local ext = vim.fn.fnamemodify(path, ":e")
+  local ext = vim.fn.fnamemodify(name, ":e")
   if dispatch(extension[ext], path, bufnr) then
     return
   end
