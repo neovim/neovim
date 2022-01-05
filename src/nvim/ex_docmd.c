@@ -2897,7 +2897,7 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  while (*name != NUL && *name == ':') {
+  while (*name == ':') {
     name++;
   }
   name = skip_range(name, NULL);
