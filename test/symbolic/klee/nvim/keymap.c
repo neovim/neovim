@@ -159,7 +159,6 @@ static const struct key_name_entry {
   { K_BS,              "BackSpace" },   // Alternative name
   { ESC,               "Esc" },
   { CSI,               "CSI" },
-  { K_CSI,             "xCSI" },
   { '|',               "Bar" },
   { '\\',              "Bslash" },
   { K_DEL,             "Del" },
@@ -306,7 +305,6 @@ static const struct key_name_entry {
   { K_ZERO,            "Nul" },
   { K_SNR,             "SNR" },
   { K_PLUG,            "Plug" },
-  { K_PASTE,           "Paste" },
   { 0,                 NULL }
 };
 
