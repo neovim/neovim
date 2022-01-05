@@ -1357,6 +1357,11 @@ end
 
 local pattern_sorted = sort_by_priority(pattern)
 
+---@private
+local function normalize_path(path)
+  return (path:gsub("\\", "/"))
+end
+
 --- Add new filetype mappings.
 ---
 --- Filetype mappings can be added either by extension or by filename (either
@@ -1419,11 +1424,11 @@ function M.add(filetypes)
   end
 
   for k, v in pairs(filetypes.filename or {}) do
-    filename[k] = v
+    filename[normalize_path(k)] = v
   end
 
   for k, v in pairs(filetypes.pattern or {}) do
-    pattern[k] = v
+    pattern[normalize_path(k)] = v
   end
 
   if filetypes.pattern then
@@ -1454,6 +1459,8 @@ function M.match(name, bufnr)
   -- the current buffer. The {bufnr} argument is provided to allow extensibility in case callers
   -- wish to perform filetype detection on buffers other than the current one.
   bufnr = bufnr or api.nvim_get_current_buf()
+
+  name = normalize_path(name)
 
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ":p"))
