@@ -666,8 +666,15 @@ vim._expand_pat_get_parts = function(lua_string)
   return parts, search_index
 end
 
----@private
-function vim._pretty_print(...)
+---Prints given arguments in human-readable format.
+---Example:
+---<pre>
+---  -- Print highlight group Normal and store it's contents in a variable.
+---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
+---</pre>
+---@see |vim.inspect()|
+---@return given arguments.
+function vim.pretty_print(...)
   local objects = {}
   for i = 1, select('#', ...) do
     local v = select(i, ...)
@@ -675,6 +682,7 @@ function vim._pretty_print(...)
   end
 
   print(table.concat(objects, '    '))
+  return ...
 end
 
 return module
