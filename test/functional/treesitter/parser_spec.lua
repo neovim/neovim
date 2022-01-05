@@ -167,6 +167,27 @@ void ui_refresh(void)
     eq('variable', ret)
   end)
 
+  it("supports caching queries", function()
+    local long_query = query:rep(100)
+    local first_run = exec_lua ([[
+      local before = vim.loop.hrtime()
+      cquery = vim.treesitter.parse_query("c", ...)
+      local after = vim.loop.hrtime()
+      return after - before
+    ]], long_query)
+
+    local subsequent_runs = exec_lua ([[
+      local before = vim.loop.hrtime()
+      for i=1,100,1 do
+        cquery = vim.treesitter.parse_query("c", ...)
+      end
+      local after = vim.loop.hrtime()
+      return after - before
+    ]], long_query)
+
+    assert.True(1000 * subsequent_runs < first_run)
+  end)
+
   it('support query and iter by capture', function()
     insert(test_text)
 
