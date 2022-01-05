@@ -840,6 +840,9 @@ RecordingLeave			When a macro stops recording.
 				register.
 				|reg_recorded()| is only updated after this
 				event.
+				Sets these |v:event| keys:
+				    regcontents
+				    regname
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
