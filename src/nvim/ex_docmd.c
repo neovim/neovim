@@ -2891,12 +2891,16 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   exarg_T ea;
   char_u *name = argvars[0].vval.v_string;
 
-  while (name[0] != NUL && name[0] == ':') {
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (name == NULL) {
+    return;
+  }
+
+  while (*name != NUL && *name == ':') {
     name++;
   }
   name = skip_range(name, NULL);
-
-  rettv->v_type = VAR_STRING;
 
   ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
   ea.cmdidx = (cmdidx_T)0;
