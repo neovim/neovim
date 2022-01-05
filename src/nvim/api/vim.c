@@ -187,18 +187,20 @@ static void on_redraw_event(void **argv)
 /// On execution error: does not fail, but updates v:errmsg.
 ///
 /// To input sequences like <C-o> use |nvim_replace_termcodes()| (typically
-/// with escape_csi=true) to replace |keycodes|, then pass the result to
+/// with escape_csi=false) to replace |keycodes|, then pass the result to
 /// nvim_feedkeys().
 ///
 /// Example:
 /// <pre>
 ///     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
-///     :call nvim_feedkeys(key, 'n', v:true)
+///     :call nvim_feedkeys(key, 'n', v:false)
 /// </pre>
 ///
 /// @param keys         to be typed
 /// @param mode         behavior flags, see |feedkeys()|
 /// @param escape_csi   If true, escape K_SPECIAL/CSI bytes in `keys`
+///                     This should be false if you already used
+//                      |nvim_replace_termcodes()|, and true otherwise.
 /// @see feedkeys()
 /// @see vim_strsave_escape_csi
 void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
