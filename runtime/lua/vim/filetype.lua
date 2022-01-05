@@ -1094,7 +1094,7 @@ local pattern = {
   [".*/etc/a2ps%.cfg"] = "a2ps",
   [".*/usr/share/alsa/alsa%.conf"] = "alsaconf",
   [".*/etc/asound%.conf"] = "alsaconf",
-  [".*/etc/apache2/sites-.*/.*%.com"] = "apache",
+  [".*/etc/apache2/sites%-.*/.*%.com"] = "apache",
   [".*/etc/httpd/.*%.conf"] = "apache",
   [".*/%.aptitude/config"] = "aptconf",
   ["[mM]akefile%.am"] = "automake",
@@ -1115,7 +1115,7 @@ local pattern = {
   ["dictd.*%.conf"] = "dictdconf",
   [".*/etc/DIR_COLORS"] = "dircolors",
   [".*/etc/dnsmasq%.conf"] = "dnsmasq",
-  ["php%.ini-.*"] = "dosini",
+  ["php%.ini%-.*"] = "dosini",
   [".*/etc/pacman%.conf"] = "dosini",
   [".*/etc/yum%.conf"] = "dosini",
   [".*lvs"] = "dracula",
@@ -1141,7 +1141,7 @@ local pattern = {
   [".*/boot/grub/grub%.conf"] = "grub",
   [".*/boot/grub/menu%.lst"] = "grub",
   [".*/etc/grub%.conf"] = "grub",
-  ["hg-editor-.*%.txt"] = "hgcommit",
+  ["hg%-editor%-.*%.txt"] = "hgcommit",
   [".*/etc/host%.conf"] = "hostconf",
   [".*/etc/hosts%.deny"] = "hostsaccess",
   [".*/etc/hosts%.allow"] = "hostsaccess",
@@ -1209,7 +1209,7 @@ local pattern = {
   [".*/etc/serial%.conf"] = "setserial",
   [".*/etc/udev/cdsymlinks%.conf"] = "sh",
   [".*%._sst%.meta"] = "sisu",
-  [".*%.-sst%.meta"] = "sisu",
+  [".*%.%-sst%.meta"] = "sisu",
   [".*%.sst%.meta"] = "sisu",
   [".*/etc/slp%.conf"] = "slpconf",
   [".*/etc/slp%.reg"] = "slpreg",
@@ -1218,7 +1218,7 @@ local pattern = {
   [".*/%.ssh/config"] = "sshconfig",
   [".*/etc/ssh/sshd_config%.d/.*%.conf"] = "sshdconfig",
   [".*/etc/sudoers"] = "sudoers",
-  ["svn-commit.*%.tmp"] = "svn",
+  ["svn%-commit.*%.tmp"] = "svn",
   [".*%.swift%.gyb"] = "swiftgyb",
   [".*/etc/sysctl%.conf"] = "sysctl",
   [".*/etc/sysctl%.d/.*%.conf"] = "sysctl",
@@ -1272,20 +1272,20 @@ local pattern = {
   [".*/%.gitconfig%.d/.*"] = starsetf('gitconfig'),
   [".*/%.neomutt/neomuttrc.*"] = starsetf('neomuttrc'),
   [".*/Xresources/.*"] = starsetf('xdefaults'),
-  [".*/app-defaults/.*"] = starsetf('xdefaults'),
+  [".*/app%-defaults/.*"] = starsetf('xdefaults'),
   [".*/bind/db%..*"] = starsetf('bindzone'),
   [".*/debian/patches/.*"] = function() vim.fn["dist#ft#Dep3patch"]() end,
   [".*/etc/Muttrc%.d/.*"] = starsetf('muttrc'),
   [".*/etc/apache2/.*%.conf.*"] = starsetf('apache'),
   [".*/etc/apache2/conf%..*/.*"] = starsetf('apache'),
-  [".*/etc/apache2/mods-.*/.*"] = starsetf('apache'),
-  [".*/etc/apache2/sites-.*/.*"] = starsetf('apache'),
+  [".*/etc/apache2/mods%-.*/.*"] = starsetf('apache'),
+  [".*/etc/apache2/sites%-.*/.*"] = starsetf('apache'),
   [".*/etc/cron%.d/.*"] = starsetf('crontab'),
   [".*/etc/dnsmasq%.d/.*"] = starsetf('dnsmasq'),
   [".*/etc/httpd/conf%..*/.*"] = starsetf('apache'),
   [".*/etc/httpd/conf%.d/.*%.conf.*"] = starsetf('apache'),
-  [".*/etc/httpd/mods-.*/.*"] = starsetf('apache'),
-  [".*/etc/httpd/sites-.*/.*"] = starsetf('apache'),
+  [".*/etc/httpd/mods%-.*/.*"] = starsetf('apache'),
+  [".*/etc/httpd/sites%-.*/.*"] = starsetf('apache'),
   [".*/etc/logcheck/.*%.d.*/.*"] = starsetf('logcheck'),
   [".*/etc/modprobe%..*"] = starsetf('modconf'),
   [".*/etc/pam%.d/.*"] = starsetf('pamconf'),
@@ -1295,7 +1295,7 @@ local pattern = {
   [".*/etc/sudoers%.d/.*"] = starsetf('sudoers'),
   [".*/etc/xinetd%.d/.*"] = starsetf('xinetd'),
   [".*/etc/yum%.repos%.d/.*"] = starsetf('dosini'),
-  [".*/gitolite-admin/conf/.*"] = starsetf('gitolite'),
+  [".*/gitolite%-admin/conf/.*"] = starsetf('gitolite'),
   [".*/named/db%..*"] = starsetf('bindzone'),
   [".*/tmp/lltmp.*"] = starsetf('gedcom'),
   [".*asterisk.*/.*voicemail%.conf.*"] = starsetf('asteriskvm'),
@@ -1316,7 +1316,7 @@ local pattern = {
   ["access%.conf.*"] = starsetf('apache'),
   ["apache%.conf.*"] = starsetf('apache'),
   ["apache2%.conf.*"] = starsetf('apache'),
-  ["bash-fc[-%.]"] = function() vim.fn["dist#ft#SetFileTypeSH"]("bash") end,
+  ["bash%-fc[-%.]"] = function() vim.fn["dist#ft#SetFileTypeSH"]("bash") end,
   ["cabal%.project%..*"] = starsetf('cabalproject'),
   ["crontab%..*"] = starsetf('crontab'),
   ["drac%..*"] = starsetf('dracula'),
@@ -1325,7 +1325,7 @@ local pattern = {
   ["lilo%.conf.*"] = starsetf('lilo'),
   ["neomuttrc.*"] = starsetf('neomuttrc'),
   ["proftpd%.conf.*"] = starsetf('apachestyle'),
-  ["reportbug-.*"] = starsetf('mail'),
+  ["reportbug%-.*"] = starsetf('mail'),
   ["sgml%.catalog.*"] = starsetf('catalog'),
   ["srm%.conf.*"] = starsetf('apache'),
   ["tmac%..*"] = starsetf('nroff'),
@@ -1456,7 +1456,7 @@ function M.match(name, bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
 
   -- First check for the simple case where the full path exists as a key
-  local path = vim.fn.fnamemodify(name, ":p")
+  local path = vim.fn.resolve(vim.fn.fnamemodify(name, ":p"))
   if dispatch(filename[path], path, bufnr) then
     return
   end
@@ -1473,7 +1473,15 @@ function M.match(name, bufnr)
     local ft = v[k][1]
     -- If the pattern contains a / match against the full path, otherwise just the tail
     local pat = "^" .. k .. "$"
-    local matches = k:find("/") and path:match(pat) or tail:match(pat)
+    local matches
+    if k:find("/") then
+      -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
+      -- both the short file name (as typed) and the full file name (after expanding to full path
+      -- and resolving symlinks)
+      matches = name:match(pat) or path:match(pat)
+    else
+      matches = tail:match(pat)
+    end
     if matches then
       if dispatch(ft, path, bufnr, matches) then
         return
