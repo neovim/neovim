@@ -256,7 +256,7 @@ local function validate_client_config(config)
     (not config.flags
       or not config.flags.debounce_text_changes
       or type(config.flags.debounce_text_changes) == 'number'),
-    "flags.debounce_text_changes must be nil or a number with the debounce time in milliseconds"
+    "flags.debounce_text_changes must be a number with the debounce time in milliseconds"
   )
 
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
@@ -383,8 +383,8 @@ do
         return
       end
       local state = state_by_client[client.id]
-      local debounce = client.config.flags.debounce_text_changes
-      if not debounce then
+      local debounce = client.config.flags.debounce_text_changes or 150
+      if debounce == 0 then
         local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
         client.notify("textDocument/didChange", {
           textDocument = {
