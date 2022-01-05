@@ -24,8 +24,7 @@ describe('vim.filetype', function()
           rs = 'radicalscript',
         },
       })
-      vim.api.nvim_buf_set_name(0, 'main.rs')
-      vim.filetype.match(0)
+      vim.filetype.match('main.rs')
       return vim.bo.filetype
     ]])
   end)
@@ -40,8 +39,7 @@ describe('vim.filetype', function()
           ['main.rs'] = 'somethingelse',
         },
       })
-      vim.api.nvim_buf_set_name(0, 'main.rs')
-      vim.filetype.match(0)
+      vim.filetype.match('main.rs')
       return vim.bo.filetype
     ]])
   end)
@@ -53,8 +51,7 @@ describe('vim.filetype', function()
           ['s_O_m_e_F_i_l_e'] = 'nim',
         },
       })
-      vim.api.nvim_buf_set_name(0, 's_O_m_e_F_i_l_e')
-      vim.filetype.match(0)
+      vim.filetype.match('s_O_m_e_F_i_l_e')
       return vim.bo.filetype
     ]])
 
@@ -66,8 +63,7 @@ describe('vim.filetype', function()
           [root .. '/.config/fun/config'] = 'dosini',
         },
       })
-      vim.api.nvim_buf_set_name(0, root .. '/.config/fun/config')
-      vim.filetype.match(0)
+      vim.filetype.match(root .. '/.config/fun/config')
       return vim.bo.filetype
     ]], root))
   end)
@@ -80,8 +76,7 @@ describe('vim.filetype', function()
           [root .. '/blog/.*%.txt'] = 'markdown',
         }
       })
-      vim.api.nvim_buf_set_name(0, root .. '/blog/why_neovim_is_awesome.txt')
-      vim.filetype.match(0)
+      vim.filetype.match(root .. '/blog/why_neovim_is_awesome.txt')
       return vim.bo.filetype
     ]], root))
   end)
@@ -97,8 +92,7 @@ describe('vim.filetype', function()
           end,
         }
       })
-      vim.api.nvim_buf_set_name(0, 'relevant_to_me')
-      vim.filetype.match(0)
+      vim.filetype.match('relevant_to_me')
       return vim.bo.filetype
     ]])
   end)
