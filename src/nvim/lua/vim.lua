@@ -666,4 +666,15 @@ vim._expand_pat_get_parts = function(lua_string)
   return parts, search_index
 end
 
+---@private
+function vim._pretty_print(...)
+  local objects = {}
+  for i = 1, select('#', ...) do
+    local v = select(i, ...)
+    table.insert(objects, vim.inspect(v))
+  end
+
+  print(table.concat(objects, '    '))
+end
+
 return module

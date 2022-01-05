@@ -1131,12 +1131,12 @@ void ex_lua(exarg_T *const eap)
   }
   // When =expr is used transform it to print(vim.inspect(expr))
   if (code[0] == '=') {
-    len += sizeof("print(vim.inspect())") - sizeof("=");
+    len += sizeof("vim._pretty_print()") - sizeof("=");
     // code_buf needs to be 1 char larger then len for null byte in the end.
     // lua nlua_typval_exec doesn't expect null terminated string so len
     // needs to end before null byte.
     char *code_buf = xmallocz(len);
-    vim_snprintf(code_buf, len+1, "print(vim.inspect(%s))", code+1);
+    vim_snprintf(code_buf, len+1, "vim._pretty_print(%s)", code+1);
     xfree(code);
     code = code_buf;
   }
