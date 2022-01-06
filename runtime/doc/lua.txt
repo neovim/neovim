@@ -1206,19 +1206,32 @@ inspect({object}, {options})                                   *vim.inspect()*
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
 
-notify({msg}, {log_level}, {opts})                              *vim.notify()*
-                Notification provider
+notify({msg}, {level}, {opts})                                  *vim.notify()*
+                Display a notification to the user.
 
-                Without a runtime, writes to :Messages
+                This function can be overridden by plugins to display
+                notifications using a custom provider (such as the system
+                notification provider). By default, writes to |:messages|.
 
                 Parameters: ~
-                    {msg}        string Content of the notification to show to
-                                 the user
-                    {log_level}  number|nil enum from vim.log.levels
-                    {opts}       table|nil additional options (timeout, etc)
+                    {msg}    string Content of the notification to show to the
+                             user.
+                    {level}  number|nil One of the values from
+                             |vim.log.levels|.
+                    {opts}   table|nil Optional parameters. Unused by default.
 
-                See also: ~
-                    :help nvim_notify
+notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
+                Display a notification only one time.
+
+                Like |vim.notify()|, but subsequent calls with the same
+                message will not display a notification.
+
+                Parameters: ~
+                    {msg}    string Content of the notification to show to the
+                             user.
+                    {level}  number|nil One of the values from
+                             |vim.log.levels|.
+                    {opts}   table|nil Optional parameters. Unused by default.
 
 on_key({fn}, {ns_id})                                           *vim.on_key()*
                 Adds Lua function {fn} with namespace id {ns_id} as a listener
