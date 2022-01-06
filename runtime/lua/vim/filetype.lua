@@ -770,6 +770,14 @@ local extension = {
   mm = function() vim.fn["dist#ft#FTmm"]() end,
   mms = function() vim.fn["dist#ft#FTmms"]() end,
   p = function() vim.fn["dist#ft#FTprogress_pascal"]() end,
+  patch = function(path, bufnr)
+    local firstline = getline(bufnr, 1)
+    if string.find(firstline, "^From " .. string.rep("%x", 40) .. "+ Mon Sep 17 00:00:00 2001$") then
+      return "gitsendemail"
+    else
+      return "diff"
+    end
+  end,
   pl = function() vim.fn["dist#ft#FTpl"]() end,
   pp = function() vim.fn["dist#ft#FTpp"]() end,
   pro = function() vim.fn["dist#ft#ProtoCheck"]('idlang') end,
