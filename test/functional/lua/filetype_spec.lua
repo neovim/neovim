@@ -253,7 +253,7 @@ describe('vim.filetype', function()
       ['gedcom'] = {'file.ged', 'lltxxxxx.txt', '/tmp/lltmp', '/tmp/lltmp-file', 'any/tmp/lltmp', 'any/tmp/lltmp-file'},
       ['gemtext'] = {'file.gmi', 'file.gemini'},
       ['gift'] = {'file.gift'},
-      ['gitcommit'] = {'COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG'},
+      ['gitcommit'] = {'COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG', 'NOTES_EDITMSG', 'EDIT_DESCRIPTION'},
       ['gitconfig'] = {'file.git/config', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig', '/etc/gitconfig.d/file', '/.gitconfig.d/file', 'any/.config/git/config', 'any/.gitconfig.d/file', 'some.git/config', 'some.git/modules/any/config'},
       ['gitolite'] = {'gitolite.conf', '/gitolite-admin/conf/file', 'any/gitolite-admin/conf/file'},
       ['gitrebase'] = {'git-rebase-todo'},
