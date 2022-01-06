@@ -2203,6 +2203,40 @@ describe('lua stdlib', function()
     end)
   end)
 
+  it('vim.notify_once', function()
+    local screen = Screen.new(60,5)
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {foreground=Screen.colors.Red},
+    })
+    screen:attach()
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    exec_lua [[vim.notify_once("I'll only tell you this once...", vim.log.levels.WARN)]]
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {1:I'll only tell you this once...}                             |
+    ]]}
+    feed('<C-l>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    exec_lua [[vim.notify_once("I'll only tell you this once...")]]
+    screen:expect_unchanged()
+  end)
+
   describe('vim.schedule_wrap', function()
     it('preserves argument lists', function()
       exec_lua [[

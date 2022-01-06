@@ -422,23 +422,43 @@ function vim.defer_fn(fn, timeout)
 end
 
 
---- Notification provider
+--- Display a notification to the user.
 ---
---- Without a runtime, writes to :Messages
----@see :help nvim_notify
----@param msg string Content of the notification to show to the user
----@param log_level number|nil enum from |vim.log.levels|
----@param opts table|nil additional options (timeout, etc)
-function vim.notify(msg, log_level, opts) -- luacheck: no unused
-  if log_level == vim.log.levels.ERROR then
+--- This function can be overridden by plugins to display notifications using a
+--- custom provider (such as the system notification provider). By default,
+--- writes to |:messages|.
+---
+---@param msg string Content of the notification to show to the user.
+---@param level number|nil One of the values from |vim.log.levels|.
+---@param opts table|nil Optional parameters. Unused by default.
+function vim.notify(msg, level, opts) -- luacheck: no unused args
+  if level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
-  elseif log_level == vim.log.levels.WARN then
+  elseif level == vim.log.levels.WARN then
     vim.api.nvim_echo({{msg, 'WarningMsg'}}, true, {})
   else
     vim.api.nvim_echo({{msg}}, true, {})
   end
 end
 
+do
+  local notified = {}
+
+  --- Display a notification only one time.
+  ---
+  --- Like |vim.notify()|, but subsequent calls with the same message will not
+  --- display a notification.
+  ---
+  ---@param msg string Content of the notification to show to the user.
+  ---@param level number|nil One of the values from |vim.log.levels|.
+  ---@param opts table|nil Optional parameters. Unused by default.
+  function vim.notify_once(msg, level, opts) -- luacheck: no unused args
+    if not notified[msg] then
+      vim.notify(msg, level, opts)
+      notified[msg] = true
+    end
+  end
+end
 
 ---@private
 function vim.register_keystroke_callback()
