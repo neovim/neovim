@@ -916,6 +916,7 @@ local filename = {
   ["Pipfile.lock"] = "json",
   [".firebaserc"] = "json",
   [".prettierrc"] = "json",
+  ["tsconfig.json"] = "jsonc",
   Kconfig = "kconfig",
   ["Kconfig.debug"] = "kconfig",
   ["lftp.conf"] = "lftp",
