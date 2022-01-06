@@ -1069,6 +1069,7 @@ local filename = {
   [".alias"] = function() vim.fn["dist#ft#CSH"]() end,
   [".bashrc"] = function() vim.fn["dist#ft#SetFileTypeSH"]("bash") end,
   [".cshrc"] = function() vim.fn["dist#ft#CSH"]() end,
+  [".env"] = function() vim.fn["dist#ft#SetFileTypeSH"](vim.fn.getline(1)) end,
   [".kshrc"] = function() vim.fn["dist#ft#SetFileTypeSH"]("ksh") end,
   [".login"] = function() vim.fn["dist#ft#CSH"]() end,
   [".profile"] = function() vim.fn["dist#ft#SetFileTypeSH"](vim.fn.getline(1)) end,
