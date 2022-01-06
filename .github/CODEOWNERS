@@ -1,3 +1,15 @@
+# CI
 /.github/ @jamessan
-/ci/ @jamessan
+/ci/      @jamessan
 /scripts/ @jamessan
+
+# src
+/src/uncrustify.cfg @dundargoc
+/src/nvim/          @bfredl
+
+# runtime
+/runtime/lua/vim/diagnostic.lua @gpanders
+/runtime/lua/vim/treesitter/    @bfredl @vigoux
+/runtime/lua/vim/treesitter.lua @bfredl @vigoux
+/runtime/lua/vim/lsp.lua        @mjlbach @mfussenegger
+/runtime/lua/vim/lsp/           @mjlbach @mfussenegger
