@@ -696,6 +696,36 @@ func Test_mksession_foldopt()
   set sessionoptions&
 endfunc
 
+" Test for mksession with "help" but not "options" in 'sessionoptions'
+func Test_mksession_help_noopt()
+  set sessionoptions-=options
+  set sessionoptions+=help
+  help
+  let fname = expand('%')
+  mksession! Xtest_mks.out
+  bwipe
+
+  source Xtest_mks.out
+  call assert_equal('help', &buftype)
+  call assert_equal('help', &filetype)
+  call assert_equal(fname, expand('%'))
+  call assert_false(&modifiable)
+  call assert_true(&readonly)
+
+  helpclose
+  help index
+  let fname = expand('%')
+  mksession! Xtest_mks.out
+  bwipe
+
+  source Xtest_mks.out
+  call assert_equal('help', &buftype)
+  call assert_equal(fname, expand('%'))
+
+  call delete('Xtest_mks.out')
+  set sessionoptions&
+endfunc
+
 " Test for mksession with window position
 func Test_mksession_winpos()
   if !has('gui_running')
