@@ -32,6 +32,14 @@
 #define MIN_COLUMNS     12      // minimal columns for screen
 #define MIN_LINES       2       // minimal lines for screen
 
+/// Structure used by switch_win() to pass values to restore_win()
+typedef struct {
+  win_T *sw_curwin;
+  tabpage_T *sw_curtab;
+  bool sw_same_win;  ///< VIsual_active was not reset
+  bool sw_visual_active;
+} switchwin_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "window.h.generated.h"
 #endif

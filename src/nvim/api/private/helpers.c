@@ -989,18 +989,16 @@ Object copy_object(Object obj)
 static void set_option_value_for(char *key, int numval, char *stringval, int opt_flags,
                                  int opt_type, void *from, Error *err)
 {
-  win_T *save_curwin = NULL;
-  tabpage_T *save_curtab = NULL;
+  switchwin_T switchwin;
   aco_save_T aco;
 
   try_start();
   switch (opt_type)
   {
   case SREQ_WIN:
-    if (switch_win_noblock(&save_curwin, &save_curtab, (win_T *)from,
-                           win_find_tabpage((win_T *)from), true)
+    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
         == FAIL) {
-      restore_win_noblock(save_curwin, save_curtab, true);
+      restore_win_noblock(&switchwin, true);
       if (try_end(err)) {
         return;
       }
@@ -1010,7 +1008,7 @@ static void set_option_value_for(char *key, int numval, char *stringval, int opt
       return;
     }
     set_option_value_err(key, numval, stringval, opt_flags, err);
-    restore_win_noblock(save_curwin, save_curtab, true);
+    restore_win_noblock(&switchwin, true);
     break;
   case SREQ_BUF:
     aucmd_prepbuf(&aco, (buf_T *)from);

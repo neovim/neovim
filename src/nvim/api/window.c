@@ -455,17 +455,14 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
   }
   tabpage_T *tabpage = win_find_tabpage(win);
 
-  win_T *save_curwin;
-  tabpage_T *save_curtab;
-
   try_start();
   Object res = OBJECT_INIT;
-  if (switch_win_noblock(&save_curwin, &save_curtab, win, tabpage, true) ==
-      OK) {
+  switchwin_T switchwin;
+  if (switch_win_noblock(&switchwin, win, tabpage, true) == OK) {
     Array args = ARRAY_DICT_INIT;
     res = nlua_call_ref(fun, NULL, args, true, err);
   }
-  restore_win_noblock(save_curwin, save_curtab, true);
+  restore_win_noblock(&switchwin, true);
   try_end(err);
   return res;
 }

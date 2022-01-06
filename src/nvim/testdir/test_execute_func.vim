@@ -147,3 +147,15 @@ func Test_win_execute_other_tab()
   tabclose
   unlet xyz
 endfunc
+
+func Test_win_execute_visual_redraw()
+  call setline(1, ['a', 'b', 'c'])
+  new
+  wincmd p
+  call feedkeys("G\<C-V>", 'txn')
+  call win_execute(winnr('#')->win_getid(), 'redraw')
+  bwipe!
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

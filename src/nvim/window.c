@@ -577,18 +577,19 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize, int64_t Pren
 
 void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
 {
-  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
+  win_T *win = find_window_by_handle(window, err);
   buf_T *buf = find_buffer_by_handle(buffer, err);
-  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
+  tabpage_T *tab = win_find_tabpage(win);
 
   if (!win || !buf) {
     return;
   }
-
   if (noautocmd) {
     block_autocmds();
   }
-  if (switch_win_noblock(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
+
+  switchwin_T switchwin;
+  if (switch_win_noblock(&switchwin, win, tab, false) == FAIL) {
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to switch to window %d",
@@ -608,7 +609,7 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
   // So do it now.
   validate_cursor();
 
-  restore_win_noblock(save_curwin, save_curtab, false);
+  restore_win_noblock(&switchwin, false);
   if (noautocmd) {
     unblock_autocmds();
   }
@@ -6631,20 +6632,27 @@ static win_T *get_snapshot_focus(int idx)
 ///                    triggered, another tabpage access is limited.
 ///
 /// @return FAIL if switching to "win" failed.
-int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp,
-               bool no_display)
+int switch_win(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
 {
   block_autocmds();
-  return switch_win_noblock(save_curwin, save_curtab, win, tp, no_display);
+  return switch_win_noblock(switchwin, win, tp, no_display);
 }
 
 // As switch_win() but without blocking autocommands.
-int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp,
-                       bool no_display)
+int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
 {
-  *save_curwin = curwin;
+  memset(switchwin, 0, sizeof(switchwin_T));
+  switchwin->sw_curwin = curwin;
+  if (win == curwin) {
+    switchwin->sw_same_win = true;
+  } else {
+    // Disable Visual selection, because redrawing may fail.
+    switchwin->sw_visual_active = VIsual_active;
+    VIsual_active = false;
+  }
+
   if (tp != NULL) {
-    *save_curtab = curtab;
+    switchwin->sw_curtab = curtab;
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
@@ -6666,28 +6674,33 @@ int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab, win_T *win,
 // Restore current tabpage and window saved by switch_win(), if still valid.
 // When "no_display" is true the display won't be affected, no redraw is
 // triggered.
-void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
+void restore_win(switchwin_T *switchwin, bool no_display)
 {
-  restore_win_noblock(save_curwin, save_curtab, no_display);
+  restore_win_noblock(switchwin, no_display);
   unblock_autocmds();
 }
 
 // As restore_win() but without unblocking autocommands.
-void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
+void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 {
-  if (save_curtab != NULL && valid_tabpage(save_curtab)) {
+  if (switchwin->sw_curtab != NULL && valid_tabpage(switchwin->sw_curtab)) {
     if (no_display) {
       curtab->tp_firstwin = firstwin;
       curtab->tp_lastwin = lastwin;
-      curtab = save_curtab;
+      curtab = switchwin->sw_curtab;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
     } else {
-      goto_tabpage_tp(save_curtab, false, false);
+      goto_tabpage_tp(switchwin->sw_curtab, false, false);
     }
   }
-  if (win_valid(save_curwin)) {
-    curwin = save_curwin;
+
+  if (!switchwin->sw_same_win) {
+    VIsual_active = switchwin->sw_visual_active;
+  }
+
+  if (win_valid(switchwin->sw_curwin)) {
+    curwin = switchwin->sw_curwin;
     curbuf = curwin->w_buffer;
   }
   // If called by win_execute() and executing the command changed the

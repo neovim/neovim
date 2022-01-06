@@ -6963,10 +6963,9 @@ win_T *find_tabwin(typval_T *wvp, typval_T *tvp)
 /// @param off  1 for gettabwinvar()
 void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
-  win_T *win, *oldcurwin;
+  win_T *win;
   dictitem_T *v;
   tabpage_T *tp = NULL;
-  tabpage_T *oldtabpage = NULL;
   bool done = false;
 
   if (off == 1) {
@@ -6986,8 +6985,8 @@ void getwinvar(typval_T *argvars, typval_T *rettv, int off)
     // otherwise the window is not valid. Only do this when needed,
     // autocommands get blocked.
     bool need_switch_win = tp != curtab || win != curwin;
-    if (!need_switch_win
-        || switch_win(&oldcurwin, &oldtabpage, win, tp, true) == OK) {
+    switchwin_T switchwin;
+    if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
       if (*varname == '&') {
         if (varname[1] == NUL) {
           // get all window-local options in a dict
@@ -7015,7 +7014,7 @@ void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 
     if (need_switch_win) {
       // restore previous notion of curwin
-      restore_win(oldcurwin, oldtabpage, true);
+      restore_win(&switchwin, true);
     }
   }
   emsg_off--;
@@ -7517,11 +7516,9 @@ void setwinvar(typval_T *argvars, typval_T *rettv, int off)
   typval_T *varp = &argvars[off + 2];
 
   if (win != NULL && varname != NULL && varp != NULL) {
-    win_T *save_curwin;
-    tabpage_T *save_curtab;
     bool need_switch_win = tp != curtab || win != curwin;
-    if (!need_switch_win
-        || switch_win(&save_curwin, &save_curtab, win, tp, true) == OK) {
+    switchwin_T switchwin;
+    if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
       if (*varname == '&') {
         long numval;
         bool error = false;
@@ -7543,7 +7540,7 @@ void setwinvar(typval_T *argvars, typval_T *rettv, int off)
       }
     }
     if (need_switch_win) {
-      restore_win(save_curwin, save_curtab, true);
+      restore_win(&switchwin, true);
     }
   }
 }
