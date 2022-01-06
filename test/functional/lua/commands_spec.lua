@@ -149,6 +149,15 @@ describe(':lua command', function()
     eq([["hello"]], helpers.exec_capture(':lua = x()'))
     helpers.exec_lua("x = {a = 1, b = 2}")
     eq("{\n  a = 1,\n  b = 2\n}", helpers.exec_capture(':lua  =x'))
+    helpers.exec_lua([[function x(success)
+      if success then
+        return true, "Return value"
+      else
+        return false, nil, "Error message"
+      end
+    end]])
+    eq([[true    "Return value"]], helpers.exec_capture(':lua  =x(true)'))
+    eq([[false    nil    "Error message"]], helpers.exec_capture(':lua  =x(false)'))
   end)
 end)
 

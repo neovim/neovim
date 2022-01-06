@@ -1329,6 +1329,18 @@ paste({lines}, {phase})                                          *vim.paste()*
                 See also: ~
                     |paste|
 
+pretty_print({...})                                       *vim.pretty_print()*
+                Prints given arguments in human-readable format. Example: >
+                  -- Print highlight group Normal and store it's contents in a variable.
+                  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
+<
+
+                Return: ~
+                    given arguments.
+
+                See also: ~
+                    |vim.inspect()|
+
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                 Get a table of lines with start, end columns for a region
                 marked by two points
