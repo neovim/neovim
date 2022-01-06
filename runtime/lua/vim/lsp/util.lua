@@ -10,14 +10,6 @@ local uv = vim.loop
 local npcall = vim.F.npcall
 local split = vim.split
 
-local _warned = {}
-local warn_once = function(message)
-  if not _warned[message] then
-    vim.api.nvim_err_writeln(message)
-    _warned[message] = true
-  end
-end
-
 local M = {}
 
 local default_border = {
@@ -1928,7 +1920,6 @@ function M.lookup_section(settings, section)
 end
 
 M._get_line_byte_from_position = get_line_byte_from_position
-M._warn_once = warn_once
 
 M.buf_versions = {}
 
