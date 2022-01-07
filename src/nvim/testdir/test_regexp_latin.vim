@@ -787,4 +787,12 @@ func Test_regexp_error()
   set re&
 endfunc
 
+func Test_using_mark_position()
+  " this was using freed memory
+  new
+  norm O0
+  call assert_fails("s/\\%')", 'E486:')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

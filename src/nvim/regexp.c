@@ -3232,7 +3232,7 @@ typedef struct {
   // The current match-position is remembered with these variables:
   linenr_T lnum;  ///< line number, relative to first line
   char_u *line;   ///< start of current line
-  char_u *input;  ///< current input, points into "regline"
+  char_u *input;  ///< current input, points into "line"
 
   int need_clear_subexpr;   ///< subexpressions still need to be cleared
   int need_clear_zsubexpr;  ///< extmatch subexpressions still need to be
