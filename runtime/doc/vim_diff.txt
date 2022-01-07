@@ -442,6 +442,9 @@ Working directory (Vim implemented some of these later than Nvim):
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
+Mappings:
+- |nore| is ignored for rhs <Plug> mappings. <Plug> mappings are always remapped.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 

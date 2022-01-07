@@ -1710,6 +1710,15 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   int keylen = *keylenp;
   int i;
   int local_State = get_real_state();
+  bool is_plug_map = false;
+
+  // Check if typehead starts with a <Plug> mapping.
+  // In that case we will ignore nore flag on it.
+  if (typebuf.tb_buf[typebuf.tb_off] == K_SPECIAL
+      && typebuf.tb_buf[typebuf.tb_off+1] == KS_EXTRA
+      && typebuf.tb_buf[typebuf.tb_off+2] == KE_PLUG) {
+    is_plug_map = true;
+  }
 
   // Check for a mappable key sequence.
   // Walk through one maphash[] list until we find an entry that matches.
@@ -1725,7 +1734,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   tb_c1 = typebuf.tb_buf[typebuf.tb_off];
   if (no_mapping == 0 && maphash_valid
       && (no_zero_mapping == 0 || tb_c1 != '0')
-      && (typebuf.tb_maplen == 0
+      && (typebuf.tb_maplen == 0 || is_plug_map
           || (p_remap
               && !(typebuf.tb_noremap[typebuf.tb_off] & (RM_NONE|RM_ABBR))))
       && !(p_paste && (State & (INSERT + CMDLINE)))
@@ -1813,7 +1822,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
               break;
             }
           }
-          if (n >= 0) {
+          if (!is_plug_map && n >= 0) {
             continue;
           }
 

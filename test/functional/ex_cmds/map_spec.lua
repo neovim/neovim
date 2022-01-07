@@ -6,6 +6,8 @@ local meths = helpers.meths
 local clear = helpers.clear
 local command = helpers.command
 local expect = helpers.expect
+local insert = helpers.insert
+local eval = helpers.eval
 
 describe(':*map', function()
   before_each(clear)
@@ -24,5 +26,38 @@ describe(':*map', function()
     command('imap <M-"> foo')
     feed('i-<M-">-')
     expect('-foo-')
+  end)
+
+  it('<Plug> keymaps ignore nore', function()
+    command('let x = 0')
+    eq(0, meths.eval('x'))
+    command [[
+      nnoremap <Plug>(Increase_x) <cmd>let x+=1<cr>
+      nmap increase_x_remap <Plug>(Increase_x)
+      nnoremap increase_x_noremap <Plug>(Increase_x)
+    ]]
+    feed('increase_x_remap')
+    eq(1, meths.eval('x'))
+    feed('increase_x_noremap')
+    eq(2, meths.eval('x'))
+  end)
+  it("Doesn't auto ignore nore for keys before or after <Plug> keymap", function()
+    command('let x = 0')
+    eq(0, meths.eval('x'))
+    command [[
+      nnoremap x <nop>
+      nnoremap <Plug>(Increase_x) <cmd>let x+=1<cr>
+      nmap increase_x_remap x<Plug>(Increase_x)x
+      nnoremap increase_x_noremap x<Plug>(Increase_x)x
+    ]]
+    insert("Some text")
+    eq('Some text', eval("getline('.')"))
+
+    feed('increase_x_remap')
+    eq(1, meths.eval('x'))
+    eq('Some text', eval("getline('.')"))
+    feed('increase_x_noremap')
+    eq(2, meths.eval('x'))
+    eq('Some te', eval("getline('.')"))
   end)
 end)
