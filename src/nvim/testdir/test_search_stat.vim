@@ -73,7 +73,6 @@ func Test_search_stat()
   let stat = '\[2/50\]'
   let g:a = execute(':unsilent :norm! n')
   call assert_notmatch(pat .. stat, g:a)
-  call writefile(getline(1, '$'), 'sample.txt')
   " n does not update search stat
   call assert_equal(
     \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
