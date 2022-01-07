@@ -311,8 +311,7 @@ int main(int argc, char **argv)
   debug_break_level = params.use_debug_break_level;
 
   // Read ex-commands if invoked with "-es".
-  if (!params.input_isatty && !params.input_neverscript
-      && silent_mode && exmode_active) {
+  if (!params.input_neverscript && silent_mode && exmode_active) {
     input_start(STDIN_FILENO);
   }
 
