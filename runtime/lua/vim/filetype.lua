@@ -15,7 +15,7 @@ local function starsetf(ft)
     end
   end, {
     -- Starset matches should always have lowest priority
-    priority = -1,
+    priority = -math.huge,
   }}
 end
 
@@ -1456,6 +1456,25 @@ local function dispatch(ft, path, bufnr, ...)
 end
 
 ---@private
+local function match_pattern(name, path, tail, pat)
+  -- If the pattern contains a / match against the full path, otherwise just the tail
+  local fullpat = "^" .. pat .. "$"
+  local matches
+  if pat:find("/") then
+    -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
+    -- both the short file name (as typed) and the full file name (after expanding to full path
+    -- and resolving symlinks)
+    matches = name:match(fullpat) or path:match(fullpat)
+  else
+    matches = tail:match(fullpat)
+  end
+  return matches
+end
+
+--- Set the filetype for the given buffer from a file name.
+---
+---@param name string File name (can be an absolute or relative path)
+---@param bufnr number|nil The buffer to set the filetype for. Defaults to the current buffer.
 function M.match(name, bufnr)
   -- When fired from the main filetypedetect autocommand the {bufnr} argument is omitted, so we use
   -- the current buffer. The {bufnr} argument is provided to allow extensibility in case callers
@@ -1476,21 +1495,18 @@ function M.match(name, bufnr)
     return
   end
 
-  -- Next, check the file path against available patterns
-  for _, v in ipairs(pattern_sorted) do
+  -- Next, check the file path against available patterns with non-negative priority
+  local j = 1
+  for i, v in ipairs(pattern_sorted) do
     local k = next(v)
-    local ft = v[k][1]
-    -- If the pattern contains a / match against the full path, otherwise just the tail
-    local pat = "^" .. k .. "$"
-    local matches
-    if k:find("/") then
-      -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
-      -- both the short file name (as typed) and the full file name (after expanding to full path
-      -- and resolving symlinks)
-      matches = name:match(pat) or path:match(pat)
-    else
-      matches = tail:match(pat)
+    local opts = v[k][2]
+    if opts.priority < 0 then
+      j = i
+      break
     end
+
+    local ft = v[k][1]
+    local matches = match_pattern(name, path, tail, k)
     if matches then
       if dispatch(ft, path, bufnr, matches) then
         return
@@ -1498,10 +1514,24 @@ function M.match(name, bufnr)
     end
   end
 
-  -- Finally, check file extension
+  -- Next, check file extension
   local ext = vim.fn.fnamemodify(name, ":e")
   if dispatch(extension[ext], path, bufnr) then
     return
+  end
+
+  -- Finally, check patterns with negative priority
+  for i = j, #pattern_sorted do
+    local v = pattern_sorted[i]
+    local k = next(v)
+
+    local ft = v[k][1]
+    local matches = match_pattern(name, path, tail, k)
+    if matches then
+      if dispatch(ft, path, bufnr, matches) then
+        return
+      end
+    end
   end
 end
 
