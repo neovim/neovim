@@ -9,7 +9,8 @@ end
 
 vim.cmd [[
 augroup filetypedetect
-au BufRead,BufNewFile * call v:lua.vim.filetype.match(expand('<afile>'))
+" Explicitly pass <afile> rather than getting name from the current buffer. cf. https://github.com/neovim/neovim/issues/16939
+au BufRead,BufNewFile * call v:lua.vim.filetype.set_filetype_for_current_buffer(expand('<afile>'))
 
 " These *must* be sourced after the autocommand above is created
 runtime! ftdetect/*.vim
