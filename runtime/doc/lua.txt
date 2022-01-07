@@ -1994,9 +1994,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                               result of Lua expr maps.
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
-                              |nvim_set_keymap()|. Default `true` if `lhs` is
-                              a string starting with `<plug>`
-                              (case-insensitive), `false` otherwise.
+                              |nvim_set_keymap()|. Default `false` .
 
                 See also: ~
                     |nvim_set_keymap()|
