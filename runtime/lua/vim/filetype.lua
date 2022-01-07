@@ -1359,6 +1359,12 @@ local pattern = {
   [".*/0/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
   [".*/0%.orig/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
   [".*/etc/sensors%.d/[^.].*"] = starsetf('sensors'),
+  [".*%.git/.*"] = function(path, bufnr)
+    local firstline = getline(bufnr, 1)
+    if firstline:find("^" .. string.rep("%x", 40) .. "+ ") or firstline:sub(1, 5) == "ref: " then
+      return "git"
+    end
+  end,
   -- END PATTERN
 }
 -- luacheck: pop
