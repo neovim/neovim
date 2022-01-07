@@ -1,7 +1,7 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: opened
+    types: [opened]
 jobs:
   triage:
     runs-on: ubuntu-latest
@@ -14,6 +14,7 @@ jobs:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
   type-scope:
     runs-on: ubuntu-latest
+    needs: ["triage"]
     permissions:
       contents: write
       pull-requests: write
@@ -25,6 +26,5 @@ jobs:
     steps:
       # Extract type and try to add it as a label
     - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
-
       # Extract scope and try to add it as a label
     - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
