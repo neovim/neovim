@@ -17,9 +17,9 @@ an idea of what lurks beneath: >
     :lua print(vim.inspect(package.loaded))
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
-"editor stdlib" (|functions| and Ex commands) and the |API|, all of which can
-be used from Lua code. A good overview of using Lua in neovim is given by
-https://github.com/nanotee/nvim-lua-guide.
+"editor stdlib" (|builtin-functions| and Ex commands) and the |API|, all of
+which can be used from Lua code. A good overview of using Lua in neovim is
+given by https://github.com/nanotee/nvim-lua-guide.
 
 Module conflicts are resolved by "last wins".  For example if both of these
 are on 'runtimepath':
