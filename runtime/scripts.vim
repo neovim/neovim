@@ -384,7 +384,7 @@ else
     set ft=scheme
 
   " Git output
-  elseif s:line1 =~# '^\(commit\|tree\|object\) \x\{40\}\>\|^tag \S\+$'
+  elseif s:line1 =~# '^\(commit\|tree\|object\) \x\{40,\}\>\|^tag \S\+$'
     set ft=git
 
    " Gprof (gnu profiler)

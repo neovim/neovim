@@ -195,7 +195,7 @@ let s:filename_checks = {
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt', '/tmp/lltmp', '/tmp/lltmp-file', 'any/tmp/lltmp', 'any/tmp/lltmp-file'],
     \ 'gemtext': ['file.gmi', 'file.gemini'],
     \ 'gift': ['file.gift'],
-    \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG'],
+    \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG', 'NOTES_EDITMSG', 'EDIT_DESCRIPTION'],
     \ 'gitconfig': ['file.git/config', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig', '/etc/gitconfig.d/file', '/.gitconfig.d/file', 'any/.config/git/config', 'any/.gitconfig.d/file', 'some.git/config', 'some.git/modules/any/config'],
     \ 'gitolite': ['gitolite.conf', '/gitolite-admin/conf/file', 'any/gitolite-admin/conf/file'],
     \ 'gitrebase': ['git-rebase-todo'],
@@ -1043,6 +1043,57 @@ func Test_dep3patch_file()
   bwipe!
 
   call delete('debian/patches', 'rf')
+endfunc
+
+func Test_patch_file()
+  filetype on
+
+  call writefile([], 'Xfile.patch')
+  split Xfile.patch
+  call assert_equal('diff', &filetype)
+  bwipe!
+
+  call writefile(['From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001'], 'Xfile.patch')
+  split Xfile.patch
+  call assert_equal('gitsendemail', &filetype)
+  bwipe!
+
+  call writefile(['From 0000000000000000000000000000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001'], 'Xfile.patch')
+  split Xfile.patch
+  call assert_equal('gitsendemail', &filetype)
+  bwipe!
+
+  call delete('Xfile.patch')
+  filetype off
+endfunc
+
+func Test_git_file()
+  filetype on
+
+  call assert_true(mkdir('Xrepo.git', 'p'))
+
+  call writefile([], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('', &filetype)
+  bwipe!
+
+  call writefile(['0000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call writefile(['0000000000000000000000000000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call writefile(['ref: refs/heads/master'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call delete('Xrepo.git', 'rf')
+  filetype off
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
