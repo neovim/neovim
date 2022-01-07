@@ -593,6 +593,33 @@ describe('startup', function()
     eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, { 'set encoding', '' }))
   end)
 
+  it('can use -es with a TTY', function()
+    exec([[
+      func Normalize(data) abort
+        " Remove any ^M characters and remove the q! to avoid a data race.
+        return filter(map(a:data, 'substitute(v:val, "\r", "", "g")'), 'v:val != "q!"')
+      endfunc
+      func OnOutput(id, data, event) dict
+        let g:stdout = Normalize(a:data)
+      endfunc
+      let id = jobstart([v:progpath, '-es'], {
+      \ 'pty': v:true,
+      \ 'stdout_buffered': v:true,
+      \ 'on_stdout': function('OnOutput'),
+      \ })
+      call chansend(id, "put =mode(1)\r%print\rq!\r")
+    ]])
+    retry(nil, nil, function()
+      if not is_os('win') then
+        eq('put =mode(1)', eval('g:stdout[0]'))
+        eq('%print', eval('g:stdout[1]'))
+        eq(' ', eval('g:stdout[2]'))
+        eq('cv', eval('g:stdout[3]'))
+        eq('', eval('g:stdout[4]'))
+      end
+    end)
+  end)
+
   it('-es/-Es disables swapfile/shada/config #8540', function()
     for _, arg in ipairs({ '-es', '-Es' }) do
       local out = fn.system({
