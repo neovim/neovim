@@ -1682,6 +1682,10 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
   char_u *file_name;
   char_u *tofree = NULL;
 
+  if (len == 0) {
+    return NULL;
+  }
+
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
     tofree = (char_u *)eval_includeexpr((char *)ptr, len);
     if (tofree != NULL) {

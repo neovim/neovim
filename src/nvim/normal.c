@@ -4476,8 +4476,13 @@ bool get_visual_text(cmdarg_T *cap, char_u **pp, size_t *lenp)
       *pp = ml_get_pos(&VIsual);
       *lenp = (size_t)curwin->w_cursor.col - (size_t)VIsual.col + 1;
     }
-    // Correct the length to include the whole last character.
-    *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
+    if (**pp == NUL) {
+      *lenp = 0;
+    }
+    if (*lenp > 0) {
+      // Correct the length to include the whole last character.
+      *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
+    }
   }
   reset_VIsual_and_resel();
   return true;

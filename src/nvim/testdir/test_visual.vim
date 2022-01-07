@@ -1110,5 +1110,12 @@ func Test_visual_block_with_virtualedit()
   call delete('XTest_beval')
 endfunc
 
+func Test_visual_block_ctrl_w_f()
+  " Emtpy block selected in new buffer should not result in an error.
+  au! BufNew foo sil norm f
+  edit foo
+
+  au! BufNew
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
