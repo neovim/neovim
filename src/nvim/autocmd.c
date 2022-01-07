@@ -1086,6 +1086,7 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
   ac->exec = aucmd_exec_copy(aucmd);
   ac->script_ctx = current_sctx;
   ac->script_ctx.sc_lnum += sourcing_lnum;
+  nlua_set_sctx(&ac->script_ctx);
   ac->next = NULL;
   ac->once = once;
   ac->nested = nested;

@@ -15,6 +15,9 @@ local pcall_err = helpers.pcall_err
 local shallowcopy = helpers.shallowcopy
 local sleep = helpers.sleep
 
+local sid_api_client = -9
+local sid_lua = -8
+
 describe('nvim_get_keymap', function()
   before_each(clear)
 
@@ -340,7 +343,7 @@ describe('nvim_get_keymap', function()
       script=0,
       silent=0,
       expr=0,
-      sid=0,
+      sid=sid_lua,
       buffer=0,
       nowait=0,
       mode='n',
@@ -357,7 +360,7 @@ describe('nvim_get_keymap', function()
       script=0,
       silent=0,
       expr=0,
-      sid=0,
+      sid=sid_api_client,
       buffer=0,
       nowait=0,
       mode='n',
@@ -400,7 +403,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.silent = not opts.silent and 0 or 1
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
-    to_return.sid = not opts.sid and 0 or opts.sid
+    to_return.sid = not opts.sid and sid_api_client or opts.sid
     to_return.buffer = not opts.buffer and 0 or opts.buffer
     to_return.lnum = not opts.lnum and 0 or opts.lnum
     to_return.desc = opts.desc
@@ -625,7 +628,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('interprets control sequences in expr-quotes correctly when called '
      ..'inside vim', function()
     command([[call nvim_set_keymap('i', "\<space>", "\<tab>", {})]])
-    eq(generate_mapargs('i', '<Space>', '\t', {}),
+    eq(generate_mapargs('i', '<Space>', '\t', {sid=0}),
        get_mapargs('i', '<Space>'))
     feed('i ')
     eq({'\t'}, curbufmeths.get_lines(0, -1, 0))
@@ -807,7 +810,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     local mapargs = funcs.maparg('asdf', 'n', false, true)
     assert.Truthy(type(mapargs.callback) == 'number', 'callback is not luaref number')
     mapargs.callback = nil
-    eq(generate_mapargs('n', 'asdf', nil, {}), mapargs)
+    eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
   end)
 
   it('can make lua expr mappings', function()

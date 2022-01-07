@@ -2573,6 +2573,7 @@ void ex_function(exarg_T *eap)
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
   fp->uf_script_ctx.sc_lnum += sourcing_lnum_top;
+  nlua_set_sctx(&fp->uf_script_ctx);
 
   goto ret_free;
 

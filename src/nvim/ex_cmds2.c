@@ -1823,7 +1823,9 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   sourcing_lnum = 0;
 
   const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid = SID_STR;
+  if (current_sctx.sc_sid != SID_LUA) {
+    current_sctx.sc_sid = SID_STR;
+  }
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
   funccal_entry_T entry;
@@ -1904,7 +1906,6 @@ int do_source(char *fname, int check_other, int is_vimrc)
   char_u *fname_exp;
   char_u *firstline = NULL;
   int retval = FAIL;
-  static int last_current_SID_seq = 0;
   int save_debug_break_level = debug_break_level;
   scriptitem_T *si = NULL;
   proftime_T wait_start;
@@ -1952,7 +1953,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
 
   if (cookie.fp == NULL) {
-    if (p_verbose > 0) {
+    if (p_verbose > 1) {
       verbose_enter();
       if (sourcing_name == NULL) {
         smsg(_("could not source \"%s\""), fname);
@@ -2028,37 +2029,8 @@ int do_source(char *fname, int check_other, int is_vimrc)
   funccal_entry_T funccalp_entry;
   save_funccal(&funccalp_entry);
 
-  // Check if this script was sourced before to find its SID.
-  // If it's new, generate a new SID.
-  // Always use a new sequence number.
   const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_seq = ++last_current_SID_seq;
-  current_sctx.sc_lnum = 0;
-  FileID file_id;
-  bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
-  assert(script_items.ga_len >= 0);
-  for (current_sctx.sc_sid = script_items.ga_len; current_sctx.sc_sid > 0;
-       current_sctx.sc_sid--) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    // Compare dev/ino when possible, it catches symbolic links.
-    // Also compare file names, the inode may change when the file was edited.
-    bool file_id_equal = file_id_ok && si->file_id_valid
-                         && os_fileid_equal(&(si->file_id), &file_id);
-    if (si->sn_name != NULL
-        && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
-      break;
-    }
-  }
-  if (current_sctx.sc_sid == 0) {
-    si = new_script_item(fname_exp, &current_sctx.sc_sid);
-    fname_exp = vim_strsave(si->sn_name);  // used for autocmd
-    if (file_id_ok) {
-      si->file_id_valid = true;
-      si->file_id = file_id;
-    } else {
-      si->file_id_valid = false;
-    }
-  }
+  si = get_current_script_id(fname_exp, &current_sctx);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
@@ -2091,16 +2063,14 @@ int do_source(char *fname, int check_other, int is_vimrc)
     firstline = p;
   }
 
-  if (path_with_extension((const char *)fname, "lua")) {
-    // TODO(shadmansaleh): Properly handle :verbose for lua
-    // For now change currennt_sctx before sourcing lua files
-    // So verbose doesn't say everything was done in line 1 since we don't know
+  if (path_with_extension((const char *)fname_exp, "lua")) {
     const sctx_T current_sctx_backup = current_sctx;
     const linenr_T sourcing_lnum_backup = sourcing_lnum;
+    current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
     sourcing_lnum = 0;
     // Source the file as lua
-    nlua_exec_file((const char *)fname);
+    nlua_exec_file((const char *)fname_exp);
     current_sctx = current_sctx_backup;
     sourcing_lnum = sourcing_lnum_backup;
   } else {
@@ -2171,6 +2141,52 @@ theend:
   xfree(fname_exp);
   return retval;
 }
+
+
+/// Check if fname was sourced before to finds its SID.
+/// If it's new, generate a new SID.
+/// @param[in] fname file path of script
+/// @param[out] ret_sctx sctx of this script
+scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
+{
+  static int last_current_SID_seq = 0;
+
+  sctx_T script_sctx = { .sc_seq = ++last_current_SID_seq,
+                         .sc_lnum = 0,
+                         .sc_sid = 0 };
+  FileID file_id;
+  scriptitem_T *si = NULL;
+
+  bool file_id_ok = os_fileid((char *)fname, &file_id);
+  assert(script_items.ga_len >= 0);
+  for (script_sctx.sc_sid = script_items.ga_len; script_sctx.sc_sid > 0;
+       script_sctx.sc_sid--) {
+    si = &SCRIPT_ITEM(script_sctx.sc_sid);
+    // Compare dev/ino when possible, it catches symbolic links.
+    // Also compare file names, the inode may change when the file was edited.
+    bool file_id_equal = file_id_ok && si->file_id_valid
+                         && os_fileid_equal(&(si->file_id), &file_id);
+    if (si->sn_name != NULL
+        && (file_id_equal || fnamecmp(si->sn_name, fname) == 0)) {
+      break;
+    }
+  }
+  if (script_sctx.sc_sid == 0) {
+    si = new_script_item(vim_strsave(fname), &script_sctx.sc_sid);
+    if (file_id_ok) {
+      si->file_id_valid = true;
+      si->file_id = file_id;
+    } else {
+      si->file_id_valid = false;
+    }
+  }
+  if (ret_sctx != NULL) {
+    *ret_sctx = script_sctx;
+  }
+
+  return si;
+}
+
 
 
 /// ":scriptnames"

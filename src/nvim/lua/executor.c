@@ -16,6 +16,7 @@
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds2.h"
@@ -651,6 +652,15 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     }
     // [package, loaded, module]
     lua_setfield(lstate, -2, "vim.filetype");  // [package, loaded]
+
+    code = (char *)&lua_keymap_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_keymap_module) - 1, "@vim/keymap.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating vim.keymap module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim.keymap");  // [package, loaded]
 
     lua_pop(lstate, 2);  // []
   }
@@ -1806,6 +1816,69 @@ void nlua_execute_on_key(int c)
   // [ ]
   assert(top == lua_gettop(lstate));
 #endif
+}
+
+// Checks if str is in blacklist array
+static bool is_in_ignorelist(const char *str, char *ignorelist[], int ignorelist_size)
+{
+  for (int i = 0; i < ignorelist_size; i++) {
+    if (strncmp(ignorelist[i], str, strlen(ignorelist[i])) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+// Get sctx of current file being sourced if doesn't exist generate it
+static sctx_T *nlua_get_sourcing_sctx(void)
+{
+  lua_State *const lstate = global_lstate;
+  sctx_T *retval = (sctx_T *)xmalloc(sizeof(sctx_T));
+  retval->sc_seq = -1;
+  retval->sc_sid = SID_LUA;
+  retval->sc_lnum = -1;
+  lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
+
+  // Files where internal wrappers are defined so we can ignore them
+  // like vim.o/opt etc are defined in _meta.lua
+  char *ignorelist[] = {
+    "vim/_meta.lua",
+    "vim/keymap.lua",
+  };
+  int blacklist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
+
+  for (int level = 1; true; level++) {
+    if (lua_getstack(lstate, level, info) != 1) {
+      goto cleanup;
+    }
+    if (lua_getinfo(lstate, "nSl", info) == 0) {
+      goto cleanup;
+    }
+
+    if (info->what[0] == 'C' || info->source[0] != '@'
+        || is_in_ignorelist(info->source+1, ignorelist, blacklist_size)) {
+      continue;
+    }
+    break;
+  }
+  char *source_path = fix_fname(info->source + 1);
+  get_current_script_id((char_u *)source_path, retval);
+  xfree(source_path);
+  retval->sc_lnum = info->currentline;
+
+cleanup:
+  xfree(info);
+  return retval;
+}
+
+// Sets the editor "script context" during Lua execution. Used by :verbose.
+// @param[out] current
+void nlua_set_sctx(sctx_T *current)
+{
+  if (p_verbose > 0 && current->sc_sid == SID_LUA) {
+    sctx_T *lua_sctx = nlua_get_sourcing_sctx();
+    *current = *lua_sctx;
+    xfree(lua_sctx);
+  }
 }
 
 void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)

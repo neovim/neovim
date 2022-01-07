@@ -153,7 +153,7 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
 
     if (flags & DIP_ERR) {
       semsg(_(e_dirnotf), basepath, name);
-    } else if (p_verbose > 0) {
+    } else if (p_verbose > 1) {
       verbose_enter();
       smsg(_("not found in '%s': \"%s\""), basepath, name);
       verbose_leave();
@@ -286,7 +286,7 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
   if (!did_one && name != NULL) {
     if (flags & DIP_ERR) {
       semsg(_(e_dirnotf), "runtime path", name);
-    } else if (p_verbose > 0) {
+    } else if (p_verbose > 1) {
       verbose_enter();
       smsg(_("not found in runtime path: \"%s\""), name);
       verbose_leave();

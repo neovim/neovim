@@ -37,7 +37,7 @@
 /// @param[out] err Error details (Vim error), if any
 /// @return Output (non-error, non-shell |:!|) if `output` is true,
 ///         else empty string.
-String nvim_exec(String src, Boolean output, Error *err)
+String nvim_exec(uint64_t channel_id, String src, Boolean output, Error *err)
   FUNC_API_SINCE(7)
 {
   const int save_msg_silent = msg_silent;
@@ -52,11 +52,16 @@ String nvim_exec(String src, Boolean output, Error *err)
   if (output) {
     msg_silent++;
   }
+
+  const sctx_T save_current_sctx = api_set_sctx(channel_id);
+
   do_source_str(src.data, "nvim_exec()");
   if (output) {
     capture_ga = save_capture_ga;
     msg_silent = save_msg_silent;
   }
+
+  current_sctx = save_current_sctx;
   try_end(err);
 
   if (ERROR_SET(err)) {

@@ -953,11 +953,11 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(uint64_t channel_id, Buffer buffer, Stri
 /// @see |nvim_set_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs, Dict(keymap) *opts,
-                         Error *err)
+void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, String rhs,
+                         Dict(keymap) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(buffer, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, buffer, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a buffer-local |mapping| for the given mode.
@@ -965,11 +965,12 @@ void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs, Dic
 /// @see |nvim_del_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
+void nvim_buf_del_keymap(uint64_t channel_id, Buffer buffer, String mode,
+                         String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
   String rhs = { .data = "", .size = 0 };
-  modify_keymap(buffer, true, mode, lhs, rhs, NULL, err);
+  modify_keymap(channel_id, buffer, true, mode, lhs, rhs, NULL, err);
 }
 
 /// Gets a map of buffer-local |user-commands|.

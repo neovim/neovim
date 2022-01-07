@@ -3086,6 +3086,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                 mp->m_expr = args->expr;
                 mp->m_script_ctx = current_sctx;
                 mp->m_script_ctx.sc_lnum += sourcing_lnum;
+                nlua_set_sctx(&mp->m_script_ctx);
                 if (args->desc != NULL) {
                   mp->m_desc = xstrdup(args->desc);
                 }
@@ -3166,6 +3167,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   mp->m_expr = args->expr;
   mp->m_script_ctx = current_sctx;
   mp->m_script_ctx.sc_lnum += sourcing_lnum;
+  nlua_set_sctx(&mp->m_script_ctx);
   mp->m_desc = NULL;
   if (args->desc != NULL) {
     mp->m_desc = xstrdup(args->desc);

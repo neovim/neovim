@@ -461,10 +461,11 @@ g8			Print the hex values of the bytes used in the
 							*:verbose-cmd*
 When 'verbose' is non-zero, listing the value of a Vim option or a key map or
 an abbreviation or a user-defined function or a command or a highlight group
-or an autocommand will also display where it was last defined.  If it was
-defined manually then there will be no "Last set" message.  When it was
-defined while executing a function, user command or autocommand, the script in
-which it was defined is reported.
+or an autocommand will also display where it was last defined. If they were
+defined in Lua they will only be located if 'verbose' is set. So Start
+nvim with -V1 arg to see them. If it was defined manually then there
+will be no "Last set" message.  When it was defined while executing a function,
+user command or autocommand, the script in which it was defined is reported.
 
 							*K*
 [count]K       		Runs the program given by 'keywordprg' to lookup the
