@@ -2193,6 +2193,13 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
       wp->w_redr_status = true;
     }
+
+    // In case the command moved the cursor or changed the Visual area,
+    // check it is valid.
+    check_cursor();
+    if (VIsual_active) {
+      check_pos(curbuf, &VIsual);
+    }
   }
 }
 
