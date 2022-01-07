@@ -1342,6 +1342,12 @@ local pattern = {
   ["zlog.*"] = starsetf('zsh'),
   ["zsh.*"] = starsetf('zsh'),
   ["ae%d+%.txt"] = 'mail',
+  [".*%.git/.*"] = function(path, bufnr)
+    local firstline = getline(bufnr, 1)
+    if firstline:find("^" .. string.rep("%x", 40) .. "+ ") or firstline:sub(1, 5) == "ref: " then
+      return "git"
+    end
+  end,
   -- END PATTERN
 }
 -- luacheck: pop
