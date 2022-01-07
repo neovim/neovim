@@ -382,7 +382,7 @@ do
     end
     local now = uv.hrtime()
     local ms_since_last_flush = (now - last_flush) * ns_to_ms
-    local remaining_debounce = (ms_since_last_flush - debounce) * -1
+    local remaining_debounce = debounce - ms_since_last_flush
     if remaining_debounce > 0 then
       return remaining_debounce
     else
