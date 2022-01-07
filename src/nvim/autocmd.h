@@ -14,6 +14,7 @@ typedef struct {
   handle_T save_prevwin_handle;   ///< ID of saved prevwin
   bufref_T new_curbuf;            ///< new curbuf
   char_u *globaldir;              ///< saved value of globaldir
+  bool save_VIsual_active;        ///< saved VIsual_active
 } aco_save_T;
 
 typedef struct AutoCmd {

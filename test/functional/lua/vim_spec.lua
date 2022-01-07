@@ -2406,6 +2406,17 @@ describe('lua stdlib', function()
       eq(buf1, meths.get_current_buf())
       eq(buf2, val)
     end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local a = vim.api
+        local t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
+        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        a.nvim_feedkeys(t "G<C-V>", "txn", false)
+        a.nvim_buf_call(a.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()

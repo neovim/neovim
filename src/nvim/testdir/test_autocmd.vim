@@ -2543,6 +2543,16 @@ func Test_close_autocmd_tab()
   %bwipe!
 endfunc
 
+func Test_Visual_doautoall_redraw()
+  call setline(1, ['a', 'b'])
+  new
+  wincmd p
+  call feedkeys("G\<C-V>", 'txn')
+  autocmd User Explode ++once redraw
+  doautoall User Explode
+  %bwipe!
+endfunc
+
 func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy
