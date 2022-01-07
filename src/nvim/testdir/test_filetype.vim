@@ -1042,7 +1042,7 @@ func Test_dep3patch_file()
   call assert_notequal('dep3patch', &filetype)
   bwipe!
 
-  call delete('debian/patches', 'rf')
+  call delete('debian', 'rf')
 endfunc
 
 func Test_patch_file()
