@@ -180,7 +180,7 @@ char *get_mode(void)
         buf[1] = 'x';
       }
     }
-  } else if (State & CMDLINE) {
+  } else if ((State & CMDLINE) || exmode_active) {
     buf[0] = 'c';
     if (exmode_active) {
       buf[1] = 'v';
