@@ -42,6 +42,7 @@ EOF
   tsan)
     cat <<EOF >> "$GITHUB_ENV"
 TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan
+CLANG_SANITIZER=TSAN
 EOF
     ;;
   lint)
