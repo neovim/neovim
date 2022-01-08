@@ -340,6 +340,11 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     tv->vval.v_dict = dict;
     break;
   }
+
+  case kObjectTypeLuaRef:
+    api_set_error(err, kErrorTypeValidation, "Cannot convert given lua type");
+    return false;
+
   default:
     abort();
   }

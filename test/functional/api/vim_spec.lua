@@ -56,6 +56,20 @@ describe('API', function()
       pcall_err(request, nil))
   end)
 
+  it('throws error on failure to convert Lua value to Vim variable', function()
+    eq({false, 'Cannot convert given lua type'},
+       exec_lua([[return {pcall(vim.api.nvim_set_var, 'var', function() end)}]]))
+    eq({false, 'Cannot convert given lua type'},
+       exec_lua([[return {pcall(vim.api.nvim_tabpage_set_var, 0, 'var', function() end)}]]))
+    eq({false, 'Cannot convert given lua type'},
+       exec_lua([[return {pcall(vim.api.nvim_win_set_var, 0, 'var', function() end)}]]))
+    eq({false, 'Cannot convert given lua type'},
+       exec_lua([[return {pcall(vim.api.nvim_buf_set_var, 0, 'var', function() end)}]]))
+    eq({false, 'Cannot convert given lua type'},
+       exec_lua([[return {pcall(vim.api.nvim_set_vvar, 'errors', function() end)}]]))
+    assert_alive()  -- editor doesn't abort.
+  end)
+
   it('handles errors in async requests', function()
     local error_types = meths.get_api_info()[2].error_types
     nvim_async('bogus')
