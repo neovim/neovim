@@ -4370,7 +4370,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
         ++i;
       }
       len = (int)STRLEN(p);
-      new_cmdline = xmalloc(STRLEN(program) + i * (len - 2) + 1);
+      new_cmdline = xmalloc(STRLEN(program) + (size_t)i * (len - 2) + 1);
       ptr = new_cmdline;
       while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
         i = (int)(pos - program);
@@ -6028,7 +6028,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
     break;
   }
 
-  case ct_MODS: {
+  case ct_MODS:
     result = quote ? 2 : 0;
     if (buf != NULL) {
       if (quote) {
@@ -6044,7 +6044,6 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
       *buf = '"';
     }
     break;
-  }
 
   case ct_REGISTER:
     result = eap->regname ? 1 : 0;

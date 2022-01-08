@@ -4130,7 +4130,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            grid->Columns * (row - startrow + 1) + v
+            (long)grid->Columns * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
            || draw_color_col || line_attr_lowprio || line_attr
            || diff_hlf != (hlf_T)0 || has_virttext)) {
@@ -6762,7 +6762,7 @@ void grid_clear_line(ScreenGrid *grid, unsigned off, int width, bool valid)
 
 void grid_invalidate(ScreenGrid *grid)
 {
-  (void)memset(grid->attrs, -1, grid->Rows * grid->Columns * sizeof(sattr_T));
+  (void)memset(grid->attrs, -1, sizeof(sattr_T) * grid->Rows * grid->Columns);
 }
 
 bool grid_invalid_row(ScreenGrid *grid, int row)
