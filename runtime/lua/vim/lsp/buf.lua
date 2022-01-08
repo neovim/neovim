@@ -627,14 +627,19 @@ end
 
 --- Executes an LSP server command.
 ---
----@param command A valid `ExecuteCommandParams` object
+---@param command_params table A valid `ExecuteCommandParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-function M.execute_command(command)
+function M.execute_command(command_params)
   validate {
-    command = { command.command, 's' },
-    arguments = { command.arguments, 't', true }
+    command = { command_params.command, 's' },
+    arguments = { command_params.arguments, 't', true }
   }
-  request('workspace/executeCommand', command)
+  command_params = {
+    command=command_params.command,
+    arguments=command_params.arguments,
+    workDoneToken=command_params.workDoneToken,
+  }
+  request('workspace/executeCommand', command_params )
 end
 
 return M
