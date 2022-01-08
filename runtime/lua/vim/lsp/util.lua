@@ -193,6 +193,11 @@ end
 local function get_lines(bufnr, rows)
   rows = type(rows) == "table" and rows or { rows }
 
+  -- This is needed for bufload and bufloaded
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
   ---@private
   local function buf_lines()
     local lines = {}
@@ -1814,7 +1819,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
     end_pos = {end_pos, 't', true};
     offset_encoding = {offset_encoding, 's', true};
   }
-  bufnr = bufnr or 0
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
   local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
