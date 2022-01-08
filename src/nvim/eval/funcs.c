@@ -10790,8 +10790,14 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // "/home/foo/…" => "~/…"
   size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
   // Trim slash.
-  if (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/') {
+  if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
     IObuff[len - 1] = '\0';
+  }
+
+  if (len == 1 && IObuff[0] == '/') {
+    // Avoid ambiguity in the URI when CWD is root directory.
+    IObuff[1] = '.';
+    IObuff[2] = '\0';
   }
 
   // Terminal URI: "term://$CWD//$PID:$CMD"
