@@ -1387,6 +1387,11 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
   LuaRef luaref = LUA_NOREF;
   LuaRef compl_luaref = LUA_NOREF;
 
+  if (mb_islower(name.data[0])) {
+    api_set_error(err, kErrorTypeValidation, "'name' must begin with an uppercase letter");
+    goto err;
+  }
+
   if (HAS_KEY(opts->range) && HAS_KEY(opts->count)) {
     api_set_error(err, kErrorTypeValidation, "'range' and 'count' are mutually exclusive");
     goto err;
