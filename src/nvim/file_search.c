@@ -1657,8 +1657,21 @@ int vim_chdirfile(char_u *fname, CdCause cause)
 {
   char dir[MAXPATHL];
 
-  STRLCPY(dir, fname, MAXPATHL);
-  *path_tail_with_sep((char_u *)dir) = NUL;
+  if (STRNCMP(fname, "term://", 7) == 0) {
+    // extract {cwd} from term://{cwd}//{pid}:{cmd} URL
+    STRLCPY(NameBuff, fname + 7, sizeof(NameBuff));
+    char_u *cwd_end = (char_u *)strstr((char *)NameBuff, "//");
+    if (cwd_end == NULL || cwd_end == NameBuff) {
+      // {cwd} part not found or is empty
+      return FAIL;
+    }
+    *cwd_end = NUL;
+    // expand "~"
+    expand_env_esc(NameBuff, (char_u *)dir, MAXPATHL, false, true, NULL);
+  } else {
+    STRLCPY(dir, fname, MAXPATHL);
+    *path_tail_with_sep((char_u *)dir) = NUL;
+  }
 
   if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
     NameBuff[0] = NUL;
