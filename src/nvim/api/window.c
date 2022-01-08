@@ -457,12 +457,10 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 
   try_start();
   Object res = OBJECT_INIT;
-  switchwin_T switchwin;
-  if (switch_win_noblock(&switchwin, win, tabpage, true) == OK) {
+  WIN_EXECUTE(win, tabpage, {
     Array args = ARRAY_DICT_INIT;
     res = nlua_call_ref(fun, NULL, args, true, err);
-  }
-  restore_win_noblock(&switchwin, true);
+  });
   try_end(err);
   return res;
 }

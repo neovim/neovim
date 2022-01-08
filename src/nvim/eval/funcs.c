@@ -2181,25 +2181,7 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = NULL;
 
   if (wp != NULL && tp != NULL) {
-    pos_T curpos = wp->w_cursor;
-    switchwin_T switchwin;
-    if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
-      check_cursor();
-      execute_common(argvars, rettv, fptr, 1);
-    }
-    restore_win_noblock(&switchwin, true);
-
-    // Update the status line if the cursor moved.
-    if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
-      wp->w_redr_status = true;
-    }
-
-    // In case the command moved the cursor or changed the Visual area,
-    // check it is valid.
-    check_cursor();
-    if (VIsual_active) {
-      check_pos(curbuf, &VIsual);
-    }
+    WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, fptr, 1));
   }
 }
 
