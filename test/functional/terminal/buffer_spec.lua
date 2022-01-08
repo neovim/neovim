@@ -292,10 +292,9 @@ describe(':terminal buffer', function()
     command('quit')
   end)
 
-  it('does not segfault when pasting empty buffer #13955', function()
-    feed_command('terminal')
+  it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
-    feed_command('put a') -- buffer a is empty
+    feed_command('put a')  -- register a is empty
     helpers.assert_alive()
   end)
 end)
