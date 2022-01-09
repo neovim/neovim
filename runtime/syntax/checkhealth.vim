@@ -12,7 +12,9 @@ unlet! b:current_syntax
 syn case match
 
 " We do not care about markdown syntax errors
-syn clear markdownError
+if hlexists('markdownError')
+  syn clear markdownError
+endif
 
 syn keyword healthError ERROR[:] containedin=markdownCodeBlock,mkdListItemLine
 syn keyword healthWarning WARNING[:] containedin=markdownCodeBlock,mkdListItemLine
