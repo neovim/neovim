@@ -2,12 +2,12 @@
 
 func Test_Rand()
   let r = srand(123456789)
-  call assert_equal([123456789, 362436069, 521288629, 88675123], r)
-  call assert_equal(3701687786, rand(r))
-  call assert_equal(458299110, rand(r))
-  call assert_equal(2500872618, rand(r))
-  call assert_equal(3633119408, rand(r))
-  call assert_equal(516391518, rand(r))
+  call assert_equal([1573771921, 319883699, 2742014374, 1324369493], r)
+  call assert_equal(4284103975, rand(r))
+  call assert_equal(1001954530, rand(r))
+  call assert_equal(2701803082, rand(r))
+  call assert_equal(2658065534, rand(r))
+  call assert_equal(3104308804, rand(r))
 
   " Nvim does not support test_settime
   " call test_settime(12341234)

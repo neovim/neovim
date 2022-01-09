@@ -6982,76 +6982,79 @@ static void f_py3eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "rand()" function
 static void f_rand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  uint32_t w;
-#define SHUFFLE_XORSHIFT128 \
-  const uint32_t t = x ^ (x << 11); \
-  x = y; \
-  y = z; \
-  z = w; \
-  w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
+  list_T *l = NULL;
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
-    static bool rand_seed_initialized = false;
-    static uint32_t xyzw[4] = { 123456789, 362436069, 521288629, 88675123 };
+    static list_T *globl = NULL;
 
-    // When argument is not given, return random number initialized
-    // statically.
-    if (!rand_seed_initialized) {
-      xyzw[0] = time(NULL);
-      rand_seed_initialized = true;
+    // When no argument is given use the global seed list.
+    if (globl == NULL) {
+      // Initialize the global seed list.
+      f_srand(argvars, rettv, fptr);
+      l = rettv->vval.v_list;
+      if (tv_list_len(l) != 4) {
+        tv_clear(rettv);
+        goto theend;
+      }
+      globl = l;
+    } else {
+      l = globl;
     }
-
-    uint32_t x = xyzw[0];
-    uint32_t y = xyzw[1];
-    uint32_t z = xyzw[2];
-    w = xyzw[3];
-    SHUFFLE_XORSHIFT128;
-    xyzw[0] = x;
-    xyzw[1] = y;
-    xyzw[2] = z;
-    xyzw[3] = w;
   } else if (argvars[0].v_type == VAR_LIST) {
-    list_T *const l = argvars[0].vval.v_list;
+    l = argvars[0].vval.v_list;
     if (tv_list_len(l) != 4) {
       goto theend;
     }
-
-    typval_T *const tvx = TV_LIST_ITEM_TV(tv_list_find(l, 0L));
-    typval_T *const tvy = TV_LIST_ITEM_TV(tv_list_find(l, 1L));
-    typval_T *const tvz = TV_LIST_ITEM_TV(tv_list_find(l, 2L));
-    typval_T *const tvw = TV_LIST_ITEM_TV(tv_list_find(l, 3L));
-    if (tvx->v_type != VAR_NUMBER) {
-      goto theend;
-    }
-    if (tvy->v_type != VAR_NUMBER) {
-      goto theend;
-    }
-    if (tvz->v_type != VAR_NUMBER) {
-      goto theend;
-    }
-    if (tvw->v_type != VAR_NUMBER) {
-      goto theend;
-    }
-    uint32_t x = tvx->vval.v_number;
-    uint32_t y = tvy->vval.v_number;
-    uint32_t z = tvz->vval.v_number;
-    w = tvw->vval.v_number;
-    SHUFFLE_XORSHIFT128;
-    tvx->vval.v_number = (varnumber_T)x;
-    tvy->vval.v_number = (varnumber_T)y;
-    tvz->vval.v_number = (varnumber_T)z;
-    tvw->vval.v_number = (varnumber_T)w;
   } else {
     goto theend;
   }
 
-#undef SHUFFLE_XORSHIFT128
+  typval_T *const tvx = TV_LIST_ITEM_TV(tv_list_find(l, 0L));
+  typval_T *const tvy = TV_LIST_ITEM_TV(tv_list_find(l, 1L));
+  typval_T *const tvz = TV_LIST_ITEM_TV(tv_list_find(l, 2L));
+  typval_T *const tvw = TV_LIST_ITEM_TV(tv_list_find(l, 3L));
+  if (tvx->v_type != VAR_NUMBER) {
+    goto theend;
+  }
+  if (tvy->v_type != VAR_NUMBER) {
+    goto theend;
+  }
+  if (tvz->v_type != VAR_NUMBER) {
+    goto theend;
+  }
+  if (tvw->v_type != VAR_NUMBER) {
+    goto theend;
+  }
+  uint32_t x = tvx->vval.v_number;
+  uint32_t y = tvy->vval.v_number;
+  uint32_t z = tvz->vval.v_number;
+  uint32_t w = tvw->vval.v_number;
+
+  // SHUFFLE_XOSHIRO128STARSTAR
+#define ROTL(x, k) ((x << k) | (x >> (32 - k)))
+  const uint32_t result = ROTL(y * 5, 7) * 9;
+  const uint32_t t = y << 9;
+  z ^= x;
+  w ^= y;
+  y ^= z;
+  x ^= w;
+  z ^= t;
+  w = ROTL(w, 11);
+#undef ROTL
+
+  tvx->vval.v_number = (varnumber_T)x;
+  tvy->vval.v_number = (varnumber_T)y;
+  tvz->vval.v_number = (varnumber_T)z;
+  tvw->vval.v_number = (varnumber_T)w;
+
   rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = (varnumber_T)w;
+  rettv->vval.v_number = (varnumber_T)result;
   return;
 
 theend:
   semsg(_(e_invarg2), tv_get_string(&argvars[0]));
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = -1;
 }
 
 /// "perleval()" function
@@ -10529,6 +10532,7 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_srand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   static int dev_urandom_state = -1;  // FAIL or OK once tried
+  uint32_t x = 0;
 
   tv_list_alloc_ret(rettv, 4);
   if (argvars[0].v_type == VAR_UNKNOWN) {
@@ -10550,26 +10554,35 @@ static void f_srand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           dev_urandom_state = FAIL;
         } else {
           dev_urandom_state = OK;
-          tv_list_append_number(rettv->vval.v_list, (varnumber_T)buf.cont.number);
+          x = buf.cont.number;
         }
         os_close(fd);
       }
     }
     if (dev_urandom_state != OK) {
       // Reading /dev/urandom doesn't work, fall back to time().
-      tv_list_append_number(rettv->vval.v_list, (varnumber_T)time(NULL));
+      x = time(NULL);
     }
   } else {
     bool error = false;
-    const uint32_t x = tv_get_number_chk(&argvars[0], &error);
+    x = tv_get_number_chk(&argvars[0], &error);
     if (error) {
       return;
     }
-    tv_list_append_number(rettv->vval.v_list, (varnumber_T)x);
   }
-  tv_list_append_number(rettv->vval.v_list, 362436069);
-  tv_list_append_number(rettv->vval.v_list, 521288629);
-  tv_list_append_number(rettv->vval.v_list, 88675123);
+
+  uint32_t z;
+#define SPLITMIX32 ( \
+    z = (x += 0x9e3779b9), \
+    z = (z ^ (z >> 16)) * 0x85ebca6b, \
+    z = (z ^ (z >> 13)) * 0xc2b2ae35, \
+    z ^ (z >> 16))
+
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)SPLITMIX32);
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)SPLITMIX32);
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)SPLITMIX32);
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)SPLITMIX32);
+#undef SPLITMIX32
 }
 
 /*
