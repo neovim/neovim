@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language: i3 config file
-" Maintainer: Mohamed Boughaba <mohamed dot bgb at gmail dot com>
+" Original Author: Mohamed Boughaba <mohamed dot bgb at gmail dot com>
+" Maintainer: Quentin Hibon (github user hiqua)
 " Version: 0.4
-" Last Change: 2021 Dec 14
+" Last Change: 2022 Jan 04
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring

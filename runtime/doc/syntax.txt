@@ -1406,7 +1406,7 @@ add the following line to your startup file: >
 
 	:let g:filetype_euphoria = "euphoria4"
 
-Elixir and Euphoria share the *.ex file extension.  If the filetype is 
+Elixir and Euphoria share the *.ex file extension.  If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
 filetype will be set as Euphoria. Otherwise, the filetype will default to
@@ -1437,7 +1437,7 @@ The following file extensions are auto-detected as Elixir file types:
 
 	*.ex, *.exs, *.eex, *.leex, *.lock
 
-Elixir and Euphoria share the *.ex file extension. If the filetype is 
+Elixir and Euphoria share the *.ex file extension. If the filetype is
 specifically set as Euphoria with the g:filetype_euphoria variable, or the
 file is determined to be Euphoria based on keywords in the file, then the
 filetype will be set as Euphoria. Otherwise, the filetype will default to

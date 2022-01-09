@@ -232,7 +232,7 @@ processing a quickfix or location list command, it will be aborted.
 			":qall!" |:qall|, except that Nvim exits non-zero or
 			[count].
 
-							*:cf* *:cfile*
+							*:cf* *:cfi* *:cfile*
 :cf[ile][!] [errorfile]	Read the error file and jump to the first error.
 			This is done automatically when Vim is started with
 			the -q option.  You can use this command when you

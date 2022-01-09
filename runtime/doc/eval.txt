@@ -4574,8 +4574,10 @@ funcref({name} [, {arglist}] [, {dict}])
 		function {name} is redefined later.
 
 		Unlike |function()|, {name} must be an existing user function.
-		Also for autoloaded functions. {name} cannot be a builtin
-		function.
+		It only works for an autoloaded function if it has already
+		been loaded (to avoid mistakenly loading the autoload script
+		when only intending to use the function name, use |function()|
+		instead). {name} cannot be a builtin function.
 
 		Can also be used as a |method|: >
 			GetFuncname()->funcref([arg])
@@ -11063,7 +11065,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E130* *E131* *E933*
+				*:delf* *:delfunction* *E131* *E933*
 :delf[unction][!] {name}
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
