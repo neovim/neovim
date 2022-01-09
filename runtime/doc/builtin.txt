@@ -325,6 +325,7 @@ pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
 py3eval({expr})			any	evaluate |python3| expression
 pyxeval({expr})			any	evaluate |python_x| expression
+rand([{expr}])			Number	get pseudo-random number
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
@@ -441,6 +442,7 @@ spellsuggest({word} [, {max} [, {capital}]])
 split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
+srand([{expr}])			List	get seed for |rand()|
 stdioopen({dict})		Number	open stdio in a headless instance.
 stdpath({what})			String/List  returns the standard path(s) for {what}
 str2float({expr} [, {quoted}])	Float	convert String to Float
@@ -5530,6 +5532,22 @@ range({expr} [, {max} [, {stride}]])				*range()*
 		Can also be used as a |method|: >
 			GetExpr()->range()
 <
+rand([{expr}])						*rand()*
+		Return a pseudo-random Number generated with an xorshift
+		algorithm using seed {expr}.  {expr} can be initialized by
+		|srand()| and will be updated by rand().
+		If {expr} is omitted, an internal seed value is used and
+		updated.
+
+		Examples: >
+			:echo rand()
+			:let seed = srand()
+			:echo rand(seed)
+			:echo rand(seed)
+<
+		Can also be used as a |method|: >
+			seed->rand()
+<
 							*readdir()*
 readdir({directory} [, {expr}])
 		Return a list with file and directory names in {directory}.
@@ -7177,6 +7195,22 @@ sqrt({expr})						*sqrt()*
 
 		Can also be used as a |method|: >
 			Compute()->sqrt()
+
+srand([{expr}])						*srand()*
+		Initialize seed used by |rand()|:
+		- If {expr} is not given, seed values are initialized by
+		  time(NULL) a.k.a. epoch time.
+		- If {expr} is given, return seed values which x element is
+		  {expr}.  This is useful for testing or when a predictable
+		  sequence is expected.
+
+		Examples: >
+			:let seed = srand()
+			:let seed = srand(userinput)
+			:echo rand(seed)
+<
+		Can also be used as a |method|: >
+			userinput->srand()
 
 stdioopen({opts})			 *stdioopen()*
 		With |--headless| this opens stdin and stdout as a |channel|.

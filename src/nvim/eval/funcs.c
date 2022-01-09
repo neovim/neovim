@@ -22,6 +22,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
@@ -6978,6 +6979,81 @@ static void f_py3eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   script_host_eval("python3", argvars, rettv);
 }
 
+/// "rand()" function
+static void f_rand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  uint32_t w;
+#define SHUFFLE_XORSHIFT128 \
+  const uint32_t t = x ^ (x << 11); \
+  x = y; \
+  y = z; \
+  z = w; \
+  w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    static bool rand_seed_initialized = false;
+    static uint32_t xyzw[4] = { 123456789, 362436069, 521288629, 88675123 };
+
+    // When argument is not given, return random number initialized
+    // statically.
+    if (!rand_seed_initialized) {
+      xyzw[0] = time(NULL);
+      rand_seed_initialized = true;
+    }
+
+    uint32_t x = xyzw[0];
+    uint32_t y = xyzw[1];
+    uint32_t z = xyzw[2];
+    w = xyzw[3];
+    SHUFFLE_XORSHIFT128;
+    xyzw[0] = x;
+    xyzw[1] = y;
+    xyzw[2] = z;
+    xyzw[3] = w;
+  } else if (argvars[0].v_type == VAR_LIST) {
+    list_T *const l = argvars[0].vval.v_list;
+    if (tv_list_len(l) != 4) {
+      goto theend;
+    }
+
+    typval_T *const tvx = TV_LIST_ITEM_TV(tv_list_find(l, 0L));
+    typval_T *const tvy = TV_LIST_ITEM_TV(tv_list_find(l, 1L));
+    typval_T *const tvz = TV_LIST_ITEM_TV(tv_list_find(l, 2L));
+    typval_T *const tvw = TV_LIST_ITEM_TV(tv_list_find(l, 3L));
+    if (tvx->v_type != VAR_NUMBER) {
+      goto theend;
+    }
+    if (tvy->v_type != VAR_NUMBER) {
+      goto theend;
+    }
+    if (tvz->v_type != VAR_NUMBER) {
+      goto theend;
+    }
+    if (tvw->v_type != VAR_NUMBER) {
+      goto theend;
+    }
+    uint32_t x = tvx->vval.v_number;
+    uint32_t y = tvy->vval.v_number;
+    uint32_t z = tvz->vval.v_number;
+    w = tvw->vval.v_number;
+    SHUFFLE_XORSHIFT128;
+    tvx->vval.v_number = (varnumber_T)x;
+    tvy->vval.v_number = (varnumber_T)y;
+    tvz->vval.v_number = (varnumber_T)z;
+    tvw->vval.v_number = (varnumber_T)w;
+  } else {
+    goto theend;
+  }
+
+#undef SHUFFLE_XORSHIFT128
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = (varnumber_T)w;
+  return;
+
+theend:
+  semsg(_(e_invarg2), tv_get_string(&argvars[0]));
+}
+
 /// "perleval()" function
 static void f_perleval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -10447,6 +10523,25 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     semsg(_("E6100: \"%s\" is not a valid stdpath"), p);
   }
+}
+
+/// "srand()" function
+static void f_srand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, 4);
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    tv_list_append_number(rettv->vval.v_list, (varnumber_T)time(NULL));
+  } else {
+    bool error = false;
+    const uint32_t x = tv_get_number_chk(&argvars[0], &error);
+    if (error) {
+      return;
+    }
+    tv_list_append_number(rettv->vval.v_list, x);
+  }
+  tv_list_append_number(rettv->vval.v_list, 362436069);
+  tv_list_append_number(rettv->vval.v_list, 521288629);
+  tv_list_append_number(rettv->vval.v_list, 88675123);
 }
 
 /*
