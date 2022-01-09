@@ -1032,9 +1032,9 @@ void ml_recover(bool checkext)
   line_count = 0;
   idx = 0;              // start with first index in block 1
   error = 0;
-  buf->b_ml.ml_stack_top = 0;
+  buf->b_ml.ml_stack_top = 0;  // -V1048
   buf->b_ml.ml_stack = NULL;
-  buf->b_ml.ml_stack_size = 0;          // no stack yet
+  buf->b_ml.ml_stack_size = 0;  // -V1048
 
   if (curbuf->b_ffname == NULL) {
     cannot_open = true;
