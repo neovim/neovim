@@ -10,6 +10,9 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/userfunc.h"
+#include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -228,6 +231,13 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 /// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
+  if (obj->v_type == VAR_FUNC) {
+    ufunc_T *fp = find_func(obj->vval.v_string);
+    if (fp->uf_cb == nlua_CFunction_func_call) {
+      LuaRef ref = api_new_luaref(((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
+      return LUAREF_OBJ(ref);
+    }
+  }
   EncodedData edata;
   kvi_init(edata.stack);
   const int evo_ret = encode_vim_to_object(&edata, obj,
@@ -340,6 +350,16 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     tv->vval.v_dict = dict;
     break;
   }
+
+  case kObjectTypeLuaRef: {
+    LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
+    state->lua_callable.func_ref = api_new_luaref(obj.data.luaref);
+    char_u *name = register_cfunc(&nlua_CFunction_func_call, &nlua_CFunction_func_free, state);
+    tv->v_type = VAR_FUNC;
+    tv->vval.v_string = vim_strsave(name);
+    break;
+  }
+
   default:
     abort();
   }
