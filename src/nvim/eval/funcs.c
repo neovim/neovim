@@ -10528,16 +10528,44 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "srand()" function
 static void f_srand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  static int dev_urandom_state = -1;  // FAIL or OK once tried
+
   tv_list_alloc_ret(rettv, 4);
   if (argvars[0].v_type == VAR_UNKNOWN) {
-    tv_list_append_number(rettv->vval.v_list, (varnumber_T)time(NULL));
+    if (dev_urandom_state != FAIL) {
+      const int fd = os_open("/dev/urandom", O_RDONLY, 0);
+      struct {
+        union {
+          uint32_t number;
+          char bytes[sizeof(uint32_t)];
+        } cont;
+      } buf;
+
+      // Attempt reading /dev/urandom.
+      if (fd == -1) {
+        dev_urandom_state = FAIL;
+      } else {
+        buf.cont.number = 0;
+        if (read(fd, buf.cont.bytes, sizeof(uint32_t)) != sizeof(uint32_t)) {
+          dev_urandom_state = FAIL;
+        } else {
+          dev_urandom_state = OK;
+          tv_list_append_number(rettv->vval.v_list, (varnumber_T)buf.cont.number);
+        }
+        os_close(fd);
+      }
+    }
+    if (dev_urandom_state != OK) {
+      // Reading /dev/urandom doesn't work, fall back to time().
+      tv_list_append_number(rettv->vval.v_list, (varnumber_T)time(NULL));
+    }
   } else {
     bool error = false;
     const uint32_t x = tv_get_number_chk(&argvars[0], &error);
     if (error) {
       return;
     }
-    tv_list_append_number(rettv->vval.v_list, x);
+    tv_list_append_number(rettv->vval.v_list, (varnumber_T)x);
   }
   tv_list_append_number(rettv->vval.v_list, 362436069);
   tv_list_append_number(rettv->vval.v_list, 521288629);
