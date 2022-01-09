@@ -668,11 +668,7 @@ describe('runtime:', function()
     mkdir_p(ftdetect_folder)
     write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
 
-    -- TODO(shadmansaleh): Figure out why this test fails without
-    --                     setting VIMRUNTIME
-    clear{ args_rm={'-u'}, env={XDG_CONFIG_HOME=xconfig,
-                                XDG_DATA_HOME=xdata,
-                                VIMRUNTIME='runtime/'}}
+    clear{ args_rm={'-u'}, env=xenv }
 
     eq(1, eval('g:lua_ftdetect'))
     rmdir(ftdetect_folder)
