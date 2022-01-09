@@ -5534,16 +5534,17 @@ range({expr} [, {max} [, {stride}]])				*range()*
 <
 rand([{expr}])						*rand()*
 		Return a pseudo-random Number generated with an xorshift
-		algorithm using seed {expr}.  {expr} can be initialized by
-		|srand()| and will be updated by rand().
-		If {expr} is omitted, an internal seed value is used and
-		updated.
+		algorithm using seed {expr}.  The returned number is 32 bits,
+		also on 64 bits systems, for consistency.
+		{expr} can be initialized by |srand()| and will be updated by
+		rand().  If {expr} is omitted, an internal seed value is used
+		and updated.
 
 		Examples: >
 			:echo rand()
 			:let seed = srand()
 			:echo rand(seed)
-			:echo rand(seed)
+			:echo rand(seed) % 16  " random number 0 - 15
 <
 		Can also be used as a |method|: >
 			seed->rand()
@@ -7199,7 +7200,8 @@ sqrt({expr})						*sqrt()*
 srand([{expr}])						*srand()*
 		Initialize seed used by |rand()|:
 		- If {expr} is not given, seed values are initialized by
-		  time(NULL) a.k.a. epoch time.
+		  time(NULL) a.k.a. epoch time.  This only has second
+		  accuracy.
 		- If {expr} is given, return seed values which x element is
 		  {expr}.  This is useful for testing or when a predictable
 		  sequence is expected.
