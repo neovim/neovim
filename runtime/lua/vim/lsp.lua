@@ -312,56 +312,72 @@ do
   --- client_id → state
   ---
   ---   state
+  ---     use_incremental_sync: bool
+  ---     buffers: bufnr -> buffer_state
+  ---
+  ---   buffer_state
   ---     pending_change?: function that the timer starts to trigger didChange
   ---     pending_changes: table (uri -> list of pending changeset tables));
-  --                       Only set if incremental_sync is used
-  ---     use_incremental_sync: bool
-  ---     buffers?: table (bufnr → lines); for incremental sync only
+  ---                      Only set if incremental_sync is used
+  ---
   ---     timer?: uv_timer
+  ---     lines: table
   local state_by_client = {}
 
   ---@private
   function changetracking.init(client, bufnr)
+    local use_incremental_sync = (
+      if_nil(client.config.flags.allow_incremental_sync, true)
+      and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
+    )
     local state = state_by_client[client.id]
     if not state then
       state = {
-        pending_changes = {};
-        last_flush = {};
-        use_incremental_sync = (
-          if_nil(client.config.flags.allow_incremental_sync, true)
-          and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
-        );
+        buffers = {};
+        debounce = client.config.flags.debounce_text_changes or 150,
+        use_incremental_sync = use_incremental_sync;
       }
       state_by_client[client.id] = state
     end
-    if not state.use_incremental_sync then
-      return
+    if not state.buffers[bufnr] then
+      local buf_state = {}
+      state.buffers[bufnr] = buf_state
+      if use_incremental_sync then
+        buf_state.lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+        buf_state.pending_changes = {}
+      end
     end
-    if not state.buffers then
-      state.buffers = {}
-    end
-    state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
   end
 
   ---@private
   function changetracking.reset_buf(client, bufnr)
-    changetracking.flush(client)
+    changetracking.flush(client, bufnr)
     local state = state_by_client[client.id]
-    if state then
-      if state.buffers then
-        state.buffers[bufnr] = nil
+    if state and state.buffers then
+      local buf_state = state.buffers[bufnr]
+      state.buffers[bufnr] = nil
+      if buf_state and buf_state.timer then
+        buf_state.timer:stop()
+        buf_state.timer:close()
+        buf_state.timer = nil
       end
-      state.last_flush = {}
     end
   end
 
   ---@private
   function changetracking.reset(client_id)
     local state = state_by_client[client_id]
-    if state then
-      state_by_client[client_id] = nil
-      changetracking._reset_timer(state)
+    if not state then
+      return
     end
+    for _, buf_state in pairs(state.buffers) do
+      if buf_state.timer then
+        buf_state.timer:stop()
+        buf_state.timer:close()
+        buf_state.timer = nil
+      end
+    end
+    state.buffers = {}
   end
 
   ---@private
@@ -371,35 +387,27 @@ do
   -- debounce can be skipped and otherwise maybe reduced.
   --
   -- This turns the debounce into a kind of client rate limiting
-  local function next_debounce(debounce, state, bufnr)
+  local function next_debounce(debounce, buf_state)
     if debounce == 0 then
       return 0
     end
     local ns_to_ms = 0.000001
-    local last_flush = state.last_flush[bufnr]
-    if not last_flush then
+    if not buf_state.last_flush then
       return debounce
     end
     local now = uv.hrtime()
-    local ms_since_last_flush = (now - last_flush) * ns_to_ms
-    local remaining_debounce = debounce - ms_since_last_flush
-    if remaining_debounce > 0 then
-      return remaining_debounce
-    else
-      state.last_flush[bufnr] = now
-      return 0
-    end
+    local ms_since_last_flush = (now - buf_state.last_flush) * ns_to_ms
+    return math.max(debounce - ms_since_last_flush, 0)
   end
 
   ---@private
   function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
-    local incremental_changes = function(client)
-      local cached_buffers = state_by_client[client.id].buffers
+    local incremental_changes = function(client, buf_state)
       local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
       local line_ending = buf_get_line_ending(bufnr)
       local incremental_change = sync.compute_diff(
-        cached_buffers[bufnr], curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
-      cached_buffers[bufnr] = curr_lines
+        buf_state.lines, curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
+      buf_state.lines = curr_lines
       return incremental_change
     end
     local full_changes = once(function()
@@ -413,79 +421,58 @@ do
         return
       end
       local state = state_by_client[client.id]
-      changetracking._reset_timer(state)
-      local debounce = next_debounce(client.config.flags.debounce_text_changes or 150, state, bufnr)
-      if debounce == 0 then
-        if state.pending_change then
-          state.pending_change()
-        end
-        local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
-        client.notify("textDocument/didChange", {
-          textDocument = {
-            uri = uri;
-            version = util.buf_versions[bufnr];
-          };
-          contentChanges = { changes, }
-        })
-        return
-      end
+      local buf_state = state.buffers[bufnr]
+      changetracking._reset_timer(buf_state)
+      local debounce = next_debounce(state.debounce, buf_state)
       if state.use_incremental_sync then
         -- This must be done immediately and cannot be delayed
         -- The contents would further change and startline/endline may no longer fit
-        if not state.pending_changes[uri] then
-          state.pending_changes[uri] = {}
-        end
-        table.insert(state.pending_changes[uri], incremental_changes(client))
+        table.insert(buf_state.pending_changes, incremental_changes(client, buf_state))
       end
-      state.pending_change = function()
-        state.pending_change = nil
-        state.last_flush[bufnr] = uv.hrtime()
+      buf_state.pending_change = function()
+        buf_state.pending_change = nil
+        buf_state.last_flush = uv.hrtime()
         if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
-        if state.use_incremental_sync then
-          for change_uri, content_changes in pairs(state.pending_changes) do
-            client.notify("textDocument/didChange", {
-              textDocument = {
-                uri = change_uri;
-                version = util.buf_versions[vim.uri_to_bufnr(change_uri)];
-              };
-              contentChanges = content_changes,
-            })
-          end
-          state.pending_changes = {}
-        else
-          client.notify("textDocument/didChange", {
-            textDocument = {
-              uri = uri;
-              version = util.buf_versions[bufnr];
-            };
-            contentChanges = { full_changes() },
-          })
-        end
+        local changes = state.use_incremental_sync and buf_state.pending_changes or { full_changes() }
+        client.notify("textDocument/didChange", {
+          textDocument = {
+            uri = uri,
+            version = util.buf_versions[bufnr],
+          },
+          contentChanges = changes,
+        })
+        buf_state.pending_changes = {}
       end
-      state.timer = vim.loop.new_timer()
-      -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
-      state.timer:start(debounce, 0, vim.schedule_wrap(state.pending_change))
+      if debounce == 0 then
+        buf_state.pending_change()
+      else
+        local timer = vim.loop.new_timer()
+        buf_state.timer = timer
+        -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
+        timer:start(debounce, 0, vim.schedule_wrap(buf_state.pending_change))
+      end
     end
   end
 
-  function changetracking._reset_timer(state)
-    if state.timer then
-      state.timer:stop()
-      state.timer:close()
-      state.timer = nil
+  function changetracking._reset_timer(buf_state)
+    if buf_state.timer then
+      buf_state.timer:stop()
+      buf_state.timer:close()
+      buf_state.timer = nil
     end
   end
 
   --- Flushes any outstanding change notification.
   ---@private
-  function changetracking.flush(client)
+  function changetracking.flush(client, bufnr)
     local state = state_by_client[client.id]
-    if state then
-      changetracking._reset_timer(state)
-      if state.pending_change then
-        state.pending_change()
+    local buf_state = state and state.buffers[bufnr]
+    if buf_state then
+      changetracking._reset_timer(buf_state)
+      if buf_state.pending_change then
+        buf_state.pending_change()
       end
     end
   end
@@ -991,7 +978,7 @@ function lsp.start_client(config)
         or error(string.format("not found: %q request handler for client %q.", method, client.name))
     end
     -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
-    changetracking.flush(client)
+    changetracking.flush(client, bufnr)
     bufnr = resolve_bufnr(bufnr)
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     local success, request_id = rpc.request(method, params, function(err, result)
