@@ -413,8 +413,12 @@ do
         return
       end
       local state = state_by_client[client.id]
+      changetracking._reset_timer(state)
       local debounce = next_debounce(client.config.flags.debounce_text_changes or 150, state, bufnr)
       if debounce == 0 then
+        if state.pending_change then
+          state.pending_change()
+        end
         local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
         client.notify("textDocument/didChange", {
           textDocument = {
@@ -425,7 +429,6 @@ do
         })
         return
       end
-      changetracking._reset_timer(state)
       if state.use_incremental_sync then
         -- This must be done immediately and cannot be delayed
         -- The contents would further change and startline/endline may no longer fit
