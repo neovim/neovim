@@ -34,6 +34,13 @@ jobs:
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')"
 
   add-reviewer:
+    # This job currently doesn't work due to a bug in GitHub CLI.
+    #
+    # Issue: https://github.com/cli/cli/issues/4844
+    # PR that will fix it: https://github.com/cli/cli/pull/4876
+    #
+    # The current workaround is to temporarily add "continue-on-error" flag so
+    # the whole workflow doesn't get flagged as a failure.
     runs-on: ubuntu-latest
     needs: ["triage", "type-scope"]
     permissions:
@@ -43,7 +50,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
-
+    continue-on-error: true
     steps:
       - name: Get labels
         id: labels
