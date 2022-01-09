@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 # Collect and submit coverage reports.
 #
 # Args:
@@ -34,9 +35,9 @@ fi
 # NOTE: ignoring flags for now, since this causes timeouts on codecov.io then,
 #       which they know about for about a year already...
 # Flags must match pattern ^[\w\,]+$ ("," as separator).
-codecov_flags="$(uname -s),${1}"
+codecov_flags="$(uname -s),$1"
 codecov_flags=$(echo "$codecov_flags" | sed 's/[^,_a-zA-Z0-9]/_/g')
-if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -Z -F "${codecov_flags}"; then
+if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -Z -F "$codecov_flags"; then
   echo "codecov upload failed."
 fi
 
@@ -46,10 +47,10 @@ rm -f coverage.xml
 
 # Upload Lua coverage  (generated manually on AppVeyor/Windows).
 if [ "$USE_LUACOV" = 1 ] && [ "$1" != "oldtest" ]; then
-  if [ -x "${DEPS_BUILD_DIR}/usr/bin/luacov" ]; then
-    "${DEPS_BUILD_DIR}/usr/bin/luacov"
+  if [ -x "$DEPS_BUILD_DIR/usr/bin/luacov" ]; then
+    "$DEPS_BUILD_DIR/usr/bin/luacov"
   fi
-  if ! "$codecov_sh" -f luacov.report.out -X gcov -X fix -Z -F "lua,${codecov_flags}"; then
+  if ! "$codecov_sh" -f luacov.report.out -X gcov -X fix -Z -F "lua,$codecov_flags"; then
     echo "codecov upload failed."
   fi
   rm luacov.stats.out
