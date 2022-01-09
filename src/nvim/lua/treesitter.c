@@ -129,6 +129,10 @@ void tslua_init(lua_State *L)
   build_meta(L, TS_META_QUERY, query_meta);
   build_meta(L, TS_META_QUERYCURSOR, querycursor_meta);
   build_meta(L, TS_META_TREECURSOR, treecursor_meta);
+
+#ifdef NVIM_TS_HAS_SET_ALLOCATOR
+  ts_set_allocator(xmalloc, xcalloc, xrealloc, xfree);
+#endif
 }
 
 int tslua_has_language(lua_State *L)
