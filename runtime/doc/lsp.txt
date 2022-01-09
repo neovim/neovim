@@ -488,6 +488,16 @@ buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
                     {bufnr}      (number) Buffer handle, or 0 for current
                     {client_id}  (number) Client id
 
+buf_detach_client({bufnr}, {client_id})          *vim.lsp.buf_detach_client()*
+                Detaches client from the specified buffer. Note: While the
+                server is notified that the text document (buffer) was closed,
+                it is still able to send notifications should it ignore this
+                notification.
+
+                Parameters: ~
+                    {bufnr}      number Buffer handle, or 0 for current
+                    {client_id}  number Client id
+
 buf_get_clients({bufnr})                           *vim.lsp.buf_get_clients()*
                 Gets a map of client_id:client pairs for the given buffer,
                 where each value is a |vim.lsp.client| object.
@@ -633,6 +643,12 @@ client()                                                      *vim.lsp.client*
                     server.
                   • {handlers} (table): The handlers used by the client as
                     described in |lsp-handler|.
+                  • {requests} (table): The current pending requests in flight
+                    to the server. Entries are key-value pairs with the key
+                    being the request ID while the value is a table with
+                    `type` , `bufnr` , and `method` key-value pairs. `type` is
+                    either "pending" for an active request, or "cancel" for a
+                    cancel request.
                   • {config} (table): copy of the table that was passed by the
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server
@@ -733,8 +749,8 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
 set_log_level({level})                               *vim.lsp.set_log_level()*
                 Sets the global log level for LSP logging.
 
-                Levels by name: "trace", "debug", "info", "warn", "error"
-                Level numbers begin with "trace" at 0
+                Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+                Level numbers begin with "TRACE" at 0
 
                 Use `lsp.log_levels` for reverse lookup.
 
@@ -1008,11 +1024,12 @@ document_symbol()                              *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
                 window.
 
-execute_command({command})                     *vim.lsp.buf.execute_command()*
+execute_command({command_params})              *vim.lsp.buf.execute_command()*
                 Executes an LSP server command.
 
                 Parameters: ~
-                    {command}  A valid `ExecuteCommandParams` object
+                    {command_params}  table A valid `ExecuteCommandParams`
+                                      object
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
@@ -1329,12 +1346,14 @@ apply_text_document_edit({text_document_edit}, {index})
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
                                              *vim.lsp.util.apply_text_edits()*
-apply_text_edits({text_edits}, {bufnr})
+apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
                 Applies a list of text edits to a buffer.
 
                 Parameters: ~
-                    {text_edits}  table list of `TextEdit` objects
-                    {bufnr}       number Buffer id
+                    {text_edits}       table list of `TextEdit` objects
+                    {bufnr}            number Buffer id
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to encoding of first client of `bufnr`
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
@@ -1361,23 +1380,28 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
                     {references}       table List of `DocumentHighlight`
                                        objects to highlight
                     {offset_encoding}  string One of "utf-8", "utf-16",
-                                       "utf-32", or nil. Defaults to utf-16
+                                       "utf-32", or nil. Defaults to
+                                       `offset_encoding` of first client of
+                                       `bufnr`
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
 
                                              *vim.lsp.util.character_offset()*
-character_offset({bufnr}, {row}, {col})
+character_offset({buf}, {row}, {col}, {offset_encoding})
                 Returns the UTF-32 and UTF-16 offsets for a position in a
                 certain buffer.
 
                 Parameters: ~
-                    {buf}  buffer id (0 for current)
-                    {row}  0-indexed line
-                    {col}  0-indexed byte offset in line
+                    {buf}              buffer id (0 for current)
+                    {row}              0-indexed line
+                    {col}              0-indexed byte offset in line
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to `offset_encoding` of first client of
+                                       `buf`
 
                 Return: ~
-                    (number, number) UTF-32 and UTF-16 index of the character
+                    (number, number) `offset_encoding` index of the character
                     in line {row} column {col} in buffer {buf}
 
                               *vim.lsp.util.convert_input_to_markdown_lines()*
@@ -1519,25 +1543,38 @@ make_formatting_params({options})
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 
                                       *vim.lsp.util.make_given_range_params()*
-make_given_range_params({start_pos}, {end_pos})
+make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
                 Using the given range in the current buffer, creates an object
                 that is similar to |vim.lsp.util.make_range_params()|.
 
                 Parameters: ~
-                    {start_pos}  ({number, number}, optional) mark-indexed
-                                 position. Defaults to the start of the last
-                                 visual selection.
-                    {end_pos}    ({number, number}, optional) mark-indexed
-                                 position. Defaults to the end of the last
-                                 visual selection.
+                    {start_pos}        ({number, number}, optional)
+                                       mark-indexed position. Defaults to the
+                                       start of the last visual selection.
+                    {end_pos}          ({number, number}, optional)
+                                       mark-indexed position. Defaults to the
+                                       end of the last visual selection.
+                    {bufnr}            (optional, number): buffer handle or 0
+                                       for current, defaults to current
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to `offset_encoding` of first client of
+                                       `bufnr`
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
                     start = `start_position` , end = `end_position` } }
 
-make_position_params()                   *vim.lsp.util.make_position_params()*
+                                         *vim.lsp.util.make_position_params()*
+make_position_params({window}, {offset_encoding})
                 Creates a `TextDocumentPositionParams` object for the current
                 buffer and cursor position.
+
+                Parameters: ~
+                    {window}           (optional, number): window handle or 0
+                                       for current, defaults to current
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to `offset_encoding` of first client of
+                                       buffer of `window`
 
                 Return: ~
                     `TextDocumentPositionParams` object
@@ -1545,20 +1582,33 @@ make_position_params()                   *vim.lsp.util.make_position_params()*
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 
-make_range_params()                         *vim.lsp.util.make_range_params()*
+                                            *vim.lsp.util.make_range_params()*
+make_range_params({window}, {offset_encoding})
                 Using the current position in the current buffer, creates an
                 object that can be used as a building block for several LSP
                 requests, such as `textDocument/codeAction` ,
                 `textDocument/colorPresentation` ,
                 `textDocument/rangeFormatting` .
 
+                Parameters: ~
+                    {window}           (optional, number): window handle or 0
+                                       for current, defaults to current
+                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
+                                       to `offset_encoding` of first client of
+                                       buffer of `window`
+
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
                     start = `current_position` , end = `current_position` } }
 
-make_text_document_params()         *vim.lsp.util.make_text_document_params()*
+                                    *vim.lsp.util.make_text_document_params()*
+make_text_document_params({bufnr})
                 Creates a `TextDocumentIdentifier` object for the current
                 buffer.
+
+                Parameters: ~
+                    {bufnr}  (optional, number): Buffer handle, defaults to
+                             current
 
                 Return: ~
                     `TextDocumentIdentifier`

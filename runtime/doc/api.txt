@@ -634,7 +634,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                    atomically, i.e. without interleaving redraws, RPC requests
                    from other clients, or user interactions (however API
                    methods may trigger autocommands or event processing which
-                   have such side effects, e.g. |:sleep| may wake timers).
+                   have such side-effects, e.g. |:sleep| may wake timers).
                 2. To minimize RPC overhead (roundtrips) of a sequence of many
                    requests.
 
@@ -698,7 +698,7 @@ nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
                     |nvim_set_keymap()|
 
 nvim_del_mark({name})                                        *nvim_del_mark()*
-                Deletes an uppercase/file named mark. See |mark-motions|.
+                Deletes a uppercase/file named mark. See |mark-motions|.
 
                 Note:
                     fails with error if a lowercase or buffer local named mark
@@ -2655,7 +2655,7 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                     true if the window is valid, false otherwise
 
 nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
-                Sets the current buffer in a window, without side effects
+                Sets the current buffer in a window, without side-effects
 
                 Attributes: ~
                     not allowed when |textlock| is active
