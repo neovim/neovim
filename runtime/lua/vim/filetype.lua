@@ -119,7 +119,13 @@ local extension = {
   tcc = "cpp",
   hxx = "cpp",
   hpp = "cpp",
-  cpp = function()
+  cpp = function(path, bufnr)
+    if vim.g.cynlib_syntax_for_cc then
+      return "cynlib"
+    end
+    return "cpp"
+  end,
+  cc = function(path, bufnr)
     if vim.g.cynlib_syntax_for_cc then
       return "cynlib"
     end
