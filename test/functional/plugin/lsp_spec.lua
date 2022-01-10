@@ -76,7 +76,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
       end;
       flags = {
         allow_incremental_sync = options.allow_incremental_sync or false;
-        debounce_text_changes = 0;
+        debounce_text_changes = options.debounce_text_changes or 0;
       };
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
@@ -920,7 +920,7 @@ describe('LSP', function()
       }
     end)
 
-    it('should check the body and didChange incremental', function()
+    it('should check the body and didChange incremental with debounce', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
         {NIL, {}, {method="finish", client_id=1}};
@@ -929,7 +929,10 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "basic_check_buffer_open_and_change_incremental";
-        options = { allow_incremental_sync = true };
+        options = {
+          allow_incremental_sync = true,
+          debounce_text_changes = 5
+        };
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
@@ -958,6 +961,8 @@ describe('LSP', function()
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
                 "123boop";
               })
+              -- wait for debounced change to trigger
+              vim.wait(10)
             ]]
             client.notify('finish')
           end
