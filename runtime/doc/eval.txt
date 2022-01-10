@@ -2782,6 +2782,8 @@ win_gettype([{nr}])		String	type of window {nr}
 win_gotoid({expr})		Number	go to |window-ID| {expr}
 win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
 win_id2win({expr})		Number	get window nr from |window-ID|
+win_move_separator({nr})	Number	move window vertical separator
+win_move_statusline({nr})	Number	move window status line
 win_screenpos({nr})		List	get screen position of window {nr}
 win_splitmove({nr}, {target} [, {options}])
 				Number	move window {nr} to split of {target}
@@ -10608,6 +10610,35 @@ win_id2win({expr})					*win_id2win()*
 
 		Can also be used as a |method|: >
 			GetWinid()->win_id2win()
+
+win_move_separator({nr}, {offset})			*win_move_separator()*
+		Move window {nr}'s vertical separator (i.e., the right border)
+		by {offset} columns, as if being dragged by the mouse. {nr}
+		can be a window number or |window-ID|. A positive {offset}
+		moves right and a negative {offset} moves left. Moving a
+		window's vertical separator will change the width of the
+		window and the width of other windows adjacent to the vertical
+		separator. The magnitude of movement may be smaller than
+		specified (e.g., as a consequence of maintaining
+		'winminwidth'). Returns TRUE if the window can be found and
+		FALSE otherwise.
+
+		Can also be used as a |method|: >
+			GetWinnr()->win_move_separator(offset)
+
+win_move_statusline({nr}, {offset})			*win_move_statusline()*
+		Move window {nr}'s status line (i.e., the bottom border) by
+		{offset} rows, as if being dragged by the mouse. {nr} can be a
+		window number or |window-ID|. A positive {offset} moves down
+		and a negative {offset} moves up. Moving a window's status
+		line will change the height of the window and the height of
+		other windows adjacent to the status line. The magnitude of
+		movement may be smaller than specified (e.g., as a consequence
+		of maintaining 'winminheight'). Returns TRUE if the window can
+		be found and FALSE otherwise.
+
+		Can also be used as a |method|: >
+			GetWinnr()->win_move_statusline(offset)
 
 win_screenpos({nr})					*win_screenpos()*
 		Return the screen position of window {nr} as a list with two
