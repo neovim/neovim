@@ -574,6 +574,7 @@ Test functions:
   test_scrollbar()
   test_setmouse()
   test_settime()
+  test_srand_seed()
 
 TUI:
 			  *t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
