@@ -1096,4 +1096,54 @@ func Test_git_file()
   filetype off
 endfunc
 
+func Test_foam_file()
+  filetype on
+  call assert_true(mkdir('0', 'p'))
+  call assert_true(mkdir('0.orig', 'p'))
+
+  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict')
+  split Xfile1Dict
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict.something')
+  split Xfile1Dict.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
+  split XfileProperties
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
+  split XfileProperties.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
+  split XfileProperties
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
+  split XfileProperties.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], '0/Xfile')
+  split 0/Xfile
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], '0.orig/Xfile')
+  split 0.orig/Xfile
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call delete('0', 'rf')
+  call delete('0.orig', 'rf')
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

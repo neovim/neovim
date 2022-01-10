@@ -829,6 +829,24 @@ func dist#ft#Dep3patch()
   endfor
 endfunc
 
+" This function checks the first 15 lines for appearance of 'FoamFile'
+" followed by 'object' on separate lines
+" In that case, it's probably an OpenFOAM file
+func dist#ft#FTfoam()
+    let lnum = 1
+    let ffile = 0
+    while lnum <= 15
+      if getline(lnum) =~# '^FoamFile'
+    let ffile = 1
+      endif
+      if ((ffile == 1) && (getline(lnum) =~# '^\s*object'))
+	setf foam
+	return
+      endif
+      let lnum = lnum + 1
+    endwhile
+endfunc
+
 " Restore 'cpoptions'
 let &cpo = s:cpo_save
 unlet s:cpo_save
