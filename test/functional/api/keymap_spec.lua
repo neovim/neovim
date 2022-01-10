@@ -820,6 +820,16 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq(99, exec_lua[[return SomeValue]])
   end)
 
+  it('does not reset pum in lua mapping', function()
+    eq(0, exec_lua [[
+      VisibleCount = 0
+      vim.api.nvim_set_keymap ('i', '<F2>', '', {callback = function() VisibleCount = VisibleCount + vim.fn.pumvisible() end})
+      return VisibleCount
+    ]])
+    feed('i<C-X><C-V><F2><F2><esc>')
+    eq(2, exec_lua[[return VisibleCount]])
+  end)
+
   it('can overwrite lua mappings', function()
     eq(0, exec_lua [[
       GlobalCount = 0
