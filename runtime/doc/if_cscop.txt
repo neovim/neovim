@@ -40,7 +40,7 @@ See |cscope-usage| to get started.
 ==============================================================================
 Cscope commands						*cscope-commands*
 
-		*:cscope* *:cs* *:scs* *:scscope* *E259* *E262* *E561* *E560*
+		*:cscope* *:cs* *:scs* *:scscope* *E259* *E262* *E560* *E561*
 All cscope commands are accessed through suboptions to the cscope commands.
 	`:cscope` or `:cs` is the main command
 	`:scscope` or `:scs` does the same and splits the window

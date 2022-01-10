@@ -1195,6 +1195,7 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 expr8->name([args])	method call			*method* *->*
 expr8->{lambda}([args])
 
+							*E260*
 For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
@@ -6456,7 +6457,7 @@ join({list} [, {sep}])					*join()*
 		Can also be used as a |method|: >
 			mylist->join()
 
-json_decode({expr})					*json_decode()*
+json_decode({expr})				*json_decode()* *E491*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style
 		list as the input, as well as regular string.  May output any
 		Vim value. In the following cases it will output
@@ -6894,7 +6895,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 			GetText()->match('word')
 			GetList()->match('word')
 <
-				*matchadd()* *E798* *E799* *E801* *E957*
+				*matchadd()* *E290* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -13155,7 +13156,7 @@ code can be used: >
     unlet scriptnames_output
 
 ==============================================================================
-The sandbox					*eval-sandbox* *sandbox* *E48*
+The sandbox					*eval-sandbox* *sandbox*
 
 The 'foldexpr', 'formatexpr', 'includeexpr', 'indentexpr', 'statusline' and
 'foldtext' options may be evaluated in a sandbox.  This means that you are
