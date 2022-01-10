@@ -1450,7 +1450,7 @@ the function returns: >
 	:let Bar = Foo(4)
 	:echo Bar(6)
 <	5
-Note that the variables must exist in the outer scope before the lamba is
+Note that the variables must exist in the outer scope before the lambda is
 defined for this to work.  See also |:func-closure|.
 
 Lambda and closure support can be checked with: >
