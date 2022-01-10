@@ -468,11 +468,21 @@ do
   ---@private
   function changetracking.flush(client, bufnr)
     local state = state_by_client[client.id]
-    local buf_state = state and state.buffers[bufnr]
-    if buf_state then
+    if not state then
+      return
+    end
+    if bufnr then
+      local buf_state = state.buffers[bufnr] or {}
       changetracking._reset_timer(buf_state)
       if buf_state.pending_change then
         buf_state.pending_change()
+      end
+    else
+      for _, buf_state in pairs(state.buffers) do
+        changetracking._reset_timer(buf_state)
+        if buf_state.pending_change then
+          buf_state.pending_change()
+        end
       end
     end
   end
@@ -1035,14 +1045,16 @@ function lsp.start_client(config)
   ---@private
   --- Sends a notification to an LSP server.
   ---
-  ---@param method (string) LSP method name.
-  ---@param params (optional, table) LSP request params.
-  ---@param bufnr (number) Buffer handle, or 0 for current.
+  ---@param method string LSP method name.
+  ---@param params table|nil LSP request params.
   ---@returns {status} (bool) true if the notification was successful.
   ---If it is false, then it will always be false
   ---(the client has shutdown).
-  function client.notify(...)
-    return rpc.notify(...)
+  function client.notify(method, params)
+    if method ~= 'textDocument/didChange' then
+      changetracking.flush(client)
+    end
+    return rpc.notify(method, params)
   end
 
   ---@private
