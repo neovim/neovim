@@ -26,7 +26,11 @@ func Test_Rand()
   let v = rand()
   call assert_notequal(v, rand())
 
+  if has('float')
+    call assert_fails('echo srand(1.2)', 'E805:')
+  endif
   call assert_fails('echo srand([1])', 'E745:')
+  call assert_fails('echo rand("burp")', 'E475:')
   call assert_fails('echo rand([1, 2, 3])', 'E475:')
   call assert_fails('echo rand([[1], 2, 3, 4])', 'E475:')
   call assert_fails('echo rand([1, [2], 3, 4])', 'E475:')
