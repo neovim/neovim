@@ -552,7 +552,8 @@ end
 ---         - `table`: Enable this feature with overrides. Use an empty table to use default values.
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
----@param opts table Configuration table with the following keys:
+---@param opts table|nil When omitted or "nil", retrieve the current configuration. Otherwise, a
+---                      configuration table with the following keys:
 ---       - underline: (default true) Use underline for diagnostics. Options:
 ---                    * severity: Only underline diagnostics matching the given severity
 ---                    |diagnostic-severity|
@@ -599,7 +600,7 @@ end
 ---                            global diagnostic options.
 function M.config(opts, namespace)
   vim.validate {
-    opts = { opts, 't' },
+    opts = { opts, 't', true },
     namespace = { namespace, 'n', true },
   }
 
@@ -609,6 +610,11 @@ function M.config(opts, namespace)
     t = ns.opts
   else
     t = global_diagnostic_options
+  end
+
+  if not opts then
+    -- Return current config
+    return vim.deepcopy(t)
   end
 
   for k, v in pairs(opts) do

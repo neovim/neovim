@@ -334,8 +334,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                       that returns any of the above.
 
                 Parameters: ~
-                    {opts}       table Configuration table with the following
-                                 keys:
+                    {opts}       table|nil When omitted or "nil", retrieve the
+                                 current configuration. Otherwise, a
+                                 configuration table with the following keys:
                                  • underline: (default true) Use underline for
                                    diagnostics. Options:
                                    • severity: Only underline diagnostics
