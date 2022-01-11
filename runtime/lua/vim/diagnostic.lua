@@ -823,6 +823,7 @@ M.handlers.signs = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
@@ -890,6 +891,7 @@ M.handlers.underline = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.underline and opts.underline.severity then
       diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
@@ -942,6 +944,7 @@ M.handlers.virtual_text = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     local severity
     if opts.virtual_text then
