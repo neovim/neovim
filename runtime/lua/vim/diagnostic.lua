@@ -611,10 +611,8 @@ function M.config(opts, namespace)
     t = global_diagnostic_options
   end
 
-  for opt in pairs(global_diagnostic_options) do
-    if opts[opt] ~= nil then
-      t[opt] = opts[opt]
-    end
+  for k, v in pairs(opts) do
+    t[k] = v
   end
 
   if namespace then
