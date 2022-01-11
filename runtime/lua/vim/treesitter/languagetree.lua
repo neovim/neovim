@@ -372,10 +372,10 @@ function LanguageTree:_get_injections()
       -- will be parsed by treesitter as the same "source".
       -- If combined is false, each "region" will be parsed as a single source.
       if not injections[tree_index][lang][pattern] then
-        injections[tree_index][lang][pattern] = { combined = combined, regions = {} }
+        injections[tree_index][lang][pattern] = {}
       end
 
-      table.insert(injections[tree_index][lang][pattern].regions, ranges)
+      table.insert(injections[tree_index][lang][pattern], { ranges = ranges, combined = combined })
     end
   end
 
@@ -390,12 +390,19 @@ function LanguageTree:_get_injections()
       end
 
       for _, entry in pairs(patterns) do
-        if entry.combined then
-          table.insert(result[lang], vim.tbl_flatten(entry.regions))
-        else
-          for _, ranges in ipairs(entry.regions) do
-            table.insert(result[lang], ranges)
+        local first_region = true
+        for _, region in ipairs(entry) do
+          if region.combined then
+            if first_region then
+                table.insert(result[lang], {})
+            end
+            for _, range in ipairs(region.ranges) do
+              table.insert(result[lang][#result[lang]], range)
+            end
+          else
+            table.insert(result[lang], region.ranges)
           end
+          first_region = false
         end
       end
     end
