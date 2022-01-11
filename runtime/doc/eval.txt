@@ -111,7 +111,7 @@ When mixing Number and Float the Number is converted to Float.  Otherwise
 there is no automatic conversion of Float.  You can use str2float() for String
 to Float, printf() for Float to String and float2nr() for Float to Number.
 
-						*E891* *E892* *E893* *E894*
+					*E362* *E891* *E892* *E893* *E894* *E907*
 When expecting a Float a Number can also be used, but nothing else.
 
 					*no-type-checking*
@@ -1195,7 +1195,7 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 expr8->name([args])	method call			*method* *->*
 expr8->{lambda}([args])
 
-							*E260*
+							*E260* *E276*
 For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
@@ -6457,7 +6457,7 @@ join({list} [, {sep}])					*join()*
 		Can also be used as a |method|: >
 			mylist->join()
 
-json_decode({expr})				*json_decode()* *E491*
+json_decode({expr})					*json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style
 		list as the input, as well as regular string.  May output any
 		Vim value. In the following cases it will output
@@ -6895,7 +6895,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 			GetText()->match('word')
 			GetList()->match('word')
 <
-				*matchadd()* *E290* *E798* *E799* *E801* *E957*
+			*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -13165,6 +13165,7 @@ safety for when these options are set from a modeline.  It is also used when
 the command from a tags file is executed and for CTRL-R = in the command line.
 The sandbox is also used for the |:sandbox| command.
 
+								*E48*
 These items are not allowed in the sandbox:
 	- changing the buffer text
 	- defining or changing mapping, autocommands, user commands

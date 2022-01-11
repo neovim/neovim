@@ -1084,7 +1084,7 @@ func s:HandleEvaluate(msg)
         \ ->substitute('.*value="\(.*\)"', '\1', '')
         \ ->substitute('\\"', '"', 'g')
         \ ->substitute('\\\\', '\\', 'g')
-        "\ multi-byte characters arrive in octal form, replace everthing but NULL values
+        "\ multi-byte characters arrive in octal form, replace everything but NULL values
         \ ->substitute('\\000', s:NullRepl, 'g')
         \ ->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
         "\ Note: GDB docs also mention hex encodings - the translations below work
