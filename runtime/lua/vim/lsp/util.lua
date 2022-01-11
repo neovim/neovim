@@ -280,6 +280,7 @@ end
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
 --- 1-indexed
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
+  offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
   local col = position.character
