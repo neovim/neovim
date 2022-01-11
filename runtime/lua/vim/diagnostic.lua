@@ -30,7 +30,7 @@ M.handlers = setmetatable({}, {
   __newindex = function(t, name, handler)
     vim.validate { handler = {handler, "t" } }
     rawset(t, name, handler)
-    if not global_diagnostic_options[name] then
+    if global_diagnostic_options[name] == nil then
       global_diagnostic_options[name] = true
     end
   end,
