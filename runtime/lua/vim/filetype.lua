@@ -860,6 +860,10 @@ local filename = {
   ["exim.conf"] = "exim",
   exports = "exports",
   [".fetchmailrc"] = "fetchmail",
+  fvSchemes = function() vim.fn["dist#ft#FTfoam"]() end,
+  fvSolution = function() vim.fn["dist#ft#FTfoam"]() end,
+  fvConstraints = function() vim.fn["dist#ft#FTfoam"]() end,
+  fvModels = function() vim.fn["dist#ft#FTfoam"]() end,
   fstab = "fstab",
   mtab = "fstab",
   [".gdbinit"] = "gdb",
@@ -1334,6 +1338,14 @@ local pattern = {
   ["zlog.*"] = starsetf('zsh'),
   ["zsh.*"] = starsetf('zsh'),
   ["ae%d+%.txt"] = 'mail',
+  ["[a-zA-Z0-9]*Dict"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  ["[a-zA-Z0-9]*Dict%..*"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  ["[a-zA-Z]*Properties"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  ["[a-zA-Z]*Properties%..*"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  [".*Transport%..*"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  [".*/constant/g"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  [".*/0/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  [".*/0%.orig/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
   -- END PATTERN
 }
 -- luacheck: pop
