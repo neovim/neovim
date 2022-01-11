@@ -153,7 +153,7 @@ func s:StartDebug_internal(dict)
     if &columns < g:termdebug_wide
       let s:save_columns = &columns
       let &columns = g:termdebug_wide
-      " If we make the Vim window wider, use the whole left halve for the debug
+      " If we make the Vim window wider, use the whole left half for the debug
       " windows.
       let s:allleft = 1
     endif
@@ -1051,10 +1051,10 @@ func s:GetEvaluationExpression(range, arg)
   return expr
 endfunc
 
-" clean up expression that may got in because of range
+" clean up expression that may get in because of range
 " (newlines and surrounding whitespace)
 " As it can also be specified via ex-command for assignments this function
-" may not change the "content" parts (like replacing contained spaces
+" may not change the "content" parts (like replacing contained spaces)
 func s:CleanupExpr(expr)
   " replace all embedded newlines/tabs/...
   let expr = substitute(a:expr, '\_s', ' ', 'g')
@@ -1084,7 +1084,7 @@ func s:HandleEvaluate(msg)
         \ ->substitute('.*value="\(.*\)"', '\1', '')
         \ ->substitute('\\"', '"', 'g')
         \ ->substitute('\\\\', '\\', 'g')
-        "\ multi-byte characters arrive in octal form, replace everthing but NULL values
+        "\ multi-byte characters arrive in octal form, replace everything but NULL values
         \ ->substitute('\\000', s:NullRepl, 'g')
         \ ->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
         "\ Note: GDB docs also mention hex encodings - the translations below work

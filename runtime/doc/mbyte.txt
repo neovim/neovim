@@ -489,8 +489,8 @@ Use the RPM or port for your system.
     window specific to the input method.
 
 
-USING XIM			*multibyte-input* *E284* *E286* *E287* *E288*
-				*E285* *E289*
+USING XIM			*multibyte-input* *E284* *E285* *E286* *E287*
+					*E288* *E289*
 
 Note that Display and Input are independent.  It is possible to see your
 language even though you have no input method for it.  But when your Display

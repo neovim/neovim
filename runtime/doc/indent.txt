@@ -872,7 +872,7 @@ For example, with N = 1, this will give:
 							*PHP_outdentphpescape*
 To indent PHP escape tags as the surrounding non-PHP code (only affects the
 PHP escape tags): >
-:let g:PHP_outdentphpescape = 0
+    :let g:PHP_outdentphpescape = 0
 -------------
 
 							*PHP_removeCRwhenUnix*
@@ -1199,7 +1199,7 @@ comments will be indented according to the correctly indented code.
 
 
 VIM							*ft-vim-indent*
-
+							*g:vim_indent_cont*
 For indenting Vim scripts there is one variable that specifies the amount of
 indent for a continuation line, a line that starts with a backslash: >
 

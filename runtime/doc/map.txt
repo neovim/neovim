@@ -82,8 +82,7 @@ modes.
 			map command applies.  The mapping may remain defined
 			for other modes where it applies.
 			It also works when {lhs} matches the {rhs} of a
-			mapping. This is for when when an abbreviation
-			applied.
+			mapping. This is for when an abbreviation applied.
 			Note: Trailing spaces are included in the {lhs}.  This
 			unmap does NOT work: >
 				:map @@ foo

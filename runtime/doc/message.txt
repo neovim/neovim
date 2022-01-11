@@ -112,7 +112,8 @@ wiped out a buffer which contains a mark or is referenced in another way.
 							*E95*  >
   Buffer with this name already exists
 
-You cannot have two buffers with the same name.
+You cannot have two buffers with exactly the same name.  This includes the
+path leading to the file.
 
 							*E72*  >
   Close error on swap file
@@ -513,10 +514,10 @@ If you type "gq", it will execute this mapping, which will call "gq" again.
 							*E22*  >
   Scripts nested too deep
 
-Scripts can be read with the "-s" command-line argument and with the ":source"
-command.  The script can then again read another script.  This can continue
-for about 14 levels.  When more nesting is done, Vim assumes that there is a
-recursive loop somewhere and stops with this error message.
+Scripts can be read with the "-s" command-line argument and with the
+`:source!` command.  The script can then again read another script.  This can
+continue for about 14 levels.  When more nesting is done, Vim assumes that
+there is a recursive loop and stops with this error message.
 
 							*E300*  >
   Swap file already exists (symlink attack?)
@@ -686,6 +687,7 @@ Ex command or function was given an invalid argument. Or |jobstart()| or
   Trailing characters
 
 An argument was given to an Ex command that does not permit one.
+Or the argument has invalid characters and has not been recognized.
 
 							*E477* *E478*  >
   No ! allowed

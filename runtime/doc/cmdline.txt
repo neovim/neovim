@@ -697,7 +697,8 @@ Line numbers may be specified with:		*:range* *{address}*
 
 Each may be followed (several times) by '+' or '-' and an optional number.
 This number is added or subtracted from the preceding line number.  If the
-number is omitted, 1 is used.
+number is omitted, 1 is used.  If there is nothing before the '+' or '-' then
+the current line is used.
 
 The "/" and "?" after {pattern} are required to separate the pattern from
 anything that follows.
@@ -727,7 +728,7 @@ Some commands allow for a count after the command.  This count is used as the
 number of lines to be used, starting with the line given in the last line
 specifier (the default is the cursor line).  The commands that accept a count
 are the ones that use a range but do not have a file name argument (because
-a file name can also be a number).
+a file name can also be a number).  The count cannot be negative.
 
 Examples: >
 	:s/x/X/g 5	substitute 'x' by 'X' in the current line and four

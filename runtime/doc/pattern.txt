@@ -304,7 +304,7 @@ the pattern.
 ==============================================================================
 2. The definition of a pattern		*search-pattern* *pattern* *[pattern]*
 					*regular-expression* *regexp* *Pattern*
-					*E76* *E383* *E476*
+					*E383* *E476*
 
 For starters, read chapter 27 of the user manual |usr_27.txt|.
 
@@ -1036,6 +1036,8 @@ match ASCII characters, as indicated by the range.
 
 \(\)	A pattern enclosed by escaped parentheses.	*/\(* */\(\)* */\)*
 	E.g., "\(^a\)" matches 'a' at the start of a line.
+	There can only be ten of these.  You can use "\%(" to add more, but
+	not counting it as a sub-expression.
 	*E51* *E54* *E55* *E872* *E873*
 
 \1      Matches the same string that was matched by	*/\1* *E65*
@@ -1058,7 +1060,7 @@ x	A single character, with no special meaning, matches itself
 \x	A backslash followed by a single character, with no special meaning,
 	is reserved for future expansions
 
-[]	(with 'nomagic': \[])		*/[]* */\[]* */\_[]* */collection*
+[]	(with 'nomagic': \[])		*/[]* */\[]* */\_[]* */collection* *E76*
 \_[]
 	A collection.  This is a sequence of characters enclosed in square
 	brackets.  It matches any single character in the collection.

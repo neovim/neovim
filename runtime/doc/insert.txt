@@ -830,7 +830,7 @@ space is preferred).  Maximum line length is 510 bytes.
 
 For an example, imagine the 'thesaurus' file has a line like this: >
 	angry furious mad enraged
-<Placing the cursor after the letters "ang" and typing CTRL-X CTRL-T would
+Placing the cursor after the letters "ang" and typing CTRL-X CTRL-T would
 complete the word "angry"; subsequent presses would change the word to
 "furious", "mad" etc.
 
@@ -842,7 +842,7 @@ https://github.com/vim/vim/issues/629#issuecomment-443293282
 Unpack thesaurus_pkg.zip, put the thesaurus.txt file somewhere, e.g.
 ~/.vim/thesaurus/english.txt, and the 'thesaurus' option to this file name.
 
-					
+
 Completing keywords with 'thesaurusfunc'		*compl-thesaurusfunc*
 
 If the 'thesaurusfunc' option is set, then the user specified function is

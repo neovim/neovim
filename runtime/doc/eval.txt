@@ -111,7 +111,7 @@ When mixing Number and Float the Number is converted to Float.  Otherwise
 there is no automatic conversion of Float.  You can use str2float() for String
 to Float, printf() for Float to String and float2nr() for Float to Number.
 
-						*E891* *E892* *E893* *E894*
+					*E362* *E891* *E892* *E893* *E894* *E907*
 When expecting a Float a Number can also be used, but nothing else.
 
 					*no-type-checking*
@@ -1195,6 +1195,7 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 expr8->name([args])	method call			*method* *->*
 expr8->{lambda}([args])
 
+							*E260* *E276*
 For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
@@ -4574,8 +4575,10 @@ funcref({name} [, {arglist}] [, {dict}])
 		function {name} is redefined later.
 
 		Unlike |function()|, {name} must be an existing user function.
-		Also for autoloaded functions. {name} cannot be a builtin
-		function.
+		It only works for an autoloaded function if it has already
+		been loaded (to avoid mistakenly loading the autoload script
+		when only intending to use the function name, use |function()|
+		instead). {name} cannot be a builtin function.
 
 		Can also be used as a |method|: >
 			GetFuncname()->funcref([arg])
@@ -6892,7 +6895,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 			GetText()->match('word')
 			GetList()->match('word')
 <
-				*matchadd()* *E798* *E799* *E801* *E957*
+			*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -11063,7 +11066,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E130* *E131* *E933*
+				*:delf* *:delfunction* *E131* *E933*
 :delf[unction][!] {name}
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
@@ -13153,7 +13156,7 @@ code can be used: >
     unlet scriptnames_output
 
 ==============================================================================
-The sandbox					*eval-sandbox* *sandbox* *E48*
+The sandbox					*eval-sandbox* *sandbox*
 
 The 'foldexpr', 'formatexpr', 'includeexpr', 'indentexpr', 'statusline' and
 'foldtext' options may be evaluated in a sandbox.  This means that you are
@@ -13162,6 +13165,7 @@ safety for when these options are set from a modeline.  It is also used when
 the command from a tags file is executed and for CTRL-R = in the command line.
 The sandbox is also used for the |:sandbox| command.
 
+								*E48*
 These items are not allowed in the sandbox:
 	- changing the buffer text
 	- defining or changing mapping, autocommands, user commands

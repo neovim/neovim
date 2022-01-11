@@ -249,7 +249,7 @@ g8			Print the hex values of the bytes used in the
 			To enter |Terminal-mode| automatically: >
 			      autocmd TermOpen * startinsert
 <
-							*:!cmd* *:!* *E34*
+							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
 			The command runs in a non-interactive shell connected
@@ -261,6 +261,7 @@ g8			Print the hex values of the bytes used in the
 			Use |jobstart()| instead. >
 				:call jobstart('foo', {'detach':1})
 <
+							*E34*
 			Any "!" in {cmd} is replaced with the previous
 			external command (see also 'cpoptions'), unless
 			escaped by a backslash.  Example: ":!ls" followed by

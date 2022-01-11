@@ -304,7 +304,7 @@ value to the local value, it doesn't switch back to using the global value
 This will make the local value of 'path' empty, so that the global value is
 used.  Thus it does the same as: >
 	:setlocal path=
-Note: In the future more global options can be made global-local.  Using
+Note: In the future more global options can be made |global-local|.  Using
 ":setlocal" on a global option might work differently then.
 
 
@@ -686,10 +686,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Write the contents of the file, if it has been modified, on each
 	`:next`, `:rewind`, `:last`, `:first`, `:previous`, `:stop`,
 	`:suspend`, `:tag`, `:!`, `:make`, CTRL-] and CTRL-^ command; and when
-	a :buffer, CTRL-O, CTRL-I, '{A-Z0-9}, or `{A-Z0-9} command takes one
+	a `:buffer`, CTRL-O, CTRL-I, '{A-Z0-9}, or `{A-Z0-9} command takes one
 	to another file.
 	A buffer is not written if it becomes hidden, e.g. when 'bufhidden' is
-	set to "hide" and `:next` is used
+	set to "hide" and `:next` is used.
 	Note that for some commands the 'autowrite' option is not used, see
 	'autowriteall' for that.
 	Some buffers will not be written, specifically when 'buftype' is
@@ -5131,7 +5131,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Don't include both "curdir" and "sesdir". When neither is included
 	filenames are stored as absolute paths.
-
+	If you leave out "options" many things won't work well after restoring
+	the session.
 				*'shada'* *'sd'* *E526* *E527* *E528*
 'shada' 'sd'		string	(Vim default for
 				   Win32:  !,'100,<50,s10,h,rA:,rB:
