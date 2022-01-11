@@ -76,7 +76,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
       end;
       flags = {
         allow_incremental_sync = options.allow_incremental_sync or false;
-        debounce_text_changes = 0;
+        debounce_text_changes = options.debounce_text_changes or 0;
       };
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
@@ -929,7 +929,60 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "basic_check_buffer_open_and_change_incremental";
-        options = { allow_incremental_sync = true };
+        options = {
+          allow_incremental_sync = true,
+        };
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
+          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
+          exec_lua [[
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          if ctx.method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "123boop";
+              })
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == 'finish' then
+            client.stop()
+          end
+        end;
+      }
+    end)
+    it('should check the body and didChange incremental with debounce', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change_incremental";
+        options = {
+          allow_incremental_sync = true,
+          debounce_text_changes = 5
+        };
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
