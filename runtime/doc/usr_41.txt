@@ -549,7 +549,7 @@ A "&" character is prepended to "path", thus the argument to eval() is
 
 Vim defines many functions and provides a large amount of functionality that
 way.  A few examples will be given in this section.  You can find the whole
-list here: |functions|.
+list below: |function-list|.
 
 A function is called with the ":call" command.  The parameters are passed in
 between parentheses separated by commas.  Example: >
@@ -588,8 +588,8 @@ after the substitute() call.
 FUNCTIONS						*function-list*
 
 There are many functions.  We will mention them here, grouped by what they are
-used for.  You can find an alphabetical list here: |functions|.  Use CTRL-] on
-the function name to jump to detailed help on it.
+used for.  You can find an alphabetical list here: |builtin-function-list|.
+Use CTRL-] on the function name to jump to detailed help on it.
 
 String manipulation:					*string-functions*
 	nr2char()		get a character by its number value
