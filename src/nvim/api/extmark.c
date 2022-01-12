@@ -603,11 +603,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool strict = true;
   OPTION_TO_BOOL(strict, strict, true);
 
-  if (line < 0 ) {
+  if (line < 0) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
     goto error;
-  }
-  else if (line > buf->b_ml.ml_line_count) {
+  } else if (line > buf->b_ml.ml_line_count) {
     if (strict) {
       api_set_error(err, kErrorTypeValidation, "line value outside range");
       goto error;
@@ -627,7 +626,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else {
       col = (Integer)len;
     }
-  } else if (col < -1 ) {
+  } else if (col < -1) {
     api_set_error(err, kErrorTypeValidation, "col value outside range");
     goto error;
   }
