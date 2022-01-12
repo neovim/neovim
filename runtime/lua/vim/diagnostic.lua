@@ -30,7 +30,7 @@ M.handlers = setmetatable({}, {
   __newindex = function(t, name, handler)
     vim.validate { handler = {handler, "t" } }
     rawset(t, name, handler)
-    if not global_diagnostic_options[name] then
+    if global_diagnostic_options[name] == nil then
       global_diagnostic_options[name] = true
     end
   end,
@@ -552,7 +552,8 @@ end
 ---         - `table`: Enable this feature with overrides. Use an empty table to use default values.
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
----@param opts table Configuration table with the following keys:
+---@param opts table|nil When omitted or "nil", retrieve the current configuration. Otherwise, a
+---                      configuration table with the following keys:
 ---       - underline: (default true) Use underline for diagnostics. Options:
 ---                    * severity: Only underline diagnostics matching the given severity
 ---                    |diagnostic-severity|
@@ -599,7 +600,7 @@ end
 ---                            global diagnostic options.
 function M.config(opts, namespace)
   vim.validate {
-    opts = { opts, 't' },
+    opts = { opts, 't', true },
     namespace = { namespace, 'n', true },
   }
 
@@ -611,10 +612,13 @@ function M.config(opts, namespace)
     t = global_diagnostic_options
   end
 
-  for opt in pairs(global_diagnostic_options) do
-    if opts[opt] ~= nil then
-      t[opt] = opts[opt]
-    end
+  if not opts then
+    -- Return current config
+    return vim.deepcopy(t)
+  end
+
+  for k, v in pairs(opts) do
+    t[k] = v
   end
 
   if namespace then
@@ -823,6 +827,7 @@ M.handlers.signs = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
@@ -890,6 +895,7 @@ M.handlers.underline = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.underline and opts.underline.severity then
       diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
@@ -942,6 +948,7 @@ M.handlers.virtual_text = {
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     local severity
     if opts.virtual_text then
