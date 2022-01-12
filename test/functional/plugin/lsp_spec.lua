@@ -2333,6 +2333,27 @@ describe('LSP', function()
     end)
   end)
 
+  describe('lsp.util.convert_signature_help_to_markdown_lines', function()
+    it('can handle negative activeSignature', function()
+      local result = exec_lua[[
+        local signature_help = {
+          activeParameter = 0,
+          activeSignature = -1,
+          signatures = {
+            {
+              documentation = "",
+              label = "TestEntity.TestEntity()",
+              parameters = {}
+            },
+          }
+        }
+        return vim.lsp.util.convert_signature_help_to_markdown_lines(signature_help, 'cs', {','})
+      ]]
+      local expected = {'```cs', 'TestEntity.TestEntity()', '```', ''}
+      eq(expected, result)
+    end)
+  end)
+
   describe('lsp.util.get_effective_tabstop', function()
     local function test_tabstop(tabsize, softtabstop)
       exec_lua(string.format([[
