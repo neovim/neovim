@@ -400,3 +400,20 @@ func Test_winsize_cmd()
   call assert_fails('win_getid(1)', 'E475: Invalid argument: _getid(1)')
   " Actually changing the window size would be flaky.
 endfunc
+
+"Test for overflow in case of a large count to :yank
+func Test_address_line_overflow()
+  if v:sizeoflong < 8
+	throw 'Skipped: only works with 64 bit long ints'
+  endif
+  new
+  call setline(1, range(100))
+  call assert_fails('|.44444444444444444444444', 'E1247:')
+  call assert_fails('|.9223372036854775806', 'E1247:')
+
+  $
+  yank 77777777777777777777
+  call assert_equal("99\n", @")
+
+  bwipe!
+endfunc

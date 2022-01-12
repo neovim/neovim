@@ -1784,8 +1784,11 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
         ea.addr_count = 1;
       }
     } else {
-      ea.line1 = ea.line2;
-      ea.line2 += n - 1;
+		ea.line1 = ea.line2;
+		if (ea.line2 >= LONG_MAX - (n - 1))
+			ea.line2 = LONG_MAX;  // avoid overflow
+		else
+			ea.line2 += n - 1;
       ++ea.addr_count;
       // Be vi compatible: no error message for out of range.
       if (ea.line2 > curbuf->b_ml.ml_line_count) {
