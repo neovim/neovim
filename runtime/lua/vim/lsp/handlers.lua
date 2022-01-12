@@ -111,13 +111,15 @@ M['client/registerCapability'] = function(_, _, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-M['workspace/applyEdit'] = function(_, workspace_edit)
+M['workspace/applyEdit'] = function(_, workspace_edit, ctx)
   if not workspace_edit then return end
   -- TODO(ashkan) Do something more with label?
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
   if workspace_edit.label then
     print("Workspace edit", workspace_edit.label)
   end
-  local status, result = pcall(util.apply_workspace_edit, workspace_edit.edit)
+  local status, result = pcall(util.apply_workspace_edit, workspace_edit.edit, client.offset_encoding)
   return {
     applied = status;
     failureReason = result;
@@ -159,6 +161,28 @@ M['textDocument/codeLens'] = function(...)
 end
 
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+M['textDocument/references'] =function(_, result, ctx, config)
+  if not result or vim.tbl_isempty(result) then
+    vim.notify('No references found')
+  else
+    config = config or {}
+    if config.loclist then
+      vim.fn.setloclist(0, {}, ' ', {
+        title = 'Language Server';
+        items = util.locations_to_items(result, ctx.offset_encoding);
+      })
+      api.nvim_command("lopen")
+    else
+      vim.fn.setqflist({}, ' ', {
+        title = 'Language Server';
+        items = util.locations_to_items(result, ctx.offset_encoding);
+      })
+      api.nvim_command("botright copen")
+    end
+  end
+end
+
 
 ---@private
 --- Return a function that converts LSP responses to list items and opens the list
@@ -193,9 +217,6 @@ local function response_to_list(map_result, entity)
   end
 end
 
-
---see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = response_to_list(util.locations_to_items, 'references')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
 M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols')
@@ -277,19 +298,23 @@ local function location_handler(_, result, ctx, _)
     local _ = log.info() and log.info(ctx.method, 'No location found')
     return nil
   end
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
 
   if vim.tbl_islist(result) then
-    util.jump_to_location(result[1])
+    util.jump_to_location(result[1], client.offset_encoding)
 
     if #result > 1 then
-      vim.fn.setqflist({}, ' ', {title = 'LSP locations', items = util.locations_to_items(result)})
+      vim.fn.setqflist({}, ' ', {
+        title = 'LSP locations',
+        items = util.locations_to_items(result, client.offset_encoding)
+      })
       api.nvim_command("copen")
     end
   else
-    util.jump_to_location(result)
+    util.jump_to_location(result, client.offset_encoding)
   end
 end
 
