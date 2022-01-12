@@ -4437,11 +4437,7 @@ static void nv_ident(cmdarg_T *cap)
       // Start insert mode in terminal buffer
       restart_edit = 'i';
 
-      add_map((char_u *)"<buffer> <esc> <Cmd>call jobstop(&channel)<CR>", TERM_FOCUS, true);
-      do_cmdline_cmd("autocmd TermClose <buffer> "
-                     " if !v:event.status |"
-                     "   exec 'bdelete! ' .. expand('<abuf>') |"
-                     " endif");
+      add_map((char_u *)"<buffer> <esc> <Cmd>bdelete!<CR>", TERM_FOCUS, true);
     }
   }
 
