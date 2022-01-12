@@ -759,6 +759,10 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     PUT(hl, "strikethrough", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_OVERLINE) {
+    PUT(hl, "overline", BOOLEAN_OBJ(true));
+  }
+
   if (use_rgb) {
     if (mask & HL_FG_INDEXED) {
       PUT(hl, "fg_indexed", BOOLEAN_OBJ(true));
@@ -817,6 +821,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       { "standout", HL_STANDOUT },
       { "underline", HL_UNDERLINE },
       { "undercurl", HL_UNDERCURL },
+      { "overline", HL_OVERLINE },
       { "italic", HL_ITALIC },
       { "reverse", HL_INVERSE },
       { "default", HL_DEFAULT },
