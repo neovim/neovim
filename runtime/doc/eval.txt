@@ -7173,8 +7173,8 @@ mkdir({name} [, {path} [, {prot}]])
 		unreadable for others.
 
 		{prot} is applied for all parts of {name}.  Thus if you create
-		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
-			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
+		/tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >
+			:call mkdir($HOME . "/tmp/foo/bar", "p", 0o700)
 <		This function is not available in the |sandbox|.
 
 		If you try to create an existing directory with {path} set to
