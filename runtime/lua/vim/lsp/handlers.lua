@@ -225,9 +225,10 @@ M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'docu
 M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
-M['textDocument/rename'] = function(_, result, _)
+M['textDocument/rename'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_workspace_edit(result)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_workspace_edit(result, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting

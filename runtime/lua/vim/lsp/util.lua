@@ -737,7 +737,8 @@ end
 
 --- Applies a `WorkspaceEdit`.
 ---
----@param workspace_edit (table) `WorkspaceEdit`
+---@param workspace_edit table `WorkspaceEdit`
+---@param offset_encoding string utf-8|utf-16|utf-32 (required)
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, offset_encoding)
   if offset_encoding == nil then
