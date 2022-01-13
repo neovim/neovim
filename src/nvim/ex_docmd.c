@@ -7825,7 +7825,6 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
 /// @return true if the directory is successfully changed.
 bool changedir_func(char_u *new_dir, CdScope scope)
 {
-  char_u *tofree;
   char_u *pdir = NULL;
   bool retval = false;
 
@@ -7843,24 +7842,10 @@ bool changedir_func(char_u *new_dir, CdScope scope)
     new_dir = pdir;
   }
 
-  // Free the previous directory
-  tofree = get_prevdir(scope);
-
   if (os_dirname(NameBuff, MAXPATHL) == OK) {
     pdir = vim_strsave(NameBuff);
   } else {
     pdir = NULL;
-  }
-
-  switch (scope) {
-  case kCdScopeTabpage:
-    curtab->tp_prevdir = pdir;
-    break;
-  case kCdScopeWindow:
-    curwin->w_prevdir = pdir;
-    break;
-  default:
-    prev_dir = pdir;
   }
 
   // For UNIX ":cd" means: go to home directory.
@@ -7878,12 +7863,27 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   bool dir_differs = new_dir == NULL || pdir == NULL
                      || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
   if (new_dir != NULL && (!dir_differs || vim_chdir(new_dir) == 0)) {
+    char_u **pp;
+
+    switch (scope) {
+    case kCdScopeTabpage:
+      pp = &curtab->tp_prevdir;
+      break;
+    case kCdScopeWindow:
+      pp = &curwin->w_prevdir;
+      break;
+    default:
+      pp = &prev_dir;
+    }
+    xfree(*pp);
+    *pp = pdir;
+
     post_chdir(scope, dir_differs);
     retval = true;
   } else {
     emsg(_(e_failed));
+    xfree(pdir);
   }
-  xfree(tofree);
 
   return retval;
 }
