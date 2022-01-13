@@ -771,7 +771,7 @@ function M.apply_workspace_edit(workspace_edit, offset_encoding)
 
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
-    M.apply_text_edits(changes, bufnr)
+    M.apply_text_edits(changes, bufnr, offset_encoding)
   end
 end
 
