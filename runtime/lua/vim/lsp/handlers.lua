@@ -162,21 +162,23 @@ end
 
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] =function(_, result, ctx, config)
+M['textDocument/references'] = function(_, result, ctx, config)
   if not result or vim.tbl_isempty(result) then
     vim.notify('No references found')
   else
     config = config or {}
     if config.loclist then
       vim.fn.setloclist(0, {}, ' ', {
-        title = 'Language Server';
+        title = 'References';
         items = util.locations_to_items(result, ctx.offset_encoding);
+        context = ctx;
       })
       api.nvim_command("lopen")
     else
       vim.fn.setqflist({}, ' ', {
-        title = 'Language Server';
+        title = 'References';
         items = util.locations_to_items(result, ctx.offset_encoding);
+        context = ctx;
       })
       api.nvim_command("botright copen")
     end
@@ -193,23 +195,26 @@ end
 ---   loclist: (boolean) use the location list (default is to use the quickfix list)
 ---
 ---@param map_result function `((resp, bufnr) -> list)` to convert the response
----@param entity name of the resource used in a `not found` error message
-local function response_to_list(map_result, entity)
-  return function(_,result, ctx, config)
+---@param entity string name of the resource used in a `not found` error message
+---@param title_fn function Function to call to generate list title
+local function response_to_list(map_result, entity, title_fn)
+  return function(_, result, ctx, config)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No ' .. entity .. ' found')
     else
       config = config or {}
       if config.loclist then
         vim.fn.setloclist(0, {}, ' ', {
-          title = 'Language Server';
+          title = title_fn(ctx);
           items = map_result(result, ctx.bufnr);
+          context = ctx;
         })
         api.nvim_command("lopen")
       else
         vim.fn.setqflist({}, ' ', {
-          title = 'Language Server';
+          title = title_fn(ctx);
           items = map_result(result, ctx.bufnr);
+          context = ctx;
         })
         api.nvim_command("botright copen")
       end
@@ -219,10 +224,15 @@ end
 
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols')
+M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols', function(ctx)
+  local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ":.")
+  return string.format('Symbols in %s', fname)
+end)
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols')
+M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
+  return string.format("Symbols matching '%s'", ctx.params.query)
+end)
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, result, ctx, _)
