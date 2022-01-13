@@ -1621,37 +1621,38 @@ function lsp.omnifunc(findstart, base)
   local params = util.make_position_params()
 
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
-    if err or not result or vim.fn.mode() ~= "i" then return end
+  local results = lsp.buf_request_sync(bufnr, 'textDocument/completion', params, 2000)
 
-    -- Completion response items may be relative to a position different than `textMatch`.
-    -- Concrete example, with sumneko/lua-language-server:
-    --
-    -- require('plenary.asy|
-    --         ▲       ▲   ▲
-    --         │       │   └── cursor_pos: 20
-    --         │       └────── textMatch: 17
-    --         └────────────── textEdit.range.start.character: 9
-    --                                 .newText = 'plenary.async'
-    --                  ^^^
-    --                  prefix (We'd remove everything not starting with `asy`,
-    --                  so we'd eliminate the `plenary.async` result
-    --
-    -- `adjust_start_col` is used to prefer the language server boundary.
-    --
-    local client = lsp.get_client_by_id(ctx.client_id)
+  if not results or vim.fn.mode() ~= "i" then return end
+
+  -- Completion response items may be relative to a position different than `textMatch`.
+  -- Concrete example, with sumneko/lua-language-server:
+  --
+  -- require('plenary.asy|
+  --         ▲       ▲   ▲
+  --         │       │   └── cursor_pos: 20
+  --         │       └────── textMatch: 17
+  --         └────────────── textEdit.range.start.character: 9
+  --                                 .newText = 'plenary.async'
+  --                  ^^^
+  --                  prefix (We'd remove everything not starting with `asy`,
+  --                  so we'd eliminate the `plenary.async` result
+  --
+  -- `adjust_start_col` is used to prefer the language server boundary.
+  --
+  local startbyte
+  for client_id, item in pairs(results) do
+    local client = lsp.get_client_by_id(client_id)
     local encoding = client and client.offset_encoding or 'utf-16'
-    local candidates = util.extract_completion_items(result)
-    local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
+    local candidates = util.extract_completion_items(item.result)
+    startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
     local prefix = line:sub(startbyte + 1, pos[2])
-    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
-    -- TODO(ashkan): is this the best way to do this?
-    vim.list_extend(items, matches)
-    vim.fn.complete(startbyte + 1, items)
-  end)
+    local matches = util.text_document_completion_list_to_complete_items(item.result, prefix)
 
-  -- Return -2 to signal that we should continue completion so that we can
-  -- async complete.
+    vim.list_extend(items, matches)
+  end
+  vim.fn.complete(startbyte + 1, items)
+
   return -2
 end
 
