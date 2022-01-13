@@ -17,12 +17,16 @@ typedef enum {
   kVTRightAlign,
 } VirtTextPos;
 
+EXTERN const char *const virt_text_pos_str[] INIT(= { "eol", "overlay", "win_col", "right_align" });
+
 typedef enum {
   kHlModeUnknown,
   kHlModeReplace,
   kHlModeCombine,
   kHlModeBlend,
 } HlMode;
+
+EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend" });
 
 typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
