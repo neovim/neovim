@@ -286,7 +286,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- When on the first character, we can ignore the difference between byte and
   -- character
   if col > 0 then
-    local line = get_line(bufnr, position.line)
+    local line = get_line(bufnr, position.line) or ''
     local ok, result
     ok, result = pcall(_str_byteindex_enc, line, col, offset_encoding)
     if ok then
@@ -402,25 +402,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end)
 
-  -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
-  local has_eol_text_edit = false
-  local max = vim.api.nvim_buf_line_count(bufnr)
-  local len = _str_utfindex_enc(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '', nil, offset_encoding)
-  text_edits = vim.tbl_map(function(text_edit)
-    if max <= text_edit.range.start.line then
-      text_edit.range.start.line = max - 1
-      text_edit.range.start.character = len
-      text_edit.newText = '\n' .. text_edit.newText
-      has_eol_text_edit = true
-    end
-    if max <= text_edit.range['end'].line then
-      text_edit.range['end'].line = max - 1
-      text_edit.range['end'].character = len
-      has_eol_text_edit = true
-    end
-    return text_edit
-  end, text_edits)
-
   -- Some LSP servers are depending on the VSCode behavior.
   -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
   local is_current_buf = vim.api.nvim_get_current_buf() == bufnr
@@ -440,16 +421,35 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Apply text edits.
   local is_cursor_fixed = false
+  local has_eol_text_edit = false
   for _, text_edit in ipairs(text_edits) do
+    -- Convert from LSP style ranges to Neovim style ranges.
     local e = {
       start_row = text_edit.range.start.line,
-      start_col = get_line_byte_from_position(bufnr, text_edit.range.start),
+      start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
-      end_col  = get_line_byte_from_position(bufnr, text_edit.range['end']),
+      end_col  = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
       text = vim.split(text_edit.newText, '\n', true),
     }
+
+    -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
+    local max = vim.api.nvim_buf_line_count(bufnr)
+    if max <= e.start_row or max <= e.end_row then
+      local len = #(get_line(bufnr, max - 1) or '')
+      if max <= e.start_row then
+        e.start_row = max - 1
+        e.start_col = len
+        table.insert(e.text, 1, '')
+      end
+      if max <= e.end_row then
+        e.end_row = max - 1
+        e.end_col = len
+      end
+      has_eol_text_edit = true
+    end
     vim.api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
 
+    -- Fix cursor position.
     local row_count = (e.end_row - e.start_row) + 1
     if e.end_row < cursor.row then
       cursor.row = cursor.row + (#e.text - row_count)
@@ -464,10 +464,13 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end
 
+  local max = vim.api.nvim_buf_line_count(bufnr)
+
+  -- Apply fixed cursor position.
   if is_cursor_fixed then
     local is_valid_cursor = true
-    is_valid_cursor = is_valid_cursor and cursor.row < vim.api.nvim_buf_line_count(bufnr)
-    is_valid_cursor = is_valid_cursor and cursor.col <= #(vim.api.nvim_buf_get_lines(bufnr, cursor.row, cursor.row + 1, false)[1] or '')
+    is_valid_cursor = is_valid_cursor and cursor.row < max
+    is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, max - 1) or '')
     if is_valid_cursor then
       vim.api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
@@ -476,7 +479,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   -- Remove final line if needed
   local fix_eol = has_eol_text_edit
   fix_eol = fix_eol and api.nvim_buf_get_option(bufnr, 'fixeol')
-  fix_eol = fix_eol and (vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '') == ''
+  fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end

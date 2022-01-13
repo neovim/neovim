@@ -1375,6 +1375,20 @@ describe('LSP', function()
         'foobar';
       }, buf_lines(1))
     end)
+    it('applies multiple text edits at the end of the document', function()
+      local edits = {
+        make_edit(4, 0, 5, 0, "");
+        make_edit(5, 0, 5, 0, "foobar");
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'First line of text';
+        'Second line of text';
+        'Third line of text';
+        'Fourth line of text';
+        'foobar';
+      }, buf_lines(1))
+    end)
 
     describe('cursor position', function()
       it('don\'t fix the cursor if the range contains the cursor', function()
