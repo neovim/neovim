@@ -16,19 +16,27 @@ describe('search cmdline', function()
     command('set nohlsearch')
     screen = Screen.new(20, 3)
     screen:attach()
-    screen:set_default_attr_ids({
-      inc = {reverse = true},
+    screen:set_default_attr_ids {
+      inc = { reverse = true },
       err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       more = { bold = true, foreground = Screen.colors.SeaGreen4 },
       tilde = { bold = true, foreground = Screen.colors.Blue1 },
       hl = { background = Screen.colors.Yellow },
-    })
+    }
   end)
 
   local function tenlines()
     funcs.setline(1, {
-      '  1', '  2 these', '  3 the', '  4 their', '  5 there',
-      '  6 their', '  7 the', '  8 them', '  9 these', ' 10 foobar'
+      '  1',
+      '  2 these',
+      '  3 the',
+      '  4 their',
+      '  5 there',
+      '  6 their',
+      '  7 the',
+      '  8 them',
+      '  9 these',
+      ' 10 foobar',
     })
     command('1')
   end
@@ -46,7 +54,7 @@ describe('search cmdline', function()
   describe('can traverse matches', function()
     before_each(tenlines)
     local function forwarditer(wrapscan)
-      command('set incsearch '..wrapscan)
+      command('set incsearch ' .. wrapscan)
       feed('/the')
       screen:expect([[
           1                 |
@@ -59,7 +67,7 @@ describe('search cmdline', function()
           3 {inc:the}             |
         /the^                |
       ]])
-      eq({0, 0, 0, 0}, funcs.getpos('"'))
+      eq({ 0, 0, 0, 0 }, funcs.getpos('"'))
       feed('<C-G>')
       screen:expect([[
           3 the             |
@@ -105,20 +113,23 @@ describe('search cmdline', function()
           /the^                |
         ]])
       else
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
             8 them            |
             9 {inc:the}se           |
           /the^                |
-        ]], condition=function()
-          eq(true, screen.bell)
-        end}
+        ]],
+          condition = function()
+            eq(true, screen.bell)
+          end,
+        }
         feed('<CR>')
-        eq({0, 0, 0, 0}, funcs.getpos('"'))
+        eq({ 0, 0, 0, 0 }, funcs.getpos('"'))
       end
     end
 
     local function backiter(wrapscan)
-      command('set incsearch '..wrapscan)
+      command('set incsearch ' .. wrapscan)
       command('$')
 
       feed('?the')
@@ -143,13 +154,16 @@ describe('search cmdline', function()
         ]])
       else
         feed('<C-G>')
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
             9 {inc:the}se           |
            10 foobar          |
           ?the^                |
-        ]], condition=function()
-          eq(true, screen.bell)
-        end}
+        ]],
+          condition = function()
+            eq(true, screen.bell)
+          end,
+        }
         feed('<CR>')
         screen:expect([[
             9 ^these           |
@@ -192,13 +206,16 @@ describe('search cmdline', function()
           ?the^                |
         ]])
       else
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
             2 {inc:the}se           |
             3 the             |
           ?the^                |
-        ]], condition=function()
-          eq(true, screen.bell)
-        end}
+        ]],
+          condition = function()
+            eq(true, screen.bell)
+          end,
+        }
       end
     end
 
@@ -438,9 +455,10 @@ describe('search cmdline', function()
        10 ^foobar          |
       /fo                 |
     ]])
-    eq({lnum = 10, leftcol = 0, col = 4, topfill = 0, topline = 6,
-        coladd = 0, skipcol = 0, curswant = 4},
-       funcs.winsaveview())
+    eq(
+      { lnum = 10, leftcol = 0, col = 4, topfill = 0, topline = 6, coladd = 0, skipcol = 0, curswant = 4 },
+      funcs.winsaveview()
+    )
   end)
 
   it('restores original view after failed search', function()
@@ -466,16 +484,17 @@ describe('search cmdline', function()
       {more:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
-    eq({lnum = 1, leftcol = 0, col = 0, topfill = 0, topline = 1,
-        coladd = 0, skipcol = 0, curswant = 0},
-       funcs.winsaveview())
+    eq(
+      { lnum = 1, leftcol = 0, col = 0, topfill = 0, topline = 1, coladd = 0, skipcol = 0, curswant = 0 },
+      funcs.winsaveview()
+    )
   end)
 
   it("CTRL-G with 'incsearch' and ? goes in the right direction", function()
     -- oldtest: Test_search_cmdline4().
     screen:try_resize(40, 4)
     command('enew!')
-    funcs.setline(1, {'  1 the first', '  2 the second', '  3 the third'})
+    funcs.setline(1, { '  1 the first', '  2 the second', '  3 the third' })
     command('set laststatus=0 shortmess+=s')
     command('set incsearch')
     command('$')
@@ -576,7 +595,7 @@ describe('search cmdline', function()
     -- oldtest: Test_incsearch_sort_dump().
     screen:try_resize(20, 4)
     command('set incsearch hlsearch scrolloff=0')
-    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+    funcs.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
 
     feed(':sort ni u /on')
     screen:expect([[
@@ -592,7 +611,7 @@ describe('search cmdline', function()
     -- oldtest: Test_incsearch_vimgrep_dump().
     screen:try_resize(30, 4)
     command('set incsearch hlsearch scrolloff=0')
-    funcs.setline(1, {'another one 2', 'that one 3', 'the one 1'})
+    funcs.setline(1, { 'another one 2', 'that one 3', 'the one 1' })
 
     feed(':vimgrep on')
     screen:expect([[

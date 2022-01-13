@@ -25,8 +25,8 @@ describe('execute()', function()
   end)
 
   it('captures the concatenated outputs of a List of commands', function()
-    eq("foobar", funcs.execute({'echon "foo"', 'echon "bar"'}))
-    eq("\nfoo\nbar", funcs.execute({'echo "foo"', 'echo "bar"'}))
+    eq('foobar', funcs.execute { 'echon "foo"', 'echon "bar"' })
+    eq('\nfoo\nbar', funcs.execute { 'echo "foo"', 'echo "bar"' })
   end)
 
   it('supports nested execute("execute(...)")', function()
@@ -85,7 +85,7 @@ describe('execute()', function()
   end)
 
   it('returns empty string if the argument list is empty', function()
-    eq('', funcs.execute({}))
+    eq('', funcs.execute {})
     eq(0, exc_exec('let g:ret = execute(v:_null_list)'))
     eq('', eval('g:ret'))
   end)
@@ -107,15 +107,15 @@ describe('execute()', function()
   end)
 
   it('captures output with highlights', function()
-    eq('\nErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
-       eval('execute("hi ErrorMsg")'))
+    eq('\nErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red', eval('execute("hi ErrorMsg")'))
   end)
 
   it('does not corrupt the command display #5422', function()
     local screen = Screen.new(70, 7)
     screen:attach()
     feed(':echo execute("hi ErrorMsg")<CR>')
-    screen:expect([[
+    screen:expect(
+      [[
                                                                             |
       {1:~                                                                     }|
       {1:~                                                                     }|
@@ -123,11 +123,13 @@ describe('execute()', function()
                                                                             |
       ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
       {3:Press ENTER or type command to continue}^                               |
-    ]], {
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
+    ]],
+      {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { bold = true, reverse = true },
+        [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      }
+    )
     feed('<CR>')
   end)
 
@@ -266,7 +268,7 @@ describe('execute()', function()
   -- with how nvim currently displays the output.
   it('captures shell-command output', function()
     local win_lf = iswin() and '\13' or ''
-    eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
+    eq('\n:!echo foo\r\n\nfoo' .. win_lf .. '\n', funcs.execute('!echo foo'))
   end)
 
   describe('{silent} argument', function()
@@ -298,13 +300,16 @@ describe('execute()', function()
       eq('42', eval('g:mes'))
 
       command('let g:mes = execute("echon 13", "silent")')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
       ^                                        |
       ~                                       |
       ~                                       |
       ~                                       |
                                               |
-      ]], unchanged=true}
+      ]],
+        unchanged = true,
+      }
       eq('13', eval('g:mes'))
     end)
 

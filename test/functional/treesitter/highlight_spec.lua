@@ -89,27 +89,30 @@ describe('treesitter highlighting', function()
     screen = Screen.new(65, 18)
     screen:attach()
     screen:set_default_attr_ids {
-      [1] = {bold = true, foreground = Screen.colors.Blue1};
-      [2] = {foreground = Screen.colors.Blue1};
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4};
-      [4] = {bold = true, foreground = Screen.colors.Brown};
-      [5] = {foreground = Screen.colors.Magenta};
-      [6] = {foreground = Screen.colors.Red};
-      [7] = {bold = true, foreground = Screen.colors.SlateBlue};
-      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
-      [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red};
-      [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red};
-      [11] = {foreground = Screen.colors.Cyan4};
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Blue1 },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [4] = { bold = true, foreground = Screen.colors.Brown },
+      [5] = { foreground = Screen.colors.Magenta },
+      [6] = { foreground = Screen.colors.Red },
+      [7] = { bold = true, foreground = Screen.colors.SlateBlue },
+      [8] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [9] = { foreground = Screen.colors.Magenta, background = Screen.colors.Red },
+      [10] = { foreground = Screen.colors.Red, background = Screen.colors.Red },
+      [11] = { foreground = Screen.colors.Cyan4 },
     }
 
     exec_lua([[ hl_query = ... ]], hl_query)
   end)
 
   it('is updated with edits', function()
-    if pending_c_parser(pending) then return end
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert(hl_text)
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       /// Schedule Lua callback on main loop's event queue             |
       static int nlua_schedule(lua_State *const lstate)                |
       {                                                                |
@@ -128,14 +131,16 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
-    exec_lua [[
+    exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")
       local highlighter = vim.treesitter.highlighter
       test_hl = highlighter.new(parser, {queries = {c = hl_query}})
-    ]]
-    screen:expect{grid=[[
+    ]])
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -154,11 +159,13 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
-    feed("5Goc<esc>dd")
+    feed('5Goc<esc>dd')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -177,10 +184,12 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
     feed('7Go*/<esc>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -199,10 +208,12 @@ describe('treesitter highlighting', function()
       }                                                                |
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
     feed('3Go/*<esc>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -221,11 +232,13 @@ describe('treesitter highlighting', function()
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
                                                                        |
-    ]]}
+    ]],
+    }
 
-    feed("gg$")
-    feed("~")
-    screen:expect{grid=[[
+    feed('gg$')
+    feed('~')
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queu^E}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -244,11 +257,12 @@ describe('treesitter highlighting', function()
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
                                                                        |
-    ]]}
+    ]],
+    }
 
-
-    feed("re")
-    screen:expect{grid=[[
+    feed('re')
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queu^e}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -267,18 +281,22 @@ describe('treesitter highlighting', function()
         {4:return} {5:0};                                                      |
       {8:}}                                                                |
                                                                        |
-    ]]}
+    ]],
+    }
   end)
 
   it('is updated with :sort', function()
-    if pending_c_parser(pending) then return end
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert(test_text)
-    exec_lua [[
+    exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
-    ]]
-    screen:expect{grid=[[
+    ]])
+    screen:expect {
+      grid = [[
         {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
         {3:bool} ext_widgets[kUIExtCount];                                 |
         {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
@@ -297,10 +315,12 @@ describe('treesitter highlighting', function()
         }                                                              |
       ^}                                                                |
                                                                        |
-    ]]}
+    ]],
+    }
 
-    feed ":sort<cr>"
-    screen:expect{grid=[[
+    feed(':sort<cr>')
+    screen:expect {
+      grid = [[
       ^                                                                 |
             ext_widgets[j] &= (ui->ui_ext[j] || inclusive);            |
           {3:UI} *ui = uis[i];                                             |
@@ -319,11 +339,13 @@ describe('treesitter highlighting', function()
         }                                                              |
       {3:void} ui_refresh({3:void})                                            |
       :sort                                                            |
-    ]]}
+    ]],
+    }
 
-    feed "u"
+    feed('u')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
         {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
         {3:bool} ext_widgets[kUIExtCount];                                 |
         {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
@@ -342,19 +364,23 @@ describe('treesitter highlighting', function()
         }                                                              |
       ^}                                                                |
       19 changes; before #2  {MATCH:.*}|
-    ]]}
+    ]],
+    }
   end)
 
-  it("supports with custom parser", function()
-    if pending_c_parser(pending) then return end
+  it('supports with custom parser', function()
+    if pending_c_parser(pending) then
+      return
+    end
 
     screen:set_default_attr_ids {
-      [1] = {bold = true, foreground = Screen.colors.SeaGreen4};
+      [1] = { bold = true, foreground = Screen.colors.SeaGreen4 },
     }
 
     insert(test_text)
 
-    screen:expect{ grid= [[
+    screen:expect {
+      grid = [[
       int width = INT_MAX, height = INT_MAX;                         |
       bool ext_widgets[kUIExtCount];                                 |
       for (UIExtension i = 0; (int)i < kUIExtCount; i++) {           |
@@ -373,9 +399,10 @@ describe('treesitter highlighting', function()
       }                                                              |
     ^}                                                                |
                                                                      |
-    ]] }
+    ]],
+    }
 
-    exec_lua [[
+    exec_lua([[
       parser = vim.treesitter.get_parser(0, "c")
       query = vim.treesitter.parse_query("c", "(declaration) @decl")
 
@@ -387,9 +414,10 @@ describe('treesitter highlighting', function()
       parser:set_included_regions({nodes})
 
       local hl = vim.treesitter.highlighter.new(parser, {queries = {c = "(identifier) @type"}})
-    ]]
+    ]])
 
-    screen:expect{ grid = [[
+    screen:expect {
+      grid = [[
       int {1:width} = {1:INT_MAX}, {1:height} = {1:INT_MAX};                         |
       bool {1:ext_widgets}[{1:kUIExtCount}];                                 |
       for (UIExtension {1:i} = 0; (int)i < kUIExtCount; i++) {           |
@@ -408,11 +436,14 @@ describe('treesitter highlighting', function()
       }                                                              |
     ^}                                                                |
                                                                      |
-    ]] }
+    ]],
+    }
   end)
 
-  it("supports injected languages", function()
-    if pending_c_parser(pending) then return end
+  it('supports injected languages', function()
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert([[
     int x = INT_MAX;
@@ -422,7 +453,8 @@ describe('treesitter highlighting', function()
                 }
     ]])
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       int x = INT_MAX;                                                 |
       #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))|
       #define foo void main() { \                                      |
@@ -441,17 +473,19 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
-    exec_lua [[
+    exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c", {
         injections = {c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}
       })
       local highlighter = vim.treesitter.highlighter
       test_hl = highlighter.new(parser, {queries = {c = hl_query}})
-    ]]
+    ]])
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {3:int} x = {5:INT_MAX};                                                 |
       #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
       #define foo {3:void} main() { \                                      |
@@ -470,11 +504,14 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
   end)
 
-  it("supports overriding queries, like ", function()
-    if pending_c_parser(pending) then return end
+  it('supports overriding queries, like ', function()
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert([[
     int x = INT_MAX;
@@ -484,15 +521,16 @@ describe('treesitter highlighting', function()
                 }
     ]])
 
-    exec_lua [[
+    exec_lua([[
       local injection_query = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
       require('vim.treesitter.query').set_query("c", "highlights", hl_query)
       require('vim.treesitter.query').set_query("c", "injections", injection_query)
 
       vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
-    ]]
+    ]])
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {3:int} x = {5:INT_MAX};                                                 |
       #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
       #define foo {3:void} main() { \                                      |
@@ -511,20 +549,24 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
   end)
 
-  it("supports highlighting with custom highlight groups", function()
-    if pending_c_parser(pending) then return end
+  it('supports highlighting with custom highlight groups', function()
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert(hl_text)
 
-    exec_lua [[
+    exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
-    ]]
+    ]])
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -543,12 +585,14 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
+    ]],
+    }
 
     -- This will change ONLY the literal strings to look like comments
     -- The only literal string is the "vim.schedule: expected function" in this test.
-    exec_lua [[vim.cmd("highlight link cString comment")]]
-    screen:expect{grid=[[
+    exec_lua([[vim.cmd("highlight link cString comment")]])
+    screen:expect {
+      grid = [[
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
       {                                                                |
@@ -567,12 +611,15 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]]}
-    screen:expect{ unchanged=true }
+    ]],
+    }
+    screen:expect { unchanged = true }
   end)
 
-  it("supports highlighting with priority", function()
-    if pending_c_parser(pending) then return end
+  it('supports highlighting with priority', function()
+    if pending_c_parser(pending) then
+      return
+    end
 
     insert([[
     int x = INT_MAX;
@@ -582,12 +629,13 @@ describe('treesitter highlighting', function()
                 }
     ]])
 
-    exec_lua [[
+    exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")
       test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query..'\n((translation_unit) @Error (set! "priority" 101))\n'}})
-    ]]
+    ]])
     -- expect everything to have Error highlight
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {12:int}{8: x = INT_MAX;}                                                 |
       {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
       {8:#define foo void main() { \}                                      |
@@ -606,11 +654,13 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
       {1:~                                                                }|
                                                                        |
-    ]], attr_ids={
-      [1] = {bold = true, foreground = Screen.colors.Blue1};
-      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
-      -- bold will not be overwritten at the moment
-      [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
-    }}
-    end)
+    ]],
+      attr_ids = {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [8] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        -- bold will not be overwritten at the moment
+        [12] = { background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100 },
+      },
+    }
+  end)
 end)

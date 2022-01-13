@@ -35,16 +35,15 @@ describe(':mksession', function()
     command('split')
     command('terminal')
     command('split')
-    command('mksession '..session_file)
+    command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
     command('qall!')
     clear()
     -- Restore session.
-    command('source '..session_file)
+    command('source ' .. session_file)
 
-    eq({2,2,4},
-      {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
+    eq({ 2, 2, 4 }, { funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3) })
   end)
 
   it('restores tab-local working directories', function()
@@ -95,27 +94,26 @@ describe(':mksession', function()
     -- for absolute paths in all cases yet. Absolute paths are used in the
     -- session file after :tcd, so we need to expect unix slashes here for now
     -- eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
-    eq(cwd_dir:gsub([[\]], '/') .. '/' .. tmpfile_base .. '2',
-      funcs.expand('%:p'))
+    eq(cwd_dir:gsub([[\]], '/') .. '/' .. tmpfile_base .. '2', funcs.expand('%:p'))
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    cwd_dir = cwd_dir:gsub([[\]], '/')  -- :mksession always uses unix slashes.
-    local session_path = cwd_dir..'/'..session_file
+    cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
+    local session_path = cwd_dir .. '/' .. session_file
 
-    command('cd '..tab_dir)
+    command('cd ' .. tab_dir)
     command('terminal echo $PWD')
-    command('cd '..cwd_dir)
-    command('mksession '..session_path)
+    command('cd ' .. cwd_dir)
+    command('mksession ' .. session_path)
     command('qall!')
 
     -- Create a new test instance of Nvim.
     clear()
-    command('silent source '..session_path)
+    command('silent source ' .. session_path)
 
-    local expected_cwd = cwd_dir..'/'..tab_dir
-    matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
+    local expected_cwd = cwd_dir .. '/' .. tab_dir
+    matches('^term://' .. pesc(expected_cwd) .. '//%d+:', funcs.expand('%'))
     command('qall!')
   end)
 end)

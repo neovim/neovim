@@ -35,8 +35,8 @@ describe(':source', function()
     eq("{'k': 'v'}", meths.exec('echo b', true))
 
     -- Script items are created only on script var access
-    eq("1", meths.exec('echo c', true))
-    eq("0zBEEFCAFE", meths.exec('echo d', true))
+    eq('1', meths.exec('echo c', true))
+    eq('0zBEEFCAFE', meths.exec('echo d', true))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec('source'))
@@ -66,7 +66,7 @@ describe(':source', function()
     feed_command(':source')
     eq('4', meths.exec('echo a', true))
     eq("{'K': 'V'}", meths.exec('echo b', true))
-    eq("<SNR>1_C()", meths.exec('echo D()', true))
+    eq('<SNR>1_C()', meths.exec('echo D()', true))
 
     -- Source last line only
     feed_command(':$source')
@@ -77,10 +77,10 @@ describe(':source', function()
   end)
 
   it('does not break if current buffer is modified while sourced', function()
-    insert [[
+    insert([[
       bwipeout!
       let a = 123
-    ]]
+    ]])
     command('source')
     eq('123', meths.exec('echo a', true))
   end)
@@ -97,7 +97,7 @@ describe(':source', function()
 
   it('can source lua files', function()
     local test_file = 'test.lua'
-    write_file (test_file, [[vim.g.sourced_lua = 1]])
+    write_file(test_file, [[vim.g.sourced_lua = 1]])
 
     exec('source ' .. test_file)
 
@@ -108,16 +108,19 @@ describe(':source', function()
   it('can source selected region in lua file', function()
     local test_file = 'test.lua'
 
-    write_file (test_file, [[
+    write_file(
+      test_file,
+      [[
       vim.g.b = 5
       vim.g.b = 6
       vim.g.b = 7
       a = [=[
        "\ a
         \ b]=]
-    ]])
+    ]]
+    )
 
-    command('edit '..test_file)
+    command('edit ' .. test_file)
 
     feed('ggjV')
     feed_command(':source')
@@ -133,16 +136,19 @@ describe(':source', function()
   it('can source current lua buffer without argument', function()
     local test_file = 'test.lua'
 
-    write_file (test_file, [[
+    write_file(
+      test_file,
+      [[
       vim.g.c = 10
       vim.g.c = 11
       vim.g.c = 12
       a = [=[
         \ 1
        "\ 2]=]
-    ]])
+    ]]
+    )
 
-    command('edit '..test_file)
+    command('edit ' .. test_file)
     feed_command(':source')
 
     eq(12, eval('g:c'))
@@ -154,22 +160,22 @@ describe(':source', function()
     local test_file = 'test.lua'
 
     -- Does throw E484 for unreadable files
-    local ok, result = pcall(exec_capture, ":source "..test_file ..'noexisting')
+    local ok, result = pcall(exec_capture, ':source ' .. test_file .. 'noexisting')
     eq(false, ok)
-    neq(nil, result:find("E484"))
+    neq(nil, result:find('E484'))
 
     -- Doesn't throw for parsing error
-    write_file (test_file, "vim.g.c = ")
-    ok, result = pcall(exec_capture, ":source "..test_file)
+    write_file(test_file, 'vim.g.c = ')
+    ok, result = pcall(exec_capture, ':source ' .. test_file)
     eq(false, ok)
-    eq(nil, result:find("E484"))
+    eq(nil, result:find('E484'))
     os.remove(test_file)
 
     -- Doesn't throw for runtime error
-    write_file (test_file, "error('Cause error anyway :D')")
-    ok, result = pcall(exec_capture, ":source "..test_file)
+    write_file(test_file, "error('Cause error anyway :D')")
+    ok, result = pcall(exec_capture, ':source ' .. test_file)
     eq(false, ok)
-    eq(nil, result:find("E484"))
+    eq(nil, result:find('E484'))
     os.remove(test_file)
   end)
 end)

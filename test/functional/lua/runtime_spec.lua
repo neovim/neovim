@@ -14,8 +14,8 @@ describe('runtime:', function()
   local init = 'dummy_init.lua'
 
   setup(function()
-    io.open(init, 'w'):close()  --  touch init file
-    clear{args = {'-u', init}}
+    io.open(init, 'w'):close() --  touch init file
+    clear { args = { '-u', init } }
     exec('set rtp+=' .. plug_dir)
   end)
 
@@ -48,8 +48,8 @@ describe('runtime:', function()
     it('loads vim colorscheme when both lua and vim version exist', function()
       local colorscheme_file = colorscheme_folder .. sep .. 'new_colorscheme'
       mkdir_p(colorscheme_folder)
-      write_file(colorscheme_file..'.vim', [[let g:colorscheme = 'vim']])
-      write_file(colorscheme_file..'.lua', [[vim.g.colorscheme = 'lua']])
+      write_file(colorscheme_file .. '.vim', [[let g:colorscheme = 'vim']])
+      write_file(colorscheme_file .. '.lua', [[vim.g.colorscheme = 'lua']])
 
       exec('colorscheme new_colorscheme')
 
@@ -75,8 +75,8 @@ describe('runtime:', function()
     it('loads vim compilers when both lua and vim version exist', function()
       local compiler_file = compiler_folder .. sep .. 'new_compiler'
       mkdir_p(compiler_folder)
-      write_file(compiler_file..'.vim', [[let g:compiler = 'vim']])
-      write_file(compiler_file..'.lua', [[vim.g.compiler = 'lua']])
+      write_file(compiler_file .. '.vim', [[let g:compiler = 'vim']])
+      write_file(compiler_file .. '.lua', [[vim.g.compiler = 'lua']])
 
       exec('compiler new_compiler')
 
@@ -86,40 +86,40 @@ describe('runtime:', function()
   end)
 
   describe('ftplugin', function()
-    local ftplugin_folder = table.concat({plug_dir, 'ftplugin'}, sep)
+    local ftplugin_folder = table.concat({ plug_dir, 'ftplugin' }, sep)
 
     it('loads lua ftplugins', function()
-      local ftplugin_file = table.concat({ftplugin_folder , 'new-ft.lua'}, sep)
+      local ftplugin_file = table.concat({ ftplugin_folder, 'new-ft.lua' }, sep)
       mkdir_p(ftplugin_folder)
-      write_file(ftplugin_file , [[vim.g.lua_ftplugin = 1]])
+      write_file(ftplugin_file, [[vim.g.lua_ftplugin = 1]])
 
-      exec [[set filetype=new-ft]]
+      exec([[set filetype=new-ft]])
       eq(1, eval('g:lua_ftplugin'))
       rmdir(ftplugin_folder)
     end)
   end)
 
   describe('indent', function()
-    local indent_folder = table.concat({plug_dir, 'indent'}, sep)
+    local indent_folder = table.concat({ plug_dir, 'indent' }, sep)
 
     it('loads lua indents', function()
-      local indent_file = table.concat({indent_folder , 'new-ft.lua'}, sep)
+      local indent_file = table.concat({ indent_folder, 'new-ft.lua' }, sep)
       mkdir_p(indent_folder)
-      write_file(indent_file , [[vim.g.lua_indent = 1]])
+      write_file(indent_file, [[vim.g.lua_indent = 1]])
 
-      exec [[set filetype=new-ft]]
+      exec([[set filetype=new-ft]])
       eq(1, eval('g:lua_indent'))
       rmdir(indent_folder)
     end)
   end)
 
   describe('syntax', function()
-    local syntax_folder = table.concat({plug_dir, 'syntax'}, sep)
+    local syntax_folder = table.concat({ plug_dir, 'syntax' }, sep)
 
     it('loads lua syntaxes on filetype change', function()
-      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, sep)
+      local syntax_file = table.concat({ syntax_folder, 'my-lang.lua' }, sep)
       mkdir_p(syntax_folder)
-      write_file(syntax_file , [[vim.g.lua_syntax = 1]])
+      write_file(syntax_file, [[vim.g.lua_syntax = 1]])
 
       exec('set filetype=my-lang')
       eq(1, eval('g:lua_syntax'))
@@ -127,15 +127,13 @@ describe('runtime:', function()
     end)
 
     it('loads lua syntaxes on syntax change', function()
-      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, sep)
+      local syntax_file = table.concat({ syntax_folder, 'my-lang.lua' }, sep)
       mkdir_p(syntax_folder)
-      write_file(syntax_file , [[vim.g.lua_syntax = 5]])
+      write_file(syntax_file, [[vim.g.lua_syntax = 5]])
 
       exec('set syntax=my-lang')
       eq(5, eval('g:lua_syntax'))
       rmdir(syntax_folder)
     end)
   end)
-
 end)
-

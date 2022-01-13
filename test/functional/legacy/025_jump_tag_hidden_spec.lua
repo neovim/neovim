@@ -56,6 +56,6 @@ describe('jump to a tag with hidden set', function()
     feed_command('$d')
 
     -- Assert buffer contents.
-    expect("#efine  SECTION_OFF  3")
+    expect('#efine  SECTION_OFF  3')
   end)
 end)

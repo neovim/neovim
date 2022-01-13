@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, retry =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
+local eq, clear, eval, feed, retry = helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -30,13 +29,15 @@ describe('K', function()
       set keywordprg=echo\ fnord>>]])
 
     -- K on the text "K_spec_out" resolves to `!echo fnord >> K_spec_out`.
-    feed('i'..test_file..'<ESC>K')
-    retry(nil, nil, function() eq(1, eval('filereadable("'..test_file..'")')) end)
-    eq({'fnord'}, eval("readfile('"..test_file.."')"))
+    feed('i' .. test_file .. '<ESC>K')
+    retry(nil, nil, function()
+      eq(1, eval('filereadable("' .. test_file .. '")'))
+    end)
+    eq({ 'fnord' }, eval("readfile('" .. test_file .. "')"))
     -- Confirm that Neovim is still in terminal mode after K is pressed (#16692).
     helpers.sleep(500)
     eq('t', eval('mode()'))
-    feed('<space>')  -- Any key, not just <space>, can be used here to escape.
+    feed('<space>') -- Any key, not just <space>, can be used here to escape.
     eq('n', eval('mode()'))
   end)
 
@@ -57,5 +58,4 @@ describe('K', function()
     eq('n', eval('mode()'))
     helpers.neq(bufnr, eval('bufnr()'))
   end)
-
 end)

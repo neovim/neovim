@@ -55,8 +55,7 @@ describe(':highlight', function()
     feed_command('hi clear')
     feed_command('hi Group3')
     feed('<cr>')
-    eq('Vim(highlight):E475: Invalid argument: cterm=\'asdf',
-       exc_exec([[hi Crash cterm='asdf]]))
+    eq("Vim(highlight):E475: Invalid argument: cterm='asdf", exc_exec([[hi Crash cterm='asdf]]))
     feed_command('redir END')
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal

@@ -35,4 +35,3 @@ describe('tabpage', function()
     eq(3, eval('tabpagenr()'))
   end)
 end)
-

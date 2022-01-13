@@ -14,7 +14,7 @@ describe(':ls', function()
   end)
 
   it('R, F for :terminal buffers', function()
-    nvim('set_option', 'shell', string.format('"%s" INTERACT', nvim_dir..'/shell-test'))
+    nvim('set_option', 'shell', string.format('"%s" INTERACT', nvim_dir .. '/shell-test'))
 
     command('edit foo')
     command('set hidden')
@@ -44,6 +44,4 @@ describe(':ls', function()
       eq('\n  3 %aF ', string.match(ls_output, '^\n *3 ... '))
     end)
   end)
-
 end)
-

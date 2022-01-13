@@ -13,9 +13,9 @@ describe('cdo', function()
   before_each(function()
     clear()
 
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile1')
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile2')
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile3')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile1')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile2')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile3')
 
     source([=[
       " Returns the current line in '<filename> <linenum>L <column>C' format

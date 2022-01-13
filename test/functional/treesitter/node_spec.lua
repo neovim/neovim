@@ -9,7 +9,7 @@ local pending_c_parser = helpers.pending_c_parser
 before_each(clear)
 
 local function lua_eval(lua_expr)
-  return exec_lua("return " .. lua_expr)
+  return exec_lua('return ' .. lua_expr)
 end
 
 describe('treesitter node API', function()
@@ -38,25 +38,25 @@ describe('treesitter node API', function()
       end
     ]])
 
-    exec_lua 'node = root:descendant_for_range(0, 11, 0, 16)'
+    exec_lua('node = root:descendant_for_range(0, 11, 0, 16)')
     eq('int x', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:next_sibling()'
+    exec_lua('node = node:next_sibling()')
     eq(',', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:next_sibling()'
+    exec_lua('node = node:next_sibling()')
     eq('int y', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:prev_sibling()'
+    exec_lua('node = node:prev_sibling()')
     eq(',', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:prev_sibling()'
+    exec_lua('node = node:prev_sibling()')
     eq('int x', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:next_named_sibling()'
+    exec_lua('node = node:next_named_sibling()')
     eq('int y', lua_eval('node_text(node)'))
 
-    exec_lua 'node = node:prev_named_sibling()'
+    exec_lua('node = node:prev_named_sibling()')
     eq('int x', lua_eval('node_text(node)'))
   end)
 end)

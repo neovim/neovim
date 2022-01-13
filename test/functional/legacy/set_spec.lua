@@ -1,8 +1,7 @@
 -- Tests for :set
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, command, eval, eq =
-  helpers.clear, helpers.command, helpers.eval, helpers.eq
+local clear, command, eval, eq = helpers.clear, helpers.command, helpers.eval, helpers.eq
 
 describe(':set', function()
   before_each(clear)

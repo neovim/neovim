@@ -23,7 +23,6 @@ describe("'pastetoggle' option", function()
     eq(1, eval('&paste'))
   end)
 
-
   it('does not wait for timeout', function()
     command('set pastetoggle=abc')
     command('set ttimeoutlen=9999999')

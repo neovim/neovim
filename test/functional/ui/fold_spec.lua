@@ -9,7 +9,6 @@ local meths = helpers.meths
 local source = helpers.source
 local assert_alive = helpers.assert_alive
 
-
 local content1 = [[
         This is a
         valid English
@@ -18,7 +17,7 @@ local content1 = [[
         in his cave.
         ]]
 
-describe("folded lines", function()
+describe('folded lines', function()
   before_each(function()
     clear()
   end)
@@ -28,27 +27,27 @@ describe("folded lines", function()
     before_each(function()
       clear()
       screen = Screen.new(45, 8)
-      screen:attach({rgb=true, ext_multigrid=multigrid})
-      screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
-        [2] = {reverse = true},
-        [3] = {bold = true, reverse = true},
-        [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-        [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-        [6] = {background = Screen.colors.Yellow},
-        [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-        [8] = {foreground = Screen.colors.Brown },
-        [9] = {bold = true, foreground = Screen.colors.Brown},
-        [10] = {background = Screen.colors.LightGrey, underline = true},
-        [11] = {bold=true},
-        [12] = {background = Screen.colors.Grey90},
-      })
+      screen:attach { rgb = true, ext_multigrid = multigrid }
+      screen:set_default_attr_ids {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { reverse = true },
+        [3] = { bold = true, reverse = true },
+        [4] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+        [6] = { background = Screen.colors.Yellow },
+        [7] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+        [8] = { foreground = Screen.colors.Brown },
+        [9] = { bold = true, foreground = Screen.colors.Brown },
+        [10] = { background = Screen.colors.LightGrey, underline = true },
+        [11] = { bold = true },
+        [12] = { background = Screen.colors.Grey90 },
+      }
     end)
 
-    it("work with more than one signcolumn", function()
-      command("set signcolumn=yes:9")
-      feed("i<cr><esc>")
-      feed("vkzf")
+    it('work with more than one signcolumn', function()
+      command('set signcolumn=yes:9')
+      feed('i<cr><esc>')
+      feed('vkzf')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -86,10 +85,10 @@ describe("folded lines", function()
     end)
 
     it("highlights with CursorLineFold when 'cursorline' is set", function()
-      command("set cursorline foldcolumn=2 foldmethod=marker")
-      command("hi link CursorLineFold Search")
+      command('set cursorline foldcolumn=2 foldmethod=marker')
+      command('hi link CursorLineFold Search')
       insert(content1)
-      feed("zf3j")
+      feed('zf3j')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -124,7 +123,7 @@ describe("folded lines", function()
                                                      |
         ]])
       end
-      feed("k")
+      feed('k')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -159,7 +158,7 @@ describe("folded lines", function()
                                                      |
         ]])
       end
-      command("set cursorlineopt=line")
+      command('set cursorlineopt=line')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -196,14 +195,14 @@ describe("folded lines", function()
       end
     end)
 
-    it("highlighting with relative line numbers", function()
-      command("set relativenumber cursorline cursorlineopt=number foldmethod=marker")
-      feed_command("set foldcolumn=2")
+    it('highlighting with relative line numbers', function()
+      command('set relativenumber cursorline cursorlineopt=number foldmethod=marker')
+      feed_command('set foldcolumn=2')
       funcs.setline(1, '{{{1')
       funcs.setline(2, 'line 1')
       funcs.setline(3, '{{{1')
       funcs.setline(4, 'line 2')
-      feed("j")
+      feed('j')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -240,14 +239,15 @@ describe("folded lines", function()
       end
     end)
 
-    it("work with spell", function()
-      command("set spell")
+    it('work with spell', function()
+      command('set spell')
       insert(content1)
 
-      feed("gg")
-      feed("zf3j")
+      feed('gg')
+      feed('zf3j')
       if not multigrid then
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
           {5:^+--  4 lines: This is a······················}|
           in his cave.                                 |
                                                        |
@@ -256,18 +256,20 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]]}
+        ]],
+        }
       end
     end)
 
-    it("work with matches", function()
+    it('work with matches', function()
       insert(content1)
-      command("highlight MyWord gui=bold guibg=red   guifg=white")
+      command('highlight MyWord gui=bold guibg=red   guifg=white')
       command("call matchadd('MyWord', '\\V' . 'test', -1)")
-      feed("gg")
-      feed("zf3j")
+      feed('gg')
+      feed('zf3j')
       if not multigrid then
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
           {5:^+--  4 lines: This is a······················}|
           in his cave.                                 |
                                                        |
@@ -276,11 +278,12 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]]}
+        ]],
+        }
       end
     end)
 
-    it("works with multibyte fillchars", function()
+    it('works with multibyte fillchars', function()
       insert([[
         aa
         bb
@@ -288,9 +291,9 @@ describe("folded lines", function()
         dd
         ee
         ff]])
-      command("set fillchars+=foldopen:▾,foldsep:│,foldclose:▸")
+      command('set fillchars+=foldopen:▾,foldsep:│,foldclose:▸')
       feed_command('1')
-      command("set foldcolumn=2")
+      command('set foldcolumn=2')
       feed('zf4j')
       feed('zf2j')
       feed('zO')
@@ -329,7 +332,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set rightleft")
+      feed_command('set rightleft')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -365,7 +368,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set norightleft")
+      feed_command('set norightleft')
       if multigrid then
         meths.input_mouse('left', 'press', '', 2, 0, 1)
         screen:expect([[
@@ -404,7 +407,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with split", function()
+    it('works with split', function()
       insert([[
         aa
         bb
@@ -413,12 +416,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("rightbelow new")
+      feed_command('rightbelow new')
       insert([[
         aa
         bb
@@ -427,7 +430,7 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
@@ -576,7 +579,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with vsplit", function()
+    it('works with vsplit', function()
       insert([[
         aa
         bb
@@ -585,12 +588,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("rightbelow vnew")
+      feed_command('rightbelow vnew')
       insert([[
         aa
         bb
@@ -599,7 +602,7 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=1")
+      command('set foldcolumn=1')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
@@ -776,7 +779,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with tab", function()
+    it('works with tab', function()
       insert([[
         aa
         bb
@@ -785,12 +788,12 @@ describe("folded lines", function()
         ee
         ff]])
       feed_command('2')
-      command("set foldcolumn=2")
+      command('set foldcolumn=2')
       feed('zf3j')
       feed_command('1')
       feed('zf2j')
       feed('zO')
-      feed_command("tab split")
+      feed_command('tab split')
       if multigrid then
         meths.input_mouse('left', 'press', '', 4, 1, 1)
         screen:expect([[
@@ -879,7 +882,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("tabnext")
+      feed_command('tabnext')
       if multigrid then
         meths.input_mouse('left', 'press', '', 2, 1, 1)
         screen:expect([[
@@ -967,7 +970,7 @@ describe("folded lines", function()
       end
     end)
 
-    it("works with multibyte text", function()
+    it('works with multibyte text', function()
       -- Currently the only allowed value of 'maxcombine'
       eq(6, meths.get_option('maxcombine'))
       eq(true, meths.get_option('arabicshape'))
@@ -1045,7 +1048,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set noarabicshape")
+      feed_command('set noarabicshape')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1081,7 +1084,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set number foldcolumn=2")
+      feed_command('set number foldcolumn=2')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1118,7 +1121,7 @@ describe("folded lines", function()
       end
 
       -- Note: too much of the folded line gets cut off.This is a vim bug.
-      feed_command("set rightleft")
+      feed_command('set rightleft')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1154,7 +1157,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set nonumber foldcolumn=0")
+      feed_command('set nonumber foldcolumn=0')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1190,7 +1193,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed_command("set arabicshape")
+      feed_command('set arabicshape')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1297,16 +1300,15 @@ describe("folded lines", function()
           :set noarabicshape                           |
         ]])
       end
-
     end)
 
-    it("work in cmdline window", function()
-      feed_command("set foldmethod=manual")
-      feed_command("let x = 1")
-      feed_command("/alpha")
-      feed_command("/omega")
+    it('work in cmdline window', function()
+      feed_command('set foldmethod=manual')
+      feed_command('let x = 1')
+      feed_command('/alpha')
+      feed_command('/omega')
 
-      feed("<cr>q:")
+      feed('<cr>q:')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1341,7 +1343,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("kzfk")
+      feed('kzfk')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1376,7 +1378,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("<cr>")
+      feed('<cr>')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1412,7 +1414,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("/<c-f>")
+      feed('/<c-f>')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1447,7 +1449,7 @@ describe("folded lines", function()
         ]])
       end
 
-      feed("ggzfG")
+      feed('ggzfG')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1481,18 +1483,16 @@ describe("folded lines", function()
           /                                            |
         ]])
       end
-
     end)
 
-    it("work with autoresize", function()
-
+    it('work with autoresize', function()
       funcs.setline(1, 'line 1')
       funcs.setline(2, 'line 2')
       funcs.setline(3, 'line 3')
       funcs.setline(4, 'line 4')
 
-      feed("zfj")
-      command("set foldcolumn=0")
+      feed('zfj')
+      command('set foldcolumn=0')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1528,7 +1528,7 @@ describe("folded lines", function()
         ]])
       end
       -- should adapt to the current nesting of folds (e.g., 1)
-      command("set foldcolumn=auto:1")
+      command('set foldcolumn=auto:1')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1563,9 +1563,10 @@ describe("folded lines", function()
                                                        |
         ]])
       end
-      command("set foldcolumn=auto")
+      command('set foldcolumn=auto')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1585,9 +1586,12 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        }
       else
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
           {7:+}{5:^+--  2 lines: line 1························}|
           {7: }line 3                                      |
           {7: }line 4                                      |
@@ -1596,10 +1600,12 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        }
       end
       -- fdc should not change with a new fold as the maximum is 1
-      feed("zf3j")
+      feed('zf3j')
 
       if multigrid then
         screen:expect([[
@@ -1636,8 +1642,10 @@ describe("folded lines", function()
         ]])
       end
 
-      command("set foldcolumn=auto:1")
-      if multigrid then screen:expect{grid=[[
+      command('set foldcolumn=auto:1')
+      if multigrid then
+        screen:expect {
+          grid = [[
         ## grid 1
           [2:---------------------------------------------]|
           [2:---------------------------------------------]|
@@ -1657,9 +1665,12 @@ describe("folded lines", function()
           {1:~                                            }|
         ## grid 3
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        }
       else
-        screen:expect{grid=[[
+        screen:expect {
+          grid = [[
           {7:+}{5:^+--  4 lines: line 1························}|
           {1:~                                            }|
           {1:~                                            }|
@@ -1668,12 +1679,14 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
-        ]], unchanged=true}
+        ]],
+          unchanged = true,
+        }
       end
 
       -- relax the maximum fdc thus fdc should expand to
       -- accomodate the current number of folds
-      command("set foldcolumn=auto:4")
+      command('set foldcolumn=auto:4')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1717,8 +1730,8 @@ describe("folded lines", function()
         endfunction
       ]])
       command('set foldtext=MyFoldText()')
-      feed("i<cr><esc>")
-      feed("vkzf")
+      feed('i<cr><esc>')
+      feed('vkzf')
       if multigrid then
         screen:expect([[
         ## grid 1
@@ -1757,7 +1770,7 @@ describe("folded lines", function()
     end)
   end
 
-  describe("with ext_multigrid", function()
+  describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)
 

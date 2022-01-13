@@ -29,8 +29,7 @@ describe(':mkview', function()
 
   it('viewoption curdir restores local current directory', function()
     local cwd_dir = funcs.getcwd()
-    local set_view_dir_command = 'set viewdir=' .. cwd_dir ..
-          get_pathsep() .. view_dir
+    local set_view_dir_command = 'set viewdir=' .. cwd_dir .. get_pathsep() .. view_dir
 
     -- By default the local current directory should save
     command(set_view_dir_command)
@@ -63,5 +62,4 @@ describe(':mkview', function()
     -- The view's local directory should have been saved
     eq(cwd_dir .. get_pathsep() .. local_dir, funcs.getcwd())
   end)
-
 end)

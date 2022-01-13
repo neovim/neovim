@@ -24,7 +24,7 @@ local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
-  local max_func_args = 20  -- from eval.h
+  local max_func_args = 20 -- from eval.h
   local range = helpers.funcs.range
 
   before_each(clear)
@@ -33,7 +33,7 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     local printf = helpers.funcs.printf
     local rep = helpers.funcs['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
-    eq(expected, printf(rep('%d,', max_func_args-1), unpack(range(2, max_func_args))))
+    eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
     local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
     eq('Vim(call):E740: Too many arguments for function printf', ret)
   end)
@@ -47,15 +47,15 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   end)
 end)
 
-describe("backtick expansion", function()
+describe('backtick expansion', function()
   setup(function()
     clear()
-    lfs.mkdir("test-backticks")
-    write_file("test-backticks/file1", "test file 1")
-    write_file("test-backticks/file2", "test file 2")
-    write_file("test-backticks/file3", "test file 3")
-    lfs.mkdir("test-backticks/subdir")
-    write_file("test-backticks/subdir/file4", "test file 4")
+    lfs.mkdir('test-backticks')
+    write_file('test-backticks/file1', 'test file 1')
+    write_file('test-backticks/file2', 'test file 2')
+    write_file('test-backticks/file3', 'test file 3')
+    lfs.mkdir('test-backticks/subdir')
+    write_file('test-backticks/subdir/file4', 'test file 4')
     -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
     command('silent cd test-backticks')
   end)
@@ -66,30 +66,30 @@ describe("backtick expansion", function()
 
   it("with default 'shell'", function()
     if helpers.iswin() then
-      command(":silent args `dir /b *2`")
+      command(':silent args `dir /b *2`')
     else
-      command(":silent args `echo ***2`")
+      command(':silent args `echo ***2`')
     end
-    eq({ "file2", }, eval("argv()"))
+    eq({ 'file2' }, eval('argv()'))
     if helpers.iswin() then
-      command(":silent args `dir /s/b *4`")
-      eq({ "subdir\\file4", }, eval("map(argv(), 'fnamemodify(v:val, \":.\")')"))
+      command(':silent args `dir /s/b *4`')
+      eq({ 'subdir\\file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
     else
-      command(":silent args `echo */*4`")
-      eq({ "subdir/file4", }, eval("argv()"))
+      command(':silent args `echo */*4`')
+      eq({ 'subdir/file4' }, eval('argv()'))
     end
   end)
 
-  it("with shell=fish", function()
+  it('with shell=fish', function()
     if eval("executable('fish')") == 0 then
       pending('missing "fish" command')
       return
     end
-    command("set shell=fish")
-    command(":silent args `echo ***2`")
-    eq({ "file2", }, eval("argv()"))
-    command(":silent args `echo */*4`")
-    eq({ "subdir/file4", }, eval("argv()"))
+    command('set shell=fish')
+    command(':silent args `echo ***2`')
+    eq({ 'file2' }, eval('argv()'))
+    command(':silent args `echo */*4`')
+    eq({ 'subdir/file4' }, eval('argv()'))
   end)
 end)
 
@@ -98,7 +98,9 @@ describe('List support code', function()
   local min_dur = 8
   local len = 131072
 
-  if not pending('does not actually allows interrupting with just got_int', function() end) then return end
+  if not pending('does not actually allows interrupting with just got_int', function() end) then
+    return
+  end
   -- The following tests are confirmed to work with os_breakcheck() just before
   -- `if (got_int) {break;}` in tv_list_copy and list_join_inner() and not to
   -- work without.

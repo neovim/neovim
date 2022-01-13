@@ -1,1 +1,5 @@
-return {doit=function() return 9003 end}
+return {
+  doit = function()
+    return 9003
+  end,
+}

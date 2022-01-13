@@ -1,1 +1,3 @@
-return function (str) return '\t' .. str end
+return function(str)
+  return '\t' .. str
+end

@@ -7,27 +7,27 @@ local feed_command = helpers.feed_command
 local insert = helpers.insert
 local funcs = helpers.funcs
 
-describe("multibyte rendering", function()
+describe('multibyte rendering', function()
   local screen
   before_each(function()
     clear()
     screen = Screen.new(60, 6)
-    screen:attach({rgb=true})
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {background = Screen.colors.WebGray},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {bold = true},
-    })
+    screen:attach { rgb = true }
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { background = Screen.colors.WebGray },
+      [3] = { background = Screen.colors.LightMagenta },
+      [4] = { bold = true },
+    }
   end)
 
-  it("works with composed char at start of line", function()
+  it('works with composed char at start of line', function()
     insert([[
       ̊
       x]])
-    feed("gg")
-     -- verify the modifier infact is alone
-    feed_command("ascii")
+    feed('gg')
+    -- verify the modifier infact is alone
+    feed_command('ascii')
     screen:expect([[
       ^ ̊                                                           |
       x                                                           |
@@ -38,8 +38,8 @@ describe("multibyte rendering", function()
     ]])
 
     -- a char inserted before will spontaneously merge with it
-    feed("ia<esc>")
-    feed_command("ascii")
+    feed('ia<esc>')
+    feed_command('ascii')
     screen:expect([[
       ^å                                                           |
       x                                                           |
@@ -94,7 +94,7 @@ describe("multibyte rendering", function()
     ]])
 
     -- check double-with char is temporarily hidden when overlapped
-    funcs.complete(4, {'xx', 'yy'})
+    funcs.complete(4, { 'xx', 'yy' })
     screen:expect([[
       ab xx^                                                       |
       - {2: xx             }                                          |
@@ -123,10 +123,10 @@ describe('multibyte rendering: statusline', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, reverse = true },
+    }
     screen:attach()
     command('set laststatus=2')
   end)
@@ -181,11 +181,13 @@ describe('multibyte rendering: statusline', function()
 
   it('hidden group %( %) does not cause invalid unicode', function()
     command("let &statusline = '%#StatColorHi2#%(✓%#StatColorHi2#%) Q≡'")
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^                                        |
       {1:~                                       }|
       {2: Q≡                                     }|
                                               |
-    ]]}
+    ]],
+    }
   end)
 end)

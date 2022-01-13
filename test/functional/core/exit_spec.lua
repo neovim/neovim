@@ -26,8 +26,8 @@ describe('v:exiting', function()
 
   it('is 0 on normal exit', function()
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "")')
       command('quit')
     end
     local function on_request()
@@ -38,9 +38,9 @@ describe('v:exiting', function()
   end)
   it('is 0 on exit from ex-mode involving try-catch', function()
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
-      feed_command('call feedkey("Q")','try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "")')
+      feed_command('call feedkey("Q")', 'try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
     end
     local function on_request()
       eq(0, eval('v:exiting'))
@@ -53,11 +53,16 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
-      eq(redir_msg, pcall_err(function() return exec_capture(cmdline) end))
+      eq(
+        redir_msg,
+        pcall_err(function()
+          return exec_capture(cmdline)
+        end)
+      )
       poke_eventloop()
       assert_alive()
     else
-      funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})
+      funcs.system { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline }
       eq(exit_code, eval('v:shell_error'))
     end
   end

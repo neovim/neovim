@@ -6,7 +6,9 @@ local nvim_prog = helpers.nvim_prog
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 
-if helpers.pending_win32(pending) then return end
+if helpers.pending_win32(pending) then
+  return
+end
 
 describe('autoread TUI FocusGained/FocusLost', function()
   local f1 = 'xtest-foo'
@@ -14,8 +16,10 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen = thelpers.screen_setup(
+      0,
+      '["' .. nvim_prog .. '", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]'
+    )
   end)
 
   teardown(function()
@@ -33,10 +37,11 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     helpers.write_file(path, '')
     lfs.touch(path, os.time() - 10)
-    feed_command('edit '..path)
+    feed_command('edit ' .. path)
     feed_data('\027[O')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1: }                                                 |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -44,13 +49,15 @@ describe('autoread TUI FocusGained/FocusLost', function()
       {5:xtest-foo                                         }|
       :edit xtest-foo                                   |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    }
 
     helpers.write_file(path, expected_addition)
 
     feed_data('\027[I')
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:l}ine 1                                            |
       line 2                                            |
       line 3                                            |
@@ -58,6 +65,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
       {5:xtest-foo                                         }|
       "xtest-foo" 4L, 28C                               |
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]],
+    }
   end)
 end)

@@ -98,8 +98,8 @@ describe('Special values', function()
     eq(0, eval('0 + v:false'))
 
     eq(-1, eval('0 - v:true'))
-    eq( 0, eval('0 - v:null'))
-    eq( 0, eval('0 - v:false'))
+    eq(0, eval('0 - v:null'))
+    eq(0, eval('0 - v:false'))
 
     eq(1, eval('1 * v:true'))
     eq(0, eval('1 * v:null'))
@@ -125,9 +125,9 @@ describe('Special values', function()
   end)
 
   it('work with . (concat) properly', function()
-    eq("true", eval('"" . v:true'))
-    eq("null", eval('"" . v:null'))
-    eq("false", eval('"" . v:false'))
+    eq('true', eval('"" . v:true'))
+    eq('null', eval('"" . v:null'))
+    eq('false', eval('"" . v:false'))
   end)
 
   it('work with type()', function()

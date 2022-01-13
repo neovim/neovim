@@ -9,7 +9,7 @@ describe('108', function()
   before_each(clear)
 
   it('is working', function()
-    command("set shortmess-=F")
+    command('set shortmess-=F')
     feed_command('lang mess C')
     feed_command('function! Foo()')
     feed_command('   let var1 = 1')

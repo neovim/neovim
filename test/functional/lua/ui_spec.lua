@@ -8,10 +8,9 @@ describe('vim.ui', function()
     clear()
   end)
 
-
   describe('select', function()
     it('can select an item', function()
-      local result = exec_lua[[
+      local result = exec_lua([[
         local items = {
           { name = 'Item 1' },
           { name = 'Item 2' },
@@ -34,7 +33,7 @@ describe('vim.ui', function()
         vim.ui.select(items, opts, cb)
         vim.wait(100, function() return selected ~= nil end)
         return {selected, choices}
-      ]]
+      ]])
       eq({ name = 'Item 1' }, result[1])
       eq({
         'Select one of:',
@@ -46,7 +45,7 @@ describe('vim.ui', function()
 
   describe('input', function()
     it('can input text', function()
-      local result = exec_lua[[
+      local result = exec_lua([[
         local opts = {
             prompt = 'Input: ',
         }
@@ -63,7 +62,7 @@ describe('vim.ui', function()
         vim.ui.input(opts, cb)
         vim.wait(100, function() return input ~= nil end)
         return {input, prompt}
-      ]]
+      ]])
       eq('Inputted text', result[1])
       eq('Input: ', result[2])
     end)

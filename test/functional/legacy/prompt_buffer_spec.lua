@@ -36,10 +36,10 @@ describe('prompt buffer', function()
         call timer_start(0, {-> execute("wincmd p|wincmd p", "")})
       endfunc
     ]])
-    feed_command("set noshowmode | set laststatus=0")
+    feed_command('set noshowmode | set laststatus=0')
     feed_command("call setline(1, 'other buffer')")
-    feed_command("new")
-    feed_command("set buftype=prompt")
+    feed_command('new')
+    feed_command('set buftype=prompt')
     feed_command("call prompt_setcallback(bufnr(''), function('TextEntered'))")
     feed_command("eval bufnr('')->prompt_setprompt('cmd: ')")
   end)
@@ -61,8 +61,8 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("i")
-    feed("hello\n")
+    feed('i')
+    feed('hello\n')
     screen:expect([[
       cmd: hello               |
       Command: "hello"         |
@@ -75,7 +75,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("exit\n")
+    feed('exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |
@@ -103,8 +103,8 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("i")
-    feed("hello<BS><BS>")
+    feed('i')
+    feed('hello<BS><BS>')
     screen:expect([[
       cmd: hel^                 |
       ~                        |
@@ -117,7 +117,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("<Left><Left><Left><BS>-")
+    feed('<Left><Left><Left><BS>-')
     screen:expect([[
       cmd: -^hel                |
       ~                        |
@@ -130,7 +130,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("<C-O>lz")
+    feed('<C-O>lz')
     screen:expect([[
       cmd: -hz^el               |
       ~                        |
@@ -143,7 +143,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("<End>x")
+    feed('<End>x')
     screen:expect([[
       cmd: -hzelx^              |
       ~                        |
@@ -156,7 +156,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed("<C-U>exit\n")
+    feed('<C-U>exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |
@@ -172,8 +172,8 @@ describe('prompt buffer', function()
   end)
 
   it('switch windows', function()
-    feed_command("set showmode")
-    feed("i")
+    feed_command('set showmode')
+    feed('i')
     screen:expect([[
       cmd: ^                    |
       ~                        |
@@ -186,7 +186,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<C-O>:call SwitchWindows()<CR>")
+    feed('<C-O>:call SwitchWindows()<CR>')
     poke_eventloop()
     screen:expect([[
       cmd: ^                    |
@@ -200,7 +200,7 @@ describe('prompt buffer', function()
       ~                        |
       -- INSERT --             |
     ]])
-    feed("<Esc>")
+    feed('<Esc>')
     poke_eventloop()
     screen:expect([[
       cmd:^                     |
@@ -217,12 +217,12 @@ describe('prompt buffer', function()
   end)
 
   it('keeps insert mode after aucmd_restbuf in callback', function()
-    source [[
+    source([[
       let s:buf = nvim_create_buf(1, 1)
       call timer_start(0, {-> nvim_buf_set_lines(s:buf, -1, -1, 0, ['walrus'])})
       startinsert
-    ]]
+    ]])
     poke_eventloop()
-    eq({ mode = "i", blocking = false }, meths.get_mode())
+    eq({ mode = 'i', blocking = false }, meths.get_mode())
   end)
 end)

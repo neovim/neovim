@@ -1,4 +1,4 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local child_call_once = helpers.child_call_once
@@ -6,9 +6,9 @@ local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
+local multiqueue = cimport('./test/unit/fixtures/multiqueue.h')
 
-describe("multiqueue (multi-level event-queue)", function()
+describe('multiqueue (multi-level event-queue)', function()
   local parent, child1, child2, child3
 
   local function put(q, str)

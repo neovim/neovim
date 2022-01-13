@@ -52,16 +52,16 @@ before_each(function()
       return ret
     endfunction
   ]])
-  screen:set_default_attr_ids({
-    EOB={bold = true, foreground = Screen.colors.Blue1},
-    T={foreground=Screen.colors.Red},
-    RBP1={background=Screen.colors.Red},
-    RBP2={background=Screen.colors.Yellow},
-    RBP3={background=Screen.colors.Green},
-    RBP4={background=Screen.colors.Blue},
-    SEP={bold = true, reverse = true},
-    CONFIRM={bold = true, foreground = Screen.colors.SeaGreen4},
-  })
+  screen:set_default_attr_ids {
+    EOB = { bold = true, foreground = Screen.colors.Blue1 },
+    T = { foreground = Screen.colors.Red },
+    RBP1 = { background = Screen.colors.Red },
+    RBP2 = { background = Screen.colors.Yellow },
+    RBP3 = { background = Screen.colors.Green },
+    RBP4 = { background = Screen.colors.Blue },
+    SEP = { bold = true, reverse = true },
+    CONFIRM = { bold = true, foreground = Screen.colors.SeaGreen4 },
+  }
 end)
 
 describe('input()', function()
@@ -114,7 +114,7 @@ describe('input()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    meths.set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -142,7 +142,7 @@ describe('input()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    meths.set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo inputdialog(opts)<CR>]])
     screen:expect([[
                                |
@@ -152,13 +152,16 @@ describe('input()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
     feed('<BS>')
     screen:expect([[
                                |
@@ -168,13 +171,16 @@ describe('input()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')
@@ -211,24 +217,18 @@ describe('input()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input([])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input("", [])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input("", "", [])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input({"cancelreturn": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input({"default": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input({"completion": []})'))
-    eq('Vim(call):E5050: {opts} must be the only argument',
-       exc_exec('call input({}, "default")'))
-    eq('Vim(call):E118: Too many arguments for function: input',
-       exc_exec('call input("prompt> ", "default", "file", "extra")'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input([])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input("", [])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input("", "", [])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input({"prompt": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input({"cancelreturn": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input({"default": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call input({"completion": []})'))
+    eq('Vim(call):E5050: {opts} must be the only argument', exc_exec('call input({}, "default")'))
+    eq(
+      'Vim(call):E118: Too many arguments for function: input',
+      exc_exec('call input("prompt> ", "default", "file", "extra")')
+    )
   end)
   it('supports highlighting', function()
     command('nnoremap <expr> X input({"highlight": "RainBowParens"})[-1]')
@@ -312,7 +312,7 @@ describe('inputdialog()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    meths.set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -340,7 +340,7 @@ describe('inputdialog()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    meths.set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -350,13 +350,16 @@ describe('inputdialog()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
     feed('<BS>')
     screen:expect([[
                                |
@@ -366,13 +369,16 @@ describe('inputdialog()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')
@@ -409,24 +415,18 @@ describe('inputdialog()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog([])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog("", [])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog("", "", [])'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog({"cancelreturn": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog({"default": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog({"completion": []})'))
-    eq('Vim(call):E5050: {opts} must be the only argument',
-       exc_exec('call inputdialog({}, "default")'))
-    eq('Vim(call):E118: Too many arguments for function: inputdialog',
-       exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog([])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog("", [])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog("", "", [])'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog({"prompt": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog({"cancelreturn": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog({"default": []})'))
+    eq('Vim(call):E730: using List as a String', exc_exec('call inputdialog({"completion": []})'))
+    eq('Vim(call):E5050: {opts} must be the only argument', exc_exec('call inputdialog({}, "default")'))
+    eq(
+      'Vim(call):E118: Too many arguments for function: inputdialog',
+      exc_exec('call inputdialog("prompt> ", "default", "file", "extra")')
+    )
   end)
   it('supports highlighting', function()
     command('nnoremap <expr> X inputdialog({"highlight": "RainBowParens"})[-1]')
@@ -443,14 +443,14 @@ describe('inputdialog()', function()
 end)
 
 describe('confirm()', function()
-  it("shows dialog even if :silent #8788", function()
+  it('shows dialog even if :silent #8788', function()
     command("autocmd BufNewFile * call confirm('test')")
 
     local function check_and_clear(edit_line)
       screen:expect([[
                                  |
         {SEP:                         }|
-        ]]..edit_line..[[
+        ]] .. edit_line .. [[
         {CONFIRM:test}                     |
         {CONFIRM:[O]k: }^                   |
       ]])

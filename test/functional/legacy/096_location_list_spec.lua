@@ -45,20 +45,18 @@ describe('location list', function()
         setl readonly
         exe 'doautocmd BufRead ' . substitute(a:name, '\v^test://(.*)', '\1', '')
       endfunction
-      ]] ..
-
-      -- Register the above buffer setup function to be executed before
-      -- starting to edit a new "test protocol" buffer.
-      [[
+      ]]
+        -- Register the above buffer setup function to be executed before
+        -- starting to edit a new "test protocol" buffer.
+        .. [[
       augroup testgroup
         au!
         autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
       augroup END
-      ]] ..
-
-      -- Populate the location list of the current window with some test
-      -- protocol file locations such as "test://foo.txt".
-      [[
+      ]]
+        -- Populate the location list of the current window with some test
+        -- protocol file locations such as "test://foo.txt".
+        .. [[
       let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
       let qflist = []
       for word in words
@@ -68,11 +66,12 @@ describe('location list', function()
         " valid.
         call setloclist(0, qflist, ' ')
       endfor
-    ]])
+    ]]
+    )
 
     -- Set up the result buffer.
     command('enew')
-    command('w! '..test_file)
+    command('w! ' .. test_file)
     command('b 1')
 
     -- Test A.
@@ -99,7 +98,7 @@ describe('location list', function()
     command([[let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')]])
     command('wincmd n')
     command('wincmd K')
-    command('b '..test_file)
+    command('b ' .. test_file)
 
     -- Prepare test output and write it to the result buffer.
     command([[let fileName = substitute(fileName, '\\', '/', 'g')]])
@@ -132,7 +131,7 @@ describe('location list', function()
     command('let numberOfWindowsOpen = winnr("$")')
     command('wincmd n')
     command('wincmd K')
-    command('b '..test_file)
+    command('b ' .. test_file)
 
     -- Prepare test output and write it to the result buffer.
     command('call append(line("$"), "Test B:")')
@@ -170,7 +169,7 @@ describe('location list', function()
     command('let bufferName = expand("%")')
     command('wincmd n')
     command('wincmd K')
-    command('b '..test_file)
+    command('b ' .. test_file)
 
     -- Prepare test output and write it to the result buffer.
     command([[let bufferName = substitute(bufferName, '\\', '/', 'g')]])

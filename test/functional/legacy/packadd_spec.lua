@@ -405,14 +405,14 @@ describe('packadd', function()
     before_each(function()
       screen = Screen.new(30, 5)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = {bold=true, foreground=Screen.colors.Blue},
+      screen:set_default_attr_ids {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
         [1] = {
           foreground = Screen.colors.Black,
           background = Screen.colors.Yellow,
         },
-        [2] = {bold = true, reverse = true}
-      })
+        [2] = { bold = true, reverse = true },
+      }
 
       command([[let optdir1 = &packpath . '/pack/mine/opt']])
       command([[let optdir2 = &packpath . '/pack/candidate/opt']])

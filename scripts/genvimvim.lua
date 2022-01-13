@@ -46,10 +46,7 @@ end
 -- Exclude these from the vimCommand keyword list, they are handled specially
 -- in syntax/vim.vim (vimAugroupKey, vimAutoCmd). #9327
 local function is_autocmd_cmd(cmd)
-  return (cmd == 'augroup'
-          or cmd == 'autocmd'
-          or cmd == 'doautocmd'
-          or cmd == 'doautoall')
+  return (cmd == 'augroup' or cmd == 'autocmd' or cmd == 'doautocmd' or cmd == 'doautoall')
 end
 
 local vimcmd_start = 'syn keyword vimCommand contained '
@@ -123,7 +120,7 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
+local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read('*all'))
 for name, _ in pairs(funcs) do
   if name then
     if lld.line_length > 850 then

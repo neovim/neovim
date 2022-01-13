@@ -1,7 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, tabpage, curtab, eq, ok =
-  helpers.clear, helpers.nvim, helpers.tabpage, helpers.curtab, helpers.eq,
-  helpers.ok
+  helpers.clear, helpers.nvim, helpers.tabpage, helpers.curtab, helpers.eq, helpers.ok
 local curtabmeths = helpers.curtabmeths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -18,8 +17,8 @@ describe('api/tabpage', function()
       nvim('command', 'vsplit')
       local tab1, tab2 = unpack(nvim('list_tabpages'))
       local win1, win2, win3 = unpack(nvim('list_wins'))
-      eq({win1},  tabpage('list_wins', tab1))
-      eq({win2, win3},  tabpage('list_wins', tab2))
+      eq({ win1 }, tabpage('list_wins', tab1))
+      eq({ win2, win3 }, tabpage('list_wins', tab2))
       eq(win2, tabpage('get_win', tab2))
       nvim('set_current_win', win3)
       eq(win3, tabpage('get_win', tab2))
@@ -32,9 +31,9 @@ describe('api/tabpage', function()
 
   describe('{get,set,del}_var', function()
     it('works', function()
-      curtab('set_var', 'lua', {1, 2, {['3'] = 1}})
-      eq({1, 2, {['3'] = 1}}, curtab('get_var', 'lua'))
-      eq({1, 2, {['3'] = 1}}, nvim('eval', 't:lua'))
+      curtab('set_var', 'lua', { 1, 2, { ['3'] = 1 } })
+      eq({ 1, 2, { ['3'] = 1 } }, curtab('get_var', 'lua'))
+      eq({ 1, 2, { ['3'] = 1 } }, nvim('eval', 't:lua'))
       eq(1, funcs.exists('t:lua'))
       curtabmeths.del_var('lua')
       eq(0, funcs.exists('t:lua'))
@@ -46,16 +45,16 @@ describe('api/tabpage', function()
     end)
 
     it('tabpage_set_var returns the old value', function()
-      local val1 = {1, 2, {['3'] = 1}}
-      local val2 = {4, 7}
+      local val1 = { 1, 2, { ['3'] = 1 } }
+      local val2 = { 4, 7 }
       eq(NIL, request('tabpage_set_var', 0, 'lua', val1))
       eq(val1, request('tabpage_set_var', 0, 'lua', val2))
     end)
 
     it('tabpage_del_var returns the old value', function()
-      local val1 = {1, 2, {['3'] = 1}}
-      local val2 = {4, 7}
-      eq(NIL,  request('tabpage_set_var', 0, 'lua', val1))
+      local val1 = { 1, 2, { ['3'] = 1 } }
+      local val2 = { 4, 7 }
+      eq(NIL, request('tabpage_set_var', 0, 'lua', val1))
       eq(val1, request('tabpage_set_var', 0, 'lua', val2))
       eq(val2, request('tabpage_del_var', 0, 'lua'))
     end)

@@ -10,8 +10,7 @@ local result_file = 'benchmark.out'
 local sample_file = 'test/benchmark/samples/re.freeze.txt'
 
 -- Vim script code that does both the work and the benchmarking of that work.
-local measure_cmd =
-    [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
+local measure_cmd = [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
 local measure_script = [[
     func! Measure(re, file, pattern, arg)
       let sstart=reltime()
@@ -37,7 +36,7 @@ describe('regexp search', function()
   -- At the end of the test run we just print the contents of the result file
   -- for human inspection and promptly delete the file.
   teardown(function()
-    print ''
+    print('')
     for line in io.lines(result_file) do
       print(line)
     end

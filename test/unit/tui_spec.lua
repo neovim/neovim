@@ -1,14 +1,14 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local cimport = helpers.cimport
 local eq = helpers.eq
 local ffi = helpers.ffi
 local itp = helpers.gen_itp(it)
 local to_cstr = helpers.to_cstr
 
-local cinput = cimport("./src/nvim/tui/input.h")
-local rbuffer = cimport("./test/unit/fixtures/rbuffer.h")
-local globals = cimport("./src/nvim/globals.h")
-local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
+local cinput = cimport('./src/nvim/tui/input.h')
+local rbuffer = cimport('./test/unit/fixtures/rbuffer.h')
+local globals = cimport('./src/nvim/globals.h')
+local multiqueue = cimport('./test/unit/fixtures/multiqueue.h')
 
 itp('handle_background_color', function()
   local handle_background_color = cinput.ut_handle_background_color
@@ -27,7 +27,7 @@ itp('handle_background_color', function()
   term_input.read_stream.buffer = rbuf
 
   local function assert_bg(colorspace, color, bg)
-    local term_response = '\027]11;'..colorspace..':'..color..'\007'
+    local term_response = '\027]11;' .. colorspace .. ':' .. color .. '\007'
     rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
     term_input.waiting_for_bg_response = 1
@@ -36,7 +36,7 @@ itp('handle_background_color', function()
     eq(1, multiqueue.multiqueue_size(events))
 
     local event = multiqueue.multiqueue_get(events)
-    local bg_event = ffi.cast("Event*", event.argv[1])
+    local bg_event = ffi.cast('Event*', event.argv[1])
     eq(bg, ffi.string(bg_event.argv[0]))
 
     -- Buffer has been consumed.
@@ -99,9 +99,8 @@ itp('handle_background_color', function()
   assert_bg('rgba', 'f/f/f/0', 'light')
   assert_bg('rgba', 'f/f/f/f', 'light')
 
-
   -- Incomplete sequence: necessarily correct behavior.
-  local term_response = '\027]11;rgba:f/f/f/f'  -- missing '\007
+  local term_response = '\027]11;rgba:f/f/f/f' -- missing '\007
   rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
   term_input.waiting_for_bg_response = 1
@@ -115,7 +114,7 @@ itp('handle_background_color', function()
   eq(0, term_input.waiting_for_bg_response)
 
   local event = multiqueue.multiqueue_get(events)
-  local bg_event = ffi.cast("Event*", event.argv[1])
+  local bg_event = ffi.cast('Event*', event.argv[1])
   eq('light', ffi.string(bg_event.argv[0]))
   eq(0, multiqueue.multiqueue_size(events))
   eq(0, rbuf.size)
@@ -134,11 +133,10 @@ itp('handle_background_color', function()
   eq(0, term_input.waiting_for_bg_response)
 
   event = multiqueue.multiqueue_get(events)
-  bg_event = ffi.cast("Event*", event.argv[1])
+  bg_event = ffi.cast('Event*', event.argv[1])
   eq('light', ffi.string(bg_event.argv[0]))
   eq(0, multiqueue.multiqueue_size(events))
   eq(0, rbuf.size)
-
 
   -- Does nothing when not at start of buffer.
   term_response = '123\027]11;rgba:f/f/f/f\007456'
@@ -151,7 +149,6 @@ itp('handle_background_color', function()
   eq(0, multiqueue.multiqueue_size(events))
   eq(#term_response, rbuf.size)
   rbuffer.rbuffer_consumed(rbuf, #term_response)
-
 
   -- Keeps trailing buffer.
   term_response = '\027]11;rgba:f/f/f/f\007456'

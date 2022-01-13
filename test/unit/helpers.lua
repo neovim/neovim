@@ -46,7 +46,7 @@ local function child_call(func, ret)
   return function(...)
     local child_calls = child_calls_mod or child_calls_init
     if child_pid ~= 0 then
-      child_calls[#child_calls + 1] = {func=func, args={...}}
+      child_calls[#child_calls + 1] = { func = func, args = { ... } }
       return ret
     else
       return func(...)
@@ -59,7 +59,9 @@ end
 local function child_call_once(func, ...)
   if child_pid ~= 0 then
     child_calls_mod_once[#child_calls_mod_once + 1] = {
-      func=func, args={...}}
+      func = func,
+      args = { ... },
+    }
   else
     func(...)
   end
@@ -72,7 +74,7 @@ local child_cleanups_mod_once = nil
 local function child_cleanup_once(func, ...)
   local child_cleanups = child_cleanups_mod_once
   if child_pid ~= 0 then
-    child_cleanups[#child_cleanups + 1] = {func=func, args={...}}
+    child_cleanups[#child_cleanups + 1] = { func = func, args = { ... } }
   else
     func(...)
   end
@@ -131,21 +133,24 @@ local pragma_pack_id = 1
 local function filter_complex_blocks(body)
   local result = {}
 
-  for line in body:gmatch("[^\r\n]+") do
-    if not (string.find(line, "(^)", 1, true) ~= nil
-            or string.find(line, "_ISwupper", 1, true)
-            or string.find(line, "_Float")
-            or string.find(line, "msgpack_zone_push_finalizer")
-            or string.find(line, "msgpack_unpacker_reserve_buffer")
-            or string.find(line, "UUID_NULL")  -- static const uuid_t UUID_NULL = {...}
-            or string.find(line, "inline _Bool")) then
+  for line in body:gmatch('[^\r\n]+') do
+    if
+      not (
+        string.find(line, '(^)', 1, true) ~= nil
+        or string.find(line, '_ISwupper', 1, true)
+        or string.find(line, '_Float')
+        or string.find(line, 'msgpack_zone_push_finalizer')
+        or string.find(line, 'msgpack_unpacker_reserve_buffer')
+        or string.find(line, 'UUID_NULL') -- static const uuid_t UUID_NULL = {...}
+        or string.find(line, 'inline _Bool')
+      )
+    then
       result[#result + 1] = line
     end
   end
 
-  return table.concat(result, "\n")
+  return table.concat(result, '\n')
 end
-
 
 local cdef = ffi.cdef
 
@@ -173,9 +178,8 @@ cimport = function(...)
     previous_defines = previous_defines_init
     cdefs = cdefs_init
   end
-  for _, path in ipairs({...}) do
-    if not (path:sub(1, 1) == '/' or path:sub(1, 1) == '.'
-            or path:sub(2, 2) == ':') then
+  for _, path in ipairs { ... } do
+    if not (path:sub(1, 1) == '/' or path:sub(1, 1) == '.' or path:sub(2, 2) == ':') then
       path = './' .. path
     end
     if not preprocess_cache[path] then
@@ -194,14 +198,14 @@ cimport = function(...)
       body = filter_complex_blocks(body)
       -- add the formatted lines to a set
       local new_cdefs = Set:new()
-      for line in body:gmatch("[^\r\n]+") do
+      for line in body:gmatch('[^\r\n]+') do
         line = trim(line)
         -- give each #pragma pack an unique id, so that they don't get removed
         -- if they are inserted into the set
         -- (they are needed in the right order with the struct definitions,
         -- otherwise luajit has wrong memory layouts for the sturcts)
-        if line:match("#pragma%s+pack") then
-          line = line .. " // " .. pragma_pack_id
+        if line:match('#pragma%s+pack') then
+          line = line .. ' // ' .. pragma_pack_id
           pragma_pack_id = pragma_pack_id + 1
         end
         new_cdefs:add(line)
@@ -264,12 +268,12 @@ end
 
 local function alloc_log_new()
   local log = {
-    log={},
-    lib=cimport('./src/nvim/memory.h'),
-    original_functions={},
-    null={['\0:is_null']=true},
+    log = {},
+    lib = cimport('./src/nvim/memory.h'),
+    original_functions = {},
+    null = { ['\0:is_null'] = true },
   }
-  local allocator_functions = {'malloc', 'free', 'calloc', 'realloc'}
+  local allocator_functions = { 'malloc', 'free', 'calloc', 'realloc' }
   function log:save_original_functions()
     for _, funcname in ipairs(allocator_functions) do
       if not self.original_functions[funcname] then
@@ -283,7 +287,7 @@ local function alloc_log_new()
       do
         local kk = k
         self.lib['mem_' .. k] = function(...)
-          local log_entry = {func=kk, args={...}}
+          local log_entry = { func = kk, args = { ... } }
           self.log[#self.log + 1] = log_entry
           if kk == 'free' then
             self.original_functions[kk](...)
@@ -296,7 +300,9 @@ local function alloc_log_new()
               log_entry.args[i] = self.null
             end
           end
-          if self.hook then self:hook(log_entry) end
+          if self.hook then
+            self:hook(log_entry)
+          end
           if log_entry.ret then
             return log_entry.ret
           end
@@ -333,7 +339,7 @@ local function alloc_log_new()
       end
     end
     table.sort(toremove)
-    for i = #toremove,1,-1 do
+    for i = #toremove, 1, -1 do
       table.remove(self.log, toremove[i])
     end
   end
@@ -388,7 +394,7 @@ elseif syscall ~= nil then
   sc = {
     fork = syscall.fork,
     pipe = function()
-      local ret = {syscall.pipe()}
+      local ret = { syscall.pipe() }
       return ret[3], ret[4]
     end,
     read = function(rd, len)
@@ -410,31 +416,26 @@ else
       return tonumber(ffi.C.fork())
     end,
     pipe = function()
-      local ret = ffi.new('int[2]', {-1, -1})
+      local ret = ffi.new('int[2]', { -1, -1 })
       ffi.errno(0)
       local res = ffi.C.pipe(ret)
-      if (res ~= 0) then
+      if res ~= 0 then
         local err = ffi.errno(0)
-        assert(res == 0, ("pipe() error: %u: %s"):format(
-            err, ffi.string(ffi.C.strerror(err))))
+        assert(res == 0, ('pipe() error: %u: %s'):format(err, ffi.string(ffi.C.strerror(err))))
       end
       assert(ret[0] ~= -1 and ret[1] ~= -1)
       return ret[0], ret[1]
     end,
     read = function(rd, len)
-      local ret = ffi.new('char[?]', len, {0})
+      local ret = ffi.new('char[?]', len, { 0 })
       local total_bytes_read = 0
       ffi.errno(0)
       while total_bytes_read < len do
-        local bytes_read = tonumber(ffi.C.read(
-            rd,
-            ffi.cast('void*', ret + total_bytes_read),
-            len - total_bytes_read))
+        local bytes_read = tonumber(ffi.C.read(rd, ffi.cast('void*', ret + total_bytes_read), len - total_bytes_read))
         if bytes_read == -1 then
           local err = ffi.errno(0)
           if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("read() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
+            assert(false, ('read() error: %u: %s'):format(err, ffi.string(ffi.C.strerror(err))))
           end
         elseif bytes_read == 0 then
           break
@@ -449,15 +450,13 @@ else
       local total_bytes_written = 0
       ffi.errno(0)
       while total_bytes_written < #s do
-        local bytes_written = tonumber(ffi.C.write(
-            wr,
-            ffi.cast('void*', wbuf + total_bytes_written),
-            #s - total_bytes_written))
+        local bytes_written = tonumber(
+          ffi.C.write(wr, ffi.cast('void*', wbuf + total_bytes_written), #s - total_bytes_written)
+        )
         if bytes_written == -1 then
           local err = ffi.errno(0)
           if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("write() error: %u: %s ('%s')"):format(
-                err, ffi.string(ffi.C.strerror(err)), s))
+            assert(false, ("write() error: %u: %s ('%s')"):format(err, ffi.string(ffi.C.strerror(err)), s))
           end
         elseif bytes_written == 0 then
           break
@@ -477,8 +476,7 @@ else
           if err == ffi.C.kPOSIXErrnoECHILD then
             break
           elseif err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("waitpid() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
+            assert(false, ('waitpid() error: %u: %s'):format(err, ffi.string(ffi.C.strerror(err))))
           end
         else
           assert(r == pid)
@@ -492,8 +490,10 @@ end
 local function format_list(lst)
   local ret = ''
   for _, v in ipairs(lst) do
-    if ret ~= '' then ret = ret .. ', ' end
-    ret = ret .. assert:format({v, n=1})[1]
+    if ret ~= '' then
+      ret = ret .. ', '
+    end
+    ret = ret .. assert:format({ v, n = 1 })[1]
   end
   return ret
 end
@@ -502,9 +502,8 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
   for k_, v_ in pairs(sc) do
     (function(k, v)
       sc[k] = function(...)
-        local rets = {v(...)}
-        io.stderr:write(('%s(%s) = %s\n'):format(k, format_list({...}),
-                                                 format_list(rets)))
+        local rets = { v(...) }
+        io.stderr:write(('%s(%s) = %s\n'):format(k, format_list { ... }, format_list(rets)))
         return unpack(rets)
       end
     end)(k_, v_)
@@ -516,9 +515,7 @@ local function just_fail(_)
 end
 say:set('assertion.just_fail.positive', '%s')
 say:set('assertion.just_fail.negative', '%s')
-assert:register('assertion', 'just_fail', just_fail,
-                'assertion.just_fail.positive',
-                'assertion.just_fail.negative')
+assert:register('assertion', 'just_fail', just_fail, 'assertion.just_fail.positive', 'assertion.just_fail.negative')
 
 local hook_fnamelen = 30
 local hook_sfnamelen = 30
@@ -558,7 +555,7 @@ local function child_sethook(wr)
     local info = nil
     if use_prev then
       info = prev_info
-    elseif reason ~= 'tail return' then  -- tail return
+    elseif reason ~= 'tail return' then -- tail return
       info = debug.getinfo(2, 'nSl')
     end
 
@@ -609,19 +606,22 @@ local function child_sethook(wr)
     else
       lnum_s = ('%u'):format(lnum)
     end
-    local msg = (  -- lua does not support %*
-      ''
-      .. msgchar
-      .. whatchar
-      .. namewhatchar
-      .. ' '
-      .. source .. (' '):rep(hook_sfnamelen - #source)
-      .. ':'
-      .. funcname .. (' '):rep(hook_fnamelen - #funcname)
-      .. ':'
-      .. ('0'):rep(hook_numlen - #lnum_s) .. lnum_s
-      .. '\n'
-    )
+    local msg = ( -- lua does not support %*
+        ''
+        .. msgchar
+        .. whatchar
+        .. namewhatchar
+        .. ' '
+        .. source
+        .. (' '):rep(hook_sfnamelen - #source)
+        .. ':'
+        .. funcname
+        .. (' '):rep(hook_fnamelen - #funcname)
+        .. ':'
+        .. ('0'):rep(hook_numlen - #lnum_s)
+        .. lnum_s
+        .. '\n'
+      )
     -- eq(hook_msglen, #msg)
     sc.write(wr, msg)
   end
@@ -749,7 +749,9 @@ local function gen_itp(it)
   child_calls_mod = {}
   child_calls_mod_once = {}
   child_cleanups_mod_once = {}
-  preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
+  preprocess_cache_mod = map(function(v)
+    return v
+  end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
   cdefs_mod = cdefs_init:copy()
   local function itp(name, func, allow_failure)
@@ -827,7 +829,7 @@ local function ptr2addr(ptr)
   return tonumber(ffi.cast('intptr_t', ffi.cast('void *', ptr)))
 end
 
-local s = ffi.new('char[64]', {0})
+local s = ffi.new('char[64]', { 0 })
 
 local function ptr2key(ptr)
   ffi.C.snprintf(s, ffi.sizeof(s), '%p', ffi.cast('void *', ptr))

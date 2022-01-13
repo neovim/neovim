@@ -1,7 +1,7 @@
 -- helps managing loading different headers into the LuaJIT ffi. Untested on
 -- windows, will probably need quite a bit of adjustment to run there.
 
-local ffi = require("ffi")
+local ffi = require('ffi')
 local global_helpers = require('test.helpers')
 
 local argss_to_cmd = global_helpers.argss_to_cmd
@@ -9,35 +9,35 @@ local repeated_read_cmd = global_helpers.repeated_read_cmd
 
 local ccs = {}
 
-local env_cc = os.getenv("CC")
+local env_cc = os.getenv('CC')
 if env_cc then
-  table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
+  table.insert(ccs, { path = { '/usr/bin/env', env_cc }, type = 'gcc' })
 end
 
-if ffi.os == "Windows" then
-  table.insert(ccs, {path = {"cl"}, type = "msvc"})
+if ffi.os == 'Windows' then
+  table.insert(ccs, { path = { 'cl' }, type = 'msvc' })
 end
 
-table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
-table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
-table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
+table.insert(ccs, { path = { '/usr/bin/env', 'cc' }, type = 'gcc' })
+table.insert(ccs, { path = { '/usr/bin/env', 'gcc' }, type = 'gcc' })
+table.insert(ccs, { path = { '/usr/bin/env', 'gcc-4.9' }, type = 'gcc' })
+table.insert(ccs, { path = { '/usr/bin/env', 'gcc-4.8' }, type = 'gcc' })
+table.insert(ccs, { path = { '/usr/bin/env', 'gcc-4.7' }, type = 'gcc' })
+table.insert(ccs, { path = { '/usr/bin/env', 'clang' }, type = 'clang' })
+table.insert(ccs, { path = { '/usr/bin/env', 'icc' }, type = 'gcc' })
 
 -- parse Makefile format dependencies into a Lua table
 local function parse_make_deps(deps)
   -- remove line breaks and line concatenators
-  deps = deps:gsub("\n", ""):gsub("\\", "")
+  deps = deps:gsub('\n', ''):gsub('\\', '')
   -- remove the Makefile "target:" element
-  deps = deps:gsub(".+:", "")
+  deps = deps:gsub('.+:', '')
   -- remove redundant spaces
-  deps = deps:gsub("  +", " ")
+  deps = deps:gsub('  +', ' ')
 
   -- split according to token (space in this case)
   local headers = {}
-  for token in deps:gmatch("[^%s]+") do
+  for token in deps:gmatch('[^%s]+') do
     -- headers[token] = true
     headers[#headers + 1] = token
   end
@@ -45,9 +45,9 @@ local function parse_make_deps(deps)
   -- resolve path redirections (..) to normalize all paths
   for i, v in ipairs(headers) do
     -- double dots (..)
-    headers[i] = v:gsub("/[^/%s]+/%.%.", "")
+    headers[i] = v:gsub('/[^/%s]+/%.%.', '')
     -- single dot (.)
-    headers[i] = v:gsub("%./", "")
+    headers[i] = v:gsub('%./', '')
   end
 
   return headers
@@ -69,25 +69,22 @@ local function headerize(headers, global)
   local pre = '"'
   local post = pre
   if global then
-    pre = "<"
-    post = ">"
+    pre = '<'
+    post = '>'
   end
 
   local formatted = {}
   for _, hdr in ipairs(headers) do
-    formatted[#formatted + 1] = "#include " ..
-                                tostring(pre) ..
-                                tostring(hdr) ..
-                                tostring(post)
+    formatted[#formatted + 1] = '#include ' .. tostring(pre) .. tostring(hdr) .. tostring(post)
   end
 
-  return table.concat(formatted, "\n")
+  return table.concat(formatted, '\n')
 end
 
 local Gcc = {
   preprocessor_extra_flags = {},
-  get_defines_extra_flags = {'-std=c99', '-dM', '-E'},
-  get_declarations_extra_flags = {'-std=c99', '-P', '-E'},
+  get_defines_extra_flags = { '-std=c99', '-dM', '-E' },
+  get_declarations_extra_flags = { '-std=c99', '-P', '-E' },
 }
 
 function Gcc:define(name, args, val)
@@ -102,20 +99,19 @@ function Gcc:define(name, args, val)
 end
 
 function Gcc:undefine(name)
-  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
-      '-U' .. name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = ('-U' .. name)
 end
 
 function Gcc:init_defines()
   -- preprocessor flags that will hopefully make the compiler produce C
   -- declarations that the LuaJIT ffi understands.
-  self:define('aligned', {'ARGS'}, '')
-  self:define('__attribute__', {'ARGS'}, '')
-  self:define('__asm', {'ARGS'}, '')
-  self:define('__asm__', {'ARGS'}, '')
+  self:define('aligned', { 'ARGS' }, '')
+  self:define('__attribute__', { 'ARGS' }, '')
+  self:define('__asm', { 'ARGS' }, '')
+  self:define('__asm__', { 'ARGS' }, '')
   self:define('__inline__', nil, '')
   self:define('EXTERN', nil, 'extern')
-  self:define('INIT', {'...'}, '')
+  self:define('INIT', { '...' }, '')
   self:define('_GNU_SOURCE')
   self:define('INCLUDE_GENERATED_DECLARATIONS')
   self:define('UNIT_TESTING')
@@ -146,9 +142,9 @@ end
 
 -- returns a list of the headers files upon which this file relies
 function Gcc:dependencies(hdr)
-  local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
+  local cmd = argss_to_cmd(self.path, { '-M', hdr }) .. ' 2>&1'
   local out = io.popen(cmd)
-  local deps = out:read("*a")
+  local deps = out:read('*a')
   out:close()
   if deps then
     return parse_make_deps(deps)
@@ -162,10 +158,12 @@ function Gcc:filter_standard_defines(defines)
     local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
     local pseudoheader_file = io.open(pseudoheader_fname, 'w')
     pseudoheader_file:close()
-    local standard_defines = repeated_read_cmd(self.path,
-                                               self.preprocessor_extra_flags,
-                                               self.get_defines_extra_flags,
-                                               {pseudoheader_fname})
+    local standard_defines = repeated_read_cmd(
+      self.path,
+      self.preprocessor_extra_flags,
+      self.get_defines_extra_flags,
+      { pseudoheader_fname }
+    )
     os.remove(pseudoheader_fname)
     self.standard_defines = {}
     for line in standard_defines:gmatch('[^\n]+') do
@@ -178,25 +176,28 @@ function Gcc:filter_standard_defines(defines)
       ret[#ret + 1] = line
     end
   end
-  return table.concat(ret, "\n")
+  return table.concat(ret, '\n')
 end
 
 -- returns a stream representing a preprocessed form of the passed-in headers.
 -- Don't forget to close the stream by calling the close() method on it.
 function Gcc:preprocess(previous_defines, ...)
   -- create pseudo-header
-  local pseudoheader = headerize({...}, false)
+  local pseudoheader = headerize({ ... }, false)
   local pseudoheader_fname = 'tmp_pseudoheader.h'
   local pseudoheader_file = io.open(pseudoheader_fname, 'w')
   pseudoheader_file:write(previous_defines)
-  pseudoheader_file:write("\n")
+  pseudoheader_file:write('\n')
   pseudoheader_file:write(pseudoheader)
   pseudoheader_file:flush()
   pseudoheader_file:close()
 
-  local defines = repeated_read_cmd(self.path, self.preprocessor_extra_flags,
-                                    self.get_defines_extra_flags,
-                                    {pseudoheader_fname})
+  local defines = repeated_read_cmd(
+    self.path,
+    self.preprocessor_extra_flags,
+    self.get_defines_extra_flags,
+    { pseudoheader_fname }
+  )
   defines = self:filter_standard_defines(defines)
 
   -- lfs = require("lfs")
@@ -205,10 +206,12 @@ function Gcc:preprocess(previous_defines, ...)
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
 
-  local declarations = repeated_read_cmd(self.path,
-                                         self.preprocessor_extra_flags,
-                                         self.get_declarations_extra_flags,
-                                         {pseudoheader_fname})
+  local declarations = repeated_read_cmd(
+    self.path,
+    self.preprocessor_extra_flags,
+    self.get_declarations_extra_flags,
+    { pseudoheader_fname }
+  )
 
   os.remove(pseudoheader_fname)
 
@@ -220,9 +223,9 @@ local Clang = Gcc:new()
 local Msvc = Gcc:new()
 
 local type_to_class = {
-  ["gcc"] = Gcc,
-  ["clang"] = Clang,
-  ["msvc"] = Msvc
+  ['gcc'] = Gcc,
+  ['clang'] = Clang,
+  ['msvc'] = Msvc,
 }
 
 -- find the best cc. If os.exec causes problems on windows (like popping up
@@ -230,10 +233,10 @@ local type_to_class = {
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
 local function find_best_cc(compilers)
   for _, meta in pairs(compilers) do
-    local version = io.popen(tostring(meta.path) .. " -v 2>&1")
+    local version = io.popen(tostring(meta.path) .. ' -v 2>&1')
     version:close()
     if version then
-      return type_to_class[meta.type]:new({path = meta.path})
+      return type_to_class[meta.type]:new { path = meta.path }
     end
   end
   return nil
@@ -256,5 +259,5 @@ return {
   end,
   add_to_include_path = function(...)
     return cc:add_to_include_path(...)
-  end
+  end,
 }

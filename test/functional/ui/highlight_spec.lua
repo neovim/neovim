@@ -25,13 +25,13 @@ describe('highlight: `:syntax manual`', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(20,5)
+    screen = Screen.new(20, 5)
     screen:attach()
     --syntax highlight for vimcscripts "echo"
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {bold=true, foreground=Screen.colors.Brown}
-    } )
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { bold = true, foreground = Screen.colors.Brown },
+    }
   end)
 
   after_each(function()
@@ -72,9 +72,9 @@ describe('highlight: `:syntax manual`', function()
     command('set nohidden')
     command('w')
     command('silent bn')
-    eq("tmp1.vim", eval("fnamemodify(bufname('%'), ':t')"))
+    eq('tmp1.vim', eval("fnamemodify(bufname('%'), ':t')"))
     feed_command('silent bp')
-    eq("Xtest-functional-ui-highlight.tmp.vim", eval("fnamemodify(bufname('%'), ':t')"))
+    eq('Xtest-functional-ui-highlight.tmp.vim', eval("fnamemodify(bufname('%'), ':t')"))
     screen:expect([[
       {1:^echo} 1              |
       {0:~                   }|
@@ -85,7 +85,6 @@ describe('highlight: `:syntax manual`', function()
   end)
 end)
 
-
 describe('highlight defaults', function()
   local screen
 
@@ -93,15 +92,15 @@ describe('highlight defaults', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    command("set display-=msgsep")
+    command('set display-=msgsep')
   end)
 
   it('window status bar', function()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {reverse = true, bold = true},  -- StatusLine
-      [2] = {reverse = true}                -- StatusLineNC
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { reverse = true, bold = true }, -- StatusLine
+      [2] = { reverse = true }, -- StatusLineNC
+    }
     feed_command('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                    {2:│}                {2:│}               |
@@ -196,35 +195,48 @@ describe('highlight defaults', function()
   it('insert mode text', function()
     feed('i')
     screen:try_resize(53, 4)
-    screen:expect([[
+    screen:expect(
+      [[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
       {1:-- INSERT --}                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold = true}})
+    ]],
+      { [0] = { bold = true, foreground = Screen.colors.Blue }, [1] = { bold = true } }
+    )
   end)
 
   it('end of file markers', function()
     screen:try_resize(53, 4)
-    screen:expect([[
+    screen:expect(
+      [[
       ^                                                     |
       {1:~                                                    }|
       {1:~                                                    }|
                                                            |
-    ]], {[1] = {bold = true, foreground = Screen.colors.Blue}})
+    ]],
+      { [1] = { bold = true, foreground = Screen.colors.Blue } }
+    )
   end)
 
   it('"wait return" text', function()
     screen:try_resize(53, 4)
     feed(':ls<cr>')
-    screen:expect([[
+    screen:expect(
+      [[
       {0:~                                                    }|
       :ls                                                  |
         1 %a   "[No Name]"                    line 1       |
       {1:Press ENTER or type command to continue}^              |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold = true, foreground = Screen.colors.SeaGreen}})
+    ]],
+      {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
+        [1] = {
+          bold = true,
+          foreground = Screen.colors.SeaGreen,
+        },
+      }
+    )
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
 
@@ -232,24 +244,31 @@ describe('highlight defaults', function()
     screen:try_resize(53, 4)
     feed_command('highlight clear ModeMsg')
     feed('i')
-    screen:expect([[
+    screen:expect(
+      [[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
       -- INSERT --                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold=true}})
+    ]],
+      { [0] = { bold = true, foreground = Screen.colors.Blue }, [1] = { bold = true } }
+    )
     feed('<esc>')
     feed_command('highlight CustomHLGroup guifg=red guibg=green')
     feed_command('highlight link ModeMsg CustomHLGroup')
     feed('i')
-    screen:expect([[
+    screen:expect(
+      [[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
       {1:-- INSERT --}                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
+    ]],
+      {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
+        [1] = { foreground = Screen.colors.Red, background = Screen.colors.Green },
+      }
+    )
   end)
 
   it('can be cleared by assigning NONE', function()
@@ -257,41 +276,54 @@ describe('highlight defaults', function()
     feed_command('syn keyword TmpKeyword neovim')
     feed_command('hi link TmpKeyword ErrorMsg')
     insert('neovim')
-    screen:expect([[
+    screen:expect(
+      [[
       {1:neovi^m}                                               |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {foreground = Screen.colors.White, background = Screen.colors.Red}
-    })
-    feed_command("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
-            .. " gui=NONE guifg=NONE guibg=NONE guisp=NONE")
-    screen:expect([[
+    ]],
+      {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
+        [1] = { foreground = Screen.colors.White, background = Screen.colors.Red },
+      }
+    )
+    feed_command(
+      'hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE' .. ' gui=NONE guifg=NONE guibg=NONE guisp=NONE'
+    )
+    screen:expect(
+      [[
       neovi^m                                               |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+    ]],
+      { [0] = { bold = true, foreground = Screen.colors.Blue } }
+    )
   end)
 
   it('linking updates window highlight immediately #16552', function()
     screen:try_resize(53, 4)
-    screen:expect([[
+    screen:expect(
+      [[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
-    feed_command("hi NonTextAlt guifg=Red")
-    feed_command("hi! link NonText NonTextAlt")
-    screen:expect([[
+    ]],
+      { [0] = { bold = true, foreground = Screen.colors.Blue } }
+    )
+    feed_command('hi NonTextAlt guifg=Red')
+    feed_command('hi! link NonText NonTextAlt')
+    screen:expect(
+      [[
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
       :hi! link NonText NonTextAlt                         |
-    ]], {[0] = {foreground=Screen.colors.Red}})
+    ]],
+      { [0] = { foreground = Screen.colors.Red } }
+    )
   end)
 
   it('Cursor after `:hi clear|syntax reset` #6508', function()
@@ -304,57 +336,72 @@ describe('highlight defaults', function()
     feed_command('highlight NonText gui=NONE guifg=#FF0000')
     feed_command('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
     insert('   ne \t o\tv  im  ')
-    screen:expect([[
+    screen:expect(
+      [[
       ne{0:.>----.}o{0:>-----}v{0:..}im{0:*^*¬}                             |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {
-      [0] = {foreground=Screen.colors.Red},
-      [1] = {foreground=Screen.colors.Blue},
-    })
+    ]],
+      {
+        [0] = { foreground = Screen.colors.Red },
+        [1] = { foreground = Screen.colors.Blue },
+      }
+    )
     feed_command('highlight Whitespace gui=NONE guifg=#0000FF')
-    screen:expect([[
+    screen:expect(
+      [[
       ne{1:.>----.}o{1:>-----}v{1:..}im{1:*^*}{0:¬}                             |
       {0:~                                                    }|
       {0:~                                                    }|
       :highlight Whitespace gui=NONE guifg=#0000FF         |
-    ]], {
-      [0] = {foreground=Screen.colors.Red},
-      [1] = {foreground=Screen.colors.Blue},
-    })
+    ]],
+      {
+        [0] = { foreground = Screen.colors.Red },
+        [1] = { foreground = Screen.colors.Blue },
+      }
+    )
   end)
 
   it('are sent to UIs', function()
     screen:try_resize(53, 4)
-    screen:set_default_attr_ids({
+    screen:set_default_attr_ids {
       [0] = {},
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {italic=true}
-    })
-    screen:expect{grid=[[
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, reverse = true },
+      [3] = { italic = true },
+    }
+    screen:expect {
+      grid = [[
       ^                                                     |
       {1:~                                                    }|
       {1:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
+    ]],
+      hl_groups = { EndOfBuffer = 1, MsgSeparator = 2 },
+    }
 
     command('highlight EndOfBuffer gui=italic')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^                                                     |
       {3:~                                                    }|
       {3:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=3, MsgSeparator=2}}
+    ]],
+      hl_groups = { EndOfBuffer = 3, MsgSeparator = 2 },
+    }
 
     command('highlight clear EndOfBuffer')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^                                                     |
       {1:~                                                    }|
       {1:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
+    ]],
+      hl_groups = { EndOfBuffer = 1, MsgSeparator = 2 },
+    }
   end)
 end)
 
@@ -362,13 +409,13 @@ describe('highlight', function()
   before_each(clear)
 
   it('visual', function()
-    local screen = Screen.new(20,4)
+    local screen = Screen.new(20, 4)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.LightGrey},
-      [2] = {bold = true, foreground = Screen.colors.Blue1},
-      [3] = {bold = true},
-    })
+    screen:set_default_attr_ids {
+      [1] = { background = Screen.colors.LightGrey },
+      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { bold = true },
+    }
     insert([[
       line1 foo bar
     ]])
@@ -395,15 +442,19 @@ describe('highlight', function()
   end)
 
   it('cterm=standout gui=standout', function()
-    local screen = Screen.new(20,5)
+    local screen = Screen.new(20, 5)
     screen:attach()
-    screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
-        [2] = {standout = true, bold = true, underline = true,
-        background = Screen.colors.Gray90, foreground = Screen.colors.Blue1},
-        [3] = {standout = true, underline = true,
-        background = Screen.colors.Gray90}
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = {
+        standout = true,
+        bold = true,
+        underline = true,
+        background = Screen.colors.Gray90,
+        foreground = Screen.colors.Blue1,
+      },
+      [3] = { standout = true, underline = true, background = Screen.colors.Gray90 },
+    }
     feed_command('hi CursorLine cterm=standout,underline gui=standout,underline')
     feed_command('set cursorline')
     feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
@@ -418,7 +469,7 @@ describe('highlight', function()
   end)
 
   it('strikethrough', function()
-    local screen = Screen.new(25,6)
+    local screen = Screen.new(25, 6)
     screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword foo')
@@ -429,27 +480,30 @@ describe('highlight', function()
       foo bar
       foobarfoobar
       ]])
-    screen:expect([[
+    screen:expect(
+      [[
       {1:foo}                      |
       {1:foo} bar                  |
       foobarfoobar             |
       ^                         |
       {2:~                        }|
                                |
-    ]],{
-      [1] = {strikethrough = true},
-      [2] = {bold = true, foreground = Screen.colors.Blue1},
-    })
+    ]],
+      {
+        [1] = { strikethrough = true },
+        [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      }
+    )
   end)
 
   it('nocombine', function()
-    local screen = Screen.new(25,6)
-    screen:set_default_attr_ids{
-      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [2] = {bold = true, foreground = Screen.colors.Blue1},
-      [3] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
-      [4] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
-      [5] = {foreground = Screen.colors.Red},
+    local screen = Screen.new(25, 6)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.SlateBlue, underline = true },
+      [2] = { bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { underline = true, reverse = true, foreground = Screen.colors.SlateBlue },
+      [4] = { background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue },
+      [5] = { foreground = Screen.colors.Red },
     }
     screen:attach()
     feed_command('syntax on')
@@ -460,37 +514,43 @@ describe('highlight', function()
       foobar
       foobar
       ]])
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:foobar}                   |
       {1:foobar}                   |
       ^                         |
       {2:~                        }|
       {2:~                        }|
                                |
-    ]]}
+    ]],
+    }
 
     feed('/foo')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {3:foo}{1:bar}                   |
       {4:foo}{1:bar}                   |
                                |
       {2:~                        }|
       {2:~                        }|
       /foo^                     |
-    ]]}
+    ]],
+    }
     feed('<cr>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {4:^foo}{1:bar}                   |
       {4:foo}{1:bar}                   |
                                |
       {2:~                        }|
       {2:~                        }|
       {5:search hit...uing at TOP} |
-    ]]}
+    ]],
+    }
   end)
 
   it('guisp (special/undercurl)', function()
-    local screen = Screen.new(25,10)
+    local screen = Screen.new(25, 10)
     screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
@@ -514,7 +574,8 @@ describe('highlight', function()
       specialwithfg
       ]])
     feed('Go<tab>neovim tabbed')
-    screen:expect([[
+    screen:expect(
+      [[
       {1:neovim}                   |
       awesome {1:neovim}           |
       wordcontainingneovim     |
@@ -525,16 +586,20 @@ describe('highlight', function()
               {1:neovim} tabbed^    |
       {0:~                        }|
       {5:-- INSERT --}             |
-    ]],{
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red,
-             special = Screen.colors.Red},
-      [2] = {special = Screen.colors.Red},
-      [3] = {special = Screen.colors.Red, background = Screen.colors.Yellow},
-      [4] = {foreground = Screen.colors.Red, special = Screen.colors.Red},
-      [5] = {bold=true},
-    })
-
+    ]],
+      {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
+        [1] = {
+          background = Screen.colors.Yellow,
+          foreground = Screen.colors.Red,
+          special = Screen.colors.Red,
+        },
+        [2] = { special = Screen.colors.Red },
+        [3] = { special = Screen.colors.Red, background = Screen.colors.Yellow },
+        [4] = { foreground = Screen.colors.Red, special = Screen.colors.Red },
+        [5] = { bold = true },
+      }
+    )
   end)
 end)
 
@@ -543,15 +608,15 @@ describe("'listchars' highlight", function()
 
   before_each(function()
     clear()
-    screen = Screen.new(20,5)
+    screen = Screen.new(20, 5)
     screen:attach()
   end)
 
   it("'cursorline' and 'cursorcolumn'", function()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background=Screen.colors.Grey90}
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Grey90 },
+    }
     feed_command('highlight clear ModeMsg')
     feed_command('set cursorline')
     feed('i')
@@ -623,25 +688,25 @@ describe("'listchars' highlight", function()
   end)
 
   it("'cursorline' and with 'listchars' option", function()
-    screen:set_default_attr_ids({
-      [1] = {background=Screen.colors.Grey90},
+    screen:set_default_attr_ids {
+      [1] = { background = Screen.colors.Grey90 },
       [2] = {
-        foreground=Screen.colors.Red,
-        background=Screen.colors.Grey90,
+        foreground = Screen.colors.Red,
+        background = Screen.colors.Grey90,
       },
       [3] = {
-        background=Screen.colors.Grey90,
-        foreground=Screen.colors.Blue,
-        bold=true,
+        background = Screen.colors.Grey90,
+        foreground = Screen.colors.Blue,
+        bold = true,
       },
       [4] = {
-        foreground=Screen.colors.Blue,
-        bold=true,
+        foreground = Screen.colors.Blue,
+        bold = true,
       },
       [5] = {
-        foreground=Screen.colors.Red,
+        foreground = Screen.colors.Red,
       },
-    })
+    }
     feed_command('highlight clear ModeMsg')
     feed_command('highlight Whitespace guifg=#FF0000')
     feed_command('set cursorline')
@@ -707,9 +772,9 @@ describe("'listchars' highlight", function()
   end)
 
   it("'listchar' with wrap", function()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+    }
     feed_command('set wrap')
     feed_command('set listchars=eol:¬,precedes:< list')
     feed('90ia<esc>')
@@ -731,37 +796,37 @@ describe("'listchars' highlight", function()
   end)
 
   it("'listchar' in visual mode", function()
-    screen:set_default_attr_ids({
-      [1] = {background=Screen.colors.Grey90},
+    screen:set_default_attr_ids {
+      [1] = { background = Screen.colors.Grey90 },
       [2] = {
-        foreground=Screen.colors.Red,
-        background=Screen.colors.Grey90,
+        foreground = Screen.colors.Red,
+        background = Screen.colors.Grey90,
       },
       [3] = {
-        background=Screen.colors.Grey90,
-        foreground=Screen.colors.Blue,
-        bold=true,
+        background = Screen.colors.Grey90,
+        foreground = Screen.colors.Blue,
+        bold = true,
       },
       [4] = {
-        foreground=Screen.colors.Blue,
-        bold=true,
+        foreground = Screen.colors.Blue,
+        bold = true,
       },
       [5] = {
-        foreground=Screen.colors.Red,
+        foreground = Screen.colors.Red,
       },
       [6] = {
-        background=Screen.colors.LightGrey,
+        background = Screen.colors.LightGrey,
       },
       [7] = {
-        background=Screen.colors.LightGrey,
-        foreground=Screen.colors.Red,
+        background = Screen.colors.LightGrey,
+        foreground = Screen.colors.Red,
       },
       [8] = {
-        background=Screen.colors.LightGrey,
-        foreground=Screen.colors.Blue,
-        bold=true,
+        background = Screen.colors.LightGrey,
+        foreground = Screen.colors.Blue,
+        bold = true,
       },
-    })
+    }
     feed_command('highlight clear ModeMsg')
     feed_command('highlight Whitespace guifg=#FF0000')
     feed_command('set cursorline')
@@ -803,12 +868,12 @@ describe("'listchars' highlight", function()
   end)
 
   it("'cursorline' with :match", function()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background=Screen.colors.Grey90},
-      [2] = {foreground=Screen.colors.Red},
-      [3] = {foreground=Screen.colors.X11Green, background=Screen.colors.Red1},
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Grey90 },
+      [2] = { foreground = Screen.colors.Red },
+      [3] = { foreground = Screen.colors.X11Green, background = Screen.colors.Red1 },
+    }
     feed_command('highlight clear ModeMsg')
     feed_command('highlight Whitespace guifg=#FF0000')
     feed_command('highlight Error guifg=#00FF00')
@@ -844,16 +909,16 @@ describe('CursorLine highlight', function()
   before_each(clear)
 
   it('overridden by Error, ColorColumn if fg not set', function()
-    local screen = Screen.new(50,5)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.SlateBlue},
-      [2] = {bold = true, foreground = Screen.colors.Brown},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
-      [5] = {background = Screen.colors.Gray90},
-      [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.LightRed},
-    })
+    local screen = Screen.new(50, 5)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.SlateBlue },
+      [2] = { bold = true, foreground = Screen.colors.Brown },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90 },
+      [5] = { background = Screen.colors.Gray90 },
+      [6] = { bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { background = Screen.colors.LightRed },
+    }
     screen:attach()
 
     command('filetype on')
@@ -880,13 +945,13 @@ describe('CursorLine highlight', function()
   end)
 
   it("overridden by NonText in 'showbreak' characters", function()
-    local screen = Screen.new(20,5)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Yellow, background = Screen.colors.Blue};
-      [2] = {foreground = Screen.colors.Black, background = Screen.colors.White};
-      [3] = {foreground = Screen.colors.Yellow, background = Screen.colors.White};
-      [4] = {foreground = Screen.colors.Yellow};
-    })
+    local screen = Screen.new(20, 5)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Yellow, background = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.Black, background = Screen.colors.White },
+      [3] = { foreground = Screen.colors.Yellow, background = Screen.colors.White },
+      [4] = { foreground = Screen.colors.Yellow },
+    }
     screen:attach()
 
     feed_command('set wrap cursorline')
@@ -931,13 +996,13 @@ describe('CursorLine highlight', function()
   end)
 
   it("'cursorlineopt' screenline", function()
-    local screen = Screen.new(20,5)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Black, background = Screen.colors.White};
-      [2] = {foreground = Screen.colors.Yellow};
-      [3] = {foreground = Screen.colors.Red, background = Screen.colors.Green};
-      [4] = {foreground = Screen.colors.Green, background = Screen.colors.Red};
-    })
+    local screen = Screen.new(20, 5)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Black, background = Screen.colors.White },
+      [2] = { foreground = Screen.colors.Yellow },
+      [3] = { foreground = Screen.colors.Red, background = Screen.colors.Green },
+      [4] = { foreground = Screen.colors.Green, background = Screen.colors.Red },
+    }
     screen:attach()
 
     feed_command('set wrap cursorline cursorlineopt=screenline')
@@ -1022,17 +1087,17 @@ describe('CursorLine highlight', function()
   end)
 
   it('always updated. vim-patch:8.1.0849', function()
-    local screen = Screen.new(50,5)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.SlateBlue},
-      [2] = {bold = true, foreground = Screen.colors.Brown},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
-      [5] = {background = Screen.colors.Gray90},
-      [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.LightRed},
-      [8] = {foreground = Screen.colors.Brown},
-    })
+    local screen = Screen.new(50, 5)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.SlateBlue },
+      [2] = { bold = true, foreground = Screen.colors.Brown },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90 },
+      [5] = { background = Screen.colors.Gray90 },
+      [6] = { bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { background = Screen.colors.LightRed },
+      [8] = { foreground = Screen.colors.Brown },
+    }
     screen:attach()
     command('set cursorline relativenumber')
     command('call setline(1, ["","1","2","3",""])')
@@ -1055,19 +1120,19 @@ describe('CursorLine highlight', function()
   end)
 
   it('with visual area. vim-patch:8.1.1001', function()
-    local screen = Screen.new(50,5)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.SlateBlue},
-      [2] = {bold = true, foreground = Screen.colors.Brown},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
-      [5] = {background = Screen.colors.Gray90},
-      [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.LightRed},
-      [8] = {foreground = Screen.colors.Brown},
-      [9] = {background = Screen.colors.LightGrey},
-      [10] = {bold = true},
-    })
+    local screen = Screen.new(50, 5)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.SlateBlue },
+      [2] = { bold = true, foreground = Screen.colors.Brown },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90 },
+      [5] = { background = Screen.colors.Gray90 },
+      [6] = { bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { background = Screen.colors.LightRed },
+      [8] = { foreground = Screen.colors.Brown },
+      [9] = { background = Screen.colors.LightGrey },
+      [10] = { bold = true },
+    }
     screen:attach()
     command('set cursorline')
     command('call setline(1, repeat(["abc"], 50))')
@@ -1082,19 +1147,19 @@ describe('CursorLine highlight', function()
   end)
 
   it('with split-windows in diff-mode', function()
-    local screen = Screen.new(50,12)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-      [2] = {bold = true, background = Screen.colors.Red},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {reverse = true},
-      [5] = {background = Screen.colors.LightBlue},
-      [6] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.Red, foreground = Screen.colors.White},
-      [8] = {bold = true, foreground = Screen.colors.Blue1},
-      [9] = {bold = true, reverse = true},
-      [10] = {bold = true},
-    })
+    local screen = Screen.new(50, 12)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+      [2] = { bold = true, background = Screen.colors.Red },
+      [3] = { background = Screen.colors.LightMagenta },
+      [4] = { reverse = true },
+      [5] = { background = Screen.colors.LightBlue },
+      [6] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { background = Screen.colors.Red, foreground = Screen.colors.White },
+      [8] = { bold = true, foreground = Screen.colors.Blue1 },
+      [9] = { bold = true, reverse = true },
+      [10] = { bold = true },
+    }
     screen:attach()
 
     command('hi CursorLine ctermbg=red ctermfg=white guibg=red guifg=white')
@@ -1140,7 +1205,8 @@ describe('CursorLine highlight', function()
     -- Rendered as underline in a diff-line. #9028
     command('hi CursorLine ctermbg=red ctermfg=NONE guibg=red guifg=NONE')
     feed('kkkk')
-    screen:expect([[
+    screen:expect(
+      [[
       {1:  }line 1 some text       {4:│}{1:  }line 1 some text      |
       {1:  }{11:line 2 mo}{12:Re text!}{11:      }{4:│}{1:  }{11:^line 2 mo}{12:re text}{11:      }|
       {1:  }{5:extra line!            }{4:│}{1:  }{6:----------------------}|
@@ -1153,53 +1219,51 @@ describe('CursorLine highlight', function()
       {8:~                        }{4:│}{8:~                       }|
       {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
-    ]], {
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-      [2] = {bold = true, background = Screen.colors.Red},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {reverse = true},
-      [5] = {background = Screen.colors.LightBlue},
-      [6] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-      [7] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [8] = {bold = true, foreground = Screen.colors.Blue1},
-      [9] = {bold = true, reverse = true},
-      [10] = {bold = true},
-      [11] = {underline = true,
-              background = Screen.colors.LightMagenta},
-      [12] = {bold = true, underline = true,
-              background = Screen.colors.Red},
-    })
+    ]],
+      {
+        [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+        [2] = { bold = true, background = Screen.colors.Red },
+        [3] = { background = Screen.colors.LightMagenta },
+        [4] = { reverse = true },
+        [5] = { background = Screen.colors.LightBlue },
+        [6] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+        [7] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [8] = { bold = true, foreground = Screen.colors.Blue1 },
+        [9] = { bold = true, reverse = true },
+        [10] = { bold = true },
+        [11] = { underline = true, background = Screen.colors.LightMagenta },
+        [12] = { bold = true, underline = true, background = Screen.colors.Red },
+      }
+    )
   end)
 end)
 
-
-describe("MsgSeparator highlight and msgsep fillchar", function()
+describe('MsgSeparator highlight and msgsep fillchar', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(50,5)
-    screen:set_default_attr_ids({
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {bold=true, reverse=true},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [4] = {background = Screen.colors.Cyan, bold = true, reverse = true},
-      [5] = {bold = true, background = Screen.colors.Magenta},
-      [6] = {background = Screen.colors.WebGray},
-      [7] = {background = Screen.colors.WebGray, bold = true, foreground = Screen.colors.SeaGreen4},
-      [8] = {foreground = Screen.colors.Grey0, background = Screen.colors.Gray60},
-      [9] = {foreground = Screen.colors.Grey40, background = Screen.colors.Gray60},
-      [10] = {foreground = tonumber('0x000019'), background = Screen.colors.Gray60},
-      [11] = {background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x666699')},
-      [12] = {background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x297d4e')},
-      [13] = {background = tonumber('0xff4cff'), bold = true, foreground = tonumber('0xb200ff')},
-    })
+    screen = Screen.new(50, 5)
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { bold = true, reverse = true },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [4] = { background = Screen.colors.Cyan, bold = true, reverse = true },
+      [5] = { bold = true, background = Screen.colors.Magenta },
+      [6] = { background = Screen.colors.WebGray },
+      [7] = { background = Screen.colors.WebGray, bold = true, foreground = Screen.colors.SeaGreen4 },
+      [8] = { foreground = Screen.colors.Grey0, background = Screen.colors.Gray60 },
+      [9] = { foreground = Screen.colors.Grey40, background = Screen.colors.Gray60 },
+      [10] = { foreground = tonumber('0x000019'), background = Screen.colors.Gray60 },
+      [11] = { background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x666699') },
+      [12] = { background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x297d4e') },
+      [13] = { background = tonumber('0xff4cff'), bold = true, foreground = tonumber('0xb200ff') },
+    }
     screen:attach()
   end)
 
-  it("works", function()
-
+  it('works', function()
     -- defaults
-    feed_command("ls")
+    feed_command('ls')
     screen:expect([[
                                                         |
       {2:                                                  }|
@@ -1209,8 +1273,8 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     ]])
     feed('<cr>')
 
-    feed_command("set fillchars+=msgsep:-")
-    feed_command("ls")
+    feed_command('set fillchars+=msgsep:-')
+    feed_command('ls')
     screen:expect([[
                                                         |
       {2:--------------------------------------------------}|
@@ -1220,8 +1284,8 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     ]])
 
     -- linked to StatusLine per default
-    feed_command("hi StatusLine guibg=Cyan")
-    feed_command("ls")
+    feed_command('hi StatusLine guibg=Cyan')
+    feed_command('ls')
     screen:expect([[
                                                         |
       {4:--------------------------------------------------}|
@@ -1231,9 +1295,9 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     ]])
 
     -- but can be unlinked
-    feed_command("hi clear MsgSeparator")
-    feed_command("hi MsgSeparator guibg=Magenta gui=bold")
-    feed_command("ls")
+    feed_command('hi clear MsgSeparator')
+    feed_command('hi MsgSeparator guibg=Magenta gui=bold')
+    feed_command('ls')
     screen:expect([[
                                                         |
       {5:--------------------------------------------------}|
@@ -1243,8 +1307,8 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     ]])
 
     -- when display doesn't contain msgsep, these options have no effect
-    feed_command("set display-=msgsep")
-    feed_command("ls")
+    feed_command('set display-=msgsep')
+    feed_command('ls')
     screen:expect([[
       {1:~                                                 }|
       {1:~                                                 }|
@@ -1254,59 +1318,71 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     ]])
   end)
 
-  it("and MsgArea", function()
-    feed_command("hi MsgArea guibg=Gray")
-    screen:expect{grid=[[
+  it('and MsgArea', function()
+    feed_command('hi MsgArea guibg=Gray')
+    screen:expect {
+      grid = [[
       ^                                                  |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
       {6:                                                  }|
-    ]]}
-    feed(":ls")
-    screen:expect{grid=[[
+    ]],
+    }
+    feed(':ls')
+    screen:expect {
+      grid = [[
                                                         |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
       {6::ls^                                               }|
-    ]]}
-    feed(":<cr>")
-    screen:expect{grid=[[
+    ]],
+    }
+    feed(':<cr>')
+    screen:expect {
+      grid = [[
                                                         |
       {2:                                                  }|
       {6::ls:                                              }|
       {6:  1 %a   "[No Name]"                    line 1    }|
       {7:Press ENTER or type command to continue}{6:^           }|
-    ]]}
+    ]],
+    }
 
     -- support madness^Wblending of message "overlay"
-    feed_command("hi MsgArea blend=20")
-    feed_command("hi clear MsgSeparator")
-    feed_command("hi MsgSeparator blend=30 guibg=Magenta")
-    screen:expect{grid=[[
+    feed_command('hi MsgArea blend=20')
+    feed_command('hi clear MsgSeparator')
+    feed_command('hi MsgSeparator blend=30 guibg=Magenta')
+    screen:expect {
+      grid = [[
       ^                                                  |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
       {8::hi}{9: }{8:MsgSeparator}{9: }{8:blend=30}{9: }{8:guibg=Magenta}{9:           }|
-    ]]}
-    feed(":ls")
-    screen:expect{grid=[[
+    ]],
+    }
+    feed(':ls')
+    screen:expect {
+      grid = [[
                                                         |
       {1:~                                                 }|
       {1:~                                                 }|
       {1:~                                                 }|
       {8::ls}{9:^                                               }|
-    ]]}
-    feed("<cr>")
-    screen:expect{grid=[[
+    ]],
+    }
+    feed('<cr>')
+    screen:expect {
+      grid = [[
                                                         |
       {13:~                                                 }|
       {10::ls}{11:                                               }|
       {11:~ }{10:1}{11: }{10:%a}{11:   }{10:"[No}{11: }{10:Name]"}{11:                    }{10:line}{11: }{10:1}{11:    }|
       {12:Press}{9: }{12:ENTER}{9: }{12:or}{9: }{12:type}{9: }{12:command}{9: }{12:to}{9: }{12:continue}{9:^           }|
-    ]]}
+    ]],
+    }
   end)
 end)
 
@@ -1314,12 +1390,12 @@ describe("'number' and 'relativenumber' highlight", function()
   before_each(clear)
 
   it('LineNr, LineNrAbove and LineNrBelow', function()
-    local screen = Screen.new(20,10)
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Red},
-      [2] = {foreground = Screen.colors.Blue},
-      [3] = {foreground = Screen.colors.Green},
-    })
+    local screen = Screen.new(20, 10)
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.Red },
+      [2] = { foreground = Screen.colors.Blue },
+      [3] = { foreground = Screen.colors.Green },
+    }
     screen:attach()
     command('set number relativenumber')
     command('call setline(1, range(50))')
@@ -1384,47 +1460,47 @@ describe("'winhighlight' highlight", function()
 
   before_each(function()
     clear()
-    screen = Screen.new(20,8)
+    screen = Screen.new(20, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background = Screen.colors.DarkBlue},
-      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1},
-      [3] = {bold = true, reverse = true},
-      [4] = {reverse = true},
-      [5] = {background = Screen.colors.DarkGreen},
-      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1},
-      [7] = {background = Screen.colors.DarkMagenta},
-      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
-      [9] = {foreground = Screen.colors.Brown},
-      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
-      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true},
-      [12] = {background = Screen.colors.DarkGreen, reverse = true},
-      [13] = {background = Screen.colors.Magenta4, reverse = true},
-      [14] = {background = Screen.colors.DarkBlue, reverse = true},
-      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [16] = {foreground = Screen.colors.Blue1},
-      [17] = {background = Screen.colors.LightRed},
-      [18] = {background = Screen.colors.Gray90},
-      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
-      [20] = {background = Screen.colors.LightGrey, underline = true},
-      [21] = {bold = true},
-      [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [23] = {background = Screen.colors.LightMagenta},
-      [24] = {background = Screen.colors.WebGray},
-      [25] = {bold = true, foreground = Screen.colors.Green1},
-      [26] = {background = Screen.colors.Red},
-      [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
-      [28] = {bold = true, foreground = Screen.colors.Brown},
-    })
-    command("hi Background1 guibg=DarkBlue")
-    command("hi Background2 guibg=DarkGreen")
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.DarkBlue },
+      [2] = { background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { bold = true, reverse = true },
+      [4] = { reverse = true },
+      [5] = { background = Screen.colors.DarkGreen },
+      [6] = { background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { background = Screen.colors.DarkMagenta },
+      [8] = { background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1 },
+      [9] = { foreground = Screen.colors.Brown },
+      [10] = { foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue },
+      [11] = { background = Screen.colors.DarkBlue, bold = true, reverse = true },
+      [12] = { background = Screen.colors.DarkGreen, reverse = true },
+      [13] = { background = Screen.colors.Magenta4, reverse = true },
+      [14] = { background = Screen.colors.DarkBlue, reverse = true },
+      [15] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [16] = { foreground = Screen.colors.Blue1 },
+      [17] = { background = Screen.colors.LightRed },
+      [18] = { background = Screen.colors.Gray90 },
+      [19] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+      [20] = { background = Screen.colors.LightGrey, underline = true },
+      [21] = { bold = true },
+      [22] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [23] = { background = Screen.colors.LightMagenta },
+      [24] = { background = Screen.colors.WebGray },
+      [25] = { bold = true, foreground = Screen.colors.Green1 },
+      [26] = { background = Screen.colors.Red },
+      [27] = { background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1 },
+      [28] = { bold = true, foreground = Screen.colors.Brown },
+    }
+    command('hi Background1 guibg=DarkBlue')
+    command('hi Background2 guibg=DarkGreen')
   end)
 
   it('works for background color', function()
-    insert("aa")
-    command("split")
-    command("set winhl=Normal:Background1")
+    insert('aa')
+    command('split')
+    command('set winhl=Normal:Background1')
     screen:expect([[
       {1:a^a                  }|
       {2:~                   }|
@@ -1436,7 +1512,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("enew")
+    command('enew')
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -1450,7 +1526,7 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('handles invalid values', function()
-    command("set winhl=Normal:Background1")
+    command('set winhl=Normal:Background1')
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -1462,10 +1538,10 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy',
-       exc_exec("set winhl=xxx:yyy"))
+    eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy', exc_exec('set winhl=xxx:yyy'))
     eq('Normal:Background1', eval('&winhl'))
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
@@ -1474,14 +1550,15 @@ describe("'winhighlight' highlight", function()
       {2:~                   }|
       {2:~                   }|
                           |
-    ]], unchanged=true}
+    ]],
+      unchanged = true,
+    }
   end)
 
-
   it('works local to the buffer', function()
-    insert("aa")
-    command("split")
-    command("setlocal winhl=Normal:Background1")
+    insert('aa')
+    command('split')
+    command('setlocal winhl=Normal:Background1')
     screen:expect([[
       {1:a^a                  }|
       {2:~                   }|
@@ -1493,7 +1570,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("enew")
+    command('enew')
     screen:expect([[
       ^                    |
       {0:~                   }|
@@ -1505,7 +1582,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("bnext")
+    command('bnext')
     screen:expect([[
       {1:^aa                  }|
       {2:~                   }|
@@ -1519,9 +1596,9 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('for inactive window background works', function()
-    command("set winhl=Normal:Background1,NormalNC:Background2")
+    command('set winhl=Normal:Background1,NormalNC:Background2')
     -- tests global value is copied across split
-    command("split")
+    command('split')
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -1533,7 +1610,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    feed("<c-w><c-w>")
+    feed('<c-w><c-w>')
     screen:expect([[
       {5:                    }|
       {6:~                   }|
@@ -1545,7 +1622,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    feed("<c-w><c-w>")
+    feed('<c-w><c-w>')
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -1559,9 +1636,9 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('works with NormalNC', function()
-    command("hi NormalNC guibg=DarkMagenta")
+    command('hi NormalNC guibg=DarkMagenta')
     -- tests global value is copied across split
-    command("split")
+    command('split')
     screen:expect([[
       ^                    |
       {0:~                   }|
@@ -1573,7 +1650,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("wincmd w")
+    command('wincmd w')
     screen:expect([[
       {7:                    }|
       {8:~                   }|
@@ -1584,10 +1661,9 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
                           |
     ]])
-
 
     -- winbg=Normal:... overrides global NormalNC
-    command("set winhl=Normal:Background1")
+    command('set winhl=Normal:Background1')
     screen:expect([[
       {7:                    }|
       {8:~                   }|
@@ -1599,7 +1675,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("wincmd w")
+    command('wincmd w')
     screen:expect([[
       ^                    |
       {0:~                   }|
@@ -1611,8 +1687,8 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("wincmd w")
-    command("set winhl=Normal:Background1,NormalNC:Background2")
+    command('wincmd w')
+    command('set winhl=Normal:Background1,NormalNC:Background2')
     screen:expect([[
       {7:                    }|
       {8:~                   }|
@@ -1624,7 +1700,7 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
 
-    command("wincmd w")
+    command('wincmd w')
     screen:expect([[
       ^                    |
       {0:~                   }|
@@ -1719,13 +1795,12 @@ describe("'winhighlight' highlight", function()
   end)
 
   it('can override NonText, Conceal and EndOfBuffer', function()
-    curbufmeths.set_lines(0,-1,true, {"raa\000"})
+    curbufmeths.set_lines(0, -1, true, { 'raa\000' })
     command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
     command('set cole=2 cocu=nvic')
     command('split')
     command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
-    command('set winhl=SpecialKey:ErrorMsg,EndOfBuffer:Background1,'
-            ..'Conceal:Background2')
+    command('set winhl=SpecialKey:ErrorMsg,EndOfBuffer:Background1,' .. 'Conceal:Background2')
 
     screen:expect([[
       ^r{5:#}a{15:^@}               |
@@ -1747,8 +1822,7 @@ describe("'winhighlight' highlight", function()
     feed('k')
 
     command('split')
-    command('set winhl=LineNr:Background1,CursorColumn:Background2,'
-            ..'ColorColumn:ErrorMsg')
+    command('set winhl=LineNr:Background1,CursorColumn:Background2,' .. 'ColorColumn:ErrorMsg')
     screen:expect([[
       {1:  1 }v{15:e}ry tex^t       |
       {1:  2 }m{15:o}re tex{5:t}       |
@@ -1775,7 +1849,7 @@ describe("'winhighlight' highlight", function()
       {0:~                   }|
                           |
     ]])
-    command("tabnext")
+    command('tabnext')
     screen:expect([[
       {21: No Name] }{1: No Name]}{20:X}|
       ^                    |
@@ -1791,8 +1865,7 @@ describe("'winhighlight' highlight", function()
   it('can override popupmenu', function()
     insert('word wording wordy')
     command('split')
-    command('set winhl=Pmenu:Background1,PmenuSel:Background2,'
-            ..'PmenuSbar:ErrorMsg,PmenuThumb:Normal')
+    command('set winhl=Pmenu:Background1,PmenuSel:Background2,' .. 'PmenuSbar:ErrorMsg,PmenuThumb:Normal')
     screen:expect([[
       word wording word^y  |
       {0:~                   }|
@@ -1834,7 +1907,8 @@ describe("'winhighlight' highlight", function()
     command('set cursorline number')
     command('split')
     command('set winhl=CursorLine:Background1')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {28:  1 }{1:^                }|
       {0:~                   }|
       {0:~                   }|
@@ -1843,10 +1917,12 @@ describe("'winhighlight' highlight", function()
       {0:~                   }|
       {4:[No Name]           }|
                           |
-    ]]}
+    ]],
+    }
 
     command('set winhl=CursorLineNr:Background2,CursorLine:Background1')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {5:  1 }{1:^                }|
       {0:~                   }|
       {0:~                   }|
@@ -1855,10 +1931,12 @@ describe("'winhighlight' highlight", function()
       {0:~                   }|
       {4:[No Name]           }|
                           |
-    ]]}
+    ]],
+    }
 
     feed('<c-w>w')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {5:  1 }{1:                }|
       {0:~                   }|
       {0:~                   }|
@@ -1867,6 +1945,7 @@ describe("'winhighlight' highlight", function()
       {0:~                   }|
       {3:[No Name]           }|
                           |
-    ]]}
+    ]],
+    }
   end)
 end)

@@ -11,32 +11,36 @@ describe(':Man', function()
       clear()
       command('syntax on')
       command('set filetype=man')
-      command('syntax off')  -- Ignore syntax groups
+      command('syntax off') -- Ignore syntax groups
       screen = Screen.new(52, 5)
-      screen:set_default_attr_ids({
+      screen:set_default_attr_ids {
         b = { bold = true },
         i = { italic = true },
         u = { underline = true },
         bi = { bold = true, italic = true },
         biu = { bold = true, italic = true, underline = true },
         c = { foreground = Screen.colors.Blue }, -- control chars
-        eob = { bold = true, foreground = Screen.colors.Blue } -- empty line '~'s
-      })
+        eob = { bold = true, foreground = Screen.colors.Blue }, -- empty line '~'s
+      }
       screen:attach()
     end)
 
     it('clears backspaces from text and adds highlights', function()
-      rawfeed([[
+      rawfeed(
+        [[
         ithis i<C-v><C-h>is<C-v><C-h>s a<C-v><C-h>a test
-        with _<C-v><C-h>o_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>c_<C-v><C-h>k text<ESC>]])
+        with _<C-v><C-h>o_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>c_<C-v><C-h>k text<ESC>]]
+      )
 
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         this i{c:^H}is{c:^H}s a{c:^H}a test                             |
         with _{c:^H}o_{c:^H}v_{c:^H}e_{c:^H}r_{c:^H}s_{c:^H}t_{c:^H}r_{c:^H}u_{c:^H}c_{c:^H}k tex^t  |
         {eob:~                                                   }|
         {eob:~                                                   }|
                                                             |
-      ]]}
+      ]],
+      }
 
       eval('man#init_pager()')
 
@@ -54,13 +58,15 @@ describe(':Man', function()
         ithis <C-v><ESC>[1mis <C-v><ESC>[3ma <C-v><ESC>[4mtest<C-v><ESC>[0m
         <C-v><ESC>[4mwith<C-v><ESC>[24m <C-v><ESC>[4mescaped<C-v><ESC>[24m <C-v><ESC>[4mtext<C-v><ESC>[24m<ESC>]])
 
-      screen:expect{grid=[=[
+      screen:expect {
+        grid = [=[
         this {c:^[}[1mis {c:^[}[3ma {c:^[}[4mtest{c:^[}[0m                  |
         {c:^[}[4mwith{c:^[}[24m {c:^[}[4mescaped{c:^[}[24m {c:^[}[4mtext{c:^[}[24^m  |
         {eob:~                                                   }|
         {eob:~                                                   }|
                                                             |
-      ]=]}
+      ]=],
+      }
 
       eval('man#init_pager()')
 
@@ -74,9 +80,11 @@ describe(':Man', function()
     end)
 
     it('highlights multibyte text', function()
-      rawfeed([[
+      rawfeed(
+        [[
         ithis i<C-v><C-h>is<C-v><C-h>s あ<C-v><C-h>あ test
-        with _<C-v><C-h>ö_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>̃_<C-v><C-h>c_<C-v><C-h>k te<C-v><ESC>[3mxt¶<C-v><ESC>[0m<ESC>]])
+        with _<C-v><C-h>ö_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>̃_<C-v><C-h>c_<C-v><C-h>k te<C-v><ESC>[3mxt¶<C-v><ESC>[0m<ESC>]]
+      )
       eval('man#init_pager()')
 
       screen:expect([[

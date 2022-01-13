@@ -7,9 +7,9 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 
-before_each(function ()
+before_each(function()
   clear()
-  exec_lua [[
+  exec_lua([[
     local evname = ...
     local sync = require('vim.lsp.sync')
     local events = {}
@@ -49,7 +49,7 @@ before_each(function ()
       events = {}
       return ret_events
     end
-  ]]
+  ]])
 end)
 
 local function test_edit(prev_buffer, edit_operations, expected_text_changes, offset_encoding, line_ending)
@@ -57,14 +57,13 @@ local function test_edit(prev_buffer, edit_operations, expected_text_changes, of
   line_ending = line_ending or '\n'
 
   meths.buf_set_lines(0, 0, -1, true, prev_buffer)
-  exec_lua("return test_register(...)", 0, "test1", offset_encoding, line_ending)
+  exec_lua('return test_register(...)', 0, 'test1', offset_encoding, line_ending)
 
   for _, edit in ipairs(edit_operations) do
     feed(edit)
   end
-  eq(expected_text_changes, exec_lua("return get_events(...)" ))
+  eq(expected_text_changes, exec_lua('return get_events(...)'))
   exec_lua("test_unreg = 'test1'")
-
 end
 
 describe('incremental synchronization', function()
@@ -75,18 +74,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 0,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 0,
-          text = 'a'
-        }
+          text = 'a',
+        },
       }
-      test_edit({""}, {"ia"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ '' }, { 'ia' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('inserting a character in the middle of a the first line', function()
       local expected_text_changes = {
@@ -94,18 +93,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 1,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 1,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 0,
-          text = 'a'
-        }
+          text = 'a',
+        },
       }
-      test_edit({"ab"}, {"lia"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'ab' }, { 'lia' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting the only character in a buffer', function()
       local expected_text_changes = {
@@ -113,18 +112,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 1,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 1,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"a"}, {"x"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'a' }, { 'x' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting a character in the middle of the line', function()
       local expected_text_changes = {
@@ -132,18 +131,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 1,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 2,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 1,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"abc"}, {"lx"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'abc' }, { 'lx' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('replacing a character', function()
       local expected_text_changes = {
@@ -151,18 +150,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 1,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 1,
-          text = 'b'
-        }
+          text = 'b',
+        },
       }
-      test_edit({"a"}, {"rb"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'a' }, { 'rb' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting a line', function()
       local expected_text_changes = {
@@ -170,18 +169,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 0,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 12,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"hello world"}, {"dd"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'hello world' }, { 'dd' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting an empty line', function()
       local expected_text_changes = {
@@ -189,18 +188,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 2
-            }
+              line = 2,
+            },
           },
           rangeLength = 1,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"hello world", ""}, {"jdd"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'hello world', '' }, { 'jdd' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('adding a line', function()
       local expected_text_changes = {
@@ -208,18 +207,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 0,
-          text = 'hello world\n'
-        }
+          text = 'hello world\n',
+        },
       }
-      test_edit({"hello world"}, {"yyp"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'hello world' }, { 'yyp' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('adding an empty line', function()
       local expected_text_changes = {
@@ -227,18 +226,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 0,
-          text = '\n'
-        }
+          text = '\n',
+        },
       }
-      test_edit({"hello world"}, {"o"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'hello world' }, { 'o' }, expected_text_changes, 'utf-16', '\n')
     end)
   end)
   describe('multi line edit', function()
@@ -249,115 +248,115 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 4,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 9,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 5,
-          text = ''
+          text = '',
         },
         -- delete "hello world\n" from line 2
         {
           range = {
             ['start'] = {
               character = 0,
-              line = 2
+              line = 2,
             },
             ['end'] = {
               character = 0,
-              line = 3
-            }
+              line = 3,
+            },
           },
           rangeLength = 12,
-          text = ''
+          text = '',
         },
         -- delete "1234" from beginning of line 2
         {
           range = {
             ['start'] = {
               character = 0,
-              line = 2
+              line = 2,
             },
             ['end'] = {
               character = 4,
-              line = 2
-            }
+              line = 2,
+            },
           },
           rangeLength = 4,
-          text = ''
+          text = '',
         },
         -- add " asdf" to end of line 1
         {
           range = {
             ['start'] = {
               character = 4,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 4,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 0,
-          text = ' asdf'
+          text = ' asdf',
         },
         -- delete " asdf\n" from line 2
         {
           range = {
             ['start'] = {
               character = 0,
-              line = 2
+              line = 2,
             },
             ['end'] = {
               character = 0,
-              line = 3
-            }
+              line = 3,
+            },
           },
           rangeLength = 6,
-          text = ''
+          text = '',
         },
         -- undo entire deletion
         {
           range = {
             ['start'] = {
               character = 4,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 9,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 5,
-          text = "_fdsa\nhello world\n1234 asdf"
+          text = '_fdsa\nhello world\n1234 asdf',
         },
         -- redo entire deletion
         {
           range = {
             ['start'] = {
               character = 4,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 9,
-              line = 3
-            }
+              line = 3,
+            },
           },
           rangeLength = 27,
-          text = ' asdf'
+          text = ' asdf',
         },
       }
       local original_lines = {
-        "\\begin{document}",
-        "test_fdsa",
-        "hello world",
-        "1234 asdf",
-        "\\end{document}"
+        '\\begin{document}',
+        'test_fdsa',
+        'hello world',
+        '1234 asdf',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"jf_vejjbhhdu<C-R>"}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { 'jf_vejjbhhdu<C-R>' }, expected_text_changes, 'utf-16', '\n')
     end)
   end)
 
@@ -366,64 +365,83 @@ describe('incremental synchronization', function()
       local expected_text_changes = {
         {
           range = {
-             ["end"] = {
-               character = 11,
-               line = 2 },
-             ["start"] = {
-               character = 10,
-               line = 2 } },
+            ['end'] = {
+              character = 11,
+              line = 2,
+            },
+            ['start'] = {
+              character = 10,
+              line = 2,
+            },
+          },
           rangeLength = 1,
           text = '',
-        },{
-          range = {
-            ["end"] = {
-              character = 10,
-              line = 2 },
-            start = {
-              character = 10,
-              line = 2 } },
-          rangeLength = 0,
-          text = '2',
-        },{
-          range = {
-            ["end"] = {
-              character = 11,
-              line = 3 },
-            ["start"] = {
-              character = 10,
-              line = 3 } },
-          rangeLength = 1,
-          text = ''
-        },{
+        },
+        {
           range = {
             ['end'] = {
               character = 10,
-              line = 3 },
+              line = 2,
+            },
+            start = {
+              character = 10,
+              line = 2,
+            },
+          },
+          rangeLength = 0,
+          text = '2',
+        },
+        {
+          range = {
+            ['end'] = {
+              character = 11,
+              line = 3,
+            },
             ['start'] = {
               character = 10,
-              line = 3 } },
+              line = 3,
+            },
+          },
+          rangeLength = 1,
+          text = '',
+        },
+        {
+          range = {
+            ['end'] = {
+              character = 10,
+              line = 3,
+            },
+            ['start'] = {
+              character = 10,
+              line = 3,
+            },
+          },
           rangeLength = 0,
-          text = '3' },
+          text = '3',
+        },
         {
           range = {
             ['end'] = {
               character = 0,
-              line = 3 },
+              line = 3,
+            },
             ['start'] = {
               character = 12,
-              line = 2 } },
+              line = 2,
+            },
+          },
           rangeLength = 1,
-          text = '\n'
-        }
+          text = '\n',
+        },
       }
       local original_lines = {
-        "\\begin{document}",
-        "\\section*{1}",
-        "\\section*{1}",
-        "\\section*{1}",
-        "\\end{document}"
+        '\\begin{document}',
+        '\\section*{1}',
+        '\\section*{1}',
+        '\\section*{1}',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"3gg$h<C-V>jg<C-A>"}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { '3gg$h<C-V>jg<C-A>' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('join and undo', function()
       local expected_text_changes = {
@@ -431,44 +449,46 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 11,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 11,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 0,
-          text = ' test3'
-        },{
+          text = ' test3',
+        },
+        {
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 2
-            }
+              line = 2,
+            },
           },
           rangeLength = 6,
-          text = ''
-        },{
+          text = '',
+        },
+        {
           range = {
             ['start'] = {
               character = 11,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 17,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 6,
-          text = '\ntest3'
+          text = '\ntest3',
         },
       }
-      test_edit({"test1 test2", "test3"}, {"J", "u"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'test1 test2', 'test3' }, { 'J', 'u' }, expected_text_changes, 'utf-16', '\n')
     end)
   end)
 
@@ -479,18 +499,18 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 0
+              line = 0,
             },
             ['end'] = {
               character = 2,
-              line = 0
-            }
+              line = 0,
+            },
           },
           rangeLength = 2,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"🔥"}, {"x"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ '🔥' }, { 'x' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('replacing a multibyte character with matching prefix', function()
       local expected_text_changes = {
@@ -498,24 +518,24 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 1,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 1,
-          text = '⟩'
-        }
+          text = '⟩',
+        },
       }
       -- ⟨ is e29fa8, ⟩ is e29fa9
       local original_lines = {
-        "\\begin{document}",
-        "⟨",
-        "\\end{document}",
+        '\\begin{document}',
+        '⟨',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"jr⟩"}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { 'jr⟩' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('replacing a multibyte character with matching suffix', function()
       local expected_text_changes = {
@@ -523,24 +543,24 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 1,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 1,
-          text = 'ḟ'
-        }
+          text = 'ḟ',
+        },
       }
       -- ฟ is e0b89f, ḟ is e1b89f
       local original_lines = {
-        "\\begin{document}",
-        "ฟ",
-        "\\end{document}",
+        '\\begin{document}',
+        'ฟ',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"jrḟ"}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { 'jrḟ' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('inserting before a multibyte character', function()
       local expected_text_changes = {
@@ -548,23 +568,23 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 0,
-          text = ' '
-        }
+          text = ' ',
+        },
       }
       local original_lines = {
-        "\\begin{document}",
-        "→",
-        "\\end{document}",
+        '\\begin{document}',
+        '→',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"ji "}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { 'ji ' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting a multibyte character from a long line', function()
       local expected_text_changes = {
@@ -572,23 +592,23 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 85,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 86,
-              line = 1
-            }
+              line = 1,
+            },
           },
           rangeLength = 1,
-          text = ''
-        }
+          text = '',
+        },
       }
       local original_lines = {
-        "\\begin{document}",
-        "→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→",
-        "\\end{document}",
+        '\\begin{document}',
+        '→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→',
+        '\\end{document}',
       }
-      test_edit(original_lines, {"jx"}, expected_text_changes, 'utf-16', '\n')
+      test_edit(original_lines, { 'jx' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting multiple lines containing multibyte characters', function()
       local expected_text_changes = {
@@ -596,19 +616,19 @@ describe('incremental synchronization', function()
           range = {
             ['start'] = {
               character = 0,
-              line = 1
+              line = 1,
             },
             ['end'] = {
               character = 0,
-              line = 3
-            }
+              line = 3,
+            },
           },
           --utf 16 len of 🔥 is 2
           rangeLength = 8,
-          text = ''
-        }
+          text = '',
+        },
       }
-      test_edit({"a🔥", "b🔥", "c🔥", "d🔥"}, {"j2dd"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'a🔥', 'b🔥', 'c🔥', 'd🔥' }, { 'j2dd' }, expected_text_changes, 'utf-16', '\n')
     end)
   end)
 end)

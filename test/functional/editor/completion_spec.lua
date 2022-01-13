@@ -17,19 +17,19 @@ describe('completion', function()
     clear()
     screen = Screen.new(60, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {background = Screen.colors.LightMagenta},
-      [2] = {background = Screen.colors.Grey},
-      [3] = {bold = true},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [5] = {foreground = Screen.colors.Red},
-      [6] = {background = Screen.colors.Black},
-      [7] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-      [8] = {reverse = true},
-      [9] = {bold = true, reverse = true},
-      [10] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.LightMagenta },
+      [2] = { background = Screen.colors.Grey },
+      [3] = { bold = true },
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen },
+      [5] = { foreground = Screen.colors.Red },
+      [6] = { background = Screen.colors.Black },
+      [7] = { foreground = Screen.colors.White, background = Screen.colors.Red },
+      [8] = { reverse = true },
+      [9] = { bold = true, reverse = true },
+      [10] = { foreground = Screen.colors.Grey0, background = Screen.colors.Yellow },
+    }
   end)
 
   describe('v:completed_item', function()
@@ -65,9 +65,7 @@ describe('completion', function()
     it('returns expected dict in normal completion', function()
       feed('ifoo<ESC>o<C-x><C-n>')
       eq('foo', eval('getline(2)'))
-      eq({word = 'foo', abbr = '', menu = '',
-          info = '', kind = '', user_data = ''},
-        eval('v:completed_item'))
+      eq({ word = 'foo', abbr = '', menu = '', info = '', kind = '', user_data = '' }, eval('v:completed_item'))
     end)
     it('is readonly', function()
       screen:try_resize(80, 8)
@@ -118,9 +116,10 @@ describe('completion', function()
         {0:~                                                           }|
         {3:-- Omni completion (^O^N^P) }{4:match 1 of 2}                    |
       ]])
-      eq({word = 'foo', abbr = 'bar', menu = 'baz',
-          info = 'foobar', kind = 'foobaz', user_data = ''},
-        eval('v:completed_item'))
+      eq(
+        { word = 'foo', abbr = 'bar', menu = 'baz', info = 'foobar', kind = 'foobaz', user_data = '' },
+        eval('v:completed_item')
+      )
     end)
   end)
 
@@ -341,8 +340,8 @@ describe('completion', function()
     end)
 
     local tests = {
-      ['<up>, <down>, <cr>'] = {'<down><cr>', '<up><cr>'},
-      ['<c-n>, <c-p>, <c-y>'] = {'<c-n><c-y>', '<c-p><c-y>'},
+      ['<up>, <down>, <cr>'] = { '<down><cr>', '<up><cr>' },
+      ['<c-n>, <c-p>, <c-y>'] = { '<c-n><c-y>', '<c-p><c-y>' },
     }
 
     for name, seq in pairs(tests) do
@@ -358,13 +357,13 @@ describe('completion', function()
         feed('A<right><esc>A<right><esc>')
 
         local expected = {
-          {'foo', 'bar', 'foo'},
-          {'foo', 'bar', 'ccc'},
-          {'foo', 'bar'},
-          {'foo', 'bbb'},
-          {'foo'},
-          {'aaa'},
-          {''},
+          { 'foo', 'bar', 'foo' },
+          { 'foo', 'bar', 'ccc' },
+          { 'foo', 'bar' },
+          { 'foo', 'bbb' },
+          { 'foo' },
+          { 'aaa' },
+          { '' },
         }
 
         for i = 1, #expected do
@@ -384,7 +383,7 @@ describe('completion', function()
     end
   end)
 
-  describe("refresh:always", function()
+  describe('refresh:always', function()
     before_each(function()
       source([[
         function! TestCompletion(findstart, base) abort
@@ -409,9 +408,9 @@ describe('completion', function()
         set completeopt=menuone,noselect
         set completefunc=TestCompletion
       ]])
-    end )
+    end)
 
-    it('completes on each input char', function ()
+    it('completes on each input char', function()
       feed('i<C-x><C-u>')
       screen:expect([[
         ^                                                            |
@@ -470,7 +469,7 @@ describe('completion', function()
       expect('August')
     end)
 
-    it("repeats correctly after backspace #2674", function ()
+    it('repeats correctly after backspace #2674', function()
       feed('o<C-x><C-u>Ja')
       screen:expect([[
                                                                     |
@@ -552,10 +551,10 @@ describe('completion', function()
         return ''
       endfunction
       ]])
-      feed_command("set completeopt=menuone,noselect")
+      feed_command('set completeopt=menuone,noselect')
     end)
 
-    it("works", function()
+    it('works', function()
       feed('i<C-r>=TestComplete()<CR>')
       screen:expect([[
         ^                                                            |
@@ -716,7 +715,7 @@ describe('completion', function()
     end)
   end)
 
-  it("does not indent until an item is selected #8345", function ()
+  it('does not indent until an item is selected #8345', function()
     -- Indents on "ind", unindents on "unind".
     source([[
       function! TestIndent()
@@ -735,14 +734,14 @@ describe('completion', function()
     ]])
 
     -- Give some words to complete.
-    feed("iinc uninc indent unindent<CR>")
+    feed('iinc uninc indent unindent<CR>')
 
     -- Does not indent when "ind" is typed.
-    feed("in<C-X><C-N>")
+    feed('in<C-X><C-N>')
     -- Completion list is generated incorrectly if we send everything at once
     -- via nvim_input().  So poke_eventloop() before sending <BS>. #8480
     poke_eventloop()
-    feed("<BS>d")
+    feed('<BS>d')
 
     screen:expect([[
       inc uninc indent unindent                                   |
@@ -756,7 +755,7 @@ describe('completion', function()
     ]])
 
     -- Indents when the item is selected
-    feed("<C-Y>")
+    feed('<C-Y>')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent^                                              |
@@ -768,7 +767,7 @@ describe('completion', function()
       {3:-- INSERT --}                                                |
     ]])
     -- Indents when completion is exited using ESC.
-    feed("<CR>in<C-N><BS>d<Esc>")
+    feed('<CR>in<C-N><BS>d<Esc>')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent                                              |
@@ -780,9 +779,9 @@ describe('completion', function()
                                                                   |
     ]])
     -- Works for unindenting too.
-    feed("ounin<C-X><C-N>")
+    feed('ounin<C-X><C-N>')
     helpers.poke_eventloop()
-    feed("<BS>d")
+    feed('<BS>d')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent                                              |
@@ -794,7 +793,7 @@ describe('completion', function()
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
     -- Works when going back and forth.
-    feed("<BS>c")
+    feed('<BS>c')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent                                              |
@@ -805,7 +804,7 @@ describe('completion', function()
       {0:~                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
-    feed("<BS>d")
+    feed('<BS>d')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent                                              |
@@ -816,7 +815,7 @@ describe('completion', function()
       {0:~                                                           }|
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 2}             |
     ]])
-    feed("<C-N><C-N><C-Y><Esc>")
+    feed('<C-N><C-N><C-Y><Esc>')
     screen:expect([[
       inc uninc indent unindent                                   |
               indent                                              |
@@ -829,8 +828,8 @@ describe('completion', function()
     ]])
   end)
 
-  it('disables folding during completion', function ()
-    feed_command("set foldmethod=indent")
+  it('disables folding during completion', function()
+    feed_command('set foldmethod=indent')
     feed('i<Tab>foo<CR><Tab>bar<Esc>gg')
     screen:expect([[
               ^foo                                                 |
@@ -856,8 +855,8 @@ describe('completion', function()
     eq(-1, eval('foldclosed(1)'))
   end)
 
-  it('popupmenu is not interrupted by events', function ()
-    feed_command("set complete=.")
+  it('popupmenu is not interrupted by events', function()
+    feed_command('set complete=.')
 
     feed('ifoobar fooegg<cr>f<c-p>')
     screen:expect([[
@@ -873,7 +872,8 @@ describe('completion', function()
 
     assert_alive()
     -- popupmenu still visible
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       foobar fooegg                                               |
       fooegg^                                                      |
       {1:foobar         }{0:                                             }|
@@ -882,7 +882,9 @@ describe('completion', function()
       {0:~                                                           }|
       {0:~                                                           }|
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
-    ]], unchanged=true}
+    ]],
+      unchanged = true,
+    }
 
     feed('<c-p>')
     -- Didn't restart completion: old matches still used
@@ -902,7 +904,8 @@ describe('completion', function()
     it('expands when there is only one match', function()
       feed(':lua CURRENT_TESTING_VAR = 1<CR>')
       feed(':lua CURRENT_TESTING_<TAB>')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
                                                                     |
         {0:~                                                           }|
         {0:~                                                           }|
@@ -911,14 +914,16 @@ describe('completion', function()
         {0:~                                                           }|
         {0:~                                                           }|
         :lua CURRENT_TESTING_VAR^                                    |
-      ]]}
+      ]],
+      }
     end)
 
     it('expands when there is only one match', function()
       feed(':lua CURRENT_TESTING_FOO = 1<CR>')
       feed(':lua CURRENT_TESTING_BAR = 1<CR>')
       feed(':lua CURRENT_TESTING_<TAB>')
-      screen:expect{ grid = [[
+      screen:expect {
+        grid = [[
                                                                     |
         {0:~                                                           }|
         {0:~                                                           }|
@@ -927,19 +932,21 @@ describe('completion', function()
         {0:~                                                           }|
         {10:CURRENT_TESTING_BAR}{9:  CURRENT_TESTING_FOO                    }|
         :lua CURRENT_TESTING_BAR^                                    |
-      ]], unchanged = true }
+      ]],
+        unchanged = true,
+      }
     end)
 
     it('provides completion from `getcompletion()`', function()
-      eq({'vim'}, funcs.getcompletion('vi', 'lua'))
-      eq({'api'}, funcs.getcompletion('vim.ap', 'lua'))
-      eq({'tbl_filter'}, funcs.getcompletion('vim.tbl_fil', 'lua'))
-      eq({'vim'}, funcs.getcompletion('print(vi', 'lua'))
+      eq({ 'vim' }, funcs.getcompletion('vi', 'lua'))
+      eq({ 'api' }, funcs.getcompletion('vim.ap', 'lua'))
+      eq({ 'tbl_filter' }, funcs.getcompletion('vim.tbl_fil', 'lua'))
+      eq({ 'vim' }, funcs.getcompletion('print(vi', 'lua'))
     end)
   end)
 
   describe('from the commandline window', function()
-    it('is cleared after CTRL-C', function ()
+    it('is cleared after CTRL-C', function()
       feed('q:')
       feed('ifoo faa fee f')
       screen:expect([[
@@ -951,7 +958,7 @@ describe('completion', function()
         {0:~                                                           }|
         {9:[Command Line]                                              }|
         {3:-- INSERT --}                                                |
-      ]] )
+      ]])
       feed('<c-x><c-n>')
       screen:expect([[
                                                                     |
@@ -986,16 +993,18 @@ describe('completion', function()
         endfunction
       ]])
       meths.set_option('completeopt', 'menuone,noselect')
-      meths.set_var('_complist', {{
-        word=0,
-        abbr=1,
-        menu=2,
-        kind=3,
-        info=4,
-        icase=5,
-        dup=6,
-        empty=7,
-      }})
+      meths.set_var('_complist', {
+        {
+          word = 0,
+          abbr = 1,
+          menu = 2,
+          kind = 3,
+          info = 4,
+          icase = 5,
+          dup = 6,
+          empty = 7,
+        },
+      })
     end)
 
     it('shows correct variant as word', function()
@@ -1030,7 +1039,7 @@ describe('completion', function()
   end)
 
   it('TextChangedP autocommand', function()
-    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar'})
+    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar' })
     source([[
       set complete=. completeopt=menuone
       let g:foo = []
@@ -1044,14 +1053,14 @@ describe('completion', function()
     feed('o')
     poke_eventloop()
     feed('<esc>')
-    eq({'I'}, eval('g:foo'))
+    eq({ 'I' }, eval('g:foo'))
 
     command('let g:foo = []')
     feed('S')
     poke_eventloop()
     feed('f')
     poke_eventloop()
-    eq({'I', 'I'}, eval('g:foo'))
+    eq({ 'I', 'I' }, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
@@ -1061,19 +1070,7 @@ describe('completion', function()
     poke_eventloop()
     feed('<C-N>')
     poke_eventloop()
-    eq({'I', 'I', 'P'}, eval('g:foo'))
-    feed('<esc>')
-
-    command('let g:foo = []')
-    feed('S')
-    poke_eventloop()
-    feed('f')
-    poke_eventloop()
-    feed('<C-N>')
-    poke_eventloop()
-    feed('<C-N>')
-    poke_eventloop()
-    eq({'I', 'I', 'P', 'P'}, eval('g:foo'))
+    eq({ 'I', 'I', 'P' }, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
@@ -1085,9 +1082,7 @@ describe('completion', function()
     poke_eventloop()
     feed('<C-N>')
     poke_eventloop()
-    feed('<C-N>')
-    poke_eventloop()
-    eq({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
+    eq({ 'I', 'I', 'P', 'P' }, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
@@ -1101,11 +1096,25 @@ describe('completion', function()
     poke_eventloop()
     feed('<C-N>')
     poke_eventloop()
-    feed('<C-N>')
-    eq({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
+    eq({ 'I', 'I', 'P', 'P', 'P' }, eval('g:foo'))
     feed('<esc>')
 
-    eq({'foo', 'bar', 'foobar', 'foo'}, eval('getline(1, "$")'))
+    command('let g:foo = []')
+    feed('S')
+    poke_eventloop()
+    feed('f')
+    poke_eventloop()
+    feed('<C-N>')
+    poke_eventloop()
+    feed('<C-N>')
+    poke_eventloop()
+    feed('<C-N>')
+    poke_eventloop()
+    feed('<C-N>')
+    eq({ 'I', 'I', 'P', 'P', 'P', 'P' }, eval('g:foo'))
+    feed('<esc>')
+
+    eq({ 'foo', 'bar', 'foobar', 'foo' }, eval('getline(1, "$")'))
 
     source([[
       au! TextChanged
@@ -1116,7 +1125,7 @@ describe('completion', function()
   end)
 
   it('CompleteChanged autocommand', function()
-    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar', ''})
+    curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar', '' })
     source([[
       set complete=. completeopt=noinsert,noselect,menuone
       function! OnPumChange()
@@ -1139,10 +1148,7 @@ describe('completion', function()
       {0:~                                                           }|
       {3:-- Keyword completion (^N^P) }{5:Back at original}               |
     ]])
-    eq({completed_item = {}, width = 15,
-      height = 2, size = 2,
-      col = 0, row = 4, scrollbar = false},
-      eval('g:event'))
+    eq({ completed_item = {}, width = 15, height = 2, size = 2, col = 0, row = 4, scrollbar = false }, eval('g:event'))
     feed('<C-N>')
     screen:expect([[
       foo                                                         |

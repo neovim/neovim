@@ -56,7 +56,8 @@ describe('argument list', function()
     command('0put=@a')
     command('$d')
 
-    eq(dedent([[
+    eq(
+      dedent([[
       start of test file Xxx1
           this is a test
           this is a test
@@ -74,7 +75,9 @@ describe('argument list', function()
           this is a test
           this is a test
           this is a test
-      end of test file Xxx]]), curbuf_contents())
+      end of test file Xxx]]),
+      curbuf_contents()
+    )
   end)
 
   teardown(function()

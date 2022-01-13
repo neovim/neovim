@@ -70,7 +70,9 @@ describe('listlbr', function()
     feed_command('$')
     feed_command('norm! zt')
 
-    feed_command('let g:test ="Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)"')
+    feed_command(
+      'let g:test ="Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)"'
+    )
     feed_command('set cpo&vim list linebreak conceallevel=2 concealcursor=nv listchars=tab:ab')
     feed_command('syn match ConcealVar contained /_/ conceal')
     feed_command('syn match All /.*/ contains=ConcealVar')

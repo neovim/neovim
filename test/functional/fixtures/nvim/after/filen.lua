@@ -1,1 +1,1 @@
-table.insert(_G.test_loadorder, "ordinary after")
+table.insert(_G.test_loadorder, 'ordinary after')

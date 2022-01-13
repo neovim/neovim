@@ -39,16 +39,23 @@ describe('python3 provider', function()
 
   it('python3_execute', function()
     command('python3 vim.vars["set_by_python3"] = [100, 0]')
-    eq({100, 0}, eval('g:set_by_python3'))
+    eq({ 100, 0 }, eval('g:set_by_python3'))
   end)
 
   it('does not truncate error message <1 MB', function()
     -- XXX: Python limits the error name to 200 chars, so this test is
     -- mostly bogus.
     local very_long_symbol = string.rep('a', 1200)
-    feed_command(':silent! py3 print('..very_long_symbol..' b)')
+    feed_command(':silent! py3 print(' .. very_long_symbol .. ' b)')
     -- Error message will contain this (last) line.
-    eq('Error invoking \'python_execute\' on channel 3 (python3-script-host):\n  File "<string>", line 1\n    print('..very_long_symbol..' b)\n          '..string.rep(' ',1200)..' ^\nSyntaxError: invalid syntax', eval('v:errmsg'))
+    eq(
+      'Error invoking \'python_execute\' on channel 3 (python3-script-host):\n  File "<string>", line 1\n    print('
+        .. very_long_symbol
+        .. ' b)\n          '
+        .. string.rep(' ', 1200)
+        .. ' ^\nSyntaxError: invalid syntax',
+      eval('v:errmsg')
+    )
   end)
 
   it('python3_execute with nested commands', function()
@@ -63,7 +70,7 @@ describe('python3 provider', function()
       line3
       line4]])
     feed('ggjvj:python3 vim.vars["range"] = vim.current.range[:]<CR>')
-    eq({'line2', 'line3'}, eval('g:range'))
+    eq({ 'line2', 'line3' }, eval('g:range'))
   end)
 
   it('py3file', function()
@@ -94,7 +101,7 @@ describe('python3 provider', function()
   end)
 
   it('py3eval', function()
-    eq({1, 2, {['key'] = 'val'}}, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
+    eq({ 1, 2, { ['key'] = 'val' } }, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
   end)
 
   it('pyxeval #10758', function()
@@ -115,7 +122,7 @@ describe('python3 provider', function()
       autocmd BufDelete * python3 foo()
       autocmd BufUnload * python3 foo()]=])
     feed_command("exe 'split' tempname()")
-    feed_command("bwipeout!")
+    feed_command('bwipeout!')
     feed_command('help help')
     assert_alive()
   end)

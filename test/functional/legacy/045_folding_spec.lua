@@ -2,8 +2,7 @@
 local Screen = require('test.functional.ui.screen')
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, feed_command, expect_any =
-  helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
+local feed, insert, feed_command, expect_any = helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
 
 describe('folding', function()
   local screen
@@ -42,7 +41,7 @@ describe('folding', function()
       1 aa]])
   end)
 
-  it("foldmethod=marker", function()
+  it('foldmethod=marker', function()
     screen:try_resize(20, 10)
     insert([[
       dd {{{
@@ -72,10 +71,9 @@ describe('folding', function()
       1                   |
                           |
     ]])
-
   end)
 
-  it("foldmethod=indent", function()
+  it('foldmethod=indent', function()
     screen:try_resize(20, 8)
     feed_command('set fdm=indent sw=2')
     insert([[
@@ -101,7 +99,7 @@ describe('folding', function()
     ]])
   end)
 
-  it("foldmethod=syntax", function()
+  it('foldmethod=syntax', function()
     screen:try_resize(35, 15)
     insert([[
       1 aa
@@ -140,7 +138,7 @@ describe('folding', function()
       a jj]])
   end)
 
-  it("foldmethod=expression", function()
+  it('foldmethod=expression', function()
     insert([[
       1 aa
       2 bb
@@ -211,4 +209,3 @@ describe('folding', function()
       line2]])
   end)
 end)
-
