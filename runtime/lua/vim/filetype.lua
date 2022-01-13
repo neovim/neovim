@@ -1346,6 +1346,7 @@ local pattern = {
   [".*/constant/g"] = function() vim.fn["dist#ft#FTfoam"]() end,
   [".*/0/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
   [".*/0%.orig/.*"] = function() vim.fn["dist#ft#FTfoam"]() end,
+  [".*/etc/sensors%.d/[^.].*"] = starsetf('sensors'),
   -- END PATTERN
 }
 -- luacheck: pop
