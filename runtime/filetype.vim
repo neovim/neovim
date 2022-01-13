@@ -2285,6 +2285,9 @@ au BufNewFile,BufRead Kconfig.*			call s:StarSetf('kconfig')
 " Lilo: Linux loader
 au BufNewFile,BufRead lilo.conf*		call s:StarSetf('lilo')
 
+" Libsensors
+au BufNewFile,BufRead */etc/sensors.d/[^.]*	call s:StarSetf('sensors')
+
 " Logcheck
 au BufNewFile,BufRead */etc/logcheck/*.d*/*	call s:StarSetf('logcheck')
 
