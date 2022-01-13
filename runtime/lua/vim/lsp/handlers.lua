@@ -233,13 +233,15 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
 M['textDocument/rangeFormatting'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_text_edits(result, ctx.bufnr)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 M['textDocument/formatting'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_text_edits(result, ctx.bufnr)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
