@@ -503,7 +503,7 @@ local function on_code_action_results(results, ctx)
   ---@private
   local function apply_action(action, client)
     if action.edit then
-      util.apply_workspace_edit(action.edit)
+      util.apply_workspace_edit(action.edit, client.offset_encoding)
     end
     if action.command then
       local command = type(action.command) == 'table' and action.command or action
