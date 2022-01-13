@@ -2,8 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source, clear, command, expect, eval, eq =
-  helpers.feed, helpers.insert, helpers.source, helpers.clear,
-  helpers.command, helpers.expect, helpers.eval, helpers.eq
+  helpers.feed, helpers.insert, helpers.source, helpers.clear, helpers.command, helpers.expect, helpers.eval, helpers.eq
 local exc_exec = helpers.exc_exec
 
 describe('tab pages', function()
@@ -44,11 +43,11 @@ describe('tab pages', function()
 
     eq(100, eval('gettabvar(2, "val_num")'))
     eq('SetTabVar test', eval('gettabvar(2, "val_str")'))
-    eq({'red', 'blue', 'green'}, eval('gettabvar(2, "val_list")'))
+    eq({ 'red', 'blue', 'green' }, eval('gettabvar(2, "val_list")'))
     command('tabnext 2')
     eq(100, eval('t:val_num'))
     eq('SetTabVar test', eval('t:val_str'))
-    eq({'red', 'blue', 'green'}, eval('t:val_list'))
+    eq({ 'red', 'blue', 'green' }, eval('t:val_list'))
   end)
 
   it('work together with the drop feature and loaded buffers', function()
@@ -113,8 +112,7 @@ describe('tab pages', function()
     command('7tabmove 5')
     eq(5, eval('tabpagenr()'))
     command('let a="No error caught."')
-    eq('Vim(tabmove):E474: Invalid argument: tabmove foo',
-       exc_exec('tabmove foo'))
+    eq('Vim(tabmove):E474: Invalid argument: tabmove foo', exc_exec('tabmove foo'))
   end)
 
   it('can trigger certain autocommands', function()
@@ -234,6 +232,6 @@ describe('tab pages', function()
       === tabnext 2 ===
       === tabclose 3 ===
       2/2]])
-      eq(2, eval("tabpagenr('$')"))
+    eq(2, eval("tabpagenr('$')"))
   end)
 end)

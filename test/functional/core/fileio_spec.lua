@@ -18,8 +18,7 @@ local iswin = helpers.iswin
 local assert_alive = helpers.assert_alive
 
 describe('fileio', function()
-  before_each(function()
-  end)
+  before_each(function() end)
   after_each(function()
     command(':qall!')
     os.remove('Xtest_startup_shada')
@@ -33,8 +32,7 @@ describe('fileio', function()
   end)
 
   it('fsync() codepaths #8304', function()
-    clear({ args={ '-i', 'Xtest_startup_shada',
-                   '--cmd', 'set directory=Xtest_startup_swapdir' } })
+    clear { args = { '-i', 'Xtest_startup_shada', '--cmd', 'set directory=Xtest_startup_swapdir' } }
 
     -- These cases ALWAYS force fsync (regardless of 'fsync' option):
 
@@ -42,24 +40,33 @@ describe('fileio', function()
     command('write Xtest_startup_file1')
     feed('ifoo<esc>h')
     command('write')
-    eq(0, request('nvim__stats').fsync)   -- 'nofsync' is the default.
+    eq(0, request('nvim__stats').fsync) -- 'nofsync' is the default.
     command('set swapfile')
     command('set updatetime=1')
-    feed('izub<esc>h')                    -- File is 'modified'.
-    sleep(3)                              -- Allow 'updatetime' to expire.
+    feed('izub<esc>h') -- File is 'modified'.
+    sleep(3) -- Allow 'updatetime' to expire.
     retry(3, nil, function()
       eq(1, request('nvim__stats').fsync)
     end)
     command('set updatetime=9999')
 
     -- 2. Exit caused by deadly signal (+ 'swapfile').
-    local j = funcs.jobstart({ nvim_prog, '-u', 'NONE', '-i',
-                               'Xtest_startup_shada', '--headless',
-                               '-c', 'set swapfile',
-                               '-c', 'write Xtest_startup_file2',
-                               '-c', 'put =localtime()', })
-    sleep(10)         -- Let Nvim start.
-    funcs.jobstop(j)  -- Send deadly signal.
+    local j = funcs.jobstart {
+      nvim_prog,
+      '-u',
+      'NONE',
+      '-i',
+      'Xtest_startup_shada',
+      '--headless',
+      '-c',
+      'set swapfile',
+      '-c',
+      'write Xtest_startup_file2',
+      '-c',
+      'put =localtime()',
+    }
+    sleep(10) -- Let Nvim start.
+    funcs.jobstop(j) -- Send deadly signal.
 
     -- 3. SIGPWR signal.
     -- ??
@@ -76,8 +83,7 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    clear({ args={ '-i', 'Xtest_startup_shada',
-                   '--cmd', 'set directory=Xtest_startup_swapdir' } })
+    clear { args = { '-i', 'Xtest_startup_shada', '--cmd', 'set directory=Xtest_startup_swapdir' } }
 
     command('write Xtest_startup_file1')
     feed('ifoo<esc>')
@@ -90,8 +96,8 @@ describe('fileio', function()
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
     local bar_contents = trim(read_file('Xtest_startup_file1~'))
 
-    eq('foobar', foobar_contents);
-    eq('foo', bar_contents);
+    eq('foobar', foobar_contents)
+    eq('foo', bar_contents)
   end)
 
   it('backup with full path #11214', function()
@@ -106,13 +112,13 @@ describe('fileio', function()
     command('write')
 
     -- Backup filename = fullpath, separators replaced with "%".
-    local backup_file_name = string.gsub(currentdir()..'/Xtest_startup_file1',
-      iswin() and '[:/\\]' or '/', '%%') .. '~'
-    local foo_contents = trim(read_file('Xtest_backupdir/'..backup_file_name))
+    local backup_file_name = string.gsub(currentdir() .. '/Xtest_startup_file1', iswin() and '[:/\\]' or '/', '%%')
+      .. '~'
+    local foo_contents = trim(read_file('Xtest_backupdir/' .. backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
 
-    eq('foobar', foobar_contents);
-    eq('foo', foo_contents);
+    eq('foobar', foobar_contents)
+    eq('foo', foo_contents)
   end)
 
   it('readfile() on multibyte filename #10586', function()
@@ -130,7 +136,7 @@ describe('fileio', function()
     table.insert(text, '')
     eq(text, funcs.readfile(fname, 'b'))
   end)
-  it('read invalid u8 over INT_MAX doesn\'t segfault', function()
+  it("read invalid u8 over INT_MAX doesn't segfault", function()
     clear()
     command('call writefile(0zFFFFFFFF, "Xtest-u8-int-max")')
     -- This should not segfault
@@ -138,4 +144,3 @@ describe('fileio', function()
     assert_alive()
   end)
 end)
-

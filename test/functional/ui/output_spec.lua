@@ -13,12 +13,14 @@ local nvim_dir = helpers.nvim_dir
 local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
 
-describe("shell command :!", function()
+describe('shell command :!', function()
   local screen
   before_each(function()
     clear()
-    screen = child_session.screen_setup(0, '["'..helpers.nvim_prog..
-      '", "-u", "NONE", "-i", "NONE", "--cmd", "'..helpers.nvim_set..'"]')
+    screen = child_session.screen_setup(
+      0,
+      '["' .. helpers.nvim_prog .. '", "-u", "NONE", "-i", "NONE", "--cmd", "' .. helpers.nvim_set .. '"]'
+    )
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -31,14 +33,16 @@ describe("shell command :!", function()
   end)
 
   after_each(function()
-    child_session.feed_data("\3") -- Ctrl-C
+    child_session.feed_data('\3') -- Ctrl-C
   end)
 
-  it("displays output without LF/EOF. #4646 #4569 #3772", function()
-    if helpers.pending_win32(pending) then return end
+  it('displays output without LF/EOF. #4646 #4569 #3772', function()
+    if helpers.pending_win32(pending) then
+      return
+    end
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
-    child_session.feed_data(":!printf foo; sleep 200\n")
+    child_session.feed_data(':!printf foo; sleep 200\n')
     screen:expect([[
                                                         |
       {4:~                                                 }|
@@ -50,19 +54,20 @@ describe("shell command :!", function()
     ]])
   end)
 
-  it("throttles shell-command output greater than ~10KB", function()
+  it('throttles shell-command output greater than ~10KB', function()
     if 'openbsd' == helpers.uname() then
       pending('FIXME #10804')
     end
-    child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
+    child_session.feed_data(':!' .. nvim_dir .. '/shell-test REP 30001 foo\n')
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
-    screen:expect{any="\n%.", timeout=20000}
+    screen:expect { any = '\n%.', timeout = 20000 }
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
-    screen:expect([[
+    screen:expect(
+      [[
       29997: foo                                        |
       29998: foo                                        |
       29999: foo                                        |
@@ -70,27 +75,29 @@ describe("shell command :!", function()
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
-    ]], {
-      -- test/functional/helpers.lua defaults to background=light.
-      [1] = {reverse = true},
-      [3] = {bold = true},
-      [10] = {foreground = 2},
-    })
+    ]],
+      {
+        -- test/functional/helpers.lua defaults to background=light.
+        [1] = { reverse = true },
+        [3] = { bold = true },
+        [10] = { foreground = 2 },
+      }
+    )
   end)
 end)
 
-describe("shell command :!", function()
+describe('shell command :!', function()
   before_each(function()
     clear()
   end)
 
-  it("cat a binary file #4142", function()
+  it('cat a binary file #4142', function()
     feed(":exe 'silent !cat '.shellescape(v:progpath)<CR>")
     assert_alive()
   end)
 
   it([[display \x08 char #4142]], function()
-    feed(":silent !echo \08<CR>")
+    feed(':silent !echo \08<CR>')
     assert_alive()
   end)
 
@@ -100,7 +107,7 @@ describe("shell command :!", function()
     end
     local screen = Screen.new(50, 4)
     screen:attach()
-    command("set display-=msgsep")
+    command('set display-=msgsep')
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
     screen:expect([[
@@ -113,14 +120,17 @@ describe("shell command :!", function()
     -- Print BELL control code. #4338
     screen.bell = false
     feed([[:!printf '\007\007\007\007text'<CR>]])
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ~                                                 |
       :!printf '\007\007\007\007text'                   |
       text                                              |
       Press ENTER or type command to continue^           |
-    ]], condition=function()
-      eq(true, screen.bell)
-    end}
+    ]],
+      condition = function()
+        eq(true, screen.bell)
+      end,
+    }
     feed([[<CR>]])
     -- Print BS control code.
     feed([[:echo system('printf ''\010\n''')<CR>]])
@@ -150,13 +160,13 @@ describe("shell command :!", function()
       write_file('bang_filter_spec/f1', 'f1')
       write_file('bang_filter_spec/f2', 'f2')
       write_file('bang_filter_spec/f3', 'f3')
-      screen = Screen.new(53,10)
-      screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
-        [2] = {foreground = Screen.colors.Blue1},
-        [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-        [4] = {bold = true, reverse = true},
-      })
+      screen = Screen.new(53, 10)
+      screen:set_default_attr_ids {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { foreground = Screen.colors.Blue1 },
+        [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+        [4] = { bold = true, reverse = true },
+      }
       screen:attach()
     end)
 
@@ -165,19 +175,18 @@ describe("shell command :!", function()
     end)
 
     it("doesn't truncate Last line of shell output #3269", function()
-      command(helpers.iswin()
-        and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
-        or  [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
-      local result = (helpers.iswin()
-        and [[:!dir /b bang_filter_spec]]
-        or  [[:!ls bang_filter_spec    ]])
+      command(
+        helpers.iswin() and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
+          or [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]]
+      )
+      local result = (helpers.iswin() and [[:!dir /b bang_filter_spec]] or [[:!ls bang_filter_spec    ]])
       feed([[\l]])
       screen:expect([[
                                                              |
         {1:~                                                    }|
         {1:~                                                    }|
         {4:                                                     }|
-        ]]..result..[[                            |
+        ]] .. result .. [[                            |
         f1                                                   |
         f2                                                   |
         f3                                                   |
@@ -189,7 +198,8 @@ describe("shell command :!", function()
     it('handles binary and multibyte data', function()
       feed_command('!cat test/functional/fixtures/shell_data.txt')
       screen.bell = false
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
                                                              |
         {1:~                                                    }|
         {4:                                                     }|
@@ -200,13 +210,15 @@ describe("shell command :!", function()
         t       {2:<ff>}                                         |
                                                              |
         {3:Press ENTER or type command to continue}^              |
-      ]], condition=function()
-        eq(true, screen.bell)
-      end}
+      ]],
+        condition = function()
+          eq(true, screen.bell)
+        end,
+      }
     end)
 
     it('handles multibyte sequences split over buffer boundaries', function()
-      command('cd '..nvim_dir)
+      command('cd ' .. nvim_dir)
       local cmd
       if iswin() then
         cmd = '!shell-test UTF-8  '
@@ -218,7 +230,7 @@ describe("shell command :!", function()
       screen:expect([[
                                                              |
         {4:                                                     }|
-        :]]..cmd..[[                                 |
+        :]] .. cmd .. [[                                 |
         å                                                    |
         ref: å̲                                               |
         1: å̲                                                 |

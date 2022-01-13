@@ -13,8 +13,7 @@ describe('hostname()', function()
     ok(string.len(actual) > 0)
     if call('executable', 'hostname') == 1 then
       local expected = string.gsub(call('system', 'hostname'), '[\n\r]', '')
-      eq((iswin() and expected:upper() or expected),
-         (iswin() and actual:upper() or actual))
+      eq((iswin() and expected:upper() or expected), (iswin() and actual:upper() or actual))
     end
   end)
 end)

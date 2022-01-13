@@ -4,9 +4,8 @@
 -- Also test byteidx() and byteidxcomp()
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, eq, eval, clear, feed_command, expect = helpers.feed,
-  helpers.insert, helpers.eq, helpers.eval, helpers.clear, helpers.feed_command,
-  helpers.expect
+local feed, insert, eq, eval, clear, feed_command, expect =
+  helpers.feed, helpers.insert, helpers.eq, helpers.eval, helpers.clear, helpers.feed_command, helpers.expect
 
 describe('multibyte text', function()
   before_each(clear)

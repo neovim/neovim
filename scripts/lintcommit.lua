@@ -15,13 +15,13 @@ local _trace = false
 -- Print message
 local function p(s)
   vim.cmd('set verbose=1')
-  vim.api.nvim_echo({{s, ''}}, false, {})
+  vim.api.nvim_echo({ { s, '' } }, false, {})
   vim.cmd('set verbose=0')
 end
 
 local function die()
   p('')
-  vim.cmd("cquit 1")
+  vim.cmd('cquit 1')
 end
 
 -- Executes and returns the output of `cmd`, or nil on failure.
@@ -29,7 +29,7 @@ end
 -- Prints `cmd` if `trace` is enabled.
 local function run(cmd, or_die)
   if _trace then
-    p('run: '..vim.inspect(cmd))
+    p('run: ' .. vim.inspect(cmd))
   end
   local rv = vim.trim(vim.fn.system(cmd)) or ''
   if vim.v.shell_error ~= 0 then
@@ -45,11 +45,11 @@ end
 -- Returns nil if the given commit message is valid, or returns a string
 -- message explaining why it is invalid.
 local function validate_commit(commit_message)
-  local commit_split = vim.split(commit_message, ":")
+  local commit_split = vim.split(commit_message, ':')
 
   -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
-  if commit_split[1] == "vim-patch" then
+  if commit_split[1] == 'vim-patch' then
     return nil
   end
 
@@ -57,7 +57,6 @@ local function validate_commit(commit_message)
   if commit_message:len() > 80 then
     return [[Commit message is too long, a maximum of 80 characters is allowed.]]
   end
-
 
   if vim.tbl_count(commit_split) < 2 then
     return [[Commit message does not include colons.]]
@@ -67,30 +66,39 @@ local function validate_commit(commit_message)
   local after_colon = commit_split[2]
 
   -- Check if commit introduces a breaking change.
-  if vim.endswith(before_colon, "!") then
+  if vim.endswith(before_colon, '!') then
     before_colon = before_colon:sub(1, -2)
   end
 
   -- Check if type is correct
-  local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'chore', 'vim-patch'}
+  local type = vim.split(before_colon, '%(')[1]
+  local allowed_types = {
+    'build',
+    'ci',
+    'docs',
+    'feat',
+    'fix',
+    'perf',
+    'refactor',
+    'revert',
+    'test',
+    'chore',
+    'vim-patch',
+  }
   if not vim.tbl_contains(allowed_types, type) then
-    return string.format(
-      'Invalid commit type "%s". Allowed types are:\n    %s',
-      type,
-      vim.inspect(allowed_types))
+    return string.format('Invalid commit type "%s". Allowed types are:\n    %s', type, vim.inspect(allowed_types))
   end
 
   -- Check if scope is empty
-  if before_colon:match("%(") then
-    local scope = vim.trim(before_colon:match("%((.*)%)"))
+  if before_colon:match('%(') then
+    local scope = vim.trim(before_colon:match('%((.*)%)'))
     if scope == '' then
       return [[Scope can't be empty.]]
     end
   end
 
   -- Check that description doesn't end with a period
-  if vim.endswith(after_colon, ".") then
+  if vim.endswith(after_colon, '.') then
     return [[Description ends with a period (".").]]
   end
 
@@ -106,29 +114,30 @@ end
 function M.main(opt)
   _trace = not opt or not not opt.trace
 
-  local branch = run({'git', 'rev-parse', '--abbrev-ref', 'HEAD'}, true)
+  local branch = run({ 'git', 'rev-parse', '--abbrev-ref', 'HEAD' }, true)
   -- TODO(justinmk): check $GITHUB_REF
-  local ancestor = run({'git', 'merge-base', 'origin/master', branch})
+  local ancestor = run { 'git', 'merge-base', 'origin/master', branch }
   if not ancestor then
-    ancestor = run({'git', 'merge-base', 'upstream/master', branch})
+    ancestor = run { 'git', 'merge-base', 'upstream/master', branch }
   end
-  local commits_str = run({'git', 'rev-list', ancestor..'..'..branch}, true)
+  local commits_str = run({ 'git', 'rev-list', ancestor .. '..' .. branch }, true)
 
   local commits = {}
-  for substring in commits_str:gmatch("%S+") do
-     table.insert(commits, substring)
+  for substring in commits_str:gmatch('%S+') do
+    table.insert(commits, substring)
   end
 
   local failed = 0
   for _, commit_id in ipairs(commits) do
-    local msg = run({'git', 'show', '-s', '--format=%s' , commit_id})
+    local msg = run { 'git', 'show', '-s', '--format=%s', commit_id }
     if vim.v.shell_error ~= 0 then
-      p('Invalid commit-id: '..commit_id..'"')
+      p('Invalid commit-id: ' .. commit_id .. '"')
     else
       local invalid_msg = validate_commit(msg)
       if invalid_msg then
         failed = failed + 1
-        p(string.format([[
+        p(string.format(
+          [[
 Invalid commit message: "%s"
     Commit: %s
     %s
@@ -138,13 +147,14 @@ Invalid commit message: "%s"
 ]],
           msg,
           commit_id,
-          invalid_msg))
+          invalid_msg
+        ))
       end
     end
   end
 
   if failed > 0 then
-    die()  -- Exit with error.
+    die() -- Exit with error.
   else
     p('')
   end
@@ -184,7 +194,7 @@ function M._test()
     ['chore: period at end of sentence.'] = false,
     ['ci: Starting sentence capitalized'] = false,
     ['unknown: using unknown type'] = false,
-    ['chore: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
+    ["chore: you're saying this commit message just goes on and on and on and on and on and on for way too long?"] = false,
   }
 
   local failed = 0
@@ -197,9 +207,8 @@ function M._test()
   end
 
   if failed > 0 then
-    die()  -- Exit with error.
+    die() -- Exit with error.
   end
-
 end
 
 return M

@@ -13,9 +13,9 @@ describe('display', function()
     clear()
     screen = Screen.new(20, 4)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold = true},
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true },
+    }
 
     feed_command([[call setline(1, repeat('a', 21))]])
     poke_eventloop()
@@ -28,4 +28,3 @@ describe('display', function()
     ]])
   end)
 end)
-

@@ -1,8 +1,7 @@
 -- Cmdline-mode tests.
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, insert, funcs, eq, feed =
-  helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
+local clear, insert, funcs, eq, feed = helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
 local meths = helpers.meths
 
 describe('cmdline CTRL-R', function()

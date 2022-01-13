@@ -10,20 +10,20 @@ describe('Signs', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=255},
-      [1] = {background = Screen.colors.Yellow},
-      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},
-      [3] = {background = Screen.colors.Gray90},
-      [4] = {bold = true, reverse = true},
-      [5] = {reverse = true},
-      [6] = {foreground = Screen.colors.Brown},
-      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [9] = {bold = true, foreground = Screen.colors.Magenta},
-      [10] = {foreground = Screen.colors.Blue1},
-      [11] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    } )
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = 255 },
+      [1] = { background = Screen.colors.Yellow },
+      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey },
+      [3] = { background = Screen.colors.Gray90 },
+      [4] = { bold = true, reverse = true },
+      [5] = { reverse = true },
+      [6] = { foreground = Screen.colors.Brown },
+      [7] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+      [8] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [9] = { bold = true, foreground = Screen.colors.Magenta },
+      [10] = { foreground = Screen.colors.Blue1 },
+      [11] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    }
   end)
 
   describe(':sign place', function()
@@ -341,7 +341,8 @@ describe('Signs', function()
       -- Check "auto:N" larger than the maximum number of signs defined in
       -- a single line (same result as "auto:3").
       command('set signcolumn=auto:4')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
         {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
         {8:XX}{1:>>}WW{6:  3 }c                                          |
@@ -356,7 +357,8 @@ describe('Signs', function()
         {0:~                                                    }|
         {0:~                                                    }|
                                                              |
-      ]]}
+      ]],
+      }
       -- line deletion deletes signs.
       command('2d')
       screen:expect([[

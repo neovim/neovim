@@ -11,7 +11,7 @@ describe("'tabstop' option", function()
 
   -- NOTE: Setting 'tabstop' to a big number reproduces crash #2838.
   -- Disallowing big 'tabstop' would not fix #2838, only hide it.
-  it("tabstop=<big-number> does not crash #2838", function()
+  it('tabstop=<big-number> does not crash #2838', function()
     -- Insert a <Tab> character for 'tabstop' to work with.
     feed('i<Tab><Esc>')
     -- Set 'tabstop' to a very high value.

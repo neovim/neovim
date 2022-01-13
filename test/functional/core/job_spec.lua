@@ -1,10 +1,21 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
-  helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
-  helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.source,
-  helpers.write_file, helpers.mkdir, helpers.rmdir
+local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim, nvim_dir, ok, source, write_file, mkdir, rmdir =
+  helpers.clear,
+  helpers.eq,
+  helpers.eval,
+  helpers.exc_exec,
+  helpers.feed_command,
+  helpers.feed,
+  helpers.insert,
+  helpers.neq,
+  helpers.next_msg,
+  helpers.nvim,
+  helpers.nvim_dir,
+  helpers.ok,
+  helpers.source,
+  helpers.write_file,
+  helpers.mkdir,
+  helpers.rmdir
 local assert_alive = helpers.assert_alive
 local command = helpers.command
 local funcs = helpers.funcs
@@ -51,7 +62,7 @@ describe('jobs', function()
   end)
 
   it('must specify env option as a dict', function()
-    command("let g:job_opts.env = v:true")
+    command('let g:job_opts.env = v:true')
     local _, err = pcall(function()
       if iswin() then
         nvim('command', "let j = jobstart('set', g:job_opts)")
@@ -59,7 +70,7 @@ describe('jobs', function()
         nvim('command', "let j = jobstart('env', g:job_opts)")
       end
     end)
-    ok(string.find(err, "E475: Invalid argument: env") ~= nil)
+    ok(string.find(err, 'E475: Invalid argument: env') ~= nil)
   end)
 
   it('append environment #env', function()
@@ -72,31 +83,31 @@ describe('jobs', function()
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
 
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq {
+      { 'notification', 'stdout', { 0, { 'hello world abc', '' } } },
+    }
   end)
 
   it('append environment with pty #env', function()
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
-    nvim('command', "let g:job_opts.pty = v:true")
+    nvim('command', 'let g:job_opts.pty = v:true')
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
     else
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq {
+      { 'notification', 'stdout', { 0, { 'hello world abc', '' } } },
+    }
   end)
 
   it('replace environment #env', function()
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
-    nvim('command', "let g:job_opts.clear_env = 1")
+    nvim('command', 'let g:job_opts.clear_env = 1')
 
     -- libuv ensures that certain "required" environment variables are
     -- preserved if the user doesn't provide them in a custom environment
@@ -107,15 +118,15 @@ describe('jobs', function()
     -- is *not* in the environment but $TOTO is.
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
-      expect_msg_seq({
-        {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
-      })
+      expect_msg_seq {
+        { 'notification', 'stdout', { 0, { 'hello world %VAR%', '' } } },
+      }
     else
-      nvim('command', "set shell=/bin/sh")
+      nvim('command', 'set shell=/bin/sh')
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
-      expect_msg_seq({
-        {'notification', 'stdout', {0, {'hello world', ''}}}
-      })
+      expect_msg_seq {
+        { 'notification', 'stdout', { 0, { 'hello world', '' } } },
+      }
     end
   end)
 
@@ -129,16 +140,16 @@ describe('jobs', function()
     else
       nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
     end
-    nvim('command', "call jobwait([j])")
-    nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
+    nvim('command', 'call jobwait([j])')
+    nvim('command', 'let g:output = Normalize(g:job_opts.stdout)')
     local actual = eval('g:output')
     local expected
     if iswin() then
       -- Toto is normalized to TOTO so we can detect duplicates, and because
       -- Windows doesn't care about case
-      expected = {'TOTO=def', ''}
+      expected = { 'TOTO=def', '' }
     else
-      expected = {'TOTO=abc', 'Toto=def', ''}
+      expected = { 'TOTO=abc', 'Toto=def', '' }
     end
     table.sort(actual)
     table.sort(expected)
@@ -152,9 +163,9 @@ describe('jobs', function()
     else
       nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
     end
-    eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { 'abc', '' } } }, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
   it('changes to given / directory', function()
@@ -164,14 +175,13 @@ describe('jobs', function()
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
-    eq({'notification', 'stdout',
-      {0, {pathroot(), ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { pathroot(), '' } } }, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
   it('changes to given `cwd` directory', function()
-    local dir = eval("resolve(tempname())"):gsub("/", get_pathsep())
+    local dir = eval('resolve(tempname())'):gsub('/', get_pathsep())
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
@@ -180,15 +190,17 @@ describe('jobs', function()
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
     expect_msg_seq(
-      { {'notification', 'stdout', {0, {dir, ''} } },
-        {'notification', 'stdout', {0, {''} } },
-        {'notification', 'exit', {0, 0} }
+      {
+        { 'notification', 'stdout', { 0, { dir, '' } } },
+        { 'notification', 'stdout', { 0, { '' } } },
+        { 'notification', 'exit', { 0, 0 } },
       },
       -- Alternative sequence:
-      { {'notification', 'stdout', {0, {dir} } },
-        {'notification', 'stdout', {0, {'', ''} } },
-        {'notification', 'stdout', {0, {''} } },
-        {'notification', 'exit', {0, 0} }
+      {
+        { 'notification', 'stdout', { 0, { dir } } },
+        { 'notification', 'stdout', { 0, { '', '' } } },
+        { 'notification', 'stdout', { 0, { '' } } },
+        { 'notification', 'exit', { 0, 0 } },
       }
     )
     rmdir(dir)
@@ -204,25 +216,29 @@ describe('jobs', function()
         nvim('command', "let j = jobstart('pwd', g:job_opts)")
       end
     end)
-    ok(string.find(err, "E475: Invalid argument: expected valid directory$") ~= nil)
+    ok(string.find(err, 'E475: Invalid argument: expected valid directory$') ~= nil)
   end)
 
   it('produces error when using non-executable `cwd`', function()
-    if iswin() then return end  -- N/A for Windows
+    if iswin() then
+      return
+    end -- N/A for Windows
 
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
     funcs.setfperm(dir, 'rw-------')
-    eq('Vim(call):E475: Invalid argument: expected valid directory',
-      pcall_err(nvim, 'command', "call jobstart('pwd', {'cwd': '"..dir.."'})"))
+    eq(
+      'Vim(call):E475: Invalid argument: expected valid directory',
+      pcall_err(nvim, 'command', "call jobstart('pwd', {'cwd': '" .. dir .. "'})")
+    )
     rmdir(dir)
   end)
 
   it('returns 0 when it fails to start', function()
-    eq("", eval("v:errmsg"))
-    feed_command("let g:test_jobid = jobstart([])")
-    eq(0, eval("g:test_jobid"))
-    eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
+    eq('', eval('v:errmsg'))
+    feed_command('let g:test_jobid = jobstart([])')
+    eq(0, eval('g:test_jobid'))
+    eq('E474:', string.match(eval('v:errmsg'), 'E%d*:'))
   end)
 
   it('returns -1 when target is not executable #5465', function()
@@ -232,9 +248,11 @@ describe('jobs', function()
     local executable_jobid = new_job()
 
     local exe = iswin() and './test/functional/fixtures' or './test/functional/fixtures/non_executable.txt'
-    eq("Vim:E475: Invalid value for argument cmd: '"..exe.."' is not executable",
-      pcall_err(eval, "jobstart(['"..exe.."'])"))
-    eq("", eval("v:errmsg"))
+    eq(
+      "Vim:E475: Invalid value for argument cmd: '" .. exe .. "' is not executable",
+      pcall_err(eval, "jobstart(['" .. exe .. "'])")
+    )
+    eq('', eval('v:errmsg'))
     -- Non-executable job should not increment the job ids. #5465
     eq(executable_jobid + 1, new_job())
   end)
@@ -242,119 +260,116 @@ describe('jobs', function()
   it('invokes callbacks when the job writes and exits', function()
     nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
     nvim('command', [[call jobstart(has('win32') ? 'echo:' : 'echo', g:job_opts)]])
-    expect_twostreams({{'notification', 'stdout', {0, {'', ''}}},
-                       {'notification', 'stdout', {0, {''}}}},
-                      {{'notification', 'stderr', {0, {''}}}})
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    expect_twostreams(
+      { { 'notification', 'stdout', { 0, { '', '' } } }, { 'notification', 'stdout', { 0, { '' } } } },
+      { { 'notification', 'stderr', { 0, { '' } } } }
+    )
+    eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
   it('allows interactive commands', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
-    eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { 'abc', '' } } }, next_msg())
     nvim('command', 'call jobsend(j, "123\\nxyz\\n")')
     expect_msg_seq(
-      { {'notification', 'stdout', {0, {'123', 'xyz', ''}}}
-      },
+      { { 'notification', 'stdout', { 0, { '123', 'xyz', '' } } } },
       -- Alternative sequence:
-      { {'notification', 'stdout', {0, {'123', ''}}},
-        {'notification', 'stdout', {0, {'xyz', ''}}}
-      }
+      { { 'notification', 'stdout', { 0, { '123', '' } } }, { 'notification', 'stdout', { 0, { 'xyz', '' } } } }
     )
     nvim('command', 'call jobsend(j, [123, "xyz", ""])')
     expect_msg_seq(
-      { {'notification', 'stdout', {0, {'123', 'xyz', ''}}}
-      },
+      { { 'notification', 'stdout', { 0, { '123', 'xyz', '' } } } },
       -- Alternative sequence:
-      { {'notification', 'stdout', {0, {'123', ''}}},
-        {'notification', 'stdout', {0, {'xyz', ''}}}
-      }
+      { { 'notification', 'stdout', { 0, { '123', '' } } }, { 'notification', 'stdout', { 0, { 'xyz', '' } } } }
     )
-    nvim('command', "call jobstop(j)")
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    nvim('command', 'call jobstop(j)')
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('preserves NULs', function()
     -- Make a file with NULs in it.
     local filename = helpers.tmpname()
-    write_file(filename, "abc\0def\n")
+    write_file(filename, 'abc\0def\n')
 
-    nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
-    eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    nvim('command', "let j = jobstart(['cat', '" .. filename .. "'], g:job_opts)")
+    eq({ 'notification', 'stdout', { 0, { 'abc\ndef', '' } } }, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
     os.remove(filename)
 
     -- jobsend() preserves NULs.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', [[call jobsend(j, ["123\n456",""])]])
-    eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
-    nvim('command', "call jobstop(j)")
+    eq({ 'notification', 'stdout', { 0, { '123\n456', '' } } }, next_msg())
+    nvim('command', 'call jobstop(j)')
   end)
 
   it("will not buffer data if it doesn't end in newlines", function()
-    if helpers.isCI('travis') and os.getenv('CC') == 'gcc-4.9'
-      and helpers.is_os('mac') then
+    if helpers.isCI('travis') and os.getenv('CC') == 'gcc-4.9' and helpers.is_os('mac') then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]")
+      pending('[Hangs on Travis macOS. #5002]')
     end
 
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
-    eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
-    nvim('command', "call jobstop(j)")
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { 'abc', 'xyz' } } }, next_msg())
+    nvim('command', 'call jobstop(j)')
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('preserves newlines', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
-    eq({'notification', 'stdout',
-      {0, {'a', '', 'c', '', '', '', 'b', '', ''}}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { 'a', '', 'c', '', '', '', 'b', '', '' } } }, next_msg())
   end)
 
   it('preserves NULs', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
-    eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
-      next_msg())
-    nvim('command', "call jobstop(j)")
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '\n123\n', 'abc\nxyz\n', '' } } }, next_msg())
+    nvim('command', 'call jobstop(j)')
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('avoids sending final newline', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["some data", "without\nfinal nl"])')
-    eq({'notification', 'stdout', {0, {'some data', 'without\nfinal nl'}}},
-      next_msg())
-    nvim('command', "call jobstop(j)")
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { 'some data', 'without\nfinal nl' } } }, next_msg())
+    nvim('command', 'call jobstop(j)')
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('closes the job streams with jobclose', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
   end)
 
-  it("disallows jobsend on a job that closed stdin", function()
+  it('disallows jobsend on a job that closed stdin', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
-    eq(false, pcall(function()
-      nvim('command', 'call jobsend(j, ["some data"])')
-    end))
+    eq(
+      false,
+      pcall(function()
+        nvim('command', 'call jobsend(j, ["some data"])')
+      end)
+    )
 
     command("let g:job_opts.stdin = 'null'")
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    eq(false, pcall(function()
-      nvim('command', 'call jobsend(j, ["some data"])')
-    end))
+    eq(
+      false,
+      pcall(function()
+        nvim('command', 'call jobsend(j, ["some data"])')
+      end)
+    )
   end)
 
   it('disallows jobsend on a non-existent job', function()
@@ -365,8 +380,8 @@ describe('jobs', function()
   it('jobstop twice on the stopped or exited job return 0', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
-    eq(1, eval("jobstop(j)"))
-    eq(0, eval("jobstop(j)"))
+    eq(1, eval('jobstop(j)'))
+    eq(0, eval('jobstop(j)'))
   end)
 
   it('will not leak memory if we leave a job running', function()
@@ -378,14 +393,17 @@ describe('jobs', function()
     local pid = eval('jobpid(j)')
     neq(NIL, meths.get_proc(pid))
     nvim('command', 'call jobstop(j)')
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    eq({ 'notification', 'stdout', { 0, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
     eq(NIL, meths.get_proc(pid))
   end)
 
-  it("do not survive the exit of nvim", function()
+  it('do not survive the exit of nvim', function()
     -- use sleep, which doesn't die on stdin close
-    nvim('command', "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
+    nvim(
+      'command',
+      "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
+    )
     local pid = eval('jobpid(g:j)')
     neq(NIL, meths.get_proc(pid))
     clear()
@@ -394,7 +412,10 @@ describe('jobs', function()
 
   it('can survive the exit of nvim with "detach"', function()
     nvim('command', 'let g:job_opts.detach = 1')
-    nvim('command', "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
+    nvim(
+      'command',
+      "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
+    )
     local pid = eval('jobpid(g:j)')
     neq(NIL, meths.get_proc(pid))
     clear()
@@ -406,25 +427,24 @@ describe('jobs', function()
   it('can pass user data to the callback', function()
     nvim('command', 'let g:job_opts.user = {"n": 5, "s": "str", "l": [1]}')
     nvim('command', [[call jobstart('echo foo', g:job_opts)]])
-    local data = {n = 5, s = 'str', l = {1}}
+    local data = { n = 5, s = 'str', l = { 1 } }
     expect_msg_seq(
-      { {'notification', 'stdout', {data, {'foo', ''}}},
-        {'notification', 'stdout', {data, {''}}},
-      },
+      { { 'notification', 'stdout', { data, { 'foo', '' } } }, { 'notification', 'stdout', { data, { '' } } } },
       -- Alternative sequence:
-      { {'notification', 'stdout', {data, {'foo'}}},
-        {'notification', 'stdout', {data, {'', ''}}},
-        {'notification', 'stdout', {data, {''}}},
+      {
+        { 'notification', 'stdout', { data, { 'foo' } } },
+        { 'notification', 'stdout', { data, { '', '' } } },
+        { 'notification', 'stdout', { data, { '' } } },
       }
     )
-    eq({'notification', 'exit', {data, 0}}, next_msg())
+    eq({ 'notification', 'exit', { data, 0 } }, next_msg())
   end)
 
   it('can omit data callbacks', function()
     nvim('command', 'unlet g:job_opts.on_stdout')
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', [[call jobstart('echo foo', g:job_opts)]])
-    eq({'notification', 'exit', {5, 0}}, next_msg())
+    eq({ 'notification', 'exit', { 5, 0 } }, next_msg())
   end)
 
   it('can omit exit callback', function()
@@ -432,13 +452,12 @@ describe('jobs', function()
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', [[call jobstart('echo foo', g:job_opts)]])
     expect_msg_seq(
-      { {'notification', 'stdout', {5, {'foo', ''} } },
-        {'notification', 'stdout', {5, {''} } },
-      },
+      { { 'notification', 'stdout', { 5, { 'foo', '' } } }, { 'notification', 'stdout', { 5, { '' } } } },
       -- Alternative sequence:
-      { {'notification', 'stdout', {5, {'foo'} } },
-        {'notification', 'stdout', {5, {'', ''} } },
-        {'notification', 'stdout', {5, {''} } },
+      {
+        { 'notification', 'stdout', { 5, { 'foo' } } },
+        { 'notification', 'stdout', { 5, { '', '' } } },
+        { 'notification', 'stdout', { 5, { '' } } },
       }
     )
   end)
@@ -446,8 +465,8 @@ describe('jobs', function()
   it('will pass return code with the exit event', function()
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', "call jobstart('exit 55', g:job_opts)")
-    eq({'notification', 'stdout', {5, {''}}}, next_msg())
-    eq({'notification', 'exit', {5, 55}}, next_msg())
+    eq({ 'notification', 'stdout', { 5, { '' } } }, next_msg())
+    eq({ 'notification', 'exit', { 5, 55 } }, next_msg())
   end)
 
   it('can receive dictionary functions', function()
@@ -458,15 +477,15 @@ describe('jobs', function()
     endfunction
     call jobstart('exit 45', g:dict)
     ]])
-    eq({'notification', 'exit', {45, 10}}, next_msg())
+    eq({ 'notification', 'exit', { 45, 10 } }, next_msg())
   end)
 
   it('can redefine callbacks being used by a job', function()
     local screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold=true, foreground=Screen.colors.Blue},
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+    }
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -484,17 +503,17 @@ describe('jobs', function()
       endfunction
     ]])
 
-    eq("", eval("v:errmsg"))
+    eq('', eval('v:errmsg'))
   end)
 
   it('requires funcrefs for script-local (s:) functions', function()
     local screen = Screen.new(60, 5)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    }
 
     -- Pass job callback names _without_ `function(...)`.
     source([[
@@ -508,7 +527,7 @@ describe('jobs', function()
         \ })
     ]])
 
-    screen:expect{any="{2:E120: Using <SID> not in a script context: s:OnEvent}"}
+    screen:expect { any = '{2:E120: Using <SID> not in a script context: s:OnEvent}' }
   end)
 
   it('does not repeat output with slow output handlers', function()
@@ -531,22 +550,22 @@ describe('jobs', function()
       call jobwait([g:id])
     ]])
 
-    local expected = {'1', '2', '3', '4', '5', ''}
+    local expected = { '1', '2', '3', '4', '5', '' }
     local chunks = eval('d.data')
     -- check nothing was received after exit, including EOF
     eq(eval('g:exit_data'), chunks)
-    local received = {''}
+    local received = { '' }
     for i, chunk in ipairs(chunks) do
       if i < #chunks then
         -- if chunks got joined, a spurious [''] callback was not sent
-        neq({''}, chunk)
+        neq({ '' }, chunk)
       else
         -- but EOF callback is still sent
-        eq({''}, chunk)
+        eq({ '' }, chunk)
       end
-      received[#received] = received[#received]..chunk[1]
+      received[#received] = received[#received] .. chunk[1]
       for j = 2, #chunk do
-        received[#received+1] = chunk[j]
+        received[#received + 1] = chunk[j]
       end
     end
     eq(expected, received)
@@ -574,22 +593,22 @@ describe('jobs', function()
       call jobwait([g:id])
     ]])
 
-    local expected = {'1', '2', '3', '4', '5', ''}
+    local expected = { '1', '2', '3', '4', '5', '' }
     local chunks = eval('d.data')
     -- check nothing was received after exit, including EOF
     eq(eval('g:exit_data'), chunks)
-    local received = {''}
+    local received = { '' }
     for i, chunk in ipairs(chunks) do
       if i < #chunks then
         -- if chunks got joined, a spurious [''] callback was not sent
-        neq({''}, chunk)
+        neq({ '' }, chunk)
       else
         -- but EOF callback is still sent
-        eq({''}, chunk)
+        eq({ '' }, chunk)
       end
-      received[#received] = received[#received]..chunk[1]
+      received[#received] = received[#received] .. chunk[1]
       for j = 2, #chunk do
-        received[#received+1] = chunk[j]
+        received[#received + 1] = chunk[j]
       end
     end
     eq(expected, received)
@@ -607,11 +626,11 @@ describe('jobs', function()
     call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
-      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
-      },
+      { { 'notification', '1', { 'foo', 'bar', { 'some text', '' }, 'stdout' } } },
       -- Alternative sequence:
-      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
-        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      {
+        { 'notification', '1', { 'foo', 'bar', { 'some text' }, 'stdout' } },
+        { 'notification', '1', { 'foo', 'bar', { '', '' }, 'stdout' } },
       }
     )
   end)
@@ -627,11 +646,11 @@ describe('jobs', function()
       call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
-      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
-      },
+      { { 'notification', '1', { 'foo', 'bar', { 'some text', '' }, 'stdout' } } },
       -- Alternative sequence:
-      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
-        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      {
+        { 'notification', '1', { 'foo', 'bar', { 'some text' }, 'stdout' } },
+        { 'notification', '1', { 'foo', 'bar', { '', '' }, 'stdout' } },
       }
     )
   end)
@@ -642,11 +661,11 @@ describe('jobs', function()
       call jobstart('echo some text', g:job_opts)
     ]])
     expect_msg_seq(
-      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
-      },
+      { { 'notification', '1', { 'foo', 'bar', { 'some text', '' }, 'stdout' } } },
       -- Alternative sequence:
-      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
-        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      {
+        { 'notification', '1', { 'foo', 'bar', { 'some text' }, 'stdout' } },
+        { 'notification', '1', { 'foo', 'bar', { '', '' }, 'stdout' } },
       }
     )
   end)
@@ -672,7 +691,7 @@ describe('jobs', function()
       \  jobstart('sleep 0.310; exit 7')
       \  ]))
       ]])
-      eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
+      eq({ 'notification', 'wait', { { 4, 5, 6, 7 } } }, next_msg())
     end)
 
     it('will run callbacks while waiting', function()
@@ -702,8 +721,7 @@ describe('jobs', function()
       \  ])
       call rpcnotify(g:channel, 'wait', sort(g:jobs), sort(g:exits))
       ]])
-      eq({'notification', 'wait',
-        {{3,4,5,6}, {3,4,5,6}}}, next_msg())
+      eq({ 'notification', 'wait', { { 3, 4, 5, 6 }, { 3, 4, 5, 6 } } }, next_msg())
     end)
 
     it('will return status codes in the order of passed ids', function()
@@ -720,7 +738,7 @@ describe('jobs', function()
       \  jobstart('sleep 0.010; exit 7')
       \  ]))
       ]])
-      eq({'notification', 'wait', {{4, 5, 6, 7}}}, next_msg())
+      eq({ 'notification', 'wait', { { 4, 5, 6, 7 } } }, next_msg())
     end)
 
     it('will return -3 for invalid job ids', function()
@@ -730,33 +748,39 @@ describe('jobs', function()
       \  jobstart((has('win32') ? 'Start-Sleep -Milliseconds 100' : 'sleep 0.01').'; exit 5'),
       \  ]))
       ]])
-      eq({'notification', 'wait', {{-3, 5}}}, next_msg())
+      eq({ 'notification', 'wait', { { -3, 5 } } }, next_msg())
     end)
 
     it('will return -2 when interrupted without timeout', function()
-      feed_command('call rpcnotify(g:channel, "ready") | '..
-              'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("'..
-              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
-              '; exit 55")]))')
-      eq({'notification', 'ready', {}}, next_msg())
+      feed_command(
+        'call rpcnotify(g:channel, "ready") | '
+          .. 'call rpcnotify(g:channel, "wait", '
+          .. 'jobwait([jobstart("'
+          .. (iswin() and 'Start-Sleep 10' or 'sleep 10')
+          .. '; exit 55")]))'
+      )
+      eq({ 'notification', 'ready', {} }, next_msg())
       feed('<c-c>')
-      eq({'notification', 'wait', {{-2}}}, next_msg())
+      eq({ 'notification', 'wait', { { -2 } } }, next_msg())
     end)
 
     it('will return -2 when interrupted with timeout', function()
-      feed_command('call rpcnotify(g:channel, "ready") | '..
-              'call rpcnotify(g:channel, "wait", '..
-              'jobwait([jobstart("'..
-              (iswin() and 'Start-Sleep 10' or 'sleep 10')..
-              '; exit 55")], 10000))')
-      eq({'notification', 'ready', {}}, next_msg())
+      feed_command(
+        'call rpcnotify(g:channel, "ready") | '
+          .. 'call rpcnotify(g:channel, "wait", '
+          .. 'jobwait([jobstart("'
+          .. (iswin() and 'Start-Sleep 10' or 'sleep 10')
+          .. '; exit 55")], 10000))'
+      )
+      eq({ 'notification', 'ready', {} }, next_msg())
       feed('<c-c>')
-      eq({'notification', 'wait', {{-2}}}, next_msg())
+      eq({ 'notification', 'wait', { { -2 } } }, next_msg())
     end)
 
     it('can be called recursively', function()
-      if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+      if helpers.pending_win32(pending) then
+        return
+      end -- TODO: Need `cat`.
       source([[
       let g:opts = {}
       let g:counter = 0
@@ -796,9 +820,9 @@ describe('jobs', function()
       local r
       for i = 10, 1, -1 do
         r = next_msg()
-        eq('job '..i..' closed', r[3][1])
+        eq('job ' .. i .. ' closed', r[3][1])
         r = next_msg()
-        eq('job '..i..' exited', r[3][1])
+        eq('job ' .. i .. ' exited', r[3][1])
       end
       eq(10, nvim('eval', 'g:counter'))
     end)
@@ -810,7 +834,7 @@ describe('jobs', function()
         \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
         \  ], 100))
         ]])
-        eq({'notification', 'wait', {{-1}}}, next_msg())
+        eq({ 'notification', 'wait', { { -1 } } }, next_msg())
       end)
 
       it('can pass 0 to check if a job exists', function()
@@ -823,7 +847,7 @@ describe('jobs', function()
         \  jobstart('sleep 0.3; exit 5'),
         \  ], 0))
         ]])
-        eq({'notification', 'wait', {{-1, -1}}}, next_msg())
+        eq({ 'notification', 'wait', { { -1, -1 } } }, next_msg())
       end)
     end)
   end)
@@ -834,27 +858,30 @@ describe('jobs', function()
     nvim('eval', 'jobsend(j, "abcdef")')
     nvim('eval', 'jobstop(j)')
     expect_msg_seq(
-      { {'notification', 'stdout', {0, {'abcdef'}}},
-        {'notification', 'stdout', {0, {''}}},
-        {'notification', 'stderr', {0, {''}}},
+      {
+        { 'notification', 'stdout', { 0, { 'abcdef' } } },
+        { 'notification', 'stdout', { 0, { '' } } },
+        { 'notification', 'stderr', { 0, { '' } } },
       },
       -- Alternative sequence:
-      { {'notification', 'stderr', {0, {''}}},
-        {'notification', 'stdout', {0, {'abcdef'}}},
-        {'notification', 'stdout', {0, {''}}},
+      {
+        { 'notification', 'stderr', { 0, { '' } } },
+        { 'notification', 'stdout', { 0, { 'abcdef' } } },
+        { 'notification', 'stdout', { 0, { '' } } },
       },
       -- Alternative sequence:
-      { {'notification', 'stdout', {0, {'abcdef'}}},
-        {'notification', 'stderr', {0, {''}}},
-        {'notification', 'stdout', {0, {''}}},
+      {
+        { 'notification', 'stdout', { 0, { 'abcdef' } } },
+        { 'notification', 'stderr', { 0, { '' } } },
+        { 'notification', 'stdout', { 0, { '' } } },
       }
     )
-    eq({'notification', 'exit', {0, 143}}, next_msg())
+    eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
   it('cannot have both rpc and pty options', function()
-    command("let g:job_opts.pty = v:true")
-    command("let g:job_opts.rpc = v:true")
+    command('let g:job_opts.pty = v:true')
+    command('let g:job_opts.rpc = v:true')
     local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
     ok(string.find(err, "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set") ~= nil)
   end)
@@ -869,7 +896,7 @@ describe('jobs', function()
     ]])
     -- The crash only triggered if both jobs are cleaned up on the same event
     -- loop tick. This is also prevented by try-block, so feed must be used.
-    feed_command("call DoIt()")
+    feed_command('call DoIt()')
     feed('<cr>') -- press RETURN
     assert_alive()
   end)
@@ -906,7 +933,7 @@ describe('jobs', function()
               \         'substitute(v:val, "\r", "", "")'),
               \       'split(v:val, "\\s\\+")')
           if len(proc) == 6
-            let s:procs[proc[1]] ..']]'..[[= {'name': proc[0],
+            let s:procs[proc[1]] .. ']]' .. [[= {'name': proc[0],
                   \               'Session Name': proc[2],
                   \               'Session': proc[3]}
           endif
@@ -930,10 +957,8 @@ describe('jobs', function()
       endfunction
       ]])
     end
-    local sleep_cmd = (iswin()
-      and 'ping -n 31 127.0.0.1'
-      or  'sleep 30')
-    local j = eval("jobstart('"..sleep_cmd..' | '..sleep_cmd..' | '..sleep_cmd.."')")
+    local sleep_cmd = (iswin() and 'ping -n 31 127.0.0.1' or 'sleep 30')
+    local j = eval("jobstart('" .. sleep_cmd .. ' | ' .. sleep_cmd .. ' | ' .. sleep_cmd .. "')")
     local ppid = funcs.jobpid(j)
     local children
     if iswin() then
@@ -949,7 +974,7 @@ describe('jobs', function()
         error(result)
       end
     else
-      retry(nil, nil,  function()
+      retry(nil, nil, function()
         children = meths.get_proc_children(ppid)
         eq(3, #children)
       end)
@@ -974,11 +999,13 @@ describe('jobs', function()
     nvim('command', 'let j = jobstart(["cat", "-"], g:job_opts)')
     neq(0, eval('j'))
 
-    eq({1, 0}, eval('[jobstop(j), jobstop(j)]'))
+    eq({ 1, 0 }, eval('[jobstop(j), jobstop(j)]'))
   end)
 
   describe('running tty-test program', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win32(pending) then
+      return
+    end
     local function next_chunk()
       local rv
       while true do
@@ -1010,11 +1037,11 @@ describe('jobs', function()
       endfunction
       ]])
       local ext = iswin() and '.exe' or ''
-      insert(nvim_dir..'/tty-test'..ext)  -- Full path to tty-test.
+      insert(nvim_dir .. '/tty-test' .. ext) -- Full path to tty-test.
       nvim('command', 'let g:job_opts.pty = 1')
       nvim('command', 'let exec = [expand("<cfile>:p")]')
-      nvim('command', "let j = jobstart(exec, g:job_opts)")
-      j = eval'j'
+      nvim('command', 'let j = jobstart(exec, g:job_opts)')
+      j = eval('j')
       eq('tty ready', next_chunk())
     end)
 
@@ -1033,8 +1060,8 @@ describe('jobs', function()
     it('jobclose() sends SIGHUP', function()
       nvim('command', 'call jobclose(j)')
       local msg = next_msg()
-      msg = (msg[2] == 'stdout') and next_msg() or msg  -- Skip stdout, if any.
-      eq({'notification', 'exit', {0, 42}}, msg)
+      msg = (msg[2] == 'stdout') and next_msg() or msg -- Skip stdout, if any.
+      eq({ 'notification', 'exit', { 0, 42 } }, msg)
     end)
 
     it('jobstart() does not keep ptmx file descriptor open', function()
@@ -1059,7 +1086,7 @@ describe('jobs', function()
   end)
 end)
 
-describe("pty process teardown", function()
+describe('pty process teardown', function()
   local screen
   before_each(function()
     clear()
@@ -1075,14 +1102,21 @@ describe("pty process teardown", function()
     ]])
   end)
 
-  it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
+  it('does not prevent/delay exit. #4798 #4900', function()
+    if helpers.pending_win32(pending) then
+      return
+    end
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
-      -- Use :term again in the _nested_ nvim to get a PTY process.
-      -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
+    feed_command(
+      ":terminal '"
+        .. helpers.nvim_prog
+        .. "' -u NONE -i NONE --cmd '"
+        .. nvim_set
+        .. "' "
+        -- Use :term again in the _nested_ nvim to get a PTY process.
+        -- Use `sleep` to simulate a long-running child of the PTY.
+        .. "+terminal +'!(sleep 300 &)' +qa"
+    )
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[

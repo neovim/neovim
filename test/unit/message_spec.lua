@@ -1,12 +1,11 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local ffi = helpers.ffi
 local eq = helpers.eq
 local to_cstr = helpers.to_cstr
 
-local cimp = helpers.cimport('./src/nvim/message.h', './src/nvim/memory.h',
-                             './src/nvim/strings.h')
+local cimp = helpers.cimport('./src/nvim/message.h', './src/nvim/memory.h', './src/nvim/strings.h')
 
 describe('trunc_string', function()
   local buflen = 40
@@ -34,8 +33,8 @@ describe('trunc_string', function()
     { ['desc'] = 'by copy', ['func'] = test_copy },
   }
 
-  for _,t in ipairs(permutations) do
-    describe('populates buf '..t.desc, function()
+  for _, t in ipairs(permutations) do
+    describe('populates buf ' .. t.desc, function()
       itp('with a small string', function()
         t.func('text', 'text')
       end)

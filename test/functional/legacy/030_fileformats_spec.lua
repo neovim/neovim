@@ -16,11 +16,11 @@ describe('fileformats option', function()
     write_file('XXMac', mac)
     write_file('XXUnix', unix)
     write_file('XXEol', eol)
-    write_file('XXDosMac', dos..mac)
-    write_file('XXMacEol', mac..eol)
-    write_file('XXUxDs', unix..dos)
-    write_file('XXUxDsMc', unix..dos..mac)
-    write_file('XXUxMac', unix..mac)
+    write_file('XXDosMac', dos .. mac)
+    write_file('XXMacEol', mac .. eol)
+    write_file('XXUxDs', unix .. dos)
+    write_file('XXUxDsMc', unix .. dos .. mac)
+    write_file('XXUxMac', unix .. mac)
   end)
 
   teardown(function()
@@ -36,13 +36,12 @@ describe('fileformats option', function()
     os.remove('XXUxMac')
     for i = 0, 9 do
       for j = 1, 4 do
-        os.remove('XXtt'..i..j)
+        os.remove('XXtt' .. i .. j)
       end
     end
   end)
 
   it('is working', function()
-
     -- Try reading and writing with 'fileformats' empty.
     command('set fileformats=')
     command('set fileformat=unix')
@@ -257,136 +256,137 @@ describe('fileformats option', function()
     -- helpers.expect() calls helpers.dedent() which messes up the white space
     -- and carrige returns.
     eq(
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'END\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      '1\n'..
-      'unix\r\n'..
-      'unix\r\n'..
-      'END\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'END\n'..
-      'mac\rmac\r\r\n'..
-      'END\n'..
-      '2\n'..
-      'unix\n'..
-      'unix\n'..
-      '\rEND\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      '\rEND\n'..
-      'mac\rmac\rEND\n'..
-      '3\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'unix\r\n'..
-      'unix\r\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\r\n'..
-      'END\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\rEND\n'..
-      '4\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'unix\n'..
-      'unix\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\r\n'..
-      'END\n'..
-      '5\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'END\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\rEND\n'..
-      'unix,mac:unix\n'..
-      'noeol\n'..
-      'END\n'..
-      '6\n'..
-      'unix\r\n'..
-      'unix\r\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'END\n'..
-      'dos,mac:dos\r\n'..
-      'unix\r\n'..
-      'unix\r\n'..
-      'mac\rmac\r\r\n'..
-      'END\n'..
-      'unix\r\n'..
-      'unix\r\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\r\n'..
-      'END\n'..
-      'dos,mac:mac\rmac\rmac\rnoeol\rEND\n'..
-      '7\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'unix,dos,mac:unix\n'..
-      'noeol\n'..
-      'END\n'..
-      '8\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\r\n'..
-      'END\n'..
-      'mac,dos,unix:mac\rnoeol\rEND\n'..
-      '9\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\rEND\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\rEND\n'..
-      'unix\n'..
-      'unix\n'..
-      'dos\r\n'..
-      'dos\r\n'..
-      'mac\rmac\rEND\n'..
-      '10\n'..
-      'unix\n'..
-      'unix',
-      helpers.curbuf_contents())
+      'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'END\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. '1\n'
+        .. 'unix\r\n'
+        .. 'unix\r\n'
+        .. 'END\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'END\n'
+        .. 'mac\rmac\r\r\n'
+        .. 'END\n'
+        .. '2\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. '\rEND\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. '\rEND\n'
+        .. 'mac\rmac\rEND\n'
+        .. '3\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'unix\r\n'
+        .. 'unix\r\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\r\n'
+        .. 'END\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\rEND\n'
+        .. '4\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\r\n'
+        .. 'END\n'
+        .. '5\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'END\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\rEND\n'
+        .. 'unix,mac:unix\n'
+        .. 'noeol\n'
+        .. 'END\n'
+        .. '6\n'
+        .. 'unix\r\n'
+        .. 'unix\r\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'END\n'
+        .. 'dos,mac:dos\r\n'
+        .. 'unix\r\n'
+        .. 'unix\r\n'
+        .. 'mac\rmac\r\r\n'
+        .. 'END\n'
+        .. 'unix\r\n'
+        .. 'unix\r\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\r\n'
+        .. 'END\n'
+        .. 'dos,mac:mac\rmac\rmac\rnoeol\rEND\n'
+        .. '7\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'unix,dos,mac:unix\n'
+        .. 'noeol\n'
+        .. 'END\n'
+        .. '8\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\r\n'
+        .. 'END\n'
+        .. 'mac,dos,unix:mac\rnoeol\rEND\n'
+        .. '9\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\rEND\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\rEND\n'
+        .. 'unix\n'
+        .. 'unix\n'
+        .. 'dos\r\n'
+        .. 'dos\r\n'
+        .. 'mac\rmac\rEND\n'
+        .. '10\n'
+        .. 'unix\n'
+        .. 'unix',
+      helpers.curbuf_contents()
+    )
   end)
 end)

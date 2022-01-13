@@ -46,19 +46,19 @@ local keymap = {}
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate {
-    mode = {mode, {'s', 't'}},
-    lhs = {lhs, 's'},
-    rhs = {rhs, {'s', 'f'}},
-    opts = {opts, 't', true}
+    mode = { mode, { 's', 't' } },
+    lhs = { lhs, 's' },
+    rhs = { rhs, { 's', 'f' } },
+    opts = { opts, 't', true },
   }
 
   opts = vim.deepcopy(opts) or {}
-  local is_rhs_luaref = type(rhs) == "function"
-  mode = type(mode) == 'string' and {mode} or mode
+  local is_rhs_luaref = type(rhs) == 'function'
+  mode = type(mode) == 'string' and { mode } or mode
 
   if is_rhs_luaref and opts.expr and opts.replace_keycodes ~= false then
     local user_rhs = rhs
-    rhs = function ()
+    rhs = function()
       return vim.api.nvim_replace_termcodes(user_rhs(), true, true, true)
     end
   end
@@ -67,7 +67,7 @@ function keymap.set(mode, lhs, rhs, opts)
 
   if opts.remap == nil then
     -- remap by default on <plug> mappings and don't otherwise.
-    opts.noremap = is_rhs_luaref or rhs:lower():match("^<plug>") == nil
+    opts.noremap = is_rhs_luaref or rhs:lower():match('^<plug>') == nil
   else
     -- remaps behavior is opposite of noremap option.
     opts.noremap = not opts.remap
@@ -107,13 +107,13 @@ end
 ---
 function keymap.del(modes, lhs, opts)
   vim.validate {
-    mode = {modes, {'s', 't'}},
-    lhs = {lhs, 's'},
-    opts = {opts, 't', true}
+    mode = { modes, { 's', 't' } },
+    lhs = { lhs, 's' },
+    opts = { opts, 't', true },
   }
 
   opts = opts or {}
-  modes = type(modes) == 'string' and {modes} or modes
+  modes = type(modes) == 'string' and { modes } or modes
 
   local buffer = false
   if opts.buffer ~= nil then

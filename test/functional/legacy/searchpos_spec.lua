@@ -15,21 +15,21 @@ describe('searchpos', function()
       123xyz]])
 
     call('cursor', 1, 1)
-    eq({1, 1, 2}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
+    eq({ 1, 1, 2 }, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
     call('cursor', 1, 2)
-    eq({2, 1, 1}, eval([['\%(\([a-z]\)\|\_.\)\{-}xyz'->searchpos('pcW')]]))
+    eq({ 2, 1, 1 }, eval([['\%(\([a-z]\)\|\_.\)\{-}xyz'->searchpos('pcW')]]))
 
     command('set cpo-=c')
     call('cursor', 1, 2)
-    eq({1, 2, 2}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
+    eq({ 1, 2, 2 }, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
     call('cursor', 1, 3)
-    eq({1, 3, 1}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
+    eq({ 1, 3, 1 }, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
 
     -- Now with \zs, first match is in column 0, "a" is matched.
     call('cursor', 1, 3)
-    eq({2, 4, 2}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}\zsxyz', 'pcW')]]))
+    eq({ 2, 4, 2 }, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}\zsxyz', 'pcW')]]))
     -- With z flag start at cursor column, don't see the "a".
     call('cursor', 1, 3)
-    eq({2, 4, 1}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}\zsxyz', 'pcWz')]]))
+    eq({ 2, 4, 1 }, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}\zsxyz', 'pcWz')]]))
   end)
 end)

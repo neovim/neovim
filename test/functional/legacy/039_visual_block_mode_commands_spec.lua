@@ -8,7 +8,6 @@ local clear, expect = helpers.clear, helpers.expect
 local feed_command = helpers.feed_command
 
 describe('Visual block mode', function()
-
   before_each(function()
     clear()
 
@@ -208,11 +207,11 @@ describe('Visual block mode', function()
     local cpos = nvim.get_var('cpos')
     local expected = {
       col = 4,
-      off = 0
+      off = 0,
     }
     local actual = {
       col = cpos[3],
-      off = cpos[4]
+      off = cpos[4],
     }
 
     eq(expected, actual)

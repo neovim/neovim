@@ -37,22 +37,22 @@ describe('Diff mode screen', function()
 
     screen = Screen.new(40, 16)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-      [3] = {reverse = true},
-      [4] = {background = Screen.colors.LightBlue},
-      [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {bold = true, reverse = true},
-      [8] = {bold = true, background = Screen.colors.Red},
-      [9] = {background = Screen.colors.LightMagenta},
-    })
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+      [2] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { reverse = true },
+      [4] = { background = Screen.colors.LightBlue },
+      [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+      [6] = { bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { bold = true, reverse = true },
+      [8] = { bold = true, background = Screen.colors.Red },
+      [9] = { background = Screen.colors.LightMagenta },
+    }
   end)
 
   it('Add a line in beginning of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
     feed(':set diffopt=filler<cr>')
@@ -97,11 +97,11 @@ describe('Diff mode screen', function()
   end)
 
   it('Add a line in beginning of file 1', function()
-    write_file(fname, "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
+    feed(':set diffopt=filler<cr>')
     screen:expect([[
       {1:  }{4:^0                 }{3:│}{1:  }{2:-----------------}|
       {1:  }1                 {3:│}{1:  }1                |
@@ -121,7 +121,7 @@ describe('Diff mode screen', function()
       :set diffopt=filler                     |
     ]])
 
-    feed(":set diffopt+=internal<cr>")
+    feed(':set diffopt+=internal<cr>')
     screen:expect([[
       {1:  }{4:^0                 }{3:│}{1:  }{2:-----------------}|
       {1:  }1                 {3:│}{1:  }1                |
@@ -143,11 +143,11 @@ describe('Diff mode screen', function()
   end)
 
   it('Add a line at the end of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
+    feed(':set diffopt=filler<cr>')
     screen:expect([[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
@@ -167,7 +167,7 @@ describe('Diff mode screen', function()
       :set diffopt=filler                     |
     ]])
 
-    feed(":set diffopt+=internal<cr>")
+    feed(':set diffopt+=internal<cr>')
     screen:expect([[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
@@ -202,11 +202,11 @@ describe('Diff mode screen', function()
   end)
 
   it('Add a line at the end of file 1', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
+    feed(':set diffopt=filler<cr>')
     screen:expect([[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
@@ -226,7 +226,7 @@ describe('Diff mode screen', function()
       :set diffopt=filler                     |
     ]])
 
-    feed(":set diffopt+=internal<cr>")
+    feed(':set diffopt+=internal<cr>')
     screen:expect([[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
@@ -261,8 +261,8 @@ describe('Diff mode screen', function()
   end)
 
   it('Add a line in the middle of file 2, remove on at the end of file 1', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
     feed(':set diffopt=filler<cr>')
@@ -307,8 +307,8 @@ describe('Diff mode screen', function()
   end)
 
   it('Add a line in the middle of file 1, remove on at the end of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
+    write_file(fname, '1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
     reread()
 
     feed(':set diffopt=filler<cr>')
@@ -564,7 +564,7 @@ int main(int argc, char **argv)
 
     it('internal', function()
       reread()
-      feed(":set diffopt=internal,filler<cr>")
+      feed(':set diffopt=internal,filler<cr>')
       screen:expect([[
         {1:  }^def finalize(value{3:│}{1:  }def finalize(valu|
         {1:  }                  {3:│}{1:  }                 |
@@ -634,8 +634,8 @@ int main(int argc, char **argv)
   end)
 
   it('Diff the same file', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
     feed(':set diffopt=filler<cr>')
@@ -680,8 +680,8 @@ int main(int argc, char **argv)
   end)
 
   it('Diff an empty file', function()
-    write_file(fname, "", false)
-    write_file(fname_2, "", false)
+    write_file(fname, '', false)
+    write_file(fname_2, '', false)
     reread()
 
     feed(':set diffopt=filler<cr>')
@@ -726,8 +726,8 @@ int main(int argc, char **argv)
   end)
 
   it('diffopt+=icase', function()
-    write_file(fname, "a\nb\ncd\n", false)
-    write_file(fname_2, "A\nb\ncDe\n", false)
+    write_file(fname, 'a\nb\ncd\n', false)
+    write_file(fname_2, 'A\nb\ncDe\n', false)
     reread()
 
     feed(':set diffopt=filler,icase<cr>')
@@ -992,26 +992,26 @@ it('win_update redraws lines properly', function()
   clear()
   screen = Screen.new(50, 10)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {bold = true, foreground = Screen.colors.Blue1},
-    [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-    [3] = {background = Screen.colors.Red, foreground = Screen.colors.Grey100, special = Screen.colors.Yellow},
-    [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    [5] = {special = Screen.colors.Yellow},
-    [6] = {special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4},
-    [7] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey100},
-    [8] = {foreground = Screen.colors.Gray90, background = Screen.colors.Grey100},
-    [9] = {foreground = tonumber('0x00000c'), background = Screen.colors.Grey100},
-    [10] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff')},
-    [11] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0x2b8452')},
-    [12] = {bold = true, reverse = true},
-    [13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [14] = {reverse = true},
-    [15] = {background = Screen.colors.LightBlue},
-    [16] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-    [17] = {bold = true, background = Screen.colors.Red},
-    [18] = {background = Screen.colors.LightMagenta},
-  })
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue1 },
+    [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+    [3] = { background = Screen.colors.Red, foreground = Screen.colors.Grey100, special = Screen.colors.Yellow },
+    [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    [5] = { special = Screen.colors.Yellow },
+    [6] = { special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4 },
+    [7] = { foreground = Screen.colors.Grey0, background = Screen.colors.Grey100 },
+    [8] = { foreground = Screen.colors.Gray90, background = Screen.colors.Grey100 },
+    [9] = { foreground = tonumber('0x00000c'), background = Screen.colors.Grey100 },
+    [10] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff') },
+    [11] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber('0x2b8452') },
+    [12] = { bold = true, reverse = true },
+    [13] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+    [14] = { reverse = true },
+    [15] = { background = Screen.colors.LightBlue },
+    [16] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+    [17] = { bold = true, background = Screen.colors.Red },
+    [18] = { background = Screen.colors.LightMagenta },
+  }
 
   insert([[
   1
@@ -1020,15 +1020,16 @@ it('win_update redraws lines properly', function()
   2
   1a
   ]])
-  command("vnew left")
+  command('vnew left')
   insert([[
   2
   2a
   2b
   ]])
-  command("windo diffthis")
-  command("windo 1")
-  screen:expect{grid=[[
+  command('windo diffthis')
+  command('windo 1')
+  screen:expect {
+    grid = [[
     {13:  }{16:-----------------------}{14:│}{13:  }{15:^1                     }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
@@ -1039,13 +1040,15 @@ it('win_update redraws lines properly', function()
     {1:~                        }{14:│}{1:~                       }|
     {14:left [+]                  }{12:[No Name] [+]           }|
                                                       |
-  ]]}
+  ]],
+  }
   feed('<C-e>')
   feed('<C-e>')
   feed('<C-y>')
   feed('<C-y>')
   feed('<C-y>')
-  screen:expect{grid=[[
+  screen:expect {
+    grid = [[
     {13:  }{16:-----------------------}{14:│}{13:  }{15:1                     }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:^                      }|
@@ -1056,28 +1059,29 @@ it('win_update redraws lines properly', function()
     {1:~                        }{14:│}{1:~                       }|
     {14:left [+]                  }{12:[No Name] [+]           }|
                                                       |
-  ]]}
+  ]],
+  }
 end)
 
 it('diff updates line numbers below filler lines', function()
   clear()
   local screen = Screen.new(40, 14)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-    [3] = {reverse = true},
-    [4] = {background = Screen.colors.LightBlue},
-    [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-    [6] = {bold = true, foreground = Screen.colors.Blue1},
-    [7] = {bold = true, reverse = true},
-    [8] = {bold = true, background = Screen.colors.Red},
-    [9] = {background = Screen.colors.LightMagenta},
-    [10] = {bold = true, foreground = Screen.colors.Brown},
-    [11] = {foreground = Screen.colors.Brown},
-    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
-    [13] = {background = Screen.colors.Gray90};
-  })
+  screen:set_default_attr_ids {
+    [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+    [2] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+    [3] = { reverse = true },
+    [4] = { background = Screen.colors.LightBlue },
+    [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+    [6] = { bold = true, foreground = Screen.colors.Blue1 },
+    [7] = { bold = true, reverse = true },
+    [8] = { bold = true, background = Screen.colors.Red },
+    [9] = { background = Screen.colors.LightMagenta },
+    [10] = { bold = true, foreground = Screen.colors.Brown },
+    [11] = { foreground = Screen.colors.Brown },
+    [12] = { foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red },
+    [13] = { background = Screen.colors.Gray90 },
+  }
   source([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
@@ -1135,9 +1139,10 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
-  command("set signcolumn number tgc cursorline cursorlineopt=number,line")
-  command("hi CursorLineNr guibg=red")
-  screen:expect{grid=[[
+  command('set signcolumn number tgc cursorline cursorlineopt=number,line')
+  command('hi CursorLineNr guibg=red')
+  screen:expect {
+    grid = [[
     {1:  }a                {3:│}{11:  2 }a               |
     {1:  }a                {3:│}{11:  1 }a               |
     {1:  }a                {3:│}{12:3   }{13:^a               }|
@@ -1152,23 +1157,24 @@ it('diff updates line numbers below filler lines', function()
     {6:~                  }{3:│}{6:~                   }|
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
       signcolumn=auto                       |
-  ]]}
+  ]],
+  }
 end)
 
 it('Align the filler lines when changing text in diff mode', function()
   clear()
   local screen = Screen.new(40, 20)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
-    [2] = {background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1, bold = true};
-    [3] = {reverse = true};
-    [4] = {background = Screen.colors.LightBlue};
-    [5] = {background = Screen.colors.LightMagenta};
-    [6] = {background = Screen.colors.Red, bold = true};
-    [7] = {foreground = Screen.colors.Blue1, bold = true};
-    [8] = {reverse = true, bold = true};
-  })
+  screen:set_default_attr_ids {
+    [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
+    [2] = { background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1, bold = true },
+    [3] = { reverse = true },
+    [4] = { background = Screen.colors.LightBlue },
+    [5] = { background = Screen.colors.LightMagenta },
+    [6] = { background = Screen.colors.Red, bold = true },
+    [7] = { foreground = Screen.colors.Blue1, bold = true },
+    [8] = { reverse = true, bold = true },
+  }
   source([[
     call setline(1, range(1, 15))
     vnew
@@ -1177,7 +1183,8 @@ it('Align the filler lines when changing text in diff mode', function()
     wincmd h
     exe "normal Gl5\<C-E>"
   ]])
-  screen:expect{grid=[[
+  screen:expect {
+    grid = [[
     {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
     {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
     {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
@@ -1198,9 +1205,11 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                   }{3:│}{7:~                  }|
     {8:[No Name] [+]        }{3:[No Name] [+]      }|
                                             |
-  ]]}
+  ]],
+  }
   feed('ax<Esc>')
-  screen:expect{grid=[[
+  screen:expect {
+    grid = [[
     {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
     {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
     {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
@@ -1221,9 +1230,11 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                   }{3:│}{7:~                  }|
     {8:[No Name] [+]        }{3:[No Name] [+]      }|
                                             |
-  ]]}
+  ]],
+  }
   feed('<C-W>lay<Esc>')
-  screen:expect{grid=[[
+  screen:expect {
+    grid = [[
     {1:  }{2:-----------------}{3:│}{1:  }{4:6                 }|
     {1:  }{2:-----------------}{3:│}{1:  }{4:7                 }|
     {1:  }{2:-----------------}{3:│}{1:  }{4:8                 }|
@@ -1244,5 +1255,6 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                  }{3:│}{7:~                   }|
     {3:[No Name] [+]       }{8:[No Name] [+]       }|
                                             |
-  ]]}
+  ]],
+  }
 end)

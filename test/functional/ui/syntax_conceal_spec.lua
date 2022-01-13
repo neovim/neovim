@@ -9,26 +9,25 @@ describe('Screen', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(nil,10)
+    screen = Screen.new(nil, 10)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
-      [2] = {bold = true, reverse = true},
-      [3] = {reverse = true},
-      [4] = {bold = true},
-      [5] = {background = Screen.colors.Yellow},
-      [6] = {background = Screen.colors.LightGrey},
-    } )
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
+      [2] = { bold = true, reverse = true },
+      [3] = { reverse = true },
+      [4] = { bold = true },
+      [5] = { background = Screen.colors.Yellow },
+      [6] = { background = Screen.colors.LightGrey },
+    }
   end)
 
-  describe("match and conceal", function()
-
+  describe('match and conceal', function()
     before_each(function()
-      command("let &conceallevel=1")
+      command('let &conceallevel=1')
     end)
 
-    describe("multiple", function()
+    describe('multiple', function()
       before_each(function()
         insert([[
           &&
@@ -41,7 +40,7 @@ describe('Screen', function()
         command("syn match dAmpersand '[&][&]' conceal cchar=∧")
       end)
 
-      it("double characters.", function()
+      it('double characters.', function()
         screen:expect([[
             {1:∧}                                                    |
             {1:∧}                                                    |
@@ -57,7 +56,7 @@ describe('Screen', function()
       end)
 
       it('double characters and move the cursor one line up.', function()
-        feed("k")
+        feed('k')
         screen:expect([[
           {1:∧}                                                    |
           {1:∧}                                                    |
@@ -73,7 +72,7 @@ describe('Screen', function()
       end)
 
       it('double characters and move the cursor to the beginning of the file.', function()
-        feed("gg")
+        feed('gg')
         screen:expect([[
           ^&&                                                   |
           {1:∧}                                                    |
@@ -89,7 +88,7 @@ describe('Screen', function()
       end)
 
       it('double characters and move the cursor to the second line in the file.', function()
-        feed("ggj")
+        feed('ggj')
         screen:expect([[
           {1:∧}                                                    |
           ^&&                                                   |
@@ -104,9 +103,11 @@ describe('Screen', function()
         ]])
       end)
 
-      it('double characters and then move the cursor to the beginning of the file and back to the end of the file.', function()
-        feed("ggG")
-        screen:expect([[
+      it(
+        'double characters and then move the cursor to the beginning of the file and back to the end of the file.',
+        function()
+          feed('ggG')
+          screen:expect([[
           {1:∧}                                                    |
           {1:∧}                                                    |
           {1:∧}                                                    |
@@ -118,13 +119,14 @@ describe('Screen', function()
           {0:~                                                    }|
                                                                |
         ]])
-      end)
+        end
+      )
     end) -- multiple
 
-    it("keyword instances in initially in the document.", function()
-      feed("2ilambda<cr><ESC>")
-      command("let &conceallevel=1")
-      command("syn keyword kLambda lambda conceal cchar=λ")
+    it('keyword instances in initially in the document.', function()
+      feed('2ilambda<cr><ESC>')
+      command('let &conceallevel=1')
+      command('syn keyword kLambda lambda conceal cchar=λ')
       screen:expect([[
         {1:λ}                                                    |
         {1:λ}                                                    |
@@ -139,12 +141,11 @@ describe('Screen', function()
       ]])
     end) -- Keyword
 
-    describe("regions in the document", function()
-
+    describe('regions in the document', function()
       before_each(function()
-        feed("2")
-        insert("<r> a region of text </r>\n")
-        command("let &conceallevel=1")
+        feed('2')
+        insert('<r> a region of text </r>\n')
+        command('let &conceallevel=1')
       end)
 
       it('initially and conceal it.', function()
@@ -181,9 +182,9 @@ describe('Screen', function()
         ]])
       end)
 
-      it('that are nested and conceal the nested region\'s start and end tags.', function()
+      it("that are nested and conceal the nested region's start and end tags.", function()
         command("syn region rText contains=rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")
-        insert("<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n")
+        insert('<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n')
         screen:expect([[
           {1: } a region of text {1:-}                                 |
           {1: } a region of text {1:-}                                 |
@@ -199,15 +200,15 @@ describe('Screen', function()
       end)
     end) -- regions in the document
 
-    describe("a region of text", function()
+    describe('a region of text', function()
       before_each(function()
-        command("syntax conceal on")
-        feed("2")
-        insert("<r> a region of text </r>\n")
+        command('syntax conceal on')
+        feed('2')
+        insert('<r> a region of text </r>\n')
         command("syn region rText start='<r>' end='</r>' cchar=-")
       end)
 
-      it("and turn on implicit concealing", function()
+      it('and turn on implicit concealing', function()
         screen:expect([[
           {1:-}                                                    |
           {1:-}                                                    |
@@ -222,10 +223,10 @@ describe('Screen', function()
         ]])
       end)
 
-      it("and then turn on, then off, and then back on implicit concealing.", function()
-        command("syntax conceal off")
-        feed("2")
-        insert("<i> italian text </i>\n")
+      it('and then turn on, then off, and then back on implicit concealing.', function()
+        command('syntax conceal off')
+        feed('2')
+        insert('<i> italian text </i>\n')
         command("syn region iText start='<i>' end='</i>' cchar=*")
         screen:expect([[
           {1:-}                                                    |
@@ -239,7 +240,7 @@ describe('Screen', function()
           {0:~                                                    }|
                                                                |
         ]])
-        command("syntax conceal on")
+        command('syntax conceal on')
         command("syn region iText start='<i>' end='</i>' cchar=*")
         screen:expect([[
           {1:-}                                                    |
@@ -257,18 +258,18 @@ describe('Screen', function()
     end) -- a region of text (implicit concealing)
   end) -- match and conceal
 
-  describe("let the conceal level be", function()
+  describe('let the conceal level be', function()
     before_each(function()
-      insert("// No Conceal\n")
+      insert('// No Conceal\n')
       insert('"Conceal without a cchar"\n')
-      insert("+ With cchar\n\n")
+      insert('+ With cchar\n\n')
       command("syn match noConceal '^//.*$'")
-      command("syn match concealNoCchar '\".\\{-}\"$' conceal")
+      command('syn match concealNoCchar \'".\\{-}"$\' conceal')
       command("syn match concealWCchar '^+.\\{-}$' conceal cchar=C")
     end)
 
-    it("0. No concealing.", function()
-      command("let &conceallevel=0")
+    it('0. No concealing.', function()
+      command('let &conceallevel=0')
       screen:expect([[
         // No Conceal                                        |
         "Conceal without a cchar"                            |
@@ -283,8 +284,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it("1. Conceal using cchar or reference listchars.", function()
-      command("let &conceallevel=1")
+    it('1. Conceal using cchar or reference listchars.', function()
+      command('let &conceallevel=1')
       screen:expect([[
         // No Conceal                                        |
         {1: }                                                    |
@@ -299,8 +300,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it("2. Hidden unless cchar is set.", function()
-      command("let &conceallevel=2")
+    it('2. Hidden unless cchar is set.', function()
+      command('let &conceallevel=2')
       screen:expect([[
         // No Conceal                                        |
                                                              |
@@ -315,8 +316,8 @@ describe('Screen', function()
       ]])
     end)
 
-    it("3. Hide all concealed text.", function()
-      command("let &conceallevel=3")
+    it('3. Hide all concealed text.', function()
+      command('let &conceallevel=3')
       screen:expect([[
         // No Conceal                                        |
                                                              |
@@ -332,11 +333,10 @@ describe('Screen', function()
     end)
   end) -- conceallevel
 
-
-  describe("cursor movement", function()
+  describe('cursor movement', function()
     before_each(function()
-      command("syn keyword concealy barf conceal cchar=b")
-      command("set cole=2")
+      command('syn keyword concealy barf conceal cchar=b')
+      command('set cole=2')
       feed('5Ofoo barf bar barf eggs<esc>')
       screen:expect([[
         foo {1:b} bar {1:b} eggs                                     |
@@ -350,12 +350,11 @@ describe('Screen', function()
         {0:~                                                    }|
                                                              |
       ]])
-
     end)
 
     it('between windows', function()
       feed('k')
-      command("split")
+      command('split')
       screen:expect([[
         foo {1:b} bar {1:b} eggs                                     |
         foo barf bar barf egg^s                               |
@@ -485,7 +484,6 @@ describe('Screen', function()
         {0:~                                                    }|
                                                              |
       ]])
-
     end)
 
     it('between modes cocu=n', function()
@@ -531,7 +529,6 @@ describe('Screen', function()
         {0:~                                                    }|
                                                              |
       ]])
-
 
       feed('v')
       screen:expect([[
@@ -827,7 +824,8 @@ describe('Screen', function()
 
       feed('10Ofoo barf bar barf eggs<esc>')
       feed(':3<cr>o    a<Esc>ggV')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
@@ -838,9 +836,11 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
         {4:-- VISUAL LINE --}                                    |
-      ]]}
+      ]],
+      }
       feed(string.rep('j', 15))
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
@@ -851,9 +851,11 @@ describe('Screen', function()
         {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         {4:-- VISUAL LINE --}                                    |
-      ]]}
+      ]],
+      }
       feed(string.rep('k', 15))
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
@@ -864,7 +866,8 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
         {4:-- VISUAL LINE --}                                    |
-      ]]}
+      ]],
+      }
     end)
   end)
 
@@ -877,7 +880,8 @@ describe('Screen', function()
     bbb
     ccc
     ]])
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       aaa                                                  |
       bbb                                                  |
       ccc                                                  |
@@ -888,18 +892,20 @@ describe('Screen', function()
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]]}
+    ]],
+    }
 
     -- XXX: hack to get notifications, and check only a single line is
     --      updated.  Could use next_msg() also.
     local orig_handle_grid_line = screen._handle_grid_line
     local grid_lines = {}
     function screen._handle_grid_line(self, grid, row, col, items)
-      table.insert(grid_lines, {row, col, items})
+      table.insert(grid_lines, { row, col, items })
       orig_handle_grid_line(self, grid, row, col, items)
     end
     feed('k')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       aaa                                                  |
       bbb                                                  |
       ^ccc                                                  |
@@ -910,8 +916,9 @@ describe('Screen', function()
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]]}
-    eq(grid_lines, {{2, 0, {{'c', 0, 3}}}})
+    ]],
+    }
+    eq(grid_lines, { { 2, 0, { { 'c', 0, 3 } } } })
   end)
 
   -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in
@@ -932,16 +939,17 @@ describe('Screen', function()
       ]])
 
       command('write Xcolesearch')
-      feed(":so %<CR>")
+      feed(':so %<CR>')
 
       -- Jump to something that is beyond the bottom of the window,
       -- so there's a scroll down.
-      feed("/expr<CR>")
+      feed('/expr<CR>')
 
       -- Are the concealed parts of the current line really hidden?
       -- Is the window's cursor column properly updated for hidden
       -- parts of the current line?
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         setl conceallevel2 concealcursornc                   |
         normal gg                                            |
         "{5:^expr}                                                |
@@ -952,7 +960,8 @@ describe('Screen', function()
         {0:~                                                    }|
         {3:Xcolesearch                                          }|
         /expr                                                |
-      ]]}
+      ]],
+      }
     end)
   end)
 end)

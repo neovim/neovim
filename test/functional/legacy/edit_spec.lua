@@ -16,10 +16,8 @@ describe('edit', function()
       call cursor(1, 4)
       call feedkeys(":set im\<cr>ZZZ\<c-r>=setbufvar(1,'&im', 0)\<cr>",'tnix')
     ]=])
-    eq({'abZZZc'}, funcs.getline(1,'$'))
-    eq({0, 1, 1, 0}, funcs.getpos('.'))
+    eq({ 'abZZZc' }, funcs.getline(1, '$'))
+    eq({ 0, 1, 1, 0 }, funcs.getpos('.'))
     eq(0, eval('&im'))
   end)
-
 end)
-

@@ -8,7 +8,7 @@ local expect = helpers.expect
 describe('getline()', function()
   before_each(function()
     clear()
-    call('setline', 1, {'a', 'b', 'c'})
+    call('setline', 1, { 'a', 'b', 'c' })
     expect([[
       a
       b
@@ -33,7 +33,7 @@ describe('getline()', function()
   end)
 
   it('returns value of valid range', function()
-    eq({'a', 'b'}, call('getline', 1, 2))
-    eq({'a', 'b', 'c'}, call('getline', 1, 4))
+    eq({ 'a', 'b' }, call('getline', 1, 2))
+    eq({ 'a', 'b', 'c' }, call('getline', 1, 4))
   end)
 end)

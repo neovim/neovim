@@ -15,8 +15,8 @@ describe('autocommands that delete and unload buffers:', function()
     end of Xxx]])
   local text2 = text1:gsub('1', '2')
   setup(function()
-    write_file('Xxx1', text1..'\n')
-    write_file('Xxx2', text2..'\n')
+    write_file('Xxx1', text1 .. '\n')
+    write_file('Xxx2', text2 .. '\n')
   end)
   teardown(function()
     os.remove(test_file)
@@ -35,8 +35,7 @@ describe('autocommands that delete and unload buffers:', function()
     -- The legacy test file did not check the error message.
     command('let v:errmsg = "no error"')
     command('silent! write')
-    eq('E203: Autocommands deleted or unloaded buffer to be written',
-      eval('v:errmsg'))
+    eq('E203: Autocommands deleted or unloaded buffer to be written', eval('v:errmsg'))
     eq('Xxx2', eval('bufname("%")'))
     expect(text2)
     -- Start editing Xxx2.
@@ -45,8 +44,7 @@ describe('autocommands that delete and unload buffers:', function()
     command('let v:errmsg = "no error"')
     -- Write Xxx2, will delete the buffer and give an error msg.
     command('silent! write')
-    eq('E203: Autocommands deleted or unloaded buffer to be written',
-      eval('v:errmsg'))
+    eq('E203: Autocommands deleted or unloaded buffer to be written', eval('v:errmsg'))
     eq('Xxx1', eval('bufname("%")'))
     expect(text1)
   end)
@@ -62,7 +60,7 @@ describe('autocommands that delete and unload buffers:', function()
 	endwhile
       endfunc
       func WriteToOut()
-	edit! ]]..test_file..[[
+	edit! ]] .. test_file .. [[
 
 	$put ='VimLeave done'
 	write
@@ -79,7 +77,6 @@ describe('autocommands that delete and unload buffers:', function()
     command('silent! edit Makefile') -- an existing file
     command('silent! split new2')
     command('silent! quit')
-    eq('VimLeave done',
-       string.match(read_file(test_file), "^%s*(.-)%s*$"))
+    eq('VimLeave done', string.match(read_file(test_file), '^%s*(.-)%s*$'))
   end)
 end)

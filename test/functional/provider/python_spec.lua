@@ -48,7 +48,7 @@ end)
 describe(':python command', function()
   it('works with a line', function()
     command('python vim.vars["set_by_python"] = [100, 0]')
-    eq({100, 0}, meths.get_var('set_by_python'))
+    eq({ 100, 0 }, meths.get_var('set_by_python'))
   end)
 
   -- TODO(ZyX-I): works with << EOF
@@ -66,7 +66,7 @@ describe(':python command', function()
       line3
       line4]])
     feed('ggjvj:python vim.vars["range"] = vim.current.range[:]<CR>')
-    eq({'line2', 'line3'}, meths.get_var('range'))
+    eq({ 'line2', 'line3' }, meths.get_var('range'))
   end)
 end)
 
@@ -103,7 +103,7 @@ end)
 
 describe('pyeval()', function()
   it('works', function()
-    eq({1, 2, {['key'] = 'val'}}, funcs.pyeval('[1, 2, {"key": "val"}]'))
+    eq({ 1, 2, { ['key'] = 'val' } }, funcs.pyeval('[1, 2, {"key": "val"}]'))
   end)
 
   it('errors out when given non-string', function()

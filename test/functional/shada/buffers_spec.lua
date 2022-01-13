@@ -1,7 +1,6 @@
 -- shada buffer list saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
-local nvim_command, funcs, eq, curbufmeths =
-  helpers.command, helpers.funcs, helpers.eq, helpers.curbufmeths
+local nvim_command, funcs, eq, curbufmeths = helpers.command, helpers.funcs, helpers.eq, helpers.curbufmeths
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -69,9 +68,9 @@ describe('shada support code', function()
 
   it('does not dump unnamed buffers', function()
     reset('set shada+=% hidden')
-    curbufmeths.set_lines(0, 1, true, {'foo'})
+    curbufmeths.set_lines(0, 1, true, { 'foo' })
     nvim_command('enew')
-    curbufmeths.set_lines(0, 1, true, {'bar'})
+    curbufmeths.set_lines(0, 1, true, { 'bar' })
     eq(2, funcs.bufnr('$'))
     nvim_command('qall!')
     reset('set shada+=% hidden')

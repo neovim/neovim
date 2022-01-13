@@ -31,19 +31,19 @@ describe('macros', function()
   end)
 
   it('can be replayed with Q', function()
-    insert [[hello
+    insert([[hello
 hello
-hello]]
-    feed [[gg]]
+hello]])
+    feed([[gg]])
 
-    feed [[qqAFOO<esc>q]]
-    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed([[qqAFOO<esc>q]])
+    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[Q]]
-    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed([[Q]])
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[G3Q]]
-    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed([[G3Q]])
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 end)
 
@@ -51,7 +51,7 @@ describe('reg_recorded()', function()
   before_each(clear)
 
   it('returns the correct value', function()
-    feed [[qqyyq]]
+    feed([[qqyyq]])
     eq('q', eval('reg_recorded()'))
   end)
 end)

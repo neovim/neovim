@@ -25,39 +25,42 @@ describe('luaeval()', function()
   local nested_by_level = {}
   local nested = {}
   local nested_s = '{}'
-  for i=1,100 do
+  for i = 1, 100 do
     if i % 2 == 0 then
-      nested = {nested}
+      nested = { nested }
       nested_s = '{' .. nested_s .. '}'
     else
-      nested = {nested=nested}
+      nested = { nested = nested }
       nested_s = '{nested=' .. nested_s .. '}'
     end
-    nested_by_level[i] = {o=nested, s=nested_s}
+    nested_by_level[i] = { o = nested, s = nested_s }
   end
 
   describe('second argument', function()
     it('is successfully received', function()
-      local t = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
-      eq(t, funcs.luaeval("_A", t))
+      local t = {
+        t = true,
+        f = false, --[[n=NIL,]]
+        d = { l = { 'string', 42, 0.42 } },
+      }
+      eq(t, funcs.luaeval('_A', t))
       -- Not tested: nil, funcrefs, returned object identity: behaviour will
       -- most likely change.
     end)
   end)
   describe('lua values', function()
     it('are successfully transformed', function()
-      eq({n=1, f=1.5, s='string', l={4, 2}},
-         funcs.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
+      eq({ n = 1, f = 1.5, s = 'string', l = { 4, 2 } }, funcs.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
       -- Not tested: nil inside containers: behaviour will most likely change.
       eq(NIL, funcs.luaeval('nil'))
-      eq({['']=1}, funcs.luaeval('{[""]=1}'))
+      eq({ [''] = 1 }, funcs.luaeval('{[""]=1}'))
     end)
   end)
   describe('recursive lua values', function()
     it('are successfully transformed', function()
       command('lua rawset(_G, "d", {})')
       command('lua rawset(d, "d", d)')
-      eq('\n{\'d\': {...@0}}', funcs.execute('echo luaeval("d")'))
+      eq("\n{'d': {...@0}}", funcs.execute('echo luaeval("d")'))
 
       command('lua rawset(_G, "l", {})')
       command('lua table.insert(l, l)')
@@ -69,17 +72,15 @@ describe('luaeval()', function()
       command([[let s = luaeval('"\0"')]])
       eq('\000', meths.get_var('s'))
     end)
-    it('are successfully converted to special dictionaries in table keys',
-    function()
+    it('are successfully converted to special dictionaries in table keys', function()
       command([[let d = luaeval('{["\0"]=1}')]])
-      eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n'}}, 1}}}, meths.get_var('d'))
+      eq({ _TYPE = {}, _VAL = { { { _TYPE = {}, _VAL = { '\n' } }, 1 } } }, meths.get_var('d'))
       eq(1, funcs.eval('d._TYPE is v:msgpack_types.map'))
       eq(1, funcs.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
     end)
-    it('are successfully converted to blobs from a list',
-    function()
+    it('are successfully converted to blobs from a list', function()
       command([[let l = luaeval('{"abc", "a\0b", "c\0d", "def"}')]])
-      eq({'abc', 'a\000b', 'c\000d', 'def'}, meths.get_var('l'))
+      eq({ 'abc', 'a\000b', 'c\000d', 'def' }, meths.get_var('l'))
     end)
   end)
 
@@ -94,7 +95,7 @@ describe('luaeval()', function()
     eq(1.5, funcs.luaeval('1.5'))
     eq(5, eval('"1.5"->luaeval()->type()'))
 
-    eq("test", funcs.luaeval('"test"'))
+    eq('test', funcs.luaeval('"test"'))
     eq(1, eval('"\'test\'"->luaeval()->type()'))
 
     eq('', funcs.luaeval('""'))
@@ -111,21 +112,25 @@ describe('luaeval()', function()
     eq({}, funcs.luaeval('{}'))
     eq(3, eval('type(luaeval("{}"))'))
 
-    eq({test=1, foo=2}, funcs.luaeval('{test=1, foo=2}'))
+    eq({ test = 1, foo = 2 }, funcs.luaeval('{test=1, foo=2}'))
     eq(4, eval('type(luaeval("{test=1, foo=2}"))'))
 
-    eq({4, 2}, funcs.luaeval('{4, 2}'))
+    eq({ 4, 2 }, funcs.luaeval('{4, 2}'))
     eq(3, eval('type(luaeval("{4, 2}"))'))
 
     local level = 30
     eq(nested_by_level[level].o, funcs.luaeval(nested_by_level[level].s))
 
-    eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}},
-       funcs.luaeval([[{['\0\n\0']='\0\n\0\0'}]]))
+    eq(
+      { _TYPE = {}, _VAL = { { { _TYPE = {}, _VAL = { '\n', '\n' } }, '\000\n\000\000' } } },
+      funcs.luaeval([[{['\0\n\0']='\0\n\0\0'}]])
+    )
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._TYPE is v:msgpack_types.map]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][0]._TYPE is v:msgpack_types.string]]))
-    eq({nested={{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}}}},
-       funcs.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]]))
+    eq(
+      { nested = { { _TYPE = {}, _VAL = { { { _TYPE = {}, _VAL = { '\n', '\n' } }, '\000\n\000\000' } } } } },
+      funcs.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]])
+    )
   end)
 
   it('correctly passes scalars as argument', function()
@@ -140,8 +145,8 @@ describe('luaeval()', function()
 
   it('correctly passes containers as argument', function()
     eq({}, funcs.luaeval('_A', {}))
-    eq({test=1}, funcs.luaeval('_A', {test=1}))
-    eq({4, 2}, funcs.luaeval('_A', {4, 2}))
+    eq({ test = 1 }, funcs.luaeval('_A', { test = 1 }))
+    eq({ 4, 2 }, funcs.luaeval('_A', { 4, 2 }))
     local level = 28
     eq(nested_by_level[level].o, funcs.luaeval('_A', nested_by_level[level].o))
   end)
@@ -151,9 +156,8 @@ describe('luaeval()', function()
   end
   local function mapsp(...)
     local val = ''
-    for i=1,(select('#', ...)/2) do
-      val = ('%s[%s,%s],'):format(val, select(i * 2 - 1, ...),
-                                  select(i * 2, ...))
+    for i = 1, (select('#', ...) / 2) do
+      val = ('%s[%s,%s],'):format(val, select(i * 2 - 1, ...), select(i * 2, ...))
     end
     return sp('map', '[' .. val .. ']')
   end
@@ -172,28 +176,29 @@ describe('luaeval()', function()
   end
 
   it('correctly passes special dictionaries', function()
-    eq({0, '\000\n\000'}, luaevalarg(sp('binary', '["\\n", "\\n"]')))
-    eq({0, '\000\n\000'}, luaevalarg(sp('string', '["\\n", "\\n"]')))
-    eq({0, true}, luaevalarg(sp('boolean', 1)))
-    eq({0, false}, luaevalarg(sp('boolean', 0)))
-    eq({0, NIL}, luaevalarg(sp('nil', 0)))
-    eq({0, {[""]=""}}, luaevalarg(mapsp(sp('binary', '[""]'), '""')))
-    eq({0, {[""]=""}}, luaevalarg(mapsp(sp('string', '[""]'), '""')))
+    eq({ 0, '\000\n\000' }, luaevalarg(sp('binary', '["\\n", "\\n"]')))
+    eq({ 0, '\000\n\000' }, luaevalarg(sp('string', '["\\n", "\\n"]')))
+    eq({ 0, true }, luaevalarg(sp('boolean', 1)))
+    eq({ 0, false }, luaevalarg(sp('boolean', 0)))
+    eq({ 0, NIL }, luaevalarg(sp('nil', 0)))
+    eq({ 0, { [''] = '' } }, luaevalarg(mapsp(sp('binary', '[""]'), '""')))
+    eq({ 0, { [''] = '' } }, luaevalarg(mapsp(sp('string', '[""]'), '""')))
   end)
 
   it('issues an error in some cases', function()
-    eq("Vim(call):E5100: Cannot convert given lua table: table should either have a sequence of positive integer keys or contain only string keys",
-       exc_exec('call luaeval("{1, foo=2}")'))
+    eq(
+      'Vim(call):E5100: Cannot convert given lua table: table should either have a sequence of positive integer keys or contain only string keys',
+      exc_exec('call luaeval("{1, foo=2}")')
+    )
 
-    startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",
-               exc_exec('call luaeval("1, 2, 3")'))
-    startswith("Vim(call):E5108: Error executing lua [string \"luaeval()\"]:",
-               exc_exec('call luaeval("(nil)()")'))
-
+    startswith('Vim(call):E5107: Error loading lua [string "luaeval()"]:', exc_exec('call luaeval("1, 2, 3")'))
+    startswith('Vim(call):E5108: Error executing lua [string "luaeval()"]:', exc_exec('call luaeval("(nil)()")'))
   end)
 
   it('should handle sending lua functions to viml', function()
-    eq(true, exec_lua [[
+    eq(
+      true,
+      exec_lua([[
       can_pass_lua_callback_to_vim_from_lua_result = nil
 
       vim.fn.call(function()
@@ -202,10 +207,13 @@ describe('luaeval()', function()
 
       return can_pass_lua_callback_to_vim_from_lua_result
     ]])
+    )
   end)
 
   it('run functions even in timers', function()
-    eq(true, exec_lua [[
+    eq(
+      true,
+      exec_lua([[
       can_pass_lua_callback_to_vim_from_lua_result = nil
 
       vim.fn.timer_start(50, function()
@@ -218,10 +226,13 @@ describe('luaeval()', function()
 
       return can_pass_lua_callback_to_vim_from_lua_result
     ]])
+    )
   end)
 
   it('can run named functions more than once', function()
-    eq(5, exec_lua [[
+    eq(
+      5,
+      exec_lua([[
       count_of_vals = 0
 
       vim.fn.timer_start(5, function()
@@ -234,10 +245,13 @@ describe('luaeval()', function()
 
       return count_of_vals
     ]])
+    )
   end)
 
   it('can handle clashing names', function()
-    eq(1, exec_lua [[
+    eq(
+      1,
+      exec_lua([[
       local f_loc = function() return 1 end
 
       local result = nil
@@ -250,10 +264,13 @@ describe('luaeval()', function()
 
       return result
     ]])
+    )
   end)
 
   it('can handle functions with errors', function()
-    eq(true, exec_lua [[
+    eq(
+      true,
+      exec_lua([[
       vim.fn.timer_start(10, function()
         error("dead function")
       end)
@@ -262,17 +279,20 @@ describe('luaeval()', function()
 
       return true
     ]])
+    )
   end)
 
   it('should handle passing functions around', function()
-    command [[
+    command([[
       function VimCanCallLuaCallbacks(Concat, Cb)
         let message = a:Concat("Hello Vim", "I'm Lua")
         call a:Cb(message)
       endfunction
-    ]]
+    ]])
 
-    eq("Hello Vim I'm Lua", exec_lua [[
+    eq(
+      "Hello Vim I'm Lua",
+      exec_lua([[
       can_pass_lua_callback_to_vim_from_lua_result = ""
 
       vim.fn.VimCanCallLuaCallbacks(
@@ -282,17 +302,20 @@ describe('luaeval()', function()
 
       return can_pass_lua_callback_to_vim_from_lua_result
     ]])
+    )
   end)
 
   it('should handle funcrefs', function()
-    command [[
+    command([[
       function VimCanCallLuaCallbacks(Concat, Cb)
         let message = a:Concat("Hello Vim", "I'm Lua")
         call a:Cb(message)
       endfunction
-    ]]
+    ]])
 
-    eq("Hello Vim I'm Lua", exec_lua [[
+    eq(
+      "Hello Vim I'm Lua",
+      exec_lua([[
       can_pass_lua_callback_to_vim_from_lua_result = ""
 
       vim.funcref('VimCanCallLuaCallbacks')(
@@ -302,10 +325,13 @@ describe('luaeval()', function()
 
       return can_pass_lua_callback_to_vim_from_lua_result
     ]])
+    )
   end)
 
   it('should work with metatables using __call', function()
-    eq(1, exec_lua [[
+    eq(
+      1,
+      exec_lua([[
       local this_is_local_variable = false
       local callable_table = setmetatable({x = 1}, {
         __call = function(t, ...)
@@ -321,10 +347,13 @@ describe('luaeval()', function()
 
       return this_is_local_variable
     ]])
+    )
   end)
 
   it('should handle being called from a timer once.', function()
-    eq(3, exec_lua [[
+    eq(
+      3,
+      exec_lua([[
       local this_is_local_variable = false
       local callable_table = setmetatable({5, 4, 3, 2, 1}, {
         __call = function(t, ...) this_is_local_variable = t[3] end
@@ -337,10 +366,13 @@ describe('luaeval()', function()
 
       return this_is_local_variable
     ]])
+    )
   end)
 
   it('should call functions once with __call metamethod', function()
-    eq(true, exec_lua [[
+    eq(
+      true,
+      exec_lua([[
       local this_is_local_variable = false
       local callable_table = setmetatable({a = true, b = false}, {
         __call = function(t, ...) this_is_local_variable = t.a end
@@ -351,10 +383,13 @@ describe('luaeval()', function()
 
       return this_is_local_variable
     ]])
+    )
   end)
 
   it('should work with lists using __call', function()
-    eq(3, exec_lua [[
+    eq(
+      3,
+      exec_lua([[
       local this_is_local_variable = false
       local mt = {
         __call = function(t, ...)
@@ -379,15 +414,19 @@ describe('luaeval()', function()
 
       return this_is_local_variable
     ]])
+    )
   end)
 
   it('should not work with tables not using __call', function()
-    eq({false, 'Vim:E921: Invalid callback argument'}, exec_lua [[
+    eq(
+      { false, 'Vim:E921: Invalid callback argument' },
+      exec_lua([[
       local this_is_local_variable = false
       local callable_table = setmetatable({x = 1}, {})
 
       return {pcall(function() vim.fn.timer_start(5, callable_table) end)}
     ]])
+    )
   end)
 
   it('correctly converts containers with type_idx', function()
@@ -398,8 +437,8 @@ describe('luaeval()', function()
     eq({}, funcs.luaeval('{[vim.type_idx]=vim.types.array}'))
 
     -- Presence of type_idx makes Vim ignore some keys
-    eq({42}, funcs.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
-    eq({foo=2}, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq({ 42 }, funcs.luaeval('{[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
+    eq({ foo = 2 }, funcs.luaeval('{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
     eq(10, funcs.luaeval('{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}'))
 
     -- The following should not crash
@@ -414,7 +453,7 @@ describe('luaeval()', function()
     eq(true, eval('luaeval("_A.d == _A.d[1]", {"d": l})'))
     eq(true, eval('luaeval("_A ~= _A[1]", [l])'))
 
-    meths.set_var('d', {foo=42})
+    meths.set_var('d', { foo = 42 })
     eval('extend(d, {"d": d})')
     eq(true, eval('luaeval("_A == _A.d", d)'))
     eq(true, eval('luaeval("_A[1] == _A[1].d", [d])'))
@@ -424,19 +463,23 @@ describe('luaeval()', function()
 
   it('errors out correctly when doing incorrect things in lua', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
-       remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: ERROR',
-       remove_trace(exc_exec([[call luaeval("error('ERROR')")]])))
-    eq('Vim(call):E5108: Error executing lua [NULL]',
-       remove_trace(exc_exec([[call luaeval("error(nil)")]])))
+    eq(
+      'Vim(call):E5108: Error executing lua [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
+      remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
+    )
+    eq(
+      'Vim(call):E5108: Error executing lua [string "luaeval()"]:1: ERROR',
+      remove_trace(exc_exec([[call luaeval("error('ERROR')")]]))
+    )
+    eq('Vim(call):E5108: Error executing lua [NULL]', remove_trace(exc_exec([[call luaeval("error(nil)")]])))
   end)
 
-  it('does not leak memory when called with too long line',
-  function()
+  it('does not leak memory when called with too long line', function()
     local s = ('x'):rep(65536)
-    eq('Vim(call):E5107: Error loading lua [string "luaeval()"]:1: unexpected symbol near \')\'',
-       exc_exec([[call luaeval("(']] .. s ..[[' + )")]]))
+    eq(
+      'Vim(call):E5107: Error loading lua [string "luaeval()"]:1: unexpected symbol near \')\'',
+      exc_exec([[call luaeval("(']] .. s .. [[' + )")]])
+    )
     eq(s, funcs.luaeval('"' .. s .. '"'))
   end)
 end)
@@ -475,12 +518,14 @@ describe('v:lua', function()
     eq(7, eval('v:lua.foo(3,4,v:null)'))
     eq(true, exec_lua([[return _G.val == vim.NIL]]))
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
-    eq("hey eval", meths.get_current_line())
-    eq("string: abc", eval('v:lua.mymod.whatis(0z616263)'))
-    eq("string: ", eval('v:lua.mymod.whatis(v:_null_blob)'))
+    eq('hey eval', meths.get_current_line())
+    eq('string: abc', eval('v:lua.mymod.whatis(0z616263)'))
+    eq('string: ', eval('v:lua.mymod.whatis(v:_null_blob)'))
 
-    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
-       pcall_err(eval, 'v:lua.mymod.crashy()'))
+    eq(
+      'Vim:E5108: Error executing lua [string "<nvim>"]:0: attempt to call global \'nonexistent\' (a nil value)',
+      pcall_err(eval, 'v:lua.mymod.crashy()')
+    )
   end)
 
   it('works when called as a method', function()
@@ -488,35 +533,40 @@ describe('v:lua', function()
     eq(true, exec_lua([[return _G.val == nil]]))
 
     eq(321, eval('300->v:lua.foo(21, "boop")'))
-    eq("boop", exec_lua([[return _G.val]]))
+    eq('boop', exec_lua([[return _G.val]]))
 
     eq(NIL, eval('"there"->v:lua.mymod.noisy()'))
-    eq("hey there", meths.get_current_line())
-    eq({5, 10, 15, 20}, eval('[[1], [2, 3], [4]]->v:lua.vim.tbl_flatten()->map({_, v -> v * 5})'))
+    eq('hey there', meths.get_current_line())
+    eq({ 5, 10, 15, 20 }, eval('[[1], [2, 3], [4]]->v:lua.vim.tbl_flatten()->map({_, v -> v * 5})'))
 
-    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
-       pcall_err(eval, '"huh?"->v:lua.mymod.crashy()'))
+    eq(
+      'Vim:E5108: Error executing lua [string "<nvim>"]:0: attempt to call global \'nonexistent\' (a nil value)',
+      pcall_err(eval, '"huh?"->v:lua.mymod.crashy()')
+    )
   end)
 
   it('works in :call', function()
     command(":call v:lua.mymod.noisy('command')")
-    eq("hey command", meths.get_current_line())
-    eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
-       pcall_err(command, 'call v:lua.mymod.crashy()'))
+    eq('hey command', meths.get_current_line())
+    eq(
+      'Vim(call):E5108: Error executing lua [string "<nvim>"]:0: attempt to call global \'nonexistent\' (a nil value)',
+      pcall_err(command, 'call v:lua.mymod.crashy()')
+    )
   end)
 
   it('works in func options', function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {background = Screen.colors.WebGray},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {bold = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { background = Screen.colors.WebGray },
+      [3] = { background = Screen.colors.LightMagenta },
+      [4] = { bold = true },
+      [5] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    }
     screen:attach()
     feed('isome st<c-x><c-o>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       some stuff^                                                  |
       {1:~   }{2: stuff          }{1:                                        }|
       {1:~   }{3: steam          }{1:                                        }|
@@ -525,7 +575,8 @@ describe('v:lua', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
-    ]]}
+    ]],
+    }
   end)
 
   it('supports packages', function()
@@ -535,21 +586,21 @@ describe('v:lua', function()
   end)
 
   it('throw errors for invalid use', function()
-    eq('Vim(let):E15: Invalid expression: v:lua.func', pcall_err(command, "let g:Func = v:lua.func"))
-    eq('Vim(let):E15: Invalid expression: v:lua', pcall_err(command, "let g:Func = v:lua"))
+    eq('Vim(let):E15: Invalid expression: v:lua.func', pcall_err(command, 'let g:Func = v:lua.func'))
+    eq('Vim(let):E15: Invalid expression: v:lua', pcall_err(command, 'let g:Func = v:lua'))
     eq("Vim(let):E15: Invalid expression: v:['lua']", pcall_err(command, "let g:Func = v:['lua']"))
 
     eq("Vim:E15: Invalid expression: v:['lua'].foo()", pcall_err(eval, "v:['lua'].foo()"))
     eq("Vim(call):E461: Illegal variable name: v:['lua']", pcall_err(command, "call v:['lua'].baar()"))
-    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "v:lua()"))
+    eq('Vim:E117: Unknown function: v:lua', pcall_err(eval, 'v:lua()'))
 
-    eq("Vim(let):E46: Cannot change read-only variable \"v:['lua']\"", pcall_err(command, "let v:['lua'] = 'xx'"))
-    eq("Vim(let):E46: Cannot change read-only variable \"v:lua\"", pcall_err(command, "let v:lua = 'xx'"))
+    eq('Vim(let):E46: Cannot change read-only variable "v:[\'lua\']"', pcall_err(command, "let v:['lua'] = 'xx'"))
+    eq('Vim(let):E46: Cannot change read-only variable "v:lua"', pcall_err(command, "let v:lua = 'xx'"))
 
-    eq("Vim:E107: Missing parentheses: v:lua.func", pcall_err(eval, "'bad'->v:lua.func"))
-    eq("Vim:E274: No white space allowed before parenthesis", pcall_err(eval, "'bad'->v:lua.func ()"))
-    eq("Vim:E107: Missing parentheses: v:lua", pcall_err(eval, "'bad'->v:lua"))
-    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "'bad'->v:lua()"))
-    eq("Vim:E15: Invalid expression: v:lua.()", pcall_err(eval, "'bad'->v:lua.()"))
+    eq('Vim:E107: Missing parentheses: v:lua.func', pcall_err(eval, "'bad'->v:lua.func"))
+    eq('Vim:E274: No white space allowed before parenthesis', pcall_err(eval, "'bad'->v:lua.func ()"))
+    eq('Vim:E107: Missing parentheses: v:lua', pcall_err(eval, "'bad'->v:lua"))
+    eq('Vim:E117: Unknown function: v:lua', pcall_err(eval, "'bad'->v:lua()"))
+    eq('Vim:E15: Invalid expression: v:lua.()', pcall_err(eval, "'bad'->v:lua.()"))
   end)
 end)

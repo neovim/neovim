@@ -68,9 +68,9 @@ describe('Test for delete()', function()
   it('symlink directory delete', function()
     command("call mkdir('Xdir1')")
     if helpers.iswin() then
-      command("silent !mklink /j Xlink Xdir1")
+      command('silent !mklink /j Xlink Xdir1')
     else
-      command("silent !ln -s Xdir1 Xlink")
+      command('silent !ln -s Xdir1 Xlink')
     end
     eq(1, eval("isdirectory('Xdir1')"))
     eq(1, eval("isdirectory('Xlink')"))
@@ -118,7 +118,6 @@ describe('Test for delete()', function()
 
   it('gives correct emsgs', function()
     eq('Vim(call):E474: Invalid argument', exc_exec("call delete('')"))
-    eq('Vim(call):E15: Invalid expression: 0',
-       exc_exec("call delete('foo', 0)"))
+    eq('Vim(call):E15: Invalid expression: 0', exc_exec("call delete('foo', 0)"))
   end)
 end)

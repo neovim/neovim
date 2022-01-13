@@ -10,24 +10,24 @@ local meths = helpers.meths
 describe('eval-API', function()
   before_each(clear)
 
-  it("work", function()
+  it('work', function()
     command("call nvim_command('let g:test = 1')")
     eq(1, eval("nvim_get_var('test')"))
 
-    local buf = eval("nvim_get_current_buf()")
-    command("call nvim_buf_set_lines("..buf..", 0, -1, v:true, ['aa', 'bb'])")
+    local buf = eval('nvim_get_current_buf()')
+    command('call nvim_buf_set_lines(' .. buf .. ", 0, -1, v:true, ['aa', 'bb'])")
     expect([[
       aa
       bb]])
 
-    command("call nvim_win_set_cursor(0, [1, 1])")
+    command('call nvim_win_set_cursor(0, [1, 1])')
     command("call nvim_input('ax<esc>')")
     expect([[
       aax
       bb]])
   end)
 
-  it("throw errors for invalid arguments", function()
+  it('throw errors for invalid arguments', function()
     local err = exc_exec('call nvim_get_current_buf("foo")')
     eq('Vim(call):E118: Too many arguments for function: nvim_get_current_buf', err)
 
@@ -38,7 +38,10 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean', err)
 
     err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq('Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)', err)
+    eq(
+      'Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)',
+      err
+    )
 
     err = exc_exec('call nvim_buf_get_number("0")')
     eq('Vim(call):E5555: API call: Wrong type for argument 1 when calling nvim_buf_get_number, expecting Buffer', err)
@@ -48,49 +51,49 @@ describe('eval-API', function()
   end)
 
   it('cannot change texts if textlocked', function()
-    command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
-    eq('Vim(call):E5555: API call: E523: Not allowed here', pcall_err(command, "normal! yy"))
+    command('autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])')
+    eq('Vim(call):E5555: API call: E523: Not allowed here', pcall_err(command, 'normal! yy'))
   end)
 
-  it("use buffer numbers and windows ids as handles", function()
+  it('use buffer numbers and windows ids as handles', function()
     local screen = Screen.new(40, 8)
     screen:attach()
     local bnr = eval("bufnr('')")
-    local bhnd = eval("nvim_get_current_buf()")
-    local wid = eval("win_getid()")
-    local whnd = eval("nvim_get_current_win()")
+    local bhnd = eval('nvim_get_current_buf()')
+    local wid = eval('win_getid()')
+    local whnd = eval('nvim_get_current_win()')
     eq(bnr, bhnd)
     eq(wid, whnd)
 
-    command("new") -- creates new buffer and new window
+    command('new') -- creates new buffer and new window
     local bnr2 = eval("bufnr('')")
-    local bhnd2 = eval("nvim_get_current_buf()")
-    local wid2 = eval("win_getid()")
-    local whnd2 = eval("nvim_get_current_win()")
+    local bhnd2 = eval('nvim_get_current_buf()')
+    local wid2 = eval('win_getid()')
+    local whnd2 = eval('nvim_get_current_win()')
     eq(bnr2, bhnd2)
     eq(wid2, whnd2)
     neq(bnr, bnr2)
     neq(wid, wid2)
     -- 0 is synonymous to the current buffer
-    eq(bnr2, eval("nvim_buf_get_number(0)"))
+    eq(bnr2, eval('nvim_buf_get_number(0)'))
 
-    command("bn") -- show old buffer in new window
-    eq(bnr, eval("nvim_get_current_buf()"))
+    command('bn') -- show old buffer in new window
+    eq(bnr, eval('nvim_get_current_buf()'))
     eq(bnr, eval("bufnr('')"))
-    eq(bnr, eval("nvim_buf_get_number(0)"))
-    eq(wid2, eval("win_getid()"))
-    eq(whnd2, eval("nvim_get_current_win()"))
+    eq(bnr, eval('nvim_buf_get_number(0)'))
+    eq(wid2, eval('win_getid()'))
+    eq(whnd2, eval('nvim_get_current_win()'))
   end)
 
-  it("get_lines and set_lines use NL to represent NUL", function()
-    curbufmeths.set_lines(0, -1, true, {"aa\0", "b\0b"})
-    eq({'aa\n', 'b\nb'}, eval("nvim_buf_get_lines(0, 0, -1, 1)"))
+  it('get_lines and set_lines use NL to represent NUL', function()
+    curbufmeths.set_lines(0, -1, true, { 'aa\0', 'b\0b' })
+    eq({ 'aa\n', 'b\nb' }, eval('nvim_buf_get_lines(0, 0, -1, 1)'))
 
     command('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
-    eq({'aa\0', 'xx', '\0yy'}, curbufmeths.get_lines(0, -1, 1))
+    eq({ 'aa\0', 'xx', '\0yy' }, curbufmeths.get_lines(0, -1, 1))
   end)
 
-  it("that are FUNC_ATTR_NOEVAL cannot be called", function()
+  it('that are FUNC_ATTR_NOEVAL cannot be called', function()
     -- Deprecated vim_ prefix is not exported.
     local err = exc_exec('call vim_get_current_buffer("foo")')
     eq('Vim(call):E117: Unknown function: vim_get_current_buffer', err)
@@ -110,29 +113,28 @@ describe('eval-API', function()
   end)
 
   it('have metadata accessible with api_info()', function()
-    local api_keys = eval("sort(keys(api_info()))")
-    eq({'error_types', 'functions', 'types',
-        'ui_events', 'ui_options', 'version'}, api_keys)
+    local api_keys = eval('sort(keys(api_info()))')
+    eq({ 'error_types', 'functions', 'types', 'ui_events', 'ui_options', 'version' }, api_keys)
   end)
 
   it('are highlighted by vim.vim syntax file', function()
-    if lfs.attributes("build/runtime/syntax/vim/generated.vim",'uid') == nil then
-      pending("runtime was not built, skipping test")
+    if lfs.attributes('build/runtime/syntax/vim/generated.vim', 'uid') == nil then
+      pending('runtime was not built, skipping test')
       return
     end
     local screen = Screen.new(40, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Brown},
-      [2] = {foreground = Screen.colors.DarkCyan},
-      [3] = {foreground = Screen.colors.SlateBlue},
-      [4] = {foreground = Screen.colors.Fuchsia},
-      [5] = {bold = true, foreground = Screen.colors.Blue},
-    })
+    screen:set_default_attr_ids {
+      [1] = { bold = true, foreground = Screen.colors.Brown },
+      [2] = { foreground = Screen.colors.DarkCyan },
+      [3] = { foreground = Screen.colors.SlateBlue },
+      [4] = { foreground = Screen.colors.Fuchsia },
+      [5] = { bold = true, foreground = Screen.colors.Blue },
+    }
 
-    command("set ft=vim")
+    command('set ft=vim')
     command("let &rtp='build/runtime/,'.&rtp")
-    command("syntax on")
+    command('syntax on')
     insert([[
       call bufnr('%')
       call nvim_input('typing...')
@@ -151,9 +153,8 @@ describe('eval-API', function()
   end)
 
   it('cannot be called from sandbox', function()
-    eq('Vim(call):E48: Not allowed in sandbox',
-       pcall_err(command, "sandbox call nvim_input('ievil')"))
-    eq({''}, meths.buf_get_lines(0, 0, -1, true))
+    eq('Vim(call):E48: Not allowed in sandbox', pcall_err(command, "sandbox call nvim_input('ievil')"))
+    eq({ '' }, meths.buf_get_lines(0, 0, -1, true))
   end)
 
   it('converts blobs to API strings', function()

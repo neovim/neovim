@@ -2,11 +2,10 @@
 -- tabulators.
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, clear, feed_command =
-  helpers.feed, helpers.insert, helpers.clear, helpers.feed_command
+local feed, insert, clear, feed_command = helpers.feed, helpers.insert, helpers.clear, helpers.feed_command
 
 local expect_pos = function(row, col)
-  return helpers.eq({row, col}, helpers.eval('[screenrow(), screencol()]'))
+  return helpers.eq({ row, col }, helpers.eval('[screenrow(), screencol()]'))
 end
 
 describe('cursor and column position with conceal and tabulators', function()

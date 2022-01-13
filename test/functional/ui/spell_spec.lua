@@ -15,15 +15,18 @@ describe("'spell'", function()
     clear()
     screen = Screen.new(80, 8)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {special = Screen.colors.Red, undercurl = true},
-      [2] = {special = Screen.colors.Blue1, undercurl = true},
-    })
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { special = Screen.colors.Red, undercurl = true },
+      [2] = { special = Screen.colors.Blue1, undercurl = true },
+    }
   end)
 
   it('joins long lines #7937', function()
-    if uname() == 'openbsd' then pending('FIXME #12104', function() end) return end
+    if uname() == 'openbsd' then
+      pending('FIXME #12104', function() end)
+      return
+    end
     command('set spell')
     insert([[
     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
@@ -44,7 +47,6 @@ describe("'spell'", function()
     {0:~                                                                               }|
                                                                                     |
     ]])
-
   end)
 
   it('has correct highlight at start of line', function()

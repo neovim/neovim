@@ -12,18 +12,18 @@ describe('maparg()', function()
   before_each(clear)
 
   local foo_bar_map_table = {
-      lhs='foo',
-      script=0,
-      silent=0,
-      rhs='bar',
-      expr=0,
-      sid=0,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      noremap=1,
-      lnum=0,
-    }
+    lhs = 'foo',
+    script = 0,
+    silent = 0,
+    rhs = 'bar',
+    expr = 0,
+    sid = 0,
+    buffer = 0,
+    nowait = 0,
+    mode = 'n',
+    noremap = 1,
+    lnum = 0,
+  }
 
   it('returns a dictionary', function()
     nvim('command', 'nnoremap foo bar')
@@ -50,10 +50,7 @@ describe('maparg()', function()
   it('returns the same value for noremap and <script>', function()
     nvim('command', 'inoremap <script> hello world')
     nvim('command', 'inoremap this that')
-    eq(
-      funcs.maparg('hello', 'i', false, true)['noremap'],
-      funcs.maparg('this', 'i', false, true)['noremap']
-      )
+    eq(funcs.maparg('hello', 'i', false, true)['noremap'], funcs.maparg('this', 'i', false, true)['noremap'])
   end)
 
   it('returns a boolean for buffer', function()
@@ -124,7 +121,7 @@ describe('maparg()', function()
   it('works with combining characters', function()
     -- Using addacutes to make combining character better visible
     local function ac(s)
-      local acute = '\204\129'  -- U+0301 COMBINING ACUTE ACCENT
+      local acute = '\204\129' -- U+0301 COMBINING ACUTE ACCENT
       local ret = s:gsub('`', acute)
       return ret
     end
@@ -134,8 +131,8 @@ describe('maparg()', function()
       nnoremap e` f`
     ]]))
     eq(ac('b`'), funcs.maparg(ac('a')))
-    eq(ac(''),   funcs.maparg(ac('c')))
-    eq(ac('d'),  funcs.maparg(ac('c`')))
+    eq(ac(''), funcs.maparg(ac('c')))
+    eq(ac('d'), funcs.maparg(ac('c`')))
     eq(ac('f`'), funcs.maparg(ac('e`')))
 
     local function acmap(lhs, rhs)
@@ -148,16 +145,16 @@ describe('maparg()', function()
         mode = 'n',
         noremap = 1,
         nowait = 0,
-        script=0,
+        script = 0,
         sid = 0,
         silent = 0,
         lnum = 0,
       }
     end
 
-    eq({}, funcs.maparg(ac('c'),  'n', 0, 1))
-    eq(acmap('a',  'b`'), funcs.maparg(ac('a'),  'n', 0, 1))
-    eq(acmap('c`', 'd'),  funcs.maparg(ac('c`'), 'n', 0, 1))
+    eq({}, funcs.maparg(ac('c'), 'n', 0, 1))
+    eq(acmap('a', 'b`'), funcs.maparg(ac('a'), 'n', 0, 1))
+    eq(acmap('c`', 'd'), funcs.maparg(ac('c`'), 'n', 0, 1))
     eq(acmap('e`', 'f`'), funcs.maparg(ac('e`'), 'n', 0, 1))
   end)
 end)

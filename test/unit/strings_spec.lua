@@ -1,4 +1,4 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
@@ -6,8 +6,7 @@ local eq = helpers.eq
 local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
 
-local strings = cimport('stdlib.h', './src/nvim/strings.h',
-                        './src/nvim/memory.h')
+local strings = cimport('stdlib.h', './src/nvim/strings.h', './src/nvim/memory.h')
 
 describe('vim_strsave_escaped()', function()
   local vim_strsave_escaped = function(s, chars)
@@ -21,19 +20,19 @@ describe('vim_strsave_escaped()', function()
   end
 
   itp('precedes by a backslash all chars from second argument', function()
-    eq([[\a\b\c\d]], vim_strsave_escaped('abcd','abcd'))
+    eq([[\a\b\c\d]], vim_strsave_escaped('abcd', 'abcd'))
   end)
 
   itp('precedes by a backslash chars only from second argument', function()
-    eq([[\a\bcd]], vim_strsave_escaped('abcd','ab'))
+    eq([[\a\bcd]], vim_strsave_escaped('abcd', 'ab'))
   end)
 
   itp('returns a copy of passed string if second argument is empty', function()
-    eq('text \n text', vim_strsave_escaped('text \n text',''))
+    eq('text \n text', vim_strsave_escaped('text \n text', ''))
   end)
 
   itp('returns an empty string if first argument is empty string', function()
-    eq('', vim_strsave_escaped('','\r'))
+    eq('', vim_strsave_escaped('', '\r'))
   end)
 
   itp('returns a copy of passed string if it does not contain chars from 2nd argument', function()

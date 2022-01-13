@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call, iswin =
-  helpers.eq, helpers.clear, helpers.call, helpers.iswin
+local eq, clear, call, iswin = helpers.eq, helpers.clear, helpers.call, helpers.iswin
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local matches = helpers.matches
@@ -20,13 +19,13 @@ describe('exepath()', function()
   end)
 
   it('fails for invalid values', function()
-    for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
-      eq('Vim(call):E928: String required', exc_exec('call exepath('..input..')'))
+    for _, input in ipairs { 'v:null', 'v:true', 'v:false', '{}', '[]' } do
+      eq('Vim(call):E928: String required', exc_exec('call exepath(' .. input .. ')'))
     end
     eq('Vim(call):E1142: Non-empty string required', exc_exec('call exepath("")'))
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-    for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
-      eq('Vim(call):E928: String required', exc_exec('call exepath('..input..')'))
+    for _, input in ipairs { 'v:null', 'v:true', 'v:false' } do
+      eq('Vim(call):E928: String required', exc_exec('call exepath(' .. input .. ')'))
     end
   end)
 
@@ -34,8 +33,8 @@ describe('exepath()', function()
     it('append extension if omitted', function()
       local filename = 'cmd'
       local pathext = '.exe'
-      clear({env={PATHEXT=pathext}})
-      eq(call('exepath', filename..pathext), call('exepath', filename))
+      clear { env = { PATHEXT = pathext } }
+      eq(call('exepath', filename .. pathext), call('exepath', filename))
     end)
   end
 end)

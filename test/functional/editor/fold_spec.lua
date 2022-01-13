@@ -13,8 +13,12 @@ local eq = helpers.eq
 describe('Folds', function()
   local tempfname = 'Xtest-fold.txt'
   clear()
-  before_each(function() feed_command('enew!') end)
-  after_each(function() os.remove(tempfname) end)
+  before_each(function()
+    feed_command('enew!')
+  end)
+  after_each(function()
+    os.remove(tempfname)
+  end)
   it('manual folding adjusts with filter', function()
     insert([[
     1
@@ -88,7 +92,8 @@ describe('Folds', function()
     end
 
     it('neither closes nor corrupts folds', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 	a
@@ -106,7 +111,9 @@ a
 	a
 	a
 	a
-	a]], '7,12m0')
+	a]],
+        '7,12m0'
+      )
       expect([[
 a
 	a
@@ -127,7 +134,7 @@ a
 	a
 	a]])
       -- lines are not closed, folds are correct
-      for i = 1,funcs.line('$') do
+      for i = 1, funcs.line('$') do
         eq(-1, funcs.foldclosed(i))
         if i == 1 or i == 7 or i == 13 then
           eq(0, foldlevel(i))
@@ -144,7 +151,8 @@ a
       eq(18, foldclosedend(14))
     end)
     it("doesn't split a fold when the move is within it", function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 	a
@@ -154,22 +162,28 @@ a
 		a
 	a
 	a
-a]], '5m6')
-      eq({0, 1, 1, 2, 2, 2, 2, 1, 1, 0}, get_folds())
+a]],
+        '5m6'
+      )
+      eq({ 0, 1, 1, 2, 2, 2, 2, 1, 1, 0 }, get_folds())
     end)
     it('truncates folds that end in the moved range', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 		a
 		a
 		a
 a
-a]], '4,5m6')
-      eq({0, 1, 2, 0, 0, 0, 0}, get_folds())
+a]],
+        '4,5m6'
+      )
+      eq({ 0, 1, 2, 0, 0, 0, 0 }, get_folds())
     end)
     it('moves folds that start between moved range and destination', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 	a
@@ -182,11 +196,14 @@ a
 	a
 a
 a
-	a]], '3,4m$')
-      eq({0, 1, 1, 0, 0, 1, 2, 1, 0, 0, 1, 0, 0}, get_folds())
+	a]],
+        '3,4m$'
+      )
+      eq({ 0, 1, 1, 0, 0, 1, 2, 1, 0, 0, 1, 0, 0 }, get_folds())
     end)
     it('does not affect folds outside changed lines', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 	a
 	a
 	a
@@ -195,11 +212,14 @@ a
 a
 	a
 	a
-	a]], '4m5')
-      eq({1, 1, 1, 0, 0, 0, 1, 1, 1}, get_folds())
+	a]],
+        '4m5'
+      )
+      eq({ 1, 1, 1, 0, 0, 0, 1, 1, 1 }, get_folds())
     end)
     it('moves and truncates folds that start in moved range', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 		a
@@ -209,31 +229,40 @@ a
 a
 a
 a
-a]], '1,3m7')
-      eq({0, 0, 0, 0, 0, 1, 2, 0, 0, 0}, get_folds())
+a]],
+        '1,3m7'
+      )
+      eq({ 0, 0, 0, 0, 0, 1, 2, 0, 0, 0 }, get_folds())
     end)
     it('breaks a fold when moving text into it', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 		a
 		a
 		a
 a
-a]], '$m4')
-      eq({0, 1, 2, 2, 0, 0, 0}, get_folds())
+a]],
+        '$m4'
+      )
+      eq({ 0, 1, 2, 2, 0, 0, 0 }, get_folds())
     end)
     it('adjusts correctly when moving a range backwards', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 a
 	a
 		a
 		a
-a]], '2,3m0')
-      eq({1, 2, 0, 0, 0}, get_folds())
+a]],
+        '2,3m0'
+      )
+      eq({ 1, 2, 0, 0, 0 }, get_folds())
     end)
     it('handles shifting all remaining folds', function()
-      test_move_indent([[
+      test_move_indent(
+        [[
 	a
 		a
 		a
@@ -248,17 +277,22 @@ a]], '2,3m0')
 		a
 		a
 	a
-a]], '13m7')
-      eq({1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 0}, get_folds())
+a]],
+        '13m7'
+      )
+      eq({ 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 0 }, get_folds())
     end)
   end)
   it('updates correctly on :read', function()
     -- luacheck: ignore 621
-    helpers.write_file(tempfname, [[
+    helpers.write_file(
+      tempfname,
+      [[
     a
 
 
-    	a]])
+    	a]]
+    )
     insert([[
     	a
     	a
@@ -278,13 +312,13 @@ a]], '13m7')
     	a
     	a
     ]])
-    for i = 1,2 do
+    for i = 1, 2 do
       eq(1, funcs.foldlevel(i))
     end
-    for i = 3,5 do
+    for i = 3, 5 do
       eq(0, funcs.foldlevel(i))
     end
-    for i = 6,8 do
+    for i = 6, 8 do
       eq(1, funcs.foldlevel(i))
     end
   end)
@@ -333,7 +367,9 @@ a]], '13m7')
       return 0
     endfunction
     ]])
-    helpers.write_file(tempfname, [[
+    helpers.write_file(
+      tempfname,
+      [[
     b
     b
     a
@@ -341,7 +377,8 @@ a]], '13m7')
     d
     a
     a
-    c]])
+    c]]
+    )
     insert([[
     a
     a

@@ -6,9 +6,9 @@ local iswin = helpers.iswin
 
 if iswin() then
   local ffi = require('ffi')
-  ffi.cdef[[
+  ffi.cdef([[
   typedef int errno_t;
   errno_t _set_fmode(int mode);
-  ]]
+  ]])
   ffi.C._set_fmode(0x8000)
 end

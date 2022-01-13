@@ -1,1 +1,1 @@
-return "I am fancy_x.lua"
+return 'I am fancy_x.lua'
