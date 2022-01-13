@@ -50,12 +50,12 @@ end
 
 ---@private
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
-  if not lines or offset_encoding == "utf-8" then
+  if not lines or offset_encoding == 'utf-8' then
     return col
   end
 
   local line = lines[lnum + 1]
-  local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == "utf-16")
+  local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == 'utf-16')
   if ok then
     return result
   end
@@ -75,7 +75,7 @@ local function get_buf_lines(bufnr)
     return
   end
 
-  local content = f:read("*a")
+  local content = f:read('*a')
   if not content then
     -- Some LSP servers report diagnostics at a directory level, in which case
     -- io.read() returns nil
@@ -83,7 +83,7 @@ local function get_buf_lines(bufnr)
     return
   end
 
-  local lines = vim.split(content, "\n")
+  local lines = vim.split(content, '\n')
   f:close()
   return lines
 end
@@ -92,10 +92,10 @@ end
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
-  local offset_encoding = client and client.offset_encoding or "utf-16"
+  local offset_encoding = client and client.offset_encoding or 'utf-16'
   return vim.tbl_map(function(diagnostic)
     local start = diagnostic.range.start
-    local _end = diagnostic.range["end"]
+    local _end = diagnostic.range['end']
     return {
       lnum = start.line,
       col = line_byte_from_position(buf_lines, start.line, start.character, offset_encoding),
@@ -120,13 +120,13 @@ end
 ---@private
 local function diagnostic_vim_to_lsp(diagnostics)
   return vim.tbl_map(function(diagnostic)
-    return vim.tbl_extend("error", {
+    return vim.tbl_extend('error', {
       range = {
         start = {
           line = diagnostic.lnum,
           character = diagnostic.col,
         },
-        ["end"] = {
+        ['end'] = {
           line = diagnostic.end_lnum,
           character = diagnostic.end_col,
         },
@@ -147,7 +147,7 @@ function M.get_namespace(client_id)
   vim.validate { client_id = { client_id, 'n' } }
   if not _client_namespaces[client_id] then
     local client = vim.lsp.get_client_by_id(client_id)
-    local name = string.format("vim.lsp.%s.%d", client and client.name or "unknown", client_id)
+    local name = string.format('vim.lsp.%s.%d', client and client.name or 'unknown', client_id)
     _client_namespaces[client_id] = vim.api.nvim_create_namespace(name)
   end
   return _client_namespaces[client_id]
@@ -195,7 +195,7 @@ function M.on_publish_diagnostics(_, result, ctx, config)
     for _, opt in pairs(config) do
       if type(opt) == 'table' then
         if not opt.severity and opt.severity_limit then
-          opt.severity = {min=severity_lsp_to_vim(opt.severity_limit)}
+          opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
         end
       end
     end
@@ -232,7 +232,6 @@ end
 
 -- Deprecated Functions {{{
 
-
 --- Save diagnostics to the current buffer.
 ---
 ---@deprecated Prefer |vim.diagnostic.set()|
@@ -264,7 +263,7 @@ function M.get_all(client_id)
     namespace = M.get_namespace(client_id)
   end
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    local diagnostics = diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, {namespace = namespace}))
+    local diagnostics = diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, { namespace = namespace }))
     result[bufnr] = diagnostics
   end
   return result
@@ -280,7 +279,9 @@ end
 ---@param predicate function|nil Optional function for filtering diagnostics
 function M.get(bufnr, client_id, predicate)
   vim.notify_once('vim.lsp.diagnostic.get is deprecated. See :h deprecated', vim.log.levels.WARN)
-  predicate = predicate or function() return true end
+  predicate = predicate or function()
+    return true
+  end
   if client_id == nil then
     local all_diagnostics = {}
     vim.lsp.for_each_buffer_client(bufnr, function(_, iter_client_id, _)
@@ -293,7 +294,7 @@ function M.get(bufnr, client_id, predicate)
   end
 
   local namespace = M.get_namespace(client_id)
-  return diagnostic_vim_to_lsp(vim.tbl_filter(predicate, vim.diagnostic.get(bufnr, {namespace=namespace})))
+  return diagnostic_vim_to_lsp(vim.tbl_filter(predicate, vim.diagnostic.get(bufnr, { namespace = namespace })))
 end
 
 --- Get the diagnostics by line
@@ -317,7 +318,7 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
   elseif opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
 
   if client_id then
@@ -363,10 +364,10 @@ function M.get_prev(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
-  return diagnostic_vim_to_lsp({vim.diagnostic.get_prev(opts)})[1]
+  return diagnostic_vim_to_lsp({ vim.diagnostic.get_prev(opts) })[1]
 end
 
 --- Return the pos, {row, col}, for the prev diagnostic in the current buffer.
@@ -381,7 +382,7 @@ function M.get_prev_pos(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
   return vim.diagnostic.get_prev_pos(opts)
@@ -398,7 +399,7 @@ function M.goto_prev(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
   return vim.diagnostic.goto_prev(opts)
@@ -416,10 +417,10 @@ function M.get_next(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
-  return diagnostic_vim_to_lsp({vim.diagnostic.get_next(opts)})[1]
+  return diagnostic_vim_to_lsp({ vim.diagnostic.get_next(opts) })[1]
 end
 
 --- Return the pos, {row, col}, for the next diagnostic in the current buffer.
@@ -434,7 +435,7 @@ function M.get_next_pos(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
   return vim.diagnostic.get_next_pos(opts)
@@ -449,7 +450,7 @@ function M.goto_next(opts)
     if opts.severity then
       opts.severity = severity_lsp_to_vim(opts.severity)
     elseif opts.severity_limit then
-      opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+      opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
     end
   end
   return vim.diagnostic.goto_next(opts)
@@ -471,7 +472,7 @@ function M.set_signs(diagnostics, bufnr, client_id, _, opts)
   vim.notify_once('vim.lsp.diagnostic.set_signs is deprecated. See :h deprecated', vim.log.levels.WARN)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
 
   vim.diagnostic._set_signs(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
@@ -492,7 +493,7 @@ function M.set_underline(diagnostics, bufnr, client_id, _, opts)
   vim.notify_once('vim.lsp.diagnostic.set_underline is deprecated. See :h deprecated', vim.log.levels.WARN)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
   return vim.diagnostic._set_underline(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
@@ -514,7 +515,7 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, _, opts)
   vim.notify_once('vim.lsp.diagnostic.set_virtual_text is deprecated. See :h deprecated', vim.log.levels.WARN)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
   return vim.diagnostic._set_virtual_text(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
@@ -530,7 +531,10 @@ end
 ---@return an array of [text, hl_group] arrays. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, _, line_diags, opts)
-  vim.notify_once('vim.lsp.diagnostic.get_virtual_text_chunks_for_line is deprecated. See :h deprecated', vim.log.levels.WARN)
+  vim.notify_once(
+    'vim.lsp.diagnostic.get_virtual_text_chunks_for_line is deprecated. See :h deprecated',
+    vim.log.levels.WARN
+  )
   return vim.diagnostic._get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
 end
 
@@ -550,12 +554,12 @@ end
 function M.show_position_diagnostics(opts, buf_nr, position)
   vim.notify_once('vim.lsp.diagnostic.show_position_diagnostics is deprecated. See :h deprecated', vim.log.levels.WARN)
   opts = opts or {}
-  opts.scope = "cursor"
+  opts.scope = 'cursor'
   opts.pos = position
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
   elseif opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
   return vim.diagnostic.open_float(buf_nr, opts)
 end
@@ -574,7 +578,7 @@ end
 function M.show_line_diagnostics(opts, buf_nr, line_nr, client_id)
   vim.notify_once('vim.lsp.diagnostic.show_line_diagnostics is deprecated. See :h deprecated', vim.log.levels.WARN)
   opts = opts or {}
-  opts.scope = "line"
+  opts.scope = 'line'
   opts.pos = line_nr
   if client_id then
     opts.namespace = M.get_namespace(client_id)
@@ -629,7 +633,7 @@ function M.set_qflist(opts)
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
   elseif opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
   if opts.client_id then
     opts.client_id = nil
@@ -661,7 +665,7 @@ function M.set_loclist(opts)
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
   elseif opts.severity_limit then
-    opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
+    opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
   if opts.client_id then
     opts.client_id = nil

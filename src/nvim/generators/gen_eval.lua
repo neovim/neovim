@@ -23,13 +23,13 @@ local funcsfname = autodir .. '/funcs.generated.h'
 local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
 
 local funcs = require('eval').funcs
-local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read("*all"))
-for _,fun in ipairs(metadata) do
+local metadata = mpack.unpack(io.open(metadata_file, 'rb'):read('*all'))
+for _, fun in ipairs(metadata) do
   if fun.eval then
     funcs[fun.name] = {
-      args=#fun.parameters,
-      func='api_wrapper',
-      data='&handle_'..fun.name,
+      args = #fun.parameters,
+      func = 'api_wrapper',
+      data = '&handle_' .. fun.name,
     }
   end
 end
@@ -55,14 +55,13 @@ VimLFuncDef;
 for name, def in pairs(funcs) do
   local args = def.args or 0
   if type(args) == 'number' then
-    args = {args, args}
+    args = { args, args }
   elseif #args == 1 then
     args[2] = 'MAX_FUNC_ARGS'
   end
-  local base = def.base or "BASE_NONE"
+  local base = def.base or 'BASE_NONE'
   local func = def.func or ('f_' .. name)
-  local data = def.data or "NULL"
-  gperfpipe:write(('%s,  %s, %s, %s, &%s, (FunPtr)%s\n')
-                  :format(name, args[1], args[2], base, func, data))
+  local data = def.data or 'NULL'
+  gperfpipe:write(('%s,  %s, %s, %s, &%s, (FunPtr)%s\n'):format(name, args[1], args[2], base, func, data))
 end
 gperfpipe:close()

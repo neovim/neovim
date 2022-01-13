@@ -33,8 +33,8 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
-local function startswith(String,Start)
-  return string.sub(String,1,string.len(Start))==Start
+local function startswith(String, Start)
+  return string.sub(String, 1, string.len(Start)) == Start
 end
 
 -- read each input file, parse and append to the api metadata
@@ -44,14 +44,14 @@ for i = 6, #arg do
   for part in string.gmatch(full_path, '[^/]+') do
     parts[#parts + 1] = part
   end
-  headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
+  headers[#headers + 1] = parts[#parts - 1] .. '/' .. parts[#parts]
 
   local input = io.open(full_path, 'rb')
 
   local tmp = c_grammar.grammar:match(input:read('*all'))
   for j = 1, #tmp do
     local fn = tmp[j]
-    local public = startswith(fn.name, "nvim_") or fn.deprecated_since
+    local public = startswith(fn.name, 'nvim_') or fn.deprecated_since
     if public and not fn.noexport then
       functions[#functions + 1] = tmp[j]
       function_names[fn.name] = true
@@ -83,14 +83,14 @@ end
 
 -- Export functions under older deprecated names.
 -- These will be removed eventually.
-local deprecated_aliases = require("api.dispatch_deprecated")
-for _,f in ipairs(shallowcopy(functions)) do
+local deprecated_aliases = require('api.dispatch_deprecated')
+for _, f in ipairs(shallowcopy(functions)) do
   local ismethod = false
-  if startswith(f.name, "nvim_") then
-    if startswith(f.name, "nvim__") then
+  if startswith(f.name, 'nvim_') then
+    if startswith(f.name, 'nvim__') then
       f.since = -1
     elseif f.since == nil then
-      print("Function "..f.name.." lacks since field.\n")
+      print('Function ' .. f.name .. ' lacks since field.\n')
       os.exit(1)
     end
     f.since = tonumber(f.since)
@@ -98,16 +98,16 @@ for _,f in ipairs(shallowcopy(functions)) do
       f.deprecated_since = tonumber(f.deprecated_since)
     end
 
-    if startswith(f.name, "nvim_buf_") then
+    if startswith(f.name, 'nvim_buf_') then
       ismethod = true
-    elseif startswith(f.name, "nvim_win_") then
+    elseif startswith(f.name, 'nvim_win_') then
       ismethod = true
-    elseif startswith(f.name, "nvim_tabpage_") then
+    elseif startswith(f.name, 'nvim_tabpage_') then
       ismethod = true
     end
     f.remote = f.remote_only or not f.lua_only
     f.lua = f.lua_only or not f.remote_only
-    f.eval = (not f.lua_only) and (not f.remote_only)
+    f.eval = not f.lua_only and not f.remote_only
   else
     f.deprecated_since = tonumber(f.deprecated_since)
     assert(f.deprecated_since == 1)
@@ -119,56 +119,59 @@ for _,f in ipairs(shallowcopy(functions)) do
   if newname ~= nil then
     if function_names[newname] then
       -- duplicate
-      print("Function "..f.name.." has deprecated alias\n"
-            ..newname.." which has a separate implementation.\n"..
-            "Please remove it from src/nvim/api/dispatch_deprecated.lua")
+      print(
+        'Function '
+          .. f.name
+          .. ' has deprecated alias\n'
+          .. newname
+          .. ' which has a separate implementation.\n'
+          .. 'Please remove it from src/nvim/api/dispatch_deprecated.lua'
+      )
       os.exit(1)
     end
     local newf = shallowcopy(f)
     newf.name = newname
-    if newname == "ui_try_resize" then
+    if newname == 'ui_try_resize' then
       -- The return type was incorrectly set to Object in 0.1.5.
       -- Keep it that way for clients that rely on this.
-      newf.return_type = "Object"
+      newf.return_type = 'Object'
     end
     newf.impl_name = f.name
     newf.lua = false
     newf.eval = false
     newf.since = 0
     newf.deprecated_since = 1
-    functions[#functions+1] = newf
+    functions[#functions + 1] = newf
   end
 end
 
 -- don't expose internal attributes like "impl_name" in public metadata
-local exported_attributes = {'name', 'return_type', 'method',
-                             'since', 'deprecated_since'}
+local exported_attributes = { 'name', 'return_type', 'method', 'since', 'deprecated_since' }
 local exported_functions = {}
-for _,f in ipairs(functions) do
-  if not startswith(f.name, "nvim__") then
+for _, f in ipairs(functions) do
+  if not startswith(f.name, 'nvim__') then
     local f_exported = {}
-    for _,attr in ipairs(exported_attributes) do
+    for _, attr in ipairs(exported_attributes) do
       f_exported[attr] = f[attr]
     end
     f_exported.parameters = {}
-    for i,param in ipairs(f.parameters) do
-      if param[1] == "DictionaryOf(LuaRef)" then
-        param = {"Dictionary", param[2]}
-      elseif startswith(param[1], "Dict(") then
-        param = {"Dictionary", param[2]}
+    for i, param in ipairs(f.parameters) do
+      if param[1] == 'DictionaryOf(LuaRef)' then
+        param = { 'Dictionary', param[2] }
+      elseif startswith(param[1], 'Dict(') then
+        param = { 'Dictionary', param[2] }
       end
       f_exported.parameters[i] = param
     end
-    exported_functions[#exported_functions+1] = f_exported
+    exported_functions[#exported_functions + 1] = f_exported
   end
 end
-
 
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 local funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
 local packed = mpack.pack(exported_functions)
-local dump_bin_array = require("generators.dump_bin_array")
+local dump_bin_array = require('generators.dump_bin_array')
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
@@ -177,9 +180,9 @@ local output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
-  local rmatch = string.match(type, "Dict%(([_%w]+)%)")
+  local rmatch = string.match(type, 'Dict%(([_%w]+)%)')
   if rmatch then
-    return "KeyDict_"..rmatch
+    return 'KeyDict_' .. rmatch
   elseif c_grammar.typed_container:match(rv) then
     if rv:match('Array') then
       rv = 'Array'
@@ -206,24 +209,25 @@ for i = 1, #functions do
   if fn.impl_name == nil and fn.remote then
     local args = {}
 
-    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
+    output:write('Object handle_' .. fn.name .. '(uint64_t channel_id, Array args, Error *error)')
     output:write('\n{')
     output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL')
-    output:write('\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "ch %" PRIu64 ": invoke '
-                 ..fn.name..'", channel_id);')
+    output:write(
+      '\n  logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "ch %" PRIu64 ": invoke ' .. fn.name .. '", channel_id);'
+    )
     output:write('\n#endif')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments
     for j = 1, #fn.parameters do
       local param = fn.parameters[j]
       local rt = real_type(param[1])
-      local converted = 'arg_'..j
-      output:write('\n  '..rt..' '..converted..';')
+      local converted = 'arg_' .. j
+      output:write('\n  ' .. rt .. ' ' .. converted .. ';')
     end
     output:write('\n')
-    output:write('\n  if (args.size != '..#fn.parameters..') {')
+    output:write('\n  if (args.size != ' .. #fn.parameters .. ') {')
     output:write('\n    api_set_error(error, kErrorTypeException, \
-      "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
+      "Wrong number of arguments: expecting ' .. #fn.parameters .. ' but got %zu", args.size);')
     output:write('\n    goto cleanup;')
     output:write('\n  }\n')
 
@@ -231,55 +235,86 @@ for i = 1, #functions do
     for j = 1, #fn.parameters do
       local converted, param
       param = fn.parameters[j]
-      converted = 'arg_'..j
+      converted = 'arg_' .. j
       local rt = real_type(param[1])
       if rt == 'Object' then
-        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
+        output:write('\n  ' .. converted .. ' = args.items[' .. (j - 1) .. '];\n')
       elseif rt:match('^KeyDict_') then
         converted = '&' .. converted
-        output:write('\n  if (args.items['..(j - 1)..'].type == kObjectTypeDictionary) {') --luacheck: ignore 631
-        output:write('\n    memset('..converted..', 0, sizeof(*'..converted..'));') -- TODO: neeeee
-        output:write('\n    if (!api_dict_to_keydict('..converted..', '..rt..'_get_field, args.items['..(j - 1)..'].data.dictionary, error)) {')
+        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDictionary) {') --luacheck: ignore 631
+        output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));') -- TODO: neeeee
+        output:write(
+          '\n    if (!api_dict_to_keydict('
+            .. converted
+            .. ', '
+            .. rt
+            .. '_get_field, args.items['
+            .. (j - 1)
+            .. '].data.dictionary, error)) {'
+        )
         output:write('\n      goto cleanup;')
         output:write('\n    }')
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
-        output:write('\n    memset('..converted..', 0, sizeof(*'..converted..'));')
+        output:write(
+          '\n  } else if (args.items['
+            .. (j - 1)
+            .. '].type == kObjectTypeArray && args.items['
+            .. (j - 1)
+            .. '].data.array.size == 0) {'
+        ) --luacheck: ignore 631
+        output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));')
 
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, \
-          "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
+          "Wrong type for argument ' .. j .. ' when calling ' .. fn.name .. ', expecting ' .. param[1] .. '");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
-          output:write('\n  if (args.items['..
-            (j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
+          output:write(
+            '\n  if (args.items['
+              .. (j - 1)
+              .. '].type == kObjectType'
+              .. rt
+              .. ' && args.items['
+              .. (j - 1)
+              .. '].data.integer >= 0) {'
+          )
+          output:write('\n    ' .. converted .. ' = (handle_T)args.items[' .. (j - 1) .. '].data.integer;')
         else
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
-          output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..attr_name(rt)..';')
+          output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectType' .. rt .. ') {')
+          output:write('\n    ' .. converted .. ' = args.items[' .. (j - 1) .. '].data.' .. attr_name(rt) .. ';')
         end
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
           -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
-          output:write('\n  } else if (args.items['..
-            (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
+          output:write(
+            '\n  } else if (args.items['
+              .. (j - 1)
+              .. '].type == kObjectTypeInteger && args.items['
+              .. (j - 1)
+              .. '].data.integer >= 0) {'
+          )
+          output:write('\n    ' .. converted .. ' = (handle_T)args.items[' .. (j - 1) .. '].data.integer;')
         end
         if rt:match('^Float$') then
           -- accept integers for Floats
-          output:write('\n  } else if (args.items['..
-            (j - 1)..'].type == kObjectTypeInteger) {')
-          output:write('\n    '..converted..' = (Float)args.items['..(j - 1)..'].data.integer;')
+          output:write('\n  } else if (args.items[' .. (j - 1) .. '].type == kObjectTypeInteger) {')
+          output:write('\n    ' .. converted .. ' = (Float)args.items[' .. (j - 1) .. '].data.integer;')
         end
         -- accept empty lua tables as empty dictionaries
         if rt:match('^Dictionary') then
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
-          output:write('\n    '..converted..' = (Dictionary)ARRAY_DICT_INIT;')
+          output:write(
+            '\n  } else if (args.items['
+              .. (j - 1)
+              .. '].type == kObjectTypeArray && args.items['
+              .. (j - 1)
+              .. '].data.array.size == 0) {'
+          ) --luacheck: ignore 631
+          output:write('\n    ' .. converted .. ' = (Dictionary)ARRAY_DICT_INIT;')
         end
         output:write('\n  } else {')
         output:write('\n    api_set_error(error, kErrorTypeException, \
-          "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
+          "Wrong type for argument ' .. j .. ' when calling ' .. fn.name .. ', expecting ' .. param[1] .. '");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       end
@@ -298,16 +333,16 @@ for i = 1, #functions do
     output:write('\n  ')
     if fn.return_type ~= 'void' then
       -- has a return value, prefix the call with a declaration
-      output:write(fn.return_type..' rv = ')
+      output:write(fn.return_type .. ' rv = ')
     end
 
     -- write the function name and the opening parenthesis
-    output:write(fn.name..'(')
+    output:write(fn.name .. '(')
 
     if fn.receives_channel_id then
       -- if the function receives the channel id, pass it as first argument
       if #args > 0 or fn.can_fail then
-        output:write('channel_id, '..call_args)
+        output:write('channel_id, ' .. call_args)
       else
         output:write('channel_id')
       end
@@ -331,11 +366,11 @@ for i = 1, #functions do
     end
 
     if fn.return_type ~= 'void' then
-      output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
+      output:write('\n  ret = ' .. string.upper(real_type(fn.return_type)) .. '_OBJ(rv);')
     end
-    output:write('\n\ncleanup:');
+    output:write('\n\ncleanup:')
 
-    output:write('\n  return ret;\n}\n\n');
+    output:write('\n  return ret;\n}\n\n')
   end
 end
 
@@ -348,11 +383,20 @@ void msgpack_rpc_init_method_table(void)
 for i = 1, #functions do
   local fn = functions[i]
   if fn.remote then
-      output:write('  msgpack_rpc_add_method_handler('..
-                   '(String) {.data = "'..fn.name..'", '..
-                   '.size = sizeof("'..fn.name..'") - 1}, '..
-                   '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-                   ', .fast = '..tostring(fn.fast)..'});\n')
+    output:write(
+      '  msgpack_rpc_add_method_handler('
+        .. '(String) {.data = "'
+        .. fn.name
+        .. '", '
+        .. '.size = sizeof("'
+        .. fn.name
+        .. '") - 1}, '
+        .. '(MsgpackRpcRequestHandler) {.fn = handle_'
+        .. (fn.impl_name or fn.name)
+        .. ', .fast = '
+        .. tostring(fn.fast)
+        .. '});\n'
+    )
   end
 end
 
@@ -366,7 +410,7 @@ mpack_output:close()
 local function include_headers(output_handle, headers_to_include)
   for i = 1, #headers_to_include do
     if headers_to_include[i]:sub(-12) ~= '.generated.h' then
-      output_handle:write('\n#include "nvim/'..headers_to_include[i]..'"')
+      output_handle:write('\n#include "nvim/' .. headers_to_include[i] .. '"')
     end
   end
 end
@@ -401,7 +445,10 @@ local lua_c_functions = {}
 
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
-  write_shifted_output(output, string.format([[
+  write_shifted_output(
+    output,
+    string.format(
+      [[
 
   static int %s(lua_State *lstate)
   {
@@ -410,61 +457,99 @@ local function process_function(fn)
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
       goto exit_0;
     }
-  ]], lua_c_function_name, #fn.parameters, #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'))
+  ]],
+      lua_c_function_name,
+      #fn.parameters,
+      #fn.parameters,
+      (#fn.parameters == 1) and '' or 's'
+    )
+  )
   lua_c_functions[#lua_c_functions + 1] = {
-    binding=lua_c_function_name,
-    api=fn.name
+    binding = lua_c_function_name,
+    api = fn.name,
   }
 
   if not fn.fast then
-    write_shifted_output(output, string.format([[
+    write_shifted_output(
+      output,
+      string.format(
+        [[
     if (!nlua_is_deferred_safe()) {
       return luaL_error(lstate, e_luv_api_disabled, "%s");
     }
-    ]], fn.name))
+    ]],
+        fn.name
+      )
+    )
   end
 
   if fn.check_textlock then
-    write_shifted_output(output, [[
+    write_shifted_output(
+      output,
+      [[
     if (textlock != 0) {
       api_set_error(&err, kErrorTypeException, "%s", e_secure);
       goto exit_0;
     }
-    ]])
+    ]]
+    )
   end
 
   local cparams = ''
   local free_code = {}
-  for j = #fn.parameters,1,-1 do
+  for j = #fn.parameters, 1, -1 do
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
     local lc_param_type = real_type(param[1]):lower()
-    local extra = param_type == "Dictionary" and "false, " or ""
-    if param[1] == "Object" or param[1] == "DictionaryOf(LuaRef)" then
-      extra = "true, "
+    local extra = param_type == 'Dictionary' and 'false, ' or ''
+    if param[1] == 'Object' or param[1] == 'DictionaryOf(LuaRef)' then
+      extra = 'true, '
     end
     local errshift = 0
     if string.match(param_type, '^KeyDict_') then
-      write_shifted_output(output, string.format([[
-      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]], param_type, cparam, cparam, param_type, extra))
-      cparam = '&'..cparam
+      write_shifted_output(
+        output,
+        string.format(
+          [[
+      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]],
+          param_type,
+          cparam,
+          cparam,
+          param_type,
+          extra
+        )
+      )
+      cparam = '&' .. cparam
       errshift = 1 -- free incomplete dict on error
     else
-      write_shifted_output(output, string.format([[
-      const %s %s = nlua_pop_%s(lstate, %s&err);]], param[1], cparam, param_type, extra))
+      write_shifted_output(
+        output,
+        string.format(
+          [[
+      const %s %s = nlua_pop_%s(lstate, %s&err);]],
+          param[1],
+          cparam,
+          param_type,
+          extra
+        )
+      )
     end
 
-    write_shifted_output(output, string.format([[
+    write_shifted_output(
+      output,
+      string.format(
+        [[
 
     if (ERROR_SET(&err)) {
       goto exit_%u;
     }
 
-    ]], #fn.parameters - j + errshift))
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
-      lc_param_type, cparam)
+    ]],
+        #fn.parameters - j + errshift
+      )
+    )
+    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
     cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
@@ -482,8 +567,7 @@ local function process_function(fn)
     if i == 1 and not string.match(real_type(fn.parameters[1][1]), '^KeyDict_') then
       free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
     else
-      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(
-        rev_i, code)
+      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(rev_i, code)
     end
   end
   local err_throw_code = [[
@@ -504,26 +588,49 @@ local function process_function(fn)
     else
       return_type = fn.return_type
     end
-    write_shifted_output(output, string.format([[
+    write_shifted_output(
+      output,
+      string.format(
+        [[
     const %s ret = %s(%s);
     nlua_push_%s(lstate, ret, true);
     api_free_%s(ret);
   %s
   %s
     return 1;
-    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
-        free_at_exit_code, err_throw_code))
+    ]],
+        fn.return_type,
+        fn.name,
+        cparams,
+        return_type,
+        return_type:lower(),
+        free_at_exit_code,
+        err_throw_code
+      )
+    )
   else
-    write_shifted_output(output, string.format([[
+    write_shifted_output(
+      output,
+      string.format(
+        [[
     %s(%s);
   %s
   %s
     return 0;
-    ]], fn.name, cparams, free_at_exit_code, err_throw_code))
+    ]],
+        fn.name,
+        cparams,
+        free_at_exit_code,
+        err_throw_code
+      )
+    )
   end
-  write_shifted_output(output, [[
+  write_shifted_output(
+    output,
+    [[
   }
-  ]])
+  ]]
+  )
 end
 
 for _, fn in ipairs(functions) do
@@ -532,18 +639,25 @@ for _, fn in ipairs(functions) do
   end
 end
 
-output:write(string.format([[
+output:write(string.format(
+  [[
 void nlua_add_api_functions(lua_State *lstate);  // silence -Wmissing-prototypes
 void nlua_add_api_functions(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, 0, %u);
-]], #lua_c_functions))
+]],
+  #lua_c_functions
+))
 for _, func in ipairs(lua_c_functions) do
-  output:write(string.format([[
+  output:write(string.format(
+    [[
 
   lua_pushcfunction(lstate, &%s);
-  lua_setfield(lstate, -2, "%s");]], func.binding, func.api))
+  lua_setfield(lstate, -2, "%s");]],
+    func.binding,
+    func.api
+  ))
 end
 output:write([[
 

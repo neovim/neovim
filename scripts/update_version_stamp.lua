@@ -14,18 +14,18 @@ local function die(msg)
 end
 
 local function iswin()
-  return package.config:sub(1,1) == '\\'
+  return package.config:sub(1, 1) == '\\'
 end
 
 if #arg ~= 2 then
-  die(string.format("Expected two args, got %d", #arg))
+  die(string.format('Expected two args, got %d', #arg))
 end
 
 local versiondeffile = arg[1]
 local prefix = arg[2]
 
 local dev_null = iswin() and 'NUL' or '/dev/null'
-local described = io.popen('git describe --first-parent --dirty 2>'..dev_null):read('*l')
+local described = io.popen('git describe --first-parent --dirty 2>' .. dev_null):read('*l')
 if not described then
   described = io.popen('git describe --first-parent --tags --always --dirty'):read('*l')
 end
@@ -48,7 +48,7 @@ if current then
 end
 
 -- Write new include file, if different.
-local new = '#define NVIM_VERSION_MEDIUM "'..with_prefix..'"'
+local new = '#define NVIM_VERSION_MEDIUM "' .. with_prefix .. '"'
 if current ~= new then
   io.open(versiondeffile, 'w'):write(new .. '\n')
 end
