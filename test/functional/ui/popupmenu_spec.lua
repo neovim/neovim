@@ -10,6 +10,7 @@ local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
+local exec_lua = helpers.exec_lua
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -322,6 +323,62 @@ describe('ui/ext_popupmenu', function()
 
     -- also should work for builtin popupmenu
     screen:set_option('ext_popupmenu', false)
+    feed('<C-r>=TestComplete()<CR>')
+    screen:expect([[
+                                                                  |
+      foo^                                                         |
+      {6:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {7:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f1>')
+    screen:expect([[
+                                                                  |
+      spam^                                                        |
+      {7:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {6:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f2>')
+    screen:expect([[
+                                                                  |
+      spam^                                                        |
+      {7:fo   x the foo }{1:                                             }|
+      {7:bar            }{1:                                             }|
+      {7:spam           }{1:                                             }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    feed('<f3>')
+    screen:expect([[
+                                                                  |
+      bar^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+
+    command('iunmap <f1>')
+    command('iunmap <f2>')
+    command('iunmap <f3>')
+    exec_lua([[
+      vim.keymap.set('i', '<f1>', function() vim.api.nvim_select_popupmenu_item(2, true, false, {}) end)
+      vim.keymap.set('i', '<f2>', function() vim.api.nvim_select_popupmenu_item(-1, false, false, {}) end)
+      vim.keymap.set('i', '<f3>', function() vim.api.nvim_select_popupmenu_item(1, false, true, {}) end)
+    ]])
     feed('<C-r>=TestComplete()<CR>')
     screen:expect([[
                                                                   |

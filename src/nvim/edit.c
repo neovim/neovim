@@ -1082,6 +1082,8 @@ static int insert_handle_key(InsertState *s)
     map_execute_lua();
 
 check_pum:
+    // nvim_select_popupmenu_item() can be called from the handling of
+    // K_EVENT, K_COMMAND, or K_LUA.
     // TODO(bfredl): Not entirely sure this indirection is necessary
     // but doing like this ensures using nvim_select_popupmenu_item is
     // equivalent to selecting the item with a typed key.
@@ -4986,7 +4988,7 @@ void ins_compl_check_keys(int frequency, int in_compl_func)
  */
 static int ins_compl_key2dir(int c)
 {
-  if (c == K_EVENT || c == K_COMMAND) {
+  if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     return pum_want.item < pum_selected_item ? BACKWARD : FORWARD;
   }
   if (c == Ctrl_P || c == Ctrl_L
@@ -5016,7 +5018,7 @@ static int ins_compl_key2count(int c)
 {
   int h;
 
-  if (c == K_EVENT || c == K_COMMAND) {
+  if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     int offset = pum_want.item - pum_selected_item;
     return abs(offset);
   }
@@ -5050,6 +5052,7 @@ static bool ins_compl_use_match(int c)
     return false;
   case K_EVENT:
   case K_COMMAND:
+  case K_LUA:
     return pum_want.active && pum_want.insert;
   }
   return true;
