@@ -842,7 +842,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   local active_hl
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
-  if active_signature >= #signature_help.signatures then
+  -- In 3.15 of the protocol, activeSignature was allowed to be negative
+  if active_signature >= #signature_help.signatures or active_signature < 0 then
     active_signature = 0
   end
   local signature = signature_help.signatures[active_signature + 1]
