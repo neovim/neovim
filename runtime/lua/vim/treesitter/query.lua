@@ -138,6 +138,13 @@ function M.get_query(lang, query_name)
   end
 end
 
+local query_cache = setmetatable({}, {
+  __index = function(tbl, key)
+    rawset(tbl, key, {})
+    return rawget(tbl, key)
+  end
+})
+
 --- Parse {query} as a string. (If the query is in a file, the caller
 ---       should read the contents into a string before calling).
 ---
@@ -151,17 +158,23 @@ end
 ---   -` info.captures` also points to `captures`.
 ---   - `info.patterns` contains information about predicates.
 ---
----@param lang The language
----@param query A string containing the query (s-expr syntax)
+---@param lang string The language
+---@param query string A string containing the query (s-expr syntax)
 ---
 ---@returns The query
 function M.parse_query(lang, query)
   language.require_language(lang)
-  local self = setmetatable({}, Query)
-  self.query = vim._ts_parse_query(lang, query)
-  self.info = self.query:inspect()
-  self.captures = self.info.captures
-  return self
+  local cached = query_cache[lang][query]
+  if cached then
+    return cached
+  else
+    local self = setmetatable({}, Query)
+    self.query = vim._ts_parse_query(lang, query)
+    self.info = self.query:inspect()
+    self.captures = self.info.captures
+    query_cache[lang][query] = self
+    return self
+  end
 end
 
 --- Gets the text corresponding to a given node
