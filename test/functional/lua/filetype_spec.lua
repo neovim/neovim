@@ -72,10 +72,10 @@ describe('vim.filetype', function()
       local root = ...
       vim.filetype.add({
         pattern = {
-          [root .. '/blog/.*%.txt'] = 'markdown',
+          ['~/blog/.*%.txt'] = 'markdown',
         }
       })
-      vim.filetype.match(root .. '/blog/why_neovim_is_awesome.txt')
+      vim.filetype.match('~/blog/why_neovim_is_awesome.txt')
       return vim.bo.filetype
     ]], root))
   end)
