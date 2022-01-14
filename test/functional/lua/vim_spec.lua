@@ -987,6 +987,38 @@ describe('lua stdlib', function()
 
     matches([[attempt to index .* nil value]],
        pcall_err(exec_lua, 'return vim.g[0].testing'))
+
+    exec_lua [[
+      local counter = 0
+      vim.g.AddCounter = function() counter = counter + 1 end
+      vim.g.GetCounter = function() return counter end
+    ]]
+
+    eq(0, eval('g:GetCounter()'))
+    eval('g:AddCounter()')
+    eq(1, eval('g:GetCounter()'))
+    eval('g:AddCounter()')
+    eq(2, eval('g:GetCounter()'))
+    exec_lua([[vim.g.AddCounter()]])
+    eq(3, exec_lua([[return vim.g.GetCounter()]]))
+    exec_lua([[vim.api.nvim_get_var('AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_get_var('GetCounter')()]]))
+
+    exec_lua [[
+      local counter = 0
+      vim.api.nvim_set_var('AddCounter', function() counter = counter + 1 end)
+      vim.api.nvim_set_var('GetCounter', function() return counter end)
+    ]]
+
+    eq(0, eval('g:GetCounter()'))
+    eval('g:AddCounter()')
+    eq(1, eval('g:GetCounter()'))
+    eval('g:AddCounter()')
+    eq(2, eval('g:GetCounter()'))
+    exec_lua([[vim.g.AddCounter()]])
+    eq(3, exec_lua([[return vim.g.GetCounter()]]))
+    exec_lua([[vim.api.nvim_get_var('AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_get_var('GetCounter')()]]))
   end)
 
   it('vim.b', function()
@@ -1020,6 +1052,38 @@ describe('lua stdlib', function()
     vim.b.to_delete = nil
     ]]
     eq(NIL, funcs.luaeval "vim.b.to_delete")
+
+    exec_lua [[
+      local counter = 0
+      vim.b.AddCounter = function() counter = counter + 1 end
+      vim.b.GetCounter = function() return counter end
+    ]]
+
+    eq(0, eval('b:GetCounter()'))
+    eval('b:AddCounter()')
+    eq(1, eval('b:GetCounter()'))
+    eval('b:AddCounter()')
+    eq(2, eval('b:GetCounter()'))
+    exec_lua([[vim.b.AddCounter()]])
+    eq(3, exec_lua([[return vim.b.GetCounter()]]))
+    exec_lua([[vim.api.nvim_buf_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_buf_get_var(0, 'GetCounter')()]]))
+
+    exec_lua [[
+      local counter = 0
+      vim.api.nvim_buf_set_var(0, 'AddCounter', function() counter = counter + 1 end)
+      vim.api.nvim_buf_set_var(0, 'GetCounter', function() return counter end)
+    ]]
+
+    eq(0, eval('b:GetCounter()'))
+    eval('b:AddCounter()')
+    eq(1, eval('b:GetCounter()'))
+    eval('b:AddCounter()')
+    eq(2, eval('b:GetCounter()'))
+    exec_lua([[vim.b.AddCounter()]])
+    eq(3, exec_lua([[return vim.b.GetCounter()]]))
+    exec_lua([[vim.api.nvim_buf_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_buf_get_var(0, 'GetCounter')()]]))
 
     exec_lua [[
     vim.cmd "vnew"
@@ -1059,6 +1123,38 @@ describe('lua stdlib', function()
     eq(NIL, funcs.luaeval "vim.w.to_delete")
 
     exec_lua [[
+      local counter = 0
+      vim.w.AddCounter = function() counter = counter + 1 end
+      vim.w.GetCounter = function() return counter end
+    ]]
+
+    eq(0, eval('w:GetCounter()'))
+    eval('w:AddCounter()')
+    eq(1, eval('w:GetCounter()'))
+    eval('w:AddCounter()')
+    eq(2, eval('w:GetCounter()'))
+    exec_lua([[vim.w.AddCounter()]])
+    eq(3, exec_lua([[return vim.w.GetCounter()]]))
+    exec_lua([[vim.api.nvim_win_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_win_get_var(0, 'GetCounter')()]]))
+
+    exec_lua [[
+      local counter = 0
+      vim.api.nvim_win_set_var(0, 'AddCounter', function() counter = counter + 1 end)
+      vim.api.nvim_win_set_var(0, 'GetCounter', function() return counter end)
+    ]]
+
+    eq(0, eval('w:GetCounter()'))
+    eval('w:AddCounter()')
+    eq(1, eval('w:GetCounter()'))
+    eval('w:AddCounter()')
+    eq(2, eval('w:GetCounter()'))
+    exec_lua([[vim.w.AddCounter()]])
+    eq(3, exec_lua([[return vim.w.GetCounter()]]))
+    exec_lua([[vim.api.nvim_win_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_win_get_var(0, 'GetCounter')()]]))
+
+    exec_lua [[
     vim.cmd "vnew"
     ]]
 
@@ -1089,6 +1185,38 @@ describe('lua stdlib', function()
     vim.t.to_delete = nil
     ]]
     eq(NIL, funcs.luaeval "vim.t.to_delete")
+
+    exec_lua [[
+      local counter = 0
+      vim.t.AddCounter = function() counter = counter + 1 end
+      vim.t.GetCounter = function() return counter end
+    ]]
+
+    eq(0, eval('t:GetCounter()'))
+    eval('t:AddCounter()')
+    eq(1, eval('t:GetCounter()'))
+    eval('t:AddCounter()')
+    eq(2, eval('t:GetCounter()'))
+    exec_lua([[vim.t.AddCounter()]])
+    eq(3, exec_lua([[return vim.t.GetCounter()]]))
+    exec_lua([[vim.api.nvim_tabpage_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'GetCounter')()]]))
+
+    exec_lua [[
+      local counter = 0
+      vim.api.nvim_tabpage_set_var(0, 'AddCounter', function() counter = counter + 1 end)
+      vim.api.nvim_tabpage_set_var(0, 'GetCounter', function() return counter end)
+    ]]
+
+    eq(0, eval('t:GetCounter()'))
+    eval('t:AddCounter()')
+    eq(1, eval('t:GetCounter()'))
+    eval('t:AddCounter()')
+    eq(2, eval('t:GetCounter()'))
+    exec_lua([[vim.t.AddCounter()]])
+    eq(3, exec_lua([[return vim.t.GetCounter()]]))
+    exec_lua([[vim.api.nvim_tabpage_get_var(0, 'AddCounter')()]])
+    eq(4, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'GetCounter')()]]))
 
     exec_lua [[
     vim.cmd "tabnew"

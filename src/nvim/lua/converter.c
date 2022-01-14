@@ -617,6 +617,13 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
     semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;
   }
+  if (tv->v_type == VAR_FUNC) {
+    ufunc_T *fp = find_func(tv->vval.v_string);
+    if (fp->uf_cb == nlua_CFunction_func_call) {
+      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
+      return true;
+    }
+  }
   if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {
     return false;
   }
