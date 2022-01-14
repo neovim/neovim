@@ -13,7 +13,7 @@ and *old tests* ([src/nvim/testdir/](https://github.com/neovim/neovim/tree/maste
 You can learn the [key concepts of Lua in 15 minutes](http://learnxinyminutes.com/docs/lua/).
 Use any existing test as a template to start writing new tests.
 
-Tests are run by `/cmake/RunTests.cmake` file, using `busted` (a Lua test-runner).
+Tests are run by [cmake/RunTests.cmake](../cmake/RunTests.cmake) file, using [busted][lua-busted] (a unit-testing framework in Lua), see the configuration file [.busted](../.busted).
 For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
 
 Depending on the presence of binaries (e.g., `xclip`) some tests will be
@@ -57,36 +57,108 @@ Running tests
 Executing Tests
 ---------------
 
-To run all tests (except "old" tests):
+To run all tests (except "old" tests)
 
-    make test
+```console
+cmake --build build --target unittest
+cmake --build build --target functionaltest
+```
 
-To run only _unit_ tests:
+### Filter by name
 
-    make unittest
+Another filter method is by setting a pattern of test name as environment variables `TEST_FILTER` or `TEST_FILTER_OUT`.
 
-To run only _functional_ tests:
+``` lua
+it('foo api',function()
+  ...
+end)
+it('bar api',function()
+  ...
+end)
+```
 
-    make functionaltest
+Run only test with filter name
 
+```console
+TEST_FILTER='foo.*api' cmake --build build --target functionaltest
+```
+
+Run all tests except ones matching a filter:
+
+```console
+TEST_FILTER_OUT='foo.*api' cmake --build build --target functionaltest
+```
+
+### Filter by file
+
+Run tests from a *specific* file
+
+```console
+# unittest
+TEST_FILE=test/unit/foo.lua cmake --build build --target unittest
+
+# functional
+TEST_FILE=test/functional/foo.lua cmake --build build --target functionaltest
+```
+
+### Filter by tag
+
+Tests can be "tagged" by adding `#` before a token in the test description.
+
+``` lua
+it('#foo bar baz', function()
+  ...
+end)
+it('#foo another test', function()
+  ...
+end)
+```
+
+Run only the tagged tests
+
+```console
+TEST_TAG=foo cmake --build build --target functionaltest
+```
+
+### Passing custom flags
+
+Example: to *repeat* a test
+
+```console
+BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua cmake --build build --target functionaltest
+```
+
+Tip: you can find shell completions for `busted` at <https://github.com/Olivine-Labs/busted/tree/master/completions>
+
+**NOTE:**
+
+* both `TEST_TAG` and `TEST_FILTER` filter tests by the string descriptions
+  found in `it()` and `describe()`.
+* if you want to use busted directly, remember to re-build Neovim if you make changes to any source-file,
+  because `busted` will not do that automatically for you
+* you need busted with lua51 (your system package manager will probably have lua54 instead).
+  Alternatively, you can use `./.deps/usr/bin/busted`.
 
 Legacy tests
 ------------
 
 To run all legacy Vim tests:
 
-    make oldtest
+```console
+make oldtest
+```
 
-To run a *single* legacy test file you can use either:
+To run a *single* legacy test file you can use either specify the test=file name
 
-    make oldtest TEST_FILE=test_syntax.vim
+```console
+make oldtest TEST_FILE=test_syntax.vim
+```
 
-or:
+or using the test-file path
 
-    make src/nvim/testdir/test_syntax.vim
-
-- Specify only the test file name, not the full path.
-
+```console
+make src/nvim/testdir/test_syntax.vim
+```
 
 Debugging tests
 ---------------
@@ -110,70 +182,6 @@ Debugging tests
 
   Afterwards, put `screen:snapshot_util()` at any position in your test. See the
   comment at the top of `test/functional/ui/screen.lua` for more.
-
-Filtering Tests
----------------
-
-### Filter by name
-
-Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
-
-``` lua
-it('foo api',function()
-  ...
-end)
-it('bar api',function()
-  ...
-end)
-```
-
-To run only test with filter name:
-
-    TEST_FILTER='foo.*api' make functionaltest
-
-To run all tests except ones matching a filter:
-
-    TEST_FILTER_OUT='foo.*api' make functionaltest
-
-### Filter by file
-
-To run a *specific* unit test:
-
-    TEST_FILE=test/unit/foo.lua make unittest
-
-To run a *specific* functional test:
-
-    TEST_FILE=test/functional/foo.lua make functionaltest
-
-To *repeat* a test:
-
-    BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
-
-### Filter by tag
-
-Tests can be "tagged" by adding `#` before a token in the test description.
-
-``` lua
-it('#foo bar baz', function()
-  ...
-end)
-it('#foo another test', function()
-  ...
-end)
-```
-
-To run only the tagged tests:
-
-    TEST_TAG=foo make functionaltest
-
-**NOTE:**
-
-* `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The
-  given value to `TEST_FILE` must be a path to an existing file.
-* Both `TEST_TAG` and `TEST_FILTER` filter tests by the string descriptions
-  found in `it()` and `describe()`.
-
-
 Writing tests
 =============
 
@@ -341,3 +349,5 @@ Number; !must be defined to function properly):
 
 - `NVIM_TEST_MAXTRACE` (U) (N): specifies maximum number of trace lines to
   keep. Default is 1024.
+
+[lua-busted]: https://olivinelabs.com/busted

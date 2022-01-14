@@ -1,0 +1,39 @@
+-- vim: ft=lua tw=80 sw=2 ts=2
+
+return {
+  _all = {
+    verbose = true,
+    lazy = true,
+    helper = "test/functional/preload.lua",
+    lpath = "build/?.lua;runtime/lua/?.lua;./?.lua",
+    output = "test.busted.outputHandlers.nvim",
+  },
+  ---
+  functional = { ROOT = { "test/functional" } },
+  ---
+  apiFunc = { ROOT = { "test/functional/api" } },
+  autocmdFunc = { ROOT = { "test/functional/autocmd" } },
+  coreFunc = { ROOT = { "test/functional/core" } },
+  editorFunc = { ROOT = { "test/functional/editor" } },
+  exCmdsFunc = { ROOT = { "test/functional/ex_cmds" } },
+  fixturesFunc = { ROOT = { "test/functional/fixtures" } },
+  legacyFunc = { ROOT = { "test/functional/legacy" } },
+  luaFunc = { ROOT = { "test/functional/lua" } },
+  optionsFunc = { ROOT = { "test/functional/options" } },
+  pluginFunc = { ROOT = { "test/functional/plugin" } },
+  providerFunc = { ROOT = { "test/functional/provider" } },
+  shadaFunc = { ROOT = { "test/functional/shada" } },
+  terminalFunc = { ROOT = { "test/functional/terminal" } },
+  treesitterFunc = { ROOT = { "test/functional/treesitter" } },
+  uiFunc = { ROOT = { "test/functional/ui" } },
+  vimscriptFunc = { ROOT = { "test/functional/vimscript" } },
+  ---
+  unittest = { ROOT = { "test/unit" } },
+  ---
+  apiUnit = { ROOT = { "test/unit/api" } },
+  charsetUnit = { ROOT = { "test/unit/charset" } },
+  evalUnit = { ROOT = { "test/unit/eval" } },
+  fixturesUnit = { ROOT = { "test/unit/fixtures" } },
+  osUnit = { ROOT = { "test/unit/os" } },
+  vimlUnit = { ROOT = { "test/unit/viml" } },
+}
