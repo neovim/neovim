@@ -7,7 +7,7 @@
 // POSIX.1-2008 says that NAME_MAX should be in here
 #include <limits.h>
 
-#define TEMP_DIR_NAMES { "$TMPDIR", "/tmp", ".", "~" }
+#define TEMP_DIR_NAMES { "$XDG_RUNTIME_DIR", "$TMPDIR", "/tmp", ".", "~" }
 #define TEMP_FILE_PATH_MAXLEN 256
 
 #define HAVE_ACL (HAVE_POSIX_ACL || HAVE_SOLARIS_ACL)
