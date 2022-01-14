@@ -422,6 +422,9 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   local is_cursor_fixed = false
   local has_eol_text_edit = false
   for _, text_edit in ipairs(text_edits) do
+    -- Normalize line ending
+    text_edit.newText, _ = string.gsub(text_edit.newText, '\r\n?', '\n')
+
     -- Convert from LSP style ranges to Neovim style ranges.
     local e = {
       start_row = text_edit.range.start.line,
