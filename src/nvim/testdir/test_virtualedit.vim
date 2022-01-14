@@ -81,6 +81,48 @@ func Test_edit_change()
   normal Cx
   call assert_equal('x', getline(1))
   bwipe!
+  set virtualedit=
+endfunc
+
+" Test for pasting before and after a tab character
+func Test_paste_in_tab()
+  new
+  let @" = 'xyz'
+  set virtualedit=all
+  call append(0, "a\tb")
+  call cursor(1, 2, 6)
+  normal p
+  call assert_equal("a\txyzb", getline(1))
+  call setline(1, "a\tb")
+  call cursor(1, 2)
+  normal P
+  call assert_equal("axyz\tb", getline(1))
+
+  " Test for virtual block paste
+  call setreg('"', 'xyz', 'b')
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal p
+  call assert_equal("a\txyzb", getline(1))
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal P
+  call assert_equal("a      xyz b", getline(1))
+
+  " Test for virtual block paste with gp and gP
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal gp
+  call assert_equal("a\txyzb", getline(1))
+  call assert_equal([0, 1, 6, 0, 12], getcurpos())
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal gP
+  call assert_equal("a      xyz b", getline(1))
+  call assert_equal([0, 1, 12, 0 ,12], getcurpos())
+
+  bwipe!
+  set virtualedit=
 endfunc
 
 " Insert "keyword keyw", ESC, C CTRL-N, shows "keyword ykeyword".

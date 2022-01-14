@@ -3154,11 +3154,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (ve_flags == VE_ALL && y_type == kMTCharWise) {
     if (gchar_cursor() == TAB) {
-      /* Don't need to insert spaces when "p" on the last position of a
-       * tab or "P" on the first position. */
       int viscol = getviscol();
+      long ts = curbuf->b_p_ts;
+      // Don't need to insert spaces when "p" on the last position of a
+      // tab or "P" on the first position.
       if (dir == FORWARD
-          ? tabstop_padding(viscol, curbuf->b_p_ts, curbuf->b_p_vts_array) != 1
+          ? tabstop_padding(viscol, ts, curbuf->b_p_vts_array) != 1
           : curwin->w_cursor.coladd > 0) {
         coladvance_force(viscol);
       } else {
