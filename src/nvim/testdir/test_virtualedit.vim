@@ -84,42 +84,127 @@ func Test_edit_change()
   set virtualedit=
 endfunc
 
-" Test for pasting before and after a tab character
+" Tests for pasting at the beginning, end and middle of a tab character
+" in virtual edit mode.
 func Test_paste_in_tab()
   new
-  let @" = 'xyz'
+  call append(0, '')
   set virtualedit=all
-  call append(0, "a\tb")
-  call cursor(1, 2, 6)
-  normal p
-  call assert_equal("a\txyzb", getline(1))
+
+  " Tests for pasting a register with characterwise mode type
+  call setreg('"', 'xyz', 'c')
+
+  " paste (p) unnamed register at the beginning of a tab
   call setline(1, "a\tb")
-  call cursor(1, 2)
+  call cursor(1, 2, 0)
+  normal p
+  call assert_equal('a xyz      b', getline(1))
+
+  " paste (P) unnamed register at the beginning of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 0)
   normal P
   call assert_equal("axyz\tb", getline(1))
 
-  " Test for virtual block paste
-  call setreg('"', 'xyz', 'b')
+  " paste (p) unnamed register at the end of a tab
   call setline(1, "a\tb")
   call cursor(1, 2, 6)
   normal p
   call assert_equal("a\txyzb", getline(1))
+
+  " paste (P) unnamed register at the end of a tab
   call setline(1, "a\tb")
   call cursor(1, 2, 6)
   normal P
-  call assert_equal("a      xyz b", getline(1))
+  call assert_equal('a      xyz b', getline(1))
 
-  " Test for virtual block paste with gp and gP
+  " Tests for pasting a register with blockwise mode type
+  call setreg('"', 'xyz', 'b')
+
+  " paste (p) unnamed register at the beginning of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 0)
+  normal p
+  call assert_equal('a xyz      b', getline(1))
+
+  " paste (P) unnamed register at the beginning of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 0)
+  normal P
+  call assert_equal("axyz\tb", getline(1))
+
+  " paste (p) unnamed register at the end of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal p
+  call assert_equal("a\txyzb", getline(1))
+
+  " paste (P) unnamed register at the end of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 6)
+  normal P
+  call assert_equal('a      xyz b', getline(1))
+
+  " Tests for pasting with gp and gP in virtual edit mode
+
+  " paste (gp) unnamed register at the beginning of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 0)
+  normal gp
+  call assert_equal('a xyz      b', getline(1))
+  call assert_equal([0, 1, 12, 0, 12], getcurpos())
+
+  " paste (gP) unnamed register at the beginning of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 0)
+  normal gP
+  call assert_equal("axyz\tb", getline(1))
+  call assert_equal([0, 1, 5, 0, 5], getcurpos())
+
+  " paste (gp) unnamed register at the end of a tab
   call setline(1, "a\tb")
   call cursor(1, 2, 6)
   normal gp
   call assert_equal("a\txyzb", getline(1))
   call assert_equal([0, 1, 6, 0, 12], getcurpos())
+
+  " paste (gP) unnamed register at the end of a tab
   call setline(1, "a\tb")
   call cursor(1, 2, 6)
   normal gP
-  call assert_equal("a      xyz b", getline(1))
-  call assert_equal([0, 1, 12, 0 ,12], getcurpos())
+  call assert_equal('a      xyz b', getline(1))
+  call assert_equal([0, 1, 12, 0, 12], getcurpos())
+
+  " Tests for pasting a named register
+  let @r = 'xyz'
+
+  " paste (gp) named register in the middle of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 2)
+  normal "rgp
+  call assert_equal('a   xyz    b', getline(1))
+  call assert_equal([0, 1, 8, 0, 8], getcurpos())
+
+  " paste (gP) named register in the middle of a tab
+  call setline(1, "a\tb")
+  call cursor(1, 2, 2)
+  normal "rgP
+  call assert_equal('a  xyz     b', getline(1))
+  call assert_equal([0, 1, 7, 0, 7], getcurpos())
+
+  bwipe!
+  set virtualedit=
+endfunc
+
+" Test for yanking a few spaces within a tab to a register
+func Test_yank_in_tab()
+  new
+  let @r = ''
+  call setline(1, "a\tb")
+  set virtualedit=all
+  call cursor(1, 2, 2)
+  normal "ry5l
+  call assert_equal('     ', @r)
 
   bwipe!
   set virtualedit=
