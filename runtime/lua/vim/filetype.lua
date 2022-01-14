@@ -1398,7 +1398,7 @@ local pattern_sorted = sort_by_priority(pattern)
 
 ---@private
 local function normalize_path(path)
-  return (path:gsub("\\", "/"))
+  return (path:gsub("\\", "/"):gsub("^~", vim.env.HOME))
 end
 
 --- Add new filetype mappings.
