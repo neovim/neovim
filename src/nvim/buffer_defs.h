@@ -772,6 +772,8 @@ struct file_buffer {
   long b_p_ul;                  ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char_u *b_p_lw;               ///< 'lispwords' local value
+  char_u *b_p_ve;               ///< 'virtualedit' local value
+  unsigned b_ve_flags;          ///< flags for 'virtualedit'
 
   // end of buffer options
 

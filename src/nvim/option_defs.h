@@ -705,12 +705,14 @@ EXTERN int p_vb;                ///< 'visualbell'
 EXTERN char_u *p_ve;            ///< 'virtualedit'
 EXTERN unsigned ve_flags;
 #ifdef IN_OPTION_C
-static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", NULL };
+static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "NONE", NULL };
 #endif
-#define VE_BLOCK       5       // includes "all"
-#define VE_INSERT      6       // includes "all"
-#define VE_ALL         4
-#define VE_ONEMORE     8
+#define VE_BLOCK       5U      // includes "all"
+#define VE_INSERT      6U      // includes "all"
+#define VE_ALL         4U
+#define VE_ONEMORE     8U
+#define VE_NONE        16U
+#define VE_NONEU       32U     // Upper-case NONE
 EXTERN long p_verbose;          // 'verbose'
 #ifdef IN_OPTION_C
 char_u *p_vfile = (char_u *)"";   // used before options are initialized
@@ -839,6 +841,7 @@ enum {
   BV_WM,
   BV_VSTS,
   BV_VTS,
+  BV_VE,
   BV_COUNT,  // must be the last one
 };
 
