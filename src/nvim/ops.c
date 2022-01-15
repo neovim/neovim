@@ -1482,7 +1482,7 @@ int op_delete(oparg_T *oap)
   // If a yank register was specified, put the deleted text into that
   // register.
   // Note: For the black hole register or select mode '_' don't yank anything.
-  if (oap->regname != '_' && !VIsual_select) {
+  if (oap->regname != '_' && !(VIsual_select && oap->is_VIsual)) {
     yankreg_T *reg = NULL;
     int did_yank = false;
     if (oap->regname != 0) {
