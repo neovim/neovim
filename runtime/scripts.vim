@@ -406,6 +406,12 @@ else
   elseif s:line1 =~# '^#.*by RouterOS.*$'
     set ft=routeros
 
+  " Sed scripts
+  " #ncomment is allowed but most likely a false positive so require a space
+  " before any trailing comment text
+  elseif s:line1 =~# '^#n\%($\|\s\)'
+    set ft=sed
+
   " CVS diff
   else
     let s:lnum = 1

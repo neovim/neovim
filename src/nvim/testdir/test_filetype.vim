@@ -653,7 +653,7 @@ let s:script_checks = {
       \                ['#!/path/nodejs'],
       \                ['#!/path/rhino']],
       \ 'bc': [['#!/path/bc']],
-      \ 'sed': [['#!/path/sed']],
+      \ 'sed': [['#!/path/sed'], ['#n'], ['#n comment']],
       \ 'ocaml': [['#!/path/ocaml']],
       \ 'awk': [['#!/path/awk'],
       \         ['#!/path/gawk']],
