@@ -122,7 +122,7 @@ local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
 end)
 
 --- @param buf integer
---- @param match table<integer,TSNode>
+--- @param match table<integer,TSNode[]>
 --- @param query Query
 --- @param lang_context QueryLinterLanguageContext
 --- @param diagnostics Diagnostic[]
@@ -130,20 +130,22 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
   local lang = lang_context.lang
   local parser_info = lang_context.parser_info
 
-  for id, node in pairs(match) do
-    local cap_id = query.captures[id]
+  for id, nodes in pairs(match) do
+    for _, node in ipairs(nodes) do
+      local cap_id = query.captures[id]
 
-    -- perform language-independent checks only for first lang
-    if lang_context.is_first_lang and cap_id == 'error' then
-      local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
-      add_lint_for_node(diagnostics, { node:range() }, 'Syntax error: ' .. node_text)
-    end
+      -- perform language-independent checks only for first lang
+      if lang_context.is_first_lang and cap_id == 'error' then
+        local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
+        add_lint_for_node(diagnostics, { node:range() }, 'Syntax error: ' .. node_text)
+      end
 
-    -- other checks rely on Neovim parser introspection
-    if lang and parser_info and cap_id == 'toplevel' then
-      local err = parse(node, buf, lang)
-      if err then
-        add_lint_for_node(diagnostics, err.range, err.msg, lang)
+      -- other checks rely on Neovim parser introspection
+      if lang and parser_info and cap_id == 'toplevel' then
+        local err = parse(node, buf, lang)
+        if err then
+          add_lint_for_node(diagnostics, err.range, err.msg, lang)
+        end
       end
     end
   end

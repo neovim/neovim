@@ -216,7 +216,7 @@ The following new APIs and features were added.
     Bash.
   • |vim.treesitter.query.omnifunc()| for treesitter query files (set by
     default).
-  • |Query:iter_matches()| now has the ability to set the maximum start depth
+  • |Query:iter_matches2()| now has the ability to set the maximum start depth
     for matches.
   • `@injection.language` now has smarter resolution and will fall back to
     language aliases (e.g., filetype or custom shorthands) registered via
@@ -477,7 +477,8 @@ release.
 
 • `vim.loop` has been renamed to |vim.uv|.
 
-• vim.treesitter.languagetree functions:
+• vim.treesitter functions:
+  - |Query:iter_matches()|		Use |Query:iter_matches2()| instead.
   - |LanguageTree:for_each_child()|	Use |LanguageTree:children()| (non-recursive) instead.
 
 • The "term_background" UI option |ui-ext-options| is deprecated and no longer

@@ -164,6 +164,8 @@ TREESITTER FUNCTIONS
 						instead.
 - *LanguageTree:for_each_child()*		Use |LanguageTree:children()|
 						(non-recursive) instead.
+- *Query:iter_matches()*			Use |Query:iter_matches2()|
+						instead.
 
 LUA
 - vim.register_keystroke_callback()	Use |vim.on_key()| instead.

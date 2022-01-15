@@ -39,7 +39,7 @@ local TSNode = {}
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, TSNode, any
+---@return fun(): integer, TSNode, TSMatch
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@param query TSQuery
@@ -47,7 +47,7 @@ function TSNode:_rawquery(query, captures, start, end_, opts) end
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): integer, any
+---@return fun(): integer, TSMatch
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
