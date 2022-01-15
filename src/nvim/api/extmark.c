@@ -445,9 +445,18 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     opts->end_row = opts->end_line;
   }
 
+#define OPTION_TO_BOOL(target, name, val) \
+  target = api_object_to_bool(opts->name, #name, val, err); \
+  if (ERROR_SET(err)) { \
+    goto error; \
+  }
+
+  bool strict = true;
+  OPTION_TO_BOOL(strict, strict, true);
+
   if (opts->end_row.type == kObjectTypeInteger) {
     Integer val = opts->end_row.data.integer;
-    if (val < 0 || val > buf->b_ml.ml_line_count) {
+    if (val < 0 || (val > buf->b_ml.ml_line_count && strict)) {
       api_set_error(err, kErrorTypeValidation, "end_row value outside range");
       goto error;
     } else {
@@ -514,12 +523,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     api_set_error(err, kErrorTypeValidation,
                   "virt_text_win_col is not a Number of the correct size");
     goto error;
-  }
-
-#define OPTION_TO_BOOL(target, name, val) \
-  target = api_object_to_bool(opts->name, #name, val, err); \
-  if (ERROR_SET(err)) { \
-    goto error; \
   }
 
   OPTION_TO_BOOL(decor.virt_text_hide, virt_text_hide, false);
@@ -599,9 +602,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   bool ephemeral = false;
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
-
-  bool strict = true;
-  OPTION_TO_BOOL(strict, strict, true);
 
   if (line < 0) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
