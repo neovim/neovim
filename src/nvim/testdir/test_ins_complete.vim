@@ -445,6 +445,28 @@ func Test_issue_7021()
   set completeslash=
 endfunc
 
+func Test_pum_stopped_by_timer()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['hello', 'hullo', 'heeee', ''])
+    func StartCompl()
+      call timer_start(100, { -> execute('stopinsert') })
+      call feedkeys("Gah\<C-N>")
+    endfunc
+  END
+
+  call writefile(lines, 'Xpumscript')
+  let buf = RunVimInTerminal('-S Xpumscript', #{rows: 12})
+  call term_sendkeys(buf, ":call StartCompl()\<CR>")
+  call TermWait(buf, 200)
+  call term_sendkeys(buf, "k")
+  call VerifyScreenDump(buf, 'Test_pum_stopped_by_timer', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xpumscript')
+endfunc
+
 func Test_pum_with_folds_two_tabs()
   CheckScreendump
 

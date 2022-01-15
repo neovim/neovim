@@ -663,8 +663,12 @@ static int insert_execute(VimState *state, int key)
   InsertState *const s = (InsertState *)state;
   if (stop_insert_mode) {
     // Insert mode ended, possibly from a callback.
+    if (key != K_IGNORE && key != K_NOP) {
+      vungetc(key);
+    }
     s->count = 0;
     s->nomove = true;
+    ins_compl_prep(ESC);
     return 0;
   }
 
