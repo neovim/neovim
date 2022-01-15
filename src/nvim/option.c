@@ -2065,7 +2065,6 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_menc);
   check_string_option(&buf->b_p_vsts);
   check_string_option(&buf->b_p_vts);
-  check_string_option(&buf->b_p_ve);
 }
 
 /// Free the string allocated for an option.
@@ -3090,8 +3089,8 @@ ambw_end:
     unsigned int *flags = &ve_flags;
 
     if (opt_flags & OPT_LOCAL) {
-      ve = curbuf->b_p_ve;
-      flags = &curbuf->b_ve_flags;
+      ve = curwin->w_p_ve;
+      flags = &curwin->w_ve_flags;
     }
 
     if ((opt_flags & OPT_LOCAL) && *ve == NUL) {
@@ -5763,8 +5762,8 @@ void unset_global_local_option(char *name, void *from)
     redraw_later((win_T *)from, NOT_VALID);
     break;
   case PV_VE:
-    clear_string_option(&buf->b_p_ve);
-    buf->b_ve_flags = 0;
+    clear_string_option(&((win_T *)from)->w_p_ve);
+    ((win_T *)from)->w_ve_flags = 0;
     break;
   }
 }
@@ -5833,7 +5832,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_LCS:
       return (char_u *)&(curwin->w_p_lcs);
     case PV_VE:
-      return (char_u *)&(curbuf->b_p_ve);
+      return (char_u *)&(curwin->w_p_ve);
     }
     return NULL;     // "cannot happen"
   }
@@ -5928,6 +5927,9 @@ static char_u *get_varp(vimoption_T *p)
   case PV_LCS:
     return *curwin->w_p_lcs != NUL
            ? (char_u *)&(curwin->w_p_lcs) : p->var;
+  case PV_VE:
+    return *curwin->w_p_ve != NUL
+           ? (char_u *)&curwin->w_p_ve : p->var;
 
   case PV_ARAB:
     return (char_u *)&(curwin->w_p_arab);
@@ -6126,8 +6128,6 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_vsts);
   case PV_VTS:
     return (char_u *)&(curbuf->b_p_vts);
-  case PV_VE:
-    return *curbuf->b_p_ve != NUL ? (char_u *)&curbuf->b_p_ve : p->var;
   case PV_KMAP:
     return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:
@@ -6170,6 +6170,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_list = from->wo_list;
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
+  to->wo_ve = vim_strsave(from->wo_ve);
+  to->wo_ve_flags = from->wo_ve_flags;
   to->wo_nuw = from->wo_nuw;
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
@@ -6246,6 +6248,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_winhl);
   check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_lcs);
+  check_string_option(&wop->wo_ve);
 }
 
 /// Free the allocated memory inside a winopt_T.
@@ -6270,6 +6273,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_winhl);
   clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_lcs);
+  clear_string_option(&wop->wo_ve);
 }
 
 void didset_window_options(win_T *wp)
@@ -6460,8 +6464,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
-      buf->b_p_ve = empty_option;
-      buf->b_ve_flags = 0;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,
@@ -7842,7 +7844,7 @@ unsigned int get_bkc_value(buf_T *buf)
 /// Get the local or global value of the 'virtualedit' flags.
 unsigned int get_ve_flags(void)
 {
-  return (curbuf->b_ve_flags ? curbuf->b_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
+  return (curwin->w_ve_flags ? curwin->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
 }
 
 /// Get the local or global value of 'showbreak'.

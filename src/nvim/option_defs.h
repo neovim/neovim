@@ -711,8 +711,8 @@ static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "N
 #define VE_INSERT      6U      // includes "all"
 #define VE_ALL         4U
 #define VE_ONEMORE     8U
-#define VE_NONE        16U
-#define VE_NONEU       32U     // Upper-case NONE
+#define VE_NONE        16U     // "none"
+#define VE_NONEU       32U     // "NONE"
 EXTERN long p_verbose;          // 'verbose'
 #ifdef IN_OPTION_C
 char_u *p_vfile = (char_u *)"";   // used before options are initialized

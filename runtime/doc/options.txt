@@ -6782,7 +6782,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
-			global or local to buffer |global-local|
+			global or local to window |global-local|
 	A comma separated list of these words:
 	    block	Allow virtual editing in Visual block mode.
 	    insert	Allow virtual editing in Insert mode.

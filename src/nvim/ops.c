@@ -2197,21 +2197,21 @@ void op_insert(oparg_T *oap, long count1)
     // already disabled, but still need it when calling
     // coladvance_force().
     // coladvance_force() uses get_ve_flags() to get the 'virtualedit'
-    // state for the current buffer.  To override that state, we need to
-    // set the buffer-local value of ve_flags rather than the global value.
+    // state for the current window.  To override that state, we need to
+    // set the window-local value of ve_flags rather than the global value.
     if (curwin->w_cursor.coladd > 0) {
-      unsigned old_ve_flags = curbuf->b_ve_flags;
+      unsigned old_ve_flags = curwin->w_ve_flags;
 
       if (u_save_cursor() == FAIL) {
         return;
       }
-      curbuf->b_ve_flags = VE_ALL;
+      curwin->w_ve_flags = VE_ALL;
       coladvance_force(oap->op_type == OP_APPEND
           ? oap->end_vcol + 1 : getviscol());
       if (oap->op_type == OP_APPEND) {
         --curwin->w_cursor.col;
       }
-      curbuf->b_ve_flags = old_ve_flags;
+      curwin->w_ve_flags = old_ve_flags;
     }
     // Get the info about the block before entering the text
     block_prep(oap, &bd, oap->start.lnum, true);
