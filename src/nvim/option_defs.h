@@ -841,7 +841,6 @@ enum {
   BV_WM,
   BV_VSTS,
   BV_VTS,
-  BV_VE,
   BV_COUNT,  // must be the last one
 };
 
@@ -872,6 +871,7 @@ enum {
   WV_LBR,
   WV_NU,
   WV_RNU,
+  WV_VE,
   WV_NUW,
   WV_PVW,
   WV_RL,

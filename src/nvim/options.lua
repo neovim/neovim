@@ -2736,7 +2736,7 @@ return {
     {
       full_name='virtualedit', abbreviation='ve',
       short_desc=N_("when to use virtual editing"),
-      type='string', list='onecomma', scope={'global', 'buffer'},
+      type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
       redraw={'curswant'},
       varname='p_ve',
