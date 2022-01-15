@@ -123,10 +123,8 @@ func Test_normal02_selectmode()
   call assert_equal('y51', getline('.'))
   call setline(1, range(1,100))
   50
-  let save_register = getreg('"')
   exe ":norm! V9jo\<c-g>y"
   call assert_equal('y60', getline('.'))
-  call assert_equal(save_register, getreg('"'))
   " clean up
   bw!
 endfunc
@@ -2758,6 +2756,17 @@ func Test_normal_count_after_operator()
   call assert_equal('".!', @:)
   call feedkeys("gg!9!\<C-B>\"\<CR>", 'xt')
   call assert_equal('".,$!', @:)
+  bw!
+endfunc
+
+" Test for selectmode register break
+func Test_selectmode_register()
+  new
+  call setline(1, range(1,100))
+  50
+  let save_register = getreg('"')
+  exe ":norm! v\<c-g>a"
+  call assert_equal(save_register, getreg('"'))
   bw!
 endfunc
 
