@@ -1034,9 +1034,16 @@ static int node_prev_named_sibling(lua_State *L)
 /// assumes the match table being on top of the stack
 static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
 {
+  // [match]
   for (int i = 0; i < match->capture_count; i++) {
-    push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, match->captures[i].index + 1);
+    lua_rawgeti(L, -1, match->captures[i].index + 1);  // [match, captures]
+    if (lua_isnil(L, -1)) {  // [match, nil]
+      lua_pop(L, 1);  // [match]
+      lua_createtable(L, 1, 0);  // [match, captures]
+    }
+    push_node(L, match->captures[i].node, nodeidx);  // [match, capture, node]
+    lua_rawseti(L, -2, lua_objlen(L, -2) + 1);  // [match, capture]
+    lua_rawseti(L, -2, match->captures[i].index + 1);  // [match]
   }
 }
 
@@ -1049,7 +1056,7 @@ static int query_next_match(lua_State *L)
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
     lua_pushinteger(L, match.pattern_index + 1);  // [index]
-    lua_createtable(L, ts_query_capture_count(query), 2);  // [index, match]
+    lua_createtable(L, ts_query_capture_count(query), 0);  // [index, match]
     set_match(L, &match, lua_upvalueindex(2));
     return 2;
   }
@@ -1090,7 +1097,8 @@ static int query_next_capture(lua_State *L)
     if (n_pred > 0 && (ud->max_match_id < (int)match.id)) {
       ud->max_match_id = match.id;
 
-      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
+      // Create a new cleared match table
+      lua_createtable(L, ts_query_capture_count(query), 2);  // [index, node, match]
       set_match(L, &match, lua_upvalueindex(2));
       lua_pushinteger(L, match.pattern_index + 1);
       lua_setfield(L, -2, "pattern");
@@ -1100,6 +1108,10 @@ static int query_next_capture(lua_State *L)
         lua_pushboolean(L, false);
         lua_setfield(L, -2, "active");
       }
+
+      // Set current_match to the new match
+      lua_replace(L, lua_upvalueindex(4));  // [index, node]
+      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       return 3;
     }
     return 2;

@@ -429,10 +429,10 @@ add_predicate({name}, {handler}, {force})                    *add_predicate()*
                                be (match, pattern, bufnr, predicate)
 
 get_node_text({node}, {source})                              *get_node_text()*
-                Gets the text corresponding to a given node
+                Gets the text corresponding to a given node or a list of nodes
 
                 Parameters: ~
-                    {node}    the node
+                    {node}    the node or list of nodes
                     {source}  The buffer or string from which the node is
                               extracted
 
@@ -541,13 +541,14 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
 >
 
     for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
-      for id, node in pairs(match) do
+      for id, nodes in pairs(match) do
         local name = query.captures[id]
-        -- `node` was captured by the `name` capture in the match
+        for _, node in ipairs(nodes) do
+          -- `node` was captured by the `name` capture in the match
 
-        local node_data = metadata[id] -- Node level metadata
-
-        ... use the info here ...
+          local node_data = metadata[id] -- Node level metadata
+          ... use the info here ...
+        end
       end
     end
 <

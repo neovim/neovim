@@ -157,6 +157,7 @@ void ui_refresh(void)
     "for" @keyword
     (primitive_type) @type
     (field_expression argument: (identifier) @fieldarg)
+    (expression_statement (assignment_expression (call_expression)))+ @funccall
   ]]
 
   it("supports runtime queries", function()
@@ -207,12 +208,18 @@ void ui_refresh(void)
       { "type", "primitive_type", 8, 2, 8, 6 },
       { "keyword", "for", 9, 2, 9, 5 },
       { "type", "primitive_type", 9, 7, 9, 13 },
+      -- captured multiple times, see https://github.com/tree-sitter/tree-sitter/issues/1591
+      { "funccall", "expression_statement", 11, 4, 11, 34 },
+      { "funccall", "expression_statement", 11, 4, 11, 34 },
+      { "funccall", "expression_statement", 11, 4, 11, 34 },
       { "minfunc", "identifier", 11, 12, 11, 15 },
       { "fieldarg", "identifier", 11, 16, 11, 18 },
       { "min_id", "identifier", 11, 27, 11, 32 },
+      { "funccall", "expression_statement", 12, 4, 12, 37 },
       { "minfunc", "identifier", 12, 13, 12, 16 },
       { "fieldarg", "identifier", 12, 17, 12, 19 },
       { "min_id", "identifier", 12, 29, 12, 35 },
+      { "funccall", "expression_statement", 13, 4, 13, 34 },
       { "fieldarg", "identifier", 13, 14, 13, 16 }
     }, res)
   end)
@@ -228,8 +235,10 @@ void ui_refresh(void)
       for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
-        for cid,node in pairs(match) do
-          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        for cid, nodes in pairs(match) do
+          for _, node in ipairs(nodes) do
+            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+          end
         end
         table.insert(res, {pattern, mrepr})
       end
@@ -244,7 +253,12 @@ void ui_refresh(void)
       { 1, { { "minfunc", "identifier", 11, 12, 11, 15 }, { "min_id", "identifier", 11, 27, 11, 32 } } },
       { 4, { { "fieldarg", "identifier", 12, 17, 12, 19 } } },
       { 1, { { "minfunc", "identifier", 12, 13, 12, 16 }, { "min_id", "identifier", 12, 29, 12, 35 } } },
-      { 4, { { "fieldarg", "identifier", 13, 14, 13, 16 } } }
+      { 4, { { "fieldarg", "identifier", 13, 14, 13, 16 } } },
+      { 5, {
+        { "funccall", "expression_statement", 11, 4, 11, 34 },
+        { "funccall", "expression_statement", 12, 4, 12, 37 },
+        { "funccall", "expression_statement", 13, 4, 13, 34 },
+      } },
     }, res)
   end)
 
@@ -319,8 +333,10 @@ end]]
       for pattern, match in cquery:iter_matches(tree:root(), 0) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
-        for cid,node in pairs(match) do
-          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        for cid, nodes in pairs(match) do
+          for _, node in ipairs(nodes) do
+            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+          end
         end
         table.insert(res, {pattern, mrepr})
       end
@@ -405,8 +421,10 @@ end]]
       for pattern, match in cquery:iter_matches(tree:root(), 0) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
-        for cid,node in pairs(match) do
-          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        for cid, nodes in pairs(match) do
+          for _, node in ipairs(nodes) do
+            table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+          end
         end
         table.insert(res, {pattern, mrepr})
       end

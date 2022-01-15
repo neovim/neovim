@@ -37,7 +37,7 @@ local hl_query = [[
   ; Use lua regexes
   ((identifier) @Identifier (#contains? @Identifier "lua_"))
   ((identifier) @Constant (#lua-match? @Constant "^[A-Z_]+$"))
-  ((identifier) @Normal (#vim-match? @Constant "^lstate$"))
+  ((identifier) @Normal (#vim-match? @Normal "^lstate$"))
 
   ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (#eq? @WarningMsg.left @WarningMsg.right))
 

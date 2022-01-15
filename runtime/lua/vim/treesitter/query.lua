@@ -179,11 +179,19 @@ function M.parse_query(lang, query)
   end
 end
 
---- Gets the text corresponding to a given node
+--- Gets the text corresponding to a given node or a list of nodes
 ---
----@param node the node
+---@param node the node or list of nodes
 ---@param source The buffer or string from which the node is extracted
 function M.get_node_text(node, source)
+  -- If node is a list of nodes then return their concatenated text
+  if type(node) == 'table' and not node.start then
+    local text = {}
+    for _, node1 in ipairs(node) do
+      table.insert(text, M.get_node_text(node1, source))
+    end
+    return table.concat(text)
+  end
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
 
@@ -328,24 +336,26 @@ local directive_handlers = {
   -- Example: (#offset! @_node 0 1 0 -1)
   ['offset!'] = function(match, _, _, pred, metadata)
     local capture_id = pred[2]
-    local offset_node = match[capture_id]
-    local range = { offset_node:range() }
-    local start_row_offset = pred[3] or 0
-    local start_col_offset = pred[4] or 0
-    local end_row_offset = pred[5] or 0
-    local end_col_offset = pred[6] or 0
+    for _, offset_node in ipairs(match[capture_id]) do
+      local range = { offset_node:range() }
+      local start_row_offset = pred[3] or 0
+      local start_col_offset = pred[4] or 0
+      local end_row_offset = pred[5] or 0
+      local end_col_offset = pred[6] or 0
 
-    range[1] = range[1] + start_row_offset
-    range[2] = range[2] + start_col_offset
-    range[3] = range[3] + end_row_offset
-    range[4] = range[4] + end_col_offset
+      range[1] = range[1] + start_row_offset
+      range[2] = range[2] + start_col_offset
+      range[3] = range[3] + end_row_offset
+      range[4] = range[4] + end_col_offset
 
-    -- If this produces an invalid range, we just skip it.
-    if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      if not metadata[capture_id] then
-        metadata[capture_id] = {}
+      -- If this produces an invalid range, we just skip it.
+      if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
+        if not metadata[capture_id] then
+          metadata[capture_id] = {}
+        end
+        -- TODO: change metadata[capture_id] to support multiple nodes per capture
+        metadata[capture_id].range = range
       end
-      metadata[capture_id].range = range
     end
   end,
 }
@@ -541,13 +551,14 @@ end
 ---
 --- <pre>
 --- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
----   for id, node in pairs(match) do
+---   for id, nodes in pairs(match) do
 ---     local name = query.captures[id]
----     -- `node` was captured by the `name` capture in the match
+---     for _, node in ipairs(nodes) do
+---       -- `node` was captured by the `name` capture in the match
 ---
----     local node_data = metadata[id] -- Node level metadata
----
----     ... use the info here ...
+---       local node_data = metadata[id] -- Node level metadata
+---       ... use the info here ...
+---     end
 ---   end
 --- end
 --- </pre>

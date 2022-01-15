@@ -338,10 +338,12 @@ function LanguageTree:_get_injections()
 
         -- Allow for captured nodes to be used
         if type(content) == 'number' then
-          content = { match[content]:range() }
+          for _, node in ipairs(match[content]) do
+            ranges[#ranges + 1] = { node:range() }
+          end
         end
 
-        if type(content) == 'table' and #content >= 4 then
+        if type(content) == 'table' then
           vim.list_extend(ranges, content)
         end
       end
@@ -353,25 +355,27 @@ function LanguageTree:_get_injections()
       -- You can specify the content and language together
       -- using a tag with the language, for example
       -- @javascript
-      for id, node in pairs(match) do
-        local name = self._injection_query.captures[id]
+      for id, nodes in pairs(match) do
+        for _, node in ipairs(nodes) do
+          local name = self._injection_query.captures[id]
 
-        -- Lang should override any other language tag
-        if name == 'language' and not lang then
-          lang = query.get_node_text(node, self._source)
-        elseif name == 'combined' then
-          combined = true
-        elseif name == 'content' and #ranges == 0 then
-          table.insert(ranges, get_node_range(node, id, metadata))
+          -- Lang should override any other language tag
+          if name == "language" and not lang then
+            lang = query.get_node_text(node, self._source)
+          elseif name == "combined" then
+            combined = true
+          elseif name == "content" and #ranges == 0 then
+            table.insert(ranges, get_node_range(node, id, metadata))
           -- Ignore any tags that start with "_"
           -- Allows for other tags to be used in matches
-        elseif string.sub(name, 1, 1) ~= '_' then
-          if not lang then
-            lang = name
-          end
+          elseif string.sub(name, 1, 1) ~= "_" then
+            if not lang then
+              lang = name
+            end
 
-          if #ranges == 0 then
-            table.insert(ranges, get_node_range(node, id, metadata))
+            if #ranges == 0 then
+              table.insert(ranges, get_node_range(node, id, metadata))
+            end
           end
         end
       end
