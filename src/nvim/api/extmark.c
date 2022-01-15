@@ -404,6 +404,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   for left). Defaults to false.
 ///               - priority: a priority value for the highlight group. For
 ///                   example treesitter highlighting uses a value of 100.
+///               - strict: boolean that indicates extmark should not be placed
+///                   if the line or column value is past the end of the
+///                   buffer or end of the line respectively. Defaults to true.
+///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer col,
@@ -441,9 +445,18 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     opts->end_row = opts->end_line;
   }
 
+#define OPTION_TO_BOOL(target, name, val) \
+  target = api_object_to_bool(opts->name, #name, val, err); \
+  if (ERROR_SET(err)) { \
+    goto error; \
+  }
+
+  bool strict = true;
+  OPTION_TO_BOOL(strict, strict, true);
+
   if (opts->end_row.type == kObjectTypeInteger) {
     Integer val = opts->end_row.data.integer;
-    if (val < 0 || val > buf->b_ml.ml_line_count) {
+    if (val < 0 || (val > buf->b_ml.ml_line_count && strict)) {
       api_set_error(err, kErrorTypeValidation, "end_row value outside range");
       goto error;
     } else {
@@ -510,12 +523,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     api_set_error(err, kErrorTypeValidation,
                   "virt_text_win_col is not a Number of the correct size");
     goto error;
-  }
-
-#define OPTION_TO_BOOL(target, name, val) \
-  target = api_object_to_bool(opts->name, #name, val, err); \
-  if (ERROR_SET(err)) { \
-    goto error; \
   }
 
   OPTION_TO_BOOL(decor.virt_text_hide, virt_text_hide, false);
@@ -596,16 +603,30 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool ephemeral = false;
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
 
-  if (line < 0 || line > buf->b_ml.ml_line_count) {
+  if (line < 0) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
     goto error;
+  } else if (line > buf->b_ml.ml_line_count) {
+    if (strict) {
+      api_set_error(err, kErrorTypeValidation, "line value outside range");
+      goto error;
+    } else {
+      line = buf->b_ml.ml_line_count;
+    }
   } else if (line < buf->b_ml.ml_line_count) {
     len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
   }
 
   if (col == -1) {
     col = (Integer)len;
-  } else if (col < -1 || col > (Integer)len) {
+  } else if (col > (Integer)len) {
+    if (strict) {
+      api_set_error(err, kErrorTypeValidation, "col value outside range");
+      goto error;
+    } else {
+      col = (Integer)len;
+    }
+  } else if (col < -1) {
     api_set_error(err, kErrorTypeValidation, "col value outside range");
     goto error;
   }
@@ -621,8 +642,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       line2 = (int)line;
     }
     if (col2 > (Integer)len) {
-      api_set_error(err, kErrorTypeValidation, "end_col value outside range");
-      goto error;
+      if (strict) {
+        api_set_error(err, kErrorTypeValidation, "end_col value outside range");
+        goto error;
+      } else {
+        col2 = (int)len;
+      }
     }
   } else if (line2 >= 0) {
     col2 = 0;

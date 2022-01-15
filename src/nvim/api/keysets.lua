@@ -21,6 +21,7 @@ return {
     "virt_lines";
     "virt_lines_above";
     "virt_lines_leftcol";
+    "strict";
   };
   keymap = {
     "noremap";

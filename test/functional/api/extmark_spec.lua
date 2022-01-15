@@ -110,6 +110,22 @@ describe('API/extmarks', function()
        pcall_err(set_extmark, ns, marks[2], 0, 0, { end_col = 1, end_row = 1 }))
   end)
 
+  it("can end extranges past final newline when strict mode is false", function()
+    set_extmark(ns, marks[1], 0, 0, {
+      end_col = 1,
+      end_row = 1,
+      strict = false,
+    })
+  end)
+
+  it("can end extranges past final column when strict mode is false", function()
+    set_extmark(ns, marks[1], 0, 0, {
+      end_col = 6,
+      end_row = 0,
+      strict = false,
+    })
+  end)
+
   it('adds, updates  and deletes marks', function()
     local rv = set_extmark(ns, marks[1], positions[1][1], positions[1][2])
     eq(marks[1], rv)
