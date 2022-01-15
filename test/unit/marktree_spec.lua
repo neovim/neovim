@@ -32,11 +32,11 @@ local function shadoworder(tree, shadow, iter, giveorder)
     local mark = lib.marktree_itr_current(iter)
     local id = tonumber(mark.id)
     local spos = shadow[id]
-    if (mark.row ~= spos[1] or mark.col ~= spos[2]) then
-      error("invalid pos for "..id..":("..mark.row..", "..mark.col..") instead of ("..spos[1]..", "..spos[2]..")")
+    if (mark.pos.row ~= spos[1] or mark.pos.col ~= spos[2]) then
+      error("invalid pos for "..id..":("..mark.pos.row..", "..mark.pos.col..") instead of ("..spos[1]..", "..spos[2]..")")
     end
-    if mark.right_gravity ~= spos[3] then
-        error("invalid gravity for "..id..":("..mark.row..", "..mark.col..")")
+    if lib.mt_right_test(mark) ~= spos[3] then
+        error("invalid gravity for "..id..":("..mark.pos.row..", "..mark.pos.col..")")
     end
     if count > 0 then
       if not pos_leq(last, spos) then
@@ -87,7 +87,21 @@ local function dosplice(tree, shadow, start, old_extent, new_extent)
   shadowsplice(shadow, start, old_extent, new_extent)
 end
 
+local last_id = nil
+
+local function put(tree, row, col, gravitate)
+  last_id = last_id + 1
+  local my_id = last_id
+
+  lib.marktree_put_test(tree, my_id, row, col, gravitate);
+  return my_id
+end
+
 describe('marktree', function()
+  before_each(function()
+    last_id = 0
+  end)
+
  itp('works', function()
     local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
     local shadow = {}
@@ -97,7 +111,7 @@ describe('marktree', function()
     for i = 1,100 do
       for j = 1,100 do
         local gravitate = (i%2) > 0
-        local id = tonumber(lib.marktree_put(tree, j, i, gravitate, 0))
+        local id = put(tree, j, i, gravitate)
         ok(id > 0)
         eq(nil, shadow[id])
         shadow[id] = {j,i,gravitate}
@@ -115,12 +129,12 @@ describe('marktree', function()
     eq({}, id2pos)
 
     for i,ipos in pairs(shadow) do
-      local pos = lib.marktree_lookup(tree, i, iter)
-      eq(ipos[1], pos.row)
-      eq(ipos[2], pos.col)
+      local p = lib.marktree_lookup_ns(tree, -1, i, false, iter)
+      eq(ipos[1], p.pos.row)
+      eq(ipos[2], p.pos.col)
       local k = lib.marktree_itr_current(iter)
-      eq(ipos[1], k.row)
-      eq(ipos[2], k.col, ipos[1])
+      eq(ipos[1], k.pos.row)
+      eq(ipos[2], k.pos.col, ipos[1])
       lib.marktree_itr_next(tree, iter)
       -- TODO(bfredl): use id2pos to check neighbour?
       -- local k2 = lib.marktree_itr_current(iter)
@@ -130,8 +144,8 @@ describe('marktree', function()
       lib.marktree_itr_get(tree, ipos[1], ipos[2], iter)
       local k = lib.marktree_itr_current(iter)
       eq(i, tonumber(k.id))
-      eq(ipos[1], k.row)
-      eq(ipos[2], k.col)
+      eq(ipos[1], k.pos.row)
+      eq(ipos[2], k.pos.col)
     end
 
     ok(lib.marktree_itr_first(tree, iter))
@@ -146,8 +160,8 @@ describe('marktree', function()
         lib.marktree_itr_get(tree, i, 50+ci, iter)
         local k = lib.marktree_itr_current(iter)
         local id = tonumber(k.id)
-        eq(shadow[id][1], k.row)
-        eq(shadow[id][2], k.col)
+        eq(shadow[id][1], k.pos.row)
+        eq(shadow[id][2], k.pos.col)
         lib.marktree_del_itr(tree, iter, false)
         shadow[id] = nil
       end
@@ -191,7 +205,7 @@ describe('marktree', function()
     -- https://github.com/neovim/neovim/pull/14719
     lib.marktree_clear(tree)
     for i = 1,20 do
-      lib.marktree_put(tree, i, i, false, 0)
+      put(tree, i, i, false)
     end
 
     lib.marktree_itr_get(tree, 10, 10, iter)
