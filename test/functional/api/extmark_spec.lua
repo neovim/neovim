@@ -114,15 +114,15 @@ describe('API/extmarks', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 1,
       end_row = 1,
-      strict = false
+      strict = false,
     })
   end)
 
   it("can end extranges past final column when strict mode is false", function()
     set_extmark(ns, marks[1], 0, 0, {
-      end_col = 1,
-      end_row = 6,
-      strict = false
+      end_col = 6,
+      end_row = 0,
+      strict = false,
     })
   end)
 
