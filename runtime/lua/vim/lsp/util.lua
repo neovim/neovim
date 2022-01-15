@@ -1550,7 +1550,10 @@ do --[[ References ]]
                       reference_ns,
                       document_highlight_kind[kind],
                       { start_line, start_idx },
-                      { end_line, end_idx })
+                      { end_line, end_idx },
+                      nil,
+                      false,
+                      40)
     end
   end
 end

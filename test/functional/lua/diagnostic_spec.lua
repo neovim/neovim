@@ -208,10 +208,10 @@ describe('vim.diagnostic', function()
     eq(all_highlights, exec_lua [[
       local ns_1_diags = {
         make_error("Error 1", 1, 1, 1, 5),
-        make_warning("Warning on Server 1", 2, 1, 2, 5),
+        make_warning("Warning on Server 1", 2, 1, 2, 3),
       }
       local ns_2_diags = {
-        make_warning("Warning 1", 2, 1, 2, 5),
+        make_warning("Warning 1", 2, 1, 2, 3),
       }
 
       vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
@@ -255,10 +255,10 @@ describe('vim.diagnostic', function()
     eq({0, 2}, exec_lua [[
       local ns_1_diags = {
         make_error("Error 1", 1, 1, 1, 5),
-        make_warning("Warning on Server 1", 2, 1, 2, 5),
+        make_warning("Warning on Server 1", 2, 1, 2, 3),
       }
       local ns_2_diags = {
-        make_warning("Warning 1", 2, 1, 2, 5),
+        make_warning("Warning 1", 2, 1, 2, 3),
       }
 
       vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
@@ -599,10 +599,10 @@ describe('vim.diagnostic', function()
       eq(all_highlights, exec_lua [[
         local ns_1_diags = {
           make_error("Error 1", 1, 1, 1, 5),
-          make_warning("Warning on Server 1", 2, 1, 2, 5),
+          make_warning("Warning on Server 1", 2, 1, 2, 3),
         }
         local ns_2_diags = {
-          make_warning("Warning 1", 2, 1, 2, 5),
+          make_warning("Warning 1", 2, 1, 2, 3),
         }
 
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diags)
@@ -787,7 +787,7 @@ describe('vim.diagnostic', function()
       eq(2, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
-          make_warning("Warning on Server 1", 1, 1, 2, 5),
+          make_warning("Warning on Server 1", 1, 1, 2, 3),
         })
 
         return #vim.diagnostic.get(diagnostic_bufnr)
@@ -798,9 +798,9 @@ describe('vim.diagnostic', function()
       eq({2, 3, 2}, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
-          make_warning("Warning on Server 1", 1, 1, 2, 5),
-          make_info("Ignored information", 1, 1, 2, 5),
-          make_hint("Here's a hint", 1, 1, 2, 5),
+          make_warning("Warning on Server 1", 1, 1, 2, 3),
+          make_info("Ignored information", 1, 1, 2, 3),
+          make_hint("Here's a hint", 1, 1, 2, 3),
         })
 
         return {
@@ -820,8 +820,8 @@ describe('vim.diagnostic', function()
       eq(1, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
-          make_warning("Warning on Server 1", 1, 1, 2, 5),
-          make_info("Ignored information", 1, 1, 2, 5),
+          make_warning("Warning on Server 1", 1, 1, 2, 3),
+          make_info("Ignored information", 1, 1, 2, 3),
           make_error("Error On Other Line", 2, 1, 1, 5),
         })
 
