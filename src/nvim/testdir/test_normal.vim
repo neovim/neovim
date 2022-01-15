@@ -123,8 +123,10 @@ func Test_normal02_selectmode()
   call assert_equal('y51', getline('.'))
   call setline(1, range(1,100))
   50
+  let save_register = getreg('"')
   exe ":norm! V9jo\<c-g>y"
   call assert_equal('y60', getline('.'))
+  call assert_equal(save_register, getreg('"'))
   " clean up
   bw!
 endfunc
