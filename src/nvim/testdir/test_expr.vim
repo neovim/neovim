@@ -288,6 +288,66 @@ function Test_printf_misc()
   call assert_equal('[あいうえお]', printf('[%10.10S]', 'あいうえお'))
   call assert_equal('[あいうえお]', printf('[%10.12S]', 'あいうえお'))
 
+  call assert_equal('あいう', printf('%S', 'あいう'))
+  call assert_equal('あいう', printf('%#S', 'あいう'))
+
+  call assert_equal('あb', printf('%2S', 'あb'))
+  call assert_equal('あb', printf('%.4S', 'あb'))
+  call assert_equal('あ', printf('%.2S', 'あb'))
+  call assert_equal(' あb', printf('%4S', 'あb'))
+  call assert_equal('0あb', printf('%04S', 'あb'))
+  call assert_equal('あb ', printf('%-4S', 'あb'))
+  call assert_equal('あ  ', printf('%-4.2S', 'あb'))
+
+  call assert_equal('aい', printf('%2S', 'aい'))
+  call assert_equal('aい', printf('%.4S', 'aい'))
+  call assert_equal('a', printf('%.2S', 'aい'))
+  call assert_equal(' aい', printf('%4S', 'aい'))
+  call assert_equal('0aい', printf('%04S', 'aい'))
+  call assert_equal('aい ', printf('%-4S', 'aい'))
+  call assert_equal('a   ', printf('%-4.2S', 'aい'))
+
+  call assert_equal('[あいう]', printf('[%05S]', 'あいう'))
+  call assert_equal('[あいう]', printf('[%06S]', 'あいう'))
+  call assert_equal('[0あいう]', printf('[%07S]', 'あいう'))
+
+  call assert_equal('[あiう]', printf('[%05S]', 'あiう'))
+  call assert_equal('[0あiう]', printf('[%06S]', 'あiう'))
+  call assert_equal('[00あiう]', printf('[%07S]', 'あiう'))
+
+  call assert_equal('[0あい]', printf('[%05.4S]', 'あいう'))
+  call assert_equal('[00あい]', printf('[%06.4S]', 'あいう'))
+  call assert_equal('[000あい]', printf('[%07.4S]', 'あいう'))
+
+  call assert_equal('[00あi]', printf('[%05.4S]', 'あiう'))
+  call assert_equal('[000あi]', printf('[%06.4S]', 'あiう'))
+  call assert_equal('[0000あi]', printf('[%07.4S]', 'あiう'))
+
+  call assert_equal('[0あい]', printf('[%05.5S]', 'あいう'))
+  call assert_equal('[00あい]', printf('[%06.5S]', 'あいう'))
+  call assert_equal('[000あい]', printf('[%07.5S]', 'あいう'))
+
+  call assert_equal('[あiう]', printf('[%05.5S]', 'あiう'))
+  call assert_equal('[0あiう]', printf('[%06.5S]', 'あiう'))
+  call assert_equal('[00あiう]', printf('[%07.5S]', 'あiう'))
+
+  call assert_equal('[0000000000]', printf('[%010.0S]', 'あいう'))
+  call assert_equal('[0000000000]', printf('[%010.1S]', 'あいう'))
+  call assert_equal('[00000000あ]', printf('[%010.2S]', 'あいう'))
+  call assert_equal('[00000000あ]', printf('[%010.3S]', 'あいう'))
+  call assert_equal('[000000あい]', printf('[%010.4S]', 'あいう'))
+  call assert_equal('[000000あい]', printf('[%010.5S]', 'あいう'))
+  call assert_equal('[0000あいう]', printf('[%010.6S]', 'あいう'))
+  call assert_equal('[0000あいう]', printf('[%010.7S]', 'あいう'))
+
+  call assert_equal('[0000000000]', printf('[%010.1S]', 'あiう'))
+  call assert_equal('[00000000あ]', printf('[%010.2S]', 'あiう'))
+  call assert_equal('[0000000あi]', printf('[%010.3S]', 'あiう'))
+  call assert_equal('[0000000あi]', printf('[%010.4S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.5S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.6S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.7S]', 'あiう'))
+
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
 
