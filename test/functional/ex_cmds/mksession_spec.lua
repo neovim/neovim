@@ -5,6 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
+local neq = helpers.neq
 local funcs = helpers.funcs
 local matches = helpers.matches
 local pesc = helpers.pesc
@@ -30,7 +31,8 @@ describe(':mksession', function()
     -- If the same :terminal is displayed in multiple windows, :mksession
     -- should restore it as such.
 
-    -- Create two windows showing the same :terminal buffer.
+    -- Create three windows: first two from top show same terminal, third -
+    -- another one (created earlier).
     command('terminal')
     command('split')
     command('terminal')
@@ -43,8 +45,8 @@ describe(':mksession', function()
     -- Restore session.
     command('source '..session_file)
 
-    eq({2,2,4},
-      {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
+    eq(funcs.winbufnr(1), funcs.winbufnr(2))
+    neq(funcs.winbufnr(1), funcs.winbufnr(3))
   end)
 
   it('restores tab-local working directories', function()
@@ -91,12 +93,7 @@ describe(':mksession', function()
     command('tabnext 1')
     eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
     command('tabnext 2')
-    -- :mksession stores paths using unix slashes, but Nvim doesn't adjust these
-    -- for absolute paths in all cases yet. Absolute paths are used in the
-    -- session file after :tcd, so we need to expect unix slashes here for now
-    -- eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
-    eq(cwd_dir:gsub([[\]], '/') .. '/' .. tmpfile_base .. '2',
-      funcs.expand('%:p'))
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
