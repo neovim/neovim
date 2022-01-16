@@ -303,3 +303,8 @@ func Test_lambda_with_index()
   let Extract = {-> function(List, ['foobar'])()[0]}
   call assert_equal('foobar', Extract())
 endfunc
+
+func Test_lambda_error()
+  " This was causing a crash
+  call assert_fails('ec{@{->{d->()()', 'E15')
+endfunc
