@@ -244,7 +244,7 @@ go through the main loop (e.g. to update the display), return "\<Ignore>".
 This is similar to "nothing" but makes Vim return from the loop that waits for
 input.
 
-Also, keep in mind that the expression may be evaluated when looking for
+Keep in mind that the expression may be evaluated when looking for
 typeahead, before the previous command has been executed.  For example: >
 	func StoreColumn()
 	  let g:column = col('.')
