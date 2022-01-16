@@ -50,4 +50,4 @@ jobs:
           git add -u
           git commit -m 'docs: regenerate'
           git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${DOC_BRANCH}
-          gh pr create --fill --base ${GITHUB_REF#refs/heads/} --head ${DOC_BRANCH} || true
+          gh pr create --draft --fill --base ${GITHUB_REF#refs/heads/} --head ${DOC_BRANCH} || true
