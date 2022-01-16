@@ -2551,6 +2551,34 @@ describe('API', function()
           'Should be truncated%<',
           { maxwidth = 15 }))
     end)
+    it('supports ASCII fillchar', function()
+      eq({ str = 'a~~~b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '~', maxwidth = 5 }))
+    end)
+    it('supports single-width multibyte fillchar', function()
+      eq({ str = 'a━━━b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '━', maxwidth = 5 }))
+    end)
+    it('rejects double-width fillchar', function()
+      eq('fillchar must be a single-width character',
+         pcall_err(meths.eval_statusline, '', { fillchar = '哦' }))
+    end)
+    it('rejects control character fillchar', function()
+      eq('fillchar must be a single-width character',
+         pcall_err(meths.eval_statusline, '', { fillchar = '\a' }))
+    end)
+    it('rejects multiple-character fillchar', function()
+      eq('fillchar must be a single-width character',
+         pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
+    end)
+    it('rejects empty string fillchar', function()
+      eq('fillchar must be a single-width character',
+         pcall_err(meths.eval_statusline, '', { fillchar = '' }))
+    end)
+    it('rejects non-string fillchar', function()
+      eq('fillchar must be a single-width character',
+         pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
+    end)
     describe('highlight parsing', function()
       it('works', function()
         eq({
