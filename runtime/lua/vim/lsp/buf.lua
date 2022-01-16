@@ -447,6 +447,9 @@ end
 ---@param query (string, optional)
 function M.workspace_symbol(query)
   query = query or npcall(vfn.input, "Query: ")
+  if query == nil then
+    return
+  end
   local params = {query = query}
   request('workspace/symbol', params)
 end
