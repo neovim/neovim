@@ -2754,6 +2754,24 @@ describe('lua stdlib', function()
 
   end)
 
+  describe("vim.defaulttable", function()
+    it("creates nested table by default", function()
+      eq({ b = {c = 1 } }, exec_lua[[
+        local a = vim.defaulttable()
+        a.b.c = 1
+        return a
+      ]])
+    end)
+
+    it("allows to create default objects", function()
+      eq({ b = 1 }, exec_lua[[
+        local a = vim.defaulttable(function() return 0 end)
+        a.b = a.b + 1
+        return a
+      ]])
+    end)
+  end)
+
 end)
 
 describe('lua: builtin modules', function()
