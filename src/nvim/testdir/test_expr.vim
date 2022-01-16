@@ -283,6 +283,11 @@ function Test_printf_misc()
   call assert_equal('🐍', printf('%.2S', '🐍🐍'))
   call assert_equal('', printf('%.1S', '🐍🐍'))
 
+  call assert_equal('[    あいう]', printf('[%10.6S]', 'あいうえお'))
+  call assert_equal('[  あいうえ]', printf('[%10.8S]', 'あいうえお'))
+  call assert_equal('[あいうえお]', printf('[%10.10S]', 'あいうえお'))
+  call assert_equal('[あいうえお]', printf('[%10.12S]', 'あいうえお'))
+
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
 
