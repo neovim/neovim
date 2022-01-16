@@ -7,11 +7,11 @@ Getting started
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
-- [Merge a Vim patch].
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
 - [Improve documentation][wiki-contribute-help]
+- [Merge a Vim patch] (Familiarity with Vim is *strongly* recommended)
 
 Reporting problems
 ------------------
