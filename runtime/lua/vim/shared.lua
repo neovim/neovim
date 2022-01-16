@@ -642,5 +642,20 @@ function vim.is_callable(f)
   return type(m.__call) == 'function'
 end
 
+--- Creates a table whose values are automatically created when missing.
+---
+--- They are kind of like defaultdicts in python
+---
+---@param create The function called to create a missing value
+---@return a "default table"
+function vim.defaulttable(create)
+  return setmetatable({}, {
+    __index = function(tbl, key)
+      rawset(tbl, key, create())
+      return rawget(tbl, key)
+    end
+  })
+end
+
 return vim
 -- vim:sw=2 ts=2 et
