@@ -2041,6 +2041,13 @@ return {
       defaults={if_true=""}
     },
     {
+      full_name='selectregister', abbreviation='slr',
+      short_desc=N_("overwrite register when Select mode"),
+      type='string', scope={'global'},
+      varname='p_slr',
+      defaults={if_true=""}
+    },
+    {
       full_name='sessionoptions', abbreviation='ssop',
       short_desc=N_("options for |:mksession|"),
       type='string', list='onecomma', scope={'global'},

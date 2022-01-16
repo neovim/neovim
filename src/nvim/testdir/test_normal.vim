@@ -2759,14 +2759,52 @@ func Test_normal_count_after_operator()
   bw!
 endfunc
 
-" Test for selectmode register break
+" Test for selectmode register overwrite
 func Test_selectmode_register()
+  " Default behavior: use unnamed register
   new
   call setline(1, range(1,100))
-  50
+  let save_register = getreg('"')
+  exe ":norm! v\<c-g>a"
+  call assert_equal('1', getreg('"'))
+
+  " Disable overwrite registers
+  new
+  let &selectregister = '_'
+  call setline(1, range(1,100))
   let save_register = getreg('"')
   exe ":norm! v\<c-g>a"
   call assert_equal(save_register, getreg('"'))
+  set selectregister&
+
+  " Overwrite a register instead
+  new
+  let &selectregister = 'a'
+  call setline(1, range(1,100))
+  let save_register = getreg('"')
+  exe ":norm! v\<c-g>a"
+  call assert_equal('1', getreg('a'))
+  call assert_equal(save_register, getreg('"'))
+  set selectregister&
+
+  " Invalid register
+  new
+  let &selectregister = 'foo'
+  call setline(1, range(1,100))
+  let save_register = getreg('"')
+  exe ":norm! v\<c-g>a"
+  call assert_equal('1', getreg('"'))
+  set selectregister&
+
+  " Use unnamed register
+  new
+  let &selectregister = '"'
+  call setline(1, range(1,100))
+  let save_register = getreg('"')
+  exe ":norm! v\<c-g>a"
+  call assert_equal('1', getreg('"'))
+  set selectregister&
+
   bw!
 endfunc
 

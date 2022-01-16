@@ -5090,6 +5090,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |Select-mode|.
 	The 'selectmode' option is set by the |:behave| command.
 
+						*'selectregister'* *'slr'*
+'selectregister' 'slr'	string	(default "")
+			global
+	This is the register name when |Select-mode| text replace.
+	If it is empty string, unnamed register is used.
+	If it is invalid register name, it is ignored.
+
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	string	(default: "blank,buffers,curdir,folds,
 					       help,tabpages,winsize"
