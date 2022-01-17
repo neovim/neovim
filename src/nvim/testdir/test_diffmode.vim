@@ -1170,7 +1170,9 @@ func Test_diff_maintains_change_mark()
   call DiffMaintainsChangeMark()
   set diffopt+=internal
   call DiffMaintainsChangeMark()
+
   set diffopt&
+  delfunc DiffMaintainsChangeMark
 endfunc
 
 func Test_diff_rnu()
