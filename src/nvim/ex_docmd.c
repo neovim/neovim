@@ -9546,7 +9546,23 @@ static void ex_filetype(exarg_T *eap)
   }
 }
 
-/// Set all :filetype options ON if user did not explicitly set any to OFF.
+/// Source ftplugin.vim and indent.vim to create the necessary FileType
+/// autocommands. We do this separately from filetype.vim so that these
+/// autocommands will always fire first (and thus can be overriden) while still
+/// allowing general filetype detection to be disabled in the user's init file.
+void filetype_plugin_enable(void)
+{
+  if (filetype_plugin == kNone) {
+    source_runtime(FTPLUGIN_FILE, DIP_ALL);
+    filetype_plugin = kTrue;
+  }
+  if (filetype_indent == kNone) {
+    source_runtime(INDENT_FILE, DIP_ALL);
+    filetype_indent = kTrue;
+  }
+}
+
+/// Enable filetype detection if the user did not explicitly disable it.
 void filetype_maybe_enable(void)
 {
   if (filetype_detect == kNone) {
@@ -9555,14 +9571,6 @@ void filetype_maybe_enable(void)
     // autocommand to be defined first so that it runs first
     source_runtime(FILETYPE_FILE, DIP_ALL);
     filetype_detect = kTrue;
-  }
-  if (filetype_plugin == kNone) {
-    source_runtime(FTPLUGIN_FILE, DIP_ALL);
-    filetype_plugin = kTrue;
-  }
-  if (filetype_indent == kNone) {
-    source_runtime(INDENT_FILE, DIP_ALL);
-    filetype_indent = kTrue;
   }
 }
 
