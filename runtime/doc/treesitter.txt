@@ -467,8 +467,9 @@ parse_query({lang}, {query})                                   *parse_query()*
                 • `info.patterns` contains information about predicates.
 
                 Parameters: ~
-                    {lang}   The language
-                    {query}  A string containing the query (s-expr syntax)
+                    {lang}   string The language
+                    {query}  string A string containing the query (s-expr
+                             syntax)
 
                 Return: ~
                     The query
@@ -665,7 +666,7 @@ LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
                     {self}
 
 LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
-                Determines whether this tree is valid. If the tree is invalid, `parse()` must be called to get the an updated tree.
+                Determines whether this tree is valid. If the tree is invalid, `parse()` must be called to get the updated tree.
 
                 Parameters: ~
                     {self}
