@@ -48,6 +48,6 @@ jobs:
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
         run: |
           git add -u
-          git commit -m 'docs: regenerate'
+          git commit -m 'docs: regenerate [skip ci]'
           git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${DOC_BRANCH}
           gh pr create --fill --base ${GITHUB_REF#refs/heads/} --head ${DOC_BRANCH} || true

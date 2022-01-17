@@ -1,13 +1,13 @@
 name: "Commit Linter"
 on:
-  pull_request:
+  # Only pull_request and push honor [skip ci].  Since this workflow must pass
+  # to merge a PR, it can't be skipped, so use pull_request_target
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
         with:
