@@ -409,7 +409,17 @@ accordingly, proceeding as follows:
 
 4. Setup |default-mappings| and  |default-autocmds|.
 
-5. Load user config (execute Ex commands from files, environment, …).
+5. Enable filetype and indent plugins.
+	This does the same as the command: >
+		:filetype plugin indent on
+<	which in turn is equivalent to: >
+		:runtime! filetype.lua
+		:runtime! filetype.vim
+		:runtime! ftplugin.vim
+		:runtime! indent.vim
+<	Skipped if the "-u NONE" command line argument was given.
+
+6. Load user config (execute Ex commands from files, environment, …).
 	$VIMINIT environment variable is read as one Ex command line (separate
 	multiple commands with '|' or <NL>).
 					*config* *init.vim* *init.lua* *vimrc* *exrc*
@@ -452,14 +462,6 @@ accordingly, proceeding as follows:
 	the others are ignored.
 	-  The file ".nvimrc"
 	-  The file ".exrc"
-
-6. Enable filetype and indent plugins.
-	This does the same as the commands: >
-		:runtime! filetype.vim
-		:runtime! ftplugin.vim
-		:runtime! indent.vim
-<	Skipped if ":filetype … off" was called or if the "-u NONE" command
-	line argument was given.
 
 7. Enable syntax highlighting.
 	This does the same as the command: >
