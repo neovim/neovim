@@ -344,6 +344,7 @@ do
       state.buffers[bufnr] = buf_state
       if use_incremental_sync then
         buf_state.lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+        buf_state.lines_tmp = {}
         buf_state.pending_changes = {}
       end
     end
@@ -403,11 +404,40 @@ do
   ---@private
   function changetracking.prepare(bufnr, firstline, lastline, new_lastline)
     local incremental_changes = function(client, buf_state)
-      local curr_lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+
+      local prev_lines = buf_state.lines
+      local curr_lines = buf_state.lines_tmp
+
+      local changed_lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+      for i = 1, firstline do
+        curr_lines[i] = prev_lines[i]
+      end
+      for i = firstline + 1, new_lastline do
+        curr_lines[i] = changed_lines[i - firstline]
+      end
+      for i = lastline + 1, #prev_lines do
+        curr_lines[i - lastline + new_lastline] = prev_lines[i]
+      end
+      if tbl_isempty(curr_lines) then
+        -- Can happen when deleting the entire contents of a buffer, see https://github.com/neovim/neovim/issues/16259.
+        curr_lines[1] = ''
+      end
+
       local line_ending = buf_get_line_ending(bufnr)
       local incremental_change = sync.compute_diff(
         buf_state.lines, curr_lines, firstline, lastline, new_lastline, client.offset_encoding or 'utf-16', line_ending)
+
+      -- Double-buffering of lines tables is used to reduce the load on the garbage collector.
+      -- At this point the prev_lines table is useless, but its internal storage has already been allocated,
+      -- so let's keep it around for the next didChange event, in which it will become the next
+      -- curr_lines table. Note that setting elements to nil doesn't actually deallocate slots in the
+      -- internal storage - it merely marks them as free, for the GC to deallocate them.
+      for i in ipairs(prev_lines) do
+        prev_lines[i] = nil
+      end
       buf_state.lines = curr_lines
+      buf_state.lines_tmp = prev_lines
+
       return incremental_change
     end
     local full_changes = once(function()
