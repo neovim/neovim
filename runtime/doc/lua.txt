@@ -1872,6 +1872,15 @@ add({filetypes})                                          *vim.filetype.add()*
                     {filetypes}  table A table containing new filetype maps
                                  (see example).
 
+match({name}, {bufnr})                                  *vim.filetype.match()*
+                Set the filetype for the given buffer from a file name.
+
+                Parameters: ~
+                    {name}   string File name (can be an absolute or relative
+                             path)
+                    {bufnr}  number|nil The buffer to set the filetype for.
+                             Defaults to the current buffer.
+
 
 ==============================================================================
 Lua module: keymap                                                *lua-keymap*

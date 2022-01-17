@@ -709,8 +709,8 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
                 Send data to channel `id` . For a job, it writes it to the
                 stdin of the process. For the stdio channel |channel-stdio|,
                 it writes to Nvim's stdout. For an internal terminal instance
-                (|nvim_open_term()|) it writes directly to terimal output. See
-                |channel-bytes| for more information.
+                (|nvim_open_term()|) it writes directly to terminal output.
+                See |channel-bytes| for more information.
 
                 This function writes raw data, not RPC messages. If the
                 channel was created with `rpc=true` then the channel expects
@@ -1405,7 +1405,7 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                     {from_part}  Legacy Vim parameter. Usually true.
                     {do_lt}      Also translate <lt>. Ignored if `special` is
                                  false.
-                    {special}    Replace |keycodes|, e.g. <CR> becomes a "\n"
+                    {special}    Replace |keycodes|, e.g. <CR> becomes a "\r"
                                  char.
 
                 See also: ~
@@ -2548,6 +2548,10 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                               • priority: a priority value for the highlight
                                 group. For example treesitter highlighting
                                 uses a value of 100.
+                              • strict: boolean that indicates extmark should
+                                not be placed if the line or column value is
+                                past the end of the buffer or end of the line
+                                respectively. Defaults to true.
 
                 Return: ~
                     Id of the created/updated extmark

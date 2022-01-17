@@ -749,8 +749,8 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
 set_log_level({level})                               *vim.lsp.set_log_level()*
                 Sets the global log level for LSP logging.
 
-                Levels by name: "trace", "debug", "info", "warn", "error"
-                Level numbers begin with "trace" at 0
+                Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+                Level numbers begin with "TRACE" at 0
 
                 Use `lsp.log_levels` for reverse lookup.
 
@@ -887,10 +887,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                            default true): Allow using
                                            incremental sync for buffer edits
                                          • debounce_text_changes (number,
-                                           default 150): Debounce didChange
+                                           default nil): Debounce didChange
                                            notifications to the server by the
                                            given number in milliseconds. No
-                                           debounce occurs if set to 0.
+                                           debounce occurs if nil
                                          • exit_timeout (number, default 500):
                                            Milliseconds to wait for server to
                                            exit cleanly after sending the
@@ -1008,7 +1008,7 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
                 the current text document position. This request can be
                 triggered by a key mapping or by events such as `CursorHold` ,
-                eg:
+                e.g.:
 >
     autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
     autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
@@ -1024,11 +1024,12 @@ document_symbol()                              *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
                 window.
 
-execute_command({command})                     *vim.lsp.buf.execute_command()*
+execute_command({command_params})              *vim.lsp.buf.execute_command()*
                 Executes an LSP server command.
 
                 Parameters: ~
-                    {command}  A valid `ExecuteCommandParams` object
+                    {command_params}  table A valid `ExecuteCommandParams`
+                                      object
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
@@ -1331,7 +1332,7 @@ signature_help({_}, {result}, {ctx}, {config})
 Lua module: vim.lsp.util                                            *lsp-util*
 
                                      *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit}, {index})
+apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
                 Applies a `TextDocumentEdit` , which is a list of changes to a
                 single document.
 
@@ -1351,18 +1352,19 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
                 Parameters: ~
                     {text_edits}       table list of `TextEdit` objects
                     {bufnr}            number Buffer id
-                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
-                                       to encoding of first client of `bufnr`
+                    {offset_encoding}  string utf-8|utf-16|utf-32 defaults to
+                                       encoding of first client of `bufnr`
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 
                                          *vim.lsp.util.apply_workspace_edit()*
-apply_workspace_edit({workspace_edit})
+apply_workspace_edit({workspace_edit}, {offset_encoding})
                 Applies a `WorkspaceEdit` .
 
                 Parameters: ~
-                    {workspace_edit}  (table) `WorkspaceEdit`
+                    {workspace_edit}   table `WorkspaceEdit`
+                    {offset_encoding}  string utf-8|utf-16|utf-32 (required)
 
 buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 Removes document highlights from a buffer.
@@ -1379,9 +1381,7 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
                     {references}       table List of `DocumentHighlight`
                                        objects to highlight
                     {offset_encoding}  string One of "utf-8", "utf-16",
-                                       "utf-32", or nil. Defaults to
-                                       `offset_encoding` of first client of
-                                       `bufnr`
+                                       "utf-32".
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
@@ -1470,16 +1470,19 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                 See also: ~
                     |softtabstop|
 
-jump_to_location({location})                 *vim.lsp.util.jump_to_location()*
+                                             *vim.lsp.util.jump_to_location()*
+jump_to_location({location}, {offset_encoding})
                 Jumps to a location.
 
                 Parameters: ~
-                    {location}  ( `Location` | `LocationLink` )
+                    {location}         table ( `Location` | `LocationLink` )
+                    {offset_encoding}  string utf-8|utf-16|utf-32 (required)
 
                 Return: ~
                     `true` if the jump succeeded
 
-locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
+                                           *vim.lsp.util.locations_to_items()*
+locations_to_items({locations}, {offset_encoding})
                 Returns the items with the byte position calculated correctly
                 and in sorted order, for display in quickfix and location
                 lists.
@@ -1488,8 +1491,10 @@ locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
                 |setqflist()| or |setloclist()|.
 
                 Parameters: ~
-                    {locations}  (table) list of `Location` s or
-                                 `LocationLink` s
+                    {locations}        table list of `Location` s or
+                                       `LocationLink` s
+                    {offset_encoding}  string offset_encoding for locations
+                                       utf-8|utf-16|utf-32
 
                 Return: ~
                     (table) list of items
