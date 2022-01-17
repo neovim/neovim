@@ -97,7 +97,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod a+x llvm.sh
-          sudo ./llvm.sh 13
+          sudo ./llvm.sh 13 "" # Empty string is a workaround for a bug in the llvm.sh script
           rm llvm.sh
 
       - name: Install brew packages
