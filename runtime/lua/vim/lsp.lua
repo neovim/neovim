@@ -1131,7 +1131,7 @@ function lsp._text_document_did_save_handler(bufnr)
     if client.resolved_capabilities.text_document_save then
       local included_text
       if client.resolved_capabilities.text_document_save_include_text then
-        included_text = text()
+        included_text = text(bufnr)
       end
       client.notify('textDocument/didSave', {
         textDocument = {
