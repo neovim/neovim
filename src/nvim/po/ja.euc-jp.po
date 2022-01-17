@@ -1644,15 +1644,6 @@ msgstr " [w]"
 msgid " written"
 msgstr " 書込み"
 
-msgid "E205: Patchmode: can't save original file"
-msgstr "E205: patchmode: 原本ファイルを保存できません"
-
-msgid "E206: patchmode: can't touch empty original file"
-msgstr "E206: patchmode: 空の原本ファイルをtouchできません"
-
-msgid "E207: Can't delete backup file"
-msgstr "E207: バックアップファイルを消せません"
-
 msgid ""
 "\n"
 "WARNING: Original file may be lost or damaged\n"

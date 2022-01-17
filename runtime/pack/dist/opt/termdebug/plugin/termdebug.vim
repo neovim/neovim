@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Dec 16
+" Last Change: 2022 Jan 13
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -1344,6 +1344,15 @@ func s:HandleCursor(msg)
     if lnum =~ '^[0-9]*$'
       call s:GotoSourcewinOrCreateIt()
       if expand('%:p') != fnamemodify(fname, ':p')
+        augroup Termdebug
+          " Always open a file read-only instead of showing the ATTENTION
+          " prompt, since we are unlikely to want to edit the file.
+          " The file may be changed but not saved, warn for that.
+          au SwapExists * echohl WarningMsg
+                \ | echo 'Warning: file is being edited elsewhere'
+                \ | echohl None
+                \ | let v:swapchoice = 'o'
+        augroup END
         if &modified
           " TODO: find existing window
           exe 'split ' . fnameescape(fname)
@@ -1352,6 +1361,9 @@ func s:HandleCursor(msg)
         else
           exe 'edit ' . fnameescape(fname)
         endif
+        augroup Termdebug
+          au! SwapExists
+        augroup END
       endif
       exe lnum
       normal! zv
