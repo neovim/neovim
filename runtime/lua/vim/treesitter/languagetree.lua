@@ -133,6 +133,13 @@ function LanguageTree:parse()
 
   for lang, injection_ranges in pairs(injections_by_lang) do
     local has_lang = language.require_language(lang, nil, true)
+    local lang_by_extension = require'vim.filetype'._ft_by_extension(lang)
+    if not has_lang and type(lang_by_extension) == 'string' then
+      has_lang = language.require_language(lang_by_extension, nil, true)
+      if has_lang then
+        lang = lang_by_extension
+      end
+    end
 
     -- Child language trees should just be ignored if not found, since
     -- they can depend on the text of a node. Intermediate strings

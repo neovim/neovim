@@ -1572,4 +1572,12 @@ function M.match(name, bufnr)
   end
 end
 
+
+---@private
+-- Returns `:h filetype` based on based on extension
+-- ext string extension
+function M._ft_by_extension(ext)
+  return extension[ext]
+end
+
 return M
