@@ -11,13 +11,12 @@ Vim's capabilities.  Or define your own macros.
 
 |05.1|	The vimrc file
 |05.2|	The example vimrc file explained
-|05.3|	The defaults.vim file explained
-|05.4|	Simple mappings
-|05.5|	Adding a package
-|05.6|	Adding a plugin
-|05.7|	Adding a help file
-|05.8|	The option window
-|05.9|	Often used options
+|05.3|	Simple mappings
+|05.4|	Adding a package
+|05.5|	Adding a plugin
+|05.6|	Adding a help file
+|05.7|	The option window
+|05.8|	Often used options
 
      Next chapter: |usr_06.txt|  Using syntax highlighting
  Previous chapter: |usr_04.txt|  Making small changes
@@ -200,7 +199,7 @@ mapping.  If set (default), this may break plugins (but it's backward
 compatible).  See 'langremap'.
 
 ==============================================================================
-*05.4*	Simple mappings
+*05.3*	Simple mappings
 
 A mapping enables you to bind a set of Vim commands to a single key.  Suppose,
 for example, that you need to surround certain words with curly braces.  In
@@ -247,7 +246,7 @@ The ":map" command (with no arguments) lists your current mappings.  At
 least the ones for Normal mode.  More about mappings in section |40.1|.
 
 ==============================================================================
-*05.5*	Adding a package			*add-package* *vimball-install*
+*05.4*	Adding a package			*add-package* *vimball-install*
 
 A package is a set of files that you can add to Vim.  There are two kinds of
 packages: optional and automatically loaded on startup.
@@ -287,7 +286,7 @@ an archive or as a repository.  For an archive you can follow these steps:
 More information about packages can be found here: |packages|.
 
 ==============================================================================
-*05.6*	Adding a plugin					*add-plugin* *plugin*
+*05.5*	Adding a plugin					*add-plugin* *plugin*
 
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
@@ -423,7 +422,7 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.7*	Adding a help file		                   *add-local-help*
+*05.6*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
@@ -456,7 +455,7 @@ them through the tag.
 For writing a local help file, see |write-local-help|.
 
 ==============================================================================
-*05.8*	The option window
+*05.7*	The option window
 
 If you are looking for an option that does what you want, you can search in
 the help files here: |options|.  Another way is by using this command: >
@@ -495,7 +494,7 @@ border.  This is what the 'scrolloff' option does, it specifies an offset
 from the window border where scrolling starts.
 
 ==============================================================================
-*05.9*	Often used options
+*05.8*	Often used options
 
 There are an awful lot of options.  Most of them you will hardly ever use.
 Some of the more useful ones will be mentioned here.  Don't forget you can
