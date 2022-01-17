@@ -232,7 +232,11 @@ function! s:get_path(sect, name) abort
   "
   " Finally, we can avoid relying on -S or -s here since they are very
   " inconsistently supported. Instead, call -w with a section and a name.
-  let results = split(s:system(['man', s:find_arg, a:sect, a:name]))
+  if empty(a:sect)
+    let results = split(s:system(['man', s:find_arg, a:name]))
+  else
+    let results = split(s:system(['man', s:find_arg, a:sect, a:name]))
+  endif
 
   if empty(results)
     return ''
