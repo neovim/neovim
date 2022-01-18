@@ -7513,8 +7513,10 @@ bool tabstop_set(char_u *var, long **array)
   for (cp = var; *cp != NUL;) {
     int n = atoi((char *)cp);
 
+    // Catch negative values, overflow and ridiculous big values.
     if (n < 0 || n > 9999) {
       semsg(_(e_invarg2), cp);
+      XFREE_CLEAR(*array);
       return false;
     }
     (*array)[t++] = n;
