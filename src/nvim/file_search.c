@@ -1433,11 +1433,11 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
     rel_fname = NULL;
   }
 
-  if (len == 0) {
-    return NULL;
-  }
+  if (first == true) {
+    if (len == 0) {
+      return NULL;
+    }
 
-  if (first == TRUE) {
     // copy file name into NameBuff, expanding environment variables
     save_char = ptr[len];
     ptr[len] = NUL;
