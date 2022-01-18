@@ -1120,7 +1120,27 @@ func Test_visual_block_with_virtualedit()
   " clean up
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
-  call delete('XTest_beval')
+  call delete('XTest_block')
+endfunc
+
+func Test_visual_reselect_with_count()
+  " this was causing an illegal memory access
+  let lines =<< trim END
+
+
+
+      :
+      r<sfile>
+      exe "%norm e3\<c-v>kr\t"
+      :
+
+      :
+  END
+  call writefile(lines, 'XvisualReselect')
+  source XvisualReselect
+
+  bwipe!
+  call delete('XvisualReselect')
 endfunc
 
 
