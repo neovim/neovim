@@ -1123,6 +1123,14 @@ func Test_visual_block_with_virtualedit()
   call delete('XTest_block')
 endfunc
 
+func Test_visual_block_ctrl_w_f()
+  " Emtpy block selected in new buffer should not result in an error.
+  au! BufNew foo sil norm f
+  edit foo
+
+  au! BufNew
+endfunc
+
 func Test_visual_reselect_with_count()
   " this was causing an illegal memory access
   let lines =<< trim END
