@@ -247,7 +247,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
     } else {    // need to allocate memory for this block
       // If the number of pages matches use the bhdr_T from the free list and
       // allocate the data.
-      void *p = xmalloc(mfp->mf_page_size * page_count);
+      void *p = xmalloc((size_t)mfp->mf_page_size * page_count);
       hp = mf_rem_free(mfp);
       hp->bh_data = p;
     }
@@ -269,7 +269,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
-  (void)memset(hp->bh_data, 0, mfp->mf_page_size * page_count);
+  (void)memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
 
   return hp;
 }
@@ -528,7 +528,7 @@ bool mf_release_all(void)
 static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, unsigned page_count)
 {
   bhdr_T *hp = xmalloc(sizeof(bhdr_T));
-  hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
+  hp->bh_data = xmalloc((size_t)mfp->mf_page_size * page_count);
   hp->bh_page_count = page_count;
   return hp;
 }

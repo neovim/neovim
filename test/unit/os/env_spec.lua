@@ -191,7 +191,7 @@ describe('env.c', function()
 
       if ffi.abi('64bit') then
         -- couldn't use a bigger number because it gets converted to
-        -- double somewere, should be big enough anyway
+        -- double somewhere, should be big enough anyway
         -- maxuint64 = ffi.new 'size_t', 18446744073709551615
         local maxuint64 = ffi.new('size_t', 18446744073709000000)
         eq(NULL, cimp.os_getenvname_at_index(maxuint64))

@@ -915,10 +915,29 @@ int do_record(int c)
       apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
     }
   } else {  // stop recording
+    save_v_event_T save_v_event;
+    // Set the v:event dictionary with information about the recording.
+    dict_T *dict = get_v_event(&save_v_event);
+
+    // The recorded text contents.
+    p = get_recorded();
+    if (p != NULL) {
+      // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
+      vim_unescape_csi(p);
+      (void)tv_dict_add_str(dict, S_LEN("regcontents"), (const char *)p);
+    }
+
+    // Name of requested register, or empty string for unnamed operation.
+    char buf[NUMBUFLEN+2];
+    buf[0] = (char)regname;
+    buf[1] = NUL;
+    (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
+
     // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
     apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    restore_v_event(dict, &save_v_event);
     reg_recorded = reg_recording;
     reg_recording = 0;
     if (ui_has(kUIMessages)) {
@@ -926,13 +945,9 @@ int do_record(int c)
     } else {
       msg("");
     }
-    p = get_recorded();
     if (p == NULL) {
       retval = FAIL;
     } else {
-      // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
-      vim_unescape_csi(p);
-
       // We don't want to change the default register here, so save and
       // restore the current register name.
       old_y_previous = y_previous;
@@ -3139,11 +3154,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
   if (ve_flags == VE_ALL && y_type == kMTCharWise) {
     if (gchar_cursor() == TAB) {
-      /* Don't need to insert spaces when "p" on the last position of a
-       * tab or "P" on the first position. */
       int viscol = getviscol();
+      long ts = curbuf->b_p_ts;
+      // Don't need to insert spaces when "p" on the last position of a
+      // tab or "P" on the first position.
       if (dir == FORWARD
-          ? tabstop_padding(viscol, curbuf->b_p_ts, curbuf->b_p_vts_array) != 1
+          ? tabstop_padding(viscol, ts, curbuf->b_p_vts_array) != 1
           : curwin->w_cursor.coladd > 0) {
         coladvance_force(viscol);
       } else {
@@ -4123,7 +4139,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * If first leader has 'f' flag, the lines can be joined only if the
    * second line does not have a leader.
    * If first leader has 'e' flag, the lines can never be joined.
-   * If fist leader has 's' flag, the lines can only be joined if there is
+   * If first leader has 's' flag, the lines can only be joined if there is
    * some text after it and the second line has the 'm' flag.
    */
   if (leader1_flags != NULL) {

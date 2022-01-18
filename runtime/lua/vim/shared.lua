@@ -526,13 +526,23 @@ end
 ---     => error('arg1: expected even number, got 3')
 --- </pre>
 ---
----@param opt Map of parameter names to validations. Each key is a parameter
+--- If multiple types are valid they can be given as a list.
+--- <pre>
+---  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+---     => NOP (success)
+---
+---  vim.validate{arg1={1, {'string', table'}}}
+---     => error('arg1: expected string|table, got number')
+---
+--- </pre>
+---
+---@param opt table of parameter names to validations. Each key is a parameter
 ---          name; each value is a tuple in one of these forms:
 ---          1. (arg_value, type_name, optional)
 ---             - arg_value: argument value
----             - type_name: string type name, one of: ("table", "t", "string",
+---             - type_name: string|table type name, one of: ("table", "t", "string",
 ---               "s", "number", "n", "boolean", "b", "function", "f", "nil",
----               "thread", "userdata")
+---               "thread", "userdata") or list of them.
 ---             - optional: (optional) boolean, if true, `nil` is valid
 ---          2. (arg_value, fn, msg)
 ---             - arg_value: argument value
@@ -571,31 +581,43 @@ do
       end
 
       local val = spec[1]   -- Argument value.
-      local t = spec[2]     -- Type name, or callable.
+      local types = spec[2]     -- Type name, or callable.
       local optional = (true == spec[3])
 
-      if type(t) == 'string' then
-        local t_name = type_names[t]
-        if not t_name then
-          return false, string.format('invalid type name: %s', t)
-        end
+      if type(types) == 'string' then
+        types = {types}
+      end
 
-        if (not optional or val ~= nil) and not _is_type(val, t_name) then
-          return false, string.format("%s: expected %s, got %s", param_name, t_name, type(val))
-        end
-      elseif vim.is_callable(t) then
+      if vim.is_callable(types) then
         -- Check user-provided validation function.
-        local valid, optional_message = t(val)
+        local valid, optional_message = types(val)
         if not valid then
-          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val)
+          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), tostring(val))
           if optional_message ~= nil then
             error_message = error_message .. string.format(". Info: %s", optional_message)
           end
 
           return false, error_message
         end
+      elseif type(types) == 'table' then
+        local success = false
+        for i, t in ipairs(types) do
+          local t_name = type_names[t]
+          if not t_name then
+            return false, string.format('invalid type name: %s', t)
+          end
+          types[i] = t_name
+
+          if (optional and val == nil) or _is_type(val, t_name) then
+            success = true
+            break
+          end
+        end
+        if not success then
+          return false, string.format("%s: expected %s, got %s", param_name, table.concat(types, '|'), type(val))
+        end
       else
-        return false, string.format("invalid type name: %s", tostring(t))
+        return false, string.format("invalid type name: %s", tostring(types))
       end
     end
 

@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Dec 14
+" Last Change:	2022 Jan 13
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -392,7 +392,8 @@ au BufNewFile,BufRead configure.in,configure.ac setf config
 " CUDA Compute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
-" Dockerfilb; Podman uses the same syntax with name Containerfile
+" Dockerfile; Podman uses the same syntax with name Containerfile
+" Also see Dockerfile.* below.
 au BufNewFile,BufRead Containerfile,Dockerfile,*.Dockerfile	setf dockerfile
 
 " WildPackets EtherPeek Decoder
@@ -492,7 +493,7 @@ au BufNewFile,BufRead */debian/patches/*	call dist#ft#Dep3patch()
 " Diff files
 au BufNewFile,BufRead *.diff,*.rej		setf diff
 au BufNewFile,BufRead *.patch
-	\ if getline(1) =~ '^From [0-9a-f]\{40\} Mon Sep 17 00:00:00 2001$' |
+	\ if getline(1) =~# '^From [0-9a-f]\{40,\} Mon Sep 17 00:00:00 2001$' |
 	\   setf gitsendemail |
 	\ else |
 	\   setf diff |
@@ -671,6 +672,7 @@ autocmd BufRead,BufNewFile *.gift		setf gift
 
 " Git
 au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG 	setf gitcommit
+au BufNewFile,BufRead NOTES_EDITMSG,EDIT_DESCRIPTION		setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,/etc/gitconfig 	setf gitconfig
 au BufNewFile,BufRead */.config/git/config			setf gitconfig
 au BufNewFile,BufRead .gitmodules,*.git/modules/*/config	setf gitconfig
@@ -679,12 +681,8 @@ if !empty($XDG_CONFIG_HOME)
 endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
 au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
-au BufNewFile,BufRead .msg.[0-9]*
-      \ if getline(1) =~ '^From.*# This line is ignored.$' |
-      \   setf gitsendemail |
-      \ endif
 au BufNewFile,BufRead *.git/*
-      \ if getline(1) =~ '^\x\{40\}\>\|^ref: ' |
+      \ if getline(1) =~# '^\x\{40,\}\>\|^ref: ' |
       \   setf git |
       \ endif
 
@@ -958,9 +956,9 @@ au BufNewFile,BufRead lilo.conf			setf lilo
 " Lisp (*.el = ELisp, *.cl = Common Lisp)
 " *.jl was removed, it's also used for Julia, better skip than guess wrong.
 if has("fname_case")
-  au BufNewFile,BufRead *.lsp,*.lisp,*.el,*.cl,*.L,.emacs,.sawfishrc setf lisp
+  au BufNewFile,BufRead *.lsp,*.lisp,*.asd,*.el,*.cl,*.L,.emacs,.sawfishrc setf lisp
 else
-  au BufNewFile,BufRead *.lsp,*.lisp,*.el,*.cl,.emacs,.sawfishrc setf lisp
+  au BufNewFile,BufRead *.lsp,*.lisp,*.asd,*.el,*.cl,.emacs,.sawfishrc setf lisp
 endif
 
 " SBCL implementation of Common Lisp
@@ -1087,7 +1085,9 @@ au BufNewFile,BufRead *.mmp			setf mmp
 
 " Modsim III (or LambdaProlog)
 au BufNewFile,BufRead *.mod
-	\ if getline(1) =~ '\<module\>' |
+	\ if expand("<afile>") =~ '\<go.mod$' |
+	\   setf gomod |
+	\ elseif getline(1) =~ '\<module\>' |
 	\   setf lprolog |
 	\ else |
 	\   setf modsim3 |
@@ -1209,6 +1209,9 @@ au BufNewFile,BufRead *.xom,*.xin		setf omnimark
 
 " OPAM
 au BufNewFile,BufRead opam,*.opam,*.opam.template setf opam
+
+" OpenFOAM
+au BufNewFile,BufRead [a-zA-Z0-9]*Dict\(.*\)\=,[a-zA-Z]*Properties\(.*\)\=,*Transport\(.*\),fvSchemes,fvSolution,fvConstrains,fvModels,*/constant/g,*/0\(\.orig\)\=/* call dist#ft#FTfoam()
 
 " OpenROAD
 au BufNewFile,BufRead *.or			setf openroad
@@ -1662,7 +1665,7 @@ au BufNewFile,BufRead .zshrc,.zshenv,.zlogin,.zlogout,.zcompdump setf zsh
 au BufNewFile,BufRead *.zsh			setf zsh
 
 " Scheme
-au BufNewFile,BufRead *.scm,*.ss,*.rkt,*.rktd,*.rktl 	setf scheme
+au BufNewFile,BufRead *.scm,*.ss,*.sld,*.rkt,*.rktd,*.rktl 	setf scheme
 
 " Screen RC
 au BufNewFile,BufRead .screenrc,screenrc	setf screen
@@ -1744,6 +1747,7 @@ au BufNewFile,BufRead *.ice			setf slice
 
 " Microsoft Visual Studio Solution
 au BufNewFile,BufRead *.sln			setf solution
+au BufNewFile,BufRead *.slnf			setf json
 
 " Spice
 au BufNewFile,BufRead *.sp,*.spice		setf spice
@@ -1770,8 +1774,8 @@ au BufNewFile,BufRead *.sqr,*.sqi		setf sqr
 au BufNewFile,BufRead *.nut			setf squirrel
 
 " OpenSSH configuration
-au BufNewFile,BufRead ssh_config,*/.ssh/config		setf sshconfig
-au BufNewFile,BufRead */etc/ssh/ssh_config.d/*.conf	setf sshconfig
+au BufNewFile,BufRead ssh_config,*/.ssh/config,*/.ssh/*.conf	setf sshconfig
+au BufNewFile,BufRead */etc/ssh/ssh_config.d/*.conf		setf sshconfig
 
 " OpenSSH server configuration
 au BufNewFile,BufRead sshd_config			setf sshdconfig
@@ -2234,6 +2238,9 @@ au BufNewFile,BufRead crontab,crontab.*,*/etc/cron.d/*		call s:StarSetf('crontab
 " dnsmasq(8) configuration
 au BufNewFile,BufRead */etc/dnsmasq.d/*		call s:StarSetf('dnsmasq')
 
+" Dockerfile
+au BufNewFile,BufRead Dockerfile.*,Containerfile.*	call s:StarSetf('dockerfile')
+
 " Dracula
 au BufNewFile,BufRead drac.*			call s:StarSetf('dracula')
 
@@ -2277,6 +2284,9 @@ au BufNewFile,BufRead Kconfig.*			call s:StarSetf('kconfig')
 
 " Lilo: Linux loader
 au BufNewFile,BufRead lilo.conf*		call s:StarSetf('lilo')
+
+" Libsensors
+au BufNewFile,BufRead */etc/sensors.d/[^.]*	call s:StarSetf('sensors')
 
 " Logcheck
 au BufNewFile,BufRead */etc/logcheck/*.d*/*	call s:StarSetf('logcheck')
@@ -2400,10 +2410,12 @@ au BufNewFile,BufRead *.txt
         \|   setf text
         \| endif       
 
-" Use the filetype detect plugins.  They may overrule any of the previously
-" detected filetypes.
-runtime! ftdetect/*.vim
-runtime! ftdetect/*.lua
+if !exists('g:did_load_ftdetect')
+  " Use the filetype detect plugins.  They may overrule any of the previously
+  " detected filetypes.
+  runtime! ftdetect/*.vim
+  runtime! ftdetect/*.lua
+endif
 
 " NOTE: The above command could have ended the filetypedetect autocmd group
 " and started another one. Let's make sure it has ended to get to a consistent

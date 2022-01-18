@@ -25,16 +25,29 @@ end
 ---@param higroup highlight group to use for highlighting
 ---@param rtype type of range (:help setreg, default charwise)
 ---@param inclusive boolean indicating whether the range is end-inclusive (default false)
-function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive)
+---@param priority number indicating priority of highlight (default 50)
+function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive, priority)
   rtype = rtype or 'v'
   inclusive = inclusive or false
+  priority = priority or 50
 
   -- sanity check
   if start[2] < 0 or finish[1] < start[1] then return end
 
   local region = vim.region(bufnr, start, finish, rtype, inclusive)
   for linenr, cols in pairs(region) do
-    api.nvim_buf_add_highlight(bufnr, ns, higroup, linenr, cols[1], cols[2])
+    local end_row
+    if cols[2] == -1 then
+      end_row = linenr + 1
+      cols[2] = 0
+    end
+    api.nvim_buf_set_extmark(bufnr, ns, linenr, cols[1], {
+      hl_group = higroup,
+      end_row = end_row,
+      end_col = cols[2],
+      priority = priority,
+      strict = false
+    })
   end
 
 end
@@ -82,7 +95,7 @@ function highlight.on_yank(opts)
   pos1 = {pos1[2] - 1, pos1[3] - 1 + pos1[4]}
   pos2 = {pos2[2] - 1, pos2[3] - 1 + pos2[4]}
 
-  highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive)
+  highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive, 200)
 
   vim.defer_fn(
     function()

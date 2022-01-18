@@ -111,7 +111,7 @@ When mixing Number and Float the Number is converted to Float.  Otherwise
 there is no automatic conversion of Float.  You can use str2float() for String
 to Float, printf() for Float to String and float2nr() for Float to Number.
 
-						*E891* *E892* *E893* *E894*
+					*E362* *E891* *E892* *E893* *E894* *E907*
 When expecting a Float a Number can also be used, but nothing else.
 
 					*no-type-checking*
@@ -1195,6 +1195,7 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 expr8->name([args])	method call			*method* *->*
 expr8->{lambda}([args])
 
+							*E260* *E276*
 For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
@@ -2278,7 +2279,7 @@ USAGE				RESULT	DESCRIPTION	~
 abs({expr})			Float or Number  absolute value of {expr}
 acos({expr})			Float	arc cosine of {expr}
 add({object}, {item})		List/Blob   append {item} to {object}
-and({expr}, {expr})		Number  bitwise AND
+and({expr}, {expr})		Number	bitwise AND
 api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
 append({lnum}, {list})		Number	append lines {list} below line {lnum}
@@ -2310,7 +2311,7 @@ assert_notmatch({pat}, {text} [, {msg}])
 assert_report({msg})		Number	report a test failure
 assert_true({actual} [, {msg}])	Number	assert {actual} is true
 atan({expr})			Float	arc tangent of {expr}
-atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
+atan2({expr}, {expr})		Float	arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
@@ -2336,7 +2337,7 @@ char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
-cindent({lnum})		Number	C indent for line {lnum}
+cindent({lnum})			Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
 col({expr})			Number	column nr of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
@@ -2349,7 +2350,7 @@ copy({expr})			any	make a shallow copy of {expr}
 cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({list}, {expr} [, {ic} [, {start}]])
-				Number	 count how many {expr} are in {list}
+				Number	count how many {expr} are in {list}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 ctxget([{index}])		Dict	return the |context| dict at {index}
@@ -2362,7 +2363,7 @@ ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
-debugbreak({pid})		Number  interrupt process being debugged
+debugbreak({pid})		Number	interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
 deletebufline({buf}, {first}[, {last}])
@@ -2381,7 +2382,7 @@ eval({string})			any	evaluate {string} into its value
 eventhandler()			Number	|TRUE| if inside an event handler
 executable({expr})		Number	1 if executable {expr} exists
 execute({command})		String	execute and capture output of {command}
-exepath({expr})		String  full path of the command {expr}
+exepath({expr})			String	full path of the command {expr}
 exists({expr})			Number	|TRUE| if {expr} exists
 extend({expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
@@ -2410,10 +2411,11 @@ foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
 foreground()			Number	bring the Vim window to the foreground
+fullcommand({name})		String	get full command from {name}
 funcref({name} [, {arglist}] [, {dict}])
-				Funcref reference to function {name}
+				Funcref	reference to function {name}
 function({name} [, {arglist}] [, {dict}])
-				Funcref named reference to function {name}
+				Funcref	named reference to function {name}
 garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
@@ -2501,11 +2503,11 @@ inputlist({textlist})		Number	let the user pick from a choice list
 inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
 inputsecret({prompt} [, {text}])
-				String  like input() but hiding the text
+				String	like input() but hiding the text
 insert({object}, {item} [, {idx}])
 				List	insert {item} in {object} [before {idx}]
 interrupt()			none	interrupt script execution
-invert({expr})			Number  bitwise invert
+invert({expr})			Number	bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
 isinf({expr})			Number	determine if {expr} is infinity value
 					(positive or negative)
@@ -2525,7 +2527,7 @@ json_encode({expr})		String	Convert {expr} to JSON
 keys({dict})			List	keys in {dict}
 len({expr})			Number	the length of {expr}
 libcall({lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
-libcallnr({lib}, {func}, {arg})  Number  idem, but return a Number
+libcallnr({lib}, {func}, {arg})	Number	idem, but return a Number
 line({expr} [, {winid}])	Number	line nr of cursor, last line or mark
 line2byte({lnum})		Number	byte count of line {lnum}
 lispindent({lnum})		Number	Lisp indent for line {lnum}
@@ -2567,7 +2569,7 @@ msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
-or({expr}, {expr})		Number  bitwise OR
+or({expr}, {expr})		Number	bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
 perleval({expr})		any	evaluate |perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
@@ -2627,7 +2629,7 @@ screenrow()			Number	current cursor row
 screenstring({row}, {col})	String	characters at screen position
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 				Number	search for {pattern}
-searchcount([{options}])	Dict    Get or update the last search count
+searchcount([{options}])	Dict	Get or update the last search count
 searchdecl({name} [, {global} [, {thisblock}]])
 				Number	search for variable declaration
 searchpair({start}, {middle}, {end} [, {flags} [, {skip} [...]]])
@@ -2699,7 +2701,7 @@ split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
-stdpath({what})                 String/List  returns the standard path(s) for {what}
+stdpath({what})			String/List  returns the standard path(s) for {what}
 str2float({expr} [, {quoted}])	Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF-8 value
@@ -2735,7 +2737,7 @@ synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
 synIDattr({synID}, {what} [, {mode}])
 				String	attribute {what} of syntax ID {synID}
 synIDtrans({synID})		Number	translated syntax ID of {synID}
-synconcealed({lnum}, {col})	List    info about concealing
+synconcealed({lnum}, {col})	List	info about concealing
 synstack({lnum}, {col})	List	stack of syntax IDs at {lnum} and {col}
 system({cmd} [, {input}])	String	output of shell command/filter {cmd}
 systemlist({cmd} [, {input}])	List	output of shell command/filter {cmd}
@@ -2771,7 +2773,7 @@ values({dict})			List	values in {dict}
 virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wait({timeout}, {condition}[, {interval}])
-				Number  Wait until {condition} is satisfied
+				Number	Wait until {condition} is satisfied
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_execute({id}, {command} [, {silent}])
 				String	execute {command} in window {id}
@@ -4162,11 +4164,12 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		Can also be used as a |method|: >
 			Getpattern()->expand()
 
-expandcmd({expr})					*expandcmd()*
-		Expand special items in {expr} like what is done for an Ex
-		command such as `:edit`.  This expands special keywords, like
-		with |expand()|, and environment variables, anywhere in
-		{expr}.  "~user" and "~/path" are only expanded at the start.
+expandcmd({string})					*expandcmd()*
+		Expand special items in String {string} like what is done for
+		an Ex command such as `:edit`.  This expands special keywords,
+		like with |expand()|, and environment variables, anywhere in
+		{string}.  "~user" and "~/path" are only expanded at the
+		start.
 		Returns the expanded string.  Example: >
 			:echo expandcmd('make %<.o')
 
@@ -4550,6 +4553,21 @@ foreground()	Move the Vim window to the foreground.  Useful when sent from
 		|remote_foreground()| instead.
 		{only in the Win32 GUI and console version}
 
+fullcommand({name})						*fullcommand()*
+		Get the full command name from a short abbreviated command
+		name; see |20.2| for details on command abbreviations.
+
+		The string argument {name} may start with a `:` and can
+		include a [range], these are skipped and not returned.
+		Returns an empty string if a command doesn't exist or if it's
+		ambiguous (for user-defined commands).
+
+		For example `fullcommand('s')`, `fullcommand('sub')`,
+		`fullcommand(':%substitute')` all return "substitute".
+
+		Can also be used as a |method|: >
+			GetName()->fullcommand()
+<
 						*funcref()*
 funcref({name} [, {arglist}] [, {dict}])
 		Just like |function()|, but the returned Funcref will lookup
@@ -4557,8 +4575,10 @@ funcref({name} [, {arglist}] [, {dict}])
 		function {name} is redefined later.
 
 		Unlike |function()|, {name} must be an existing user function.
-		Also for autoloaded functions. {name} cannot be a builtin
-		function.
+		It only works for an autoloaded function if it has already
+		been loaded (to avoid mistakenly loading the autoload script
+		when only intending to use the function name, use |function()|
+		instead). {name} cannot be a builtin function.
 
 		Can also be used as a |method|: >
 			GetFuncname()->funcref([arg])
@@ -5420,8 +5440,9 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		When {regname} was not set the result is an empty string.
-		The {regname} argument is a string.
+<		When register {regname} was not set the result is an empty
+		string.
+		The {regname} argument must be a string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -6874,7 +6895,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 			GetText()->match('word')
 			GetList()->match('word')
 <
-				*matchadd()* *E798* *E799* *E801* *E957*
+			*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -11045,7 +11066,7 @@ See |:verbose-cmd| for more information.
 			command, use line breaks instead of |:bar|: >
 				:exe "func Foo()\necho 'foo'\nendfunc"
 <
-				*:delf* *:delfunction* *E130* *E131* *E933*
+				*:delf* *:delfunction* *E131* *E933*
 :delf[unction][!] {name}
 			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
@@ -13135,7 +13156,7 @@ code can be used: >
     unlet scriptnames_output
 
 ==============================================================================
-The sandbox					*eval-sandbox* *sandbox* *E48*
+The sandbox					*eval-sandbox* *sandbox*
 
 The 'foldexpr', 'formatexpr', 'includeexpr', 'indentexpr', 'statusline' and
 'foldtext' options may be evaluated in a sandbox.  This means that you are
@@ -13144,6 +13165,7 @@ safety for when these options are set from a modeline.  It is also used when
 the command from a tags file is executed and for CTRL-R = in the command line.
 The sandbox is also used for the |:sandbox| command.
 
+								*E48*
 These items are not allowed in the sandbox:
 	- changing the buffer text
 	- defining or changing mapping, autocommands, user commands

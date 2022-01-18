@@ -184,7 +184,7 @@ function M.formatting_sync(options, timeout_ms)
 
     local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, bufnr)
     if result and result.result then
-      util.apply_text_edits(result.result, bufnr)
+      util.apply_text_edits(result.result, bufnr, client.offset_encoding)
     elseif err then
       vim.notify('vim.lsp.buf.formatting_sync: ' .. err, vim.log.levels.WARN)
     end
@@ -228,7 +228,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
       local params = util.make_formatting_params(options)
       local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
-        util.apply_text_edits(result.result, bufnr)
+        util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       elseif err then
         vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
       end
@@ -447,13 +447,16 @@ end
 ---@param query (string, optional)
 function M.workspace_symbol(query)
   query = query or npcall(vfn.input, "Query: ")
+  if query == nil then
+    return
+  end
   local params = {query = query}
   request('workspace/symbol', params)
 end
 
 --- Send request to the server to resolve document highlights for the current
 --- text document position. This request can be triggered by a  key mapping or
---- by events such as `CursorHold`, eg:
+--- by events such as `CursorHold`, e.g.:
 ---
 --- <pre>
 --- autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
@@ -503,7 +506,7 @@ local function on_code_action_results(results, ctx)
   ---@private
   local function apply_action(action, client)
     if action.edit then
-      util.apply_workspace_edit(action.edit)
+      util.apply_workspace_edit(action.edit, client.offset_encoding)
     end
     if action.command then
       local command = type(action.command) == 'table' and action.command or action
@@ -627,14 +630,19 @@ end
 
 --- Executes an LSP server command.
 ---
----@param command A valid `ExecuteCommandParams` object
+---@param command_params table A valid `ExecuteCommandParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-function M.execute_command(command)
+function M.execute_command(command_params)
   validate {
-    command = { command.command, 's' },
-    arguments = { command.arguments, 't', true }
+    command = { command_params.command, 's' },
+    arguments = { command_params.arguments, 't', true }
   }
-  request('workspace/executeCommand', command)
+  command_params = {
+    command=command_params.command,
+    arguments=command_params.arguments,
+    workDoneToken=command_params.workDoneToken,
+  }
+  request('workspace/executeCommand', command_params )
 end
 
 return M

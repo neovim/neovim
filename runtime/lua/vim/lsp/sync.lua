@@ -298,7 +298,7 @@ end
 
 ---@private
 -- rangelength depends on the offset encoding
--- bytes for utf-8 (clangd with extenion)
+-- bytes for utf-8 (clangd with extension)
 -- codepoints for utf-16
 -- codeunits for utf-32
 -- Line endings count here as 2 chars for \r\n (dos), 1 char for \n (unix), and 1 char for \r (mac)

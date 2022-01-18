@@ -1536,7 +1536,7 @@ static inline void east_set_error(const ParserState *const pstate, ExprASTError 
     /* TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to */ \
     /* handle environment variables like those bash uses for */ \
     /* `export -f`: their names consist not only of alphanumeric */ \
-    /* characetrs. */ \
+    /* characters. */ \
     case kExprNodeComplexIdentifier: \
     case kExprNodePlainIdentifier: \
     case kExprNodeCurlyBracesIdentifier: { \

@@ -249,7 +249,7 @@ g8			Print the hex values of the bytes used in the
 			To enter |Terminal-mode| automatically: >
 			      autocmd TermOpen * startinsert
 <
-							*:!cmd* *:!* *E34*
+							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
 			The command runs in a non-interactive shell connected
@@ -261,6 +261,7 @@ g8			Print the hex values of the bytes used in the
 			Use |jobstart()| instead. >
 				:call jobstart('foo', {'detach':1})
 <
+							*E34*
 			Any "!" in {cmd} is replaced with the previous
 			external command (see also 'cpoptions'), unless
 			escaped by a backslash.  Example: ":!ls" followed by
@@ -357,19 +358,19 @@ g8			Print the hex values of the bytes used in the
 :redi[r] END		End redirecting messages.
 
 							*:filt* *:filter*
-:filt[er][!] {pat} {command}
-:filt[er][!] /{pat}/ {command}
+:filt[er][!] {pattern} {command}
+:filt[er][!] /{pattern}/ {command}
 			Restrict the output of {command} to lines matching
-			with {pat}.  For example, to list only xml files: >
+			with {pattern}.  For example, to list only xml files: >
 				:filter /\.xml$/ oldfiles
 <			If the [!] is given, restrict the output of {command}
-			to lines that do NOT match {pat}.
+			to lines that do NOT match {pattern}.
 
-			{pat} is a Vim search pattern.  Instead of enclosing
+			{pattern} is a Vim search pattern.  Instead of enclosing
 			it in / any non-ID character (see |'isident'|) can be
-			used, so long as it does not appear in {pat}.  Without
-			the enclosing character the pattern cannot include the
-			bar character. 'ignorecase' is not used.
+			used, so long as it does not appear in {pattern}.
+			Without the enclosing character the pattern cannot
+			include the bar character. 'ignorecase' is not used.
 
 			The pattern is matched against the relevant part of
 			the output, not necessarily the whole line. Only some

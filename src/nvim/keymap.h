@@ -245,6 +245,7 @@ enum key_extra {
   KE_MOUSEMOVE = 100,        // mouse moved with no button down
   // , KE_CANCEL = 101        // return from vgetc
   KE_EVENT = 102,           // event
+  KE_LUA = 103,  // lua special key
   KE_COMMAND = 104,  // <Cmd> special key
 };
 
@@ -443,6 +444,7 @@ enum key_extra {
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
+#define K_LUA           TERMCAP2KEY(KS_EXTRA, KE_LUA)
 
 // Bits for modifier mask
 // 0x01 cannot be used, because the modifier must be 0x02 or higher

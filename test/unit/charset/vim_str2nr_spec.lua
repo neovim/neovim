@@ -463,7 +463,7 @@ describe('vim_str2nr()', function()
     test_vim_str2nr("1'2'3'4", flags, {len = 7, num = 1234, unum = 1234, pre = 0}, 0)
 
     -- counter-intuitive, but like Vim, strict=true should partially accept
-    -- these: (' and - are not alpha-numeric)
+    -- these: (' and - are not alphanumeric)
     test_vim_str2nr("7''331", flags, {len = 1, num = 7, unum = 7, pre = 0}, 0)
     test_vim_str2nr("123'x4", flags, {len = 3, num = 123, unum = 123, pre = 0}, 0)
     test_vim_str2nr("1337'", flags, {len = 4, num = 1337, unum = 1337, pre = 0}, 0)

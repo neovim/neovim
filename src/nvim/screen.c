@@ -3771,7 +3771,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
             // Make sure, the highlighting for the tab char will be
             // correctly set further below (effectively reverts the
-            // FIX_FOR_BOGSUCOLS macro.
+            // FIX_FOR_BOGSUCOLS macro).
             if (n_extra == tab_len + vc_saved && wp->w_p_list
                 && wp->w_p_lcs_chars.tab1) {
               tab_len += vc_saved;
@@ -4130,7 +4130,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            grid->Columns * (row - startrow + 1) + v
+            (long)grid->Columns * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
            || draw_color_col || line_attr_lowprio || line_attr
            || diff_hlf != (hlf_T)0 || has_virttext)) {
@@ -4294,7 +4294,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // Store the character.
       //
       if (wp->w_p_rl && utf_char2cells(mb_c) > 1) {
-        // A double-wide character is: put first halve in left cell.
+        // A double-wide character is: put first half in left cell.
         off--;
         col--;
       }
@@ -4637,8 +4637,8 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
 {
   return wp->w_p_cul
-    && lnum == wp->w_cursor.lnum
-    && (wp->w_p_culopt_flags & CULOPT_NBR);
+         && lnum == wp->w_cursor.lnum
+         && (wp->w_p_culopt_flags & CULOPT_NBR);
 }
 
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
@@ -4834,9 +4834,9 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
       end_dirty = col + char_cells;
       // When writing a single-width character over a double-width
       // character and at the end of the redrawn text, need to clear out
-      // the right halve of the old character.
-      // Also required when writing the right halve of a double-width
-      // char over the left halve of an existing one
+      // the right half of the old character.
+      // Also required when writing the right half of a double-width
+      // char over the left half of an existing one
       if (col + char_cells == endcol
           && ((char_cells == 1
                && grid_off2cells(grid, off_to, max_off_to) > 1)
@@ -5887,8 +5887,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
   }
   off = grid->line_offset[row] + col;
 
-  /* When drawing over the right halve of a double-wide char clear out the
-   * left halve.  Only needed in a terminal. */
+  // When drawing over the right half of a double-wide char clear out the
+  // left half.  Only needed in a terminal.
   if (grid != &default_grid && col == 0 && grid_invalid_row(grid, row)) {
     // redraw the previous cell, make it empty
     put_dirty_first = -1;
@@ -5950,9 +5950,9 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
     if (need_redraw) {
       // When at the end of the text and overwriting a two-cell
       // character with a one-cell character, need to clear the next
-      // cell.  Also when overwriting the left halve of a two-cell char
-      // with the right halve of a two-cell char.  Do this only once
-      // (utf8_off2cells() may return 2 on the right halve).
+      // cell.  Also when overwriting the left half of a two-cell char
+      // with the right half of a two-cell char.  Do this only once
+      // (utf8_off2cells() may return 2 on the right half).
       if (clear_next_cell) {
         clear_next_cell = false;
       } else if ((len < 0 ? ptr[mbyte_blen] == NUL
@@ -6351,9 +6351,9 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
   }
 
   for (int row = start_row; row < end_row; row++) {
-    // When drawing over the right halve of a double-wide char clear
-    // out the left halve.  When drawing over the left halve of a
-    // double wide-char clear out the right halve.  Only needed in a
+    // When drawing over the right half of a double-wide char clear
+    // out the left half.  When drawing over the left half of a
+    // double wide-char clear out the right half.  Only needed in a
     // terminal.
     if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
       grid_puts_len(grid, (char_u *)" ", 1, row, start_col - 1, 0);
@@ -6762,7 +6762,7 @@ void grid_clear_line(ScreenGrid *grid, unsigned off, int width, bool valid)
 
 void grid_invalidate(ScreenGrid *grid)
 {
-  (void)memset(grid->attrs, -1, grid->Rows * grid->Columns * sizeof(sattr_T));
+  (void)memset(grid->attrs, -1, sizeof(sattr_T) * grid->Rows * grid->Columns);
 }
 
 bool grid_invalid_row(ScreenGrid *grid, int row)

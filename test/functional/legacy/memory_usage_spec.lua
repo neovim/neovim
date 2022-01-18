@@ -195,10 +195,10 @@ describe('memory usage', function()
     local after = monitor_memory_usage(pid)
     source('bwipe!')
     poke_eventloop()
-    -- Allow for an increase of 5% in memory usage, which accommodates minor fluctuation,
+    -- Allow for an increase of 10% in memory usage, which accommodates minor fluctuation,
     -- but is small enough that if memory were not released (prior to PR #14884), the test
     -- would fail.
-    local upper = before.last * 1.05
+    local upper = before.last * 1.10
     check_result({before=before, after=after}, pcall(ok, after.last <= upper))
   end)
 end)

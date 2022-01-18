@@ -74,8 +74,8 @@ local function uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
-local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
-local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):[a-zA-Z]:.*'
+local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
+local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 
 --- Get a URI from a bufnr
 ---@param bufnr number

@@ -40,6 +40,55 @@ assert(vim)
 vim.inspect = package.loaded['vim.inspect']
 assert(vim.inspect)
 
+vim.filetype = package.loaded['vim.filetype']
+assert(vim.filetype)
+
+local pathtrails = {}
+vim._so_trails = {}
+for s in  (package.cpath..';'):gmatch('[^;]*;') do
+    s = s:sub(1, -2)  -- Strip trailing semicolon
+  -- Find out path patterns. pathtrail should contain something like
+  -- /?.so, \?.dll. This allows not to bother determining what correct
+  -- suffixes are.
+  local pathtrail = s:match('[/\\][^/\\]*%?.*$')
+  if pathtrail and not pathtrails[pathtrail] then
+    pathtrails[pathtrail] = true
+    table.insert(vim._so_trails, pathtrail)
+  end
+end
+
+function vim._load_package(name)
+  local basename = name:gsub('%.', '/')
+  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
+  local found = vim.api.nvim__get_runtime(paths, false, {is_lua=true})
+  if #found > 0 then
+    local f, err = loadfile(found[1])
+    return f or error(err)
+  end
+
+  local so_paths = {}
+  for _,trail in ipairs(vim._so_trails) do
+    local path = "lua"..trail:gsub('?', basename) -- so_trails contains a leading slash
+    table.insert(so_paths, path)
+  end
+
+  found = vim.api.nvim__get_runtime(so_paths, false, {is_lua=true})
+  if #found > 0 then
+    -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
+    -- a) strip prefix up to and including the first dash, if any
+    -- b) replace all dots by underscores
+    -- c) prepend "luaopen_"
+    -- So "foo-bar.baz" should result in "luaopen_bar_baz"
+    local dash = name:find("-", 1, true)
+    local modname = dash and name:sub(dash + 1) or name
+    local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
+    return f or error(err)
+  end
+  return nil
+end
+
+table.insert(package.loaders, 1, vim._load_package)
+
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 setmetatable(vim, {
@@ -66,6 +115,9 @@ setmetatable(vim, {
     elseif key == 'ui' then
       t.ui = require('vim.ui')
       return t.ui
+    elseif key == 'keymap' then
+      t.keymap = require('vim.keymap')
+      return t.keymap
     end
   end
 })
@@ -373,23 +425,43 @@ function vim.defer_fn(fn, timeout)
 end
 
 
---- Notification provider
+--- Display a notification to the user.
 ---
---- Without a runtime, writes to :Messages
----@see :help nvim_notify
----@param msg string Content of the notification to show to the user
----@param log_level number|nil enum from vim.log.levels
----@param opts table|nil additional options (timeout, etc)
-function vim.notify(msg, log_level, opts) -- luacheck: no unused
-  if log_level == vim.log.levels.ERROR then
+--- This function can be overridden by plugins to display notifications using a
+--- custom provider (such as the system notification provider). By default,
+--- writes to |:messages|.
+---
+---@param msg string Content of the notification to show to the user.
+---@param level number|nil One of the values from |vim.log.levels|.
+---@param opts table|nil Optional parameters. Unused by default.
+function vim.notify(msg, level, opts) -- luacheck: no unused args
+  if level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
-  elseif log_level == vim.log.levels.WARN then
+  elseif level == vim.log.levels.WARN then
     vim.api.nvim_echo({{msg, 'WarningMsg'}}, true, {})
   else
     vim.api.nvim_echo({{msg}}, true, {})
   end
 end
 
+do
+  local notified = {}
+
+  --- Display a notification only one time.
+  ---
+  --- Like |vim.notify()|, but subsequent calls with the same message will not
+  --- display a notification.
+  ---
+  ---@param msg string Content of the notification to show to the user.
+  ---@param level number|nil One of the values from |vim.log.levels|.
+  ---@param opts table|nil Optional parameters. Unused by default.
+  function vim.notify_once(msg, level, opts) -- luacheck: no unused args
+    if not notified[msg] then
+      vim.notify(msg, level, opts)
+      notified[msg] = true
+    end
+  end
+end
 
 ---@private
 function vim.register_keystroke_callback()
@@ -615,6 +687,25 @@ vim._expand_pat_get_parts = function(lua_string)
   parts = vim.tbl_filter(function(val) return #val > 0 end, parts)
 
   return parts, search_index
+end
+
+---Prints given arguments in human-readable format.
+---Example:
+---<pre>
+---  -- Print highlight group Normal and store it's contents in a variable.
+---  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
+---</pre>
+---@see |vim.inspect()|
+---@return given arguments.
+function vim.pretty_print(...)
+  local objects = {}
+  for i = 1, select('#', ...) do
+    local v = select(i, ...)
+    table.insert(objects, vim.inspect(v))
+  end
+
+  print(table.concat(objects, '    '))
+  return ...
 end
 
 return module

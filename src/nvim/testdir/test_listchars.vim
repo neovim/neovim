@@ -331,13 +331,27 @@ func Test_listchars_invalid()
   call assert_fails('set listchars=space:xx', 'E474:')
   call assert_fails('set listchars=tab:xxxx', 'E474:')
 
-  " Has non-single width character
+  " Has double-width character
   call assert_fails('set listchars=space:·', 'E474:')
   call assert_fails('set listchars=tab:·x', 'E474:')
   call assert_fails('set listchars=tab:x·', 'E474:')
   call assert_fails('set listchars=tab:xx·', 'E474:')
   call assert_fails('set listchars=multispace:·', 'E474:')
   call assert_fails('set listchars=multispace:xxx·', 'E474:')
+
+  " Has control character
+  call assert_fails("set listchars=space:\x01", 'E474:')
+  call assert_fails("set listchars=tab:\x01x", 'E474:')
+  call assert_fails("set listchars=tab:x\x01", 'E474:')
+  call assert_fails("set listchars=tab:xx\x01", 'E474:')
+  call assert_fails("set listchars=multispace:\x01", 'E474:')
+  call assert_fails("set listchars=multispace:xxx\x01", 'E474:')
+  call assert_fails('set listchars=space:\\x01', 'E474:')
+  call assert_fails('set listchars=tab:\\x01x', 'E474:')
+  call assert_fails('set listchars=tab:x\\x01', 'E474:')
+  call assert_fails('set listchars=tab:xx\\x01', 'E474:')
+  call assert_fails('set listchars=multispace:\\x01', 'E474:')
+  call assert_fails('set listchars=multispace:xxx\\x01', 'E474:')
 
   enew!
   set ambiwidth& listchars& ff&

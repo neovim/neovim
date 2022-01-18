@@ -111,13 +111,15 @@ M['client/registerCapability'] = function(_, _, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-M['workspace/applyEdit'] = function(_, workspace_edit)
+M['workspace/applyEdit'] = function(_, workspace_edit, ctx)
   if not workspace_edit then return end
   -- TODO(ashkan) Do something more with label?
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
   if workspace_edit.label then
     print("Workspace edit", workspace_edit.label)
   end
-  local status, result = pcall(util.apply_workspace_edit, workspace_edit.edit)
+  local status, result = pcall(util.apply_workspace_edit, workspace_edit.edit, client.offset_encoding)
   return {
     applied = status;
     failureReason = result;
@@ -159,6 +161,31 @@ M['textDocument/codeLens'] = function(...)
 end
 
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+M['textDocument/references'] = function(_, result, ctx, config)
+  if not result or vim.tbl_isempty(result) then
+    vim.notify('No references found')
+  else
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    config = config or {}
+    if config.loclist then
+      vim.fn.setloclist(0, {}, ' ', {
+        title = 'References';
+        items = util.locations_to_items(result, client.offset_encoding);
+        context = ctx;
+      })
+      api.nvim_command("lopen")
+    else
+      vim.fn.setqflist({}, ' ', {
+        title = 'References';
+        items = util.locations_to_items(result, client.offset_encoding);
+        context = ctx;
+      })
+      api.nvim_command("botright copen")
+    end
+  end
+end
+
 
 ---@private
 --- Return a function that converts LSP responses to list items and opens the list
@@ -169,23 +196,26 @@ end
 ---   loclist: (boolean) use the location list (default is to use the quickfix list)
 ---
 ---@param map_result function `((resp, bufnr) -> list)` to convert the response
----@param entity name of the resource used in a `not found` error message
-local function response_to_list(map_result, entity)
-  return function(_,result, ctx, config)
+---@param entity string name of the resource used in a `not found` error message
+---@param title_fn function Function to call to generate list title
+local function response_to_list(map_result, entity, title_fn)
+  return function(_, result, ctx, config)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No ' .. entity .. ' found')
     else
       config = config or {}
       if config.loclist then
         vim.fn.setloclist(0, {}, ' ', {
-          title = 'Language Server';
+          title = title_fn(ctx);
           items = map_result(result, ctx.bufnr);
+          context = ctx;
         })
         api.nvim_command("lopen")
       else
         vim.fn.setqflist({}, ' ', {
-          title = 'Language Server';
+          title = title_fn(ctx);
           items = map_result(result, ctx.bufnr);
+          context = ctx;
         })
         api.nvim_command("botright copen")
       end
@@ -194,31 +224,36 @@ local function response_to_list(map_result, entity)
 end
 
 
---see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = response_to_list(util.locations_to_items, 'references')
-
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols')
+M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols', function(ctx)
+  local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ":.")
+  return string.format('Symbols in %s', fname)
+end)
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols')
+M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
+  return string.format("Symbols matching '%s'", ctx.params.query)
+end)
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
-M['textDocument/rename'] = function(_, result, _)
+M['textDocument/rename'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_workspace_edit(result)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_workspace_edit(result, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
 M['textDocument/rangeFormatting'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_text_edits(result, ctx.bufnr)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 M['textDocument/formatting'] = function(_, result, ctx, _)
   if not result then return end
-  util.apply_text_edits(result, ctx.bufnr)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
@@ -246,7 +281,7 @@ end
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
----         - See |vim.api.nvim_open_win()|
+---         - See |nvim_open_win()|
 function M.hover(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
@@ -277,19 +312,23 @@ local function location_handler(_, result, ctx, _)
     local _ = log.info() and log.info(ctx.method, 'No location found')
     return nil
   end
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
 
   if vim.tbl_islist(result) then
-    util.jump_to_location(result[1])
+    util.jump_to_location(result[1], client.offset_encoding)
 
     if #result > 1 then
-      vim.fn.setqflist({}, ' ', {title = 'LSP locations', items = util.locations_to_items(result)})
+      vim.fn.setqflist({}, ' ', {
+        title = 'LSP locations',
+        items = util.locations_to_items(result, client.offset_encoding)
+      })
       api.nvim_command("copen")
     end
   else
-    util.jump_to_location(result)
+    util.jump_to_location(result, client.offset_encoding)
   end
 end
 
@@ -439,14 +478,20 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      local client = vim.lsp.get_client_by_id(ctx.client_id)
-      local client_name = client and client.name or string.format("client_id=%d", ctx.client_id)
       -- LSP spec:
       -- interface ResponseError:
       --  code: integer;
       --  message: string;
       --  data?: string | number | boolean | array | object | null;
-      return err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
+
+      -- Per LSP, don't show ContentModified error to the user.
+      if err.code ~= protocol.ErrorCodes.ContentModified then
+        local client = vim.lsp.get_client_by_id(ctx.client_id)
+        local client_name = client and client.name or string.format("client_id=%d", ctx.client_id)
+
+        err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
+      end
+      return
     end
 
     return fn(err, result, ctx, config)

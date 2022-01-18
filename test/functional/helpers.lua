@@ -451,6 +451,7 @@ function module.new_argv(...)
         'GCOV_ERROR_FILE',
         'XDG_DATA_DIRS',
         'TMPDIR',
+        'VIMRUNTIME',
       }) do
         if not env_tbl[k] then
           env_tbl[k] = os.getenv(k)

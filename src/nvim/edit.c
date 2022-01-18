@@ -643,7 +643,10 @@ static int insert_check(VimState *state)
   update_curswant();
   s->old_topline = curwin->w_topline;
   s->old_topfill = curwin->w_topfill;
-  s->lastc = s->c;   // remember previous char for CTRL-D
+
+  if (s->c != K_EVENT) {
+    s->lastc = s->c;  // remember previous char for CTRL-D
+  }
 
   // After using CTRL-G U the next cursor key will not break undo.
   if (dont_sync_undo == kNone) {
@@ -1073,8 +1076,14 @@ static int insert_handle_key(InsertState *s)
 
   case K_COMMAND:       // some command
     do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+    goto check_pum;
+
+  case K_LUA:
+    map_execute_lua();
 
 check_pum:
+    // nvim_select_popupmenu_item() can be called from the handling of
+    // K_EVENT, K_COMMAND, or K_LUA.
     // TODO(bfredl): Not entirely sure this indirection is necessary
     // but doing like this ensures using nvim_select_popupmenu_item is
     // equivalent to selecting the item with a typed key.
@@ -1597,8 +1606,8 @@ static void ins_ctrl_v(void)
  */
 static int pc_status;
 #define PC_STATUS_UNSET 0       // pc_bytes was not set
-#define PC_STATUS_RIGHT 1       // right halve of double-wide char
-#define PC_STATUS_LEFT  2       // left halve of double-wide char
+#define PC_STATUS_RIGHT 1       // right half of double-wide char
+#define PC_STATUS_LEFT  2       // left half of double-wide char
 #define PC_STATUS_SET   3       // pc_bytes was filled
 static char_u pc_bytes[MB_MAXBYTES + 1];  // saved bytes
 static int pc_attr;
@@ -1685,7 +1694,7 @@ static void init_prompt(int cmdchar_todo)
   // Insert always starts after the prompt, allow editing text after it.
   if (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)STRLEN(prompt)) {
     Insstart.lnum = curwin->w_cursor.lnum;
-    Insstart.col = STRLEN(prompt);
+    Insstart.col = (colnr_T)STRLEN(prompt);
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
     Insstart_blank_vcol = MAXCOL;
@@ -1696,7 +1705,7 @@ static void init_prompt(int cmdchar_todo)
     coladvance(MAXCOL);
   }
   if (curwin->w_cursor.col < (colnr_T)STRLEN(prompt)) {
-    curwin->w_cursor.col = STRLEN(prompt);
+    curwin->w_cursor.col = (colnr_T)STRLEN(prompt);
   }
   // Make sure the cursor is in a valid position.
   check_cursor();
@@ -3613,7 +3622,7 @@ static bool ins_compl_prep(int c)
   // Ignore end of Select mode mapping and mouse scroll buttons.
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
       || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
-      || c == K_COMMAND) {
+      || c == K_COMMAND || c == K_LUA) {
     return retval;
   }
 
@@ -4979,7 +4988,7 @@ void ins_compl_check_keys(int frequency, int in_compl_func)
  */
 static int ins_compl_key2dir(int c)
 {
-  if (c == K_EVENT || c == K_COMMAND) {
+  if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     return pum_want.item < pum_selected_item ? BACKWARD : FORWARD;
   }
   if (c == Ctrl_P || c == Ctrl_L
@@ -5009,7 +5018,7 @@ static int ins_compl_key2count(int c)
 {
   int h;
 
-  if (c == K_EVENT || c == K_COMMAND) {
+  if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     int offset = pum_want.item - pum_selected_item;
     return abs(offset);
   }
@@ -5043,6 +5052,7 @@ static bool ins_compl_use_match(int c)
     return false;
   case K_EVENT:
   case K_COMMAND:
+  case K_LUA:
     return pum_want.active && pum_want.insert;
   }
   return true;

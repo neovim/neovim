@@ -108,3 +108,11 @@ func Test_echospace()
 
   set ruler& showcmd&
 endfunc
+
+" this was missing a terminating NUL
+func Test_echo_string_partial()
+  function CountSpaces()
+  endfunction
+  call assert_equal("function('CountSpaces', [{'ccccccccccc': ['ab', 'cd'], 'aaaaaaaaaaa': v:false, 'bbbbbbbbbbbb': ''}])", string(function('CountSpaces', [#{aaaaaaaaaaa: v:false, bbbbbbbbbbbb: '', ccccccccccc: ['ab', 'cd']}])))
+endfunc
+

@@ -28,7 +28,7 @@
 #endif
 
 #ifndef FILETYPE_FILE
-# define FILETYPE_FILE  "filetype.vim"
+# define FILETYPE_FILE "filetype.lua filetype.vim"
 #endif
 
 #ifndef FTPLUGIN_FILE

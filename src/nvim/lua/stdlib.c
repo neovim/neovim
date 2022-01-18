@@ -30,6 +30,7 @@
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
+#include "nvim/lua/spell.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
@@ -523,4 +524,9 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
+
+  // vim.spell
+  luaopen_spell(lstate);
+  lua_setfield(lstate, -2, "spell");
+
 }

@@ -361,7 +361,7 @@ static int add_menu_path(const char_u *const menu_path, vimmenu_T *menuarg,
         goto erret;
       }
 
-      // Not already there, so lets add it
+      // Not already there, so let's add it
       menu = xcalloc(1, sizeof(vimmenu_T));
 
       menu->modes = modes;

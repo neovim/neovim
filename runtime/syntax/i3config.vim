@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language: i3 config file
-" Maintainer: Mohamed Boughaba <mohamed dot bgb at gmail dot com>
+" Original Author: Mohamed Boughaba <mohamed dot bgb at gmail dot com>
+" Maintainer: Quentin Hibon (github user hiqua)
 " Version: 0.4
-" Last Change: 2021 Dec 14
+" Last Change: 2022 Jan 15
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -174,7 +175,7 @@ syn keyword i3ConfigDrawingMarksKeyword show_marks contained
 syn match i3ConfigDrawingMarks /^\s*show_marks\s\+\(yes\|no\)\s\?$/ contains=i3ConfigFocusWrappingType,i3ConfigDrawingMarksKeyword
 
 " Group mode/bar
-syn keyword i3ConfigBlockKeyword mode bar colors i3bar_command status_command position exec mode hidden_state modifier id position output background statusline tray_output tray_padding separator separator_symbol workspace_buttons strip_workspace_numbers binding_mode_indicator focused_workspace active_workspace inactive_workspace urgent_workspace binding_mode contained
+syn keyword i3ConfigBlockKeyword mode bar colors i3bar_command status_command position exec mode hidden_state modifier id position output background statusline tray_output tray_padding separator separator_symbol workspace_min_width workspace_buttons strip_workspace_numbers binding_mode_indicator focused_workspace active_workspace inactive_workspace urgent_workspace binding_mode contained
 syn region i3ConfigBlock start=+.*s\?{$+ end=+^}$+ contains=i3ConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable transparent keepend extend
 
 " Line continuation

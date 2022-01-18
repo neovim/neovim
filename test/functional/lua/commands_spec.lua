@@ -141,6 +141,24 @@ describe(':lua command', function()
       {4:Press ENTER or type command to continue}^ |
     ]]}
   end)
+
+  it('Can print results of =expr', function()
+    helpers.exec_lua("x = 5")
+    eq("5", helpers.exec_capture(':lua =x'))
+    helpers.exec_lua("function x() return 'hello' end")
+    eq([["hello"]], helpers.exec_capture(':lua = x()'))
+    helpers.exec_lua("x = {a = 1, b = 2}")
+    eq("{\n  a = 1,\n  b = 2\n}", helpers.exec_capture(':lua  =x'))
+    helpers.exec_lua([[function x(success)
+      if success then
+        return true, "Return value"
+      else
+        return false, nil, "Error message"
+      end
+    end]])
+    eq([[true    "Return value"]], helpers.exec_capture(':lua  =x(true)'))
+    eq([[false    nil    "Error message"]], helpers.exec_capture(':lua  =x(false)'))
+  end)
 end)
 
 describe(':luado command', function()

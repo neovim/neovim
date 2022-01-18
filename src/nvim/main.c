@@ -345,9 +345,11 @@ int main(int argc, char **argv)
   init_default_autocmds();
   TIME_MSG("init default autocommands");
 
+  bool vimrc_none = params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE");
+
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")) {
+  if (vimrc_none) {
     // When using --clean we still want to load plugins
     p_lpl = params.clean;
   }
@@ -355,14 +357,20 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
+  if (!vimrc_none) {
+    // Does ":filetype plugin indent on". We do this *before* the user startup scripts to ensure
+    // ftplugins run before FileType autocommands defined in the init file (which allows those
+    // autocommands to overwrite settings from ftplugins).
+    filetype_maybe_enable();
+  }
+
   // Source startup scripts.
   source_startup_scripts(&params);
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
-  if (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE")) {
-    // Does ":filetype plugin indent on".
-    filetype_maybe_enable();
-    // Sources syntax/syntax.vim, which calls `:filetype on`.
+  if (!vimrc_none) {
+    // Sources syntax/syntax.vim. We do this *after* the user startup scripts so that users can
+    // disable syntax highlighting with `:syntax off` if they wish.
     syn_maybe_enable();
   }
 

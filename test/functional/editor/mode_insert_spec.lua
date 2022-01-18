@@ -6,7 +6,6 @@ local expect = helpers.expect
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local meths = helpers.meths
 
 describe('insert-mode', function()
   before_each(function()
@@ -74,16 +73,6 @@ describe('insert-mode', function()
       feed(':startinsert<CR>')
       feed('ooo')
       expect('hello oooworld')
-    end)
-
-    it("doesn't cancel Ctrl-O mode when processing event", function()
-      feed('iHello World<c-o>')
-      eq({mode='niI', blocking=false}, meths.get_mode()) -- fast event
-      eq(2, eval('1+1'))  -- causes K_EVENT key
-      eq({mode='niI', blocking=false}, meths.get_mode()) -- still in ctrl-o mode
-      feed('dd')
-      eq({mode='i', blocking=false}, meths.get_mode()) -- left ctrl-o mode
-      expect('') -- executed the command
     end)
   end)
 end)

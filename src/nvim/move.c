@@ -909,7 +909,7 @@ void curs_columns(win_T *wp, int may_scroll)
       }
       wp->w_skipcol = n * width;
     } else if (extra == 1) {
-      // less then 'scrolloff' lines above, decrease skipcol
+      // less than 'scrolloff' lines above, decrease skipcol
       assert(so <= INT_MAX);
       extra = (wp->w_skipcol + (int)so * width - wp->w_virtcol
                + width - 1) / width;
@@ -920,7 +920,7 @@ void curs_columns(win_T *wp, int may_scroll)
         wp->w_skipcol -= extra * width;
       }
     } else if (extra == 2) {
-      // less then 'scrolloff' lines below, increase skipcol
+      // less than 'scrolloff' lines below, increase skipcol
       endcol = (n - wp->w_height_inner + 1) * width;
       while (endcol > wp->w_virtcol) {
         endcol -= width;

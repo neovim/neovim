@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
@@ -146,7 +147,7 @@ static int KeyNoremap = 0;                  // remapping flags
 
 // typebuf.tb_buf has three parts: room in front (for result of mappings), the
 // middle for typeahead and room for new characters (which needs to be 3 *
-// MAXMAPLEN) for the Amiga).
+// MAXMAPLEN for the Amiga).
 #define TYPELEN_INIT    (5 * (MAXMAPLEN + 3))
 static char_u typebuf_init[TYPELEN_INIT];       // initial typebuf.tb_buf
 static char_u noremapbuf_init[TYPELEN_INIT];    // initial typebuf.tb_noremap
@@ -861,7 +862,7 @@ void init_default_mappings(void)
 //
 // If noremap is REMAP_YES, new string can be mapped again.
 // If noremap is REMAP_NONE, new string cannot be mapped again.
-// If noremap is REMAP_SKIP, fist char of new string cannot be mapped again,
+// If noremap is REMAP_SKIP, first char of new string cannot be mapped again,
 // but abbreviations are allowed.
 // If noremap is REMAP_SCRIPT, new string cannot be mapped again, except for
 //                             script-local mappings.
@@ -1693,7 +1694,7 @@ typedef enum {
   map_result_fail,    // failed, break loop
   map_result_get,     // get a character from typeahead
   map_result_retry,   // try to map again
-  map_result_nomatch  // no matching mapping, get char
+  map_result_nomatch,  // no matching mapping, get char
 } map_result_T;
 
 /// Handle mappings in the typeahead buffer.
@@ -1902,7 +1903,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 
   // complete match
   if (keylen >= 0 && keylen <= typebuf.tb_len) {
-    char_u *map_str;
+    char_u *map_str = NULL;
     int save_m_expr;
     int save_m_noremap;
     int save_m_silent;
@@ -1947,6 +1948,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     save_m_silent = mp->m_silent;
     char_u *save_m_keys = NULL;  // only saved when needed
     char_u *save_m_str = NULL;  // only saved when needed
+    LuaRef save_m_luaref = mp->m_luaref;
 
     // Handle ":map <expr>": evaluate the {rhs} as an
     // expression.  Also save and restore the command line
@@ -1959,8 +1961,10 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       may_garbage_collect = false;
 
       save_m_keys = vim_strsave(mp->m_keys);
-      save_m_str = vim_strsave(mp->m_str);
-      map_str = eval_map_expr(save_m_str, NUL);
+      if (save_m_luaref == LUA_NOREF) {
+        save_m_str = vim_strsave(mp->m_str);
+      }
+      map_str = eval_map_expr(mp, NUL);
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
     } else {
@@ -2470,7 +2474,7 @@ static int vgetorpeek(bool advance)
 ///  Return the number of obtained characters.
 ///  Return -1 when end of input script reached.
 ///
-/// @param wait_time  milli seconds
+/// @param wait_time  milliseconds
 int inchar(char_u *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
@@ -2618,11 +2622,13 @@ int fix_input_buffer(char_u *buf, int len)
 /// @param[in] orig_lhs   Original mapping LHS, with characters to replace.
 /// @param[in] orig_lhs_len   `strlen` of orig_lhs.
 /// @param[in] orig_rhs   Original mapping RHS, with characters to replace.
+/// @param[in] rhs_lua   Lua reference for Lua maps.
 /// @param[in] orig_rhs_len   `strlen` of orig_rhs.
 /// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
-void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len, const char_u *orig_rhs,
-                        const size_t orig_rhs_len, int cpo_flags, MapArguments *mapargs)
+void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
+                        const char_u *orig_rhs, const size_t orig_rhs_len,
+                        LuaRef rhs_lua, int cpo_flags, MapArguments *mapargs)
 {
   char_u *lhs_buf = NULL;
   char_u *rhs_buf = NULL;
@@ -2638,22 +2644,34 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len, const
                                        true, true, true, cpo_flags);
   mapargs->lhs_len = STRLEN(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
+  mapargs->rhs_lua = rhs_lua;
 
-  mapargs->orig_rhs_len = orig_rhs_len;
-  mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char_u));
-  STRLCPY(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len + 1);
+  if (rhs_lua == LUA_NOREF) {
+    mapargs->orig_rhs_len = orig_rhs_len;
+    mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char_u));
+    STRLCPY(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len + 1);
 
-  if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
-    mapargs->rhs = xcalloc(1, sizeof(char_u));  // single null-char
-    mapargs->rhs_len = 0;
-    mapargs->rhs_is_noop = true;
+    if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
+      mapargs->rhs = xcalloc(1, sizeof(char_u));  // single null-char
+      mapargs->rhs_len = 0;
+      mapargs->rhs_is_noop = true;
+    } else {
+      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
+                                   false, true, true, cpo_flags);
+      mapargs->rhs_len = STRLEN(replaced);
+      mapargs->rhs_is_noop = false;
+      mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
+      STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
+    }
   } else {
-    replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
-                                 false, true, true, cpo_flags);
-    mapargs->rhs_len = STRLEN(replaced);
-    mapargs->rhs_is_noop = false;
-    mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
-    STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
+    char tmp_buf[64];
+    // stores <lua>ref_no<cr> in map_str
+    mapargs->orig_rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "<LUA>%d<CR>", rhs_lua);
+    mapargs->orig_rhs = vim_strsave((char_u *)tmp_buf);
+    mapargs->rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "%c%c%c%d\r", K_SPECIAL,
+                                            (char_u)KEY2TERMCAP0(K_LUA), KEY2TERMCAP1(K_LUA),
+                                            rhs_lua);
+    mapargs->rhs = vim_strsave((char_u *)tmp_buf);
   }
 
   xfree(lhs_buf);
@@ -2765,7 +2783,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 
   size_t orig_rhs_len = STRLEN(rhs_start);
   set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,
-                     rhs_start, orig_rhs_len,
+                     rhs_start, orig_rhs_len, LUA_NOREF,
                      CPO_TO_CPO_FLAGS, &parsed_args);
 
   xfree(lhs_to_replace);
@@ -2827,7 +2845,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   validate_maphash();
 
   bool has_lhs = (args->lhs[0] != NUL);
-  bool has_rhs = (args->rhs[0] != NUL) || args->rhs_is_noop;
+  bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
 
   // check for :unmap without argument
   if (maptype == 1 && !has_lhs) {
@@ -3017,10 +3035,14 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
             } else {  // new rhs for existing entry
               mp->m_mode &= ~mode;  // remove mode bits
               if (mp->m_mode == 0 && !did_it) {  // reuse entry
-                xfree(mp->m_str);
+                XFREE_CLEAR(mp->m_str);
+                XFREE_CLEAR(mp->m_orig_str);
+                XFREE_CLEAR(mp->m_desc);
+                NLUA_CLEAR_REF(mp->m_luaref);
+
                 mp->m_str = vim_strsave(rhs);
-                xfree(mp->m_orig_str);
                 mp->m_orig_str = vim_strsave(orig_rhs);
+                mp->m_luaref = args->rhs_lua;
                 mp->m_noremap = noremap;
                 mp->m_nowait = args->nowait;
                 mp->m_silent = args->silent;
@@ -3028,6 +3050,9 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                 mp->m_expr = args->expr;
                 mp->m_script_ctx = current_sctx;
                 mp->m_script_ctx.sc_lnum += sourcing_lnum;
+                if (args->desc != NULL) {
+                  mp->m_desc = xstrdup(args->desc);
+                }
                 did_it = true;
               }
             }
@@ -3096,6 +3121,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   mp->m_keys = vim_strsave(lhs);
   mp->m_str = vim_strsave(rhs);
   mp->m_orig_str = vim_strsave(orig_rhs);
+  mp->m_luaref = args->rhs_lua;
   mp->m_keylen = (int)STRLEN(mp->m_keys);
   mp->m_noremap = noremap;
   mp->m_nowait = args->nowait;
@@ -3104,6 +3130,10 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   mp->m_expr = args->expr;
   mp->m_script_ctx = current_sctx;
   mp->m_script_ctx.sc_lnum += sourcing_lnum;
+  mp->m_desc = NULL;
+  if (args->desc != NULL) {
+    mp->m_desc = xstrdup(args->desc);
+  }
 
   // add the new entry in front of the abbrlist or maphash[] list
   if (is_abbrev) {
@@ -3200,8 +3230,10 @@ static void mapblock_free(mapblock_T **mpp)
 
   mp = *mpp;
   xfree(mp->m_keys);
-  xfree(mp->m_str);
-  xfree(mp->m_orig_str);
+  NLUA_CLEAR_REF(mp->m_luaref);
+  XFREE_CLEAR(mp->m_str);
+  XFREE_CLEAR(mp->m_orig_str);
+  XFREE_CLEAR(mp->m_desc);
   *mpp = mp->m_next;
   xfree(mp);
 }
@@ -3392,7 +3424,8 @@ static void showmap(mapblock_T *mp, bool local)
 {
   size_t len = 1;
 
-  if (message_filtered(mp->m_keys) && message_filtered(mp->m_str)) {
+  if (message_filtered(mp->m_keys)
+      && mp->m_str != NULL && message_filtered(mp->m_str)) {
     return;
   }
 
@@ -3437,7 +3470,11 @@ static void showmap(mapblock_T *mp, bool local)
 
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
-  if (*mp->m_str == NUL) {
+  if (mp->m_luaref != LUA_NOREF) {
+    char msg[100];
+    snprintf(msg, sizeof(msg), "<Lua function %d>", mp->m_luaref);
+    msg_puts_attr(msg, HL_ATTR(HLF_8));
+  } else if (mp->m_str == NULL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
     // Remove escaping of CSI, because "m_str" is in a format to be used
@@ -3446,6 +3483,11 @@ static void showmap(mapblock_T *mp, bool local)
     vim_unescape_csi(s);
     msg_outtrans_special(s, false, 0);
     xfree(s);
+  }
+
+  if (mp->m_desc != NULL) {
+    msg_puts("\n                 ");  // Shift line to same level as rhs.
+    msg_puts(mp->m_desc);
   }
   if (p_verbose > 0) {
     last_set_msg(mp->m_script_ctx);
@@ -3533,7 +3575,7 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
       }
       for (; mp; mp = mp->m_next) {
         if ((mp->m_mode & mode)
-            && strstr((char *)mp->m_str, rhs) != NULL) {
+            && mp->m_str != NULL && strstr((char *)mp->m_str, rhs) != NULL) {
           return true;
         }
       }
@@ -3879,7 +3921,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
         (void)ins_typebuf(tb, 1, 0, true, mp->m_silent);
       }
       if (mp->m_expr) {
-        s = eval_map_expr(mp->m_str, c);
+        s = eval_map_expr(mp, c);
       } else {
         s = mp->m_str;
       }
@@ -3909,11 +3951,11 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
 /// special characters.
 ///
 /// @param c  NUL or typed character for abbreviation
-static char_u *eval_map_expr(char_u *str, int c)
+static char_u *eval_map_expr(mapblock_T  *mp, int c)
 {
   char_u *res;
-  char_u *p;
-  char_u *expr;
+  char_u *p = NULL;
+  char_u *expr = NULL;
   char_u *save_cmd;
   pos_T save_cursor;
   int save_msg_col;
@@ -3921,8 +3963,10 @@ static char_u *eval_map_expr(char_u *str, int c)
 
   /* Remove escaping of CSI, because "str" is in a format to be used as
    * typeahead. */
-  expr = vim_strsave(str);
-  vim_unescape_csi(expr);
+  if (mp->m_luaref == LUA_NOREF) {
+    expr = vim_strsave(mp->m_str);
+    vim_unescape_csi(expr);
+  }
 
   save_cmd = save_cmdline_alloc();
 
@@ -3934,7 +3978,22 @@ static char_u *eval_map_expr(char_u *str, int c)
   save_cursor = curwin->w_cursor;
   save_msg_col = msg_col;
   save_msg_row = msg_row;
-  p = eval_to_string(expr, NULL, false);
+  if (mp->m_luaref != LUA_NOREF) {
+    Error err = ERROR_INIT;
+    Array args = ARRAY_DICT_INIT;
+    Object ret = nlua_call_ref(mp->m_luaref, NULL, args, true, &err);
+    if (ret.type == kObjectTypeString) {
+      p = (char_u *)xstrndup(ret.data.string.data, ret.data.string.size);
+    }
+    api_free_object(ret);
+    if (err.type != kErrorTypeNone) {
+      semsg_multiline("E5108: %s", err.msg);
+      api_clear_error(&err);
+    }
+  } else {
+    p = eval_to_string(expr, NULL, false);
+    xfree(expr);
+  }
   textlock--;
   ex_normal_lock--;
   curwin->w_cursor = save_cursor;
@@ -3942,7 +4001,6 @@ static char_u *eval_map_expr(char_u *str, int c)
   msg_row = save_msg_row;
 
   restore_cmdline_alloc(save_cmd);
-  xfree(expr);
 
   if (p == NULL) {
     return NULL;
@@ -4049,8 +4107,11 @@ int makemap(FILE *fd, buf_T *buf)
           continue;
         }
 
-        // skip mappings that contain a <SNR> (script-local thing),
+        // skip lua mappings and mappings that contain a <SNR> (script-local thing),
         // they probably don't work when loaded again
+        if (mp->m_luaref != LUA_NOREF) {
+          continue;
+        }
         for (p = mp->m_str; *p != NUL; p++) {
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
               && p[2] == (int)KE_SNR) {
@@ -4331,10 +4392,11 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
 /// @param mp_ptr  return: pointer to mapblock or NULL
 /// @param local_ptr  return: buffer-local mapping or NULL
 char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapblock_T **mp_ptr,
-                  int *local_ptr)
+                  int *local_ptr, int *rhs_lua)
 {
   int len, minlen;
   mapblock_T *mp;
+  *rhs_lua = LUA_NOREF;
 
   validate_maphash();
 
@@ -4375,7 +4437,8 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
             if (local_ptr != NULL) {
               *local_ptr = local;
             }
-            return mp->m_str;
+            *rhs_lua = mp->m_luaref;
+            return mp->m_luaref == LUA_NOREF ? mp->m_str : NULL;
           }
         }
       }
@@ -4559,4 +4622,48 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
   }
 
   return (char_u *)line_ga.ga_data;
+}
+
+bool map_execute_lua(void)
+{
+  garray_T line_ga;
+  int c1 = -1;
+  bool aborted = false;
+
+  ga_init(&line_ga, 1, 32);
+
+  no_mapping++;
+
+  got_int = false;
+  while (c1 != NUL && !aborted) {
+    ga_grow(&line_ga, 32);
+    // Get one character at a time.
+    c1 = vgetorpeek(true);
+    if (got_int) {
+      aborted = true;
+    } else if (c1 == '\r' || c1 == '\n') {
+      c1 = NUL;  // end the line
+    } else {
+      ga_append(&line_ga, (char)c1);
+    }
+  }
+
+  no_mapping--;
+
+  if (aborted) {
+    ga_clear(&line_ga);
+    return false;
+  }
+
+  LuaRef ref = (LuaRef)atoi(line_ga.ga_data);
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+  nlua_call_ref(ref, NULL, args, false, &err);
+  if (err.type != kErrorTypeNone) {
+    semsg_multiline("E5108: %s", err.msg);
+    api_clear_error(&err);
+  }
+
+  ga_clear(&line_ga);
+  return true;
 }

@@ -594,6 +594,7 @@ Array string_to_array(const String input, bool crlf)
 void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String rhs,
                    Dict(keymap) *opts, Error *err)
 {
+  LuaRef lua_funcref = LUA_NOREF;
   bool global = (buffer == -1);
   if (global) {
     buffer = 0;
@@ -604,6 +605,10 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
     return;
   }
 
+  if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
+    lua_funcref = opts->callback.data.luaref;
+    opts->callback.data.luaref = LUA_NOREF;
+  }
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
 #define KEY_TO_BOOL(name) \
@@ -623,9 +628,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   parsed_args.buffer = !global;
 
   set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
-                     (char_u *)rhs.data, rhs.size,
+                     (char_u *)rhs.data, rhs.size, lua_funcref,
                      CPO_TO_CPO_FLAGS, &parsed_args);
-
+  if (opts != NULL && opts->desc.type == kObjectTypeString) {
+    parsed_args.desc = xstrdup(opts->desc.data.string.data);
+  } else {
+    parsed_args.desc = NULL;
+  }
   if (parsed_args.lhs_len > MAXMAPLEN) {
     api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;
@@ -658,7 +667,8 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   bool is_noremap = parsed_args.noremap;
   assert(!(is_unmap && is_noremap));
 
-  if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
+  if (!is_unmap && lua_funcref == LUA_NOREF
+      && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
     if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
       parsed_args.rhs_is_noop = true;
     } else {
@@ -668,9 +678,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
       api_set_error(err, kErrorTypeValidation, "Parsing of nonempty RHS failed: %s", rhs.data);
       goto fail_and_free;
     }
-  } else if (is_unmap && parsed_args.rhs_len) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+  } else if (is_unmap && (parsed_args.rhs_len || parsed_args.rhs_lua != LUA_NOREF)) {
+    if (parsed_args.rhs_len) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Gave nonempty RHS for unmap");
+    }
     goto fail_and_free;
   }
 
@@ -700,9 +714,12 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
     goto fail_and_free;
   }  // switch
 
+  parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
 fail_and_free:
+  NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
+  XFREE_CLEAR(parsed_args.desc);
   return;
 }
 
@@ -961,6 +978,10 @@ Object copy_object(Object obj)
 
   case kObjectTypeDictionary:
     return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
+
+  case kObjectTypeLuaRef:
+    return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
+
   default:
     abort();
   }
@@ -1048,8 +1069,9 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
+/// @param  from_lua  Whether it is called from internal lua api.
 /// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
 {
   Array mappings = ARRAY_DICT_INIT;
   dict_T *const dict = tv_dict_alloc();
@@ -1069,8 +1091,19 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        ADD(mappings, vim_to_object((typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
-
+        Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
+                                                         .vval.v_dict = dict } });
+        if (from_lua) {
+          Dictionary d = api_dict.data.dictionary;
+          for (size_t j = 0; j < d.size; j++) {
+            if (strequal("callback", d.items[j].key.data)) {
+              d.items[j].value.type = kObjectTypeLuaRef;
+              d.items[j].value.data.luaref = api_new_luaref((LuaRef)d.items[j].value.data.integer);
+              break;
+            }
+          }
+        }
+        ADD(mappings, api_dict);
         tv_dict_clear(dict);
       }
     }
@@ -1108,7 +1141,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
       return false;
     }
 
-    ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+    ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
     if (extmark.row >= 0) {
       *row = extmark.row;
       *col = extmark.col;
@@ -1341,4 +1374,190 @@ const char *get_default_stl_hl(win_T *wp)
   } else {
     return "StatusLineNC";
   }
+}
+
+void add_user_command(String name, Object command, Dict(user_command) *opts, int flags, Error *err)
+{
+  uint32_t argt = 0;
+  long def = -1;
+  cmd_addr_T addr_type_arg = ADDR_NONE;
+  int compl = EXPAND_NOTHING;
+  char *compl_arg = NULL;
+  char *rep = NULL;
+  LuaRef luaref = LUA_NOREF;
+  LuaRef compl_luaref = LUA_NOREF;
+
+  if (mb_islower(name.data[0])) {
+    api_set_error(err, kErrorTypeValidation, "'name' must begin with an uppercase letter");
+    goto err;
+  }
+
+  if (HAS_KEY(opts->range) && HAS_KEY(opts->count)) {
+    api_set_error(err, kErrorTypeValidation, "'range' and 'count' are mutually exclusive");
+    goto err;
+  }
+
+  if (opts->nargs.type == kObjectTypeInteger) {
+    switch (opts->nargs.data.integer) {
+    case 0:
+      // Default value, nothing to do
+      break;
+    case 1:
+      argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+  } else if (opts->nargs.type == kObjectTypeString) {
+    if (opts->nargs.data.string.size > 1) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+
+    switch (opts->nargs.data.string.data[0]) {
+    case '*':
+      argt |= EX_EXTRA;
+      break;
+    case '?':
+      argt |= EX_EXTRA | EX_NOSPC;
+      break;
+    case '+':
+      argt |= EX_EXTRA | EX_NEEDARG;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+      goto err;
+    }
+  } else if (HAS_KEY(opts->nargs)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+    goto err;
+  }
+
+  if (HAS_KEY(opts->complete) && !argt) {
+    api_set_error(err, kErrorTypeValidation, "'complete' used without 'nargs'");
+    goto err;
+  }
+
+  if (opts->range.type == kObjectTypeBoolean) {
+    if (opts->range.data.boolean) {
+      argt |= EX_RANGE;
+      addr_type_arg = ADDR_LINES;
+    }
+  } else if (opts->range.type == kObjectTypeString) {
+    if (opts->range.data.string.data[0] == '%' && opts->range.data.string.size == 1) {
+      argt |= EX_RANGE | EX_DFLALL;
+      addr_type_arg = ADDR_LINES;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
+      goto err;
+    }
+  } else if (opts->range.type == kObjectTypeInteger) {
+    argt |= EX_RANGE | EX_ZEROR;
+    def = opts->range.data.integer;
+    addr_type_arg = ADDR_LINES;
+  } else if (HAS_KEY(opts->range)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'range'");
+    goto err;
+  }
+
+  if (opts->count.type == kObjectTypeBoolean) {
+    if (opts->count.data.boolean) {
+      argt |= EX_COUNT | EX_ZEROR | EX_RANGE;
+      addr_type_arg = ADDR_OTHER;
+      def = 0;
+    }
+  } else if (opts->count.type == kObjectTypeInteger) {
+    argt |= EX_COUNT | EX_ZEROR | EX_RANGE;
+    addr_type_arg = ADDR_OTHER;
+    def = opts->count.data.integer;
+  } else if (HAS_KEY(opts->count)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'count'");
+    goto err;
+  }
+
+  if (opts->addr.type == kObjectTypeString) {
+    if (parse_addr_type_arg((char_u *)opts->addr.data.string.data, (int)opts->addr.data.string.size,
+                            &addr_type_arg) != OK) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
+      goto err;
+    }
+
+    if (addr_type_arg != ADDR_LINES) {
+      argt |= EX_ZEROR;
+    }
+  } else if (HAS_KEY(opts->addr)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
+    goto err;
+  }
+
+  if (api_object_to_bool(opts->bang, "bang", false, err)) {
+    argt |= EX_BANG;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  if (api_object_to_bool(opts->bar, "bar", false, err)) {
+    argt |= EX_TRLBAR;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+
+  if (api_object_to_bool(opts->register_, "register", false, err)) {
+    argt |= EX_REGSTR;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  bool force = api_object_to_bool(opts->force, "force", true, err);
+  if (ERROR_SET(err)) {
+    goto err;
+  }
+
+  if (opts->complete.type == kObjectTypeLuaRef) {
+    compl = EXPAND_USER_LUA;
+    compl_luaref = api_new_luaref(opts->complete.data.luaref);
+  } else if (opts->complete.type == kObjectTypeString) {
+    if (parse_compl_arg((char_u *)opts->complete.data.string.data,
+                        (int)opts->complete.data.string.size, &compl, &argt,
+                        (char_u **)&compl_arg) != OK) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
+      goto err;
+    }
+  } else if (HAS_KEY(opts->complete)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
+    goto err;
+  }
+
+  switch (command.type) {
+  case kObjectTypeLuaRef:
+    luaref = api_new_luaref(command.data.luaref);
+    if (opts->desc.type == kObjectTypeString) {
+      rep = opts->desc.data.string.data;
+    } else {
+      snprintf((char *)IObuff, IOSIZE, "<Lua function %d>", luaref);
+      rep = (char *)IObuff;
+    }
+    break;
+  case kObjectTypeString:
+    rep = command.data.string.data;
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "'command' must be a string or Lua function");
+    goto err;
+  }
+
+  if (uc_add_command((char_u *)name.data, name.size, (char_u *)rep, argt, def, flags,
+                     compl, (char_u *)compl_arg, compl_luaref, addr_type_arg, luaref,
+                     force) != OK) {
+    api_set_error(err, kErrorTypeException, "Failed to create user command");
+    goto err;
+  }
+
+  return;
+
+err:
+  NLUA_CLEAR_REF(luaref);
+  NLUA_CLEAR_REF(compl_luaref);
 }

@@ -2162,7 +2162,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   funccal_entry_T funccalp_entry;
   save_funccal(&funccalp_entry);
 
-  // Check if this script was sourced before to finds its SID.
+  // Check if this script was sourced before to find its SID.
   // If it's new, generate a new SID.
   // Always use a new sequence number.
   const sctx_T save_current_sctx = current_sctx;

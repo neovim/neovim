@@ -224,6 +224,23 @@ describe('startup', function()
     end
   end)
 
+  it('-e sets ex mode', function()
+    local screen = Screen.new(25, 3)
+    clear('-e')
+    screen:attach()
+    -- Verify we set the proper mode both before and after :vi.
+    feed("put =mode(1)<CR>vi<CR>:put =mode(1)<CR>")
+    screen:expect([[
+      cv                       |
+      ^n                        |
+      :put =mode(1)            |
+    ]])
+
+    eq('cv\n',
+       funcs.system({nvim_prog, '-n', '-es' },
+                    { 'put =mode(1)', 'print', '' }))
+  end)
+
   it('fails on --embed with -es/-Es', function()
     matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
       funcs.system({nvim_prog, '--embed', '-es' }))
@@ -651,11 +668,7 @@ describe('runtime:', function()
     mkdir_p(ftdetect_folder)
     write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
 
-    -- TODO(shadmansaleh): Figure out why this test fails without
-    --                     setting VIMRUNTIME
-    clear{ args_rm={'-u'}, env={XDG_CONFIG_HOME=xconfig,
-                                XDG_DATA_HOME=xdata,
-                                VIMRUNTIME='runtime/'}}
+    clear{ args_rm={'-u'}, env=xenv }
 
     eq(1, eval('g:lua_ftdetect'))
     rmdir(ftdetect_folder)

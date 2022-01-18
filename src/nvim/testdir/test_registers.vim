@@ -13,6 +13,8 @@ func Test_aaa_empty_reg_test()
   call assert_fails('normal @!', 'E354:')
   call assert_fails('normal @:', 'E30:')
   call assert_fails('normal @.', 'E29:')
+  call assert_fails('put /', 'E35:')
+  call assert_fails('put .', 'E29:')
 endfunc
 
 func Test_yank_shows_register()
@@ -141,6 +143,14 @@ func Test_last_used_exec_reg()
   normal @@
   call assert_equal('EditEdit', a)
 
+  " Test for repeating the last command-line in visual mode
+  call append(0, 'register')
+  normal gg
+  let @r = ''
+  call feedkeys("v:yank R\<CR>", 'xt')
+  call feedkeys("v@:", 'xt')
+  call assert_equal("\nregister\nregister\n", @r)
+
   enew!
 endfunc
 
@@ -164,6 +174,28 @@ func Test_get_register()
 
   call assert_equal('', getregtype('!'))
 
+  " Test for clipboard registers (* and +)
+  if has("clipboard_working")
+    call append(0, "text for clipboard test")
+    normal gg"*yiw
+    call assert_equal('text', getreg('*'))
+    normal gg2w"+yiw
+    call assert_equal('clipboard', getreg('+'))
+  endif
+
+  " Test for inserting an invalid register content
+  call assert_beeps('exe "normal i\<C-R>!"')
+
+  " Test for inserting a register with multiple lines
+  call deletebufline('', 1, '$')
+  call setreg('r', ['a', 'b'])
+  exe "normal i\<C-R>r"
+  call assert_equal(['a', 'b', ''], getline(1, '$'))
+
+  " Test for inserting a multi-line register in the command line
+  call feedkeys(":\<C-R>r\<Esc>", 'xt')
+  call assert_equal("a\rb", histget(':', -1))  " Modified because of #6137
+
   enew!
 endfunc
 
@@ -186,6 +218,25 @@ func Test_set_register()
   call setreg('=', 'a', 'a')
   call setreg('=', 'b', 'a')
   call assert_equal('regwrite', getreg('='))
+
+  " Test for settting a list of lines to special registers
+  call setreg('/', [])
+  call assert_equal('', @/)
+  call setreg('=', [])
+  call assert_equal('', @=)
+  call assert_fails("call setreg('/', ['a', 'b'])", 'E883:')
+  call assert_fails("call setreg('=', ['a', 'b'])", 'E883:')
+  call assert_equal(0, setreg('_', ['a', 'b']))
+
+  " Test for recording to a invalid register
+  call assert_beeps('normal q$')
+
+  " Appending to a register when recording
+  call append(0, "text for clipboard test")
+  normal gg
+  call feedkeys('qrllq', 'xt')
+  call feedkeys('qRhhq', 'xt')
+  call assert_equal('llhh', getreg('r'))
 
   enew!
 endfunc

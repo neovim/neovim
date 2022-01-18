@@ -4576,7 +4576,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
     cur_tab_rec->def.func = NULL;
   }
 
-  // When inside update_screen we do not want redrawing a stausline, ruler,
+  // When inside update_screen we do not want redrawing a statusline, ruler,
   // title, etc. to trigger another redraw, it may cause an endless loop.
   if (updating_screen) {
     must_redraw = save_must_redraw;

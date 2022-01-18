@@ -1024,11 +1024,13 @@ static int command_line_execute(VimState *state, int key)
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
-  if (s->c == K_EVENT || s->c == K_COMMAND) {
+  if (s->c == K_EVENT || s->c == K_COMMAND || s->c == K_LUA) {
     if (s->c == K_EVENT) {
       state_handle_k_event();
-    } else {
+    } else if (s->c == K_COMMAND) {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+    } else {
+      map_execute_lua();
     }
 
     if (!cmdline_was_last_drawn) {
@@ -4983,6 +4985,9 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, num_file, file);
   }
+  if (xp->xp_context == EXPAND_USER_LUA) {
+    return ExpandUserLua(xp, num_file, file);
+  }
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, num_file, file);
   }
@@ -5392,6 +5397,35 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   if (retlist == NULL) {
     return FAIL;
   }
+
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char *), 3);
+  // Loop over the items in the list.
+  TV_LIST_ITER_CONST(retlist, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING
+        || TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
+      continue;  // Skip non-string items and empty strings.
+    }
+
+    GA_APPEND(char *, &ga, xstrdup((const char *)TV_LIST_ITEM_TV(li)->vval.v_string));
+  });
+  tv_list_unref(retlist);
+
+  *file = ga.ga_data;
+  *num_file = ga.ga_len;
+  return OK;
+}
+
+static int ExpandUserLua(expand_T *xp, int *num_file, char_u ***file)
+{
+  typval_T rettv;
+  nlua_call_user_expand_func(xp, &rettv);
+  if (rettv.v_type != VAR_LIST) {
+    tv_clear(&rettv);
+    return FAIL;
+  }
+
+  list_T *const retlist = rettv.vval.v_list;
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 3);

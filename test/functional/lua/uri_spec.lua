@@ -155,6 +155,12 @@ describe('URI methods', function()
           return pcall(vim.uri_to_fname, 'not_an_uri.txt')
         ]])
       end)
+
+      it('uri_to_fname should not treat comma as a scheme character', function()
+        eq(false, exec_lua [[
+          return pcall(vim.uri_to_fname, 'foo,://bar')
+        ]])
+      end)
     end)
 
   end)

@@ -10,14 +10,6 @@ local uv = vim.loop
 local npcall = vim.F.npcall
 local split = vim.split
 
-local _warned = {}
-local warn_once = function(message)
-  if not _warned[message] then
-    vim.api.nvim_err_writeln(message)
-    _warned[message] = true
-  end
-end
-
 local M = {}
 
 local default_border = {
@@ -201,6 +193,11 @@ end
 local function get_lines(bufnr, rows)
   rows = type(rows) == "table" and rows or { rows }
 
+  -- This is needed for bufload and bufloaded
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
   ---@private
   local function buf_lines()
     local lines = {}
@@ -280,7 +277,7 @@ end
 ---@private
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
+---@param offset_encoding string utf-8|utf-16|utf-32
 --- 1-indexed
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
@@ -289,7 +286,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- When on the first character, we can ignore the difference between byte and
   -- character
   if col > 0 then
-    local line = get_line(bufnr, position.line)
+    local line = get_line(bufnr, position.line) or ''
     local ok, result
     ok, result = pcall(_str_byteindex_enc, line, col, offset_encoding)
     if ok then
@@ -363,15 +360,14 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr number Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to encoding of first client of `bufnr`
+---@param offset_encoding string utf-8|utf-16|utf-32 defaults to encoding of first client of `bufnr`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate {
     text_edits = { text_edits, 't', false };
     bufnr = { bufnr, 'number', false };
-    offset_encoding = { offset_encoding, 'string', true };
+    offset_encoding = { offset_encoding, 'string', false };
   }
-  offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -405,25 +401,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end)
 
-  -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
-  local has_eol_text_edit = false
-  local max = vim.api.nvim_buf_line_count(bufnr)
-  local len = _str_utfindex_enc(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '', nil, offset_encoding)
-  text_edits = vim.tbl_map(function(text_edit)
-    if max <= text_edit.range.start.line then
-      text_edit.range.start.line = max - 1
-      text_edit.range.start.character = len
-      text_edit.newText = '\n' .. text_edit.newText
-      has_eol_text_edit = true
-    end
-    if max <= text_edit.range['end'].line then
-      text_edit.range['end'].line = max - 1
-      text_edit.range['end'].character = len
-      has_eol_text_edit = true
-    end
-    return text_edit
-  end, text_edits)
-
   -- Some LSP servers are depending on the VSCode behavior.
   -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
   local is_current_buf = vim.api.nvim_get_current_buf() == bufnr
@@ -443,16 +420,38 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Apply text edits.
   local is_cursor_fixed = false
+  local has_eol_text_edit = false
   for _, text_edit in ipairs(text_edits) do
+    -- Normalize line ending
+    text_edit.newText, _ = string.gsub(text_edit.newText, '\r\n?', '\n')
+
+    -- Convert from LSP style ranges to Neovim style ranges.
     local e = {
       start_row = text_edit.range.start.line,
-      start_col = get_line_byte_from_position(bufnr, text_edit.range.start),
+      start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
-      end_col  = get_line_byte_from_position(bufnr, text_edit.range['end']),
+      end_col  = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
       text = vim.split(text_edit.newText, '\n', true),
     }
+
+    -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
+    local max = vim.api.nvim_buf_line_count(bufnr)
+    if max <= e.start_row or max <= e.end_row then
+      local len = #(get_line(bufnr, max - 1) or '')
+      if max <= e.start_row then
+        e.start_row = max - 1
+        e.start_col = len
+        table.insert(e.text, 1, '')
+      end
+      if max <= e.end_row then
+        e.end_row = max - 1
+        e.end_col = len
+      end
+      has_eol_text_edit = true
+    end
     vim.api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
 
+    -- Fix cursor position.
     local row_count = (e.end_row - e.start_row) + 1
     if e.end_row < cursor.row then
       cursor.row = cursor.row + (#e.text - row_count)
@@ -467,10 +466,13 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end
 
+  local max = vim.api.nvim_buf_line_count(bufnr)
+
+  -- Apply fixed cursor position.
   if is_cursor_fixed then
     local is_valid_cursor = true
-    is_valid_cursor = is_valid_cursor and cursor.row < vim.api.nvim_buf_line_count(bufnr)
-    is_valid_cursor = is_valid_cursor and cursor.col <= #(vim.api.nvim_buf_get_lines(bufnr, cursor.row, cursor.row + 1, false)[1] or '')
+    is_valid_cursor = is_valid_cursor and cursor.row < max
+    is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, max - 1) or '')
     if is_valid_cursor then
       vim.api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
@@ -479,7 +481,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   -- Remove final line if needed
   local fix_eol = has_eol_text_edit
   fix_eol = fix_eol and api.nvim_buf_get_option(bufnr, 'fixeol')
-  fix_eol = fix_eol and (vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '') == ''
+  fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
@@ -517,9 +519,12 @@ end
 ---@param text_document_edit table: a `TextDocumentEdit` object
 ---@param index number: Optional index of the edit, if from a list of edits (or nil, if not from a list)
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
-function M.apply_text_document_edit(text_document_edit, index)
+function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
+  if offset_encoding == nil then
+    vim.notify_once("apply_text_document_edit must be called with valid offset encoding", vim.log.levels.WARN)
+  end
 
   -- For lists of text document edits,
   -- do not check the version after the first edit.
@@ -538,7 +543,7 @@ function M.apply_text_document_edit(text_document_edit, index)
     return
   end
 
-  M.apply_text_edits(text_document_edit.edits, bufnr)
+  M.apply_text_edits(text_document_edit.edits, bufnr, offset_encoding)
 end
 
 --- Parses snippets in a completion entry.
@@ -735,9 +740,13 @@ end
 
 --- Applies a `WorkspaceEdit`.
 ---
----@param workspace_edit (table) `WorkspaceEdit`
+---@param workspace_edit table `WorkspaceEdit`
+---@param offset_encoding string utf-8|utf-16|utf-32 (required)
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-function M.apply_workspace_edit(workspace_edit)
+function M.apply_workspace_edit(workspace_edit, offset_encoding)
+  if offset_encoding == nil then
+    vim.notify_once("apply_workspace_edit must be called with valid offset encoding", vim.log.levels.WARN)
+  end
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
       if change.kind == "rename" then
@@ -753,7 +762,7 @@ function M.apply_workspace_edit(workspace_edit)
       elseif change.kind then
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
-        M.apply_text_document_edit(change, idx)
+        M.apply_text_document_edit(change, idx, offset_encoding)
       end
     end
     return
@@ -766,7 +775,7 @@ function M.apply_workspace_edit(workspace_edit)
 
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
-    M.apply_text_edits(changes, bufnr)
+    M.apply_text_edits(changes, bufnr, offset_encoding)
   end
 end
 
@@ -842,7 +851,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   local active_hl
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
-  if active_signature >= #signature_help.signatures then
+  -- In 3.15 of the protocol, activeSignature was allowed to be negative
+  if active_signature >= #signature_help.signatures or active_signature < 0 then
     active_signature = 0
   end
   local signature = signature_help.signatures[active_signature + 1]
@@ -983,12 +993,16 @@ end
 
 --- Jumps to a location.
 ---
----@param location (`Location`|`LocationLink`)
+---@param location table (`Location`|`LocationLink`)
+---@param offset_encoding string utf-8|utf-16|utf-32 (required)
 ---@returns `true` if the jump succeeded
-function M.jump_to_location(location)
+function M.jump_to_location(location, offset_encoding)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
   if uri == nil then return end
+  if offset_encoding == nil then
+    vim.notify_once("jump_to_location must be called with valid offset encoding", vim.log.levels.WARN)
+  end
   local bufnr = vim.uri_to_bufnr(uri)
   -- Save position in jumplist
   vim.cmd "normal! m'"
@@ -1000,10 +1014,10 @@ function M.jump_to_location(location)
 
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
   api.nvim_set_current_buf(bufnr)
-  api.nvim_buf_set_option(0, 'buflisted', true)
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
-  local col = get_line_byte_from_position(0, range.start)
+  local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
   api.nvim_win_set_cursor(0, {row + 1, col})
   -- Open folds under the cursor
   vim.cmd("normal! zv")
@@ -1505,18 +1519,20 @@ do --[[ References ]]
   ---@param bufnr number Buffer id
   function M.buf_clear_references(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
-    api.nvim_buf_clear_namespace(bufnr, reference_ns, 0, -1)
+    api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
   end
 
   --- Shows a list of document highlights for a certain buffer.
   ---
   ---@param bufnr number Buffer id
   ---@param references table List of `DocumentHighlight` objects to highlight
-  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32", or nil. Defaults to `offset_encoding` of first client of `bufnr`
+  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references, offset_encoding)
-    validate { bufnr = {bufnr, 'n', true} }
-    offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
+    validate {
+      bufnr = {bufnr, 'n', true},
+      offset_encoding = { offset_encoding, 'string', false };
+    }
     for _, reference in ipairs(references) do
       local start_line, start_char = reference["range"]["start"]["line"], reference["range"]["start"]["character"]
       local end_line, end_char = reference["range"]["end"]["line"], reference["range"]["end"]["character"]
@@ -1534,7 +1550,10 @@ do --[[ References ]]
                       reference_ns,
                       document_highlight_kind[kind],
                       { start_line, start_idx },
-                      { end_line, end_idx })
+                      { end_line, end_idx },
+                      nil,
+                      false,
+                      40)
     end
   end
 end
@@ -1549,9 +1568,14 @@ end)
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
----@param locations (table) list of `Location`s or `LocationLink`s
+---@param locations table list of `Location`s or `LocationLink`s
+---@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---@returns (table) list of items
-function M.locations_to_items(locations)
+function M.locations_to_items(locations, offset_encoding)
+  if offset_encoding == nil then
+    vim.notify_once("locations_to_items must be called with valid offset encoding", vim.log.levels.WARN)
+  end
+
   local items = {}
   local grouped = setmetatable({}, {
     __index = function(t, k)
@@ -1591,7 +1615,7 @@ function M.locations_to_items(locations)
       local pos = temp.start
       local row = pos.line
       local line = lines[row] or ""
-      local col = pos.character
+      local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
       table.insert(items, {
         filename = filename,
         lnum = row + 1,
@@ -1677,7 +1701,7 @@ function M.symbols_to_items(symbols, bufnr)
     end
     return _items
   end
-  return _symbols_to_items(symbols, {}, bufnr)
+  return _symbols_to_items(symbols, {}, bufnr or 0)
 end
 
 --- Removes empty lines from the beginning and end.
@@ -1775,7 +1799,13 @@ function M._get_offset_encoding(bufnr)
   local offset_encoding
 
   for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
-    local this_offset_encoding = client.offset_encoding or "utf-16"
+    if client.offset_encoding == nil then
+      vim.notify_once(
+        string.format("Client (id: %s) offset_encoding is nil. Do not unset offset_encoding.", client.id),
+        vim.log.levels.ERROR
+      )
+    end
+    local this_offset_encoding = client.offset_encoding
     if not offset_encoding then
       offset_encoding = this_offset_encoding
     elseif offset_encoding ~= this_offset_encoding then
@@ -1796,7 +1826,7 @@ end
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
-  local buf = vim.api.nvim_win_get_buf(window)
+  local buf = vim.api.nvim_win_get_buf(window or 0)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   local position = make_position_param(window, offset_encoding)
   return {
@@ -1822,7 +1852,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
     end_pos = {end_pos, 't', true};
     offset_encoding = {offset_encoding, 's', true};
   }
-  bufnr = bufnr or 0
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
   local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
@@ -1904,7 +1934,9 @@ end
 ---@returns (number, number) `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, offset_encoding)
   local line = get_line(buf, row)
-  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
+  if offset_encoding == nil then
+    vim.notify_once("character_offset must be called with valid offset encoding", vim.log.levels.WARN)
+  end
   -- If the col is past the EOL, use the line length.
   if col > #line then
     return _str_utfindex_enc(line, nil, offset_encoding)
@@ -1928,7 +1960,6 @@ function M.lookup_section(settings, section)
 end
 
 M._get_line_byte_from_position = get_line_byte_from_position
-M._warn_once = warn_once
 
 M.buf_versions = {}
 

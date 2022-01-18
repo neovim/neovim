@@ -12,20 +12,16 @@
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
-#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
-#include "nvim/fileio.h"
-#include "nvim/getchar.h"
 #include "nvim/lua/executor.h"
-#include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -839,7 +835,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of maparg()-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
-ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
+ArrayOf(Dictionary) nvim_buf_get_keymap(uint64_t channel_id, Buffer buffer, String mode, Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -848,7 +844,7 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
     return (Array)ARRAY_DICT_INIT;
   }
 
-  return keymap_array(mode, buf);
+  return keymap_array(mode, buf, channel_id == LUA_INTERNAL_CALL);
 }
 
 /// Sets a buffer-local |mapping| for the given mode.
@@ -1275,6 +1271,63 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   aucmd_restbuf(&aco);
   try_end(err);
   return res;
+}
+
+/// Create a new user command |user-commands| in the given buffer.
+///
+/// @param  buffer  Buffer handle, or 0 for current buffer.
+/// @param[out] err Error details, if any.
+/// @see nvim_add_user_command
+void nvim_buf_add_user_command(Buffer buffer, String name, Object command,
+                               Dict(user_command) *opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  buf_T *target_buf = find_buffer_by_handle(buffer, err);
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  buf_T *save_curbuf = curbuf;
+  curbuf = target_buf;
+  add_user_command(name, command, opts, UC_BUFFER, err);
+  curbuf = save_curbuf;
+}
+
+/// Delete a buffer-local user-defined command.
+///
+/// Only commands created with |:command-buffer| or
+/// |nvim_buf_add_user_command()| can be deleted with this function.
+///
+/// @param  buffer  Buffer handle, or 0 for current buffer.
+/// @param  name    Name of the command to delete.
+/// @param[out] err Error details, if any.
+void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
+  FUNC_API_SINCE(9)
+{
+  garray_T *gap;
+  if (buffer == -1) {
+    gap = &ucmds;
+  } else {
+    buf_T *buf = find_buffer_by_handle(buffer, err);
+    gap = &buf->b_ucmds;
+  }
+
+  for (int i = 0; i < gap->ga_len; i++) {
+    ucmd_T *cmd = USER_CMD_GA(gap, i);
+    if (!STRCMP(name.data, cmd->uc_name)) {
+      free_ucmd(cmd);
+
+      gap->ga_len -= 1;
+
+      if (i < gap->ga_len) {
+        memmove(cmd, cmd + 1, (size_t)(gap->ga_len - i) * sizeof(ucmd_T));
+      }
+
+      return;
+    }
+  }
+
+  api_set_error(err, kErrorTypeException, "No such user-defined command: %s", name.data);
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)

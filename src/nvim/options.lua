@@ -275,6 +275,14 @@ return {
       defaults={if_true="internal,keepascii"}
     },
     {
+      full_name='cdhome', abbreviation='cdh',
+      short_desc=N_(":cd without argument goes to the home directory"),
+      type='bool', scope={'global'},
+      secure=true,
+      varname='p_cdh',
+      defaults={if_true=false}
+    },
+    {
       full_name='cdpath', abbreviation='cd',
       short_desc=N_("list of directories searched with \":cd\""),
       type='string', list='comma', scope={'global'},
@@ -403,7 +411,7 @@ return {
     },
     {
       full_name='compatible', abbreviation='cp',
-	  short_desc=N_("No description"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
       redraw={'all_windows'},
       varname='p_force_off',
@@ -657,14 +665,14 @@ return {
     },
     {
       full_name='edcompatible', abbreviation='ed',
-	  short_desc=N_("No description"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
       varname='p_force_off',
       defaults={if_true=false}
     },
     {
       full_name='emoji', abbreviation='emo',
-	  short_desc=N_("No description"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
       redraw={'all_windows', 'ui_option'},
       varname='p_emoji',
@@ -1176,7 +1184,7 @@ return {
     },
     {
       full_name='inccommand', abbreviation='icm',
-	  short_desc=N_("Live preview of substitution"),
+      short_desc=N_("Live preview of substitution"),
       type='string', scope={'global'},
       redraw={'all_windows'},
       varname='p_icm',
@@ -2491,7 +2499,7 @@ return {
     },
     {
       full_name='termencoding', abbreviation='tenc',
-      short_desc=N_("Terminal encodig"),
+      short_desc=N_("Terminal encoding"),
       type='string', scope={'global'},
       defaults={if_true=""}
     },
@@ -2614,7 +2622,7 @@ return {
     },
     {
       full_name='ttyfast', abbreviation='tf',
-	  short_desc=N_("No description"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
       no_mkrc=true,
       varname='p_force_on',

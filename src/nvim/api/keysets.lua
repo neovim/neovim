@@ -21,6 +21,7 @@ return {
     "virt_lines";
     "virt_lines_above";
     "virt_lines_leftcol";
+    "strict";
   };
   keymap = {
     "noremap";
@@ -29,9 +30,23 @@ return {
     "script";
     "expr";
     "unique";
+    "callback";
+    "desc";
   };
   get_commands = {
     "builtin";
+  };
+  user_command = {
+    "addr";
+    "bang";
+    "bar";
+    "complete";
+    "count";
+    "desc";
+    "force";
+    "nargs";
+    "range";
+    "register";
   };
   float_config = {
     "row";

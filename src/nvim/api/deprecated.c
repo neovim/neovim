@@ -130,7 +130,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
     return 0;
   }
 
-  uint64_t ns_id = src2ns(&src_id);
+  uint32_t ns_id = src2ns(&src_id);
   int width;
 
   VirtText virt_text = parse_virt_text(chunks, err, &width);
@@ -148,11 +148,12 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
     return src_id;
   }
 
-  Decoration *decor = xcalloc(1, sizeof(*decor));
-  decor->virt_text = virt_text;
-  decor->virt_text_width = width;
+  Decoration decor = DECORATION_INIT;
+  decor.virt_text = virt_text;
+  decor.virt_text_width = width;
+  decor.priority = 0;
 
-  extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, decor, true,
+  extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, &decor, true,
               false, kExtmarkNoUndo);
   return src_id;
 }

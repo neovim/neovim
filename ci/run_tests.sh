@@ -17,10 +17,6 @@ build_nvim
 
 exit_suite --continue
 
-source ~/.nvm/nvm.sh
-nvm use 10
-
-
 enter_suite tests
 
 if test "$CLANG_SANITIZER" != "TSAN" ; then

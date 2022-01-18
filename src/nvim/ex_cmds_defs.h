@@ -192,6 +192,7 @@ struct expand {
   int xp_context;               // type of expansion
   size_t xp_pattern_len;        // bytes in xp_pattern before cursor
   char_u *xp_arg;               // completion function
+  LuaRef xp_luaref;             // Ref to Lua completion function
   sctx_T xp_script_ctx;         // SCTX for completion function
   int xp_backslash;             // one of the XP_BS_ values
 #ifndef BACKSLASH_IN_FILENAME

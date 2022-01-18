@@ -1032,9 +1032,9 @@ void ml_recover(bool checkext)
   line_count = 0;
   idx = 0;              // start with first index in block 1
   error = 0;
-  buf->b_ml.ml_stack_top = 0;
+  buf->b_ml.ml_stack_top = 0;  // -V1048
   buf->b_ml.ml_stack = NULL;
-  buf->b_ml.ml_stack_size = 0;          // no stack yet
+  buf->b_ml.ml_stack_size = 0;  // -V1048
 
   if (curbuf->b_ffname == NULL) {
     cannot_open = true;
@@ -4139,7 +4139,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
              || (offset != 0
                  && offset > size +
                  buf->b_ml.ml_chunksize[curix].mlcs_totalsize
-                 + ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
+                 + (long)ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     size += buf->b_ml.ml_chunksize[curix].mlcs_totalsize;
     if (offset && ffdos) {

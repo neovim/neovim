@@ -73,8 +73,11 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
         vim.rpcrequest(1, "init", result)
-        client.config.flags.allow_incremental_sync = options.allow_incremental_sync or false
       end;
+      flags = {
+        allow_incremental_sync = options.allow_incremental_sync or false;
+        debounce_text_changes = options.debounce_text_changes or 0;
+      };
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
@@ -926,7 +929,60 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "basic_check_buffer_open_and_change_incremental";
-        options = { allow_incremental_sync = true };
+        options = {
+          allow_incremental_sync = true,
+        };
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
+          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
+          exec_lua [[
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          if ctx.method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "123boop";
+              })
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == 'finish' then
+            client.stop()
+          end
+        end;
+      }
+    end)
+    it('should check the body and didChange incremental with debounce', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change_incremental";
+        options = {
+          allow_incremental_sync = true,
+          debounce_text_changes = 5
+        };
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
@@ -1235,7 +1291,7 @@ describe('LSP', function()
         make_edit(2, 0, 2, 2, {"3"});
         make_edit(3, 2, 3, 4, {""});
       }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
       eq({
         '123First line of text';
         '2econd line of text';
@@ -1255,7 +1311,7 @@ describe('LSP', function()
         make_edit(3, #'', 3, #"Fourth", {"another line of text", "before this"});
         make_edit(3, #'Fourth', 3, #"Fourth line of text", {"!"});
       }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
       eq({
         '';
         '123';
@@ -1279,7 +1335,7 @@ describe('LSP', function()
         make_edit(3, #"Fourth", 3, #'', {"another line of text", "before this"});
         make_edit(3, #"Fourth line of text", 3, #'Fourth', {"!"});
       }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
       eq({
         '';
         '123';
@@ -1296,7 +1352,7 @@ describe('LSP', function()
       local edits = {
         make_edit(4, 3, 4, 4, {"ä"});
       }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
       eq({
         'First line of text';
         'Second line of text';
@@ -1309,13 +1365,27 @@ describe('LSP', function()
       local edits = {
         make_edit(5, 0, 5, 0, "foobar");
       }
-      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
       eq({
         'First line of text';
         'Second line of text';
         'Third line of text';
         'Fourth line of text';
         'å å ɧ 汉语 ↥ 🤦 🦄';
+        'foobar';
+      }, buf_lines(1))
+    end)
+    it('applies multiple text edits at the end of the document', function()
+      local edits = {
+        make_edit(4, 0, 5, 0, "");
+        make_edit(5, 0, 5, 0, "foobar");
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
+      eq({
+        'First line of text';
+        'Second line of text';
+        'Third line of text';
+        'Fourth line of text';
         'foobar';
       }, buf_lines(1))
     end)
@@ -1326,7 +1396,7 @@ describe('LSP', function()
         local edits = {
           make_edit(1, 0, 1, 19, 'Second line of text')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
           'Second line of text';
@@ -1343,7 +1413,7 @@ describe('LSP', function()
           make_edit(1, 0, 1, 6, ''),
           make_edit(1, 6, 1, 19, '')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
           '';
@@ -1360,7 +1430,7 @@ describe('LSP', function()
           make_edit(1, 0, 1, 6, ''),
           make_edit(0, 18, 5, 0, '')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
         }, buf_lines(1))
@@ -1372,7 +1442,7 @@ describe('LSP', function()
         local edits = {
           make_edit(1, 0, 2, 0, '')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
           'Third line of text';
@@ -1387,7 +1457,7 @@ describe('LSP', function()
         local edits = {
           make_edit(1, 7, 1, 11, '')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
           'Second  of text';
@@ -1403,7 +1473,7 @@ describe('LSP', function()
         local edits = {
           make_edit(0, 11, 1, 12, '')
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({
           'First line of text';
           'Third line of text';
@@ -1419,21 +1489,21 @@ describe('LSP', function()
         local edits = {
           make_edit(0, 0, 5, 0, {"All replaced"});
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({'All replaced'}, buf_lines(1))
       end)
       it('applies edits when the end line is 2 larger than vim\'s', function()
         local edits = {
           make_edit(0, 0, 6, 0, {"All replaced"});
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({'All replaced'}, buf_lines(1))
       end)
       it('applies edits with a column offset', function()
         local edits = {
           make_edit(0, 0, 5, 2, {"All replaced"});
         }
-        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
         eq({'All replaced'}, buf_lines(1))
       end)
     end)
@@ -1461,7 +1531,7 @@ describe('LSP', function()
       ]]
     end)
     it('correctly goes ahead with the edit if all is normal', function()
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit(5))
+      exec_lua("vim.lsp.util.apply_text_document_edit(..., nil, 'utf-16')", text_document_edit(5))
       eq({
         'First ↥ 🤦 🦄 line of text';
         '2nd line of 语text';
@@ -1473,7 +1543,7 @@ describe('LSP', function()
         local bufnr = select(1, ...)
         local text_edit = select(2, ...)
         vim.lsp.util.buf_versions[bufnr] = 10
-        vim.lsp.util.apply_text_document_edit(text_edit)
+        vim.lsp.util.apply_text_document_edit(text_edit, nil, 'utf-16')
       ]], target_bufnr, text_document_edit(0))
       eq({
         'First ↥ 🤦 🦄 line of text';
@@ -1486,7 +1556,7 @@ describe('LSP', function()
           local args = {...}
           local versionedBuf = args[2]
           vim.lsp.util.buf_versions[versionedBuf.bufnr] = versionedBuf.currentVersion
-          vim.lsp.util.apply_text_document_edit(args[1])
+          vim.lsp.util.apply_text_document_edit(args[1], nil, 'utf-16')
         ]], edit, versionedBuf)
       end
 
@@ -1512,17 +1582,36 @@ describe('LSP', function()
 
   describe('workspace_apply_edit', function()
     it('workspace/applyEdit returns ApplyWorkspaceEditResponse', function()
-      local expected = {
-        applied = true;
-        failureReason = nil;
+      local expected_handlers = {
+        {NIL, {}, {method="test", client_id=1}};
       }
-      eq(expected, exec_lua [[
-        local apply_edit = {
-          label = nil;
-          edit = {};
-        }
-        return vim.lsp.handlers['workspace/applyEdit'](nil, apply_edit)
-      ]])
+      test_rpc_server {
+        test_name = "basic_init";
+        on_init = function(client, _)
+          client.stop()
+        end;
+        -- If the program timed out, then code will be nil.
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        -- Note that NIL must be used here.
+        -- on_handler(err, method, result, client_id)
+        on_handler = function(...)
+          local expected = {
+            applied = true;
+            failureReason = nil;
+          }
+          eq(expected, exec_lua [[
+            local apply_edit = {
+              label = nil;
+              edit = {};
+            }
+            return vim.lsp.handlers['workspace/applyEdit'](nil, apply_edit, {client_id = TEST_RPC_CLIENT_ID})
+          ]])
+          eq(table.remove(expected_handlers), {...})
+        end;
+      }
     end)
   end)
 
@@ -1596,7 +1685,7 @@ describe('LSP', function()
         local workspace_edits = args[1]
         local target_bufnr = args[2]
 
-        vim.lsp.util.apply_workspace_edit(workspace_edits)
+        vim.lsp.util.apply_workspace_edit(workspace_edits, 'utf-16')
 
         return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
       ]], make_workspace_edit(edits), target_bufnr))
@@ -1618,7 +1707,7 @@ describe('LSP', function()
         local workspace_edits = args[1]
         local target_bufnr = args[2]
 
-        vim.lsp.util.apply_workspace_edit(workspace_edits)
+        vim.lsp.util.apply_workspace_edit(workspace_edits, 'utf-16')
 
         return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
       ]], make_workspace_edit(edits), target_bufnr))
@@ -1635,7 +1724,7 @@ describe('LSP', function()
           },
         }
       }
-      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
     end)
     it('createFile does not touch file if it exists and ignoreIfExists is set', function()
@@ -1653,7 +1742,7 @@ describe('LSP', function()
           },
         }
       }
-      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
       eq('Dummy content', read_file(tmpfile))
     end)
@@ -1673,7 +1762,7 @@ describe('LSP', function()
           },
         }
       }
-      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16')
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
       eq('', read_file(tmpfile))
     end)
@@ -1694,7 +1783,7 @@ describe('LSP', function()
           }
         }
       }
-      eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16'))
       eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
       eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
     end)
@@ -1855,7 +1944,7 @@ describe('LSP', function()
             }
           },
         }
-        return vim.lsp.util.locations_to_items(locations)
+        return vim.lsp.util.locations_to_items(locations, 'utf-16')
       ]]
       eq(expected, actual)
     end)
@@ -1885,7 +1974,7 @@ describe('LSP', function()
             }
           },
         }
-        return vim.lsp.util.locations_to_items(locations)
+        return vim.lsp.util.locations_to_items(locations, 'utf-16')
       ]]
       eq(expected, actual)
     end)
@@ -2189,7 +2278,7 @@ describe('LSP', function()
     end
 
     local jump = function(msg)
-      eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg))
+      eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg, "utf-16"))
       eq(target_bufnr, exec_lua[[return vim.fn.bufnr('%')]])
       return {
         line = exec_lua[[return vim.fn.line('.')]],
@@ -2260,6 +2349,27 @@ describe('LSP', function()
   describe('lsp.util.trim.trim_empty_lines', function()
     it('properly trims empty lines', function()
       eq({{"foo", "bar"}}, exec_lua[[ return vim.lsp.util.trim_empty_lines({{ "foo", "bar" },  nil}) ]])
+    end)
+  end)
+
+  describe('lsp.util.convert_signature_help_to_markdown_lines', function()
+    it('can handle negative activeSignature', function()
+      local result = exec_lua[[
+        local signature_help = {
+          activeParameter = 0,
+          activeSignature = -1,
+          signatures = {
+            {
+              documentation = "",
+              label = "TestEntity.TestEntity()",
+              parameters = {}
+            },
+          }
+        }
+        return vim.lsp.util.convert_signature_help_to_markdown_lines(signature_help, 'cs', {','})
+      ]]
+      local expected = {'```cs', 'TestEntity.TestEntity()', '```', ''}
+      eq(expected, result)
     end)
   end)
 

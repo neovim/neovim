@@ -292,10 +292,9 @@ describe(':terminal buffer', function()
     command('quit')
   end)
 
-  it('does not segfault when pasting empty buffer #13955', function()
-    feed_command('terminal')
+  it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
-    feed_command('put a') -- buffer a is empty
+    feed_command('put a')  -- register a is empty
     helpers.assert_alive()
   end)
 end)
@@ -350,7 +349,7 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
   end)
 
   it('creating a terminal buffer #16394', function()
-    feed_command([[autocmd TermOpen * ++once call v:lua.register_callback(expand("<abuf>"))]])
+    feed_command('autocmd TermOpen * ++once call v:lua.register_callback(str2nr(expand("<abuf>")))')
     feed_command('terminal')
     sleep(500)
     eq('', exec_lua([[return _G.cb_error]]))

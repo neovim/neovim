@@ -82,8 +82,7 @@ modes.
 			map command applies.  The mapping may remain defined
 			for other modes where it applies.
 			It also works when {lhs} matches the {rhs} of a
-			mapping. This is for when when an abbreviation
-			applied.
+			mapping. This is for when an abbreviation applied.
 			Note: Trailing spaces are included in the {lhs}.  This
 			unmap does NOT work: >
 				:map @@ foo
@@ -245,7 +244,7 @@ go through the main loop (e.g. to update the display), return "\<Ignore>".
 This is similar to "nothing" but makes Vim return from the loop that waits for
 input.
 
-Also, keep in mind that the expression may be evaluated when looking for
+Keep in mind that the expression may be evaluated when looking for
 typeahead, before the previous command has been executed.  For example: >
 	func StoreColumn()
 	  let g:column = col('.')
@@ -837,8 +836,7 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 			    "line"	{motion} was |linewise|
 			    "char"	{motion} was |charwise|
 			    "block"	{motion} was |blockwise-visual|
-			Although "block" would rarely appear, since it can
-			only result from Visual mode where "g@" is not useful.
+			The type can be forced, see |forced-motion|.
 
 Here is an example that counts the number of spaces with <F4>: >
 
@@ -1248,8 +1246,8 @@ See |:verbose-cmd| for more information.
 
 
 Command attributes ~
-
-User-defined commands are treated by Vim just like any other Ex commands.  They
+							*command-attributes*
+User-defined commands are treated by Nvim just like any other Ex commands.  They
 can have arguments, or have a range specified.  Arguments are subject to
 completion as filenames, buffers, etc.  Exactly how this works depends upon the
 command's attributes, which are specified when the command is defined.

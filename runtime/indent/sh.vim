@@ -109,7 +109,7 @@ function! GetShIndent()
       let ind += s:indent_value('continuation-line')
     endif
   elseif s:end_block(line) && !s:start_block(line)
-    let ind -= s:indent_value('default')
+    let ind = indent(lnum)
   elseif pnum != 0 &&
         \ s:is_continuation_line(pline) &&
         \ !s:end_block(curline) &&

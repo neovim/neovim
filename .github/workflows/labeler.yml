@@ -1,8 +1,9 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: opened
+    types: [opened]
 jobs:
+
   triage:
     runs-on: ubuntu-latest
     permissions:
@@ -12,8 +13,10 @@ jobs:
     - uses: actions/labeler@main
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
   type-scope:
     runs-on: ubuntu-latest
+    needs: ["triage"]
     permissions:
       contents: write
       pull-requests: write
@@ -23,8 +26,9 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-      # Extract type and try to add it as a label
-    - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
-
-      # Extract scope and try to add it as a label
-    - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+    - name: "Extract commit type and add as label"
+      continue-on-error: true
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
+    - name: "Extract commit scope and add as label"
+      continue-on-error: true
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')"

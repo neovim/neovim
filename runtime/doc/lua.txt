@@ -249,13 +249,15 @@ arguments separated by " " (space) instead of "\t" (tab).
                                                         *:lua*
 :[range]lua {chunk}
                         Executes Lua chunk {chunk}.
-
+                        if {chunk} starts with "=" the rest of the chunk is
+                        evaluated as an expression and printed. `:lua =expr`
+                        is equivalent to `:lua print(vim.inspect(expr))`
                         Examples: >
                             :lua vim.api.nvim_command('echo "Hello, Nvim!"')
 <                        To see the Lua version: >
                             :lua print(_VERSION)
 <                        To see the LuaJIT version: >
-                            :lua print(jit.version)
+                            :lua =jit.version
 <
                                                         *:lua-heredoc*
 :[range]lua << [endmarker]
@@ -272,7 +274,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                             lua << EOF
                             local linenr = vim.api.nvim_win_get_cursor(0)[1]
                             local curline = vim.api.nvim_buf_get_lines(
-                                    0, linenr, linenr + 1, false)[1]
+                                    0, linenr - 1, linenr, false)[1]
                             print(string.format("Current line [%d] has %d bytes",
                                     linenr, #curline))
                             EOF
@@ -708,6 +710,38 @@ vim.mpack.decode({str})                                 *vim.mpack.decode*
         Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
 ------------------------------------------------------------------------------
+VIM.SPELL                                                           *lua-spell*
+
+vim.spell.check({str})                                      *vim.spell.check()*
+        Check {str} for spelling errors. Similar to the Vimscript function
+        |spellbadword()|.
+
+        Note: The behaviour of this function is dependent on: 'spelllang',
+        'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local
+        to the buffer. Consider calling this with |nvim_buf_call()|.
+
+        Example: >
+            vim.spell.check("the quik brown fox")
+            -->
+            {
+                {'quik', 'bad', 4}
+            }
+<
+
+        Parameters: ~
+            {str}    String to spell check.
+
+        Return: ~
+          List of tuples with three items:
+            - The badly spelled word.
+            - The type of the spelling error:
+                "bad"   spelling mistake
+                "rare"  rare word
+                "local" word only valid in another region
+                "caps"  word should start with Capital
+            - The position in {str} where the word begins.
+
+------------------------------------------------------------------------------
 VIM                                                     *lua-builtin*
 
 vim.api.{func}({...})                                   *vim.api*
@@ -759,9 +793,9 @@ vim.stricmp({a}, {b})                                   *vim.stricmp()*
         respectively.
 
 vim.str_utfindex({str}[, {index}])                      *vim.str_utfindex()*
-        Convert byte index to UTF-32 and UTF-16 indicies. If {index} is not
-        supplied, the length of the string is used. All indicies are zero-based.
-        Returns two values: the UTF-32 and UTF-16 indicies respectively.
+        Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
+        supplied, the length of the string is used. All indices are zero-based.
+        Returns two values: the UTF-32 and UTF-16 indices respectively.
 
         Embedded NUL bytes are treated as terminating the string. Invalid
         UTF-8 bytes, and embedded surrogates are counted as one code
@@ -880,6 +914,15 @@ vim.types                                               *vim.types*
         values corresponding to `vim.types.float`, `vim.types.array` and
         `vim.types.dictionary` will not change or that `vim.types` table will
         only contain values for these three types.
+
+                                                   *log_levels* *vim.log.levels*
+Log levels are one of the values defined in `vim.log.levels`:
+
+        vim.log.levels.DEBUG
+        vim.log.levels.ERROR
+        vim.log.levels.INFO
+        vim.log.levels.TRACE
+        vim.log.levels.WARN
 
 ------------------------------------------------------------------------------
 LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
@@ -1197,19 +1240,32 @@ inspect({object}, {options})                                   *vim.inspect()*
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
 
-notify({msg}, {log_level}, {opts})                              *vim.notify()*
-                Notification provider
+notify({msg}, {level}, {opts})                                  *vim.notify()*
+                Display a notification to the user.
 
-                Without a runtime, writes to :Messages
+                This function can be overridden by plugins to display
+                notifications using a custom provider (such as the system
+                notification provider). By default, writes to |:messages|.
 
                 Parameters: ~
-                    {msg}        string Content of the notification to show to
-                                 the user
-                    {log_level}  number|nil enum from vim.log.levels
-                    {opts}       table|nil additional options (timeout, etc)
+                    {msg}    string Content of the notification to show to the
+                             user.
+                    {level}  number|nil One of the values from
+                             |vim.log.levels|.
+                    {opts}   table|nil Optional parameters. Unused by default.
 
-                See also: ~
-                    :help nvim_notify
+notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
+                Display a notification only one time.
+
+                Like |vim.notify()|, but subsequent calls with the same
+                message will not display a notification.
+
+                Parameters: ~
+                    {msg}    string Content of the notification to show to the
+                             user.
+                    {level}  number|nil One of the values from
+                             |vim.log.levels|.
+                    {opts}   table|nil Optional parameters. Unused by default.
 
 on_key({fn}, {ns_id})                                           *vim.on_key()*
                 Adds Lua function {fn} with namespace id {ns_id} as a listener
@@ -1272,6 +1328,18 @@ paste({lines}, {phase})                                          *vim.paste()*
 
                 See also: ~
                     |paste|
+
+pretty_print({...})                                       *vim.pretty_print()*
+                Prints given arguments in human-readable format. Example: >
+                  -- Print highlight group Normal and store it's contents in a variable.
+                  local hl_normal = vim.pretty_print(vim.api.nvim_get_hl_by_name("Normal", true))
+<
+
+                Return: ~
+                    given arguments.
+
+                See also: ~
+                    |vim.inspect()|
 
 region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                 Get a table of lines with start, end columns for a region
@@ -1615,16 +1683,25 @@ validate({opt})                                               *vim.validate()*
                      => error('arg1: expected even number, got 3')
 <
 
+                If multiple types are valid they can be given as a list. >
+
+                  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+                     => NOP (success)
+
+                  vim.validate{arg1={1, {'string', table'}}}
+                     => error('arg1: expected string|table, got number')
+<
+
                 Parameters: ~
-                    {opt}  Map of parameter names to validations. Each key is
-                           a parameter name; each value is a tuple in one of
-                           these forms:
+                    {opt}  table of parameter names to validations. Each key
+                           is a parameter name; each value is a tuple in one
+                           of these forms:
                            1. (arg_value, type_name, optional)
                               • arg_value: argument value
-                              • type_name: string type name, one of: ("table",
-                                "t", "string", "s", "number", "n", "boolean",
-                                "b", "function", "f", "nil", "thread",
-                                "userdata")
+                              • type_name: string|table type name, one of:
+                                ("table", "t", "string", "s", "number", "n",
+                                "boolean", "b", "function", "f", "nil",
+                                "thread", "userdata") or list of them.
                               • optional: (optional) boolean, if true, `nil`
                                 is valid
 
@@ -1727,5 +1804,158 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                  once the user made a choice. `idx` is the
                                  1-based index of `item` within `item` . `nil`
                                  if the user aborted the dialog.
+
+
+==============================================================================
+Lua module: filetype                                            *lua-filetype*
+
+add({filetypes})                                          *vim.filetype.add()*
+                Add new filetype mappings.
+
+                Filetype mappings can be added either by extension or by
+                filename (either the "tail" or the full file path). The full
+                file path is checked first, followed by the file name. If a
+                match is not found using the filename, then the filename is
+                matched against the list of patterns (sorted by priority)
+                until a match is found. Lastly, if pattern matching does not
+                find a filetype, then the file extension is used.
+
+                The filetype can be either a string (in which case it is used
+                as the filetype directly) or a function. If a function, it
+                takes the full path and buffer number of the file as arguments
+                (along with captures from the matched pattern, if any) and
+                should return a string that will be used as the buffer's
+                filetype.
+
+                Filename patterns can specify an optional priority to resolve
+                cases when a file path matches multiple patterns. Higher
+                priorities are matched first. When omitted, the priority
+                defaults to 0.
+
+                See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
+
+                Note that Lua filetype detection is only enabled when
+                |g:do_filetype_lua| is set to 1.
+
+                Example: >
+
+                  vim.filetype.add({
+                    extension = {
+                      foo = "fooscript",
+                      bar = function(path, bufnr)
+                        if some_condition() then
+                          return "barscript"
+                        end
+                        return "bar"
+                      end,
+                    },
+                    filename = {
+                      [".foorc"] = "toml",
+                      ["/etc/foo/config"] = "toml",
+                    },
+                    pattern = {
+                      [".*&zwj;/etc/foo/.*"] = "fooscript",
+                      -- Using an optional priority
+                      [".*&zwj;/etc/foo/.*%.conf"] = { "dosini", { priority = 10 } },
+                      ["README.(%a+)$"] = function(path, bufnr, ext)
+                        if ext == "md" then
+                          return "markdown"
+                        elseif ext == "rst" then
+                          return "rst"
+                        end
+                      end,
+                    },
+                  })
+<
+
+                Parameters: ~
+                    {filetypes}  table A table containing new filetype maps
+                                 (see example).
+
+match({name}, {bufnr})                                  *vim.filetype.match()*
+                Set the filetype for the given buffer from a file name.
+
+                Parameters: ~
+                    {name}   string File name (can be an absolute or relative
+                             path)
+                    {bufnr}  number|nil The buffer to set the filetype for.
+                             Defaults to the current buffer.
+
+
+==============================================================================
+Lua module: keymap                                                *lua-keymap*
+
+del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
+                Remove an existing mapping. Examples: >
+
+                   vim.keymap.del('n', 'lhs')
+
+                   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+<
+
+                Parameters: ~
+                    {opts}  table A table of optional arguments:
+                            • buffer: (number or boolean) Remove a mapping
+                              from the given buffer. When "true" or 0, use the
+                              current buffer.
+
+                See also: ~
+                    |vim.keymap.set()|
+
+set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
+                Add a new |mapping|. Examples: >
+
+                   -- Can add mapping to Lua functions
+                   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
+
+                   -- Can use it to map multiple modes
+                   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer=true })
+
+                   -- Can add mapping for specific buffer
+                   vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
+
+                   -- Expr mappings
+                   vim.keymap.set('i', '<Tab>', function()
+                     return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
+                   end, { expr = true })
+                   -- <Plug> mappings
+                   vim.keymap.set('n', '[%', '<Plug>(MatchitNormalMultiBackward)')
+<
+
+                Note that in a mapping like: >
+
+                    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
+<
+
+                the require('jkl') gets evaluated during this call in order to
+                access the function. If you want to avoid this cost at startup
+                you can wrap it in a function, for example: >
+
+                    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
+<
+
+                Parameters: ~
+                    {mode}  string|table Same mode short names as
+                            |nvim_set_keymap()|. Can also be list of modes to
+                            create mapping on multiple modes.
+                    {lhs}   string Left-hand side |{lhs}| of the mapping.
+                    {rhs}   string|function Right-hand side |{rhs}| of the
+                            mapping. Can also be a Lua function.
+                    {opts}  table A table of |:map-arguments| such as
+                            "silent". In addition to the options listed in
+                            |nvim_set_keymap()|, this table also accepts the
+                            following keys:
+                            • replace_keycodes: (boolean, default true) When
+                              both this and expr is "true",
+                              |nvim_replace_termcodes()| is applied to the
+                              result of Lua expr maps.
+                            • remap: (boolean) Make the mapping recursive.
+                              This is the inverse of the "noremap" option from
+                              |nvim_set_keymap()|. Default `true` if `lhs` is
+                              a string starting with `<plug>`
+                              (case-insensitive), `false` otherwise.
+
+                See also: ~
+                    |nvim_set_keymap()|
 
  vim:tw=78:ts=8:ft=help:norl:

@@ -39,6 +39,8 @@ setlocal indentkeys=o,O,*<Return>,<>>,<<>,/,{,},!^F
 " autoindent: used when the indentexpr returns -1
 setlocal autoindent
 
+let b:undo_indent = "setl ai< inde< indk<"
+
 if !exists('b:xml_indent_open')
     let b:xml_indent_open = '.\{-}<[:A-Z_a-z]'
     " pre tag, e.g. <address>
@@ -49,6 +51,10 @@ if !exists('b:xml_indent_close')
     let b:xml_indent_close = '.\{-}</\|/>.\{-}'
     " end pre tag, e.g. </address>
     " let b:xml_indent_close = '.\{-}</\(address\)\@!'
+endif
+
+if !exists('b:xml_indent_continuation_filetype')
+    let b:xml_indent_continuation_filetype = 'xml'
 endif
 
 let &cpo = s:keepcpo
@@ -162,7 +168,7 @@ endfun
 
 func! <SID>IsXMLContinuation(line)
     " Checks, whether or not the line matches a start-of-tag
-    return a:line !~ '^\s*<' && &ft is# 'xml'
+    return a:line !~ '^\s*<' && &ft =~# b:xml_indent_continuation_filetype
 endfunc
 
 func! <SID>HasNoTagEnd(line)

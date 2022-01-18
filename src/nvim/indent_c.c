@@ -923,11 +923,10 @@ static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
 
   while (*s && *s != ';' && *s != '\'' && *s != '"') {
     if (*s == ')' && cin_nocode(s + 1)) {
-      /* ')' at the end: may have found a match
-       * Check for he previous line not to end in a backslash:
-       *       #if defined(x) && \
-       *		 defined(y)
-       */
+      // ')' at the end: may have found a match
+      // Check for the previous line not to end in a backslash:
+      //       #if defined(x) && {backslash}
+      //           defined(y)
       lnum = first_lnum - 1;
       s = ml_get(lnum);
       if (*s == NUL || s[STRLEN(s) - 1] != '\\')
@@ -1634,8 +1633,8 @@ void parse_cino(buf_T *buf)
    * itself is also unclosed. */
   buf->b_ind_unclosed2 = sw;
 
-  /* Suppress ignoring spaces from the indent of a line starting with an
-   * unclosed parentheses. */
+  // Suppress ignoring spaces from the indent of a line starting with an
+  // unclosed parenthesis.
   buf->b_ind_unclosed_noignore = 0;
 
   /* If the opening paren is the last nonwhite character on the line, and
@@ -1647,11 +1646,11 @@ void parse_cino(buf_T *buf)
    * an unclosed parentheses. */
   buf->b_ind_unclosed_whiteok = 0;
 
-  /* Indent a closing parentheses under the line start of the matching
-   * opening parentheses. */
+  // Indent a closing parenthesis under the line start of the matching
+  // opening parenthesis.
   buf->b_ind_matching_paren = 0;
 
-  // Indent a closing parentheses under the previous line.
+  // Indent a closing parenthesis under the previous line.
   buf->b_ind_paren_prev = 0;
 
   // Extra indent for comments.

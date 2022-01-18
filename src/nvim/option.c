@@ -1345,7 +1345,7 @@ int do_set(char_u *arg, int opt_flags)
 
             if (nextchar == '&') {  // set to default val
               newval = options[opt_idx].def_val;
-              // expand environment variables and ~ (since the
+              // expand environment variables and ~ since the
               // default value was already expanded, only
               // required when an environment variable was set
               // later
@@ -3613,7 +3613,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
           c2 = c3 = 0;
           s = p + len + 1;
           c1 = get_encoded_char_adv(&s);
-          if (c1 == 0 || utf_char2cells(c1) > 1) {
+          if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
           }
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
@@ -3621,12 +3621,12 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
               return e_invarg;
             }
             c2 = get_encoded_char_adv(&s);
-            if (c2 == 0 || utf_char2cells(c2) > 1) {
+            if (c2 == 0 || char2cells(c2) > 1) {
               return e_invarg;
             }
             if (!(*s == ',' || *s == NUL)) {
               c3 = get_encoded_char_adv(&s);
-              if (c3 == 0 || utf_char2cells(c3) > 1) {
+              if (c3 == 0 || char2cells(c3) > 1) {
                 return e_invarg;
               }
             }
@@ -3660,7 +3660,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
               c1 = get_encoded_char_adv(&s);
-              if (c1 == 0 || utf_char2cells(c1) > 1) {
+              if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
               multispace_len++;
@@ -4132,7 +4132,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         }
       }
 
-      // Arabic requires a utf-8 encoding, inform the user if its not
+      // Arabic requires a utf-8 encoding, inform the user if it's not
       // set.
       if (STRCMP(p_enc, "utf-8") != 0) {
         static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");

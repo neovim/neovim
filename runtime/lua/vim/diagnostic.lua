@@ -30,7 +30,7 @@ M.handlers = setmetatable({}, {
   __newindex = function(t, name, handler)
     vim.validate { handler = {handler, "t" } }
     rawset(t, name, handler)
-    if not global_diagnostic_options[name] then
+    if global_diagnostic_options[name] == nil then
       global_diagnostic_options[name] = true
     end
   end,
@@ -552,17 +552,24 @@ end
 ---         - `table`: Enable this feature with overrides. Use an empty table to use default values.
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
----@param opts table Configuration table with the following keys:
+---@param opts table|nil When omitted or "nil", retrieve the current configuration. Otherwise, a
+---                      configuration table with the following keys:
 ---       - underline: (default true) Use underline for diagnostics. Options:
 ---                    * severity: Only underline diagnostics matching the given severity
 ---                    |diagnostic-severity|
----       - virtual_text: (default true) Use virtual text for diagnostics. Options:
+---       - virtual_text: (default true) Use virtual text for diagnostics. If multiple diagnostics
+---                       are set for a namespace, one prefix per diagnostic + the last diagnostic
+---                       message are shown.
+---                       Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|
 ---                       * source: (boolean or string) Include the diagnostic source in virtual
 ---                                 text. Use "if_many" to only show sources if there is more than
 ---                                 one diagnostic source in the buffer. Otherwise, any truthy value
 ---                                 means to always show the diagnostic source.
+---                       * spacing: (number) Amount of empty spaces inserted at the beginning
+---                                  of the virtual text.
+---                       * prefix: (string) Prepend diagnostic message with prefix.
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
 ---                                 the diagnostic. Example:
@@ -593,7 +600,7 @@ end
 ---                            global diagnostic options.
 function M.config(opts, namespace)
   vim.validate {
-    opts = { opts, 't' },
+    opts = { opts, 't', true },
     namespace = { namespace, 'n', true },
   }
 
@@ -605,10 +612,13 @@ function M.config(opts, namespace)
     t = global_diagnostic_options
   end
 
-  for opt in pairs(global_diagnostic_options) do
-    if opts[opt] ~= nil then
-      t[opt] = opts[opt]
-    end
+  if not opts then
+    -- Return current config
+    return vim.deepcopy(t)
+  end
+
+  for k, v in pairs(opts) do
+    t[k] = v
   end
 
   if namespace then
@@ -638,7 +648,11 @@ function M.set(namespace, bufnr, diagnostics, opts)
   vim.validate {
     namespace = {namespace, 'n'},
     bufnr = {bufnr, 'n'},
-    diagnostics = {diagnostics, 't'},
+    diagnostics = {
+      diagnostics,
+      vim.tbl_islist,
+      "a list of diagnostics",
+    },
     opts = {opts, 't', true},
   }
 
@@ -804,11 +818,16 @@ M.handlers.signs = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
@@ -867,11 +886,16 @@ M.handlers.underline = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     if opts.underline and opts.underline.severity then
       diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
@@ -915,11 +939,16 @@ M.handlers.virtual_text = {
     vim.validate {
       namespace = {namespace, 'n'},
       bufnr = {bufnr, 'n'},
-      diagnostics = {diagnostics, 't'},
+      diagnostics = {
+        diagnostics,
+        vim.tbl_islist,
+        "a list of diagnostics",
+      },
       opts = {opts, 't', true},
     }
 
     bufnr = get_bufnr(bufnr)
+    opts = opts or {}
 
     local severity
     if opts.virtual_text then
@@ -1075,7 +1104,11 @@ function M.show(namespace, bufnr, diagnostics, opts)
   vim.validate {
     namespace = { namespace, 'n', true },
     bufnr = { bufnr, 'n', true },
-    diagnostics = { diagnostics, 't', true },
+    diagnostics = {
+      diagnostics,
+      function(v) return v == nil or vim.tbl_islist(v) end,
+      "a list of diagnostics",
+    },
     opts = { opts, 't', true },
   }
 
@@ -1346,16 +1379,16 @@ function M.reset(namespace, bufnr)
       diagnostic_cache[iter_bufnr][iter_namespace] = nil
       M.hide(iter_namespace, iter_bufnr)
     end
-  end
 
-  vim.api.nvim_buf_call(bufnr, function()
-    vim.api.nvim_command(
-      string.format(
-        "doautocmd <nomodeline> DiagnosticChanged %s",
-        vim.fn.fnameescape(vim.api.nvim_buf_get_name(bufnr))
+    vim.api.nvim_buf_call(iter_bufnr, function()
+      vim.api.nvim_command(
+        string.format(
+          "doautocmd <nomodeline> DiagnosticChanged %s",
+          vim.fn.fnameescape(vim.api.nvim_buf_get_name(iter_bufnr))
+        )
       )
-    )
-  end)
+    end)
+  end
 end
 
 --- Add all diagnostics to the quickfix list.
@@ -1520,7 +1553,13 @@ local errlist_type_map = {
 ---@param diagnostics table List of diagnostics |diagnostic-structure|.
 ---@return array of quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
-  vim.validate { diagnostics = {diagnostics, 't'} }
+  vim.validate {
+    diagnostics = {
+      diagnostics,
+      vim.tbl_islist,
+      "a list of diagnostics",
+    },
+  }
 
   local list = {}
   for _, v in ipairs(diagnostics) do
@@ -1551,7 +1590,13 @@ end
 ---            |getloclist()|.
 ---@return array of diagnostics |diagnostic-structure|
 function M.fromqflist(list)
-  vim.validate { list = {list, 't'} }
+  vim.validate {
+    list = {
+      list,
+      vim.tbl_islist,
+      "a list of quickfix items",
+    },
+  }
 
   local diagnostics = {}
   for _, item in ipairs(list) do
