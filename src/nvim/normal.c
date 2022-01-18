@@ -7490,7 +7490,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
         // Now delete the selected text. Avoid messages here.
-        cap->oap->regname = cap->cmdchar == 'p' ? NUL : '_';
+        cap->oap->regname = cap->cmdchar == 'P' ? '_' : NULL;
         cap->cmdchar = 'd';
         cap->nchar = NUL;
         msg_silent++;
