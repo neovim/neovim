@@ -354,10 +354,10 @@ int main(int argc, char **argv)
   exe_pre_commands(&params);
 
   if (!vimrc_none) {
-    // Does ":filetype plugin indent on". We do this *before* the user startup scripts to ensure
+    // Sources ftplugin.vim and indent.vim. We do this *before* the user startup scripts to ensure
     // ftplugins run before FileType autocommands defined in the init file (which allows those
     // autocommands to overwrite settings from ftplugins).
-    filetype_maybe_enable();
+    filetype_plugin_enable();
   }
 
   // Source startup scripts.
@@ -365,6 +365,9 @@ int main(int argc, char **argv)
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (!vimrc_none) {
+    // Sources filetype.lua and filetype.vim unless the user explicitly disabled it with :filetype
+    // off.
+    filetype_maybe_enable();
     // Sources syntax/syntax.vim. We do this *after* the user startup scripts so that users can
     // disable syntax highlighting with `:syntax off` if they wish.
     syn_maybe_enable();

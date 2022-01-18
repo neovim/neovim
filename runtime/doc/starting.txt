@@ -411,12 +411,7 @@ accordingly, proceeding as follows:
 
 5. Enable filetype and indent plugins.
 	This does the same as the command: >
-		:filetype plugin indent on
-<	which in turn is equivalent to: >
-		:runtime! filetype.lua
-		:runtime! filetype.vim
-		:runtime! ftplugin.vim
-		:runtime! indent.vim
+		:runtime! ftplugin.vim indent.vim
 <	Skipped if the "-u NONE" command line argument was given.
 
 6. Load user config (execute Ex commands from files, environment, …).
@@ -463,13 +458,19 @@ accordingly, proceeding as follows:
 	-  The file ".nvimrc"
 	-  The file ".exrc"
 
-7. Enable syntax highlighting.
+7. Enable filetype detection.
+	This does the same as the command: >
+		:runtime! filetype.lua filetype.vim
+<	Skipped if ":filetype off" was called or if the "-u NONE" command line
+	argument was given.
+
+8. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
 <	Skipped if ":syntax off" was called or if the "-u NONE" command
 	line argument was given.
 
-8. Load the plugin scripts.					*load-plugins*
+9. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 		:runtime! plugin/**/*.lua
@@ -499,21 +500,21 @@ accordingly, proceeding as follows:
 	if packages have been found, but that should not add a directory
 	ending in "after".
 
-9. Set 'shellpipe' and 'shellredir'
+10. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Nvim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-10. Set 'updatecount' to zero, if "-n" command argument used
+11. Set 'updatecount' to zero, if "-n" command argument used
 
-11. Set binary options if the |-b| flag was given.
+12. Set binary options if the |-b| flag was given.
 
-12. Read the |shada-file|.
+13. Read the |shada-file|.
 
-13. Read the quickfix file if the |-q| flag was given, or exit on failure.
+14. Read the quickfix file if the |-q| flag was given, or exit on failure.
 
-14. Open all windows
+15. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -523,7 +524,7 @@ accordingly, proceeding as follows:
 	Buffers for all windows will be loaded, without triggering |BufAdd|
 	autocommands.
 
-15. Execute startup commands
+16. Execute startup commands
 	If a |-t| flag was given, the tag is jumped to.
 	Commands given with |-c| and |+cmd| are executed.
 	If the 'insertmode' option is set, Insert mode is entered.
