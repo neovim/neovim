@@ -512,8 +512,12 @@ describe('put command', function()
 =======
           if not conversion_table.put_backwards then
             eq(getreg('"'), selection_string)
+<<<<<<< HEAD
           end 
 >>>>>>> 96daea0f0 (fix: import @zeertzjq patch)
+=======
+          end
+>>>>>>> 5a3e5ae32 (fix: lint)
         else
           eq('test_string"', getreg('"'))
         end
