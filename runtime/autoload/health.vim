@@ -21,10 +21,17 @@ function! health#check(plugin_names) abort
           throw 'healthcheck_not_found'
         endif
         eval type == 'v' ? call(func, []) : luaeval(func)
+        " in the event the healthcheck doesn't return anything
+        " (the plugin author should avoid this possibility)
+        if len(s:output) == 0
+          throw 'healthcheck_no_return_value'
+        endif
       catch
         let s:output = []  " Clear the output
         if v:exception =~# 'healthcheck_not_found'
           call health#report_error('No healthcheck found for "'.name.'" plugin.')
+        elseif v:exception =~# 'healthcheck_no_return_value'
+          call health#report_error('The healthcheck report for "'.name.'" plugin is empty.')
         else
           call health#report_error(printf(
                 \ "Failed to run healthcheck for \"%s\" plugin. Exception:\n%s\n%s",
@@ -127,7 +134,7 @@ endfunction " }}}
 
 " From a path return a list [{name}, {func}, {type}] representing a healthcheck
 function! s:filepath_to_healthcheck(path) abort
-  if a:path =~# 'vim$' 
+  if a:path =~# 'vim$'
     let name =  matchstr(a:path, '\zs[^\/]*\ze\.vim$')
     let func = 'health#'.name.'#check'
     let type = 'v'
