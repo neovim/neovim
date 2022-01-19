@@ -507,17 +507,9 @@ describe('put command', function()
       return function(exception_table, after_redo)
         test_expect(exception_table, after_redo)
         if selection_string then
-<<<<<<< HEAD
-          eq(selection_string, getreg('"'))
-=======
           if not conversion_table.put_backwards then
-            eq(getreg('"'), selection_string)
-<<<<<<< HEAD
-          end 
->>>>>>> 96daea0f0 (fix: import @zeertzjq patch)
-=======
+            eq(selection_string, getreg('"'))
           end
->>>>>>> 5a3e5ae32 (fix: lint)
         else
           eq('test_string"', getreg('"'))
         end
@@ -724,13 +716,9 @@ describe('put command', function()
             expect_base, conversion_table)
           return function(exception_table, after_redo)
             test_expect(exception_table, after_redo)
-<<<<<<< HEAD
-            eq('Line of words 1\n', getreg('"'))
-=======
             if not conversion_table.put_backwards then
-              eq(getreg('"'), 'Line of words 1\n')
+              eq('Line of words 1\n', getreg('"'))
             end
->>>>>>> 96daea0f0 (fix: import @zeertzjq patch)
           end
         end
         local base_expect_string = [[
@@ -764,13 +752,9 @@ describe('put command', function()
           end, expect_base, conversion_table)
         return function(e,c)
           test_expect(e,c)
-<<<<<<< HEAD
-          eq('Lin\nLin', getreg('"'))
-=======
           if not conversion_table.put_backwards then
-            eq(getreg('"'), 'Lin\nLin')
+            eq('Lin\nLin', getreg('"'))
           end
->>>>>>> 96daea0f0 (fix: import @zeertzjq patch)
         end
       end
 
