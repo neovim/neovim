@@ -64,7 +64,7 @@ describe('put command', function()
       -- one place to the right (unless we were at the end of the
       -- line when we pasted).
       if not (exception_table.undo_position and after_undo) then
-        eq(funcs.getcurpos(), init_cursorpos)
+        eq(init_cursorpos, funcs.getcurpos())
       end
     end
 
@@ -86,7 +86,7 @@ describe('put command', function()
         -- If we paste the ". register with a count we can't avoid
         -- changing this register, hence avoid this check.
         if not test.exception_table.dot_reg_changed then
-          eq(funcs.getreg('.'), orig_dotstr)
+          eq(orig_dotstr, funcs.getreg('.'))
         end
 
         -- Doing something, undoing it, and then redoing it should
@@ -507,9 +507,9 @@ describe('put command', function()
       return function(exception_table, after_redo)
         test_expect(exception_table, after_redo)
         if selection_string then
-          eq(getreg('"'), selection_string)
+          eq(selection_string, getreg('"'))
         else
-          eq(getreg('"'), 'test_string"')
+          eq('test_string"', getreg('"'))
         end
       end
     end
@@ -714,7 +714,7 @@ describe('put command', function()
             expect_base, conversion_table)
           return function(exception_table, after_redo)
             test_expect(exception_table, after_redo)
-            eq(getreg('"'), 'Line of words 1\n')
+            eq('Line of words 1\n', getreg('"'))
           end
         end
         local base_expect_string = [[
@@ -748,7 +748,7 @@ describe('put command', function()
           end, expect_base, conversion_table)
         return function(e,c)
           test_expect(e,c)
-          eq(getreg('"'), 'Lin\nLin')
+          eq('Lin\nLin', getreg('"'))
         end
       end
 
@@ -800,9 +800,9 @@ describe('put command', function()
             feed('u')
             -- Have to use feed('u') here to set curswant, because
             -- ex_undo() doesn't do that.
-            eq(funcs.getcurpos(), {0, 1, 1, 0, 1})
+            eq({0, 1, 1, 0, 1}, funcs.getcurpos())
             feed('<C-r>')
-            eq(funcs.getcurpos(), {0, 1, 1, 0, 1})
+            eq({0, 1, 1, 0, 1}, funcs.getcurpos())
           end
         end
 
