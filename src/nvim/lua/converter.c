@@ -619,6 +619,7 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
   }
   if (tv->v_type == VAR_FUNC) {
     ufunc_T *fp = find_func(tv->vval.v_string);
+    assert(fp != NULL);
     if (fp->uf_cb == nlua_CFunction_func_call) {
       nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
       return true;
