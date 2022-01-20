@@ -4351,7 +4351,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
     // Only free the string buffer if we allocated it.
     // Note: This is not needed if `str` is pointing at `tmp`
     if (opt == STL_VIM_EXPR) {
-      xfree(str);
+      XFREE_CLEAR(str);
     }
 
     if (num >= 0 || (!itemisflag && str && *str)) {
