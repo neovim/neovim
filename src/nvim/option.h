@@ -13,16 +13,16 @@
 /// When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
 /// values, get local value.
 typedef enum {
-  OPT_FREE     = 1,   ///< Free old value if it was allocated.
-  OPT_GLOBAL   = 2,   ///< Use global value.
-  OPT_LOCAL    = 4,   ///< Use local value.
-  OPT_MODELINE = 8,   ///< Option in modeline.
-  OPT_WINONLY  = 16,  ///< Only set window-local options.
-  OPT_NOWIN    = 32,  ///< Don’t set window-local options.
-  OPT_ONECOLUMN = 64,  ///< list options one per line
-  OPT_NO_REDRAW = 128,  ///< ignore redraw flags on option
-  OPT_SKIPRTP = 256,  ///< "skiprtp" in 'sessionoptions'
-  OPT_CLEAR = 512,  ///< Clear local value of an option.
+  OPT_FREE      = 0x01,   ///< Free old value if it was allocated.
+  OPT_GLOBAL    = 0x02,   ///< Use global value.
+  OPT_LOCAL     = 0x04,   ///< Use local value.
+  OPT_MODELINE  = 0x08,   ///< Option in modeline.
+  OPT_WINONLY   = 0x10,   ///< Only set window-local options.
+  OPT_NOWIN     = 0x20,   ///< Don’t set window-local options.
+  OPT_ONECOLUMN = 0x40,   ///< list options one per line
+  OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
+  OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
+  OPT_CLEAR     = 0x200,  ///< Clear local value of an option.
 } OptionFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

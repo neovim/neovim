@@ -20,9 +20,13 @@ achieve special effects.  These options come in three forms:
 1. Setting options					*set-option* *E764*
 
 							*:se* *:set*
-:se[t]			Show all options that differ from their default value.
+:se[t][!]		Show all options that differ from their default value.
+			When [!] is present every option is on a separate
+			line.
 
-:se[t] all		Show all options.
+:se[t][!] all		Show all options.
+			When [!] is present every option is on a separate
+			line.
 
 								*E518* *E519*
 :se[t] {option}?	Show value of {option}.
@@ -235,7 +239,7 @@ happens when the buffer is not loaded, but they are lost when the buffer is
 wiped out |:bwipe|.
 
 							*:setl* *:setlocal*
-:setl[ocal] ...		Like ":set" but set only the value local to the
+:setl[ocal][!] ...	Like ":set" but set only the value local to the
 			current buffer or window.  Not all options have a
 			local value.  If the option does not have a local
 			value the global value is set.
@@ -257,7 +261,7 @@ wiped out |:bwipe|.
 			{option}, so that the global value will be used.
 
 							*:setg* *:setglobal*
-:setg[lobal] ...	Like ":set" but set only the global value for a local
+:setg[lobal][!] ...	Like ":set" but set only the global value for a local
 			option without changing the local value.
 			When displaying an option, the global value is shown.
 			With the "all" argument: display global values for all

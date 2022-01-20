@@ -2413,7 +2413,7 @@ module.cmds = {
   },
   {
     command='set',
-    flags=bit.bor(TRLBAR, EXTRA, CMDWIN, SBOXOK),
+    flags=bit.bor(BANG, TRLBAR, EXTRA, CMDWIN, SBOXOK),
     addr_type='ADDR_NONE',
     func='ex_set',
   },
@@ -2425,13 +2425,13 @@ module.cmds = {
   },
   {
     command='setglobal',
-    flags=bit.bor(TRLBAR, EXTRA, CMDWIN, SBOXOK),
+    flags=bit.bor(BANG, TRLBAR, EXTRA, CMDWIN, SBOXOK),
     addr_type='ADDR_NONE',
     func='ex_set',
   },
   {
     command='setlocal',
-    flags=bit.bor(TRLBAR, EXTRA, CMDWIN, SBOXOK),
+    flags=bit.bor(BANG, TRLBAR, EXTRA, CMDWIN, SBOXOK),
     addr_type='ADDR_NONE',
     func='ex_set',
   },

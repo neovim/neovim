@@ -9600,18 +9600,6 @@ static void ex_digraphs(exarg_T *eap)
   }
 }
 
-static void ex_set(exarg_T *eap)
-{
-  int flags = 0;
-
-  if (eap->cmdidx == CMD_setlocal) {
-    flags = OPT_LOCAL;
-  } else if (eap->cmdidx == CMD_setglobal) {
-    flags = OPT_GLOBAL;
-  }
-  (void)do_set(eap->arg, flags);
-}
-
 void set_no_hlsearch(bool flag)
 {
   no_hlsearch = flag;
