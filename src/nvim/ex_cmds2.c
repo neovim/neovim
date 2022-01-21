@@ -1613,7 +1613,7 @@ void ex_compiler(exarg_T *eap)
       if (old_cur_comp != NULL) {
         old_cur_comp = vim_strsave(old_cur_comp);
       }
-      do_cmdline_cmd("command -nargs=* CompilerSet setlocal <args>");
+      do_cmdline_cmd("command -nargs=* -keepscript CompilerSet setlocal <args>");
     }
     do_unlet(S_LEN("g:current_compiler"), true);
     do_unlet(S_LEN("b:current_compiler"), true);

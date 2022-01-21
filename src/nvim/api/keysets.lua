@@ -44,6 +44,7 @@ return {
     "count";
     "desc";
     "force";
+    "keepscript";
     "nargs";
     "range";
     "register";

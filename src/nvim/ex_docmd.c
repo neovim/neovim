@@ -5517,6 +5517,8 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int
     *flags |= UC_BUFFER;
   } else if (STRNICMP(attr, "register", len) == 0) {
     *argt |= EX_REGSTR;
+  } else if (STRNICMP(attr, "keepscript", len) == 0) {
+    *argt |= EX_KEEPSCRIPT;
   } else if (STRNICMP(attr, "bar", len) == 0) {
     *argt |= EX_TRLBAR;
   } else {
@@ -6257,10 +6259,14 @@ static void do_ucmd(exarg_T *eap)
     buf = xmalloc(totlen + 1);
   }
 
-  current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
+  if ((cmd->uc_argt & EX_KEEPSCRIPT) == 0) {
+    current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
+  }
   (void)do_cmdline(buf, eap->getline, eap->cookie,
                    DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
-  current_sctx = save_current_sctx;
+  if ((cmd->uc_argt & EX_KEEPSCRIPT) == 0) {
+    current_sctx = save_current_sctx;
+  }
   xfree(buf);
   xfree(split_buf);
 }
@@ -6306,7 +6312,7 @@ char_u *get_user_cmd_flags(expand_T *xp, int idx)
 {
   static char *user_cmd_flags[] = { "addr",   "bang",     "bar",
                                     "buffer", "complete", "count",
-                                    "nargs",  "range",    "register" };
+                                    "nargs",  "range",    "register", "keepscript" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_flags)) {
     return NULL;
@@ -9846,6 +9852,7 @@ Dictionary commands_array(buf_T *buf)
     PUT(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
     PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
     PUT(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
+    PUT(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
 
     switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case 0:
