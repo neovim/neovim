@@ -69,6 +69,16 @@ func Test_nolinebreak_with_list()
   call s:close_windows()
 endfunc
 
+" this was causing a crash
+func Test_linebreak_with_list_and_tabs()
+  set linebreak list listchars=tab:⇤\ ⇥ tabstop=100
+  new
+  call setline(1, "\t\t\ttext")
+  redraw
+  bwipe!
+  set nolinebreak nolist listchars&vim tabstop=8
+endfunc
+
 func Test_linebreak_with_nolist()
   call s:test_windows('setl nolist')
   call setline(1, "\t*mask = nil;")
