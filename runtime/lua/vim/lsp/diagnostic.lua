@@ -168,8 +168,8 @@ end
 ---     },
 ---     -- Use a function to dynamically turn signs off
 ---     -- and on, using buffer local variables
----     signs = function(bufnr, client_id)
----       return vim.bo[bufnr].show_signs == false
+---     signs = function(namespace, bufnr)
+---       return vim.b[bufnr].show_signs == true
 ---     end,
 ---     -- Disable a feature
 ---     update_in_insert = false,
