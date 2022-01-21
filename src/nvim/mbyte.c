@@ -2089,19 +2089,13 @@ const char *mb_unescape(const char **const pp)
   size_t buf_idx = 0;
   uint8_t *str = (uint8_t *)(*pp);
 
-  // Must translate K_SPECIAL KS_SPECIAL KE_FILLER to K_SPECIAL and CSI
-  // KS_EXTRA KE_CSI to CSI.
+  // Must translate K_SPECIAL KS_SPECIAL KE_FILLER to K_SPECIAL.
   // Maximum length of a utf-8 character is 4 bytes.
   for (size_t str_idx = 0; str[str_idx] != NUL && buf_idx < 4; str_idx++) {
     if (str[str_idx] == K_SPECIAL
         && str[str_idx + 1] == KS_SPECIAL
         && str[str_idx + 2] == KE_FILLER) {
       buf[buf_idx++] = (char)K_SPECIAL;
-      str_idx += 2;
-    } else if ((str[str_idx] == K_SPECIAL)
-               && str[str_idx + 1] == KS_EXTRA
-               && str[str_idx + 2] == KE_CSI) {
-      buf[buf_idx++] = (char)CSI;
       str_idx += 2;
     } else if (str[str_idx] == K_SPECIAL) {
       break;  // A special key can't be a multibyte char.

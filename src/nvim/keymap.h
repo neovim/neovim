@@ -220,7 +220,7 @@ enum key_extra {
   KE_KINS = 79,             // keypad Insert key
   KE_KDEL = 80,              // keypad Delete key
 
-  KE_CSI = 81,              // CSI typed directly (no longer produced by Nvim)
+  // KE_CSI = 81,           // Nvim doesn't need escaping CSI
   KE_SNR = 82,              // <SNR>
   KE_PLUG = 83,             // <Plug>
   KE_CMDWIN = 84,            // open command-line window from Command-line Mode

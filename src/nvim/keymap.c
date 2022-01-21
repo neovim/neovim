@@ -963,7 +963,6 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
     for (i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
-      // If compiled with the GUI replace CSI with K_CSI.
       if (*src == K_SPECIAL) {
         result[dlen++] = K_SPECIAL;
         result[dlen++] = KS_SPECIAL;

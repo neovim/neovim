@@ -187,21 +187,23 @@ static void on_redraw_event(void **argv)
 /// On execution error: does not fail, but updates v:errmsg.
 ///
 /// To input sequences like <C-o> use |nvim_replace_termcodes()| (typically
-/// with escape_csi=true) to replace |keycodes|, then pass the result to
+/// with escape_ks=false) to replace |keycodes|, then pass the result to
 /// nvim_feedkeys().
 ///
 /// Example:
 /// <pre>
 ///     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
-///     :call nvim_feedkeys(key, 'n', v:true)
+///     :call nvim_feedkeys(key, 'n', v:false)
 /// </pre>
 ///
 /// @param keys         to be typed
 /// @param mode         behavior flags, see |feedkeys()|
-/// @param escape_csi   If true, escape K_SPECIAL/CSI bytes in `keys`
+/// @param escape_ks    If true, escape K_SPECIAL bytes in `keys`
+///                     This should be false if you already used
+///                     |nvim_replace_termcodes()|, and true otherwise.
 /// @see feedkeys()
-/// @see vim_strsave_escape_csi
-void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
+/// @see vim_strsave_escape_ks
+void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   FUNC_API_SINCE(1)
 {
   bool remap = true;
@@ -232,10 +234,10 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   }
 
   char *keys_esc;
-  if (escape_csi) {
-    // Need to escape K_SPECIAL and CSI before putting the string in the
+  if (escape_ks) {
+    // Need to escape K_SPECIAL before putting the string in the
     // typeahead buffer.
-    keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
+    keys_esc = (char *)vim_strsave_escape_ks((char_u *)keys.data);
   } else {
     keys_esc = keys.data;
   }
@@ -245,7 +247,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
     typebuf_was_filled = true;
   }
 
-  if (escape_csi) {
+  if (escape_ks) {
     xfree(keys_esc);
   }
 

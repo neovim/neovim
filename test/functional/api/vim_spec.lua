@@ -1367,18 +1367,18 @@ describe('API', function()
   end)
 
   describe('nvim_feedkeys', function()
-    it('CSI escaping', function()
+    it('K_SPECIAL escaping', function()
       local function on_setup()
         -- notice the special char(…) \xe2\80\xa6
         nvim('feedkeys', ':let x1="…"\n', '', true)
 
         -- Both nvim_replace_termcodes and nvim_feedkeys escape \x80
         local inp = helpers.nvim('replace_termcodes', ':let x2="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', true)   -- escape_csi=true
+        nvim('feedkeys', inp, '', true)   -- escape_ks=true
 
-        -- nvim_feedkeys with CSI escaping disabled
+        -- nvim_feedkeys with K_SPECIAL escaping disabled
         inp = helpers.nvim('replace_termcodes', ':let x3="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', false)  -- escape_csi=false
+        nvim('feedkeys', inp, '', false)  -- escape_ks=false
 
         helpers.stop()
       end
