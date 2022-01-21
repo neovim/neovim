@@ -189,7 +189,8 @@ au BufNewFile,BufRead *.awk,*.gawk		setf awk
 au BufNewFile,BufRead *.mch,*.ref,*.imp		setf b
 
 " BASIC or Visual Basic
-au BufNewFile,BufRead *.bas			call dist#ft#FTVB("basic")
+au BufNewFile,BufRead *.bas			call dist#ft#FTbas()
+au BufNewFile,BufRead *.bi,*.bm			call dist#ft#FTbas()
 
 " Visual Basic Script (close to Visual Basic) or Visual Basic .NET
 au BufNewFile,BufRead *.vb,*.vbs,*.dsm,*.ctl	setf vb
@@ -198,7 +199,7 @@ au BufNewFile,BufRead *.vb,*.vbs,*.dsm,*.ctl	setf vb
 au BufNewFile,BufRead *.iba,*.ibi		setf ibasic
 
 " FreeBasic file (similar to QBasic)
-au BufNewFile,BufRead *.fb,*.bi			setf freebasic
+au BufNewFile,BufRead *.fb			setf freebasic
 
 " Batch file for MSDOS.
 au BufNewFile,BufRead *.bat,*.sys		setf dosbatch
