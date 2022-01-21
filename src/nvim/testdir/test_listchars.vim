@@ -1,6 +1,8 @@
 " Tests for 'listchars' display with 'list' and :list
 
+source check.vim
 source view_util.vim
+source screendump.vim
 
 func Test_listchars()
   enew!
@@ -516,5 +518,35 @@ func Test_listchars_window_local()
   %bw!
   set list& listchars&
 endfunc
+
+func Test_listchars_foldcolumn()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['aaa', '', 'a', 'aaaaaa'])
+      vsplit
+      vsplit
+      windo set signcolumn=yes foldcolumn=1 winminwidth=0 nowrap list listchars=extends:>,precedes:<
+  END
+  call writefile(lines, 'XTest_listchars')
+
+  let buf = RunVimInTerminal('-S XTest_listchars', {'rows': 10, 'cols': 60})
+
+  call term_sendkeys(buf, "13\<C-W>>")
+  call VerifyScreenDump(buf, 'Test_listchars_01', {})
+  call term_sendkeys(buf, "\<C-W>>")
+  call VerifyScreenDump(buf, 'Test_listchars_02', {})
+  call term_sendkeys(buf, "\<C-W>>")
+  call VerifyScreenDump(buf, 'Test_listchars_03', {})
+  call term_sendkeys(buf, "\<C-W>>")
+  call VerifyScreenDump(buf, 'Test_listchars_04', {})
+  call term_sendkeys(buf, "\<C-W>>")
+  call VerifyScreenDump(buf, 'Test_listchars_05', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_listchars')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

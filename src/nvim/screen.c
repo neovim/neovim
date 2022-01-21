@@ -4232,6 +4232,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // Show "extends" character from 'listchars' if beyond the line end and
     // 'list' is set.
     if (wp->w_p_lcs_chars.ext != NUL
+        && draw_state == WL_LINE
         && wp->w_p_list
         && !wp->w_p_wrap
         && filler_todo <= 0
@@ -4427,7 +4428,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
      */
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->Columns))
         && foldinfo.fi_lines == 0
-        && (*ptr != NUL
+        && (draw_state != WL_LINE
+            || *ptr != NUL
             || filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && p_extra != at_end_str)

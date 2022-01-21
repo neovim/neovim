@@ -1,7 +1,8 @@
 -- Tests for 'listchars' display with 'list' and :list.
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, source = helpers.feed, helpers.insert, helpers.source
+local Screen = require('test.functional.ui.screen')
+local feed, insert, exec = helpers.feed, helpers.insert, helpers.exec
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 -- luacheck: ignore 621 (Indentation)
@@ -13,7 +14,7 @@ describe("'listchars'", function()
 
   -- luacheck: ignore 613 (Trailing whitespace in a string)
   it("works with 'list'", function()
-    source([[
+    exec([[
       function GetScreenCharsForLine(lnum)
         return join(map(range(1, virtcol('$')), 'nr2char(screenchar(a:lnum, v:val))'), '')
       endfunction
@@ -97,5 +98,81 @@ describe("'listchars'", function()
       >-------gg>-----$
       .....h>-$
       iii<<<<><<$]])
+  end)
+
+  it('"exceeds" character does not appear in foldcolumn vim-patch:8.2.3121', function()
+    local screen = Screen.new(60, 10)
+    screen:attach()
+    exec([[
+      call setline(1, ['aaa', '', 'a', 'aaaaaa'])
+      vsplit
+      vsplit
+      windo set signcolumn=yes foldcolumn=1 winminwidth=0 nowrap list listchars=extends:>,precedes:<
+    ]])
+    feed('13<C-W>>')
+    screen:expect([[
+         aaa              │   a>│   ^aaa                           |
+                          │     │                                 |
+         a                │   a │   a                             |
+         aaaaaa           │   a>│   aaaaaa                        |
+      ~                   │~    │~                                |
+      ~                   │~    │~                                |
+      ~                   │~    │~                                |
+      ~                   │~    │~                                |
+      [No Name] [+]        <[+]  [No Name] [+]                    |
+                                                                  |
+    ]])
+    feed('<C-W>>')
+    screen:expect([[
+         aaa              │   >│   ^aaa                            |
+                          │    │                                  |
+         a                │   a│   a                              |
+         aaaaaa           │   >│   aaaaaa                         |
+      ~                   │~   │~                                 |
+      ~                   │~   │~                                 |
+      ~                   │~   │~                                 |
+      ~                   │~   │~                                 |
+      [No Name] [+]        <+]  [No Name] [+]                     |
+                                                                  |
+    ]])
+    feed('<C-W>>')
+    screen:expect([[
+         aaa              │   │   ^aaa                             |
+                          │   │                                   |
+         a                │   │   a                               |
+         aaaaaa           │   │   aaaaaa                          |
+      ~                   │~  │~                                  |
+      ~                   │~  │~                                  |
+      ~                   │~  │~                                  |
+      ~                   │~  │~                                  |
+      [No Name] [+]        <]  [No Name] [+]                      |
+                                                                  |
+    ]])
+    feed('<C-W>>')
+    screen:expect([[
+         aaa              │  │   ^aaa                              |
+                          │  │                                    |
+         a                │  │   a                                |
+         aaaaaa           │  │   aaaaaa                           |
+      ~                   │~ │~                                   |
+      ~                   │~ │~                                   |
+      ~                   │~ │~                                   |
+      ~                   │~ │~                                   |
+      [No Name] [+]        <  [No Name] [+]                       |
+                                                                  |
+    ]])
+    feed('<C-W>>')
+    screen:expect([[
+         aaa              │ │   ^aaa                               |
+                          │ │                                     |
+         a                │ │   a                                 |
+         aaaaaa           │ │   aaaaaa                            |
+      ~                   │~│~                                    |
+      ~                   │~│~                                    |
+      ~                   │~│~                                    |
+      ~                   │~│~                                    |
+      [No Name] [+]        < [No Name] [+]                        |
+                                                                  |
+    ]])
   end)
 end)
