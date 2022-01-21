@@ -152,6 +152,17 @@ M['workspace/configuration'] = function(_, result, ctx)
   return response
 end
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_workspaceFolders
+M['workspace/workspaceFolders'] = function(_, _, ctx)
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
+  if not client then
+    err_message("LSP[id=", client_id, "] client has shut down after sending the message")
+    return
+  end
+  return client.workspace_folders or vim.NIL
+end
+
 M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end
