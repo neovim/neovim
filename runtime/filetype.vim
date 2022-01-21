@@ -710,7 +710,7 @@ au BufNewFile,BufRead gitolite.conf		setf gitolite
 au BufNewFile,BufRead {,.}gitolite.rc,example.gitolite.rc	setf perl
 
 " Gnuplot scripts
-au BufNewFile,BufRead *.gpi			setf gnuplot
+au BufNewFile,BufRead *.gpi,.gnuplot			setf gnuplot
 
 " Go (Google)
 au BufNewFile,BufRead *.go			setf go
