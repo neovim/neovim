@@ -20,7 +20,7 @@ func Test_compiler()
   call assert_fails('let g:current_compiler', 'E121:')
 
   let verbose_efm = execute('verbose set efm')
-  call assert_match('Last set from .*/compiler/perl.vim ', verbose_efm)
+  call assert_match('Last set from .*[/\\]compiler[/\\]perl.vim ', verbose_efm)
 
   call setline(1, ['#!/usr/bin/perl -w', 'use strict;', 'my $foo=1'])
   w!
