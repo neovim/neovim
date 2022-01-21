@@ -1010,12 +1010,11 @@ void ins_char_typebuf(int c)
     buf[utf_char2bytes(c, buf)] = NUL;
     char_u *p = buf;
     while (*p) {
-      if ((uint8_t)(*p) == CSI || (uint8_t)(*p) == K_SPECIAL) {
-        bool is_csi = (uint8_t)(*p) == CSI;
+      if ((uint8_t)(*p) == K_SPECIAL) {
         memmove(p + 3, p + 1, STRLEN(p + 1) + 1);
         *p++ = K_SPECIAL;
-        *p++ = is_csi ? KS_EXTRA : KS_SPECIAL;
-        *p++ = is_csi ? KE_CSI : KE_FILLER;
+        *p++ = KS_SPECIAL;
+        *p++ = KE_FILLER;
       } else {
         p++;
       }
