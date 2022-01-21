@@ -478,6 +478,10 @@ Commands in Select mode:
 - ESC stops Select mode.
 - CTRL-O switches to Visual mode for the duration of one command. *v_CTRL-O*
 - CTRL-G switches to Visual mode.
+- CTRL-R {register} selects the register to be used for the text that is
+  deleted when typing text.					  *v_CTRL-R*
+  Unless you specify the "_" (black hole) register, the unnamed register is
+  also overwritten.
 
 Otherwise, typed characters are handled as in Visual mode.
 
