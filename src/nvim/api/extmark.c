@@ -115,7 +115,12 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
     if (decor->hl_id) {
       String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
       PUT(dict, "hl_group", STRING_OBJ(name));
+      PUT(dict, "hl_eol", BOOLEAN_OBJ(decor->hl_eol));
     }
+    if (decor->hl_mode) {
+      PUT(dict, "hl_mode", STRING_OBJ(cstr_to_string(hl_mode_str[decor->hl_mode])));
+    }
+
     if (kv_size(decor->virt_text)) {
       Array chunks = ARRAY_DICT_INIT;
       for (size_t i = 0; i < decor->virt_text.size; i++) {
@@ -129,6 +134,36 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
         ADD(chunks, ARRAY_OBJ(chunk));
       }
       PUT(dict, "virt_text", ARRAY_OBJ(chunks));
+      PUT(dict, "virt_text_hide", BOOLEAN_OBJ(decor->virt_text_hide));
+      if (decor->virt_text_pos == kVTWinCol) {
+        PUT(dict, "virt_text_win_col", INTEGER_OBJ(decor->col));
+      }
+      PUT(dict, "virt_text_pos",
+          STRING_OBJ(cstr_to_string(virt_text_pos_str[decor->virt_text_pos])));
+    }
+
+    if (kv_size(decor->virt_lines)) {
+      Array all_chunks = ARRAY_DICT_INIT;
+      bool virt_lines_leftcol = false;
+      for (size_t i = 0; i < decor->virt_lines.size; i++) {
+        Array chunks = ARRAY_DICT_INIT;
+        VirtText *vt = &decor->virt_lines.items[i].line;
+        virt_lines_leftcol = decor->virt_lines.items[i].left_col;
+        for (size_t j = 0; j < vt->size; j++) {
+          Array chunk = ARRAY_DICT_INIT;
+          VirtTextChunk *vtc = &vt->items[j];
+          ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+          if (vtc->hl_id > 0) {
+            ADD(chunk,
+                STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+          }
+          ADD(chunks, ARRAY_OBJ(chunk));
+        }
+        ADD(all_chunks, ARRAY_OBJ(chunks));
+      }
+      PUT(dict, "virt_lines", ARRAY_OBJ(all_chunks));
+      PUT(dict, "virt_lines_above", BOOLEAN_OBJ(decor->virt_lines_above));
+      PUT(dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
     }
 
     if (decor->hl_id || kv_size(decor->virt_text)) {
