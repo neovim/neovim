@@ -158,7 +158,6 @@ static const struct key_name_entry {
   { ESC,               "Esc" },
   { ESC,               "Escape" },      // Alternative name
   { CSI,               "CSI" },
-  { K_CSI,             "xCSI" },
   { '|',               "Bar" },
   { '\\',              "Bslash" },
   { K_DEL,             "Del" },
