@@ -59,25 +59,18 @@
 static int curscript = 0;
 FileDescriptor *scriptin[NSCRIPT] = { NULL };
 
-/*
- * These buffers are used for storing:
- * - stuffed characters: A command that is translated into another command.
- * - redo characters: will redo the last change.
- * - recorded characters: for the "q" command.
- *
- * The bytes are stored like in the typeahead buffer:
- * - K_SPECIAL introduces a special key (two more bytes follow).  A literal
- *   K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
- * - CSI introduces a GUI termcap code (also when gui.in_use is FALSE,
- *   otherwise switching the GUI on would make mappings invalid).
- *   A literal CSI is stored as CSI KS_EXTRA KE_CSI.
- * These translations are also done on multi-byte characters!
- *
- * Escaping CSI bytes is done by the system-specific input functions, called
- * by ui_inchar().
- * Escaping K_SPECIAL is done by inchar().
- * Un-escaping is done by vgetc().
- */
+// These buffers are used for storing:
+// - stuffed characters: A command that is translated into another command.
+// - redo characters: will redo the last change.
+// - recorded characters: for the "q" command.
+//
+// The bytes are stored like in the typeahead buffer:
+// - K_SPECIAL introduces a special key (two more bytes follow).  A literal
+//   K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
+// These translations are also done on multi-byte characters!
+//
+// Escaping K_SPECIAL is done by inchar().
+// Un-escaping is done by vgetc().
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
 
@@ -173,7 +166,7 @@ void free_buff(buffheader_T *buf)
 }
 
 /// Return the contents of a buffer as a single string.
-/// K_SPECIAL and CSI in the returned string are escaped.
+/// K_SPECIAL in the returned string is escaped.
 ///
 /// @param dozero  count == zero is not an error
 static char_u *get_buffcont(buffheader_T *buffer, int dozero)
@@ -202,11 +195,9 @@ static char_u *get_buffcont(buffheader_T *buffer, int dozero)
   return p;
 }
 
-/*
- * Return the contents of the record buffer as a single string
- * and clear the record buffer.
- * K_SPECIAL and CSI in the returned string are escaped.
- */
+/// Return the contents of the record buffer as a single string
+/// and clear the record buffer.
+/// K_SPECIAL in the returned string is escaped.
 char_u *get_recorded(void)
 {
   char_u *p;
@@ -236,10 +227,8 @@ char_u *get_recorded(void)
   return p;
 }
 
-/*
- * Return the contents of the redo buffer as a single string.
- * K_SPECIAL and CSI in the returned string are escaped.
- */
+/// Return the contents of the redo buffer as a single string.
+/// K_SPECIAL in the returned string is escaped.
 char_u *get_inserted(void)
 {
   return get_buffcont(&redobuff, FALSE);
@@ -247,7 +236,7 @@ char_u *get_inserted(void)
 
 /// Add string after the current block of the given buffer
 ///
-/// K_SPECIAL and CSI should have been escaped already.
+/// K_SPECIAL should have been escaped already.
 ///
 /// @param[out]  buf  Buffer to add to.
 /// @param[in]  s  String to add.
@@ -305,10 +294,8 @@ static void add_num_buff(buffheader_T *buf, long n)
   add_buff(buf, number, -1L);
 }
 
-/*
- * Add character 'c' to buffer "buf".
- * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
- */
+/// Add character 'c' to buffer "buf".
+/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
 static void add_char_buff(buffheader_T *buf, int c)
 {
   uint8_t bytes[MB_MAXBYTES + 1];
@@ -340,12 +327,10 @@ static void add_char_buff(buffheader_T *buf, int c)
   }
 }
 
-/*
- * Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
- * if that one is empty.
- * If advance == TRUE go to the next char.
- * No translation is done K_SPECIAL and CSI are escaped.
- */
+/// Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
+/// if that one is empty.
+/// If advance == TRUE go to the next char.
+/// No translation is done K_SPECIAL is escaped.
 static int read_readbuffers(int advance)
 {
   int c;
@@ -524,10 +509,8 @@ void restoreRedobuff(save_redo_T *save_redo)
   old_redobuff = save_redo->sr_old_redobuff;
 }
 
-/*
- * Append "s" to the redo buffer.
- * K_SPECIAL and CSI should already have been escaped.
- */
+/// Append "s" to the redo buffer.
+/// K_SPECIAL should already have been escaped.
 void AppendToRedobuff(const char *s)
 {
   if (!block_redo) {
@@ -536,7 +519,7 @@ void AppendToRedobuff(const char *s)
 }
 
 /// Append to Redo buffer literally, escaping special characters with CTRL-V.
-/// K_SPECIAL and CSI are escaped as well.
+/// K_SPECIAL is escaped as well.
 ///
 /// @param str  String to append
 /// @param len  Length of `str` or -1 for up to the NUL.
@@ -584,10 +567,8 @@ void AppendToRedobuffLit(const char_u *str, int len)
   }
 }
 
-/*
- * Append a character to the redo buffer.
- * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
- */
+/// Append a character to the redo buffer.
+/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
 void AppendCharToRedobuff(int c)
 {
   if (!block_redo) {
@@ -605,17 +586,15 @@ void AppendNumberToRedobuff(long n)
   }
 }
 
-/*
- * Append string "s" to the stuff buffer.
- * CSI and K_SPECIAL must already have been escaped.
- */
+/// Append string "s" to the stuff buffer.
+/// K_SPECIAL must already have been escaped.
 void stuffReadbuff(const char *s)
 {
   add_buff(&readbuf1, s, -1L);
 }
 
 /// Append string "s" to the redo stuff buffer.
-/// @remark CSI and K_SPECIAL must already have been escaped.
+/// @remark K_SPECIAL must already have been escaped.
 void stuffRedoReadbuff(const char *s)
 {
   add_buff(&readbuf2, s, -1L);
@@ -626,11 +605,9 @@ void stuffReadbuffLen(const char *s, long len)
   add_buff(&readbuf1, s, len);
 }
 
-/*
- * Stuff "s" into the stuff buffer, leaving special key codes unmodified and
- * escaping other K_SPECIAL and CSI bytes.
- * Change CR, LF and ESC into a space.
- */
+/// Stuff "s" into the stuff buffer, leaving special key codes unmodified and
+/// escaping other K_SPECIAL bytes.
+/// Change CR, LF and ESC into a space.
 void stuffReadbuffSpec(const char *s)
 {
   while (*s != NUL) {
@@ -648,10 +625,8 @@ void stuffReadbuffSpec(const char *s)
   }
 }
 
-/*
- * Append a character to the stuff buffer.
- * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
- */
+/// Append a character to the stuff buffer.
+/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
 void stuffcharReadbuff(int c)
 {
   add_char_buff(&readbuf1, c);
@@ -665,12 +640,12 @@ void stuffnumReadbuff(long n)
   add_num_buff(&readbuf1, n);
 }
 
-// Read a character from the redo buffer.  Translates K_SPECIAL, CSI and
-// multibyte characters.
-// The redo buffer is left as it is.
-// If init is true, prepare for redo, return FAIL if nothing to redo, OK
-// otherwise.
-// If old_redo is true, use old_redobuff instead of redobuff.
+/// Read a character from the redo buffer.  Translates K_SPECIAL and
+/// multibyte characters.
+/// The redo buffer is left as it is.
+/// If init is true, prepare for redo, return FAIL if nothing to redo, OK
+/// otherwise.
+/// If old_redo is true, use old_redobuff instead of redobuff.
 static int read_redo(bool init, bool old_redo)
 {
   static buffblock_T *bp;
@@ -724,9 +699,9 @@ static int read_redo(bool init, bool old_redo)
   return c;
 }
 
-// Copy the rest of the redo buffer into the stuff buffer (in a slow way).
-// If old_redo is true, use old_redobuff instead of redobuff.
-// The escaped K_SPECIAL and CSI are copied without translation.
+/// Copy the rest of the redo buffer into the stuff buffer (in a slow way).
+/// If old_redo is true, use old_redobuff instead of redobuff.
+/// The escaped K_SPECIAL is copied without translation.
 static void copy_redo(bool old_redo)
 {
   int c;
@@ -1010,12 +985,11 @@ void ins_char_typebuf(int c)
     buf[utf_char2bytes(c, buf)] = NUL;
     char_u *p = buf;
     while (*p) {
-      if ((uint8_t)(*p) == CSI || (uint8_t)(*p) == K_SPECIAL) {
-        bool is_csi = (uint8_t)(*p) == CSI;
+      if ((uint8_t)(*p) == K_SPECIAL) {
         memmove(p + 3, p + 1, STRLEN(p + 1) + 1);
         *p++ = K_SPECIAL;
-        *p++ = is_csi ? KS_EXTRA : KS_SPECIAL;
-        *p++ = is_csi ? KE_CSI : KE_FILLER;
+        *p++ = KS_SPECIAL;
+        *p++ = KE_FILLER;
       } else {
         p++;
       }
@@ -1427,15 +1401,13 @@ static void updatescript(int c)
   }
 }
 
-/*
- * Get the next input character.
- * Can return a special key or a multi-byte character.
- * Can return NUL when called recursively, use safe_vgetc() if that's not
- * wanted.
- * This translates escaped K_SPECIAL and CSI bytes to a K_SPECIAL or CSI byte.
- * Collects the bytes of a multibyte character into the whole character.
- * Returns the modifiers in the global "mod_mask".
- */
+/// Get the next input character.
+/// Can return a special key or a multi-byte character.
+/// Can return NUL when called recursively, use safe_vgetc() if that's not
+/// wanted.
+/// This translates escaped K_SPECIAL bytes to a K_SPECIAL byte.
+/// Collects the bytes of a multibyte character into the whole character.
+/// Returns the modifiers in the global "mod_mask".
 int vgetc(void)
 {
   int c, c2;
@@ -1572,14 +1544,9 @@ int vgetc(void)
           buf[i] = (char_u)vgetorpeek(true);
           if (buf[i] == K_SPECIAL) {
             // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
-            // which represents a K_SPECIAL (0x80),
-            // or a CSI - KS_EXTRA - KE_CSI sequence, which represents
-            // a CSI (0x9B),
-            // of a K_SPECIAL - KS_EXTRA - KE_CSI, which is CSI too.
-            c = vgetorpeek(true);
-            if (vgetorpeek(true) == KE_CSI && c == KS_EXTRA) {
-              buf[i] = CSI;
-            }
+            // which represents a K_SPECIAL (0x80).
+            (void)vgetorpeek(true);  // skip KS_SPECIAL
+            (void)vgetorpeek(true);  // skip KE_FILLER
           }
         }
         no_mapping--;
@@ -2043,7 +2010,7 @@ void vungetc(int c)
 ///
 /// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
-/// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
+/// K_SPECIAL may be escaped, need to get two more bytes then.
 static int vgetorpeek(bool advance)
 {
   int c, c1;
@@ -2573,7 +2540,7 @@ int fix_input_buffer(char_u *buf, int len)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
-    // Should not escape K_SPECIAL/CSI reading input from the user because vim
+    // Should not escape K_SPECIAL reading input from the user because vim
     // key codes keys are processed in input.c/input_enqueue.
     buf[len] = NUL;
     return len;
@@ -2584,9 +2551,8 @@ int fix_input_buffer(char_u *buf, int len)
   char_u *p = buf;
 
   // Two characters are special: NUL and K_SPECIAL.
-  // Replace         NUL by K_SPECIAL KS_ZERO    KE_FILLER
+  // Replace       NUL by K_SPECIAL KS_ZERO    KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
-  // Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
@@ -3477,10 +3443,10 @@ static void showmap(mapblock_T *mp, bool local)
   } else if (mp->m_str == NULL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
-    // Remove escaping of CSI, because "m_str" is in a format to be used
+    // Remove escaping of K_SPECIAL, because "m_str" is in a format to be used
     // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
-    vim_unescape_csi(s);
+    vim_unescape_ks(s);
     msg_outtrans_special(s, false, 0);
     xfree(s);
   }
@@ -3860,9 +3826,9 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
       int match;
 
       if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
-        // Might have CSI escaped mp->m_keys.
+        // Might have K_SPECIAL escaped mp->m_keys.
         q = vim_strsave(mp->m_keys);
-        vim_unescape_csi(q);
+        vim_unescape_ks(q);
         qlen = (int)STRLEN(q);
       }
       // find entries with right mode and keys
@@ -3908,7 +3874,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
           int newlen = utf_char2bytes(c, tb + j);
           tb[j + newlen] = NUL;
           // Need to escape K_SPECIAL.
-          char_u *escaped = vim_strsave_escape_csi(tb + j);
+          char_u *escaped = vim_strsave_escape_ks(tb + j);
           if (escaped != NULL) {
             newlen = (int)STRLEN(escaped);
             memmove(tb + j, escaped, (size_t)newlen);
@@ -3961,11 +3927,11 @@ static char_u *eval_map_expr(mapblock_T  *mp, int c)
   int save_msg_col;
   int save_msg_row;
 
-  /* Remove escaping of CSI, because "str" is in a format to be used as
-   * typeahead. */
+  // Remove escaping of K_SPECIAL, because "str" is in a format to be used as
+  // typeahead.
   if (mp->m_luaref == LUA_NOREF) {
     expr = vim_strsave(mp->m_str);
-    vim_unescape_csi(expr);
+    vim_unescape_ks(expr);
   }
 
   save_cmd = save_cmdline_alloc();
@@ -4005,18 +3971,16 @@ static char_u *eval_map_expr(mapblock_T  *mp, int c)
   if (p == NULL) {
     return NULL;
   }
-  // Escape CSI in the result to be able to use the string as typeahead.
-  res = vim_strsave_escape_csi(p);
+  // Escape K_SPECIAL in the result to be able to use the string as typeahead.
+  res = vim_strsave_escape_ks(p);
   xfree(p);
 
   return res;
 }
 
-/*
- * Copy "p" to allocated memory, escaping K_SPECIAL and CSI so that the result
- * can be put in the typeahead buffer.
- */
-char_u *vim_strsave_escape_csi(char_u *p)
+/// Copy "p" to allocated memory, escaping K_SPECIAL so that the result
+/// can be put in the typeahead buffer.
+char_u *vim_strsave_escape_ks(char_u *p)
 {
   // Need a buffer to hold up to three times as much.  Four in case of an
   // illegal utf-8 byte:
@@ -4031,7 +3995,7 @@ char_u *vim_strsave_escape_csi(char_u *p)
       *d++ = *s++;
     } else {
       // Add character, possibly multi-byte to destination, escaping
-      // CSI and K_SPECIAL. Be careful, it can be an illegal byte!
+      // K_SPECIAL. Be careful, it can be an illegal byte!
       d = add_char2buf(utf_ptr2char(s), d);
       s += utf_ptr2len(s);
     }
@@ -4041,21 +4005,15 @@ char_u *vim_strsave_escape_csi(char_u *p)
   return res;
 }
 
-/*
- * Remove escaping from CSI and K_SPECIAL characters.  Reverse of
- * vim_strsave_escape_csi().  Works in-place.
- */
-void vim_unescape_csi(char_u *p)
+/// Remove escaping from K_SPECIAL characters.  Reverse of
+/// vim_strsave_escape_ks().  Works in-place.
+void vim_unescape_ks(char_u *p)
 {
   char_u *s = p, *d = p;
 
   while (*s != NUL) {
     if (s[0] == K_SPECIAL && s[1] == KS_SPECIAL && s[2] == KE_FILLER) {
       *d++ = K_SPECIAL;
-      s += 3;
-    } else if ((s[0] == K_SPECIAL || s[0] == CSI)
-               && s[1] == KS_EXTRA && s[2] == (int)KE_CSI) {
-      *d++ = CSI;
       s += 3;
     } else {
       *d++ = *s++;
@@ -4299,7 +4257,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
 
   for (; *str != NUL; str++) {
     // Check for a multi-byte character, which may contain escaped
-    // K_SPECIAL and CSI bytes.
+    // K_SPECIAL bytes.
     const char *p = mb_unescape((const char **)&str);
     if (p != NULL) {
       while (*p != NUL) {

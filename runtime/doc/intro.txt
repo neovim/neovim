@@ -322,7 +322,6 @@ notation	meaning		    equivalent	decimal value(s)	~
 <Bar>		vertical bar		|	124	*<Bar>*
 <Del>		delete				127
 <CSI>		command sequence intro  ALT-Esc 155	*<CSI>*
-<xCSI>		CSI when typed in the GUI		*<xCSI>*
 
 <EOL>		end-of-line (can be <CR>, <NL> or <CR><NL>,
 		depends on system and 'fileformat')	*<EOL>*

@@ -6204,7 +6204,6 @@ static void do_ucmd(exarg_T *eap)
           // K_SPECIAL has been put in the buffer as K_SPECIAL
           // KS_SPECIAL KE_FILLER, like for mappings, but
           // do_cmdline() doesn't handle that, so convert it back.
-          // Also change K_SPECIAL KS_EXTRA KE_CSI into CSI.
           len = ksp - p;
           if (len > 0) {
             memmove(q, p, len);
@@ -8627,7 +8626,7 @@ static void ex_normal(exarg_T *eap)
     return;
   }
 
-  // vgetc() expects a CSI and K_SPECIAL to have been escaped.  Don't do
+  // vgetc() expects K_SPECIAL to have been escaped.  Don't do
   // this for the K_SPECIAL leading byte, otherwise special keys will not
   // work.
   {
@@ -8636,8 +8635,7 @@ static void ex_normal(exarg_T *eap)
     // Count the number of characters to be escaped.
     for (p = eap->arg; *p != NUL; p++) {
       for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
-        if (*++p == K_SPECIAL             // trailbyte K_SPECIAL or CSI
-            ) {
+        if (*++p == K_SPECIAL) {  // trailbyte K_SPECIAL
           len += 2;
         }
       }

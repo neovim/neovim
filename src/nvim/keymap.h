@@ -220,7 +220,7 @@ enum key_extra {
   KE_KINS = 79,             // keypad Insert key
   KE_KDEL = 80,              // keypad Delete key
 
-  KE_CSI = 81,              // CSI typed directly
+  // KE_CSI = 81,           // Nvim doesn't need escaping CSI
   KE_SNR = 82,              // <SNR>
   KE_PLUG = 83,             // <Plug>
   KE_CMDWIN = 84,            // open command-line window from Command-line Mode
@@ -435,7 +435,6 @@ enum key_extra {
 #define K_MOUSELEFT     TERMCAP2KEY(KS_EXTRA, KE_MOUSELEFT)
 #define K_MOUSERIGHT    TERMCAP2KEY(KS_EXTRA, KE_MOUSERIGHT)
 
-#define K_CSI           TERMCAP2KEY(KS_EXTRA, KE_CSI)
 #define K_SNR           TERMCAP2KEY(KS_EXTRA, KE_SNR)
 #define K_PLUG          TERMCAP2KEY(KS_EXTRA, KE_PLUG)
 #define K_CMDWIN        TERMCAP2KEY(KS_EXTRA, KE_CMDWIN)

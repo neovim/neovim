@@ -260,7 +260,7 @@ static colnr_T Insstart_blank_vcol;     // vcol for first inserted blank
 static bool update_Insstart_orig = true;  // set Insstart_orig to Insstart
 
 static char_u *last_insert = NULL;    // the text of the previous insert,
-                                      // K_SPECIAL and CSI are escaped
+                                      // K_SPECIAL is escaped
 static int last_insert_skip;      // nr of chars in front of previous insert
 static int new_insert_skip;       // nr of chars in front of current insert
 static int did_restart_edit;            // "restart_edit" when calling edit()
@@ -6817,7 +6817,7 @@ void free_last_insert(void)
 
 /// Add character "c" to buffer "s"
 ///
-/// Escapes the special meaning of K_SPECIAL and CSI, handles multi-byte
+/// Escapes the special meaning of K_SPECIAL, handles multi-byte
 /// characters.
 ///
 /// @param[in]  c  Character to add.
@@ -6831,7 +6831,7 @@ char_u *add_char2buf(int c, char_u *s)
   const int len = utf_char2bytes(c, temp);
   for (int i = 0; i < len; i++) {
     c = temp[i];
-    // Need to escape K_SPECIAL and CSI like in the typeahead buffer.
+    // Need to escape K_SPECIAL like in the typeahead buffer.
     if (c == K_SPECIAL) {
       *s++ = K_SPECIAL;
       *s++ = KS_SPECIAL;

@@ -922,8 +922,8 @@ int do_record(int c)
     // The recorded text contents.
     p = get_recorded();
     if (p != NULL) {
-      // Remove escaping for CSI and K_SPECIAL in multi-byte chars.
-      vim_unescape_csi(p);
+      // Remove escaping for K_SPECIAL in multi-byte chars.
+      vim_unescape_ks(p);
       (void)tv_dict_add_str(dict, S_LEN("regcontents"), (const char *)p);
     }
 
@@ -933,7 +933,7 @@ int do_record(int c)
     buf[1] = NUL;
     (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
 
-    // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
+    // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
     apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
@@ -1099,7 +1099,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
           return FAIL;
         }
       }
-      escaped = vim_strsave_escape_csi(reg->y_array[i]);
+      escaped = vim_strsave_escape_ks(reg->y_array[i]);
       retval = ins_typebuf(escaped, remap, 0, true, silent);
       xfree(escaped);
       if (retval == FAIL) {
@@ -1141,7 +1141,7 @@ static void put_reedit_in_typebuf(int silent)
 /// Insert register contents "s" into the typeahead buffer, so that it will be
 /// executed again.
 ///
-/// @param esc    when true then it is to be taken literally: Escape CSI
+/// @param esc    when true then it is to be taken literally: Escape K_SPECIAL
 ///               characters and no remapping.
 /// @param colon  add ':' before the line
 static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
@@ -1156,7 +1156,7 @@ static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
     char_u *p;
 
     if (esc) {
-      p = vim_strsave_escape_csi(s);
+      p = vim_strsave_escape_ks(s);
     } else {
       p = s;
     }
