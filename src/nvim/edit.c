@@ -5702,6 +5702,8 @@ int get_literal(void)
   --no_mapping;
   if (nc) {
     vungetc(nc);
+    // A character typed with i_CTRL-V_digit cannot have a mod_mask.
+    mod_mask = 0;
   }
   got_int = false;          // CTRL-C typed after CTRL-V is not an interrupt
   return cc;

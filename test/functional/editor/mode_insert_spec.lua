@@ -112,6 +112,11 @@ describe('insert-mode', function()
       expect('😀😁')
     end)
 
+    it('entering character by value is interrupted by invalid character', function()
+      feed('i<C-V>76c<C-V>76<D-F2><C-V>u3c0j<C-V>u3c0<D-F2><C-V>U1f600j<C-V>U1f600<D-F2><Esc>')
+      expect('LcL<D-F2>πjπ<D-F2>😀j😀<D-F2>')
+    end)
+
     it('shows o, O, u, U, x, X, and digits with META/CMD modifiers', function()
       feed('i<C-V><M-o><C-V><D-o><C-V><M-O><C-V><D-O><Esc>')
       expect('<M-o><D-o><M-O><D-O>')
