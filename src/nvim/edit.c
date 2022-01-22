@@ -5631,6 +5631,10 @@ int get_literal(void)
   i = 0;
   for (;;) {
     nc = plain_vgetc();
+    if (mod_mask != 0) {
+      // A character with a mod_mask should not be valid character for i_CTRL-V_digit.
+      break;
+    }
     if (!(State & CMDLINE)
         && MB_BYTE2LEN_CHECK(nc) == 1) {
       add_to_showcmd(nc);
