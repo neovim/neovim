@@ -134,7 +134,7 @@ There is some text missing from this line.
  1. Move the cursor to the first line below marked ✗.
     It does not matter on what character the cursor is in that line.
 
- 2. Press [A](A) and type in the necessary additions.
+ 2. Press [A](A) (that is Shift-A) and type in the necessary additions.
 
  3. As the text has been appended press `<Esc>`{normal} to return to Normal
     mode.
@@ -864,9 +864,9 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
 ~~~
 # Lesson 7.1: GETTING HELP
 
-** Use the on-line help system. **
+** Use the online help system. **
 
-Vim has a comprehensive on-line help system.
+Vim has a comprehensive online help system.
 
 To get started, try one of these three:
 
@@ -964,12 +964,13 @@ them:
   https://github.com/mhinz/vim-galore
 
 If you prefer a book, *Practical Vim* by Drew Neil is recommended often
-(the sequel, *Modern Vim*, includes material specific to nvim).
+(the sequel, *Modern Vim*, includes material specific to Neovim).
 
 This tutorial was written by Michael C. Pierce and Robert K. Ware, Colorado
 School of Mines using ideas supplied by Charles Smith, Colorado State
 University. E-mail: bware@mines.colorado.edu.
 
+Modified for Neovim by the Neovim community
 Modified for Vim by Bram Moolenaar.
 Modified for vim-tutor-mode by Felipe Morales.
 
