@@ -77,6 +77,41 @@ describe('insert-mode', function()
   end)
 
   describe('Ctrl-V', function()
+    it('supports entering the decimal value of a character', function()
+      feed('i<C-V>076<C-V>167')
+      expect('L§')
+    end)
+
+    it('supports entering the octal value of a character with "o"', function()
+      feed('i<C-V>o114<C-V>o247<Esc>')
+      expect('L§')
+    end)
+
+    it('supports entering the octal value of a character with "O"', function()
+      feed('i<C-V>O114<C-V>O247<Esc>')
+      expect('L§')
+    end)
+
+    it('supports entering the hexadecimal value of a character with "x"', function()
+      feed('i<C-V>x4c<C-V>xA7<Esc>')
+      expect('L§')
+    end)
+
+    it('supports entering the hexadecimal value of a character with "X"', function()
+      feed('i<C-V>X4c<C-V>XA7<Esc>')
+      expect('L§')
+    end)
+
+    it('supports entering the hexadecimal value of a character with "u"', function()
+      feed('i<C-V>u25ba<C-V>u25C7<Esc>')
+      expect('►◇')
+    end)
+
+    it('supports entering the hexadecimal value of a character with "U"', function()
+      feed('i<C-V>U0001f600<C-V>U0001F601<Esc>')
+      expect('😀😁')
+    end)
+
     it('shows o, O, u, U, x, X, and digits with META/CMD modifiers', function()
       feed('i<C-V><M-o><C-V><D-o><C-V><M-O><C-V><D-O><Esc>')
       expect('<M-o><D-o><M-O><D-O>')
