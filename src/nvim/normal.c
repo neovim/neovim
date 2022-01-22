@@ -1010,7 +1010,7 @@ static int normal_execute(VimState *state, int key)
     // restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
-    ins_char_typebuf(s->c);
+    ins_char_typebuf(s->c, mod_mask);
     if (restart_edit != 0) {
       s->c = 'd';
     } else {

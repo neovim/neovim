@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
-local feed, nvim = helpers.feed, helpers.nvim
+local feed, nvim, command = helpers.feed, helpers.nvim, helpers.command
 local feed_data = thelpers.feed_data
 
 describe(':terminal mouse', function()
@@ -10,9 +10,9 @@ describe(':terminal mouse', function()
   before_each(function()
     clear()
     nvim('set_option', 'statusline', '==========')
-    nvim('command', 'highlight StatusLine cterm=NONE')
-    nvim('command', 'highlight StatusLineNC cterm=NONE')
-    nvim('command', 'highlight VertSplit cterm=NONE')
+    command('highlight StatusLine cterm=NONE')
+    command('highlight StatusLineNC cterm=NONE')
+    command('highlight VertSplit cterm=NONE')
     screen = thelpers.screen_setup()
     local lines = {}
     for i = 1, 30 do
@@ -36,6 +36,26 @@ describe(':terminal mouse', function()
       eq('t', eval('mode(1)'))
       feed('<ScrollWheelUp><0,0>')
       eq('nt', eval('mode(1)'))
+    end)
+
+    it('will exit focus and trigger Normal mode mapping on mouse click', function()
+      command('let g:got_leftmouse = 0')
+      command('nnoremap <LeftMouse> <Cmd>let g:got_leftmouse = 1<CR>')
+      eq('t', eval('mode(1)'))
+      eq(0, eval('g:got_leftmouse'))
+      feed('<LeftMouse>')
+      eq('nt', eval('mode(1)'))
+      eq(1, eval('g:got_leftmouse'))
+    end)
+
+    it('will exit focus and trigger Normal mode mapping on mouse click with modifier', function()
+      command('let g:got_ctrl_leftmouse = 0')
+      command('nnoremap <C-LeftMouse> <Cmd>let g:got_ctrl_leftmouse = 1<CR>')
+      eq('t', eval('mode(1)'))
+      eq(0, eval('g:got_ctrl_leftmouse'))
+      feed('<C-LeftMouse>')
+      eq('nt', eval('mode(1)'))
+      eq(1, eval('g:got_ctrl_leftmouse'))
     end)
 
     it('will exit focus on <C-\\> + mouse-scroll', function()
@@ -180,7 +200,7 @@ describe(':terminal mouse', function()
 
       it('will forward mouse clicks to the program with the correct even if set nu', function()
         if helpers.pending_win32(pending) then return end
-        nvim('command', 'set number')
+        command('set number')
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
         feed('<LeftMouse><3,0>')

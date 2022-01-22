@@ -127,7 +127,7 @@ typedef off_t off_T;
 
 // When vgetc() is called, it sets mod_mask to the set of modifiers that are
 // held down based on the MOD_MASK_* symbols that are read first.
-EXTERN int mod_mask INIT(= 0x0);  // current key modifiers
+EXTERN int mod_mask INIT(= 0);  // current key modifiers
 
 
 // Cmdline_row is the row where the command line starts, just below the
