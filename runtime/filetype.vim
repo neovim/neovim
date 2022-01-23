@@ -650,6 +650,9 @@ au BufNewFile,BufRead *.fsl			setf framescript
 " FStab
 au BufNewFile,BufRead fstab,mtab		setf fstab
 
+" Fusion
+au BufRead,BufNewFile *.fusion			setf fusion
+
 " F# or Forth
 au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
 
@@ -661,6 +664,12 @@ au BufNewFile,BufRead .gdbinit,gdbinit		setf gdb
 
 " GDMO
 au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
+
+" GDscript
+au BufNewFile,BufRead *.gd			setf gdscript
+
+" Godot resource
+au BufRead,BufNewFile *.tscn,*.tres			setf gdresource
 
 " Gedcom
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
@@ -692,6 +701,9 @@ au BufNewFile,BufRead *.git/*
 " Gkrellmrc
 au BufNewFile,BufRead gkrellmrc,gkrellmrc_?	setf gkrellmrc
 
+" GLSL
+au BufNewFile,BufRead *.glsl			setf glsl
+
 " GP scripts (2.0 and onward)
 au BufNewFile,BufRead *.gp,.gprc		setf gp
 
@@ -717,9 +729,13 @@ au BufNewFile,BufRead *.gpi,.gnuplot		setf gnuplot
 " Go (Google)
 au BufNewFile,BufRead *.go			setf go
 au BufNewFile,BufRead Gopkg.lock		setf toml
+au BufRead,BufNewFile go.work			setf gowork
 
 " GrADS scripts
 au BufNewFile,BufRead *.gs			setf grads
+
+" GraphQL
+au BufNewFile,BufRead *.graphql,*.graphqls,*.gql			setf graphql
 
 " Gretl
 au BufNewFile,BufRead *.gretl			setf gretl
@@ -736,11 +752,17 @@ au BufNewFile,BufRead */etc/group,*/etc/group-,*/etc/group.edit,*/etc/gshadow,*/
 " GTK RC
 au BufNewFile,BufRead .gtkrc,gtkrc		setf gtkrc
 
+" Hack
+au BufRead,BufNewFile *.hack,*.hackpartial			setf hack
+
 " Haml
 au BufNewFile,BufRead *.haml			setf haml
 
 " Hamster Classic | Playground files
 au BufNewFile,BufRead *.hsm			setf hamster
+
+" Handlebars
+au BufNewFile,BufRead *.hbs			setf handlebars
 
 " Haskell
 au BufNewFile,BufRead *.hs,*.hsc,*.hs-boot,*.hsig setf haskell
@@ -754,11 +776,20 @@ au BufNewFile,BufRead cabal.config		setf cabalconfig
 au BufNewFile,BufRead *.ht			setf haste
 au BufNewFile,BufRead *.htpp			setf hastepreproc
 
+" HCL
+au BufRead,BufNewFile *.hcl			setf hcl
+
 " Hercules
 au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 
+" HEEx
+au BufRead,BufNewFile *.heex			setf heex
+
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
+
+" Hjson
+au BufNewFile,BufRead *.hjson			setf hjson
 
 " Hollywood
 au BufRead,BufNewFile *.hws			setf hollywood
@@ -937,6 +968,9 @@ au BufNewFile,BufRead *.ldif			setf ldif
 
 " Ld loader
 au BufNewFile,BufRead *.ld			setf ld
+
+" Ledger
+au BufRead,BufNewFile *.ldg,*.ledger,*.journal			setf ledger
 
 " Less
 au BufNewFile,BufRead *.less			setf less
@@ -1175,6 +1209,9 @@ au BufNewFile,BufRead *.nginx,nginx*.conf,*nginx.conf,*/etc/nginx/*,*/usr/local/
 " Ninja file
 au BufNewFile,BufRead *.ninja			setf ninja
 
+" Nix
+au BufRead,BufNewFile *.nix			setf nix
+
 " NPM RC file
 au BufNewFile,BufRead npmrc,.npmrc		setf dosini
 
@@ -1360,12 +1397,18 @@ au BufNewFile,BufRead *printcap
 au BufNewFile,BufRead *termcap
 	\ let b:ptcap_type = "term" | setf ptcap
 
+" Prisma
+au BufRead,BufNewFile *.prisma			setf prisma
+
 " PCCTS / ANTLR
 "au BufNewFile,BufRead *.g			setf antlr
 au BufNewFile,BufRead *.g			setf pccts
 
 " PPWizard
 au BufNewFile,BufRead *.it,*.ih			setf ppwiz
+
+" Pug
+au BufRead,BufNewFile *.pug			setf pug
 
 " Puppet
 au BufNewFile,BufRead Puppetfile		setf ruby
@@ -1431,6 +1474,9 @@ au BufNewFile,BufRead *.pyx,*.pxd		setf pyrex
 " Quixote (Python-based web framework)
 au BufNewFile,BufRead *.py,*.pyw,.pythonstartup,.pythonrc  setf python
 au BufNewFile,BufRead *.ptl,*.pyi,SConstruct		   setf python
+
+" QL
+au BufRead,BufNewFile *.ql,*.qll		setf ql
 
 " Radiance
 au BufNewFile,BufRead *.rad,*.mat		setf radiance
@@ -1836,6 +1882,9 @@ au BufNewFile,BufRead */etc/sudoers,sudoers.tmp	setf sudoers
 " SVG (Scalable Vector Graphics)
 au BufNewFile,BufRead *.svg			setf svg
 
+" Surface
+au BufRead,BufNewFile *.sface			setf surface
+
 " Tads (or Nroff or Perl test file)
 au BufNewFile,BufRead *.t
 	\ if !dist#ft#FTnroff() && !dist#ft#FTperl() | setf tads | endif
@@ -1853,6 +1902,9 @@ au BufRead,BufNewFile *.task			setf taskedit
 " Tcl (JACL too)
 au BufNewFile,BufRead *.tcl,*.tm,*.tk,*.itcl,*.itk,*.jacl,.tclshrc,.wishrc	setf tcl
 
+" Teal
+au BufRead,BufNewFile *.tl			setf teal
+
 " TealInfo
 au BufNewFile,BufRead *.tli			setf tli
 
@@ -1869,6 +1921,9 @@ au BufRead,BufNewFile *.ttl
 
 " Terminfo
 au BufNewFile,BufRead *.ti			setf terminfo
+
+" Terraform
+au BufRead,BufNewFile *.tfvars			setf terraform
 
 " TeX
 au BufNewFile,BufRead *.latex,*.sty,*.dtx,*.ltx,*.bbl	setf tex
@@ -1888,6 +1943,9 @@ au BufNewFile,BufRead .tidyrc,tidyrc,tidy.conf	setf tidy
 
 " TF mud client
 au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
+
+" TLA+
+au BufRead,BufNewFile *.tla			setf tla
 
 " tmux configuration
 au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
@@ -2149,6 +2207,9 @@ au BufNewFile,BufRead *.raml			setf raml
 
 " yum conf (close enough to dosini)
 au BufNewFile,BufRead */etc/yum.conf		setf dosini
+
+" YANG
+au BufRead,BufNewFile *.yang			setf yang
 
 " Zimbu
 au BufNewFile,BufRead *.zu			setf zimbu
