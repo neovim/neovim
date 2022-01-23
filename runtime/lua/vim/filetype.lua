@@ -293,6 +293,7 @@ local extension = {
   webmanifest = "json",
   ipynb = "json",
   ["json-patch"] = "json",
+  json5 = "json5",
   jsonc = "jsonc",
   jsp = "jsp",
   jl = "julia",
