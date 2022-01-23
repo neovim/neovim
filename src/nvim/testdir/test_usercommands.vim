@@ -269,10 +269,10 @@ endfunc
 
 func Test_CmdCompletion()
   call feedkeys(":com -\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"com -addr bang bar buffer complete count nargs range register', @:)
+  call assert_equal('"com -addr bang bar buffer complete count keepscript nargs range register', @:)
 
   call feedkeys(":com -nargs=0 -\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"com -nargs=0 -addr bang bar buffer complete count nargs range register', @:)
+  call assert_equal('"com -nargs=0 -addr bang bar buffer complete count keepscript nargs range register', @:)
 
   call feedkeys(":com -nargs=\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"com -nargs=* + 0 1 ?', @:)

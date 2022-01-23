@@ -1510,6 +1510,12 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     goto err;
   }
 
+  if (api_object_to_bool(opts->keepscript, "keepscript", false, err)) {
+    argt |= EX_KEEPSCRIPT;
+  } else if (ERROR_SET(err)) {
+    goto err;
+  }
+
   bool force = api_object_to_bool(opts->force, "force", true, err);
   if (ERROR_SET(err)) {
     goto err;
