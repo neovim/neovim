@@ -882,6 +882,9 @@ au BufNewFile,BufRead *.jov,*.j73,*.jovial	setf jovial
 " JSON
 au BufNewFile,BufRead *.json,*.jsonp,*.webmanifest	setf json
 
+" JSON5
+au BufNewFile,BufRead *.json5			setf json5
+
 " JSON Patch (RFC 6902)
 au BufNewFile,BufRead *.json-patch			setf json
 
