@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 Jan 13
+" Last Change: 2022 Jan 17
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -1344,6 +1344,7 @@ func s:HandleCursor(msg)
     if lnum =~ '^[0-9]*$'
       call s:GotoSourcewinOrCreateIt()
       if expand('%:p') != fnamemodify(fname, ':p')
+        echomsg 'different fname: "' .. expand('%:p') .. '" vs "' .. fnamemodify(fname, ':p') .. '"'
         augroup Termdebug
           " Always open a file read-only instead of showing the ATTENTION
           " prompt, since we are unlikely to want to edit the file.

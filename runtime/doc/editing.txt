@@ -845,7 +845,7 @@ Note: When the 'write' option is off, you are not able to write any file.
 
 							*:w* *:write*
 					*E502* *E503* *E504* *E505*
-					*E512* *E514* *E667* *E796* *E949*
+					*E512* *E514* *E667* *E949*
 :w[rite] [++opt]	Write the whole buffer to the current file.  This is
 			the normal way to save changes to a file.  It fails
 			when the 'readonly' option is set or when there is

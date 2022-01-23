@@ -501,7 +501,9 @@ Note the use of backslashes to avoid some characters to be interpreted by the
     :endfunction
 
 Evaluating 'foldtext' is done in the |sandbox|.  The current window is set to
-the window that displays the line.  Errors are ignored.
+the window that displays the line.
+
+Errors are ignored.  For debugging set the 'debug' option to "throw".
 
 The default value is |foldtext()|.  This returns a reasonable text for most
 types of folding.  If you don't like it, you can specify your own 'foldtext'

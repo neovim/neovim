@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	M$ Resource files (*.rc)
 " Maintainer:	Christian Brabandt
-" Last Change:	2015-05-29
+" Last Change:	20220116
 " Repository:   https://github.com/chrisbra/vim-rc-syntax
 " License:	Vim (see :h license)
 " Previous Maintainer:	Heiko Erhardt <Heiko.Erhardt@munich.netsurf.de>
@@ -173,16 +173,17 @@ hi def link rcAttribute	rcCommonAttribute
 hi def link rcStdId	rcStatement
 hi def link rcStatement	Statement
 
-" Default color overrides
-hi def rcLanguage	term=reverse ctermbg=Red ctermfg=Yellow guibg=Red guifg=Yellow
-hi def rcMainObject	term=underline ctermfg=Blue guifg=Blue
-hi def rcSubObject	ctermfg=Green guifg=Green
-hi def rcCaptionParam	term=underline ctermfg=DarkGreen guifg=Green
-hi def rcParam	ctermfg=DarkGreen guifg=DarkGreen
-hi def rcStatement	ctermfg=DarkGreen guifg=DarkGreen
-hi def rcCommonAttribute	ctermfg=Brown guifg=Brown
+hi def link rcLanguage	Constant
+hi def link rcCaptionParam Constant
+hi def link rcCommonAttribute Constant
 
-"hi def link rcIdentifier	Identifier
+hi def link rcMainObject Identifier
+hi def link rcSubObject	Define
+hi def link rcParam	Constant
+hi def link rcStatement	Statement
+"
+"hi def link rcIdentifier Identifier
+
 
 
 let b:current_syntax = "rc"
