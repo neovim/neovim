@@ -230,6 +230,7 @@ local extension = {
   gemini = "gemtext",
   gift = "gift",
   gpi = "gnuplot",
+  gnuplot = "gnuplot",
   go = "go",
   gp = "gp",
   gs = "grads",
