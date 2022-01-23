@@ -973,27 +973,35 @@ int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent
  * Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to
  * the char.
  */
-void ins_char_typebuf(int c)
+void ins_char_typebuf(int c, int modifier)
 {
-  char_u buf[MB_MAXBYTES + 1];
-  if (IS_SPECIAL(c)) {
+  char_u buf[MB_MAXBYTES + 4];
+  int idx = 0;
+  if (modifier != 0) {
     buf[0] = K_SPECIAL;
-    buf[1] = (char_u)K_SECOND(c);
-    buf[2] = (char_u)K_THIRD(c);
+    buf[1] = KS_MODIFIER;
+    buf[2] = (char_u)modifier;
     buf[3] = NUL;
+    idx = 3;
+  }
+  if (IS_SPECIAL(c)) {
+    buf[idx] = K_SPECIAL;
+    buf[idx + 1] = (char_u)K_SECOND(c);
+    buf[idx + 2] = (char_u)K_THIRD(c);
+    buf[idx + 3] = NUL;
   } else {
-    buf[utf_char2bytes(c, buf)] = NUL;
-    char_u *p = buf;
-    while (*p) {
+    char_u *p = buf + idx;
+    int char_len = utf_char2bytes(c, p);
+    // If the character contains K_SPECIAL bytes they need escaping.
+    for (int i = char_len; --i >= 0; p++) {
       if ((uint8_t)(*p) == K_SPECIAL) {
-        memmove(p + 3, p + 1, STRLEN(p + 1) + 1);
+        memmove(p + 3, p + 1, (size_t)i);
         *p++ = K_SPECIAL;
         *p++ = KS_SPECIAL;
-        *p++ = KE_FILLER;
-      } else {
-        p++;
+        *p = KE_FILLER;
       }
     }
+    *p = NUL;
   }
   (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
 }
@@ -1433,8 +1441,9 @@ int vgetc(void)
     mouse_row = old_mouse_row;
     mouse_col = old_mouse_col;
   } else {
-    mod_mask = 0x0;
+    mod_mask = 0;
     last_recorded_len = 0;
+
     for (;;) {                 // this is done twice if there are modifiers
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
@@ -1560,8 +1569,8 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && !(State & TERM_FOCUS)
           && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
         mod_mask = 0;
-        ins_char_typebuf(c);
-        ins_char_typebuf(ESC);
+        ins_char_typebuf(c, 0);
+        ins_char_typebuf(ESC, 0);
         continue;
       }
 
