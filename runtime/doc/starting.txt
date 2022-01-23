@@ -188,7 +188,7 @@ argument.
 		changes and writing.
 
 -e							*-e* *-E*
--E		Start Nvim in Ex mode |gQ|.
+-E		Start Nvim in Ex mode |gQ|, see |Ex-mode|.
 
 		If stdin is not a TTY:
 		  -e reads/executes stdin as Ex commands.

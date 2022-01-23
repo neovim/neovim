@@ -920,11 +920,15 @@ in .../after/syntax/baan.vim (see |after-directory|). Eg: >
 
 BASIC			*basic.vim* *vb.vim* *ft-basic-syntax* *ft-vb-syntax*
 
-Both Visual Basic and "normal" basic use the extension ".bas".	To detect
+Both Visual Basic and "normal" BASIC use the extension ".bas".	To detect
 which one should be used, Vim checks for the string "VB_Name" in the first
 five lines of the file.  If it is not found, filetype will be "basic",
 otherwise "vb".  Files with the ".frm" extension will always be seen as Visual
 Basic.
+
+If the automatic detection doesn't work for you or you only edit, for
+example, FreeBASIC files, use this in your startup vimrc: >
+   :let filetype_bas = "freebasic"
 
 
 C							*c.vim* *ft-c-syntax*

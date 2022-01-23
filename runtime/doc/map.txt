@@ -1217,7 +1217,7 @@ scripts.
 
 							*:command-verbose*
 When 'verbose' is non-zero, listing a command will also display where it was
-last defined. Example: >
+last defined and any completion argument. Example: >
 
     :verbose command TOhtml
 <	Name	    Args Range Complete  Definition ~
@@ -1332,6 +1332,8 @@ completion can be enabled:
 	-complete=custom,{func} custom completion, defined via {func}
 	-complete=customlist,{func} custom completion, defined via {func}
 
+If you specify completion while there is nothing to complete (-nargs=0, the
+default) then you get error *E1208* .
 Note: That some completion methods might expand environment variables.
 
 

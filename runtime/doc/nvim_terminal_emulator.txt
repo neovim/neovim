@@ -162,12 +162,11 @@ command name, for example: >
 This opens two windows:
 
 gdb window	A terminal window in which "gdb vim" is executed.  Here you
-		can directly interact with gdb.  The buffer name is "!gdb".
+		can directly interact with gdb.
 
 program window	A terminal window for the executed program.  When "run" is
 		used in gdb the program I/O will happen in this window, so
-		that it does not interfere with controlling gdb.  The buffer
-		name is "gdb program".
+		that it does not interfere with controlling gdb.
 
 The current window is used to show the source code.  When gdb pauses the
 source file location will be displayed, if possible.  A sign is used to

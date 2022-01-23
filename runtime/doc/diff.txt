@@ -324,8 +324,9 @@ After setting this variable, reload the syntax script: >
 
 FINDING THE DIFFERENCES					*diff-diffexpr*
 
-The 'diffexpr' option can be set to use something else than the standard
-"diff" program to compare two files and find the differences. *E959*
+The 'diffexpr' option can be set to use something else than the internal diff
+support or the standard "diff" program to compare two files and find the
+differences.
 
 When 'diffexpr' is empty, Vim uses this command to find the differences
 between file1 and file2: >
@@ -358,7 +359,7 @@ format mentioned.  These variables are set to the file names used:
 
 	v:fname_in		original file
 	v:fname_new		new version of the same file
-	v:fname_out		resulting diff file
+	v:fname_out		where to write the resulting diff file
 
 Additionally, 'diffexpr' should take care of "icase" and "iwhite" in the
 'diffopt' option.  'diffexpr' cannot change the value of 'lines' and

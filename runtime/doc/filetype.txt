@@ -131,14 +131,15 @@ shell script: "#!/bin/csh".
 argument was used.
 
 							*filetype-overrule*
-When the same extension is used for two filetypes, Vim tries to guess what
-kind of file it is.  This doesn't always work.  A number of global variables
-can be used to overrule the filetype used for certain extensions:
+When the same extension is used for multiple filetypes, Vim tries to guess
+what kind of file it is.  This doesn't always work.  A number of global
+variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
 	*.asa		g:filetype_asa	|ft-aspvbs-syntax| |ft-aspperl-syntax|
 	*.asm		g:asmsyntax	|ft-asm-syntax|
 	*.asp		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
+	*.bas		g:filetype_bas	|ft-basic-syntax|
 	*.fs		g:filetype_fs   |ft-forth-syntax|
 	*.i		g:filetype_i	|ft-progress-syntax|
 	*.inc		g:filetype_inc
