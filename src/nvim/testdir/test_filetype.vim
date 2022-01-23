@@ -203,7 +203,7 @@ let s:filename_checks = {
     \ 'gitsendemail': ['.gitsendemail.msg.xxxxxx'],
     \ 'gkrellmrc': ['gkrellmrc', 'gkrellmrc_x'],
     \ 'gnash': ['gnashrc', '.gnashrc', 'gnashpluginrc', '.gnashpluginrc'],
-    \ 'gnuplot': ['file.gpi'],
+    \ 'gnuplot': ['file.gpi', '.gnuplot'],
     \ 'go': ['file.go'],
     \ 'gomod': ['go.mod'],
     \ 'gp': ['file.gp', '.gprc'],
