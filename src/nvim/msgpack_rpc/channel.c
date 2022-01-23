@@ -18,6 +18,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/wstream.h"
+#include "nvim/globals.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
@@ -373,7 +374,9 @@ static void request_event(void **argv)
     // channel was closed, abort any pending requests
     goto free_ret;
   }
+  RedrawingDisabled++;
   Object result = handler.fn(channel->id, e->args, &error);
+  RedrawingDisabled--;
   if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.
     msgpack_packer response;

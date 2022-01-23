@@ -18,6 +18,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
@@ -222,9 +223,13 @@ void ui_refresh(void)
 
   ui_default_colors_set();
 
+  int save_RedrawingDisabled = RedrawingDisabled;
   int save_p_lz = p_lz;
-  p_lz = false;  // convince redrawing() to return true ...
+  // convince redrawing() to return true ...
+  RedrawingDisabled  = 0;
+  p_lz = false;
   screen_resize(width, height);
+  RedrawingDisabled = save_RedrawingDisabled;
   p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {

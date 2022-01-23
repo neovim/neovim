@@ -6,6 +6,7 @@ local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
 local iswin = helpers.iswin
+local funcs, meths, exec_lua = helpers.funcs, helpers.meths, helpers.exec_lua
 
 describe('screen', function()
   local screen
@@ -127,12 +128,51 @@ local function screen_tests(linegrid)
     end)
 
     it('has correct default title with named file', function()
-      local expected = (iswin() and 'myfile (C:\\mydir) - NVIM'
-                                 or 'myfile (/mydir) - NVIM')
+      local expected = (iswin() and 'myfile (C:\\mydir) - NVIM' or 'myfile (/mydir) - NVIM')
       command('set title')
       command(iswin() and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
       screen:expect(function()
         eq(expected, screen.title)
+      end)
+    end)
+
+    describe('is not changed by', function()
+      local file1 = iswin() and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
+      local file2 = iswin() and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
+      local expected = (iswin() and 'myfile1 (C:\\mydir) - NVIM' or 'myfile1 (/mydir) - NVIM')
+      local buf2
+
+      before_each(function()
+        command('edit ' .. file1)
+        buf2 = funcs.bufadd(file2)
+        command('set title')
+      end)
+
+      after_each(function()
+        command('redraw!')
+        screen:expect(function()
+          eq(expected, screen.title)
+        end)
+      end)
+
+      it('an RPC call to nvim_buf_set_option in a hidden buffer', function()
+        meths.buf_set_option(buf2, 'autoindent', true)
+      end)
+
+      it('a Lua callback calling nvim_buf_set_option in a hidden buffer', function()
+        exec_lua(string.format([[
+          vim.schedule(function()
+            vim.api.nvim_buf_set_option(%d, 'autoindent', true)
+          end)
+        ]], buf2))
+      end)
+
+      it('a Lua callback calling nvim_buf_call in a hidden buffer', function()
+        exec_lua(string.format([[
+          vim.schedule(function()
+            vim.api.nvim_buf_call(%d, function() end)
+          end)
+        ]], buf2))
       end)
     end)
   end)

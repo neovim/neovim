@@ -96,7 +96,9 @@ static int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   lua_getfield(lstate, -1, "traceback");
   lua_remove(lstate, -2);
   lua_insert(lstate, -2 - nargs);
+  RedrawingDisabled++;
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
+  RedrawingDisabled--;
   if (status) {
     lua_remove(lstate, -2);
   } else {
