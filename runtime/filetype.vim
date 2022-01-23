@@ -674,8 +674,10 @@ autocmd BufRead,BufNewFile *.gift		setf gift
 " Git
 au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG 	setf gitcommit
 au BufNewFile,BufRead NOTES_EDITMSG,EDIT_DESCRIPTION		setf gitcommit
-au BufNewFile,BufRead *.git/config,.gitconfig,/etc/gitconfig 	setf gitconfig
+au BufNewFile,BufRead *.git/config,.gitconfig,*/etc/gitconfig 	setf gitconfig
 au BufNewFile,BufRead */.config/git/config			setf gitconfig
+au BufNewFile,BufRead *.git/config.worktree			setf gitconfig
+au BufNewFile,BufRead *.git/worktrees/*/config.worktree		setf gitconfig
 au BufNewFile,BufRead .gitmodules,*.git/modules/*/config	setf gitconfig
 if !empty($XDG_CONFIG_HOME)
   au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config		setf gitconfig
