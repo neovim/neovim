@@ -121,6 +121,17 @@ func Test_recording_esc_sequence()
   endif
 endfunc
 
+func Test_recording_with_select_mode()
+  new
+  call feedkeys("qacc12345\<Esc>gH98765\<Esc>q", "tx")
+  call assert_equal("98765", getline(1))
+  call assert_equal("cc12345\<Esc>gH98765\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("98765", getline(1))
+  bwipe!
+endfunc
+
 " Test for executing the last used register (@)
 func Test_last_used_exec_reg()
   " Test for the @: command
