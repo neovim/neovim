@@ -2283,6 +2283,11 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     fillchar = ' ';
   } else {
     wp = find_window_by_handle(window, err);
+
+    if (wp == NULL) {
+      api_set_error(err, kErrorTypeException, "unknown winid %d", window);
+      return result;
+    }
     ewp = wp;
 
     if (fillchar == 0) {
