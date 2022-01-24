@@ -10215,6 +10215,10 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!tv_dict_get_callback(opts, S_LEN("on_stdin"), &on_stdin.cb)) {
     return;
   }
+  if (!tv_dict_get_callback(opts, S_LEN("on_print"), &on_print)) {
+    return;
+  }
+
   on_stdin.buffered = tv_dict_get_number(opts, "stdin_buffered");
   if (on_stdin.buffered && on_stdin.cb.type == kCallbackNone) {
     on_stdin.self = opts;
