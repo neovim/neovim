@@ -11,6 +11,7 @@ local parsers = {}
 local M = vim.tbl_extend("error", query, language)
 
 M.language_version = vim._ts_get_language_version()
+M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 setmetatable(M, {
   __index = function (t, k)
