@@ -1079,11 +1079,16 @@ found_node:
 
 mtpos_t marktree_get_altpos(MarkTree *b, mtkey_t mark, MarkTreeIter *itr)
 {
+  return marktree_get_alt(b, mark, itr).pos;
+}
+
+mtkey_t marktree_get_alt(MarkTree *b, mtkey_t mark, MarkTreeIter *itr)
+{
   mtkey_t end = MT_INVALID_KEY;
   if (mt_paired(mark)) {
     end = marktree_lookup_ns(b, mark.ns, mark.id, !mt_end(mark), itr);
   }
-  return end.pos;
+  return end;
 }
 
 static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)

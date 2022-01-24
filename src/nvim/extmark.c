@@ -305,12 +305,14 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
     }
 
     if (mark.ns == ns_id) {
-      mtpos_t endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
+      mtkey_t end = marktree_get_alt(buf->b_marktree, mark, NULL);
       kv_push(array, ((ExtmarkInfo) { .ns_id = mark.ns,
                                       .mark_id = mark.id,
                                       .row = mark.pos.row, .col = mark.pos.col,
-                                      .end_row = endpos.row,
-                                      .end_col = endpos.col,
+                                      .end_row = end.pos.row,
+                                      .end_col = end.pos.col,
+                                      .right_gravity = mt_right(mark),
+                                      .end_right_gravity = mt_right(end),
                                       .decor = get_decor(mark) }));
     }
 next_mark:
@@ -326,20 +328,22 @@ next_mark:
 // Lookup an extmark by id
 ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
-  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, DECORATION_INIT };
+  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, false, false, DECORATION_INIT };
   mtkey_t mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, NULL);
   if (!mark.id) {
     return ret;
   }
   assert(mark.pos.row >= 0);
-  mtpos_t endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
+  mtkey_t end = marktree_get_alt(buf->b_marktree, mark, NULL);
 
   ret.ns_id = ns_id;
   ret.mark_id = id;
   ret.row = mark.pos.row;
   ret.col = mark.pos.col;
-  ret.end_row = endpos.row;
-  ret.end_col = endpos.col;
+  ret.end_row = end.pos.row;
+  ret.end_col = end.pos.col;
+  ret.right_gravity = mt_right(mark);
+  ret.end_right_gravity = mt_right(end);
   ret.decor = get_decor(mark);
 
   return ret;

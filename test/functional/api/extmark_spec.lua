@@ -1446,13 +1446,20 @@ describe('API/extmarks', function()
       end_col = 0,
       end_line = 1
     })
-    eq({ {1, 0, 0, { end_col = 0, end_row = 1 }} }, get_extmarks(ns, 0, -1, {details=true}))
+    eq({ {1, 0, 0, {
+      end_col = 0,
+      end_row = 1,
+      right_gravity = true,
+      end_right_gravity = false,
+    }} }, get_extmarks(ns, 0, -1, {details=true}))
   end)
 
   it('can get details', function()
     set_extmark(ns, marks[1], 0, 0, {
       end_col = 0,
       end_row = 1,
+      right_gravity = false,
+      end_right_gravity = true,
       priority = 0,
       hl_eol = true,
       hl_mode = "blend",
@@ -1472,6 +1479,8 @@ describe('API/extmarks', function()
     eq({0, 0, {
       end_col = 0,
       end_row = 1,
+      right_gravity = false,
+      end_right_gravity = true,
       priority = 0,
       hl_eol = true,
       hl_mode = "blend",
@@ -1484,6 +1493,7 @@ describe('API/extmarks', function()
       virt_lines_leftcol = true,
     } }, get_extmark_by_id(ns, marks[1], { details = true }))
     eq({0, 0, {
+      right_gravity = true,
       priority = 0,
       virt_text = { { "text", "Statement" } },
       virt_text_hide = false,
