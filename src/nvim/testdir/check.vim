@@ -12,9 +12,9 @@ endfunc
 " Command to check for the absence of a feature.
 command -nargs=1 CheckNotFeature call CheckNotFeature(<f-args>)
 func CheckNotFeature(name)
-  if !has(a:name, 1)
-    throw 'Checking for non-existent feature ' .. a:name
-  endif
+  " if !has(a:name, 1)
+  "   throw 'Checking for non-existent feature ' .. a:name
+  " endif
   if has(a:name)
     throw 'Skipped: ' .. a:name .. ' feature present'
   endif

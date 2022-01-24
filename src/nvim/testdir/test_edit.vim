@@ -1006,16 +1006,16 @@ func Test_edit_DROP()
 endfunc
 
 func Test_edit_CTRL_V()
-  if has("ebcdic")
-    return
-  endif
+  CheckNotFeature ebcdic
+
   new
   call setline(1, ['abc'])
   call cursor(2, 1)
+
   " force some redraws
   set showmode showcmd
-  "call test_override_char_avail(1)
-  " call test_override('ALL', 1)
+  " call test_override('char_avail', 1)
+
   call feedkeys("A\<c-v>\<c-n>\<c-v>\<c-l>\<c-v>\<c-b>\<esc>", 'tnix')
   call assert_equal(["abc\x0e\x0c\x02"], getline(1, '$'))
 
@@ -1028,8 +1028,19 @@ func Test_edit_CTRL_V()
     set norl
   endif
 
-  " call test_override('ALL', 0)
   set noshowmode showcmd
+  " call test_override('char_avail', 0)
+
+  " No modifiers should be applied to the char typed using i_CTRL-V_digit.
+  call feedkeys(":append\<CR>\<C-V>76c\<C-V>76\<C-F2>\<C-V>u3c0j\<C-V>u3c0\<M-F3>\<CR>.\<CR>", 'tnix')
+  call assert_equal('LcL<C-F2>πjπ<M-F3>', getline(2))
+
+  if has('osx')
+    " A char with a modifier should not be a valid char for i_CTRL-V_digit.
+    call feedkeys("o\<C-V>\<D-j>\<C-V>\<D-1>\<C-V>\<D-o>\<C-V>\<D-x>\<C-V>\<D-u>", 'tnix')
+    call assert_equal('<D-j><D-1><D-o><D-x><D-u>', getline(3))
+  endif
+
   bw!
 endfunc
 
