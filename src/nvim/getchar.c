@@ -984,7 +984,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent
 /// @return the length of what was inserted
 int ins_char_typebuf(int c, int modifier)
 {
-  char_u buf[MB_MAXBYTES + 4];
+  char_u buf[MB_MAXBYTES * 3 + 4];
   int len = 0;
   if (modifier != 0) {
     buf[0] = K_SPECIAL;
