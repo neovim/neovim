@@ -144,13 +144,19 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
   }
 }
 
-void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
+void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, HlAttrNames *names)
 {
-  DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
       && map_has(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id))) {
     return;
   }
+  if (ns_id == 0) {
+    assert(names);
+    // set in global (':highlight') namespace
+    set_hl_group(hl_id, attrs, names, link_id);
+    return;
+  }
+  DecorProvider *p = get_decor_provider(ns_id, true);
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
   ColorItem it = { .attr_id = attr_id,
                    .link_id = link_id,
@@ -194,7 +200,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     if (ret.type == kObjectTypeDictionary) {
       Dictionary dict = ret.data.dictionary;
       fallback = false;
-      attrs = dict2hlattrs(dict, true, &it.link_id, &err);
+      attrs = dict2hlattrs(dict, true, &it.link_id, NULL, &err);
       for (size_t i = 0; i < dict.size; i++) {
         char *key = dict.items[i].key.data;
         Object val = dict.items[i].value;
@@ -796,7 +802,7 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   return hl;
 }
 
-HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
+HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, HlAttrNames *names, Error *err)
 {
   HlAttrs hlattrs = HLATTRS_INIT;
 
@@ -820,7 +826,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       { "italic", HL_ITALIC },
       { "reverse", HL_INVERSE },
       { "default", HL_DEFAULT },
-      { "global", HL_GLOBAL },
+      // { "global", HL_GLOBAL },
       { NULL, 0 },
     };
 
@@ -857,13 +863,14 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       const char *name;
       const char *shortname;
       int *dest;
+      char **dest_name;
     } colors[] = {
-      { "foreground", "fg", &fg },
-      { "background", "bg", &bg },
-      { "ctermfg", NULL, &ctermfg },
-      { "ctermbg", NULL, &ctermbg },
-      { "special", "sp", &sp },
-      { NULL, NULL, NULL },
+      { "foreground", "fg", &fg, names ? &names->fg_name : NULL },
+      { "background", "bg", &bg, names ? &names->bg_name : NULL },
+      { "ctermfg", NULL, &ctermfg, NULL },
+      { "ctermbg", NULL, &ctermbg, NULL },
+      { "special", "sp", &sp, names ? &names->sp_name : NULL },
+      { NULL, NULL, NULL, NULL },
     };
 
     int k;
@@ -876,6 +883,9 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
           // TODO(bfredl): be more fancy with "bg", "fg" etc
           if (str.size) {
             *colors[k].dest = name_to_color(str.data);
+            if (colors[k].dest_name) {
+              *colors[k].dest_name = str.data;
+            }
           }
         } else {
           api_set_error(err, kErrorTypeValidation,

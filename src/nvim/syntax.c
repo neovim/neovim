@@ -6714,6 +6714,90 @@ int lookup_color(const int idx, const bool foreground, TriState *const boldp)
   return color;
 }
 
+void set_hl_group(int id, HlAttrs attrs, HlAttrNames *names, int link_id)
+{
+  int idx = id - 1;  // Index is ID minus one.
+
+  bool is_default = attrs.rgb_ae_attr & HL_DEFAULT;
+
+  // Return if "default" was used and the group already has settings
+  if (is_default && hl_has_settings(idx, true)) {
+    return;
+  }
+
+  HlGroup *g = &HL_TABLE()[idx];
+
+  if (link_id > 0) {
+    g->sg_cleared = false;
+    g->sg_link = link_id;
+    g->sg_script_ctx = current_sctx;
+    g->sg_script_ctx.sc_lnum += sourcing_lnum;
+    g->sg_set |= SG_LINK;
+    if (is_default) {
+      g->sg_deflink = link_id;
+      g->sg_deflink_sctx = current_sctx;
+      g->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+    }
+    return;
+  }
+
+  g->sg_cleared = false;
+  g->sg_link = 0;
+  g->sg_gui = attrs.rgb_ae_attr;
+
+  g->sg_rgb_fg = attrs.rgb_fg_color;
+  g->sg_rgb_bg = attrs.rgb_bg_color;
+  g->sg_rgb_sp = attrs.rgb_sp_color;
+
+  struct {
+    char **dest; RgbValue val; char *name;
+  } cattrs[] = {
+    { &g->sg_rgb_fg_name, g->sg_rgb_fg, names->fg_name },
+    { &g->sg_rgb_bg_name, g->sg_rgb_bg, names->bg_name },
+    { &g->sg_rgb_sp_name, g->sg_rgb_sp, names->sp_name },
+    { NULL, -1, NULL },
+  };
+
+  for (int j = 0; cattrs[j].dest; j++) {
+    if (cattrs[j].val != -1) {
+      xfree(*cattrs[j].dest);
+      if (cattrs[j].name) {
+        *cattrs[j].dest = xstrdup(cattrs[j].name);
+      } else {
+        char hex_name[8];
+        snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
+        *cattrs[j].dest = xstrdup(hex_name);
+      }
+    }
+  }
+
+  g->sg_cterm = attrs.cterm_ae_attr;
+  g->sg_cterm_bg = attrs.cterm_bg_color;
+  g->sg_cterm_fg = attrs.cterm_fg_color;
+  g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
+  g->sg_blend = attrs.hl_blend;
+
+  g->sg_script_ctx = current_sctx;
+  g->sg_script_ctx.sc_lnum += sourcing_lnum;
+
+  // 'Normal' is special
+  if (STRCMP(g->sg_name_u, "NORMAL") == 0) {
+    cterm_normal_fg_color = g->sg_cterm_fg;
+    cterm_normal_bg_color = g->sg_cterm_bg;
+    normal_fg = g->sg_rgb_fg;
+    normal_bg = g->sg_rgb_bg;
+    normal_sp = g->sg_rgb_sp;
+    ui_default_colors_set();
+  } else {
+    g->sg_attr = hl_get_syn_attr(0, id, attrs);
+
+    // a cursor style uses this syn_id, make sure its attribute is updated.
+    if (cursor_mode_uses_syn_id(id)) {
+      ui_mode_info_set();
+    }
+  }
+}
+
 
 /// Handle ":highlight" command
 ///

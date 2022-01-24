@@ -46,6 +46,18 @@ typedef struct attr_entry {
   .hl_blend = -1, \
 }
 
+typedef struct {
+  char *bg_name;
+  char *fg_name;
+  char *sp_name;
+} HlAttrNames;
+
+#define HLATTRNAMES_INIT (HlAttrNames) { \
+  .bg_name = NULL, \
+  .fg_name = NULL, \
+  .sp_name = NULL, \
+}
+
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names below!
 typedef enum {
