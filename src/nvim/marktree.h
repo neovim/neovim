@@ -2,6 +2,7 @@
 #define NVIM_MARKTREE_H
 
 #include <stdint.h>
+#include <assert.h>
 
 #include "nvim/assert.h"
 #include "nvim/garray.h"
