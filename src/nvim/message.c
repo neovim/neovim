@@ -1094,6 +1094,10 @@ void wait_return(int redraw)
     return;
   }
 
+  if (headless_mode && !ui_active()) {
+    return;
+  }
+
   /*
    * When inside vgetc(), we can't wait for a typed character at all.
    * With the global command (and some others) we only need one return at
