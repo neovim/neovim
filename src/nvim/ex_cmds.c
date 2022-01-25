@@ -3629,8 +3629,14 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   // We do it here once to avoid it to be replaced over and over again.
   // But don't do it when it starts with "\=", then it's an expression.
   assert(sub != NULL);
+
+  bool sub_needs_free = false;
   if (!(sub[0] == '\\' && sub[1] == '=')) {
+    char_u *source = sub;
     sub = regtilde(sub, p_magic);
+    // When previewing, the new pattern allocated by regtilde() needs to be freed
+    // in this function because it will not be used or freed by regtilde() later.
+    sub_needs_free = preview && sub != source;
   }
 
   // Check for a match on each line.
@@ -4424,6 +4430,10 @@ skip:
   }
 
   kv_destroy(preview_lines.subresults);
+
+  if (sub_needs_free) {
+    xfree(sub);
+  }
 
   return preview_buf;
 #undef ADJUST_SUB_FIRSTLNUM
