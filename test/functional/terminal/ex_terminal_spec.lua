@@ -110,6 +110,7 @@ describe(':terminal', function()
     feed('i[tui] insert-mode')
     eq({ blocking=false, mode='t' }, nvim('get_mode'))
     command('stopinsert')
+    poke_eventloop()  -- Terminal mode is not stopped immediately
     eq({ blocking=false, mode='nt' }, nvim('get_mode'))
   end)
 
