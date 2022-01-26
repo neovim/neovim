@@ -1162,5 +1162,20 @@ func Test_visual_ex_copy_line()
   bwipe!
 endfunc
 
+" This was leaving the end of the Visual area beyond the end of a line.
+" Set 'undolevels' to start a new undo block.
+func Test_visual_undo_deletes_last_line()
+  new
+  call setline(1, ["aaa", "ccc", "dyd"])
+  set undolevels=100
+  exe "normal obbbbbbbbbxbb\<Esc>"
+  set undolevels=100
+  /y
+  exe "normal ggvjfxO"
+  undo
+  normal gNU
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
