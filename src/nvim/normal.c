@@ -4472,8 +4472,13 @@ bool get_visual_text(cmdarg_T *cap, char_u **pp, size_t *lenp)
       *pp = ml_get_pos(&VIsual);
       *lenp = (size_t)curwin->w_cursor.col - (size_t)VIsual.col + 1;
     }
-    // Correct the length to include the whole last character.
-    *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
+    if (**pp == NUL) {
+      *lenp = 0;
+    }
+    if (*lenp > 0) {
+      // Correct the length to include all bytes of the last character.
+      *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
+    }
   }
   reset_VIsual_and_resel();
   return true;
@@ -5963,11 +5968,8 @@ static void nv_visual(cmdarg_T *cap)
        * was only one -- webb
        */
       if (resel_VIsual_mode != 'v' || resel_VIsual_line_count > 1) {
-        curwin->w_cursor.lnum +=
-          resel_VIsual_line_count * cap->count0 - 1;
-        if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-          curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-        }
+        curwin->w_cursor.lnum += resel_VIsual_line_count * cap->count0 - 1;
+        check_cursor();
       }
       VIsual_mode = resel_VIsual_mode;
       if (VIsual_mode == 'v') {
