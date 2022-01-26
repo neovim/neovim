@@ -1103,6 +1103,13 @@ func Test_visual_put_blockedit_zy_and_zp()
   bw!
 endfunc
 
+func Test_visual_block_yank_zy()
+  new
+  " this was reading before the start of the line
+  exe "norm o\<C-T>\<Esc>\<C-V>zy"
+  bwipe!
+endfunc
+
 func Test_visual_block_with_virtualedit()
   CheckScreendump
 

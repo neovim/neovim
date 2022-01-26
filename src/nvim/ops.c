@@ -2801,7 +2801,7 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx,
   if (exclude_trailing_space) {
     int s = bd->textlen + bd->endspaces;
 
-    while (ascii_iswhite(*(bd->textstart + s - 1)) && s > 0) {
+    while (s > 0 && ascii_iswhite(*(bd->textstart + s - 1))) {
       s = s - utf_head_off(bd->textstart, bd->textstart + s - 1) - 1;
       pnew--;
     }
