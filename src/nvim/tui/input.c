@@ -439,22 +439,6 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
-// ESC NUL => <Esc>
-static bool handle_forced_escape(TermInput *input)
-{
-  if (rbuffer_size(input->read_stream.buffer) > 1
-      && !rbuffer_cmp(input->read_stream.buffer, "\x1b\x00", 2)) {
-    // skip the ESC and NUL and push one <esc> to the input buffer
-    size_t rcnt;
-    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
-                                                   &rcnt), 1);
-    rbuffer_consumed(input->read_stream.buffer, 2);
-    tk_getkeys(input, true);
-    return true;
-  }
-  return false;
-}
-
 static void set_bg_deferred(void **argv)
 {
   char *bgvalue = argv[0];
@@ -583,7 +567,6 @@ static void handle_raw_buffer(TermInput *input, bool force)
     if (!force
         && (handle_focus_event(input)
             || (is_paste = handle_bracketed_paste(input)) != kNotApplicable
-            || handle_forced_escape(input)
             || (is_bc = handle_background_color(input)) != kNotApplicable)) {
       if (is_paste == kIncomplete || is_bc == kIncomplete) {
         // Wait for the next input, leaving it in the raw buffer due to an
