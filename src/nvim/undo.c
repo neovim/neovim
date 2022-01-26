@@ -2633,6 +2633,10 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
     }
   }
 
+  if (VIsual_active) {
+    check_pos(curbuf, &VIsual);
+  }
+
   smsg_attr_keep(0,
                  _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
                  u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,

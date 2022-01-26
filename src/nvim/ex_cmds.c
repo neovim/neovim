@@ -1099,6 +1099,9 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   }
 
   appended_lines_mark(n, count);
+  if (VIsual_active) {
+    check_pos(curbuf, &VIsual);
+  }
 
   msgmore((long)count);
 }
