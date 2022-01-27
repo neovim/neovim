@@ -1124,6 +1124,9 @@ func Test_visual_block_with_virtualedit()
   call term_sendkeys(buf, "\<C-V>gg$")
   call VerifyScreenDump(buf, 'Test_visual_block_with_virtualedit', {})
 
+  call term_sendkeys(buf, "\<Esc>gg\<C-V>G$")
+  call VerifyScreenDump(buf, 'Test_visual_block_with_virtualedit2', {})
+
   " clean up
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
