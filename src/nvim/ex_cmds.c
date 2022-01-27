@@ -980,8 +980,10 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
         foldMoveRange(win, &win->w_folds, line1, line2, dest);
       }
     }
-    curbuf->b_op_start.lnum = dest - num_lines + 1;
-    curbuf->b_op_end.lnum = dest;
+    if (!cmdmod.lockmarks) {
+      curbuf->b_op_start.lnum = dest - num_lines + 1;
+      curbuf->b_op_end.lnum = dest;
+    }
     line_off = -num_lines;
     byte_off = -extent_byte;
   } else {
@@ -991,10 +993,14 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
         foldMoveRange(win, &win->w_folds, dest + 1, line1 - 1, line2);
       }
     }
-    curbuf->b_op_start.lnum = dest + 1;
-    curbuf->b_op_end.lnum = dest + num_lines;
+    if (!cmdmod.lockmarks) {
+      curbuf->b_op_start.lnum = dest + 1;
+      curbuf->b_op_end.lnum = dest + num_lines;
+    }
   }
-  curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+  if (!cmdmod.lockmarks) {
+    curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+  }
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
                      -(last_line - dest - extra), 0L, kExtmarkNOOP);
 
@@ -1057,9 +1063,11 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   char_u *p;
 
   count = line2 - line1 + 1;
-  curbuf->b_op_start.lnum = n + 1;
-  curbuf->b_op_end.lnum = n + count;
-  curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+  if (!cmdmod.lockmarks) {
+    curbuf->b_op_start.lnum = n + 1;
+    curbuf->b_op_end.lnum = n + count;
+    curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+  }
 
   /*
    * there are three situations:
@@ -1272,12 +1280,18 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   char_u *cmd_buf;
   buf_T *old_curbuf = curbuf;
   int shell_flags = 0;
+  const pos_T orig_start = curbuf->b_op_start;
+  const pos_T orig_end = curbuf->b_op_end;
   const int stmp = p_stmp;
 
   if (*cmd == NUL) {        // no filter command
     return;
   }
 
+  const bool save_lockmarks = cmdmod.lockmarks;
+  // Temporarily disable lockmarks since that's needed to propagate changed
+  // regions of the buffer for foldUpdate(), linecount, etc.
+  cmdmod.lockmarks = false;
 
   cursor_save = curwin->w_cursor;
   linecount = line2 - line1 + 1;
@@ -1458,10 +1472,15 @@ error:
 
 filterend:
 
+  cmdmod.lockmarks = save_lockmarks;
   if (curbuf != old_curbuf) {
     no_wait_return--;
     emsg(_("E135: *Filter* Autocommands must not change current buffer"));
+  } else if (cmdmod.lockmarks) {
+    curbuf->b_op_start = orig_start;
+    curbuf->b_op_end = orig_end;
   }
+
   if (itmp != NULL) {
     os_remove((char *)itmp);
   }
@@ -3034,14 +3053,15 @@ void ex_append(exarg_T *eap)
   // eap->line2 pointed to the end of the buffer and nothing was appended)
   // "end" is set to lnum when something has been appended, otherwise
   // it is the same as "start"  -- Acevedo
-  curbuf->b_op_start.lnum = (eap->line2 < curbuf->b_ml.ml_line_count) ?
-                            eap->line2 + 1 : curbuf->b_ml.ml_line_count;
-  if (eap->cmdidx != CMD_append) {
-    --curbuf->b_op_start.lnum;
+  if (!cmdmod.lockmarks) {
+    curbuf->b_op_start.lnum
+        = (eap->line2 < curbuf->b_ml.ml_line_count) ? eap->line2 + 1 : curbuf->b_ml.ml_line_count;
+    if (eap->cmdidx != CMD_append) {
+      curbuf->b_op_start.lnum--;
+    }
+    curbuf->b_op_end.lnum = (eap->line2 < lnum) ? lnum : curbuf->b_op_start.lnum;
+    curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   }
-  curbuf->b_op_end.lnum = (eap->line2 < lnum)
-                          ? lnum : curbuf->b_op_start.lnum;
-  curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   curwin->w_cursor.lnum = lnum;
   check_cursor_lnum();
   beginline(BL_SOL | BL_FIX);
@@ -4354,10 +4374,12 @@ skip:
   }
 
   if (sub_nsubs > start_nsubs) {
-    // Set the '[ and '] marks.
-    curbuf->b_op_start.lnum = eap->line1;
-    curbuf->b_op_end.lnum = line2;
-    curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+    if (!cmdmod.lockmarks) {
+      // Set the '[ and '] marks.
+      curbuf->b_op_start.lnum = eap->line1;
+      curbuf->b_op_end.lnum = line2;
+      curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+    }
 
     if (!global_busy) {
       // when interactive leave cursor on the match

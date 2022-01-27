@@ -185,15 +185,6 @@ func Test_get_register()
 
   call assert_equal('', getregtype('!'))
 
-  " Test for clipboard registers (* and +)
-  if has("clipboard_working")
-    call append(0, "text for clipboard test")
-    normal gg"*yiw
-    call assert_equal('text', getreg('*'))
-    normal gg2w"+yiw
-    call assert_equal('clipboard', getreg('+'))
-  endif
-
   " Test for inserting an invalid register content
   call assert_beeps('exe "normal i\<C-R>!"')
 
@@ -249,7 +240,99 @@ func Test_set_register()
   call feedkeys('qRhhq', 'xt')
   call assert_equal('llhh', getreg('r'))
 
+  " Appending a list of characters to a register from different lines
+  let @r = ''
+  call append(0, ['abcdef', '123456'])
+  normal gg"ry3l
+  call cursor(2, 4)
+  normal "Ry3l
+  call assert_equal('abc456', @r)
+
+  " Test for gP with multiple lines selected using characterwise motion
+  %delete
+  call append(0, ['vim editor', 'vim editor'])
+  let @r = ''
+  exe "normal ggwy/vim /e\<CR>gP"
+  call assert_equal(['vim editor', 'vim editor', 'vim editor'], getline(1, 3))
+
+  " Test for gP with . register
+  %delete
+  normal iabc
+  normal ".gp
+  call assert_equal('abcabc', getline(1))
+  normal 0".gP
+  call assert_equal('abcabcabc', getline(1))
+
   enew!
+endfunc
+
+" Test for clipboard registers (* and +)
+func Test_clipboard_regs()
+  throw 'skipped: needs clipboard=autoselect,autoselectplus'
+
+  CheckNotGui
+  CheckFeature clipboard_working
+
+  new
+  call append(0, "text for clipboard test")
+  normal gg"*yiw
+  call assert_equal('text', getreg('*'))
+  normal gg2w"+yiw
+  call assert_equal('clipboard', getreg('+'))
+
+  " Test for replacing the clipboard register contents
+  set clipboard=unnamed
+  let @* = 'food'
+  normal ggviw"*p
+  call assert_equal('text', getreg('*'))
+  call assert_equal('food for clipboard test', getline(1))
+  normal ggviw"*p
+  call assert_equal('food', getreg('*'))
+  call assert_equal('text for clipboard test', getline(1))
+
+  " Test for replacing the selection register contents
+  set clipboard=unnamedplus
+  let @+ = 'food'
+  normal ggviw"+p
+  call assert_equal('text', getreg('+'))
+  call assert_equal('food for clipboard test', getline(1))
+  normal ggviw"+p
+  call assert_equal('food', getreg('+'))
+  call assert_equal('text for clipboard test', getline(1))
+
+  " Test for auto copying visually selected text to clipboard register
+  call setline(1, "text for clipboard test")
+  let @* = ''
+  set clipboard=autoselect
+  normal ggwwviwy
+  call assert_equal('clipboard', @*)
+
+  " Test for auto copying visually selected text to selection register
+  let @+ = ''
+  set clipboard=autoselectplus
+  normal ggwviwy
+  call assert_equal('for', @+)
+
+  set clipboard&vim
+  bwipe!
+endfunc
+
+" Test for restarting the current mode (insert or virtual replace) after
+" executing the contents of a register
+func Test_put_reg_restart_mode()
+  new
+  call append(0, 'editor')
+  normal gg
+  let @r = "ivim \<Esc>"
+  call feedkeys("i\<C-O>@r\<C-R>=mode()\<CR>", 'xt')
+  call assert_equal('vimi editor', getline(1))
+
+  call setline(1, 'editor')
+  normal gg
+  call feedkeys("gR\<C-O>@r\<C-R>=mode()\<CR>", 'xt')
+  call assert_equal('vimReditor', getline(1))
+
+  bwipe!
 endfunc
 
 func Test_v_register()

@@ -242,6 +242,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   bool notconverted = false;             // true if conversion wanted but it wasn't possible
   char_u conv_rest[CONV_RESTLEN];
   int conv_restlen = 0;                 // nr of bytes in conv_rest[]
+  pos_T orig_start;
   buf_T *old_curbuf;
   char_u *old_b_ffname;
   char_u *old_b_fname;
@@ -298,14 +299,10 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   fname = sfname;
 #endif
 
-  /*
-   * The BufReadCmd and FileReadCmd events intercept the reading process by
-   * executing the associated commands instead.
-   */
+  // The BufReadCmd and FileReadCmd events intercept the reading process by
+  // executing the associated commands instead.
   if (!filtering && !read_stdin && !read_buffer) {
-    pos_T pos;
-
-    pos = curbuf->b_op_start;
+    orig_start = curbuf->b_op_start;
 
     // Set '[ mark to the line above where the lines go (line 1 if zero).
     curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
@@ -335,7 +332,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       return aborting() ? FAIL : OK;
     }
 
-    curbuf->b_op_start = pos;
+    curbuf->b_op_start = orig_start;
   }
 
   if ((shortmess(SHM_OVER) || curbuf->b_help) && p_verbose == 0) {
@@ -576,9 +573,8 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
 
   ++no_wait_return;         // don't wait for return yet
 
-  /*
-   * Set '[ mark to the line above where the lines go (line 1 if zero).
-   */
+  // Set '[ mark to the line above where the lines go (line 1 if zero).
+  orig_start = curbuf->b_op_start;
   curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
   curbuf->b_op_start.col = 0;
 
@@ -618,6 +614,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     try_mac = (vim_strchr(p_ffs, 'm') != NULL);
     try_dos = (vim_strchr(p_ffs, 'd') != NULL);
     try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+    curbuf->b_op_start = orig_start;
 
     if (msg_scrolled == n) {
       msg_scroll = m;
@@ -1888,13 +1885,13 @@ failed:
     check_cursor_lnum();
     beginline(BL_WHITE | BL_FIX);           // on first non-blank
 
-    /*
-     * Set '[ and '] marks to the newly read lines.
-     */
-    curbuf->b_op_start.lnum = from + 1;
-    curbuf->b_op_start.col = 0;
-    curbuf->b_op_end.lnum = from + linecnt;
-    curbuf->b_op_end.col = 0;
+    if (!cmdmod.lockmarks) {
+      // Set '[ and '] marks to the newly read lines.
+      curbuf->b_op_start.lnum = from + 1;
+      curbuf->b_op_start.col = 0;
+      curbuf->b_op_end.lnum = from + linecnt;
+      curbuf->b_op_end.col = 0;
+    }
   }
   msg_scroll = msg_save;
 
@@ -2252,6 +2249,8 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   int write_undo_file = FALSE;
   context_sha256_T sha_ctx;
   unsigned int bkc = get_bkc_value(buf);
+  const pos_T orig_start = buf->b_op_start;
+  const pos_T orig_end = buf->b_op_end;
 
   if (fname == NULL || *fname == NUL) {  // safety check
     return FAIL;
@@ -2432,7 +2431,13 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
     if (buf == NULL || (buf->b_ml.ml_mfp == NULL && !empty_memline)
         || did_cmd || nofile_err
         || aborting()) {
-      --no_wait_return;
+      if (buf != NULL && cmdmod.lockmarks) {
+        // restore the original '[ and '] positions
+        buf->b_op_start = orig_start;
+        buf->b_op_end = orig_end;
+      }
+
+      no_wait_return--;
       msg_scroll = msg_save;
       if (nofile_err) {
         emsg(_("E676: No matching autocommands for acwrite buffer"));
@@ -2513,6 +2518,11 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
     }
   }
 
+  if (cmdmod.lockmarks) {
+    // restore the original '[ and '] positions
+    buf->b_op_start = orig_start;
+    buf->b_op_end = orig_end;
+  }
 
   if (shortmess(SHM_OVER) && !exiting) {
     msg_scroll = FALSE;             // overwrite previous file message
