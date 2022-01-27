@@ -14,7 +14,7 @@ function M.require_language(lang, path, silent)
     return true
   end
   if path == nil then
-    local fname = 'parser/' .. lang .. '.*'
+    local fname = 'parser/' .. vim.fn.fnameescape(lang) .. '.*'
     local paths = a.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
       if silent then

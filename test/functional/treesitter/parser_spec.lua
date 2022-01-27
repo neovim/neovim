@@ -666,6 +666,21 @@ int x = INT_MAX;
                           -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
+
+      it("should not inject bad languages", function()
+        if helpers.pending_win32(pending) then return end
+        exec_lua([=[
+        vim.treesitter.add_directive("inject-bad!", function(match, _, _, pred, metadata)
+          metadata.language = "{"
+          metadata.combined = true
+          metadata.content = pred[2]
+        end)
+
+        parser = vim.treesitter.get_parser(0, "c", {
+          injections = {
+            c = "(preproc_function_def value: ((preproc_arg) @_a (#inject-bad! @_a)))"}})
+        ]=])
+      end)
     end)
 
     describe("when using the offset directive", function()
