@@ -88,4 +88,14 @@ func Test_map_filter_fails()
   call assert_fails("let l = filter('abc', '\"> \" . v:val')", 'E896:')
 endfunc
 
+func Test_map_and_modify()
+  let l = ["abc"]
+  " cannot change the list halfway a map()
+  call assert_fails('call map(l, "remove(l, 0)[0]")', 'E741:')
+
+  let d = #{a: 1, b: 2, c: 3}
+  call assert_fails('call map(d, "remove(d, v:key)[0]")', 'E741:')
+  call assert_fails('echo map(d, {k,v -> remove(d, k)})', 'E741:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -6468,6 +6468,10 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
     if (argvars[0].v_type == VAR_DICT) {
       vimvars[VV_KEY].vv_type = VAR_STRING;
 
+      const VarLockStatus prev_lock = d->dv_lock;
+      if (map && d->dv_lock == VAR_UNLOCKED) {
+        d->dv_lock = VAR_LOCKED;
+      }
       ht = &d->dv_hashtab;
       hash_lock(ht);
       todo = (int)ht->ht_used;
@@ -6498,6 +6502,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         }
       }
       hash_unlock(ht);
+      d->dv_lock = prev_lock;
     } else if (argvars[0].v_type == VAR_BLOB) {
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
@@ -6530,6 +6535,10 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
       assert(argvars[0].v_type == VAR_LIST);
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
+      const VarLockStatus prev_lock = tv_list_locked(l);
+      if (map && tv_list_locked(l) == VAR_UNLOCKED) {
+        tv_list_set_lock(l, VAR_LOCKED);
+      }
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
         if (map
             && var_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
@@ -6548,6 +6557,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
         }
         idx++;
       }
+      tv_list_set_lock(l, prev_lock);
     }
 
     restore_vimvar(VV_KEY, &save_key);
