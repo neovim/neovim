@@ -4,10 +4,10 @@ source check.vim
 CheckFeature conceal
 
 source screendump.vim
-" CheckScreendump
 
 func Test_conceal_two_windows()
   CheckScreendump
+
   let code =<< trim [CODE]
     let lines = ["one one one one one", "two |hidden| here", "three |hidden| three"]
     call setline(1, lines)
@@ -111,6 +111,7 @@ endfunc
 
 func Test_conceal_with_cursorline()
   CheckScreendump
+
   " Opens a help window, where 'conceal' is set, switches to the other window
   " where 'cursorline' needs to be updated when the cursor moves.
   let code =<< trim [CODE]
@@ -139,6 +140,7 @@ endfunc
 
 func Test_conceal_resize_term()
   CheckScreendump
+
   let code =<< trim [CODE]
     call setline(1, '`one` `two` `three` `four` `five`, the backticks should be concealed')
     setl cocu=n cole=3
