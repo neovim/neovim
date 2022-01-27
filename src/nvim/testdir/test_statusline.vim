@@ -186,7 +186,16 @@ func Test_statusline()
   set virtualedit=all
   norm 10|
   call assert_match('^10,-10\s*$', s:get_statusline())
+  set list
+  call assert_match('^10,-10\s*$', s:get_statusline())
   set virtualedit&
+  exe "norm A\<Tab>\<Tab>a\<Esc>"
+  " In list mode a <Tab> is shown as "^I", which is 2-wide.
+  call assert_match('^9,-9\s*$', s:get_statusline())
+  set list&
+  " Now the second <Tab> ends at the 16th screen column.
+  call assert_match('^17,-17\s*$', s:get_statusline())
+  undo
 
   " %w: Preview window flag, text is "[Preview]".
   " %W: Preview window flag, text is ",PRV".
