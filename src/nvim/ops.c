@@ -1435,6 +1435,11 @@ int op_delete(oparg_T *oap)
     return FAIL;
   }
 
+  if (VIsual_select && oap->is_VIsual) {
+    // Use the register given with CTRL_R, defaults to zero
+    oap->regname = VIsual_select_reg;
+  }
+
   mb_adjust_opend(oap);
 
   /*
