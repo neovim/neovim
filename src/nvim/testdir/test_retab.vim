@@ -74,4 +74,7 @@ endfunc
 func Test_retab_error()
   call assert_fails('retab -1',  'E487:')
   call assert_fails('retab! -1', 'E487:')
+  call assert_fails('ret -1000', 'E487:')
+  call assert_fails('ret 10000', 'E475:')
+  call assert_fails('ret 80000000000000000000', 'E475:')
 endfunc

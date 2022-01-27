@@ -2008,9 +2008,9 @@ static void didset_options2(void)
   // Parse default for 'wildmode'.
   check_opt_wim();
   xfree(curbuf->b_p_vsts_array);
-  tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
+  (void)tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
   xfree(curbuf->b_p_vts_array);
-  tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
+  (void)tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
 }
 
 /// Check for string options that are NULL (normally only termcap options).
@@ -6412,7 +6412,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = vim_strsave(p_vsts);
       if (p_vsts && p_vsts != empty_option) {
-        tabstop_set(p_vsts, &buf->b_p_vsts_array);
+        (void)tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = 0;
       }
@@ -6492,7 +6492,7 @@ void buf_copy_options(buf_T *buf, int flags)
       if (dont_do_help) {
         buf->b_p_isk = save_p_isk;
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
-          tabstop_set(p_vts, &buf->b_p_vts_array);
+          (void)tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
         }
@@ -6502,7 +6502,7 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_ts = p_ts;
         buf->b_p_vts = vim_strsave(p_vts);
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
-          tabstop_set(p_vts, &buf->b_p_vts_array);
+          (void)tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
         }
@@ -7195,7 +7195,7 @@ static void paste_option_changed(void)
         xfree(buf->b_p_vsts_array);
       }
       if (buf->b_p_vsts && buf->b_p_vsts != empty_option) {
-        tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
+        (void)tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = 0;
       }
@@ -7513,6 +7513,7 @@ int check_ff_value(char_u *p)
 
 // Set the integer values corresponding to the string setting of 'vartabstop'.
 // "array" will be set, caller must free it if needed.
+// Return false for an error.
 bool tabstop_set(char_u *var, long **array)
 {
   long valcount = 1;
@@ -7532,7 +7533,7 @@ bool tabstop_set(char_u *var, long **array)
         if (cp != end) {
           emsg(_(e_positive));
         } else {
-          emsg(_(e_invarg));
+          semsg(_(e_invarg2), cp);
         }
         return false;
       }
@@ -7545,7 +7546,7 @@ bool tabstop_set(char_u *var, long **array)
       valcount++;
       continue;
     }
-    emsg(_(e_invarg));
+    semsg(_(e_invarg2), var);
     return false;
   }
 
@@ -7554,7 +7555,15 @@ bool tabstop_set(char_u *var, long **array)
 
   t = 1;
   for (cp = var; *cp != NUL;) {
-    (*array)[t++] = atoi((char *)cp);
+    int n = atoi((char *)cp);
+
+    // Catch negative values, overflow and ridiculous big values.
+    if (n < 0 || n > 9999) {
+      semsg(_(e_invarg2), cp);
+      XFREE_CLEAR(*array);
+      return false;
+    }
+    (*array)[t++] = n;
     while (*cp != NUL && *cp != ',') {
       cp++;
     }
