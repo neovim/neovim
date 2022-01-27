@@ -6329,11 +6329,9 @@ static void nv_g_cmd(cmdarg_T *cap)
     break;
 
   case 'M': {
-    const char_u *const ptr = get_cursor_line_ptr();
-
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
-    i = (int)mb_string2cells_len(ptr, STRLEN(ptr));
+    i = linetabsize(get_cursor_line_ptr());
     if (cap->count0 > 0 && cap->count0 <= 100) {
       coladvance((colnr_T)(i * cap->count0 / 100));
     } else {
