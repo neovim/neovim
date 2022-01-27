@@ -1001,22 +1001,20 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
                                  - str_arg);
           }
           if (fmt_spec == 'S') {
-            if (min_field_width != 0) {
-              min_field_width += (strlen(str_arg)
-                                  - mb_string2cells((char_u *)str_arg));
-            }
-            if (precision) {
-              char_u *p1;
-              size_t i = 0;
+            char_u *p1;
+            size_t i;
 
-              for (p1 = (char_u *)str_arg; *p1;
-                   p1 += utfc_ptr2len(p1)) {
-                i += (size_t)utf_ptr2cells(p1);
-                if (i > precision) {
-                  break;
-                }
+            for (i = 0, p1 = (char_u *)str_arg; *p1; p1 += utfc_ptr2len(p1)) {
+              size_t cell = (size_t)utf_ptr2cells(p1);
+              if (precision_specified && i + cell > precision) {
+                break;
               }
-              str_arg_l = (size_t)(p1 - (char_u *)str_arg);
+              i += cell;
+            }
+
+            str_arg_l = (size_t)(p1 - (char_u *)str_arg);
+            if (min_field_width != 0) {
+              min_field_width += str_arg_l - i;
             }
           }
           break;
