@@ -1093,6 +1093,8 @@ check_pum:
     // equivalent to selecting the item with a typed key.
     if (pum_want.active) {
       if (pum_visible()) {
+        // Set this to NULL so that ins_complete() will update the message.
+        edit_submode_extra = NULL;
         insert_do_complete(s);
         if (pum_want.finish) {
           // accept the item and stop completion
