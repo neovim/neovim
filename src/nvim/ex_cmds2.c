@@ -2323,9 +2323,11 @@ void ex_scriptnames(exarg_T *eap)
 
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name,
-                   NameBuff, MAXPATHL, true);
-      smsg("%3d: %s", i, NameBuff);
+      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
+      vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
+      msg_putchar('\n');
+      msg_outtrans(IObuff);
+      line_breakcheck();
     }
   }
 }
