@@ -281,7 +281,7 @@ typedef struct vimoption {
 # include "options.generated.h"
 #endif
 
-#define PARAM_COUNT ARRAY_SIZE(options)
+#define OPTION_COUNT ARRAY_SIZE(options)
 
 static char *(p_ambw_values[]) =      { "single", "double", NULL };
 static char *(p_bg_values[]) =        { "light", "dark", NULL };
@@ -929,6 +929,21 @@ void set_title_defaults(void)
     options[idx1].def_val = (char_u *)(intptr_t)0;
     p_icon = 0;
   }
+}
+
+void ex_set(exarg_T *eap)
+{
+  int flags = 0;
+
+  if (eap->cmdidx == CMD_setlocal) {
+    flags = OPT_LOCAL;
+  } else if (eap->cmdidx == CMD_setglobal) {
+    flags = OPT_GLOBAL;
+  }
+  if (eap->forceit) {
+    flags |= OPT_ONECOLUMN;
+  }
+  (void)do_set(eap->arg, flags);
 }
 
 /// Parse 'arg' for option settings.
@@ -5197,7 +5212,7 @@ static void showoptions(int all, int opt_flags)
 #define INC 20
 #define GAP 3
 
-  vimoption_T **items = xmalloc(sizeof(vimoption_T *) * PARAM_COUNT);
+  vimoption_T **items = xmalloc(sizeof(vimoption_T *) * OPTION_COUNT);
 
   // Highlight title
   if (opt_flags & OPT_GLOBAL) {
@@ -5211,6 +5226,7 @@ static void showoptions(int all, int opt_flags)
   // Do the loop two times:
   // 1. display the short items
   // 2. display the long items (only strings and numbers)
+  // When "opt_flags" has OPT_ONECOLUMN do everything in run 2.
   for (run = 1; run <= 2 && !got_int; run++) {
     // collect the items in items[]
     item_count = 0;
@@ -5221,7 +5237,7 @@ static void showoptions(int all, int opt_flags)
       }
 
       varp = NULL;
-      if (opt_flags != 0) {
+      if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) != 0) {
         if (p->indir != PV_NONE) {
           varp = get_varp_scope(p, opt_flags);
         }
@@ -5230,8 +5246,10 @@ static void showoptions(int all, int opt_flags)
       }
       if (varp != NULL
           && (all == 1 || (all == 0 && !optval_default(p, varp)))) {
-        if (p->flags & P_BOOL) {
-          len = 1;                      //  a toggle option fits always
+        if (opt_flags & OPT_ONECOLUMN) {
+          len = Columns;
+        } else if (p->flags & P_BOOL) {
+          len = 1;                      // a toggle option fits always
         } else {
           option_value2string(p, opt_flags);
           len = (int)STRLEN(p->fullname) + vim_strsize(NameBuff) + 1;

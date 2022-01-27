@@ -51,7 +51,7 @@ func Test_wildoptions()
   call assert_equal('tagfile', &wildoptions)
 endfunc
 
-function! Test_options()
+func Test_options_command()
   let caught = 'ok'
   try
     options
@@ -88,7 +88,7 @@ function! Test_options()
 
   " close option-window
   close
-endfunction
+endfunc
 
 function! Test_path_keep_commas()
   " Test that changing 'path' keeps two commas.
@@ -366,6 +366,13 @@ func Test_set_all()
   call assert_match('iskeyword=a-z,A-Z', out)
   call assert_match('nosplitbelow', out)
   set tw& iskeyword& splitbelow&
+endfunc
+
+func Test_set_one_column()
+  let out_mult = execute('set all')->split("\n")
+  let out_one = execute('set! all')->split("\n")
+  " one column should be two to four times as many lines
+  call assert_inrange(len(out_mult) * 2, len(out_mult) * 4, len(out_one))
 endfunc
 
 func Test_set_values()
