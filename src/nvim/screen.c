@@ -1222,12 +1222,33 @@ static void win_update(win_T *wp, Providers *providers)
         }
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
-        curwin->w_ve_flags = save_ve_flags;
         toc++;
+        curwin->w_ve_flags = save_ve_flags;
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
-        if (curwin->w_curswant == MAXCOL && !(get_ve_flags() & VE_BLOCK)) {
-          toc = MAXCOL;
+        if (curwin->w_curswant == MAXCOL) {
+          if (get_ve_flags() & VE_BLOCK) {
+            pos_T pos;
+            int cursor_above = curwin->w_cursor.lnum < VIsual.lnum;
+
+            // Need to find the longest line.
+            toc = 0;
+            pos.coladd = 0;
+            for (pos.lnum = curwin->w_cursor.lnum;
+                 cursor_above ? pos.lnum <= VIsual.lnum : pos.lnum >= VIsual.lnum;
+                 pos.lnum += cursor_above ? 1 : -1) {
+              colnr_T t;
+
+              pos.col = STRLEN(ml_get_buf(wp->w_buffer, pos.lnum, false));
+              getvvcol(wp, &pos, NULL, NULL, &t);
+              if (toc < t) {
+                toc = t;
+              }
+            }
+            toc++;
+          } else {
+            toc = MAXCOL;
+          }
         }
 
         if (fromc != wp->w_old_cursor_fcol
