@@ -6782,12 +6782,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
-			global
+			global or local to window |global-local|
 	A comma separated list of these words:
 	    block	Allow virtual editing in Visual block mode.
 	    insert	Allow virtual editing in Insert mode.
 	    all		Allow virtual editing in all modes.
 	    onemore	Allow the cursor to move just past the end of the line
+	    none	When used as the local value, do not allow virtual
+			editing even when the global value is set.  When used
+			as the global value, "none" is the same as "".
+	    NONE	Alternative spelling of "none".
 
 	Virtual editing means that the cursor can be positioned where there is
 	no actual character.  This can be halfway into a tab or beyond the end

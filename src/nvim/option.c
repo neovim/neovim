@@ -3084,14 +3084,27 @@ ambw_end:
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
-  } else if (varp == &p_ve) {  // 'virtualedit'
-    if (opt_strings_flags(p_ve, p_ve_values, &ve_flags, true) != OK) {
-      errmsg = e_invarg;
-    } else if (STRCMP(p_ve, oldval) != 0) {
-      // Recompute cursor position in case the new 've' setting
-      // changes something.
-      validate_virtcol();
-      coladvance(curwin->w_virtcol);
+  } else if (gvarp == &p_ve) {  // 'virtualedit'
+    char_u *ve = p_ve;
+    unsigned int *flags = &ve_flags;
+
+    if (opt_flags & OPT_LOCAL) {
+      ve = curwin->w_p_ve;
+      flags = &curwin->w_ve_flags;
+    }
+
+    if ((opt_flags & OPT_LOCAL) && *ve == NUL) {
+      // make the local value empty: use the global value
+      *flags = 0;
+    } else {
+      if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
+        errmsg = e_invarg;
+      } else if (STRCMP(p_ve, oldval) != 0) {
+        // Recompute cursor position in case the new 've' setting
+        // changes something.
+        validate_virtcol();
+        coladvance(curwin->w_virtcol);
+      }
     }
   } else if (varp == &p_csqf) {
     if (p_csqf != NULL) {
@@ -5748,6 +5761,10 @@ void unset_global_local_option(char *name, void *from)
     set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
     redraw_later((win_T *)from, NOT_VALID);
     break;
+  case PV_VE:
+    clear_string_option(&((win_T *)from)->w_p_ve);
+    ((win_T *)from)->w_ve_flags = 0;
+    break;
   }
 }
 
@@ -5814,6 +5831,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
       return (char_u *)&(curwin->w_p_fcs);
     case PV_LCS:
       return (char_u *)&(curwin->w_p_lcs);
+    case PV_VE:
+      return (char_u *)&(curwin->w_p_ve);
     }
     return NULL;     // "cannot happen"
   }
@@ -5908,6 +5927,9 @@ static char_u *get_varp(vimoption_T *p)
   case PV_LCS:
     return *curwin->w_p_lcs != NUL
            ? (char_u *)&(curwin->w_p_lcs) : p->var;
+  case PV_VE:
+    return *curwin->w_p_ve != NUL
+           ? (char_u *)&curwin->w_p_ve : p->var;
 
   case PV_ARAB:
     return (char_u *)&(curwin->w_p_arab);
@@ -6148,6 +6170,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_list = from->wo_list;
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
+  to->wo_ve = vim_strsave(from->wo_ve);
+  to->wo_ve_flags = from->wo_ve_flags;
   to->wo_nuw = from->wo_nuw;
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
@@ -6224,6 +6248,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_winhl);
   check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_lcs);
+  check_string_option(&wop->wo_ve);
 }
 
 /// Free the allocated memory inside a winopt_T.
@@ -6248,6 +6273,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_winhl);
   clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_lcs);
+  clear_string_option(&wop->wo_ve);
 }
 
 void didset_window_options(win_T *wp)
@@ -7813,6 +7839,12 @@ static bool briopt_check(win_T *wp)
 unsigned int get_bkc_value(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
+}
+
+/// Get the local or global value of the 'virtualedit' flags.
+unsigned int get_ve_flags(void)
+{
+  return (curwin->w_ve_flags ? curwin->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
 }
 
 /// Get the local or global value of 'showbreak'.

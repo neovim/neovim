@@ -204,6 +204,10 @@ typedef struct {
 #define w_p_nu w_onebuf_opt.wo_nu       // 'number'
   int wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     // 'relativenumber'
+  char_u *wo_ve;
+#define w_p_ve w_onebuf_opt.wo_ve       // 'virtualedit'
+  unsigned wo_ve_flags;
+#define w_ve_flags w_onebuf_opt.wo_ve_flags  // flags for 'virtualedit'
   long wo_nuw;
 #define w_p_nuw w_onebuf_opt.wo_nuw    // 'numberwidth'
   int wo_wfh;

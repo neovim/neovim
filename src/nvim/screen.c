@@ -1215,18 +1215,18 @@ static void win_update(win_T *wp, Providers *providers)
        */
       if (VIsual_mode == Ctrl_V) {
         colnr_T fromc, toc;
-        int save_ve_flags = ve_flags;
+        unsigned int save_ve_flags = curwin->w_ve_flags;
 
         if (curwin->w_p_lbr) {
-          ve_flags = VE_ALL;
+          curwin->w_ve_flags = VE_ALL;
         }
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
-        ve_flags = save_ve_flags;
+        curwin->w_ve_flags = save_ve_flags;
         toc++;
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
-        if (curwin->w_curswant == MAXCOL && !(ve_flags & VE_BLOCK)) {
+        if (curwin->w_curswant == MAXCOL && !(get_ve_flags() & VE_BLOCK)) {
           toc = MAXCOL;
         }
 

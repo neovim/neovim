@@ -12,6 +12,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/state.h"
@@ -107,15 +108,17 @@ void state_handle_k_event(void)
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
+  unsigned int cur_ve_flags = get_ve_flags();
+
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"
   // being used.
   if (virtual_op != kNone) {
     return virtual_op;
   }
-  return ve_flags == VE_ALL
-         || ((ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
-         || ((ve_flags & VE_INSERT) && (State & INSERT));
+  return cur_ve_flags == VE_ALL
+         || ((cur_ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
+         || ((cur_ve_flags & VE_INSERT) && (State & INSERT));
 }
 
 /// VISUAL, SELECTMODE and OP_PENDING State are never set, they are equal to

@@ -913,7 +913,7 @@ static int insert_handle_key(InsertState *s)
     ins_ctrl_o();
 
     // don't move the cursor left when 'virtualedit' has "onemore".
-    if (ve_flags & VE_ONEMORE) {
+    if (get_ve_flags() & VE_ONEMORE) {
       ins_at_eol = false;
       s->nomove = true;
     }
@@ -6909,8 +6909,7 @@ int oneright(void)
 
   // move "l" bytes right, but don't end up on the NUL, unless 'virtualedit'
   // contains "onemore".
-  if (ptr[l] == NUL
-      && (ve_flags & VE_ONEMORE) == 0) {
+  if (ptr[l] == NUL && (get_ve_flags() & VE_ONEMORE) == 0) {
     return FAIL;
   }
   curwin->w_cursor.col += l;
@@ -8032,7 +8031,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
               && !VIsual_active
               ))
       && !revins_on) {
-    if (curwin->w_cursor.coladd > 0 || ve_flags == VE_ALL) {
+    if (curwin->w_cursor.coladd > 0 || get_ve_flags() == VE_ALL) {
       oneleft();
       if (restart_edit != NUL) {
         curwin->w_cursor.coladd++;
