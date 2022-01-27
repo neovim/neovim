@@ -8956,7 +8956,7 @@ static bool tv_is_luafunc(typval_T *tv)
 const char *skip_luafunc_name(const char *p)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.' || *p == '\'') {
+  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '-' || *p == '.' || *p == '\'') {
     p++;
   }
   return p;
