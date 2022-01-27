@@ -3720,41 +3720,46 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               tab_len += n_extra - tab_len;
             }
 
-            // if n_extra > 0, it gives the number of chars
+            // If n_extra > 0, it gives the number of chars
             // to use for a tab, else we need to calculate the width
-            // for a tab
+            // for a tab.
             int len = (tab_len * utf_char2len(wp->w_p_lcs_chars.tab2));
+            if (wp->w_p_lcs_chars.tab3) {
+              len += utf_char2len(wp->w_p_lcs_chars.tab3);
+            }
             if (n_extra > 0) {
               len += n_extra - tab_len;
             }
             c = wp->w_p_lcs_chars.tab1;
             p = xmalloc(len + 1);
-            memset(p, ' ', len);
-            p[len] = NUL;
-            xfree(p_extra_free);
-            p_extra_free = p;
-            for (i = 0; i < tab_len; i++) {
-              if (*p == NUL) {
-                tab_len = i;
-                break;
-              }
-              int lcs = wp->w_p_lcs_chars.tab2;
+            if (p == NULL) {
+              n_extra = 0;
+            } else {
+              memset(p, ' ', len);
+              p[len] = NUL;
+              xfree(p_extra_free);
+              p_extra_free = p;
+              for (i = 0; i < tab_len; i++) {
+                if (*p == NUL) {
+                  tab_len = i;
+                  break;
+                }
+                int lcs = wp->w_p_lcs_chars.tab2;
 
-              // if tab3 is given, need to change the char
-              // for tab
-              if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
-                lcs = wp->w_p_lcs_chars.tab3;
+                // if tab3 is given, use it for the last char
+                if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
+                  lcs = wp->w_p_lcs_chars.tab3;
+                }
+                p += utf_char2bytes(lcs, p);
+                n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
               }
-              utf_char2bytes(lcs, p);
-              p += utf_char2len(lcs);
-              n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
-            }
-            p_extra = p_extra_free;
+              p_extra = p_extra_free;
 
-            // n_extra will be increased by FIX_FOX_BOGUSCOLS
-            // macro below, so need to adjust for that here
-            if (vcol_off > 0) {
-              n_extra -= vcol_off;
+              // n_extra will be increased by FIX_FOX_BOGUSCOLS
+              // macro below, so need to adjust for that here
+              if (vcol_off > 0) {
+                n_extra -= vcol_off;
+              }
             }
           }
 
@@ -4232,6 +4237,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // Show "extends" character from 'listchars' if beyond the line end and
     // 'list' is set.
     if (wp->w_p_lcs_chars.ext != NUL
+        && draw_state == WL_LINE
         && wp->w_p_list
         && !wp->w_p_wrap
         && filler_todo <= 0
@@ -4427,7 +4433,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
      */
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->Columns))
         && foldinfo.fi_lines == 0
-        && (*ptr != NUL
+        && (draw_state != WL_LINE
+            || *ptr != NUL
             || filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && p_extra != at_end_str)
