@@ -16,6 +16,8 @@ typedef struct {
   colnr_T col;
   int end_row;
   colnr_T end_col;
+  bool right_gravity;
+  bool end_right_gravity;
   Decoration decor;  // TODO(bfredl): CHONKY
 } ExtmarkInfo;
 

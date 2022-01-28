@@ -106,9 +106,12 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
   if (add_dict) {
     Dictionary dict = ARRAY_DICT_INIT;
 
+    PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark.right_gravity));
+
     if (extmark.end_row >= 0) {
       PUT(dict, "end_row", INTEGER_OBJ(extmark.end_row));
       PUT(dict, "end_col", INTEGER_OBJ(extmark.end_col));
+      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
     }
 
     Decoration *decor = &extmark.decor;
