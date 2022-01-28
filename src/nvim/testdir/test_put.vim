@@ -116,8 +116,10 @@ func Test_gp_with_count_leaves_cursor_at_end()
   new
   call setline(1, '<---->')
   call setreg('@', "foo\nbar", 'c')
-  exe "normal 1G3|3gpix\<Esc>"
-  call assert_equal(['<--foo', 'barfoo', 'barfoo', 'barx-->'], getline(1, '$'))
+  normal 1G3|3gp
+  call assert_equal([0, 4, 4, 0], getpos("."))
+  call assert_equal(['<--foo', 'barfoo', 'barfoo', 'bar-->'], getline(1, '$'))
+  call assert_equal([0, 4, 3, 0], getpos("']"))
 
   bwipe!
 endfunc
