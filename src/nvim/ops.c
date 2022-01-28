@@ -1494,20 +1494,22 @@ int op_delete(oparg_T *oap)
     yankreg_T *reg = NULL;
     int did_yank = false;
     if (oap->regname != 0) {
-      // yank without message
-      did_yank = op_yank(oap, false, true);
-      if (!did_yank) {
-        // op_yank failed, don't do anything
+      // check for read-only register
+      if (!valid_yank_reg(oap->regname, true)) {
+        beep_flush();
         return OK;
       }
+      reg = get_yank_register(oap->regname, YREG_YANK);
+      // yank without message
+      op_yank_reg(oap, false, reg, is_append_register(oap->regname));
     }
 
-    /*
-     * Put deleted text into register 1 and shift number registers if the
-     * delete contains a line break, or when a regname has been specified.
-     */
-    if (oap->regname != 0 || oap->motion_type == kMTLineWise
-        || oap->line_count > 1 || oap->use_reg_one) {
+    // Put deleted text into register 1 and shift number registers if the
+    // delete contains a line break, or when using a specific operator (Vi
+    // compatible)
+    // Use the register name from before adjust_clip_reg() may have
+    // changed it.
+    if (oap->motion_type == kMTLineWise || oap->line_count > 1 || oap->use_reg_one) {
       shift_delete_registers(is_append_register(oap->regname));
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
@@ -2563,7 +2565,7 @@ void free_register(yankreg_T *reg)
 /// @param message show message when more than `&report` lines are yanked.
 /// @param deleting whether the function was called from a delete operation.
 /// @returns whether the operation register was writable.
-bool op_yank(oparg_T *oap, bool message, int deleting)
+bool op_yank(oparg_T *oap, bool message)
   FUNC_ATTR_NONNULL_ALL
 {
   // check for read-only register
@@ -2577,11 +2579,8 @@ bool op_yank(oparg_T *oap, bool message, int deleting)
 
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
-  // op_delete will set_clipboard and do_autocmd
-  if (!deleting) {
-    set_clipboard(oap->regname, reg);
-    do_autocmd_textyankpost(oap, reg);
-  }
+  set_clipboard(oap->regname, reg);
+  do_autocmd_textyankpost(oap, reg);
 
   return true;
 }
@@ -6569,7 +6568,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         curwin->w_p_lbr = lbr_saved;
         oap->excl_tr_ws = cap->cmdchar == 'z';
-        (void)op_yank(oap, !gui_yank, false);
+        (void)op_yank(oap, !gui_yank);
       }
       check_cursor_col();
       break;
