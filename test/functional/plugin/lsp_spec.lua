@@ -1855,9 +1855,9 @@ describe('LSP', function()
         { abbr = 'foocar', dup = 1, empty = 1, icase = 1, info = ' ', kind = 'Unknown', menu = '', word = 'foodar(${1:var1})', user_data = { nvim = { lsp = { completion_item = { label='foocar', sortText="k", insertText='foodar(${1:var1})', insertTextFormat=1, textEdit={} } } } } },
       }
 
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
-      eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
-      eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+      eq(expected, exec_lua([[return require'vim.lsp.completion'.lsp_to_vim_items(...)]], completion_list, prefix))
+      eq(expected, exec_lua([[return require'vim.lsp.completion'.lsp_to_vim_items(...)]], completion_list_items, prefix))
+      eq({}, exec_lua([[return require'vim.lsp.completion'.lsp_to_vim_items(...)]], {}, prefix))
     end)
   end)
 
@@ -2235,18 +2235,6 @@ describe('LSP', function()
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil)
         ]])
-    end)
-  end)
-
-  describe('lsp.util._get_completion_item_kind_name', function()
-    it('returns the name specified by protocol', function()
-      eq("Text", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1)"))
-      eq("TypeParameter", exec_lua("return vim.lsp.util._get_completion_item_kind_name(25)"))
-    end)
-    it('returns the name not specified by protocol', function()
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(nil)"))
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(vim.NIL)"))
-      eq("Unknown", exec_lua("return vim.lsp.util._get_completion_item_kind_name(1000)"))
     end)
   end)
 
