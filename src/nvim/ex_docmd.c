@@ -8133,6 +8133,7 @@ static void ex_put(exarg_T *eap)
     eap->forceit = TRUE;
   }
   curwin->w_cursor.lnum = eap->line2;
+  check_cursor_col();
   do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
          PUT_LINE|PUT_CURSLINE);
 }

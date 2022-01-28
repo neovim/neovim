@@ -138,6 +138,15 @@ func Test_p_with_count_leaves_mark_at_end()
   bwipe!
 endfunc
 
+func Test_put_above_first_line()
+  new
+  let @" = 'text'
+  silent! normal 0o00
+  0put
+  call assert_equal('text', getline(1))
+  bwipe!
+endfunc
+
 func Test_multibyte_op_end_mark()
   new
   call setline(1, 'тест')
