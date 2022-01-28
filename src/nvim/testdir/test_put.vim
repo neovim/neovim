@@ -1,5 +1,7 @@
 " Tests for put commands, e.g. ":put", "p", "gp", "P", "gP", etc.
 
+source check.vim
+
 func Test_put_block()
   new
   call feedkeys("i\<C-V>u2500\<CR>x\<ESC>", 'x')
