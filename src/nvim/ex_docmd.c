@@ -2891,12 +2891,16 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   exarg_T ea;
   char_u *name = argvars[0].vval.v_string;
 
-  while (name[0] != NUL && name[0] == ':') {
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  if (name == NULL) {
+    return;
+  }
+
+  while (*name == ':') {
     name++;
   }
   name = skip_range(name, NULL);
-
-  rettv->v_type = VAR_STRING;
 
   ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
   ea.cmdidx = (cmdidx_T)0;
@@ -2906,7 +2910,7 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   rettv->vval.v_string = vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
-                                     ? get_user_commands(NULL, ea.useridx)
+                                     ? get_user_command_name(ea.useridx, ea.cmdidx)
                                      : cmdnames[ea.cmdidx].cmd_name);
 }
 
@@ -5151,7 +5155,7 @@ static int check_more(int message, bool forceit)
 char_u *get_command_name(expand_T *xp, int idx)
 {
   if (idx >= CMD_SIZE) {
-    return get_user_command_name(idx);
+    return expand_user_command_name(idx);
   }
   return cmdnames[idx].cmd_name;
 }
@@ -6270,7 +6274,7 @@ static void do_ucmd(exarg_T *eap)
   xfree(split_buf);
 }
 
-static char_u *get_user_command_name(int idx)
+static char_u *expand_user_command_name(int idx)
 {
   return get_user_commands(NULL, idx - CMD_SIZE);
 }
@@ -6299,6 +6303,24 @@ char_u *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   idx -= buf->b_ucmds.ga_len;
   if (idx < ucmds.ga_len) {
     return USER_CMD(idx)->uc_name;
+  }
+  return NULL;
+}
+
+// Get the name of user command "idx".  "cmdidx" can be CMD_USER or
+// CMD_USER_BUF.
+// Returns NULL if the command is not found.
+static char_u *get_user_command_name(int idx, int cmdidx)
+{
+  if (cmdidx == CMD_USER && idx < ucmds.ga_len) {
+    return USER_CMD(idx)->uc_name;
+  }
+  if (cmdidx == CMD_USER_BUF) {
+    // In cmdwin, the alternative buffer should be used.
+    buf_T *buf = (cmdwin_type != 0 && get_cmdline_type() == NUL) ? prevwin->w_buffer : curbuf;
+    if (idx < buf->b_ucmds.ga_len) {
+      return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
+    }
   }
   return NULL;
 }
