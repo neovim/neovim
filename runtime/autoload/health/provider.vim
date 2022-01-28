@@ -282,10 +282,10 @@ function! s:disabled_via_loaded_var(provider) abort
   return 0
 endfunction
 
-function! s:check_python(version) abort
-  call health#report_start('Python ' . a:version . ' provider (optional)')
+function! s:check_python() abort
+  call health#report_start('Python 3 provider (optional)')
 
-  let pyname = 'python'.(a:version == 2 ? '' : '3')
+  let pyname = 'python3'
   let python_exe = ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
@@ -301,7 +301,7 @@ function! s:check_python(version) abort
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
-  let [pyname, pythonx_errors] = provider#pythonx#Detect(a:version)
+  let [pyname, pythonx_errors] = provider#pythonx#Detect(3)
 
   if empty(pyname)
     call health#report_warn('No Python executable found that can `import neovim`. '
@@ -405,7 +405,7 @@ function! s:check_python(version) abort
     " can import 'pynvim'. If so, that Python failed to import 'neovim' as
     " well, which is most probably due to a failed pip upgrade:
     " https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-    let [pynvim_exe, errors] = provider#pythonx#DetectByModule('pynvim', a:version)
+    let [pynvim_exe, errors] = provider#pythonx#DetectByModule('pynvim', 3)
     if !empty(pynvim_exe)
       call health#report_error(
             \ 'Detected pip upgrade failure: Python executable can import "pynvim" but '
@@ -416,14 +416,14 @@ function! s:check_python(version) abort
             \ . pynvim_exe ." -m pip install neovim  # only if needed by third-party software")
     endif
   else
-    let [pyversion, current, latest, status] = s:version_info(python_exe)
+    let [majorpyversion, current, latest, status] = s:version_info(python_exe)
 
-    if a:version != str2nr(pyversion)
+    if 3 != str2nr(majorpyversion)
       call health#report_warn('Unexpected Python version.' .
                   \ ' This could lead to confusing error messages.')
     endif
 
-    call health#report_info('Python version: ' . pyversion)
+    call health#report_info('Python version: ' . majorpyversion)
 
     if s:is_bad_response(status)
       call health#report_info(printf('pynvim version: %s (%s)', current, status))
@@ -751,8 +751,7 @@ endfunction
 
 function! health#provider#check() abort
   call s:check_clipboard()
-  call s:check_python(2)
-  call s:check_python(3)
+  call s:check_python()
   call s:check_virtualenv()
   call s:check_ruby()
   call s:check_node()

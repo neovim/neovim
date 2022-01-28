@@ -6,10 +6,8 @@ endif
 let s:loaded_pythonx_provider = 1
 
 function! provider#pythonx#Require(host) abort
-  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
-
   " Python host arguments
-  let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
+  let prog = provider#python3#Prog()
   let args = [prog, '-c', 'import sys; sys.path = list(filter(lambda x: x != "", sys.path)); import neovim; neovim.start_host()']
 
 
@@ -23,14 +21,12 @@ function! provider#pythonx#Require(host) abort
 endfunction
 
 function! s:get_python_executable_from_host_var(major_version) abort
-  return expand(get(g:, 'python'.(a:major_version == 3 ? '3' : '').'_host_prog', ''), v:true)
+  return expand(get(g:, 'python'.(a:major_version == 3 ? '3' : execute("throw 'unsupported'")).'_host_prog', ''), v:true)
 endfunction
 
 function! s:get_python_candidates(major_version) abort
   return {
-        \ 2: ['python2', 'python2.7', 'python2.6', 'python'],
-        \ 3: ['python3', 'python3.10', 'python3.9', 'python3.8', 'python3.7',
-        \     'python3.6', 'python']
+        \ 3: ['python3', 'python3.10', 'python3.9', 'python3.8', 'python3.7', 'python']
         \ }[a:major_version]
 endfunction
 
@@ -82,7 +78,7 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
     return [0, a:prog . ' not found in search path or not executable.']
   endif
 
-  let min_version = (a:major_version == 2) ? '2.6' : '3.3'
+  let min_version = '3.7'
 
   " Try to load module, and output Python version.
   " Exit codes:

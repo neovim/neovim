@@ -20,11 +20,12 @@ Run the |:checkhealth| command, and review the sections below.
 ==============================================================================
 Python integration				*provider-python*
 
-Nvim supports Python |remote-plugin|s and the Vim legacy |python2| and
-|python3| interfaces (which are implemented as remote-plugins).
+Nvim supports Python |remote-plugin|s and the Vim legacy |python3| and
+|pythonx| interfaces (which are implemented as remote-plugins).
 
 Note: Only the Vim 7.3 legacy interface is supported, not later features such
-as |python-bindeval| (Vim 7.4); use the Nvim API instead.
+as |python-bindeval| (Vim 7.4); use the Nvim API instead. Python 2 is not
+supported.
 
 
 PYTHON QUICKSTART ~
@@ -37,11 +38,6 @@ For Python 3 plugins:
 1. Make sure Python 3.4+ is available in your $PATH.
 2. Install the module (try "python" if "python3" is missing): >
    python3 -m pip install --user --upgrade pynvim
-
-For Python 2 plugins:
-1. Make sure Python 2.7 is available in your $PATH.
-2. Install the module (try "python" if "python2" is missing): >
-   python2 -m pip install --user --upgrade pynvim
 
 The pip `--upgrade` flag ensures that you get the latest version even if
 a previous version was already installed.
@@ -56,21 +52,11 @@ If you run into problems, uninstall _both_ then install "pynvim" again: >
 
 
 PYTHON PROVIDER CONFIGURATION ~
-						*g:python_host_prog*
-Command to start Python 2 (executable, not directory). Setting this makes
-startup faster. Useful for working with virtualenvs. Must be set before any
-check for has("python2").  >
-    let g:python_host_prog  = '/path/to/python'
-<
 						*g:python3_host_prog*
 Command to start Python 3 (executable, not directory). Setting this makes
 startup faster. Useful for working with virtualenvs. Must be set before any
 check for has("python3").  >
     let g:python3_host_prog = '/path/to/python3'
-<
-						*g:loaded_python_provider*
-To disable Python 2 support: >
-    let g:loaded_python_provider = 0
 <
 						*g:loaded_python3_provider*
 To disable Python 3 support: >
@@ -81,8 +67,8 @@ PYTHON VIRTUALENVS ~
 						*python-virtualenv*
 If you plan to use per-project virtualenvs often, you should assign one
 virtualenv for Neovim and hard-code the interpreter path via
-|g:python3_host_prog| (or |g:python_host_prog|) so that the "pynvim" package
-is not required for each virtualenv.
+|g:python3_host_prog| so that the "pynvim" package is not required
+for each virtualenv.
 
 Example using pyenv: >
     pyenv install 3.4.4

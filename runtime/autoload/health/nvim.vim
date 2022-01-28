@@ -104,8 +104,8 @@ function! s:check_rplugin_manifest() abort
         if !has_key(existing_rplugins, script)
           let msg = printf('"%s" is not registered.', fnamemodify(path, ':t'))
           if python_version ==# 'pythonx'
-            if !has('python2') && !has('python3')
-              let msg .= ' (python2 and python3 not available)'
+            if !has('python3')
+              let msg .= ' (python3 not available)'
             endif
           elseif !has(python_version)
             let msg .= printf(' (%s not available)', python_version)

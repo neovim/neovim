@@ -62,10 +62,10 @@ describe('script_get-based command', function()
 
   -- Provider-based scripts
   test_garbage_exec('ruby', not missing_provider('ruby'))
-  test_garbage_exec('python', not missing_provider('python'))
   test_garbage_exec('python3', not missing_provider('python3'))
 
   -- Missing scripts
+  test_garbage_exec('python', false)
   test_garbage_exec('tcl', false)
   test_garbage_exec('mzscheme', false)
   test_garbage_exec('perl', false)

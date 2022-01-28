@@ -1846,7 +1846,7 @@ return {
       type='number', scope={'global'},
       secure=true,
       varname='p_pyx',
-      defaults={if_true=0}
+      defaults={if_true=3}
     },
     {
       full_name='quickfixtextfunc', abbreviation='qftf',
