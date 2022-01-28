@@ -315,7 +315,6 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
 static void tk_getkeys(TermInput *input, bool force)
 {

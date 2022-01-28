@@ -262,7 +262,6 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   if (*s != NUL) {
     msg_outtrans_attr((char_u *)s, attr);
   }
-  return;
 }
 
 
@@ -329,7 +328,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize((char_u *)s) < (int)(Rows - cmdline_row - 1)
+  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1)
       * Columns + sc_col) {
     set_keep_msg((char *)s, 0);
   }
@@ -356,10 +355,10 @@ char_u *msg_strtrunc(char_u *s, int force)
     len = vim_strsize(s);
     if (msg_scrolled != 0) {
       // Use all the columns.
-      room = (int)(Rows - msg_row) * Columns - 1;
+      room = (Rows - msg_row) * Columns - 1;
     } else {
       // Use up to 'showcmd' column.
-      room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+      room = (Rows - msg_row - 1) * Columns + sc_col - 1;
     }
     if (len > room && room > 0) {
       // may have up to 18 bytes per cell (6 per char, up to two
@@ -873,7 +872,7 @@ char_u *msg_may_trunc(bool force, char_u *s)
 {
   int room;
 
-  room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);

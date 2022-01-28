@@ -268,7 +268,7 @@ void do_debug(char_u *cmd)
                        DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
     }
-    lines_left = (int)(Rows - 1);
+    lines_left = Rows - 1;
   }
   xfree(cmdline);
 
@@ -277,7 +277,7 @@ void do_debug(char_u *cmd)
   redraw_all_later(NOT_VALID);
   need_wait_return = false;
   msg_scroll = save_msg_scroll;
-  lines_left = (int)(Rows - 1);
+  lines_left = Rows - 1;
   State = save_State;
   debug_mode = false;
   did_emsg = save_did_emsg;

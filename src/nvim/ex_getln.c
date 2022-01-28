@@ -311,7 +311,7 @@ static char_u *get_healthcheck_names(expand_T *xp, int idx)
     healthchecks.last_gen = last_prompt_id;
   }
   return idx <
-         (int)healthchecks.names.ga_len ? ((char_u **)(healthchecks.names.ga_data))[idx] : NULL;
+         healthchecks.names.ga_len ? ((char_u **)(healthchecks.names.ga_data))[idx] : NULL;
 }
 
 /// Transform healthcheck file path into it's name.

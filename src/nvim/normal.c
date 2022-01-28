@@ -1030,7 +1030,7 @@ static int normal_execute(VimState *state, int key)
 
   s->need_flushbuf = add_to_showcmd(s->c);
 
-  while (normal_get_command_count(s)) { continue; }
+  while (normal_get_command_count(s)) { }
 
   if (s->c == K_EVENT) {
     // Save the count values so that ca.opcount and ca.count0 are exactly
@@ -4093,7 +4093,7 @@ static void nv_colon(cmdarg_T *cap)
     if (is_lua) {
       cmd_result = map_execute_lua();
     } else {
-    // get a command line and execute it
+      // get a command line and execute it
       cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
                               cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
     }
@@ -6330,7 +6330,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     curwin->w_set_curswant = true;
     break;
 
-  case 'M': {
+  case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
     i = linetabsize(get_cursor_line_ptr());
@@ -6340,8 +6340,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       coladvance((colnr_T)(i / 2));
     }
     curwin->w_set_curswant = true;
-  }
-  break;
+    break;
 
   case '_':
     /* "g_": to the last non-blank character in the line or <count> lines

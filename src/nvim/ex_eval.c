@@ -599,7 +599,7 @@ static void catch_exception(except_T *excp)
 {
   excp->caught = caught_stack;
   caught_stack = excp;
-  set_vim_var_string(VV_EXCEPTION, (char *)excp->value, -1);
+  set_vim_var_string(VV_EXCEPTION, excp->value, -1);
   if (*excp->throw_name != NUL) {
     if (excp->throw_lnum != 0) {
       vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %" PRId64),
@@ -650,7 +650,7 @@ static void finish_exception(except_T *excp)
   }
   caught_stack = caught_stack->caught;
   if (caught_stack != NULL) {
-    set_vim_var_string(VV_EXCEPTION, (char *)caught_stack->value, -1);
+    set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
     if (*caught_stack->throw_name != NUL) {
       if (caught_stack->throw_lnum != 0) {
         vim_snprintf((char *)IObuff, IOSIZE,
@@ -733,7 +733,7 @@ static void report_pending(int action, int pending, void *value)
       vim_snprintf((char *)IObuff, IOSIZE,
                    mesg, _("Exception"));
       mesg = (char *)concat_str(IObuff, (char_u *)": %s");
-      s = (char *)((except_T *)value)->value;
+      s = ((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT)) {
       s = _("Error and interrupt");
     } else if (pending & CSTP_ERROR) {
@@ -1620,7 +1620,7 @@ void ex_endtry(exarg_T *eap)
     // the finally clause.  The latter case need not be tested since then
     // anything pending has already been discarded.
     bool skip = did_emsg || got_int || current_exception
-            || !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
+                || !(cstack->cs_flags[cstack->cs_idx] & CSF_TRUE);
 
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
