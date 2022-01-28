@@ -338,14 +338,26 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 
   // Edit the file.  Skip this when ":next" already did it.
   if (add_edit && (!did_next || wp->w_arg_idx_invalid)) {
-    char *fname_esc =
-      ses_escape_fname(ses_get_fname(wp->w_buffer, flagp), flagp);
-    //
-    // Load the file.
-    //
-    if (wp->w_buffer->b_ffname != NULL
-        && (!bt_nofile(wp->w_buffer)
-            || wp->w_buffer->terminal)) {
+    char *fname_esc = ses_escape_fname(ses_get_fname(wp->w_buffer, flagp), flagp);
+    if (bt_help(wp->w_buffer)) {
+      char *curtag = "";
+
+      // A help buffer needs some options to be set.
+      // First, create a new empty buffer with "buftype=help".
+      // Then ":help" will re-use both the buffer and the window and set
+      // the options, even when "options" is not in 'sessionoptions'.
+      if (0 < wp->w_tagstackidx && wp->w_tagstackidx <= wp->w_tagstacklen) {
+        curtag = (char *)wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
+      }
+
+      if (put_line(fd, "enew | setl bt=help") == FAIL
+          || fprintf(fd, "help %s", curtag) < 0 || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+    } else if (wp->w_buffer->b_ffname != NULL
+               && (!bt_nofile(wp->w_buffer) || wp->w_buffer->terminal)) {
+      // Load the file.
+
       // Editing a file in this buffer: use ":edit file".
       // This may have side effects! (e.g., compressed or network file).
       //
