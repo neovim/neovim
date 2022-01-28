@@ -5636,12 +5636,6 @@ invalid_count:
     }
   }
 
-  // incsearch needs range, or it's an error
-  if (*argt & EX_INCSEARCH && !(*argt & EX_RANGE)) {
-    emsg(_("E177: -incsearch used without -range"));
-    return FAIL;
-  }
-
   return OK;
 }
 
@@ -5675,6 +5669,12 @@ static void ex_command(exarg_T *eap)
       return;
     }
     p = skipwhite(end);
+  }
+
+  // incsearch needs range, or it's an error
+  if (argt & EX_INCSEARCH && !(argt & EX_RANGE)) {
+    emsg(_("E177: -incsearch used without -range"));
+    return;
   }
 
   // Get the name (if any) and skip to the following argument.
