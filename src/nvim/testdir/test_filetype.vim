@@ -746,6 +746,24 @@ func Test_hook_file()
   filetype off
 endfunc
 
+func Test_tf_file()
+  filetype on
+
+  call writefile([';;; TF MUD client is super duper cool'], 'Xfile.tf')
+  split Xfile.tf
+  call assert_equal('tf', &filetype)
+  bwipe!
+
+  call writefile(['provider "azurerm" {'], 'Xfile.tf')
+  split Xfile.tf
+  call assert_equal('terraform', &filetype)
+  bwipe!
+
+  call delete('Xfile.tf')
+  filetype off
+endfunc
+
+
 func Test_ts_file()
   filetype on
 
