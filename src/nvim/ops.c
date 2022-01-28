@@ -3473,6 +3473,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
     } else {
       linenr_T new_lnum = new_cursor.lnum;
+      size_t len;
 
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
@@ -3592,10 +3593,11 @@ error:
       // Put the '] mark on the first byte of the last inserted character.
       // Correct the length for change in indent.
       curbuf->b_op_end.lnum = new_lnum;
-      col = (colnr_T)STRLEN(y_array[y_size - 1]) - lendiff;
+      len = STRLEN(y_array[y_size - 1]);
+      col = (colnr_T)len - lendiff;
       if (col > 1) {
         curbuf->b_op_end.col = col - 1 - utf_head_off(y_array[y_size - 1],
-                                                      y_array[y_size - 1] + col - 1);
+                                                      y_array[y_size - 1] + len - 1);
       } else {
         curbuf->b_op_end.col = 0;
       }
