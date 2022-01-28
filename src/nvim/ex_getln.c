@@ -448,7 +448,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   }
 
   if (uc != NULL) {
-    goto also_uc;
+    delim_optional = true;
+    p += (*p == '!'); // skip over !
   } else if (STRNCMP(cmd, "substitute", p - cmd) == 0
       || STRNCMP(cmd, "smagic", p - cmd) == 0
       || STRNCMP(cmd, "snomagic", MAX(p - cmd, 3)) == 0
@@ -474,7 +475,6 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
              || STRNCMP(cmd, "lvimgrep", MAX(p - cmd, 2)) == 0
              || STRNCMP(cmd, "lvimgrepadd", MAX(p - cmd, 9)) == 0
              || STRNCMP(cmd, "global", p - cmd) == 0) {
-also_uc:
     // skip over "!/".
     if (*p == '!') {
       p++;
