@@ -35,7 +35,7 @@ case "$FLAVOR" in
     cat <<EOF >> "$GITHUB_ENV"
 CLANG_SANITIZER=ASAN_UBSAN
 SYMBOLIZER=asan_symbolize-13
-ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan
+ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan:intercept_tls_get_addr=0
 UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan
 EOF
     ;;
