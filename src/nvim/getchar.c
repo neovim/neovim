@@ -163,6 +163,7 @@ void free_buff(buffheader_T *buf)
     xfree(p);
   }
   buf->bh_first.b_next = NULL;
+  buf->bh_curr = NULL;
 }
 
 /// Return the contents of a buffer as a single string.
@@ -288,8 +289,12 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
 /// Only works when it was just added.
 static void delete_buff_tail(buffheader_T *buf, int slen)
 {
-  int len = (int)STRLEN(buf->bh_curr->b_str);
+  int len;
 
+  if (buf->bh_curr == NULL) {
+    return;  // nothing to delete
+  }
+  len = (int)STRLEN(buf->bh_curr->b_str);
   if (len >= slen) {
     buf->bh_curr->b_str[len - slen] = NUL;
     buf->bh_space += (size_t)slen;
