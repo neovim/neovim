@@ -112,6 +112,16 @@ func Test_put_p_indent_visual()
   bwipe!
 endfunc
 
+func Test_gp_with_count_leaves_cursor_at_end()
+  new
+  call setline(1, '<---->')
+  call setreg('@', "foo\nbar", 'c')
+  exe "normal 1G3|3gpix\<Esc>"
+  call assert_equal(['<--foo', 'barfoo', 'barfoo', 'barx-->'], getline(1, '$'))
+
+  bwipe!
+endfunc
+
 func Test_multibyte_op_end_mark()
   new
   call setline(1, 'тест')

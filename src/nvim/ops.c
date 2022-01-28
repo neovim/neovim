@@ -3472,6 +3472,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         curwin->w_cursor.col -= first_byte_off;
       }
     } else {
+      linenr_T new_lnum = new_cursor.lnum;
+
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
       for (cnt = 1; cnt <= count; cnt++) {
@@ -3488,6 +3490,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           STRCAT(newp, ptr);
           // insert second line
           ml_append(lnum, newp, (colnr_T)0, false);
+          new_lnum++;
           xfree(newp);
 
           oldp = ml_get(lnum);
@@ -3503,10 +3506,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
 
         for (; i < y_size; i++) {
-          if ((y_type != kMTCharWise || i < y_size - 1)
-              && ml_append(lnum, y_array[i], (colnr_T)0, false)
-              == FAIL) {
-            goto error;
+          if ((y_type != kMTCharWise || i < y_size - 1)) {
+            if (ml_append(lnum, y_array[i], (colnr_T)0, false) == FAIL) {
+              goto error;
+            }
+            new_lnum++;
           }
           lnum++;
           ++nr_lines;
@@ -3555,6 +3559,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           // Account for last pasted NL + last NL
           extmark_splice(curbuf, (int)new_cursor.lnum-1, col + 1, 0, 0, 0,
                          (int)y_size+1, 0, totsize+2, kExtmarkUndo);
+        }
+
+        if (cnt == 1) {
+          new_lnum = lnum;
         }
       }
 
@@ -3606,7 +3614,7 @@ error:
           }
           curwin->w_cursor.col = 0;
         } else {
-          curwin->w_cursor.lnum = lnum;
+          curwin->w_cursor.lnum = new_lnum;
           curwin->w_cursor.col = col;
         }
       } else if (y_type == kMTLineWise) {
