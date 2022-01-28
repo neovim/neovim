@@ -511,4 +511,14 @@ func Test_insert_small_delete()
   bwipe!
 endfunc
 
+func Test_record_in_select_mode()
+  new
+  call setline(1, 'text')
+  sil norm q00
+  sil norm q
+  call assert_equal('0ext', getline(1))
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
