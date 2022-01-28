@@ -3591,7 +3591,7 @@ error:
 
       // Put the '] mark on the first byte of the last inserted character.
       // Correct the length for change in indent.
-      curbuf->b_op_end.lnum = lnum;
+      curbuf->b_op_end.lnum = new_lnum;
       col = (colnr_T)STRLEN(y_array[y_size - 1]) - lendiff;
       if (col > 1) {
         curbuf->b_op_end.col = col - 1 - utf_head_off(y_array[y_size - 1],
