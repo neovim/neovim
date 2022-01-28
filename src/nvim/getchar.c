@@ -1598,8 +1598,9 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && !(State & TERM_FOCUS)
           && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
         mod_mask = 0;
-        ins_char_typebuf(c, 0);
-        ins_char_typebuf(ESC, 0);
+        int len = ins_char_typebuf(c, 0);
+        (void)ins_char_typebuf(ESC, 0);
+        ungetchars(len + 3);  // The ALT/META modifier takes three more bytes
         continue;
       }
 

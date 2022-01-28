@@ -104,4 +104,20 @@ describe('meta-keys #8226 #13042', function()
     eq({ 0, 2, 1, 0, }, funcs.getpos('.'))
     eq('nt', eval('mode(1)'))
   end)
+
+  it('ALT/META when recording a macro #13235', function()
+    feed('ifoo<CR>bar<CR>baz<Esc>gg0')
+    -- <M-"> is reinterpreted as <Esc>"
+    feed('qrviw"ayC// This is some text: <M-">apq')
+    expect([[
+      // This is some text: foo
+      bar
+      baz]])
+    -- Should not insert an extra double quote when replaying
+    feed('j0@rj0@@')
+    expect([[
+      // This is some text: foo
+      // This is some text: bar
+      // This is some text: baz]])
+  end)
 end)
