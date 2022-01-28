@@ -862,6 +862,21 @@ func dist#ft#FTfoam()
     endwhile
 endfunc
 
+" Determine if a *.tf file is TF mud client or terraform
+func dist#ft#FTtf()
+  let numberOfLines = line('$')
+  for i in range(1, numberOfLines)
+    let currentLine = trim(getline(i))
+    let firstCharacter = currentLine[0]
+    if firstCharacter !=? ";" && firstCharacter !=? "/" && firstCharacter !=? ""
+      setf terraform
+      return
+    endif
+  endfor
+  setf tf
+endfunc
+
+
 " Restore 'cpoptions'
 let &cpo = s:cpo_save
 unlet s:cpo_save

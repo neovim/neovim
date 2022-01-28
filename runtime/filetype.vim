@@ -1942,10 +1942,13 @@ au BufNewFile,BufRead texmf.cnf			setf texmf
 au BufNewFile,BufRead .tidyrc,tidyrc,tidy.conf	setf tidy
 
 " TF mud client
-au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
+au BufNewFile,BufRead .tfrc,tfrc		setf tf
+
+" TF mud client or terraform
+au BufNewFile,BufRead *.tf			call dist#ft#FTtf()
 
 " TLA+
-au BufRead,BufNewFile *.tla			setf tla
+au BufNewFile,BufRead *.tla			setf tla
 
 " tmux configuration
 au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
@@ -1954,7 +1957,7 @@ au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
 au BufNewFile,BufRead *.toml			setf toml
 
 " TPP - Text Presentation Program
-au BufNewFile,BufReadPost *.tpp			setf tpp
+au BufNewFile,BufRead *.tpp			setf tpp
 
 " Treetop
 au BufRead,BufNewFile *.treetop			setf treetop
