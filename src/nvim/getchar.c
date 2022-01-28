@@ -290,7 +290,7 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
 {
   int len;
 
-  if (buf->bh_curr == NULL || buf->bh_curr->b_str == NULL) {
+  if (buf->bh_curr == NULL) {
     return;  // nothing to delete
   }
   len = (int)STRLEN(buf->bh_curr->b_str);
