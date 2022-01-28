@@ -163,6 +163,7 @@ void free_buff(buffheader_T *buf)
     xfree(p);
   }
   buf->bh_first.b_next = NULL;
+  buf->bh_curr = NULL;
 }
 
 /// Return the contents of a buffer as a single string.
