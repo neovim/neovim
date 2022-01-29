@@ -6587,6 +6587,13 @@ static int open_cmdwin(void)
   return cmdwin_result;
 }
 
+/// @return true if in the cmdwin, not editing the command line.
+bool is_in_cmdwin(void)
+  FUNC_ATTR_PURE
+{
+  return cmdwin_type != 0 && get_cmdline_type() == NUL;
+}
+
 /// Get script string
 ///
 /// Used for commands which accept either `:command script` or
