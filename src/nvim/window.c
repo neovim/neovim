@@ -6008,7 +6008,7 @@ void win_set_inner_size(win_T *wp)
         set_fraction(wp);
       }
     }
-    wp->w_height_inner = height;
+    wp->w_height_inner = height - wp->w_winbar;
     wp->w_skipcol = 0;
 
     // There is no point in adjusting the scroll position when exiting.  Some

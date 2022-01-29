@@ -1308,7 +1308,8 @@ static void normal_redraw(NormalState *s)
   }
 
   if (VIsual_active) {
-    update_curbuf(INVERTED);  // update inverted part
+    redraw_curbuf_later(INVERTED); // update inverted part
+    update_screen(INVERTED);
   } else if (must_redraw) {
     update_screen(0);
   } else if (redraw_cmdline || clear_cmdline) {

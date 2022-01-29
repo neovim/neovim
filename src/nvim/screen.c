@@ -304,15 +304,6 @@ void redrawWinline(win_T *wp, linenr_T lnum)
   }
 }
 
-/*
- * update all windows that are editing the current buffer
- */
-void update_curbuf(int type)
-{
-  redraw_curbuf_later(type);
-  update_screen(type);
-}
-
 /// called when the status bars for the buffer 'buf' need to be updated
 void redraw_buf_status_later(buf_T *buf)
 {
@@ -608,6 +599,10 @@ int update_screen(int type)
 
     // reallocate grid if needed.
     win_grid_alloc(wp);
+
+    if (wp->w_redr_type >= NOT_VALID || wp->w_redr_status) {
+      win_redr_winbar(wp);
+    }
 
     if (wp->w_redr_border || wp->w_redr_type >= NOT_VALID) {
       win_redr_border(wp);
@@ -5409,7 +5404,7 @@ static void redraw_custom_statusline(win_T *wp)
   entered = true;
 
   did_emsg = false;
-  win_redr_custom(wp, false);
+  win_redr_custom(wp, false, false);
   if (did_emsg) {
     // When there is an error disable the statusline, otherwise the
     // display is messed up with errors and a redraw triggers the problem
@@ -5488,11 +5483,11 @@ bool get_keymap_str(win_T *wp, char_u *fmt, char_u *buf, int len)
   return buf[0] != NUL;
 }
 
-/*
- * Redraw the status line or ruler of window "wp".
- * When "wp" is NULL redraw the tab pages line from 'tabline'.
- */
-static void win_redr_custom(win_T *wp, bool draw_ruler)
+/// Redraw the status line or ruler of window "wp".
+///
+/// When "wp" is NULL redraw the tab pages line from 'tabline'.
+/// @param draw_winbar draw the winbar instead
+static void win_redr_custom(win_T *wp, bool draw_ruler, bool draw_winbar)
 {
   static bool entered = false;
   int attr;
@@ -5567,6 +5562,11 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
       }
 
       use_sandbox = was_set_insecurely(wp, "rulerformat", 0);
+    } else if (draw_winbar) {
+      stl = (char_u *)wp->w_winbar_line;
+      // TODO: adjust grid!
+      row = wp->w_winrow;
+      maxwidth = wp->w_width_inner;
     } else {
       if (*wp->w_p_stl != NUL) {
         stl = wp->w_p_stl;
@@ -5640,6 +5640,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
 
   grid_puts_line_flush(false);
 
+  // TODO: winbar!
   if (wp == NULL) {
     // Fill the tab_page_click_defs array for clicking in the tab pages line.
     col = 0;
@@ -5663,6 +5664,17 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
 
 theend:
   entered = false;
+}
+
+
+static void win_redr_winbar(win_T *wp)
+{
+  if (!wp->w_winbar) {
+    return;
+  }
+
+  win_redr_custom(wp, false, true);
+
 }
 
 static void win_redr_border(win_T *wp)
@@ -6509,18 +6521,18 @@ void win_grid_alloc(win_T *wp)
   grid->Rows = rows;
   grid->Columns = cols;
 
+  wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar;
+  wp->w_wincol_off = wp->w_border_adj[3];
+
   if (want_allocation) {
     grid->target = grid_allocated;
-    grid->row_offset = wp->w_border_adj[0];
-    grid->col_offset = wp->w_border_adj[3];
+    grid->row_offset = wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol_off;
   } else {
     grid->target = &default_grid;
-    grid->row_offset = wp->w_winrow;
-    grid->col_offset = wp->w_wincol;
+    grid->row_offset = wp->w_winrow + wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol + wp->w_wincol_off;
   }
-
-  wp->w_winrow_off = wp->w_border_adj[0];
-  wp->w_wincol_off = wp->w_border_adj[3];
 
   // send grid resize event if:
   // - a grid was just resized
@@ -7272,7 +7284,7 @@ void draw_tabline(void)
     // Check for an error.  If there is one we would loop in redrawing the
     // screen.  Avoid that by making 'tabline' empty.
     did_emsg = false;
-    win_redr_custom(NULL, false);
+    win_redr_custom(NULL, false, false);
     if (did_emsg) {
       set_string_option_direct("tabline", -1,
                                (char_u *)"", OPT_FREE, SID_ERROR);
@@ -7560,7 +7572,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     int save_called_emsg = called_emsg;
 
     called_emsg = false;
-    win_redr_custom(wp, true);
+    win_redr_custom(wp, true, false);
     if (called_emsg) {
       set_string_option_direct("rulerformat", -1, (char_u *)"",
                                OPT_FREE, SID_ERROR);

@@ -1291,6 +1291,9 @@ struct window_S {
   int w_height_outer;
   int w_width_outer;
 
+  int w_winbar; // HAIIIII
+  char *w_winbar_line;
+
   /*
    * === start of cached values ====
    */
