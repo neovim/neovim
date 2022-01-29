@@ -837,6 +837,8 @@ Buffers, windows and the argument list:
 	win_gotoid()		go to window with ID
 	win_id2tabwin()		get tab and window nr from window ID
 	win_id2win()		get window nr from window ID
+	win_move_separator()	move window vertical separator
+	win_move_statusline()	move window status line
 	getbufinfo()		get a list with buffer information
 	gettabinfo()		get a list with tab page information
 	getwininfo()		get a list with window information

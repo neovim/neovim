@@ -413,6 +413,8 @@ return {
     win_gotoid={args=1, base=1},
     win_id2tabwin={args=1, base=1},
     win_id2win={args=1, base=1},
+    win_move_separator={args=2, base=1},
+    win_move_statusline={args=2, base=1},
     win_screenpos={args=1, base=1},
     win_splitmove={args={2, 3}, base=1},
     winbufnr={args=1, base=1},

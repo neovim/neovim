@@ -11989,6 +11989,42 @@ static void f_win_id2win(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = win_id2win(argvars);
 }
 
+/// "win_move_separator()" function
+static void f_win_move_separator(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wp;
+  int offset;
+
+  rettv->vval.v_number = false;
+
+  wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL || wp->w_floating) {
+    return;
+  }
+
+  offset = (int)tv_get_number(&argvars[1]);
+  win_drag_vsep_line(wp, offset);
+  rettv->vval.v_number = true;
+}
+
+/// "win_move_statusline()" function
+static void f_win_move_statusline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wp;
+  int offset;
+
+  rettv->vval.v_number = false;
+
+  wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL || wp->w_floating) {
+    return;
+  }
+
+  offset = (int)tv_get_number(&argvars[1]);
+  win_drag_status_line(wp, offset);
+  rettv->vval.v_number = true;
+}
+
 /// "winbufnr(nr)" function
 static void f_winbufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
