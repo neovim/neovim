@@ -292,15 +292,84 @@ endfunc
 
 func Test_searchpair()
   new
-  call setline(1, ['other code here', '', '[', '" cursor here', ']'])
+  call setline(1, ['other code', 'here [', ' [', ' " cursor here', ' ]]'])
+
   4
-  let a = searchpair('\[','',']','bW')
-  call assert_equal(3, a)
+  call assert_equal(3, searchpair('\[', '', ']', 'bW'))
+  call assert_equal([0, 3, 2, 0], getpos('.'))
+  4
+  call assert_equal(2, searchpair('\[', '', ']', 'bWr'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
+  4
+  call assert_equal(1, searchpair('\[', '', ']', 'bWm'))
+  call assert_equal([0, 3, 2, 0], getpos('.'))
+  4|norm ^
+  call assert_equal(5, searchpair('\[', '', ']', 'Wn'))
+  call assert_equal([0, 4, 2, 0], getpos('.'))
+  4
+  call assert_equal(2, searchpair('\[', '', ']', 'bW',
+        \                         'getline(".") =~ "^\\s*\["'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
   set nomagic
   4
-  let a = searchpair('\[','',']','bW')
-  call assert_equal(3, a)
+  call assert_equal(3, searchpair('\[', '', ']', 'bW'))
+  call assert_equal([0, 3, 2, 0], getpos('.'))
   set magic
+  4|norm ^
+  call assert_equal(0, searchpair('{', '', '}', 'bW'))
+  call assert_equal([0, 4, 2, 0], getpos('.'))
+
+  %d
+  call setline(1, ['if 1', '  if 2', '  else', '  endif 2', 'endif 1'])
+
+  /\<if 1
+  call assert_equal(5, searchpair('\<if\>', '\<else\>', '\<endif\>', 'W'))
+  call assert_equal([0, 5, 1, 0], getpos('.'))
+  /\<if 2
+  call assert_equal(3, searchpair('\<if\>', '\<else\>', '\<endif\>', 'W'))
+  call assert_equal([0, 3, 3, 0], getpos('.'))
+
+  q!
+endfunc
+
+func Test_searchpairpos()
+  new
+  call setline(1, ['other code', 'here [', ' [', ' " cursor here', ' ]]'])
+
+  4
+  call assert_equal([3, 2], searchpairpos('\[', '', ']', 'bW'))
+  call assert_equal([0, 3, 2, 0], getpos('.'))
+  4
+  call assert_equal([2, 6], searchpairpos('\[', '', ']', 'bWr'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
+  4|norm ^
+  call assert_equal([5, 2], searchpairpos('\[', '', ']', 'Wn'))
+  call assert_equal([0, 4, 2, 0], getpos('.'))
+  4
+  call assert_equal([2, 6], searchpairpos('\[', '', ']', 'bW',
+        \                                 'getline(".") =~ "^\\s*\["'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
+  4
+  call assert_equal([2, 6], searchpairpos('\[', '', ']', 'bWr'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
+  set nomagic
+  4
+  call assert_equal([3, 2], searchpairpos('\[', '', ']', 'bW'))
+  call assert_equal([0, 3, 2, 0], getpos('.'))
+  set magic
+  4|norm ^
+  call assert_equal([0, 0], searchpairpos('{', '', '}', 'bW'))
+  call assert_equal([0, 4, 2, 0], getpos('.'))
+
+  %d
+  call setline(1, ['if 1', '  if 2', '  else', '  endif 2', 'endif 1'])
+  /\<if 1
+  call assert_equal([5, 1], searchpairpos('\<if\>', '\<else\>', '\<endif\>', 'W'))
+  call assert_equal([0, 5, 1, 0], getpos('.'))
+  /\<if 2
+  call assert_equal([3, 3], searchpairpos('\<if\>', '\<else\>', '\<endif\>', 'W'))
+  call assert_equal([0, 3, 3, 0], getpos('.'))
+
   q!
 endfunc
 
@@ -312,14 +381,28 @@ func Test_searchpair_errors()
   call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 0, 99, 100)", 'E475: Invalid argument: 0')
   call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 'func', -99, 100)", 'E475: Invalid argument: -99')
   call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 'func', 99, -100)", 'E475: Invalid argument: -100')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'e')", 'E475: Invalid argument: e')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'sn')", 'E475: Invalid argument: sn')
+endfunc
+
+func Test_searchpairpos_errors()
+  call assert_fails("call searchpairpos([0], 'middle', 'end', 'bW', 'skip', 99, 100)", 'E730: using List as a String')
+  call assert_fails("call searchpairpos('start', {-> 0}, 'end', 'bW', 'skip', 99, 100)", 'E729: using Funcref as a String')
+  call assert_fails("call searchpairpos('start', 'middle', {'one': 1}, 'bW', 'skip', 99, 100)", 'E731: using Dictionary as a String')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'flags', 'skip', 99, 100)", 'E475: Invalid argument: flags')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'bW', 0, 99, 100)", 'E475: Invalid argument: 0')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'bW', 'func', -99, 100)", 'E475: Invalid argument: -99')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'bW', 'func', 99, -100)", 'E475: Invalid argument: -100')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'e')", 'E475: Invalid argument: e')
+  call assert_fails("call searchpairpos('start', 'middle', 'end', 'sn')", 'E475: Invalid argument: sn')
 endfunc
 
 func Test_searchpair_skip()
     func Zero()
-	return 0
+      return 0
     endfunc
     func Partial(x)
-	return a:x
+      return a:x
     endfunc
     new
     call setline(1, ['{', 'foo', 'foo', 'foo', '}'])
@@ -1192,7 +1275,7 @@ endfunc
 " This was causing E874.  Also causes an invalid read?
 func Test_look_behind()
   new
-  call setline(1, '0\|\&\n\@<=') 
+  call setline(1, '0\|\&\n\@<=')
   call search(getline("."))
   bwipe!
 endfunc
@@ -1236,11 +1319,11 @@ endfunc
 func Test_search_Ctrl_L_combining()
   " Make sure, that Ctrl-L works correctly with combining characters.
   " It uses an artificial example of an 'a' with 4 combining chars:
-    " 'a' U+0061 Dec:97 LATIN SMALL LETTER A &#x61; /\%u61\Z "\u0061" 
+    " 'a' U+0061 Dec:97 LATIN SMALL LETTER A &#x61; /\%u61\Z "\u0061"
     " ' ̀' U+0300 Dec:768 COMBINING GRAVE ACCENT &#x300; /\%u300\Z "\u0300"
     " ' ́' U+0301 Dec:769 COMBINING ACUTE ACCENT &#x301; /\%u301\Z "\u0301"
     " ' ̇' U+0307 Dec:775 COMBINING DOT ABOVE &#x307; /\%u307\Z "\u0307"
-    " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323" 
+    " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323"
   " Those should also appear on the commandline
   CheckOption incsearch
 
