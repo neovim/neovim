@@ -5795,7 +5795,6 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
     }
     fr = curfr;  // put fr at window that grows
   }
-  assert(fr);
 
   // Not enough room
   if (room < offset) {
@@ -5808,7 +5807,9 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   }
 
   if (fr == NULL) {
-    return;  // Safety check, should not happen.
+    // This can happen when calling win_move_separator() on the rightmost
+    // window.  Just don't do anything.
+    return;
   }
 
   // grow frame fr by offset lines

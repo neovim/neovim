@@ -968,6 +968,12 @@ func Test_win_move_separator()
     call assert_true(id->win_move_separator(-offset))
     call assert_equal(w, winwidth(id))
   endfor
+  " check win_move_separator from right window on right window is no-op
+  let w0 = winwidth(0)
+  call assert_true(win_move_separator(0, 1))
+  call assert_equal(w0, winwidth(0))
+  call assert_true(win_move_separator(0, -1))
+  call assert_equal(w0, winwidth(0))
   " check that win_move_separator doesn't error with offsets beyond moving
   " possibility
   call assert_true(win_move_separator(id, 5000))
@@ -990,6 +996,7 @@ func Test_win_move_separator()
 endfunc
 
 func Test_win_move_statusline()
+  redraw  " This test fails in Nvim without a redraw to clear messages.
   edit a
   leftabove split b
   let h = winheight(0)
@@ -1010,6 +1017,19 @@ func Test_win_move_statusline()
     call assert_true(win_move_statusline(1, -offset))
     call assert_equal(h, winheight(1))
   endfor
+  " check win_move_statusline from bottom window on bottom window
+  let h0 = winheight(0)
+  for offset in range(5)
+    call assert_true(0->win_move_statusline(-offset))
+    call assert_equal(h0 - offset, winheight(0))
+    call assert_equal(1 + offset, &cmdheight)
+    call assert_true(win_move_statusline(0, offset))
+    call assert_equal(h0, winheight(0))
+    call assert_equal(1, &cmdheight)
+  endfor
+  call assert_true(win_move_statusline(0, 1))
+  call assert_equal(h0, winheight(0))
+  call assert_equal(1, &cmdheight)
   " check win_move_statusline from bottom window on top window ID
   let id = win_getid(1)
   for offset in range(5)
