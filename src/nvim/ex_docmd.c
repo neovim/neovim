@@ -78,6 +78,10 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
+static char *e_no_such_user_defined_command_str = N_("E184: No such user-defined command: %s");
+static char *e_no_such_user_defined_command_in_current_buffer_str
+    = N_("E1237: No such user-defined command in current buffer: %s");
+
 static int quitmore = 0;
 static bool ex_pressedreturn = false;
 
@@ -5737,26 +5741,36 @@ static void ex_delcommand(exarg_T *eap)
 {
   int i = 0;
   ucmd_T *cmd = NULL;
-  int cmp = -1;
+  int res = -1;
   garray_T *gap;
+  const char_u *arg = eap->arg;
+  bool buffer_only = false;
+
+  if (STRNCMP(arg, "-buffer", 7) == 0 && ascii_iswhite(arg[7])) {
+    buffer_only = true;
+    arg = skipwhite(arg + 7);
+  }
 
   gap = &curbuf->b_ucmds;
   for (;;) {
     for (i = 0; i < gap->ga_len; i++) {
       cmd = USER_CMD_GA(gap, i);
-      cmp = STRCMP(eap->arg, cmd->uc_name);
-      if (cmp <= 0) {
+      res = STRCMP(arg, cmd->uc_name);
+      if (res <= 0) {
         break;
       }
     }
-    if (gap == &ucmds || cmp == 0) {
+    if (gap == &ucmds || res == 0 || buffer_only) {
       break;
     }
     gap = &ucmds;
   }
 
-  if (cmp != 0) {
-    semsg(_("E184: No such user-defined command: %s"), eap->arg);
+  if (res != 0) {
+    semsg(_(buffer_only
+            ? e_no_such_user_defined_command_in_current_buffer_str
+            : e_no_such_user_defined_command_str),
+          arg);
     return;
   }
 
