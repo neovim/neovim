@@ -1160,7 +1160,10 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
     int save_acd = p_acd;
     p_acd = false;
+    // no redrawing and don't set the window title
+    RedrawingDisabled++;
     win_enter(aucmd_win, false);
+    RedrawingDisabled--;
     p_acd = save_acd;
     unblock_autocmds();
     curwin = aucmd_win;
