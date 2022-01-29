@@ -18,6 +18,24 @@ local M = {}
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `item`.
 ---               `nil` if the user aborted the dialog.
+---
+---
+--- Example:
+--- <pre>
+--- vim.ui.select({ 'tabs', 'spaces' }, {
+---     prompt = 'Select tabs or spaces:',
+---     format_item = function(item)
+---         return "I'd like to choose " .. item
+---     end,
+--- }, function(choice)
+---     if choice == 'spaces' then
+---         vim.o.expandtab = true
+---     else
+---         vim.o.expandtab = false
+---     end
+--- end)
+--- </pre>
+
 function M.select(items, opts, on_choice)
   vim.validate {
     items = { items, 'table', false },
@@ -57,6 +75,13 @@ end
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed.
 ---               `nil` if the user aborted the dialog.
+---
+--- Example:
+--- <pre>
+--- vim.ui.input({ prompt = 'Select value for shiftwidth: ' }, function(input)
+---     vim.o.shiftwidth = tonumber(input)
+--- end)
+--- </pre>
 function M.input(opts, on_confirm)
   vim.validate {
     on_confirm = { on_confirm, 'function', false },
