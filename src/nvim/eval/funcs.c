@@ -3795,7 +3795,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 // "getmousepos()" function
-void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   dict_T *d;
   win_T *wp;
@@ -6927,7 +6927,7 @@ static void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, FunPtr fpt
 }
 
 /// "prompt_getprompt({buffer})" function
-void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
   // return an empty string by default, e.g. it's not a prompt buffer
@@ -10673,7 +10673,7 @@ static void f_stridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /*
  * "string()" function
  */
-void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void f_string(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = (char_u *)encode_tv2string(&argvars[0], NULL);
