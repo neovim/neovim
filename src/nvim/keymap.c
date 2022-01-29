@@ -13,6 +13,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
+#include "nvim/option_defs.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 
@@ -744,12 +745,15 @@ static int extract_modifiers(int key, int *modp)
       modifiers &= ~MOD_MASK_SHIFT;
     }
   }
-  if ((modifiers & MOD_MASK_CTRL)
-      && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
-    key = Ctrl_chr(key);
-    modifiers &= ~MOD_MASK_CTRL;
-    if (key == 0) {  // <C-@> is <Nul>
-      key = K_ZERO;
+  if ((modifiers & MOD_MASK_CTRL) && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
+    key = TOUPPER_ASC(key);
+    int new_key = Ctrl_chr(key);
+    if (!p_clbg || (new_key != TAB && new_key != CAR && new_key != ESC)) {
+      key = new_key;
+      modifiers &= ~MOD_MASK_CTRL;
+      if (key == 0) {  // <C-@> is <Nul>
+        key = K_ZERO;
+      }
     }
   }
 

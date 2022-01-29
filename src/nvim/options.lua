@@ -542,6 +542,13 @@ return {
       defaults={if_true=1}
     },
     {
+      full_name='ctrldisambig', abbreviation='clbg',
+      short_desc=N_(""),
+      type='bool', scope={'global'},
+      varname='p_clbg',
+      defaults={if_true=true}
+    },
+    {
       full_name='cursorbind', abbreviation='crb',
       short_desc=N_("move cursor in window as it moves in other windows"),
       type='bool', scope={'window'},
