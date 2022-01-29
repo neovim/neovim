@@ -309,6 +309,31 @@ func Test_mksession_buffer_count()
   set nohidden
 endfunc
 
+func Test_mksession_buffer_order()
+  %bwipe!
+  e Xfoo | e Xbar | e Xbaz | e Xqux
+  bufdo write
+  mksession! Xtest_mks.out
+
+  " Verify that loading the session preserves order of buffers
+  %bwipe!
+  source Xtest_mks.out
+
+  let s:buf_info = getbufinfo()
+  call assert_true(s:buf_info[0]['name'] =~# 'Xfoo$')
+  call assert_true(s:buf_info[1]['name'] =~# 'Xbar$')
+  call assert_true(s:buf_info[2]['name'] =~# 'Xbaz$')
+  call assert_true(s:buf_info[3]['name'] =~# 'Xqux$')
+
+  " Clean up.
+  call delete('Xfoo')
+  call delete('Xbar')
+  call delete('Xbaz')
+  call delete('Xqux')
+  call delete('Xtest_mks.out')
+  %bwipe!
+endfunc
+
 if has('extra_search')
 
 func Test_mksession_hlsearch()

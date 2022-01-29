@@ -591,6 +591,24 @@ static int makeopens(FILE *fd, char_u *dirnow)
     return FAIL;
   }
 
+  // Put all buffers into the buffer list.
+  // Do it very early to preserve buffer order after loading session (which
+  // can be disrupted by prior `edit` or `tabedit` calls).
+  FOR_ALL_BUFFERS(buf) {
+    if (!(only_save_windows && buf->b_nwindows == 0)
+        && !(buf->b_help && !(ssop_flags & SSOP_HELP))
+        && buf->b_fname != NULL
+        && buf->b_p_bl) {
+      if (fprintf(fd, "badd +%" PRId64 " ",
+                  buf->b_wininfo == NULL
+                  ? (int64_t)1L
+                  : (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
+          || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
+        return FAIL;
+      }
+    }
+  }
+
   // the global argument list
   if (ses_arglist(fd, "argglobal", &global_alist.al_ga,
                   !(ssop_flags & SSOP_CURDIR), &ssop_flags) == FAIL) {
@@ -626,7 +644,10 @@ static int makeopens(FILE *fd, char_u *dirnow)
     // Similar to ses_win_rec() below, populate the tab pages first so
     // later local options won't be copied to the new tabs.
     FOR_ALL_TABS(tp) {
-      if (tp->tp_next != NULL && put_line(fd, "tabnew") == FAIL) {
+      // Use `bufhidden=wipe` to remove empty "placeholder" buffers once
+      // they are not needed. This prevents creating extra buffers (see
+      // cause of Vim patch 8.1.0829)
+      if (tp->tp_next != NULL && put_line(fd, "tabnew +setlocal\\ bufhidden=wipe") == FAIL) {
         return FAIL;
       }
     }
@@ -802,25 +823,6 @@ static int makeopens(FILE *fd, char_u *dirnow)
   }
   if (restore_stal && put_line(fd, "set stal=1") == FAIL) {
     return FAIL;
-  }
-
-  // Now put the remaining buffers into the buffer list.
-  // This is near the end, so that when 'hidden' is set we don't create extra
-  // buffers.  If the buffer was already created with another command the
-  // ":badd" will have no effect.
-  FOR_ALL_BUFFERS(buf) {
-    if (!(only_save_windows && buf->b_nwindows == 0)
-        && !(buf->b_help && !(ssop_flags & SSOP_HELP))
-        && buf->b_fname != NULL
-        && buf->b_p_bl) {
-      if (fprintf(fd, "badd +%" PRId64 " ",
-                  buf->b_wininfo == NULL
-                  ? (int64_t)1L
-                  : (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
-          || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
-        return FAIL;
-      }
-    }
   }
 
   //
