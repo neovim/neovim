@@ -6519,6 +6519,9 @@ void win_grid_alloc(win_T *wp)
     grid->col_offset = wp->w_wincol;
   }
 
+  wp->w_winrow_off = wp->w_border_adj[0];
+  wp->w_wincol_off = wp->w_border_adj[3];
+
   // send grid resize event if:
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent

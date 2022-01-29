@@ -497,6 +497,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
+      *rowp -= wp->w_height_inner;
       return wp;
     }
   }
