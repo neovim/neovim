@@ -756,6 +756,7 @@ local extension = {
   zu = "zimbu",
   zut = "zimbutempl",
   zsh = "zsh",
+  vala = "vala",
   E = function() vim.fn["dist#ft#FTe"]() end,
   EU = function() vim.fn["dist#ft#EuphoriaCheck"]() end,
   EW = function() vim.fn["dist#ft#EuphoriaCheck"]() end,
