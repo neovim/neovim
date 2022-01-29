@@ -350,7 +350,6 @@ func Test_use_execute_in_completion()
 endfunc
 
 func Test_addr_all()
-  throw 'skipped: requires patch v8.1.0341 to pass'
   command! -addr=lines DoSomething let g:a1 = <line1> | let g:a2 = <line2>
   %DoSomething
   call assert_equal(1, g:a1)
