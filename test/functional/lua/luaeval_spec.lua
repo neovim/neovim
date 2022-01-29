@@ -532,6 +532,7 @@ describe('v:lua', function()
     command('set pp+=test/functional/fixtures')
     eq('\tbadval', eval("v:lua.require'leftpad'('badval')"))
     eq(9003, eval("v:lua.require'bar'.doit()"))
+    eq(9004, eval("v:lua.require'baz-quux'.doit()"))
   end)
 
   it('throw errors for invalid use', function()
