@@ -9916,6 +9916,7 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"underline"	"1" if underlined
 		"undercurl"	"1" if undercurled
 		"strikethrough"	"1" if struckthrough
+		"overline"	"1" if overlined
 
 		Example (echoes the color of the syntax item under the
 		cursor): >

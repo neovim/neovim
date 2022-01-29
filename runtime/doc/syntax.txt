@@ -4878,6 +4878,7 @@ the same syntax file on all UIs.
 					*bold* *underline* *undercurl*
 					*inverse* *italic* *standout*
 					*nocombine* *strikethrough*
+					*overline*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma separated list (without spaces) of the
 	following items (in any order):
@@ -4885,6 +4886,7 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 		underline
 		undercurl	curly underline
 		strikethrough
+		overline
 		reverse
 		inverse		same as reverse
 		italic

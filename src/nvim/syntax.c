@@ -121,10 +121,10 @@ static int include_link = 0;    // when 2 include "nvim/link" and "clear"
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
 { "bold", "standout", "underline", "undercurl",
-  "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+  "italic", "reverse", "inverse", "strikethrough", "overline", "nocombine", "NONE" };
 static int hl_attr_table[] =
 { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
-  HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
+  HL_INVERSE, HL_STRIKETHROUGH, HL_OVERLINE, HL_NOCOMBINE, 0 };
 
 static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
 
