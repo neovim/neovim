@@ -2017,6 +2017,9 @@ au BufNewFile,BufRead */.init/*.conf,*/.init/*.override	       setf upstart
 au BufNewFile,BufRead */.config/upstart/*.conf		       setf upstart
 au BufNewFile,BufRead */.config/upstart/*.override	       setf upstart
 
+" Vala
+au BufNewFile,BufRead *.vala			setf vala
+
 " Vera
 au BufNewFile,BufRead *.vr,*.vri,*.vrh		setf vera
 
