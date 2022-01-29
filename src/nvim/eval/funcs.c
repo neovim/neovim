@@ -6982,36 +6982,13 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/*
- * "pyeval()" function
- */
-static void f_pyeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  script_host_eval("python", argvars, rettv);
-}
-
-/*
- * "py3eval()" function
- */
+/// "py3eval()" and "pyxeval()" functions (always python3)
 static void f_py3eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   script_host_eval("python3", argvars, rettv);
 }
 
-// "pyxeval()" function
-static void f_pyxeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  init_pyxversion();
-  if (p_pyx == 2) {
-    f_pyeval(argvars, rettv, NULL);
-  } else {
-    f_py3eval(argvars, rettv, NULL);
-  }
-}
-
-///
 /// "perleval()" function
-///
 static void f_perleval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   script_host_eval("perl", argvars, rettv);

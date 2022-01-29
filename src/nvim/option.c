@@ -4349,6 +4349,12 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     } else if (value > 10000) {
       errmsg = e_invarg;
     }
+  } else if (pp == &p_pyx) {
+    if (value == 0) {
+      value = 3;
+    } else if (value != 3) {
+      errmsg = e_invarg;
+    }
   } else if (pp == &p_re) {
     if (value < 0 || value > 2) {
       errmsg = e_invarg;
@@ -4522,10 +4528,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     pum_grid.blending = (p_pb > 0);
     if (pum_drawn()) {
       pum_redraw();
-    }
-  } else if (pp == &p_pyx) {
-    if (p_pyx != 0 && p_pyx != 2 && p_pyx != 3) {
-      errmsg = e_invarg;
     }
   } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
     // sync undo before 'undolevels' changes

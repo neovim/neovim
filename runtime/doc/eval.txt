@@ -5806,7 +5806,6 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 					this is not present).
 			mac		MacOS system.
 			nvim		This is Nvim.
-			python2		Legacy Vim |python2| interface. |has-python|
 			python3		Legacy Vim |python3| interface. |has-python|
 			pythonx		Legacy Vim |python_x| interface. |has-pythonx|
 			ttyin		input is a terminal (tty)

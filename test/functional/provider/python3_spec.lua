@@ -8,6 +8,7 @@ local source = helpers.source
 local missing_provider = helpers.missing_provider
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
+local funcs = helpers.funcs
 
 do
   clear()
@@ -93,14 +94,38 @@ describe('python3 provider', function()
       ghi]])
   end)
 
-  it('py3eval', function()
-    eq({1, 2, {['key'] = 'val'}}, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
+  describe('py3eval()', function()
+    it('works', function()
+      eq({1, 2, {['key'] = 'val'}}, funcs.py3eval('[1, 2, {"key": "val"}]'))
+    end)
+
+    it('errors out when given non-string', function()
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(10)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(v:_null_dict)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(v:_null_list)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(0.0)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(function("tr"))'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(v:true)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(v:false)'))
+      eq('Vim:E474: Invalid argument', pcall_err(eval, 'py3eval(v:null)'))
+    end)
+
+    it('accepts NULL string', function()
+      matches('.*SyntaxError.*', pcall_err(eval, 'py3eval($XXX_NONEXISTENT_VAR_XXX)'))
+    end)
   end)
 
   it('pyxeval #10758', function()
-    eq(0, eval([[&pyxversion]]))
+    eq(3, eval([[&pyxversion]]))
     eq(3, eval([[pyxeval('sys.version_info[:3][0]')]]))
     eq(3, eval([[&pyxversion]]))
+  end)
+
+  it("setting 'pyxversion'", function()
+    command 'set pyxversion=3' -- no error
+    eq('Vim(set):E474: Invalid argument: pyxversion=2', pcall_err(command, 'set pyxversion=2'))
+    command 'set pyxversion=0' -- allowed, but equivalent to pyxversion=3
+    eq(3, eval'&pyxversion')
   end)
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
@@ -118,5 +143,17 @@ describe('python3 provider', function()
     feed_command("bwipeout!")
     feed_command('help help')
     assert_alive()
+  end)
+end)
+
+describe('python2 feature test', function()
+  -- python2 is not supported, so correct behaviour is to return 0
+  it('works', function()
+    eq(0, funcs.has('python2'))
+    eq(0, funcs.has('python'))
+    eq(0, funcs.has('python_compiled'))
+    eq(0, funcs.has('python_dynamic'))
+    eq(0, funcs.has('python_dynamic_'))
+    eq(0, funcs.has('python_'))
   end)
 end)

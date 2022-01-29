@@ -1446,7 +1446,7 @@ error message (line numbers are not part of the actual output):
      4	Traceback (most recent call last):
      5	  File "unittests/dbfacadeTest.py", line 89, in testFoo
      6	    self.assertEquals(34, dtid)
-     7	  File "/usr/lib/python2.2/unittest.py", line 286, in
+     7	  File "/usr/lib/python3.8/unittest.py", line 286, in
      8	 failUnlessEqual
      9	    raise self.failureException, \
     10	AssertionError: 34 != 33

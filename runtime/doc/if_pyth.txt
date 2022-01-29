@@ -1,10 +1,10 @@
 *if_pyth.txt*   Nvim
 
 
-		  VIM REFERENCE MANUAL    by Paul Moore
+		  NVIM REFERENCE MANUAL
 
 
-The Python Interface to Vim				*if_pyth* *python* *Python*
+The Python Interface to NVim				*if_pyth* *python* *Python*
 
 See |provider-python| for more information.
 
@@ -134,7 +134,7 @@ Instead, put the Python command in a function and call that function:
 Note that "EOF" must be at the start of the line.
 
 ==============================================================================
-The vim module						*python-vim* *python2*
+The vim module							*python-vim*
 
 Python code gets all of its access to vim (with one exception - see
 |python-output| below) via the "vim" module.  The vim module implements two
@@ -322,14 +322,13 @@ Output from Python					*python-output*
 	supported, and may cause the program to crash.  This should probably be
 	fixed.
 
-		    *python2-directory* *python3-directory* *pythonx-directory*
+				  *python3-directory* *pythonx-directory*
 Python 'runtimepath' handling				*python-special-path*
 
 In python vim.VIM_SPECIAL_PATH special directory is used as a replacement for
 the list of paths found in 'runtimepath': with this directory in sys.path and
 vim.path_hooks in sys.path_hooks python will try to load module from
-{rtp}/python2 (or python3) and {rtp}/pythonx (for both python versions) for
-each {rtp} found in 'runtimepath'.
+{rtp}/python3 and {rtp}/pythonx for each {rtp} found in 'runtimepath'.
 
 Implementation is similar to the following, but written in C: >
 
@@ -401,8 +400,8 @@ vim._get_paths						*python-_get_paths*
 	hook. You should not rely on this method being present in future
 	versions, but can use it for debugging.
 
-	It returns a list of {rtp}/python2 (or {rtp}/python3) and
-	{rtp}/pythonx directories for each {rtp} in 'runtimepath'.
+	It returns a list of {rtp}/python3 and {rtp}/pythonx
+	directories for each {rtp} in 'runtimepath'.
 
 ==============================================================================
 Buffer objects						*python-buffer*
@@ -590,6 +589,11 @@ functions to evaluate Python expressions and pass their values to Vim script.
 ==============================================================================
 Python 3						*python3*
 
+As Python 3 is the only supported version in Nvim, "python" is synonymous
+with "python3" in the current version. However, code that aims to support older
+versions of Neovim, as well as Vim, should prefer to use "python3"
+variants explicitly if Python 3 is required.
+
 							*:py3* *:python3*
 :[range]py3 {stmt}
 :[range]py3 << [endmarker]
@@ -619,31 +623,26 @@ Raising SystemExit exception in python isn't endorsed way to quit vim, use: >
 	:py vim.command("qall!")
 <
 							*has-python*
-You can test what Python version is available with: >
-	if has('python')
-	  echo 'there is Python 2.x'
+You can test if Python is available with: >
+	if has('pythonx')
+	  echo 'there is Python'
 	endif
   	if has('python3')
 	  echo 'there is Python 3.x'
 	endif
 
+Python 2 is no longer supported. Thus `has('python')` always returns
+zero for backwards compatibility reasons.
+
 ==============================================================================
 Python X						*python_x* *pythonx*
 
-Because most python code can be written so that it works with Python 2.6+ and
-Python 3, the pyx* functions and commands have been written.  They work the
-same as the Python 2 and 3 variants, but select the Python version using the
-'pyxversion' setting.
-
-Set 'pyxversion' in your |vimrc| to prefer Python 2 or Python 3 for Python
-commands. Changing this setting at runtime risks losing the state of plugins
-(such as initialization).
-
-If you want to use a module, you can put it in the {rtp}/pythonx directory.
-See |pythonx-directory|.
+The "pythonx" and "pyx" prefixes were introduced for python code which
+works with Python 2.6+ and Python 3. As Nvim only supports Python 3,
+all these commands are now synonymous to their "python3" equivalents.
 
 							*:pyx* *:pythonx*
-`:pyx` and `:pythonx` work similar to `:python`.  To check if `:pyx` works: >
+`:pyx` and `:pythonx` work the same as `:python3`.  To check if `:pyx` works: >
 	:pyx print("Hello")
 
 To see what version of Python is being used: >
@@ -651,33 +650,15 @@ To see what version of Python is being used: >
 	:pyx print(sys.version)
 <
 					*:pyxfile* *python_x-special-comments*
-`:pyxfile` works similar to `:pyfile`.  But you can add a "shebang" comment to
-force Vim to use `:pyfile` or `:py3file`: >
-  #!/any string/python2		" Shebang. Must be the first line of the file.
-  #!/any string/python3		" Shebang. Must be the first line of the file.
-  # requires python 2.x		" Maximum lines depend on 'modelines'.
-  # requires python 3.x		" Maximum lines depend on 'modelines'.
-Unlike normal modelines, the bottom of the file is not checked.
-If none of them are found, the 'pyxversion' option is used.
-							*W20* *W21*
-If Vim does not support the selected Python version a silent message will be
-printed.  Use `:messages` to read them.
+`:pyxfile` works the same as `:py3file`. 
 
 							*:pyxdo*
-`:pyxdo` works similar to `:pydo`.
+`:pyxdo` works the same as `:py3do`.
 
 							*has-pythonx*
-To check if pyx* functions and commands are available: >
+To check if `pyx*` functions and commands are available: >
 	if has('pythonx')
 	  echo 'pyx* commands are available. (Python ' . &pyx . ')'
-	endif
-
-If you prefer Python 2 and want to fallback to Python 3, set 'pyxversion'
-explicitly in your |.vimrc|.  Example: >
-	if has('python')
-	  set pyx=2
-	elseif has('python3')
-	  set pyx=3
 	endif
 
 ==============================================================================

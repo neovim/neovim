@@ -69,6 +69,7 @@ func Test_vim_function()
 endfunc
 
 func Test_skipped_python3_command_does_not_affect_pyxversion()
+  throw 'skipped: Nvim hardcodes pyxversion=3'
   set pyxversion=0
   if 0
     python3 import vim
