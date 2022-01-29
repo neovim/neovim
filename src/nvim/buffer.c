@@ -1899,10 +1899,8 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
   clear_string_option(&buf->b_p_vsts);
-  xfree(buf->b_p_vsts_nopaste);
-  buf->b_p_vsts_nopaste = NULL;
-  xfree(buf->b_p_vsts_array);
-  buf->b_p_vsts_array = NULL;
+  XFREE_CLEAR(buf->b_p_vsts_nopaste);
+  XFREE_CLEAR(buf->b_p_vsts_array);
   clear_string_option(&buf->b_p_vts);
   XFREE_CLEAR(buf->b_p_vts_array);
   clear_string_option(&buf->b_p_keymap);
