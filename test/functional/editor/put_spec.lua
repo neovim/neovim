@@ -507,7 +507,9 @@ describe('put command', function()
       return function(exception_table, after_redo)
         test_expect(exception_table, after_redo)
         if selection_string then
-          eq(selection_string, getreg('"'))
+          if not conversion_table.put_backwards then
+            eq(selection_string, getreg('"'))
+          end
         else
           eq('test_string"', getreg('"'))
         end
@@ -714,7 +716,9 @@ describe('put command', function()
             expect_base, conversion_table)
           return function(exception_table, after_redo)
             test_expect(exception_table, after_redo)
-            eq('Line of words 1\n', getreg('"'))
+            if not conversion_table.put_backwards then
+              eq('Line of words 1\n', getreg('"'))
+            end
           end
         end
         local base_expect_string = [[
@@ -748,7 +752,9 @@ describe('put command', function()
           end, expect_base, conversion_table)
         return function(e,c)
           test_expect(e,c)
-          eq('Lin\nLin', getreg('"'))
+          if not conversion_table.put_backwards then
+            eq('Lin\nLin', getreg('"'))
+          end
         end
       end
 

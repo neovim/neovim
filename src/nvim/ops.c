@@ -7268,18 +7268,15 @@ const yankreg_T *op_reg_get(const char name)
 
 /// Set the previous yank register
 ///
-/// @param[in]  name  Register name.
+/// @param[in]  idx  Register index.
 ///
 /// @return true on success, false on failure.
-bool op_reg_set_previous(const char name)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+bool op_reg_set_previous(int idx)
 {
-  int i = op_reg_index(name);
-  if (i == -1) {
+  if (idx < 0 || idx >= NUM_REGISTERS) {
     return false;
   }
-
-  y_previous = &y_regs[i];
+  y_previous = &y_regs[idx];
   return true;
 }
 

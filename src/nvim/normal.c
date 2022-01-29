@@ -7523,6 +7523,8 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // 'virtualedit' and past the end of the line, we use the 'c' operator in
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
+        bool save_unnamed = cap->cmdchar == 'P';
+        int old_unnamed_idx = get_unname_register();
         // Now delete the selected text. Avoid messages here.
         cap->cmdchar = 'd';
         cap->nchar = NUL;
@@ -7532,6 +7534,11 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
         do_pending_operator(cap, 0, false);
         empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
         msg_silent--;
+
+        if (save_unnamed) {
+          // Note: Discard the result
+          (void)op_reg_set_previous(old_unnamed_idx);
+        }
 
         // delete PUT_LINE_BACKWARD;
         cap->oap->regname = regname;
