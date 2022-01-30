@@ -227,7 +227,7 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
         && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
         && ASCII_ISUPPER(key->code.codepoint)) {
       assert(len <= 62);
-      // Make remove for the S-
+      // Make room for the S-
       memmove(buf + 3, buf + 1, len - 1);
       buf[1] = 'S';
       buf[2] = '-';
