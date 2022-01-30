@@ -465,8 +465,8 @@ flag when defining the function, it is not relevant when executing it. >
    :set cpo-=C
 <
 					*line-continuation-comment*
-To add a comment in between the lines start with '\" '.  Notice the space
-after the double quote.  Example: >
+To add a comment in between the lines start with '"\ '.  Notice the space
+after the backslash.  Example: >
 	let array = [
 		"\ first entry comment
 		\ 'first',

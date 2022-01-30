@@ -22,8 +22,10 @@ acos({expr})			Float	arc cosine of {expr}
 add({object}, {item})		List/Blob   append {item} to {object}
 and({expr}, {expr})		Number	bitwise AND
 api_info()			Dict	api metadata
-append({lnum}, {string})	Number	append {string} below line {lnum}
-append({lnum}, {list})		Number	append lines {list} below line {lnum}
+append({lnum}, {text})		Number	append {text} below line {lnum}
+appendbufline({expr}, {lnum}, {text})
+				Number	append {text} below line {lnum}
+					in buffer {expr}
 argc([{winid}])			Number	number of files in the argument list
 argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
@@ -52,7 +54,7 @@ assert_notmatch({pat}, {text} [, {msg}])
 assert_report({msg})		Number	report a test failure
 assert_true({actual} [, {msg}])	Number	assert {actual} is true
 atan({expr})			Float	arc tangent of {expr}
-atan2({expr}, {expr})		Float	arc tangent of {expr1} / {expr2}
+atan2({expr1}, {expr2})		Float	arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
@@ -72,9 +74,9 @@ call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
-chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
+chanclose({id} [, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
-char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
+char2nr({expr} [, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charcol({expr})			Number	column number of cursor or mark
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
@@ -91,8 +93,8 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 copy({expr})			any	make a shallow copy of {expr}
 cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
-count({list}, {expr} [, {ic} [, {start}]])
-				Number	count how many {expr} are in {list}
+count({comp}, {expr} [, {ic} [, {start}]])
+				Number	count how many {expr} are in {comp}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 ctxget([{index}])		Dict	return the |context| dict at {index}
@@ -100,7 +102,7 @@ ctxpop()			none	pop and restore |context| from the
 					|context-stack|
 ctxpush([{types}])		none	push the current |context| to the
 					|context-stack|
-ctxset({context}[, {index}])	none	set |context| at {index}
+ctxset({context} [, {index}])	none	set |context| at {index}
 ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
@@ -108,7 +110,7 @@ cursor({list})			Number	move cursor to position in {list}
 debugbreak({pid})		Number	interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
-deletebufline({buf}, {first}[, {last}])
+deletebufline({buf}, {first} [, {last}])
 				Number	delete lines from buffer {buf}
 dictwatcheradd({dict}, {pattern}, {callback})
 				Start watching a dictionary
@@ -212,7 +214,7 @@ gettabvar({nr}, {varname} [, {def}])
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
 gettagstack([{nr}])		Dict	get the tag stack of window {nr}
-getwininfo([{winid}])		List	list of windows
+getwininfo([{winid}])		List	list of info about each window
 getwinpos([{timeout}])		List	X and Y coord in pixels of the Vim window
 getwinposx()			Number	X coord in pixels of Vim window
 getwinposy()			Number	Y coord in pixels of Vim window
@@ -262,9 +264,9 @@ items({dict})			List	key-value pairs in {dict}
 jobpid({id})			Number	Returns pid of a job.
 jobresize({id}, {width}, {height})
 				Number	Resize pseudo terminal window of a job
-jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
+jobstart({cmd} [, {opts}])	Number	Spawns {cmd} as a job
 jobstop({id})			Number	Stops a job
-jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
+jobwait({ids} [, {timeout}])	Number	Wait for a set of jobs
 join({list} [, {sep}])		String	join {list} items into one String
 json_decode({expr})		any	Convert {expr} from JSON
 json_encode({expr})		String	Convert {expr} to JSON
@@ -279,32 +281,32 @@ list2str({list} [, {utf8}])	String	turn numbers in {list} into a String
 localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
-luaeval({expr}[, {expr}])	any	evaluate Lua expression
+luaeval({expr} [, {expr}])	any	evaluate |Lua| expression
 map({expr1}, {expr2})		List/Dict  change each item in {expr1} to {expr}
-maparg({name}[, {mode} [, {abbr} [, {dict}]]])
+maparg({name} [, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
 					rhs of mapping {name} in mode {mode}
-mapcheck({name}[, {mode} [, {abbr}]])
+mapcheck({name} [, {mode} [, {abbr}]])
 				String	check for mappings matching {name}
-match({expr}, {pat}[, {start}[, {count}]])
+match({expr}, {pat} [, {start} [, {count}]])
 				Number	position where {pat} matches in {expr}
-matchadd({group}, {pattern}[, {priority}[, {id}]])
+matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 				Number	highlight {pattern} with {group}
-matchaddpos({group}, {list}[, {priority}[, {id}]])
+matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 				Number	highlight positions with {group}
 matcharg({nr})			List	arguments of |:match|
 matchdelete({id} [, {win}])	Number	delete match identified by {id}
-matchend({expr}, {pat}[, {start}[, {count}]])
+matchend({expr}, {pat} [, {start} [, {count}]])
 				Number	position where {pat} ends in {expr}
 matchfuzzy({list}, {str} [, {dict}])
 				List	fuzzy match {str} in {list}
 matchfuzzypos({list}, {str} [, {dict}])
 				List	fuzzy match {str} in {list}
-matchlist({expr}, {pat}[, {start}[, {count}]])
+matchlist({expr}, {pat} [, {start} [, {count}]])
 				List	match and submatches of {pat} in {expr}
-matchstr({expr}, {pat}[, {start}[, {count}]])
+matchstr({expr}, {pat} [, {start} [, {count}]])
 				String	{count}'th match of {pat} in {expr}
-matchstrpos({expr}, {pat}[, {start}[, {count}]])
+matchstrpos({expr}, {pat} [, {start} [, {count}]])
 				List	{count}'th match of {pat} in {expr}
 max({expr})			Number	maximum value of items in {expr}
 menu_get({path} [, {modes}])	List	description of |menus| matched by {path}
@@ -315,7 +317,7 @@ mode([expr])			String	current editing mode
 msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
 msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
-nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
+nr2char({expr} [, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number	bitwise OR
 pathshorten({expr} [, {len}])	String	shorten directory names in a path
@@ -365,9 +367,9 @@ resolve({filename})		String	get filename a shortcut points to
 reverse({list})			List	reverse {list} in-place
 round({expr})			Float	round off {expr}
 rubyeval({expr})		any	evaluate |Ruby| expression
-rpcnotify({channel}, {event}[, {args}...])
+rpcnotify({channel}, {event} [, {args}...])
 				Sends an |RPC| notification to {channel}
-rpcrequest({channel}, {method}[, {args}...])
+rpcrequest({channel}, {method} [, {args}...])
 				Sends an |RPC| request to {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
@@ -390,8 +392,8 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 server2client({clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
-setbufline( {expr}, {lnum}, {line})
-				Number	set line {lnum} to {line} in buffer
+setbufline({expr}, {lnum}, {text})
+				Number	set line {lnum} to {text} in buffer
 					{expr}
 setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
 setcharpos({expr}, {list})	Number	set the {expr} position to {list}
@@ -410,7 +412,7 @@ setpos({expr}, {list})		Number	set the {expr} position to {list}
 setqflist({list} [, {action}])	Number	modify quickfix list using {list}
 setqflist({list}, {action}, {what})
 				Number	modify specific quickfix list props
-setreg({n}, {v}[, {opt}])	Number	set register to value and type
+setreg({n}, {v} [, {opt}])	Number	set register to value and type
 settabvar({nr}, {varname}, {val})	set {varname} in tab page {nr} to {val}
 settabwinvar({tabnr}, {winnr}, {varname}, {val})    set {varname} in window
 					{winnr} in tab page {tabnr} to {val}
@@ -495,9 +497,9 @@ system({cmd} [, {input}])	String	output of shell command/filter {cmd}
 systemlist({cmd} [, {input}])	List	output of shell command/filter {cmd}
 tabpagebuflist([{arg}])		List	list of buffer numbers in tab page
 tabpagenr([{arg}])		Number	number of current or last tab page
-tabpagewinnr({tabarg}[, {arg}])
+tabpagewinnr({tabarg} [, {arg}])
 				Number	number of current window in tab page
-taglist({expr}[, {filename}])	List	list of tags matching {expr}
+taglist({expr} [, {filename}])	List	list of tags matching {expr}
 tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
@@ -524,7 +526,7 @@ uniq({list} [, {func} [, {dict}]])
 values({dict})			List	values in {dict}
 virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
-wait({timeout}, {condition}[, {interval}])
+wait({timeout}, {condition} [, {interval}])
 				Number	Wait until {condition} is satisfied
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_execute({id}, {command} [, {silent}])
@@ -999,7 +1001,7 @@ changenr()						*changenr()*
 		redo it is the number of the redone change.  After undo it is
 		one less than the number of the undone change.
 
-chanclose({id}[, {stream}])				*chanclose()*
+chanclose({id} [, {stream}])				*chanclose()*
 		Close a channel or a specific stream associated with it.
 		For a job, {stream} can be one of "stdin", "stdout",
 		"stderr" or "rpc" (closes stdin/stdout for a job started
@@ -1443,7 +1445,7 @@ ctxpush([{types}])					*ctxpush()*
 		which |context-types| to include in the pushed context.
 		Otherwise, all context types are included.
 
-ctxset({context}[, {index}])				*ctxset()*
+ctxset({context} [, {index}])				*ctxset()*
 		Sets the |context| at {index} from the top of the
 		|context-stack| to that represented by {context}.
 		{context} is a Dictionary with context data (|context-dict|).
@@ -1487,7 +1489,7 @@ cursor({list})
 		Can also be used as a |method|: >
 			GetCursorPos()->cursor()
 
-deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
+deepcopy({expr} [, {noref}])				*deepcopy()* *E698*
 		Make a copy of {expr}.  For Numbers and Strings this isn't
 		different from using {expr} directly.
 		When {expr} is a |List| a full copy is created.  This means
@@ -1530,7 +1532,7 @@ delete({fname} [, {flags}])				*delete()*
 		Can also be used as a |method|: >
 			GetName()->delete()
 
-deletebufline({buf}, {first}[, {last}])		*deletebufline()*
+deletebufline({buf}, {first} [, {last}])		*deletebufline()*
 		Delete lines {first} to {last} (inclusive) from buffer {buf}.
 		If {last} is omitted then delete line {first} only.
 		On success 0 is returned, on failure 1 is returned.
@@ -1540,7 +1542,7 @@ deletebufline({buf}, {first}[, {last}])		*deletebufline()*
 
 		For the use of {buf}, see |bufname()| above.
 
-		{first} and {last} are used like with |setline()|. Note that
+		{first} and {last} are used like with |getline()|. Note that
 		when using |line()| this refers to the current buffer. Use "$"
 		to refer to the last line in buffer {buf}.
 
@@ -2865,7 +2867,7 @@ getcursorcharpos([{winid}])
 		Can also be used as a |method|: >
 			GetWinid()->getcursorcharpos()
 
-getcwd([{winnr}[, {tabnr}]])				*getcwd()*
+getcwd([{winnr} [, {tabnr}]])				*getcwd()*
 		With no arguments, returns the name of the effective
 		|current-directory|. With {winnr} or {tabnr} the working
 		directory of that scope is returned, and 'autochdir' is
@@ -3022,7 +3024,7 @@ getline({lnum} [, {end}])
 
 <		To get lines from another buffer see |getbufline()|
 
-getloclist({nr},[, {what}])				*getloclist()*
+getloclist({nr} [, {what}])				*getloclist()*
 		Returns a |List| with all the entries in the location list for
 		window {nr}.  {nr} can be the window number or the |window-ID|.
 		When {nr} is zero the current window is used.
@@ -3649,7 +3651,7 @@ has_key({dict}, {key})					*has_key()*
 		Can also be used as a |method|: >
 			mydict->has_key(key)
 
-haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
+haslocaldir([{winnr} [, {tabnr}]])			*haslocaldir()*
 		The result is a Number, which is 1 when the window has set a
 		local path via |:lcd| or when {winnr} is -1 and the tabpage
 		has set a local path via |:tcd|, otherwise 0.
@@ -4151,7 +4153,7 @@ jobresize({job}, {width}, {height})			*jobresize()*
 		columns and {height} rows.
 		Fails if the job was not started with `"pty":v:true`.
 
-jobstart({cmd}[, {opts}])				*jobstart()*
+jobstart({cmd} [, {opts}])				*jobstart()*
 		Spawns {cmd} as a job.
 		If {cmd} is a List it runs directly (no 'shell').
 		If {cmd} is a String it runs in the 'shell', like this: >
@@ -4238,7 +4240,7 @@ jobstop({id})						*jobstop()*
 		Returns 1 for valid job id, 0 for invalid id, including jobs have
 		exited or stopped.
 
-jobwait({jobs}[, {timeout}])				*jobwait()*
+jobwait({jobs} [, {timeout}])				*jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
 
 		{jobs} is a List of |job-id|s to wait for.
@@ -4495,7 +4497,7 @@ log10({expr})						*log10()*
 		Can also be used as a |method|: >
 			Compute()->log10()
 
-luaeval({expr}[, {expr}])
+luaeval({expr} [, {expr}])
 		Evaluate Lua expression {expr} and return its result converted
 		to Vim data structures. See |lua-eval| for more details.
 
@@ -4715,7 +4717,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 			GetList()->match('word')
 <
 			*matchadd()* *E798* *E799* *E801* *E957*
-matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
+matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
 		identification number (ID), which can be used to delete the
@@ -6028,19 +6030,19 @@ round({expr})							*round()*
 		Can also be used as a |method|: >
 			Compute()->round()
 
-rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
+rpcnotify({channel}, {event} [, {args}...])			*rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
 		If {channel} is 0, the event is broadcast to all channels.
 		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
 
-rpcrequest({channel}, {method}[, {args}...])			*rpcrequest()*
+rpcrequest({channel}, {method} [, {args}...])			*rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 
-rpcstart({prog}[, {argv}])					*rpcstart()*
+rpcstart({prog} [, {argv}])					*rpcstart()*
 		Deprecated. Replace  >
 			:let id = rpcstart('prog', ['arg1', 'arg2'])
 <		with >
@@ -7808,11 +7810,11 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
 		swapfile {fname}. The available fields are:
-			version VIM version
+			version Vim version
 			user	user name
 			host	host name
 			fname	original file name
-			pid	PID of the VIM process that created the swap
+			pid	PID of the Vim process that created the swap
 				file
 			mtime	last modification time in seconds
 			inode	Optional: INODE number of the file
@@ -8123,7 +8125,7 @@ tempname()					*tempname()* *temp-file-name*
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
 
-termopen({cmd}[, {opts}])			*termopen()*
+termopen({cmd} [, {opts}])			*termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected
 		to the current buffer.  {cmd} is the same as the one passed to
 		|jobstart()|.  This function fails if the current buffer is
@@ -8482,7 +8484,7 @@ visualmode([{expr}])						*visualmode()*
 		a non-empty String, then the Visual mode will be cleared and
 		the old value is returned.  See |non-zero-arg|.
 
-wait({timeout}, {condition}[, {interval}])			*wait()*
+wait({timeout}, {condition} [, {interval}])			*wait()*
 		Waits until {condition} evaluates to |TRUE|, where {condition}
 		is a |Funcref| or |string| containing an expression.
 

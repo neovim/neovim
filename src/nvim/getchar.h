@@ -55,7 +55,7 @@ struct map_arguments {
 
   char_u *orig_rhs;  /// The original text of the {rhs}.
   size_t orig_rhs_len;
-  char *desc;  /// map escription
+  char *desc;  /// map description
 };
 typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, \
