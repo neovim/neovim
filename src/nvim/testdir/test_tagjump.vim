@@ -1067,7 +1067,7 @@ func Test_tselect_listing()
   2 FS  v    first             Xfoo
                typeref:typename:char 
                2
-Type number and <Enter> (empty cancels): 
+Type number and <Enter> (q or empty cancels): 
 [DATA]
   call assert_equal(expected, l)
 
