@@ -483,8 +483,14 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
       int len = 0;
 
       if (p > search_ctx->ffsc_fix_path) {
+        // do not add '..' to the path and start upwards searching
         len = (int)(p - search_ctx->ffsc_fix_path) - 1;
-        STRNCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, len);
+        if ((len >= 2 && STRNCMP(search_ctx->ffsc_fix_path, "..", 2) == 0)
+            && (len == 2 || search_ctx->ffsc_fix_path[2] == PATHSEP)) {
+          xfree(buf);
+          goto error_return;
+        }
+        STRLCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, eb_len + (size_t)len + 1);
         add_pathsep((char *)ff_expand_buffer);
       } else {
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
