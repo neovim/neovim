@@ -2319,7 +2319,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     maxwidth = (int)opts->maxwidth.data.integer;
   } else {
-    maxwidth = use_tabline ? Columns : wp->w_width;
+    maxwidth = (use_tabline || global_stl_height() > 0) ? Columns : wp->w_width;
   }
 
   char buf[MAXPATHL];

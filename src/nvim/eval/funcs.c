@@ -3886,7 +3886,7 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   wp = mouse_find_win(&grid, &row, &col);
   if (wp != NULL) {
-    int height = wp->w_height + wp->w_status_height;
+    int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
     // The height is adjusted by 1 when there is a bottom border. This is not
     // necessary for a top border since `row` starts at -1 in that case.
     if (row < height + wp->w_border_adj[2]) {

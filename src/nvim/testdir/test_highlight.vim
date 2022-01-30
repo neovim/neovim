@@ -146,7 +146,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^  ^^^^^^^^^   no highlight
   "      ^             'Search' highlight
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   let attrs0 = ScreenAttrs(1, 15)[0]
   call assert_equal(repeat([attrs0[0]], 4), attrs0[0:3])
   call assert_equal(repeat([attrs0[0]], 9), attrs0[6:14])
@@ -160,7 +160,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^              underline
   "      ^             'Search' highlight with underline
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   "        ^^^^^^^^^   no highlight
 
   " underline

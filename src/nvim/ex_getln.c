@@ -632,7 +632,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
 
   validate_cursor();
   // May redraw the status line to show the cursor position.
-  if (p_ru && curwin->w_status_height > 0) {
+  if (p_ru && (curwin->w_status_height > 0 || global_stl_height() > 0)) {
     curwin->w_redr_status = true;
   }
 
@@ -3631,7 +3631,7 @@ void compute_cmdrow(void)
   } else {
     win_T *wp = lastwin_nofloating();
     cmdline_row = wp->w_winrow + wp->w_height
-                  + wp->w_status_height;
+                  + wp->w_hsep_height + wp->w_status_height + global_stl_height();
   }
   lines_left = cmdline_row;
 }
