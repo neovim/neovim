@@ -641,7 +641,7 @@ func Test_tag_envvar()
 endfunc
 
 " Test for :ptag
-func Test_ptag()
+func Test_tag_preview()
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
         \ "second\tXfile1\t2",
         \ "third\tXfile1\t3",],
@@ -655,11 +655,19 @@ func Test_ptag()
   call assert_equal(2, winnr('$'))
   call assert_equal(1, getwinvar(1, '&previewwindow'))
   call assert_equal(0, getwinvar(2, '&previewwindow'))
-  wincmd w
+  wincmd P
   call assert_equal(3, line('.'))
 
   " jump to the tag again
+  wincmd w
   ptag third
+  wincmd P
+  call assert_equal(3, line('.'))
+
+  " jump to the newer tag
+  wincmd w
+  ptag
+  wincmd P
   call assert_equal(3, line('.'))
 
   " close the preview window
@@ -829,8 +837,8 @@ func Test_tag_last_search_pat()
   %bwipe
 endfunc
 
-" Test for jumping to a tag when the tag stack is full
-func Test_tag_stack_full()
+" Tag stack tests
+func Test_tag_stack()
   let l = []
   for i in range(10, 31)
     let l += ["var" .. i .. "\tXfoo\t/^int var" .. i .. ";$/"]
@@ -844,6 +852,7 @@ func Test_tag_stack_full()
   endfor
   call writefile(l, 'Xfoo')
 
+  " Jump to a tag when the tag stack is full. Oldest entry should be removed.
   enew
   for i in range(10, 30)
     exe "tag var" .. i
@@ -856,8 +865,14 @@ func Test_tag_stack_full()
   call assert_equal('var12', l.items[0].tagname)
   call assert_equal('var31', l.items[19].tagname)
 
-  " Jump from the top of the stack
+  " Use tnext with a single match
+  call assert_fails('tnext', 'E427:')
+
+  " Jump to newest entry from the top of the stack
   call assert_fails('tag', 'E556:')
+
+  " Pop with zero count from the top of the stack
+  call assert_fails('0pop', 'E556:')
 
   " Pop from an unsaved buffer
   enew!
@@ -868,6 +883,13 @@ func Test_tag_stack_full()
 
   " Pop all the entries in the tag stack
   call assert_fails('30pop', 'E555:')
+
+  " Pop with a count when already at the bottom of the stack
+  call assert_fails('exe "normal 4\<C-T>"', 'E555:')
+  call assert_equal(1, gettagstack().curidx)
+
+  " Jump to newest entry from the bottom of the stack with zero count
+  call assert_fails('0tag', 'E555:')
 
   " Pop the tag stack when it is empty
   call settagstack(1, {'items' : []})
@@ -895,6 +917,7 @@ func Test_tag_multimatch()
   [CODE]
   call writefile(code, 'Xfoo')
 
+  call settagstack(1, {'items' : []})
   tag first
   tlast
   call assert_equal(3, line('.'))
@@ -902,6 +925,151 @@ func Test_tag_multimatch()
   tfirst
   call assert_equal(1, line('.'))
   call assert_fails('tprev', 'E425:')
+
+  tlast
+  call feedkeys("5\<CR>", 't')
+  tselect first
+  call assert_equal(2, gettagstack().curidx)
+
+  set ignorecase
+  tag FIRST
+  tnext
+  call assert_equal(2, line('.'))
+  set ignorecase&
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for previewing multiple matching tags
+func Test_preview_tag_multimatch()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo\t1",
+        \ "first\tXfoo\t2",
+        \ "first\tXfoo\t3"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int first() {}
+    int first() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  enew | only
+  ptag first
+  ptlast
+  wincmd P
+  call assert_equal(3, line('.'))
+  wincmd w
+  call assert_fails('ptnext', 'E428:')
+  ptprev
+  wincmd P
+  call assert_equal(2, line('.'))
+  wincmd w
+  ptfirst
+  wincmd P
+  call assert_equal(1, line('.'))
+  wincmd w
+  call assert_fails('ptprev', 'E425:')
+  ptnext
+  wincmd P
+  call assert_equal(2, line('.'))
+  wincmd w
+  ptlast
+  call feedkeys("5\<CR>", 't')
+  ptselect first
+  wincmd P
+  call assert_equal(3, line('.'))
+
+  pclose
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for jumping to multiple matching tags across multiple :tags commands
+func Test_tnext_multimatch()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo1\t1",
+        \ "first\tXfoo2\t1",
+        \ "first\tXfoo3\t1"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+  [CODE]
+  call writefile(code, 'Xfoo1')
+  call writefile(code, 'Xfoo2')
+  call writefile(code, 'Xfoo3')
+
+  tag first
+  tag first
+  pop
+  tnext
+  tnext
+  call assert_fails('tnext', 'E428:')
+
+  call delete('Xtags')
+  call delete('Xfoo1')
+  call delete('Xfoo2')
+  call delete('Xfoo3')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for jumping to multiple matching tags in non-existing files
+func Test_multimatch_non_existing_files()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo1\t1",
+        \ "first\tXfoo2\t1",
+        \ "first\tXfoo3\t1"],
+        \ 'Xtags')
+  set tags=Xtags
+
+  call settagstack(1, {'items' : []})
+  call assert_fails('tag first', 'E429:')
+  call assert_equal(3, gettagstack().items[0].matchnr)
+
+  call delete('Xtags')
+  set tags&
+  %bwipe
+endfunc
+
+func Test_tselect_listing()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo\t1" .. ';"' .. "\tv\ttyperef:typename:int\tfile:",
+        \ "first\tXfoo\t2" .. ';"' .. "\tv\ttyperef:typename:char\tfile:"],
+        \ 'Xtags')
+  set tags=Xtags
+
+  let code =<< trim [CODE]
+    static int first;
+    static char first;
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  call feedkeys("\<CR>", "t")
+  let l = split(execute("tselect first"), "\n")
+  let expected =<< [DATA]
+  # pri kind tag               file
+  1 FS  v    first             Xfoo
+               typeref:typename:int 
+               1
+  2 FS  v    first             Xfoo
+               typeref:typename:char 
+               2
+Type number and <Enter> (q or empty cancels): 
+[DATA]
+  call assert_equal(expected, l)
 
   call delete('Xtags')
   call delete('Xfoo')
