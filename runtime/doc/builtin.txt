@@ -1723,6 +1723,19 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 		For checking if a file exists use |filereadable()|.
 
 		The {expr} argument is a string, which contains one of these:
+			varname		internal variable (see
+			dict.key	|internal-variables|).  Also works
+			list[i]		for |curly-braces-names|, |Dictionary|
+					entries, |List| items, etc.
+					Beware that evaluating an index may
+					cause an error message for an invalid
+					expression.  E.g.: >
+					   :let l = [1, 2, 3]
+					   :echo exists("l[5]")
+<					   0 >
+					   :echo exists("l[xx]")
+<					   E121: Undefined variable: xx
+					   0
 			&option-name	Vim option (only checks if it exists,
 					not if it really works)
 			+option-name	Vim option that works.
@@ -1733,19 +1746,6 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					or user defined function (see
 					|user-function|). Also works for a
 					variable that is a Funcref.
-			varname		internal variable (see
-					|internal-variables|).  Also works
-					for |curly-braces-names|, |Dictionary|
-					entries, |List| items, etc.  Beware
-					that evaluating an index may cause an
-					error message for an invalid
-					expression.  E.g.: >
-					   :let l = [1, 2, 3]
-					   :echo exists("l[5]")
-<					   0 >
-					   :echo exists("l[xx]")
-<					   E121: Undefined variable: xx
-					   0
 			:cmdname	Ex command: built-in command, user
 					command or command modifier |:command|.
 					Returns:
