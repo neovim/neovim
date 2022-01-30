@@ -78,7 +78,7 @@ end
 ---
 --- Example:
 --- <pre>
---- vim.ui.input({ prompt = 'Select value for shiftwidth: ' }, function(input)
+--- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
 ---     vim.o.shiftwidth = tonumber(input)
 --- end)
 --- </pre>
