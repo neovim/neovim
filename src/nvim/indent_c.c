@@ -152,11 +152,11 @@ static char_u *skip_string(char_u *p)
    */
   for (;; p++) {
     if (p[0] == '\'') {                     // 'c' or '\n' or '\000'
-      if (!p[1]) {                          // ' at end of line
+      if (p[1] == NUL) {                    // ' at end of line
         break;
       }
       i = 2;
-      if (p[1] == '\\') {                   // '\n' or '\000'
+      if (p[1] == '\\' && p[2] != NUL) {    // '\n' or '\000'
         i++;
         while (ascii_isdigit(p[i - 1])) {   // '\000'
           i++;
@@ -541,6 +541,11 @@ static bool cin_is_cpp_namespace(char_u *s)
   bool has_name_start = false;
 
   s = cin_skipcomment(s);
+
+  if (STRNCMP(s, "inline", 6) == 0 && (s[6] == NUL || !vim_iswordc(s[6]))) {
+    s = cin_skipcomment(skipwhite(s + 6));
+  }
+
   if (STRNCMP(s, "namespace", 9) == 0 && (s[9] == NUL || !vim_iswordc(s[9]))) {
     p = cin_skipcomment(skipwhite(s + 9));
     while (*p != NUL) {
@@ -1411,8 +1416,8 @@ static int cin_skip2pos(pos_T *trypos)
 static pos_T *find_start_brace(void)  // XXX
 {
   pos_T cursor_save;
-  pos_T       *trypos;
-  pos_T       *pos;
+  pos_T *trypos;
+  pos_T *pos;
   static pos_T pos_copy;
 
   cursor_save = curwin->w_cursor;
@@ -1427,7 +1432,7 @@ static pos_T *find_start_brace(void)  // XXX
       break;
     }
     if (pos != NULL) {
-      curwin->w_cursor.lnum = pos->lnum;
+      curwin->w_cursor = *pos;
     }
   }
   curwin->w_cursor = cursor_save;
