@@ -1758,7 +1758,9 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
       ea.regname = *ea.arg++;
       // for '=' register: accept the rest of the line as an expression
       if (ea.arg[-1] == '=' && ea.arg[0] != NUL) {
-        set_expr_line(vim_strsave(ea.arg));
+        if (!ea.skip) {
+          set_expr_line(vim_strsave(ea.arg));
+        }
         ea.arg += STRLEN(ea.arg);
       }
       ea.arg = skipwhite(ea.arg);
