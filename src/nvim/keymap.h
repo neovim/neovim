@@ -122,8 +122,6 @@
 //
 // Entries must be in the range 0x02-0x7f (see comment at K_SPECIAL).
 enum key_extra {
-  KE_NAME = 3,                 // name of this terminal entry
-
   KE_S_UP = 4,              // shift-up
   KE_S_DOWN = 5,             // shift-down
 
