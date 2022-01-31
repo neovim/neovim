@@ -952,11 +952,13 @@ int copy_indent(int size, char_u *src)
 ///
 /// "second_line_indent": indent for after ^^D in Insert mode or if flag
 ///                       OPENLINE_COM_LIST
+/// "did_do_comment" is set to true when intentionally putting the comment
+/// leader in fromt of the new line.
 ///
 /// @param dir  FORWARD or BACKWARD
 ///
 /// @return true on success, false on failure
-int open_line(int dir, int flags, int second_line_indent)
+int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 {
   char_u *next_line = NULL;       // copy of the next line
   char_u *p_extra = NULL;         // what goes to next line
@@ -969,6 +971,7 @@ int open_line(int dir, int flags, int second_line_indent)
   bool retval = false;            // return value
   int extra_len = 0;              // length of p_extra string
   int lead_len;                   // length of comment leader
+  int comment_start = 0;          // start index of the comment leader
   char_u *lead_flags;             // position in 'comments' for comment leader
   char_u *leader = NULL;          // copy of comment leader
   char_u *allocated = NULL;       // allocated memory
@@ -977,6 +980,7 @@ int open_line(int dir, int flags, int second_line_indent)
   pos_T *pos;
   bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin
                 && *curbuf->b_p_inde == NUL);
+  bool do_cindent;
   bool no_si = false;             // reset did_si afterwards
   int first_char = NUL;           // init for GCC
   int vreplace_mode;
@@ -1189,11 +1193,30 @@ int open_line(int dir, int flags, int second_line_indent)
     did_ai = true;
   }
 
+  // May do indenting after opening a new line.
+  do_cindent = !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL)
+               && in_cinkeys(dir == FORWARD ? KEY_OPEN_FORW : KEY_OPEN_BACK,
+                             ' ', linewhite(curwin->w_cursor.lnum));
+
   // Find out if the current line starts with a comment leader.
   // This may then be inserted in front of the new line.
   end_comment_pending = NUL;
-  if (flags & OPENLINE_DO_COM) {
+  if (flags & OPENLINE_DO_COM && dir == FORWARD) {
+    // Check for a line comment after code.
     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, true);
+    if (lead_len == 0 && do_cindent) {
+      comment_start = check_linecomment(saved_line);
+      if (comment_start != MAXCOL) {
+        lead_len = get_leader_len(saved_line + comment_start,
+                                  &lead_flags, false, true);
+        if (lead_len != 0) {
+          lead_len += comment_start;
+          if (did_do_comment != NULL) {
+            *did_do_comment = true;
+          }
+        }
+      }
+    }
   } else {
     lead_len = 0;
   }
@@ -1348,6 +1371,13 @@ int open_line(int dir, int flags, int second_line_indent)
       allocated = leader;  // remember to free it later
 
       STRLCPY(leader, saved_line, lead_len + 1);
+
+      // TODO(vim): handle multi-byte and double width chars
+      for (int li = 0; li < comment_start; li++) {
+        if (!ascii_iswhite(leader[li])) {
+          leader[li] = ' ';
+        }
+      }
 
       // Replace leader with lead_repl, right or left adjusted
       if (lead_repl != NULL) {
@@ -1758,13 +1788,7 @@ int open_line(int dir, int flags, int second_line_indent)
     ai_col = (colnr_T)getwhitecols_curline();
   }
   // May do indenting after opening a new line.
-  if (!p_paste
-      && (curbuf->b_p_cin
-          || *curbuf->b_p_inde != NUL
-          )
-      && in_cinkeys(dir == FORWARD
-                    ? KEY_OPEN_FORW
-                    : KEY_OPEN_BACK, ' ', linewhite(curwin->w_cursor.lnum))) {
+  if (do_cindent) {
     do_c_expr_indent();
     ai_col = (colnr_T)getwhitecols_curline();
   }

@@ -26,6 +26,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
+#include "nvim/indent_c.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -2313,12 +2314,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   return (pos_T *)NULL;         // never found it
 }
 
-/*
- * Check if line[] contains a / / comment.
- * Return MAXCOL if not, otherwise return the column.
- * TODO: skip strings.
- */
-static int check_linecomment(const char_u *line)
+/// Check if line[] contains a / / comment.
+/// @returns MAXCOL if not, otherwise return the column.
+int check_linecomment(const char_u *line)
 {
   const char_u *p = line;  // scan from start
   // skip Lispish one-line comments
@@ -2338,7 +2336,8 @@ static int check_linecomment(const char_u *line)
             in_str = true;
           }
         } else if (!in_str && ((p - line) < 2
-                               || (*(p - 1) != '\\' && *(p - 2) != '#'))) {
+                               || (*(p - 1) != '\\' && *(p - 2) != '#'))
+                   && !is_pos_in_string(line, (colnr_T)(p - line))) {
           break;                // found!
         }
         p++;
@@ -2348,9 +2347,11 @@ static int check_linecomment(const char_u *line)
     }
   } else {
     while ((p = vim_strchr(p, '/')) != NULL) {
-      // accept a double /, unless it's preceded with * and followed by *,
-      // because * / / * is an end and start of a C comment
-      if (p[1] == '/' && (p == line || p[-1] != '*' || p[2] != '*')) {
+      // Accept a double /, unless it's preceded with * and followed by *,
+      // because * / / * is an end and start of a C comment.
+      // Only accept the position if it is not inside a string.
+      if (p[1] == '/' && (p == line || p[-1] != '*' || p[2] != '*')
+          && !is_pos_in_string(line, (colnr_T)(p - line))) {
         break;
       }
       ++p;

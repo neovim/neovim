@@ -1707,9 +1707,9 @@ func Test_cindent_1()
   #endif
 
   int y;		// comment
-  // comment
+			// comment
 
-  // comment
+			// comment
 
   {
   	Constructor(int a,

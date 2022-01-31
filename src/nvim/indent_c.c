@@ -41,9 +41,7 @@ static pos_T *ind_find_start_comment(void)  // XXX
 
 pos_T *find_start_comment(int ind_maxcomment)  // XXX
 {
-  pos_T       *pos;
-  char_u      *line;
-  char_u      *p;
+  pos_T *pos;
   int64_t cur_maxcomment = ind_maxcomment;
 
   for (;; ) {
@@ -55,11 +53,9 @@ pos_T *find_start_comment(int ind_maxcomment)  // XXX
      * Check if the comment start we found is inside a string.
      * If it is then restrict the search to below this line and try again.
      */
-    line = ml_get(pos->lnum);
-    for (p = line; *p && (colnr_T)(p - line) < pos->col; ++p)
-      p = skip_string(p);
-    if ((colnr_T)(p - line) <= pos->col)
+    if (!is_pos_in_string(ml_get(pos->lnum), pos->col)) {
       break;
+    }
     cur_maxcomment = curwin->w_cursor.lnum - pos->lnum - 1;
     if (cur_maxcomment <= 0) {
       pos = NULL;
@@ -110,8 +106,6 @@ static pos_T *ind_find_start_CORS(linenr_T *is_raw)
 static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
 {
     pos_T *pos;
-    char_u *line;
-    char_u *p;
     long cur_maxcomment = ind_maxcomment;
 
     for (;;)
@@ -124,11 +118,9 @@ static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
          * Check if the raw string start we found is inside a string.
          * If it is then restrict the search to below this line and try again.
          */
-        line = ml_get(pos->lnum);
-        for (p = line; *p && (colnr_T)(p - line) < pos->col; ++p)
-            p = skip_string(p);
-        if ((colnr_T)(p - line) <= pos->col)
-            break;
+        if (!is_pos_in_string(ml_get(pos->lnum), pos->col)) {
+          break;
+        }
         cur_maxcomment = curwin->w_cursor.lnum - pos->lnum - 1;
         if (cur_maxcomment <= 0)
         {
@@ -143,7 +135,7 @@ static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
  * Skip to the end of a "string" and a 'c' character.
  * If there is no string or character, return argument unmodified.
  */
-static char_u *skip_string(char_u *p)
+static const char_u *skip_string(const char_u *p)
 {
   int i;
 
@@ -178,24 +170,24 @@ static char_u *skip_string(char_u *p)
         continue;  // continue for another string
       }
     } else if (p[0] == 'R' && p[1] == '"') {
-        // Raw string: R"[delim](...)[delim]"
-        char_u *delim = p + 2;
-        char_u *paren = vim_strchr(delim, '(');
+      // Raw string: R"[delim](...)[delim]"
+      const char_u *delim = p + 2;
+      const char_u *paren = vim_strchr(delim, '(');
 
-        if (paren != NULL) {
-            const ptrdiff_t delim_len = paren - delim;
+      if (paren != NULL) {
+        const ptrdiff_t delim_len = paren - delim;
 
-            for (p += 3; *p; ++p)
-                if (p[0] == ')' && STRNCMP(p + 1, delim, delim_len) == 0
-                        && p[delim_len + 1] == '"')
-                {
-                    p += delim_len + 1;
-                    break;
-                }
-            if (p[0] == '"') {
-              continue;  // continue for another string
-            }
+        for (p += 3; *p; p++) {
+          if (p[0] == ')' && STRNCMP(p + 1, delim, delim_len) == 0
+              && p[delim_len + 1] == '"') {
+            p += delim_len + 1;
+            break;
+          }
         }
+        if (p[0] == '"') {
+          continue;  // continue for another string
+        }
+      }
     }
     break;                                  // no string found
   }
@@ -205,6 +197,16 @@ static char_u *skip_string(char_u *p)
   return p;
 }
 
+/// @returns true if "line[col]" is inside a C string.
+int is_pos_in_string(const char_u *line, colnr_T col)
+{
+  const char_u *p;
+
+  for (p = line; *p && (colnr_T)(p - line) < col; p++) {
+    p = skip_string(p);
+  }
+  return !((colnr_T)(p - line) <= col);
+}
 
 /*
  * Functions for C-indenting.
@@ -218,7 +220,7 @@ static char_u *skip_string(char_u *p)
 /*
  * Return true if the string "line" starts with a word from 'cinwords'.
  */
-bool cin_is_cinword(char_u *line)
+bool cin_is_cinword(const char_u *line)
 {
   bool retval = false;
 
@@ -246,10 +248,10 @@ bool cin_is_cinword(char_u *line)
  * Skip over white space and C comments within the line.
  * Also skip over Perl/shell comments if desired.
  */
-static char_u *cin_skipcomment(char_u *s)
+static const char_u *cin_skipcomment(const char_u *s)
 {
   while (*s) {
-    char_u *prev_s = s;
+    const char_u *prev_s = s;
 
     s = skipwhite(s);
 
@@ -283,7 +285,7 @@ static char_u *cin_skipcomment(char_u *s)
  * Return TRUE if there is no code at *s.  White space and comments are
  * not considered code.
  */
-static int cin_nocode(char_u *s)
+static int cin_nocode(const char_u *s)
 {
   return *cin_skipcomment(s) == NUL;
 }
@@ -312,9 +314,9 @@ static pos_T *find_line_comment(void)  // XXX
 }
 
 /// Checks if `text` starts with "key:".
-static bool cin_has_js_key(char_u *text)
+static bool cin_has_js_key(const char_u *text)
 {
-  char_u *s = skipwhite(text);
+  const char_u *s = skipwhite(text);
 
   char_u quote = 0;
   if (*s == '\'' || *s == '"') {
@@ -341,7 +343,7 @@ static bool cin_has_js_key(char_u *text)
 
 /// Checks if string matches "label:"; move to character after ':' if true.
 /// "*s" must point to the start of the label, if there is one.
-static bool cin_islabel_skip(char_u **s)
+static bool cin_islabel_skip(const char_u **s)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!vim_isIDc(**s)) {            // need at least one ID character
@@ -361,7 +363,7 @@ static bool cin_islabel_skip(char_u **s)
 // Note: curwin->w_cursor must be where we are looking for the label.
 bool cin_islabel(void)  // XXX
 {
-  char_u *s = cin_skipcomment(get_cursor_line_ptr());
+  const char_u *s = cin_skipcomment(get_cursor_line_ptr());
 
   // Exclude "default" from labels, since it should be indented
   // like a switch label.  Same for C++ scope declarations.
@@ -380,8 +382,8 @@ bool cin_islabel(void)  // XXX
    * label.
    */
   pos_T cursor_save;
-  pos_T   *trypos;
-  char_u  *line;
+  pos_T *trypos;
+  const char_u *line;
 
   cursor_save = curwin->w_cursor;
   while (curwin->w_cursor.lnum > 1) {
@@ -424,8 +426,8 @@ bool cin_islabel(void)  // XXX
  */
 static int cin_isinit(void)
 {
-  char_u      *s;
-  static char *skip[] = {"static", "public", "protected", "private"};
+  const char_u *s;
+  static char *skip[] = { "static", "public", "protected", "private" };
 
   s = cin_skipcomment(get_cursor_line_ptr());
 
@@ -460,7 +462,7 @@ static int cin_isinit(void)
  * Recognize a switch label: "case .*:" or "default:".
  */
 bool cin_iscase(
-    char_u *s,
+    const char_u *s,
     bool strict     // Allow relaxed check of case statement for JS
 )
 {
@@ -503,7 +505,7 @@ bool cin_iscase(
 /*
  * Recognize a "default" switch label.
  */
-static int cin_isdefault(char_u *s)
+static int cin_isdefault(const char_u *s)
 {
   return STRNCMP(s, "default", 7) == 0
          && *(s = cin_skipcomment(s + 7)) == ':'
@@ -513,7 +515,7 @@ static int cin_isdefault(char_u *s)
 /*
  * Recognize a "public/private/protected" scope declaration label.
  */
-bool cin_isscopedecl(char_u *s)
+bool cin_isscopedecl(const char_u *s)
 {
   int i;
 
@@ -534,9 +536,9 @@ bool cin_isscopedecl(char_u *s)
 #define FIND_NAMESPACE_LIM 20
 
 // Recognize a "namespace" scope declaration.
-static bool cin_is_cpp_namespace(char_u *s)
+static bool cin_is_cpp_namespace(const char_u *s)
 {
-  char_u *p;
+  const char_u *p;
   bool has_name = false;
   bool has_name_start = false;
 
@@ -581,7 +583,7 @@ static bool cin_is_cpp_namespace(char_u *s)
  *	  case 234:    a = b;
  *		       ^
  */
-static char_u *after_label(char_u *l)
+static const char_u *after_label(const char_u *l)
 {
   for (; *l; ++l) {
     if (*l == ':') {
@@ -608,10 +610,10 @@ static char_u *after_label(char_u *l)
  */
 static int get_indent_nolabel(linenr_T lnum)  // XXX
 {
-  char_u      *l;
+  const char_u *l;
   pos_T fp;
   colnr_T col;
-  char_u      *p;
+  const char_u *p;
 
   l = ml_get(lnum);
   p = after_label(l);
@@ -630,9 +632,9 @@ static int get_indent_nolabel(linenr_T lnum)  // XXX
  *   label:	if (asdf && asdfasdf)
  *		^
  */
-static int skip_label(linenr_T lnum, char_u **pp)
+static int skip_label(linenr_T lnum, const char_u **pp)
 {
-  char_u      *l;
+  const char_u *l;
   int amount;
   pos_T cursor_save;
 
@@ -713,8 +715,8 @@ static int cin_first_id_amount(void)
  */
 static int cin_get_equal_amount(linenr_T lnum)
 {
-  char_u      *line;
-  char_u      *s;
+  const char_u *line;
+  const char_u *s;
   colnr_T col;
   pos_T fp;
 
@@ -752,7 +754,7 @@ static int cin_get_equal_amount(linenr_T lnum)
 /*
  * Recognize a preprocessor statement: Any line that starts with '#'.
  */
-static int cin_ispreproc(char_u *s)
+static int cin_ispreproc(const char_u *s)
 {
   if (*skipwhite(s) == '#')
     return TRUE;
@@ -763,9 +765,9 @@ static int cin_ispreproc(char_u *s)
 /// continuation line of a preprocessor statement.  Decrease "*lnump" to the
 /// start and return the line in "*pp".
 /// Put the amount of indent in "*amount".
-static int cin_ispreproc_cont(char_u **pp, linenr_T *lnump, int *amount)
+static int cin_ispreproc_cont(const char_u **pp, linenr_T *lnump, int *amount)
 {
-  char_u      *line = *pp;
+  const char_u *line = *pp;
   linenr_T lnum = *lnump;
   int retval = false;
   int candidate_amount = *amount;
@@ -799,7 +801,7 @@ static int cin_ispreproc_cont(char_u **pp, linenr_T *lnump, int *amount)
 /*
  * Recognize the start of a C or C++ comment.
  */
-static int cin_iscomment(char_u *p)
+static int cin_iscomment(const char_u *p)
 {
   return p[0] == '/' && (p[1] == '*' || p[1] == '/');
 }
@@ -807,7 +809,7 @@ static int cin_iscomment(char_u *p)
 /*
  * Recognize the start of a "//" comment.
  */
-static int cin_islinecomment(char_u *p)
+static int cin_islinecomment(const char_u *p)
 {
   return p[0] == '/' && p[1] == '/';
 }
@@ -822,8 +824,8 @@ static int cin_islinecomment(char_u *p)
  * both apply in order to determine initializations).
  */
 static char_u
-cin_isterminated (
-    char_u *s,
+cin_isterminated(
+    const char_u *s,
     int incl_open,                  // include '{' at the end as terminator
     int incl_comma                 // recognize a trailing comma
 )
@@ -872,9 +874,9 @@ cin_isterminated (
 ///                 lines here.
 /// @param[in]  first_lnum Where to start looking.
 /// @param[in]  min_lnum The line before which we will not be looking.
-static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
+static int cin_isfuncdecl(const char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
 {
-  char_u      *s;
+  const char_u *s;
   linenr_T lnum = first_lnum;
   linenr_T save_lnum = curwin->w_cursor.lnum;
   int retval = false;
@@ -975,12 +977,12 @@ done:
   return retval;
 }
 
-static int cin_isif(char_u *p)
+static int cin_isif(const char_u *p)
 {
   return STRNCMP(p, "if", 2) == 0 && !vim_isIDc(p[2]);
 }
 
-static int cin_iselse(char_u *p)
+static int cin_iselse(const char_u *p)
 {
   if (*p == '}') {          // accept "} else"
     p = cin_skipcomment(p + 1);
@@ -988,7 +990,7 @@ static int cin_iselse(char_u *p)
   return STRNCMP(p, "else", 4) == 0 && !vim_isIDc(p[4]);
 }
 
-static int cin_isdo(char_u *p)
+static int cin_isdo(const char_u *p)
 {
   return STRNCMP(p, "do", 2) == 0 && !vim_isIDc(p[2]);
 }
@@ -998,7 +1000,7 @@ static int cin_isdo(char_u *p)
  * We only accept a "while (condition) ;", with only white space between the
  * ')' and ';'. The condition may be spread over several lines.
  */
-static int cin_iswhileofdo(char_u *p, linenr_T lnum)  // XXX
+static int cin_iswhileofdo(const char_u *p, linenr_T lnum)  // XXX
 {
   pos_T cursor_save;
   pos_T       *trypos;
@@ -1032,7 +1034,7 @@ static int cin_iswhileofdo(char_u *p, linenr_T lnum)  // XXX
  * Otherwise return !0 and update "*poffset" to point to the place where the
  * string was found.
  */
-static int cin_is_if_for_while_before_offset(char_u *line, int *poffset)
+static int cin_is_if_for_while_before_offset(const char_u *line, int *poffset)
 {
   int offset = *poffset;
 
@@ -1076,10 +1078,10 @@ probablyFound:
  */
 static int cin_iswhileofdo_end(int terminated)
 {
-  char_u      *line;
-  char_u      *p;
-  char_u      *s;
-  pos_T       *trypos;
+  const char_u *line;
+  const char_u *p;
+  const char_u *s;
+  pos_T *trypos;
   int i;
 
   if (terminated != ';') {      // there must be a ';' at the end
@@ -1119,7 +1121,7 @@ static int cin_iswhileofdo_end(int terminated)
   return FALSE;
 }
 
-static int cin_isbreak(char_u *p)
+static int cin_isbreak(const char_u *p)
 {
   return STRNCMP(p, "break", 5) == 0 && !vim_isIDc(p[5]);
 }
@@ -1139,10 +1141,10 @@ static int cin_isbreak(char_u *p)
  */
 static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached) {
   lpos_T *pos = &cached->lpos;  // find position
-  char_u      *s;
+  const char_u *s;
   int class_or_struct, lookfor_ctor_init, cpp_base_class;
   linenr_T lnum = curwin->w_cursor.lnum;
-  char_u      *line = get_cursor_line_ptr();
+  const char_u *line = get_cursor_line_ptr();
 
   if (pos->lnum <= lnum) {
     return cached->found;  // Use the cached result
@@ -1310,10 +1312,10 @@ static int get_baseclass_amount(int col)
  * white space and comments.  Skip strings and comments.
  * Ignore "ignore" after "find" if it's not NULL.
  */
-static int cin_ends_in(char_u *s, char_u *find, char_u *ignore)
+static int cin_ends_in(const char_u *s, const char_u *find, const char_u *ignore)
 {
-  char_u      *p = s;
-  char_u      *r;
+  const char_u *p = s;
+  const char_u *r;
   int len = (int)STRLEN(find);
 
   while (*p != NUL) {
@@ -1334,7 +1336,7 @@ static int cin_ends_in(char_u *s, char_u *find, char_u *ignore)
 /*
  * Return TRUE when "s" starts with "word" and then a non-ID character.
  */
-static int cin_starts_with(char_u *s, char *word)
+static int cin_starts_with(const char_u *s, const char *word)
 {
   int l = (int)STRLEN(word);
 
@@ -1342,10 +1344,10 @@ static int cin_starts_with(char_u *s, char *word)
 }
 
 /// Recognize a `extern "C"` or `extern "C++"` linkage specifications.
-static int cin_is_cpp_extern_c(char_u *s)
+static int cin_is_cpp_extern_c(const char_u *s)
 {
-  char_u  *p;
-  int     has_string_literal = false;
+  const char_u *p;
+  int has_string_literal = false;
 
   s = cin_skipcomment(s);
   if (STRNCMP(s, "extern", 6) == 0 && (s[6] == NUL || !vim_iswordc(s[6]))) {
@@ -1384,9 +1386,9 @@ static int cin_is_cpp_extern_c(char_u *s)
  */
 static int cin_skip2pos(pos_T *trypos)
 {
-  char_u      *line;
-  char_u      *p;
-  char_u      *new_p;
+  const char_u *line;
+  const char_u *p;
+  const char_u *new_p;
 
   p = line = ml_get(trypos->lnum);
   while (*p && (colnr_T)(p - line) < trypos->col) {
@@ -1529,7 +1531,7 @@ static int corr_ind_maxparen(pos_T *startpos)
  * Set w_cursor.col to the column number of the last unmatched ')' or '{' in
  * line "l".  "l" must point to the start of the line.
  */
-static int find_last_paren(char_u *l, int start, int end)
+static int find_last_paren(const char_u *l, int start, int end)
 {
   int i;
   int retval = FALSE;
@@ -1801,8 +1803,8 @@ int get_c_indent(void)
 #define BRACE_AT_START          2           // '{' is at start of line
 #define BRACE_AT_END            3           // '{' is at end of line
   linenr_T ourscope;
-  char_u      *l;
-  char_u      *look;
+  const char_u *l;
+  const char_u *look;
   char_u terminated;
   int lookfor;
 #define LOOKFOR_INITIAL         0
@@ -1906,12 +1908,25 @@ int get_c_indent(void)
    * If we're inside a "//" comment and there is a "//" comment in a
    * previous line, lineup with that one.
    */
-  if (cin_islinecomment(theline)
-      && (trypos = find_line_comment()) != NULL) {  // XXX
-    // find how indented the line beginning the comment is
-    getvcol(curwin, trypos, &col, NULL, NULL);
-    amount = col;
-    goto theend;
+  if (cin_islinecomment(theline)) {
+    pos_T linecomment_pos;
+
+    trypos = find_line_comment();  // XXX
+    if (trypos == NULL && curwin->w_cursor.lnum > 1) {
+      // There may be a statement before the comment, search from the end
+      // of the line for a comment start.
+      linecomment_pos.col = check_linecomment(ml_get(curwin->w_cursor.lnum - 1));
+      if (linecomment_pos.col != MAXCOL) {
+        trypos = &linecomment_pos;
+        trypos->lnum = curwin->w_cursor.lnum - 1;
+      }
+    }
+    if (trypos != NULL) {
+      // find how indented the line beginning the comment is
+      getvcol(curwin, trypos, &col, NULL, NULL);
+      amount = col;
+      goto theend;
+    }
   }
   /*
    * If we're inside a comment and not looking at the start of the
@@ -3602,9 +3617,9 @@ laterend:
 
 static int find_match(int lookfor, linenr_T ourscope)
 {
-  char_u      *look;
-  pos_T       *theirscope;
-  char_u      *mightbeif;
+  const char_u *look;
+  pos_T *theirscope;
+  const char_u *mightbeif;
   int elselevel;
   int whilelevel;
 

@@ -6021,6 +6021,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     char_u *saved_text = NULL;
     colnr_T col;
     colnr_T end_col;
+    bool did_do_comment = false;
 
     virtcol = get_nolist_virtcol()
               + char2cells(c != NUL ? c : gchar_cursor());
@@ -6136,8 +6137,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
         if (curwin->w_cursor.col <= (colnr_T)wantcol) {
           break;
         }
-      } else if ((cc >= 0x100 || !utf_allow_break_before(cc))
-                 && fo_multibyte) {
+      } else if ((cc >= 0x100 || !utf_allow_break_before(cc)) && fo_multibyte) {
         int ncc;
         bool allow_break;
 
@@ -6294,9 +6294,16 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
               + (fo_white_par ? OPENLINE_KEEPTRAIL : 0)
               + (do_comments ? OPENLINE_DO_COM : 0)
               + ((flags & INSCHAR_COM_LIST) ? OPENLINE_COM_LIST : 0),
-              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent));
+              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent),
+              &did_do_comment);
     if (!(flags & INSCHAR_COM_LIST)) {
       old_indent = 0;
+    }
+
+    // If a comment leader was inserted, may also do this on a following
+    // line.
+    if (did_do_comment) {
+      no_leader = false;
     }
 
     replace_offset = 0;
@@ -8292,6 +8299,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int in_indent;
   int oldState;
   int cpc[MAX_MCO];                 // composing characters
+  bool call_fix_indent = false;
 
   // can't delete anything in an empty file
   // can't backup past first character in buffer
@@ -8435,6 +8443,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       beginline(BL_WHITE);
       if (curwin->w_cursor.col < save_col) {
         mincol = curwin->w_cursor.col;
+        // should now fix the indent to match with the previous line
+        call_fix_indent = true;
       }
       curwin->w_cursor.col = save_col;
     }
@@ -8569,6 +8579,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   if (curwin->w_cursor.col <= 1) {
     did_ai = false;
   }
+
+  if (call_fix_indent) {
+    fix_indent();
+  }
+
   // It's a little strange to put backspaces into the redo
   // buffer, but it makes auto-indent a lot easier to deal
   // with.
@@ -9183,7 +9198,7 @@ static bool ins_eol(int c)
   AppendToRedobuff(NL_STR);
   bool i = open_line(FORWARD,
                      has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
-                     old_indent);
+                     old_indent, NULL);
   old_indent = 0;
   can_cindent = true;
   // When inserting a line the cursor line must never be in a closed fold.
