@@ -763,9 +763,9 @@ fun! s:ParseSkip(str)
       let skip = "synIDattr(synID(line('.'),col('.'),1),'name') !~? '" ..
         \ strpart(skip,2) .. "'"
     elseif skip[0] == "r"
-      let skip = "strpart(getline('.'),0,col('.'))=~'" . strpart(skip,2). "'"
+      let skip = "strpart(getline('.'),0,col('.'))=~'" .. strpart(skip,2) .. "'"
     elseif skip[0] == "R"
-      let skip = "strpart(getline('.'),0,col('.'))!~'" . strpart(skip,2). "'"
+      let skip = "strpart(getline('.'),0,col('.'))!~'" .. strpart(skip,2) .. "'"
     endif
   endif
   return skip

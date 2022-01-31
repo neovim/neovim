@@ -1121,7 +1121,7 @@ deleting the selection.)
 The previously selected text is put in the unnamed register.  If you want to
 put the same text into a Visual selection several times you need to use
 another register.  E.g., yank the text to copy, Visually select the text to
-replace and use "0p .  You can repeat this as many times as you like, the
+replace and use "0p .  You can repeat this as many times as you like, and the
 unnamed register will be changed each time.
 
 When you use a blockwise Visual mode command and yank only a single line into
