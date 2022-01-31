@@ -238,6 +238,29 @@ func Test_format_c_comment()
   END
   call assert_equal(expected, getline(1, '$'))
 
+  " Using "o" repeates the line comment, "O" does not.
+  %del
+  let text =<< trim END
+      nop;
+      val = val;      // This is a comment
+  END
+  call setline(1, text)
+  normal 2Go
+  let expected =<< trim END
+      nop;
+      val = val;      // This is a comment
+                      //
+  END
+  call assert_equal(expected, getline(1, '$'))
+  normal 2GO
+  let expected =<< trim END
+      nop;
+
+      val = val;      // This is a comment
+                      //
+  END
+  call assert_equal(expected, getline(1, '$'))
+
   bwipe!
 endfunc
 
