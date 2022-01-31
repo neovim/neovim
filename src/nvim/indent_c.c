@@ -41,9 +41,7 @@ static pos_T *ind_find_start_comment(void)  // XXX
 
 pos_T *find_start_comment(int ind_maxcomment)  // XXX
 {
-  pos_T       *pos;
-  char_u      *line;
-  char_u      *p;
+  pos_T *pos;
   int64_t cur_maxcomment = ind_maxcomment;
 
   for (;; ) {
@@ -55,11 +53,9 @@ pos_T *find_start_comment(int ind_maxcomment)  // XXX
      * Check if the comment start we found is inside a string.
      * If it is then restrict the search to below this line and try again.
      */
-    line = ml_get(pos->lnum);
-    for (p = line; *p && (colnr_T)(p - line) < pos->col; ++p)
-      p = skip_string(p);
-    if ((colnr_T)(p - line) <= pos->col)
+    if (!is_pos_in_string(ml_get(pos->lnum), pos->col)) {
       break;
+    }
     cur_maxcomment = curwin->w_cursor.lnum - pos->lnum - 1;
     if (cur_maxcomment <= 0) {
       pos = NULL;
@@ -110,8 +106,6 @@ static pos_T *ind_find_start_CORS(linenr_T *is_raw)
 static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
 {
     pos_T *pos;
-    char_u *line;
-    char_u *p;
     long cur_maxcomment = ind_maxcomment;
 
     for (;;)
@@ -124,11 +118,9 @@ static pos_T *find_start_rawstring(int ind_maxcomment)  // XXX
          * Check if the raw string start we found is inside a string.
          * If it is then restrict the search to below this line and try again.
          */
-        line = ml_get(pos->lnum);
-        for (p = line; *p && (colnr_T)(p - line) < pos->col; ++p)
-            p = skip_string(p);
-        if ((colnr_T)(p - line) <= pos->col)
-            break;
+        if (!is_pos_in_string(ml_get(pos->lnum), pos->col)) {
+          break;
+        }
         cur_maxcomment = curwin->w_cursor.lnum - pos->lnum - 1;
         if (cur_maxcomment <= 0)
         {
@@ -205,6 +197,16 @@ static char_u *skip_string(char_u *p)
   return p;
 }
 
+/// @returns true if "line[col]" is inside a C string.
+int is_pos_in_string(char_u *line, colnr_T col)
+{
+  char_u *p;
+
+  for (p = line; *p && (colnr_T)(p - line) < col; p++) {
+    p = skip_string(p);
+  }
+  return !((colnr_T)(p - line) <= col);
+}
 
 /*
  * Functions for C-indenting.

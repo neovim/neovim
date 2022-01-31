@@ -261,6 +261,21 @@ func Test_format_c_comment()
   END
   call assert_equal(expected, getline(1, '$'))
 
+  " Using "o" does not repeat a comment in a string
+  %del
+  let text =<< trim END
+      nop;
+      val = " // This is not a comment";
+  END
+  call setline(1, text)
+  normal 2Gox
+  let expected =<< trim END
+      nop;
+      val = " // This is not a comment";
+      x
+  END
+  call assert_equal(expected, getline(1, '$'))
+
   " Using CTRL-U after "o" fixes the indent
   %del
   let text =<< trim END
