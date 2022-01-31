@@ -903,6 +903,8 @@ enum {
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
 
+#define TABSTOP_MAX 9999
+
 /// Stores an identifier of a script or channel that last set an option.
 typedef struct {
   sctx_T script_ctx;       /// script context where the option was last set
