@@ -8299,6 +8299,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int in_indent;
   int oldState;
   int cpc[MAX_MCO];                 // composing characters
+  bool call_fix_indent = false;
 
   // can't delete anything in an empty file
   // can't backup past first character in buffer
@@ -8442,6 +8443,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       beginline(BL_WHITE);
       if (curwin->w_cursor.col < save_col) {
         mincol = curwin->w_cursor.col;
+        // should now fix the indent to match with the previous line
+        call_fix_indent = true;
       }
       curwin->w_cursor.col = save_col;
     }
@@ -8576,6 +8579,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   if (curwin->w_cursor.col <= 1) {
     did_ai = false;
   }
+
+  if (call_fix_indent) {
+    fix_indent();
+  }
+
   // It's a little strange to put backspaces into the redo
   // buffer, but it makes auto-indent a lot easier to deal
   // with.

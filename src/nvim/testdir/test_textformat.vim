@@ -238,7 +238,7 @@ func Test_format_c_comment()
   END
   call assert_equal(expected, getline(1, '$'))
 
-  " Using "o" repeates the line comment, "O" does not.
+  " Using "o" repeats the line comment, "O" does not.
   %del
   let text =<< trim END
       nop;
@@ -258,6 +258,21 @@ func Test_format_c_comment()
 
       val = val;      // This is a comment
                       //
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Using CTRL-U after "o" fixes the indent
+  %del
+  let text =<< trim END
+      {
+         val = val;      // This is a comment
+  END
+  call setline(1, text)
+  exe "normal! 2Go\<C-U>x\<Esc>"
+  let expected =<< trim END
+      {
+         val = val;      // This is a comment
+         x
   END
   call assert_equal(expected, getline(1, '$'))
 
