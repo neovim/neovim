@@ -771,6 +771,15 @@ You can set the indent for the first line after <script> and <style>
       "auto"	auto indent (same indent as the blocktag)
       "inc"	auto indent + one indent step
 
+You can set the indent for attributes after an open <tag line: >
+
+      :let g:html_indent_attribute = 1
+<
+      VALUE	MEANING ~
+      1		auto indent, one indent step more than <tag
+      2		auto indent, two indent steps (default)
+      > 2	auto indent, more indent steps
+
 Many tags increase the indent for what follows per default (see "Add Indent
 Tags" in the script).  You can add further tags with: >
 
