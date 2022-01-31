@@ -1241,6 +1241,10 @@ See |:verbose-cmd| for more information.
 :delc[ommand] {cmd}				*:delc* *:delcommand* *E184*
 			Delete the user-defined command {cmd}.
 
+:delc[ommand] -buffer {cmd}					*E1237*
+			Delete the user-defined command {cmd} that was defined
+			for the current buffer.
+
 :comc[lear]						*:comc* *:comclear*
 			Delete all user-defined commands.
 

@@ -350,7 +350,6 @@ func Test_use_execute_in_completion()
 endfunc
 
 func Test_addr_all()
-  throw 'skipped: requires patch v8.1.0341 to pass'
   command! -addr=lines DoSomething let g:a1 = <line1> | let g:a2 = <line2>
   %DoSomething
   call assert_equal(1, g:a1)
@@ -551,3 +550,26 @@ func Test_command_list()
   call assert_equal("\nNo user-defined commands found", execute(':command Xxx'))
   call assert_equal("\nNo user-defined commands found", execute('command'))
 endfunc
+
+func Test_delcommand_buffer()
+  command Global echo 'global'
+  command -buffer OneBuffer echo 'one'
+  new
+  command -buffer TwoBuffer echo 'two'
+  call assert_equal(0, exists(':OneBuffer'))
+  call assert_equal(2, exists(':Global'))
+  call assert_equal(2, exists(':TwoBuffer'))
+  delcommand -buffer TwoBuffer
+  call assert_equal(0, exists(':TwoBuffer'))
+  call assert_fails('delcommand -buffer Global', 'E1237:')
+  call assert_fails('delcommand -buffer OneBuffer', 'E1237:')
+  bwipe!
+  call assert_equal(2, exists(':OneBuffer'))
+  delcommand -buffer OneBuffer
+  call assert_equal(0, exists(':OneBuffer'))
+  call assert_fails('delcommand -buffer Global', 'E1237:')
+  delcommand Global
+  call assert_equal(0, exists(':Global'))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
