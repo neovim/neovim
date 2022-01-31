@@ -4350,7 +4350,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
   int leader_len = 0;               // leader len of current line
   int next_leader_len;              // leader len of next line
   char_u *leader_flags = NULL;      // flags for leader of current line
-  char_u *next_leader_flags;        // flags for leader of next line
+  char_u *next_leader_flags = NULL;  // flags for leader of next line
   bool advance = true;
   int second_indent = -1;           // indent for second line (comment aware)
   bool first_par_line = true;
@@ -4467,7 +4467,14 @@ void format_lines(linenr_T line_count, int avoid_fex)
                           leader_len, leader_flags,
                           next_leader_len,
                           next_leader_flags)) {
-        is_end_par = true;
+        // Special case: If the next line starts with a line comment
+        // and this line has a line comment after some text, the
+        // paragraph doesn't really end.
+        if (next_leader_flags == NULL
+            || STRNCMP(next_leader_flags, "://", 3) != 0
+            || check_linecomment(get_cursor_line_ptr()) == MAXCOL) {
+          is_end_par = true;
+        }
       }
 
       /*

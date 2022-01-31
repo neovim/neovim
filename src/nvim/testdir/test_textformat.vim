@@ -223,6 +223,21 @@ func Test_format_c_comment()
   END
   call assert_equal(expected, getline(1, '$'))
 
+  %del
+  let text =<< trim END
+      #if 0           // This is another long end of
+                      // line comment that
+                      // wraps.
+  END
+  call setline(1, text)
+  normal gq2j
+  let expected =<< trim END
+      #if 0           // This is another long
+                      // end of line comment
+                      // that wraps.
+  END
+  call assert_equal(expected, getline(1, '$'))
+
   bwipe!
 endfunc
 

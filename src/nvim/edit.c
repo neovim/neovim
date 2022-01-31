@@ -6137,8 +6137,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
         if (curwin->w_cursor.col <= (colnr_T)wantcol) {
           break;
         }
-      } else if ((cc >= 0x100 || !utf_allow_break_before(cc))
-                 && fo_multibyte) {
+      } else if ((cc >= 0x100 || !utf_allow_break_before(cc)) && fo_multibyte) {
         int ncc;
         bool allow_break;
 
