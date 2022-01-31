@@ -217,8 +217,8 @@ void checkpcmark(void)
       && (equalpos(curwin->w_pcmark, curwin->w_cursor)
           || curwin->w_pcmark.lnum == 0)) {
     curwin->w_pcmark = curwin->w_prev_pcmark;
-    curwin->w_prev_pcmark.lnum = 0;             // Show it has been checked
   }
+  curwin->w_prev_pcmark.lnum = 0;  // it has been checked
 }
 
 /*
