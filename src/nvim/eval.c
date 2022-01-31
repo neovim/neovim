@@ -11004,10 +11004,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
 bool eval_has_provider(const char *feat)
 {
   if (!strequal(feat, "clipboard")
-      && !strequal(feat, "python")
       && !strequal(feat, "python3")
-      && !strequal(feat, "python_compiled")
-      && !strequal(feat, "python_dynamic")
       && !strequal(feat, "python3_compiled")
       && !strequal(feat, "python3_dynamic")
       && !strequal(feat, "perl")
