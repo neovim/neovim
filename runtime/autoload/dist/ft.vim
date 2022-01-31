@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Jan 28
+" Last Change:	2022 Jan 31
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -67,7 +67,7 @@ func dist#ft#FTasmsyntax()
   endif
 endfunc
 
-func dist#ft#FTbas()
+func dist#ft#FTbas(alt = '')
   if exists("g:filetype_bas")
     exe "setf " . g:filetype_bas
     return
@@ -88,6 +88,8 @@ func dist#ft#FTbas()
     setf qb64
   elseif match(lines, '\cVB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)') > -1
     setf vb
+  elseif a:alt != ''
+    exe 'setf ' .. a:alt
   else
     setf basic
   endif
