@@ -6021,6 +6021,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     char_u *saved_text = NULL;
     colnr_T col;
     colnr_T end_col;
+    bool did_do_comment = false;
 
     virtcol = get_nolist_virtcol()
               + char2cells(c != NUL ? c : gchar_cursor());
@@ -6294,9 +6295,16 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
               + (fo_white_par ? OPENLINE_KEEPTRAIL : 0)
               + (do_comments ? OPENLINE_DO_COM : 0)
               + ((flags & INSCHAR_COM_LIST) ? OPENLINE_COM_LIST : 0),
-              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent));
+              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent),
+              &did_do_comment);
     if (!(flags & INSCHAR_COM_LIST)) {
       old_indent = 0;
+    }
+
+    // If a comment leader was inserted, may also do this on a following
+    // line.
+    if (did_do_comment) {
+      no_leader = false;
     }
 
     replace_offset = 0;
@@ -9183,7 +9191,7 @@ static bool ins_eol(int c)
   AppendToRedobuff(NL_STR);
   bool i = open_line(FORWARD,
                      has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
-                     old_indent);
+                     old_indent, NULL);
   old_indent = 0;
   can_cindent = true;
   // When inserting a line the cursor line must never be in a closed fold.

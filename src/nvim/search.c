@@ -2318,7 +2318,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
  * Return MAXCOL if not, otherwise return the column.
  * TODO: skip strings.
  */
-static int check_linecomment(const char_u *line)
+int check_linecomment(const char_u *line)
 {
   const char_u *p = line;  // scan from start
   // skip Lispish one-line comments

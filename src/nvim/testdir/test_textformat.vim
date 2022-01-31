@@ -196,6 +196,36 @@ func Test_text_format()
   enew!
 endfunc
 
+func Test_format_c_comment()
+  new
+  setl ai cindent tw=40 et fo=croql
+  let text =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf
+  END
+  call setline(1, text)
+  normal gql
+  let expected =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf
+                   // asdf asdf asdf asdf asdf
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  %del
+  let text =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf
+  END
+  call setline(1, text)
+  normal gql
+  let expected =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf
+                   // asdf asdf asdf asdf asdf
+                   // asdf asdf
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  bwipe!
+endfunc
+
 " Tests for :right, :center and :left on text with embedded TAB.
 func Test_format_align()
   enew!

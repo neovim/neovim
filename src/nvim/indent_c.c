@@ -1906,12 +1906,25 @@ int get_c_indent(void)
    * If we're inside a "//" comment and there is a "//" comment in a
    * previous line, lineup with that one.
    */
-  if (cin_islinecomment(theline)
-      && (trypos = find_line_comment()) != NULL) {  // XXX
-    // find how indented the line beginning the comment is
-    getvcol(curwin, trypos, &col, NULL, NULL);
-    amount = col;
-    goto theend;
+  if (cin_islinecomment(theline)) {
+    pos_T linecomment_pos;
+
+    trypos = find_line_comment();  // XXX
+    if (trypos == NULL && curwin->w_cursor.lnum > 1) {
+      // There may be a statement before the comment, search from the end
+      // of the line for a comment start.
+      linecomment_pos.col = check_linecomment(ml_get(curwin->w_cursor.lnum - 1));
+      if (linecomment_pos.col != MAXCOL) {
+        trypos = &linecomment_pos;
+        trypos->lnum = curwin->w_cursor.lnum - 1;
+      }
+    }
+    if (trypos != NULL) {
+      // find how indented the line beginning the comment is
+      getvcol(curwin, trypos, &col, NULL, NULL);
+      amount = col;
+      goto theend;
+    }
   }
   /*
    * If we're inside a comment and not looking at the start of the

@@ -6685,9 +6685,8 @@ static void n_opencmd(cmdarg_T *cap)
                           (cap->cmdchar == 'o' ? 1 : 0))
                )
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
-                     has_format_option(FO_OPEN_COMS)
-                     ? OPENLINE_DO_COM : 0,
-                     0)) {
+                     has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM : 0,
+                     0, NULL)) {
       if (win_cursorline_standout(curwin)) {
         // force redraw of cursorline
         curwin->w_valid &= ~VALID_CROW;
