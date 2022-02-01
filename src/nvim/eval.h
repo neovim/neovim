@@ -272,6 +272,22 @@ typedef int (*ex_unletlock_callback)(lval_T *, char_u *, exarg_T *, int);
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
+/// Function argument that can be a string, funcref or partial.
+/// - declare:  evalarg_T name;
+/// - init:     name = EVALARG_INIT;
+/// - set:      evalarg_get(&argvars[3], &name);
+/// - use:      if (evalarg_valid(&name)) res = evalarg_call(&name);
+/// - cleanup:  evalarg_clean(&name);
+typedef struct {
+  const char *eva_string;
+  Callback eva_callback;
+} evalarg_T;
+
+#define EVALARG_INIT (evalarg_T) { \
+  .eva_string = NULL, \
+  .eva_callback = CALLBACK_NONE, \
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval.h.generated.h"
 #endif

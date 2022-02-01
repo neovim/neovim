@@ -23,8 +23,7 @@ function! freebasic#GetDialect() abort
 
   let save_cursor = getcurpos()
   call cursor(1, 1)
-  " let lnum = search(pat, 'n', '', '', skip) " 'skip' needs 8.2.0915
-  let lnum = search(pat, 'n', '', '')
+  let lnum = search(pat, 'n', '', '', skip)
   call setpos('.', save_cursor)
 
   if lnum

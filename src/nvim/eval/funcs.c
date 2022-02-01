@@ -8237,6 +8237,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   int options = SEARCH_KEEP;
   int subpatnum;
   searchit_arg_T sia;
+  evalarg_T skip = EVALARG_INIT;
 
   const char *const pat = tv_get_string(&argvars[0]);
   dir = get_search_arg(&argvars[1], flagsp);  // May set p_ws.
@@ -8254,7 +8255,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     options |= SEARCH_COL;
   }
 
-  // Optional arguments: line number to stop searching and timeout.
+  // Optional arguments: line number to stop searching, timeout and skip.
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     lnum_stop = tv_get_number_chk(&argvars[2], NULL);
     if (lnum_stop < 0) {
@@ -8263,6 +8264,9 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     if (argvars[3].v_type != VAR_UNKNOWN) {
       time_limit = tv_get_number_chk(&argvars[3], NULL);
       if (time_limit < 0) {
+        goto theend;
+      }
+      if (argvars[4].v_type != VAR_UNKNOWN && !evalarg_get(&argvars[4], &skip)) {
         goto theend;
       }
     }
@@ -8284,11 +8288,46 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   }
 
   pos = save_cursor = curwin->w_cursor;
+  pos_T firstpos = { 0 };
   memset(&sia, 0, sizeof(sia));
   sia.sa_stop_lnum = (linenr_T)lnum_stop;
   sia.sa_tm = &tm;
-  subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1,
-                       options, RE_SEARCH, &sia);
+
+  // Repeat until {skip} returns false.
+  for (;;) {
+    subpatnum
+        = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
+    // finding the first match again means there is no match where {skip}
+    // evaluates to zero.
+    if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
+      subpatnum = FAIL;
+    }
+
+    if (subpatnum == FAIL || !evalarg_valid(&skip)) {
+      // didn't find it or no skip argument
+      break;
+    }
+    firstpos = pos;
+
+    // If the skip pattern matches, ignore this match.
+    {
+      bool err;
+      const pos_T save_pos = curwin->w_cursor;
+
+      curwin->w_cursor = pos;
+      const bool do_skip = evalarg_call_bool(&skip, &err);
+      curwin->w_cursor = save_pos;
+      if (err) {
+        // Evaluating {skip} caused an error, break here.
+        subpatnum = FAIL;
+        break;
+      }
+      if (!do_skip) {
+        break;
+      }
+    }
+  }
+
   if (subpatnum != FAIL) {
     if (flags & SP_SUBPAT) {
       retval = subpatnum;
@@ -8317,6 +8356,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   }
 theend:
   p_ws = save_p_ws;
+  evalarg_clean(&skip);
 
   return retval;
 }
