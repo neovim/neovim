@@ -2901,18 +2901,14 @@ static int peekchr(void)
   {
     int c = regparse[1];
 
-    if (c == NUL)
-      curchr = '\\';                  /* trailing '\' */
-    else if (
-      c <= '~' && META_flags[c]
-      ) {
-      /*
-       * META contains everything that may be magic sometimes,
-       * except ^ and $ ("\^" and "\$" are only magic after
-       * "\V").  We now fetch the next character and toggle its
-       * magicness.  Therefore, \ is so meta-magic that it is
-       * not in META.
-       */
+    if (c == NUL) {
+      curchr = '\\';  // trailing '\'
+    } else if (c <= '~' && META_flags[c]) {
+      // META contains everything that may be magic sometimes,
+      // except ^ and $ ("\^" and "\$" are only magic after
+      // "\V").  We now fetch the next character and toggle its
+      // magicness.  Therefore, \ is so meta-magic that it is
+      // not in META.
       curchr = -1;
       prev_at_start = at_start;
       at_start = false;  // be able to say "/\*ptr"

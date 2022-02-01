@@ -5027,9 +5027,7 @@ static void nv_brackets(cmdarg_T *cap)
    * identifier     "]i"  "[i"   "]I"  "[I"     "]^I"  "[^I"
    * define           "]d"  "[d"   "]D"  "[D"   "]^D"  "[^D"
    */
-  if (vim_strchr((char_u *)
-                 "iI\011dD\004",
-                 cap->nchar) != NULL) {
+  if (vim_strchr((char_u *)"iI\011dD\004", cap->nchar) != NULL) {
     char_u *ptr;
     size_t len;
 
