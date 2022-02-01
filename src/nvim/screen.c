@@ -1981,7 +1981,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
   level = foldinfo.fi_level;
 
   // If the column is too narrow, we start at the lowest level that
-  // fits and use numbers to indicated the depth.
+  // fits and use numbers to indicate the depth.
   first_level = level - fdc - closed + 1;
   if (first_level < 1) {
     first_level = 1;

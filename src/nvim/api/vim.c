@@ -19,6 +19,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/context.h"
 #include "nvim/decoration.h"
 #include "nvim/edit.h"
@@ -2236,7 +2237,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   Dictionary result = ARRAY_DICT_INIT;
 
   int maxwidth;
-  char fillchar = 0;
+  int fillchar = 0;
   Window window = 0;
   bool use_tabline = false;
   bool highlights = false;
@@ -2251,12 +2252,12 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   }
 
   if (HAS_KEY(opts->fillchar)) {
-    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size > 1) {
-      api_set_error(err, kErrorTypeValidation, "fillchar must be an ASCII character");
+    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size == 0
+        || char2cells(fillchar = utf_ptr2char((char_u *)opts->fillchar.data.string.data)) != 1
+        || (size_t)utf_char2len(fillchar) != opts->fillchar.data.string.size) {
+      api_set_error(err, kErrorTypeValidation, "fillchar must be a single-width character");
       return result;
     }
-
-    fillchar = opts->fillchar.data.string.data[0];
   }
 
   if (HAS_KEY(opts->highlights)) {
@@ -2292,7 +2293,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     if (fillchar == 0) {
       int attr;
-      fillchar = (char)fillchar_status(&attr, wp);
+      fillchar = fillchar_status(&attr, wp);
     }
   }
 
@@ -2320,7 +2321,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                sizeof(buf),
                                (char_u *)str.data,
                                false,
-                               (char_u)fillchar,
+                               fillchar,
                                maxwidth,
                                hltab_ptr,
                                NULL);
