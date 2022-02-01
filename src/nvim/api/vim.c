@@ -32,6 +32,7 @@
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
@@ -122,7 +123,9 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 
 /// Set a highlight group.
 ///
-/// @param ns_id number of namespace for this highlight
+/// @param ns_id number of namespace for this highlight. Use value 0
+///              to set a highlight group in the global (`:highlight`)
+///              namespace.
 /// @param name highlight group name, like ErrorMsg
 /// @param val highlight definition map, like |nvim_get_hl_by_name|.
 ///            in addition the following keys are also recognized:
@@ -136,18 +139,23 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                               same as attributes of gui color
 /// @param[out] err Error details, if any
 ///
-/// TODO: ns_id = 0, should modify :highlight namespace
-/// TODO val should take update vs reset flag
+// TODO(bfredl): val should take update vs reset flag
 void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
   FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, (int)name.size);
   int link_id = -1;
 
-  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
-  if (!ERROR_SET(err)) {
-    ns_hl_def((NS)ns_id, hl_id, attrs, link_id);
+  HlAttrNames *names = NULL;  // Only used when setting global namespace
+  if (ns_id == 0) {
+    names = xmalloc(sizeof(*names));
+    *names = HLATTRNAMES_INIT;
   }
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, names, err);
+  if (!ERROR_SET(err)) {
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, names);
+  }
+  xfree(names);
 }
 
 /// Set active namespace for highlights.

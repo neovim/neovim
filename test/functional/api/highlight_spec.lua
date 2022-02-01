@@ -3,6 +3,7 @@ local clear, nvim = helpers.clear, helpers.nvim
 local Screen = require('test.functional.ui.screen')
 local eq, eval = helpers.eq, helpers.eval
 local command = helpers.command
+local exec_capture = helpers.exec_capture
 local meths = helpers.meths
 local funcs = helpers.funcs
 local pcall_err = helpers.pcall_err
@@ -251,5 +252,24 @@ describe("API: set highlight", function()
     meths.set_hl(ns, 'Test_hl', highlight3_config)
     eq(highlight3_result_gui, meths.get_hl_by_name('Test_hl', true))
     eq(highlight3_result_cterm, meths.get_hl_by_name('Test_hl', false))
+  end)
+
+  it ("can set a highlight in the global namespace", function()
+    meths.set_hl(0, 'Test_hl', highlight2_config)
+    eq('Test_hl        xxx cterm=underline,reverse ctermfg=8 ctermbg=15 gui=underline,reverse',
+      exec_capture('highlight Test_hl'))
+
+    meths.set_hl(0, 'Test_hl', { background = highlight_color.bg })
+    eq('Test_hl        xxx guibg=#0032aa',
+      exec_capture('highlight Test_hl'))
+
+    meths.set_hl(0, 'Test_hl2', highlight3_config)
+    eq('Test_hl2       xxx cterm=undercurl,italic,reverse ctermfg=8 ctermbg=15 gui=bold,underline,undercurl,italic,reverse guifg=#ff0000 guibg=#0032aa',
+      exec_capture('highlight Test_hl2'))
+
+    -- Colors are stored exactly as they are defined.
+    meths.set_hl(0, 'Test_hl3', { bg = 'reD', fg = 'bLue'})
+    eq('Test_hl3       xxx guifg=bLue guibg=reD',
+      exec_capture('highlight Test_hl3'))
   end)
 end)
