@@ -483,7 +483,6 @@ Commands:
   :tearoff
 
 Compile-time features:
-  EBCDIC
   Emacs tags support
   X11 integration (see |x11-selection|)
 
