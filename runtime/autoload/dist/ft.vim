@@ -67,7 +67,10 @@ func dist#ft#FTasmsyntax()
   endif
 endfunc
 
-func dist#ft#FTbas(alt = '')
+let s:ft_visual_basic_content = '\cVB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)'
+
+" See FTfrm() for Visual Basic form file detection
+func dist#ft#FTbas()
   if exists("g:filetype_bas")
     exe "setf " . g:filetype_bas
     return
@@ -86,10 +89,8 @@ func dist#ft#FTbas(alt = '')
     setf freebasic
   elseif match(lines, qb64_preproc) > -1
     setf qb64
-  elseif match(lines, '\cVB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)') > -1
+  elseif match(lines, s:ft_visual_basic_content) > -1
     setf vb
-  elseif a:alt != ''
-    exe 'setf ' .. a:alt
   else
     setf basic
   endif
@@ -234,6 +235,21 @@ func dist#ft#FTe()
       let n = n + 1
     endwhile
     setf eiffel
+  endif
+endfunc
+
+func dist#ft#FTfrm()
+  if exists("g:filetype_frm")
+    exe "setf " . g:filetype_frm
+    return
+  endif
+
+  let lines = getline(1, min([line("$"), 5]))
+
+  if match(lines, s:ft_visual_basic_content) > -1
+    setf vb
+  else
+    setf form
   endif
 endfunc
 

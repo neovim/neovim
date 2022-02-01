@@ -183,6 +183,7 @@ let s:filename_checks = {
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
     \ 'fish': ['file.fish'],
     \ 'focexec': ['file.fex', 'file.focexec'],
+    \ 'form': ['file.frm'],
     \ 'forth': ['file.ft', 'file.fth'],
     \ 'fortran': ['file.f', 'file.for', 'file.fortran', 'file.fpp', 'file.ftn', 'file.f77', 'file.f90', 'file.f95', 'file.f03', 'file.f08'],
     \ 'fpcmake': ['file.fpc'],
@@ -1246,6 +1247,33 @@ func Test_bas_file()
   bwipe!
 
   call delete('Xfile.bas')
+  filetype off
+endfunc
+
+func Test_frm_file()
+  filetype on
+
+  call writefile(['looks like FORM'], 'Xfile.frm')
+  split Xfile.frm
+  call assert_equal('form', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTfrm()
+
+  let g:filetype_frm = 'form'
+  split Xfile.frm
+  call assert_equal('form', &filetype)
+  bwipe!
+  unlet g:filetype_frm
+
+  " Visual Basic
+
+  call writefile(['Begin VB.Form Form1'], 'Xfile.frm')
+  split Xfile.frm
+  call assert_equal('vb', &filetype)
+  bwipe!
+
+  call delete('Xfile.frm')
   filetype off
 endfunc
 
