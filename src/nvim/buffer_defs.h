@@ -283,8 +283,8 @@ typedef struct {
 struct wininfo_S {
   wininfo_T *wi_next;         // next entry or NULL for last entry
   wininfo_T *wi_prev;         // previous entry or NULL for first entry
-  win_T *wi_win;          // pointer to window that did set wi_fpos
-  pos_T wi_fpos;                // last cursor position in the file
+  win_T *wi_win;          // pointer to window that did set wi_mark
+  fmark_T wi_mark;                // last cursor mark in the file
   bool wi_optset;               // true when wi_opt has useful values
   winopt_T wi_opt;              // local window options
   bool wi_fold_manual;          // copy of w_fold_manual

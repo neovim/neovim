@@ -4982,19 +4982,22 @@ static void nv_brackets(cmdarg_T *cap)
     nv_put_opt(cap, true);
   } else if (cap->nchar == '\'' || cap->nchar == '`') {
     // "['", "[`", "]'" and "]`": jump to next mark
+    fmark_T *fm = NULL;
     pos = &curwin->w_cursor;
     for (n = cap->count1; n > 0; n--) {
       prev_pos = *pos;
-      pos = getnextmark(pos, cap->cmdchar == '[' ? BACKWARD : FORWARD,
-                        cap->nchar == '\'');
+      fm = getnextmark(pos, cap->cmdchar == '[' ? BACKWARD : FORWARD,
+                       cap->nchar == '\'');
       if (pos == NULL) {
         break;
+      } else {
+        pos = fm != NULL ? &fm->mark : NULL;  // Adjust for the next iteration.
       }
     }
-    if (pos == NULL) {
-      pos = &prev_pos;
-    }
-    nv_cursormark(cap, cap->nchar == '\'', pos);
+    fm = fm == NULL ? pos_to_mark(curbuf, NULL, curwin->w_cursor) : fm;
+    MarkMove flags = kMarkContext;
+    flags |= cap->nchar == '\'' ? kMarkBeginLine: 0;
+    nv_mark_move_to(cap, flags, fm);
   } else if (cap->nchar >= K_RIGHTRELEASE && cap->nchar <= K_LEFTMOUSE) {
     // [ or ] followed by a middle mouse click: put selected text with
     // indent adjustment.  Any other button just does as usual.
@@ -5464,31 +5467,28 @@ static void n_swapchar(cmdarg_T *cap)
   }
 }
 
-/// Move cursor to mark.
-static void nv_cursormark(cmdarg_T *cap, int flag, pos_T *pos)
+/// Move the cursor to the mark position
+///
+/// Wrapper to mark_move_to() that also handles normal mode command arguments.
+/// @note  It will switch the buffer if neccesarry, move the cursor and set the
+/// view depending on the given flags.
+/// @param cap  command line arguments
+/// @param flags for mark_move_to()
+/// @param mark  mark
+/// @return  The result of calling mark_move_to()
+static MarkMoveRes nv_mark_move_to(cmdarg_T *cap, MarkMove flags, fmark_T *fm)
 {
-  if (check_mark(pos) == false) {
+  MarkMoveRes res = mark_move_to(fm, flags);
+  if (res & kMarkMoveFailed) {
     clearop(cap->oap);
-  } else {
-    if (cap->cmdchar == '\''
-        || cap->cmdchar == '`'
-        || cap->cmdchar == '['
-        || cap->cmdchar == ']') {
-      setpcmark();
-    }
-    curwin->w_cursor = *pos;
-    if (flag) {
-      beginline(BL_WHITE | BL_FIX);
-    } else {
-      check_cursor();
-    }
   }
-  cap->oap->motion_type = flag ? kMTLineWise : kMTCharWise;
+  cap->oap->motion_type = flags & kMarkBeginLine ? kMTLineWise : kMTCharWise;
   if (cap->cmdchar == '`') {
     cap->oap->use_reg_one = true;
   }
   cap->oap->inclusive = false;  // ignored if not kMTCharWise
   curwin->w_set_curswant = true;
+  return res;
 }
 
 /// Handle commands that are operators in Visual mode.
@@ -5563,36 +5563,32 @@ static void nv_optrans(cmdarg_T *cap)
 /// cap->arg is true for "'" and "g'".
 static void nv_gomark(cmdarg_T *cap)
 {
-  pos_T *pos;
-  int c;
-  pos_T old_cursor = curwin->w_cursor;
-  const bool old_KeyTyped = KeyTyped;       // getting file may reset it
+  int name;
+  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  MarkMoveRes move_res = 0;  // Result from moving to the mark
+  const bool old_KeyTyped = KeyTyped;  // getting file may reset it
 
   if (cap->cmdchar == 'g') {
-    c = cap->extra_char;
+    name = cap->extra_char;
+    flags |= KMarkNoContext;
   } else {
-    c = cap->nchar;
+    name = cap->nchar;
+    flags |= kMarkContext;
   }
-  pos = getmark(c, (cap->oap->op_type == OP_NOP));
-  if (pos == (pos_T *)-1) {         // jumped to other file
-    if (cap->arg) {
-      check_cursor_lnum();
-      beginline(BL_WHITE | BL_FIX);
-    } else {
-      check_cursor();
-    }
-  } else {
-    nv_cursormark(cap, cap->arg, pos);
-  }
+  flags |= cap->arg ? kMarkBeginLine : 0;
+  flags |= cap->count0 ? kMarkSetView : 0;
+
+  fmark_T *fm = mark_get(curbuf, curwin, NULL, kMarkAll, name);
+  move_res = nv_mark_move_to(cap, flags, fm);
 
   // May need to clear the coladd that a mark includes.
   if (!virtual_active()) {
     curwin->w_cursor.coladd = 0;
   }
-  check_cursor_col();
+
   if (cap->oap->op_type == OP_NOP
-      && pos != NULL
-      && (pos == (pos_T *)-1 || !equalpos(old_cursor, *pos))
+      && move_res & kMarkMoveSuccess
+      && (move_res & kMarkSwitchedBuf || move_res & kMarkChangedCursor)
       && (fdo_flags & FDO_MARK)
       && old_KeyTyped) {
     foldOpenCursor();
@@ -5600,11 +5596,13 @@ static void nv_gomark(cmdarg_T *cap)
 }
 
 /// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
+/// Movement in the jumplist and changelist.
 static void nv_pcmark(cmdarg_T *cap)
 {
-  pos_T *pos;
-  linenr_T lnum = curwin->w_cursor.lnum;
-  const bool old_KeyTyped = KeyTyped;       // getting file may reset it
+  fmark_T *fm = NULL;
+  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  MarkMoveRes move_res = 0;  // Result from moving to the mark
+  const bool old_KeyTyped = KeyTyped;  // getting file may reset it.
 
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == TAB && mod_mask == MOD_MASK_CTRL) {
@@ -5613,16 +5611,18 @@ static void nv_pcmark(cmdarg_T *cap)
       }
       return;
     }
+
     if (cap->cmdchar == 'g') {
-      pos = movechangelist((int)cap->count1);
+      fm = get_changelist(curbuf, curwin, (int)cap->count1);
     } else {
-      pos = movemark((int)cap->count1);
+      fm = get_jumplist(curwin, (int)cap->count1);
+      flags |=  KMarkNoContext | kMarkJumpList;
     }
-    if (pos == (pos_T *)-1) {           // jump to other file
-      curwin->w_set_curswant = true;
-      check_cursor();
-    } else if (pos != NULL) {               // can jump
-      nv_cursormark(cap, false, pos);
+    // Changelist and jumplist have their own error messages. Therefore avoid
+    // calling nv_mark_move_to() when not found to avoid incorrect error
+    // messages.
+    if (fm != NULL) {
+      move_res = nv_mark_move_to(cap, flags, fm);
     } else if (cap->cmdchar == 'g') {
       if (curbuf->b_changelistlen == 0) {
         emsg(_("E664: changelist is empty"));
@@ -5635,7 +5635,7 @@ static void nv_pcmark(cmdarg_T *cap)
       clearopbeep(cap->oap);
     }
     if (cap->oap->op_type == OP_NOP
-        && (pos == (pos_T *)-1 || lnum != curwin->w_cursor.lnum)
+        && (move_res & kMarkSwitchedBuf || move_res & kMarkChangedLine)
         && (fdo_flags & FDO_MARK)
         && old_KeyTyped) {
       foldOpenCursor();
@@ -6803,7 +6803,6 @@ void set_cursor_for_append_to_line(void)
   curwin->w_set_curswant = true;
   if (get_ve_flags() == VE_ALL) {
     const int save_State = State;
-
     // Pretend Insert mode here to allow the cursor on the
     // character past the end of the line
     State = MODE_INSERT;

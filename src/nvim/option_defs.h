@@ -491,9 +491,10 @@ EXTERN int p_js;                // 'joinspaces'
 EXTERN char_u *p_jop;           // 'jumpooptions'
 EXTERN unsigned jop_flags;
 #ifdef IN_OPTION_C
-static char *(p_jop_values[]) = { "stack", NULL };
+static char *(p_jop_values[]) = { "stack", "view", NULL };
 #endif
 #define JOP_STACK               0x01
+#define JOP_VIEW                0x02
 EXTERN char_u *p_kp;          // 'keywordprg'
 EXTERN char_u *p_km;          // 'keymodel'
 EXTERN char_u *p_langmap;     // 'langmap'

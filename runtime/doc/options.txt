@@ -3530,6 +3530,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			jumplist and then jumping to a location.
 			|jumplist-stack|
 
+	  view          When moving through the jumplist, |changelist|,
+			|alternate-file| or using |mark-motions| try to
+			restore the |mark-view| in which the action occurred.
+
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
 'joinspaces' 'js'	boolean	(default off)
 			global

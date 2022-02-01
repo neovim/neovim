@@ -6930,10 +6930,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_MARK:
       case NFA_MARK_GT:
       case NFA_MARK_LT: {
-        pos_T *pos;
+        fmark_T *fm;
         size_t col = REG_MULTI ? rex.input - rex.line : 0;
-
-        pos = getmark_buf(rex.reg_buf, t->state->val, false);
+        // fm will be NULL if the mark is not set, doesn't belong to reg_buf
+        fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, t->state->val);
 
         // Line may have been freed, get it again.
         if (REG_MULTI) {
@@ -6943,7 +6943,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         // Compare the mark position to the match position, if the mark
         // exists and mark is set in reg_buf.
-        if (pos != NULL && pos->lnum > 0) {
+        if (fm != NULL && fm->mark.lnum > 0) {
+          pos_T *pos = &fm->mark;
           const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
                                   && pos->col == MAXCOL
             ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))

@@ -7957,7 +7957,8 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
 
   // Remember the last Insert position in the '^ mark.
   if ((cmdmod.cmod_flags & CMOD_KEEPJUMPS) == 0) {
-    RESET_FMARK(&curbuf->b_last_insert, curwin->w_cursor, curbuf->b_fnum);
+    fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_cursor);
+    RESET_FMARK(&curbuf->b_last_insert, curwin->w_cursor, curbuf->b_fnum, view);
   }
 
   /*

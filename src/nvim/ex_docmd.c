@@ -2803,16 +2803,16 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
 
         eap->cmd++;
         if (!eap->skip) {
-          pos_T *fp = getmark('<', false);
-          if (check_mark(fp) == FAIL) {
+          fmark_T *fm = mark_get_visual(curbuf, '<');
+          if (!mark_check(fm)) {
             goto theend;
           }
-          eap->line1 = fp->lnum;
-          fp = getmark('>', false);
-          if (check_mark(fp) == FAIL) {
+          eap->line1 = fm->mark.lnum;
+          fm = mark_get_visual(curbuf, '>');
+          if (!mark_check(fm)) {
             goto theend;
           }
-          eap->line2 = fp->lnum;
+          eap->line2 = fm->mark.lnum;
           eap->addr_count++;
         }
       }
@@ -4208,7 +4208,6 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
   linenr_T n;
   char *cmd;
   pos_T pos;
-  pos_T *fp;
   linenr_T lnum;
   buf_T *buf;
 
@@ -4318,17 +4317,19 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       } else {
         // Only accept a mark in another file when it is
         // used by itself: ":'M".
-        fp = getmark(*cmd, to_other_file && cmd[1] == NUL);
-        ++cmd;
-        if (fp == (pos_T *)-1) {
-          // Jumped to another file.
+        MarkGet flag = to_other_file && cmd[1] == NUL ? kMarkAll : kMarkBufLocal;
+        fmark_T *fm = mark_get(curbuf, curwin, NULL, flag, *cmd);
+        MarkMoveRes move_res = mark_move_to(fm, kMarkBeginLine);
+        cmd++;
+        // Switched buffer
+        if (move_res & kMarkSwitchedBuf) {
           lnum = curwin->w_cursor.lnum;
         } else {
-          if (check_mark(fp) == FAIL) {
+          if (fm == NULL) {
             cmd = NULL;
             goto error;
           }
-          lnum = fp->lnum;
+          lnum = fm->mark.lnum;
         }
       }
       break;

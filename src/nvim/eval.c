@@ -7802,11 +7802,14 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
   } else if (name[0] == '\'') {
     // mark
-    const pos_T *const pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
-    if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0) {
+    int mname = (uint8_t)name[1];
+    const fmark_T *const fm = mark_get(curbuf, curwin, NULL, kMarkAll, mname);
+    if (fm == NULL || fm->mark.lnum <= 0) {
       return NULL;
     }
-    pos = *pp;
+    pos = fm->mark;
+    // Vimscript behavior, only provide fnum if mark is global.
+    *ret_fnum = ASCII_ISUPPER(mname) || ascii_isdigit(mname) ? fm->fnum: *ret_fnum;
   }
   if (pos.lnum != 0) {
     if (charcol) {

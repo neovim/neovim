@@ -13,42 +13,43 @@
 #include "nvim/pos.h"
 
 /// Set fmark using given value
-#define SET_FMARK(fmarkp_, mark_, fnum_) \
+#define SET_FMARK(fmarkp_, mark_, fnum_, view_) \
   do { \
     fmark_T *const fmarkp__ = fmarkp_; \
     fmarkp__->mark = mark_; \
     fmarkp__->fnum = fnum_; \
     fmarkp__->timestamp = os_time(); \
+    fmarkp__->view = view_; \
     fmarkp__->additional_data = NULL; \
   } while (0)
 
 /// Free and set fmark using given value
-#define RESET_FMARK(fmarkp_, mark_, fnum_) \
+#define RESET_FMARK(fmarkp_, mark_, fnum_, view_) \
   do { \
     fmark_T *const fmarkp___ = fmarkp_; \
     free_fmark(*fmarkp___); \
-    SET_FMARK(fmarkp___, mark_, fnum_); \
+    SET_FMARK(fmarkp___, mark_, fnum_, view_); \
   } while (0)
 
 /// Clear given fmark
 #define CLEAR_FMARK(fmarkp_) \
-  RESET_FMARK(fmarkp_, ((pos_T) { 0, 0, 0 }), 0)
+  RESET_FMARK(fmarkp_, ((pos_T) { 0, 0, 0 }), 0, ((fmarkv_T) { 0 }))
 
 /// Set given extended mark (regular mark + file name)
-#define SET_XFMARK(xfmarkp_, mark_, fnum_, fname_) \
+#define SET_XFMARK(xfmarkp_, mark_, fnum_, view_, fname_) \
   do { \
     xfmark_T *const xfmarkp__ = xfmarkp_; \
     xfmarkp__->fname = fname_; \
-    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_); \
+    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_, view_); \
   } while (0)
 
 /// Free and set given extended mark (regular mark + file name)
-#define RESET_XFMARK(xfmarkp_, mark_, fnum_, fname_) \
+#define RESET_XFMARK(xfmarkp_, mark_, fnum_, view_, fname_) \
   do { \
     xfmark_T *const xfmarkp__ = xfmarkp_; \
     free_xfmark(*xfmarkp__); \
     xfmarkp__->fname = fname_; \
-    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_); \
+    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_, view_); \
   } while (0)
 
 /// Convert mark name to the offset

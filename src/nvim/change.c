@@ -149,7 +149,13 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
 
   // set the '. mark
   if ((cmdmod.cmod_flags & CMOD_KEEPJUMPS) == 0) {
-    RESET_FMARK(&curbuf->b_last_change, ((pos_T) { lnum, col, 0 }), 0);
+    fmarkv_T view = INIT_FMARKV;
+    // Set the markview only if lnum is visible, as changes might be done
+    // outside of the current window view.
+    if (lnum >= curwin->w_topline && lnum <= curwin->w_botline) {
+      view = mark_view_make(curwin->w_topline, curwin->w_cursor);
+    }
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) { lnum, col, 0 }), curbuf->handle, view);
 
     // Create a new entry if a new undo-able change was started or we
     // don't have an entry yet.

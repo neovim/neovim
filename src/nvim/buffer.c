@@ -54,6 +54,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -1791,7 +1792,8 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf_copy_options(buf, BCO_ALWAYS);
   }
 
-  buf->b_wininfo->wi_fpos.lnum = lnum;
+  buf->b_wininfo->wi_mark = (fmark_T)INIT_FMARK;
+  buf->b_wininfo->wi_mark.mark.lnum = lnum;
   buf->b_wininfo->wi_win = curwin;
 
   hash_init(&buf->b_s.b_keywtab);
@@ -1939,7 +1941,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 {
   buf_T *buf;
   win_T *wp = NULL;
-  pos_T *fpos;
+  fmark_T *fm = NULL;
   colnr_T col;
 
   buf = buflist_findnr(n);
@@ -1965,11 +1967,13 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     return FAIL;
   }
 
+  bool restore_view = false;
   // altfpos may be changed by getfile(), get it now
   if (lnum == 0) {
-    fpos = buflist_findfpos(buf);
-    lnum = fpos->lnum;
-    col = fpos->col;
+    fm = buflist_findfmark(buf);
+    lnum = fm->mark.lnum;
+    col = fm->mark.col;
+    restore_view = true;
   } else {
     col = 0;
   }
@@ -2013,6 +2017,9 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = true;
     }
+    if (jop_flags & JOP_VIEW && restore_view) {
+      mark_view_restore(fm);
+    }
     return OK;
   }
   RedrawingDisabled--;
@@ -2024,7 +2031,7 @@ void buflist_getfpos(void)
 {
   pos_T *fpos;
 
-  fpos = buflist_findfpos(curbuf);
+  fpos = &buflist_findfmark(curbuf)->mark;
 
   curwin->w_cursor.lnum = fpos->lnum;
   check_cursor_lnum();
@@ -2464,8 +2471,11 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
     }
   }
   if (lnum != 0) {
-    wip->wi_fpos.lnum = lnum;
-    wip->wi_fpos.col = col;
+    wip->wi_mark.mark.lnum = lnum;
+    wip->wi_mark.mark.col = col;
+    if (win != NULL) {
+      wip->wi_mark.view = mark_view_make(win->w_topline, wip->wi_mark.mark);
+    }
   }
   if (copy_options && win != NULL) {
     // Save the window-specific option values.
@@ -2583,24 +2593,23 @@ void get_winopts(buf_T *buf)
   didset_window_options(curwin);
 }
 
-/// Find the position (lnum and col) for the buffer 'buf' for the current
-/// window.
+/// Find the mark for the buffer 'buf' for the current window.
 ///
 /// @return  a pointer to no_position if no position is found.
-pos_T *buflist_findfpos(buf_T *buf)
+fmark_T *buflist_findfmark(buf_T *buf)
   FUNC_ATTR_PURE
 {
-  static pos_T no_position = { 1, 0, 0 };
+  static fmark_T no_position = { { 1, 0, 0 }, 0, 0, { 0 }, NULL };
 
   wininfo_T *const wip = find_wininfo(buf, false, false);
-  return (wip == NULL) ? &no_position : &(wip->wi_fpos);
+  return (wip == NULL) ? &no_position : &(wip->wi_mark);
 }
 
 /// Find the lnum for the buffer 'buf' for the current window.
 linenr_T buflist_findlnum(buf_T *buf)
   FUNC_ATTR_PURE
 {
-  return buflist_findfpos(buf)->lnum;
+  return buflist_findfmark(buf)->mark.lnum;
 }
 
 /// List all known file names (for :files and :buffers command).

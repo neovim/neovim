@@ -383,6 +383,8 @@ Normal commands:
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
   |jumpoptions| "stack" behavior
+  |jumpoptions| "view" tries to restore the |mark-view| when moving through
+  the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
   'shortmess' the "F" flag does not affect output from autocommands
 
 Shell:
