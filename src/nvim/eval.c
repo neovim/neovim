@@ -766,6 +766,15 @@ static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
   return ret;
 }
 
+/// @return whether a typval is a valid expression to pass to eval_expr_typval()
+/// or eval_expr_to_bool().  An empty string returns false;
+bool eval_expr_valid_arg(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_CONST
+{
+  return tv->v_type != VAR_UNKNOWN
+         && (tv->v_type != VAR_STRING || (tv->vval.v_string != NULL && *tv->vval.v_string != NUL));
+}
+
 int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
@@ -3379,67 +3388,6 @@ static int eval_func(char_u **const arg, char_u *const name, const int name_len,
     ret = FAIL;
   }
   return ret;
-}
-
-/// Process a function argument that can be a string expression or a function
-/// reference.
-/// "tv" must remain valid until calling evalarg_clean()!
-/// @return false when the argument is invalid.
-bool evalarg_get(typval_T *const tv, evalarg_T *const eva)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (tv->v_type == VAR_STRING || tv->v_type == VAR_NUMBER || tv->v_type == VAR_BOOL
-      || tv->v_type == VAR_SPECIAL) {
-    char numbuf[NUMBUFLEN];
-    eva->eva_string = tv_get_string_buf(tv, numbuf);
-    return true;
-  }
-
-  return callback_from_typval(&eva->eva_callback, tv);
-}
-
-/// @return whether "eva" has a valid expression or callback.
-bool evalarg_valid(const evalarg_T *const eva)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_CONST
-{
-  return eva->eva_string != NULL || eva->eva_callback.type != kCallbackNone;
-}
-
-/// Invoke the expression or callback "eva" and return the result in "tv".
-/// @return false if something failed
-bool evalarg_call(evalarg_T *const eva, typval_T *const tv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (eva->eva_string != NULL) {
-    return eval0((char_u *)eva->eva_string, tv, NULL, true);
-  }
-
-  typval_T argv[1];
-  argv[0].v_type = VAR_UNKNOWN;
-  return callback_call(&eva->eva_callback, 0, argv, tv);
-}
-
-/// Like evalarg_call(), but just return true or false.
-/// Sets "error" to true if evaluation failed.
-bool evalarg_call_bool(evalarg_T *const eva, bool *const error)
-  FUNC_ATTR_NONNULL_ALL
-{
-  typval_T tv;
-  if (!evalarg_call(eva, &tv)) {
-    *error = true;
-    return false;
-  }
-
-  const bool r = tv_get_number(&tv);
-  tv_clear(&tv);
-  *error = false;
-  return r;
-}
-
-void evalarg_clean(evalarg_T *const eva)
-  FUNC_ATTR_NONNULL_ALL
-{
-  callback_free(&eva->eva_callback);
 }
 
 // TODO(ZyX-I): move to eval/expressions

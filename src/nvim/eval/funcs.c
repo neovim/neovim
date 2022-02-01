@@ -8237,7 +8237,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   int options = SEARCH_KEEP;
   int subpatnum;
   searchit_arg_T sia;
-  evalarg_T skip = EVALARG_INIT;
+  bool use_skip = false;
 
   const char *const pat = tv_get_string(&argvars[0]);
   dir = get_search_arg(&argvars[1], flagsp);  // May set p_ws.
@@ -8266,9 +8266,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
       if (time_limit < 0) {
         goto theend;
       }
-      if (argvars[4].v_type != VAR_UNKNOWN && !evalarg_get(&argvars[4], &skip)) {
-        goto theend;
-      }
+      use_skip = eval_expr_valid_arg(&argvars[4]);
     }
   }
 
@@ -8303,19 +8301,19 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
       subpatnum = FAIL;
     }
 
-    if (subpatnum == FAIL || !evalarg_valid(&skip)) {
+    if (subpatnum == FAIL || !use_skip) {
       // didn't find it or no skip argument
       break;
     }
     firstpos = pos;
 
-    // If the skip pattern matches, ignore this match.
+    // If the skip expression matches, ignore this match.
     {
-      bool err;
       const pos_T save_pos = curwin->w_cursor;
 
       curwin->w_cursor = pos;
-      const bool do_skip = evalarg_call_bool(&skip, &err);
+      bool err = false;
+      const bool do_skip = eval_expr_to_bool(&argvars[4], &err);
       curwin->w_cursor = save_pos;
       if (err) {
         // Evaluating {skip} caused an error, break here.
@@ -8356,7 +8354,6 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   }
 theend:
   p_ws = save_p_ws;
-  evalarg_clean(&skip);
 
   return retval;
 }
@@ -8788,13 +8785,9 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
       || argvars[4].v_type == VAR_UNKNOWN) {
     skip = NULL;
   } else {
+    // Type is checked later.
     skip = &argvars[4];
-    if (skip->v_type != VAR_FUNC
-        && skip->v_type != VAR_PARTIAL
-        && skip->v_type != VAR_STRING) {
-      semsg(_(e_invarg2), tv_get_string(&argvars[4]));
-      goto theend;  // Type error.
-    }
+
     if (argvars[5].v_type != VAR_UNKNOWN) {
       lnum_stop = tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
@@ -8905,10 +8898,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   }
 
   if (skip != NULL) {
-    // Empty string means to not use the skip expression.
-    if (skip->v_type == VAR_STRING || skip->v_type == VAR_FUNC) {
-      use_skip = skip->vval.v_string != NULL && *skip->vval.v_string != NUL;
-    }
+    use_skip = eval_expr_valid_arg(skip);
   }
 
   save_cursor = curwin->w_cursor;
