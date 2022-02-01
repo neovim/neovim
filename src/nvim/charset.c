@@ -217,9 +217,7 @@ int buf_init_chartab(buf_T *buf, int global)
             }
           } else if (i == 1) {
             // (re)set printable
-            // For double-byte we keep the cell width, so
-            // that we can detect it from the first byte.
-            if (((c < ' ') || (c > '~'))) {
+            if (c < ' ' || c > '~') {
               if (tilde) {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
                                          + ((dy_flags & DY_UHEX) ? 4 : 2));
@@ -539,7 +537,7 @@ char_u *transchar_buf(const buf_T *buf, int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))))
+  if ((!chartab_initialized && (c >= ' ' && c <= '~'))
       || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
     transchar_charbuf[i] = (char_u)c;

@@ -19,11 +19,7 @@ func Test_gf_url()
   call search("^second")
   call search("URL")
   call assert_equal("URL://machine.name/tmp/vimtest2b", expand("<cfile>"))
-  if has("ebcdic")
-      set isf=@,240-249,/,.,-,_,+,,,$,:,~,\
-  else
-      set isf=@,48-57,/,.,-,_,+,,,$,~,\
-  endif
+  set isf=@,48-57,/,.,-,_,+,,,$,~,\
   call search("^third")
   call search("name")
   call assert_equal("URL:\\\\machine.name\\vimtest2c", expand("<cfile>"))
@@ -76,11 +72,7 @@ endfunc
 
 " Test for invoking 'gf' on a ${VAR} variable
 func Test_gf()
-  if has("ebcdic")
-    set isfname=@,240-249,/,.,-,_,+,,,$,:,~,{,}
-  else
-    set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
-  endif
+  set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
 
   call writefile(["Test for gf command"], "Xtest1")
   if has("unix")
