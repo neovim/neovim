@@ -7835,13 +7835,11 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
 /// @return true if the directory is successfully changed.
 bool changedir_func(char_u *new_dir, CdScope scope)
 {
-  char_u *pdir = NULL;
-  bool retval = false;
-
   if (new_dir == NULL || allbuf_locked()) {
     return false;
   }
 
+  char_u *pdir = NULL;
   // ":cd -": Change to previous directory
   if (STRCMP(new_dir, "-") == 0) {
     pdir = get_prevdir(scope);
@@ -7870,32 +7868,30 @@ bool changedir_func(char_u *new_dir, CdScope scope)
     new_dir = NameBuff;
   }
 
-  bool dir_differs = new_dir == NULL || pdir == NULL
-                     || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
-  if (new_dir != NULL && (!dir_differs || vim_chdir(new_dir) == 0)) {
-    char_u **pp;
-
-    switch (scope) {
-    case kCdScopeTabpage:
-      pp = &curtab->tp_prevdir;
-      break;
-    case kCdScopeWindow:
-      pp = &curwin->w_prevdir;
-      break;
-    default:
-      pp = &prev_dir;
-    }
-    xfree(*pp);
-    *pp = pdir;
-
-    post_chdir(scope, dir_differs);
-    retval = true;
-  } else {
+  bool dir_differs = pdir == NULL || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
+  if (dir_differs && vim_chdir(new_dir) != 0) {
     emsg(_(e_failed));
     xfree(pdir);
+    return false;
   }
 
-  return retval;
+  char_u **pp;
+  switch (scope) {
+  case kCdScopeTabpage:
+    pp = &curtab->tp_prevdir;
+    break;
+  case kCdScopeWindow:
+    pp = &curwin->w_prevdir;
+    break;
+  default:
+    pp = &prev_dir;
+  }
+  xfree(*pp);
+  *pp = pdir;
+
+  post_chdir(scope, dir_differs);
+
+  return true;
 }
 
 /// ":cd", ":tcd", ":lcd", ":chdir", "tchdir" and ":lchdir".
