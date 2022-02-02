@@ -144,16 +144,16 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
   }
 }
 
-void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, HlAttrNames *names)
+void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id, Dict(highlight) *dict)
 {
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
       && map_has(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id))) {
     return;
   }
   if (ns_id == 0) {
-    assert(names);
+    assert(dict);
     // set in global (':highlight') namespace
-    set_hl_group(hl_id, attrs, names, link_id);
+    set_hl_group(hl_id, attrs, dict, link_id);
     return;
   }
   DecorProvider *p = get_decor_provider(ns_id, true);
@@ -198,22 +198,16 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     int tmp = false;
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDictionary) {
-      Dictionary dict = ret.data.dictionary;
       fallback = false;
-      attrs = dict2hlattrs(dict, true, &it.link_id, NULL, &err);
-      for (size_t i = 0; i < dict.size; i++) {
-        char *key = dict.items[i].key.data;
-        Object val = dict.items[i].value;
-        bool truthy = api_object_to_bool(val, key, false, &err);
-
-        if (strequal(key, "fallback")) {
-          fallback = truthy;
-        } else if (strequal(key, "temp")) {
-          tmp = truthy;
+      Dict(highlight) dict = { 0 };
+      if (api_dict_to_keydict(&dict, KeyDict_highlight_get_field,
+                              ret.data.dictionary, &err)) {
+        attrs = dict2hlattrs(&dict, true, &it.link_id, &err);
+        fallback = api_object_to_bool(dict.fallback, "fallback", true, &err);
+        tmp = api_object_to_bool(dict.fallback, "tmp", false, &err);
+        if (it.link_id >= 0) {
+          fallback = true;
         }
-      }
-      if (it.link_id >= 0) {
-        fallback = true;
       }
     }
 
@@ -802,116 +796,98 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   return hl;
 }
 
-HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, HlAttrNames *names, Error *err)
+HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
 {
   HlAttrs hlattrs = HLATTRS_INIT;
-
   int32_t fg = -1, bg = -1, ctermfg = -1, ctermbg = -1, sp = -1;
   int16_t mask = 0;
   int16_t cterm_mask = 0;
   bool cterm_mask_provided = false;
 
-  for (size_t i = 0; i < dict.size; i++) {
-    char *key = dict.items[i].key.data;
-    Object val = dict.items[i].value;
-
-    struct {
-      const char *name;
-      int16_t flag;
-    } flags[] = {
-      { "bold", HL_BOLD },
-      { "standout", HL_STANDOUT },
-      { "underline", HL_UNDERLINE },
-      { "undercurl", HL_UNDERCURL },
-      { "italic", HL_ITALIC },
-      { "reverse", HL_INVERSE },
-      { "default", HL_DEFAULT },
-      // { "global", HL_GLOBAL },
-      { NULL, 0 },
-    };
-
-    int j;
-    for (j = 0; flags[j].name; j++) {
-      if (strequal(flags[j].name, key)) {
-        if (api_object_to_bool(val, key, false, err)) {
-          mask = mask | flags[j].flag;
-        }
-        break;
-      }
+#define CHECK_FLAG(d, m, name, extra, flag) \
+    if (api_object_to_bool(d->name ## extra, #name, false, err)) { \
+      m = m | flag; \
     }
 
-    // Handle cterm attrs
-    if (strequal(key, "cterm") && val.type == kObjectTypeDictionary) {
-      cterm_mask_provided = true;
-      Dictionary cterm_dict = val.data.dictionary;
-      for (size_t l = 0; l < cterm_dict.size; l++) {
-        char *cterm_dict_key = cterm_dict.items[l].key.data;
-        Object cterm_dict_val = cterm_dict.items[l].value;
-        for (int m = 0; flags[m].name; m++) {
-          if (strequal(flags[m].name, cterm_dict_key)) {
-            if (api_object_to_bool(cterm_dict_val, cterm_dict_key, false,
-                                   err)) {
-              cterm_mask |= flags[m].flag;
-            }
-            break;
-          }
-        }
+  CHECK_FLAG(dict, mask, bold, , HL_BOLD);
+  CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
+  CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
+  CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
+  CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
+  CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
+  CHECK_FLAG(dict, mask, default, _, HL_DEFAULT);
+  CHECK_FLAG(dict, mask, global, , HL_GLOBAL);
+
+  if (HAS_KEY(dict->fg)) {
+    fg = object_to_color(dict->fg, "fg", err);
+  } else if (HAS_KEY(dict->foreground)) {
+    fg = object_to_color(dict->foreground, "foreground", err);
+  }
+  if (ERROR_SET(err)) {
+    return hlattrs;
+  }
+
+  if (HAS_KEY(dict->bg)) {
+    bg = object_to_color(dict->bg, "bg", err);
+  } else if (HAS_KEY(dict->background)) {
+    bg = object_to_color(dict->background, "background", err);
+  }
+  if (ERROR_SET(err)) {
+    return hlattrs;
+  }
+
+  if (HAS_KEY(dict->sp)) {
+    sp = object_to_color(dict->sp, "sp", err);
+  } else if (HAS_KEY(dict->special)) {
+    sp = object_to_color(dict->special, "special", err);
+  }
+  if (ERROR_SET(err)) {
+    return hlattrs;
+  }
+
+  if (HAS_KEY(dict->link)) {
+    if (link_id) {
+      *link_id = object_to_hl_id(dict->link, "link", err);
+      if (ERROR_SET(err)) {
+        return hlattrs;
       }
+    } else {
+      api_set_error(err, kErrorTypeValidation, "Invalid Key: 'link'");
+    }
+  }
+
+  // Handle cterm attrs
+  if (dict->cterm.type == kObjectTypeDictionary) {
+    Dict(highlight_cterm) cterm[1] = { 0 };
+    if (!api_dict_to_keydict(cterm, KeyDict_highlight_cterm_get_field,
+                             dict->cterm.data.dictionary, err)) {
+      return hlattrs;
     }
 
-    struct {
-      const char *name;
-      const char *shortname;
-      int *dest;
-      char **dest_name;
-    } colors[] = {
-      { "foreground", "fg", &fg, names ? &names->fg_name : NULL },
-      { "background", "bg", &bg, names ? &names->bg_name : NULL },
-      { "ctermfg", NULL, &ctermfg, NULL },
-      { "ctermbg", NULL, &ctermbg, NULL },
-      { "special", "sp", &sp, names ? &names->sp_name : NULL },
-      { NULL, NULL, NULL, NULL },
-    };
+    cterm_mask_provided = true;
+    CHECK_FLAG(cterm, cterm_mask, bold, , HL_BOLD);
+    CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
+    CHECK_FLAG(cterm, cterm_mask, underline, , HL_UNDERLINE);
+    CHECK_FLAG(cterm, cterm_mask, undercurl, , HL_UNDERCURL);
+    CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
+    CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
 
-    int k;
-    for (k = 0; (!flags[j].name) && colors[k].name; k++) {
-      if (strequal(colors[k].name, key) || strequal(colors[k].shortname, key)) {
-        if (val.type == kObjectTypeInteger) {
-          *colors[k].dest = (int)val.data.integer;
-        } else if (val.type == kObjectTypeString) {
-          String str = val.data.string;
-          // TODO(bfredl): be more fancy with "bg", "fg" etc
-          if (str.size) {
-            *colors[k].dest = name_to_color(str.data);
-            if (colors[k].dest_name) {
-              *colors[k].dest_name = str.data;
-            }
-          }
-        } else {
-          api_set_error(err, kErrorTypeValidation,
-                        "'%s' must be string or integer", key);
-        }
-        break;
-      }
-    }
+  } else if (HAS_KEY(dict->cterm)) {
+    api_set_error(err, kErrorTypeValidation, "'cterm' must be a Dictionary.");
+  }
+#undef CHECK_FLAG
 
-    if (flags[j].name || colors[k].name) {
-      // handled above
-    } else if (link_id && strequal(key, "link")) {
-      if (val.type == kObjectTypeString) {
-        String str = val.data.string;
-        *link_id = syn_check_group(str.data, (int)str.size);
-      } else if (val.type == kObjectTypeInteger) {
-        // TODO(bfredl): validate range?
-        *link_id = (int)val.data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'link' must be string or integer");
-      }
-    }
-
+  if (HAS_KEY(dict->ctermfg)) {
+    ctermfg = object_to_color(dict->ctermfg, "ctermfg", err);
     if (ERROR_SET(err)) {
-      return hlattrs;  // error set, caller should not use retval
+      return hlattrs;
+    }
+  }
+
+  if (HAS_KEY(dict->ctermbg)) {
+    ctermbg = object_to_color(dict->ctermbg, "ctermbg", err);
+    if (ERROR_SET(err)) {
+      return hlattrs;
     }
   }
 
@@ -937,6 +913,21 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, HlAttrNames *n
 
   return hlattrs;
 }
+
+int object_to_color(Object val, char *key, Error *err)
+{
+  if (val.type == kObjectTypeInteger) {
+    return (int)val.data.integer;
+  } else if (val.type == kObjectTypeString) {
+    String str = val.data.string;
+    // TODO(bfredl): be more fancy with "bg", "fg" etc
+    return str.size ? name_to_color(str.data) : 0;
+  } else {
+    api_set_error(err, kErrorTypeValidation, "'%s' must be string or integer", key);
+    return 0;
+  }
+}
+
 Array hl_inspect(int attr)
 {
   Array ret = ARRAY_DICT_INIT;
