@@ -1569,6 +1569,12 @@ There are three different types of searching:
 	/u/user_x/work/include
 	/u/user_x/include
 
+<   Note: If your 'path' setting includes a non-existing directory, Vim will
+   skip the non-existing directory, but continues searching in the parent of
+   the non-existing directory if upwards searching is used.  E.g. when
+   searching "../include" and that doesn't exist, and upward searching is
+   used, also searches in "..".
+
 3) Combined up/downward search:
    If Vim's current path is /u/user_x/work/release and you do >
 	set path=**;/u/user_x
