@@ -39,11 +39,12 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
+    no_block_input = true;
     if (char_avail() || using_script() || input_available()) {
       // Don't block for events if there's a character already available for
       // processing. Characters can come from mappings, scripts and other
       // sources, so this scenario is very common.
-      key = safe_vgetc();
+      key = vgetc();
     } else if (!multiqueue_empty(main_loop.events)) {
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
@@ -57,7 +58,12 @@ getkey:
       // If an event was put into the queue, we send K_EVENT directly.
       key = !multiqueue_empty(main_loop.events)
             ? K_EVENT
-            : safe_vgetc();
+            : vgetc();
+    }
+    no_block_input = false;
+
+    if (key == NUL) {
+      goto getkey;
     }
 
     if (key == K_EVENT) {

@@ -148,6 +148,8 @@ EXTERN bool cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
 
 EXTERN bool exec_from_reg INIT(= false);         // executing register
 
+EXTERN bool no_block_input INIT(= false);
+
 // When '$' is included in 'cpoptions' option set:
 // When a change command is given that deletes only part of a line, a dollar
 // is put at the end of the changed text. dollar_vcol is set to the virtual

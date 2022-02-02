@@ -30,6 +30,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/input.h"
 #include "nvim/keymap.h"
 #include "nvim/lua/executor.h"
@@ -1480,6 +1481,7 @@ int vgetc(void)
         did_inc = true;         // mod_mask may change value
       }
       c = vgetorpeek(true);
+      no_block_input = false;
       if (did_inc) {
         no_mapping--;
       }
@@ -2376,7 +2378,10 @@ static int vgetorpeek(bool advance)
         long wait_time = 0;
 
         if (advance) {
-          if (typebuf.tb_len == 0 || !(p_timeout || (p_ttimeout && keylen == KEYLEN_PART_KEY))) {
+          if (typebuf.tb_len == 0) {
+            // blocking wait unless called from state_enter()
+            wait_time = no_block_input ? 0L : -1L;
+          } else if (!(p_timeout || (p_ttimeout && keylen == KEYLEN_PART_KEY))) {
             // blocking wait
             wait_time = -1L;
           } else if (keylen == KEYLEN_PART_KEY && p_ttm >= 0) {
@@ -2390,6 +2395,10 @@ static int vgetorpeek(bool advance)
         c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
                    typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
                    wait_time);
+
+        if (no_block_input && wait_tb_len == 0 && c == 0) {
+          advance = false;
+        }
 
         if (showcmd_idx != 0) {
           pop_showcmd();
