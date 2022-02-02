@@ -7870,9 +7870,11 @@ bool changedir_func(char_u *new_dir, CdScope scope)
     new_dir = NameBuff;
   }
 
-  bool dir_differs = new_dir == NULL || pdir == NULL
-                     || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
-  if (new_dir != NULL && (!dir_differs || vim_chdir(new_dir) == 0)) {
+  bool dir_differs = pdir == NULL || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
+  if (dir_differs && vim_chdir(new_dir) != 0) {
+    emsg(_(e_failed));
+    xfree(pdir);
+  } else {
     char_u **pp;
 
     switch (scope) {
@@ -7890,9 +7892,6 @@ bool changedir_func(char_u *new_dir, CdScope scope)
 
     post_chdir(scope, dir_differs);
     retval = true;
-  } else {
-    emsg(_(e_failed));
-    xfree(pdir);
   }
 
   return retval;
