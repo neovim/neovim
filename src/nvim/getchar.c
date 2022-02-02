@@ -2304,6 +2304,10 @@ static int vgetorpeek(bool advance)
             c = ESC;
           }
           tc = c;
+
+          // no chars to block abbreviations for
+          typebuf.tb_no_abbr_cnt = 0;
+
           break;
         }
 
