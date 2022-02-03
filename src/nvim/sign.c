@@ -1501,28 +1501,28 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("linehl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("linehl"), p);
   }
   if (sp->sn_text_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_text_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("texthl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("texthl"), p);
   }
   if (sp->sn_cul_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_cul_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("culhl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("culhl"), p);
   }
   if (sp->sn_num_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_num_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("numhl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("numhl"), p);
   }
 }
 

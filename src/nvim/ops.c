@@ -381,8 +381,8 @@ static void shift_block(oparg_T *oap, int amount)
       }
     }
     for (; ascii_iswhite(*bd.textstart);) {
-      // TODO: is passing bd.textstart for start of the line OK?
-      incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (bd.start_vcol));
+      // TODO(fmoralesc): is passing bd.textstart for start of the line OK?
+      incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, bd.start_vcol);
       total += incr;
       bd.start_vcol += incr;
     }
@@ -2789,8 +2789,6 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       curbuf->b_op_end.col = MAXCOL;
     }
   }
-
-  return;
 }
 
 // Copy a block range into a register.

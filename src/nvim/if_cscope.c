@@ -919,8 +919,8 @@ static int cs_find(exarg_T *eap)
 
 
 /// Common code for cscope find, shared by cs_find() and ex_cstag().
-static bool cs_find_common(char *opt, char *pat, int forceit, int verbose,
-                           bool use_ll, char_u *cmdline)
+static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool use_ll,
+                           char_u *cmdline)
 {
   char *cmd;
   int *nummatches;
@@ -1594,7 +1594,6 @@ static char *cs_pathcomponents(char *path)
   char *s = path + strlen(path) - 1;
   for (int i = 0; i < p_cspc; i++) {
     while (s > path && *--s != '/') {
-      continue;
     }
   }
   if ((s > path && *s == '/')) {
@@ -1813,7 +1812,6 @@ static int cs_read_prompt(size_t i)
 static void sig_handler(int s)
 {
   // do nothing
-  return;
 }
 
 #endif

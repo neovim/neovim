@@ -139,10 +139,10 @@ bool try_end(Error *err)
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
-    char *msg = (char *)get_exception_string(*msg_list,
-                                             ET_ERROR,
-                                             NULL,
-                                             &should_free);
+    char *msg = get_exception_string(*msg_list,
+                                     ET_ERROR,
+                                     NULL,
+                                     &should_free);
     api_set_error(err, kErrorTypeException, "%s", msg);
     free_global_msglist();
 
@@ -720,7 +720,6 @@ fail_and_free:
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
   XFREE_CLEAR(parsed_args.desc);
-  return;
 }
 
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines

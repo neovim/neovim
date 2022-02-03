@@ -2093,7 +2093,7 @@ void list_in_columns(char_u **items, int size, int current)
 
   // The rightmost column doesn't need a separator.
   // Sacrifice it to fit in one more column if possible.
-  int ncol = (int)(Columns + 1) / width;
+  int ncol = (Columns + 1) / width;
   int nrow = item_count / ncol + (item_count % ncol ? 1 : 0);
   int cur_row = 1;
 

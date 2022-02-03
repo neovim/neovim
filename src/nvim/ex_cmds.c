@@ -1366,7 +1366,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
-    if (u_save((line2), (linenr_T)(line2 + 1)) == FAIL) {
+    if (u_save(line2, (linenr_T)(line2 + 1)) == FAIL) {
       xfree(cmd_buf);
       goto error;
     }
@@ -3055,7 +3055,7 @@ void ex_append(exarg_T *eap)
   // it is the same as "start"  -- Acevedo
   if (!cmdmod.lockmarks) {
     curbuf->b_op_start.lnum
-        = (eap->line2 < curbuf->b_ml.ml_line_count) ? eap->line2 + 1 : curbuf->b_ml.ml_line_count;
+      = (eap->line2 < curbuf->b_ml.ml_line_count) ? eap->line2 + 1 : curbuf->b_ml.ml_line_count;
     if (eap->cmdidx != CMD_append) {
       curbuf->b_op_start.lnum--;
     }
