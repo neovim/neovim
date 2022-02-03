@@ -568,19 +568,8 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     }
 
     if (spaces > 0) {
-      int off;
-
-      // Avoid starting halfway through a multi-byte character.
-      if (b_insert) {
-        off = utf_head_off(oldp, oldp + offset + spaces);
-        spaces -= off;
-        count -= off;
-      } else {
-        // spaces fill the gap, the character that's at the edge moves
-        // right
-        off = utf_head_off(oldp, oldp + offset);
-        offset -= off;
-      }
+      // avoid copying part of a multi-byte character
+      offset -= utf_head_off(oldp, oldp + offset);
     }
     if (spaces < 0) {  // can happen when the cursor was moved
       spaces = 0;
