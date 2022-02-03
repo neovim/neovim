@@ -3470,6 +3470,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         curwin->w_cursor.col -= first_byte_off;
       }
     } else {
+      linenr_T new_lnum = new_cursor.lnum;
+      size_t len;
+
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
       for (cnt = 1; cnt <= count; cnt++) {
@@ -3486,6 +3489,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           STRCAT(newp, ptr);
           // insert second line
           ml_append(lnum, newp, (colnr_T)0, false);
+          new_lnum++;
           xfree(newp);
 
           oldp = ml_get(lnum);
@@ -3501,10 +3505,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
 
         for (; i < y_size; i++) {
-          if ((y_type != kMTCharWise || i < y_size - 1)
-              && ml_append(lnum, y_array[i], (colnr_T)0, false)
-              == FAIL) {
-            goto error;
+          if ((y_type != kMTCharWise || i < y_size - 1)) {
+            if (ml_append(lnum, y_array[i], (colnr_T)0, false) == FAIL) {
+              goto error;
+            }
+            new_lnum++;
           }
           lnum++;
           ++nr_lines;
@@ -3554,6 +3559,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           extmark_splice(curbuf, (int)new_cursor.lnum-1, col + 1, 0, 0, 0,
                          (int)y_size+1, 0, totsize+2, kExtmarkUndo);
         }
+
+        if (cnt == 1) {
+          new_lnum = lnum;
+        }
       }
 
 error:
@@ -3581,11 +3590,12 @@ error:
 
       // Put the '] mark on the first byte of the last inserted character.
       // Correct the length for change in indent.
-      curbuf->b_op_end.lnum = lnum;
-      col = (colnr_T)STRLEN(y_array[y_size - 1]) - lendiff;
+      curbuf->b_op_end.lnum = new_lnum;
+      len = STRLEN(y_array[y_size - 1]);
+      col = (colnr_T)len - lendiff;
       if (col > 1) {
         curbuf->b_op_end.col = col - 1 - utf_head_off(y_array[y_size - 1],
-                                                      y_array[y_size - 1] + col - 1);
+                                                      y_array[y_size - 1] + len - 1);
       } else {
         curbuf->b_op_end.col = 0;
       }
@@ -3604,8 +3614,12 @@ error:
           }
           curwin->w_cursor.col = 0;
         } else {
-          curwin->w_cursor.lnum = lnum;
+          curwin->w_cursor.lnum = new_lnum;
           curwin->w_cursor.col = col;
+          curbuf->b_op_end = curwin->w_cursor;
+          if (col > 1) {
+            curbuf->b_op_end.col = col - 1;
+          }
         }
       } else if (y_type == kMTLineWise) {
         // put cursor on first non-blank in first inserted line
