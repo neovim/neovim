@@ -573,19 +573,24 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       // Avoid starting halfway through a multi-byte character.
       if (b_insert) {
         off = utf_head_off(oldp, oldp + offset + spaces);
+        spaces -= off;
+        count -= off;
       } else {
-        off = mb_off_next(oldp, oldp + offset);
-        offset += off;
+        // spaces fill the gap, the character that's at the edge moves
+        // right
+        off = utf_head_off(oldp, oldp + offset);
+        offset -= off;
       }
-      spaces -= off;
-      count -= off;
     }
     if (spaces < 0) {  // can happen when the cursor was moved
       spaces = 0;
     }
 
     assert(count >= 0);
-    newp = (char_u *)xmalloc(STRLEN(oldp) + s_len + (size_t)count + 1);
+    // Make sure the allocated size matches what is actually copied below.
+    newp = xmalloc(STRLEN(oldp) + (size_t)spaces + s_len
+                   + (spaces > 0 && !bdp->is_short ? (size_t)p_ts - (size_t)spaces : 0)
+                   + (size_t)count + 1);
 
     // copy up to shifted part
     memmove(newp, oldp, (size_t)offset);
@@ -600,14 +605,19 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     offset += (int)s_len;
 
     int skipped = 0;
-    if (spaces && !bdp->is_short) {
-      // insert post-padding
-      memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
-      // We're splitting a TAB, don't copy it.
-      oldp++;
-      // We allowed for that TAB, remember this now
-      count++;
-      skipped = 1;
+    if (spaces > 0 && !bdp->is_short) {
+      if (*oldp == TAB) {
+        // insert post-padding
+        memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
+        // We're splitting a TAB, don't copy it.
+        oldp++;
+        // We allowed for that TAB, remember this now
+        count++;
+        skipped = 1;
+      } else {
+        // Not a TAB, no extra spaces
+        count = spaces;
+      }
     }
 
     if (spaces > 0) {
@@ -2329,7 +2339,7 @@ void op_insert(oparg_T *oap, long count1)
           pre_textlen -= t - oap->start_vcol;
           oap->start_vcol = t;
         } else if (oap->op_type == OP_APPEND
-                   && oap->end.col + oap->end.coladd
+                   && oap->start.col + oap->start.coladd
                    >= curbuf->b_op_start_orig.col
                    + curbuf->b_op_start_orig.coladd) {
           oap->start.col = curbuf->b_op_start_orig.col;
