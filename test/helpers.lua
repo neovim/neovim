@@ -815,7 +815,7 @@ end
 function module.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
-  local keep = is_ci and 999 or 10
+  local keep = is_ci and 100 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'
     ..string.format('$NVIM_LOG_FILE: %s\n', logfile)
