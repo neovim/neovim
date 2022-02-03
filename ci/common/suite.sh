@@ -29,17 +29,14 @@ ci_fold() {
 }
 
 enter_suite() {
-  set +x
   FAILED=0
   rm -f "${END_MARKER}"
   local suite_name="$1"
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
   ci_fold "start" "$suite_name"
-  set -x
 }
 
 exit_suite() {
-  set +x
   if test $FAILED -ne 0 ; then
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"
