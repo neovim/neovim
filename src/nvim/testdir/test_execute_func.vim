@@ -147,3 +147,30 @@ func Test_win_execute_other_tab()
   tabclose
   unlet xyz
 endfunc
+
+func Test_win_execute_visual_redraw()
+  call setline(1, ['a', 'b', 'c'])
+  new
+  wincmd p
+  " start Visual in current window, redraw in other window with fewer lines
+  call feedkeys("G\<C-V>", 'txn')
+  call win_execute(winnr('#')->win_getid(), 'redraw')
+  call feedkeys("\<Esc>", 'txn')
+  bwipe!
+  bwipe!
+
+  enew
+  new
+  call setline(1, ['a', 'b', 'c'])
+  let winid = win_getid()
+  wincmd p
+  " start Visual in current window, extend it in other window with more lines
+  call feedkeys("\<C-V>", 'txn')
+  call win_execute(winid, 'call feedkeys("G\<C-V>", ''txn'')')
+  redraw
+
+  bwipe!
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

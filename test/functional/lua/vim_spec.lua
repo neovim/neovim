@@ -2406,6 +2406,17 @@ describe('lua stdlib', function()
       eq(buf1, meths.get_current_buf())
       eq(buf2, val)
     end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local a = vim.api
+        local t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
+        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        a.nvim_feedkeys(t "G<C-V>", "txn", false)
+        a.nvim_buf_call(a.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()
@@ -2433,6 +2444,75 @@ describe('lua stdlib', function()
       eq('Normal:Normal', meths.win_get_option(win2, 'winhighlight'))
       eq(win1, meths.get_current_win())
       eq(win2, val)
+    end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Add lines to the current buffer and make another window looking into an empty buffer.
+      exec_lua [[
+        _G.a = vim.api
+        _G.t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
+        _G.win_lines = a.nvim_get_current_win()
+        vim.cmd "new"
+        _G.win_empty = a.nvim_get_current_win()
+        a.nvim_set_current_win(win_lines)
+        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+      ]]
+
+      -- Start Visual in current window, redraw in other window with fewer lines.
+      -- Should be fixed by vim-patch:8.2.4018.
+      exec_lua [[
+        a.nvim_feedkeys(t "G<C-V>", "txn", false)
+        a.nvim_win_call(win_empty, function() vim.cmd "redraw" end)
+      ]]
+
+      -- Start Visual in current window, extend it in other window with more lines.
+      -- Fixed for win_execute by vim-patch:8.2.4026, but nvim_win_call should also not be affected.
+      exec_lua [[
+        a.nvim_feedkeys(t "<Esc>gg", "txn", false)
+        a.nvim_set_current_win(win_empty)
+        a.nvim_feedkeys(t "gg<C-V>", "txn", false)
+        a.nvim_win_call(win_lines, function() a.nvim_feedkeys(t "G<C-V>", "txn", false) end)
+        vim.cmd "redraw"
+      ]]
+    end)
+
+    it('updates ruler if cursor moved', function()
+      -- Fixed for win_execute in vim-patch:8.1.2124, but should've applied to nvim_win_call too!
+      local screen = Screen.new(30, 5)
+      screen:set_default_attr_ids {
+          [1] = {reverse = true},
+          [2] = {bold = true, reverse = true},
+      }
+      screen:attach()
+      exec_lua [[
+        _G.a = vim.api
+        vim.opt.ruler = true
+        local lines = {}
+        for i = 0, 499 do lines[#lines + 1] = tostring(i) end
+        a.nvim_buf_set_lines(0, 0, -1, true, lines)
+        a.nvim_win_set_cursor(0, {20, 0})
+        vim.cmd "split"
+        _G.win = a.nvim_get_current_win()
+        vim.cmd "wincmd w | redraw"
+      ]]
+      screen:expect [[
+        19                            |
+        {1:[No Name] [+]  20,1         3%}|
+        ^19                            |
+        {2:[No Name] [+]  20,1         3%}|
+                                      |
+      ]]
+      exec_lua [[
+        a.nvim_win_call(win, function() a.nvim_win_set_cursor(0, {100, 0}) end)
+        vim.cmd "redraw"
+      ]]
+      screen:expect [[
+        99                            |
+        {1:[No Name] [+]  100,1       19%}|
+        ^19                            |
+        {2:[No Name] [+]  20,1         3%}|
+                                      |
+      ]]
     end)
   end)
 end)

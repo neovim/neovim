@@ -2176,25 +2176,12 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tabpage_T *tp;
   win_T *wp = win_id2wp_tp(argvars, &tp);
-  win_T *save_curwin;
-  tabpage_T *save_curtab;
   // Return an empty string if something fails.
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
   if (wp != NULL && tp != NULL) {
-    pos_T curpos = wp->w_cursor;
-    if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true) ==
-        OK) {
-      check_cursor();
-      execute_common(argvars, rettv, fptr, 1);
-    }
-    restore_win_noblock(save_curwin, save_curtab, true);
-
-    // Update the status line if the cursor moved.
-    if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
-      wp->w_redr_status = true;
-    }
+    WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, fptr, 1));
   }
 }
 
@@ -4031,8 +4018,6 @@ static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *oldcurwin;
-  tabpage_T *oldtabpage;
   bool done = false;
 
   rettv->v_type = VAR_STRING;
@@ -4046,7 +4031,8 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     win_T *const window = tp == curtab || tp->tp_firstwin == NULL
         ? firstwin
         : tp->tp_firstwin;
-    if (switch_win(&oldcurwin, &oldtabpage, window, tp, true) == OK) {
+    switchwin_T switchwin;
+    if (switch_win(&switchwin, window, tp, true) == OK) {
       // look up the variable
       // Let gettabvar({nr}, "") return the "t:" dictionary.
       const dictitem_T *const v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't',
@@ -4059,7 +4045,7 @@ static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     // restore previous notion of curwin
-    restore_win(oldcurwin, oldtabpage, true);
+    restore_win(&switchwin, true);
   }
 
   if (!done && argvars[2].v_type != VAR_UNKNOWN) {
@@ -5881,18 +5867,16 @@ static void f_line(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     tabpage_T *tp;
-    win_T *save_curwin;
-    tabpage_T *save_curtab;
 
     // use window specified in the second argument
     win_T *wp = win_id2wp_tp(&argvars[1], &tp);
     if (wp != NULL && tp != NULL) {
-      if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true)
-          == OK) {
+      switchwin_T switchwin;
+      if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
         check_cursor();
         fp = var2fpos(&argvars[0], true, &fnum);
       }
-      restore_win_noblock(save_curwin, save_curtab, true);
+      restore_win_noblock(&switchwin, true);
     }
   } else {
     // use current window
