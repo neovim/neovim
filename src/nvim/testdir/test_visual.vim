@@ -1187,5 +1187,13 @@ func Test_visual_undo_deletes_last_line()
   bwipe!
 endfunc
 
+func Test_visual_block_insert_round_off()
+  new
+  " The number of characters are tuned to fill a 4096 byte allocated block,
+  " so that valgrind reports going over the end.
+  call setline(1, ['xxxxx', repeat('0', 1350), "\t", repeat('x', 60)])
+  exe "normal gg0\<C-V>GI" .. repeat('0', 1320) .. "\<Esc>"
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
