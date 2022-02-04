@@ -1,14 +1,15 @@
 " Tests for search_stats, when "S" is not in 'shortmess'
 
-source screendump.vim
 source check.vim
+source screendump.vim
 
 func Test_search_stat()
   new
   set shortmess-=S
   " Append 50 lines with text to search for, "foobar" appears 20 times
   call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 10))
-  call nvim_win_set_cursor(0, [1, 0])
+
+  call cursor(1, 1)
 
   " searchcount() returns an empty dictionary when previous pattern was not set
   call assert_equal({}, searchcount(#{pattern: ''}))
@@ -45,7 +46,6 @@ func Test_search_stat()
     \ searchcount(#{pattern: 'fooooobar', maxcount: 1}))
 
   " match at second line
-  call cursor(1, 1)
   let messages_before = execute('messages')
   let @/ = 'fo*\(bar\?\)\?'
   let g:a = execute(':unsilent :norm! n')
@@ -262,6 +262,34 @@ func Test_searchcount_fails()
   call assert_fails('echo searchcount("boo!")', 'E715:')
 endfunc
 
+func Test_searchcount_in_statusline()
+  CheckScreendump
+
+  let lines =<< trim END
+    set shortmess-=S
+    call append(0, 'this is something')
+    function TestSearchCount() abort
+      let search_count = searchcount()
+      if !empty(search_count)
+	return '[' . search_count.current . '/' . search_count.total . ']'
+      else
+	return ''
+      endif
+    endfunction
+    set hlsearch
+    set laststatus=2 statusline+=%{TestSearchCount()}
+  END
+  call writefile(lines, 'Xsearchstatusline')
+  let buf = RunVimInTerminal('-S Xsearchstatusline', #{rows: 10})
+  call TermWait(buf)
+  call term_sendkeys(buf, "/something")
+  call VerifyScreenDump(buf, 'Test_searchstat_4', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xsearchstatusline')
+endfunc
+
 func Test_search_stat_foldopen()
   CheckScreendump
 
@@ -319,30 +347,29 @@ func! Test_search_stat_screendump()
   call delete('Xsearchstat')
 endfunc
 
-func Test_searchcount_in_statusline()
+func Test_search_stat_then_gd()
   CheckScreendump
 
   let lines =<< trim END
+    call setline(1, ['int cat;', 'int dog;', 'cat = dog;'])
     set shortmess-=S
-    call append(0, 'this is something')
-    function TestSearchCount() abort
-      let search_count = searchcount()
-      if !empty(search_count)
-        return '[' . search_count.current . '/' . search_count.total . ']'
-      else
-        return ''
-      endif
-    endfunction
     set hlsearch
-    set laststatus=2 statusline+=%{TestSearchCount()}
   END
-  call writefile(lines, 'Xsearchstatusline')
-  let buf = RunVimInTerminal('-S Xsearchstatusline', #{rows: 10})
-  call TermWait(buf)
-  call term_sendkeys(buf, "/something")
-  call VerifyScreenDump(buf, 'Test_searchstat_4', {})
+  call writefile(lines, 'Xsearchstatgd')
 
-  call term_sendkeys(buf, "\<Esc>")
+  let buf = RunVimInTerminal('-S Xsearchstatgd', #{rows: 10})
+  call term_sendkeys(buf, "/dog\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstatgd_1', {})
+
+  call term_sendkeys(buf, "G0gD")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstatgd_2', {})
+
   call StopVimInTerminal(buf)
-  call delete('Xsearchstatusline')
+  call delete('Xsearchstatgd')
 endfunc
+
+
+
+" vim: shiftwidth=2 sts=2 expandtab
