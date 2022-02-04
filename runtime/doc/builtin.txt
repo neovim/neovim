@@ -3543,24 +3543,25 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			:if has("win32")
 <							*feature-list*
 		    List of supported pseudo-feature names:
-		        acl		|ACL| support
+			acl		|ACL| support.
 			bsd		BSD system (not macOS, use "mac" for that).
-		        iconv		Can use |iconv()| for conversion.
-		        +shellslash	Can use backslashes in filenames (Windows)
 			clipboard	|clipboard| provider is available.
 			fname_case	Case in file names matters (for Darwin and MS-Windows
 					this is not present).
+			iconv		Can use |iconv()| for conversion.
+			linux		Linux system.
 			mac		MacOS system.
 			nvim		This is Nvim.
 			python3		Legacy Vim |python3| interface. |has-python|
 			pythonx		Legacy Vim |python_x| interface. |has-pythonx|
-			ttyin		input is a terminal (tty)
-			ttyout		output is a terminal (tty)
+			sun		SunOS system.
+			ttyin		input is a terminal (tty).
+			ttyout		output is a terminal (tty).
 			unix		Unix system.
 			*vim_starting*	True during |startup|.
 			win32		Windows system (32 or 64 bit).
 			win64		Windows system (64 bit).
-			wsl		WSL (Windows Subsystem for Linux) system
+			wsl		WSL (Windows Subsystem for Linux) system.
 
 							*has-patch*
 		3.  Vim patch. For example the "patch123" feature means that
