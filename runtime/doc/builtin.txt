@@ -4347,6 +4347,9 @@ line({expr} [, {winid}])				*line()*
 			line("'t")		line number of mark t
 			line("'" . marker)	line number of mark marker
 <
+		To jump to the last known position when opening a file see
+		|last-position-jump|.
+
 		Can also be used as a |method|: >
 			GetValue()->line()
 
@@ -4912,8 +4915,10 @@ min({expr})	Return the minimum value of all items in {expr}.
 <							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
 		Create directory {name}.
+
 		If {path} is "p" then intermediate directories are created as
 		necessary.  Otherwise it must be "".
+
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 		the user, readable for others).  Use 0o700 to make it
@@ -4922,6 +4927,7 @@ mkdir({name} [, {path} [, {prot}]])
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0o700)
+
 <		This function is not available in the |sandbox|.
 
 		If you try to create an existing directory with {path} set to
@@ -5758,8 +5764,10 @@ remove({list}, {idx} [, {end}])				*remove()*
 		Example: >
 			:echo "last item: " . remove(mylist, -1)
 			:call remove(mylist, 0, 9)
+<
+		Use |delete()| to remove a file.
 
-<		Can also be used as a |method|: >
+		Can also be used as a |method|: >
 			mylist->remove(idx)
 
 remove({blob}, {idx} [, {end}])
@@ -5778,8 +5786,6 @@ remove({dict}, {key})
 		Example: >
 			:echo "removed " . remove(dict, "one")
 <		If there is no {key} in {dict} this is an error.
-
-		Use |delete()| to remove a file.
 
 rename({from}, {to})					*rename()*
 		Rename the file by the name {from} to the name {to}.  This
