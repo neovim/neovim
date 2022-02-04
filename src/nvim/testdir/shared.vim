@@ -343,6 +343,15 @@ func RunVimPiped(before, after, arguments, pipecmd)
   return 1
 endfunc
 
+func IsRoot()
+  if !has('unix')
+    return v:false
+  elseif $USER == 'root' || system('id -un') =~ '\<root\>'
+    return v:true
+  endif
+  return v:false
+endfunc
+
 " Get all messages but drop the maintainer entry.
 func GetMessages()
   redir => result

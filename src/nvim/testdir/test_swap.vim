@@ -1,6 +1,7 @@
 " Tests for the swap feature
 
 source check.vim
+source shared.vim
 
 func s:swapname()
   return trim(execute('swapname'))
@@ -198,14 +199,17 @@ func Test_swapfile_delete()
   quit
   call assert_equal(fnamemodify(swapfile_name, ':t'), fnamemodify(s:swapname, ':t'))
 
-  " Write the swapfile with a modified PID, now it will be automatically
-  " deleted. Process one should never be Vim.
-  let swapfile_bytes[24:27] = 0z01000000
-  call writefile(swapfile_bytes, swapfile_name)
-  let s:swapname = ''
-  split XswapfileText
-  quit
-  call assert_equal('', s:swapname)
+  " This test won't work as root because root can successfully run kill(1, 0)
+  if !IsRoot()
+    " Write the swapfile with a modified PID, now it will be automatically
+    " deleted. Process one should never be Vim.
+    let swapfile_bytes[24:27] = 0z01000000
+    call writefile(swapfile_bytes, swapfile_name)
+    let s:swapname = ''
+    split XswapfileText
+    quit
+    call assert_equal('', s:swapname)
+  endif
 
   " Now set the modified flag, the swap file will not be deleted
   let swapfile_bytes[28 + 80 + 899] = 0x55
