@@ -113,6 +113,14 @@ func CheckNotGui()
   endif
 endfunc
 
+" Command to check that test is not running as root
+command CheckNotRoot call CheckNotRoot()
+func CheckNotRoot()
+  if IsRoot()
+    throw 'Skipped: cannot run test as root'
+  endif
+endfunc
+
 " Command to check that the current language is English
 command CheckEnglish call CheckEnglish()
 func CheckEnglish()
