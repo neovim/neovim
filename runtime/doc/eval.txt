@@ -676,7 +676,7 @@ similar to -1. >
 	:let otherblob = myblob[:]	" make a copy of the Blob
 
 If the first index is beyond the last byte of the Blob or the second byte is
-before the first byte, the result is an empty Blob.  There is no error
+before the first index, the result is an empty Blob.  There is no error
 message.
 
 If the second index is equal to or greater than the length of the Blob the

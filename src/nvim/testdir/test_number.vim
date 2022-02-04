@@ -284,10 +284,10 @@ func Test_relativenumber_colors()
   " Default colors
   call VerifyScreenDump(buf, 'Test_relnr_colors_1', {})
 
-  call term_sendkeys(buf, ":hi LineNrAbove ctermfg=blue\<CR>")
+  call term_sendkeys(buf, ":hi LineNrAbove ctermfg=blue\<CR>:\<CR>")
   call VerifyScreenDump(buf, 'Test_relnr_colors_2', {})
 
-  call term_sendkeys(buf, ":hi LineNrBelow ctermfg=green\<CR>")
+  call term_sendkeys(buf, ":hi LineNrBelow ctermfg=green\<CR>:\<CR>")
   call VerifyScreenDump(buf, 'Test_relnr_colors_3', {})
 
   call term_sendkeys(buf, ":hi clear LineNrAbove\<CR>")

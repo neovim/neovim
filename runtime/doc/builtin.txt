@@ -3543,24 +3543,25 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			:if has("win32")
 <							*feature-list*
 		    List of supported pseudo-feature names:
-		        acl		|ACL| support
+			acl		|ACL| support.
 			bsd		BSD system (not macOS, use "mac" for that).
-		        iconv		Can use |iconv()| for conversion.
-		        +shellslash	Can use backslashes in filenames (Windows)
 			clipboard	|clipboard| provider is available.
 			fname_case	Case in file names matters (for Darwin and MS-Windows
 					this is not present).
+			iconv		Can use |iconv()| for conversion.
+			linux		Linux system.
 			mac		MacOS system.
 			nvim		This is Nvim.
 			python3		Legacy Vim |python3| interface. |has-python|
 			pythonx		Legacy Vim |python_x| interface. |has-pythonx|
-			ttyin		input is a terminal (tty)
-			ttyout		output is a terminal (tty)
+			sun		SunOS system.
+			ttyin		input is a terminal (tty).
+			ttyout		output is a terminal (tty).
 			unix		Unix system.
 			*vim_starting*	True during |startup|.
 			win32		Windows system (32 or 64 bit).
 			win64		Windows system (64 bit).
-			wsl		WSL (Windows Subsystem for Linux) system
+			wsl		WSL (Windows Subsystem for Linux) system.
 
 							*has-patch*
 		3.  Vim patch. For example the "patch123" feature means that
@@ -4347,6 +4348,9 @@ line({expr} [, {winid}])				*line()*
 			line("'t")		line number of mark t
 			line("'" . marker)	line number of mark marker
 <
+		To jump to the last known position when opening a file see
+		|last-position-jump|.
+
 		Can also be used as a |method|: >
 			GetValue()->line()
 
@@ -4912,8 +4916,10 @@ min({expr})	Return the minimum value of all items in {expr}.
 <							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
 		Create directory {name}.
+
 		If {path} is "p" then intermediate directories are created as
 		necessary.  Otherwise it must be "".
+
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 		the user, readable for others).  Use 0o700 to make it
@@ -4922,6 +4928,7 @@ mkdir({name} [, {path} [, {prot}]])
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0o700)
+
 <		This function is not available in the |sandbox|.
 
 		If you try to create an existing directory with {path} set to
@@ -5758,8 +5765,10 @@ remove({list}, {idx} [, {end}])				*remove()*
 		Example: >
 			:echo "last item: " . remove(mylist, -1)
 			:call remove(mylist, 0, 9)
+<
+		Use |delete()| to remove a file.
 
-<		Can also be used as a |method|: >
+		Can also be used as a |method|: >
 			mylist->remove(idx)
 
 remove({blob}, {idx} [, {end}])
@@ -5778,8 +5787,6 @@ remove({dict}, {key})
 		Example: >
 			:echo "removed " . remove(dict, "one")
 <		If there is no {key} in {dict} this is an error.
-
-		Use |delete()| to remove a file.
 
 rename({from}, {to})					*rename()*
 		Rename the file by the name {from} to the name {to}.  This

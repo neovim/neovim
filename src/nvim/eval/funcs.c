@@ -4419,6 +4419,12 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #if defined(BSD) && !defined(__APPLE__)
     "bsd",
 #endif
+#ifdef __linux__
+    "linux",
+#endif
+#ifdef SUN_SYSTEM
+    "sun",
+#endif
 #ifdef UNIX
     "unix",
 #endif

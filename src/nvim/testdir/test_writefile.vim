@@ -43,7 +43,7 @@ func Test_writefile_fails_gently()
 endfunc
 
 func Test_writefile_fails_conversion()
-  if !has('iconv') || system('uname -s') =~ 'SunOS'
+  if !has('iconv') || has('sun')
     return
   endif
   " Without a backup file the write won't happen if there is a conversion

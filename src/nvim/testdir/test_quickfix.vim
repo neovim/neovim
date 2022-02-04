@@ -1914,6 +1914,7 @@ func Test_switchbuf()
 
   " If opening a file changes 'switchbuf', then the new value should be
   " retained.
+  set modeline&vim
   call writefile(["vim: switchbuf=split"], 'Xqftestfile1')
   enew | only
   set switchbuf&vim
