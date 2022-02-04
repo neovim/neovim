@@ -86,6 +86,9 @@ endfunc
 " test that g~ap changes one paragraph only.
 func Test_gap()
   new
-  call feedkeys("iabcd\n\ndefggg0g~ap", "tx")
+  " setup text
+  call feedkeys("iabcd\<cr>\<cr>defg", "tx")
+  " modify only first line
+  call feedkeys("gg0g~ap", "tx")
   call assert_equal(["ABCD", "", "defg"], getline(1,3))
 endfunc

@@ -1789,6 +1789,7 @@ func s:create_test_file(filename)
 endfunc
 
 func Test_switchbuf()
+  CheckNotBSD
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
   call s:create_test_file('Xqftestfile3')
