@@ -165,7 +165,7 @@ describe('input non-printable chars', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      "Xtest-overwrite" [noeol] 1L, 6C                            |
+      "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
     -- The timestamp is in second resolution, wait two seconds to be sure.
