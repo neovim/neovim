@@ -1789,7 +1789,6 @@ func s:create_test_file(filename)
 endfunc
 
 func Test_switchbuf()
-  CheckNotBSD
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
   call s:create_test_file('Xqftestfile3')
@@ -1915,6 +1914,7 @@ func Test_switchbuf()
 
   " If opening a file changes 'switchbuf', then the new value should be
   " retained.
+  set modeline&vim
   call writefile(["vim: switchbuf=split"], 'Xqftestfile1')
   enew | only
   set switchbuf&vim
