@@ -347,4 +347,29 @@ func! Test_search_stat_screendump()
   call delete('Xsearchstat')
 endfunc
 
+func Test_search_stat_then_gd()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['int cat;', 'int dog;', 'cat = dog;'])
+    set shortmess-=S
+    set hlsearch
+  END
+  call writefile(lines, 'Xsearchstatgd')
+
+  let buf = RunVimInTerminal('-S Xsearchstatgd', #{rows: 10})
+  call term_sendkeys(buf, "/dog\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstatgd_1', {})
+
+  call term_sendkeys(buf, "G0gD")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_searchstatgd_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xsearchstatgd')
+endfunc
+
+
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -3098,8 +3098,14 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
       || !find_decl(ptr, len, nchar == 'd', thisblock, SEARCH_START)) {
     clearopbeep(oap);
-  } else if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP) {
-    foldOpenCursor();
+  } else {
+    if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP) {
+      foldOpenCursor();
+    }
+    // clear any search statistics
+    if (messaging() && !msg_silent && !shortmess(SHM_SEARCHCOUNT)) {
+      clear_cmdline = true;
+    }
   }
 }
 
