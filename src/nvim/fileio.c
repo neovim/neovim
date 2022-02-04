@@ -3863,7 +3863,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
     *p++ = ' ';
   }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf((char *)p, IOSIZE - (p - IObuff), "%" PRId64 "L, %" PRId64 "C",
+    vim_snprintf((char *)p, IOSIZE - (p - IObuff), "%" PRId64 "L, %" PRId64 "B",
                  (int64_t)lnum, (int64_t)nchars);
   } else {
     vim_snprintf((char *)p, IOSIZE - (p - IObuff),
@@ -3871,7 +3871,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
                  (int64_t)lnum);
     p += STRLEN(p);
     vim_snprintf((char *)p, IOSIZE - (p - IObuff),
-                 NGETTEXT("%" PRId64 " character", "%" PRId64 " characters", nchars),
+                 NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
                  (int64_t)nchars);
   }
 }
