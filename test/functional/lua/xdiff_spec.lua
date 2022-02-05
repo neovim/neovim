@@ -90,6 +90,48 @@ describe('xdiff bindings', function()
         exec_lua([[return vim.diff(a2, b2, {result_type = 'indices'})]]))
     end)
 
+    it('can run different algorithms', function()
+      local a = table.concat({
+        '.foo1 {',
+        '    margin: 0;',
+        '}',
+        '',
+        '.bar {',
+        '    margin: 0;',
+        '}',
+        ''}, '\n')
+
+      local b = table.concat({
+        '.bar {',
+        '    margin: 0;',
+        '}',
+        '',
+        '.foo1 {',
+        '    margin: 0;',
+        '    color: green;',
+        '}',
+        ''}, '\n')
+
+      eq(
+        table.concat({'@@ -1,4 +0,0 @@',
+          '-.foo1 {',
+          '-    margin: 0;',
+          '-}',
+          '-',
+          '@@ -7,0 +4,5 @@',
+          '+',
+          '+.foo1 {',
+          '+    margin: 0;',
+          '+    color: green;',
+          '+}',
+          ''}, '\n'),
+        exec_lua([[
+          local args = {...}
+          return vim.diff(args[1], args[2], {
+            algorithm = 'patience'
+          })
+        ]], a, b))
+    end)
   end)
 
   it('can handle bad args', function()

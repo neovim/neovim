@@ -184,11 +184,11 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
       if (strequal("myers", v->data.string.data)) {
         // default
       } else if (strequal("minimal", v->data.string.data)) {
-        cfg->flags |= XDF_NEED_MINIMAL;
+        params->flags |= XDF_NEED_MINIMAL;
       } else if (strequal("patience", v->data.string.data)) {
-        cfg->flags |= XDF_PATIENCE_DIFF;
+        params->flags |= XDF_PATIENCE_DIFF;
       } else if (strequal("histogram", v->data.string.data)) {
-        cfg->flags |= XDF_HISTOGRAM_DIFF;
+        params->flags |= XDF_HISTOGRAM_DIFF;
       } else {
         api_set_error(err, kErrorTypeValidation, "not a valid algorithm");
         goto exit_1;
