@@ -3408,7 +3408,7 @@ static void tagstack_push_items(win_T *wp, list_T *l)
     if ((di = tv_dict_find(itemdict, "from", -1)) == NULL) {
       continue;
     }
-    if (list2fpos(&di->di_tv, &mark, &fnum, NULL) != OK) {
+    if (list2fpos(&di->di_tv, &mark, &fnum, NULL, false) != OK) {
       continue;
     }
     if ((tagname = (char_u *)tv_dict_get_string(itemdict, "tagname", true))

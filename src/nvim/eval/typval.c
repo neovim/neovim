@@ -3091,7 +3091,7 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   linenr_T lnum = (linenr_T)tv_get_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
     int fnum;
-    pos_T *const fp = var2fpos(tv, true, &fnum);
+    pos_T *const fp = var2fpos(tv, true, &fnum, false);
     if (fp != NULL) {
       lnum = fp->lnum;
     }

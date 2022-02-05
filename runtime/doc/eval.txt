@@ -1066,7 +1066,7 @@ expr7							*expr7*
 
 For '!' |TRUE| becomes |FALSE|, |FALSE| becomes |TRUE| (one).
 For '-' the sign of the number is changed.
-For '+' the number is unchanged.
+For '+' the number is unchanged.  Note: "++" has no effect.
 
 A String will be converted to a Number first.
 
@@ -1228,8 +1228,8 @@ And NOT: >
 number
 ------
 number			number constant			*expr-number*
-				*hex-number* *octal-number* *binary-number*
 
+			*0x* *hex-number* *0o* *octal-number* *binary-number*
 Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
 and Octal (starting with 0, 0o or 0O).
 
@@ -1486,7 +1486,7 @@ Notice how execute() is used to execute an Ex command.  That's ugly though.
 
 Lambda expressions have internal names like '<lambda>42'.  If you get an error
 for a lambda expression, you can find what it is with the following command: >
-	:function {'<lambda>42'}
+	:function <lambda>42
 See also: |numbered-function|
 
 ==============================================================================

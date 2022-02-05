@@ -75,12 +75,13 @@ changenr()			Number	current change number
 chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
+charcol({expr})			Number	column number of cursor or mark
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 chdir({dir})			String	change current working directory
 cindent({lnum})			Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
-col({expr})			Number	column nr of cursor or mark
+col({expr})			Number	column byte index of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
 complete_add({expr})		Number	add completion match
 complete_check()		Number	check for key typed during completion
@@ -170,6 +171,7 @@ getchangelist([{buf}])		List	list of change list items
 getchar([expr])			Number or String
 					get one character from the user
 getcharmod()			Number	modifiers for the last typed character
+getcharpos({expr})		List	position of cursor, mark, etc.
 getcharsearch()			Dict	last character search
 getcharstr([expr])		String	get one character from the user
 getcmdline()			String	return the current command-line
@@ -179,6 +181,7 @@ getcmdwintype()			String	return current command-line window type
 getcompletion({pat}, {type} [, {filtered}])
 				List	list of cmdline completion matches
 getcurpos([{winnr}])		List	position of the cursor
+getcursorcharpos([{winnr}])	List	character position of the cursor
 getcwd([{winnr} [, {tabnr}]])	String	get the current working directory
 getenv({name})			String	return environment variable
 getfontname([{name}])		String	name of font being used
@@ -387,8 +390,10 @@ setbufline( {expr}, {lnum}, {line})
 				Number	set line {lnum} to {line} in buffer
 					{expr}
 setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
+setcharpos({expr}, {list})	Number	set the {expr} position to {list}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
+setcursorcharpos({list})	Number	move cursor to position in {list}
 setenv({name}, {val})		none	set environment variable
 setfperm({fname}, {mode}	Number	set {fname} file permissions to {mode}
 setline({lnum}, {line})		Number	set line {lnum} to {line}
@@ -949,8 +954,8 @@ byteidxcomp({expr}, {nr})					*byteidxcomp()*
 <		The first and third echo result in 3 ('e' plus composing
 		character is 3 bytes), the second echo results in 1 ('e' is
 		one byte).
-		Only works differently from byteidx() when 'encoding' is set to
-		a Unicode encoding.
+		Only works differently from byteidx() when 'encoding' is set
+		to a Unicode encoding.
 
 		Can also be used as a |method|: >
 			GetName()->byteidxcomp(idx)
@@ -1034,6 +1039,18 @@ char2nr({string} [, {utf8}])					*char2nr()*
 
 		Can also be used as a |method|: >
 			GetChar()->char2nr()
+<
+							*charcol()*
+charcol({expr})	Same as |col()| but returns the character index of the column
+		position given with {expr} instead of the byte position.
+
+		Example:
+		With the cursor on '세' in line 5 with text "여보세요": >
+			charcol('.')		returns 3
+			col('.')		returns 7
+
+<		Can also be used as a |method|: >
+			GetPos()->col()
 <
 							*charidx()*
 charidx({string}, {idx} [, {countcc}])
@@ -1120,7 +1137,8 @@ col({expr})	The result is a Number, which is the byte index of the column
 		out of range then col() returns zero.
 		To get the line number use |line()|.  To get both use
 		|getpos()|.
-		For the screen column position use |virtcol()|.
+		For the screen column position use |virtcol()|.  For the
+		character position use |charcol()|.
 		Note that only marks in the current file can be used.
 		Examples: >
 			col(".")		column of cursor
@@ -1442,6 +1460,9 @@ cursor({list})
 			[{lnum}, {col}, {off}, {curswant}]
 		This is like the return value of |getpos()| or |getcurpos()|,
 		but without the first item.
+
+		To position the cursor using the character count, use
+		|setcursorcharpos()|.
 
 		Does not change the jumplist.
 		If {lnum} is greater than the number of lines in the buffer,
@@ -2652,6 +2673,20 @@ getcharmod()						*getcharmod()*
 		character itself are obtained.  Thus Shift-a results in "A"
 		without a modifier.
 
+							*getcharpos()*
+getcharpos({expr})
+		Get the position for {expr}. Same as |getpos()| but the column
+		number in the returned List is a character index instead of
+		a byte index.
+
+		Example:
+		With the cursor on '세' in line 5 with text "여보세요": >
+			getcharpos('.')		returns [0, 5, 3, 0]
+			getpos('.')		returns [0, 5, 7, 0]
+<
+		Can also be used as a |method|: >
+			GetMark()->getcharpos()
+
 getcharsearch()						*getcharsearch()*
 		Return the current character search information as a {dict}
 		with the following entries:
@@ -2791,8 +2826,11 @@ getcurpos([{winid}])
 		includes an extra "curswant" in the list:
 		    [0, lnum, col, off, curswant] ~
 		The "curswant" number is the preferred column when moving the
-		cursor vertically.  Also see |getpos()|.
-		The first "bufnum" item is always zero.
+		cursor vertically.  Also see |getcursorcharpos()| and
+		|getpos()|.
+		The first "bufnum" item is always zero. The byte position of
+		the cursor is returned in 'col'. To get the character
+		position, use |getcursorcharpos()|.
 
 		The optional {winid} argument can specify the window.  It can
 		be the window number or the |window-ID|.  The last known
@@ -2806,6 +2844,22 @@ getcurpos([{winid}])
  			call setpos('.', save_cursor)
 <		Note that this only works within the window.  See
 		|winrestview()| for restoring more state.
+
+		Can also be used as a |method|: >
+			GetWinid()->getcurpos()
+
+<							*getcursorcharpos()*
+getcursorcharpos([{winid}])
+		Same as |getcurpos()| but the column number in the returned
+		List is a character index instead of a byte index.
+
+		Example:
+		With the cursor on '보' in line 3 with text "여보세요": >
+			getcursorcharpos()	returns [0, 3, 2, 0, 3]
+			getcurpos()		returns [0, 3, 4, 0, 3]
+
+<		Can also be used as a |method|: >
+			GetWinid()->getcursorcharpos()
 
 getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 		With no arguments, returns the name of the effective
@@ -3086,14 +3140,15 @@ getpos({expr})	Get the position for String {expr}.  For possible values of
 		(visual line mode) the column of '< is zero and the column of
 		'> is a large number.
 		The column number in the returned List is the byte position
-		within the line.
+		within the line. To get the character position in the line,
+		use |getcharpos()|
 		The column number can be very large, e.g. 2147483647, in which
 		case it means "after the end of the line".
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
 			...
 			call setpos("'a", save_a_mark)
-<		Also see |getcurpos()| and |setpos()|.
+<		Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 
 		Can also be used as a |method|: >
 			GetMark()->getpos()
@@ -4855,8 +4910,10 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 			GetText()->matchstrpos('word')
 <
 							*max()*
-max({expr})	Return the maximum value of all items in {expr}.
-		{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
+max({expr})	Return the maximum value of all items in {expr}. Example: >
+			echo max([apples, pears, oranges])
+
+<		{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
 		it returns the maximum of all values in the Dictionary.
 		If {expr} is neither a List nor a Dictionary, or one of the
 		items in {expr} cannot be used as a Number this results in
@@ -4912,8 +4969,10 @@ menu_get({path} [, {modes}])				*menu_get()*
 <
 
 							*min()*
-min({expr})	Return the minimum value of all items in {expr}.
-		{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
+min({expr})	Return the minimum value of all items in {expr}. Example:  >
+			echo min([apples, pears, oranges])
+
+<		{expr} can be a |List| or a |Dictionary|.  For a Dictionary,
 		it returns the minimum of all values in the Dictionary.
 		If {expr} is neither a List nor a Dictionary, or one of the
 		items in {expr} cannot be used as a Number this results in
@@ -6454,6 +6513,20 @@ setbufvar({buf}, {varname}, {val})			*setbufvar()*
 		third argument: >
 			GetValue()->setbufvar(buf, varname)
 
+setcharpos({expr}, {list})				*setcharpos()*
+		Same as |setpos()| but uses the specified column number as the
+		character index instead of the byte index in the line.
+
+		Example:
+		With the text "여보세요" in line 8: >
+			call setcharpos('.', [0, 8, 4, 0])
+<		positions the cursor on the fourth character '요'. >
+			call setpos('.', [0, 8, 4, 0])
+<		positions the cursor on the second character '보'.
+
+		Can also be used as a |method|: >
+			GetPosition()->setcharpos('.')
+
 setcharsearch({dict})					*setcharsearch()*
 		Set the current character search information to {dict},
 		which contains one or more of the following entries:
@@ -6494,6 +6567,21 @@ setcmdpos({pos})					*setcmdpos()*
 
 		Can also be used as a |method|: >
 			GetPos()->setcmdpos()
+
+setcursorcharpos({lnum}, {col} [, {off}])		*setcursorcharpos()*
+setcursorcharpos({list})
+		Same as |cursor()| but uses the specified column number as the
+		character index instead of the byte index in the line.
+
+		Example:
+		With the text "여보세요" in line 4: >
+			call setcursorcharpos(4, 3)
+<		positions the cursor on the third character '세'. >
+			call cursor(4, 3)
+<		positions the cursor on the first character '여'.
+
+		Can also be used as a |method|: >
+			GetCursorPos()->setcursorcharpos()
 
 setenv({name}, {val})						*setenv()*
 		Set environment variable {name} to {val}.  Example: >
@@ -6607,7 +6695,8 @@ setpos({expr}, {list})
 
 		"lnum" and "col" are the position in the buffer.  The first
 		column is 1.  Use a zero "lnum" to delete a mark.  If "col" is
-		smaller than 1 then 1 is used.
+		smaller than 1 then 1 is used. To use the character count
+		instead of the byte count, use |setcharpos()|.
 
 		The "off" number is only used when 'virtualedit' is set. Then
 		it is the offset in screen columns from the start of the
@@ -6627,7 +6716,7 @@ setpos({expr}, {list})
 		Returns 0 when the position could be set, -1 otherwise.
 		An error message is given if {expr} is invalid.
 
-		Also see |getpos()| and |getcurpos()|.
+		Also see |setcharpos()|, |getpos()| and |getcurpos()|.
 
 		This does not restore the preferred column for moving
 		vertically; if you set the cursor position with this, |j| and
