@@ -87,7 +87,8 @@ function vim._load_package(name)
   return nil
 end
 
-table.insert(package.loaders, 1, vim._load_package)
+-- Insert vim._load_package after the preloader at position 2
+table.insert(package.loaders, 2, vim._load_package)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
