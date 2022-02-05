@@ -140,22 +140,16 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
-void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
+void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, (int)name.size);
   int link_id = -1;
 
-  HlAttrNames *names = NULL;  // Only used when setting global namespace
-  if (ns_id == 0) {
-    names = xmalloc(sizeof(*names));
-    *names = HLATTRNAMES_INIT;
-  }
-  HlAttrs attrs = dict2hlattrs(val, true, &link_id, names, err);
+  HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
-    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, names);
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
   }
-  xfree(names);
 }
 
 /// Set active namespace for highlights.

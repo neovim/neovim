@@ -78,5 +78,32 @@ return {
   option = {
     "scope";
   };
+  highlight = {
+    "bold";
+    "standout";
+    "underline";
+    "undercurl";
+    "italic";
+    "reverse";
+    "default";
+    "global";
+    "cterm";
+    "foreground"; "fg";
+    "background"; "bg";
+    "ctermfg";
+    "ctermbg";
+    "special"; "sp";
+    "link";
+    "fallback";
+    "temp";
+  };
+  highlight_cterm = {
+    "bold";
+    "standout";
+    "underline";
+    "undercurl";
+    "italic";
+    "reverse";
+  };
 }
 

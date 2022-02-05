@@ -6714,7 +6714,7 @@ int lookup_color(const int idx, const bool foreground, TriState *const boldp)
   return color;
 }
 
-void set_hl_group(int id, HlAttrs attrs, HlAttrNames *names, int link_id)
+void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 {
   int idx = id - 1;  // Index is ID minus one.
 
@@ -6750,19 +6750,19 @@ void set_hl_group(int id, HlAttrs attrs, HlAttrNames *names, int link_id)
   g->sg_rgb_sp = attrs.rgb_sp_color;
 
   struct {
-    char **dest; RgbValue val; char *name;
+    char **dest; RgbValue val; Object name;
   } cattrs[] = {
-    { &g->sg_rgb_fg_name, g->sg_rgb_fg, names->fg_name },
-    { &g->sg_rgb_bg_name, g->sg_rgb_bg, names->bg_name },
-    { &g->sg_rgb_sp_name, g->sg_rgb_sp, names->sp_name },
-    { NULL, -1, NULL },
+    { &g->sg_rgb_fg_name, g->sg_rgb_fg, HAS_KEY(dict->fg) ? dict->fg : dict->foreground },
+    { &g->sg_rgb_bg_name, g->sg_rgb_bg, HAS_KEY(dict->bg) ? dict->bg : dict->background },
+    { &g->sg_rgb_sp_name, g->sg_rgb_sp, HAS_KEY(dict->sp) ? dict->sp : dict->special },
+    { NULL, -1, NIL },
   };
 
   for (int j = 0; cattrs[j].dest; j++) {
     if (cattrs[j].val != -1) {
       xfree(*cattrs[j].dest);
-      if (cattrs[j].name) {
-        *cattrs[j].dest = xstrdup(cattrs[j].name);
+      if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
+        *cattrs[j].dest = xstrdup(cattrs[j].name.data.string.data);
       } else {
         char hex_name[8];
         snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
