@@ -2675,9 +2675,9 @@ getcharmod()						*getcharmod()*
 
 							*getcharpos()*
 getcharpos({expr})
-		Get the position for {expr}. Same as |getpos()| but the column
-		number in the returned List is a character index instead of
-		a byte index.
+		Get the position for String {expr}. Same as |getpos()| but the
+		column number in the returned List is a character index
+		instead of a byte index.
 
 		Example:
 		With the cursor on '세' in line 5 with text "여보세요": >
