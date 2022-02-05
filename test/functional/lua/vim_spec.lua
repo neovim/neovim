@@ -19,6 +19,7 @@ local NIL = helpers.NIL
 local retry = helpers.retry
 local next_msg = helpers.next_msg
 local remove_trace = helpers.remove_trace
+local expect = helpers.expect
 
 before_each(clear)
 
@@ -2562,6 +2563,16 @@ describe('vim.keymap', function()
     feed('aa')
 
     eq(99, exec_lua[[return SomeValue]])
+  end)
+
+  it('if an expr mapping returns "#1" it does not get converted to <F1>', function()
+    exec_lua([[
+      vim.keymap.set('i', '!', function() return '#1' end, {expr = true})
+    ]])
+
+    feed('i!<Esc>')
+
+    expect('#1')
   end)
 
   it('can overwrite a mapping', function()

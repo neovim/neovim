@@ -59,7 +59,7 @@ function keymap.set(mode, lhs, rhs, opts)
   if is_rhs_luaref and opts.expr and opts.replace_keycodes ~= false then
     local user_rhs = rhs
     rhs = function ()
-      return vim.api.nvim_replace_termcodes(user_rhs(), true, true, true)
+      return vim.api.nvim_replace_termcodes(user_rhs(), false, true, true)
     end
   end
   -- clear replace_keycodes from opts table
