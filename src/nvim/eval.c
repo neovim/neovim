@@ -8151,6 +8151,52 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   return ret;
 }
 
+/// Convert the specified byte index of line 'lnum' in buffer 'buf' to a
+/// character index.  Works only for loaded buffers. Returns -1 on failure.
+/// The index of the first character is one.
+int buf_byteidx_to_charidx(buf_T *buf, int lnum, int byteidx)
+{
+  if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
+    return -1;
+  }
+
+  if (lnum > buf->b_ml.ml_line_count) {
+    lnum = buf->b_ml.ml_line_count;
+  }
+
+  char_u *str = ml_get_buf(buf, lnum, false);
+
+  if (*str == NUL) {
+    return 1;
+  }
+
+  return mb_charlen_len(str, byteidx + 1);
+}
+
+/// Convert the specified character index of line 'lnum' in buffer 'buf' to a
+/// byte index.  Works only for loaded buffers. Returns -1 on failure. The index
+/// of the first byte and the first character is one.
+int buf_charidx_to_byteidx(buf_T *buf, int lnum, int charidx)
+{
+  if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
+    return -1;
+  }
+
+  if (lnum > buf->b_ml.ml_line_count) {
+    lnum = buf->b_ml.ml_line_count;
+  }
+
+  char_u *str = ml_get_buf(buf, lnum, false);
+
+  // Convert the character offset to a byte offset
+  char_u *t = str;
+  while (*t != NUL && --charidx > 0) {
+    t += utfc_ptr2len(t);
+  }
+
+  return t - str + 1;
+}
+
 /// Translate a VimL object into a position
 ///
 /// Accepts VAR_LIST and VAR_STRING objects. Does not give an error for invalid
@@ -8159,9 +8205,11 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
 /// @param[in]  tv  Object to translate.
 /// @param[in]  dollar_lnum  True when "$" is last line.
 /// @param[out]  ret_fnum  Set to fnum for marks.
+/// @param[in]  charcol  True to return character column.
 ///
 /// @return Pointer to position or NULL in case of error (e.g. invalid type).
-pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret_fnum)
+pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret_fnum,
+                const bool charcol)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static pos_T pos;
@@ -8191,7 +8239,11 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     if (error) {
       return NULL;
     }
-    len = (long)STRLEN(ml_get(pos.lnum));
+    if (charcol) {
+      len = mb_charlen(ml_get(pos.lnum));
+    } else {
+      len = STRLEN(ml_get(pos.lnum));
+    }
 
     // We accept "$" for the column number: last column.
     li = tv_list_find(l, 1L);
@@ -8222,18 +8274,30 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     return NULL;
   }
   if (name[0] == '.') {  // Cursor.
-    return &curwin->w_cursor;
+    pos = curwin->w_cursor;
+    if (charcol) {
+      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col) - 1;
+    }
+    return &pos;
   }
   if (name[0] == 'v' && name[1] == NUL) {  // Visual start.
     if (VIsual_active) {
-      return &VIsual;
+      pos = VIsual;
+    } else {
+      pos = curwin->w_cursor;
     }
-    return &curwin->w_cursor;
+    if (charcol) {
+      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col) - 1;
+    }
+    return &pos;
   }
   if (name[0] == '\'') {  // Mark.
     pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
     if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0) {
       return NULL;
+    }
+    if (charcol) {
+      pp->col = buf_byteidx_to_charidx(curbuf, pp->lnum, pp->col) - 1;
     }
     return pp;
   }
@@ -8260,22 +8324,24 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       pos.col = 0;
     } else {
       pos.lnum = curwin->w_cursor.lnum;
-      pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+      if (charcol) {
+        pos.col = (colnr_T)mb_charlen(get_cursor_line_ptr());
+      } else {
+        pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+      }
     }
     return &pos;
   }
   return NULL;
 }
 
-/*
- * Convert list in "arg" into a position and optional file number.
- * When "fnump" is NULL there is no file number, only 3 items.
- * Note that the column is passed on as-is, the caller may want to decrement
- * it to use 1 for the first column.
- * Return FAIL when conversion is not possible, doesn't check the position for
- * validity.
- */
-int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
+/// Convert list in "arg" into a position and optional file number.
+/// When "fnump" is NULL there is no file number, only 3 items.
+/// Note that the column is passed on as-is, the caller may want to decrement
+/// it to use 1 for the first column.
+/// Return FAIL when conversion is not possible, doesn't check the position for
+/// validity.
+int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool charcol)
 {
   list_T *l;
   long i = 0;
@@ -8310,6 +8376,15 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
   n = tv_list_find_nr(l, i++, NULL);  // col
   if (n < 0) {
     return FAIL;
+  }
+  // If character position is specified, then convert to byte position
+  if (charcol) {
+    // Get the text for the specified line in a loaded buffer
+    buf_T *buf = buflist_findnr(fnump == NULL ? curbuf->b_fnum : *fnump);
+    if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
+      return FAIL;
+    }
+    n = buf_charidx_to_byteidx(buf, posp->lnum, n);
   }
   posp->col = n;
 

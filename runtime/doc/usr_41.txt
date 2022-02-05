@@ -746,6 +746,11 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	screenchar()		get character code at a screen line/row
 	screenchars()		get character codes at a screen line/row
 	screenstring()		get string of characters at a screen line/row
+	charcol()		character number of the cursor or a mark
+	getcharpos()		get character position of cursor, mark, etc.
+	setcharpos()		set character position of cursor, mark, etc.
+	getcursorcharpos()	get character position of the cursor
+	setcursorcharpos()	set character position of the cursor
 
 Working with text in the current buffer:		*text-functions*
 	getline()		get a line or list of lines from the buffer
