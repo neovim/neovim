@@ -2847,8 +2847,8 @@ getcurpos([{winid}])
 
 		Can also be used as a |method|: >
 			GetWinid()->getcurpos()
-
-<							*getcursorcharpos()*
+<
+							*getcursorcharpos()*
 getcursorcharpos([{winid}])
 		Same as |getcurpos()| but the column number in the returned
 		List is a character index instead of a byte index.
@@ -2857,8 +2857,8 @@ getcursorcharpos([{winid}])
 		With the cursor on '보' in line 3 with text "여보세요": >
 			getcursorcharpos()	returns [0, 3, 2, 0, 3]
 			getcurpos()		returns [0, 3, 4, 0, 3]
-
-<		Can also be used as a |method|: >
+<
+		Can also be used as a |method|: >
 			GetWinid()->getcursorcharpos()
 
 getcwd([{winnr}[, {tabnr}]])				*getcwd()*
@@ -3141,7 +3141,7 @@ getpos({expr})	Get the position for String {expr}.  For possible values of
 		'> is a large number.
 		The column number in the returned List is the byte position
 		within the line. To get the character position in the line,
-		use |getcharpos()|
+		use |getcharpos()|.
 		The column number can be very large, e.g. 2147483647, in which
 		case it means "after the end of the line".
 		This can be used to save and restore the position of a mark: >
