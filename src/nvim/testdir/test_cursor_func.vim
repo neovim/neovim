@@ -24,6 +24,9 @@ func Test_move_cursor()
   " below last line goes to last line
   call cursor(9, 1)
   call assert_equal([4, 1, 0, 1], getcurpos()[1:])
+  " pass string arguments
+  call cursor('3', '3')
+  call assert_equal([3, 3, 0, 3], getcurpos()[1:])
 
   call setline(1, ["\<TAB>"])
   call cursor(1, 1, 1)

@@ -1584,7 +1584,7 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
       set_curswant = false;
     }
   } else if ((argvars[0].v_type == VAR_NUMBER || argvars[0].v_type == VAR_STRING)
-             && argvars[1].v_type == VAR_NUMBER) {
+             && (argvars[1].v_type == VAR_NUMBER || argvars[1].v_type == VAR_STRING)) {
     line = tv_get_lnum(argvars);
     col = (long)tv_get_number_chk(&argvars[1], NULL);
     if (charcol) {
