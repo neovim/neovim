@@ -821,31 +821,30 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
   return 0;         // Shouldn't get here
 }
 
-/// Replace any terminal code strings with the equivalent internal
-/// representation
+/// Replace any terminal code strings with the equivalent internal representation.
 ///
-/// Used for the "from" and "to" part of a mapping, and the "to" part of
-/// a menu command. Any strings like "<C-UP>" are also replaced, unless
-/// `special` is false. K_SPECIAL by itself is replaced by K_SPECIAL
-/// KS_SPECIAL KE_FILLER.
+/// Used for the "from" and "to" part of a mapping, and the "to" part of a menu command.
+/// Any strings like "<C-UP>" are also replaced, unless `special` is false.
+/// K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
+///
+/// When cpo_flags contains #FLAG_CPO_BSLASH, a backslash can be used in place of <C-v>.
+/// All other <C-v> characters are removed.
 ///
 /// @param[in]  from  What characters to replace.
 /// @param[in]  from_len  Length of the "from" argument.
-/// @param[out]  bufp  Location where results were saved in case of success
-///                    (allocated). Will be set to NULL in case of failure.
+/// @param[out]  bufp  Location where results were saved in case of success (allocated).
+///                    Will be set to NULL in case of failure.
 /// @param[in]  do_lt  If true, also translate <lt>.
-/// @param[in]  from_part  If true, trailing <C-v> is included, otherwise it is
-///                        removed (to make ":map xx ^V" map xx to nothing).
-///                        When cpo_flags contains #FLAG_CPO_BSLASH, a backslash
-///                        can be used in place of <C-v>. All other <C-v>
-///                        characters are removed.
+/// @param[in]  from_part  If true, trailing <C-v> is included, otherwise it is removed (to make
+///                        ":map xx ^V" map xx to nothing).
+///                        If true, "#n" (where n is a digit) at the beginning is replaced with a
+///                        functional key, like in the lhs of a mapping.
 /// @param[in]  special    Replace keycodes, e.g. <CR> becomes a "\n" char.
 /// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see
 ///                        #CPO_TO_CPO_FLAGS.
 ///
-/// @return Pointer to an allocated memory in case of success, "from" in case of
-///         failure. In case of success returned pointer is also saved to
-///         "bufp".
+/// @return Pointer to an allocated memory in case of success, "from" in case of failure.
+///         In case of success returned pointer is also saved to "bufp".
 char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bufp,
                           const bool from_part, const bool do_lt, const bool special, int cpo_flags)
   FUNC_ATTR_NONNULL_ALL

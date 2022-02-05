@@ -201,7 +201,7 @@ static void on_redraw_event(void **argv)
 ///
 /// Example:
 /// <pre>
-///     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
+///     :let key = nvim_replace_termcodes("<C-o>", v:false, v:false, v:true)
 ///     :call nvim_feedkeys(key, 'n', v:false)
 /// </pre>
 ///
@@ -392,7 +392,8 @@ error:
 /// the internal representation.
 ///
 /// @param str        String to be converted.
-/// @param from_part  Legacy Vim parameter. Usually true.
+/// @param from_part  Replace "#n" (where n is a digit) at the beginning
+///                   with a functional key, like in the lhs of a mapping.
 /// @param do_lt      Also translate <lt>. Ignored if `special` is false.
 /// @param special    Replace |keycodes|, e.g. <CR> becomes a "\r" char.
 /// @see replace_termcodes
