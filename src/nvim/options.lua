@@ -1478,6 +1478,15 @@ return {
       defaults={if_true="make"}
     },
     {
+      full_name='mappings', abbreviation='maps',
+      short_desc=N_("kind of mappings that are enabled for current buffer"),
+      type='string', scope={'buffer'},
+      noglob=true,
+      alloced=true,
+      varname='p_maps',
+      defaults={if_true=""}
+    },
+    {
       full_name='matchpairs', abbreviation='mps',
       short_desc=N_("pairs of characters that \"%\" can match"),
       type='string', list='onecomma', scope={'buffer'},

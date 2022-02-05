@@ -1894,6 +1894,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_fp);
   clear_string_option(&buf->b_p_fex);
   clear_string_option(&buf->b_p_kp);
+  clear_string_option(&buf->b_p_maps);
   clear_string_option(&buf->b_p_mps);
   clear_string_option(&buf->b_p_fo);
   clear_string_option(&buf->b_p_flp);

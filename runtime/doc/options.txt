@@ -3894,6 +3894,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'mappings'* *'maps'*
+'mappings' 'maps'	string	(default "")
+			local to buffer
+	This option specifies what kind of user mappings will be processed
+	inside the current buffer:
+	  <empty>	both global and buffer-local mappings
+	  no		no user mappings will be processed
+	  global	only process global mappings (as if there were no
+			defined buffer-local mappings)
+	  buffer	only process buffer mappings (as if there were no
+			defined global mappings)
+
 						*'matchpairs'* *'mps'*
 'matchpairs' 'mps'	string	(default "(:),{:},[:]")
 			local to buffer

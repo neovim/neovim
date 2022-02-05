@@ -810,6 +810,7 @@ enum {
   BV_MA,
   BV_ML,
   BV_MOD,
+  BV_MAPS,
   BV_MPS,
   BV_NF,
   BV_OFU,

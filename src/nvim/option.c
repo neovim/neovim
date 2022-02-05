@@ -158,6 +158,7 @@ static int p_lisp;
 static int p_ml;
 static int p_ma;
 static int p_mod;
+static char_u *p_maps;
 static char_u *p_mps;
 static char_u *p_nf;
 static int p_pi;
@@ -303,7 +304,8 @@ static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };
-static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
+static char *(p_maps_values[]) =      { "global", "buffer", "no", NULL };
+static char *(p_bs_values[]) =        { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
@@ -2040,6 +2042,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_fp);
   check_string_option(&buf->b_p_fex);
   check_string_option(&buf->b_p_kp);
+  check_string_option(&buf->b_p_maps);
   check_string_option(&buf->b_p_mps);
   check_string_option(&buf->b_p_fo);
   check_string_option(&buf->b_p_flp);
@@ -2902,6 +2905,11 @@ ambw_end:
   } else if (gvarp == &p_bh) {
     // When 'bufhidden' is set, check for valid value.
     if (check_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_maps) {
+    // When 'mappings' is set, check for valid value.
+    if (check_opt_strings(curbuf->b_p_maps, p_maps_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_bt) {
@@ -6092,6 +6100,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_lisp);
   case PV_ML:
     return (char_u *)&(curbuf->b_p_ml);
+  case PV_MAPS:
+    return (char_u *)&(curbuf->b_p_maps);
   case PV_MPS:
     return (char_u *)&(curbuf->b_p_mps);
   case PV_MA:

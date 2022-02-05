@@ -1728,13 +1728,14 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   // Don't look for mappings if:
   // - no_mapping set: mapping disabled (e.g. for CTRL-V)
   // - maphash_valid not set: no mappings present.
+  // - 'mappings' option is set to 'no': ignore all user mappings
   // - typebuf.tb_buf[typebuf.tb_off] should not be remapped
   // - in insert or cmdline mode and 'paste' option set
   // - waiting for "hit return to continue" and CR or SPACE typed
   // - waiting for a char with --more--
   // - in Ctrl-X mode, and we get a valid char for that mode
   tb_c1 = typebuf.tb_buf[typebuf.tb_off];
-  if (no_mapping == 0 && maphash_valid
+  if (no_mapping == 0 && maphash_valid && curbuf->b_p_maps[0] != 'n'
       && (no_zero_mapping == 0 || tb_c1 != '0')
       && (typebuf.tb_maplen == 0
           || (p_remap
@@ -1755,9 +1756,10 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     // First try buffer-local mappings.
     mp = curbuf->b_maphash[MAP_HASH(local_State, tb_c1)];
     mp2 = maphash[MAP_HASH(local_State, tb_c1)];
-    if (mp == NULL) {
-      // There are no buffer-local mappings.
-      mp = mp2;
+    if (mp == NULL || curbuf->b_p_maps[0] == 'g') {
+      // There are no buffer-local mappings, or they are being ignored.
+      // If 'mappings' option is set to 'buffer', also ignore global mappings.
+      mp = curbuf->b_p_maps[0] == 'b' ? NULL : mp2;
       mp2 = NULL;
     }
     // Loop until a partly matching mapping is found or all (local)
