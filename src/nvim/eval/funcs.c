@@ -3845,37 +3845,45 @@ static void f_getpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
 {
-  pos_T *fp;
+  pos_T *fp = NULL;
+  win_T *wp = curwin;
   int fnum = -1;
 
   if (getcurpos) {
-    fp = &curwin->w_cursor;
+    if (argvars[0].v_type != VAR_UNKNOWN) {
+      wp = find_win_by_nr_or_id(&argvars[0]);
+      if (wp != NULL) {
+        fp = &wp->w_cursor;
+      }
+    } else {
+      fp = &curwin->w_cursor;
+    }
   } else {
     fp = var2fpos(&argvars[0], true, &fnum);
   }
 
   list_T *const l = tv_list_alloc_ret(rettv, 4 + (!!getcurpos));
   tv_list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
+  tv_list_append_number(l, ((fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0));
   tv_list_append_number(l, ((fp != NULL)
-                            ? (varnumber_T)fp->lnum
+                            ? (varnumber_T)(fp->col == MAXCOL ? MAXCOL : fp->col + 1)
                             : (varnumber_T)0));
-  tv_list_append_number(l, ((fp != NULL)
-          ? (varnumber_T)(fp->col == MAXCOL ? MAXCOL : fp->col + 1)
-                                            : (varnumber_T)0));
   tv_list_append_number(l, (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
     const int save_set_curswant = curwin->w_set_curswant;
     const colnr_T save_curswant = curwin->w_curswant;
     const colnr_T save_virtcol = curwin->w_virtcol;
 
-    update_curswant();
-    tv_list_append_number(l, (curwin->w_curswant == MAXCOL
-                              ? (varnumber_T)MAXCOL
-                              : (varnumber_T)curwin->w_curswant + 1));
+    if (wp == curwin) {
+      update_curswant();
+    }
+    tv_list_append_number(l, (wp == NULL) ? 0 : (wp->w_curswant == MAXCOL)
+                                                ? (varnumber_T)MAXCOL
+                                                : (varnumber_T)wp->w_curswant + 1);
 
     // Do not change "curswant", as it is unexpected that a get
     // function has a side effect.
-    if (save_set_curswant) {
+    if (wp == curwin && save_set_curswant) {
       curwin->w_set_curswant = save_set_curswant;
       curwin->w_curswant = save_curswant;
       curwin->w_virtcol = save_virtcol;

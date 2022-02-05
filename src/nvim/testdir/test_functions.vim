@@ -1712,6 +1712,33 @@ func Test_nr2char()
   call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
 endfunc
 
+" Test for getcurpos() and setpos()
+func Test_getcurpos_setpos()
+  new
+  call setline(1, ['012345678', '012345678'])
+  normal gg6l
+  let sp = getcurpos()
+  normal 0
+  call setpos('.', sp)
+  normal jyl
+  call assert_equal('6', @")
+  call assert_equal(-1, setpos('.', v:_null_list))
+  call assert_equal(-1, setpos('.', {}))
+
+  let winid = win_getid()
+  normal G$
+  let pos = getcurpos()
+  wincmd w
+  call assert_equal(pos, getcurpos(winid))
+
+  wincmd w
+  close!
+
+  call assert_equal(getcurpos(), getcurpos(0))
+  call assert_equal([0, 0, 0, 0, 0], getcurpos(-1))
+  call assert_equal([0, 0, 0, 0, 0], getcurpos(1999))
+endfunc
+
 func HasDefault(msg = 'msg')
   return a:msg
 endfunc

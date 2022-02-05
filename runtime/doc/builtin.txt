@@ -178,7 +178,7 @@ getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
 getcompletion({pat}, {type} [, {filtered}])
 				List	list of cmdline completion matches
-getcurpos()			List	position of the cursor
+getcurpos([{winnr}])		List	position of the cursor
 getcwd([{winnr} [, {tabnr}]])	String	get the current working directory
 getenv({name})			String	return environment variable
 getfontname([{name}])		String	name of font being used
@@ -2786,12 +2786,19 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 			GetPattern()->getcompletion('color')
 <
 							*getcurpos()*
-getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
+getcurpos([{winid}])
+		Get the position of the cursor.  This is like getpos('.'), but
 		includes an extra "curswant" in the list:
 		    [0, lnum, col, off, curswant] ~
 		The "curswant" number is the preferred column when moving the
 		cursor vertically.  Also see |getpos()|.
 		The first "bufnum" item is always zero.
+
+		The optional {winid} argument can specify the window.  It can
+		be the window number or the |window-ID|.  The last known
+		cursor position is returned, this may be invalid for the
+		current value of the buffer if it is not the current window.
+		If {winid} is invalid a list with zeroes is returned.
 
  		This can be used to save and restore the cursor position: >
  			let save_cursor = getcurpos()

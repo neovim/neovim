@@ -151,7 +151,7 @@ return {
     getcmdtype={},
     getcmdwintype={},
     getcompletion={args={2, 3}, base=1},
-    getcurpos={},
+    getcurpos={args={0, 1}, base=1},
     getcwd={args={0, 2}, base=1},
     getenv={args=1, base=1},
     getfontname={args={0, 1}},
