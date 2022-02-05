@@ -1325,15 +1325,15 @@ describe('API', function()
 
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))
+      eq('\128\254X', helpers.nvim('replace_termcodes', '\128', false, true, true))
     end)
 
     it('leaves non-K_SPECIAL string unchanged', function()
-      eq('abc', helpers.nvim('replace_termcodes', 'abc', true, true, true))
+      eq('abc', helpers.nvim('replace_termcodes', 'abc', false, true, true))
     end)
 
     it('converts <expressions>', function()
-      eq('\\', helpers.nvim('replace_termcodes', '<Leader>', true, true, true))
+      eq('\\', helpers.nvim('replace_termcodes', '<Leader>', false, true, true))
     end)
 
     it('converts <LeftMouse> to K_SPECIAL KS_EXTRA KE_LEFTMOUSE', function()
@@ -1341,17 +1341,17 @@ describe('API', function()
       -- 0x80      0xfd     0x2c
       -- 128       253      44
       eq('\128\253\44', helpers.nvim('replace_termcodes',
-                                     '<LeftMouse>', true, true, true))
+                                     '<LeftMouse>', false, true, true))
     end)
 
     it('converts keycodes', function()
       eq('\nx\27x\rx<x', helpers.nvim('replace_termcodes',
-         '<NL>x<Esc>x<CR>x<lt>x', true, true, true))
+         '<NL>x<Esc>x<CR>x<lt>x', false, true, true))
     end)
 
     it('does not convert keycodes if special=false', function()
       eq('<NL>x<Esc>x<CR>x<lt>x', helpers.nvim('replace_termcodes',
-         '<NL>x<Esc>x<CR>x<lt>x', true, true, false))
+         '<NL>x<Esc>x<CR>x<lt>x', false, true, false))
     end)
 
     it('does not crash when transforming an empty string', function()
@@ -1362,7 +1362,16 @@ describe('API', function()
       -- then `return str` in vim_replace_termcodes body will make Neovim free
       -- `str.data` twice: once when freeing arguments, then when freeing return
       -- value.
-      eq('', meths.replace_termcodes('', true, true, true))
+      eq('', meths.replace_termcodes('', false, true, true))
+    end)
+
+    it('does not convert #1 to <F1> if from_part=false', function()
+      eq('#1', meths.replace_termcodes('#1', false, false, false))
+    end)
+
+    it('converts #1 to <F1> if from_part=true', function()
+      eq(meths.replace_termcodes('<F1>', false, false, true),
+         meths.replace_termcodes('#1', true, false, false))
     end)
   end)
 

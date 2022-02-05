@@ -217,7 +217,7 @@ describe("'langmap'", function()
     if setup_function then setup_function() end
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
-    eq(helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
+    eq(helpers.funcs.nvim_replace_termcodes(command_string, false, true, true),
       eval('@a'))
     if setup_function then setup_function() end
     -- n.b. may need nvim_replace_termcodes() here.

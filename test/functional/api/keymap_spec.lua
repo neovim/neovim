@@ -812,7 +812,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('can make lua expr mappings', function()
     exec_lua [[
-      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', true, false, true) end, expr = true })
+      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', false, false, true) end, expr = true })
     ]]
 
     feed('aa')
@@ -989,7 +989,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   it('can make lua expr mappings', function()
     exec_lua [[
-      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', true, false, true) end, expr = true })
+      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', false, false, true) end, expr = true })
     ]]
 
     feed('aa')
