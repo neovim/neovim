@@ -8,8 +8,6 @@ _stat() {
 
 top_make() {
   printf '%78s\n' | tr ' ' '='
-  # Travis has 1.5 virtual cores according to:
-  # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
   ninja "$@"
 }
 

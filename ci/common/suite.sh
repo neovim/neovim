@@ -73,13 +73,8 @@ fail() {
 
 run_test() {
   local cmd="$1"
-  test $# -gt 0 && shift
-  local test_name="$1"
-  : ${test_name:=$cmd}
-  test $# -gt 0 && shift
-  if ! eval "$cmd" ; then
-    fail "${test_name}" "$@"
-  fi
+  local test_name="$2"
+  eval "$cmd" || fail "$test_name"
 }
 
 ended_successfully() {
@@ -99,3 +94,13 @@ end_tests() {
   touch "${END_MARKER}"
   ended_successfully
 }
+
+run_suite() {
+  local command="$1"
+  local suite_name="$2"
+
+  enter_suite "$suite_name"
+  run_test "$command" "$suite_name"
+  exit_suite --continue
+}
+
