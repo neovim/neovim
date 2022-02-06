@@ -36,6 +36,8 @@ func Test_fnamemodify()
   call chdir($HOME . '/XXXXXXXX/a/')
   call assert_equal('foo', fnamemodify($HOME . '/XXXXXXXX/a/foo', ':p:~:.'))
   call assert_equal('~/XXXXXXXX/b/foo', fnamemodify($HOME . '/XXXXXXXX/b/foo', ':p:~:.'))
+  call mkdir($HOME . '/XXXXXXXX/a.ext', 'p')
+  call assert_equal('~/XXXXXXXX/a.ext/foo', fnamemodify($HOME . '/XXXXXXXX/a.ext/foo', ':p:~:.'))
   call chdir(cwd)
   call delete($HOME . '/XXXXXXXX', 'rf')
 
