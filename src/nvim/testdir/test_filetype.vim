@@ -1277,4 +1277,23 @@ func Test_frm_file()
   filetype off
 endfunc
 
+func Test_tex_file()
+  filetype on
+
+  " only tests one case, should do more
+  let lines =<< trim END
+      % This is a sentence.
+
+      This is a sentence.
+  END
+  call writefile(lines, "Xfile.tex")
+  split Xfile.tex
+  call assert_equal('plaintex', &filetype)
+  bwipe
+
+  call delete('Xfile.tex')
+  filetype off
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
