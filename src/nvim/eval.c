@@ -10624,12 +10624,13 @@ int modify_fname(char_u *src, bool tilde_file, size_t *usedlen, char_u **fnamep,
   char_u *s, *p, *pbuf;
   char_u dirname[MAXPATHL];
   int c;
-  int has_fullname = 0;
+  bool has_fullname = false;
+  bool has_homerelative = false;
 
 repeat:
   // ":p" - full path/file_name
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 'p') {
-    has_fullname = 1;
+    has_fullname = true;
 
     valid |= VALID_PATH;
     *usedlen += 2;
@@ -10698,8 +10699,8 @@ repeat:
     }
     pbuf = NULL;
     // Need full path first (use expand_env() to remove a "~/")
-    if (!has_fullname) {
-      if (c == '.' && **fnamep == '~') {
+    if (!has_fullname && !has_homerelative) {
+      if ((c == '.' || c == '~') && **fnamep == '~') {
         p = pbuf = expand_env_save(*fnamep);
       } else {
         p = pbuf = (char_u *)FullName_save((char *)*fnamep, FALSE);
@@ -10708,18 +10709,33 @@ repeat:
       p = *fnamep;
     }
 
-    has_fullname = 0;
+    has_fullname = false;
 
     if (p != NULL) {
       if (c == '.') {
         os_dirname(dirname, MAXPATHL);
-        s = path_shorten_fname(p, dirname);
-        if (s != NULL) {
-          *fnamep = s;
-          if (pbuf != NULL) {
-            xfree(*bufp);               // free any allocated file name
-            *bufp = pbuf;
-            pbuf = NULL;
+        if (has_homerelative) {
+          s = vim_strsave(dirname);
+          home_replace(NULL, s, dirname, MAXPATHL, true);
+          xfree(s);
+        }
+        size_t namelen = STRLEN(dirname);
+
+        // Do not call shorten_fname() here since it removes the prefix
+        // even though the path does not have a prefix.
+        if (fnamencmp(p, dirname, namelen) == 0) {
+          p += namelen;
+          if (vim_ispathsep(*p)) {
+            while (*p && vim_ispathsep(*p)) {
+              p++;
+            }
+            *fnamep = p;
+            if (pbuf != NULL) {
+              // free any allocated file name
+              xfree(*bufp);
+              *bufp = pbuf;
+              pbuf = NULL;
+            }
           }
         }
       } else {
@@ -10730,6 +10746,7 @@ repeat:
           *fnamep = s;
           xfree(*bufp);
           *bufp = s;
+          has_homerelative = true;
         }
       }
       xfree(pbuf);
