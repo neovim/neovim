@@ -50,9 +50,7 @@ exit_suite() {
   if test "$1" != "--continue" ; then
     exit $FAILED
   else
-    local saved_failed=$FAILED
     FAILED=0
-    return $saved_failed
   fi
 }
 

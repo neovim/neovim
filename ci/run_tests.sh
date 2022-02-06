@@ -8,12 +8,12 @@ run_tests(){
     # Additional threads are only created when the builtin UI starts, which
     # doesn't happen in the unit/functional tests
     if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
-      run_test run_unittests unittests
+      run_suite run_unittests unittests
     fi
-    run_test run_functionaltests functionaltests
+    run_suite run_functionaltests functionaltests
   fi
-  run_test run_oldtests oldtests
-  run_test install_nvim install_nvim
+  run_suite run_oldtests oldtests
+  run_suite install_nvim install_nvim
 }
 
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
