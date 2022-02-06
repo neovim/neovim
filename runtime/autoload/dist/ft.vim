@@ -726,7 +726,7 @@ func dist#ft#FTperl()
   endif
   let save_cursor = getpos('.')
   call cursor(1,1)
-  let has_use = search('^use\s\s*\k', 'c', 30)
+  let has_use = search('^use\s\s*\k', 'c', 30) > 0
   call setpos('.', save_cursor)
   if has_use
     setf perl
@@ -758,7 +758,8 @@ func dist#ft#FTtex()
     let save_cursor = getpos('.')
     call cursor(1,1)
     let firstNC = search('^\s*[^[:space:]%]', 'c', 1000)
-    if firstNC " Check the next thousand lines for a LaTeX or ConTeXt keyword.
+    if firstNC > 0
+      " Check the next thousand lines for a LaTeX or ConTeXt keyword.
       let lpat = 'documentclass\>\|usepackage\>\|begin{\|newcommand\>\|renewcommand\>'
       let cpat = 'start\a\+\|setup\a\+\|usemodule\|enablemode\|enableregime\|setvariables\|useencoding\|usesymbols\|stelle\a\+\|verwende\a\+\|stel\a\+\|gebruik\a\+\|usa\a\+\|imposta\a\+\|regle\a\+\|utilisemodule\>'
       let kwline = search('^\s*\\\%(' . lpat . '\)\|^\s*\\\(' . cpat . '\)',
