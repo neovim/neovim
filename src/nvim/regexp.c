@@ -6534,11 +6534,16 @@ char_u *regtilde(char_u *source, int magic)
     }
   }
 
-  xfree(reg_prev_sub);
-  if (newsub != source)         /* newsub was allocated, just keep it */
-    reg_prev_sub = newsub;
-  else                          /* no ~ found, need to save newsub  */
-    reg_prev_sub = vim_strsave(newsub);
+  // Only change reg_prev_sub when not previewing.
+  if (!(State & CMDPREVIEW)) {
+    xfree(reg_prev_sub);
+    if (newsub != source) {             // newsub was allocated, just keep it
+      reg_prev_sub = newsub;
+    } else {                            // no ~ found, need to save newsub
+      reg_prev_sub = vim_strsave(newsub);
+    }
+  }
+
   return newsub;
 }
 
