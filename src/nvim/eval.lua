@@ -262,7 +262,7 @@ return {
     nextnonblank={args=1, base=1},
     nr2char={args={1, 2}, base=1},
     ['or']={args=2, base=1},
-    pathshorten={args=1, base=1},
+    pathshorten={args={1, 2}, base=1},
     pow={args=2, base=1},
     prevnonblank={args=1, base=1},
     printf={args=varargs(1), base=2},

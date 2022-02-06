@@ -7350,7 +7350,7 @@ void draw_tabline(void)
       if (room > 0) {
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
-        (void)shorten_dir(NameBuff);
+        shorten_dir(NameBuff);
         len = vim_strsize(NameBuff);
         p = NameBuff;
         while (len > room) {
