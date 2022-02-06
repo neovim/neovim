@@ -22,8 +22,10 @@ acos({expr})			Float	arc cosine of {expr}
 add({object}, {item})		List/Blob   append {item} to {object}
 and({expr}, {expr})		Number	bitwise AND
 api_info()			Dict	api metadata
-append({lnum}, {string})	Number	append {string} below line {lnum}
-append({lnum}, {list})		Number	append lines {list} below line {lnum}
+append({lnum}, {text})		Number	append {text} below line {lnum}
+appendbufline({expr}, {lnum}, {text})
+				Number	append {text} below line {lnum}
+					in buffer {expr}
 argc([{winid}])			Number	number of files in the argument list
 argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
@@ -91,8 +93,8 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 copy({expr})			any	make a shallow copy of {expr}
 cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
-count({list}, {expr} [, {ic} [, {start}]])
-				Number	count how many {expr} are in {list}
+count({comp}, {expr} [, {ic} [, {start}]])
+				Number	count how many {expr} are in {comp}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 ctxget([{index}])		Dict	return the |context| dict at {index}
@@ -108,7 +110,7 @@ cursor({list})			Number	move cursor to position in {list}
 debugbreak({pid})		Number	interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
-deletebufline({buf}, {first}[, {last}])
+deletebufline({buf}, {first} [, {last}])
 				Number	delete lines from buffer {buf}
 dictwatcheradd({dict}, {pattern}, {callback})
 				Start watching a dictionary
@@ -386,8 +388,8 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 server2client({clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
-setbufline( {expr}, {lnum}, {line})
-				Number	set line {lnum} to {line} in buffer
+setbufline({expr}, {lnum}, {text})
+				Number	set line {lnum} to {text} in buffer
 					{expr}
 setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
 setcharpos({expr}, {list})	Number	set the {expr} position to {list}
@@ -1526,7 +1528,7 @@ delete({fname} [, {flags}])				*delete()*
 		Can also be used as a |method|: >
 			GetName()->delete()
 
-deletebufline({buf}, {first}[, {last}])		*deletebufline()*
+deletebufline({buf}, {first} [, {last}])		*deletebufline()*
 		Delete lines {first} to {last} (inclusive) from buffer {buf}.
 		If {last} is omitted then delete line {first} only.
 		On success 0 is returned, on failure 1 is returned.
@@ -1536,7 +1538,7 @@ deletebufline({buf}, {first}[, {last}])		*deletebufline()*
 
 		For the use of {buf}, see |bufname()| above.
 
-		{first} and {last} are used like with |setline()|. Note that
+		{first} and {last} are used like with |getline()|. Note that
 		when using |line()| this refers to the current buffer. Use "$"
 		to refer to the last line in buffer {buf}.
 
@@ -7719,11 +7721,11 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
 		swapfile {fname}. The available fields are:
-			version VIM version
+			version Vim version
 			user	user name
 			host	host name
 			fname	original file name
-			pid	PID of the VIM process that created the swap
+			pid	PID of the Vim process that created the swap
 				file
 			mtime	last modification time in seconds
 			inode	Optional: INODE number of the file
