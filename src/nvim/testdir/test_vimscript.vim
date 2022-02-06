@@ -1156,6 +1156,16 @@ func Test_type()
     call assert_equal(v:t_list, type(v:_null_list))
     call assert_equal(v:t_dict, type(v:_null_dict))
     call assert_equal(v:t_blob, type(v:_null_blob))
+
+    call assert_equal(0, 0 + v:false)
+    call assert_equal(1, 0 + v:true)
+    " call assert_equal(0, 0 + v:none)
+    call assert_equal(0, 0 + v:null)
+
+    call assert_equal('false', '' . v:false)
+    call assert_equal('true', '' . v:true)
+    " call assert_equal('none', '' . v:none)
+    call assert_equal('null', '' . v:null)
 endfunc
 
 "-------------------------------------------------------------------------------
