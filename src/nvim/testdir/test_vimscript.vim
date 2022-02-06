@@ -1178,6 +1178,30 @@ func Test_type()
     call assert_false(v:null != 0)
     " call assert_true(v:none == 0)
     " call assert_false(v:none != 0)
+
+    call assert_true(v:false is v:false)
+    call assert_true(v:true is v:true)
+    " call assert_true(v:none is v:none)
+    call assert_true(v:null is v:null)
+
+    call assert_false(v:false isnot v:false)
+    call assert_false(v:true isnot v:true)
+    " call assert_false(v:none isnot v:none)
+    call assert_false(v:null isnot v:null)
+
+    call assert_false(v:false is 0)
+    call assert_false(v:true is 1)
+    call assert_false(v:true is v:false)
+    " call assert_false(v:none is 0)
+    call assert_false(v:null is 0)
+    " call assert_false(v:null is v:none)
+
+    call assert_true(v:false isnot 0)
+    call assert_true(v:true isnot 1)
+    call assert_true(v:true isnot v:false)
+    " call assert_true(v:none isnot 0)
+    call assert_true(v:null isnot 0)
+    " call assert_true(v:null isnot v:none)
 endfunc
 
 "-------------------------------------------------------------------------------
