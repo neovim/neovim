@@ -1207,6 +1207,11 @@ func Test_type()
     call assert_equal(v:true, eval(string(v:true)))
     " call assert_equal(v:none, eval(string(v:none)))
     call assert_equal(v:null, eval(string(v:null)))
+
+    call assert_true(empty(v:false))
+    call assert_false(empty(v:true))
+    call assert_true(empty(v:null))
+    " call assert_true(empty(v:none))
 endfunc
 
 "-------------------------------------------------------------------------------
