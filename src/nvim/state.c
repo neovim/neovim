@@ -39,10 +39,16 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
-    if (char_avail() || using_script() || input_available()) {
-      // Don't block for events if there's a character already available for
-      // processing. Characters can come from mappings, scripts and other
-      // sources, so this scenario is very common.
+    // Expand mappings first by calling vpeekc() directly.
+    // - If vpeekc() returns non-NUL, there is a character already available for processing, so
+    //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
+    // - If vpeekc() returns NUL, vgetc() will block, and there are three cases:
+    //   - There is no input available.
+    //   - All of available input maps to an empty string.
+    //   - There is an incomplete mapping.
+    //   A blocking wait for a character should only be done in the third case, which is the only
+    //   case of the three where typebuf.tb_len > 0 after vpeekc() returns NUL.
+    if (vpeekc() != NUL || typebuf.tb_len > 0) {
       key = safe_vgetc();
     } else if (!multiqueue_empty(main_loop.events)) {
       // Event was made available after the last multiqueue_process_events call
@@ -55,9 +61,11 @@ getkey:
       // mapping engine.
       (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
-      key = !multiqueue_empty(main_loop.events)
-            ? K_EVENT
-            : safe_vgetc();
+      if (!multiqueue_empty(main_loop.events)) {
+        key = K_EVENT;
+      } else {
+        goto getkey;
+      }
     }
 
     if (key == K_EVENT) {

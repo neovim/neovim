@@ -272,4 +272,12 @@ describe('timers', function()
     ]]
     eq("Vim(call):E48: Not allowed in sandbox", exc_exec("sandbox call timer_start(0, 'Scary')"))
   end)
+
+  it('can be triggered after an empty string <expr> mapping', function()
+    local screen = Screen.new(40, 6)
+    screen:attach()
+    command([=[imap <expr> <F2> [timer_start(0, { _ -> execute("throw 'x'", "") }), ''][-1]]=])
+    feed('i<F2>')
+    screen:expect({any='E605: Exception not caught: x'})
+  end)
 end)

@@ -3189,7 +3189,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
     if (argvars[0].v_type == VAR_UNKNOWN) {
       // getchar(): blocking wait.
       // TODO(bfredl): deduplicate shared logic with state_enter ?
-      if (!(char_avail() || using_script() || input_available())) {
+      if (!char_avail()) {
         (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
         if (!multiqueue_empty(main_loop.events)) {
           state_handle_k_event();
