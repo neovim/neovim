@@ -1212,6 +1212,16 @@ func Test_type()
     call assert_false(empty(v:true))
     call assert_true(empty(v:null))
     " call assert_true(empty(v:none))
+
+    func ChangeYourMind()
+      try
+	return v:true
+      finally
+        return 'something else'
+      endtry
+    endfunc
+
+    call ChangeYourMind()
 endfunc
 
 "-------------------------------------------------------------------------------
