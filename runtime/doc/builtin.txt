@@ -52,7 +52,7 @@ assert_notmatch({pat}, {text} [, {msg}])
 assert_report({msg})		Number	report a test failure
 assert_true({actual} [, {msg}])	Number	assert {actual} is true
 atan({expr})			Float	arc tangent of {expr}
-atan2({expr}, {expr})		Float	arc tangent of {expr1} / {expr2}
+atan2({expr1}, {expr2})		Float	arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
