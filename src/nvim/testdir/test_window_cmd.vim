@@ -575,7 +575,7 @@ func Test_winrestcmd()
   only
 endfunc
 
-function! Fun_RenewFile()
+func Fun_RenewFile()
   " Need to wait a bit for the timestamp to be older.
   let old_ftime = getftime("tmp.txt")
   while getftime("tmp.txt") == old_ftime
@@ -585,7 +585,7 @@ function! Fun_RenewFile()
   sp
   wincmd p
   edit! tmp.txt
-endfunction
+endfunc
 
 func Test_window_prevwin()
   " Can we make this work on MS-Windows?

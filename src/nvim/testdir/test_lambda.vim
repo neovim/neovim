@@ -1,24 +1,24 @@
 " Test for lambda and closure
 
-function! Test_lambda_feature()
+func Test_lambda_feature()
   call assert_equal(1, has('lambda'))
-endfunction
+endfunc
 
-function! Test_lambda_with_filter()
+func Test_lambda_with_filter()
   let s:x = 2
   call assert_equal([2, 3], filter([1, 2, 3], {i, v -> v >= s:x}))
-endfunction
+endfunc
 
-function! Test_lambda_with_map()
+func Test_lambda_with_map()
   let s:x = 1
   call assert_equal([2, 3, 4], map([1, 2, 3], {i, v -> v + s:x}))
-endfunction
+endfunc
 
-function! Test_lambda_with_sort()
+func Test_lambda_with_sort()
   call assert_equal([1, 2, 3, 4, 7], sort([3,7,2,1,4], {a, b -> a - b}))
-endfunction
+endfunc
 
-function! Test_lambda_with_timer()
+func Test_lambda_with_timer()
   if !has('timers')
     return
   endif
@@ -54,10 +54,10 @@ function! Test_lambda_with_timer()
   call assert_true(s:n > m)
 endfunc
 
-function! Test_lambda_with_partial()
+func Test_lambda_with_partial()
   let l:Cb = function({... -> ['zero', a:1, a:2, a:3]}, ['one', 'two'])
   call assert_equal(['zero', 'one', 'two', 'three'], l:Cb('three'))
-endfunction
+endfunc
 
 function Test_lambda_fails()
   call assert_equal(3, {a, b -> a + b}(1, 2))
@@ -70,59 +70,59 @@ func Test_not_lambda()
   call assert_equal('foo', x['>'])
 endfunc
 
-function! Test_lambda_capture_by_reference()
+func Test_lambda_capture_by_reference()
   let v = 1
   let l:F = {x -> x + v}
   let v = 2
   call assert_equal(12, l:F(10))
-endfunction
+endfunc
 
-function! Test_lambda_side_effect()
-  function! s:update_and_return(arr)
+func Test_lambda_side_effect()
+  func! s:update_and_return(arr)
     let a:arr[1] = 5
     return a:arr
-  endfunction
+  endfunc
 
-  function! s:foo(arr)
+  func! s:foo(arr)
     return {-> s:update_and_return(a:arr)}
-  endfunction
+  endfunc
 
   let arr = [3,2,1]
   call assert_equal([3, 5, 1], s:foo(arr)())
-endfunction
+endfunc
 
-function! Test_lambda_refer_local_variable_from_other_scope()
-  function! s:foo(X)
+func Test_lambda_refer_local_variable_from_other_scope()
+  func! s:foo(X)
     return a:X() " refer l:x in s:bar()
-  endfunction
+  endfunc
 
-  function! s:bar()
+  func! s:bar()
     let x = 123
     return s:foo({-> x})
-  endfunction
+  endfunc
 
   call assert_equal(123, s:bar())
-endfunction
+endfunc
 
-function! Test_lambda_do_not_share_local_variable()
-  function! s:define_funcs()
+func Test_lambda_do_not_share_local_variable()
+  func! s:define_funcs()
     let l:One = {-> split(execute("let a = 'abc' | echo a"))[0]}
     let l:Two = {-> exists("a") ? a : "no"}
     return [l:One, l:Two]
-  endfunction
+  endfunc
 
   let l:F = s:define_funcs()
 
   call assert_equal('no', l:F[1]())
   call assert_equal('abc', l:F[0]())
   call assert_equal('no', l:F[1]())
-endfunction
+endfunc
 
-function! Test_lambda_closure_counter()
-  function! s:foo()
+func Test_lambda_closure_counter()
+  func! s:foo()
     let x = 0
     return {-> [execute("let x += 1"), x][-1]}
-  endfunction
+  endfunc
 
   let l:F = s:foo()
   call garbagecollect()
@@ -130,52 +130,52 @@ function! Test_lambda_closure_counter()
   call assert_equal(2, l:F())
   call assert_equal(3, l:F())
   call assert_equal(4, l:F())
-endfunction
+endfunc
 
-function! Test_lambda_with_a_var()
-  function! s:foo()
+func Test_lambda_with_a_var()
+  func! s:foo()
     let x = 2
     return {... -> a:000 + [x]}
-  endfunction
-  function! s:bar()
+  endfunc
+  func! s:bar()
     return s:foo()(1)
-  endfunction
+  endfunc
 
   call assert_equal([1, 2], s:bar())
-endfunction
+endfunc
 
-function! Test_lambda_call_lambda_from_lambda()
-  function! s:foo(x)
+func Test_lambda_call_lambda_from_lambda()
+  func! s:foo(x)
     let l:F1 = {-> {-> a:x}}
     return {-> l:F1()}
-  endfunction
+  endfunc
 
   let l:F = s:foo(1)
   call assert_equal(1, l:F()())
-endfunction
+endfunc
 
-function! Test_lambda_delfunc()
-  function! s:gen()
+func Test_lambda_delfunc()
+  func! s:gen()
     let pl = l:
     let l:Foo = {-> get(pl, "Foo", get(pl, "Bar", {-> 0}))}
     let l:Bar = l:Foo
     delfunction l:Foo
     return l:Bar
-  endfunction
+  endfunc
 
   let l:F = s:gen()
   call assert_fails(':call l:F()', 'E933:')
-endfunction
+endfunc
 
-function! Test_lambda_scope()
-  function! s:NewCounter()
+func Test_lambda_scope()
+  func! s:NewCounter()
     let c = 0
     return {-> [execute('let c += 1'), c][-1]}
-  endfunction
+  endfunc
 
-  function! s:NewCounter2()
+  func! s:NewCounter2()
     return {-> [execute('let c += 100'), c][-1]}
-  endfunction
+  endfunc
 
   let l:C = s:NewCounter()
   let l:D = s:NewCounter2()
@@ -183,37 +183,37 @@ function! Test_lambda_scope()
   call assert_equal(1, l:C())
   call assert_fails(':call l:D()', 'E121:')
   call assert_equal(2, l:C())
-endfunction
+endfunc
 
-function! Test_lambda_share_scope()
-  function! s:New()
+func Test_lambda_share_scope()
+  func! s:New()
     let c = 0
     let l:Inc0 = {-> [execute('let c += 1'), c][-1]}
     let l:Dec0 = {-> [execute('let c -= 1'), c][-1]}
     return [l:Inc0, l:Dec0]
-  endfunction
+  endfunc
 
   let [l:Inc, l:Dec] = s:New()
 
   call assert_equal(1, l:Inc())
   call assert_equal(2, l:Inc())
   call assert_equal(1, l:Dec())
-endfunction
+endfunc
 
-function! Test_lambda_circular_reference()
-  function! s:Foo()
+func Test_lambda_circular_reference()
+  func! s:Foo()
     let d = {}
     let d.f = {-> d}
     return d.f
-  endfunction
+  endfunc
 
   call s:Foo()
   call garbagecollect()
   let i = 0 | while i < 10000 | call s:Foo() | let i+= 1 | endwhile
   call garbagecollect()
-endfunction
+endfunc
 
-function! Test_lambda_combination()
+func Test_lambda_combination()
   call assert_equal(2, {x -> {x -> x}}(1)(2))
   call assert_equal(10, {y -> {x -> x(y)(10)}({y -> y})}({z -> z}))
   call assert_equal(5.0, {x -> {y -> x / y}}(10)(2.0))
@@ -226,17 +226,17 @@ function! Test_lambda_combination()
   let Z = {f -> {x -> f({y -> x(x)(y)})}({x -> f({y -> x(x)(y)})})}
   let Fact = {f -> {x -> x == 0 ? 1 : x * f(x - 1)}}
   call assert_equal(120, Z(Fact)(5))
-endfunction
+endfunc
 
-function! Test_closure_counter()
-  function! s:foo()
+func Test_closure_counter()
+  func! s:foo()
     let x = 0
-    function! s:bar() closure
+    func! s:bar() closure
       let x += 1
       return x
-    endfunction
+    endfunc
     return function('s:bar')
-  endfunction
+  endfunc
 
   let l:F = s:foo()
   call garbagecollect()
@@ -244,30 +244,30 @@ function! Test_closure_counter()
   call assert_equal(2, l:F())
   call assert_equal(3, l:F())
   call assert_equal(4, l:F())
-endfunction
+endfunc
 
-function! Test_closure_unlet()
-  function! s:foo()
+func Test_closure_unlet()
+  func! s:foo()
     let x = 1
-    function! s:bar() closure
+    func! s:bar() closure
       unlet x
-    endfunction
+    endfunc
     call s:bar()
     return l:
-  endfunction
+  endfunc
 
   call assert_false(has_key(s:foo(), 'x'))
   call garbagecollect()
-endfunction
+endfunc
 
-function! LambdaFoo()
+func LambdaFoo()
   let x = 0
-  function! LambdaBar() closure
+  func! LambdaBar() closure
     let x += 1
     return x
-  endfunction
+  endfunc
   return function('LambdaBar')
-endfunction
+endfunc
 
 func Test_closure_refcount()
   let g:Count = LambdaFoo()

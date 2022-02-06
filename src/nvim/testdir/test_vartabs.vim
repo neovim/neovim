@@ -145,7 +145,7 @@ func Test_retab_invalid_arg()
   bwipe!
 endfunc
 
-func! Test_vartabs_breakindent()
+func Test_vartabs_breakindent()
   if !exists("+breakindent")
     return
   endif

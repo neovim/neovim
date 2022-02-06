@@ -40,7 +40,7 @@ endfunc
 " indicator (e.g., "-- INSERT --") when ":stopinsert" is invoked.  Message
 " output could then be disturbed when 'cmdheight' was greater than one.
 " This test ensures that the bugfix for this issue remains in place.
-function! Test_stopinsert_does_not_break_message_output()
+func Test_stopinsert_does_not_break_message_output()
   set cmdheight=2
   redraw!
 
@@ -55,7 +55,7 @@ function! Test_stopinsert_does_not_break_message_output()
   redraw!
 
    set cmdheight&
-endfunction
+endfunc
 
 func Test_message_completion()
   call feedkeys(":message \<C-A>\<C-B>\"\<CR>", 'tx')

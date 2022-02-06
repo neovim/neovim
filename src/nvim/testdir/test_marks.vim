@@ -1,6 +1,6 @@
 
 " Test that a deleted mark is restored after delete-undo-redo-undo.
-function! Test_Restore_DelMark()
+func Test_Restore_DelMark()
   enew!
   call append(0, ["	textline A", "	textline B", "	textline C"])
   normal! 2gg
@@ -11,10 +11,10 @@ function! Test_Restore_DelMark()
   call assert_equal(2, pos[1])
   call assert_equal(1, pos[2])
   enew!
-endfunction
+endfunc
 
 " Test that CTRL-A and CTRL-X updates last changed mark '[, '].
-function! Test_Incr_Marks()
+func Test_Incr_Marks()
   enew!
   call append(0, ["123 123 123", "123 123 123", "123 123 123"])
   normal! gg
@@ -23,7 +23,7 @@ function! Test_Incr_Marks()
   call assert_equal("123 XXXXXXX", getline(2))
   call assert_equal("XXX 123 123", getline(3))
   enew!
-endfunction
+endfunc
 
 func Test_previous_jump_mark()
   new

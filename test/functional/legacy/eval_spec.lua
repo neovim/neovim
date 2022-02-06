@@ -666,7 +666,7 @@ describe('eval', function()
     source([[
       " Vim script used in test_eval.in.  Needed for script-local function.
 
-      func! s:Testje()
+      func s:Testje()
         return "foo"
       endfunc
 

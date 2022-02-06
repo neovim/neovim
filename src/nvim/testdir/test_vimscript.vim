@@ -25,7 +25,7 @@ com! -nargs=1	     Xout     call Xout(<args>)
 " in the variable argument list.  This function is useful if similar tests are
 " to be made for a ":return" from a function call or a ":finish" in a script
 " file.
-function! MakeScript(funcname, ...)
+func MakeScript(funcname, ...)
     let script = tempname()
     execute "redir! >" . script
     execute "function" a:funcname
@@ -1156,6 +1156,82 @@ func Test_type()
     call assert_equal(v:t_list, type(v:_null_list))
     call assert_equal(v:t_dict, type(v:_null_dict))
     call assert_equal(v:t_blob, type(v:_null_blob))
+
+    call assert_equal(0, 0 + v:false)
+    call assert_equal(1, 0 + v:true)
+    " call assert_equal(0, 0 + v:none)
+    call assert_equal(0, 0 + v:null)
+
+    call assert_equal('false', '' . v:false)
+    call assert_equal('true', '' . v:true)
+    " call assert_equal('none', '' . v:none)
+    call assert_equal('null', '' . v:null)
+
+    call assert_true(v:false == 0)
+    call assert_false(v:false != 0)
+    call assert_true(v:true == 1)
+    call assert_false(v:true != 1)
+    call assert_false(v:true == v:false)
+    call assert_true(v:true != v:false)
+
+    call assert_true(v:null == 0)
+    call assert_false(v:null != 0)
+    " call assert_true(v:none == 0)
+    " call assert_false(v:none != 0)
+
+    call assert_true(v:false is v:false)
+    call assert_true(v:true is v:true)
+    " call assert_true(v:none is v:none)
+    call assert_true(v:null is v:null)
+
+    call assert_false(v:false isnot v:false)
+    call assert_false(v:true isnot v:true)
+    " call assert_false(v:none isnot v:none)
+    call assert_false(v:null isnot v:null)
+
+    call assert_false(v:false is 0)
+    call assert_false(v:true is 1)
+    call assert_false(v:true is v:false)
+    " call assert_false(v:none is 0)
+    call assert_false(v:null is 0)
+    " call assert_false(v:null is v:none)
+
+    call assert_true(v:false isnot 0)
+    call assert_true(v:true isnot 1)
+    call assert_true(v:true isnot v:false)
+    " call assert_true(v:none isnot 0)
+    call assert_true(v:null isnot 0)
+    " call assert_true(v:null isnot v:none)
+
+    call assert_equal(v:false, eval(string(v:false)))
+    call assert_equal(v:true, eval(string(v:true)))
+    " call assert_equal(v:none, eval(string(v:none)))
+    call assert_equal(v:null, eval(string(v:null)))
+
+    call assert_equal(v:false, copy(v:false))
+    call assert_equal(v:true, copy(v:true))
+    " call assert_equal(v:none, copy(v:none))
+    call assert_equal(v:null, copy(v:null))
+
+    call assert_equal([v:false], deepcopy([v:false]))
+    call assert_equal([v:true], deepcopy([v:true]))
+    " call assert_equal([v:none], deepcopy([v:none]))
+    call assert_equal([v:null], deepcopy([v:null]))
+
+    call assert_true(empty(v:false))
+    call assert_false(empty(v:true))
+    call assert_true(empty(v:null))
+    " call assert_true(empty(v:none))
+
+    func ChangeYourMind()
+	try
+	    return v:true
+	finally
+	    return 'something else'
+	endtry
+    endfunc
+
+    call ChangeYourMind()
 endfunc
 
 "-------------------------------------------------------------------------------

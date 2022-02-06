@@ -22,16 +22,16 @@ func Test_whichwrap()
   call assert_equal('h', &whichwrap)
 
   set whichwrap&
-endfunction
+endfunc
 
-function! Test_isfname()
+func Test_isfname()
   " This used to cause Vim to access uninitialized memory.
   set isfname=
   call assert_equal("~X", expand("~X"))
   set isfname&
-endfunction
+endfunc
 
-function Test_wildchar()
+func Test_wildchar()
   " Empty 'wildchar' used to access invalid memory.
   call assert_fails('set wildchar=', 'E521:')
   call assert_fails('set wildchar=abc', 'E521:')
@@ -42,7 +42,7 @@ function Test_wildchar()
   let a=execute('set wildchar?')
   call assert_equal("\n  wildchar=<Esc>", a)
   set wildchar&
-endfunction
+endfunc
 
 func Test_wildoptions()
   set wildoptions=
@@ -90,7 +90,7 @@ func Test_options_command()
   close
 endfunc
 
-function! Test_path_keep_commas()
+func Test_path_keep_commas()
   " Test that changing 'path' keeps two commas.
   set path=foo,,bar
   set path-=bar
@@ -98,7 +98,7 @@ function! Test_path_keep_commas()
   call assert_equal('foo,,bar', &path)
 
   set path&
-endfunction
+endfunc
 
 func Test_filetype_valid()
   set ft=valid_name

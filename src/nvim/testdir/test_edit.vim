@@ -213,7 +213,7 @@ func Test_edit_07()
   bw!
 endfunc
 
-func! Test_edit_08()
+func Test_edit_08()
   throw 'skipped: moved to test/functional/legacy/edit_spec.lua'
   " reset insertmode from i_ctrl-r_=
   let g:bufnr = bufnr('%')
@@ -417,7 +417,7 @@ func Test_edit_13()
   bwipe!
 endfunc
 
-func! Test_edit_CR()
+func Test_edit_CR()
   " Test for <CR> in insert mode
   " basically only in quickfix mode ist tested, the rest
   " has been taken care of by other tests
@@ -450,7 +450,7 @@ func! Test_edit_CR()
   call delete('Xqflist.txt')
 endfunc
 
-func! Test_edit_CTRL_()
+func Test_edit_CTRL_()
   " disabled for Windows builds, why?
   if !has("rightleft") || has("win32")
     return
@@ -734,7 +734,7 @@ func Test_edit_CTRL_O()
   bw!
 endfunc
 
-func! Test_edit_CTRL_R()
+func Test_edit_CTRL_R()
   " Insert Register
   new
   " call test_override("ALL", 1)

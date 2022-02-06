@@ -516,22 +516,22 @@ func Test_dict_lock_operator()
 endfunc
 
 " No remove() of write-protected scope-level variable
-func! Tfunc(this_is_a_long_parameter_name)
+func Tfunc1(this_is_a_long_parameter_name)
   call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742')
-endfun
+endfunc
 func Test_dict_scope_var_remove()
-  call Tfunc('testval')
+  call Tfunc1('testval')
 endfunc
 
 " No extend() of write-protected scope-level variable
 func Test_dict_scope_var_extend()
   call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
 endfunc
-func! Tfunc(this_is_a_long_parameter_name)
+func Tfunc2(this_is_a_long_parameter_name)
   call assert_fails("call extend(a:, {'this_is_a_long_parameter_name': 1234})", 'E742')
 endfunc
 func Test_dict_scope_var_extend_overwrite()
-  call Tfunc('testval')
+  call Tfunc2('testval')
 endfunc
 
 " No :unlet of variable in locked scope

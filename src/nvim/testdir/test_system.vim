@@ -46,9 +46,9 @@ func Test_System()
   bwipe!
 
   call assert_fails('call system("wc -l", 99999)', 'E86:')
-endfunction
+endfunc
 
-function! Test_system_exmode()
+func Test_system_exmode()
   if has('unix') " echo $? only works on Unix
     let cmd = ' -es --headless -u NONE -c "source Xscript" +q; echo "result=$?"'
     " Need to put this in a script, "catch" isn't found after an unknown

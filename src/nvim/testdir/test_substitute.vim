@@ -105,7 +105,7 @@ func Test_substitute_variants()
       call assert_equal(var.exp, getline('.'), msg)
     endfor
   endfor
-endfunction
+endfunc
 
 " Test the l, p, # flags.
 func Test_substitute_flags_lp()
