@@ -69,6 +69,7 @@ static char *e_nowhitespace
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static char *e_write2 = N_("E80: Error while writing: %s");
+static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
 
 // TODO(ZyX-I): move to eval/executor
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
@@ -112,9 +113,11 @@ typedef struct {
   int fi_semicolon;             // TRUE if ending in '; var]'
   int fi_varcount;              // nr of variables in the list
   listwatch_T fi_lw;            // keep an eye on the item used.
-  list_T *fi_list;         // list being used
+  list_T *fi_list;              // list being used
   int fi_bi;                    // index of blob
   blob_T *fi_blob;              // blob being used
+  char_u *fi_string;            // copy of string being used
+  int fi_byte_idx;              // byte index in fi_string
 } forinfo_T;
 
 // values for vv_flags:
@@ -2641,8 +2644,15 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
           fi->fi_blob = btv.vval.v_blob;
         }
         tv_clear(&tv);
+      } else if (tv.v_type == VAR_STRING) {
+        fi->fi_byte_idx = 0;
+        fi->fi_string = tv.vval.v_string;
+        tv.vval.v_string = NULL;
+        if (fi->fi_string == NULL) {
+          fi->fi_string = vim_strsave((char_u *)"");
+        }
       } else {
-        emsg(_(e_listblobreq));
+        emsg(_(e_string_list_or_blob_required));
         tv_clear(&tv);
       }
     }
@@ -2679,6 +2689,22 @@ bool next_for_item(void *fi_void, char_u *arg)
                        fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK;
   }
 
+  if (fi->fi_string != NULL) {
+    const int len = utfc_ptr2len(fi->fi_string + fi->fi_byte_idx);
+    if (len == 0) {
+      return false;
+    }
+    typval_T tv;
+    tv.v_type = VAR_STRING;
+    tv.v_lock = VAR_FIXED;
+    tv.vval.v_string = vim_strnsave(fi->fi_string + fi->fi_byte_idx, len);
+    fi->fi_byte_idx += len;
+    const int result
+        = ex_let_vars(arg, &tv, true, fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK;
+    xfree(tv.vval.v_string);
+    return result;
+  }
+
   listitem_T *item = fi->fi_lw.lw_item;
   if (item == NULL) {
     return false;
@@ -2698,12 +2724,16 @@ void free_for_info(void *fi_void)
 {
   forinfo_T *fi = (forinfo_T *)fi_void;
 
-  if (fi != NULL && fi->fi_list != NULL) {
+  if (fi == NULL) {
+    return;
+  }
+  if (fi->fi_list != NULL) {
     tv_list_watch_remove(fi->fi_list, &fi->fi_lw);
     tv_list_unref(fi->fi_list);
-  }
-  if (fi != NULL && fi->fi_blob != NULL) {
+  } else if (fi->fi_blob != NULL) {
     tv_blob_unref(fi->fi_blob);
+  } else {
+    xfree(fi->fi_string);
   }
   xfree(fi);
 }

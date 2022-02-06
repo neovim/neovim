@@ -1692,6 +1692,26 @@ func Test_function_defined_line()
     call delete('Xtest.vim')
 endfunc
 
+func Test_for_over_string()
+  let res = ''
+  for c in 'aéc̀d'
+    let res ..= c .. '-'
+  endfor
+  call assert_equal('a-é-c̀-d-', res)
+
+  let res = ''
+  for c in ''
+    let res ..= c .. '-'
+  endfor
+  call assert_equal('', res)
+
+  let res = ''
+  for c in v:_null_string
+    let res ..= c .. '-'
+  endfor
+  call assert_equal('', res)
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
