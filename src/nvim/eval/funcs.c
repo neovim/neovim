@@ -6846,12 +6846,23 @@ static void f_or(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_pathshorten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->v_type = VAR_STRING;
-  const char *const s = tv_get_string_chk(&argvars[0]);
-  if (!s) {
-    return;
+  int trim_len = 1;
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    trim_len = (int)tv_get_number(&argvars[1]);
+    if (trim_len < 1) {
+      trim_len = 1;
+    }
   }
-  rettv->vval.v_string = shorten_dir((char_u *)xstrdup(s));
+
+  rettv->v_type = VAR_STRING;
+  const char_u *p = (char_u *)tv_get_string_chk(&argvars[0]);
+  if (p == NULL) {
+    rettv->vval.v_string = NULL;
+  } else {
+    rettv->vval.v_string = vim_strsave(p);
+    shorten_dir_len(rettv->vval.v_string, trim_len);
+  }
 }
 
 /*

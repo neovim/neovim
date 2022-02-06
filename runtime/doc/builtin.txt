@@ -314,7 +314,7 @@ nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number	bitwise OR
-pathshorten({expr})		String	shorten directory names in a path
+pathshorten({expr} [, {len}])	String	shorten directory names in a path
 perleval({expr})		any	evaluate |perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
@@ -5204,13 +5204,17 @@ or({expr}, {expr})					*or()*
 <		Can also be used as a |method|: >
 			:let bits = bits->or(0x80)
 
-pathshorten({path})					*pathshorten()*
+pathshorten({expr} [, {len}])				*pathshorten()*
 		Shorten directory names in the path {path} and return the
 		result.  The tail, the file name, is kept as-is.  The other
-		components in the path are reduced to single letters.  Leading
-		'~' and '.' characters are kept.  Example: >
+		components in the path are reduced to {len} letters in length.
+		If {len} is omitted or smaller than 1 then 1 is used (single
+		letters).  Leading '~' and '.' characters are kept.  Examples: >
 			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
 <			~/.c/n/a/file1.vim ~
+>
+			:echo pathshorten('~/.config/nvim/autoload/file2.vim', 2)
+<			~/.co/nv/au/file2.vim ~
 		It doesn't matter if the path exists or not.
 
 		Can also be used as a |method|: >
