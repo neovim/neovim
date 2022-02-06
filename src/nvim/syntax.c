@@ -3168,9 +3168,9 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   if (*arg == NUL) {
     switch (curwin->w_s->b_syn_foldlevel) {
     case SYNFLD_START:
-      msg(_("syntax foldlevel start"));   break;
+      msg("syntax foldlevel start");   break;
     case SYNFLD_MINIMUM:
-      msg(_("syntax foldlevel minimum")); break;
+      msg("syntax foldlevel minimum"); break;
     default:
       break;
     }
@@ -3209,11 +3209,11 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
-      msg(_("syntax spell toplevel"));
+      msg("syntax spell toplevel");
     } else if (curwin->w_s->b_syn_spell == SYNSPL_NOTOP) {
-      msg(_("syntax spell notoplevel"));
+      msg("syntax spell notoplevel");
     } else {
-      msg(_("syntax spell default"));
+      msg("syntax spell default");
     }
   } else if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
