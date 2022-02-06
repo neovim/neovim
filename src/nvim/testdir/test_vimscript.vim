@@ -25,7 +25,7 @@ com! -nargs=1	     Xout     call Xout(<args>)
 " in the variable argument list.  This function is useful if similar tests are
 " to be made for a ":return" from a function call or a ":finish" in a script
 " file.
-function! MakeScript(funcname, ...)
+func MakeScript(funcname, ...)
     let script = tempname()
     execute "redir! >" . script
     execute "function" a:funcname
@@ -1224,11 +1224,11 @@ func Test_type()
     " call assert_true(empty(v:none))
 
     func ChangeYourMind()
-      try
-	return v:true
-      finally
-        return 'something else'
-      endtry
+	try
+	    return v:true
+	finally
+	    return 'something else'
+	endtry
     endfunc
 
     call ChangeYourMind()

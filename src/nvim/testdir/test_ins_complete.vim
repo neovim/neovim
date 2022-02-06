@@ -109,7 +109,7 @@ func s:CompleteDone_CompleteFuncNone( findstart, base )
   return v:none
 endfunc
 
-function! s:CompleteDone_CompleteFuncDict( findstart, base )
+func s:CompleteDone_CompleteFuncDict( findstart, base )
   if a:findstart
     return 0
   endif
@@ -126,7 +126,7 @@ function! s:CompleteDone_CompleteFuncDict( findstart, base )
             \ }
           \ ]
         \ }
-endfunction
+endfunc
 
 func s:CompleteDone_CheckCompletedItemNone()
   let s:called_completedone = 1

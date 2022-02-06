@@ -4,7 +4,7 @@ source shared.vim
 source check.vim
 source term_util.vim
 
-func! s:cleanup_buffers() abort
+func s:cleanup_buffers() abort
   for bnr in range(1, bufnr('$'))
     if bufloaded(bnr) && bufnr('%') != bnr
       execute 'bd! ' . bnr
