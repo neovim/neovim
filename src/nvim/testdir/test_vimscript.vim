@@ -1208,6 +1208,16 @@ func Test_type()
     " call assert_equal(v:none, eval(string(v:none)))
     call assert_equal(v:null, eval(string(v:null)))
 
+    call assert_equal(v:false, copy(v:false))
+    call assert_equal(v:true, copy(v:true))
+    " call assert_equal(v:none, copy(v:none))
+    call assert_equal(v:null, copy(v:null))
+
+    call assert_equal([v:false], deepcopy([v:false]))
+    call assert_equal([v:true], deepcopy([v:true]))
+    " call assert_equal([v:none], deepcopy([v:none]))
+    call assert_equal([v:null], deepcopy([v:null]))
+
     call assert_true(empty(v:false))
     call assert_false(empty(v:true))
     call assert_true(empty(v:null))
