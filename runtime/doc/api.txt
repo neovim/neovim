@@ -186,7 +186,7 @@ About the `functions` map:
     a type name, e.g. `nvim_buf_get_lines` is the `get_lines` method of
     a Buffer instance. |dev-api|
   - Global functions have the "method=false" flag and are prefixed with just
-    `nvim_`, e.g. `nvim_get_buffers`.
+    `nvim_`, e.g. `nvim_list_bufs`.
 
 							*api-mapping*
 External programs (clients) can use the metadata to discover the API, using
