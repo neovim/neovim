@@ -65,12 +65,6 @@ fail() {
   FAILED=1
 }
 
-run_test() {
-  local cmd="$1"
-  local test_name="$2"
-  eval "$cmd" || fail "$test_name"
-}
-
 ended_successfully() {
   if test -f "${FAIL_SUMMARY_FILE}" ; then
     echo 'Test failed, complete summary:'
@@ -94,7 +88,7 @@ run_suite() {
   local suite_name="$2"
 
   enter_suite "$suite_name"
-  run_test "$command" "$suite_name"
+  eval "$command" || fail "$suite_name"
   exit_suite
 }
 
