@@ -55,6 +55,9 @@
 #define SEARCH_STAT_DEF_MAX_COUNT 99
 #define SEARCH_STAT_BUF_LEN 12
 
+/// Maximum number of characters that can be fuzzy matched
+#define MAX_FUZZY_MATCHES 256
+
 /// Structure containing offset definition for the last search pattern
 ///
 /// @note Only offset for the last search pattern is used, not for the last

@@ -989,7 +989,7 @@ commands can be combined to create a NewGrep command: >
 5.1 using Vim's internal grep
 
 					*:vim* *:vimgrep* *E682* *E683*
-:vim[grep][!] /{pattern}/[g][j] {file} ...
+:vim[grep][!] /{pattern}/[g][j][f] {file} ...
 			Search for {pattern} in the files {file} ... and set
 			the error list to the matches.  Files matching
 			'wildignore' are ignored; files in 'suffixes' are
@@ -1013,6 +1013,13 @@ commands can be combined to create a NewGrep command: >
 			     match.  With 'j' only the quickfix list is
 			     updated.  With the [!] any changes in the current
 			     buffer are abandoned.
+
+			'f'  When the 'f' flag is specified, fuzzy string
+			     matching is used to find matching lines. In this
+			     case, {pattern} is treated as a literal string
+			     instead of a regular expression.  See
+			     |fuzzy-match| for more information about fuzzy
+			     matching strings.
 
 			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
 			A file that is opened for matching may use a buffer
@@ -1042,20 +1049,20 @@ commands can be combined to create a NewGrep command: >
 				:vimgrep Error *.c
 <
 							*:lv* *:lvimgrep*
-:lv[imgrep][!] /{pattern}/[g][j] {file} ...
+:lv[imgrep][!] /{pattern}/[g][j][f] {file} ...
 :lv[imgrep][!] {pattern} {file} ...
 			Same as ":vimgrep", except the location list for the
 			current window is used instead of the quickfix list.
 
 						*:vimgrepa* *:vimgrepadd*
-:vimgrepa[dd][!] /{pattern}/[g][j] {file} ...
+:vimgrepa[dd][!] /{pattern}/[g][j][f] {file} ...
 :vimgrepa[dd][!] {pattern} {file} ...
 			Just like ":vimgrep", but instead of making a new list
 			of errors the matches are appended to the current
 			list.
 
 						*:lvimgrepa* *:lvimgrepadd*
-:lvimgrepa[dd][!] /{pattern}/[g][j] {file} ...
+:lvimgrepa[dd][!] /{pattern}/[g][j][f] {file} ...
 :lvimgrepa[dd][!] {pattern} {file} ...
 			Same as ":vimgrepadd", except the location list for
 			the current window is used instead of the quickfix

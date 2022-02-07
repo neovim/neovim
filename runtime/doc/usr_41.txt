@@ -608,6 +608,8 @@ String manipulation:					*string-functions*
 	toupper()		turn a string to uppercase
 	match()			position where a pattern matches in a string
 	matchend()		position where a pattern match ends in a string
+	matchfuzzy()		fuzzy matches a string in a list of strings
+	matchfuzzypos()		fuzzy matches a string in a list of strings
 	matchstr()		match of a pattern in a string
 	matchstrpos()		match and positions of a pattern in a string
 	matchlist()		like matchstr() and also return submatches
