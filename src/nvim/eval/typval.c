@@ -3205,8 +3205,9 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   case VAR_BLOB:
   case VAR_UNKNOWN:
     emsg(_(str_errors[tv->v_type]));
-    return false;
+    return NULL;
   }
+  abort();
   return NULL;
 }
 
