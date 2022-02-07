@@ -14,10 +14,12 @@ VIM.TREESITTER						*lua-treesitter*
 Nvim integrates the tree-sitter library for incremental parsing of buffers.
 
                                              *vim.treesitter.language_version*
-To check which language version is compiled with neovim, the number is stored
-within `vim.treesitter.language_version`. This number is not too helpful
-unless you are wondering about compatibility between different versions of
-compiled grammars.
+The latest parser ABI version that is supported by the bundled tree-sitter
+library.
+
+                                     *vim.treesitter.minimum_language_version*
+The earliest parser ABI version that is supported by the bundled tree-sitter
+library.
 
 Parser files						*treesitter-parsers*
 
@@ -49,10 +51,10 @@ Whenever you need to access the current syntax tree, parse the buffer: >
 
     tstree = parser:parse()
 
-<This will return a table of immutable trees that represent the current state of the
-buffer. When the plugin wants to access the state after a (possible) edit
-it should call `parse()` again. If the buffer wasn't edited, the same tree will
-be returned again without extra work. If the buffer was parsed before,
+<This will return a table of immutable trees that represent the current state
+of the buffer. When the plugin wants to access the state after a (possible)
+edit it should call `parse()` again. If the buffer wasn't edited, the same tree
+will be returned again without extra work. If the buffer was parsed before,
 incremental parsing will be done of the changed parts.
 
 Note: to use the parser directly inside a |nvim_buf_attach| Lua callback, you
@@ -61,9 +63,10 @@ parsing shouldn't be done directly in the change callback anyway as they will
 be very frequent. Rather a plugin that does any kind of analysis on a tree
 should use a timer to throttle too frequent updates.
 
-tsparser:set_included_regions({region_list})			*tsparser:set_included_regions()*
+tsparser:set_included_regions({region_list})  *tsparser:set_included_regions()*
 	Changes the regions the parser should consider. This is used for
-	language injection.  {region_list} should be of the form (all zero-based): >
+	language injection.  {region_list} should be of the form
+	(all zero-based): >
 	{
 		{node1, node2},
 		...
@@ -92,13 +95,13 @@ tsnode:next_sibling()					*tsnode:next_sibling()*
 tsnode:prev_sibling()					*tsnode:prev_sibling()*
 	Get the node's previous sibling.
 
-tsnode:next_named_sibling()				*tsnode:next_named_sibling()*
+tsnode:next_named_sibling()                       *tsnode:next_named_sibling()*
 	Get the node's next named sibling.
 
-tsnode:prev_named_sibling()				*tsnode:prev_named_sibling()*
+tsnode:prev_named_sibling()			  *tsnode:prev_named_sibling()*
 	Get the node's previous named sibling.
 
-tsnode:iter_children()					*tsnode:iter_children()*
+tsnode:iter_children()				       *tsnode:iter_children()*
 	Iterates over all the direct children of {tsnode}, regardless of
 	whether they are named or not.
 	Returns the child node plus the eventual field name corresponding to
@@ -114,10 +117,10 @@ tsnode:child({index})					*tsnode:child()*
 	Get the node's child at the given {index}, where zero represents the
 	first child.
 
-tsnode:named_child_count()				*tsnode:named_child_count()*
+tsnode:named_child_count()			   *tsnode:named_child_count()*
 	Get the node's number of named children.
 
-tsnode:named_child({index})				*tsnode:named_child()*
+tsnode:named_child({index})			         *tsnode:named_child()*
 	Get the node's named child at the given {index}, where zero represents
 	the first named child.
 
@@ -157,20 +160,20 @@ tsnode:sexpr()						*tsnode:sexpr()*
 tsnode:id()						*tsnode:id()*
 	Get an unique identifier for the node inside its own tree.
 
-	No guarantees are made about this identifier's internal representation,
-	except for being a primitive lua type with value equality (so not a table).
-	Presently it is a (non-printable) string.
+	No guarantees are made about this identifier's internal
+	representation, except for being a primitive lua type with value
+	equality (so not a table). Presently it is a (non-printable) string.
 
 	Note: the id is not guaranteed to be unique for nodes from different
 	trees.
 
+						*tsnode:descendant_for_range()*
 tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
-							*tsnode:descendant_for_range()*
 	Get the smallest node within this node that spans the given range of
 	(row, column) positions
 
+					  *tsnode:named_descendant_for_range()*
 tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
-							*tsnode:named_descendant_for_range()*
 	Get the smallest named node within this node that spans the given
 	range of (row, column) positions
 
@@ -192,11 +195,11 @@ and predicates. A `capture` allows you to associate names with a specific
 node in a pattern. A `predicate` adds arbitrary metadata and conditional data
 to a match.
 
-Treesitter Query Predicates				*lua-treesitter-predicates*
+Treesitter Query Predicates			    *lua-treesitter-predicates*
 
 When writing queries for treesitter, one might use `predicates`, that is,
-special scheme nodes that are evaluated to verify things on a captured node for
-example, the |eq?| predicate : >
+special scheme nodes that are evaluated to verify things on a captured node
+for example, the |eq?| predicate : >
 	((identifier) @foo (#eq? @foo "foo"))
 
 This will only match identifier corresponding to the `"foo"` text.
@@ -209,24 +212,24 @@ Here is a list of built-in predicates :
 			((node1) @left (node2) @right (#eq? @left @right))
 <
 	`match?`					*ts-predicate-match?*
-	`vim-match?`					*ts-predicate-vim-match?*
+	`vim-match?`				    *ts-predicate-vim-match?*
 		This will match if the provided vim regex matches the text
 		corresponding to a node : >
 			((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <		Note: the `^` and `$` anchors will respectively match the
 			start and end of the node's text.
 
-	`lua-match?`					*ts-predicate-lua-match?*
+	`lua-match?`				    *ts-predicate-lua-match?*
 		This will match the same way than |match?| but using lua
 		regexes.
 
-	`contains?`					*ts-predicate-contains?*
+	`contains?`				     *ts-predicate-contains?*
 		Will check if any of the following arguments appears in the
 		text corresponding to the node : >
 			((identifier) @foo (#contains? @foo "foo"))
 			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
-	`any-of?`					*ts-predicate-any-of?*
+	`any-of?`				       *ts-predicate-any-of?*
 		Will check if the text is the same as any of the following.
 		This is the recommended way to check if the node matches one
 		of many keywords for example, as it has been optimized for
@@ -234,27 +237,27 @@ Here is a list of built-in predicates :
 		arguments : >
 			((identifier) @foo (#any-of? @foo "foo" "bar"))
 <
-							*lua-treesitter-not-predicate*
+						 *lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
-						*vim.treesitter.query.add_predicate()*
+					 *vim.treesitter.query.add_predicate()*
 vim.treesitter.query.add_predicate({name}, {handler})
 
 This adds a predicate with the name {name} to be used in queries.
 {handler} should be a function whose signature will be : >
 	handler(match, pattern, bufnr, predicate)
 <
-						*vim.treesitter.query.list_predicates()*
+				       *vim.treesitter.query.list_predicates()*
 vim.treesitter.query.list_predicates()
 
 This lists the currently available predicates to use in queries.
 
-Treesitter Query Directive				*lua-treesitter-directives*
+Treesitter Query Directive			    *lua-treesitter-directives*
 
-Treesitter queries can also contain `directives`. Directives store metadata for a node
-or match and perform side effects. For example, the |set!| predicate sets metadata on
-the match or node : >
+Treesitter queries can also contain `directives`. Directives store metadata
+for a node or match and perform side effects. For example, the |set!|
+predicate sets metadata on the match or node : >
 	((identifier) @foo (#set! "type" "parameter"))
 
 Here is a list of built-in directives:
@@ -268,8 +271,8 @@ Here is a list of built-in directives:
 		Takes the range of the captured node and applies the offsets
 		to it's range : >
 			((identifier) @constant (#offset! @constant 0 1 0 -1))
-<		This will generate a range object for the captured node with the
-		offsets applied. The arguments are
+<		This will generate a range object for the captured node with
+		the offsets applied. The arguments are
 		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
 		The default key is "offset".
 
@@ -279,25 +282,25 @@ vim.treesitter.query.add_directive({name}, {handler})
 This adds a directive with the name {name} to be used in queries.
 {handler} should be a function whose signature will be : >
 	handler(match, pattern, bufnr, predicate, metadata)
-Handlers can set match level data by setting directly on the metadata object `metadata.key = value`
-Handlers can set node level data by using the capture id on the metadata table
-`metadata[capture_id].key = value`
+Handlers can set match level data by setting directly on the metadata object
+`metadata.key = value` Handlers can set node level data by using the capture
+id on the metadata table `metadata[capture_id].key = value`
 
 					*vim.treesitter.query.list_directives()*
 vim.treesitter.query.list_directives()
 
 This lists the currently available directives to use in queries.
 
-Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
+Treesitter syntax highlighting (WIP)		     *lua-treesitter-highlight*
 
 NOTE: This is a partially implemented feature, and not usable as a default
 solution yet. What is documented here is a temporary interface intended
 for those who want to experiment with this feature and contribute to
 its development.
 
-Highlights are defined in the same query format as in the tree-sitter highlight
-crate, with some limitations and additions. Set a highlight query for a
-buffer with this code: >
+Highlights are defined in the same query format as in the tree-sitter
+highlight crate, with some limitations and additions. Set a highlight query
+for a buffer with this code: >
 
     local query = [[
       "for" @keyword
@@ -338,7 +341,8 @@ Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
 Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default 
 priority of 100. This enables plugins to set a highlighting priority lower or
 higher than tree-sitter. It is also possible to change the priority of an
-individual query pattern manually by setting its `"priority"` metadata attribute: >
+individual query pattern manually by setting its `"priority"` metadata
+attribute: >
 
     (
       (super_important_node) @ImportantHighlight
@@ -461,7 +465,7 @@ parse_query({lang}, {query})                                   *parse_query()*
                 can be used to search nodes in the syntax tree for the
                 patterns defined in {query} using `iter_*` methods below.
 
-                Exposes `info` and `captures` with additional information about the {query}.
+                Exposes `info` and `captures` with additional context about {query}.
                 • `captures` contains the list of unique capture names defined
                   in {query}. - `info.captures` also points to `captures` .
                 • `info.patterns` contains information about predicates.
@@ -609,10 +613,9 @@ LanguageTree:children({self})                        *LanguageTree:children()*
                     {self}
 
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
-                Determines whether This goes down the tree to recursively check children.
+                Determines whether {range} is contained in this language tree
 
-                Parameters: ~
-                    {range}  is contained in this language tree
+                This goes down the tree to recursively check children.
 
                 Parameters: ~
                     {range}  A range, that is a `{ start_line, start_col,
@@ -622,8 +625,9 @@ LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
 LanguageTree:destroy({self})                          *LanguageTree:destroy()*
                 Destroys this language tree and all its children.
 
-                Any cleanup logic should be performed here. Note, this DOES
-                NOT remove this tree from a parent. `remove_child` must be called on the parent to remove it.
+                Any cleanup logic should be performed here.
+
+                Note: This DOES NOT remove this tree from a parent. Instead, `remove_child` must be called on the parent to remove it.
 
                 Parameters: ~
                     {self}
@@ -666,7 +670,8 @@ LanguageTree:invalidate({self}, {reload})          *LanguageTree:invalidate()*
                     {self}
 
 LanguageTree:is_valid({self})                        *LanguageTree:is_valid()*
-                Determines whether this tree is valid. If the tree is invalid, `parse()` must be called to get the updated tree.
+                Determines whether this tree is valid. If the tree is invalid,
+                call `parse()` . This will return the updated tree.
 
                 Parameters: ~
                     {self}
@@ -679,7 +684,7 @@ LanguageTree:lang({self})                                *LanguageTree:lang()*
 
                                            *LanguageTree:language_for_range()*
 LanguageTree:language_for_range({self}, {range})
-                Gets the appropriate language that contains
+                Gets the appropriate language that contains {range}
 
                 Parameters: ~
                     {range}  A text range, see |LanguageTree:contains|
@@ -695,13 +700,22 @@ LanguageTree:parse({self})                              *LanguageTree:parse()*
                     {self}
 
 LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
-                Registers callbacks for the parser
+                Registers callbacks for the parser.
 
                 Parameters: ~
-                    {cbs}   An `nvim_buf_attach` -like table argument with the following keys : `on_bytes` : see `nvim_buf_attach` , but this will be called after the parsers callback. `on_changedtree` : a callback that will be called every time the
-                            tree has syntactical changes. it will only be
-                            passed one argument, that is a table of the ranges
-                            (as node ranges) that changed. `on_child_added` : emitted when a child is added to the tree. `on_child_removed` : emitted when a child is removed from the tree.
+                    {cbs}   table An |nvim_buf_attach()|-like table argument
+                            with the following keys :
+                            • `on_bytes` : see |nvim_buf_attach()|, but this will be
+                              called after the parsers callback.
+                            • `on_changedtree` : a callback that will be
+                              called every time the tree has syntactical
+                              changes. It will only be passed one argument,
+                              which is a table of the ranges (as node ranges)
+                              that changed.
+                            • `on_child_added` : emitted when a child is added
+                              to the tree.
+                            • `on_child_removed` : emitted when a child is
+                              removed from the tree.
                     {self}
 
 LanguageTree:remove_child({self}, {lang})        *LanguageTree:remove_child()*
