@@ -47,11 +47,7 @@ exit_suite() {
     ci_fold "end" ""
   fi
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
-  if test "$1" != "--continue" ; then
-    exit $FAILED
-  else
-    FAILED=0
-  fi
+  FAILED=0
 }
 
 fail() {
@@ -99,6 +95,6 @@ run_suite() {
 
   enter_suite "$suite_name"
   run_test "$command" "$suite_name"
-  exit_suite --continue
+  exit_suite
 }
 

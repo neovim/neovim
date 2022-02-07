@@ -142,7 +142,7 @@ check_runtime_files() {(
 install_nvim() {(
   if ! build_make install ; then
     fail 'install' E 'make install failed'
-    exit_suite --continue
+    exit_suite
   fi
 
   "${INSTALL_PREFIX}/bin/nvim" --version
