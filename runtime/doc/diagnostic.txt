@@ -74,7 +74,7 @@ Functions that take a severity as an optional parameter (e.g.
 
 2. A table with a "min" or "max" key (or both): >
 
-	vim.diagnostic.get(0, { severity = {min=vim.diagnostic.severity.WARN})
+	vim.diagnostic.get(0, { severity = {min=vim.diagnostic.severity.WARN} })
 
 The latter form allows users to specify a range of severities.
 

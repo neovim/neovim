@@ -1079,7 +1079,7 @@ WinLeave			Before leaving a window.  If the window to be
 				executes the BufLeave autocommands before the
 				WinLeave autocommands (but not for ":new").
 				Not used for ":qa" or ":q" when exiting Vim.
-				After WinClosed.
+				Before WinClosed.
 							*WinNew*
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
