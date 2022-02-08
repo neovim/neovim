@@ -656,6 +656,19 @@ func Test_buftype()
   close!
 endfunc
 
+" Test for the 'shellquote' option
+func Test_shellquote()
+  CheckUnix
+  set shellquote=#
+  set verbose=20
+  redir => v
+  silent! !echo Hello
+  redir END
+  set verbose&
+  set shellquote&
+  call assert_match(': "#echo Hello#"', v)
+endfunc
+
 " Test for setting option values using v:false and v:true
 func Test_opt_boolean()
   set number&

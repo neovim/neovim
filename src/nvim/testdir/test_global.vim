@@ -36,6 +36,36 @@ func Test_global_error()
   call assert_fails('g/\(/y', 'E476:')
 endfunc
 
+" Test for printing lines using :g with different search patterns
+func Test_global_print()
+  new
+  call setline(1, ['foo', 'bar', 'foo', 'foo'])
+  let @/ = 'foo'
+  let t = execute("g/")->trim()->split("\n")
+  call assert_equal(['foo', 'foo', 'foo'], t)
+
+  " Test for Vi compatible patterns
+  let @/ = 'bar'
+  let t = execute('g\/')->trim()->split("\n")
+  call assert_equal(['bar'], t)
+
+  normal gg
+  s/foo/foo/
+  let t = execute('g\&')->trim()->split("\n")
+  call assert_equal(['foo', 'foo', 'foo'], t)
+
+  let @/ = 'bar'
+  let t = execute('g?')->trim()->split("\n")
+  call assert_equal(['bar'], t)
+
+  " Test for the 'Pattern found in every line' message
+  let v:statusmsg = ''
+  v/foo\|bar/p
+  call assert_notequal('', v:statusmsg)
+
+  close!
+endfunc
+
 func Test_wrong_delimiter()
   call assert_fails('g x^bxd', 'E146:')
 endfunc

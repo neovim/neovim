@@ -169,9 +169,7 @@ endfunc
 " Test for ':w !<cmd>' to pipe lines from the current buffer to an external
 " command.
 func Test_write_pipe_to_cmd()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   new
   call setline(1, ['L1', 'L2', 'L3', 'L4'])
   2,3w !cat > Xfile
