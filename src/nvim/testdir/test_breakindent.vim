@@ -20,7 +20,7 @@ func s:screen_lines2(lnums, lnume, width) abort
   return ScreenLines([a:lnums, a:lnume], a:width)
 endfunc
 
-func! s:compare_lines(expect, actual)
+func s:compare_lines(expect, actual)
   call assert_equal(join(a:expect, "\n"), join(a:actual, "\n"))
 endfunc
 

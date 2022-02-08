@@ -526,7 +526,7 @@ DirChanged			After the |current-directory| was changed.
 					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
-				    scope: "global", "tab", "window"
+				    scope: "global", "tabpage", "window"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
