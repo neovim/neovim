@@ -4934,6 +4934,7 @@ static int fuzzy_match_recursive(const char_u *fuzpat, const char_u *str, uint32
 
   // Loop through fuzpat and str looking for a match
   bool first_match = true;
+  assert(*fuzpat != NUL && *str != NUL);  // Avoid bogus clang warning.
   while (*fuzpat != NUL && *str != NUL) {
     const int c1 = utf_ptr2char(fuzpat);
     const int c2 = utf_ptr2char(str);
