@@ -1201,10 +1201,10 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // Find out if the current line starts with a comment leader.
   // This may then be inserted in front of the new line.
   end_comment_pending = NUL;
-  if (flags & OPENLINE_DO_COM && dir == FORWARD) {
-    // Check for a line comment after code.
+  if (flags & OPENLINE_DO_COM) {
     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, true);
-    if (lead_len == 0 && do_cindent) {
+    if (lead_len == 0 && do_cindent && dir == FORWARD) {
+      // Check for a line comment after code.
       comment_start = check_linecomment(saved_line);
       if (comment_start != MAXCOL) {
         lead_len = get_leader_len(saved_line + comment_start,
