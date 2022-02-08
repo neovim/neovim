@@ -36,6 +36,8 @@ jobs:
   add-reviewer:
     runs-on: ubuntu-latest
     needs: ["triage", "type-scope"]
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/github-script@v5
         with:
