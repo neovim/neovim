@@ -32,3 +32,39 @@ jobs:
     - name: "Extract commit scope and add as label"
       continue-on-error: true
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')"
+
+  add-reviewer:
+    runs-on: ubuntu-latest
+    needs: ["triage", "type-scope"]
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const reviewers = []
+
+            const { data: { labels } } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            })
+            const label_names = labels.map(label => label.name)
+
+            if (label_names.includes('ci')) {
+              reviewers.push("jamessan")
+            }
+
+            if (label_names.includes('vim-patch')) {
+              reviewers.push("seandewar")
+            }
+
+            const index = reviewers.indexOf(context.actor);
+            if (index > -1) {
+              reviewers.splice(index, 1);
+            }
+
+            github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              reviewers: reviewers
+            });
