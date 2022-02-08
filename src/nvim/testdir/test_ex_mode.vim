@@ -29,12 +29,11 @@ endfunc
 
 " Test editing line in Ex mode (both Q and gQ)
 func Test_ex_mode()
-  throw 'skipped: TODO: '
+  throw 'Skipped: Nvim only supports Vim Ex mode'
   let encoding_save = &encoding
   set sw=2
 
-  " for e in ['utf8', 'latin1']
-  for e in ['utf8']
+  for e in ['utf8', 'latin1']
     exe 'set encoding=' . e
 
     call assert_equal(['bar', 'bar'],             Ex("foo bar\<C-u>bar"), e)
