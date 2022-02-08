@@ -531,6 +531,21 @@ func Test_format_align()
   call assert_equal("\t\t Vim", getline(1))
   q!
 
+  " align text with 'rightleft'
+  if has('rightleft')
+    new
+    call setline(1, 'Vim')
+    setlocal rightleft
+    left 20
+    setlocal norightleft
+    call assert_equal("\t\t Vim", getline(1))
+    setlocal rightleft
+    right
+    setlocal norightleft
+    call assert_equal("Vim", getline(1))
+    close!
+  endif
+
   set tw&
 endfunc
 

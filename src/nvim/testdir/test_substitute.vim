@@ -51,10 +51,12 @@ func Test_substitute_variants()
 	\ { 'cmd': ':s/t/r/cg', 'exp': 'Tesring srring', 'prompt': 'a' },
 	\ { 'cmd': ':s/t/r/ci', 'exp': 'resting string', 'prompt': 'y' },
 	\ { 'cmd': ':s/t/r/cI', 'exp': 'Tesring string', 'prompt': 'y' },
+	\ { 'cmd': ':s/t/r/c', 'exp': 'Testing string', 'prompt': 'n' },
 	\ { 'cmd': ':s/t/r/cn', 'exp': ln },
 	\ { 'cmd': ':s/t/r/cp', 'exp': 'Tesring string', 'prompt': 'y' },
 	\ { 'cmd': ':s/t/r/cl', 'exp': 'Tesring string', 'prompt': 'y' },
 	\ { 'cmd': ':s/t/r/gc', 'exp': 'Tesring srring', 'prompt': 'a' },
+	\ { 'cmd': ':s/i/I/gc', 'exp': 'TestIng string', 'prompt': 'l' },
 	\ { 'cmd': ':s/foo/bar/ge', 'exp': ln },
 	\ { 'cmd': ':s/t/r/g', 'exp': 'Tesring srring' },
 	\ { 'cmd': ':s/t/r/gi', 'exp': 'resring srring' },
@@ -86,6 +88,7 @@ func Test_substitute_variants()
 	\ { 'cmd': ':s//r/rp', 'exp': 'Testr string' },
 	\ { 'cmd': ':s//r/rl', 'exp': 'Testr string' },
 	\ { 'cmd': ':s//r/r', 'exp': 'Testr string' },
+	\ { 'cmd': ':s/i/I/gc', 'exp': 'Testing string', 'prompt': 'q' },
 	\]
 
   for var in variants
@@ -384,6 +387,10 @@ func Test_substitute_join()
   call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
   call assert_equal('\n', histget("search", -1))
 
+  call setline(1, ['foo', 'bar', 'baz', 'qux'])
+  call execute('1,2s/\n//')
+  call assert_equal(['foobarbaz', 'qux'], getline(1, '$'))
+
   bwipe!
 endfunc
 
@@ -397,6 +404,11 @@ func Test_substitute_count()
   \                 getline(1, '$'))
 
   call assert_fails('s/foo/bar/0', 'E939:')
+
+  call setline(1, ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo'])
+  2,4s/foo/bar/ 10
+  call assert_equal(['foo foo', 'foo foo', 'foo foo', 'bar foo', 'bar foo'],
+        \           getline(1, '$'))
 
   bwipe!
 endfunc
@@ -415,6 +427,10 @@ func Test_substitute_flag_n()
 
   " No substitution should have been done.
   call assert_equal(lines, getline(1, '$'))
+
+  %delete _
+  call setline(1, ['A', 'Bar', 'Baz'])
+  call assert_equal("\n1 match on 1 line", execute('s/\nB\@=//gn'))
 
   bwipe!
 endfunc
@@ -747,6 +763,45 @@ func Test_sub_beyond_end()
   s///e
   call assert_equal('#', getline(1))
   bwipe!
+endfunc
+
+" Test for repeating last substitution using :~ and :&r
+func Test_repeat_last_sub()
+  new
+  call setline(1, ['blue green yellow orange white'])
+  s/blue/red/
+  let @/ = 'yellow'
+  ~
+  let @/ = 'white'
+  :&r
+  let @/ = 'green'
+  s//gray
+  call assert_equal('red gray red orange red', getline(1))
+  close!
+endfunc
+
+" Test for Vi compatible substitution:
+"     \/{string}/, \?{string}? and \&{string}&
+func Test_sub_vi_compatibility()
+  new
+  call setline(1, ['blue green yellow orange blue'])
+  let @/ = 'orange'
+  s\/white/
+  let @/ = 'blue'
+  s\?amber?
+  let @/ = 'white'
+  s\&green&
+  call assert_equal('amber green yellow white green', getline(1))
+  close!
+endfunc
+
+" Test for substitute with the new text longer than the original text
+func Test_sub_expand_text()
+  new
+  call setline(1, 'abcabcabcabcabcabcabcabc')
+  s/b/\=repeat('B', 10)/g
+  call assert_equal(repeat('aBBBBBBBBBBc', 8), getline(1))
+  close!
 endfunc
 
 func Test_submatch_list_concatenate()

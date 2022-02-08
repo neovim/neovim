@@ -23,6 +23,11 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*bar\*')
   helpclose
 
+  help "
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*quote\*')
+  helpclose
+
   help "*
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*quotestar\*')
@@ -86,11 +91,40 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*i_^_CTRL-D\*')
   helpclose
 
+  help i^x^y
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*i_CTRL-X_CTRL-Y\*')
+  helpclose
+
+  exe "help i\<C-\>\<C-G>"
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*i_CTRL-\\_CTRL-G\*')
+  helpclose
+
   exec "help \<C-V>"
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*CTRL-V\*')
   helpclose
 
+  help /\|
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*/\\bar\*')
+  helpclose
+
+  help CTRL-\_CTRL-N
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*CTRL-\\_CTRL-N\*')
+  helpclose
+
+  help `:pwd`,
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:pwd\*')
+  helpclose
+
+  help `:ls`.
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*:ls\*')
+  helpclose
 
   exec "help! ('textwidth'"
   call assert_equal("help", &filetype)
@@ -121,6 +155,15 @@ func Test_help_tagjump()
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*{address}\*')
   helpclose
+
+  " Use special patterns in the help tag
+  for h in ['/\w', '/\%^', '/\%(', '/\zs', '/\@<=', '/\_$', '[++opt]', '/\{']
+    exec "help! " . h
+    call assert_equal("help", &filetype)
+    let pat = '\*' . escape(h, '\$[') . '\*'
+    call assert_true(getline('.') =~ pat, pat)
+    helpclose
+  endfor
 
   exusage
   call assert_equal("help", &filetype)
