@@ -33,8 +33,8 @@ describe('cmdline', function()
       ~                             |
       ~                             |
       ~                             |
-      6                             |
-      7                             |
+                                    |
+                                    |
                                     |
     ]])
   end)

@@ -5412,11 +5412,17 @@ void win_setheight_win(int height, win_T *win)
     // line, clear it.
     if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
       grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+      if (msg_grid.chars) {
+        clear_cmdline = true;
+      }
     }
     cmdline_row = row;
+    p_ch = MAX(Rows - cmdline_row, 1);
+    curtab->tp_ch_used = p_ch;
     msg_row = row;
     msg_col = 0;
     redraw_all_later(NOT_VALID);
+    showmode();
   }
 }
 
@@ -5452,7 +5458,9 @@ static void frame_setheight(frame_T *curfrp, int height)
   if (curfrp->fr_parent == NULL) {
     // topframe: can only change the command line
     if (height > ROWS_AVAIL) {
-      height = ROWS_AVAIL;
+      // If height is greater than the available space, try to create space for the frame by
+      // reducing 'cmdheight' if possible, while making sure `cmdheight` doesn't go below 1.
+      height = MIN(ROWS_AVAIL + (p_ch - 1), height);
     }
     if (height > 0) {
       frame_new_height(curfrp, height, false, false);
