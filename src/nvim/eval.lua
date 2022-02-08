@@ -282,6 +282,7 @@ return {
     range={args={1, 3}, base=1},
     readdir={args={1, 2}, base=1},
     readfile={args={1, 3}, base=1},
+    reduce={args={2, 3}, base=1},
     reg_executing={},
     reg_recording={},
     reg_recorded={},

@@ -620,6 +620,49 @@ func Test_reverse_sort_uniq()
   call assert_fails('call reverse("")', 'E899:')
 endfunc
 
+" reduce a list or a blob
+func Test_reduce()
+  call assert_equal(1, reduce([], { acc, val -> acc + val }, 1))
+  call assert_equal(10, reduce([1, 3, 5], { acc, val -> acc + val }, 1))
+  call assert_equal(2 * (2 * ((2 * 1) + 2) + 3) + 4, reduce([2, 3, 4], { acc, val -> 2 * acc + val }, 1))
+  call assert_equal('a x y z', ['x', 'y', 'z']->reduce({ acc, val -> acc .. ' ' .. val}, 'a'))
+  call assert_equal(#{ x: 1, y: 1, z: 1 }, ['x', 'y', 'z']->reduce({ acc, val -> extend(acc, { val: 1 }) }, {}))
+  call assert_equal([0, 1, 2, 3], reduce([1, 2, 3], function('add'), [0]))
+
+  let l = ['x', 'y', 'z']
+  call assert_equal(42, reduce(l, function('get'), #{ x: #{ y: #{ z: 42 } } }))
+  call assert_equal(['x', 'y', 'z'], l)
+
+  call assert_equal(1, reduce([1], { acc, val -> acc + val }))
+  call assert_equal('x y z', reduce(['x', 'y', 'z'], { acc, val -> acc .. ' ' .. val }))
+  call assert_equal(120, range(1, 5)->reduce({ acc, val -> acc * val }))
+  call assert_fails("call reduce([], { acc, val -> acc + val })", 'E998: Reduce of an empty List with no initial value')
+
+  call assert_equal(1, reduce(0z, { acc, val -> acc + val }, 1))
+  call assert_equal(1 + 0xaf + 0xbf + 0xcf, reduce(0zAFBFCF, { acc, val -> acc + val }, 1))
+  call assert_equal(2 * (2 * 1 + 0xaf) + 0xbf, 0zAFBF->reduce({ acc, val -> 2 * acc + val }, 1))
+
+  call assert_equal(0xff, reduce(0zff, { acc, val -> acc + val }))
+  call assert_equal(2 * (2 * 0xaf + 0xbf) + 0xcf, reduce(0zAFBFCF, { acc, val -> 2 * acc + val }))
+  call assert_fails("call reduce(0z, { acc, val -> acc + val })", 'E998: Reduce of an empty Blob with no initial value')
+
+  call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E897:')
+  call assert_fails("call reduce(0, { acc, val -> acc + val }, 1)", 'E897:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E897:')
+
+  let g:lut = [1, 2, 3, 4]
+  func EvilRemove()
+    call remove(g:lut, 1)
+    return 1
+  endfunc
+  call assert_fails("call reduce(g:lut, { acc, val -> EvilRemove() }, 1)", 'E742:')
+  unlet g:lut
+  delfunc EvilRemove
+
+  call assert_equal(42, reduce(v:_null_list, function('add'), 42))
+  call assert_equal(42, reduce(v:_null_blob, function('add'), 42))
+endfunc
+
 " splitting a string to a List
 func Test_str_split()
   call assert_equal(['aa', 'bb'], split('  aa  bb '))
