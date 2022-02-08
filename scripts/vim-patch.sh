@@ -576,13 +576,13 @@ show_vimpatches() {
     runtime_commits[$commit]=1
   done
 
-  while read -r vim_commit; do
+  list_missing_vimpatches 1 "$@" | while read -r vim_commit; do
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
       printf '  • %s\n' "${vim_commit}"
     fi
-  done <<< "$(list_missing_vimpatches 1 "$@")"
+  done
 
   cat << EOF
 
