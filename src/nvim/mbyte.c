@@ -1821,12 +1821,10 @@ void mb_copy_char(const char_u **const fp, char_u **const tp)
   *fp += l;
 }
 
-/*
- * Return the offset from "p" to the first byte of a character.  When "p" is
- * at the start of a character 0 is returned, otherwise the offset to the next
- * character.  Can start anywhere in a stream of bytes.
- */
-int mb_off_next(char_u *base, char_u *p)
+/// Return the offset from "p" to the first byte of a character.  When "p" is
+/// at the start of a character 0 is returned, otherwise the offset to the next
+/// character.  Can start anywhere in a stream of bytes.
+int mb_off_next(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -1854,7 +1852,7 @@ int mb_off_next(char_u *base, char_u *p)
 /// Return the offset from "p" to the last byte of the character it points
 /// into.  Can start anywhere in a stream of bytes.
 /// Composing characters are not included.
-int mb_tail_off(char_u *base, char_u *p)
+int mb_tail_off(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -1882,12 +1880,13 @@ int mb_tail_off(char_u *base, char_u *p)
 
 /// Return the offset from "p" to the first byte of the character it points
 /// into. Can start anywhere in a stream of bytes.
+/// Unlike utf_head_off() this doesn't include composing characters and returns a negative value.
 ///
 /// @param[in] base  Pointer to start of string
 /// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
 //
 /// @return 0 if invalid sequence, else offset to previous codepoint
-int mb_head_off(char_u *base, char_u *p)
+int mb_head_off(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -2037,13 +2036,11 @@ char_u *mb_prevptr(char_u *line, char_u *p)
   return p;
 }
 
-/*
- * Return the character length of "str".  Each multi-byte character (with
- * following composing characters) counts as one.
- */
-int mb_charlen(char_u *str)
+/// Return the character length of "str".  Each multi-byte character (with
+/// following composing characters) counts as one.
+int mb_charlen(const char_u *str)
 {
-  char_u *p = str;
+  const char_u *p = str;
   int count;
 
   if (p == NULL) {
@@ -2057,12 +2054,10 @@ int mb_charlen(char_u *str)
   return count;
 }
 
-/*
- * Like mb_charlen() but for a string with specified length.
- */
-int mb_charlen_len(char_u *str, int len)
+/// Like mb_charlen() but for a string with specified length.
+int mb_charlen_len(const char_u *str, int len)
 {
-  char_u *p = str;
+  const char_u *p = str;
   int count;
 
   for (count = 0; *p != NUL && p < str + len; count++) {
@@ -2201,11 +2196,9 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
   return r;
 }
 
-/*
- * Search for an encoding alias of "name".
- * Returns -1 when not found.
- */
-static int enc_alias_search(char_u *name)
+/// Search for an encoding alias of "name".
+/// Returns -1 when not found.
+static int enc_alias_search(const char_u *name)
 {
   int i;
 

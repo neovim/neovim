@@ -566,7 +566,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       if (b_insert) {
         off = utf_head_off(oldp, oldp + offset + spaces);
       } else {
-        off = (*mb_off_next)(oldp, oldp + offset);
+        off = mb_off_next(oldp, oldp + offset);
         offset += off;
       }
       spaces -= off;
