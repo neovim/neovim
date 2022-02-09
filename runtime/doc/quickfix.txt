@@ -1339,12 +1339,17 @@ Basic items
 	%f		file name (finds a string)
 	%o		module name (finds a string)
 	%l		line number (finds a number)
+	%e		end line number (finds a number)
 	%c		column number (finds a number representing character
 			column of the error, byte index, a <tab> is 1
 			character column)
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))
+	%k		end column number (finds a number representing
+			the character column of the error, byte index, or a
+			number representing screen end column of the error if
+			it's used with %v)
 	%t		error type (finds a single character):
 			    e - error message
 			    w - warning message

@@ -131,7 +131,7 @@ struct qf_info_S {
 static qf_info_T ql_info;         // global quickfix list
 static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
-#define FMT_PATTERNS 11           // maximum number of % recognized
+#define FMT_PATTERNS 13           // maximum number of % recognized
 
 // Structure used to hold the info of one part of 'errorformat'
 typedef struct efm_S efm_T;
@@ -332,22 +332,27 @@ int qf_init(win_T *wp, const char_u *restrict efile, char_u *restrict errorforma
 // Maximum number of bytes allowed per line while reading an errorfile.
 static const size_t LINE_MAXLEN = 4096;
 
+/// Patterns used.  Keep in sync with qf_parse_fmt[].
 static struct fmtpattern {
   char_u convchar;
   char *pattern;
 } fmt_pat[FMT_PATTERNS] =
 {
-  { 'f', ".\\+" },  // only used when at end
-  { 'n', "\\d\\+" },
-  { 'l', "\\d\\+" },
-  { 'c', "\\d\\+" },
-  { 't', "." },
-  { 'm', ".\\+" },
-  { 'r', ".*" },
-  { 'p', "[- 	.]*"},  // NOLINT(whitespace/tab)
-  { 'v', "\\d\\+" },
-  { 's', ".\\+" },
-  { 'o', ".\\+" }
+  { 'f', ".\\+" },      // only used when at end
+  { 'n', "\\d\\+" },    // 1
+  { 'l', "\\d\\+" },    // 2
+  { 'e', "\\d\\+" },    // 3
+  { 'c', "\\d\\+" },    // 4
+  { 'k', "\\d\\+" },    // 5
+  { 't', "." },         // 6
+#define FMT_PATTERN_M 7
+  { 'm', ".\\+" },      // 7
+#define FMT_PATTERN_R 8
+  { 'r', ".*" },        // 8
+  { 'p', "[- \t.]*" },  // 9
+  { 'v', "\\d\\+" },    // 10
+  { 's', ".\\+" },      // 11
+  { 'o', ".\\+" }       // 12
 };
 
 /// Convert an errorformat pattern to a regular expression pattern.
@@ -363,9 +368,9 @@ static char_u *efmpat_to_regpat(const char_u *efmpat, char_u *regpat, efm_T *efm
     semsg(_("E372: Too many %%%c in format string"), *efmpat);
     return NULL;
   }
-  if ((idx && idx < 6
+  if ((idx && idx < FMT_PATTERN_R
        && vim_strchr((char_u *)"DXOPQ", efminfo->prefix) != NULL)
-      || (idx == 6
+      || (idx == FMT_PATTERN_R
           && vim_strchr((char_u *)"OPQ", efminfo->prefix) == NULL)) {
     semsg(_("E373: Unexpected %%%c in format string"), *efmpat);
     return NULL;
@@ -1288,7 +1293,7 @@ static int qf_parse_fmt_n(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-/// Parse the match for line number (%l') pattern in regmatch.
+/// Parse the match for line number ('%l') pattern in regmatch.
 /// Return the matched value in "fields->lnum".
 static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
 {
@@ -1296,6 +1301,17 @@ static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
     return QF_FAIL;
   }
   fields->lnum = atol((char *)rmp->startp[midx]);
+  return QF_OK;
+}
+
+/// Parse the match for end line number ('%e') pattern in regmatch.
+/// Return the matched value in "fields->end_lnum".
+static int qf_parse_fmt_e(regmatch_T *rmp, int midx, qffields_T *fields)
+{
+  if (rmp->startp[midx] == NULL) {
+    return QF_FAIL;
+  }
+  fields->end_lnum = atol((char *)rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1307,6 +1323,17 @@ static int qf_parse_fmt_c(regmatch_T *rmp, int midx, qffields_T *fields)
     return QF_FAIL;
   }
   fields->col = (int)atol((char *)rmp->startp[midx]);
+  return QF_OK;
+}
+
+/// Parse the match for end line number ('%e') pattern in regmatch.
+/// Return the matched value in "fields->end_lnum".
+static int qf_parse_fmt_k(regmatch_T *rmp, int midx, qffields_T *fields)
+{
+  if (rmp->startp[midx] == NULL) {
+    return QF_FAIL;
+  }
+  fields->end_col = (int)atol((char *)rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1442,14 +1469,17 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
 /// 'errorformat' format pattern parser functions.
 /// The '%f' and '%r' formats are parsed differently from other formats.
 /// See qf_parse_match() for details.
+/// Keep in sync with fmt_pat[].
 static int (*qf_parse_fmt[FMT_PATTERNS])(regmatch_T *, int, qffields_T *) = {
-  NULL,
+  NULL,  // %f
   qf_parse_fmt_n,
   qf_parse_fmt_l,
+  qf_parse_fmt_e,
   qf_parse_fmt_c,
+  qf_parse_fmt_k,
   qf_parse_fmt_t,
   qf_parse_fmt_m,
-  NULL,
+  NULL,  // %r
   qf_parse_fmt_p,
   qf_parse_fmt_v,
   qf_parse_fmt_s,
@@ -1485,13 +1515,13 @@ static int qf_parse_match(char_u *linebuf, size_t linelen, efm_T *fmt_ptr, regma
     midx = (int)fmt_ptr->addr[i];
     if (i == 0 && midx > 0) {  // %f
       status = qf_parse_fmt_f(regmatch, midx, fields, idx);
-    } else if (i == 5) {
+    } else if (i == FMT_PATTERN_M) {
       if (fmt_ptr->flags == '+' && !qf_multiscan) {  // %+
         qf_parse_fmt_plus(linebuf, linelen, fields);
       } else if (midx > 0) {  // %m
         status = qf_parse_fmt_m(regmatch, midx, fields);
       }
-    } else if (i == 6 && midx > 0) {  // %r
+    } else if (i == FMT_PATTERN_R && midx > 0) {  // %r
       status = qf_parse_fmt_r(regmatch, midx, tail);
     } else if (midx > 0) {  // others
       status = (qf_parse_fmt[i])(regmatch, midx, fields);
@@ -1636,9 +1666,15 @@ static int qf_parse_multiline_pfx(int idx, qf_list_T *qfl, qffields_T *fields)
     if (!qfprev->qf_lnum) {
       qfprev->qf_lnum = fields->lnum;
     }
+    if (!qfprev->qf_end_lnum) {
+      qfprev->qf_end_lnum = fields->end_lnum;
+    }
     if (!qfprev->qf_col) {
       qfprev->qf_col = fields->col;
       qfprev->qf_viscol = fields->use_viscol;
+    }
+    if (!qfprev->qf_end_col) {
+      qfprev->qf_end_col = fields->end_col;
     }
     if (!qfprev->qf_fnum) {
       qfprev->qf_fnum = qf_get_fnum(qfl, qfl->qf_directory,

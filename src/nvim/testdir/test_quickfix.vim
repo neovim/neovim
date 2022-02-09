@@ -1384,6 +1384,29 @@ func Test_efm_error_type()
   let &efm = save_efm
 endfunc
 
+" Test for end_lnum ('%e') and end_col ('%k') fields in 'efm'
+func Test_efm_end_lnum_col()
+  let save_efm = &efm
+
+  " single line
+  set efm=%f:%l-%e:%c-%k:%t:%m
+  cexpr ["Xfile1:10-20:1-2:E:msg1", "Xfile1:20-30:2-3:W:msg2",]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:10-20 col 1-2 error: msg1',
+        \ ' 2 Xfile1:20-30 col 2-3 warning: msg2'], output)
+
+  " multiple lines
+  set efm=%A%n)%m,%Z%f:%l-%e:%c-%k
+  cexpr ["1)msg1", "Xfile1:14-24:1-2",
+        \ "2)msg2", "Xfile1:24-34:3-4"]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:14-24 col 1-2 error   1: msg1',
+        \ ' 2 Xfile1:24-34 col 3-4 error   2: msg2'], output)
+  let &efm = save_efm
+endfunc
+
 func XquickfixChangedByAutocmd(cchar)
   call s:setup_commands(a:cchar)
   if a:cchar == 'c'
