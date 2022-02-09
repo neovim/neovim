@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/globals.h"
 #include "nvim/vim.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -2190,9 +2191,11 @@ void ex_scriptnames(exarg_T *eap)
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
       vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
-      msg_putchar('\n');
-      msg_outtrans(IObuff);
-      line_breakcheck();
+      if (!message_filtered(IObuff)) {
+        msg_putchar('\n');
+        msg_outtrans(IObuff);
+        line_breakcheck();
+      }
     }
   }
 }
