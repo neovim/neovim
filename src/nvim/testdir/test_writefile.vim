@@ -503,8 +503,8 @@ func Test_read_write_bin()
   call assert_equal(0z6E6F656F6C, readfile('XNoEolSetEol', 'B'))
 
   " when file is read 'eol' is off
-  set ff=unix nofixeol
-  e! XNoEolSetEol
+  set nofixeol
+  e! ++ff=unix XNoEolSetEol
   call assert_equal(0, &eol)
 
   " writing with 'eol' set adds the newline
