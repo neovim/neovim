@@ -3318,7 +3318,7 @@ restore_backup:
       if (end == 0
           || (lnum == end
               && (write_bin || !buf->b_p_fixeol)
-              && (lnum == buf->b_no_eol_lnum
+              && ((write_bin && lnum == buf->b_no_eol_lnum)
                   || (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol)))) {
         lnum++;                           // written the line, count it
         no_eol = true;

@@ -497,6 +497,24 @@ func Test_readwrite_file_with_bom()
   %bw!
 endfunc
 
+func Test_read_write_bin()
+  " write file missing EOL
+  call writefile(['noeol'], "XNoEolSetEol", 'bS')
+  call assert_equal(0z6E6F656F6C, readfile('XNoEolSetEol', 'B'))
+
+  " when file is read 'eol' is off
+  set ff=unix nofixeol
+  e XNoEolSetEol
+  call assert_equal(0, &eol)
+
+  " writing with 'eol' set adds the newline
+  setlocal eol
+  w
+  call assert_equal(0z6E6F656F6C0A, readfile('XNoEolSetEol', 'B'))
+
+  call delete('XNoEolSetEol')
+endfunc
+
 " Check that buffer is written before triggering QuitPre
 func Test_wq_quitpre_autocommand()
   edit Xsomefile
