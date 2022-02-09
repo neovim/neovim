@@ -1184,8 +1184,66 @@ func Test_visual_undo_deletes_last_line()
   exe "normal ggvjfxO"
   undo
   normal gNU
+
   bwipe!
 endfunc
 
+func Test_visual_paste()
+  new
+
+  " v_p overwrites unnamed register.
+  call setline(1, ['xxxx'])
+  call setreg('"', 'foo')
+  call setreg('-', 'bar')
+  normal gg0vp
+  call assert_equal('x', @")
+  call assert_equal('x', @-)
+  call assert_equal('fooxxx', getline(1))
+  normal $vp
+  call assert_equal('x', @")
+  call assert_equal('x', @-)
+  call assert_equal('fooxxx', getline(1))
+  " Test with a different register as unnamed register.
+  call setline(2, ['baz'])
+  normal 2gg0"rD
+  call assert_equal('baz', @")
+  normal gg0vp
+  call assert_equal('f', @")
+  call assert_equal('f', @-)
+  call assert_equal('bazooxxx', getline(1))
+  normal $vp
+  call assert_equal('x', @")
+  call assert_equal('x', @-)
+  call assert_equal('bazooxxf', getline(1))
+
+  if has('clipboard')
+    " v_P does not overwrite unnamed register.
+    call setline(1, ['xxxx'])
+    call setreg('"', 'foo')
+    call setreg('-', 'bar')
+    normal gg0vP
+    call assert_equal('foo', @")
+    call assert_equal('x', @-)
+    call assert_equal('fooxxx', getline(1))
+    normal $vP
+    call assert_equal('foo', @")
+    call assert_equal('x', @-)
+    call assert_equal('fooxxfoo', getline(1))
+    " Test with a different register as unnamed register.
+    call setline(2, ['baz'])
+    normal 2gg0"rD
+    call assert_equal('baz', @")
+    normal gg0vP
+    call assert_equal('baz', @")
+    call assert_equal('f', @-)
+    call assert_equal('bazooxxfoo', getline(1))
+    normal $vP
+    call assert_equal('baz', @")
+    call assert_equal('o', @-)
+    call assert_equal('bazooxxfobaz', getline(1))
+  endif
+
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1118,8 +1118,11 @@ register.  With blockwise selection it also depends on the size of the block
 and whether the corners are on an existing character.  (Implementation detail:
 it actually works by first putting the register after the selection and then
 deleting the selection.)
-The previously selected text is put in the unnamed register.  If you want to
-put the same text into a Visual selection several times you need to use
+With 'p' the previously selected text is put in the unnamed register.  This is
+useful if you want to put that text somewhere else.  But you cannot repeat the
+same change.
+With 'P' the unnamed register is not changed, you can repeat the same change.
+But the deleted text cannot be used.  If you do need it you can use 'p' with
 another register.  E.g., yank the text to copy, Visually select the text to
 replace and use "0p .  You can repeat this as many times as you like, and the
 unnamed register will be changed each time.
