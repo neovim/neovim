@@ -785,7 +785,8 @@ describe('API: buffer events:', function()
 
   local function lines_subset(first, second)
     for i = 1,#first do
-      if first[i] ~= second[i] then
+      -- need to ignore trailing spaces
+      if first[i]:gsub(' +$', '') ~= second[i]:gsub(' +$', '') then
         return false
       end
     end

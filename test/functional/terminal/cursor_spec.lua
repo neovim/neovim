@@ -5,6 +5,7 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, command = helpers.nvim_dir, helpers.command
 local nvim_prog = helpers.nvim_prog
 local eq, eval = helpers.eq, helpers.eval
+local matches = helpers.matches
 local feed_command = helpers.feed_command
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
@@ -177,7 +178,6 @@ describe('cursor with customized highlighting', function()
 end)
 
 describe('buffer cursor position is correct in terminal without number column', function()
-  if helpers.pending_win32(pending) then return end
   local screen
 
   local function setup_ex_register(str)
@@ -525,10 +525,36 @@ describe('buffer cursor position is correct in terminal without number column', 
       eq({6, 1}, eval('nvim_win_get_cursor(0)'))
     end)
   end)
+
+  it('at the end of a line with trailing spaces #16234', function()
+    setup_ex_register('aaaaaaaa    ')
+    feed('<C-R>r')
+    screen:expect([[
+                                                                            |
+                                                                            |
+                                                                            |
+                                                                            |
+      Entering Ex mode.  Type "visual" to go to Normal mode.                |
+      :aaaaaaaa    {1: }                                                        |
+      {3:-- TERMINAL --}                                                        |
+    ]])
+    matches('^:aaaaaaaa    ', eval('nvim_get_current_line()'))
+    eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+                                                                            |
+                                                                            |
+                                                                            |
+                                                                            |
+      Entering Ex mode.  Type "visual" to go to Normal mode.                |
+      :aaaaaaaa   ^ {2: }                                                        |
+                                                                            |
+    ]])
+    eq({6, 12}, eval('nvim_win_get_cursor(0)'))
+  end)
 end)
 
 describe('buffer cursor position is correct in terminal with number column', function()
-  if helpers.pending_win32(pending) then return end
   local screen
 
   local function setup_ex_register(str)
@@ -878,5 +904,32 @@ describe('buffer cursor position is correct in terminal with number column', fun
       ]])
       eq({6, 1}, eval('nvim_win_get_cursor(0)'))
     end)
+  end)
+
+  it('at the end of a line with trailing spaces #16234', function()
+    setup_ex_register('aaaaaaaa    ')
+    feed('<C-R>r')
+    screen:expect([[
+      {7:  1 }                                                                  |
+      {7:  2 }                                                                  |
+      {7:  3 }                                                                  |
+      {7:  4 }                                                                  |
+      {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
+      {7:  6 }:aaaaaaaa    {1: }                                                    |
+      {3:-- TERMINAL --}                                                        |
+    ]])
+    matches('^:aaaaaaaa    ', eval('nvim_get_current_line()'))
+    eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {7:  1 }                                                                  |
+      {7:  2 }                                                                  |
+      {7:  3 }                                                                  |
+      {7:  4 }                                                                  |
+      {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
+      {7:  6 }:aaaaaaaa   ^ {2: }                                                    |
+                                                                            |
+    ]])
+    eq({6, 12}, eval('nvim_win_get_cursor(0)'))
   end)
 end)

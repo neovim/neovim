@@ -1374,26 +1374,21 @@ static void fetch_row(Terminal *term, int row, int end_col)
   while (col < end_col) {
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
-    int cell_len = 0;
     if (cell.chars[0]) {
+      int cell_len = 0;
       for (int i = 0; cell.chars[i]; i++) {
         cell_len += utf_char2bytes((int)cell.chars[i], ptr + cell_len);
       }
-    } else {
-      *ptr = ' ';
-      cell_len = 1;
-    }
-    char c = *ptr;
-    ptr += cell_len;
-    if (c != ' ') {
-      // only increase the line length if the last character is not whitespace
+      ptr += cell_len;
       line_len = (size_t)(ptr - term->textbuf);
+    } else {
+      *ptr++ = ' ';
     }
     col += cell.width;
   }
 
-  // trim trailing whitespace
-  term->textbuf[line_len] = 0;
+  // end of line
+  term->textbuf[line_len] = NUL;
 }
 
 static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
