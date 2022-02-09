@@ -172,6 +172,11 @@ void terminal_teardown(void)
   pmap_init(ptr_t, &invalidated_terminals);
 }
 
+static void term_output_callback(const char *s, size_t len, void *user_data)
+{
+  terminal_send((Terminal *)user_data, (char *)s, len);
+}
+
 // public API {{{
 
 Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
@@ -195,6 +200,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(rv->vts, 1);
+  vterm_output_set_callback(rv->vt, term_output_callback, rv);
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
   rv->invalid_start = 0;
@@ -636,7 +642,6 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
     return;
   }
   vterm_keyboard_start_paste(curbuf->terminal->vt);
-  terminal_flush_output(curbuf->terminal);
   size_t buff_len = STRLEN(y_array[0]);
   char_u *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {  // -V756
@@ -667,14 +672,6 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
   }
   xfree(buff);
   vterm_keyboard_end_paste(curbuf->terminal->vt);
-  terminal_flush_output(curbuf->terminal);
-}
-
-void terminal_flush_output(Terminal *term)
-{
-  size_t len = vterm_output_read(term->vt, term->textbuf,
-                                 sizeof(term->textbuf));
-  terminal_send(term, term->textbuf, len);
 }
 
 void terminal_send_key(Terminal *term, int c)
@@ -693,8 +690,6 @@ void terminal_send_key(Terminal *term, int c)
   } else {
     vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
   }
-
-  terminal_flush_output(term);
 }
 
 void terminal_receive(Terminal *term, char *data, size_t len)
@@ -1265,9 +1260,6 @@ static bool send_mouse_event(Terminal *term, int c)
     }
 
     mouse_action(term, button, row, col - offset, pressed, 0);
-    size_t len = vterm_output_read(term->vt, term->textbuf,
-                                   sizeof(term->textbuf));
-    terminal_send(term, term->textbuf, len);
     return false;
   }
 

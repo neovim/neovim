@@ -613,7 +613,6 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, size_
   } else {
     if (chan->term) {
       terminal_receive(chan->term, ptr, count);
-      terminal_flush_output(chan->term);
     }
 
     rbuffer_consumed(buf, count);
