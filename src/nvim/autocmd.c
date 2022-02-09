@@ -285,7 +285,7 @@ void aubuflocal_remove(buf_T *buf)
 }
 
 // Add an autocmd group name.
-// Return its ID.  Returns AUGROUP_ERROR (< 0) for error.
+// Return its ID.
 static int au_new_group(char_u *name)
 {
   int i = au_find_group(name);
@@ -379,10 +379,7 @@ void do_augroup(char_u *arg, int del_group)
   } else if (STRICMP(arg, "end") == 0) {  // ":aug end": back to group 0
     current_augroup = AUGROUP_DEFAULT;
   } else if (*arg) {  // ":aug xxx": switch to group xxx
-    int i = au_new_group(arg);
-    if (i != AUGROUP_ERROR) {
-      current_augroup = i;
-    }
+    current_augroup = au_new_group(arg);
   } else {  // ":aug": list the group names
     msg_start();
     for (int i = 0; i < augroups.ga_len; i++) {
