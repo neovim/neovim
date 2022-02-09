@@ -51,12 +51,64 @@ jobs:
             })
             const label_names = labels.map(label => label.name)
 
+            if (label_names.includes('api')) {
+              reviewers.push("bfredl")
+              reviewers.push("gpanders")
+              reviewers.push("muniter")
+            }
+
             if (label_names.includes('ci')) {
               reviewers.push("jamessan")
             }
 
+            if (label_names.includes('diagnostic')) {
+              reviewers.push("gpanders")
+            }
+
+            if (label_names.includes('distribution')) {
+              reviewers.push("jamessan")
+            }
+
+            if (label_names.includes('documentation')) {
+              reviewers.push("clason")
+            }
+
+            if (label_names.includes('extmarks')) {
+              reviewers.push("bfredl")
+            }
+
+            if (label_names.includes('filetype')) {
+              reviewers.push("clason")
+              reviewers.push("gpanders")
+            }
+
+            if (label_names.includes('gui')) {
+              reviewers.push("glacambre")
+              reviewers.push("smolck")
+            }
+
+            if (label_names.includes('lsp')) {
+              reviewers.push("mfussenegger")
+              reviewers.push("mjlbach")
+            }
+
+            if (label_names.includes('treesitter')) {
+              reviewers.push("bfredl")
+              reviewers.push("vigoux")
+            }
+
+            if (label_names.includes('typo')) {
+              reviewers.push("dundargoc")
+            }
+
+            if (label_names.includes('ui')) {
+              reviewers.push("bfredl")
+            }
+
             if (label_names.includes('vim-patch')) {
+              reviewers.push("janlazo")
               reviewers.push("seandewar")
+              reviewers.push("zeertzjq")
             }
 
             const index = reviewers.indexOf(context.actor);
