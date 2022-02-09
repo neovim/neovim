@@ -4848,6 +4848,7 @@ static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
                                      const uint32_t *const matches, const int numMatches)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
+  assert(numMatches > 0);  // suppress clang "result of operation is garbage"
   // Initialize score
   int score = 100;
 
