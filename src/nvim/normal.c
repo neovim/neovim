@@ -7509,9 +7509,9 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // overwrites if the old contents is being put.
       was_visual = true;
       regname = cap->oap->regname;
+      bool save_unnamed = cap->cmdchar == 'P';
       // '+' and '*' could be the same selection
-      bool clipoverwrite = (regname == '+' || regname == '*')
-                           && (cb_flags & CB_UNNAMEDMASK);
+      bool clipoverwrite = (regname == '+' || regname == '*') && (cb_flags & CB_UNNAMEDMASK);
       if (regname == 0 || regname == '"' || clipoverwrite
           || ascii_isdigit(regname) || regname == '-') {
         // The delete might overwrite the register we want to put, save it first
@@ -7524,6 +7524,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
         // Now delete the selected text. Avoid messages here.
+        yankreg_T *old_y_previous;
+        if (save_unnamed) {
+          old_y_previous = get_y_previous();
+        }
         cap->cmdchar = 'd';
         cap->nchar = NUL;
         cap->oap->regname = NUL;
@@ -7532,6 +7536,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
         do_pending_operator(cap, 0, false);
         empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
         msg_silent--;
+
+        if (save_unnamed) {
+          set_y_previous(old_y_previous);
+        }
 
         // delete PUT_LINE_BACKWARD;
         cap->oap->regname = regname;

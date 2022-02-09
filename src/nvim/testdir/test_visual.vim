@@ -1184,8 +1184,32 @@ func Test_visual_undo_deletes_last_line()
   exe "normal ggvjfxO"
   undo
   normal gNU
+
   bwipe!
 endfunc
 
+func Test_visual_paste()
+  new
+
+  " v_p overwrites unnamed register.
+  call setline(1, ['xxxx'])
+  call setreg('"', 'foo')
+  call setreg('-', 'bar')
+  normal 1Gvp
+  call assert_equal(@", 'x')
+  call assert_equal(@-, 'x')
+
+  if has('clipboard')
+    " v_P does not overwrite unnamed register.
+    call setline(1, ['xxxx'])
+    call setreg('"', 'foo')
+    call setreg('-', 'bar')
+    normal 1GvP
+    call assert_equal(@", 'foo')
+    call assert_equal(@-, 'x')
+  endif
+
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
