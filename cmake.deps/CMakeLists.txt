@@ -288,6 +288,7 @@ endif()
 # resulting in MSVC build failure in CI.
 if (MSVC)
   set(ALL_DEPS ${THIRD_PARTY_DEPS})
+  add_compile_options(/MP)
 else()
   add_custom_target(clean-shared-libraries
     COMMAND ${CMAKE_COMMAND}
