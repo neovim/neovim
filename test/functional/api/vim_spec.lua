@@ -536,6 +536,31 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_set_current_dir', function()
+    local start_dir
+
+    before_each(function()
+      clear()
+      funcs.mkdir("Xtestdir")
+      start_dir = funcs.getcwd()
+    end)
+
+    after_each(function()
+      helpers.rmdir("Xtestdir")
+    end)
+
+    it('works', function()
+      meths.set_current_dir("Xtestdir")
+      eq(funcs.getcwd(), start_dir .. helpers.get_pathsep() .. "Xtestdir")
+    end)
+
+    it('sets previous directory', function()
+      meths.set_current_dir("Xtestdir")
+      meths.exec('cd -', false)
+      eq(funcs.getcwd(), start_dir)
+    end)
+  end)
+
   describe('nvim_exec_lua', function()
     it('works', function()
       meths.exec_lua('vim.api.nvim_set_var("test", 3)', {})
