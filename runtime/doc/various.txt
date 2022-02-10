@@ -388,6 +388,8 @@ g8			Print the hex values of the bytes used in the
 			   |:marks|      - filter by text in the current file,
 					   or file name for other files
 			   |:oldfiles|   - filter by file name
+			   |:registers|  - filter by register contents
+					   (does not work multi-line)
 			   |:set|        - filter by option name
 
 			Only normal messages are filtered, error messages are

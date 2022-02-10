@@ -3732,7 +3732,7 @@ void ex_display(exarg_T *eap)
   int name;
   char_u *arg = eap->arg;
   int clen;
-  char_u type[2];
+  int type;
 
   if (arg != NULL && *arg == NUL) {
     arg = NULL;
@@ -3745,11 +3745,11 @@ void ex_display(exarg_T *eap)
     name = get_register_name(i);
     switch (get_reg_type(name, NULL)) {
     case kMTLineWise:
-      type[0] = 'l'; break;
+      type = 'l'; break;
     case kMTCharWise:
-      type[0] = 'c'; break;
+      type = 'c'; break;
     default:
-      type[0] = 'b'; break;
+      type = 'b'; break;
     }
 
     if (arg != NULL && vim_strchr(arg, name) == NULL) {
@@ -3776,88 +3776,87 @@ void ex_display(exarg_T *eap)
     }
 
     if (yb->y_array != NULL) {
-      msg_putchar('\n');
-      msg_puts("  ");
-      msg_putchar(type[0]);
-      msg_puts("  ");
-      msg_putchar('"');
-      msg_putchar(name);
-      msg_puts("   ");
+      bool do_show = false;
 
-      int n = Columns - 11;
-      for (size_t j = 0; j < yb->y_size && n > 1; j++) {
-        if (j) {
+      for (size_t j = 0; !do_show && j < yb->y_size; j++) {
+        do_show = !message_filtered(yb->y_array[j]);
+      }
+
+      if (do_show || yb->y_size == 0) {
+        msg_putchar('\n');
+        msg_puts("  ");
+        msg_putchar(type);
+        msg_puts("  ");
+        msg_putchar('"');
+        msg_putchar(name);
+        msg_puts("   ");
+
+        int n = Columns - 11;
+        for (size_t j = 0; j < yb->y_size && n > 1; j++) {
+          if (j) {
+            msg_puts_attr("^J", attr);
+            n -= 2;
+          }
+          for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {
+            clen = utfc_ptr2len(p);
+            msg_outtrans_len(p, clen);
+            p += clen - 1;
+          }
+        }
+        if (n > 1 && yb->y_type == kMTLineWise) {
           msg_puts_attr("^J", attr);
-          n -= 2;
         }
-        for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019 NOLINT(whitespace/line_length)
-          clen = utfc_ptr2len(p);
-          msg_outtrans_len(p, clen);
-          p += clen - 1;
-        }
+        ui_flush();  // show one line at a time
       }
-      if (n > 1 && yb->y_type == kMTLineWise) {
-        msg_puts_attr("^J", attr);
-      }
-      ui_flush();  // show one line at a time
+      os_breakcheck();
     }
-    os_breakcheck();
   }
 
-  /*
-   * display last inserted text
-   */
+  // display last inserted text
   if ((p = get_last_insert()) != NULL
-      && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int) {
+      && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int
+      && !message_filtered(p)) {
     msg_puts("\n  c  \".   ");
     dis_msg(p, true);
   }
 
-  /*
-   * display last command line
-   */
+  // display last command line
   if (last_cmdline != NULL && (arg == NULL || vim_strchr(arg, ':') != NULL)
-      && !got_int) {
+      && !got_int && !message_filtered(last_cmdline)) {
     msg_puts("\n  c  \":   ");
     dis_msg(last_cmdline, false);
   }
 
-  /*
-   * display current file name
-   */
+  // display current file name
   if (curbuf->b_fname != NULL
-      && (arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int) {
+      && (arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int
+      && !message_filtered(curbuf->b_fname)) {
     msg_puts("\n  c  \"%   ");
     dis_msg(curbuf->b_fname, false);
   }
 
-  /*
-   * display alternate file name
-   */
+  // display alternate file name
   if ((arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int) {
     char_u *fname;
     linenr_T dummy;
 
-    if (buflist_name_nr(0, &fname, &dummy) != FAIL) {
+    if (buflist_name_nr(0, &fname, &dummy) != FAIL && !message_filtered(fname)) {
       msg_puts("\n  c  \"#   ");
       dis_msg(fname, false);
     }
   }
 
-  /*
-   * display last search pattern
-   */
+  // display last search pattern
   if (last_search_pat() != NULL
-      && (arg == NULL || vim_strchr(arg, '/') != NULL) && !got_int) {
+      && (arg == NULL || vim_strchr(arg, '/') != NULL) && !got_int
+      && !message_filtered(last_search_pat())) {
     msg_puts("\n  c  \"/   ");
     dis_msg(last_search_pat(), false);
   }
 
-  /*
-   * display last used expression
-   */
+  // display last used expression
   if (expr_line != NULL && (arg == NULL || vim_strchr(arg, '=') != NULL)
-      && !got_int) {
+      && !got_int && !message_filtered(expr_line)) {
     msg_puts("\n  c  \"=   ");
     dis_msg(expr_line, false);
   }

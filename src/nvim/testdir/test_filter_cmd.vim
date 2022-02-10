@@ -145,3 +145,38 @@ func Test_filter_commands()
   bwipe! file.h
   bwipe! file.hs
 endfunc
+
+func Test_filter_display()
+  edit Xdoesnotmatch
+  let @a = '!!willmatch'
+  let @b = '!!doesnotmatch'
+  let @c = "oneline\ntwoline\nwillmatch\n"
+  let @/ = '!!doesnotmatch'
+  call feedkeys(":echo '!!doesnotmatch:'\<CR>", 'ntx')
+  let lines = map(split(execute('filter /willmatch/ display'), "\n"), 'v:val[5:6]')
+
+  call assert_true(index(lines, '"a') >= 0)
+  call assert_false(index(lines, '"b') >= 0)
+  call assert_true(index(lines, '"c') >= 0)
+  call assert_false(index(lines, '"/') >= 0)
+  call assert_false(index(lines, '":') >= 0)
+  call assert_false(index(lines, '"%') >= 0)
+
+  let lines = map(split(execute('filter /doesnotmatch/ display'), "\n"), 'v:val[5:6]')
+  call assert_true(index(lines, '"a') < 0)
+  call assert_false(index(lines, '"b') < 0)
+  call assert_true(index(lines, '"c') < 0)
+  call assert_false(index(lines, '"/') < 0)
+  call assert_false(index(lines, '":') < 0)
+  call assert_false(index(lines, '"%') < 0)
+
+  bwipe!
+endfunc
+
+func Test_filter_scriptnames()
+  let lines = split(execute('filter /test_filter_cmd/ scriptnames'), "\n")
+  call assert_equal(1, len(lines))
+  call assert_match('filter_cmd', lines[0])
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
