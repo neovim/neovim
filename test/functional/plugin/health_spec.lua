@@ -153,6 +153,10 @@ describe('health.vim', function()
         ## report 2
           - OK: nothing to see here
 
+        test_plug.submodule_empty: require("test_plug.submodule_empty.health").check()
+        ========================================================================
+          - ERROR: The healthcheck report for "test_plug.submodule_empty" plugin is empty.
+
         test_plug.submodule_failed: require("test_plug.submodule_failed.health").check()
         ========================================================================
           - ERROR: Failed to run healthcheck for "test_plug.submodule_failed" plugin. Exception:
@@ -170,6 +174,16 @@ describe('health.vim', function()
             function health#check[20]..health#broken#check, line 1
             caused an error
         ]])
+    end)
+
+    it("... including empty reports", function()
+      command("checkhealth test_plug.submodule_empty")
+      helpers.expect([[
+
+      test_plug.submodule_empty: require("test_plug.submodule_empty.health").check()
+      ========================================================================
+        - ERROR: The healthcheck report for "test_plug.submodule_empty" plugin is empty.
+      ]])
     end)
 
     it("gracefully handles broken lua healthcheck", function()
