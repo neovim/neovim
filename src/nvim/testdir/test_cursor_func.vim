@@ -75,7 +75,6 @@ func Test_curswant_with_cursorline()
 endfunc
 
 func Test_screenpos()
-  throw 'skipped: TODO: '
   rightbelow new
   rightbelow 20vsplit
   call setline(1, ["\tsome text", "long wrapping line here", "next line"])
@@ -103,9 +102,10 @@ func Test_screenpos()
   bwipe!
 
   call assert_equal({'col': 1, 'row': 1, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
-  nmenu WinBar.TEST :
-  call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
-  nunmenu WinBar.TEST
+  " Needs WinBar
+  " nmenu WinBar.TEST :
+  " call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  " nunmenu WinBar.TEST
 endfunc
 
 func Test_screenpos_number()
