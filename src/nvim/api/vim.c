@@ -31,6 +31,7 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/lua/executor.h"
@@ -545,20 +546,19 @@ void nvim_set_current_dir(String dir, Error *err)
     return;
   }
 
-  char string[MAXPATHL];
+  char_u string[MAXPATHL];
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
   try_start();
 
-  if (vim_chdir((char_u *)string)) {
+  if (!changedir_func(string, kCdScopeGlobal)) {
     if (!try_end(err)) {
       api_set_error(err, kErrorTypeException, "Failed to change directory");
     }
     return;
   }
 
-  post_chdir(kCdScopeGlobal, true);
   try_end(err);
 }
 
