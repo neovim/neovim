@@ -860,7 +860,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
     if (diff_write(buf, &dio->dio_new) == FAIL) {
       continue;
     }
-    if (diff_file(dio) == FAIL) {
+    if (diff_file(dio, idx_orig, idx_new) == FAIL) {
       continue;
     }
 
@@ -879,13 +879,31 @@ theend:
 }
 
 ///
+/// Return true if the diffexpr option is set with '->' prefix,
+/// so it means that internal diff is used and customized.
+///
+int diffexpr_internal_prefix(void)
+{
+  char_u *c = p_dex;
+  if (*c == '-') {
+    c += 1;
+    if (*c == '>') {
+      c += 1;
+      return true;
+    }
+  }
+  return false;
+}
+
+///
 /// Return true if the options are set to use the internal diff library.
 /// Note that if the internal diff failed for one of the buffers, the external
 /// diff will be used anyway.
 ///
 int diff_internal(void)
 {
-  return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
+  return (diff_flags & DIFF_INTERNAL) != 0
+    && (*p_dex == NUL || diffexpr_internal_prefix());
 }
 
 ///
@@ -1004,7 +1022,7 @@ static int check_external_diff(diffio_T *diffio)
         }
         fclose(fd);
         fd = NULL;
-        if (diff_file(diffio) == OK) {
+        if (diff_file(diffio, -1, -1) == OK) {
           fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
         }
 
@@ -1064,7 +1082,7 @@ static int check_external_diff(diffio_T *diffio)
 ///
 /// Invoke the xdiff function.
 ///
-static int diff_file_internal(diffio_T *diffio)
+static int diff_file_internal(diffio_T *diffio, list_T *chunks)
 {
   xpparam_t param;
   xdemitconf_t emit_cfg;
@@ -1074,6 +1092,69 @@ static int diff_file_internal(diffio_T *diffio)
   memset(&emit_cfg, 0, sizeof(emit_cfg));
   memset(&emit_cb, 0, sizeof(emit_cb));
 
+  if (diffexpr_internal_prefix()) {
+    // If a custom expression has been used,
+    // translate received user chunks into diffio data.
+    listitem_T *c = tv_list_first(chunks);
+    list_T* i; // chunk (i)nformation is made of 4 (n)umbers.
+    listitem_T *n;
+    typval_T* c_val;
+    typval_T* n_val;
+    int i_size;
+    long start_a;
+    long count_a;
+    long start_b;
+    long count_b;
+    if (c != NULL) {
+      for (; c != NULL; c = TV_LIST_ITEM_NEXT(chunks, c)) {
+        c_val = TV_LIST_ITEM_TV(c);
+        if (c_val->v_type == VAR_LIST) {
+          i = c_val->vval.v_list;
+          i_size = tv_list_len(i);
+          if (i_size == 4) {
+            n = tv_list_first(i);
+            // Check information types.
+            for (; n != NULL; n = TV_LIST_ITEM_NEXT(i, n)) {
+              n_val = TV_LIST_ITEM_TV(n);
+              if (n_val->v_type != VAR_NUMBER) {
+                emsg("Invalid chunk element received: must be a number.");
+                return FAIL;
+              }
+            }
+            // Types are ok: setup diff information.
+            n = tv_list_first(i);
+            start_a = TV_LIST_ITEM_TV(n)->vval.v_number;
+            n = TV_LIST_ITEM_NEXT(i, n);
+            count_a = TV_LIST_ITEM_TV(n)->vval.v_number;
+            n = TV_LIST_ITEM_NEXT(i, n);
+            start_b = TV_LIST_ITEM_TV(n)->vval.v_number;
+            n = TV_LIST_ITEM_NEXT(i, n);
+            count_b = TV_LIST_ITEM_TV(n)->vval.v_number;
+            // Counter-mimic extra offsets done by xdiff.
+            if (count_a > 0) {
+              start_a -= 1;
+            }
+            if (count_b > 0) {
+              start_b -= 1;
+            }
+            // For some reason, the a and b expected by xdiff_out
+            // are reversed compared to the chunks produced by vim.diff.
+            xdiff_out(start_b, count_b,
+                      start_a, count_a, &diffio->dio_diff);
+          } else {
+            emsg("Invalid chunk received: must contain 4 numbers.");
+            return FAIL;
+          }
+        } else {
+          semsg("Invalid chunk type received (%i), expected list (%i).", c_val->v_type, VAR_LIST);
+          return FAIL;
+        }
+      }
+    }
+    return OK;
+  }
+
+  // Otherwise, defer chunks calculations to xdiff.
   param.flags = diff_algorithm;
 
   if (diff_flags & DIFF_IWHITE) {
@@ -1104,21 +1185,32 @@ static int diff_file_internal(diffio_T *diffio)
 /// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
 ///
 /// @param dio
+/// @param idx_orig Buffer number of original file.
+/// @param idx_new Buffer number of new version of the file.
 ///
 /// @return OK or FAIL
-static int diff_file(diffio_T *dio)
+static int diff_file(diffio_T *dio, const int idx_orig, const int idx_new)
 {
   char *tmp_orig = (char *)dio->dio_orig.din_fname;
   char *tmp_new = (char *)dio->dio_new.din_fname;
   char *tmp_diff = (char *)dio->dio_diff.dout_fname;
+  list_T* chunks;
+
   if (*p_dex != NUL) {
-    // Use 'diffexpr' to generate the diff file.
-    eval_diff(tmp_orig, tmp_new, tmp_diff);
-    return OK;
+    // Evaluate function with `in_bufnr` and `new_bufnr` arguments.
+    if (diffexpr_internal_prefix()) {
+      // Ignore the first two '->' characters of the option,
+      // they are not part of the expression to evaluate.
+      chunks = eval_idifffn(idx_orig, idx_new, p_dex + 2);
+    } else {
+      // Otherwise use 'diffexpr' to generate the diff file.
+      eval_diff(tmp_orig, tmp_new, tmp_diff);
+      return OK;
+    }
   }
   // Use xdiff for generating the diff.
   if (dio->dio_internal) {
-    return diff_file_internal(dio);
+    return diff_file_internal(dio, chunks);
   } else {
     const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
                         + STRLEN(p_srr) + 27);

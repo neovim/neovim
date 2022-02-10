@@ -354,12 +354,20 @@ The "1a2" item appends the line "bbb".
 The "4d4" item deletes the line "111".
 The "7c7" item replaces the line "GGG" with "ggg".
 
-When 'diffexpr' is not empty, Vim evaluates it to obtain a diff file in the
-format mentioned.  These variables are set to the file names used:
+When 'diffexpr' is a non-empty expresion, Vim evaluates it to obtain a diff file
+in the format mentioned.  These variables are set to the file names used:
 
 	v:fname_in		original file
 	v:fname_new		new version of the same file
 	v:fname_out		where to write the resulting diff file
+
+When 'diffexpr' is an expression prefixed with '->', Vim evaluates it to obtain
+diff chunks indices like the ones produced by the |vim.diff| function. In this
+case, these variables are set instead:
+
+	v:bufnr_in		number of the buffer with original content
+	v:bufnr_new		number of the buffer with new version
+	v:diff_chunks		to be filled with the desired chunks indices
 
 Additionally, 'diffexpr' should take care of "icase" and "iwhite" in the
 'diffopt' option.  'diffexpr' cannot change the value of 'lines' and
@@ -387,6 +395,62 @@ mode, so that a CTRL-Z doesn't end the text on DOS.
 
 The `redraw!` command may not be needed, depending on whether executing a
 shell command shows something on the display or not.
+
+Another similar example with '->' prefix instead (this does almost the same as
+'diffexpr' being empty): >
+
+	set diffexpr=->MyDiff()
+
+	lua <<EOF
+ 	function buffer_to_string(bufnr)
+	    local content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	    return table.concat(content, "\n")
+	end
+
+	function has_value(tb, val)
+	  for _, v in ipairs(tb) do
+	    if v == val then
+	      return true
+	    end
+	  end
+	  return false
+	end
+
+	function extract_value_from_prefix(tb, prefix)
+	  for _, v in ipairs(tb) do
+	    for v in string.gmatch(v, prefix..":(%w+)") do
+	      return v
+	    end
+	  end
+	  return nil
+	end
+
+	function MyDiff()
+	  local a_file = buffer_to_string(vim.v.bufnr_in)
+	  local b_file = buffer_to_string(vim.v.bufnr_new)
+
+	  local opt = vim.opt.diffopt:get()
+	  local copy_opt = {
+	    result_type = "indices",
+	    ignore_whitespace = has_value(opt, "iwhite"),
+	    ignore_whitespace_change = has_value(opt, "iwhiteall"),
+	    ignore_whitespace_change_at_eol = has_value(opt, "iwhiteeol"),
+	    ignore_blank_lines = has_value(opt, "iblank"),
+	    indent_heuristic = has_value(opt, "indent-heuristic"),
+	    algorithm = extract_value_from_prefix(opt, "algorithm"),
+	    ctxlen = tonumber(extract_value_from_prefix(opt, "context")),
+	  }
+	  local chunks = vim.diff(a_file, b_file, copy_opt)
+	  vim.v.diff_chunks = chunks
+	end
+	EOF
+
+	function! MyDiff()
+	  lua MyDiff()
+	endfunction
+
+Diff chunks may be edited or calculated another way, as long as they remain
+valid.
 
 						*E810* *E97*
 Vim will do a test if the diff output looks alright.  If it doesn't, you will
