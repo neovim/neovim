@@ -1,0 +1,99 @@
+name: "Request reviews"
+on:
+  pull_request_target:
+    types: [labeled]
+  workflow_run:
+    workflows: [Pull Request Labeler]
+    types: [completed]
+jobs:
+  request-reviewer:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            // The number of the pull request that triggered this run. If label
+            // was added manually by a person the number will be stored in current
+            // context, otherwise the number will be stored in the payload.
+            const pr_number = context.issue.number || context.payload.workflow_run.pull_requests[0].number
+
+            const pr_data = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            })
+            const labels = pr_data.data.labels.map(e => e.name)
+
+            const reviewers = new Set()
+            if (labels.includes('api')) {
+              reviewers.add("bfredl")
+              reviewers.add("gpanders")
+              reviewers.add("muniter")
+            }
+
+            if (labels.includes('ci')) {
+              reviewers.add("jamessan")
+            }
+
+            if (labels.includes('diagnostic')) {
+              reviewers.add("gpanders")
+            }
+
+            if (labels.includes('distribution')) {
+              reviewers.add("jamessan")
+            }
+
+            if (labels.includes('documentation')) {
+              reviewers.add("clason")
+            }
+
+            if (labels.includes('extmarks')) {
+              reviewers.add("bfredl")
+            }
+
+            if (labels.includes('filetype')) {
+              reviewers.add("clason")
+              reviewers.add("gpanders")
+            }
+
+            if (labels.includes('gui')) {
+              reviewers.add("glacambre")
+              reviewers.add("smolck")
+            }
+
+            if (labels.includes('lsp')) {
+              reviewers.add("mfussenegger")
+              reviewers.add("mjlbach")
+            }
+
+            if (labels.includes('treesitter')) {
+              reviewers.add("bfredl")
+              reviewers.add("vigoux")
+            }
+
+            if (labels.includes('typo')) {
+              reviewers.add("dundargoc")
+            }
+
+            if (labels.includes('ui')) {
+              reviewers.add("bfredl")
+            }
+
+            if (labels.includes('vim-patch')) {
+              reviewers.add("janlazo")
+              reviewers.add("seandewar")
+              reviewers.add("zeertzjq")
+            }
+
+            // Remove person that opened the PR since they can't review themselves
+            const pr_opener = pr_data.data.user.login
+            reviewers.delete(pr_opener)
+
+            github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number,
+              reviewers: Array.from(reviewers)
+            });
