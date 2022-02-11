@@ -8788,12 +8788,15 @@ void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 void exec_normal(bool was_typed, bool use_vpeekc)
 {
   oparg_T oa;
+  int c;
 
+  // When calling vpeekc() from feedkeys() it will return Ctrl_C when there
+  // is nothing to get, so also check for Ctrl_C.
   clear_oparg(&oa);
   finish_op = false;
   while ((!stuff_empty()
           || ((was_typed || !typebuf_typed()) && typebuf.tb_len > 0)
-          || (use_vpeekc && vpeekc() != NUL))
+          || (use_vpeekc && (c = vpeekc()) != NUL && c != Ctrl_C))
          && !got_int) {
     update_topline_cursor();
     normal_cmd(&oa, true);      // execute a Normal mode cmd
