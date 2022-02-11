@@ -133,7 +133,7 @@ static void tinput_wait_enqueue(void **argv)
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
     } else {
-      const size_t consumed = input_enqueue(keys);
+      const size_t consumed = input_enqueue(keys, true);
       if (consumed) {
         rbuffer_consumed(input->key_buffer, consumed);
       }

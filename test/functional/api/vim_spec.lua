@@ -1420,6 +1420,13 @@ describe('API', function()
         inp = helpers.nvim('replace_termcodes', ':let x3="…"<CR>', true, true, true)
         nvim('feedkeys', inp, '', false)  -- escape_ks=false
 
+        -- With "L" flag K_SPECIAL is escaped even if escape_ks=false
+        nvim('feedkeys', ':let x4="…"\n', 'L', false)
+
+        -- Both nvim_replace_termcodes and nvim_feedkeys with "L" flag escape \x80
+        inp = helpers.nvim('replace_termcodes', ':let x5="…"<CR>', true, true, true)
+        nvim('feedkeys', inp, 'L', true)
+
         helpers.stop()
       end
 
@@ -1430,6 +1437,9 @@ describe('API', function()
       -- Because of the double escaping this is neq
       neq(nvim('get_var', 'x2'), '…')
       eq(nvim('get_var', 'x3'), '…')
+      eq(nvim('get_var', 'x4'), '…')
+      -- Because of the double escaping this is neq
+      neq(nvim('get_var', 'x5'), '…')
     end)
   end)
 

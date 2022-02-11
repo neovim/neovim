@@ -202,9 +202,11 @@ static void on_redraw_event(void **argv)
 ///
 /// @param keys         to be typed
 /// @param mode         behavior flags, see |feedkeys()|
-/// @param escape_ks    If true, escape K_SPECIAL bytes in `keys`
+/// @param escape_ks    If true, escape K_SPECIAL bytes in `keys`.
 ///                     This should be false if you already used
 ///                     |nvim_replace_termcodes()|, and true otherwise.
+///                     K_SPECIAL bytes are always escaped if "L" flag
+///                     is present.
 /// @see feedkeys()
 /// @see vim_strsave_escape_ks
 void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
@@ -215,6 +217,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool typed = false;
   bool execute = false;
   bool dangerous = false;
+  bool lowlevel = false;
 
   for (size_t i = 0; i < mode.size; ++i) {
     switch (mode.data[i]) {
@@ -230,6 +233,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
       execute = true; break;
     case '!':
       dangerous = true; break;
+    case 'L':
+      lowlevel = true; break;
     }
   }
 
@@ -237,22 +242,28 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
     return;
   }
 
-  char *keys_esc;
-  if (escape_ks) {
-    // Need to escape K_SPECIAL before putting the string in the
-    // typeahead buffer.
-    keys_esc = (char *)vim_strsave_escape_ks((char_u *)keys.data);
+  if (lowlevel) {
+    size_t consumed = input_enqueue(keys, false);
+    if (consumed < keys.size) {
+      // What to do here?
+    }
   } else {
-    keys_esc = keys.data;
-  }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-              insert ? 0 : typebuf.tb_len, !typed, false);
-  if (vgetc_busy) {
-    typebuf_was_filled = true;
-  }
-
-  if (escape_ks) {
-    xfree(keys_esc);
+    char *keys_esc;
+    if (escape_ks) {
+      // Need to escape K_SPECIAL before putting the string in the
+      // typeahead buffer.
+      keys_esc = (char *)vim_strsave_escape_ks((char_u *)keys.data);
+    } else {
+      keys_esc = keys.data;
+    }
+    ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                insert ? 0 : typebuf.tb_len, !typed, false);
+    if (vgetc_busy) {
+      typebuf_was_filled = true;
+    }
+    if (escape_ks) {
+      xfree(keys_esc);
+    }
   }
 
   if (execute) {
@@ -289,7 +300,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 Integer nvim_input(String keys)
   FUNC_API_SINCE(1) FUNC_API_FAST
 {
-  return (Integer)input_enqueue(keys);
+  return (Integer)input_enqueue(keys, true);
 }
 
 /// Send mouse event from GUI.

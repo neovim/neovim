@@ -226,41 +226,43 @@ bool os_isatty(int fd)
   return uv_guess_handle(fd) == UV_TTY;
 }
 
-size_t input_enqueue(String keys)
+size_t input_enqueue(String keys, bool special)
 {
   char *ptr = keys.data;
   char *end = ptr + keys.size;
 
   while (rbuffer_space(input_buffer) >= 19 && ptr < end) {
-    // A "<x>" form occupies at least 1 characters, and produces up
-    // to 19 characters (1 + 5 * 3 for the char and 3 for a modifier).
-    // In the case of K_SPECIAL(0x80), 3 bytes are escaped and needed,
-    // but since the keys are UTF-8, so the first byte cannot be
-    // K_SPECIAL(0x80).
-    uint8_t buf[19] = { 0 };
-    unsigned int new_size
-      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                      false);
+    if (special) {
+      // A "<x>" form occupies at least 1 characters, and produces up
+      // to 19 characters (1 + 5 * 3 for the char and 3 for a modifier).
+      // In the case of K_SPECIAL(0x80), 3 bytes are escaped and needed,
+      // but since the keys are UTF-8, so the first byte cannot be
+      // K_SPECIAL(0x80).
+      uint8_t buf[19] = { 0 };
+      unsigned int new_size
+        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
+                        false);
 
-    if (new_size) {
-      new_size = handle_mouse_event(&ptr, buf, new_size);
-      rbuffer_write(input_buffer, (char *)buf, new_size);
-      continue;
-    }
-
-    if (*ptr == '<') {
-      char *old_ptr = ptr;
-      // Invalid or incomplete key sequence, skip until the next '>' or *end.
-      do {
-        ptr++;
-      } while (ptr < end && *ptr != '>');
-      if (*ptr != '>') {
-        // Incomplete key sequence, return without consuming.
-        ptr = old_ptr;
-        break;
+      if (new_size) {
+        new_size = handle_mouse_event(&ptr, buf, new_size);
+        rbuffer_write(input_buffer, (char *)buf, new_size);
+        continue;
       }
-      ptr++;
-      continue;
+
+      if (*ptr == '<') {
+        char *old_ptr = ptr;
+        // Invalid or incomplete key sequence, skip until the next '>' or *end.
+        do {
+          ptr++;
+        } while (ptr < end && *ptr != '>');
+        if (*ptr != '>') {
+          // Incomplete key sequence, return without consuming.
+          ptr = old_ptr;
+          break;
+        }
+        ptr++;
+        continue;
+      }
     }
 
     // copy the character, escaping K_SPECIAL
