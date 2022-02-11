@@ -91,7 +91,7 @@ func Test_FileChangedShell_reload()
 endfunc
 
 func Test_file_changed_dialog()
-  throw 'skipped: TODO: '
+  throw 'Skipped: requires a UI to a active'
   if !has('unix') || has('gui_running')
     return
   endif
