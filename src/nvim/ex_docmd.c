@@ -7784,7 +7784,7 @@ static char_u *get_prevdir(CdScope scope)
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
-void post_chdir(CdScope scope, bool trigger_dirchanged)
+static void post_chdir(CdScope scope, bool trigger_dirchanged)
 {
   // Always overwrite the window-local CWD.
   XFREE_CLEAR(curwin->w_localdir);
@@ -7825,7 +7825,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   shorten_fnames(true);
 
   if (trigger_dirchanged) {
-    do_autocmd_dirchanged(cwd, scope, kCdCauseManual);
+    do_autocmd_dirchanged(cwd, scope, kCdCauseManual, false);
   }
 }
 
@@ -7869,10 +7869,13 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   }
 
   bool dir_differs = pdir == NULL || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
-  if (dir_differs && vim_chdir(new_dir) != 0) {
-    emsg(_(e_failed));
-    xfree(pdir);
-    return false;
+  if (dir_differs) {
+    do_autocmd_dirchanged((char *)new_dir, scope, kCdCauseManual, true);
+    if (vim_chdir(new_dir) != 0) {
+      emsg(_(e_failed));
+      xfree(pdir);
+      return false;
+    }
   }
 
   char_u **pp;

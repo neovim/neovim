@@ -525,8 +525,19 @@ DirChanged			After the |current-directory| was changed.
 					"global"  to trigger on `:cd`
 					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
-				    cwd:   current working directory
-				    scope: "global", "tabpage", "window"
+				    cwd:            current working directory
+				    scope:          "global", "tabpage", "window"
+				    changed_window: v:true if we fired the event
+				                    switching window (or tab)
+				<afile> is set to the new directory name.
+				Non-recursive (event cannot trigger itself).
+							*DirChangedPre*
+DirChangedPre			When the |current-directory| is going to be
+				changed, as with |DirChanged|.
+				The pattern is like with |DirChanged|.
+				Sets these |v:event| keys:
+				    directory:      new working directory
+				    scope:          "global", "tabpage", "window"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.

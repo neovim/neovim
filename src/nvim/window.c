@@ -4645,20 +4645,29 @@ void fix_current_dir(void)
         globaldir = (char_u *)xstrdup(cwd);
       }
     }
-    if (os_chdir(new_dir) == 0) {
-      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
-        do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
-      }
-      last_chdir_reason = NULL;
-      shorten_fnames(true);
+    bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
+    if (!p_acd && dir_differs) {
+      do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
+                            kCdCauseWindow, true);
     }
+    if (os_chdir(new_dir) == 0) {
+      if (!p_acd && dir_differs) {
+        do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
+                              kCdCauseWindow, false);
+      }
+    }
+    last_chdir_reason = NULL;
+    shorten_fnames(true);
   } else if (globaldir != NULL) {
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
+    bool dir_differs = pathcmp((char *)globaldir, cwd, -1) != 0;
+    if (!p_acd && dir_differs) {
+      do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, true);
+    }
     if (os_chdir((char *)globaldir) == 0) {
-      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
+      if (!p_acd && dir_differs) {
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, false);
       }
     }
     XFREE_CLEAR(globaldir);

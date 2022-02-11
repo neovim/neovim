@@ -1850,14 +1850,16 @@ endfunc
 
 function Test_dirchanged_global()
   call s:Before_test_dirchanged()
+  autocmd test_dirchanged DirChangedPre global call add(s:li, "pre cd " .. v:event.directory)
   autocmd test_dirchanged DirChanged global call add(s:li, "cd:")
   autocmd test_dirchanged DirChanged global call add(s:li, expand("<afile>"))
   call chdir(s:dir_foo)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  let expected = ["pre cd " .. s:dir_foo, "cd:", s:dir_foo]
+  call assert_equal(expected, s:li)
   call chdir(s:dir_foo)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  call assert_equal(expected, s:li)
   exe 'lcd ' .. fnameescape(s:dir_bar)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  call assert_equal(expected, s:li)
   call s:After_test_dirchanged()
 endfunc
 
@@ -1879,6 +1881,7 @@ function Test_dirchanged_auto()
   CheckOption autochdir
   call s:Before_test_dirchanged()
   call test_autochdir()
+  autocmd test_dirchanged DirChangedPre auto call add(s:li, "pre cd " .. v:event.directory)
   autocmd test_dirchanged DirChanged auto call add(s:li, "auto:")
   autocmd test_dirchanged DirChanged auto call add(s:li, expand("<afile>"))
   set acd
@@ -1886,7 +1889,8 @@ function Test_dirchanged_auto()
   call assert_equal([], s:li)
   exe 'edit ' . s:dir_foo . '/Xfile'
   call assert_equal(s:dir_foo, getcwd())
-  call assert_equal(["auto:", s:dir_foo], s:li)
+  let expected = ["pre cd " .. s:dir_foo, "auto:", s:dir_foo]
+  call assert_equal(expected, s:li)
   set noacd
   bwipe!
   call s:After_test_dirchanged()
