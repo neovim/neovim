@@ -2,9 +2,6 @@ name: "Request reviews"
 on:
   pull_request_target:
     types: [labeled]
-  workflow_run:
-    workflows: [Pull Request Labeler]
-    types: [completed]
 jobs:
   request-reviewer:
     runs-on: ubuntu-latest
@@ -14,10 +11,7 @@ jobs:
       - uses: actions/github-script@v5
         with:
           script: |
-            // The number of the pull request that triggered this run. If label
-            // was added manually by a person the number will be stored in current
-            // context, otherwise the number will be stored in the payload.
-            const pr_number = context.issue.number || context.payload.workflow_run.pull_requests[0].number
+            const pr_number = context.issue.number
 
             const pr_data = await github.rest.pulls.get({
               owner: context.repo.owner,
