@@ -304,7 +304,7 @@ newwindow:
         newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
         if (curwin == wp) {
-          win_close(curwin, false);
+          win_close(curwin, false, false);
         }
         if (valid_tabpage(newtab)) {
           goto_tabpage_tp(newtab, true, true);
@@ -449,7 +449,7 @@ wingotofile:
         RESET_BINDING(curwin);
         if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
           // Failed to open the file, close the window opened for it.
-          win_close(curwin, false);
+          win_close(curwin, false, false);
           goto_tabpage_win(oldtab, oldwin);
         } else if (nchar == 'F' && lnum >= 0) {
           curwin->w_cursor.lnum = lnum;
@@ -2290,7 +2290,7 @@ void close_windows(buf_T *buf, int keep_curwin)
   for (win_T *wp = firstwin; wp != NULL && !ONE_WINDOW;) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
-      if (win_close(wp, false) == FAIL) {
+      if (win_close(wp, false, false) == FAIL) {
         // If closing the window fails give up, to avoid looping forever.
         break;
       }
@@ -2368,6 +2368,22 @@ bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
 }
 
+/// Check if floating windows can be closed.
+///
+/// @return true if all floating windows can be closed
+static bool can_close_floating_windows(tabpage_T *tab)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
+    buf_T *buf = wp->w_buffer;
+    int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
+
+    if (need_hide && !buf_hide(buf)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Close the possibly last window in a tab page.
 ///
 /// @param  win          window to close
@@ -2432,7 +2448,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
 //
 // Called by :quit, :close, :xit, :wq and findtag().
 // Returns FAIL when the window was not closed.
-int win_close(win_T *win, bool free_buf)
+int win_close(win_T *win, bool free_buf, bool force)
 {
   win_T *wp;
   bool other_buffer = false;
@@ -2462,9 +2478,18 @@ int win_close(win_T *win, bool free_buf)
   }
   if ((firstwin == win && lastwin_nofloating() == win)
       && lastwin->w_floating) {
-    // TODO(bfredl): we might close the float also instead
-    emsg(e_floatonly);
-    return FAIL;
+    if (force || can_close_floating_windows(curtab)) {
+      win_T *nextwp;
+      for (win_T *wpp = firstwin; wpp != NULL; wpp = nextwp) {
+        nextwp = wpp->w_next;
+        if (wpp->w_floating) {
+          win_close(wpp, free_buf, force);
+        }
+      }
+    } else {
+      emsg(e_floatonly);
+      return FAIL;
+    }
   }
 
   // When closing the last window in a tab page first go to another tab page
@@ -3611,7 +3636,9 @@ void close_others(int message, int forceit)
         continue;
       }
     }
-    win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer));
+    win_close(wp,
+              !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer),
+              false);
   }
 
   if (message && !ONE_WINDOW) {
