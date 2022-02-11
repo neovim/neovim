@@ -7433,6 +7433,9 @@ stdioopen({opts})			 *stdioopen()*
 
 		{opts} is a dictionary with these keys:
 		  |on_stdin| : callback invoked when stdin is written to.
+		  on_print : callback invoked when Nvim needs to print a
+			     message, with the message (whose type is string)
+			     as sole argument.
 		  stdin_buffered : read stdin in |channel-buffered| mode.
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     over stdio
