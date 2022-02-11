@@ -199,11 +199,13 @@ function M.get_node_text(node, source)
       lines = a.nvim_buf_get_lines(source, start_row, end_row + 1, true)
     end
 
-    if #lines == 1 then
-      lines[1]      = string.sub(lines[1], start_col+1, end_col)
-    else
-      lines[1]      = string.sub(lines[1], start_col+1)
-      lines[#lines] = string.sub(lines[#lines], 1, end_col)
+    if #lines > 0 then
+      if #lines == 1 then
+        lines[1]      = string.sub(lines[1], start_col+1, end_col)
+      else
+        lines[1]      = string.sub(lines[1], start_col+1)
+        lines[#lines] = string.sub(lines[#lines], 1, end_col)
+      end
     end
 
     return table.concat(lines, "\n")
