@@ -1482,8 +1482,6 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   copyFoldingState(oldp, newp);
 
   win_init_some(newp, oldp);
-
-  didset_window_options(newp);
 }
 
 /*
