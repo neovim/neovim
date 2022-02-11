@@ -1944,10 +1944,9 @@ static void didset_options(void)
   (void)did_set_spell_option(true);
   // set cedit_key
   (void)check_cedit();
-  briopt_check(curwin);
   // initialize the table for 'breakat'.
   fill_breakat_flags();
-  fill_culopt_flags(NULL, curwin);
+  didset_window_options(curwin);
 }
 
 // More side effects of setting options.
@@ -6007,6 +6006,7 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
+  didset_window_options(wp_to);
 }
 
 /// Copy the options from one winopt_T to another.
