@@ -11,13 +11,43 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/github-script@v5
+      - if: github.event_name	== 'workflow_run'
+        name: 'Download artifact with PR number'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pr_number"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_number.zip`, Buffer.from(download.data));
+
+      - if: github.event_name	== 'workflow_run'
+        name: 'Unzip artifact'
+        run: unzip pr_number.zip
+
+      - name: 'Request reviewers'
+        uses: actions/github-script@v5
         with:
           script: |
             // The number of the pull request that triggered this run. If label
             // was added manually by a person the number will be stored in current
-            // context, otherwise the number will be stored in the payload.
-            const pr_number = context.issue.number || context.payload.workflow_run.pull_requests[0].number
+            // context, otherwise the number will be stored in a text file that
+            // was stored as an artifact from previous workflow.
+
+            const fs = require('fs')
+            const pr_number =  context.issue.number || Number(fs.readFileSync('./pr_number'))
 
             const pr_data = await github.rest.pulls.get({
               owner: context.repo.owner,
