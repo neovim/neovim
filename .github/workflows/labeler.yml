@@ -32,3 +32,15 @@ jobs:
     - name: "Extract commit scope and add as label"
       continue-on-error: true
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')"
+
+  upload-pr-number:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        run: |
+          mkdir -p pr
+          echo ${{ github.event.number }} > pr/pr_number
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr_number
+          path: pr/
