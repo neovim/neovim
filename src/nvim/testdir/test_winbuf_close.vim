@@ -194,3 +194,22 @@ func Test_tabwin_close()
   call assert_true(v:true)
   %bwipe!
 endfunc
+
+" Test when closing a split window (above/below) restores space to the window
+" below when 'noequalalways' and 'splitright' are set.
+func Test_window_close_splitright_noequalalways()
+  set noequalalways
+  set splitright
+  new
+  let w1 = win_getid()
+  new
+  let w2 = win_getid()
+  execute "normal \<c-w>b"
+  let h = winheight(0)
+  let w = win_getid()
+  new 
+  q
+  call assert_equal(h, winheight(0), "Window height does not match eight before opening and closing another window")
+  call assert_equal(w, win_getid(), "Did not return to original window after opening and closing a window")
+endfunc
+
