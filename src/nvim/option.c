@@ -8046,7 +8046,6 @@ int win_signcol_count(win_T *wp)
 /// Return the number of requested sign columns, based on user / configuration.
 int win_signcol_configured(win_T *wp, int *is_fixed)
 {
-  int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
   if (is_fixed) {
@@ -8059,7 +8058,6 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
                                 && (wp->w_p_nu || wp->w_p_rnu)))) {
     return 0;
   }
-  needed_signcols = buf_signcols(wp->w_buffer);
 
   // yes or yes
   if (!strncmp(scl, "yes:", 4)) {
@@ -8075,6 +8073,8 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
     *is_fixed = 0;
   }
 
+  int minimum = 0, maximum = 1;
+
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';
@@ -8085,7 +8085,8 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
     }
   }
 
-  int ret = MAX(minimum, MIN(maximum, needed_signcols));
+  int needed_signcols = buf_signcols(wp->w_buffer, maximum);
+  int ret = MAX(minimum, needed_signcols);
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
 }
