@@ -6232,6 +6232,9 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fcs = vim_strsave(from->wo_fcs);
   to->wo_lcs = vim_strsave(from->wo_lcs);
   to->wo_winbl = from->wo_winbl;
+
+  // Copy the script context so that we know were the value was last set.
+  memmove(to->wo_script_ctx, from->wo_script_ctx, sizeof(to->wo_script_ctx));
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -6304,11 +6307,30 @@ void didset_window_options(win_T *wp)
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
+/// Index into the options table for a buffer-local option enum.
+static int buf_opt_idx[BV_COUNT];
+#define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].last_set
+
+/// Initialize buf_opt_idx[] if not done already.
+static void init_buf_opt_idx(void)
+{
+  static int did_init_buf_opt_idx = false;
+
+  if (did_init_buf_opt_idx) {
+    return;
+  }
+  did_init_buf_opt_idx = true;
+  for (int i = 0; options[i].fullname != NULL; i++) {
+    if (options[i].indir & PV_BUF) {
+      buf_opt_idx[options[i].indir & PV_MASK] = i;
+    }
+  }
+}
 
 /// Copy global option values to local options for one buffer.
 /// Used when creating a new buffer and sometimes when entering a buffer.
 /// flags:
-/// BCO_ENTER    We will enter the buf buffer.
+/// BCO_ENTER    We will enter the buffer "buf".
 /// BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
 ///      appropriate.
 /// BCO_NOHELP   Don't copy the values to a help buffer.
@@ -6344,11 +6366,12 @@ void buf_copy_options(buf_T *buf, int flags)
     }
 
     if (should_copy || (flags & BCO_ALWAYS)) {
-      /* Don't copy the options specific to a help buffer when
-      * BCO_NOHELP is given or the options were initialized already
-      * (jumping back to a help file with CTRL-T or CTRL-O) */
-      dont_do_help = ((flags & BCO_NOHELP) && buf->b_help)
-                     || buf->b_p_initialized;
+      memset(buf->b_p_script_ctx, 0, sizeof(buf->b_p_script_ctx));
+      init_buf_opt_idx();
+      // Don't copy the options specific to a help buffer when
+      // BCO_NOHELP is given or the options were initialized already
+      // (jumping back to a help file with CTRL-T or CTRL-O)
+      dont_do_help = ((flags & BCO_NOHELP) && buf->b_help) || buf->b_p_initialized;
       if (dont_do_help) {               // don't free b_p_isk
         save_p_isk = buf->b_p_isk;
         buf->b_p_isk = NULL;
@@ -6380,35 +6403,58 @@ void buf_copy_options(buf_T *buf, int flags)
       }
 
       buf->b_p_ai = p_ai;
+      COPY_OPT_SCTX(buf, BV_AI);
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
+      COPY_OPT_SCTX(buf, BV_SW);
       buf->b_p_scbk = p_scbk;
+      COPY_OPT_SCTX(buf, BV_SCBK);
       buf->b_p_tw = p_tw;
+      COPY_OPT_SCTX(buf, BV_TW);
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;
       buf->b_p_wm = p_wm;
+      COPY_OPT_SCTX(buf, BV_WM);
       buf->b_p_wm_nopaste = p_wm_nopaste;
       buf->b_p_wm_nobin = p_wm_nobin;
       buf->b_p_bin = p_bin;
+      COPY_OPT_SCTX(buf, BV_BIN);
       buf->b_p_bomb = p_bomb;
+      COPY_OPT_SCTX(buf, BV_BOMB);
       buf->b_p_et = p_et;
+      COPY_OPT_SCTX(buf, BV_ET);
       buf->b_p_fixeol = p_fixeol;
+      COPY_OPT_SCTX(buf, BV_FIXEOL);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;
+      COPY_OPT_SCTX(buf, BV_ML);
       buf->b_p_ml_nobin = p_ml_nobin;
       buf->b_p_inf = p_inf;
-      buf->b_p_swf = cmdmod.noswapfile ? false : p_swf;
+      COPY_OPT_SCTX(buf, BV_INF);
+      if (cmdmod.noswapfile) {
+        buf->b_p_swf = false;
+      } else {
+        buf->b_p_swf = p_swf;
+        COPY_OPT_SCTX(buf, BV_SWF);
+      }
       buf->b_p_cpt = vim_strsave(p_cpt);
+      COPY_OPT_SCTX(buf, BV_CPT);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = vim_strsave(p_csl);
+      COPY_OPT_SCTX(buf, BV_CSL);
 #endif
       buf->b_p_cfu = vim_strsave(p_cfu);
+      COPY_OPT_SCTX(buf, BV_CFU);
       buf->b_p_ofu = vim_strsave(p_ofu);
+      COPY_OPT_SCTX(buf, BV_OFU);
       buf->b_p_tfu = vim_strsave(p_tfu);
+      COPY_OPT_SCTX(buf, BV_TFU);
       buf->b_p_sts = p_sts;
+      COPY_OPT_SCTX(buf, BV_STS);
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = vim_strsave(p_vsts);
+      COPY_OPT_SCTX(buf, BV_VSTS);
       if (p_vsts && p_vsts != empty_option) {
         (void)tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
@@ -6418,42 +6464,68 @@ void buf_copy_options(buf_T *buf, int flags)
                                 ? vim_strsave(p_vsts_nopaste)
                                 : NULL;
       buf->b_p_com = vim_strsave(p_com);
+      COPY_OPT_SCTX(buf, BV_COM);
       buf->b_p_cms = vim_strsave(p_cms);
+      COPY_OPT_SCTX(buf, BV_CMS);
       buf->b_p_fo = vim_strsave(p_fo);
+      COPY_OPT_SCTX(buf, BV_FO);
       buf->b_p_flp = vim_strsave(p_flp);
+      COPY_OPT_SCTX(buf, BV_FLP);
       buf->b_p_nf = vim_strsave(p_nf);
+      COPY_OPT_SCTX(buf, BV_NF);
       buf->b_p_mps = vim_strsave(p_mps);
+      COPY_OPT_SCTX(buf, BV_MPS);
       buf->b_p_si = p_si;
+      COPY_OPT_SCTX(buf, BV_SI);
       buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
+      COPY_OPT_SCTX(buf, BV_CI);
       buf->b_p_cin = p_cin;
+      COPY_OPT_SCTX(buf, BV_CIN);
       buf->b_p_cink = vim_strsave(p_cink);
+      COPY_OPT_SCTX(buf, BV_CINK);
       buf->b_p_cino = vim_strsave(p_cino);
+      COPY_OPT_SCTX(buf, BV_CINO);
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;
+      COPY_OPT_SCTX(buf, BV_PI);
       buf->b_p_cinw = vim_strsave(p_cinw);
+      COPY_OPT_SCTX(buf, BV_CINW);
       buf->b_p_lisp = p_lisp;
+      COPY_OPT_SCTX(buf, BV_LISP);
       // Don't copy 'syntax', it must be set
       buf->b_p_syn = empty_option;
       buf->b_p_smc = p_smc;
+      COPY_OPT_SCTX(buf, BV_SMC);
       buf->b_s.b_syn_isk = empty_option;
       buf->b_s.b_p_spc = vim_strsave(p_spc);
+      COPY_OPT_SCTX(buf, BV_SPC);
       (void)compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = vim_strsave(p_spf);
+      COPY_OPT_SCTX(buf, BV_SPF);
       buf->b_s.b_p_spl = vim_strsave(p_spl);
+      COPY_OPT_SCTX(buf, BV_SPL);
       buf->b_s.b_p_spo = vim_strsave(p_spo);
+      COPY_OPT_SCTX(buf, BV_SPO);
       buf->b_p_inde = vim_strsave(p_inde);
+      COPY_OPT_SCTX(buf, BV_INDE);
       buf->b_p_indk = vim_strsave(p_indk);
+      COPY_OPT_SCTX(buf, BV_INDK);
       buf->b_p_fp = empty_option;
       buf->b_p_fex = vim_strsave(p_fex);
+      COPY_OPT_SCTX(buf, BV_FEX);
       buf->b_p_sua = vim_strsave(p_sua);
+      COPY_OPT_SCTX(buf, BV_SUA);
       buf->b_p_keymap = vim_strsave(p_keymap);
+      COPY_OPT_SCTX(buf, BV_KMAP);
       buf->b_kmap_state |= KEYMAP_INIT;
       // This isn't really an option, but copying the langmap and IME
       // state from the current buffer is better than resetting it.
       buf->b_p_iminsert = p_iminsert;
+      COPY_OPT_SCTX(buf, BV_IMI);
       buf->b_p_imsearch = p_imsearch;
+      COPY_OPT_SCTX(buf, BV_IMS);
 
       // options that are normally global but also have a local value
       // are not copied, start using the global value
@@ -6473,11 +6545,14 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_def = empty_option;
       buf->b_p_inc = empty_option;
       buf->b_p_inex = vim_strsave(p_inex);
+      COPY_OPT_SCTX(buf, BV_INEX);
       buf->b_p_dict = empty_option;
       buf->b_p_tsr = empty_option;
       buf->b_p_tsrfu = empty_option;
       buf->b_p_qe = vim_strsave(p_qe);
+      COPY_OPT_SCTX(buf, BV_QE);
       buf->b_p_udf = p_udf;
+      COPY_OPT_SCTX(buf, BV_UDF);
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
 
@@ -6496,9 +6571,12 @@ void buf_copy_options(buf_T *buf, int flags)
         }
       } else {
         buf->b_p_isk = vim_strsave(p_isk);
+        COPY_OPT_SCTX(buf, BV_ISK);
         did_isk = true;
         buf->b_p_ts = p_ts;
+        COPY_OPT_SCTX(buf, BV_TS);
         buf->b_p_vts = vim_strsave(p_vts);
+        COPY_OPT_SCTX(buf, BV_VTS);
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
           (void)tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
@@ -6509,6 +6587,7 @@ void buf_copy_options(buf_T *buf, int flags)
           clear_string_option(&buf->b_p_bt);
         }
         buf->b_p_ma = p_ma;
+        COPY_OPT_SCTX(buf, BV_MA);
       }
     }
 
