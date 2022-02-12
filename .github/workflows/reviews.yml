@@ -13,7 +13,7 @@ jobs:
     steps:
       - if: github.event_name	== 'workflow_run'
         name: 'Download artifact with PR number'
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: |
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -38,7 +38,7 @@ jobs:
         run: unzip pr_number.zip
 
       - name: 'Request reviewers'
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: |
             // The number of the pull request that triggered this run. If label
