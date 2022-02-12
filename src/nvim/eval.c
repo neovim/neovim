@@ -766,6 +766,15 @@ static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
   return ret;
 }
 
+/// @return whether a typval is a valid expression to pass to eval_expr_typval()
+/// or eval_expr_to_bool().  An empty string returns false;
+bool eval_expr_valid_arg(const typval_T *const tv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_CONST
+{
+  return tv->v_type != VAR_UNKNOWN
+         && (tv->v_type != VAR_STRING || (tv->vval.v_string != NULL && *tv->vval.v_string != NUL));
+}
+
 int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {

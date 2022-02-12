@@ -380,7 +380,7 @@ screencol()			Number	current cursor column
 screenpos({winid}, {lnum}, {col}) Dict	screen row and col of a text character
 screenrow()			Number	current cursor row
 screenstring({row}, {col})	String	characters at screen position
-search({pattern} [, {flags} [, {stopline} [, {timeout}]]])
+search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 				Number	search for {pattern}
 searchcount([{options}])	Dict	Get or update the last search count
 searchdecl({name} [, {global} [, {thisblock}]])
@@ -389,7 +389,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip} [...]]])
 				Number	search for other end of start/end pair
 searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [...]]])
 				List	search for other end of start/end pair
-searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])
+searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 				List	search for {pattern}
 server2client({clientid}, {string})
 				Number	send reply string
@@ -6169,8 +6169,9 @@ screenstring({row}, {col})					*screenstring()*
 
 		Can also be used as a |method|: >
 			GetRow()->screenstring(col)
-
-search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
+<
+								*search()*
+search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 		Search for regexp pattern {pattern}.  The search starts at the
 		cursor position (you can use |cursor()| to set it).
 
@@ -6222,6 +6223,15 @@ search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 		The value must not be negative.  A zero value is like not
 		giving the argument.
 
+		If the {skip} expression is given it is evaluated with the
+		cursor positioned on the start of a match.  If it evaluates to
+		non-zero this match is skipped.  This can be used, for
+		example, to skip a match in a comment or a string.
+		{skip} can be a string, which is evaluated as an expression, a
+		function reference or a lambda.
+		When {skip} is omitted or empty, every match is accepted.
+		When evaluating {skip} causes an error the search is aborted
+		and -1 returned.
 							*search()-sub-match*
 		With the 'p' flag the returned value is one more than the
 		first sub-match in \(\).  One if none of them matched but the
@@ -6505,7 +6515,8 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip}
 <
 		See |match-parens| for a bigger and more useful example.
 
-searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*searchpos()*
+							*searchpos()*
+searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 		Same as |search()|, but returns a |List| with the line and
 		column position of the match. The first element of the |List|
 		is the line number and the second element is the byte index of

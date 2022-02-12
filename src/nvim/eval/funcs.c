@@ -8237,6 +8237,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   int options = SEARCH_KEEP;
   int subpatnum;
   searchit_arg_T sia;
+  bool use_skip = false;
 
   const char *const pat = tv_get_string(&argvars[0]);
   dir = get_search_arg(&argvars[1], flagsp);  // May set p_ws.
@@ -8254,7 +8255,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
     options |= SEARCH_COL;
   }
 
-  // Optional arguments: line number to stop searching and timeout.
+  // Optional arguments: line number to stop searching, timeout and skip.
   if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
     lnum_stop = tv_get_number_chk(&argvars[2], NULL);
     if (lnum_stop < 0) {
@@ -8265,6 +8266,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
       if (time_limit < 0) {
         goto theend;
       }
+      use_skip = eval_expr_valid_arg(&argvars[4]);
     }
   }
 
@@ -8284,11 +8286,46 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   }
 
   pos = save_cursor = curwin->w_cursor;
+  pos_T firstpos = { 0 };
   memset(&sia, 0, sizeof(sia));
   sia.sa_stop_lnum = (linenr_T)lnum_stop;
   sia.sa_tm = &tm;
-  subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1,
-                       options, RE_SEARCH, &sia);
+
+  // Repeat until {skip} returns false.
+  for (;;) {
+    subpatnum
+        = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
+    // finding the first match again means there is no match where {skip}
+    // evaluates to zero.
+    if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
+      subpatnum = FAIL;
+    }
+
+    if (subpatnum == FAIL || !use_skip) {
+      // didn't find it or no skip argument
+      break;
+    }
+    firstpos = pos;
+
+    // If the skip expression matches, ignore this match.
+    {
+      const pos_T save_pos = curwin->w_cursor;
+
+      curwin->w_cursor = pos;
+      bool err = false;
+      const bool do_skip = eval_expr_to_bool(&argvars[4], &err);
+      curwin->w_cursor = save_pos;
+      if (err) {
+        // Evaluating {skip} caused an error, break here.
+        subpatnum = FAIL;
+        break;
+      }
+      if (!do_skip) {
+        break;
+      }
+    }
+  }
+
   if (subpatnum != FAIL) {
     if (flags & SP_SUBPAT) {
       retval = subpatnum;
@@ -8748,13 +8785,9 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
       || argvars[4].v_type == VAR_UNKNOWN) {
     skip = NULL;
   } else {
+    // Type is checked later.
     skip = &argvars[4];
-    if (skip->v_type != VAR_FUNC
-        && skip->v_type != VAR_PARTIAL
-        && skip->v_type != VAR_STRING) {
-      semsg(_(e_invarg2), tv_get_string(&argvars[4]));
-      goto theend;  // Type error.
-    }
+
     if (argvars[5].v_type != VAR_UNKNOWN) {
       lnum_stop = tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
@@ -8865,10 +8898,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   }
 
   if (skip != NULL) {
-    // Empty string means to not use the skip expression.
-    if (skip->v_type == VAR_STRING || skip->v_type == VAR_FUNC) {
-      use_skip = skip->vval.v_string != NULL && *skip->vval.v_string != NUL;
-    }
+    use_skip = eval_expr_valid_arg(skip);
   }
 
   save_cursor = curwin->w_cursor;
