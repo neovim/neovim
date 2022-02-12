@@ -847,6 +847,10 @@ void ex_retab(exarg_T *eap)
         break;
       }
       vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
+      if (vcol >= MAXCOL) {
+        emsg(_(e_resulting_text_too_long));
+        break;
+      }
       col += utfc_ptr2len(ptr + col);
     }
     if (new_line == NULL) {                 // out of memory
