@@ -25,6 +25,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/stdlib.h"
@@ -408,6 +409,12 @@ int nlua_getvar(lua_State *lstate)
   const char *name = luaL_checklstring(lstate, 3, &len);
 
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
+  if (di == NULL && dict == &globvardict) {  // try to autoload script
+    if (!script_autoload(name, len, false) || aborting()) {
+       return 0;  // nil
+    }
+    di = tv_dict_find(dict, name, (ptrdiff_t)len);
+  }
   if (di == NULL) {
     return 0;  // nil
   }

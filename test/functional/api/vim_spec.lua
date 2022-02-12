@@ -898,6 +898,19 @@ describe('API', function()
       command('lockvar lua')
       eq('Key is locked: lua', pcall_err(meths.del_var, 'lua'))
       eq('Key is locked: lua', pcall_err(meths.set_var, 'lua', 1))
+
+      -- Check if autoload works properly
+      local pathsep = helpers.get_pathsep()
+      local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
+      local xdata = 'Xhome' .. pathsep .. 'Xdata'
+      local autoload_folder = table.concat({xconfig, 'nvim', 'autoload'}, pathsep)
+      local autoload_file = table.concat({autoload_folder , 'testload.vim'}, pathsep)
+      mkdir_p(autoload_folder)
+      write_file(autoload_file , [[let testload#value = 2]])
+
+      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata } }
+      eq(2, meths.get_var('testload#value'))
+      rmdir('Xhome')
     end)
 
     it('nvim_get_vvar, nvim_set_vvar', function()
