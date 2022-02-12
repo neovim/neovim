@@ -81,10 +81,12 @@ return {
   highlight = {
     "bold";
     "standout";
+    "strikethrough";
     "underline";
     "undercurl";
     "italic";
     "reverse";
+    "nocombine";
     "default";
     "global";
     "cterm";
@@ -100,10 +102,12 @@ return {
   highlight_cterm = {
     "bold";
     "standout";
+    "strikethrough";
     "underline";
     "undercurl";
     "italic";
     "reverse";
+    "nocombine";
   };
 }
 

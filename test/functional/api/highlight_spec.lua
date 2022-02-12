@@ -195,10 +195,12 @@ describe("API: set highlight", function()
     reverse = true,
     undercurl = true,
     underline = true,
+    strikethrough = true,
     cterm = {
       italic = true,
       reverse = true,
       undercurl = true,
+      strikethrough = true,
     }
   }
   local highlight3_result_gui = {
@@ -209,6 +211,7 @@ describe("API: set highlight", function()
     reverse = true,
     undercurl = true,
     underline = true,
+    strikethrough = true,
   }
   local highlight3_result_cterm = {
     background = highlight_color.ctermbg,
@@ -216,6 +219,7 @@ describe("API: set highlight", function()
     italic = true,
     reverse = true,
     undercurl = true,
+    strikethrough = true,
   }
 
   local function get_ns()
@@ -264,7 +268,7 @@ describe("API: set highlight", function()
       exec_capture('highlight Test_hl'))
 
     meths.set_hl(0, 'Test_hl2', highlight3_config)
-    eq('Test_hl2       xxx cterm=undercurl,italic,reverse ctermfg=8 ctermbg=15 gui=bold,underline,undercurl,italic,reverse guifg=#ff0000 guibg=#0032aa',
+    eq('Test_hl2       xxx cterm=undercurl,italic,reverse,strikethrough ctermfg=8 ctermbg=15 gui=bold,underline,undercurl,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2'))
 
     -- Colors are stored exactly as they are defined.

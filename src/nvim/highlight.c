@@ -815,6 +815,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
+  CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);
+  CHECK_FLAG(dict, mask, nocombine, , HL_NOCOMBINE);
   CHECK_FLAG(dict, mask, default, _, HL_DEFAULT);
   CHECK_FLAG(dict, mask, global, , HL_GLOBAL);
 
@@ -871,6 +873,8 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, undercurl, , HL_UNDERCURL);
     CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
     CHECK_FLAG(cterm, cterm_mask, reverse, , HL_INVERSE);
+    CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
+    CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
 
   } else if (HAS_KEY(dict->cterm)) {
     api_set_error(err, kErrorTypeValidation, "'cterm' must be a Dictionary.");
