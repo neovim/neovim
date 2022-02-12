@@ -8192,7 +8192,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
 
 /// Convert the specified byte index of line 'lnum' in buffer 'buf' to a
 /// character index.  Works only for loaded buffers. Returns -1 on failure.
-/// The index of the first character is one.
+/// The index of the first byte and the first character is zero.
 int buf_byteidx_to_charidx(buf_T *buf, int lnum, int byteidx)
 {
   if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
@@ -8206,15 +8206,29 @@ int buf_byteidx_to_charidx(buf_T *buf, int lnum, int byteidx)
   char_u *str = ml_get_buf(buf, lnum, false);
 
   if (*str == NUL) {
-    return 1;
+    return 0;
   }
 
-  return mb_charlen_len(str, byteidx + 1);
+  // count the number of characters
+  char_u *t = str;
+  int count;
+  for (count = 0; *t != NUL && t <= str + byteidx; count++) {
+    t += utfc_ptr2len(t);
+  }
+
+  // In insert mode, when the cursor is at the end of a non-empty line,
+  // byteidx points to the NUL character immediately past the end of the
+  // string. In this case, add one to the character count.
+  if (*t == NUL && byteidx != 0 && t == str + byteidx) {
+    count++;
+  }
+
+  return count - 1;
 }
 
 /// Convert the specified character index of line 'lnum' in buffer 'buf' to a
-/// byte index.  Works only for loaded buffers. Returns -1 on failure. The index
-/// of the first byte and the first character is one.
+/// byte index.  Works only for loaded buffers. Returns -1 on failure.
+/// The index of the first byte and the first character is zero.
 int buf_charidx_to_byteidx(buf_T *buf, int lnum, int charidx)
 {
   if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
@@ -8233,7 +8247,7 @@ int buf_charidx_to_byteidx(buf_T *buf, int lnum, int charidx)
     t += utfc_ptr2len(t);
   }
 
-  return t - str + 1;
+  return t - str;
 }
 
 /// Translate a VimL object into a position
@@ -8315,7 +8329,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   if (name[0] == '.') {  // Cursor.
     pos = curwin->w_cursor;
     if (charcol) {
-      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col) - 1;
+      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col);
     }
     return &pos;
   }
@@ -8326,7 +8340,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       pos = curwin->w_cursor;
     }
     if (charcol) {
-      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col) - 1;
+      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col);
     }
     return &pos;
   }
@@ -8336,7 +8350,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       return NULL;
     }
     if (charcol) {
-      pp->col = buf_byteidx_to_charidx(curbuf, pp->lnum, pp->col) - 1;
+      pp->col = buf_byteidx_to_charidx(curbuf, pp->lnum, pp->col);
     }
     return pp;
   }
@@ -8423,7 +8437,7 @@ int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp, bool c
     if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
       return FAIL;
     }
-    n = buf_charidx_to_byteidx(buf, posp->lnum, n);
+    n = buf_charidx_to_byteidx(buf, posp->lnum, n) + 1;
   }
   posp->col = n;
 

@@ -1588,7 +1588,7 @@ static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
     line = tv_get_lnum(argvars);
     col = (long)tv_get_number_chk(&argvars[1], NULL);
     if (charcol) {
-      col = buf_charidx_to_byteidx(curbuf, line, col);
+      col = buf_charidx_to_byteidx(curbuf, line, col) + 1;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
       coladd = (long)tv_get_number_chk(&argvars[2], NULL);
@@ -3327,7 +3327,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool
     }
     if (fp != NULL && charcol) {
       pos = *fp;
-      pos.col = buf_byteidx_to_charidx(wp->w_buffer, pos.lnum, pos.col) - 1;
+      pos.col = buf_byteidx_to_charidx(wp->w_buffer, pos.lnum, pos.col);
       fp = &pos;
     }
   } else {
