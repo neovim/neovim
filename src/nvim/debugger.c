@@ -18,6 +18,7 @@
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/scriptfile.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
@@ -62,6 +63,7 @@ void do_debug(char_u *cmd)
   int n;
   char_u *cmdline = NULL;
   char_u *p;
+  char_u *sname;
   char *tail = NULL;
   static int last_cmd = 0;
 #define CMD_CONT        1
@@ -100,11 +102,13 @@ void do_debug(char_u *cmd)
     xfree(debug_newval);
     debug_newval = NULL;
   }
-  if (sourcing_name != NULL) {
-    msg((char *)sourcing_name);
+  sname = estack_sfile();
+  if (sname != NULL) {
+      msg((char *)sname);
   }
-  if (sourcing_lnum != 0) {
-    smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
+  xfree(sname);
+  if (SOURCING_LNUM != 0) {
+      smsg(_("line %" PRId64 ": %s"), (int64_t)SOURCING_LNUM, cmd);
   } else {
     smsg(_("cmd: %s"), cmd);
   }
@@ -290,12 +294,12 @@ void do_debug(char_u *cmd)
   debug_did_msg = true;
 }
 
-static int get_maxbacktrace_level(void)
+static int get_maxbacktrace_level(char_u *sname)
 {
   int maxbacktrace = 0;
 
-  if (sourcing_name != NULL) {
-    char *p = (char *)sourcing_name;
+  if (sname != NULL) {
+    char *p = (char *)sname;
     char *q;
     while ((q = strstr(p, "..")) != NULL) {
       p = q + 2;
@@ -323,20 +327,25 @@ static void do_checkbacktracelevel(void)
     debug_backtrace_level = 0;
     msg(_("frame is zero"));
   } else {
-    int max = get_maxbacktrace_level();
+    char_u *sname = estack_sfile();
+    int max = get_maxbacktrace_level(sname);
+
     if (debug_backtrace_level > max) {
       debug_backtrace_level = max;
       smsg(_("frame at highest level: %d"), max);
     }
+    xfree(sname);
   }
 }
 
 static void do_showbacktrace(char_u *cmd)
 {
-  if (sourcing_name != NULL) {
+  char_u *sname = estack_sfile();
+
+  if (sname != NULL) {
     int i = 0;
-    int max = get_maxbacktrace_level();
-    char *cur = (char *)sourcing_name;
+    int max = get_maxbacktrace_level(sname);
+    char *cur = (char *)sname;
     while (!got_int) {
       char *next = strstr(cur, "..");
       if (next != NULL) {
@@ -354,9 +363,10 @@ static void do_showbacktrace(char_u *cmd)
       *next = '.';
       cur = next + 2;
     }
+    xfree(sname);
   }
-  if (sourcing_lnum != 0) {
-    smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
+  if (SOURCING_LNUM != 0) {
+    smsg(_("line %" PRId64 ": %s"), (int64_t)SOURCING_LNUM, cmd);
   } else {
     smsg(_("cmd: %s"), cmd);
   }

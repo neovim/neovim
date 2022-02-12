@@ -22,6 +22,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/regexp.h"
+#include "nvim/scriptfile.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 
@@ -482,9 +483,11 @@ static int throw_exception(void *value, except_type_T type, char_u *cmdname)
   }
 
   excp->type = type;
-  excp->throw_name = vim_strsave(sourcing_name == NULL
-      ? (char_u *)"" : sourcing_name);
-  excp->throw_lnum = sourcing_lnum;
+  excp->throw_name = estack_sfile();
+  if (excp->throw_name == NULL) {
+    excp->throw_name = vim_strsave((char_u *)"");
+  }
+  excp->throw_lnum = SOURCING_LNUM;
 
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
