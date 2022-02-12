@@ -794,7 +794,7 @@ static void win_update(win_T *wp, Providers *providers)
   // If we can compute a change in the automatic sizing of the sign column
   // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
   // figuring it out here so we can redraw the entire screen for it.
-  buf_signcols(buf);
+  win_signcol_count(wp);
 
   type = wp->w_redr_type;
 
