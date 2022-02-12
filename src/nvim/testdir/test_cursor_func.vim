@@ -123,8 +123,15 @@ func Test_screenpos_number()
   bwipe!
 endfunc
 
+" Save the visual start character position
 func SaveVisualStartCharPos()
   call add(g:VisualStartPos, getcharpos('v'))
+  return ''
+endfunc
+
+" Save the current cursor character position in insert mode
+func SaveInsertCurrentCharPos()
+  call add(g:InsertCurrentPos, getcharpos('.'))
   return ''
 endfunc
 
@@ -156,15 +163,28 @@ func Test_getcharpos()
   vnoremap <expr> <F3> SaveVisualStartCharPos()
   let g:VisualStartPos = []
   exe "normal 2G6lv$\<F3>ohh\<F3>o\<F3>"
-  call assert_equal([[0, 2, 7, 0], [0, 2, 9, 0], [0, 2, 5, 0]], g:VisualStartPos)
+  call assert_equal([[0, 2, 7, 0], [0, 2, 10, 0], [0, 2, 5, 0]], g:VisualStartPos)
   call assert_equal([0, 2, 9, 0], getcharpos('v'))
   let g:VisualStartPos = []
   exe "normal 3Gv$\<F3>o\<F3>"
-  call assert_equal([[0, 3, 1, 0], [0, 3, 1, 0]], g:VisualStartPos)
+  call assert_equal([[0, 3, 1, 0], [0, 3, 2, 0]], g:VisualStartPos)
   let g:VisualStartPos = []
   exe "normal 1Gv$\<F3>o\<F3>"
   call assert_equal([[0, 1, 1, 0], [0, 1, 1, 0]], g:VisualStartPos)
   vunmap <F3>
+
+  " Test for getting the position in insert mode with the cursor after the
+  " last character in a line
+  inoremap <expr> <F3> SaveInsertCurrentCharPos()
+  let g:InsertCurrentPos = []
+  exe "normal 1GA\<F3>"
+  exe "normal 2GA\<F3>"
+  exe "normal 3GA\<F3>"
+  exe "normal 4GA\<F3>"
+  exe "normal 2G6li\<F3>"
+  call assert_equal([[0, 1, 1, 0], [0, 2, 10, 0], [0, 3, 2, 0], [0, 4, 10, 0],
+                        \ [0, 2, 7, 0]], g:InsertCurrentPos)
+  iunmap <F3>
 
   %bw!
 endfunc
@@ -192,6 +212,10 @@ func Test_setcharpos()
   call setcharpos("'m", [0, 2, 9, 0])
   normal `m
   call assert_equal([2, 11], [line('.'), col('.')])
+  " unload the buffer and try to set the mark
+  let bnr = bufnr()
+  enew!
+  call assert_equal(-1, setcharpos("'m", [bnr, 2, 2, 0]))
 
   %bw!
   call assert_equal(-1, setcharpos('.', [10, 3, 1, 0]))
@@ -199,6 +223,11 @@ endfunc
 
 func SaveVisualStartCharCol()
   call add(g:VisualStartCol, charcol('v'))
+  return ''
+endfunc
+
+func SaveInsertCurrentCharCol()
+  call add(g:InsertCurrentCol, charcol('.'))
   return ''
 endfunc
 
@@ -239,17 +268,34 @@ func Test_charcol()
   vnoremap <expr> <F3> SaveVisualStartCharCol()
   let g:VisualStartCol = []
   exe "normal 2G6lv$\<F3>ohh\<F3>o\<F3>"
-  call assert_equal([7, 9, 5], g:VisualStartCol)
+  call assert_equal([7, 10, 5], g:VisualStartCol)
   call assert_equal(9, charcol('v'))
   let g:VisualStartCol = []
   exe "normal 3Gv$\<F3>o\<F3>"
-  call assert_equal([1, 1], g:VisualStartCol)
+  call assert_equal([1, 2], g:VisualStartCol)
   let g:VisualStartCol = []
   exe "normal 1Gv$\<F3>o\<F3>"
   call assert_equal([1, 1], g:VisualStartCol)
   vunmap <F3>
 
+  " Test for getting the column number in insert mode with the cursor after
+  " the last character in a line
+  inoremap <expr> <F3> SaveInsertCurrentCharCol()
+  let g:InsertCurrentCol = []
+  exe "normal 1GA\<F3>"
+  exe "normal 2GA\<F3>"
+  exe "normal 3GA\<F3>"
+  exe "normal 4GA\<F3>"
+  exe "normal 2G6li\<F3>"
+  call assert_equal([1, 10, 2, 10, 7], g:InsertCurrentCol)
+  iunmap <F3>
+
   %bw!
+endfunc
+
+func SaveInsertCursorCharPos()
+  call add(g:InsertCursorPos, getcursorcharpos('.'))
+  return ''
 endfunc
 
 " Test for getcursorcharpos()
@@ -268,6 +314,19 @@ func Test_getcursorcharpos()
   call assert_equal([0, 3, 1, 0, 1], getcursorcharpos())
   normal 4G9l
   call assert_equal([0, 4, 9, 0, 9], getcursorcharpos())
+
+  " Test for getting the cursor position in insert mode with the cursor after
+  " the last character in a line
+  inoremap <expr> <F3> SaveInsertCursorCharPos()
+  let g:InsertCursorPos = []
+  exe "normal 1GA\<F3>"
+  exe "normal 2GA\<F3>"
+  exe "normal 3GA\<F3>"
+  exe "normal 4GA\<F3>"
+  exe "normal 2G6li\<F3>"
+  call assert_equal([[0, 1, 1, 0, 1], [0, 2, 10, 0, 15], [0, 3, 2, 0, 2],
+                    \ [0, 4, 10, 0, 10], [0, 2, 7, 0, 12]], g:InsertCursorPos)
+  iunmap <F3>
 
   let winid = win_getid()
   normal 2G5l
