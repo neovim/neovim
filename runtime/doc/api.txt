@@ -855,7 +855,7 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Return: ~
                     Return value of Lua code if present or NIL.
 
-nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
+nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
                 Sends input-keys to Nvim, subject to various quirks controlled
                 by `mode` flags. This is a blocking call, unlike
                 |nvim_input()|.
@@ -863,23 +863,25 @@ nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 On execution error: does not fail, but updates v:errmsg.
 
                 To input sequences like <C-o> use |nvim_replace_termcodes()|
-                (typically with escape_csi=true) to replace |keycodes|, then
+                (typically with escape_ks=false) to replace |keycodes|, then
                 pass the result to nvim_feedkeys().
 
                 Example: >
                     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
-                    :call nvim_feedkeys(key, 'n', v:true)
+                    :call nvim_feedkeys(key, 'n', v:false)
 <
 
                 Parameters: ~
-                    {keys}        to be typed
-                    {mode}        behavior flags, see |feedkeys()|
-                    {escape_csi}  If true, escape K_SPECIAL/CSI bytes in
-                                  `keys`
+                    {keys}       to be typed
+                    {mode}       behavior flags, see |feedkeys()|
+                    {escape_ks}  If true, escape K_SPECIAL bytes in `keys`
+                                 This should be false if you already used
+                                 |nvim_replace_termcodes()|, and true
+                                 otherwise.
 
                 See also: ~
                     feedkeys()
-                    vim_strsave_escape_csi
+                    vim_strsave_escape_ks
 
 nvim_get_all_options_info()                      *nvim_get_all_options_info()*
                 Gets the option information for all options.
@@ -1538,14 +1540,13 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
                 Parameters: ~
                     {window}  Window handle
 
-nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
+nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                 Set a highlight group.
 
-                TODO: ns_id = 0, should modify :highlight namespace TODO val
-                should take update vs reset flag
-
                 Parameters: ~
-                    {ns_id}  number of namespace for this highlight
+                    {ns_id}  number of namespace for this highlight. Use value
+                             0 to set a highlight group in the global (
+                             `:highlight` ) namespace.
                     {name}   highlight group name, like ErrorMsg
                     {val}    highlight definition map, like
                              |nvim_get_hl_by_name|. in addition the following

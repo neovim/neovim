@@ -1763,6 +1763,13 @@ Lua module: ui                                                        *lua-ui*
 input({opts}, {on_confirm})                                   *vim.ui.input()*
                 Prompts the user for input
 
+                Example: >
+
+                 vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+                     vim.o.shiftwidth = tonumber(input)
+                 end)
+<
+
                 Parameters: ~
                     {opts}        table Additional options. See |input()|
                                   • prompt (string|nil) Text of the prompt.
@@ -1785,6 +1792,22 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                 Prompts the user to pick a single item from a collection of
                 entries
+
+                Example: >
+
+                 vim.ui.select({ 'tabs', 'spaces' }, {
+                     prompt = 'Select tabs or spaces:',
+                     format_item = function(item)
+                         return "I'd like to choose " .. item
+                     end,
+                 }, function(choice)
+                     if choice == 'spaces' then
+                         vim.o.expandtab = true
+                     else
+                         vim.o.expandtab = false
+                     end
+                 end)
+<
 
                 Parameters: ~
                     {items}      table Arbitrary items
