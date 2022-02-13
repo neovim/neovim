@@ -405,6 +405,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
       curbuf->b_mtime_read = curbuf->b_mtime;
+      curbuf->b_mtime_read_ns = curbuf->b_mtime_ns;
 #ifdef UNIX
       /*
        * Use the protection bits of the original file for the swap file.
@@ -421,7 +422,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
 #endif
     } else {
       curbuf->b_mtime = 0;
+      curbuf->b_mtime_ns = 0;
       curbuf->b_mtime_read = 0;
+      curbuf->b_mtime_read_ns = 0;
       curbuf->b_orig_size = 0;
       curbuf->b_orig_mode = 0;
     }
@@ -3695,11 +3698,12 @@ nofail:
       msg_puts_attr(_("don't quit the editor until the file is successfully written!"),
                     attr | MSG_HIST);
 
-      /* Update the timestamp to avoid an "overwrite changed file"
-       * prompt when writing again. */
+      // Update the timestamp to avoid an "overwrite changed file"
+      // prompt when writing again.
       if (os_fileinfo((char *)fname, &file_info_old)) {
         buf_store_file_info(buf, &file_info_old);
         buf->b_mtime_read = buf->b_mtime;
+        buf->b_mtime_read_ns = buf->b_mtime_ns;
       }
     }
   }
@@ -3893,8 +3897,7 @@ static void msg_add_eol(void)
 static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
-      && time_differs(file_info->stat.st_mtim.tv_sec,
-                      buf->b_mtime_read)) {
+      && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
@@ -3908,19 +3911,17 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   return OK;
 }
 
-/// Return true if the times differ
-///
-/// @param t1 first time
-/// @param t2 second time
-static bool time_differs(long t1, long t2) FUNC_ATTR_CONST
+static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) FUNC_ATTR_CONST
 {
 #if defined(__linux__) || defined(MSWIN)
   // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
   // the seconds.  Since the roundoff is done when flushing the inode, the
   // time may change unexpectedly by one second!!!
-  return t1 - t2 > 1 || t2 - t1 > 1;
+  return (long)file_info->stat.st_mtim.tv_sec - mtime > 1
+         || mtime - (long)file_info->stat.st_mtim.tv_sec > 1
+         || (long)file_info->stat.st_mtim.tv_nsec != mtime_ns;
 #else
-  return t1 != t2;
+  return (long)file_info->stat.st_mtim.tv_sec != mtime;
 #endif
 }
 
@@ -4943,7 +4944,7 @@ int buf_check_timestamp(buf_T *buf)
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
       && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
-          || time_differs(file_info.stat.st_mtim.tv_sec, buf->b_mtime)
+          || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
           || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
     const long prev_b_mtime = buf->b_mtime;
 
@@ -5034,6 +5035,7 @@ int buf_check_timestamp(buf_T *buf)
             // Only timestamp changed, store it to avoid a warning
             // in check_mtime() later.
             buf->b_mtime_read = buf->b_mtime;
+            buf->b_mtime_read_ns = buf->b_mtime_ns;
           }
         }
       }
@@ -5262,6 +5264,7 @@ void buf_store_file_info(buf_T *buf, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   buf->b_mtime = file_info->stat.st_mtim.tv_sec;
+  buf->b_mtime_ns = file_info->stat.st_mtim.tv_nsec;
   buf->b_orig_size = os_fileinfo_size(file_info);
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }
