@@ -98,16 +98,18 @@ endfunc
 func Test_autoread_fast()
   CheckFeature nanotime
 
-  new Xautoread
-  set autoread
-  call setline(1, 'foo')
+  " this is timing sensitive
+  let g:test_is_flaky = 1
 
+  new Xautoread
+  setlocal autoread
+  call setline(1, 'foo')
   w!
   silent !echo bar > Xautoread
   sleep 10m
   checktime
-
   call assert_equal('bar', trim(getline(1)))
+
   call delete('Xautoread')
 endfunc
 
