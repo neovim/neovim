@@ -1,12 +1,13 @@
 name: "Request reviews"
 on:
   pull_request_target:
-    types: [labeled]
+    types: [labeled, ready_for_review]
   workflow_run:
     workflows: [Pull Request Labeler]
     types: [completed]
 jobs:
   request-reviewer:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
