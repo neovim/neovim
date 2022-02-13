@@ -587,7 +587,9 @@ struct file_buffer {
                                 // where invoked
 
   long b_mtime;                 // last change time of original file
+  long b_mtime_ns;              // nanoseconds of last change time
   long b_mtime_read;            // last change time when reading
+  long b_mtime_read_ns;         // nanoseconds of last read time
   uint64_t b_orig_size;         // size of original file in bytes
   int b_orig_mode;              // mode of original file
   time_t b_last_used;           // time when the buffer was last used; used

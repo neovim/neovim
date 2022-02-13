@@ -1,5 +1,7 @@
 " Tests for stat functions and checktime
 
+source check.vim
+
 func CheckFileTime(doSleep)
   let fnames = ['Xtest1.tmp', 'Xtest2.tmp', 'Xtest3.tmp']
   let times = []
@@ -72,6 +74,44 @@ func Test_checktime()
   call assert_equal(fl[0], getline(1))
 
   call delete(fname)
+endfunc
+
+func Test_checktime_fast()
+  CheckFeature nanotime
+
+  let fname = 'Xtest.tmp'
+
+  let fl = ['Hello World!']
+  call writefile(fl, fname)
+  set autoread
+  exec 'e' fname
+  let fl = readfile(fname)
+  let fl[0] .= ' - checktime'
+  sleep 10m  " make test less flaky in Nvim
+  call writefile(fl, fname)
+  checktime
+  call assert_equal(fl[0], getline(1))
+
+  call delete(fname)
+endfunc
+
+func Test_autoread_fast()
+  CheckFeature nanotime
+
+  " this is timing sensitive
+  let g:test_is_flaky = 1
+
+  new Xautoread
+  setlocal autoread
+  call setline(1, 'foo')
+  w!
+  sleep 10m
+  call writefile(['bar'], 'Xautoread')
+  sleep 10m
+  checktime
+  call assert_equal('bar', trim(getline(1)))
+
+  call delete('Xautoread')
 endfunc
 
 func Test_autoread_file_deleted()

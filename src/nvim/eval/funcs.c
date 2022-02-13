@@ -4539,6 +4539,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "mouse",
     "multi_byte",
     "multi_lang",
+    "nanotime",
     "num64",
     "packages",
     "path_extra",
