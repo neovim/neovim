@@ -104,6 +104,7 @@ func Test_autoread_fast()
 
   w!
   silent !echo bar > Xautoread
+  sleep 10m
   checktime
 
   call assert_equal('bar', trim(getline(1)))
