@@ -105,7 +105,8 @@ func Test_autoread_fast()
   setlocal autoread
   call setline(1, 'foo')
   w!
-  silent !echo bar > Xautoread
+  sleep 10m
+  call writefile(['bar'], 'Xautoread')
   sleep 10m
   checktime
   call assert_equal('bar', trim(getline(1)))
