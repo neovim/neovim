@@ -6907,11 +6907,11 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 		'f'	All the quickfix lists in the quickfix stack are
 			freed.
 
-		If {action} is not present or is set to ' ', then a new list
-		is created. The new quickfix list is added after the current
-		quickfix list in the stack and all the following lists are
-		freed. To add a new quickfix list at the end of the stack,
-		set "nr" in {what} to "$".
+		' '     If {action} is not present or is set to ' ', then a new list
+			is created. The new quickfix list is added after the current
+			quickfix list in the stack and all the following lists are
+			freed. To add a new quickfix list at the end of the stack,
+			set "nr" in {what} to "$".
 
 		The following items can be specified in dictionary {what}:
 		    context	quickfix list context. See |quickfix-context|
