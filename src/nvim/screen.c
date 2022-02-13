@@ -2813,7 +2813,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           // in 'lnum', then display the sign instead of the line
           // number.
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
-              && num_signs > 0) {
+              && num_signs > 0 && sign_get_attr(SIGN_TEXT, sattrs, 0, 1)) {
             int count = win_signcol_count(wp);
             get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo, count,

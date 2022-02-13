@@ -526,6 +526,32 @@ describe('Signs', function()
       ]])
     end)
 
+    it('shows the line number when signcolumn=number but no marks on a line have text', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number signcolumn=number')
+      command('sign define pietSearch text=>> texthl=Search numhl=Error')
+      command('sign define pietError text=    texthl=Search numhl=Error')
+      command('sign place 1 line=1 name=pietSearch buffer=1')
+      command('sign place 2 line=2 name=pietError  buffer=1')
+      -- no signcolumn, line number for "a" is Search, for "b" is Error, for "c" is LineNr
+      screen:expect([[
+        {1: >> }a                                                |
+        {8:  2 }b                                                |
+        {6:  3 }c                                                |
+        {6:  4 }^                                                 |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
     it('can have 32bit sign IDs', function()
       command('sign define piet text=>> texthl=Search')
       command('sign place 100000 line=1 name=piet buffer=1')
