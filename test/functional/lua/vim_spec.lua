@@ -19,6 +19,9 @@ local NIL = helpers.NIL
 local retry = helpers.retry
 local next_msg = helpers.next_msg
 local remove_trace = helpers.remove_trace
+local mkdir_p = helpers.mkdir_p
+local rmdir = helpers.rmdir
+local write_file = helpers.write_file
 
 before_each(clear)
 
@@ -1019,6 +1022,20 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.g.GetCounter()]]))
     exec_lua([[vim.api.nvim_get_var('AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_get_var('GetCounter')()]]))
+
+    -- Check if autoload works properly
+    local pathsep = helpers.get_pathsep()
+    local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
+    local xdata = 'Xhome' .. pathsep .. 'Xdata'
+    local autoload_folder = table.concat({xconfig, 'nvim', 'autoload'}, pathsep)
+    local autoload_file = table.concat({autoload_folder , 'testload.vim'}, pathsep)
+    mkdir_p(autoload_folder)
+    write_file(autoload_file , [[let testload#value = 2]])
+
+    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata } }
+
+    eq(2, exec_lua("return vim.g['testload#value']"))
+    rmdir('Xhome')
   end)
 
   it('vim.b', function()
