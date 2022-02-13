@@ -2,9 +2,6 @@ name: "Request reviews"
 on:
   pull_request_target:
     types: [labeled, ready_for_review]
-  workflow_run:
-    workflows: [Pull Request Labeler]
-    types: [completed]
 jobs:
   request-reviewer:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -12,119 +9,10 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - if: github.event_name	== 'workflow_run'
-        name: 'Download artifact with PR number'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "pr_number"
-            })[0];
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
-            let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_number.zip`, Buffer.from(download.data));
-
-      - if: github.event_name	== 'workflow_run'
-        name: 'Unzip artifact'
-        run: unzip pr_number.zip
-
+      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/ci/reviews.js
       - name: 'Request reviewers'
         uses: actions/github-script@v6
         with:
           script: |
-            // The number of the pull request that triggered this run. If label
-            // was added manually by a person the number will be stored in current
-            // context, otherwise the number will be stored in a text file that
-            // was stored as an artifact from previous workflow.
-
-            const fs = require('fs')
-            const pr_number =  context.issue.number || Number(fs.readFileSync('./pr_number'))
-
-            const pr_data = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr_number
-            })
-            const labels = pr_data.data.labels.map(e => e.name)
-
-            const reviewers = new Set()
-            if (labels.includes('api')) {
-              reviewers.add("bfredl")
-              reviewers.add("gpanders")
-              reviewers.add("muniter")
-            }
-
-            if (labels.includes('ci')) {
-              reviewers.add("jamessan")
-            }
-
-            if (labels.includes('diagnostic')) {
-              reviewers.add("gpanders")
-            }
-
-            if (labels.includes('distribution')) {
-              reviewers.add("jamessan")
-            }
-
-            if (labels.includes('documentation')) {
-              reviewers.add("clason")
-            }
-
-            if (labels.includes('extmarks')) {
-              reviewers.add("bfredl")
-            }
-
-            if (labels.includes('filetype')) {
-              reviewers.add("clason")
-              reviewers.add("gpanders")
-            }
-
-            if (labels.includes('gui')) {
-              reviewers.add("glacambre")
-              reviewers.add("smolck")
-            }
-
-            if (labels.includes('lsp')) {
-              reviewers.add("mfussenegger")
-              reviewers.add("mjlbach")
-            }
-
-            if (labels.includes('treesitter')) {
-              reviewers.add("bfredl")
-              reviewers.add("vigoux")
-            }
-
-            if (labels.includes('typo')) {
-              reviewers.add("dundargoc")
-            }
-
-            if (labels.includes('ui')) {
-              reviewers.add("bfredl")
-            }
-
-            if (labels.includes('vim-patch')) {
-              reviewers.add("janlazo")
-              reviewers.add("seandewar")
-              reviewers.add("zeertzjq")
-            }
-
-            // Remove person that opened the PR since they can't review themselves
-            const pr_opener = pr_data.data.user.login
-            reviewers.delete(pr_opener)
-
-            github.rest.pulls.requestReviewers({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr_number,
-              reviewers: Array.from(reviewers)
-            });
+            const script = require('./reviews.js')
+            await script({github, context})
