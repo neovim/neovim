@@ -146,13 +146,13 @@ local query_cache = setmetatable({}, {
 })
 
 --- Parse {query} as a string. (If the query is in a file, the caller
----       should read the contents into a string before calling).
+--- should read the contents into a string before calling).
 ---
 --- Returns a `Query` (see |lua-treesitter-query|) object which can be used to
 --- search nodes in the syntax tree for the patterns defined in {query}
 --- using `iter_*` methods below.
 ---
---- Exposes `info` and `captures` with additional information about the {query}.
+--- Exposes `info` and `captures` with additional context about {query}.
 ---   - `captures` contains the list of unique capture names defined in
 ---     {query}.
 ---   -` info.captures` also points to `captures`.

@@ -76,8 +76,8 @@ function LanguageTree:lang()
 end
 
 --- Determines whether this tree is valid.
---- If the tree is invalid, `parse()` must be called
---- to get the updated tree.
+--- If the tree is invalid, call `parse()`.
+--- This will return the updated tree.
 function LanguageTree:is_valid()
   return self._valid
 end
@@ -234,7 +234,9 @@ end
 --- Destroys this language tree and all its children.
 ---
 --- Any cleanup logic should be performed here.
---- Note, this DOES NOT remove this tree from a parent.
+---
+--- Note:
+--- This DOES NOT remove this tree from a parent. Instead,
 --- `remove_child` must be called on the parent to remove it.
 function LanguageTree:destroy()
   -- Cleanup here
@@ -448,14 +450,14 @@ function LanguageTree:_on_detach(...)
   self:_do_callback('detach', ...)
 end
 
---- Registers callbacks for the parser
----@param cbs An `nvim_buf_attach`-like table argument with the following keys :
----  `on_bytes` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
----  `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
----      it will only be passed one argument, that is a table of the ranges (as node ranges) that
----      changed.
----  `on_child_added` : emitted when a child is added to the tree.
----  `on_child_removed` : emitted when a child is removed from the tree.
+--- Registers callbacks for the parser.
+---@param cbs table An |nvim_buf_attach()|-like table argument with the following keys :
+---           - `on_bytes` : see |nvim_buf_attach()|, but this will be called _after_ the parsers callback.
+---           - `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
+---              It will only be passed one argument, which is a table of the ranges (as node ranges) that
+---              changed.
+---           - `on_child_added` : emitted when a child is added to the tree.
+---           - `on_child_removed` : emitted when a child is removed from the tree.
 function LanguageTree:register_cbs(cbs)
   if not cbs then return end
 
@@ -493,7 +495,7 @@ local function tree_contains(tree, range)
   return false
 end
 
---- Determines whether @param range is contained in this language tree
+--- Determines whether {range} is contained in this language tree
 ---
 --- This goes down the tree to recursively check children.
 ---
@@ -508,7 +510,7 @@ function LanguageTree:contains(range)
   return false
 end
 
---- Gets the appropriate language that contains @param range
+--- Gets the appropriate language that contains {range}
 ---
 ---@param range A text range, see |LanguageTree:contains|
 function LanguageTree:language_for_range(range)
