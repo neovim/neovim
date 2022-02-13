@@ -3913,15 +3913,15 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
 
 static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) FUNC_ATTR_CONST
 {
+  return (long)file_info->stat.st_mtim.tv_nsec != mtime_ns
 #if defined(__linux__) || defined(MSWIN)
-  // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
-  // the seconds.  Since the roundoff is done when flushing the inode, the
-  // time may change unexpectedly by one second!!!
-  return (long)file_info->stat.st_mtim.tv_sec - mtime > 1
-         || mtime - (long)file_info->stat.st_mtim.tv_sec > 1
-         || (long)file_info->stat.st_mtim.tv_nsec != mtime_ns;
+         // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
+         // the seconds.  Since the roundoff is done when flushing the inode, the
+         // time may change unexpectedly by one second!!!
+         || (long)file_info->stat.st_mtim.tv_sec - mtime > 1
+         || mtime - (long)file_info->stat.st_mtim.tv_sec > 1;
 #else
-  return (long)file_info->stat.st_mtim.tv_sec != mtime;
+         || (long)file_info->stat.st_mtim.tv_sec != mtime;
 #endif
 }
 
