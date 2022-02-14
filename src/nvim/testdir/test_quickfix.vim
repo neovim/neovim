@@ -169,8 +169,8 @@ func XlistTests(cchar)
         \ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
   let l = split(execute('Xlist', ""), "\n")
   call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
-        \ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
-        \ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
+	\ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
+	\ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
 
   " For help entries in the quickfix list, only the filename without directory
   " should be displayed
@@ -2020,6 +2020,7 @@ func s:test_xgrep(cchar)
   enew
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 9)
 
   " Try with 'grepprg' set to 'internal'
   set grepprg=internal
@@ -2028,12 +2029,12 @@ func s:test_xgrep(cchar)
   call assert_true(len(g:Xgetlist()) == 9)
   set grepprg&vim
 
-   call writefile(['Vim'], 'XtestTempFile')
-   set makeef=XtestTempFile
-   silent Xgrep Grep_Test_Text: test_quickfix.vim
-   call assert_equal(5, len(g:Xgetlist()))
-   call assert_false(filereadable('XtestTempFile'))
-   set makeef&vim
+  call writefile(['Vim'], 'XtestTempFile')
+  set makeef=XtestTempFile
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  call assert_equal(5, len(g:Xgetlist()))
+  call assert_false(filereadable('XtestTempFile'))
+  set makeef&vim
 endfunc
 
 func Test_grep()
@@ -2738,6 +2739,25 @@ func Test_cwindow_jump()
   cnext
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
+
+  " open the quickfix buffer in two windows and jump to an entry. Should open
+  " the file in the first quickfix window.
+  enew | only
+  copen
+  let bnum = bufnr('')
+  exe 'sbuffer ' . bnum
+  wincmd b
+  cfirst
+  call assert_equal(2, winnr())
+  call assert_equal('F1', bufname(''))
+  enew | only
+  exe 'sb' bnum
+  exe 'botright sb' bnum
+  wincmd t
+  clast
+  call assert_equal(2, winnr())
+  call assert_equal('quickfix', getwinvar(1, '&buftype'))
+  call assert_equal('quickfix', getwinvar(3, '&buftype'))
 
   " Jumping to a file from the location list window should find a usable
   " window by wrapping around the window list.
