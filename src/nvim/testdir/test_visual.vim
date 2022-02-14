@@ -866,11 +866,7 @@ func Test_visual_block_mode()
   %d _
   call setline(1, ['aaa', 'bbb', 'ccc'])
   exe "normal $\<C-V>2jA\<Left>x"
-  " BUG: Instead of adding x as the third character in all the three lines,
-  " 'a' is added in the second and third lines at the end. This bug is not
-  " reproducible if this operation is performed manually.
-  "call assert_equal(['aaxa', 'bbxb', 'ccxc'], getline(1, '$'))
-  call assert_equal(['aaxa', 'bbba', 'ccca'], getline(1, '$'))
+  call assert_equal(['aaxa', 'bbxb', 'ccxc'], getline(1, '$'))
   " Repeat the previous test but use 'l' to move the cursor instead of '$'
   call setline(1, ['aaa', 'bbb', 'ccc'])
   exe "normal! gg2l\<C-V>2jA\<Left>x"
