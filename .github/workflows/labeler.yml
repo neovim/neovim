@@ -31,14 +31,17 @@ jobs:
     - name: "Extract commit scope and add as label"
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
 
-  upload-pr-number:
+  request-reviewer:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    needs: ["triage", "type-scope"]
+    permissions:
+      pull-requests: write
     steps:
-      - name: Save PR number
-        run: |
-          mkdir -p pr
-          echo ${{ github.event.number }} > pr/pr_number
-      - uses: actions/upload-artifact@v2
+      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/ci/reviews.js
+      - name: 'Request reviewers'
+        uses: actions/github-script@v6
         with:
-          name: pr_number
-          path: pr/
+          script: |
+            const script = require('./reviews.js')
+            await script({github, context})
