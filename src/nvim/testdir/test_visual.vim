@@ -871,6 +871,10 @@ func Test_visual_block_mode()
   " reproducible if this operation is performed manually.
   "call assert_equal(['aaxa', 'bbxb', 'ccxc'], getline(1, '$'))
   call assert_equal(['aaxa', 'bbba', 'ccca'], getline(1, '$'))
+  " Repeat the previous test but use 'l' to move the cursor instead of '$'
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  exe "normal! gg2l\<C-V>2jA\<Left>x"
+  call assert_equal(['aaxa', 'bbxb', 'ccxc'], getline(1, '$'))
 
   " Change a characterwise motion to a blockwise motion using CTRL-V
   %d _
