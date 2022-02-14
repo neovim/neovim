@@ -219,7 +219,7 @@ func Test_set_register()
   call setreg('=', 'b', 'a')
   call assert_equal('regwrite', getreg('='))
 
-  " Test for settting a list of lines to special registers
+  " Test for setting a list of lines to special registers
   call setreg('/', [])
   call assert_equal('', @/)
   call setreg('=', [])

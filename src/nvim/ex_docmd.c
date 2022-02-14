@@ -7485,7 +7485,7 @@ static void ex_edit(exarg_T *eap)
   do_exedit(eap, NULL);
 }
 
-/// ":edit <file>" command and alikes.
+/// ":edit <file>" command and alike.
 ///
 /// @param old_curwin  curwin before doing a split or NULL
 void do_exedit(exarg_T *eap, win_T *old_curwin)
