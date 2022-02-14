@@ -59,7 +59,7 @@ endfunc
 
 " Test for visual block shift and tab characters.
 func Test_block_shift_tab()
-  enew!
+  new
   call append(0, repeat(['one two three'], 5))
   call cursor(1,1)
   exe "normal i\<C-G>u"
@@ -68,7 +68,7 @@ func Test_block_shift_tab()
   call assert_equal('on1 two three', getline(2))
   call assert_equal('on1 two three', getline(5))
 
-  enew!
+  %d _
   call append(0, repeat(['abcdefghijklmnopqrstuvwxyz'], 5))
   call cursor(1,1)
   exe "normal \<C-V>4jI    \<Esc>j<<11|D"
@@ -93,12 +93,26 @@ func Test_block_shift_tab()
   call assert_equal("    abc\<Tab>\<Tab>defghijklmnopqrstuvwxyz", getline(4))
   call assert_equal("    abc\<Tab>    defghijklmnopqrstuvwxyz", getline(5))
 
-  enew!
+  " Test for block shift with space characters at the beginning and with
+  " 'noexpandtab' and 'expandtab'
+  %d _
+  call setline(1, ["      1", "      2", "      3"])
+  setlocal shiftwidth=2 noexpandtab
+  exe "normal gg\<C-V>3j>"
+  call assert_equal(["\t1", "\t2", "\t3"], getline(1, '$'))
+  %d _
+  call setline(1, ["      1", "      2", "      3"])
+  setlocal shiftwidth=2 expandtab
+  exe "normal gg\<C-V>3j>"
+  call assert_equal(["        1", "        2", "        3"], getline(1, '$'))
+  setlocal shiftwidth&
+
+  bw!
 endfunc
 
 " Tests Blockwise Visual when there are TABs before the text.
 func Test_blockwise_visual()
-  enew!
+  new
   call append(0, ['123456',
 	      \ '234567',
 	      \ '345678',
@@ -120,12 +134,12 @@ func Test_blockwise_visual()
 	      \ "\t\tsomext",
 	      \ "\t\ttesext"], getline(1, 7))
 
-  enew!
+  bw!
 endfunc
 
 " Test swapping corners in blockwise visual mode with o and O
 func Test_blockwise_visual_o_O()
-  enew!
+  new
 
   exe "norm! 10i.\<Esc>Y4P3lj\<C-V>4l2jr "
   exe "norm! gvO\<Esc>ra"
@@ -144,7 +158,7 @@ func Test_blockwise_visual_o_O()
         \            '...a   bf.',
         \            '..........'], getline(1, '$'))
 
-  enew!
+  bw!
 endfun
 
 " Test Virtual replace mode.
@@ -273,7 +287,6 @@ func Test_visual_mode_reset()
   " thus preventing the problem:
   exe "normal! GV:call TriggerTheProblem()\<CR>"
   call assert_equal("Everything's fine.", g:msg)
-
 endfunc
 
 func Test_Visual_word_textobject()
@@ -440,15 +453,13 @@ endfunc
 
 " Test for 'p'ut in visual block mode
 func Test_visual_block_put()
-  enew
-
+  new
   call append(0, ['One', 'Two', 'Three'])
   normal gg
   yank
   call feedkeys("jl\<C-V>ljp", 'xt')
   call assert_equal(['One', 'T', 'Tee', 'One', ''], getline(1, '$'))
-
-  enew!
+  bw!
 endfunc
 
 func Test_visual_put_in_block()
@@ -628,6 +639,12 @@ func Test_characterwise_visual_mode()
   normal Gkvj$d
   call assert_equal(['', 'a', ''], getline(1, '$'))
 
+  " characterwise visual mode: replace a single character line and the eol
+  %d _
+  call setline(1, "a")
+  normal v$rx
+  call assert_equal(['x'], getline(1, '$'))
+
   bwipe!
 endfunc
 
@@ -800,6 +817,66 @@ func Test_visual_block_mode()
   call cursor(3, 3)
   exe "normal! \<C-V>j2lD"
   call assert_equal(['ax', 'ax'], getline(3, 4))
+
+  " Test block insert with a short line that ends before the block
+  %d _
+  call setline(1, ["  one", "a", "  two"])
+  exe "normal gg\<C-V>2jIx"
+  call assert_equal(["  xone", "a", "  xtwo"], getline(1, '$'))
+
+  " Test block append at EOL with '$' and without '$'
+  %d _
+  call setline(1, ["one", "a", "two"])
+  exe "normal gg$\<C-V>2jAx"
+  call assert_equal(["onex", "ax", "twox"], getline(1, '$'))
+  %d _
+  call setline(1, ["one", "a", "two"])
+  exe "normal gg3l\<C-V>2jAx"
+  call assert_equal(["onex", "a  x", "twox"], getline(1, '$'))
+
+  " Test block replace with an empty line in the middle and use $ to jump to
+  " the end of the line.
+  %d _
+  call setline(1, ['one', '', 'two'])
+  exe "normal gg$\<C-V>2jrx"
+  call assert_equal(["onx", "", "twx"], getline(1, '$'))
+
+  " Test block replace with an empty line in the middle and move cursor to the
+  " end of the line
+  %d _
+  call setline(1, ['one', '', 'two'])
+  exe "normal gg2l\<C-V>2jrx"
+  call assert_equal(["onx", "", "twx"], getline(1, '$'))
+
+  " Replace odd number of characters with a multibyte character
+  %d _
+  call setline(1, ['abcd', 'efgh'])
+  exe "normal ggl\<C-V>2ljr\u1100"
+  call assert_equal(["a\u1100 ", "e\u1100 "], getline(1, '$'))
+
+  " During visual block append, if the cursor moved outside of the selected
+  " range, then the edit should not be applied to the block.
+  %d _
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  exe "normal 2G\<C-V>jAx\<Up>"
+  call assert_equal(['aaa', 'bxbb', 'ccc'], getline(1, '$'))
+
+  " During visual block append, if the cursor is moved before the start of the
+  " block, then the new text should be appended there.
+  %d _
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  exe "normal $\<C-V>2jA\<Left>x"
+  " BUG: Instead of adding x as the third character in all the three lines,
+  " 'a' is added in the second and third lines at the end. This bug is not
+  " reproducible if this operation is performed manually.
+  "call assert_equal(['aaxa', 'bbxb', 'ccxc'], getline(1, '$'))
+  call assert_equal(['aaxa', 'bbba', 'ccca'], getline(1, '$'))
+
+  " Change a characterwise motion to a blockwise motion using CTRL-V
+  %d _
+  call setline(1, ['123', '456', '789'])
+  exe "normal ld\<C-V>j"
+  call assert_equal(['13', '46', '789'], getline(1, '$'))
 
   " Test from ':help v_b_I_example'
   %d _
