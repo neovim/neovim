@@ -1882,6 +1882,11 @@ v:fcs_choice	What should happen after a |FileChangedShell| event was
 		do with the affected buffer:
 			reload		Reload the buffer (does not work if
 					the file was deleted).
+			edit		Reload the buffer and detect the
+					values for options such as
+					'fileformat', 'fileencoding', 'binary'
+					(does not work if the file was
+					deleted).
 			ask		Ask the user what to do, as if there
 					was no autocommand.  Except that when
 					only the timestamp changed nothing

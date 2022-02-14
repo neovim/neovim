@@ -5654,7 +5654,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
 
     // If the .add file is edited somewhere, reload it.
     if (buf != NULL) {
-      buf_reload(buf, buf->b_orig_mode);
+      buf_reload(buf, buf->b_orig_mode, false);
     }
 
     redraw_all_later(SOME_VALID);

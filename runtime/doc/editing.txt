@@ -1450,6 +1450,11 @@ If you don't get warned often enough you can use the following command.
 			if it exists now.
 			Once a file has been checked the timestamp is reset,
 			you will not be warned again.
+			Syntax highlighting, marks, diff status,
+			'fileencoding', 'fileformat' and 'binary' options
+			are not changed.  See |v:fcs_choice| to reload these
+			too (for example, if a code formatting tools has
+			changed the file).
 
 :[N]checkt[ime] {filename}
 :[N]checkt[ime] [N]

@@ -2013,10 +2013,8 @@ static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, char_u *endp)
   return lnum;
 }
 
-/*
- * Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary to be
- * equal to the buffer "buf".  Used for calling readfile().
- */
+/// Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary' to be
+/// equal to the buffer "buf".  Used for calling readfile().
 void prep_exarg(exarg_T *eap, const buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4901,13 +4899,11 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
-/*
- * Check if buffer "buf" has been changed.
- * Also check if the file for a new buffer unexpectedly appeared.
- * return 1 if a changed buffer was found.
- * return 2 if a message has been displayed.
- * return 0 otherwise.
- */
+/// Check if buffer "buf" has been changed.
+/// Also check if the file for a new buffer unexpectedly appeared.
+/// return 1 if a changed buffer was found.
+/// return 2 if a message has been displayed.
+/// return 0 otherwise.
 int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4916,7 +4912,11 @@ int buf_check_timestamp(buf_T *buf)
   char *mesg = NULL;
   char *mesg2 = "";
   bool helpmesg = false;
-  bool reload = false;
+  enum {
+    RELOAD_NONE,
+    RELOAD_NORMAL,
+    RELOAD_DETECT
+  } reload = RELOAD_NONE;
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
@@ -4969,7 +4969,7 @@ int buf_check_timestamp(buf_T *buf)
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it
       // was set, the global option value otherwise.
-      reload = true;
+      reload = RELOAD_NORMAL;
     } else {
       if (!file_info_ok) {
         reason = "deleted";
@@ -5000,7 +5000,9 @@ int buf_check_timestamp(buf_T *buf)
         }
         s = get_vim_var_str(VV_FCS_CHOICE);
         if (STRCMP(s, "reload") == 0 && *reason != 'd') {
-          reload = true;
+          reload = RELOAD_NORMAL;
+        } else if (STRCMP(s, "edit") == 0) {
+          reload = RELOAD_DETECT;
         } else if (STRCMP(s, "ask") == 0) {
           n = false;
         } else {
@@ -5064,9 +5066,15 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "\n", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      if (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
-                    (char_u *)_("&OK\n&Load File"), 1, NULL, true) == 2) {
-        reload = true;
+      switch (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
+                        (char_u *)_("&OK\n&Load File\nLoad File &and Options"),
+                        1, NULL, true)) {
+        case 2:
+          reload = RELOAD_NORMAL;
+          break;
+        case 3:
+          reload = RELOAD_DETECT;
+          break;
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
@@ -5100,9 +5108,9 @@ int buf_check_timestamp(buf_T *buf)
     xfree(tbuf);
   }
 
-  if (reload) {
+  if (reload != RELOAD_NONE) {
     // Reload the buffer.
-    buf_reload(buf, orig_mode);
+    buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
       char_u hash[UNDO_HASH_SIZE];
 
@@ -5120,13 +5128,11 @@ int buf_check_timestamp(buf_T *buf)
   return retval;
 }
 
-/*
- * Reload a buffer that is already loaded.
- * Used when the file was changed outside of Vim.
- * "orig_mode" is buf->b_orig_mode before the need for reloading was detected.
- * buf->b_orig_mode may have been reset already.
- */
-void buf_reload(buf_T *buf, int orig_mode)
+/// Reload a buffer that is already loaded.
+/// Used when the file was changed outside of Vim.
+/// "orig_mode" is buf->b_orig_mode before the need for reloading was detected.
+/// buf->b_orig_mode may have been reset already.
+void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 {
   exarg_T ea;
   pos_T old_cursor;
@@ -5141,11 +5147,15 @@ void buf_reload(buf_T *buf, int orig_mode)
   // set curwin/curbuf for "buf" and save some things
   aucmd_prepbuf(&aco, buf);
 
-  // We only want to read the text from the file, not reset the syntax
-  // highlighting, clear marks, diff status, etc.  Force the fileformat and
-  // encoding to be the same.
+  // Unless reload_options is set, we only want to read the text from the
+  // file, not reset the syntax highlighting, clear marks, diff status, etc.
+  // Force the fileformat and encoding to be the same.
+  if (reload_options) {
+    memset(&ea, 0, sizeof(ea));
+  } else {
+    prep_exarg(&ea, buf);
+  }
 
-  prep_exarg(&ea, buf);
   old_cursor = curwin->w_cursor;
   old_topline = curwin->w_topline;
 
