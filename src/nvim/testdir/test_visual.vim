@@ -22,6 +22,14 @@ func Test_block_shift_overflow()
   q!
 endfunc
 
+func Test_dotregister_paste()
+  new
+  exe "norm! ihello world\<esc>"
+  norm! 0ve".p
+  call assert_equal('hello world world', getline(1))
+  q!
+endfunc
+
 func Test_Visual_ctrl_o()
   new
   call setline(1, ['one', 'two', 'three'])
@@ -42,19 +50,39 @@ func Test_Visual_vapo()
   bwipe!
 endfunc
 
-func Test_dotregister_paste()
-  new
-  exe "norm! ihello world\<esc>"
-  norm! 0ve".p
-  call assert_equal('hello world world', getline(1))
-  q!
-endfunc
-
 func Test_Visual_inner_quote()
   new
   normal oxX
   normal vki'
   bwipe!
+endfunc
+
+" Test for Visual mode not being reset causing E315 error.
+func TriggerTheProblem()
+  " At this point there is no visual selection because :call reset it.
+  " Let's restore the selection:
+  normal gv
+  '<,'>del _
+  try
+      exe "normal \<Esc>"
+  catch /^Vim\%((\a\+)\)\=:E315/
+      echom 'Snap! E315 error!'
+      let g:msg = 'Snap! E315 error!'
+  endtry
+endfunc
+
+func Test_visual_mode_reset()
+  enew
+  let g:msg = "Everything's fine."
+  enew
+  setl buftype=nofile
+  call append(line('$'), 'Delete this line.')
+
+  " NOTE: this has to be done by a call to a function because executing :del
+  " the ex-way will require the colon operator which resets the visual mode
+  " thus preventing the problem:
+  exe "normal! GV:call TriggerTheProblem()\<CR>"
+  call assert_equal("Everything's fine.", g:msg)
 endfunc
 
 " Test for visual block shift and tab characters.
@@ -261,34 +289,6 @@ func Test_virtual_replace2()
   set bs&vim
 endfunc
 
-" Test for Visual mode not being reset causing E315 error.
-func TriggerTheProblem()
-  " At this point there is no visual selection because :call reset it.
-  " Let's restore the selection:
-  normal gv
-  '<,'>del _
-  try
-      exe "normal \<Esc>"
-  catch /^Vim\%((\a\+)\)\=:E315/
-      echom 'Snap! E315 error!'
-      let g:msg = 'Snap! E315 error!'
-  endtry
-endfunc
-
-func Test_visual_mode_reset()
-  enew
-  let g:msg = "Everything's fine."
-  enew
-  setl buftype=nofile
-  call append(line('$'), 'Delete this line.')
-
-  " NOTE: this has to be done by a call to a function because executing :del
-  " the ex-way will require the colon operator which resets the visual mode
-  " thus preventing the problem:
-  exe "normal! GV:call TriggerTheProblem()\<CR>"
-  call assert_equal("Everything's fine.", g:msg)
-endfunc
-
 func Test_Visual_word_textobject()
   new
   call setline(1, ['First sentence. Second sentence.'])
@@ -367,17 +367,6 @@ func Test_Visual_sentence_textobject()
   bwipe!
 endfunc
 
-func Test_curswant_not_changed()
-  new
-  call setline(1, ['one', 'two'])
-  au InsertLeave * call getcurpos()
-  call feedkeys("gg0\<C-V>jI123 \<Esc>j", 'xt')
-  call assert_equal([0, 2, 1, 0, 1], getcurpos())
-
-  bwipe!
-  au! InsertLeave
-endfunc
-
 func Test_Visual_paragraph_textobject()
   new
   call setline(1, ['First line.',
@@ -427,6 +416,17 @@ func Test_Visual_paragraph_textobject()
   bwipe!
 endfunc
 
+func Test_curswant_not_changed()
+  new
+  call setline(1, ['one', 'two'])
+  au InsertLeave * call getcurpos()
+  call feedkeys("gg0\<C-V>jI123 \<Esc>j", 'xt')
+  call assert_equal([0, 2, 1, 0, 1], getcurpos())
+
+  bwipe!
+  au! InsertLeave
+endfunc
+
 " Tests for "vaBiB", end could be wrong.
 func Test_Visual_Block()
   new
@@ -460,15 +460,6 @@ func Test_visual_block_put()
   call feedkeys("jl\<C-V>ljp", 'xt')
   call assert_equal(['One', 'T', 'Tee', 'One', ''], getline(1, '$'))
   bw!
-endfunc
-
-func Test_visual_put_in_block()
-  new
-  call setline(1, ['xxxx', 'y∞yy', 'zzzz'])
-  normal 1G2yl
-  exe "normal 1G2l\<C-V>jjlp"
-  call assert_equal(['xxxx', 'y∞xx', 'zzxx'], getline(1, 3))
-  bwipe!
 endfunc
 
 " Visual modes (v V CTRL-V) followed by an operator; count; repeating
@@ -1106,6 +1097,15 @@ func Test_block_insert_replace_tabs()
         \ "#define BO_BS\t    \t0x0002",
         \ "#define BO_CRSR\t    \t0x0004", ''], getline(1, '$'))
   set ts& sts& sw&
+  bwipe!
+endfunc
+
+func Test_visual_put_in_block()
+  new
+  call setline(1, ['xxxx', 'y∞yy', 'zzzz'])
+  normal 1G2yl
+  exe "normal 1G2l\<C-V>jjlp"
+  call assert_equal(['xxxx', 'y∞xx', 'zzxx'], getline(1, 3))
   bwipe!
 endfunc
 
