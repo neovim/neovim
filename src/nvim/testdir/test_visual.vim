@@ -1280,6 +1280,16 @@ func Test_visual_block_insert_round_off()
   bwipe!
 endfunc
 
+" this was causing an ml_get error
+func Test_visual_exchange_windows()
+  enew!
+  new
+  call setline(1, ['foo', 'bar'])
+  exe "normal G\<C-V>gg\<C-W>\<C-X>OO\<Esc>"
+  bwipe!
+  bwipe!
+endfunc
+
 " this was leaving the end of the Visual area beyond the end of a line
 func Test_visual_ex_copy_line()
   new
