@@ -13,10 +13,10 @@ jobs:
     - uses: actions/labeler@main
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        sync-labels: ""
 
   type-scope:
     runs-on: ubuntu-latest
-    needs: ["triage"]
     permissions:
       contents: write
       pull-requests: write
