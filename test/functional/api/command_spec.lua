@@ -180,6 +180,28 @@ describe('nvim_add_user_command', function()
     feed('<C-U>Test b<Tab>')
     eq('Test bbb', funcs.getcmdline())
   end)
+
+  it('does not allow invalid command names', function()
+    matches("'name' must begin with an uppercase letter", pcall_err(exec_lua, [[
+      vim.api.nvim_add_user_command('test', 'echo "hi"', {})
+    ]]))
+
+    matches('Invalid command name', pcall_err(exec_lua, [[
+      vim.api.nvim_add_user_command('t@', 'echo "hi"', {})
+    ]]))
+
+    matches('Invalid command name', pcall_err(exec_lua, [[
+      vim.api.nvim_add_user_command('T@st', 'echo "hi"', {})
+    ]]))
+
+    matches('Invalid command name', pcall_err(exec_lua, [[
+      vim.api.nvim_add_user_command('Test!', 'echo "hi"', {})
+    ]]))
+
+    matches('Invalid command name', pcall_err(exec_lua, [[
+      vim.api.nvim_add_user_command('💩', 'echo "hi"', {})
+    ]]))
+  end)
 end)
 
 describe('nvim_del_user_command', function()
