@@ -138,6 +138,13 @@ func Test_p_with_count_leaves_mark_at_end()
   bwipe!
 endfunc
 
+func Test_very_larg_count()
+  new
+  let @" = 'x'
+  call assert_fails('norm 44444444444444p', 'E1240:')
+  bwipe!
+endfunc
+
 func Test_put_above_first_line()
   new
   let @" = 'text'

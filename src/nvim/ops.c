@@ -3431,8 +3431,13 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
       do {
-        totlen = (size_t)(count * yanklen);
-        if (totlen > 0) {
+        const long multlen = count * yanklen;
+
+        totlen = (size_t)(int)multlen;
+        if (totlen != (size_t)multlen) {
+          emsg(_(e_resulting_text_too_long));
+          break;
+        } else if (totlen > 0) {
           oldp = ml_get(lnum);
           if (lnum > start_lnum) {
             pos_T pos = {
