@@ -17,8 +17,16 @@ module.exports = async ({github, context}) => {
     reviewers.add("jamessan")
   }
 
+  if (labels.includes('column')) {
+    reviewers.add("lewis6991")
+  }
+
   if (labels.includes('diagnostic')) {
     reviewers.add("gpanders")
+  }
+
+  if (labels.includes('diff')) {
+    reviewers.add("lewis6991")
   }
 
   if (labels.includes('distribution')) {
