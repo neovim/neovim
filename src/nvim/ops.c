@@ -1961,11 +1961,14 @@ static int op_replace(oparg_T *oap, int c)
     while (ltoreq(curwin->w_cursor, oap->end)) {
       n = gchar_cursor();
       if (n != NUL) {
-        if (utf_char2len(c) > 1 || utf_char2len(n) > 1) {
+        int new_byte_len = utf_char2len(c);
+        int old_byte_len = utfc_ptr2len(get_cursor_pos_ptr());
+
+        if (new_byte_len > 1 || old_byte_len > 1) {
           // This is slow, but it handles replacing a single-byte
           // with a multi-byte and the other way around.
           if (curwin->w_cursor.lnum == oap->end.lnum) {
-            oap->end.col += utf_char2len(c) - utf_char2len(n);
+            oap->end.col += new_byte_len - old_byte_len;
           }
           replace_character(c);
         } else {

@@ -636,6 +636,11 @@ func Test_characterwise_visual_mode()
   normal v$rx
   call assert_equal(['x'], getline(1, '$'))
 
+  " replace a character with composing characters
+  call setline(1, "xã̳x")
+  normal gg0lvrb
+  call assert_equal("xbx", getline(1))
+
   bwipe!
 endfunc
 
