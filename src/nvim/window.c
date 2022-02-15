@@ -1727,6 +1727,12 @@ static void win_exchange(long Prenum)
 
   (void)win_comp_pos();                 // recompute window positions
 
+  if (wp->w_buffer != curbuf) {
+    reset_VIsual_and_resel();
+  } else if (VIsual_active) {
+    wp->w_cursor = curwin->w_cursor;
+  }
+
   win_enter(wp, true);
   redraw_later(curwin, NOT_VALID);
   redraw_later(wp, NOT_VALID);
