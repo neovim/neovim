@@ -276,4 +276,26 @@ describe("API: set highlight", function()
     eq('Test_hl3       xxx guifg=bLue guibg=reD',
       exec_capture('highlight Test_hl3'))
   end)
+
+  it ("can modify a highlight in the global namespace", function()
+    meths.set_hl(0, 'Test_hl3', { bg = 'red', fg = 'blue'})
+    eq('Test_hl3       xxx guifg=blue guibg=red',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { bg = 'red' })
+    eq('Test_hl3       xxx guibg=red',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { ctermbg = 9, ctermfg = 12})
+    eq('Test_hl3       xxx ctermfg=12 ctermbg=9',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { ctermbg = 9 })
+    eq('Test_hl3       xxx ctermbg=9',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', {})
+    eq('Test_hl3       xxx cleared',
+      exec_capture('highlight Test_hl3'))
+  end)
 end)
