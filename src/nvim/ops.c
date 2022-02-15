@@ -568,21 +568,18 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     }
 
     if (spaces > 0) {
-      int off;
-
-      // Avoid starting halfway through a multi-byte character.
-      if (b_insert) {
-        off = utf_head_off(oldp, oldp + offset + spaces);
-      } else {
-        off = mb_off_next(oldp, oldp + offset);
-        offset += off;
-      }
-      spaces -= off;
-      count -= off;
+      // avoid copying part of a multi-byte character
+      offset -= utf_head_off(oldp, oldp + offset);
+    }
+    if (spaces < 0) {  // can happen when the cursor was moved
+      spaces = 0;
     }
 
     assert(count >= 0);
-    newp = (char_u *)xmalloc(STRLEN(oldp) + s_len + (size_t)count + 1);
+    // Make sure the allocated size matches what is actually copied below.
+    newp = xmalloc(STRLEN(oldp) + (size_t)spaces + s_len
+                   + (spaces > 0 && !bdp->is_short ? (size_t)p_ts - (size_t)spaces : 0)
+                   + (size_t)count + 1);
 
     // copy up to shifted part
     memmove(newp, oldp, (size_t)offset);
@@ -597,14 +594,19 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     offset += (int)s_len;
 
     int skipped = 0;
-    if (spaces && !bdp->is_short) {
-      // insert post-padding
-      memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
-      // We're splitting a TAB, don't copy it.
-      oldp++;
-      // We allowed for that TAB, remember this now
-      count++;
-      skipped = 1;
+    if (spaces > 0 && !bdp->is_short) {
+      if (*oldp == TAB) {
+        // insert post-padding
+        memset(newp + offset + spaces, ' ', (size_t)(p_ts - spaces));
+        // We're splitting a TAB, don't copy it.
+        oldp++;
+        // We allowed for that TAB, remember this now
+        count++;
+        skipped = 1;
+      } else {
+        // Not a TAB, no extra spaces
+        count = spaces;
+      }
     }
 
     if (spaces > 0) {
@@ -2278,6 +2280,7 @@ void op_insert(oparg_T *oap, long count1)
   }
 
   t1 = oap->start;
+  const pos_T start_insert = curwin->w_cursor;
   (void)edit(NUL, false, (linenr_T)count1);
 
   // When a tab was inserted, and the characters in front of the tab
@@ -2315,26 +2318,30 @@ void op_insert(oparg_T *oap, long count1)
     if (oap->start.lnum == curbuf->b_op_start_orig.lnum
         && !bd.is_MAX
         && !did_indent) {
-      if (oap->op_type == OP_INSERT
-          && oap->start.col + oap->start.coladd
-          != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
-        int t = getviscol2(curbuf->b_op_start_orig.col,
-                           curbuf->b_op_start_orig.coladd);
-        oap->start.col = curbuf->b_op_start_orig.col;
-        pre_textlen -= t - oap->start_vcol;
-        oap->start_vcol = t;
-      } else if (oap->op_type == OP_APPEND
-                 && oap->end.col + oap->end.coladd
-                 >= curbuf->b_op_start_orig.col
-                 + curbuf->b_op_start_orig.coladd) {
-        int t = getviscol2(curbuf->b_op_start_orig.col,
-                           curbuf->b_op_start_orig.coladd);
-        oap->start.col = curbuf->b_op_start_orig.col;
+      const int t = getviscol2(curbuf->b_op_start_orig.col, curbuf->b_op_start_orig.coladd);
+
+      if (!bd.is_MAX) {
+        if (oap->op_type == OP_INSERT
+            && oap->start.col + oap->start.coladd
+            != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
+          oap->start.col = curbuf->b_op_start_orig.col;
+          pre_textlen -= t - oap->start_vcol;
+          oap->start_vcol = t;
+        } else if (oap->op_type == OP_APPEND
+                   && oap->start.col + oap->start.coladd
+                   >= curbuf->b_op_start_orig.col
+                   + curbuf->b_op_start_orig.coladd) {
+          oap->start.col = curbuf->b_op_start_orig.col;
+          // reset pre_textlen to the value of OP_INSERT
+          pre_textlen += bd.textlen;
+          pre_textlen -= t - oap->start_vcol;
+          oap->start_vcol = t;
+          oap->op_type = OP_INSERT;
+        }
+      } else if (bd.is_MAX && oap->op_type == OP_APPEND) {
         // reset pre_textlen to the value of OP_INSERT
         pre_textlen += bd.textlen;
         pre_textlen -= t - oap->start_vcol;
-        oap->start_vcol = t;
-        oap->op_type = OP_INSERT;
       }
     }
 
@@ -2376,15 +2383,27 @@ void op_insert(oparg_T *oap, long count1)
     firstline = ml_get(oap->start.lnum);
     const size_t len = STRLEN(firstline);
     colnr_T add = bd.textcol;
+    colnr_T offset = 0;  // offset when cursor was moved in insert mode
     if (oap->op_type == OP_APPEND) {
       add += bd.textlen;
+      // account for pressing cursor in insert mode when '$' was used
+      if (bd.is_MAX && start_insert.lnum == Insstart.lnum && start_insert.col > Insstart.col) {
+        offset = start_insert.col - Insstart.col;
+        add -= offset;
+        if (oap->end_vcol > offset) {
+          oap->end_vcol -= offset + 1;
+        } else {
+          // moved outside of the visual block, what to do?
+          return;
+        }
+      }
     }
     if ((size_t)add > len) {
       firstline += len;  // short line, point to the NUL
     } else {
       firstline += add;
     }
-    ins_len = (long)STRLEN(firstline) - pre_textlen;
+    ins_len = (long)STRLEN(firstline) - pre_textlen - offset;
     if (pre_textlen >= 0 && ins_len > 0) {
       ins_text = vim_strnsave(firstline, (size_t)ins_len);
       // block handled here
