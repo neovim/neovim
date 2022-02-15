@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, insert, eval, tabpage = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
@@ -73,8 +74,7 @@ describe('API/win', function()
       eq('typing\n  some dumb text', curbuf_contents())
     end)
 
-    it('does not leak memory when using invalid window ID with invalid pos',
-    function()
+    it('does not leak memory when using invalid window ID with invalid pos', function()
       eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
@@ -147,6 +147,46 @@ describe('API/win', function()
       eq({2, 5}, window('get_cursor', win))
     end)
 
+    it('updates cursorline and statusline ruler in non-current window', function()
+      local screen = Screen.new(60, 8)
+      screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+        [2] = {background = Screen.colors.Grey90},  -- CursorLine
+        [3] = {bold = true, reverse = true},  -- StatusLine
+        [4] = {reverse = true},  -- VertSplit, StatusLineNC
+      })
+      screen:attach()
+      command('set ruler')
+      command('set cursorline')
+      insert([[
+        aaa
+        bbb
+        ccc
+        ddd]])
+      local oldwin = curwin()
+      command('vsplit')
+      screen:expect([[
+        aaa                           {4:│}aaa                          |
+        bbb                           {4:│}bbb                          |
+        ccc                           {4:│}ccc                          |
+        {2:dd^d                           }{4:│}{2:ddd                          }|
+        {1:~                             }{4:│}{1:~                            }|
+        {1:~                             }{4:│}{1:~                            }|
+        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
+                                                                    |
+      ]])
+      window('set_cursor', oldwin, {1, 0})
+      screen:expect([[
+        aaa                           {4:│}{2:aaa                          }|
+        bbb                           {4:│}bbb                          |
+        ccc                           {4:│}ccc                          |
+        {2:dd^d                           }{4:│}ddd                          |
+        {1:~                             }{4:│}{1:~                            }|
+        {1:~                             }{4:│}{1:~                            }|
+        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
+                                                                    |
+      ]])
+    end)
   end)
 
   describe('{get,set}_height', function()
