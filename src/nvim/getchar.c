@@ -2679,8 +2679,7 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
     mapargs->orig_rhs_len = 0;
     // stores <lua>ref_no<cr> in map_str
     mapargs->rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "%c%c%c%d\r", K_SPECIAL,
-                                            (char_u)KEY2TERMCAP0(K_LUA), KEY2TERMCAP1(K_LUA),
-                                            rhs_lua);
+                                            (char_u)KS_EXTRA, KE_LUA, rhs_lua);
     mapargs->rhs = vim_strsave((char_u *)tmp_buf);
   }
 
@@ -3484,7 +3483,7 @@ static void showmap(mapblock_T *mp, bool local)
     char msg[100];
     snprintf(msg, sizeof(msg), "<Lua function %d>", mp->m_luaref);
     msg_puts_attr(msg, HL_ATTR(HLF_8));
-  } else if (mp->m_str == NULL) {
+  } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
     // Remove escaping of K_SPECIAL, because "m_str" is in a format to be used
