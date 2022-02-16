@@ -3483,7 +3483,7 @@ static void showmap(mapblock_T *mp, bool local)
     char msg[100];
     snprintf(msg, sizeof(msg), "<Lua function %d>", mp->m_luaref);
     msg_puts_attr(msg, HL_ATTR(HLF_8));
-  } else if (mp->m_str == NULL) {
+  } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
     // Remove escaping of K_SPECIAL, because "m_str" is in a format to be used
