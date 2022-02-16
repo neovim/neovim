@@ -801,12 +801,10 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut' or name == 'github')
-  local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
-  local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
+  assert(any or name == 'sourcehut' or name == 'github')
   local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  return tr or av or sh or gh
+  return sh or gh
 
 end
 
