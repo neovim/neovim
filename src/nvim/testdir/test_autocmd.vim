@@ -1827,6 +1827,14 @@ func Test_autocommand_all_events()
   call assert_fails('au * x bwipe', 'E1155:')
 endfunc
 
+func Test_autocmd_user()
+  au User MyEvent let s:res = [expand("<afile>"), expand("<amatch>")]
+  doautocmd User MyEvent
+  call assert_equal(['MyEvent', 'MyEvent'], s:res)
+  au! User
+  unlet s:res
+endfunc
+
 function s:Before_test_dirchanged()
   augroup test_dirchanged
     autocmd!
@@ -1850,11 +1858,11 @@ endfunc
 
 function Test_dirchanged_global()
   call s:Before_test_dirchanged()
-  autocmd test_dirchanged DirChangedPre global call add(s:li, "pre cd " .. v:event.directory)
+  autocmd test_dirchanged DirChangedPre global call add(s:li, expand("<amatch>") .. " pre cd " .. v:event.directory)
   autocmd test_dirchanged DirChanged global call add(s:li, "cd:")
   autocmd test_dirchanged DirChanged global call add(s:li, expand("<afile>"))
   call chdir(s:dir_foo)
-  let expected = ["pre cd " .. s:dir_foo, "cd:", s:dir_foo]
+  let expected = ["global pre cd " .. s:dir_foo, "cd:", s:dir_foo]
   call assert_equal(expected, s:li)
   call chdir(s:dir_foo)
   call assert_equal(expected, s:li)

@@ -1523,7 +1523,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
         || event == EVENT_QUICKFIXCMDPOST || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_REMOTEREPLY || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX || event == EVENT_SIGNAL
-        || event == EVENT_TABCLOSED || event == EVENT_WINCLOSED) {
+        || event == EVENT_TABCLOSED || event == EVENT_USER
+        || event == EVENT_WINCLOSED) {
       fname = vim_strsave(fname);
     } else {
       fname = (char_u *)FullName_save((char *)fname, false);
