@@ -139,13 +139,6 @@ func Test_p_with_count_leaves_mark_at_end()
 endfunc
 
 func Test_very_large_count()
-  " FIXME: should actually check if sizeof(int) == sizeof(long)
-  CheckNotMSWindows
-
-  if v:numbersize != 64
-    throw 'Skipped: only works with 64 bit numbers'
-  endif
-
   new
   let @" = 'x'
   call assert_fails('norm 44444444444444p', 'E1240:')
