@@ -1004,20 +1004,9 @@ int ins_char_typebuf(int c, int modifier)
     buf[len + 2] = (char_u)K_THIRD(c);
     buf[len + 3] = NUL;
   } else {
-    char_u *p = buf + len;
-    int char_len = utf_char2bytes(c, p);
-    len += char_len;
-    // If the character contains K_SPECIAL bytes they need escaping.
-    for (int i = char_len; --i >= 0; p++) {
-      if ((uint8_t)(*p) == K_SPECIAL) {
-        memmove(p + 3, p + 1, (size_t)i);
-        *p++ = K_SPECIAL;
-        *p++ = KS_SPECIAL;
-        *p = KE_FILLER;
-        len += 2;
-      }
-    }
-    *p = NUL;
+    char_u *end = add_char2buf(c, buf + len);
+    *end = NUL;
+    len = (int)(end - buf);
   }
   (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
   return len;
