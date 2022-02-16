@@ -890,6 +890,11 @@ n  asdf1         qwert
                  do the one thing]],
        helpers.exec_capture('filter the nmap'))
   end)
+
+  it ('shows <nop> as map rhs', function()
+    meths.set_keymap('n', 'asdf', '<nop>', {})
+    eq('\nn  asdf          <Nop>', helpers.exec_capture('nmap asdf'))
+  end)
 end)
 
 describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
@@ -1049,10 +1054,5 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua[[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
-  end)
-
-  it ('shows <nop> as map rhs', function()
-    meths.set_keymap('n', 'asdf', '<nop>', {})
-    eq('\nn  asdf          <Nop>', helpers.exec_capture('nmap asdf'))
   end)
 end)
