@@ -102,7 +102,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 `vim-patch` token). See LICENSE for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
-    encouraged to make a donation for needy children in Uganda.  Please see the
+    encouraged to make a donation for needy children.  Please see the
     kcc section of the vim docs or visit the ICCF web site, available at these URLs:
 
             http://iccf-holland.org/
@@ -110,7 +110,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
             http://www.iccf.nl/
 
     You can also sponsor the development of Vim.  Vim sponsors can vote for
-    features.  The money goes to Uganda anyway.
+    features.  The money goes to needy children anyway.
 
 [license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803
 [nvim-features]: https://neovim.io/doc/user/vim_diff.html#nvim-features
