@@ -497,8 +497,12 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
-  do_in_runtimepath((char_u *)(name.size ? name.data : ""),
-                    flags, find_runtime_cb, &rv);
+  TRY_WRAP({
+    try_start();
+    do_in_runtimepath((char_u *)(name.size ? name.data : ""),
+                      flags, find_runtime_cb, &rv);
+    try_end(err);
+  });
   return rv;
 }
 
