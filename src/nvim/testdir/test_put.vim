@@ -138,7 +138,10 @@ func Test_p_with_count_leaves_mark_at_end()
   bwipe!
 endfunc
 
-func Test_very_larg_count()
+func Test_very_large_count()
+  " FIXME: should actually check if sizeof(int) == sizeof(long)
+  CheckNotMSWindows
+
   new
   let @" = 'x'
   call assert_fails('norm 44444444444444p', 'E1240:')
