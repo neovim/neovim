@@ -3519,6 +3519,7 @@ static void showmap(mapblock_T *mp, bool local)
   if (p_verbose > 0) {
     last_set_msg(mp->m_script_ctx);
   }
+  msg_clr_eos();
   ui_flush();                          // show one line at a time
 }
 
