@@ -3431,12 +3431,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
       do {
-        const long multlen = count * yanklen;
+        const double multlen = (double)count * (double)yanklen;
 
-        totlen = (size_t)(int)multlen;
-        if (count != 0 && yanklen != 0
-            && (totlen != (size_t)multlen || (long)totlen / count != yanklen
-                || (long)totlen / yanklen != count)) {
+        totlen = (size_t)(int)(count * yanklen);
+        if ((double)totlen != multlen) {
           emsg(_(e_resulting_text_too_long));
           break;
         } else if (totlen > 0) {
