@@ -836,7 +836,7 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     ADD(a, INTEGER_OBJ((int)rc_id));
     ADD(a, ARRAY_OBJ(args));
     String s = cstr_to_string("return vim._cs_remote(...)");
-    Object o = executor_exec_lua_api(s, a, &err);
+    Object o = nlua_exec(s, a, &err);
     api_free_string(s);
     api_free_array(a);
 
@@ -859,7 +859,7 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     }
 
     if (should_exit) {
-      mch_exit(0);
+      os_exit(0);
     } else {
       if (tabbed) {
         params->window_count = files;
