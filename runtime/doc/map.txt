@@ -153,8 +153,8 @@ type "a", then "bar" will get inserted.
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
 
-"<buffer>", "<nowait>", "<silent>", "<script>", "<expr>" and
-"<unique>" can be used in any order.  They must appear right after the
+"<buffer>", "<nowait>", "<silent>", "<script>", "<expr>",
+"<unique>", "<desc>" can be used in any order.  They must appear right after the
 command, before any other arguments.
 
 			*:map-local* *:map-<buffer>* *:map-buffer* *E224* *E225*
@@ -198,6 +198,18 @@ the executed command are still given though.  To shut them up too, add a
 Prompts will still be given, e.g., for inputdialog().
 Using "<silent>" for an abbreviation is possible, but will cause redrawing of
 the command line to fail.
+
+						*:map-<desc>* *:map-desc*
+"<desc>" can be used provide a description for mappings. Example: >
+	:map <desc=Save all files and quit nvim> <leader>q <Cmd>wqa<CR>
+Text between `<desc=` & `>` will be used as description.
+`>` can be used inside description by escaping it with `\`. Because `\`
+is the escape charecter it also needs to be escaped. A lone `\` is just
+ignored. So >
+	:map <desc=escape \> with \\> abc cba
+Is a valid way to set description and the description becomes "escape > with \".
+If a description is given during map creation it'll shown while listing
+mappings.
 
 						*:map-<script>* *:map-script*
 If the first argument to one of these commands is "<script>" and it is used to
@@ -502,9 +514,7 @@ Note: When using mappings for Visual mode, you can use the "'<" mark, which
 is the start of the last selected Visual area in the current buffer |'<|.
 
 The |:filter| command can be used to select what mappings to list.  The
-pattern is matched against the {lhs} and {rhs} in the raw form.  If a
-description was added using |nvim_set_keymap()| or |nvim_buf_set_keymap()|
-then the pattern is also matched against it.
+pattern is matched against the {lhs}, {rhs} and <desc> in the raw form.
 
 							*:map-verbose*
 When 'verbose' is non-zero, listing a key map will also display where it was

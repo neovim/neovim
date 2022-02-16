@@ -2757,6 +2757,27 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
       parsed_args.unique = true;
       continue;
     }
+
+    if (STRNCMP(to_parse, "<desc=", 6) == 0) {
+      const char_u *p = to_parse + 6;
+      garray_T ga = GA_INIT(sizeof(char), 20);
+      while (*p != '>' && *p != NUL) {
+        if (*p == '\\') {
+          p++;  // skip escape char
+        }
+        ga_append(&ga, (char)(*p));
+        p++;
+      }
+      if (*p == NUL || p == to_parse + 6) {
+        // Unfinished description. Try it as lhs.
+        ga_clear(&ga);
+        break;
+      }
+      ga_append(&ga, NUL);
+      parsed_args.desc = (char *)ga.ga_data;
+      to_parse = skipwhite(p + 1);
+      continue;
+    }
     break;
   }
 
@@ -3226,6 +3247,7 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 free_and_return:
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
+  xfree(parsed_args.desc);
   return result;
 }
 

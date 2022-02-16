@@ -25,4 +25,22 @@ describe(':*map', function()
     feed('i-<M-">-')
     expect('-foo-')
   end)
+
+  it('can create maps with description', function()
+    command('nnoremap <silent><desc=Some interesting map> asdf <Nop>')
+    eq([[
+
+n  asdf        * <Nop>
+                 Some interesting map]],
+       helpers.exec_capture('nnoremap asdf'))
+  end)
+
+  it('accepts escaped > in map-description', function()
+    command([[nnoremap <silent><desc=escape \> with \\> asdf <Nop>]])
+    eq([[
+
+n  asdf        * <Nop>
+                 escape > with \]],
+       helpers.exec_capture('nnoremap asdf'))
+  end)
 end)
