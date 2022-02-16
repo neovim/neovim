@@ -1584,7 +1584,7 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                     {rhs}   Right-hand-side |{rhs}| of the mapping.
                     {opts}  Optional parameters map. Accepts all
                             |:map-arguments| as keys excluding |<buffer>| but
-                            including |noremap| and "desc". |desc| can be used
+                            including |noremap| and "desc". "desc" can be used
                             to give a description to keymap. When called from
                             Lua, also accepts a "callback" key that takes a
                             Lua function to call when the mapping is executed.
