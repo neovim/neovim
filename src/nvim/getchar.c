@@ -1949,8 +1949,10 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     // expression.  Also save and restore the command line
     // for "normal :".
     if (mp->m_expr) {
-      int save_vgetc_busy = vgetc_busy;
+      const int save_vgetc_busy = vgetc_busy;
       const bool save_may_garbage_collect = may_garbage_collect;
+      const int save_cursor_row = ui_current_row();
+      const int save_cursor_col = ui_current_col();
 
       vgetc_busy = 0;
       may_garbage_collect = false;
@@ -1960,6 +1962,12 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
         save_m_str = vim_strsave(mp->m_str);
       }
       map_str = eval_map_expr(mp, NUL);
+
+      // The mapping may do anything, but we expect it to take care of
+      // redrawing.  Do put the cursor back where it was.
+      ui_cursor_goto(save_cursor_row, save_cursor_col);
+      ui_flush();
+
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
     } else {

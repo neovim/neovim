@@ -1,6 +1,8 @@
 " Tests for mappings and abbreviations
 
 source shared.vim
+source check.vim
+source screendump.vim
 
 func Test_abbreviation()
   " abbreviation with 0x80 should work
@@ -449,6 +451,36 @@ func Test_expr_map_gets_cursor()
   delfunc StoreColumn
   nunmap x
   nunmap !
+endfunc
+
+func Test_expr_map_restore_cursor()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['one', 'two', 'three'])
+      2
+      set ls=2
+      hi! link StatusLine ErrorMsg
+      noremap <expr> <C-B> Func()
+      func Func()
+	  let g:on = !get(g:, 'on', 0)
+	  redraws
+	  return ''
+      endfunc
+      func Status()
+	  return get(g:, 'on', 0) ? '[on]' : ''
+      endfunc
+      set stl=%{Status()}
+  END
+  call writefile(lines, 'XtestExprMap')
+  let buf = RunVimInTerminal('-S XtestExprMap', #{rows: 10})
+  call term_wait(buf)
+  call term_sendkeys(buf, "\<C-B>")
+  call VerifyScreenDump(buf, 'Test_map_expr_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestExprMap')
 endfunc
 
 " Test for mapping errors
