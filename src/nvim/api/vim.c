@@ -1584,7 +1584,7 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map. Accepts all |:map-arguments|
 ///               as keys excluding |<buffer>| but including |noremap| and "desc".
-///               |desc| can be used to give a description to keymap.
+///               "desc" can be used to give a description to keymap.
 ///               When called from Lua, also accepts a "callback" key that takes
 ///               a Lua function to call when the mapping is executed.
 ///               Values are Booleans. Unknown key is an error.

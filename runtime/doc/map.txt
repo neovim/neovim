@@ -502,7 +502,9 @@ Note: When using mappings for Visual mode, you can use the "'<" mark, which
 is the start of the last selected Visual area in the current buffer |'<|.
 
 The |:filter| command can be used to select what mappings to list.  The
-pattern is matched against the {lhs}, {rhs} and {desc} in the raw form.
+pattern is matched against the {lhs} and {rhs} in the raw form.  If a
+description was added using |nvim_set_keymap()| or |nvim_buf_set_keymap()|
+then the pattern is also matched against it.
 
 							*:map-verbose*
 When 'verbose' is non-zero, listing a key map will also display where it was
