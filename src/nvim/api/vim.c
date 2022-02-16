@@ -128,8 +128,15 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///              to set a highlight group in the global (`:highlight`)
 ///              namespace.
 /// @param name highlight group name, like ErrorMsg
-/// @param val highlight definition map, like |nvim_get_hl_by_name|.
-///            in addition the following keys are also recognized:
+/// @param val highlight definition map
+///            The following keys are recognized:
+///              `fg`     : sets the forground of gui color
+///              `bg`     : sets the background of gui color
+///              `{bold,italic,undercurl,
+///                 underline,strikethrough,reverse}`:
+///                         sets the specified attribute to `true`
+///                         or `false`
+///              `sp`     : sets the sp color for gui
 ///              `default`: don't override existing definition,
 ///                         like `hi default`
 ///              `ctermfg`: sets foreground of cterm color
