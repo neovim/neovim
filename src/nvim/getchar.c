@@ -3433,8 +3433,8 @@ static void showmap(mapblock_T *mp, bool local)
 {
   size_t len = 1;
 
-  if (message_filtered(mp->m_keys)
-      && mp->m_str != NULL && message_filtered(mp->m_str)) {
+  if (message_filtered(mp->m_keys) && message_filtered(mp->m_str)
+      && (mp->m_desc == NULL || message_filtered((char_u *)mp->m_desc))) {
     return;
   }
 

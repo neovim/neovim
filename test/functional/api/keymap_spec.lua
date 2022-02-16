@@ -877,6 +877,19 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq("\nn  lhs           rhs\n                 map description",
        helpers.exec_capture("nmap lhs"))
   end)
+
+  it ('can :filter maps based on description', function()
+    meths.set_keymap('n', 'asdf1', 'qwert', {desc='do the one thing'})
+    meths.set_keymap('n', 'asdf2', 'qwert', {desc='doesnot really do anything'})
+    meths.set_keymap('n', 'asdf3', 'qwert', {desc='do the other thing'})
+    eq([[
+
+n  asdf3         qwert
+                 do the other thing
+n  asdf1         qwert
+                 do the one thing]],
+       helpers.exec_capture('filter the nmap'))
+  end)
 end)
 
 describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
