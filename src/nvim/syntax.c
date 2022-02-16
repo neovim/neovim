@@ -8859,6 +8859,22 @@ RgbValue name_to_color(const char *name)
   return -1;
 }
 
+int name_to_ctermcolor(const char *name)
+{
+  int i;
+  int off = TOUPPER_ASC(*name);
+  for (i = ARRAY_SIZE(color_names); --i >= 0;) {
+    if (off == color_names[i][0]
+        && STRICMP(name+1, color_names[i]+1) == 0) {
+      break;
+    }
+  }
+  if (i < 0) {
+    return -1;
+  }
+  TriState bold = kNone;
+  return lookup_color(i, false, &bold);
+}
 
 /**************************************
 *  End of Highlighting stuff          *
