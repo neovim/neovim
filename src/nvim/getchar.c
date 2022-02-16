@@ -1953,6 +1953,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       const bool save_may_garbage_collect = may_garbage_collect;
       const int save_cursor_row = ui_current_row();
       const int save_cursor_col = ui_current_col();
+      const int prev_did_emsg = did_emsg;
 
       vgetc_busy = 0;
       may_garbage_collect = false;
@@ -1967,6 +1968,26 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       // redrawing.  Do put the cursor back where it was.
       ui_cursor_goto(save_cursor_row, save_cursor_col);
       ui_flush();
+
+      // If an error was displayed and the expression returns an empty
+      // string, generate a <Nop> to allow for a redraw.
+      if (prev_did_emsg != did_emsg && (map_str == NULL || *map_str == NUL)) {
+        char_u buf[4];
+        xfree(map_str);
+        buf[0] = K_SPECIAL;
+        buf[1] = KS_EXTRA;
+        buf[2] = KE_IGNORE;
+        buf[3] = NUL;
+        map_str = vim_strsave(buf);
+        if (State & CMDLINE) {
+          // redraw the command below the error
+          msg_didout = true;
+          if (msg_row < cmdline_row) {
+            msg_row = cmdline_row;
+          }
+          redrawcmd();
+        }
+      }
 
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;

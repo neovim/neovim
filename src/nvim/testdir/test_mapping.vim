@@ -483,6 +483,38 @@ func Test_expr_map_restore_cursor()
   call delete('XtestExprMap')
 endfunc
 
+func Test_expr_map_error()
+  CheckScreendump
+
+  let lines =<< trim END
+      func Func()
+        throw 'test'
+        return ''
+      endfunc
+
+      nnoremap <expr> <F2> Func()
+      cnoremap <expr> <F2> Func()
+
+      call test_override('ui_delay', 10)
+  END
+  call writefile(lines, 'XtestExprMap')
+  let buf = RunVimInTerminal('-S XtestExprMap', #{rows: 10})
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<F2>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<CR>")
+  call VerifyScreenDump(buf, 'Test_map_expr_2', {})
+
+  call term_sendkeys(buf, ":abc\<F2>")
+  call VerifyScreenDump(buf, 'Test_map_expr_3', {})
+  call term_sendkeys(buf, "\<Esc>0")
+  call VerifyScreenDump(buf, 'Test_map_expr_4', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestExprMap')
+endfunc
+
 " Test for mapping errors
 func Test_map_error()
   call assert_fails('unmap', 'E474:')
