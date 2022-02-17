@@ -212,7 +212,7 @@ func Test_digraphs()
   call Put_Dig("el")
   call assert_equal(['␀', 'ü', '∞', 'l'], getline(line('.')-3,line('.')))
   call assert_fails('digraph xy z', 'E39:')
-  call assert_fails('digraph x', 'E474:')
+  call assert_fails('digraph x', 'E1214:')
   bw!
 endfunc
 
@@ -505,4 +505,82 @@ func Test_entering_digraph()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_setdigraph_function()
+  new
+  call setdigraph('aa', 'あ')
+  call Put_Dig('aa')
+  call assert_equal('あ', getline('$'))
+  call setdigraph(' i', 'い')
+  call Put_Dig(' i')
+  call assert_equal('い', getline('$'))
+  call setdigraph('  ', 'う')
+  call Put_Dig('  ')
+  call assert_equal('う', getline('$'))
+
+  eval 'aa'->setdigraph('え')
+  call Put_Dig('aa')
+  call assert_equal('え', getline('$'))
+
+  call assert_fails('call setdigraph("aaa", "あ")', 'E1214: Digraph must be just two characters: aaa')
+  call assert_fails('call setdigraph("b", "あ")', 'E1214: Digraph must be just two characters: b')
+  call assert_fails('call setdigraph("あ", "あ")', 'E1214: Digraph must be just two characters: あ')
+  call assert_fails('call setdigraph("aa", "ああ")', 'E1215: Digraph must be one character: ああ')
+  call assert_fails('call setdigraph("aa", "か" .. nr2char(0x3099))',  'E1215: Digraph must be one character: か' .. nr2char(0x3099))
+  bwipe!
+endfunc
+
+func Test_getdigraph_function()
+  " Built-in digraphs
+  call assert_equal('∞', getdigraph('00'))
+
+  " User-defined digraphs
+  call setdigraph('aa', 'あ')
+  call setdigraph(' i', 'い')
+  call setdigraph('  ', 'う')
+  call assert_equal('あ', getdigraph('aa'))
+  call assert_equal('あ', 'aa'->getdigraph())
+  call assert_equal('い', getdigraph(' i'))
+  call assert_equal('う', getdigraph('  '))
+  call assert_fails('call getdigraph("aaa")', 'E1214: Digraph must be just two characters: aaa')
+  call assert_fails('call getdigraph("b")', 'E1214: Digraph must be just two characters: b')
+endfunc
+
+func Test_getdigraph_function_encode()
+  throw 'Skipped: Nvim does not support setting encoding=japan'
+  CheckFeature iconv
+  let testcases = {
+        \'00': '∞',
+        \'aa': 'あ',
+        \}
+  for [key, ch] in items(testcases)
+    call setdigraph(key, ch)
+    set encoding=japan
+    call assert_equal(iconv(ch, 'utf-8', 'japan'), getdigraph(key))
+    set encoding&
+  endfor
+endfunc
+
+func Test_setdigraphlist_function()
+  call setdigraphlist([['aa', 'き'], ['bb', 'く']])
+  call assert_equal('き', getdigraph('aa'))
+  call assert_equal('く', getdigraph('bb'))
+
+  call assert_fails('call setdigraphlist([[]])', 'E1216:')
+  call assert_fails('call setdigraphlist([["aa", "b", "cc"]])', '1216:')
+  call assert_fails('call setdigraphlist([["あ", "あ"]])', 'E1214: Digraph must be just two characters: あ')
+endfunc
+
+func Test_getdigraphlist_function()
+  " Make sure user-defined digraphs are defined
+  call setdigraphlist([['aa', 'き'], ['bb', 'く']])
+
+  for pair in getdigraphlist(1)
+    call assert_equal(getdigraph(pair[0]), pair[1])
+  endfor
+
+  " We don't know how many digraphs are registered before, so check the number
+  " of digraphs returned.
+  call assert_equal(getdigraphlist()->len(), getdigraphlist(0)->len())
+  call assert_notequal((getdigraphlist()->len()), getdigraphlist(1)->len())
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab
