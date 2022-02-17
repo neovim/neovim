@@ -5696,7 +5696,9 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
       // When appending, copy the previous line and free it after.
       size_t extra = append ? STRLEN(pp[--lnum]) : 0;
       char_u *s = xmallocz(line_len + extra);
-      memcpy(s, pp[lnum], extra);
+      if (extra > 0) {
+        memcpy(s, pp[lnum], extra);
+      }
       memcpy(s + extra, start, line_len);
       size_t s_len = extra + line_len;
 
