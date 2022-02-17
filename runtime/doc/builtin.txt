@@ -119,6 +119,10 @@ dictwatcherdel({dict}, {pattern}, {callback})
 did_filetype()			Number	|TRUE| if FileType autocommand event used
 diff_filler({lnum})		Number	diff filler lines about {lnum}
 diff_hlID({lnum}, {col})	Number	diff highlighting at {lnum}/{col}
+digraph_get({chars})		String	get the digraph of {chars}
+digraph_getlist([{listall}])	List	get all |digraph|s
+digraph_set({chars}, {digraph})	Boolean	register |digraph|
+digraph_setlist({digraphlist})	Boolean	register multiple |digraph|s
 empty({expr})			Number	|TRUE| if {expr} is empty
 environ()			Dict	return environment variables
 escape({string}, {chars})	String	escape {chars} in {string} with '\'
@@ -185,8 +189,6 @@ getcompletion({pat}, {type} [, {filtered}])
 getcurpos([{winnr}])		List	position of the cursor
 getcursorcharpos([{winnr}])	List	character position of the cursor
 getcwd([{winnr} [, {tabnr}]])	String	get the current working directory
-getdigraph({chars})		String	get the digraph of {chars}
-getdigraphlist([{listall}])	List	get all |digraph|s
 getenv({name})			String	return environment variable
 getfontname([{name}])		String	name of font being used
 getfperm({fname})		String	file permissions of file {fname}
@@ -404,8 +406,6 @@ setcharpos({expr}, {list})	Number	set the {expr} position to {list}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setcursorcharpos({list})	Number	move cursor to position in {list}
-setdigraph({chars}, {digraph})	Boolean  register |digraph|
-setdigraphlist({digraphlist})	Boolean  register multiple |digraph|s
 setenv({name}, {val})		none	set environment variable
 setfperm({fname}, {mode}	Number	set {fname} file permissions to {mode}
 setline({lnum}, {line})		Number	set line {lnum} to {line}
@@ -1640,6 +1640,84 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 
 		Can also be used as a |method|: >
 			GetLnum()->diff_hlID(col)
+<
+
+digraph_get({chars})					*digraph_get()* *E1214*
+		Return the digraph of {chars}.  This should be a string with
+		exactly two characters.  If {chars} are not just two
+		characters, or the digraph of {chars} does not exist, an error
+		is given and an empty string is returned.
+
+		Also see |digraph_getlist()|.
+
+		Examples: >
+		" Get a built-in digraph
+		:echo digraph_get('00')		" Returns '∞'
+
+		" Get a user-defined digraph
+		:call digraph_set('aa', 'あ')
+		:echo digraph_get('aa')		" Returns 'あ'
+<
+		Can also be used as a |method|: >
+			GetChars()->digraph_get()
+<
+
+digraph_getlist([{listall}])				*digraph_getlist()*
+		Return a list of digraphs.  If the {listall} argument is given
+		and it is TRUE, return all digraphs, including the default
+		digraphs.  Otherwise, return only user-defined digraphs.
+
+		Also see |digraph_get()|.
+
+		Examples: >
+		" Get user-defined digraphs
+		:echo digraph_getlist()
+
+		" Get all the digraphs, including default digraphs
+		:echo digraph_getlist(1)
+<
+		Can also be used as a |method|: >
+			GetNumber()->digraph_getlist()
+<
+
+digraph_set({chars}, {digraph})				*digraph_set()* *E1205*
+		Add digraph {chars} to the list.  {chars} must be a string
+		with two characters.  {digraph} is a string with one utf-8
+		encoded character. Be careful, composing characters are NOT
+		ignored.  This function is similar to |:digraphs| command, but
+		useful to add digraphs start with a white space.
+
+		The function result is v:true if |digraph| is registered.  If
+		this fails an error message is given and v:false is returned.
+
+		If you want to define multiple digraphs at once, you can use
+		|digraph_setlist()|.
+
+		Example: >
+			call digraph_set('  ', 'あ')
+<
+		Can be used as a |method|: >
+			GetString()->digraph_set('あ')
+<
+
+digraph_setlist({digraphlist})				*digraph_setlist()*
+		Similar to |digraph_set()| but this function can add multiple
+		digraphs at once.  {digraphlist} is a list composed of lists,
+		where each list contains two strings with {chars} and
+		{digraph} as in |digraph_set()|.
+		Example: >
+		    call digraph_setlist([['aa', 'あ'], ['ii', 'い']])
+<
+		It is similar to the following: >
+		    for [chars, digraph] in [['aa', 'あ'], ['ii', 'い']]
+			  call digraph_set(chars, digraph)
+		    endfor
+<		Except that the function returns after the first error,
+		following digraphs will not be added.
+
+		Can be used as a |method|: >
+		    GetList()->digraph_setlist()
+<
 
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
@@ -2895,45 +2973,6 @@ getcwd([{winnr} [, {tabnr}]])				*getcwd()*
 
 		Can also be used as a |method|: >
 			GetWinnr()->getcwd()
-<
-
-getdigraph({chars})				*getdigraph()* *E1214*
-		Return the digraph of {chars}.  This should be a string with
-		exactly two characters.  If {chars} are not just two
-		characters, or the digraph of {chars} does not exist, an error
-		is given and an empty string is returned.
-
-		Also see |getdigraphlist()|.
-
-		Examples: >
-		" Get a built-in digraph
-		:echo getdigraph('00')		" Returns '∞'
-
-		" Get a user-defined digraph
-		:call setdigraph('aa', 'あ')
-		:echo getdigraph('aa')		" Returns 'あ'
-<
-		Can also be used as a |method|: >
-			GetChars()->getdigraph()
-<
-
-getdigraphlist([{listall}])			*getdigraphlist()*
-		Return a list of digraphs.  If the {listall} argument is given
-		and it is TRUE, return all digraphs, including the default
-		digraphs.  Otherwise, return only user-defined digraphs.
-
-		Also see |getdigraph()|.
-
-		Examples: >
-		" Get user-defined digraphs
-		:echo getdigraphlist()
-
-		" Get all the digraphs, including default digraphs
-		:echo digraphlist(1)
-<
-		Can also be used as a |method|: >
-			GetNumber()->getdigraphlist()
-<
 
 getenv({name})						*getenv()*
 		Return the value of environment variable {name}.  The {name}
@@ -6776,46 +6815,6 @@ setcursorcharpos({list})
 
 		Can also be used as a |method|: >
 			GetCursorPos()->setcursorcharpos()
-
-
-setdigraph({chars}, {digraph})		*setdigraph()* *E1205*
-		Add digraph {chars} to the list.  {chars} must be a string
-		with two characters.  {digraph} is a string with one utf-8
-		encoded character. Be careful, composing characters are NOT
-		ignored.  This function is similar to |:digraphs| command, but
-		useful to add digraphs start with a white space.
-
-		The function result is v:true if |digraph| is registered.  If
-		this fails an error message is given and v:false is returned.
-
-		If you want to define multiple digraphs at once, you can use
-		|setdigraphlist()|.
-
-		Example: >
-			call setdigraph('  ', 'あ')
-<
-		Can be used as a |method|: >
-			GetString()->setdigraph('あ')
-<
-
-setdigraphlist({digraphlist})			*setdigraphlist()*
-		Similar to |setdigraph()| but this function can add multiple
-		digraphs at once.  {digraphlist} is a list composed of lists,
-		where each list contains two strings with {chars} and
-		{digraph} as in |setdigraph()|.
-		Example: >
-		    call setdigraphlist([['aa', 'あ'], ['ii', 'い']])
-<
-		It is similar to the following: >
-		    for [chars, digraph] in [['aa', 'あ'], ['ii', 'い']]
-			  call setdigraph(chars, digraph)
-		    endfor
-<		Except that the function returns after the first error,
-		following digraphs will not be added.
-
-		Can be used as a |method|: >
-		    GetList()->setdigraphlist()
-<
 
 setenv({name}, {val})						*setenv()*
 		Set environment variable {name} to {val}.  Example: >

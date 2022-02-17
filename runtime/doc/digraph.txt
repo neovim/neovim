@@ -37,7 +37,7 @@ An alternative is using the 'keymap' option.
 			future.
 			NOTE: This command cannot add a digraph that starts
 			with a white space.  If you want to add such digraph,
-			you can use |setdigraph()| instead.
+			you can use |digraph_set()| instead.
 
 Example of the output of ":digraphs": >
  TH Þ  222  ss ß  223  a! à  224  a' á  225  a> â  226  a? ã  227  a: ä  228

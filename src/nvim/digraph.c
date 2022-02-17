@@ -39,8 +39,8 @@ static char e_digraph_must_be_just_two_characters_str[]
     = N_("E1214: Digraph must be just two characters: %s");
 static char e_digraph_argument_must_be_one_character_str[]
     = N_("E1215: Digraph must be one character: %s");
-static char e_setdigraphlist_argument_must_be_list_of_lists_with_two_items[]
-    = N_("E1216: setdigraphlist() argument must be a list of lists with two items");
+static char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
+    = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "digraph.c.generated.h"
@@ -1465,7 +1465,7 @@ int do_digraph(int c)
     backspaced = -1;
   } else if (p_dg) {
     if (backspaced >= 0) {
-      c = getdigraph(backspaced, c, false);
+      c = digraph_get(backspaced, c, false);
     }
     backspaced = -1;
 
@@ -1537,7 +1537,7 @@ int get_digraph(bool cmdline)
 
     if (cc != ESC) {
       // ESC cancels CTRL-K
-      return getdigraph(c, cc, true);
+      return digraph_get(c, cc, true);
     }
   }
   return NUL;
@@ -1601,7 +1601,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
 /// @param meta_char
 ///
 /// @return The digraph.
-int getdigraph(int char1, int char2, bool meta_char)
+int digraph_get(int char1, int char2, bool meta_char)
 {
   int retval;
 
@@ -1729,7 +1729,7 @@ void listdigraphs(bool use_headers)
   }
 }
 
-static void getdigraphlist_appendpair(digr_T *dp, list_T *l)
+static void digraph_getlist_appendpair(digr_T *dp, list_T *l)
 {
   list_T *l2 = tv_list_alloc(2);
   tv_list_append_list(l, l2);
@@ -1746,7 +1746,7 @@ static void getdigraphlist_appendpair(digr_T *dp, list_T *l)
   tv_list_append_string(l2, (char *)buf, -1);
 }
 
-void getdigraphlist_common(bool list_all, typval_T *rettv)
+void digraph_getlist_common(bool list_all, typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, (int)sizeof(digraphdefault) + user_digraphs.ga_len);
 
@@ -1760,7 +1760,7 @@ void getdigraphlist_common(bool list_all, typval_T *rettv)
       tmp.char2 = dp->char2;
       tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
       if (tmp.result != 0 && tmp.result != tmp.char2) {
-        getdigraphlist_appendpair(&tmp, rettv->vval.v_list);
+        digraph_getlist_appendpair(&tmp, rettv->vval.v_list);
       }
       dp++;
     }
@@ -1768,7 +1768,7 @@ void getdigraphlist_common(bool list_all, typval_T *rettv)
 
   dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
-    getdigraphlist_appendpair(dp, rettv->vval.v_list);
+    digraph_getlist_appendpair(dp, rettv->vval.v_list);
     dp++;
   }
 }
@@ -1889,7 +1889,7 @@ static int get_digraph_chars(typval_T *arg, int *char1, int *char2)
   return FAIL;
 }
 
-static bool setdigraph_common(typval_T *argchars, typval_T *argdigraph)
+static bool digraph_set_common(typval_T *argchars, typval_T *argdigraph)
 {
   int char1, char2;
   if (get_digraph_chars(argchars, &char1, &char2) == FAIL) {
@@ -1912,8 +1912,8 @@ static bool setdigraph_common(typval_T *argchars, typval_T *argdigraph)
   return true;
 }
 
-/// "getdigraph()" function
-void f_getdigraph(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "digraph_get()" function
+void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;  // Return empty string for failure
@@ -1926,15 +1926,15 @@ void f_getdigraph(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     semsg(_(e_digraph_must_be_just_two_characters_str), digraphs);
     return;
   }
-  int code = getdigraph(digraphs[0], digraphs[1], false);
+  int code = digraph_get(digraphs[0], digraphs[1], false);
 
   char_u buf[NUMBUFLEN];
   buf[utf_char2bytes(code, buf)] = NUL;
   rettv->vval.v_string = vim_strsave(buf);
 }
 
-/// "getdigraphlist()" function
-void f_getdigraphlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "digraph_getlist()" function
+void f_digraph_getlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   bool flag_list_all;
 
@@ -1949,30 +1949,30 @@ void f_getdigraphlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     flag_list_all = flag != 0;
   }
 
-  getdigraphlist_common(flag_list_all, rettv);
+  digraph_getlist_common(flag_list_all, rettv);
 }
 
-/// "setdigraph()" function
-void f_setdigraph(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "digraph_set()" function
+void f_digraph_set(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;
 
-  if (!setdigraph_common(&argvars[0], &argvars[1])) {
+  if (!digraph_set_common(&argvars[0], &argvars[1])) {
     return;
   }
 
   rettv->vval.v_bool = kBoolVarTrue;
 }
 
-/// "setdigraphlist()" function
-void f_setdigraphlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "digraph_setlist()" function
+void f_digraph_setlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;
 
   if (argvars[0].v_type != VAR_LIST) {
-    emsg(_(e_setdigraphlist_argument_must_be_list_of_lists_with_two_items));
+    emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
     return;
   }
 
@@ -1985,18 +1985,18 @@ void f_setdigraphlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   TV_LIST_ITER_CONST(pl, pli, {
     if (TV_LIST_ITEM_TV(pli)->v_type != VAR_LIST) {
-      emsg(_(e_setdigraphlist_argument_must_be_list_of_lists_with_two_items));
+      emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
       return;
     }
 
     list_T *l = TV_LIST_ITEM_TV(pli)->vval.v_list;
     if (l == NULL || tv_list_len(l) != 2) {
-      emsg(_(e_setdigraphlist_argument_must_be_list_of_lists_with_two_items));
+      emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
       return;
     }
 
-    if (!setdigraph_common(TV_LIST_ITEM_TV(tv_list_first(l)),
-                           TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))))) {
+    if (!digraph_set_common(TV_LIST_ITEM_TV(tv_list_first(l)),
+                            TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))))) {
       return;
     }
   });

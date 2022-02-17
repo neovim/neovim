@@ -960,14 +960,14 @@ Window size and position:			*window-size-functions*
 	winrestview()		restore saved view of current window
 
 Mappings:				    *mapping-functions*
+	digraph_get()		get |digraph|
+	digraph_getlist()	get all |digraph|s
+	digraph_set()		register |digraph|
+	digraph_setlist()	register multiple |digraph|s
 	hasmapto()		check if a mapping exists
 	mapcheck()		check if a matching mapping exists
 	maparg()		get rhs of a mapping
 	wildmenumode()		check if the wildmode is active
-	getdigraph()		get |digraph|
-	getdigraphlist()	get all |digraph|s
-	setdigraph()		register |digraph|
-	setdigraphlist()	register multiple |digraph|s
 
 Signs:						*sign-functions*
 	sign_define()		define or update a sign
