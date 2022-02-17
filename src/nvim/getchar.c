@@ -3799,7 +3799,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
 #define MAPMODE(mode, modechars, chr, modeflags) \
   do { \
     if (strchr(modechars, chr) != NULL) { \
-      mode |= modeflags; \
+      (mode) |= (modeflags); \
     } \
   } while (0)
   MAPMODE(mode, modechars, 'n', MODE_NORMAL);

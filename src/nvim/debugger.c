@@ -444,7 +444,7 @@ bool dbg_check_skipped(exarg_T *eap)
 
 static garray_T dbg_breakp = { 0, 0, sizeof(struct debuggy), 4, NULL };
 #define BREAKP(idx)             (((struct debuggy *)dbg_breakp.ga_data)[idx])
-#define DEBUGGY(gap, idx)       (((struct debuggy *)gap->ga_data)[idx])
+#define DEBUGGY(gap, idx)       (((struct debuggy *)(gap)->ga_data)[idx])
 static int last_breakp = 0;     // nr of last defined breakpoint
 
 // Profiling uses file and func names similar to breakpoints.

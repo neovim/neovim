@@ -58,7 +58,7 @@
 
 #define ID_INCR (((uint64_t)1) << 2)
 
-#define rawkey(itr) (itr->node->key[itr->i])
+#define rawkey(itr) ((itr)->node->key[(itr)->i])
 
 static bool pos_leq(mtpos_t a, mtpos_t b)
 {

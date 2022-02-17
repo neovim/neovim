@@ -1931,13 +1931,13 @@ static void write_msg(String message, bool to_err)
   static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
 
 #define PUSH_CHAR(i, pos, line_buf, msg) \
-  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
-    line_buf[pos] = NUL; \
+  if (message.data[i] == NL || (pos) == LINE_BUFFER_SIZE - 1) { \
+    (line_buf)[pos] = NUL; \
     msg(line_buf); \
-    pos = 0; \
+    (pos) = 0; \
     continue; \
   } \
-  line_buf[pos++] = message.data[i];
+  (line_buf)[(pos)++] = message.data[i];
 
   no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {

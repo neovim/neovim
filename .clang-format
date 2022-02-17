@@ -45,6 +45,7 @@ IncludeCategories:
     Priority:        1
     SortPriority:    1
     CaseSensitive:   false
+AlignConsecutiveMacros: AcrossEmptyLines
 IndentPPDirectives: AfterHash
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 ForEachMacros:

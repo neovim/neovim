@@ -2195,11 +2195,11 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   linenr_T lnum;
   long nchars;
 #define SET_ERRMSG_NUM(num, msg) \
-  errnum = num, errmsg = msg, errmsgarg = 0
+  errnum = (num), errmsg = (msg), errmsgarg = 0
 #define SET_ERRMSG_ARG(msg, error) \
-  errnum = NULL, errmsg = msg, errmsgarg = error
+  errnum = NULL, errmsg = (msg), errmsgarg = error
 #define SET_ERRMSG(msg) \
-  errnum = NULL, errmsg = msg, errmsgarg = 0
+  errnum = NULL, errmsg = (msg), errmsgarg = 0
   const char *errnum = NULL;
   char *errmsg = NULL;
   int errmsgarg = 0;
