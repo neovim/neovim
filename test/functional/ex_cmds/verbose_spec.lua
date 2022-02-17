@@ -38,6 +38,13 @@ function Close_Window() abort\
   wincmd -\
 endfunction\
 ", false)
+
+local ret = vim.api.nvim_exec ("\
+function! s:return80()\
+  return 80\
+endfunction\
+let &tw = s:return80()\
+", true)
 ]])
     exec(':source '..script_file)
   end)
@@ -123,6 +130,14 @@ test_group  FileType
 	Last set from %s line 16
 1    wincmd -
    endfunction]],
+       script_location), result)
+  end)
+
+  it('"Last set" works with anonymous sid', function()
+    local result = exec_capture(':verbose set tw?')
+    eq(string.format([[
+  textwidth=80
+	Last set from %s line 22]],
        script_location), result)
   end)
 end)
