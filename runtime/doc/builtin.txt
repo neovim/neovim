@@ -1680,12 +1680,13 @@ digraph_getlist([{listall}])				*digraph_getlist()*
 			GetNumber()->digraph_getlist()
 <
 
-digraph_set({chars}, {digraph})				*digraph_set()* *E1205*
+digraph_set({chars}, {digraph})				*digraph_set()*
 		Add digraph {chars} to the list.  {chars} must be a string
-		with two characters.  {digraph} is a string with one utf-8
-		encoded character. Be careful, composing characters are NOT
-		ignored.  This function is similar to |:digraphs| command, but
-		useful to add digraphs start with a white space.
+		with two characters.  {digraph} is a string with one UTF-8
+		encoded character.  *E1215*
+		Be careful, composing characters are NOT ignored.  This
+		function is similar to |:digraphs| command, but useful to add
+		digraphs start with a white space.
 
 		The function result is v:true if |digraph| is registered.  If
 		this fails an error message is given and v:false is returned.
@@ -1704,7 +1705,7 @@ digraph_setlist({digraphlist})				*digraph_setlist()*
 		Similar to |digraph_set()| but this function can add multiple
 		digraphs at once.  {digraphlist} is a list composed of lists,
 		where each list contains two strings with {chars} and
-		{digraph} as in |digraph_set()|.
+		{digraph} as in |digraph_set()|. *E1216*
 		Example: >
 		    call digraph_setlist([['aa', 'あ'], ['ii', 'い']])
 <
