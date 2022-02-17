@@ -242,6 +242,12 @@ describe("API: set highlight", function()
     eq(highlight2_result, meths.get_hl_by_name('Test_hl', false))
   end)
 
+  it ("can set emtpy cterm attr", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', { cterm = {} })
+    eq({}, meths.get_hl_by_name('Test_hl', false))
+  end)
+
   it ("cterm attr defaults to gui attr", function()
     local ns = get_ns()
     meths.set_hl(ns, 'Test_hl', highlight1)
