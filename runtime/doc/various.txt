@@ -432,7 +432,7 @@ g8			Print the hex values of the bytes used in the
 			used.  In this example |:silent| is used to avoid the
 			message about reading the file and |:unsilent| to be
 			able to list the first line of each file. >
-    		:silent argdo unsilent echo expand('%') .. ": " .. getline(1)
+		:silent argdo unsilent echo expand('%') .. ": " .. getline(1)
 <
 
 						*:verb* *:verbose*
