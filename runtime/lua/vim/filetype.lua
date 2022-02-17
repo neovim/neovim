@@ -65,6 +65,7 @@ local extension = {
   bdf = "bdf",
   beancount = "beancount",
   bib = "bib",
+  bicep = "bicep",
   bl = "blank",
   bsdl = "bsdl",
   bst = "bst",
