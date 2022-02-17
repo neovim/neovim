@@ -2762,10 +2762,19 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
       const char_u *p = to_parse + 6;
       garray_T ga = GA_INIT(sizeof(char), 20);
       while (*p != '>' && *p != NUL) {
-        if (*p == '\\') {
-          p++;  // skip escape char
+        char p_char = (char)(*p);
+        if (p_char == '\\') {
+          p_char = (char)(*(++p));  // skip escape char
+          switch (p_char) {
+            case 'n':
+              p_char = '\n';
+              break;
+            case 't':
+              p_char = '\t';
+              break;
+          }
         }
-        ga_append(&ga, (char)(*p));
+        ga_append(&ga, p_char);
         p++;
       }
       if (*p == NUL || p == to_parse + 6) {

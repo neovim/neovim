@@ -64,4 +64,13 @@ n  asdf        * <Nop>
                  escape > with \]],
        helpers.exec_capture('nnoremap asdf'))
   end)
+  it('can use newline & tab in description', function()
+    command([[nnoremap <silent><desc=can do multiline\n\t\t tabs too> asdf <Nop>]])
+    eq([[
+
+n  asdf        * <Nop>
+                 can do multiline
+		 tabs too]],
+       helpers.exec_capture('nnoremap asdf'))
+  end)
 end)
