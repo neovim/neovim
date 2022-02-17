@@ -6758,16 +6758,26 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     { NULL, -1, NIL },
   };
 
+  char hex_name[8];
+  char *name;
+
   for (int j = 0; cattrs[j].dest; j++) {
-    if (cattrs[j].val != -1) {
+    if (cattrs[j].val < 0) {
+      XFREE_CLEAR(*cattrs[j].dest);
+      continue;
+    }
+
+    if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
+      name = cattrs[j].name.data.string.data;
+    } else {
+      snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
+      name = hex_name;
+    }
+
+    if (!*cattrs[j].dest
+        || STRCMP(*cattrs[j].dest, name) != 0) {
       xfree(*cattrs[j].dest);
-      if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
-        *cattrs[j].dest = xstrdup(cattrs[j].name.data.string.data);
-      } else {
-        char hex_name[8];
-        snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
-        *cattrs[j].dest = xstrdup(hex_name);
-      }
+      *cattrs[j].dest = xstrdup(name);
     }
   }
 
@@ -8849,6 +8859,22 @@ RgbValue name_to_color(const char *name)
   return -1;
 }
 
+int name_to_ctermcolor(const char *name)
+{
+  int i;
+  int off = TOUPPER_ASC(*name);
+  for (i = ARRAY_SIZE(color_names); --i >= 0;) {
+    if (off == color_names[i][0]
+        && STRICMP(name+1, color_names[i]+1) == 0) {
+      break;
+    }
+  }
+  if (i < 0) {
+    return -1;
+  }
+  TriState bold = kNone;
+  return lookup_color(i, false, &bold);
+}
 
 /**************************************
 *  End of Highlighting stuff          *

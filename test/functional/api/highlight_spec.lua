@@ -276,4 +276,43 @@ describe("API: set highlight", function()
     eq('Test_hl3       xxx guifg=bLue guibg=reD',
       exec_capture('highlight Test_hl3'))
   end)
+
+  it ("can modify a highlight in the global namespace", function()
+    meths.set_hl(0, 'Test_hl3', { bg = 'red', fg = 'blue'})
+    eq('Test_hl3       xxx guifg=blue guibg=red',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { bg = 'red' })
+    eq('Test_hl3       xxx guibg=red',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { ctermbg = 9, ctermfg = 12})
+    eq('Test_hl3       xxx ctermfg=12 ctermbg=9',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { ctermbg = 'red' , ctermfg = 'blue'})
+    eq('Test_hl3       xxx ctermfg=12 ctermbg=9',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', { ctermbg = 9 })
+    eq('Test_hl3       xxx ctermbg=9',
+      exec_capture('highlight Test_hl3'))
+
+    meths.set_hl(0, 'Test_hl3', {})
+    eq('Test_hl3       xxx cleared',
+      exec_capture('highlight Test_hl3'))
+
+    eq("'redd' is not a valid color",
+      pcall_err(meths.set_hl, 0, 'Test_hl3', {fg='redd'}))
+
+    eq("'bleu' is not a valid color",
+      pcall_err(meths.set_hl, 0, 'Test_hl3', {ctermfg='bleu'}))
+
+    meths.set_hl(0, 'Test_hl3', {fg='#FF00FF'})
+    eq('Test_hl3       xxx guifg=#FF00FF',
+      exec_capture('highlight Test_hl3'))
+
+    eq("'#FF00FF' is not a valid color",
+      pcall_err(meths.set_hl, 0, 'Test_hl3', {ctermfg='#FF00FF'}))
+  end)
 end)

@@ -821,27 +821,27 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, global, , HL_GLOBAL);
 
   if (HAS_KEY(dict->fg)) {
-    fg = object_to_color(dict->fg, "fg", err);
+    fg = object_to_color(dict->fg, "fg", true, err);
   } else if (HAS_KEY(dict->foreground)) {
-    fg = object_to_color(dict->foreground, "foreground", err);
+    fg = object_to_color(dict->foreground, "foreground", true, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
   if (HAS_KEY(dict->bg)) {
-    bg = object_to_color(dict->bg, "bg", err);
+    bg = object_to_color(dict->bg, "bg", true, err);
   } else if (HAS_KEY(dict->background)) {
-    bg = object_to_color(dict->background, "background", err);
+    bg = object_to_color(dict->background, "background", true, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
   if (HAS_KEY(dict->sp)) {
-    sp = object_to_color(dict->sp, "sp", err);
+    sp = object_to_color(dict->sp, "sp", true, err);
   } else if (HAS_KEY(dict->special)) {
-    sp = object_to_color(dict->special, "special", err);
+    sp = object_to_color(dict->special, "special", true, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
@@ -882,14 +882,14 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
 #undef CHECK_FLAG
 
   if (HAS_KEY(dict->ctermfg)) {
-    ctermfg = object_to_color(dict->ctermfg, "ctermfg", err);
+    ctermfg = object_to_color(dict->ctermfg, "ctermfg", false, err);
     if (ERROR_SET(err)) {
       return hlattrs;
     }
   }
 
   if (HAS_KEY(dict->ctermbg)) {
-    ctermbg = object_to_color(dict->ctermbg, "ctermbg", err);
+    ctermbg = object_to_color(dict->ctermbg, "ctermbg", false, err);
     if (ERROR_SET(err)) {
       return hlattrs;
     }
@@ -904,28 +904,37 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.rgb_bg_color = bg;
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
-    hlattrs.cterm_bg_color =
-      ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
-    hlattrs.cterm_fg_color =
-      ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
+    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : ctermbg + 1;
+    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
     hlattrs.cterm_ae_attr = cterm_mask;
-    hlattrs.cterm_bg_color = bg == -1 ? cterm_normal_bg_color : bg + 1;
-    hlattrs.cterm_fg_color = fg == -1 ? cterm_normal_fg_color : fg + 1;
+    hlattrs.cterm_bg_color = bg == -1 ? 0 : bg + 1;
+    hlattrs.cterm_fg_color = fg == -1 ? 0 : fg + 1;
   }
 
   return hlattrs;
 }
 
-int object_to_color(Object val, char *key, Error *err)
+int object_to_color(Object val, char *key, bool rgb, Error *err)
 {
   if (val.type == kObjectTypeInteger) {
     return (int)val.data.integer;
   } else if (val.type == kObjectTypeString) {
     String str = val.data.string;
     // TODO(bfredl): be more fancy with "bg", "fg" etc
-    return str.size ? name_to_color(str.data) : 0;
+    int color;
+    if (!str.size) {
+      color = 0;
+    } else if (rgb) {
+      color = name_to_color(str.data);
+    } else {
+      color = name_to_ctermcolor(str.data);
+    }
+    if (color < 0) {
+      api_set_error(err, kErrorTypeValidation, "'%s' is not a valid color", str.data);
+    }
+    return color;
   } else {
     api_set_error(err, kErrorTypeValidation, "'%s' must be string or integer", key);
     return 0;
