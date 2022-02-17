@@ -548,6 +548,7 @@ endfunc
 func Test_digraph_get_function_encode()
   throw 'Skipped: Nvim does not support setting encoding=japan'
   CheckFeature iconv
+
   let testcases = {
         \'00': '∞',
         \'aa': 'あ',
@@ -556,7 +557,7 @@ func Test_digraph_get_function_encode()
     call digraph_set(key, ch)
     set encoding=japan
     call assert_equal(iconv(ch, 'utf-8', 'japan'), digraph_get(key))
-    set encoding&
+    set encoding=utf-8
   endfor
 endfunc
 
@@ -583,4 +584,6 @@ func Test_digraph_getlist_function()
   call assert_equal(digraph_getlist()->len(), digraph_getlist(0)->len())
   call assert_notequal((digraph_getlist()->len()), digraph_getlist(1)->len())
 endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
