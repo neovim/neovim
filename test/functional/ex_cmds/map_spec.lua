@@ -2,6 +2,7 @@ local helpers = require("test.functional.helpers")(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
+local exec = helpers.exec
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
@@ -28,7 +29,7 @@ describe(':*map', function()
   end)
 end)
 
-describe(':*map <expr>', function()
+describe(':*map cursor and redrawing', function()
   local screen
   before_each(function()
     clear()
@@ -36,8 +37,8 @@ describe(':*map <expr>', function()
     screen:attach()
   end)
 
-  it('cursor is restored after :map <expr>', function()
-    command(':map <expr> x input("> ")')
+  it('cursor is restored after :map <expr> which calls input()', function()
+    command('map <expr> x input("> ")')
     screen:expect([[
       ^                    |
       ~                   |
@@ -63,8 +64,8 @@ describe(':*map <expr>', function()
     ]])
   end)
 
-  it('cursor is restored after :imap <expr>', function()
-    command(':imap <expr> x input("> ")')
+  it('cursor is restored after :imap <expr> which calls input()', function()
+    command('imap <expr> x input("> ")')
     feed('i')
     screen:expect([[
       ^                    |
@@ -91,9 +92,57 @@ describe(':*map <expr>', function()
     ]])
   end)
 
-  it('error in :cmap <expr> handled correctly', function()
+  it('cursor is restored after :map <expr> which redraws statusline vim-patch:8.1.2336', function()
+    exec([[
+      call setline(1, ['one', 'two', 'three'])
+      2
+      set ls=2
+      hi! link StatusLine ErrorMsg
+      noremap <expr> <C-B> Func()
+      func Func()
+	  let g:on = !get(g:, 'on', 0)
+	  redraws
+	  return ''
+      endfunc
+      func Status()
+	  return get(g:, 'on', 0) ? '[on]' : ''
+      endfunc
+      set stl=%{Status()}
+    ]])
+    feed('<C-B>')
+    screen:expect([[
+      one                 |
+      ^two                 |
+      three               |
+      [on]                |
+                          |
+    ]])
+  end)
+
+  it('error in :nmap <expr> does not mess up display vim-patch:4.2.4338', function()
     screen:try_resize(40, 5)
-    command(':cmap <expr> x execute("throw 42")')
+    command('nmap <expr> <F2> execute("throw 42")')
+    feed('<F2>')
+    screen:expect([[
+                                              |
+                                              |
+      Error detected while processing :       |
+      E605: Exception not caught: 42          |
+      Press ENTER or type command to continue^ |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+                                              |
+    ]])
+  end)
+
+  it('error in :cmap <expr> handled correctly vim-patch:4.2.4338', function()
+    screen:try_resize(40, 5)
+    command('cmap <expr> <F2> execute("throw 42")')
     feed(':echo "foo')
     screen:expect([[
                                               |
@@ -102,7 +151,7 @@ describe(':*map <expr>', function()
       ~                                       |
       :echo "foo^                              |
     ]])
-    feed('x')
+    feed('<F2>')
     screen:expect([[
                                               |
       :echo "foo                              |
@@ -125,6 +174,19 @@ describe(':*map <expr>', function()
       E605: Exception not caught: 42          |
       foo                                     |
       Press ENTER or type command to continue^ |
+    ]])
+  end)
+
+  it('listing mappings clears command line vim-patch:8.2.4401', function()
+    screen:try_resize(40, 5)
+    command('nmap a b')
+    feed(':                      nmap a<CR>')
+    screen:expect([[
+      ^                                        |
+      ~                                       |
+      ~                                       |
+      ~                                       |
+      n  a             b                      |
     ]])
   end)
 end)
