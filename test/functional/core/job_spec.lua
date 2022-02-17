@@ -295,12 +295,6 @@ describe('jobs', function()
   end)
 
   it("will not buffer data if it doesn't end in newlines", function()
-    if helpers.isCI('travis') and os.getenv('CC') == 'gcc-4.9'
-      and helpers.is_os('mac') then
-      -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]")
-    end
-
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
