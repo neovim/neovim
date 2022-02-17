@@ -38,7 +38,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/ci/reviews.js
+      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/.github/scripts/reviews.js
       - name: 'Request reviewers'
         uses: actions/github-script@v6
         with:
