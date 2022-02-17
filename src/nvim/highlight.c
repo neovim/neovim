@@ -876,6 +876,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, nocombine, , HL_NOCOMBINE);
 
+  } else if (dict->cterm.type == kObjectTypeArray && dict->cterm.data.array.size == 0) {
+    // empty list from Lua API should clear all cterm attributes
+    // TODO(clason): handle via gen_api_dispatch
+    cterm_mask_provided = true;
   } else if (HAS_KEY(dict->cterm)) {
     api_set_error(err, kErrorTypeValidation, "'cterm' must be a Dictionary.");
   }
