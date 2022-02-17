@@ -9,10 +9,10 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/.github/scripts/reviews.js
+      - uses: actions/checkout@v2
       - name: 'Request reviewers'
         uses: actions/github-script@v6
         with:
           script: |
-            const script = require('./reviews.js')
+            const script = require('./.github/scripts/reviews.js')
             await script({github, context})
