@@ -824,7 +824,7 @@ static bool normal_get_command_count(NormalState *s)
     if (s->c == K_DEL || s->c == K_KDEL) {
       s->ca.count0 /= 10;
       del_from_showcmd(4);            // delete the digit and ~@%
-    } else if (s->ca.count0 >= 999999999L) {
+    } else if (s->ca.count0 > 99999999L) {
       s->ca.count0 = 999999999L;
     } else {
       s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
