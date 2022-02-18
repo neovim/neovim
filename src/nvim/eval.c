@@ -174,9 +174,6 @@ static struct vimvar {
   VV(VV_FNAME_IN,         "fname_in",         VAR_STRING, VV_RO),
   VV(VV_FNAME_OUT,        "fname_out",        VAR_STRING, VV_RO),
   VV(VV_FNAME_NEW,        "fname_new",        VAR_STRING, VV_RO),
-  VV(VV_BUFNR_IN,         "bufnr_in",         VAR_NUMBER, VV_RO),
-  VV(VV_BUFNR_NEW,        "bufnr_new",        VAR_NUMBER, VV_RO),
-  VV(VV_DIFF_CHUNKS,      "diff_chunks",      VAR_LIST  , 0),
   VV(VV_FNAME_DIFF,       "fname_diff",       VAR_STRING, VV_RO),
   VV(VV_CMDARG,           "cmdarg",           VAR_STRING, VV_RO),
   VV(VV_FOLDSTART,        "foldstart",        VAR_NUMBER, VV_RO_SBX),
@@ -690,7 +687,9 @@ int eval_printexpr(const char *const fname, const char *const args)
   return OK;
 }
 
-void eval_diff(const char *const origfile, const char *const newfile, const char *const outfile)
+void eval_diff_expr(const char *const origfile,
+                    const char *const newfile,
+                    const char *const outfile)
 {
   bool err = false;
 
@@ -704,16 +703,15 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
 }
 
 // Return list of chunks calculated by user.
-list_T* eval_idifffn(const int idx_orig, const int idx_new, char_u *rem_p_dex)
+list_T *eval_diff_fn(const int idx_orig, const int idx_new, char_u *fn_name)
 {
-  bool err = false;
-
-  set_vim_var_nr(VV_BUFNR_IN, idx_orig);
-  set_vim_var_nr(VV_BUFNR_NEW, idx_new);
-  (void)eval_to_bool(rem_p_dex, &err, NULL, FALSE);
-  set_vim_var_nr(VV_BUFNR_IN, 0);
-  set_vim_var_nr(VV_BUFNR_NEW, 0);
-  return get_vim_var_list(VV_DIFF_CHUNKS);
+  typval_T args[2];
+  args[0].v_type = VAR_NUMBER;
+  args[1].v_type = VAR_NUMBER;
+  args[0].vval.v_number = idx_orig;
+  args[1].vval.v_number = idx_new;
+  list_T *chunks = call_func_retlist(fn_name, 2, args);
+  return chunks;
 }
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)

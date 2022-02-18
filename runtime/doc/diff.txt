@@ -354,20 +354,20 @@ The "1a2" item appends the line "bbb".
 The "4d4" item deletes the line "111".
 The "7c7" item replaces the line "GGG" with "ggg".
 
-When 'diffexpr' is a non-empty expresion, Vim evaluates it to obtain a diff file
-in the format mentioned.  These variables are set to the file names used:
+When 'diffexpr' is not empty, Vim evaluates it to obtain a diff file in the
+format mentioned.  These variables are set to the file names used:
 
 	v:fname_in		original file
 	v:fname_new		new version of the same file
 	v:fname_out		where to write the resulting diff file
 
-When 'diffexpr' is an expression prefixed with '->', Vim evaluates it to obtain
-diff chunks indices like the ones produced by the |vim.diff| function. In this
-case, these variables are set instead:
+When 'diffexpr' is a function identifier prefixed with '->', Vim directly
+evaluates this function to obtain diff chunks indices, like the ones produced by
+|vim.diff|.  The function must return a valid list of diff chunks, and takes the
+following arguments:
 
-	v:bufnr_in		number of the buffer with original content
-	v:bufnr_new		number of the buffer with new version
-	v:diff_chunks		to be filled with the desired chunks indices
+	a:bufnr_in		number of the buffer with original content
+	a:bufnr_new		number of the buffer with new version
 
 Additionally, 'diffexpr' should take care of "icase" and "iwhite" in the
 'diffopt' option.  'diffexpr' cannot change the value of 'lines' and
@@ -399,7 +399,7 @@ shell command shows something on the display or not.
 Another similar example with '->' prefix instead (this does almost the same as
 'diffexpr' being empty): >
 
-	set diffexpr=->MyDiff()
+	set diffexpr=->v:lua.MyDiff
 
 	lua <<EOF
  	function buffer_to_string(bufnr)
@@ -425,9 +425,9 @@ Another similar example with '->' prefix instead (this does almost the same as
 	  return nil
 	end
 
-	function MyDiff()
-	  local a_file = buffer_to_string(vim.v.bufnr_in)
-	  local b_file = buffer_to_string(vim.v.bufnr_new)
+	function MyDiff(bufnr_in, bufnr_new)
+	  local a_file = buffer_to_string(bufnr_in)
+	  local b_file = buffer_to_string(bufnr_new)
 
 	  local opt = vim.opt.diffopt:get()
 	  local copy_opt = {
@@ -441,13 +441,9 @@ Another similar example with '->' prefix instead (this does almost the same as
 	    ctxlen = tonumber(extract_value_from_prefix(opt, "context")),
 	  }
 	  local chunks = vim.diff(a_file, b_file, copy_opt)
-	  vim.v.diff_chunks = chunks
+	  return chunks
 	end
 	EOF
-
-	function! MyDiff()
-	  lua MyDiff()
-	endfunction
 
 Diff chunks may be edited or calculated another way, as long as they remain
 valid.

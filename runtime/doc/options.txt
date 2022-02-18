@@ -1942,10 +1942,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'dex'* *'diffexpr'*
 'diffexpr' 'dex'	string	(default "")
 			global
-	Expression which is evaluated to obtain diff information (either
-	ed-style file, unified-style file or chunks indices) from two versions
-	of a file. See |diff-diffexpr|. This option cannot be set from a
-	|modeline| or in the |sandbox|, for security reasons.
+	Expression which is evaluated to obtain a diff file (either ed-style
+	or unified-style) from two versions of a file.  See |diff-diffexpr|.
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
+	Alternately, the option can be set to a function identifier prefixed
+	with `->`. In this case, no files are written or read from disk, and the
+	user in charge of producing the diff chunks indices. See
+	|diff-diffexpr|.
 
 						*'dip'* *'diffopt'*
 'diffopt' 'dip'		string	(default "internal,filler,closeoff")
