@@ -65,3 +65,4 @@
 
 "runtime":
   - runtime/**/*
+  - "!runtime/autoload/provider/clipboard.vim"
