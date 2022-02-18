@@ -3314,18 +3314,28 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
 
-      // insert the new text
+      // Insert the new text.
+      // First check for multiplication overflow.
+      if (yanklen + spaces != 0
+          && count > ((INT_MAX - (bd.startspaces + bd.endspaces)) / (yanklen + spaces))) {
+        emsg(_(e_resulting_text_too_long));
+        break;
+      }
+
       totlen = (size_t)(count * (yanklen + spaces)
                         + bd.startspaces + bd.endspaces);
       int addcount = (int)totlen + lines_appended;
       newp = (char_u *)xmalloc(totlen + oldlen + 1);
+
       // copy part up to cursor to new line
       ptr = newp;
       memmove(ptr, oldp, (size_t)bd.textcol);
       ptr += bd.textcol;
+
       // may insert some spaces before the new text
       memset(ptr, ' ', (size_t)bd.startspaces);
       ptr += bd.startspaces;
+
       // insert the new text
       for (long j = 0; j < count; j++) {
         memmove(ptr, y_array[i], (size_t)yanklen);
@@ -3339,9 +3349,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           addcount -= spaces;
         }
       }
+
       // may insert some spaces after the new text
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
+
       // move the text after the cursor to the end of the line.
       int columns = (int)oldlen - bd.textcol - delcount + 1;
       assert(columns >= 0);
@@ -3430,10 +3442,18 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
 
-      do {
+      if (count == 0 || yanklen == 0) {
+        if (VIsual_active) {
+          lnum = end_lnum;
+        }
+      } else if (count > INT_MAX / yanklen) {
+        // multiplication overflow
+        emsg(_(e_resulting_text_too_long));
+      } else {
         totlen = (size_t)(count * yanklen);
-        if (totlen > 0) {
+        do {
           oldp = ml_get(lnum);
+          oldlen = STRLEN(oldp);
           if (lnum > start_lnum) {
             pos_T pos = {
               .lnum = lnum,
@@ -3444,11 +3464,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
               col = MAXCOL;
             }
           }
-          if (VIsual_active && col > (int)STRLEN(oldp)) {
+          if (VIsual_active && col > (colnr_T)oldlen) {
             lnum++;
             continue;
           }
-          newp = (char_u *)xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
+          newp = (char_u *)xmalloc(totlen + oldlen + 1);
           memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < (size_t)count; i++) {
@@ -3470,14 +3490,14 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           changed_bytes(lnum, col);
           extmark_splice_cols(curbuf, (int)lnum-1, col,
                               0, (int)totlen, kExtmarkUndo);
-        }
-        if (VIsual_active) {
-          lnum++;
-        }
-      } while (VIsual_active && lnum <= end_lnum);
+          if (VIsual_active) {
+            lnum++;
+          }
+        } while (VIsual_active && lnum <= end_lnum);
 
-      if (VIsual_active) {  // reset lnum to the last visual line
-        lnum--;
+        if (VIsual_active) {  // reset lnum to the last visual line
+          lnum--;
+        }
       }
 
       // put '] at the first byte of the last character
@@ -5691,7 +5711,9 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
       // When appending, copy the previous line and free it after.
       size_t extra = append ? STRLEN(pp[--lnum]) : 0;
       char_u *s = xmallocz(line_len + extra);
-      memcpy(s, pp[lnum], extra);
+      if (extra > 0) {
+        memcpy(s, pp[lnum], extra);
+      }
       memcpy(s + extra, start, line_len);
       size_t s_len = extra + line_len;
 

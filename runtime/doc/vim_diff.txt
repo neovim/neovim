@@ -494,6 +494,9 @@ Eval:
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
+  *v:sizeofint*
+  *v:sizeoflong*
+  *v:sizeofpointer*
 
 Events:
   *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
