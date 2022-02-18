@@ -1002,6 +1002,8 @@ EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cann
 
 EXTERN char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
 
+EXTERN char e_line_number_out_of_range[] INIT(= N_("E1247: Line number out of range"));
+
 EXTERN char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));

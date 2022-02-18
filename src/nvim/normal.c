@@ -824,13 +824,10 @@ static bool normal_get_command_count(NormalState *s)
     if (s->c == K_DEL || s->c == K_KDEL) {
       s->ca.count0 /= 10;
       del_from_showcmd(4);            // delete the digit and ~@%
+    } else if (s->ca.count0 > 99999999L) {
+      s->ca.count0 = 999999999L;
     } else {
       s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
-    }
-
-    if (s->ca.count0 < 0) {
-      // overflow
-      s->ca.count0 = 999999999L;
     }
 
     // Set v:count here, when called from main() and not a stuffed
@@ -1046,13 +1043,13 @@ static int normal_execute(VimState *state, int key)
     // If you give a count before AND after the operator, they are
     // multiplied.
     if (s->ca.count0) {
-      s->ca.count0 = (long)((uint64_t)s->ca.count0 * (uint64_t)s->ca.opcount);
+      if (s->ca.opcount >= 999999999L / s->ca.count0) {
+        s->ca.count0 = 999999999L;
+      } else {
+        s->ca.count0 *= s->ca.opcount;
+      }
     } else {
       s->ca.count0 = s->ca.opcount;
-    }
-    if (s->ca.count0 < 0) {
-      // overflow
-      s->ca.count0 = 999999999L;
     }
   }
 

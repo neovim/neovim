@@ -409,4 +409,18 @@ func Test_not_break_expression_register()
   call assert_equal('1+1', getreg('=', 1))
 endfunc
 
+func Test_address_line_overflow()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/excmd_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+  new
+  call setline(1, 'text')
+  call assert_fails('|.44444444444444444444444', 'E1247:')
+  call assert_fails('|.9223372036854775806', 'E1247:')
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

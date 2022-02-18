@@ -12,33 +12,20 @@ local function sizeoflong()
   return exec_lua('return require("ffi").sizeof(require("ffi").typeof("long"))')
 end
 
-describe('put', function()
+describe('Ex command', function()
   before_each(clear)
   after_each(function() eq({}, meths.get_vvar('errors')) end)
 
-  it('very large count 64-bit', function()
+  it('checks for address line overflow', function()
     if sizeoflong() < 8 then
       pending('Skipped: only works with 64 bit long ints')
     end
 
     source [[
       new
-      let @" = repeat('x', 100)
-      call assert_fails('norm 999999999p', 'E1240:')
-      bwipe!
-    ]]
-  end)
-
-  it('very large count (visual block) 64-bit', function()
-    if sizeoflong() < 8 then
-      pending('Skipped: only works with 64 bit long ints')
-    end
-
-    source [[
-      new
-      call setline(1, repeat('x', 100))
-      exe "norm \<C-V>$y"
-      call assert_fails('norm 999999999p', 'E1240:')
+      call setline(1, 'text')
+      call assert_fails('|.44444444444444444444444', 'E1247:')
+      call assert_fails('|.9223372036854775806', 'E1247:')
       bwipe!
     ]]
   end)
