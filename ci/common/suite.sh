@@ -11,37 +11,17 @@ FAIL_SUMMARY=""
 END_MARKER="$BUILD_DIR/.tests_finished"
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
-ci_fold() {
-  if test "$GITHUB_ACTIONS" = "true"; then
-    local action="$1"
-    local name="$2"
-    case "$action" in
-      start)
-        echo "::group::${name}"
-        ;;
-      end)
-        echo "::endgroup::"
-        ;;
-      *)
-        :;;
-    esac
-  fi
-}
-
 enter_suite() {
   FAILED=0
   rm -f "${END_MARKER}"
   local suite_name="$1"
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
-  ci_fold "start" "$suite_name"
 }
 
 exit_suite() {
   if test $FAILED -ne 0 ; then
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"
-  else
-    ci_fold "end" ""
   fi
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   FAILED=0
@@ -66,6 +46,11 @@ ended_successfully() {
   if test -f "${FAIL_SUMMARY_FILE}" ; then
     echo 'Test failed, complete summary:'
     cat "${FAIL_SUMMARY_FILE}"
+
+    if [[ "$GITHUB_ACTIONS" == "true" ]]; then
+        rm -f "$FAIL_SUMMARY_FILE"
+    fi
+
     return 1
   fi
   if ! test -f "${END_MARKER}" ; then

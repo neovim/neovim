@@ -43,8 +43,25 @@ jobs:
       - name: Build third-party
         run: ./ci/before_script.sh
 
-      - name: Run lint
-        run: ./ci/script.sh
+      - if: "!cancelled()"
+        name: clint
+        run: ./ci/run_lint.sh clint
+
+      - if: "!cancelled()"
+        name: lualint
+        run: ./ci/run_lint.sh lualint
+
+      - if: "!cancelled()"
+        name: pylint
+        run: ./ci/run_lint.sh pylint
+
+      - if: "!cancelled()"
+        name: shlint
+        run: ./ci/run_lint.sh shlint
+
+      - if: "!cancelled()"
+        name: single-includes
+        run: ./ci/run_lint.sh single-includes
 
       - name: Cache dependencies
         if: ${{ success() }}
@@ -126,8 +143,7 @@ jobs:
           brew install automake ccache perl cpanminus ninja
 
       - name: Setup interpreter packages
-        run: |
-          ./ci/install.sh
+        run: ./ci/install.sh
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -140,8 +156,24 @@ jobs:
       - name: Build third-party
         run: ./ci/before_script.sh
 
-      - name: Build and test
-        run: ./ci/script.sh
+      - name: Build
+        run: ./ci/run_tests.sh build
+
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+        name: Unittests
+        run: ./ci/run_tests.sh unittests
+
+      - if: matrix.flavor != 'tsan' && !cancelled()
+        name: Functionaltests
+        run: ./ci/run_tests.sh functionaltests
+
+      - if: "!cancelled()"
+        name: Oldtests
+        run: ./ci/run_tests.sh oldtests
+
+      - if: "!cancelled()"
+        name: Install nvim
+        run: ./ci/run_tests.sh install_nvim
 
       - name: Cache dependencies
         if: ${{ success() }}
