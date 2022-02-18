@@ -1791,6 +1791,9 @@ au BufNewFile,BufRead *.mib,*.my		setf mib
 au BufNewFile,BufRead *.hog,snort.conf,vision.conf	setf hog
 au BufNewFile,BufRead *.rules			call dist#ft#FTRules()
 
+" Solidity
+au BufRead,BufNewFile *.sol			setf solidity
+
 " SPARQL queries
 au BufNewFile,BufRead *.rq,*.sparql		setf sparql
 

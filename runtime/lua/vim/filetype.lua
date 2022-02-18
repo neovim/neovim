@@ -598,6 +598,7 @@ local extension = {
   sl = "slang",
   ice = "slice",
   score = "slrnsc",
+  sol = "solidity",
   tpl = "smarty",
   ihlp = "smcl",
   smcl = "smcl",
