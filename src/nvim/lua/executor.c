@@ -1241,6 +1241,9 @@ void ex_luafile(exarg_T *const eap)
 
 /// execute lua code from a file.
 ///
+/// Note: we call the lua global loadfile as opposed to calling luaL_loadfile
+/// in case loadfile has been overridden in the users environment.
+///
 /// @param  path  path of the file
 ///
 /// @return  true if everything ok, false if there was an error (echoed)
@@ -1249,10 +1252,29 @@ bool nlua_exec_file(const char *path)
 {
   lua_State *const lstate = global_lstate;
 
-  if (luaL_loadfile(lstate, path)) {
-    nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
+  lua_getglobal(lstate, "loadfile");
+  lua_pushstring(lstate, path);
+
+  if (nlua_pcall(lstate, 1, 2)) {
+    nlua_error(lstate, _("E5111: Error calling lua: %.*s"));
     return false;
   }
+
+  // loadstring() returns either:
+  //  1. nil, error
+  //  2. chunk, nil
+
+  if (lua_isnil(lstate, -2)) {
+    // 1
+    nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
+    assert(lua_isnil(lstate, -1));
+    lua_pop(lstate, 1);
+    return false;
+  }
+
+  // 2
+  assert(lua_isnil(lstate, -1));
+  lua_pop(lstate, 1);
 
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
