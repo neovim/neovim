@@ -51,7 +51,7 @@
   - "**/CMakeLists.txt"
   - "**/*.cmake"
 
-"tests":
+"test":
   - all: ["test/**/*"]
 
 "ci":
@@ -62,3 +62,6 @@
 
 "filetype":
   - runtime/lua/vim/filetype.lua
+
+"runtime":
+  - runtime/**/*
