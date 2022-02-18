@@ -154,8 +154,8 @@ func Test_very_large_count_64bit()
   endif
 
   new
-  let @" = 'x'
-  call assert_fails('norm 44444444444444p', 'E1240:')
+  let @" = repeat('x', 100)
+  call assert_fails('norm 999999999p', 'E1240:')
   bwipe!
 endfunc
 
@@ -176,9 +176,9 @@ func Test_very_large_count_block_64bit()
   endif
 
   new
-  call setline(1, 'x')
-  exe "norm \<C-V>y"
-  call assert_fails('norm 44444444444444p', 'E1240:')
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>$y"
+  call assert_fails('norm 999999999p', 'E1240:')
   bwipe!
 endfunc
 
