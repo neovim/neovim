@@ -51,7 +51,7 @@
   - "**/CMakeLists.txt"
   - "**/*.cmake"
 
-"tests":
+"test":
   - all: ["test/**/*"]
 
 "ci":
