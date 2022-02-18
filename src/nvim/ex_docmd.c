@@ -4141,7 +4141,11 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
       if (!ascii_isdigit(*cmd)) {       // '+' is '+1', but '+0' is not '+1'
         n = 1;
       } else {
-        n = getdigits(&cmd, true, 0);
+        n = getdigits(&cmd, false, MAXLNUM);
+        if (n == MAXLNUM) {
+          emsg(_(e_line_number_out_of_range));
+          goto error;
+        }
       }
 
       if (addr_type == ADDR_TABS_RELATIVE) {
@@ -4160,6 +4164,10 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
         if (i == '-') {
           lnum -= n;
         } else {
+          if (n >= LONG_MAX - lnum) {
+            emsg(_(e_line_number_out_of_range));
+            goto error;
+          }
           lnum += n;
         }
       }
