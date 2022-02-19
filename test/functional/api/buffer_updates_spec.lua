@@ -7,6 +7,7 @@ local nvim_prog = helpers.nvim_prog
 local pcall_err = helpers.pcall_err
 local sleep = helpers.sleep
 local write_file = helpers.write_file
+local iswin = helpers.iswin
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -823,7 +824,7 @@ describe('API: buffer events:', function()
       end
       msg = next_msg()
     end
-    assert(false, 'did not match/receive expected nvim_buf_lines_event lines')
+    assert(iswin(), 'did not match/receive expected nvim_buf_lines_event lines')
   end
 
   it('when :terminal lines change', function()

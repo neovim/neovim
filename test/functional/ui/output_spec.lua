@@ -14,6 +14,7 @@ local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
+  if not iswin() then
   local screen
   before_each(function()
     clear()
@@ -77,6 +78,7 @@ describe("shell command :!", function()
       [10] = {foreground = 2},
     })
   end)
+  end
 end)
 
 describe("shell command :!", function()

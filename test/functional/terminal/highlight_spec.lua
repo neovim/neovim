@@ -117,6 +117,7 @@ describe(':terminal highlight', function()
 end)
 
 it(':terminal highlight has lower precedence than editor #9964', function()
+  if helpers.pending_win32(pending) then return end
   clear()
   local screen = Screen.new(30, 4)
   screen:set_default_attr_ids({

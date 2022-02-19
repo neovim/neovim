@@ -258,6 +258,7 @@ describe(':terminal buffer', function()
   end)
 
   it('it works with set rightleft #11438', function()
+    if helpers.pending_win32(pending) then return end
     local columns = eval('&columns')
     feed(string.rep('a', columns))
     command('set rightleft')
