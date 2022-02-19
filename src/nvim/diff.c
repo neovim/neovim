@@ -882,7 +882,7 @@ theend:
 /// Return true if the diffexpr option is set with '->' prefix,
 /// so it means that internal diff is used and customized.
 ///
-int diffexpr_internal_prefix(void)
+int diffexpr_is_fn(void)
 {
   return STRNCMP(p_dex, "->", 2) == 0;
 }
@@ -894,8 +894,7 @@ int diffexpr_internal_prefix(void)
 ///
 int diff_internal(void)
 {
-  return (diff_flags & DIFF_INTERNAL) != 0
-    && (*p_dex == NUL || diffexpr_internal_prefix());
+  return (diff_flags & DIFF_INTERNAL) != 0 && (*p_dex == NUL || diffexpr_is_fn());
 }
 
 ///
@@ -1115,6 +1114,10 @@ static int diff_file_internal(diffio_T *diffio)
 /// Post-process the user-produced chunks so they fit into diffio_T logic.
 /// Responsible for freeing the chunks list.
 ///
+/// @param dio
+/// @param chunks Non-null pointer to the list of chunks to translate and free.
+///
+/// @return OK or FAIL
 static int translate_chunks(diffio_T *const diffio, list_T *const chunks)
 {
   // If a custom expression has been used,
@@ -1130,50 +1133,46 @@ static int translate_chunks(diffio_T *const diffio, list_T *const chunks)
   long start_b;
   long count_b;
   int success = FAIL;
-  if (c != NULL) {
-    for (; c != NULL; c = TV_LIST_ITEM_NEXT(chunks, c)) {
-      c_val = TV_LIST_ITEM_TV(c);
-      if (c_val->v_type == VAR_LIST) {
-        i = c_val->vval.v_list;
-        i_size = tv_list_len(i);
-        if (i_size == 4) {
-          n = tv_list_first(i);
-          // Check information types.
-          for (; n != NULL; n = TV_LIST_ITEM_NEXT(i, n)) {
-            n_val = TV_LIST_ITEM_TV(n);
-            if (n_val->v_type != VAR_NUMBER) {
-              emsg("Invalid chunk element received: must be a number.");
-              goto theend;
-            }
-          }
-          // Types are ok: setup diff information.
-          n = tv_list_first(i);
-          start_a = TV_LIST_ITEM_TV(n)->vval.v_number;
-          n = TV_LIST_ITEM_NEXT(i, n);
-          count_a = TV_LIST_ITEM_TV(n)->vval.v_number;
-          n = TV_LIST_ITEM_NEXT(i, n);
-          start_b = TV_LIST_ITEM_TV(n)->vval.v_number;
-          n = TV_LIST_ITEM_NEXT(i, n);
-          count_b = TV_LIST_ITEM_TV(n)->vval.v_number;
-          // Counter-mimic extra offsets done by xdiff.
-          if (count_a > 0) {
-            start_a -= 1;
-          }
-          if (count_b > 0) {
-            start_b -= 1;
-          }
-          // For some reason, the a and b expected by xdiff_out
-          // are reversed compared to the chunks produced by vim.diff.
-          xdiff_out(start_b, count_b, start_a, count_a, &diffio->dio_diff);
-        } else {
-          emsg("Invalid chunk received: must contain 4 numbers.");
-          goto theend;
-        }
-      } else {
-        semsg("Invalid chunk type received (%i), expected list (%i).", c_val->v_type, VAR_LIST);
+  for (; c != NULL; c = TV_LIST_ITEM_NEXT(chunks, c)) {
+    // Typecheck chunk.
+    c_val = TV_LIST_ITEM_TV(c);
+    if (c_val->v_type != VAR_LIST) {
+      semsg("Invalid chunk type received (%i), expected list (%i).", c_val->v_type, VAR_LIST);
+      goto theend;
+    }
+    i = c_val->vval.v_list;
+    i_size = tv_list_len(i);
+    if (i_size != 4) {
+      semsg("Invalid chunk received: must contain 4 numbers (not %i).", i_size);
+      goto theend;
+    }
+    n = tv_list_first(i);
+    for (; n != NULL; n = TV_LIST_ITEM_NEXT(i, n)) {
+      n_val = TV_LIST_ITEM_TV(n);
+      if (n_val->v_type != VAR_NUMBER) {
+        emsg("Invalid chunk element received: must be a number.");
         goto theend;
       }
     }
+    // Types are ok: setup diff information.
+    n = tv_list_first(i);
+    start_a = TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    count_a = TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    start_b = TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    count_b = TV_LIST_ITEM_TV(n)->vval.v_number;
+    // Counter-mimic extra offsets done by xdiff.
+    if (count_a > 0) {
+      start_a -= 1;
+    }
+    if (count_b > 0) {
+      start_b -= 1;
+    }
+    // For some reason, the a and b expected by xdiff_out
+    // are reversed compared to the chunks produced by vim.diff.
+    xdiff_out(start_b, count_b, start_a, count_a, &diffio->dio_diff);
   }
   success = OK;
 theend:
@@ -1184,8 +1183,8 @@ theend:
 /// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
 ///
 /// @param dio
-/// @param idx_orig Buffer number of original file.
-/// @param idx_new Buffer number of new version of the file.
+/// @param idx_orig Buffer number of original file, for use by `diffexpr=->`
+/// @param idx_new Buffer number of new version of the file, for use by `diffexpr=->
 ///
 /// @return OK or FAIL
 static int diff_file(diffio_T *dio, const int idx_orig, const int idx_new)
@@ -1195,13 +1194,14 @@ static int diff_file(diffio_T *dio, const int idx_orig, const int idx_new)
   char *tmp_diff = (char *)dio->dio_diff.dout_fname;
   if (*p_dex != NUL) {
     // Evaluate function with `in_bufnr` and `new_bufnr` arguments.
-    if (diffexpr_internal_prefix()) {
+    if (diffexpr_is_fn()) {
       // Ignore the first two '->' characters of the option,
       // they are not part of the function identifier.
-      char_u *fn_name = p_dex + 2;
-      list_T* chunks = eval_diff_fn(idx_orig, idx_new, fn_name);
+      list_T* chunks = eval_diff_fn(idx_orig, idx_new, p_dex + 2);
       if (chunks == NULL) {
-          semsg("Call to diff function '%s' failed, or it did not return a list.", fn_name);
+          semsg("Call to diff function '%s' failed, "
+                "or it did not return a list.", p_dex + 2);
+          return FAIL;
       }
       return translate_chunks(dio, chunks);
     } else {

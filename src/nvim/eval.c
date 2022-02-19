@@ -702,7 +702,7 @@ void eval_diff_expr(const char *const origfile,
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
 }
 
-// Return list of chunks calculated by user.
+// Return (owned) list of chunks calculated by user.
 list_T *eval_diff_fn(const int idx_orig, const int idx_new, char_u *fn_name)
 {
   typval_T args[2];
@@ -710,8 +710,7 @@ list_T *eval_diff_fn(const int idx_orig, const int idx_new, char_u *fn_name)
   args[1].v_type = VAR_NUMBER;
   args[0].vval.v_number = idx_orig;
   args[1].vval.v_number = idx_new;
-  list_T *chunks = call_func_retlist(fn_name, 2, args);
-  return chunks;
+  return call_func_retlist(fn_name, 2, args);
 }
 
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
