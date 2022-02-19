@@ -920,7 +920,10 @@ M.handlers.underline = {
         underline_ns,
         higroup,
         { diagnostic.lnum, diagnostic.col },
-        { diagnostic.end_lnum, diagnostic.end_col }
+        { diagnostic.end_lnum, diagnostic.end_col },
+        'v',
+        false,
+        150
       )
     end
     save_extmarks(underline_ns, bufnr)
