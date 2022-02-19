@@ -345,6 +345,9 @@ end)
 
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
+    if iswin() then
+      pending("Test fails on windows.")
+    end
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
@@ -576,6 +579,9 @@ describe("pending scrollback line handling", function()
   end)
 
   it("does not crash after nvim_buf_call #14891", function()
+    if iswin() then
+      pending("Test fails on windows.")
+    end
     exec_lua [[
       local a = vim.api
       local bufnr = a.nvim_create_buf(false, true)

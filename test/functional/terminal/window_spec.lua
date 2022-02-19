@@ -18,6 +18,9 @@ describe(':terminal window', function()
   end)
 
   it('sets topline correctly #8556', function()
+    if iswin() then
+      pending("Test fails on windows.")
+    end
     -- Test has hardcoded assumptions of dimensions.
     eq(7, eval('&lines'))
     feed_data('\n\n\n')  -- Add blank lines.

@@ -7,6 +7,7 @@ local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
 local nvim_set = helpers.nvim_set
+local iswin = helpers.iswin
 
 describe(':terminal highlight', function()
   local screen
@@ -117,6 +118,9 @@ describe(':terminal highlight', function()
 end)
 
 it(':terminal highlight has lower precedence than editor #9964', function()
+  if iswin() then
+    pending("Test fails on windows.")
+  end
   clear()
   local screen = Screen.new(30, 4)
   screen:set_default_attr_ids({

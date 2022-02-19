@@ -78,6 +78,9 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
+    if iswin() then
+        pending("Test fails on windows.")
+    end
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")

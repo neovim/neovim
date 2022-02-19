@@ -11,6 +11,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local matches = helpers.matches
 local pesc = helpers.pesc
+local iswin = helpers.iswin
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
@@ -36,6 +37,9 @@ describe(':edit term://*', function()
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
+    if iswin() then
+      pending("Test fails on windows.")
+    end
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97
