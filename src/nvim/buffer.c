@@ -3438,8 +3438,12 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
   if (stl_items == NULL) {
     stl_items = xmalloc(sizeof(stl_item_t) * stl_items_len);
     stl_groupitems = xmalloc(sizeof(int) * stl_items_len);
-    stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * stl_items_len);
-    stl_tabtab = xmalloc(sizeof(StlClickRecord) * stl_items_len);
+
+    // Allocate one more, because the last element is used to indicate the
+    // end of the list.
+    stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
+    stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
+
     stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
@@ -3514,8 +3518,8 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
       stl_items = xrealloc(stl_items, sizeof(stl_item_t) * new_len);
       stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
-      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * new_len);
-      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * new_len);
+      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
+      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
       stl_separator_locations =
         xrealloc(stl_separator_locations, sizeof(int) * new_len);
 
