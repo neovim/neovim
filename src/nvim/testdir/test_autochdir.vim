@@ -67,9 +67,9 @@ endfunc
 func Test_multibyte()
   " using an invalid character should not cause a crash
   set wic
-  " E344 is thrown first, but v8.1.1183 hasn't been ported yet
-  " call assert_fails('tc û¦*', 'E344:')
-  call assert_fails('tc û¦*', 'E472:')
+  " Except on Windows, E472 is also thrown last, but v8.1.1183 isn't ported yet
+  " call assert_fails('tc û¦*', has('win32') ? 'E480:' : 'E344:')
+  call assert_fails('tc û¦*', has('win32') ? 'E480:' : 'E472:')
   set nowic
 endfunc
 
