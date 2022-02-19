@@ -1551,9 +1551,9 @@ do --[[ References ]]
                       document_highlight_kind[kind],
                       { start_line, start_idx },
                       { end_line, end_idx },
-                      nil,
+                      'v',
                       false,
-                      40)
+                      200)
     end
   end
 end
