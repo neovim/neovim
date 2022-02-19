@@ -66,7 +66,7 @@ describe(':terminal mouse', function()
     end)
 
     it('does not leave terminal mode on left-release', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win(pending) then return end
       feed('<LeftRelease>')
       eq('t', eval('mode(1)'))
     end)
@@ -87,7 +87,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse press, drag and release to the program', function()
-        if helpers.pending_win32(pending) then return end
+        if helpers.pending_win(pending) then return end
         feed('<LeftMouse><1,2>')
         screen:expect([[
           line27                                            |
@@ -131,7 +131,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse scroll to the program', function()
-        if helpers.pending_win32(pending) then return end
+        if helpers.pending_win(pending) then return end
         feed('<ScrollWheelUp><0,0>')
         screen:expect([[
           line27                                            |
@@ -145,7 +145,7 @@ describe(':terminal mouse', function()
       end)
 
       it('dragging and scrolling do not interfere with each other', function()
-        if helpers.pending_win32(pending) then return end
+        if helpers.pending_win(pending) then return end
         feed('<LeftMouse><1,2>')
         screen:expect([[
           line27                                            |
@@ -199,7 +199,7 @@ describe(':terminal mouse', function()
       end)
 
       it('will forward mouse clicks to the program with the correct even if set nu', function()
-        if helpers.pending_win32(pending) then return end
+        if helpers.pending_win(pending) then return end
         command('set number')
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
@@ -230,7 +230,7 @@ describe(':terminal mouse', function()
     end)
 
     describe('with a split window and other buffer', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win(pending) then return end
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[

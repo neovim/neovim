@@ -21,7 +21,7 @@ local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
 
-if helpers.pending_win32(pending) then return end
+if helpers.pending_win(pending) then return end
 
 describe('TUI', function()
   local screen

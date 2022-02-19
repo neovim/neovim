@@ -239,7 +239,7 @@ describe('ShaDa support code', function()
   end)
 
   it('does not crash when ShaDa file directory is not writable', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win(pending) then return end
 
     funcs.mkdir(dirname, '', 0)
     eq(0, funcs.filewritable(dirname))

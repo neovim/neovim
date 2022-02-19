@@ -49,7 +49,7 @@ describe('Command-line option', function()
       eq(#('100500\n'), attrs.size)
     end)
     it('does not crash after reading from stdin in non-headless mode', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win(pending) then return end
       local screen = Screen.new(40, 8)
       screen:attach()
       funcs.termopen({

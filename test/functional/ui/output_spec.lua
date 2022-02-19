@@ -35,7 +35,7 @@ describe("shell command :!", function()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win(pending) then return end
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")

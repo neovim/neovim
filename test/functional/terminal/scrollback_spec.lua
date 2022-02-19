@@ -138,7 +138,7 @@ describe(':terminal scrollback', function()
 
 
     describe('and height decreased by 1', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win(pending) then return end
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
@@ -184,7 +184,7 @@ describe(':terminal scrollback', function()
     -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
     --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
     --      See also: https://github.com/rprichard/winpty/issues/110
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win(pending) then return end
 
     describe('and the height is decreased by 2', function()
       before_each(function()
@@ -263,7 +263,7 @@ describe(':terminal scrollback', function()
       -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
       --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
       --      See also: https://github.com/rprichard/winpty/issues/110
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win(pending) then return end
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
         screen:expect([[

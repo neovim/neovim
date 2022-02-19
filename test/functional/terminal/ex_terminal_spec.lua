@@ -45,7 +45,7 @@ describe(':terminal', function()
   end)
 
   it("reads output buffer on terminal reporting #4151", function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win(pending) then return end
     if iswin() then
       feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])
     else
