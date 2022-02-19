@@ -1317,6 +1317,12 @@ bool mb_isupper(int a)
   return mb_tolower(a) != a;
 }
 
+bool mb_isalpha(int a)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return mb_islower(a) || mb_isupper(a);
+}
+
 static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2)
 {
   int c1, c2, cdiff;

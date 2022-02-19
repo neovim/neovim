@@ -64,4 +64,14 @@ func Test_verbose_pwd()
   call delete('Xautodir', 'rf')
 endfunc
 
+func Test_multibyte()
+  " using an invalid character should not cause a crash
+  set wic
+  " E344 is thrown first, but v8.1.1183 hasn't been ported yet
+  " call assert_fails('tc û¦*', 'E344:')
+  call assert_fails('tc û¦*', 'E472:')
+  set nowic
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

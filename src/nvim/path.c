@@ -642,8 +642,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
     } else if (path_end >= path + wildoff
                && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
 #ifndef WIN32
-                   || (!p_fic && (flags & EW_ICASE)
-                       && isalpha(utf_ptr2char(path_end)))
+                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end)))
 #endif
                    )) {
       e = p;
