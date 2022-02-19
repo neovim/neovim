@@ -921,9 +921,7 @@ M.handlers.underline = {
         higroup,
         { diagnostic.lnum, diagnostic.col },
         { diagnostic.end_lnum, diagnostic.end_col },
-        'v',
-        false,
-        150
+        { priority = vim.highlight.priorities.diagnostics }
       )
     end
     save_extmarks(underline_ns, bufnr)
