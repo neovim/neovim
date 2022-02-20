@@ -1483,6 +1483,10 @@ func Test_getchar()
   call assert_equal('', getcharstr(0))
   call assert_equal('', getcharstr(1))
 
+  call feedkeys("\<M-F2>", '')
+  call assert_equal("\<M-F2>", getchar(0))
+  call assert_equal(0, getchar(0))
+
   call setline(1, 'xxxx')
   " call test_setmouse(1, 3)
   " let v:mouse_win = 9
