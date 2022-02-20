@@ -795,6 +795,7 @@ EXTERN char *p_wop;             // 'wildoptions'
 EXTERN unsigned wop_flags;
 #define WOP_TAGFILE             0x01
 #define WOP_PUM                 0x02
+#define WOP_FUZZY               0x04
 EXTERN long p_window;           // 'window'
 EXTERN char *p_wak;             // 'winaltkeys'
 EXTERN char *p_wig;             // 'wildignore'
