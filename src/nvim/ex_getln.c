@@ -5024,67 +5024,71 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
     ret = ExpandUserDefined(xp, &regmatch, num_file, file);
   } else {
-    static struct expgen {
-      int context;
-      ExpandFunc func;
-      int ic;
-      int escaped;
-    } tab[] = {
-      { EXPAND_COMMANDS, get_command_name, false, true },
-      { EXPAND_BEHAVE, get_behave_arg, true, true },
-      { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
-      { EXPAND_MESSAGES, get_messages_arg, true, true },
-      { EXPAND_HISTORY, get_history_arg, true, true },
-      { EXPAND_USER_COMMANDS, get_user_commands, false, true },
-      { EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, false, true },
-      { EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, false, true },
-      { EXPAND_USER_NARGS, get_user_cmd_nargs, false, true },
-      { EXPAND_USER_COMPLETE, get_user_cmd_complete, false, true },
-      { EXPAND_USER_VARS, get_user_var_name, false, true },
-      { EXPAND_FUNCTIONS, get_function_name, false, true },
-      { EXPAND_USER_FUNC, get_user_func_name, false, true },
-      { EXPAND_EXPRESSION, get_expr_name, false, true },
-      { EXPAND_MENUS, get_menu_name, false, true },
-      { EXPAND_MENUNAMES, get_menu_names, false, true },
-      { EXPAND_SYNTAX, get_syntax_name, true, true },
-      { EXPAND_SYNTIME, get_syntime_arg, true, true },
-      { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
-      { EXPAND_EVENTS, get_event_name, true, true },
-      { EXPAND_AUGROUP, get_augroup_name, true, true },
-      { EXPAND_CSCOPE, get_cscope_name, true, true },
-      { EXPAND_SIGN, get_sign_name, true, true },
-      { EXPAND_PROFILE, get_profile_name, true, true },
-#ifdef HAVE_WORKING_LIBINTL
-      { EXPAND_LANGUAGE, get_lang_arg, true, false },
-      { EXPAND_LOCALES, get_locales, true, false },
-#endif
-      { EXPAND_ENV_VARS, get_env_name, true, true },
-      { EXPAND_USER, get_users, true, false },
-      { EXPAND_ARGLIST, get_arglist_name, true, false },
-      { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
-    };
-    int i;
-
-    /*
-     * Find a context in the table and call the ExpandGeneric() with the
-     * right function to do the expansion.
-     */
-    ret = FAIL;
-    for (i = 0; i < (int)ARRAY_SIZE(tab); ++i) {
-      if (xp->xp_context == tab[i].context) {
-        if (tab[i].ic) {
-          regmatch.rm_ic = TRUE;
-        }
-        ExpandGeneric(xp, &regmatch, num_file, file, tab[i].func,
-                      tab[i].escaped);
-        ret = OK;
-        break;
-      }
-    }
+    ret = ExpandOther(xp, &regmatch, num_file, file);
   }
 
   vim_regfree(regmatch.regprog);
   xfree(tofree);
+
+  return ret;
+}
+
+/// Do the expansion based on xp->xp_context and 'rmp'.
+static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char_u ***file)
+{
+  static struct expgen {
+    int context;
+    ExpandFunc func;
+    int ic;
+    int escaped;
+  } tab[] = {
+    { EXPAND_COMMANDS, get_command_name, false, true },
+    { EXPAND_BEHAVE, get_behave_arg, true, true },
+    { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
+    { EXPAND_MESSAGES, get_messages_arg, true, true },
+    { EXPAND_HISTORY, get_history_arg, true, true },
+    { EXPAND_USER_COMMANDS, get_user_commands, false, true },
+    { EXPAND_USER_ADDR_TYPE, get_user_cmd_addr_type, false, true },
+    { EXPAND_USER_CMD_FLAGS, get_user_cmd_flags, false, true },
+    { EXPAND_USER_NARGS, get_user_cmd_nargs, false, true },
+    { EXPAND_USER_COMPLETE, get_user_cmd_complete, false, true },
+    { EXPAND_USER_VARS, get_user_var_name, false, true },
+    { EXPAND_FUNCTIONS, get_function_name, false, true },
+    { EXPAND_USER_FUNC, get_user_func_name, false, true },
+    { EXPAND_EXPRESSION, get_expr_name, false, true },
+    { EXPAND_MENUS, get_menu_name, false, true },
+    { EXPAND_MENUNAMES, get_menu_names, false, true },
+    { EXPAND_SYNTAX, get_syntax_name, true, true },
+    { EXPAND_SYNTIME, get_syntime_arg, true, true },
+    { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
+    { EXPAND_EVENTS, get_event_name, true, true },
+    { EXPAND_AUGROUP, get_augroup_name, true, true },
+    { EXPAND_CSCOPE, get_cscope_name, true, true },
+    { EXPAND_SIGN, get_sign_name, true, true },
+    { EXPAND_PROFILE, get_profile_name, true, true },
+#ifdef HAVE_WORKING_LIBINTL
+    { EXPAND_LANGUAGE, get_lang_arg, true, false },
+    { EXPAND_LOCALES, get_locales, true, false },
+#endif
+    { EXPAND_ENV_VARS, get_env_name, true, true },
+    { EXPAND_USER, get_users, true, false },
+    { EXPAND_ARGLIST, get_arglist_name, true, false },
+    { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
+  };
+  int ret = FAIL;
+
+  // Find a context in the table and call the ExpandGeneric() with the
+  // right function to do the expansion.
+  for (int i = 0; i < (int)ARRAY_SIZE(tab); i++) {
+    if (xp->xp_context == tab[i].context) {
+      if (tab[i].ic) {
+        rmp->rm_ic = true;
+      }
+      ExpandGeneric(xp, rmp, num_file, file, tab[i].func, tab[i].escaped);
+      ret = OK;
+      break;
+    }
+  }
 
   return ret;
 }
