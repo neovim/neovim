@@ -3225,7 +3225,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   set_vim_var_nr(VV_MOUSE_COL, 0);
 
   rettv->vval.v_number = n;
-  if (IS_SPECIAL(n) || mod_mask != 0) {
+  if (n != 0 && (IS_SPECIAL(n) || mod_mask != 0)) {
     char_u temp[10];                // modifier: 3, mbyte-char: 6, NUL: 1
     int i = 0;
 
