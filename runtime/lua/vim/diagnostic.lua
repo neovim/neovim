@@ -447,7 +447,7 @@ local function set_list(loclist, opts)
     vim.fn.setqflist({}, ' ', { title = title, items = items })
   end
   if open then
-    vim.api.nvim_command(loclist and "lopen" or "copen")
+    vim.api.nvim_command(loclist and "lopen" or "botright copen")
   end
 end
 
