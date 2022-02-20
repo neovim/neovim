@@ -29,19 +29,43 @@ jobs:
 
       - name: Install apt packages
         run: |
+          sudo add-apt-repository ppa:neovim-ppa/stable
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential ccache cmake gettext gperf libtool-bin locales ninja-build pkg-config flake8
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            build-essential \
+            ccache \
+            cmake \
+            flake8 \
+            gettext \
+            gperf \
+            libluajit-5.1-dev \
+            libmsgpack-dev \
+            libtermkey-dev \
+            libtool-bin \
+            libtree-sitter-dev \
+            libunibilium-dev \
+            libuv1-dev \
+            libvterm-dev \
+            locales \
+            lua-busted \
+            lua-check \
+            lua-filesystem \
+            lua-inspect \
+            lua-lpeg \
+            lua-luv-dev \
+            lua-nvim \
+            luajit \
+            ninja-build \
+            pkg-config
 
-      - name: Cache dependencies
+      - name: Cache artifacts
         uses: actions/cache@v2
         with:
           path: |
-            ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: lint-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
-
-      - name: Build third-party
-        run: ./ci/before_script.sh
+          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!third-party/**CMakeLists.txt') }}-${{ github.base_ref }}
 
       - if: "!cancelled()"
         name: clint
