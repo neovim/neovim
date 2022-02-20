@@ -349,14 +349,16 @@ Notice that "yw" includes the white space after a word.  If you don't want
 this, use "ye".
 
 The "yy" command yanks a whole line, just like "dd" deletes a whole line.
-Unexpectedly, while "D" deletes from the cursor to the end of the line, "Y"
-works like "yy", it yanks the whole line.  Watch out for this inconsistency!
-Use "y$" to yank to the end of the line.
 
 	a text line   yy	a text line	       a text line
 	line 2			line 2		p      line 2
 	last line		last line	       a text line
 						       last line
+
+"Y" was originally equivalent to "yank the entire line", as opposed to "D"
+which is "delete to end of the line".  "Y" has thus been remapped to mean
+"yank to end of the line" to make it consistent with the behavior of "D".
+Mappings will be covered in later chapters.
 
 ==============================================================================
 *04.7*	Using the clipboard

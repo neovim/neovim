@@ -353,6 +353,7 @@ tag		char	      note action in Normal mode	~
 				   register x]
 |Y|		["x]Y		   yank N lines [into register x]; synonym for
 				   "yy"
+				   Note: Mapped to "y$" by default. |default-mappings|
 |ZZ|		ZZ		   write if buffer changed and close window
 |ZQ|		ZQ		   close window without writing
 |[|		[{char}		   square bracket command (see |[| below)

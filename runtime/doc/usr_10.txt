@@ -132,11 +132,11 @@ This works both with recording and with yank and delete commands.  For
 example, you want to collect a sequence of lines into the a register.  Yank
 the first line with: >
 
-	"aY
+	"ayy
 
 Now move to the second line, and type: >
 
-	"AY
+	"Ayy
 
 Repeat this command for all lines.  The a register now contains all those
 lines, in the order you yanked them.
