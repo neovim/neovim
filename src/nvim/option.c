@@ -8165,7 +8165,7 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   }
 
   int needed_signcols = buf_signcols(wp->w_buffer, maximum);
-  int ret = MAX(minimum, needed_signcols);
+  int ret = MAX(minimum, MIN(maximum, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
 }

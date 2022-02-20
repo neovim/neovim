@@ -864,6 +864,7 @@ struct file_buffer {
   sign_entry_T *b_signlist;     // list of placed signs
   int b_signcols;               // last calculated number of sign columns
   bool b_signcols_valid;        // calculated sign columns is valid
+  int b_signcols_max;           // Maximum value b_signcols is valid for.
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
