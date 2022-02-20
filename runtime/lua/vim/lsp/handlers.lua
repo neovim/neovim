@@ -336,7 +336,7 @@ local function location_handler(_, result, ctx, _)
         title = 'LSP locations',
         items = util.locations_to_items(result, client.offset_encoding)
       })
-      api.nvim_command("copen")
+      api.nvim_command("botright copen")
     end
   else
     util.jump_to_location(result, client.offset_encoding)
@@ -430,7 +430,7 @@ local make_call_hierarchy_handler = function(direction)
       end
     end
     vim.fn.setqflist({}, ' ', {title = 'LSP call hierarchy', items = items})
-    api.nvim_command("copen")
+    api.nvim_command("botright copen")
   end
 end
 
