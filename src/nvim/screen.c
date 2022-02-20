@@ -794,7 +794,7 @@ static void win_update(win_T *wp, Providers *providers)
   // If we can compute a change in the automatic sizing of the sign column
   // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
   // figuring it out here so we can redraw the entire screen for it.
-  win_signcol_count(wp);
+  wp->w_scwidth = win_signcol_count(wp);
 
   type = wp->w_redr_type;
 
@@ -1846,7 +1846,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, i
                        win_hl_attr(wp, HLF_FC));
     }
     // draw the sign column
-    int count = win_signcol_count(wp);
+    int count = wp->w_scwidth;
     if (count > 0) {
       n = win_fill_end(wp, ' ', ' ', n, win_signcol_width(wp) * count, row,
                        endrow, win_hl_attr(wp, HLF_SC));
@@ -2792,10 +2792,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         draw_state = WL_SIGN;
         /* Show the sign column when there are any signs in this
          * buffer or when using Netbeans. */
-        int count = win_signcol_count(wp);
-        if (count > 0) {
+        if (wp->w_scwidth > 0) {
           get_sign_display_info(false, wp, lnum, sattrs, row,
-                                startrow, filler_lines, filler_todo, count,
+                                startrow, filler_lines, filler_todo,
                                 &c_extra, &c_final, extra, sizeof(extra),
                                 &p_extra, &n_extra,
                                 &char_attr, &draw_state, &sign_idx);
@@ -2814,9 +2813,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           // number.
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
               && num_signs > 0 && sign_get_attr(SIGN_TEXT, sattrs, 0, 1)) {
-            int count = win_signcol_count(wp);
             get_sign_display_info(true, wp, lnum, sattrs, row,
-                                  startrow, filler_lines, filler_todo, count,
+                                  startrow, filler_lines, filler_todo,
                                   &c_extra, &c_final, extra, sizeof(extra),
                                   &p_extra, &n_extra,
                                   &char_attr, &draw_state, &sign_idx);
@@ -4674,10 +4672,11 @@ static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
 // @param[in, out] sign_idxp Index of the displayed sign
 static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
                                   int row, int startrow, int filler_lines, int filler_todo,
-                                  int count, int *c_extrap, int *c_finalp, char_u *extra,
+                                  int *c_extrap, int *c_finalp, char_u *extra,
                                   size_t extra_size, char_u **pp_extra, int *n_extrap,
                                   int *char_attrp, int *draw_statep, int *sign_idxp)
 {
+  int count = wp->w_scwidth;
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
   *c_finalp = NUL;

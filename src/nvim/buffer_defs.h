@@ -1354,6 +1354,7 @@ struct window_S {
                                     // recomputed
   int w_nrwidth;                    // width of 'number' and 'relativenumber'
                                     // column being used
+  int w_scwidth;                    // width of 'signcolumn'
 
   /*
    * === end of cached values ===
