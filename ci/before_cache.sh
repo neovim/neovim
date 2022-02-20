@@ -7,6 +7,8 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/suite.sh"
 
+mkdir -p "${HOME}/.cache"
+
 echo "before_cache.sh: cache size"
 du -chd 1 "${HOME}/.cache" | sort -rh | head -20
 
