@@ -67,6 +67,9 @@ jobs:
             ~/.ccache
           key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!third-party/**CMakeLists.txt') }}-${{ github.base_ref }}
 
+      - name: Build nvim
+        run: ./ci/run_tests.sh build
+
       - if: "!cancelled()"
         name: clint
         run: ./ci/run_lint.sh clint
