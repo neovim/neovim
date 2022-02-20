@@ -3723,6 +3723,39 @@ static int ccheck_abbr(int c)
   return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, spos);
 }
 
+/// @returns true if fuzzy completion is supported for a given cmdline completion
+/// context.
+static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return (wop_flags & WOP_FUZZY)
+          && xp->xp_context != EXPAND_BOOL_SETTINGS
+          && xp->xp_context != EXPAND_COLORS
+          && xp->xp_context != EXPAND_COMPILER
+          && xp->xp_context != EXPAND_DIRECTORIES
+          && xp->xp_context != EXPAND_FILES
+          && xp->xp_context != EXPAND_FILES_IN_PATH
+          && xp->xp_context != EXPAND_FILETYPE
+          && xp->xp_context != EXPAND_HELP
+          && xp->xp_context != EXPAND_MAPPINGS
+          && xp->xp_context != EXPAND_OLD_SETTING
+          && xp->xp_context != EXPAND_OWNSYNTAX
+          && xp->xp_context != EXPAND_PACKADD
+          && xp->xp_context != EXPAND_SHELLCMD
+          && xp->xp_context != EXPAND_TAGS
+          && xp->xp_context != EXPAND_TAGS_LISTFILES
+          && xp->xp_context != EXPAND_USER_DEFINED
+          && xp->xp_context != EXPAND_USER_LIST;
+}
+
+/// @returns true if fuzzy completion for cmdline completion is enabled and
+/// 'fuzzystr' is not empty.
+bool cmdline_fuzzy_complete(const char_u *const fuzzystr)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  return (wop_flags & WOP_FUZZY) && *fuzzystr != NUL;
+}
+
 static int sort_func_compare(const void *s1, const void *s2)
 {
   char_u *p1 = *(char_u **)s1;
@@ -3778,8 +3811,13 @@ static int nextwild(expand_T *xp, int type, int options, int escape)
     // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
+    if (cmdline_fuzzy_completion_supported(xp)) {
+      // If fuzzy matching, don't modify the search string
+      p1 = vim_strsave(xp->xp_pattern);
+    } else {
+      p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+    }
     // Translate string into pattern and expand it.
-    p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     const int use_options = (
                              options
                              | WILD_HOME_REPLACE
@@ -4771,7 +4809,12 @@ int expand_cmdline(expand_T *xp, char_u *str, int col, int *matchcount, char_u *
   // add star to file name, or convert to regexp if not exp. files.
   assert((str + col) - xp->xp_pattern >= 0);
   xp->xp_pattern_len = (size_t)((str + col) - xp->xp_pattern);
-  file_str = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+  if (cmdline_fuzzy_completion_supported(xp)) {
+    // If fuzzy matching, don't modify the search string
+    file_str = vim_strsave(xp->xp_pattern);
+  } else {
+    file_str = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+  }
 
   if (p_wic) {
     options += WILD_ICASE;
@@ -5018,13 +5061,13 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
 
   if (xp->xp_context == EXPAND_SETTINGS
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
-    ret = ExpandSettings(xp, &regmatch, num_file, file);
+    ret = ExpandSettings(xp, &regmatch, pat, num_file, file);
   } else if (xp->xp_context == EXPAND_MAPPINGS) {
     ret = ExpandMappings(&regmatch, num_file, file);
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
     ret = ExpandUserDefined(xp, &regmatch, num_file, file);
   } else {
-    ret = ExpandOther(xp, &regmatch, num_file, file);
+    ret = ExpandOther(pat, xp, &regmatch, num_file, file);
   }
 
   vim_regfree(regmatch.regprog);
@@ -5034,7 +5077,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
 }
 
 /// Do the expansion based on xp->xp_context and 'rmp'.
-static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char_u ***file)
+static int ExpandOther(char_u *pat, expand_T *xp, regmatch_T *rmp, int *num_file, char_u ***file)
 {
   static struct expgen {
     int context;
@@ -5081,10 +5124,15 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char_u ***f
   // right function to do the expansion.
   for (int i = 0; i < (int)ARRAY_SIZE(tab); i++) {
     if (xp->xp_context == tab[i].context) {
+      // Use fuzzy matching if 'wildoptions' has 'fuzzy'.
+      // If no search pattern is supplied, then don't use fuzzy
+      // matching and return all the found items.
+      const bool fuzzy = cmdline_fuzzy_complete(pat);
+
       if (tab[i].ic) {
         rmp->rm_ic = true;
       }
-      ExpandGeneric(xp, rmp, num_file, file, tab[i].func, tab[i].escaped);
+      ExpandGeneric(xp, rmp, num_file, file, tab[i].func, tab[i].escaped, fuzzy ? pat : NULL);
       ret = OK;
       break;
     }
@@ -5099,16 +5147,20 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char_u ***f
 /// obtain strings, one by one.  The strings are matched against a regexp
 /// program.  Matching strings are copied into an array, which is returned.
 ///
+/// If 'fuzzystr' is not NULL, then fuzzy matching is used. Otherwise, regex matching
+/// is used.
+///
 /// @param func  returns a string from the list
 static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file,
-                          CompleteListItemGetter func, int escaped)
+                          CompleteListItemGetter func, int escaped, const char_u *const fuzzystr)
 {
   int i;
   size_t count = 0;
   char_u *str;
 
   // count the number of matching names
-  for (i = 0;; ++i) {
+  const bool fuzzy = fuzzystr != NULL;
+  for (i = 0;; i++) {
     str = (*func)(xp, i);
     if (str == NULL) {  // end of list
       break;
@@ -5116,8 +5168,8 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
     if (*str == NUL) {  // skip empty strings
       continue;
     }
-    if (vim_regexec(regmatch, str, (colnr_T)0)) {
-      ++count;
+    if (vim_regexec(regmatch, str, (colnr_T)0) || (fuzzy && fuzzy_match_str(str, fuzzystr) != 0)) {
+      count++;
     }
   }
   if (count == 0) {
@@ -5125,7 +5177,12 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
   }
   assert(count < INT_MAX);
   *num_file = (int)count;
-  *file = (char_u **)xmalloc(count * sizeof(char_u *));
+  fuzmatch_str_T *fuzmatch = NULL;
+  if (fuzzy) {
+    fuzmatch = xmalloc(count * sizeof(fuzmatch_str_T));
+  } else {
+    *file = (char_u **)xmalloc(count * sizeof(char_u *));
+  }
 
   // copy the matching names into allocated memory
   count = 0;
@@ -5137,13 +5194,22 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
     if (*str == NUL) {  // Skip empty strings.
       continue;
     }
-    if (vim_regexec(regmatch, str, (colnr_T)0)) {
+    int score;
+    if (vim_regexec(regmatch, str, (colnr_T)0)
+        || (fuzzy && ((score = fuzzy_match_str(str, fuzzystr)) != 0))) {
       if (escaped) {
         str = vim_strsave_escaped(str, (char_u *)" \t\\.");
       } else {
         str = vim_strsave(str);
       }
-      (*file)[count++] = str;
+      if (fuzzy) {
+        fuzmatch[count].idx = (int)count;
+        fuzmatch[count].str = str;
+        fuzmatch[count].score = score;
+      } else {
+        (*file)[count] = str;
+      }
+      count++;
       if (func == get_menu_names) {
         // Test for separator added by get_menu_names().
         str += STRLEN(str) - 1;
@@ -5155,21 +5221,30 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
   }
 
   // Sort the results.  Keep menu's in the specified order.
+  bool funcsort = false;
   if (xp->xp_context != EXPAND_MENUNAMES && xp->xp_context != EXPAND_MENUS) {
     if (xp->xp_context == EXPAND_EXPRESSION
         || xp->xp_context == EXPAND_FUNCTIONS
         || xp->xp_context == EXPAND_USER_FUNC) {
       // <SNR> functions should be sorted to the end.
-      qsort((void *)*file, (size_t)*num_file, sizeof(char_u *),
-            sort_func_compare);
+      funcsort = true;
+      if (!fuzzy) {
+        qsort(*file, (size_t)(*num_file), sizeof(char_u *), sort_func_compare);
+      }
     } else {
-      sort_strings(*file, *num_file);
+      if (!fuzzy) {
+        sort_strings(*file, *num_file);
+      }
     }
   }
 
   /* Reset the variables used for special highlight names expansion, so that
    * they don't show up when getting normal highlight names by ID. */
   reset_expand_highlight();
+
+  if (fuzzy) {
+    fuzzymatches_to_strmatches(fuzmatch, file, (int)count, funcsort);
+  }
 }
 
 /// Complete a shell command.

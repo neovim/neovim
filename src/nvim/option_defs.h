@@ -723,10 +723,11 @@ EXTERN int p_warn;              // 'warn'
 EXTERN char_u *p_wop;         // 'wildoptions'
 EXTERN unsigned wop_flags;
 #ifdef IN_OPTION_C
-static char *(p_wop_values[]) =  { "tagfile", "pum", NULL };
+static char *(p_wop_values[]) =  { "tagfile", "pum", "fuzzy", NULL };
 #endif
 #define WOP_TAGFILE             0x01
 #define WOP_PUM                 0x02
+#define WOP_FUZZY               0x04
 EXTERN long p_window;           // 'window'
 EXTERN char_u *p_wak;         // 'winaltkeys'
 EXTERN char_u *p_wig;         // 'wildignore'

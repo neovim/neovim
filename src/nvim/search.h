@@ -97,6 +97,14 @@ typedef struct searchstat {
   int last_maxcount;  // the max count of the last search
 } searchstat_T;
 
+/// Fuzzy matched string list item. Used for fuzzy match completion. Items are
+/// usually sorted by 'score'. The 'idx' member is used for stable-sort.
+typedef struct {
+  int idx;
+  char_u *str;
+  int score;
+} fuzmatch_str_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"
 #endif
