@@ -64,7 +64,6 @@ jobs:
         run: ./ci/run_lint.sh single-includes
 
       - name: Cache dependencies
-        if: ${{ success() }}
         run: ./ci/before_cache.sh
 
   unixish:
@@ -176,7 +175,6 @@ jobs:
         run: ./ci/run_tests.sh install_nvim
 
       - name: Cache dependencies
-        if: ${{ success() }}
         run: ./ci/before_cache.sh
 
   windows:
