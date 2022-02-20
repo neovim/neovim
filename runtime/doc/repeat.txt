@@ -253,21 +253,22 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			below "plugin", just like with plugins in
 			'runtimepath'.
 
-			If the filetype detection was not enabled yet (this
+			If the filetype detection was already enabled (this
 			is usually done with a "syntax enable" or "filetype
-			on" command in your .vimrc file), this will also look
+			on" command in your |init.vim|, or automatically during
+			|initialization|), and the package was found in
+			"pack/*/opt/{name}", this command will also look
 			for "{name}/ftdetect/*.vim" files.
 
 			When the optional ! is added no plugin files or
 			ftdetect scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
-			useful in your .vimrc.  The plugins will then be
-			loaded during initialization, see |load-plugins| (note
+			useful in your |init.vim|.  The plugins will then be
+			loaded during |initialization|, see |load-plugins| (note
 			that the loading order will be reversed, because each
-			directory is inserted before others).
-			Note that for ftdetect scripts to be loaded
-			you will need to write `filetype plugin indent on`
-			AFTER all `packadd!` commands.
+			directory is inserted before others). In this case, the
+			ftdetect scripts will be loaded during |initialization|,
+			before the |load-plugins| step.
 
 			Also see |pack-add|.
 
