@@ -326,6 +326,18 @@ void redraw_buf_status_later(buf_T *buf)
   }
 }
 
+void redraw_win_signcol(win_T *wp)
+{
+  // If we can compute a change in the automatic sizing of the sign column
+  // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
+  // figuring it out here so we can redraw the entire screen for it.
+  int scwidth = wp->w_scwidth;
+  wp->w_scwidth = win_signcol_count(wp);
+  if (wp->w_scwidth != scwidth) {
+    changed_line_abv_curs_win(wp);
+  }
+}
+
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
@@ -790,12 +802,6 @@ static void win_update(win_T *wp, Providers *providers)
   linenr_T mod_bot = 0;
   int save_got_int;
 
-
-  // If we can compute a change in the automatic sizing of the sign column
-  // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
-  // figuring it out here so we can redraw the entire screen for it.
-  wp->w_scwidth = win_signcol_count(wp);
-
   type = wp->w_redr_type;
 
   if (type >= NOT_VALID) {
@@ -816,6 +822,8 @@ static void win_update(win_T *wp, Providers *providers)
     wp->w_redr_type = 0;
     return;
   }
+
+  redraw_win_signcol(wp);
 
   init_search_hl(wp);
 
