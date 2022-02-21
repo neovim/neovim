@@ -25,7 +25,7 @@ local keymap = {}
 ---    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 --- </pre>
 ---
---- the require('jkl') gets evaluated during this call in order to access the function. If you want to
+--- the `require('jkl')` gets evaluated during this call in order to access the function. If you want to
 --- avoid this cost at startup you can wrap it in a function, for example:
 --- <pre>
 ---    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
