@@ -196,7 +196,7 @@ If you want to keep the changed buffer without saving it, switch on the
 			Edit {file} always.  Discard any changes to the
 			current buffer.
 			Also see |++opt| and |+cmd|.
-
+							*:edit_#* *:e#*
 :e[dit] [++opt] [+cmd] #[count]
 			Edit the [count]th buffer (as shown by |:files|).
 			This command does the same as [count] CTRL-^.  But ":e
@@ -356,7 +356,7 @@ as a wildcard when "[" is in the 'isfname' option.  A simple way to avoid this
 is to use "path\[[]abc]", this matches the file "path\[abc]".
 
 					*starstar-wildcard*
-Expanding "**" is possible on Unix, Win32, Mac OS/X and a few other systems.
+Expanding "**" is possible on Unix, Win32, macOS and a few other systems.
 This allows searching a directory tree.  This goes up to 100 directories deep.
 Note there are some commands where this works slightly differently, see
 |file-searching|.
@@ -1495,7 +1495,7 @@ which version of the file you want to keep.
 
 The accuracy of the time check depends on the filesystem.  On Unix it is
 usually sub-second.  With old file sytems and on MS-Windows it is normally one
-second.  Use has('nanotime') check if sub-second time stamp checks are
+second.  Use `has('nanotime')` to check if sub-second time stamp checks are
 available.
 
 There is one situation where you get the message while there is nothing wrong:
