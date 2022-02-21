@@ -1,6 +1,9 @@
 " Test various aspects of the Vim script language.
 " Most of this was formerly in test49.
 
+source check.vim
+source shared.vim
+
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
 "-------------------------------------------------------------------------------
@@ -1744,7 +1747,7 @@ func Test_function_defined_line()
     [CODE]
 
     call writefile(lines, 'Xtest.vim')
-    let res = system(v:progpath .. ' --clean -es -X -S Xtest.vim')
+    let res = system(GetVimCommandClean() .. ' -es -X -S Xtest.vim')
     call assert_equal(0, v:shell_error)
 
     let m = matchstr(res, 'function F1()[^[:print:]]*[[:print:]]*')

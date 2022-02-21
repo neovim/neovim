@@ -2739,7 +2739,7 @@ func Test_cwindow_jump()
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
 
-  " Jumping to a file from the location list window should find a usuable
+  " Jumping to a file from the location list window should find a usable
   " window by wrapping around the window list.
   enew | only
   call setloclist(0, [], 'f')

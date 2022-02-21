@@ -4277,7 +4277,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   }
 
   // Save the global value before changing anything. This is needed as for
-  // a global-only option setting the "local value" infact sets the global
+  // a global-only option setting the "local value" in fact sets the global
   // value (since there is only one value).
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
