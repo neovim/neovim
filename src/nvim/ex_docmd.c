@@ -2704,7 +2704,7 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
                                      // only full match global is accepted.
 
   // Look for buffer-local user commands first, then global ones.
-  gap = is_in_cmdwin() ? &prevwin->w_buffer->b_ucmds : &curbuf->b_ucmds;
+  gap = &prevwin_curwin()->w_buffer->b_ucmds;
   for (;;) {
     for (j = 0; j < gap->ga_len; j++) {
       uc = USER_CMD_GA(gap, j);
@@ -5378,7 +5378,7 @@ static void uc_list(char_u *name, size_t name_len)
   uint32_t a;
 
   // In cmdwin, the alternative buffer should be used.
-  garray_T *gap = is_in_cmdwin() ? &prevwin->w_buffer->b_ucmds : &curbuf->b_ucmds;
+  const garray_T *gap = &prevwin_curwin()->w_buffer->b_ucmds;
   for (;;) {
     for (i = 0; i < gap->ga_len; i++) {
       cmd = USER_CMD_GA(gap, i);
@@ -6357,7 +6357,7 @@ char_u *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In cmdwin, the alternative buffer should be used.
-  const buf_T *const buf = is_in_cmdwin() ? prevwin->w_buffer : curbuf;
+  const buf_T *const buf = prevwin_curwin()->w_buffer;
 
   if (idx < buf->b_ucmds.ga_len) {
     return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
@@ -6379,7 +6379,8 @@ static char_u *get_user_command_name(int idx, int cmdidx)
   }
   if (cmdidx == CMD_USER_BUF) {
     // In cmdwin, the alternative buffer should be used.
-    buf_T *buf = is_in_cmdwin() ? prevwin->w_buffer : curbuf;
+    const buf_T *const buf = prevwin_curwin()->w_buffer;
+
     if (idx < buf->b_ucmds.ga_len) {
       return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
     }

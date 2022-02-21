@@ -73,6 +73,15 @@ typedef enum {
 
 static char *m_onlyone = N_("Already only one window");
 
+/// @return the current window, unless in the cmdline window and "prevwin" is
+/// set, then return "prevwin".
+win_T *prevwin_curwin(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // In cmdwin, the alternative buffer should be used.
+  return is_in_cmdwin() && prevwin != NULL ? prevwin : curwin;
+}
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -3857,6 +3866,11 @@ int win_new_tabpage(int after, char_u *filename)
   tabpage_T *newtp;
   int n;
 
+  if (cmdwin_type != 0) {
+    emsg(_(e_cmdwin));
+    return FAIL;
+  }
+
   newtp = alloc_tabpage();
 
   // Remember the current windows in this Tab page.
@@ -4255,6 +4269,8 @@ void goto_tabpage(int n)
 /// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
 void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
+  CHECK_CMDWIN;
+
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
 

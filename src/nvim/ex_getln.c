@@ -6589,7 +6589,7 @@ static int open_cmdwin(void)
 
 /// @return true if in the cmdwin, not editing the command line.
 bool is_in_cmdwin(void)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return cmdwin_type != 0 && get_cmdline_type() == NUL;
 }
