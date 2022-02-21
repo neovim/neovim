@@ -927,10 +927,11 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
   } else if (val.type == kObjectTypeString) {
     String str = val.data.string;
     // TODO(bfredl): be more fancy with "bg", "fg" etc
+    if (!str.size || STRICMP(str.data, "NONE") == 0) {
+      return -1;
+    }
     int color;
-    if (!str.size) {
-      color = 0;
-    } else if (rgb) {
+    if (rgb) {
       color = name_to_color(str.data);
     } else {
       color = name_to_ctermcolor(str.data);
