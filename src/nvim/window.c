@@ -4269,7 +4269,9 @@ void goto_tabpage(int n)
 /// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
 void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
-  CHECK_CMDWIN;
+  if (trigger_enter_autocmds || trigger_leave_autocmds) {
+    CHECK_CMDWIN;
+  }
 
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
