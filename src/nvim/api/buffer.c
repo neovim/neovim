@@ -133,7 +133,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - buffer handle
 ///             - on_reload: Lua callback invoked on reload. The entire buffer
 ///                          content should be considered changed. Args:
-///               - the string "detach"
+///               - the string "reload"
 ///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
