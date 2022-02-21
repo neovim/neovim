@@ -124,6 +124,10 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 
 /// Set a highlight group.
 ///
+/// Note: unlike the `:highlight` command which can update a highlight group,
+/// this function completely replaces the definition. For example:
+/// `nvim_set_hl(0, 'Visual', {})` will clear the highlight group 'Visual'.
+///
 /// @param ns_id number of namespace for this highlight. Use value 0
 ///              to set a highlight group in the global (`:highlight`)
 ///              namespace.
