@@ -319,9 +319,9 @@ void terminal_close(Terminal *term, int status)
   } else if (!only_destroy) {
     // This was called by channel_process_exit_cb() not in process_teardown().
     // Do not call the close callback now. Wait for the user to press a key.
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
-    terminal_receive(term, msg, strlen(msg));
+    char _msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
+    snprintf(_msg, sizeof _msg, "\r\n[Process exited %d]", status);
+    terminal_receive(term, _msg, strlen(_msg));
   }
 
   if (only_destroy) {
@@ -1504,7 +1504,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
 static void refresh_screen(Terminal *term, buf_T *buf)
 {
   assert(buf == curbuf);  // TODO(bfredl): remove this condition
-  int changed = 0;
+  int _changed = 0;
   int added = 0;
   int height;
   int width;
@@ -1525,7 +1525,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
     if (linenr <= buf->b_ml.ml_line_count) {
       ml_replace(linenr, (uint8_t *)term->textbuf, true);
-      changed++;
+      _changed++;
     } else {
       ml_append(linenr - 1, (uint8_t *)term->textbuf, 0, false);
       added++;
@@ -1533,7 +1533,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   }
 
   int change_start = row_to_linenr(term, term->invalid_start);
-  int change_end = change_start + changed;
+  int change_end = change_start + _changed;
   changed_lines(change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;

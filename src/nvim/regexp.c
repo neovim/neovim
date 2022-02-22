@@ -7385,9 +7385,9 @@ static bool vim_regexec_string(regmatch_T *rmp, char_u *line, colnr_T col,
 bool vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
                       colnr_T col)
 {
-  regmatch_T regmatch = { .regprog = *prog, .rm_ic = ignore_case };
-  bool r = vim_regexec_string(&regmatch, line, col, false);
-  *prog = regmatch.regprog;
+  regmatch_T _regmatch = { .regprog = *prog, .rm_ic = ignore_case };
+  bool r = vim_regexec_string(&_regmatch, line, col, false);
+  *prog = _regmatch.regprog;
   return r;
 }
 

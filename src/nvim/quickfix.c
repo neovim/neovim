@@ -3947,7 +3947,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   buf = qf_find_buf(qi);
   if (buf != NULL) {
     linenr_T old_line_count = buf->b_ml.ml_line_count;
-    int qf_winid = 0;
+    int _qf_winid = 0;
 
     if (IS_LL_STACK(qi)) {
       if (curwin->w_llist == qi) {
@@ -3958,7 +3958,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
           return;
         }
       }
-      qf_winid = (int)win->handle;
+      _qf_winid = (int)win->handle;
     }
 
     if (old_last == NULL) {
@@ -3968,7 +3968,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
     qf_update_win_titlevar(qi);
 
-    qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
+    qf_fill_buffer(qf_get_curlist(qi), buf, old_last, _qf_winid);
     buf_inc_changedtick(buf);
 
     if (old_last == NULL) {

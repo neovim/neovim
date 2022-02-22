@@ -444,7 +444,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
-  bcount_t inserted_bytes = 0;
+  bcount_t _inserted_bytes = 0;
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
@@ -458,7 +458,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
       goto end;
     }
 
-    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+    _inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
@@ -478,7 +478,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
       goto end;
     }
 
-    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+    _inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
 
     // Same as with replacing, but we also need to free lines
     xfree(lines[i]);
@@ -497,7 +497,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
               kExtmarkNOOP);
 
   extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
-                 deleted_bytes, (int)new_len, 0, inserted_bytes,
+                 deleted_bytes, (int)new_len, 0, _inserted_bytes,
                  kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);

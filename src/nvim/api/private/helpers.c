@@ -139,15 +139,15 @@ bool try_end(Error *err)
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
-    char *msg = get_exception_string(*msg_list,
-                                     ET_ERROR,
-                                     NULL,
-                                     &should_free);
-    api_set_error(err, kErrorTypeException, "%s", msg);
+    char *_msg = get_exception_string(*msg_list,
+                                      ET_ERROR,
+                                      NULL,
+                                      &should_free);
+    api_set_error(err, kErrorTypeException, "%s", _msg);
     free_global_msglist();
 
     if (should_free) {
-      xfree(msg);
+      xfree(_msg);
     }
   } else if (current_exception) {
     api_set_error(err, kErrorTypeException, "%s", current_exception->value);

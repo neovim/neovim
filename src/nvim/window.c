@@ -854,16 +854,16 @@ void ui_ext_win_position(win_T *wp)
       bool east = c.anchor & kFloatAnchorEast;
       bool south = c.anchor & kFloatAnchorSouth;
 
-      int comp_row = (int)row - (south ? wp->w_height_outer : 0);
-      int comp_col = (int)col - (east ? wp->w_width_outer : 0);
-      comp_row += grid->comp_row;
-      comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - 1), 0);
-      comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
-      wp->w_winrow = comp_row;
-      wp->w_wincol = comp_col;
+      int _comp_row = (int)row - (south ? wp->w_height_outer : 0);
+      int _comp_col = (int)col - (east ? wp->w_width_outer : 0);
+      _comp_row += grid->comp_row;
+      _comp_col += grid->comp_col;
+      _comp_row = MAX(MIN(_comp_row, Rows - wp->w_height_outer - 1), 0);
+      _comp_col = MAX(MIN(_comp_col, Columns - wp->w_width_outer), 0);
+      wp->w_winrow = _comp_row;
+      wp->w_wincol = _comp_col;
       bool valid = (wp->w_redr_type == 0);
-      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+      ui_comp_put_grid(&wp->w_grid_alloc, _comp_row, _comp_col,
                        wp->w_height_outer, wp->w_width_outer, valid, false);
       ui_check_cursor_grid(wp->w_grid_alloc.handle);
       wp->w_grid_alloc.focusable = wp->w_float_config.focusable;

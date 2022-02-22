@@ -3469,9 +3469,9 @@ static void showmap(mapblock_T *mp, bool local)
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
   if (mp->m_luaref != LUA_NOREF) {
-    char msg[100];
-    snprintf(msg, sizeof(msg), "<Lua function %d>", mp->m_luaref);
-    msg_puts_attr(msg, HL_ATTR(HLF_8));
+    char _msg[100];
+    snprintf(_msg, sizeof(_msg), "<Lua function %d>", mp->m_luaref);
+    msg_puts_attr(_msg, HL_ATTR(HLF_8));
   } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {

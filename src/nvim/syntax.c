@@ -3234,7 +3234,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
 static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 {
   char_u *arg = eap->arg;
-  char_u save_chartab[32];
+  char_u _save_chartab[32];
   char_u *save_isk;
 
   if (eap->skip) {
@@ -3255,13 +3255,13 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
     } else {
-      memmove(save_chartab, curbuf->b_chartab, (size_t)32);
+      memmove(_save_chartab, curbuf->b_chartab, (size_t)32);
       save_isk = curbuf->b_p_isk;
       curbuf->b_p_isk = vim_strsave(arg);
 
       buf_init_chartab(curbuf, false);
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
-      memmove(curbuf->b_chartab, save_chartab, (size_t)32);
+      memmove(curbuf->b_chartab, _save_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
       curwin->w_s->b_syn_isk = curbuf->b_p_isk;
       curbuf->b_p_isk = save_isk;

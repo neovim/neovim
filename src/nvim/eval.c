@@ -6233,10 +6233,10 @@ int assert_inrange(typval_T *argvars)
         ga_concat(&ga, (char *)tofree);
         xfree(tofree);
       } else {
-        char msg[80];
-        vim_snprintf(msg, sizeof(msg), "Expected range %g - %g, but got %g",
+        char _msg[80];
+        vim_snprintf(_msg, sizeof(_msg), "Expected range %g - %g, but got %g",
                      flower, fupper, factual);
-        ga_concat(&ga, msg);
+        ga_concat(&ga, _msg);
       }
       assert_error(&ga);
       ga_clear(&ga);
@@ -6254,11 +6254,11 @@ int assert_inrange(typval_T *argvars)
       garray_T ga;
       prepare_assert_error(&ga);
 
-      char msg[55];
-      vim_snprintf(msg, sizeof(msg),
+      char _msg[55];
+      vim_snprintf(_msg, sizeof(_msg),
                    "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
                    lower, upper);  // -V576
-      fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
+      fill_assert_error(&ga, &argvars[3], (char_u *)_msg, NULL, &argvars[2],
                         ASSERT_INRANGE);
       assert_error(&ga);
       ga_clear(&ga);

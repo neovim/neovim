@@ -1738,7 +1738,7 @@ static void do_system_initialization(void)
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
     const void *iter = NULL;
-    const char path_tail[] = {
+    const char _path_tail[] = {
       'n', 'v', 'i', 'm', PATHSEP,
       's', 'y', 's', 'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL
     };
@@ -1749,13 +1749,13 @@ static void do_system_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      char *vimrc = xmalloc(dir_len + sizeof(_path_tail) + 1);
       memcpy(vimrc, dir, dir_len);
       if (vimrc[dir_len - 1] != PATHSEP) {
         vimrc[dir_len] = PATHSEP;
         dir_len += 1;
       }
-      memcpy(vimrc + dir_len, path_tail, sizeof(path_tail));
+      memcpy(vimrc + dir_len, _path_tail, sizeof(_path_tail));
       if (do_source(vimrc, false, DOSO_NONE) != FAIL) {
         xfree(vimrc);
         xfree(config_dirs);
@@ -1832,12 +1832,12 @@ static bool do_user_initialization(void)
       if (dir == NULL || dir_len == 0) {
         break;
       }
-      const char path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
+      const char _path_tail[] = { 'n', 'v', 'i', 'm', PATHSEP,
                                  'i', 'n', 'i', 't', '.', 'v', 'i', 'm', NUL };
-      char *vimrc = xmalloc(dir_len + sizeof(path_tail) + 1);
+      char *vimrc = xmalloc(dir_len + sizeof(_path_tail) + 1);
       memmove(vimrc, dir, dir_len);
       vimrc[dir_len] = PATHSEP;
-      memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
+      memmove(vimrc + dir_len + 1, _path_tail, sizeof(_path_tail));
       if (do_source(vimrc, true, DOSO_VIMRC) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
