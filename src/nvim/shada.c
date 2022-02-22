@@ -2465,24 +2465,6 @@ static inline void find_removable_bufs(khash_t(bufset) *removable_bufs)
   }
 }
 
-void shada_write_exit(bool dump_one_history[HIST_COUNT], WriteMergerState *wms,
-                      khash_t(bufset) removable_bufs, msgpack_packer *packer);
-
-void shada_write_exit(bool dump_one_history[HIST_COUNT], WriteMergerState *const wms,
-                      khash_t(bufset) removable_bufs, msgpack_packer *const packer)
-{
-  for (size_t i = 0; i < HIST_COUNT; i++) {
-    if (dump_one_history[i]) {
-      hms_dealloc(&wms->hms[i]);
-    }
-  }
-  kh_dealloc(file_marks, &wms->file_marks);
-  kh_dealloc(bufset, &removable_bufs);
-  msgpack_packer_free(packer);
-  kh_dealloc(strset, &wms->dumped_variables);
-  xfree(wms);
-}
-
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2578,8 +2560,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
     }
   }, 0) == kSDWriteFailed) {
     ret = kSDWriteFailed;
-    shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-    return ret;
+    goto shada_write_exit;
   }
 
   // Write buffer list
@@ -2588,8 +2569,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
     if (shada_pack_entry(packer, buflist_entry, 0) == kSDWriteFailed) {
       xfree(buflist_entry.data.buffer_list.buffers);
       ret = kSDWriteFailed;
-      shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-      return ret;
+      goto shada_write_exit;
     }
     xfree(buflist_entry.data.buffer_list.buffers);
   }
@@ -2650,8 +2630,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         tv_clear(&vartv);
         tv_clear(&tgttv);
         ret = kSDWriteFailed;
-        shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-        return ret;
+        goto shada_write_exit;
       }
       tv_clear(&vartv);
       tv_clear(&tgttv);
@@ -2853,8 +2832,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         if (shada_pack_pfreed_entry(packer, wms_array[i_], max_kbyte) \
             == kSDWriteFailed) { \
           ret = kSDWriteFailed; \
-          shada_write_exit(dump_one_history, wms, removable_bufs, packer); \
-          return ret; \
+          goto shada_write_exit; \
         } \
       } \
     } \
@@ -2866,8 +2844,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
     if (shada_pack_pfreed_entry(packer, wms->jumps[i], max_kbyte)
         == kSDWriteFailed) {
       ret = kSDWriteFailed;
-      shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-      return ret;
+      goto shada_write_exit;
     }
   }
 #define PACK_WMS_ENTRY(wms_entry) \
@@ -2876,8 +2853,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       if (shada_pack_pfreed_entry(packer, wms_entry, max_kbyte) \
           == kSDWriteFailed) { \
         ret = kSDWriteFailed; \
-        shada_write_exit(dump_one_history, wms, removable_bufs, packer); \
-        return ret; \
+        goto shada_write_exit; \
       } \
     } \
   } while (0)
@@ -2905,8 +2881,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       if (shada_pack_pfreed_entry(packer, all_file_markss[i]->changes[j],
                                   max_kbyte) == kSDWriteFailed) {
         ret = kSDWriteFailed;
-        shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-        return ret;
+        goto shada_write_exit;
       }
     }
     for (size_t j = 0; j < all_file_markss[i]->additional_marks_size; j++) {
@@ -2914,8 +2889,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
                            0) == kSDWriteFailed) {
         shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
         ret = kSDWriteFailed;
-        shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-        return ret;
+        goto shada_write_exit;
       }
       shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
     }
@@ -2938,17 +2912,25 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
           }
         })
         if (ret == kSDWriteFailed) {
-          shada_write_exit(dump_one_history, wms, removable_bufs, packer);
-          return ret;
+          goto shada_write_exit;
         }
       }
     }
   }
 
-  shada_write_exit(dump_one_history, wms, removable_bufs, packer);
+shada_write_exit:
+  for (size_t i = 0; i < HIST_COUNT; i++) {
+    if (dump_one_history[i]) {
+      hms_dealloc(&wms->hms[i]);
+    }
+  }
+  kh_dealloc(file_marks, &wms->file_marks);
+  kh_dealloc(bufset, &removable_bufs);
+  msgpack_packer_free(packer);
+  kh_dealloc(strset, &wms->dumped_variables);
+  xfree(wms);
   return ret;
 }
-
 
 #undef PACK_STATIC_STR
 
