@@ -1512,12 +1512,6 @@ static char *shada_filename(const char *file)
     } \
   } while (0)
 
-void shada_pack_entry_error(msgpack_packer *spacker, msgpack_sbuffer sbuf)
-{
-  msgpack_packer_free(spacker);
-  msgpack_sbuffer_destroy(&sbuf);
-}
-
 /// Write single ShaDa entry
 ///
 /// @param[in]  packer     Packer used to write entry.
@@ -1541,8 +1535,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
         if (encode_vim_to_msgpack(spacker, TV_LIST_ITEM_TV(li), \
                                   _("additional elements of ShaDa " what)) \
             == FAIL) { \
-          shada_pack_entry_error(spacker, sbuf); \
-          return ret; \
+          goto shada_pack_entry_error; \
         } \
       }); \
     } \
@@ -1562,8 +1555,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
           if (encode_vim_to_msgpack(spacker, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
-            shada_pack_entry_error(spacker, sbuf); \
-            return ret; \
+            goto shada_pack_entry_error; \
           } \
         } \
       } \
@@ -1579,8 +1571,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   case kSDItemUnknown:
     if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
                           (unsigned)entry.data.unknown_item.size) == -1) {
-      shada_pack_entry_error(spacker, sbuf);
-      return ret;
+      goto shada_pack_entry_error;
     }
     break;
   case kSDItemHistoryEntry: {
@@ -1621,8 +1612,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
       ret = kSDWriteIgnError;
       semsg(_(WERR "Failed to write variable %s"),
             entry.data.global_var.name);
-      shada_pack_entry_error(spacker, sbuf);
-      return ret;
+      goto shada_pack_entry_error;
     }
     DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements,
                              "variable item");
@@ -1817,31 +1807,31 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
     if (entry.type == kSDItemUnknown) {
       if (msgpack_pack_uint64(packer, entry.data.unknown_item.type) == -1) {
-        shada_pack_entry_error(spacker, sbuf);
-        return ret;
+        goto shada_pack_entry_error;
       }
     } else {
       if (msgpack_pack_uint64(packer, (uint64_t)entry.type) == -1) {
-        shada_pack_entry_error(spacker, sbuf);
-        return ret;
+        goto shada_pack_entry_error;
       }
     }
     if (msgpack_pack_uint64(packer, (uint64_t)entry.timestamp) == -1) {
-      shada_pack_entry_error(spacker, sbuf);
-      return ret;
+      goto shada_pack_entry_error;
     }
     if (sbuf.size > 0) {
       if ((msgpack_pack_uint64(packer, (uint64_t)sbuf.size) == -1)
           || (packer->callback(packer->data, sbuf.data,
                                (unsigned)sbuf.size) == -1)) {
-        shada_pack_entry_error(spacker, sbuf);
-        return ret;
+        goto shada_pack_entry_error;
       }
     }
   }
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
   return kSDWriteSuccessfull;
+shada_pack_entry_error:
+  msgpack_packer_free(spacker);
+  msgpack_sbuffer_destroy(&sbuf);
+  return ret;
 }
 
 /// Write single ShaDa entry and free it afterwards
