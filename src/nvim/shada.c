@@ -1115,6 +1115,44 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
     } \
   } while (0)
 
+void shada_read_main_cycle_end(unsigned srni_flags, HistoryMergerState hms[HIST_COUNT],
+                               khash_t(bufset) cl_bufs, khash_t(fnamebufs) fname_bufs,
+                               khash_t(strset) oldfiles_set);
+
+void shada_read_main_cycle_end(const unsigned srni_flags, HistoryMergerState hms[HIST_COUNT],
+                               khash_t(bufset) cl_bufs, khash_t(fnamebufs) fname_bufs,
+                               khash_t(strset) oldfiles_set)
+{
+  if (srni_flags & kSDReadHistory) {
+    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+      hms_insert_whole_neovim_history(&hms[i]);
+      clr_history(i);
+      int *new_hisidx;
+      int *new_hisnum;
+      histentry_T *hist = hist_get_array(i, &new_hisidx, &new_hisnum);
+      if (hist != NULL) {
+        hms_to_he_array(&hms[i], hist, new_hisidx, new_hisnum);
+      }
+      hms_dealloc(&hms[i]);
+    }
+  }
+  if (cl_bufs.n_occupied) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      (void)tp;
+      if (in_bufset(&cl_bufs, wp->w_buffer)) {
+        wp->w_changelistidx = wp->w_buffer->b_changelistlen;
+      }
+    }
+  }
+  kh_dealloc(bufset, &cl_bufs);
+  const char *key;
+  kh_foreach_key(&fname_bufs, key, {
+    xfree((void *)key);
+  })
+  kh_dealloc(fnamebufs, &fname_bufs);
+  kh_dealloc(strset, &oldfiles_set);
+}
+
 /// Read data from ShaDa file
 ///
 /// @param[in]  sd_reader  Structure containing file reader definition.
@@ -1176,7 +1214,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       abort();
     case kSDReadStatusNotShaDa:
     case kSDReadStatusReadError:
-      goto shada_read_main_cycle_end;
+      shada_read_main_cycle_end(srni_flags, hms, cl_bufs, fname_bufs, oldfiles_set);
+      return;
     case kSDReadStatusMalformed:
       continue;
     }
@@ -1404,42 +1443,15 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
     }
   }
-shada_read_main_cycle_end:
   // Warning: shada_hist_iter returns ShadaEntry elements which use strings from
   //          original history list. This means that once such entry is removed
   //          from the history Neovim array will no longer be valid. To reduce
   //          amount of memory allocations ShaDa file reader allocates enough
   //          memory for the history string itself and separator character which
   //          may be assigned right away.
-  if (srni_flags & kSDReadHistory) {
-    for (uint8_t i = 0; i < HIST_COUNT; i++) {
-      hms_insert_whole_neovim_history(&hms[i]);
-      clr_history(i);
-      int *new_hisidx;
-      int *new_hisnum;
-      histentry_T *hist = hist_get_array(i, &new_hisidx, &new_hisnum);
-      if (hist != NULL) {
-        hms_to_he_array(&hms[i], hist, new_hisidx, new_hisnum);
-      }
-      hms_dealloc(&hms[i]);
-    }
-  }
-  if (cl_bufs.n_occupied) {
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      (void)tp;
-      if (in_bufset(&cl_bufs, wp->w_buffer)) {
-        wp->w_changelistidx = wp->w_buffer->b_changelistlen;
-      }
-    }
-  }
-  kh_dealloc(bufset, &cl_bufs);
-  const char *key;
-  kh_foreach_key(&fname_bufs, key, {
-    xfree((void *)key);
-  })
-  kh_dealloc(fnamebufs, &fname_bufs);
-  kh_dealloc(strset, &oldfiles_set);
+  shada_read_main_cycle_end(srni_flags, hms, cl_bufs, fname_bufs, oldfiles_set);
 }
+
 
 /// Default shada file location: cached path
 static char *default_shada_file = NULL;
