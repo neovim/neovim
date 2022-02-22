@@ -287,8 +287,8 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   }
 
   bool oob = false;
-  start = normalize_index(buf, start, &oob);
-  end = normalize_index(buf, end, &oob);
+  start = normalize_index(buf, start, true, &oob);
+  end = normalize_index(buf, end, true, &oob);
 
   if (strict_indexing && oob) {
     api_set_error(err, kErrorTypeValidation, "Index out of bounds");
@@ -374,14 +374,13 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   }
 
   bool oob = false;
-  start = normalize_index(buf, start, &oob);
-  end = normalize_index(buf, end, &oob);
+  start = normalize_index(buf, start, true, &oob);
+  end = normalize_index(buf, end, true, &oob);
 
   if (strict_indexing && oob) {
     api_set_error(err, kErrorTypeValidation, "Index out of bounds");
     return;
   }
-
 
   if (start > end) {
     api_set_error(err,
@@ -554,13 +553,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
-  start_row = normalize_index(buf, start_row, &oob);
+  start_row = normalize_index(buf, start_row, true, &oob);
   if (oob || start_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
     return;
   }
 
-  end_row = normalize_index(buf, end_row, &oob);
+  end_row = normalize_index(buf, end_row, true, &oob);
   if (oob || end_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
     return;
@@ -755,6 +754,108 @@ end:
   xfree(lines);
   aucmd_restbuf(&aco);
   try_end(err);
+}
+
+/// Gets a range from the buffer.
+///
+/// This differs from |nvim_buf_get_lines()| in that it allows retrieving only
+/// portions of a line.
+///
+/// Indexing is zero-based. Column indices are end-exclusive.
+///
+/// Prefer |nvim_buf_get_lines()| when retrieving entire lines.
+///
+/// @param channel_id
+/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param start_row  First line index
+/// @param start_col  Starting byte offset of first line
+/// @param end_row    Last line index
+/// @param end_col    Ending byte offset of last line (exclusive)
+/// @param opts       Optional parameters. Currently unused.
+/// @param[out] err   Error details, if any
+/// @return Array of lines, or empty array for unloaded buffer.
+ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
+                                  Integer start_row, Integer start_col,
+                                  Integer end_row, Integer end_col,
+                                  Dictionary opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return rv;
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    return rv;
+  }
+
+  bool oob = false;
+  start_row = normalize_index(buf, start_row, false, &oob);
+  end_row = normalize_index(buf, end_row, false, &oob);
+
+  if (oob) {
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
+    return rv;
+  }
+
+  // nvim_buf_get_lines doesn't care if the start row is greater than the end
+  // row (it will just return an empty array), but nvim_buf_get_text does in
+  // order to maintain symmetry with nvim_buf_set_text.
+  if (start_row > end_row) {
+    api_set_error(err, kErrorTypeValidation, "start is higher than end");
+    return rv;
+  }
+
+  bool replace_nl = (channel_id != VIML_INTERNAL_CALL);
+
+  if (start_row == end_row) {
+    String line = buf_get_text(buf, start_row, start_col, end_col, replace_nl, err);
+    if (ERROR_SET(err)) {
+      return rv;
+    }
+
+    ADD(rv, STRING_OBJ(line));
+    return rv;
+  }
+
+  rv.size = (size_t)(end_row - start_row) + 1;
+  rv.items = xcalloc(rv.size, sizeof(Object));
+
+  rv.items[0] = STRING_OBJ(buf_get_text(buf, start_row, start_col, MAXCOL-1, replace_nl, err));
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+  if (rv.size > 2) {
+    Array tmp = ARRAY_DICT_INIT;
+    tmp.items = &rv.items[1];
+    if (!buf_collect_lines(buf, rv.size - 2, start_row + 1, replace_nl, &tmp, err)) {
+      goto end;
+    }
+  }
+
+  rv.items[rv.size-1] = STRING_OBJ(buf_get_text(buf, end_row, 0, end_col, replace_nl, err));
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+end:
+  if (ERROR_SET(err)) {
+    api_free_array(rv);
+    rv.size = 0;
+    rv.items = NULL;
+  }
+
+  return rv;
 }
 
 /// Returns the byte offset of a line (0-indexed). |api-indexing|
@@ -1386,11 +1487,11 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 }
 
 // Normalizes 0-based indexes to buffer line numbers
-static int64_t normalize_index(buf_T *buf, int64_t index, bool *oob)
+static int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob)
 {
   int64_t line_count = buf->b_ml.ml_line_count;
   // Fix if < 0
-  index = index < 0 ? line_count + index +1 : index;
+  index = index < 0 ? line_count + index + (int)end_exclusive : index;
 
   // Check for oob
   if (index > line_count) {
