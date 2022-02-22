@@ -1905,11 +1905,6 @@ shada_parse_msgpack_read_next: {}
     msgpack_unpack_next(&unpacked, buf, length, &off);
   ShaDaReadResult ret = kSDReadStatusSuccess;
   switch (result) {
-  case MSGPACK_UNPACK_SUCCESS:
-    if (off < length) {
-      goto shada_parse_msgpack_extra_bytes;
-    }
-    break;
   case MSGPACK_UNPACK_PARSE_ERROR:
     semsg(_(RCERR "Failed to parse ShaDa file due to a msgpack parser error "
             "at position %" PRIu64),
@@ -1931,8 +1926,12 @@ shada_parse_msgpack_read_next: {}
           (uint64_t)initial_fpos);
     ret = kSDReadStatusNotShaDa;
     break;
+  case MSGPACK_UNPACK_SUCCESS:
+    if (off >= length) {
+      break;
+    }
+    __attribute__((fallthrough));
   case MSGPACK_UNPACK_EXTRA_BYTES:
-shada_parse_msgpack_extra_bytes:
     semsg(_(RCERR "Failed to parse ShaDa file: extra bytes in msgpack string "
             "at position %" PRIu64),
           (uint64_t)initial_fpos);
