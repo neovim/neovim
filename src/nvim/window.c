@@ -1838,6 +1838,9 @@ static void win_totop(int size, int flags)
     beep_flush();
     return;
   }
+  if (curwin == aucmd_win) {
+    return;
+  }
 
   if (curwin->w_floating) {
     ui_comp_remove_grid(&curwin->w_grid_alloc);

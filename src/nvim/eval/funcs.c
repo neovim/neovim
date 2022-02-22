@@ -4242,7 +4242,7 @@ static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags
   int height = wp->w_height;
   win_T *oldwin = curwin;
 
-  if (wp == targetwin) {
+  if (wp == targetwin || wp == aucmd_win) {
     return;
   }
 
