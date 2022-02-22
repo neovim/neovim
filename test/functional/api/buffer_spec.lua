@@ -423,6 +423,13 @@ describe('api/buf', function()
       -- will join multiple lines if needed
       set_text(0, 6, 3, 4, {'bar'})
       eq({'hello bar'}, get_lines(0,  1, true))
+
+      -- can use negative line numbers
+      set_text(-2, 0, -2, 5, {'goodbye'})
+      eq({'goodbye bar', ''}, get_lines(0, -1, true))
+
+      set_text(-1, 0, -1, 0, {'text'})
+      eq({'goodbye bar', 'text'}, get_lines(0, 2, true))
     end)
 
     it('works with undo', function()
