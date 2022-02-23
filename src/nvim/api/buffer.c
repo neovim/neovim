@@ -553,13 +553,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
-  start_row = normalize_index(buf, start_row, true, &oob);
+  start_row = normalize_index(buf, start_row, false, &oob);
   if (oob || start_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
     return;
   }
 
-  end_row = normalize_index(buf, end_row, true, &oob);
+  end_row = normalize_index(buf, end_row, false, &oob);
   if (oob || end_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
     return;
