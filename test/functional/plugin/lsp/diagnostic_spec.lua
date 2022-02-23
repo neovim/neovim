@@ -110,6 +110,7 @@ describe('vim.lsp.diagnostic', function()
         }
       ]]
       eq({code = 42, tags = {"foo", "bar"}, data = "Hello world"}, result[1].user_data.lsp)
+      eq(42, result[1].code)
       eq(42, result[2].code)
       eq({"foo", "bar"}, result[2].tags)
       eq("Hello world", result[2].data)
