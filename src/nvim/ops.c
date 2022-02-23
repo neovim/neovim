@@ -1572,12 +1572,14 @@ int op_delete(oparg_T *oap)
     yankreg_T *reg = NULL;
     int did_yank = false;
     if (oap->regname != 0) {
-      // yank without message
-      did_yank = op_yank(oap, false, true);
-      if (!did_yank) {
-        // op_yank failed, don't do anything
+      // check for read-only register
+      if (!valid_yank_reg(oap->regname, true)) {
+        beep_flush();
         return OK;
       }
+      reg = get_yank_register(oap->regname, YREG_YANK);  // yank into specif'd reg
+      op_yank_reg(oap, false, reg, is_append_register(oap->regname));  // yank without message
+      did_yank = true;
     }
 
     /*
@@ -2647,12 +2649,12 @@ void free_register(yankreg_T *reg)
 /// Yanks the text between "oap->start" and "oap->end" into a yank register.
 /// If we are to append (uppercase register), we first yank into a new yank
 /// register and then concatenate the old and the new one.
+/// Do not call this from a delete operation. Use op_yank_reg() instead.
 ///
 /// @param oap operator arguments
 /// @param message show message when more than `&report` lines are yanked.
-/// @param deleting whether the function was called from a delete operation.
 /// @returns whether the operation register was writable.
-bool op_yank(oparg_T *oap, bool message, int deleting)
+bool op_yank(oparg_T *oap, bool message)
   FUNC_ATTR_NONNULL_ALL
 {
   // check for read-only register
@@ -2666,11 +2668,8 @@ bool op_yank(oparg_T *oap, bool message, int deleting)
 
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
-  // op_delete will set_clipboard and do_autocmd
-  if (!deleting) {
-    set_clipboard(oap->regname, reg);
-    do_autocmd_textyankpost(oap, reg);
-  }
+  set_clipboard(oap->regname, reg);
+  do_autocmd_textyankpost(oap, reg);
 
   return true;
 }
@@ -6698,7 +6697,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         curwin->w_p_lbr = lbr_saved;
         oap->excl_tr_ws = cap->cmdchar == 'z';
-        (void)op_yank(oap, !gui_yank, false);
+        (void)op_yank(oap, !gui_yank);
       }
       check_cursor_col();
       break;
