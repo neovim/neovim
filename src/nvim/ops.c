@@ -1582,12 +1582,10 @@ int op_delete(oparg_T *oap)
       did_yank = true;
     }
 
-    /*
-     * Put deleted text into register 1 and shift number registers if the
-     * delete contains a line break, or when a regname has been specified.
-     */
-    if (oap->regname != 0 || oap->motion_type == kMTLineWise
-        || oap->line_count > 1 || oap->use_reg_one) {
+    // Put deleted text into register 1 and shift number registers if the
+    // delete contains a line break, or when using a specific operator (Vi
+    // compatible)
+    if (oap->motion_type == kMTLineWise || oap->line_count > 1 || oap->use_reg_one) {
       shift_delete_registers(is_append_register(oap->regname));
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
