@@ -482,6 +482,82 @@ func Test_v_register()
   bwipe!
 endfunc
 
+" Test for executing the contents of a register as an Ex command with line
+" continuation.
+func Test_execute_reg_as_ex_cmd()
+  " Line continuation with just two lines
+  let code =<< trim END
+    let l = [
+      \ 1]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1], l)
+
+  " Line continuation with more than two lines
+  let code =<< trim END
+    let l = [
+      \ 1,
+      \ 2,
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use comments interspersed with code
+  let code =<< trim END
+    let l = [
+      "\ one
+      \ 1,
+      "\ two
+      \ 2,
+      "\ three
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use line continuation in the middle
+  let code =<< trim END
+    let a = "one"
+    let l = [
+      \ 1,
+      \ 2]
+    let b = "two"
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2], l)
+  call assert_equal("one", a)
+  call assert_equal("two", b)
+
+  " only one line with a \
+  let @r = "\\let l = 1"
+  call assert_fails('@r', 'E10:')
+
+  " only one line with a "\
+  let @r = '   "\ let i = 1'
+  @r
+  call assert_false(exists('i'))
+
+  " first line also begins with a \
+  let @r = "\\let l = [\n\\ 1]"
+  call assert_fails('@r', 'E10:')
+
+  " Test with a large number of lines
+  let @r = "let str = \n"
+  let @r ..= repeat("  \\ 'abcdefghijklmnopqrstuvwxyz' ..\n", 312)
+  let @r ..= '  \ ""'
+  @r
+  call assert_equal(repeat('abcdefghijklmnopqrstuvwxyz', 312), str)
+endfunc
+
 func Test_ve_blockpaste()
   new
   set ve=all

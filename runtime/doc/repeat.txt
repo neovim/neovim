@@ -161,6 +161,11 @@ Q			Repeat the last recorded register [count] times.
 			result of evaluating the expression is executed as an
 			Ex command.
 			Mappings are not recognized in these commands.
+			When the |line-continuation| character (\) is present
+			at the beginning of a line in a linewise register,
+			then it is combined with the previous line. This is
+			useful for yanking and executing parts of a Vim
+			script.
 
 							*:@:*
 :[addr]@:		Repeat last command-line.  First set cursor at line
