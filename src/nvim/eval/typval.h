@@ -72,6 +72,7 @@ typedef enum {
   kCallbackNone = 0,
   kCallbackFuncref,
   kCallbackPartial,
+  kCallbackLuaFunc,
 } CallbackType;
 
 typedef struct {
