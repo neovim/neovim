@@ -81,7 +81,68 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = (char *)expand_env_save((char_u *)fallback);
   }
 
+#ifdef UNIX
+  if (idx == kXDGDataDirs || idx == kXDGConfigDirs) {
+    remove_duplicates(ret);
+  }
+#endif
+
   return ret;
+}
+
+void remove_duplicates(char *dirs)
+{
+  size_t dirs_length = STRLEN(dirs) + 1;
+
+  size_t number_of_directories = strcnt(dirs, ':') + 1;
+
+  char **dirs_list = xmalloc(sizeof(char *) * number_of_directories);
+
+  size_t dir_index = 0;
+  const void *iter = NULL;
+  do {
+    const char *directory;
+    size_t dir_len;
+    iter = vim_env_iter(':', dirs, iter, &directory, &dir_len);
+    dirs_list[dir_index] = xstrndup(directory, dir_len);
+    dir_index++;
+  } while (iter != NULL);
+
+  size_t current_index = 0;
+  char *dirs_unique = xmalloc(sizeof(char) * dirs_length);
+  for (size_t i = 0; i < number_of_directories; i++) {
+    if (is_duplicate(dirs_list, number_of_directories, i)) {
+      continue;
+    }
+    size_t dir_length = STRLEN(dirs_list[i])+1;
+    xstrlcpy(dirs_unique+current_index, dirs_list[i], dir_length);
+    current_index += dir_length-1;
+    // Don't append a : at the end of the string
+    if (i != number_of_directories-1) {
+      dirs_unique[current_index++] = ':';
+    }
+  }
+
+  size_t dirs_unique_length = STRLEN(dirs_unique) +1;
+  xstrlcpy(dirs, dirs_unique, dirs_unique_length);
+
+  // printf("%s\n", dirs);
+
+  for (size_t i = 0; i < number_of_directories; i++) {
+    xfree(dirs_list[i]);
+  }
+  xfree(dirs_list);
+  xfree(dirs_unique);
+}
+
+bool is_duplicate(char **dirs_list, size_t number_of_directories, size_t i)
+{
+  for (size_t j = i+1; j < number_of_directories; j++) {
+    if (strequal(dirs_list[i], dirs_list[j])) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Return Nvim-specific XDG directory subpath.
