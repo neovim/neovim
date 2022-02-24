@@ -167,7 +167,4 @@ if (Test-Path -Path $env:ChocolateyInstall\bin\cpack.exe) {
 }
 
 # Build artifacts
-cpack -G ZIP -C RelWithDebInfo
-if ($env:APPVEYOR_REPO_TAG_NAME -ne $null) {
-  cpack -G NSIS -C RelWithDebInfo
-}
+cpack -C $cmakeBuildType
