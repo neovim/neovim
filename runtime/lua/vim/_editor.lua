@@ -636,17 +636,10 @@ function vim.pretty_print(...)
   return ...
 end
 
-local function __rpcrequest(...)
-  return vim.api.nvim_call_function("rpcrequest", {...})
-end
-
 function vim._cs_remote(rcid, args)
-
   local f_silent = false
   local f_wait = false
   local f_tab = false
-  local should_exit = true
-  local command = 'edit '
 
   local subcmd = string.sub(args[1],10)
 
@@ -672,40 +665,42 @@ function vim._cs_remote(rcid, args)
     f_wait = true
     f_silent = true
   elseif subcmd == 'send' then
-    __rpcrequest(rcid, 'nvim_input', args[2])
-    return { should_exit = should_exit, tabbed = f_tab, files = 0 }
-    -- should we show warning if --server doesn't exist in --send and --expr?
-  elseif subcmd == 'expr' then
-    local res = __rpcrequest(rcid, 'vim_eval', args[2])
-    print(res)
-    return { should_exit = should_exit, tabbed = f_tab, files = 0 }
-  else
-    print('--remote subcommand not found')
-  end
-
-  table.remove(args,1)
-
-  if not f_silent and rcid == 0 then
-    print('Remote server does not exist.')
-  end
-
-  if f_silent and rcid == 0 then
-    print('Remote server does not exist. starting new server')
-    should_exit = false
-  end
-
-  if f_tab then command = 'tabedit ' end
-
-  if rcid ~= 0 then
-    for _, key in ipairs(args) do
-      __rpcrequest(rcid, 'nvim_command', command .. key)
+    if rcid == 0 then
+      vim.cmd('echoerr "E247: Remote server does not exist. Send failed."')
+      return
     end
+    vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
+    return { should_exit = true, tabbed = false }
+  elseif subcmd == 'expr' then
+    if rcid == 0 then
+      vim.cmd('echoerr "E247: Remote server does not exist. Send expression failed."')
+      return
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_eval', args[2])
+    return { should_exit = true, tabbed = false }
+  else
+    vim.cmd('echoerr "Unknown option argument: ' .. args[1] .. '"')
+    return
+  end
+
+  if rcid == 0 then
+    if not f_silent then
+      vim.cmd('echohl WarningMsg | echomsg "E247: Remote server does not exist. Editing locally" | echohl None')
+    end
+    should_exit = false
+  else
+    local command = {}
+    if f_tab then table.insert(command, 'tab') end
+    table.insert(command, 'drop')
+    for i = 2, #args do
+      table.insert(command, vim.fn.fnameescape(args[i]))
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
   end
 
   return {
-    should_exit = should_exit,
+    should_exit = rcid ~= 0,
     tabbed = f_tab,
-    files = table.getn(args)
   }
 end
 

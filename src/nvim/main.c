@@ -821,7 +821,6 @@ static void handle_remote_client(mparm_T *params, int remote_args,
 
     Boolean should_exit = true;
     Boolean tabbed;
-    int files;
 
     int t_argc = remote_args;
     Array args = ARRAY_DICT_INIT;
@@ -839,12 +838,17 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     Object o = nlua_exec(s, a, &err);
     api_free_string(s);
     api_free_array(a);
+    if (ERROR_SET(&err)) {
+      mch_errmsg(err.msg);
+      mch_errmsg("\n");
+      os_exit(2);
+    }
 
     if (o.type == kObjectTypeDictionary) {
       rvobj.data.dictionary = o.data.dictionary;
-    } else if (!ERROR_SET(&err)) {
-      api_set_error(&err, kErrorTypeException,
-                    "Function returned unexpected value");
+    } else {
+      mch_errmsg("vim._cs_remote returned unexpected value\n");
+      os_exit(3);
     }
 
     for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
@@ -853,18 +857,15 @@ static void handle_remote_client(mparm_T *params, int remote_args,
         tabbed = rvobj.data.dictionary.items[i].value.data.boolean;
       } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
         should_exit = rvobj.data.dictionary.items[i].value.data.boolean;
-      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "files") == 0) {
-        files = (int)rvobj.data.dictionary.items[i].value.data.integer;
       }
     }
 
     if (should_exit) {
       os_exit(0);
-    } else {
-      if (tabbed) {
-        params->window_count = files;
-        params->window_layout = WIN_TABS;
-      }
+    }
+    if (tabbed) {
+      params->window_count = argc - remote_args - 1;
+      params->window_layout = WIN_TABS;
     }
 }
 

@@ -1997,7 +1997,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     DLOG("fallback to vim._os_proc_children()");
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
-    String s = cstr_to_string("return vim._os_proc_children(select(...))");
+    String s = cstr_to_string("return vim._os_proc_children(...)");
     Object o = nlua_exec(s, a, err);
     api_free_string(s);
     api_free_array(a);
