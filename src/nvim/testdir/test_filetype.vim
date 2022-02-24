@@ -132,6 +132,7 @@ let s:filename_checks = {
     \ 'cvs': ['cvs123'],
     \ 'cvsrc': ['.cvsrc'],
     \ 'cynpp': ['file.cyn'],
+    \ 'd': ['file.d'],
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
@@ -154,6 +155,7 @@ let s:filename_checks = {
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
+    \ 'dtrace': ['/usr/lib/dtrace/io.d'],
     \ 'dts': ['file.dts', 'file.dtsi'],
     \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
     \ 'dylan': ['file.dylan'],
@@ -799,6 +801,42 @@ func Test_bas_file()
   bwipe!
 
   call delete('Xfile.bas')
+  filetype off
+endfunc
+
+func Test_d_file()
+  filetype on
+
+  call writefile(['looks like D'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
+  bwipe!
+
+  call writefile(['#!/some/bin/dtrace'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
+  bwipe!
+
+  call writefile(['#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
+  bwipe!
+
+  call writefile([':some:thing:'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
+  bwipe!
+
+  call writefile(['module this', '#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
+  bwipe!
+
+  call writefile(['import that', '#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
+  bwipe!
+
   filetype off
 endfunc
 

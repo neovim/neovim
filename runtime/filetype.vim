@@ -480,6 +480,7 @@ au BufNewFile,BufRead */etc/dnsmasq.conf	setf dnsmasq
 au BufNewFile,BufRead *.desc			setf desc
 
 " the D language or dtrace
+au BufNewFile,BufRead */dtrace/*.d		setf dtrace
 au BufNewFile,BufRead *.d			call dist#ft#DtraceCheck()
 
 " Desktop files
