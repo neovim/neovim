@@ -97,6 +97,7 @@ return {
     "special"; "sp";
     "link";
     "fallback";
+    "blend";
     "temp";
   };
   highlight_cterm = {

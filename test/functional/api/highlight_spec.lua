@@ -323,5 +323,9 @@ describe("API: set highlight", function()
         exec_capture('highlight Test_hl3'))
     end
 
+    meths.set_hl(0, 'Test_hl3', {fg='#FF00FF', blend=50})
+    eq('Test_hl3       xxx guifg=#FF00FF blend=50',
+      exec_capture('highlight Test_hl3'))
+
   end)
 end)
