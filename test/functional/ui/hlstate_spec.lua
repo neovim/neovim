@@ -179,6 +179,8 @@ describe('ext_hlstate detailed highlights', function()
   end)
 
   it("work with :terminal", function()
+    if helpers.pending_win32(pending) then return end
+
     screen:set_default_attr_ids({
       [1] = {{}, {{hi_name = "TermCursorNC", ui_name = "TermCursorNC", kind = "ui"}}},
       [2] = {{foreground = tonumber('0x00ccff'), fg_indexed=true}, {{kind = "term"}}},
