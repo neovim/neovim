@@ -2415,6 +2415,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - args: (string) The args passed to the command, if any |<args>|
+///                 - fargs: (table) The args split by unescaped whitespace (when more than one
+///                 argument is allowed), if any |<f-args>|
 ///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
 ///                 - line1: (number) The starting line of the command range |<line1>|
 ///                 - line2: (number) The final line of the command range |<line2>|

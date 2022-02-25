@@ -1520,8 +1520,31 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
   lua_pushinteger(lstate, eap->line2);
   lua_setfield(lstate, -2, "line2");
 
+  lua_newtable(lstate);  // f-args table
   lua_pushstring(lstate, (const char *)eap->arg);
-  lua_setfield(lstate, -2, "args");
+  lua_pushvalue(lstate, -1);  // Reference for potential use on f-args
+  lua_setfield(lstate, -4, "args");
+
+  // Split args by unescaped whitespace |<f-args>| (nargs dependent)
+  if (cmd->uc_argt & EX_NOSPC) {
+    // Commands where nargs = 1 or "?" fargs is the same as args
+    lua_rawseti(lstate, -2, 1);
+  } else {
+    // Commands with more than one possible argument we split
+    lua_pop(lstate, 1);  // Pop the reference of opts.args
+    int length = (int)STRLEN(eap->arg);
+    int start = 0;
+    int end = 0;
+    int i = 1;
+    bool res = true;
+    while (res) {
+      res = uc_split_args_iter(eap->arg, i, &start, &end, length);
+      lua_pushlstring(lstate, (const char *)eap->arg + start, (size_t)(end - start + 1));
+      lua_rawseti(lstate, -2, i);
+      i++;
+    }
+  }
+  lua_setfield(lstate, -2, "fargs");
 
   lua_pushstring(lstate, (const char *)&eap->regname);
   lua_setfield(lstate, -2, "reg");

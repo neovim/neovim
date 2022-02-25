@@ -5802,6 +5802,30 @@ static void ex_delcommand(exarg_T *eap)
   }
 }
 
+/// Split a string by unescaped whitespace (space & tab), used for f-args on Lua commands callback.
+/// Similar to uc_split_args(), but does not allocate, add quotes, add commas and is an iterator.
+///
+/// @note  If no separator is found start = 0 and end = length - 1
+/// @param[in]  arg  String to split
+/// @param[in]  iter Iteration counter
+/// @param[out]  start Start of the split
+/// @param[out]  end End of the split
+/// @param[in]  length Length of the string
+/// @return  false if it's the last split (don't call again), true otherwise (call again).
+bool uc_split_args_iter(const char_u *arg, int iter, int *start, int *end, int length)
+{
+  int pos;
+  *start = *end + (iter > 1 ? 2 : 0);  // Skip whitespace after the first split
+  for (pos = *start; pos < length - 2; pos++) {
+    if (arg[pos] != '\\' && ascii_iswhite(arg[pos + 1])) {
+      *end = pos;
+      return true;
+    }
+  }
+  *end = length - 1;
+  return false;
+}
+
 /*
  * split and quote args for <f-args>
  */
