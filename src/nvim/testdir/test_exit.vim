@@ -1,6 +1,7 @@
 " Tests for exiting Vim.
 
 source shared.vim
+source check.vim
 
 func Test_exiting()
   let after =<< trim [CODE]
@@ -108,5 +109,22 @@ func Test_exit_code()
   endif
   call delete('Xtestout')
 endfunc
+
+func Test_exit_error_reading_input()
+  throw 'Skipped: Nvim does not exit after stdin is read'
+
+  CheckNotGui
+
+  call writefile([":au VimLeave * call writefile(['l = ' .. v:exiting], 'Xtestout')", ":tabnew\<CR>q:"], 'Xscript')
+
+  " Nvim requires "-s -" to read stdin as Normal mode input
+  " if RunVim([], [], '< Xscript')
+  if RunVim([], [], '-s - < Xscript')
+    call assert_equal(['l = 1'], readfile('Xtestout'))
+  endif
+  call delete('Xscript')
+  call delete('Xtestout')
+endfun
+
 
 " vim: shiftwidth=2 sts=2 expandtab
