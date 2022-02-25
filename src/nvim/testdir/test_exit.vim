@@ -123,6 +123,7 @@ func Test_exit_error_reading_input()
   " Nvim requires "-s -" to read stdin as Normal mode input
   " if RunVim([], [], '<Xscript')
   if RunVim([], [], '-s - <Xscript')
+    call assert_equal(1, v:shell_error)
     call assert_equal(['l = 1'], readfile('Xtestout'))
   endif
   call delete('Xscript')

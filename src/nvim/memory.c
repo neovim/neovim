@@ -575,9 +575,6 @@ void free_all_mem(void)
   // Don't want to trigger autocommands from here on.
   block_autocmds();
 
-  // Ensure cmdline window doesn't prevent closing tabs and windows.
-  cmdwin_type = 0;
-
   // Close all tabs and windows.  Reset 'equalalways' to avoid redraws.
   p_ea = false;
   if (first_tabpage->tp_next != NULL) {
