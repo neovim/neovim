@@ -114,6 +114,7 @@ func Test_exit_error_reading_input()
   throw 'Skipped: Nvim does not exit after stdin is read'
 
   CheckNotGui
+  CheckNotMSWindows
   " The early exit causes memory not to be freed somehow
   CheckNotAsan
 
