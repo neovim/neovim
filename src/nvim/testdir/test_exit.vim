@@ -114,6 +114,7 @@ func Test_exit_error_reading_input()
   throw 'Skipped: Nvim does not exit after stdin is read'
 
   CheckNotGui
+  CheckNotMSWindows
 
   call writefile([":au VimLeave * call writefile(['l = ' .. v:exiting], 'Xtestout')", ":tabnew\<CR>q:"], 'Xscript')
 
