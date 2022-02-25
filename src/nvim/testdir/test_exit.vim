@@ -114,13 +114,14 @@ func Test_exit_error_reading_input()
   throw 'Skipped: Nvim does not exit after stdin is read'
 
   CheckNotGui
-  CheckNotMSWindows
+  " The early exit causes memory not to be freed somehow
+  CheckNotAsan
 
-  call writefile([":au VimLeave * call writefile(['l = ' .. v:exiting], 'Xtestout')", ":tabnew\<CR>q:"], 'Xscript')
+  call writefile([":au VimLeave * call writefile(['l = ' .. v:exiting], 'Xtestout')", ":tabnew", "q:"], 'Xscript', 'b')
 
   " Nvim requires "-s -" to read stdin as Normal mode input
-  " if RunVim([], [], '< Xscript')
-  if RunVim([], [], '-s - < Xscript')
+  " if RunVim([], [], '<Xscript')
+  if RunVim([], [], '-s - <Xscript')
     call assert_equal(['l = 1'], readfile('Xtestout'))
   endif
   call delete('Xscript')

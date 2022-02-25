@@ -137,6 +137,14 @@ func CheckNotMSWindows()
   endif
 endfunc
 
+" Command to check for not running under ASAN
+command CheckNotAsan call CheckNotAsan()
+func CheckNotAsan()
+  if execute('version') =~# '-fsanitize=[a-z,]*\<address\>'
+    throw 'Skipped: does not work with ASAN'
+  endif
+endfunc
+
 " Command to check for satisfying any of the conditions.
 " e.g. CheckAnyOf Feature:bsd Feature:sun Linux
 command -nargs=+ CheckAnyOf call CheckAnyOf(<f-args>)
