@@ -1592,7 +1592,7 @@ typedef struct {
 ///                        string is a regex.
 /// @param[in]  is_invalid  Whether currently processed token is not valid.
 static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const node,
-                                const LexExprToken token, const ExprASTStack ast_stack,
+                                const LexExprToken token, const ExprASTStack *ast_stack,
                                 const bool is_invalid)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2907,7 +2907,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
                        ? kExprNodeDoubleQuotedString
                        : kExprNodeSingleQuotedString));
       *top_node_p = cur_node;
-      parse_quoted_string(pstate, cur_node, cur_token, ast_stack, is_invalid);
+      parse_quoted_string(pstate, cur_node, cur_token, &ast_stack, is_invalid);
       want_node = kENodeOperator;
       break;
     }
