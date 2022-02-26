@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local assert_visible = helpers.assert_visible
+local assert_alive = helpers.assert_alive
 local dedent = helpers.dedent
 local eq = helpers.eq
 local eval = helpers.eval
@@ -13,6 +14,7 @@ local funcs = helpers.funcs
 local expect = helpers.expect
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local curbufmeths = helpers.curbufmeths
 local source = helpers.source
 
@@ -331,6 +333,68 @@ describe('autocmd', function()
 
     eq('Vim(call):E5555: API call: Invalid window id: 1001',
       pcall_err(command, "call nvim_set_current_win(g:winid)"))
+  end)
+
+  it("`aucmd_win` cannot be changed into a normal window #13699", function()
+    local screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {reverse = true},
+      [3] = {bold = true, reverse = true},
+    }
+
+    -- Create specific layout and ensure it's left unchanged.
+    -- Use nvim_buf_call on a hidden buffer so aucmd_win is used.
+    exec_lua [[
+      vim.cmd "wincmd s | wincmd _"
+      _G.buf = vim.api.nvim_create_buf(true, true)
+      vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd J" end)
+    ]]
+    screen:expect [[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {3:[No Name]                                         }|
+                                                        |
+      {2:[No Name]                                         }|
+                                                        |
+    ]]
+    -- This used to crash after making aucmd_win a normal window via the above.
+    exec_lua [[
+      vim.cmd "tabnew | tabclose # | wincmd s | wincmd _"
+      vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd K" end)
+    ]]
+    assert_alive()
+    screen:expect_unchanged()
+
+    -- Ensure splitting still works from inside the aucmd_win.
+    exec_lua [[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]]
+    screen:expect [[
+      ^                                                  |
+      {1:~                                                 }|
+      {3:[No Name]                                         }|
+                                                        |
+      {1:~                                                 }|
+      {2:[Scratch]                                         }|
+                                                        |
+      {1:~                                                 }|
+      {2:[No Name]                                         }|
+                                                        |
+    ]]
+
+    -- After all of our messing around, aucmd_win should still be floating.
+    -- Use :only to ensure _G.buf is hidden again (so the aucmd_win is used).
+    eq("editor", exec_lua [[
+      vim.cmd "only"
+      vim.api.nvim_buf_call(_G.buf, function()
+        _G.config = vim.api.nvim_win_get_config(0)
+      end)
+      return _G.config.relative
+    ]])
   end)
 
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
