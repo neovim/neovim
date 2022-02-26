@@ -147,6 +147,10 @@ revised:
     if (decor_has_sign(decor)) {
       buf->b_signs++;
     }
+    if (decor->sign_text) {
+      // TODO(lewis6991): smarter invalidation
+      buf_signcols_add_check(buf, NULL);
+    }
     decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
   }
 
