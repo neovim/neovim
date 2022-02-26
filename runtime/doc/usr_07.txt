@@ -336,7 +336,7 @@ there. >
 
 Of course you can use many other commands to yank the text.  For example, to
 select whole lines start Visual mode with "V".  Or use CTRL-V to select a
-rectangular block.  Or use "Y" to yank a single line, "yaw" to yank-a-word,
+rectangular block.  Or use "yy" to yank a single line, "yaw" to yank-a-word,
 etc.
    The "p" command puts the text after the cursor.  Use "P" to put the text
 before the cursor.  Notice that Vim remembers if you yanked a whole line or a
@@ -359,7 +359,7 @@ the text should be placed in the f register.  This must come just before the
 yank command.
    Now yank three whole lines to the l register (l for line): >
 
-	"l3Y
+	"l3yy
 
 The count could be before the "l just as well.  To yank a block of text to the
 b (for block) register: >
