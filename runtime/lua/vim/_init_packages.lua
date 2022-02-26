@@ -42,8 +42,11 @@ function vim._load_package(name)
   return nil
 end
 
--- Insert vim._load_package after the preloader at position 2
-table.insert(package.loaders, 2, vim._load_package)
+-- TODO(bfredl): dedicated state for this?
+if vim.api then
+  -- Insert vim._load_package after the preloader at position 2
+  table.insert(package.loaders, 2, vim._load_package)
+end
 
 -- builtin functions which always should be available
 require('vim.shared')
@@ -78,6 +81,6 @@ function vim.empty_dict()
 end
 
 -- only on main thread: functions for interacting with editor state
-if not vim.is_thread() then
+if vim.api and not vim.is_thread() then
   require('vim._editor')
 end
