@@ -806,6 +806,7 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
                   && !embedded_mode
                   && (!exmode_active || parmp->input_neverscript)
                   && !parmp->input_isatty
+                  && parmp->edit_type != EDIT_QF
                   && scriptin[0] == NULL;  // `-s -` was not given.
   return explicit || implicit;
 }
@@ -1136,7 +1137,11 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'q':    // "-q {errorfile}" QuickFix mode
-          parmp->use_ef = (char_u *)argv[0];
+          if (strequal(argv[0], "-")) {
+              parmp->use_ef = (char_u *)"/dev/stdin";
+          } else {
+              parmp->use_ef = (char_u *)argv[0];
+          }
           break;
 
         case 'i':    // "-i {shada}" use for shada
