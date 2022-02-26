@@ -824,6 +824,7 @@ describe('API: buffer events:', function()
       end
       msg = next_msg()
     end
+    -- FIXME: Windows
     assert(iswin(), 'did not match/receive expected nvim_buf_lines_event lines')
   end
 
