@@ -356,6 +356,7 @@ In Insert or Command-line mode:
 |v_y|	     {visual}y	yank the highlighted text into a register
 |yy|	  N  yy		yank N lines into a register
 |Y|	  N  Y		yank N lines into a register
+			Note: Mapped to "y$" by default. |default-mappings|
 |p|	  N  p		put a register after the cursor position (N times)
 |P|	  N  P		put a register before the cursor position (N times)
 |]p|	  N  ]p		like p, but adjust indent to current line
