@@ -386,30 +386,43 @@ static uint32_t prt_get_term_color(int colorindex)
   return cterm_color_8[colorindex % 8];
 }
 
-static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
+static uint32_t prt_get_color(int hl_id, int modec)
 {
   int colorindex;
   uint32_t fg_color;
 
+  const char *color = highlight_color(hl_id, "fg#", 'g');
+  if (color != NULL) {
+    RgbValue rgb = name_to_color(color);
+    if (rgb != -1) {
+      return (uint32_t)rgb;
+    }
+  }
+
+  color = highlight_color(hl_id, "fg", modec);
+  if (color == NULL) {
+    colorindex = 0;
+  } else {
+    colorindex = atoi(color);
+  }
+
+  if (colorindex >= 0 && colorindex < t_colors) {
+    fg_color = prt_get_term_color(colorindex);
+  } else {
+    fg_color = PRCOLOR_BLACK;
+  }
+
+  return fg_color;
+}
+
+static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
+{
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
   pattr->italic = (highlight_has_attr(hl_id, HL_ITALIC, modec) != NULL);
   pattr->underline = (highlight_has_attr(hl_id, HL_UNDERLINE, modec) != NULL);
   pattr->undercurl = (highlight_has_attr(hl_id, HL_UNDERCURL, modec) != NULL);
 
-  {
-    const char *color = highlight_color(hl_id, "fg", modec);
-    if (color == NULL) {
-      colorindex = 0;
-    } else {
-      colorindex = atoi(color);
-    }
-
-    if (colorindex >= 0 && colorindex < t_colors) {
-      fg_color = prt_get_term_color(colorindex);
-    } else {
-      fg_color = PRCOLOR_BLACK;
-    }
-  }
+  uint32_t fg_color = prt_get_color(hl_id, modec);
 
   if (fg_color == PRCOLOR_WHITE) {
     fg_color = PRCOLOR_BLACK;
