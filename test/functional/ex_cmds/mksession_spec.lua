@@ -10,12 +10,11 @@ local funcs = helpers.funcs
 local matches = helpers.matches
 local pesc = helpers.pesc
 local rmdir = helpers.rmdir
-local iswin = helpers.iswin
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
 describe(':mksession', function()
-  if not iswin() then
+  if helpers.pending_win32(pending) then return end
   local session_file = file_prefix .. '.vim'
   local tab_dir = file_prefix .. '.d'
 
@@ -117,5 +116,4 @@ describe(':mksession', function()
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
     command('qall!')
   end)
-  end
 end)
