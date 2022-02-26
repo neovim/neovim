@@ -864,6 +864,7 @@ struct file_buffer {
   sign_entry_T *b_signlist;     // list of placed signs
   int b_signcols;               // last calculated number of sign columns
   bool b_signcols_valid;        // calculated sign columns is valid
+  int b_signcols_max;           // Maximum value b_signcols is valid for.
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
@@ -1353,6 +1354,7 @@ struct window_S {
                                     // recomputed
   int w_nrwidth;                    // width of 'number' and 'relativenumber'
                                     // column being used
+  int w_scwidth;                    // width of 'signcolumn'
 
   /*
    * === end of cached values ===

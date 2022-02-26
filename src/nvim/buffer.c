@@ -5495,11 +5495,19 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
 int buf_signcols(buf_T *buf, int maximum)
 {
+  // The maximum can be determined from 'signcolumn' which is window scoped so
+  // need to invalidate signcols if the maximum is greater than the previous
+  // maximum.
+  if (maximum > buf->b_signcols_max) {
+    buf->b_signcols_valid = false;
+  }
+
   if (!buf->b_signcols_valid) {
     int signcols = buf_signcols_inner(buf, maximum);
     // Check if we need to redraw
     if (signcols != buf->b_signcols) {
       buf->b_signcols = signcols;
+      buf->b_signcols_max = maximum;
       redraw_buf_later(buf, NOT_VALID);
     }
 
