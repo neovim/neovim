@@ -27,19 +27,9 @@ static RuntimeSearchPath runtime_search_path;
 static RuntimeSearchPath runtime_search_path_thread;
 static uv_mutex_t runtime_search_path_mutex;
 
-void runtime_search_path_init(void)
+void runtime_init(void)
 {
   uv_mutex_init(&runtime_search_path_mutex);
-}
-
-void runtime_search_path_lock(void)
-{
-  uv_mutex_lock(&runtime_search_path_mutex);
-}
-
-void runtime_search_path_unlock(void)
-{
-  uv_mutex_unlock(&runtime_search_path_mutex);
 }
 
 /// ":runtime [what] {name}"
@@ -330,8 +320,9 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
 {
   int ref;
   RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
+  static char buf[MAXPATHL];
 
-  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, path);
+  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, path, buf, sizeof buf);
 
   runtime_search_path_unref(path, &ref);
   return rv;
@@ -339,18 +330,19 @@ ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
 
 ArrayOf(String) runtime_get_named_thread(bool lua, Array pat, bool all)
 {
-  runtime_search_path_lock();
-  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, runtime_search_path_thread);
-  runtime_search_path_unlock();
+  // TODO(bfredl): avoid contention between multiple worker threads?
+  uv_mutex_lock(&runtime_search_path_mutex);
+  static char buf[MAXPATHL];
+  ArrayOf(String) rv = runtime_get_named_common(lua, pat, all, runtime_search_path_thread,
+                                                buf, sizeof buf);
+  uv_mutex_unlock(&runtime_search_path_mutex);
   return rv;
 }
 
 ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
-                                         RuntimeSearchPath path)
+                                         RuntimeSearchPath path, char *buf, size_t buf_len)
 {
   ArrayOf(String) rv = ARRAY_DICT_INIT;
-  size_t buf_len = MAXPATHL;
-  char *buf = xmalloc(MAXPATHL);
   for (size_t i = 0; i < kv_size(path); i++) {
     SearchPathItem *item = &kv_A(path, i);
     if (lua) {
@@ -380,7 +372,6 @@ ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
     }
   }
 done:
-  xfree(buf);
   return rv;
 }
 
@@ -614,10 +605,10 @@ void runtime_search_path_validate(void)
     runtime_search_path = runtime_search_path_build();
     runtime_search_path_valid = true;
     runtime_search_path_ref = NULL;  // initially unowned
-    runtime_search_path_lock();
+    uv_mutex_lock(&runtime_search_path_mutex);
     runtime_search_path_free(runtime_search_path_thread);
     runtime_search_path_thread = copy_runtime_search_path(runtime_search_path);
-    runtime_search_path_unlock();
+    uv_mutex_unlock(&runtime_search_path_mutex);
   }
 }
 

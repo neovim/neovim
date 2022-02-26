@@ -26,13 +26,12 @@ describe('thread', function()
   end)
 
   it('entry func is executed in protected mode', function()
-    local code = [[
+    exec_lua [[
       local thread = vim.loop.new_thread(function()
         error('Error in thread entry func')
       end)
       vim.loop.thread_join(thread)
     ]]
-    exec_lua(code)
 
     screen:expect([[
                                                         |
@@ -51,7 +50,7 @@ describe('thread', function()
   end)
 
   it('callback is executed in protected mode', function()
-    local code = [[
+    exec_lua [[
       local thread = vim.loop.new_thread(function()
         local timer = vim.loop.new_timer()
         local function ontimeout()
@@ -64,7 +63,6 @@ describe('thread', function()
       end)
       vim.loop.thread_join(thread)
     ]]
-    exec_lua(code)
 
     screen:expect([[
                                                         |
@@ -83,35 +81,33 @@ describe('thread', function()
   end)
 
   describe('print', function()
-    it('work', function()
-    local code = [[
-      local thread = vim.loop.new_thread(function()
-        print('print in thread')
-      end)
-      vim.loop.thread_join(thread)
-    ]]
-    exec_lua(code)
+    it('works', function()
+      exec_lua [[
+        local thread = vim.loop.new_thread(function()
+          print('print in thread')
+        end)
+        vim.loop.thread_join(thread)
+      ]]
 
-    screen:expect([[
-      ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      print in thread                                   |
-    ]])
-
+      screen:expect([[
+        ^                                                  |
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        print in thread                                   |
+      ]])
     end)
   end)
 
   describe('vim.*', function()
     before_each(function()
       clear()
-      local code = [[
+      exec_lua [[
         Thread_Test = {}
 
         Thread_Test.entry_func = function(async, entry_str, args)
@@ -140,11 +136,10 @@ describe('thread', function()
           return self
         end
       ]]
-      exec_lua(code)
     end)
 
     it('is_thread', function()
-      local code = [[
+      exec_lua [[
         local entry = function(async)
           async:send(vim.is_thread())
         end
@@ -154,13 +149,12 @@ describe('thread', function()
         local thread_test = Thread_Test.new(entry, on_async)
         thread_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result', {true}}, next_msg())
     end)
 
     it('loop', function()
-      local code = [[
+      exec_lua [[
         local entry = function(async)
           async:send(vim.loop.version())
         end
@@ -170,7 +164,6 @@ describe('thread', function()
         local thread_test = Thread_Test.new(entry, on_async)
         thread_test:do_test()
       ]]
-      exec_lua(code)
 
       local msg = next_msg()
       eq(msg[1], 'notification')
@@ -178,7 +171,7 @@ describe('thread', function()
     end)
 
     it('mpack', function()
-      local code = [[
+      exec_lua [[
         local entry = function(async)
           async:send(vim.mpack.encode({33, vim.NIL, 'text'}))
         end
@@ -188,13 +181,12 @@ describe('thread', function()
         local thread_test = Thread_Test.new(entry, on_async)
         thread_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
     end)
 
     it('json', function()
-      local code = [[
+      exec_lua [[
         local entry = function(async)
         async:send(vim.json.encode({33, vim.NIL, 'text'}))
         end
@@ -204,13 +196,12 @@ describe('thread', function()
         local thread_test = Thread_Test.new(entry, on_async)
         thread_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
     end)
 
     it('diff', function()
-      local code = [[
+      exec_lua [[
         local entry = function(async)
           async:send(vim.diff('Hello\n', 'Helli\n'))
         end
@@ -220,7 +211,6 @@ describe('thread', function()
         local thread_test = Thread_Test.new(entry, on_async)
         thread_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result',
           {table.concat({
@@ -238,9 +228,9 @@ describe('threadpool', function()
   before_each(clear)
 
   it('is_thread', function()
-    eq(false, exec_lua('return vim.is_thread()'))
+    eq(false, exec_lua [[return vim.is_thread()]])
 
-    local code = [[
+    exec_lua [[
       local work_fn = function()
         return vim.is_thread()
       end
@@ -250,19 +240,18 @@ describe('threadpool', function()
       local work = vim.loop.new_work(work_fn, after_work_fn)
       work:queue()
     ]]
-    exec_lua(code)
 
     eq({'notification', 'result', {true}}, next_msg())
   end)
 
   it('with invalid argument', function()
-    local code = [[
+    local status = pcall_err(exec_lua, [[
       local work = vim.loop.new_thread(function() end, function() end)
       work:queue({})
-    ]]
+    ]])
 
     eq([[Error executing lua: [string "<nvim>"]:0: Error: thread arg not support type 'function' at 1]],
-      pcall_err(exec_lua, code))
+       status)
   end)
 
   it('with invalid return value', function()
@@ -276,11 +265,10 @@ describe('threadpool', function()
       [5] = {bold = true},
     })
 
-    local code = [[
+    exec_lua [[
       local work = vim.loop.new_work(function() return {} end, function() end)
       work:queue()
     ]]
-    exec_lua(code)
 
     screen:expect([[
                                                         |
@@ -299,7 +287,7 @@ describe('threadpool', function()
   describe('vim.*', function()
     before_each(function()
       clear()
-      local code = [[
+      exec_lua [[
         Threadpool_Test = {}
 
         Threadpool_Test.work_fn = function(work_fn_str, args)
@@ -322,11 +310,10 @@ describe('threadpool', function()
           return self
         end
       ]]
-      exec_lua(code)
     end)
 
     it('loop', function()
-      local code = [[
+      exec_lua [[
         local work_fn = function()
           return vim.loop.version()
         end
@@ -336,7 +323,6 @@ describe('threadpool', function()
         local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
         threadpool_test:do_test()
       ]]
-      exec_lua(code)
 
       local msg = next_msg()
       eq(msg[1], 'notification')
@@ -344,7 +330,7 @@ describe('threadpool', function()
     end)
 
     it('mpack', function()
-      local code = [[
+      exec_lua [[
         local work_fn = function()
           local var = vim.mpack.encode({33, vim.NIL, 'text'})
           return var
@@ -355,13 +341,12 @@ describe('threadpool', function()
         local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
         threadpool_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
     end)
 
     it('json', function()
-      local code = [[
+      exec_lua [[
         local work_fn = function()
           local var = vim.json.encode({33, vim.NIL, 'text'})
           return var
@@ -372,13 +357,12 @@ describe('threadpool', function()
         local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
         threadpool_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
     end)
 
     it('work', function()
-      local code = [[
+      exec_lua [[
         local work_fn = function()
           return vim.diff('Hello\n', 'Helli\n')
         end
@@ -388,7 +372,6 @@ describe('threadpool', function()
         local threadpool_test = Threadpool_Test.new(work_fn, after_work_fn)
         threadpool_test:do_test()
       ]]
-      exec_lua(code)
 
       eq({'notification', 'result',
           {table.concat({

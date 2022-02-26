@@ -64,6 +64,9 @@ void fs_init(void)
   uv_mutex_init_recursive(&fs_loop_mutex);
 }
 
+/// TODO(bfredl): some of these operations should
+/// be possible to do the private libuv loop of the
+/// thread, instead of contending the global fs loop
 void fs_loop_lock(void)
 {
   uv_mutex_lock(&fs_loop_mutex);

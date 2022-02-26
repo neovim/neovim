@@ -474,6 +474,9 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
+    // TODO(bfredl): some of basic string functions should already be
+    // (or be easy to make) threadsafe
+
     // stricmp
     lua_pushcfunction(lstate, &nlua_stricmp);
     lua_setfield(lstate, -2, "stricmp");
