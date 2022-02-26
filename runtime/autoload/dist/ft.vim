@@ -211,6 +211,10 @@ func dist#ft#EuphoriaCheck()
 endfunc
 
 func dist#ft#DtraceCheck()
+  if did_filetype()
+    " Filetype was already detected
+    return
+  endif
   let lines = getline(1, min([line("$"), 100]))
   if match(lines, '^module\>\|^import\>') > -1
     " D files often start with a module and/or import statement.

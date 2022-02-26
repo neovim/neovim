@@ -1178,6 +1178,7 @@ local pattern = {
   [".*/etc/yum%.conf"] = "dosini",
   [".*lvs"] = "dracula",
   [".*lpe"] = "dracula",
+  [".*/dtrace/.*%.d"] = "dtrace",
   [".*esmtprc"] = "esmtprc",
   [".*Eterm/.*%.cfg"] = "eterm",
   [".*%.git/modules/.*/config"] = "gitconfig",
