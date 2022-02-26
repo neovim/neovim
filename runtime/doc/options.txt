@@ -6437,6 +6437,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	   C1	    Control characters 0x80...0x9F
 
+						*'termpasteraw'* *'notermpasteraw'*
+'termpasteraw' boolean	(default off)
+			global
+	When set, text pasted into a terminal window is not escaped or filtered
+	and is processed as raw keystrokes by the terminal emulator (the value
+	of 'termpastefilter' is ignored). This allows control sequences to be
+	passed to terminal programs. This is potentially unsafe, so should only be
+	activated when dealing with trusted input.
 
 						*'terse'* *'noterse'*
 'terse'			boolean	(default off)

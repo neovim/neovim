@@ -641,6 +641,21 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
   if (y_size == 0) {
     return;
   }
+  // In termpasteraw mode, send all the lines directly without filtering control
+  // codes or setting paste mode in libvterm
+  if (p_tpr) {
+    for (int i = 0; i < count; i++) {  // -V756
+      // feed the lines to the terminal
+      for (size_t j = 0; j < y_size; j++) {
+        if (j) {
+          // terminate the previous line
+          terminal_send(curbuf->terminal, "\n", 1);
+        }
+        terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+      }
+    }
+    return;
+  }
   vterm_keyboard_start_paste(curbuf->terminal->vt);
   size_t buff_len = STRLEN(y_array[0]);
   char_u *buff = xmalloc(buff_len);

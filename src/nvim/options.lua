@@ -2519,6 +2519,13 @@ return {
       defaults={if_true="BS,HT,ESC,DEL"}
     },
     {
+      full_name='termpasteraw',
+      short_desc=N_("disables escaping of input pasted to a terminal window"),
+      type='bool', scope={'global'},
+      varname='p_tpr',
+      defaults={if_true=false}
+    },
+    {
       full_name='terse',
       short_desc=N_("hides notification of search wrap"),
       type='bool', scope={'global'},

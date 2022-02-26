@@ -644,6 +644,7 @@ static char *(p_tpf_values[]) =
 #define TPF_DEL                0x010
 #define TPF_C0                 0x020
 #define TPF_C1                 0x040
+EXTERN int *p_tpr;             // 'termpasteraw'
 EXTERN char_u *p_sps;         // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
