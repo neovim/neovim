@@ -21,6 +21,7 @@ jobs:
   lint:
     if: (github.event_name == 'pull_request' && github.base_ref == 'master' && !github.event.pull_request.draft) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-20.04
+    timeout-minutes: 10
     env:
       CC: gcc
     steps:
@@ -208,6 +209,7 @@ jobs:
 
   windows:
     runs-on: windows-2019
+    timeout-minutes: 45
     if: github.event.pull_request.draft == false
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
