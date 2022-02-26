@@ -285,7 +285,7 @@ Here is an example that inserts a list number that increases: >
 
 	func ListItem()
 	  let g:counter += 1
-	  return g:counter . '. '
+	  return g:counter .. '. '
 	endfunc
 
 	func ListReset()
@@ -1489,12 +1489,12 @@ The valid escape sequences are
 		Examples: >
 		    command! -nargs=+ -complete=file MyEdit
 				\ for f in expand(<q-args>, 0, 1) |
-				\ exe '<mods> split ' . f |
+				\ exe '<mods> split ' .. f |
 				\ endfor
 
 		    function! SpecialEdit(files, mods)
 			for f in expand(a:files, 0, 1)
-			    exe a:mods . ' split ' . f
+			    exe a:mods .. ' split ' .. f
 			endfor
 		    endfunction
 		    command! -nargs=+ -complete=file Sedit
@@ -1570,7 +1570,7 @@ This will invoke: >
    :   let i = 0
    :   while i < argc()
    :	  if filereadable(argv(i))
-   :	     execute "e " . argv(i)
+   :	     execute "e " .. argv(i)
    :	     execute a:command
    :      endif
    :      let i = i + 1

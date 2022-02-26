@@ -693,7 +693,7 @@ argv([{nr} [, {winid}]])
 	:let i = 0
 	:while i < argc()
 	:  let f = escape(fnameescape(argv(i)), '.')
-	:  exe 'amenu Arg.' . f . ' :e ' . f . '<CR>'
+	:  exe 'amenu Arg.' .. f .. ' :e ' .. f .. '<CR>'
 	:  let i = i + 1
 	:endwhile
 <		Without the {nr} argument, or when {nr} is -1, a |List| with
@@ -895,7 +895,7 @@ bufwinid({buf})						*bufwinid()*
 		see |bufname()| above.  If buffer {buf} doesn't exist or
 		there is no such window, -1 is returned.  Example: >
 
-	echo "A window containing buffer 1 is " . (bufwinid(1))
+	echo "A window containing buffer 1 is " .. (bufwinid(1))
 <
 		Only deals with the current tab page.
 
@@ -908,7 +908,7 @@ bufwinnr({buf})						*bufwinnr()*
 		If buffer {buf} doesn't exist or there is no such window, -1
 		is returned.  Example: >
 
-	echo "A window containing buffer 1 is " . (bufwinnr(1))
+	echo "A window containing buffer 1 is " .. (bufwinnr(1))
 
 <		The number can be used with |CTRL-W_w| and ":wincmd w"
 		|:wincmd|.
@@ -955,7 +955,7 @@ byteidx({expr}, {nr})					*byteidx()*
 byteidxcomp({expr}, {nr})					*byteidxcomp()*
 		Like byteidx(), except that a composing character is counted
 		as a separate character.  Example: >
-			let s = 'e' . nr2char(0x301)
+			let s = 'e' .. nr2char(0x301)
 			echo byteidx(s, 1)
 			echo byteidxcomp(s, 1)
 			echo byteidxcomp(s, 2)
@@ -1152,7 +1152,7 @@ col({expr})	The result is a Number, which is the byte index of the column
 			col(".")		column of cursor
 			col("$")		length of cursor line plus one
 			col("'t")		column of mark t
-			col("'" . markname)	column of mark markname
+			col("'" .. markname)	column of mark markname
 <		The first column is 1.  0 is returned for an error.
 		For an uppercase mark the column may actually be in another
 		buffer.
@@ -1161,7 +1161,7 @@ col({expr})	The result is a Number, which is the byte index of the column
 		line.  This can be used to obtain the column in Insert mode: >
 			:imap <F2> <C-O>:let save_ve = &ve<CR>
 				\<C-O>:set ve=all<CR>
-				\<C-O>:echo col(".") . "\n" <Bar>
+				\<C-O>:echo col(".") .. "\n" <Bar>
 				\let &ve = save_ve<CR>
 
 <		Can also be used as a |method|: >
@@ -1899,12 +1899,12 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 			:e		extension only
 
 		Example: >
-			:let &tags = expand("%:p:h") . "/tags"
+			:let &tags = expand("%:p:h") .. "/tags"
 <		Note that when expanding a string that starts with '%', '#' or
 		'<', any following text is ignored.  This does NOT work: >
 			:let doesntwork = expand("%:h.bak")
 <		Use this: >
-			:let doeswork = expand("%:h") . ".bak"
+			:let doeswork = expand("%:h") .. ".bak"
 <		Also note that expanding "<cfile>" and others only returns the
 		referenced file name without further expansion.  If "<cfile>"
 		is "~/.cshrc", you need to do another expand() to have the
@@ -2240,7 +2240,7 @@ fnameescape({string})					*fnameescape()*
 		and |:write|).  And a "-" by itself (special after |:cd|).
 		Example: >
 			:let fname = '+some str%nge|name'
-			:exe "edit " . fnameescape(fname)
+			:exe "edit " .. fnameescape(fname)
 <		results in executing: >
 			edit \+some\ str\%nge\|name
 <
@@ -2395,7 +2395,7 @@ function({name} [, {arglist}] [, {dict}])
 <		The Dictionary is only useful when calling a "dict" function.
 		In that case the {dict} is passed in as "self". Example: >
 			function Callback() dict
-			   echo "called for " . self.name
+			   echo "called for " .. self.name
 			endfunction
 			...
 			let context = {"name": "example"}
@@ -2578,7 +2578,7 @@ getbufvar({buf}, {varname} [, {def}])				*getbufvar()*
 		string is returned, there is no error message.
 		Examples: >
 			:let bufmodified = getbufvar(1, "&mod")
-			:echo "todo myvar = " . getbufvar("todo", "myvar")
+			:echo "todo myvar = " .. getbufvar("todo", "myvar")
 
 <		Can also be used as a |method|: >
 			GetBufnr()->getbufvar(varname)
@@ -2639,9 +2639,9 @@ getchar([expr])						*getchar()*
 		This example positions the mouse as it would normally happen: >
 			let c = getchar()
 			if c == "\<LeftMouse>" && v:mouse_win > 0
-			  exe v:mouse_win . "wincmd w"
+			  exe v:mouse_win .. "wincmd w"
 			  exe v:mouse_lnum
-			  exe "normal " . v:mouse_col . "|"
+			  exe "normal " .. v:mouse_col .. "|"
 			endif
 <
 		There is no prompt, you will somehow have to make clear to the
@@ -3374,7 +3374,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		empty string is returned, there is no error message.
 		Examples: >
 			:let list_is_on = gettabwinvar(1, 2, '&list')
-			:echo "myvar = " . gettabwinvar(3, 1, 'myvar')
+			:echo "myvar = " .. gettabwinvar(3, 1, 'myvar')
 <
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
@@ -3489,7 +3489,7 @@ getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.
 		Examples: >
 			:let list_is_on = getwinvar(2, '&list')
-			:echo "myvar = " . getwinvar(1, 'myvar')
+			:echo "myvar = " .. getwinvar(1, 'myvar')
 
 <		Can also be used as a |method|: >
 			GetWinnr()->getwinvar(varname)
@@ -3758,7 +3758,7 @@ histdel({history} [, {item}])				*histdel()*
 		The following three are equivalent: >
 			:call histdel("search", histnr("search"))
 			:call histdel("search", -1)
-			:call histdel("search", '^'.histget("search", -1).'$')
+			:call histdel("search", '^' .. histget("search", -1) .. '$')
 <
 		To delete the last search pattern and use the last-but-one for
 		the "n" command and 'hlsearch': >
@@ -3777,7 +3777,7 @@ histget({history} [, {index}])				*histget()*
 
 		Examples:
 		Redo the second last search from history. >
-			:execute '/' . histget("search", -2)
+			:execute '/' .. histget("search", -2)
 
 <		Define an Ex command ":H {num}" that supports re-execution of
 		the {num}th entry from the output of |:history|. >
@@ -3941,11 +3941,11 @@ input({opts})
 			  let lvl = 0
 			  while i < len(a:cmdline)
 			    if a:cmdline[i] is# '('
-			      call add(ret, [i, i + 1, 'RBP' . ((lvl % g:rainbow_levels) + 1)])
+			      call add(ret, [i, i + 1, 'RBP' .. ((lvl % g:rainbow_levels) + 1)])
 			      let lvl += 1
 			    elseif a:cmdline[i] is# ')'
 			      let lvl -= 1
-			      call add(ret, [i, i + 1, 'RBP' . ((lvl % g:rainbow_levels) + 1)])
+			      call add(ret, [i, i + 1, 'RBP' .. ((lvl % g:rainbow_levels) + 1)])
 			    endif
 			    let i += 1
 			  endwhile
@@ -3975,7 +3975,7 @@ input({opts})
 		|:execute| or |:normal|.
 
 		Example with a mapping: >
-			:nmap \x :call GetFoo()<CR>:exe "/" . Foo<CR>
+			:nmap \x :call GetFoo()<CR>:exe "/" .. Foo<CR>
 			:function GetFoo()
 			:  call inputsave()
 			:  let g:Foo = input("enter search pattern: ")
@@ -4134,7 +4134,7 @@ items({dict})						*items()*
 		order.  Also see |keys()| and |values()|.
 		Example: >
 			for [key, value] in items(mydict)
-			   echo key . ': ' . value
+			   echo key .. ': ' .. value
 			endfor
 
 <		Can also be used as a |method|: >
@@ -4270,7 +4270,7 @@ join({list} [, {sep}])					*join()*
 		{sep} is omitted a single space is used.
 		Note that {sep} is not added at the end.  You might want to
 		add it there too: >
-			let lines = join(mylist, "\n") . "\n"
+			let lines = join(mylist, "\n") .. "\n"
 <		String items are used as-is.  |Lists| and |Dictionaries| are
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
@@ -4419,7 +4419,7 @@ line({expr} [, {winid}])				*line()*
 			line(".")		line number of the cursor
 			line(".", winid)	idem, in window "winid"
 			line("'t")		line number of mark t
-			line("'" . marker)	line number of mark marker
+			line("'" .. marker)	line number of mark marker
 <
 		To jump to the last known position when opening a file see
 		|last-position-jump|.
@@ -4520,7 +4520,7 @@ map({expr1}, {expr2})					*map()*
 		the current item.  For a |Blob| |v:key| has the index of the
 		current byte.
 		Example: >
-			:call map(mylist, '"> " . v:val . " <"')
+			:call map(mylist, '"> " .. v:val .. " <"')
 <		This puts "> " before and " <" after each item in "mylist".
 
 		Note that {expr2} is the result of an expression and is then
@@ -4534,19 +4534,19 @@ map({expr1}, {expr2})					*map()*
 		The function must return the new value of the item. Example
 		that changes each value by "key-value": >
 			func KeyValue(key, val)
-			  return a:key . '-' . a:val
+			  return a:key .. '-' .. a:val
 			endfunc
 			call map(myDict, function('KeyValue'))
 <		It is shorter when using a |lambda|: >
-			call map(myDict, {key, val -> key . '-' . val})
+			call map(myDict, {key, val -> key .. '-' .. val})
 <		If you do not use "val" you can leave it out: >
-			call map(myDict, {key -> 'item: ' . key})
+			call map(myDict, {key -> 'item: ' .. key})
 <		If you do not use "key" you can use a short name: >
-			call map(myDict, {_, val -> 'item: ' . val})
+			call map(myDict, {_, val -> 'item: ' .. val})
 <
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
-			:let tlist = map(copy(mylist), ' v:val . "\t"')
+			:let tlist = map(copy(mylist), ' v:val .. "\t"')
 
 <		Returns {expr1}, the |List|, |Blob| or |Dictionary| that was
 		filtered.  When an error is encountered while evaluating
@@ -4612,7 +4612,7 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		then the global mappings.
 		This function can be used to map a key even when it's already
 		mapped, and have it do the original mapping too.  Sketch: >
-			exe 'nnoremap <Tab> ==' . maparg('<Tab>', 'n')
+			exe 'nnoremap <Tab> ==' .. maparg('<Tab>', 'n')
 
 <		Can also be used as a |method|: >
 			GetKey()->maparg('n')
@@ -5085,7 +5085,7 @@ mkdir({name} [, {path} [, {prot}]])
 
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >
-			:call mkdir($HOME . "/tmp/foo/bar", "p", 0o700)
+			:call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 
 <		This function is not available in the |sandbox|.
 
@@ -5585,7 +5585,7 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		       stopinsert
 		       close
 		     else
-		       call append(line('$') - 1, 'Entered: "' . a:text . '"')
+		       call append(line('$') - 1, 'Entered: "' .. a:text .. '"')
 		       " Reset 'modified' to allow the buffer to be closed.
 		       set nomodified
 		     endif
@@ -5732,7 +5732,7 @@ readdir({directory} [, {expr}])
                   function! s:tree(dir)
                       return {a:dir : map(readdir(a:dir),
 		      \ {_, x -> isdirectory(x) ?
-		      \          {x : s:tree(a:dir . '/' . x)} : x})}
+		      \          {x : s:tree(a:dir .. '/' .. x)} : x})}
                   endfunction
                   echo s:tree(".")
 <
@@ -5920,7 +5920,7 @@ remote_peek({serverid} [, {retvar}])		*remote_peek()*
 		This function is not available in the |sandbox|.
 		Examples: >
 			:let repl = ""
-			:echo "PEEK: ".remote_peek(id, "repl").": ".repl
+			:echo "PEEK: " .. remote_peek(id, "repl") .. ": " .. repl
 
 remote_read({serverid}, [{timeout}])			*remote_read()*
 		Return the oldest available reply from {serverid} and consume
@@ -5950,12 +5950,12 @@ remote_send({server}, {string} [, {idvar}])
 		Note: Any errors will be reported in the server and may mess
 		up the display.
 		Examples: >
-		:echo remote_send("gvim", ":DropAndReply ".file, "serverid").
+		:echo remote_send("gvim", ":DropAndReply " .. file, "serverid") ..
 		 \ remote_read(serverid)
 
 		:autocmd NONE RemoteReply *
 		 \ echo remote_read(expand("<amatch>"))
-		:echo remote_send("gvim", ":sleep 10 | echo ".
+		:echo remote_send("gvim", ":sleep 10 | echo " ..
 		 \ 'server2client(expand("<client>"), "HELLO")<CR>')
 <
 					*remote_startserver()* *E941* *E942*
@@ -5972,7 +5972,7 @@ remove({list}, {idx} [, {end}])				*remove()*
 		points to an item before {idx} this is an error.
 		See |list-index| for possible values of {idx} and {end}.
 		Example: >
-			:echo "last item: " . remove(mylist, -1)
+			:echo "last item: " .. remove(mylist, -1)
 			:call remove(mylist, 0, 9)
 <
 		Use |delete()| to remove a file.
@@ -5988,13 +5988,13 @@ remove({blob}, {idx} [, {end}])
 		byte as {end} a |Blob| with one byte is returned.  When {end}
 		points to a byte before {idx} this is an error.
 		Example: >
-			:echo "last byte: " . remove(myblob, -1)
+			:echo "last byte: " .. remove(myblob, -1)
 			:call remove(mylist, 0, 9)
 
 remove({dict}, {key})
 		Remove the entry from {dict} with key {key} and return it.
 		Example: >
-			:echo "removed " . remove(dict, "one")
+			:echo "removed " .. remove(dict, "one")
 <		If there is no {key} in {dict} this is an error.
 
 rename({from}, {to})					*rename()*
@@ -6135,7 +6135,7 @@ screencol()							*screencol()*
 		column inside the command line, which is 1 when the command is
 		executed. To get the cursor position in the file use one of
 		the following mappings: >
-			nnoremap <expr> GG ":echom ".screencol()."\n"
+			nnoremap <expr> GG ":echom " .. screencol() .. "\n"
 			nnoremap <silent> GG :echom screencol()<CR>
 			noremap GG <Cmd>echom screencol()<Cr>
 <
@@ -6256,7 +6256,7 @@ search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 		Example (goes over all files in the argument list): >
 		    :let n = 1
 		    :while n <= argc()	    " loop over all files in arglist
-		    :  exe "argument " . n
+		    :  exe "argument " .. n
 		    :  " start at the last char in the file and wrap for the
 		    :  " first search to find match at start of file
 		    :  normal G$
@@ -6340,11 +6340,11 @@ searchcount([{options}])					*searchcount()*
 			  return printf(' /%s [%d/%d]', @/,
 			  \             result.current, result.total)
 			endfunction
-			let &statusline .= '%{LastSearchCount()}'
+			let &statusline ..= '%{LastSearchCount()}'
 
 			" Or if you want to show the count only when
 			" 'hlsearch' was on
-			" let &statusline .=
+			" let &statusline ..=
 			" \   '%{v:hlsearch ? LastSearchCount() : ""}'
 <
 		You can also update the search count, which can be useful in a
@@ -7146,10 +7146,10 @@ shellescape({string} [, {special}])			*shellescape()*
 		inside single quotes.
 
 		Example of use with a |:!| command: >
-		    :exe '!dir ' . shellescape(expand('<cfile>'), 1)
+		    :exe '!dir ' .. shellescape(expand('<cfile>'), 1)
 <		This results in a directory listing for the file under the
 		cursor.  Example of use with |system()|: >
-		    :call system("chmod +w -- " . shellescape(expand("%")))
+		    :call system("chmod +w -- " .. shellescape(expand("%")))
 <		See also |::S|.
 
 		Can also be used as a |method|: >
@@ -7841,7 +7841,7 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 		When {sub} starts with "\=", the remainder is interpreted as
 		an expression. See |sub-replace-expression|.  Example: >
 			:echo substitute(s, '%\(\x\x\)',
-			   \ '\=nr2char("0x" . submatch(1))', 'g')
+			   \ '\=nr2char("0x" .. submatch(1))', 'g')
 
 <		When {sub} is a Funcref that function is called, with one
 		optional argument.  Example: >
@@ -7849,7 +7849,7 @@ substitute({string}, {pat}, {sub}, {flags})		*substitute()*
 <		The optional argument is a list which contains the whole
 		matched string and up to nine submatches, like what
 		|submatch()| returns.  Example: >
-		   :echo substitute(s, '%\(\x\x\)', {m -> '0x' . m[1]}, 'g')
+		   :echo substitute(s, '%\(\x\x\)', {m -> '0x' .. m[1]}, 'g')
 
 <		Can also be used as a |method|: >
 			GetString()->substitute(pat, sub, flags)
@@ -8167,7 +8167,7 @@ tempname()					*tempname()* *temp-file-name*
 		The result is a String, which is the name of a file that
 		doesn't exist.  It can be used for a temporary file.  Example: >
 			:let tmpfile = tempname()
-			:exe "redir > " . tmpfile
+			:exe "redir > " .. tmpfile
 <		For Unix, the file will be in a private directory |tempfile|.
 		For MS-Windows forward slashes are used when the 'shellslash'
 		option is set or when 'shellcmdflag' starts with '-'.
@@ -8343,7 +8343,7 @@ trim({text} [, {mask} [, {dir}]])				*trim()*
 		Examples: >
 			echo trim("   some text ")
 <		returns "some text" >
-			echo trim("  \r\t\t\r RESERVE \t\n\x0B\xA0") . "_TAIL"
+			echo trim("  \r\t\t\r RESERVE \t\n\x0B\xA0") .. "_TAIL"
 <		returns "RESERVE_TAIL" >
 			echo trim("rm<Xrm<>X>rrm", "rm<>")
 <		returns "Xrm<>X" (characters in the middle are not removed) >
@@ -8521,7 +8521,7 @@ visualmode([{expr}])						*visualmode()*
 		character-wise, line-wise, or block-wise Visual mode
 		respectively.
 		Example: >
-			:exe "normal " . visualmode()
+			:exe "normal " .. visualmode()
 <		This enters the same Visual mode as before.  It is also useful
 		in scripts if you wish to act differently depending on the
 		Visual mode that was used.
@@ -8708,7 +8708,7 @@ winbufnr({nr})	The result is a Number, which is the number of the buffer
 		window is returned.
 		When window {nr} doesn't exist, -1 is returned.
 		Example: >
-  :echo "The file in the current window is " . bufname(winbufnr(0))
+  :echo "The file in the current window is " .. bufname(winbufnr(0))
 <
 		Can also be used as a |method|: >
 			FindWindow()->winbufnr()->bufname()
@@ -8733,7 +8733,7 @@ winheight({nr})						*winheight()*
 		An existing window always has a height of zero or more.
 		This excludes any window toolbar line.
 		Examples: >
-  :echo "The current window has " . winheight(0) . " lines."
+  :echo "The current window has " .. winheight(0) .. " lines."
 
 <		Can also be used as a |method|: >
 			GetWinid()->winheight()
@@ -8870,7 +8870,7 @@ winwidth({nr})						*winwidth()*
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a width of zero or more.
 		Examples: >
-  :echo "The current window has " . winwidth(0) . " columns."
+  :echo "The current window has " .. winwidth(0) .. " columns."
   :if winwidth(0) <= 50
   :  50 wincmd |
   :endif

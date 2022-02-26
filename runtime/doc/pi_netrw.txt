@@ -968,7 +968,7 @@ itself:
      fun! NetReadFixup(method, line1, line2)
        if method == 3   " ftp (no <.netrc>)
         let fourblanklines= line2 - 3
-        silent fourblanklines.",".line2."g/^\s*/d"
+        silent fourblanklines .. "," .. line2 .. "g/^\s*/d"
        endif
      endfunction
     endif
@@ -1975,7 +1975,7 @@ To use this function, simply assign its output to |g:netrw_list_hide| option.  >
 	Example: let g:netrw_list_hide= netrw_gitignore#Hide('my_gitignore_file')
 		Function can take additional files with git-ignore patterns.
 
-	Example: g:netrw_list_hide= netrw_gitignore#Hide() . '.*\.swp$'
+	Example: let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
 		Combining 'netrw_gitignore#Hide' with custom patterns.
 <
 
@@ -2824,7 +2824,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 
 				Examples:
 				 let g:netrw_list_hide= '.*\.swp$'
-				 let g:netrw_list_hide= netrw_gitignore#Hide().'.*\.swp$'
+				 let g:netrw_list_hide= netrw_gitignore#Hide() .. '.*\.swp$'
 				default: ""
 
   *g:netrw_localcopycmd*	="cp"           Linux/Unix/MacOS/Cygwin

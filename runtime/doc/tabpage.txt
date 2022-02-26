@@ -366,24 +366,24 @@ pages and define labels for them.  Then get the label for each tab page. >
 	  for i in range(tabpagenr('$'))
 	    " select the highlighting
 	    if i + 1 == tabpagenr()
-	      let s .= '%#TabLineSel#'
+	      let s ..= '%#TabLineSel#'
 	    else
-	      let s .= '%#TabLine#'
+	      let s ..= '%#TabLine#'
 	    endif
 
 	    " set the tab page number (for mouse clicks)
-	    let s .= '%' . (i + 1) . 'T'
+	    let s ..= '%' .. (i + 1) .. 'T'
 
 	    " the label is made by MyTabLabel()
-	    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
+	    let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
 	  endfor
 
 	  " after the last tab fill with TabLineFill and reset tab page nr
-	  let s .= '%#TabLineFill#%T'
+	  let s ..= '%#TabLineFill#%T'
 
 	  " right-align the label to close the current tab page
 	  if tabpagenr('$') > 1
-	    let s .= '%=%#TabLine#%999Xclose'
+	    let s ..= '%=%#TabLine#%999Xclose'
 	  endif
 
 	  return s
@@ -446,14 +446,14 @@ windows in the tab page and a '+' if there is a modified buffer: >
 	  " Append the number of windows in the tab page if more than one
 	  let wincount = tabpagewinnr(v:lnum, '$')
 	  if wincount > 1
-	    let label .= wincount
+	    let label ..= wincount
 	  endif
 	  if label != ''
-	    let label .= ' '
+	    let label ..= ' '
 	  endif
 
 	  " Append the buffer name
-	  return label . bufname(bufnrlist[tabpagewinnr(v:lnum) - 1])
+	  return label .. bufname(bufnrlist[tabpagewinnr(v:lnum) - 1])
 	endfunction
 
 	set guitablabel=%{GuiTabLabel()}

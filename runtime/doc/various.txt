@@ -275,7 +275,7 @@ g8			Print the hex values of the bytes used in the
 			Special characters are not escaped, use quotes or
 			|shellescape()|: >
 				:!ls "%"
-				:exe "!ls " . shellescape(expand("%"))
+				:exe "!ls " .. shellescape(expand("%"))
 <
 			Newline character ends {cmd} unless a backslash
 			precedes the newline.  What follows is interpreted as
@@ -432,7 +432,7 @@ g8			Print the hex values of the bytes used in the
 			used.  In this example |:silent| is used to avoid the
 			message about reading the file and |:unsilent| to be
 			able to list the first line of each file. >
-    		:silent argdo unsilent echo expand('%') . ": " . getline(1)
+    		:silent argdo unsilent echo expand('%') .. ": " .. getline(1)
 <
 
 						*:verb* *:verbose*

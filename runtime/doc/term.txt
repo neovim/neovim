@@ -321,7 +321,7 @@ an #if/#else/#endif block, the selection becomes linewise.
 For MS-Windows and xterm the time for double clicking can be set with the
 'mousetime' option. For the other systems this time is defined outside of Vim.
 An example, for using a double click to jump to the tag under the cursor: >
-	:map <2-LeftMouse> :exe "tag ". expand("<cword>")<CR>
+	:map <2-LeftMouse> :exe "tag " .. expand("<cword>")<CR>
 
 Dragging the mouse with a double click (button-down, button-up, button-down
 and then drag) will result in whole words to be selected.  This continues
