@@ -144,8 +144,8 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.42.0.tar.gz)
-set(LIBUV_SHA256 371e5419708f6aaeb8656671f89400b92a9bba6443369af1bb70bcd6e4b3c764)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/7ae0c9543d0080968766288c73874aee3798ae30.tar.gz)
+set(LIBUV_SHA256 02ade646f52221e56f2515f8d0bfb8099204d21f6973b2a139bc726807ea803c)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
@@ -169,9 +169,9 @@ set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3
 set(LIBVTERM_URL https://www.leonerd.org.uk/code/libvterm/libvterm-0.1.4.tar.gz)
 set(LIBVTERM_SHA256 bc70349e95559c667672fc8c55b9527d9db9ada0fb80a3beda533418d782d3dd)
 
-set(LUV_VERSION 1.42.0-1)
+set(LUV_VERSION 1.43.0-0)
 set(LUV_URL https://github.com/luvit/luv/archive/${LUV_VERSION}.tar.gz)
-set(LUV_SHA256 a55563e6da9294ea26f77a2111598aa49188c5806b8bd1e1f4bdf402f340713e)
+set(LUV_SHA256 a36865f34db029e2caa01245a41341a067038c09e94459b50db1346d9fdf82f0)
 
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
