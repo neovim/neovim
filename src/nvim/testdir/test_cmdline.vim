@@ -3,6 +3,19 @@
 source check.vim
 source screendump.vim
 
+func SetUp()
+  func SaveLastScreenLine()
+    let g:Sline = Screenline(&lines - 1)
+    return ''
+  endfunc
+  cnoremap <expr> <F4> SaveLastScreenLine()
+endfunc
+
+func TearDown()
+  delfunc SaveLastScreenLine
+  cunmap <F4>
+endfunc
+
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")
