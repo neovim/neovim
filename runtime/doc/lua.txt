@@ -568,6 +568,26 @@ Example: TCP echo-server                                *tcp-server*
     end)
     print('TCP echo-server listening on port: '..server:getsockname().port)
 
+
+Multithreading						*lua-loop-threading*
+
+Plugins can perform work in separate (os-level) threads using the threading
+APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+gets its own separate lua interpreter state, with no access to lua globals
+in the main thread. Neither can the state of the editor (buffers, windows,
+etc) be directly accessed from threads.
+
+A subset of the `vim.*` API is available in threads. This includes:
+
+- `vim.loop` with a separate event loop per thread.
+- `vim.mpack` and `vim.json` (useful for serializing messages between threads)
+- `require` in threads can use lua packages from the global |lua-package-path|
+- `print()` and `vim.inspect`
+- `vim.diff`
+- most utility functions in `vim.*` for working with pure lua values
+  like `vim.split`, `vim.tbl_*`, `vim.list_*`, and so on.
+- `vim.is_thread()` returns true from a non-main thread.
+
 ------------------------------------------------------------------------------
 VIM.HIGHLIGHT                                           *lua-highlight*
 

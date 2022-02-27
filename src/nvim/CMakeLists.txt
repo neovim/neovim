@@ -63,6 +63,7 @@ set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
 set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lua)
+set(LUA_LOAD_PACKAGE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_load_package.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -336,6 +337,7 @@ add_custom_command(
       ${LUA_F_MODULE_SOURCE} lua_F_module
       ${LUA_META_MODULE_SOURCE} lua_meta_module
       ${LUA_FILETYPE_MODULE_SOURCE} lua_filetype_module
+      ${LUA_LOAD_PACKAGE_MODULE_SOURCE} lua_load_package_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_VIM_MODULE_SOURCE}
@@ -344,6 +346,7 @@ add_custom_command(
     ${LUA_F_MODULE_SOURCE}
     ${LUA_META_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
+    ${LUA_LOAD_PACKAGE_MODULE_SOURCE}
   VERBATIM
 )
 

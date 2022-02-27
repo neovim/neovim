@@ -156,7 +156,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
             && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
       if (tsize == 0 && lua_getmetatable(lstate, -1)) {
-        nlua_pushref(lstate, nlua_empty_dict_ref);
+        nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
         if (lua_rawequal(lstate, -2, -1)) {
           ret.type = kObjectTypeDictionary;
         }
@@ -316,7 +316,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       LuaRef table_ref = LUA_NOREF;
       if (lua_getmetatable(lstate, -1)) {
         lua_pop(lstate, 1);
-        table_ref = nlua_ref(lstate, -1);
+        table_ref = nlua_ref_global(lstate, -1);
       }
 
       const LuaTableProps table_props = nlua_traverse_table(lstate);
@@ -389,7 +389,7 @@ nlua_pop_typval_table_processing_end:
     }
     case LUA_TFUNCTION: {
       LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-      state->lua_callable.func_ref = nlua_ref(lstate, -1);
+      state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
 
       char_u *name = register_cfunc(&nlua_CFunction_func_call,
                                     &nlua_CFunction_func_free,
@@ -401,7 +401,7 @@ nlua_pop_typval_table_processing_end:
     }
     case LUA_TUSERDATA: {
       // TODO(bfredl): check mt.__call and convert to function?
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
       bool is_nil = lua_rawequal(lstate, -2, -1);
       lua_pop(lstate, 1);
       if (is_nil) {
@@ -445,7 +445,7 @@ static bool typval_conv_special = false;
     if (typval_conv_special) { \
       lua_pushnil(lstate); \
     } else { \
-      nlua_pushref(lstate, nlua_nil_ref); \
+      nlua_pushref(lstate, nlua_global_refs->nil_ref); \
     } \
   } while (0)
 
@@ -495,7 +495,7 @@ static bool typval_conv_special = false;
       nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary); \
     } else { \
       lua_createtable(lstate, 0, 0); \
-      nlua_pushref(lstate, nlua_empty_dict_ref); \
+      nlua_pushref(lstate, nlua_global_refs->empty_dict_ref); \
       lua_setmetatable(lstate, -2); \
     } \
   } while (0)
@@ -734,7 +734,7 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special
   } else {
     lua_createtable(lstate, 0, (int)dict.size);
     if (dict.size == 0 && !special) {
-      nlua_pushref(lstate, nlua_empty_dict_ref);
+      nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
       lua_setmetatable(lstate, -2);
     }
   }
@@ -782,7 +782,7 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
     if (special) {
       lua_pushnil(lstate);
     } else {
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
     }
     break;
   case kObjectTypeLuaRef: {
@@ -1199,14 +1199,14 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
     case LUA_TFUNCTION:
       if (ref) {
-        *cur.obj = LUAREF_OBJ(nlua_ref(lstate, -1));
+        *cur.obj = LUAREF_OBJ(nlua_ref_global(lstate, -1));
       } else {
         goto type_error;
       }
       break;
 
     case LUA_TUSERDATA: {
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
       bool is_nil = lua_rawequal(lstate, -2, -1);
       lua_pop(lstate, 1);
       if (is_nil) {
@@ -1240,7 +1240,7 @@ type_error:
 
 LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
 {
-  LuaRef rv = nlua_ref(lstate, -1);
+  LuaRef rv = nlua_ref_global(lstate, -1);
   lua_pop(lstate, 1);
   return rv;
 }

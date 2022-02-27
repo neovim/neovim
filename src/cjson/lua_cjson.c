@@ -776,7 +776,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
 
         if (has_metatable) {
 
-          nlua_pushref(l, nlua_empty_dict_ref);
+          nlua_pushref(l, nlua_get_empty_dict_ref(l));
           if (lua_rawequal(l, -2, -1)) {
             as_empty_dict = true;
           } else {
@@ -822,7 +822,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         }
         break;
     case LUA_TUSERDATA:
-        nlua_pushref(l, nlua_nil_ref);
+        nlua_pushref(l, nlua_get_nil_ref(l));
         bool is_nil = lua_rawequal(l, -2, -1);
         lua_pop(l, 1);
         if (is_nil) {
@@ -1285,7 +1285,7 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
 
     /* Handle empty objects */
     if (token.type == T_OBJ_END) {
-        nlua_pushref(l, nlua_empty_dict_ref); \
+        nlua_pushref(l, nlua_get_empty_dict_ref(l)); \
         lua_setmetatable(l, -2); \
         json_decode_ascend(json);
         return;
@@ -1392,7 +1392,7 @@ static void json_process_value(lua_State *l, json_parse_t *json,
         if (use_luanil) {
             lua_pushnil(l);
         } else {
-            nlua_pushref(l, nlua_nil_ref);
+            nlua_pushref(l, nlua_get_nil_ref(l));
         }
         break;;
     default:
@@ -1549,7 +1549,15 @@ int lua_cjson_new(lua_State *l)
     };
 
     /* Initialise number conversions */
-    fpconv_init();
+    lua_getfield(l, LUA_REGISTRYINDEX, "nvim.thread");
+    bool is_thread = lua_toboolean(l, -1);
+    lua_pop(l, 1);
+
+    // Since fpconv_init does not need to be called multiple times and is not
+    // thread safe, it should only be called in the main thread.
+    if (!is_thread) {
+        fpconv_init();
+    }
 
     /* Test if array metatables are in registry */
     lua_pushlightuserdata(l, json_lightudata_mask(&json_empty_array));
@@ -1582,7 +1590,7 @@ int lua_cjson_new(lua_State *l)
     compat_luaL_setfuncs(l, reg, 1);
 
     /* Set cjson.null */
-    nlua_pushref(l, nlua_nil_ref);
+    nlua_pushref(l, nlua_get_nil_ref(l));
     lua_setfield(l, -2, "null");
 
     /* Set cjson.empty_array_mt */

@@ -45,6 +45,8 @@ static int in_fast_callback = 0;
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
 
+static uv_thread_t main_thread;
+
 typedef struct {
   Error err;
   String lua_err_str;
@@ -65,10 +67,15 @@ typedef struct {
   }
 
 #if __has_feature(address_sanitizer)
-static PMap(handle_T) nlua_ref_markers = MAP_INIT;
 static bool nlua_track_refs = false;
 # define NLUA_TRACK_REFS
 #endif
+
+typedef enum luv_err_type {
+  kCallback,
+  kThread,
+  kThreadCallback,
+} luv_err_t;
 
 /// Convert lua error into a Vim error message
 ///
@@ -122,8 +129,21 @@ static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 static void nlua_luv_error_event(void **argv)
 {
   char *error = (char *)argv[0];
+  luv_err_t type = (luv_err_t)(intptr_t)argv[1];
   msg_ext_set_kind("lua_error");
-  semsg_multiline("Error executing luv callback:\n%s", error);
+  switch (type) {
+    case kCallback:
+      semsg_multiline("Error executing luv callback:\n%s", error);
+      break;
+    case kThread:
+      semsg_multiline("Error in luv thread:\n%s", error);
+      break;
+    case kThreadCallback:
+      semsg_multiline("Error in luv callback, thread:\n%s", error);
+      break;
+    default:
+      break;
+  }
   xfree(error);
 }
 
@@ -148,7 +168,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
     const char *error = lua_tostring(lstate, -1);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
-                   1, xstrdup(error));
+                   2, xstrdup(error), (intptr_t)kCallback);
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
@@ -162,12 +182,112 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
   return retval;
 }
 
+static int nlua_luv_thread_cb_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                      int flags)
+{
+  return nlua_luv_thread_common_cfpcall(lstate, nargs, nresult, flags, true);
+}
+
+static int nlua_luv_thread_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                   int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return nlua_luv_thread_common_cfpcall(lstate, nargs, nresult, flags, false);
+}
+
+static int nlua_luv_thread_cfcpcall(lua_State *lstate, lua_CFunction func,
+                                    void *ud, int flags)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  lua_pushcfunction(lstate, func);
+  lua_pushlightuserdata(lstate, ud);
+  int retval = nlua_luv_thread_cfpcall(lstate, 1, 0, flags);
+  return retval;
+}
+
+static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                          int flags, bool is_callback)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int retval;
+
+  int top = lua_gettop(lstate);
+  int status = lua_pcall(lstate, nargs, nresult, 0);
+  if (status) {
+    if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
+      // Terminate this thread, as the main thread may be able to continue
+      // execution.
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
+      lua_close(lstate);
+#ifdef WIN32
+    ExitThread(0);
+#else
+    pthread_exit(0);
+#endif
+    }
+    const char *error = lua_tostring(lstate, -1);
+
+    loop_schedule_deferred(&main_loop,
+                           event_create(nlua_luv_error_event, 2,
+                                        xstrdup(error),
+                                        is_callback
+                                        ? (intptr_t)kThreadCallback
+                                        : (intptr_t)kThread));
+    lua_pop(lstate, 1);  // error message
+    retval = -status;
+  } else {  // LUA_OK
+    if (nresult == LUA_MULTRET) {
+      nresult = lua_gettop(lstate) - top + nargs + 1;
+    }
+    retval = nresult;
+  }
+
+  return retval;
+}
+
+static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
+{
+  if (lua_gettop(lstate) != 3) {
+    return luaL_error(lstate, "Expected 3 arguments");
+  }
+
+  luaL_checktype(lstate, -1, LUA_TTABLE);
+  lua_getfield(lstate, -1, "is_lua");
+  if (!lua_isboolean(lstate, -1)) {
+    return luaL_error(lstate, "is_lua is not a boolean");
+  }
+  bool is_lua = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 2);
+
+  luaL_checktype(lstate, -1, LUA_TBOOLEAN);
+  bool all = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+
+  Error err = ERROR_INIT;
+  const Array pat = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    luaL_where(lstate, 1);
+    lua_pushstring(lstate, err.msg);
+    api_clear_error(&err);
+    lua_concat(lstate, 2);
+    return lua_error(lstate);
+  }
+
+  ArrayOf(String) ret = runtime_get_named_thread(is_lua, pat, all);
+  nlua_push_Array(lstate, ret, true);
+  api_free_array(ret);
+  api_free_array(pat);
+
+  return 1;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
-  nlua_unref(lstate, cb);
+  nlua_unref_global(lstate, cb);
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
   }
@@ -184,7 +304,7 @@ static int nlua_schedule(lua_State *const lstate)
     return lua_error(lstate);
   }
 
-  LuaRef cb = nlua_ref(lstate, 1);
+  LuaRef cb = nlua_ref_global(lstate, 1);
 
   multiqueue_put(main_loop.events, nlua_schedule_event,
                  1, (void *)(ptrdiff_t)cb);
@@ -302,6 +422,152 @@ static int nlua_wait(lua_State *lstate)
   return 2;
 }
 
+static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
+  FUNC_ATTR_NONNULL_ALL
+{
+  nlua_ref_state_t *ref_state = lua_newuserdata(lstate, sizeof(*ref_state));
+  memset(ref_state, 0, sizeof(*ref_state));
+  ref_state->nil_ref = LUA_NOREF;
+  ref_state->empty_dict_ref = LUA_NOREF;
+  if (!is_thread) {
+    nlua_global_refs = ref_state;
+  }
+  return ref_state;
+}
+
+static nlua_ref_state_t *nlua_get_ref_state(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
+  nlua_ref_state_t *ref_state = lua_touserdata(lstate, -1);
+  lua_pop(lstate, 1);
+
+  return ref_state;
+}
+
+LuaRef nlua_get_nil_ref(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
+  return ref_state->nil_ref;
+}
+
+LuaRef nlua_get_empty_dict_ref(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
+  return ref_state->empty_dict_ref;
+}
+
+int nlua_get_global_ref_count(void)
+{
+  return nlua_global_refs->ref_count;
+}
+
+static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  nlua_ref_state_t *ref_state = nlua_new_ref_state(lstate, is_thread);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
+
+  // vim.is_thread
+  lua_pushboolean(lstate, is_thread);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  lua_pushcfunction(lstate, &nlua_is_thread);
+  lua_setfield(lstate, -2, "is_thread");
+
+  // vim.NIL
+  lua_newuserdata(lstate, 0);
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_nil_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  lua_setmetatable(lstate, -2);
+  ref_state->nil_ref = nlua_ref(lstate,  ref_state, -1);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
+  lua_setfield(lstate, -2, "NIL");
+
+  // vim._empty_dict_mt
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  ref_state->empty_dict_ref = nlua_ref(lstate, ref_state, -1);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
+  lua_setfield(lstate, -2, "_empty_dict_mt");
+
+  // vim.loop
+  if (is_thread) {
+    luv_set_callback(lstate, nlua_luv_thread_cb_cfpcall);
+    luv_set_thread(lstate, nlua_luv_thread_cfpcall);
+    luv_set_cthread(lstate, nlua_luv_thread_cfcpcall);
+  } else {
+    luv_set_loop(lstate, &main_loop.uv);
+    luv_set_callback(lstate, nlua_luv_cfpcall);
+  }
+  luaopen_luv(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");
+
+  // package.loaded.luv = vim.loop
+  // otherwise luv will be reinitialized when require'luv'
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "luv");
+  lua_pop(lstate, 3);
+}
+
+static void nlua_common_package_init(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  {
+    const char *code = (char *)&shared_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(shared_module) - 1, "@vim/shared.lua")
+        || nlua_pcall(lstate, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
+      return;
+    }
+  }
+
+  {
+    const char *code = (char *)&lua_load_package_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_load_package_module) - 1, "@vim/_load_package.lua")
+        || lua_pcall(lstate, 0, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating _load_package module: %.*s"));
+      return;
+    }
+  }
+
+  {
+    lua_getglobal(lstate, "package");  // [package]
+    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
+
+    const char *code = (char *)&inspect_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(inspect_module) - 1, "@vim/inspect.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
+      return;
+    }
+
+    // [package, loaded, inspect]
+    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
+  }
+
+  {
+    const char *code = (char *)&lua_F_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_F_module) - 1, "@vim/F.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s\n"));
+      return;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
+
+    lua_pop(lstate, 2);  // []
+  }
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -362,80 +628,22 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
 
-  // vim.NIL
-  lua_newuserdata(lstate, 0);
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_nil_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  lua_setmetatable(lstate, -2);
-  nlua_nil_ref = nlua_ref(lstate, -1);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
-  lua_setfield(lstate, -2, "NIL");
-
-  // vim._empty_dict_mt
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  nlua_empty_dict_ref = nlua_ref(lstate, -1);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
-  lua_setfield(lstate, -2, "_empty_dict_mt");
+  nlua_common_vim_init(lstate, false);
 
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
-  // vim.loop
-  luv_set_loop(lstate, &main_loop.uv);
-  luv_set_callback(lstate, nlua_luv_cfpcall);
-  luaopen_luv(lstate);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, -3, "loop");
-
-  // package.loaded.luv = vim.loop
-  // otherwise luv will be reinitialized when require'luv'
-  lua_getglobal(lstate, "package");
-  lua_getfield(lstate, -1, "loaded");
-  lua_pushvalue(lstate, -3);
-  lua_setfield(lstate, -2, "luv");
-  lua_pop(lstate, 3);
-
-  nlua_state_add_stdlib(lstate);
+  nlua_state_add_stdlib(lstate, false);
 
   lua_setglobal(lstate, "vim");
 
-  {
-    const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(shared_module) - 1, "@vim/shared.lua")
-        || nlua_pcall(lstate, 0, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
-      return 1;
-    }
-  }
+  nlua_common_package_init(lstate);
 
   {
     lua_getglobal(lstate, "package");  // [package]
     lua_getfield(lstate, -1, "loaded");  // [package, loaded]
 
-    const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(inspect_module) - 1, "@vim/inspect.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
-      return 1;
-    }
-    // [package, loaded, inspect]
-    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
-
-    code = (char *)&lua_F_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_F_module) - 1, "@vim/F.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s\n"));
-      return 1;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
-
-    code = (char *)&lua_filetype_module[0];
+    char *code = (char *)&lua_filetype_module[0];
     if (luaL_loadbuffer(lstate, code, sizeof(lua_filetype_module) - 1, "@vim/filetype.lua")
         || nlua_pcall(lstate, 0, 1)) {
       nlua_error(lstate, _("E5106: Error while creating vim.filetype module: %.*s"));
@@ -495,9 +703,60 @@ void nlua_init(void)
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
 
+  luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
+
   global_lstate = lstate;
+
+  main_thread = uv_thread_self();
 }
 
+static lua_State *nlua_thread_acquire_vm(void)
+{
+  // If it is called from the main thread, it will attempt to rebuild the cache.
+  const uv_thread_t self = uv_thread_self();
+  if (uv_thread_equal(&main_thread, &self)) {
+    runtime_search_path_validate();
+  }
+
+  lua_State *lstate = luaL_newstate();
+
+  // Add in the lua standard libraries
+  luaL_openlibs(lstate);
+
+  // print
+  lua_pushcfunction(lstate, &nlua_print);
+  lua_setglobal(lstate, "print");
+
+  lua_pushinteger(lstate, 0);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+
+  // vim
+  lua_newtable(lstate);
+
+  nlua_common_vim_init(lstate, true);
+
+  nlua_state_add_stdlib(lstate, true);
+
+  lua_setglobal(lstate, "vim");
+
+  nlua_common_package_init(lstate);
+
+  lua_getglobal(lstate, "vim");
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_getfield(lstate, -1, "vim.inspect");
+  lua_setfield(lstate, -4, "inspect");
+  lua_pop(lstate, 3);
+
+  lua_getglobal(lstate, "vim");
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, nlua_thr_api_nvim__get_runtime);
+  lua_setfield(lstate, -2, "nvim__get_runtime");
+  lua_setfield(lstate, -2, "api");
+  lua_pop(lstate, 1);
+
+  return lstate;
+}
 
 void nlua_free_all_mem(void)
 {
@@ -505,26 +764,30 @@ void nlua_free_all_mem(void)
     return;
   }
   lua_State *lstate = global_lstate;
+  nlua_common_free_all_mem(lstate);
+}
 
-  nlua_unref(lstate, nlua_nil_ref);
-  nlua_unref(lstate, nlua_empty_dict_ref);
+static void nlua_common_free_all_mem(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  nlua_ref_state_t *ref_state = nlua_get_ref_state(lstate);
+  nlua_unref(lstate, ref_state, ref_state->nil_ref);
+  nlua_unref(lstate, ref_state, ref_state->empty_dict_ref);
 
 #ifdef NLUA_TRACK_REFS
-  if (nlua_refcount) {
-    fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
+  if (ref_state->ref_count) {
+    fprintf(stderr, "%d lua references were leaked!", ref_state->ref_count);
   }
 
   if (nlua_track_refs) {
     // in case there are leaked luarefs, leak the associated memory
     // to get LeakSanitizer stacktraces on exit
-    pmap_destroy(handle_T)(&nlua_ref_markers);
+    pmap_destroy(handle_T)(&ref_state->ref_markers);
   }
 #endif
 
-  nlua_refcount = 0;
   lua_close(lstate);
 }
-
 static void nlua_print_event(void **argv)
 {
   char *str = argv[0];
@@ -602,9 +865,18 @@ static int nlua_print(lua_State *const lstate)
 #undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
 
-  if (in_fast_callback) {
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  bool is_thread = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+
+  if (is_thread) {
+    loop_schedule_deferred(&main_loop,
+                           event_create(nlua_print_event, 2,
+                                        msg_ga.ga_data,
+                                        (intptr_t)msg_ga.ga_len));
+  } else if (in_fast_callback) {
     multiqueue_put(main_loop.events, nlua_print_event,
-                   2, msg_ga.ga_data, msg_ga.ga_len);
+                   2, msg_ga.ga_data, (intptr_t)msg_ga.ga_len);
   } else {
     nlua_print_event((void *[]){ msg_ga.ga_data,
                                  (void *)(intptr_t)msg_ga.ga_len });
@@ -613,10 +885,12 @@ static int nlua_print(lua_State *const lstate)
 
 nlua_print_error:
   ga_clear(&msg_ga);
+  char *buff = xmalloc(IOSIZE);
   const char *fmt = _("E5114: Error while converting print argument #%i: %.*s");
-  size_t len = (size_t)vim_snprintf((char *)IObuff, IOSIZE, fmt, curargidx,
+  size_t len = (size_t)vim_snprintf(buff, IOSIZE, fmt, curargidx,
                                     (int)errmsg_len, errmsg);
-  lua_pushlstring(lstate, (char *)IObuff, len);
+  lua_pushlstring(lstate, buff, len);
+  xfree(buff);
   return lua_error(lstate);
 }
 
@@ -806,40 +1080,53 @@ static int nlua_getenv(lua_State *lstate)
 
 
 /// add the value to the registry
-LuaRef nlua_ref(lua_State *lstate, int index)
+/// The current implementation does not support calls from threads.
+LuaRef nlua_ref(lua_State *lstate, nlua_ref_state_t *ref_state, int index)
 {
   lua_pushvalue(lstate, index);
   LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
   if (ref > 0) {
-    nlua_refcount++;
+    ref_state->ref_count++;
 #ifdef NLUA_TRACK_REFS
     if (nlua_track_refs) {
       // dummy allocation to make LeakSanitizer track our luarefs
-      pmap_put(handle_T)(&nlua_ref_markers, ref, xmalloc(3));
+      pmap_put(handle_T)(&ref_state->ref_markers, ref, xmalloc(3));
     }
 #endif
   }
   return ref;
 }
 
+
+LuaRef nlua_ref_global(lua_State *lstate, int index)
+{
+  return nlua_ref(lstate, nlua_global_refs, index);
+}
+
 /// remove the value from the registry
-void nlua_unref(lua_State *lstate, LuaRef ref)
+void nlua_unref(lua_State *lstate, nlua_ref_state_t *ref_state, LuaRef ref)
 {
   if (ref > 0) {
-    nlua_refcount--;
+    ref_state->ref_count--;
 #ifdef NLUA_TRACK_REFS
     // NB: don't remove entry from map to track double-unref
     if (nlua_track_refs) {
-      xfree(pmap_get(handle_T)(&nlua_ref_markers, ref));
+      xfree(pmap_get(handle_T)(&ref_state->ref_markers, ref));
     }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
   }
 }
 
+void nlua_unref_global(lua_State *lstate, LuaRef ref)
+{
+  nlua_unref(lstate, nlua_global_refs, ref);
+}
+
+
 void api_free_luaref(LuaRef ref)
 {
-  nlua_unref(global_lstate, ref);
+  nlua_unref_global(global_lstate, ref);
 }
 
 /// push a value referenced in the registry
@@ -861,7 +1148,7 @@ LuaRef api_new_luaref(LuaRef original_ref)
 
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, original_ref);
-  LuaRef new_ref = nlua_ref(lstate, -1);
+  LuaRef new_ref = nlua_ref_global(lstate,  -1);
   lua_pop(lstate, 1);
   return new_ref;
 }
@@ -1391,6 +1678,13 @@ cleanup:
   return ret;
 }
 
+static int nlua_is_thread(lua_State *lstate)
+{
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+
+  return 1;
+}
+
 // Required functions for lua c functions as VimL callbacks
 
 int nlua_CFunction_func_call(int argcount, typval_T *argvars, typval_T *rettv, void *state)
@@ -1407,7 +1701,7 @@ void nlua_CFunction_func_free(void *state)
   lua_State *const lstate = global_lstate;
   LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
 
-  nlua_unref(lstate, funcstate->lua_callable.func_ref);
+  nlua_unref_global(lstate, funcstate->lua_callable.func_ref);
   xfree(funcstate);
 }
 
@@ -1457,7 +1751,7 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
   lua_pop(lstate, 2);  // [table]
 
   LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-  state->lua_callable.func_ref = nlua_ref(lstate, -1);
+  state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
 
   char_u *name = register_cfunc(&nlua_CFunction_func_call,
                                 &nlua_CFunction_func_free, state);
