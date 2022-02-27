@@ -80,7 +80,7 @@
 
 static char *e_no_such_user_defined_command_str = N_("E184: No such user-defined command: %s");
 static char *e_no_such_user_defined_command_in_current_buffer_str
-    = N_("E1237: No such user-defined command in current buffer: %s");
+  = N_("E1237: No such user-defined command in current buffer: %s");
 
 static int quitmore = 0;
 static bool ex_pressedreturn = false;
@@ -2835,7 +2835,7 @@ int modifier_len(char_u *cmd)
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
     int j;
     for (j = 0; p[j] != NUL; j++) {
-      if (p[j] != cmdmods[i].name[j]) {
+      if (p[j] != (char_u)cmdmods[i].name[j]) {
         break;
       }
     }

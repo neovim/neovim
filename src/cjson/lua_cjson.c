@@ -1110,7 +1110,7 @@ static int json_is_invalid_number(json_parse_t *json)
 
     /* Reject numbers starting with 0x, or leading zeros */
     if (*p == '0') {
-        int ch2 = *(p + 1);
+        char ch2 = *(p + 1);
 
         if ((ch2 | 0x20) == 'x' ||          /* Hex */
             ('0' <= ch2 && ch2 <= '9'))     /* Leading zero */

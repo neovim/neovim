@@ -201,7 +201,7 @@ void do_debug(char_u *cmd)
         if (last_cmd != 0) {
           // Check that the tail matches.
           p++;
-          while (*p != NUL && *p == *tail) {
+          while (*p != NUL && *p == (char_u)(*tail)) {
             p++;
             tail++;
           }

@@ -1500,7 +1500,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len, cons
   } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
              && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'
              && ptr[1] != '9') {
-    pre = ptr[1];
+    pre = (char_u)ptr[1];
     // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
         && !STRING_ENDED(ptr + 2)
