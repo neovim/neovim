@@ -1949,8 +1949,11 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     // expression.  Also save and restore the command line
     // for "normal :".
     if (mp->m_expr) {
-      int save_vgetc_busy = vgetc_busy;
+      const int save_vgetc_busy = vgetc_busy;
       const bool save_may_garbage_collect = may_garbage_collect;
+      const int save_cursor_row = ui_current_row();
+      const int save_cursor_col = ui_current_col();
+      const int prev_did_emsg = did_emsg;
 
       vgetc_busy = 0;
       may_garbage_collect = false;
@@ -1960,6 +1963,32 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
         save_m_str = vim_strsave(mp->m_str);
       }
       map_str = eval_map_expr(mp, NUL);
+
+      // The mapping may do anything, but we expect it to take care of
+      // redrawing.  Do put the cursor back where it was.
+      ui_cursor_goto(save_cursor_row, save_cursor_col);
+      ui_flush();
+
+      // If an error was displayed and the expression returns an empty
+      // string, generate a <Nop> to allow for a redraw.
+      if (prev_did_emsg != did_emsg && (map_str == NULL || *map_str == NUL)) {
+        char_u buf[4];
+        xfree(map_str);
+        buf[0] = K_SPECIAL;
+        buf[1] = KS_EXTRA;
+        buf[2] = KE_IGNORE;
+        buf[3] = NUL;
+        map_str = vim_strsave(buf);
+        if (State & CMDLINE) {
+          // redraw the command below the error
+          msg_didout = true;
+          if (msg_row < cmdline_row) {
+            msg_row = cmdline_row;
+          }
+          redrawcmd();
+        }
+      }
+
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
     } else {
@@ -3490,6 +3519,7 @@ static void showmap(mapblock_T *mp, bool local)
   if (p_verbose > 0) {
     last_set_msg(mp->m_script_ctx);
   }
+  msg_clr_eos();
   ui_flush();                          // show one line at a time
 }
 
