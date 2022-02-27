@@ -67,8 +67,12 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
+            ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
           key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!third-party/**CMakeLists.txt') }}-${{ github.base_ref }}
+
+      - name: Build third-party
+        run: ./ci/before_script.sh
 
       - name: Build nvim
         run: ./ci/run_tests.sh build
