@@ -1003,6 +1003,8 @@ static void command_line_scan(mparm_T *parmp)
           argv_idx = -1;
         } else if (argc > 1) {    // "-q {errorfile}"
           want_argument = true;
+        } else {
+            mainerr(err_arg_missing, argv[0]);
         }
         break;
       case 'R':    // "-R" readonly mode
