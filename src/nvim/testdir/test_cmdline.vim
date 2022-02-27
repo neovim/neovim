@@ -1500,7 +1500,9 @@ func Test_wildoptions_fuzzy()
   call assert_equal('"syntax list mpar', @:)
   set wildoptions=fuzzy
   call feedkeys(":syntax list mpar\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"syntax list MatchParen', @:)
+  " Fuzzy match favours NvimParenthesis over MatchParen
+  " call assert_equal('"syntax list MatchParen', @:)
+  call assert_equal('"syntax list NvimParenthesis', @:)
 
   " :syntime suboptions fuzzy completion
   if has('profile')
@@ -1526,6 +1528,25 @@ func Test_wildoptions_fuzzy()
   set wildoptions=fuzzy
   call feedkeys(":let SVar\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"let SomeVariable', @:)
+
+  " Test for sorting the results by the best match
+  %bw!
+  command T123format :
+  command T123goformat :
+  command T123TestFOrmat :
+  command T123fendoff :
+  command T123state :
+  command T123FendingOff :
+  set wildoptions=fuzzy
+  call feedkeys(":T123fo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"T123format T123TestFOrmat T123FendingOff T123goformat T123fendoff', @:)
+  delcommand T123format
+  delcommand T123goformat
+  delcommand T123TestFOrmat
+  delcommand T123fendoff
+  delcommand T123state
+  delcommand T123FendingOff
+  %bw
 
   set wildoptions&
   %bw!
