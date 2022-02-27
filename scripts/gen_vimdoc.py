@@ -95,6 +95,7 @@ CONFIG = {
             'window.c',
             'win_config.c',
             'tabpage.c',
+            'autocmd.c',
             'ui.c',
         ],
         # List of files/directories for doxygen to read, separated by blanks

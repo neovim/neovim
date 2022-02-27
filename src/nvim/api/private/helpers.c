@@ -396,19 +396,14 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
     stringval = value.data.string.data;
   }
 
-  const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid =
-    channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
-  current_sctx.sc_lnum = 0;
-  current_channel_id = channel_id;
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
+                          ? 0 : (type == SREQ_GLOBAL)
+                                ? OPT_GLOBAL : OPT_LOCAL;
 
-  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
-                        ? 0 : (type == SREQ_GLOBAL)
-                              ? OPT_GLOBAL : OPT_LOCAL;
-  set_option_value_for(name.data, numval, stringval,
-                       opt_flags, type, to, err);
-
-  current_sctx = save_current_sctx;
+    set_option_value_for(name.data, numval, stringval,
+                         opt_flags, type, to, err);
+  });
 }
 
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
@@ -1613,4 +1608,17 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
 err:
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+}
+
+int find_sid(uint64_t channel_id)
+{
+  switch (channel_id) {
+  case VIML_INTERNAL_CALL:
+    // TODO(autocmd): Figure out what this should be
+    // return SID_API_CLIENT;
+  case LUA_INTERNAL_CALL:
+    return SID_LUA;
+  default:
+    return SID_API_CLIENT;
+  }
 }

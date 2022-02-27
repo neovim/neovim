@@ -5,6 +5,7 @@ local assert_visible = helpers.assert_visible
 local assert_alive = helpers.assert_alive
 local dedent = helpers.dedent
 local eq = helpers.eq
+local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
@@ -417,5 +418,107 @@ describe('autocmd', function()
       {1:~                               }|
       :doautocmd SessionLoadPost      |
     ]]}
+  end)
+
+  describe('old_tests', function()
+    it('vimscript: WinNew ++once', function()
+      source [[
+        " Without ++once WinNew triggers twice
+        let g:did_split = 0
+        augroup Testing
+          au!
+          au WinNew * let g:did_split += 1
+        augroup END
+        split
+        split
+        call assert_equal(2, g:did_split)
+        call assert_true(exists('#WinNew'))
+        close
+        close
+
+        " With ++once WinNew triggers once
+        let g:did_split = 0
+        augroup Testing
+          au!
+          au WinNew * ++once let g:did_split += 1
+        augroup END
+        split
+        split
+        call assert_equal(1, g:did_split)
+        call assert_false(exists('#WinNew'))
+        close
+        close
+
+        call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+      ]]
+
+      meths.set_var('did_split', 0)
+
+      source [[
+        augroup Testing
+          au!
+          au WinNew * let g:did_split += 1
+        augroup END
+
+        split
+        split
+      ]]
+
+      eq(2, meths.get_var('did_split'))
+      eq(1, funcs.exists('#WinNew'))
+
+      -- Now with once
+      meths.set_var('did_split', 0)
+
+      source [[
+        augroup Testing
+          au!
+          au WinNew * ++once let g:did_split += 1
+        augroup END
+
+        split
+        split
+      ]]
+
+      eq(1, meths.get_var('did_split'))
+      eq(0, funcs.exists('#WinNew'))
+
+      -- call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+      local ok, msg = pcall(source, [[
+        au WinNew * ++once ++once echo bad
+      ]])
+
+      eq(false, ok)
+      eq(true, not not string.find(msg, 'E983:'))
+    end)
+
+    it('should have autocmds in filetypedetect group', function()
+      source [[filetype on]]
+      neq({}, meths.get_autocmds { group = "filetypedetect" })
+    end)
+
+    it('should not access freed mem', function()
+      source [[
+        au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
+        arg 0
+        argadd
+        all
+        all
+        au!
+        bwipe xxx
+      ]]
+    end)
+
+    it('should allow comma-separated patterns', function()
+      source [[
+        augroup TestingPatterns
+          au!
+          autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
+          autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
+        augroup END
+      ]]
+
+      eq(4, #meths.get_autocmds { event = "BufReadCmd", group = "TestingPatterns" })
+    end)
   end)
 end)

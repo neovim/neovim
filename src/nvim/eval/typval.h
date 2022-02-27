@@ -72,15 +72,18 @@ typedef enum {
   kCallbackNone = 0,
   kCallbackFuncref,
   kCallbackPartial,
+  kCallbackLua,
 } CallbackType;
 
 typedef struct {
   union {
     char_u *funcref;
     partial_T *partial;
+    LuaRef luaref;
   } data;
   CallbackType type;
 } Callback;
+
 #define CALLBACK_INIT { .type = kCallbackNone }
 #define CALLBACK_NONE ((Callback)CALLBACK_INIT)
 

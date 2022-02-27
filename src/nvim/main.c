@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/aucmd.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"

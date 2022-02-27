@@ -24,14 +24,6 @@ typedef struct {
 #endif
 } nlua_ref_state_t;
 
-#define set_api_error(s, err) \
-  do { \
-    Error *err_ = (err); \
-    err_->type = kErrorTypeException; \
-    err_->set = true; \
-    memcpy(&err_->msg[0], s, sizeof(s)); \
-  } while (0)
-
 #define NLUA_CLEAR_REF(x) \
   do { \
     /* Take the address to avoid double evaluation. #1375 */ \

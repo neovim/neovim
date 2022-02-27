@@ -1350,6 +1350,16 @@ Object nlua_exec(const String str, const Array args, Error *err)
   return nlua_pop_Object(lstate, false, err);
 }
 
+bool nlua_ref_is_function(LuaRef ref)
+{
+  lua_State *const lstate = global_lstate;
+  nlua_pushref(lstate, ref);
+  bool is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+  lua_pop(lstate, 1);
+
+  return is_function;
+}
+
 /// call a LuaRef as a function (or table with __call metamethod)
 ///
 /// @param ref     the reference to call (not consumed)
