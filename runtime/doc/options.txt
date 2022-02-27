@@ -897,7 +897,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If you like to keep a lot of backups, you could use a BufWritePre
 	autocommand to change 'backupext' just before writing the file to
 	include a timestamp. >
-		:au BufWritePre * let &bex = '-' . strftime("%Y%b%d%X") . '~'
+		:au BufWritePre * let &bex = '-' .. strftime("%Y%b%d%X") .. '~'
 <	Use 'backupdir' to put the backup in a different directory.
 
 						*'backupskip'* *'bsk'*
@@ -920,7 +920,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Note that environment variables are not expanded.  If you want to use
 	$HOME you must expand it explicitly, e.g.: >
-		:let backupskip = escape(expand('$HOME'), '\') . '/tmp/*'
+		:let backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 
 <	Note that the default also makes sure that "crontab -e" works (when a
 	backup would be made by renaming the original file crontab won't see
@@ -1185,7 +1185,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the default value taken from $CDPATH is not what you want, include
 	a modified version of the following command in your vimrc file to
 	override it: >
-	  :let &cdpath = ',' . substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
+	  :let &cdpath = ',' .. substitute(substitute($CDPATH, '[, ]', '\\\0', 'g'), ':', ',', 'g')
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 	(parts of 'cdpath' can be passed to the shell to expand file names).
@@ -1232,8 +1232,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		set charconvert=CharConvert()
 		fun CharConvert()
 		  system("recode "
-			\ . v:charconvert_from . ".." . v:charconvert_to
-			\ . " <" . v:fname_in . " >" v:fname_out)
+			\ .. v:charconvert_from .. ".." .. v:charconvert_to
+			\ .. " <" .. v:fname_in .. " >" .. v:fname_out)
 		  return v:shell_error
 		endfun
 <	The related Vim variables are:
@@ -3620,7 +3620,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Language to use for menu translation.  Tells which file is loaded
 	from the "lang" directory in 'runtimepath': >
-		"lang/menu_" . &langmenu . ".vim"
+		"lang/menu_" .. &langmenu .. ".vim"
 <	(without the spaces).  For example, to always use the Dutch menus, no
 	matter what $LANG is set to: >
 		:set langmenu=nl_NL.ISO_8859-1
@@ -4522,7 +4522,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	To use an environment variable, you probably need to replace the
 	separator.  Here is an example to append $INCL, in which directory
 	names are separated with a semi-colon: >
-		:let &path = &path . "," . substitute($INCL, ';', ',', 'g')
+		:let &path = &path .. "," .. substitute($INCL, ';', ',', 'g')
 <	Replace the ';' with a ':' or whatever separator is used.  Note that
 	this doesn't work when $INCL contains a comma or white space.
 
@@ -6570,7 +6570,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	Example: >
-	    :auto BufEnter * let &titlestring = hostname() . "/" . expand("%:p")
+	    :auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
 	    :set title titlestring=%<%F%=%l/%L-%P titlelen=70
 <	The value of 'titlelen' is used to align items in the middle or right
 	of the available space.

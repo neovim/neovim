@@ -341,7 +341,7 @@ processing a quickfix or location list command, it will be aborted.
 			cursor position will not be changed. See |:cexpr| for
 			more information.
 			Example: >
-    :g/mypattern/caddexpr expand("%") . ":" . line(".") .  ":" . getline(".")
+    :g/mypattern/caddexpr expand("%") .. ":" .. line(".") ..  ":" .. getline(".")
 <
 						*:lad* *:addd* *:laddexpr*
 :lad[dexpr] {expr}	Same as ":caddexpr", except the location list for the
@@ -641,6 +641,24 @@ quickfix window.  If there already is a window for that file, it is used
 instead.  If the buffer in the used window has changed, and the error is in
 another file, jumping to the error will fail.  You will first have to make
 sure the window contains a buffer which can be abandoned.
+
+The following steps are used to find a window to open the file selected from
+the quickfix window:
+1. If 'switchbuf' contains "usetab", then find a window in any tabpage
+   (starting with the first tabpage) that has the selected file and jump to
+   it.
+2. Otherwise find a window displaying the selected file in the current tab
+   page (starting with the window before the quickfix window) and use it.
+3. Otherwise find a window displaying a normal buffer ('buftype' is empty)
+   starting with the window before the quickfix window. If a window is found,
+   open the file in that window.
+4. If a usable window is not found and 'switchbuf' contains "uselast", then
+   open the file in the last used window.
+5. Otherwise open the file in the window before the quickfix window.  If there
+   is no previous window, then open the file in the next window.
+6. If a usable window is not found in the above steps, then create a new
+   horizontally split window above the quickfix window and open the file.
+
 					*CTRL-W_<Enter>* *CTRL-W_<CR>*
 You can use CTRL-W <Enter> to open a new window and jump to the error there.
 
@@ -650,7 +668,7 @@ FileType event (also see |qf.vim|).  Then the BufReadPost event is triggered,
 using "quickfix" for the buffer name.  This can be used to perform some action
 on the listed errors.  Example: >
 	au BufReadPost quickfix  setlocal modifiable
-		\ | silent exe 'g/^/s//\=line(".")." "/'
+		\ | silent exe 'g/^/s//\=line(".") .. " "/'
 		\ | setlocal nomodifiable
 This prepends the line number to each line.  Note the use of "\=" in the
 substitute string of the ":s" command, which is used to evaluate an

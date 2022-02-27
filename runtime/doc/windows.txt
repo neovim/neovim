@@ -447,7 +447,7 @@ These commands can also be executed with ":wincmd":
 		the |CursorHold| autocommand event).  Or when a Normal mode
 		command is inconvenient.
 		The count can also be a window number.  Example: >
-			:exe nr . "wincmd w"
+			:exe nr .. "wincmd w"
 <		This goes to window "nr".
 
 ==============================================================================
@@ -909,12 +909,12 @@ CTRL-W g }						*CTRL-W_g}*
 		cursor.  This is less clever than using |:ptag|, but you don't
 		need a tags file and it will also find matches in system
 		include files.  Example: >
-  :au! CursorHold *.[ch] ++nested exe "silent! psearch " . expand("<cword>")
+  :au! CursorHold *.[ch] ++nested exe "silent! psearch " .. expand("<cword>")
 <		Warning: This can be slow.
 
 Example						*CursorHold-example*  >
 
-  :au! CursorHold *.[ch] ++nested exe "silent! ptag " . expand("<cword>")
+  :au! CursorHold *.[ch] ++nested exe "silent! ptag " .. expand("<cword>")
 
 This will cause a ":ptag" to be executed for the keyword under the cursor,
 when the cursor hasn't moved for the time set with 'updatetime'.  "++nested"
@@ -937,14 +937,14 @@ is no word under the cursor, and a few other things: >
   :
   :    " Delete any existing highlight before showing another tag
   :    silent! wincmd P			" jump to preview window
-  :    if &previewwindow			" if we really get there...
+  :    if &previewwindow		" if we really get there...
   :      match none			" delete existing highlight
   :      wincmd p			" back to old window
   :    endif
   :
   :    " Try displaying a matching tag for the word under the cursor
   :    try
-  :       exe "ptag " . w
+  :       exe "ptag " .. w
   :    catch
   :      return
   :    endtry
@@ -956,10 +956,10 @@ is no word under the cursor, and a few other things: >
   :	 endif
   :	 call search("$", "b")		" to end of previous line
   :	 let w = substitute(w, '\\', '\\\\', "")
-  :	 call search('\<\V' . w . '\>')	" position cursor on match
+  :	 call search('\<\V' .. w .. '\>')	" position cursor on match
   :	 " Add a match highlight to the word at this position
   :      hi previewWord term=bold ctermbg=green guibg=green
-  :	 exe 'match previewWord "\%' . line(".") . 'l\%' . col(".") . 'c\k*"'
+  :	 exe 'match previewWord "\%' .. line(".") .. 'l\%' .. col(".") .. 'c\k*"'
   :      wincmd p			" back to old window
   :    endif
   :  endif

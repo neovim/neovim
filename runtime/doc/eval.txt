@@ -402,7 +402,7 @@ It is also possible to put remaining items in a List variable: >
 	:for [i, j; rest] in listlist
 	:   call Doit(i, j)
 	:   if !empty(rest)
-	:      echo "remainder: " . string(rest)
+	:      echo "remainder: " .. string(rest)
 	:   endif
 	:endfor
 
@@ -430,11 +430,11 @@ Functions that are useful with a List: >
 	:let list = split("a b c")	" create list from items in a string
 	:let string = join(list, ', ')	" create string from list items
 	:let s = string(list)		" String representation of list
-	:call map(list, '">> " . v:val')  " prepend ">> " to each item
+	:call map(list, '">> " .. v:val')  " prepend ">> " to each item
 
 Don't forget that a combination of features can make things simple.  For
 example, to add up all the numbers in a list: >
-	:exe 'let sum = ' . join(nrlist, '+')
+	:exe 'let sum = ' .. join(nrlist, '+')
 
 
 1.4 Dictionaries ~
@@ -496,7 +496,7 @@ turn the Dictionary into a List and pass it to |:for|.
 
 Most often you want to loop over the keys, using the |keys()| function: >
 	:for key in keys(mydict)
-	:   echo key . ': ' . mydict[key]
+	:   echo key .. ': ' .. mydict[key]
 	:endfor
 
 The List of keys is unsorted.  You may want to sort them first: >
@@ -504,13 +504,13 @@ The List of keys is unsorted.  You may want to sort them first: >
 
 To loop over the values use the |values()| function:  >
 	:for v in values(mydict)
-	:   echo "value: " . v
+	:   echo "value: " .. v
 	:endfor
 
 If you want both the key and the value use the |items()| function.  It returns
 a List in which each item is a List with two items, the key and the value: >
 	:for [key, value] in items(mydict)
-	:   echo key . ': ' . value
+	:   echo key .. ': ' .. value
 	:endfor
 
 
@@ -605,7 +605,7 @@ Functions that can be used with a Dictionary: >
 	:let small = min(dict)		" minimum value in dict
 	:let xs = count(dict, 'x')	" count nr of times 'x' appears in dict
 	:let s = string(dict)		" String representation of dict
-	:call map(dict, '">> " . v:val')  " prepend ">> " to each item
+	:call map(dict, '">> " .. v:val')  " prepend ">> " to each item
 
 
 1.5 Blobs ~
@@ -840,7 +840,7 @@ Example: >
 All expressions within one level are parsed from left to right.
 
 
-expr1							*expr1* *trinary* *E109*
+expr1							*expr1* *ternary* *E109*
 -----
 
 expr2 ? expr1 : expr1
@@ -1362,7 +1362,7 @@ option						*expr-option* *E112* *E113*
 &l:option		local option value
 
 Examples: >
-	echo "tabstop is " . &tabstop
+	echo "tabstop is " .. &tabstop
 	if &insertmode
 
 Any option name can be used here.  See |options|.  When using the local value
@@ -1637,7 +1637,7 @@ maintain a counter: >
 	  echo "script executed for the first time"
 	else
 	  let s:counter = s:counter + 1
-	  echo "script executed " . s:counter . " times now"
+	  echo "script executed " .. s:counter .. " times now"
 	endif
 
 Note that this means that filetype plugins don't get a different set of script
@@ -1736,7 +1736,7 @@ v:completed_item
 					*v:count* *count-variable*
 v:count		The count given for the last Normal mode command.  Can be used
 		to get the count before a mapping.  Read-only.  Example: >
-	:map _x :<C-U>echo "the count is " . v:count<CR>
+	:map _x :<C-U>echo "the count is " .. v:count<CR>
 <		Note: The <C-U> is required to remove the line range that you
 		get when typing ':' after a count.
 		When there are two counts, as in "3d2w", they are multiplied,
@@ -2531,9 +2531,9 @@ Example: >
   :  echohl Title
   :  echo a:title
   :  echohl None
-  :  echo a:0 . " items:"
+  :  echo a:0 .. " items:"
   :  for s in a:000
-  :    echon ' ' . s
+  :    echon ' ' .. s
   :  endfor
   :endfunction
 
@@ -2572,7 +2572,7 @@ This function can then be called with: >
 		this works:
 						*function-range-example*  >
 	:function Mynumber(arg)
-	:  echo line(".") . " " . a:arg
+	:  echo line(".") .. " " .. a:arg
 	:endfunction
 	:1,5call Mynumber(getline("."))
 <
@@ -2583,7 +2583,7 @@ This function can then be called with: >
 		Example of a function that handles the range itself: >
 
 	:function Cont() range
-	:  execute (a:firstline + 1) . "," . a:lastline . 's/^/\t\\ '
+	:  execute (a:firstline + 1) .. "," .. a:lastline .. 's/^/\t\\ '
 	:endfunction
 	:4,8call Cont()
 <
@@ -2745,7 +2745,7 @@ This does NOT work: >
 			This cannot be used to add an item to a |List|.
 			This cannot be used to set a byte in a String.  You
 			can do that like this: >
-				:let var = var[0:2] . 'X' . var[4:]
+				:let var = var[0:2] .. 'X' .. var[4:]
 <			When {var-name} is a |Blob| then {idx} can be the
 			length of the blob, in which case one byte is
 			appended.
@@ -2807,7 +2807,7 @@ This does NOT work: >
 			is just like using the |:set| command: both the local
 			value and the global value are changed.
 			Example: >
-				:let &path = &path . ',/usr/local/include'
+				:let &path = &path .. ',/usr/local/include'
 
 :let &{option-name} .= {expr1}
 			For a string option: Append {expr1} to the value.
@@ -3064,6 +3064,8 @@ text...
 :if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
 :en[dif]		Execute the commands until the next matching ":else"
 			or ":endif" if {expr1} evaluates to non-zero.
+			Although the short forms work, it is recommended to
+			always use `:endif` to avoid confusion.
 
 			From Vim version 4.5 until 5.0, every Ex command in
 			between the ":if" and ":endif" is ignored.  These two
@@ -3661,7 +3663,7 @@ exception most recently caught as long it is not finished.
 
 	:function! Caught()
 	:  if v:exception != ""
-	:    echo 'Caught "' . v:exception . '" in ' . v:throwpoint
+	:    echo 'Caught "' .. v:exception .. '" in ' .. v:throwpoint
 	:  else
 	:    echo 'Nothing caught'
 	:  endif
@@ -4064,8 +4066,8 @@ a script in order to catch unexpected things.
 	:catch /^Vim:Interrupt$/
 	:    echo "Script interrupted"
 	:catch /.*/
-	:  echo "Internal error (" . v:exception . ")"
-	:  echo " - occurred at " . v:throwpoint
+	:  echo "Internal error (" .. v:exception .. ")"
+	:  echo " - occurred at " .. v:throwpoint
 	:endtry
 	:" end of script
 
@@ -4261,7 +4263,7 @@ parentheses can be cut out from |v:exception| with the ":substitute" command.
 
 	:function! CheckRange(a, func)
 	:  if a:a < 0
-	:    throw "EXCEPT:MATHERR:RANGE(" . a:func . ")"
+	:    throw "EXCEPT:MATHERR:RANGE(" .. a:func .. ")"
 	:  endif
 	:endfunction
 	:
@@ -4288,7 +4290,7 @@ parentheses can be cut out from |v:exception| with the ":substitute" command.
 	:  try
 	:    execute "write" fnameescape(a:file)
 	:  catch /^Vim(write):/
-	:    throw "EXCEPT:IO(" . getcwd() . ", " . a:file . "):WRITEERR"
+	:    throw "EXCEPT:IO(" .. getcwd() .. ", " .. a:file .. "):WRITEERR"
 	:  endtry
 	:endfunction
 	:
@@ -4307,9 +4309,9 @@ parentheses can be cut out from |v:exception| with the ":substitute" command.
 	:  let dir = substitute(v:exception, '.*(\(.\+\),\s*.\+).*', '\1', "")
 	:  let file = substitute(v:exception, '.*(.\+,\s*\(.\+\)).*', '\1', "")
 	:  if file !~ '^/'
-	:    let file = dir . "/" . file
+	:    let file = dir .. "/" .. file
 	:  endif
-	:  echo 'I/O error for "' . file . '"'
+	:  echo 'I/O error for "' .. file .. '"'
 	:
 	:catch /^EXCEPT/
 	:  echo "Unspecified error"
@@ -4377,7 +4379,7 @@ clauses, however, is executed.
 	:    echo "inner finally"
 	:  endtry
 	:catch
-	:  echo 'outer catch-all caught "' . v:exception . '"'
+	:  echo 'outer catch-all caught "' .. v:exception .. '"'
 	:  finally
 	:    echo "outer finally"
 	:endtry
@@ -4439,7 +4441,7 @@ Printing in Binary ~
   :  let n = a:nr
   :  let r = ""
   :  while n
-  :    let r = '01'[n % 2] . r
+  :    let r = '01'[n % 2] .. r
   :    let n = n / 2
   :  endwhile
   :  return r
@@ -4450,7 +4452,7 @@ Printing in Binary ~
   :func String2Bin(str)
   :  let out = ''
   :  for ix in range(strlen(a:str))
-  :    let out = out . '-' . Nr2Bin(char2nr(a:str[ix]))
+  :    let out = out .. '-' .. Nr2Bin(char2nr(a:str[ix]))
   :  endfor
   :  return out[1:]
   :endfunc

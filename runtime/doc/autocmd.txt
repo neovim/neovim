@@ -1406,7 +1406,7 @@ Examples for reading and writing compressed files: >
   :  autocmd BufReadPre,FileReadPre	*.gz set bin
   :  autocmd BufReadPost,FileReadPost	*.gz '[,']!gunzip
   :  autocmd BufReadPost,FileReadPost	*.gz set nobin
-  :  autocmd BufReadPost,FileReadPost	*.gz execute ":doautocmd BufReadPost " . expand("%:r")
+  :  autocmd BufReadPost,FileReadPost	*.gz execute ":doautocmd BufReadPost " .. expand("%:r")
   :  autocmd BufWritePost,FileWritePost	*.gz !mv <afile> <afile>:r
   :  autocmd BufWritePost,FileWritePost	*.gz !gzip <afile>:r
 
@@ -1505,7 +1505,7 @@ To insert the current date and time in a *.html file when writing it: >
   :  else
   :    let l = line("$")
   :  endif
-  :  exe "1," . l . "g/Last modified: /s/Last modified: .*/Last modified: " .
+  :  exe "1," .. l .. "g/Last modified: /s/Last modified: .*/Last modified: " ..
   :  \ strftime("%Y %b %d")
   :endfun
 

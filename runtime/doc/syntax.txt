@@ -616,7 +616,7 @@ evaluate to get a unique string to append to each ID used in a given document,
 so that the full IDs will be unique even when combined with other content in a
 larger HTML document. Example, to append _ and the buffer number to each ID: >
 
-	:let g:html_id_expr = '"_".bufnr("%")'
+	:let g:html_id_expr = '"_" .. bufnr("%")'
 <
 To append a string "_mystring" to the end of each ID: >
 
@@ -3550,8 +3550,8 @@ Do you want to draw with the mouse?  Try the following: >
    :function! GetPixel()
    :   let c = getline(".")[col(".") - 1]
    :   echo c
-   :   exe "noremap <LeftMouse> <LeftMouse>r".c
-   :   exe "noremap <LeftDrag>	<LeftMouse>r".c
+   :   exe "noremap <LeftMouse> <LeftMouse>r" .. c
+   :   exe "noremap <LeftDrag>	<LeftMouse>r" .. c
    :endfunction
    :noremap <RightMouse> <LeftMouse>:call GetPixel()<CR>
    :set guicursor=n:hor20	   " to see the color beneath the cursor
@@ -5363,9 +5363,9 @@ types.vim: *.[ch]
 And put these lines in your vimrc: >
 
    " load the types.vim highlighting file, if it exists
-   autocmd BufRead,BufNewFile *.[ch] let fname = expand('<afile>:p:h') . '/types.vim'
+   autocmd BufRead,BufNewFile *.[ch] let fname = expand('<afile>:p:h') .. '/types.vim'
    autocmd BufRead,BufNewFile *.[ch] if filereadable(fname)
-   autocmd BufRead,BufNewFile *.[ch]   exe 'so ' . fname
+   autocmd BufRead,BufNewFile *.[ch]   exe 'so ' .. fname
    autocmd BufRead,BufNewFile *.[ch] endif
 
 ==============================================================================

@@ -993,7 +993,7 @@ These commands are not marks themselves, but jump to a mark:
 				:let lnum = line(".")
 				:keepjumps normal gg
 				:call SetLastChange()
-				:keepjumps exe "normal " . lnum . "G"
+				:keepjumps exe "normal " .. lnum .. "G"
 <
 			Note that ":keepjumps" must be used for every command.
 			When invoking a function the commands in that function

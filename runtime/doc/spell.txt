@@ -120,8 +120,8 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 			rare as this is a fairly uncommon command and all
 			intuitive commands for this are already taken. If you
 			want you can add mappings with e.g.: >
-		nnoremap z?  :exe ':spellrare  ' . expand('<cWORD>')<CR>
-		nnoremap z/  :exe ':spellrare! ' . expand('<cWORD>')<CR>
+		nnoremap z?  :exe ':spellrare  ' .. expand('<cWORD>')<CR>
+		nnoremap z/  :exe ':spellrare! ' .. expand('<cWORD>')<CR>
 <			|:spellundo|, |zuw|, or |zuW| can be used to undo this.
 
 :spellr[rare]! {word}	Add {word} as a rare word to the internal word
