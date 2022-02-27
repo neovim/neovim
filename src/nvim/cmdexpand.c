@@ -2765,8 +2765,14 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, char ***matches, i
     if (*str == NUL) {  // skip empty strings
       continue;
     }
-    if (vim_regexec(regmatch, str, (colnr_T)0)
-        || (fuzzy && fuzzy_match_str(str, fuzzystr) != 0)) {
+
+    bool match;
+    if (!fuzzy) {
+      match = vim_regexec(regmatch, str, (colnr_T)0);
+    } else {
+      match = fuzzy_match_str(str, fuzzystr) != 0;
+    }
+    if (match) {
       count++;
     }
   }
@@ -2792,28 +2798,37 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, char ***matches, i
     if (*str == NUL) {  // Skip empty strings.
       continue;
     }
-    int score;
-    if (vim_regexec(regmatch, str, (colnr_T)0)
-        || (fuzzy && ((score = fuzzy_match_str(str, fuzzystr)) != 0))) {
-      if (escaped) {
-        str = vim_strsave_escaped(str, " \t\\.");
-      } else {
-        str = xstrdup(str);
-      }
-      if (fuzzy) {
-        fuzmatch[count].idx = (int)count;
-        fuzmatch[count].str = str;
-        fuzmatch[count].score = score;
-      } else {
-        (*matches)[count] = str;
-      }
-      count++;
-      if (func == get_menu_names) {
-        // Test for separator added by get_menu_names().
-        str += strlen(str) - 1;
-        if (*str == '\001') {
-          *str = '.';
-        }
+
+    bool match;
+    int score = 0;
+    if (!fuzzy) {
+      match = vim_regexec(regmatch, str, (colnr_T)0);
+    } else {
+      score = fuzzy_match_str(str, fuzzystr);
+      match = (score != 0);
+    }
+    if (!match) {
+      continue;
+    }
+
+    if (escaped) {
+      str = vim_strsave_escaped(str, " \t\\.");
+    } else {
+      str = xstrdup(str);
+    }
+    if (fuzzy) {
+      fuzmatch[count].idx = (int)count;
+      fuzmatch[count].str = str;
+      fuzmatch[count].score = score;
+    } else {
+      (*matches)[count] = str;
+    }
+    count++;
+    if (func == get_menu_names) {
+      // Test for separator added by get_menu_names().
+      str += strlen(str) - 1;
+      if (*str == '\001') {
+        *str = '.';
       }
     }
   }
