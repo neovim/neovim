@@ -107,7 +107,8 @@ describe('nvim_add_user_command', function()
     ]]
 
     eq({
-      args = "hello",
+      args = [[hello my\ friend how\ are\ you?]],
+      fargs = {[[hello]], [[my\ friend]], [[how\ are\ you?]]},
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -115,13 +116,14 @@ describe('nvim_add_user_command', function()
       range = 0,
       count = 2,
       reg = "",
-    }, exec_lua [[
-      vim.api.nvim_command('CommandWithLuaCallback hello')
+    }, exec_lua [=[
+      vim.api.nvim_command([[CommandWithLuaCallback hello my\ friend how\ are\ you?]])
       return result
-    ]])
+    ]=])
 
     eq({
-      args = "",
+      args = 'h\tey',
+      fargs = {[[h]], [[ey]]},
       bang = true,
       line1 = 10,
       line2 = 10,
@@ -129,13 +131,14 @@ describe('nvim_add_user_command', function()
       range = 1,
       count = 10,
       reg = "",
-    }, exec_lua [[
-      vim.api.nvim_command('botright 10CommandWithLuaCallback!')
+    }, exec_lua [=[
+      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey')
       return result
-    ]])
+    ]=])
 
     eq({
-      args = "",
+      args = "h",
+      fargs = {"h"},
       bang = false,
       line1 = 1,
       line2 = 42,
@@ -144,9 +147,52 @@ describe('nvim_add_user_command', function()
       count = 42,
       reg = "",
     }, exec_lua [[
-      vim.api.nvim_command('CommandWithLuaCallback 42')
+      vim.api.nvim_command('CommandWithLuaCallback 42 h')
       return result
     ]])
+
+    eq({
+      args = "",
+      fargs = {""},  -- fargs works without args
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [[
+      vim.api.nvim_command('CommandWithLuaCallback')
+      return result
+    ]])
+
+    -- f-args doesn't split when command nargs is 1 or "?"
+    exec_lua [[
+      result = {}
+      vim.api.nvim_add_user_command('CommandWithOneArg', function(opts)
+        result = opts
+      end, {
+        nargs = "?",
+        bang = true,
+        count = 2,
+      })
+    ]]
+
+    eq({
+      args = "hello I'm one argmuent",
+      fargs = {"hello I'm one argmuent"},  -- Doesn't split args
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [[
+      vim.api.nvim_command('CommandWithOneArg hello I\'m one argmuent')
+      return result
+    ]])
+
   end)
 
   it('can define buffer-local commands', function()
