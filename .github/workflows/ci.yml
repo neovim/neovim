@@ -77,23 +77,27 @@ jobs:
       - name: Build nvim
         run: ./ci/run_tests.sh build
 
-      - if: "!cancelled()"
+      - if: failure()
+        name: Abort run
+        run: echo "abort=true" >> $GITHUB_ENV
+
+      - if: env.abort != 'true' && !cancelled()
         name: clint
         run: ./ci/run_lint.sh clint
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: lualint
         run: ./ci/run_lint.sh lualint
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: pylint
         run: ./ci/run_lint.sh pylint
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: shlint
         run: ./ci/run_lint.sh shlint
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: single-includes
         run: ./ci/run_lint.sh single-includes
 
@@ -192,19 +196,23 @@ jobs:
       - name: Build
         run: ./ci/run_tests.sh build
 
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+      - if: failure()
+        name: Abort run
+        run: echo "abort=true" >> $GITHUB_ENV
+
+      - if: env.abort != 'true' && matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
         name: Unittests
         run: ./ci/run_tests.sh unittests
 
-      - if: matrix.flavor != 'tsan' && !cancelled()
+      - if: env.abort != 'true' && matrix.flavor != 'tsan' && !cancelled()
         name: Functionaltests
         run: ./ci/run_tests.sh functionaltests
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: Oldtests
         run: ./ci/run_tests.sh oldtests
 
-      - if: "!cancelled()"
+      - if: env.abort != 'true' && !cancelled()
         name: Install nvim
         run: ./ci/run_tests.sh install_nvim
 
