@@ -829,7 +829,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
   }
 
   // Check external diff is actually working.
-  if (!dio->dio_internal && check_external_diff(dio) == FAIL) {
+  if (!(dio->dio_internal || diffexpr_is_fn()) && check_external_diff(dio) == FAIL) {
     goto theend;
   }
 
@@ -1150,7 +1150,7 @@ static int translate_chunks(diffio_T *const diffio, list_T *const chunks)
     for (; n != NULL; n = TV_LIST_ITEM_NEXT(i, n)) {
       n_val = TV_LIST_ITEM_TV(n);
       if (n_val->v_type != VAR_NUMBER) {
-        emsg("Invalid chunk element received: must be a number.");
+        emsg("Invalid chunk element type received: must be a number.");
         goto theend;
       }
     }
@@ -1170,9 +1170,7 @@ static int translate_chunks(diffio_T *const diffio, list_T *const chunks)
     if (count_b > 0) {
       start_b -= 1;
     }
-    // For some reason, the a and b expected by xdiff_out
-    // are reversed compared to the chunks produced by vim.diff.
-    xdiff_out(start_b, count_b, start_a, count_a, &diffio->dio_diff);
+    xdiff_out(start_a, count_a, start_b, count_b, &diffio->dio_diff);
   }
   success = OK;
 theend:
@@ -1646,7 +1644,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     DIFF_NONE,
   } diffstyle = DIFF_NONE;
 
-  if (dout->dout_fname == NULL) {
+  if (diffexpr_is_fn() || dout->dout_fname == NULL) {
     diffstyle = DIFF_UNIFIED;
   } else {
     fd = os_fopen((char *)dout->dout_fname, "r");
@@ -1656,7 +1654,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
     }
   }
 
-  if (!dio->dio_internal) {
+  if (!(dio->dio_internal || diffexpr_is_fn())) {
     hunk = xmalloc(sizeof(*hunk));
   }
 

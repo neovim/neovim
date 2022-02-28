@@ -9,8 +9,10 @@ local write_file = helpers.write_file
 local source = helpers.source
 
 describe('Diff mode screen', function()
-  local fname = 'Xtest-functional-diff-screen-1'
+  local base = 'Xtest-functional-diff-screen'
+  local fname = base .. '-1'
   local fname_2 = fname .. '.2'
+  local fname_config = base .. '-config.vim'
   local screen
 
   local reread = function()
@@ -21,19 +23,43 @@ describe('Diff mode screen', function()
     clear()
     os.remove(fname)
     os.remove(fname_2)
+    os.remove(fname_config)
   end)
 
   teardown(function()
     os.remove(fname)
     os.remove(fname_2)
+    os.remove(fname_config)
   end)
+
+  -- Experiment diffexpr callback behaviour:
+  local diffexpr_content = [[
+    set diffexpr=->v:lua.MyDiff
+
+    lua <<EOF
+    -- Artificial callback (negative) counter.
+    local n_times_called = {7}
+
+    function MyDiff(bufnr_in, bufnr_new)
+      n_times_called[1] = n_times_called[1] - 1
+      -- I'd expect this to be printed only once..
+      vim.cmd('echom "CALLBACK ('..n_times_called[1]..')"')
+      -- ..or, if called 6 times, I'd expect the last chunk to be of size 1.
+      return {{2, 0, 3, n_times_called[1]}}
+    end
+    EOF]]
 
   before_each(function()
     clear()
+    write_file(fname_config, diffexpr_content, false)
+    feed(':source ' .. fname_config .. '<cr>')
     feed(':e ' .. fname_2 .. '<cr>')
     feed(':vnew ' .. fname .. '<cr>')
+    feed(':echoerr "opened"<cr>')
     feed(':diffthis<cr>')
+    feed(':echoerr "diffthis1"<cr>')
     feed('<c-w>w:diffthis<cr><c-w>w')
+    feed(':echoerr "diffthis2"<cr>')
 
     screen = Screen.new(40, 16)
     screen:attach()
@@ -55,7 +81,10 @@ describe('Diff mode screen', function()
     write_file(fname_2, "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
     reread()
 
+    feed(':mess<cr>')
+    feed(':echoerr "before diffopt"<cr>')
     feed(':set diffopt=filler<cr>')
+    feed(':echoerr "after diffopt"<cr>') -- This is never printed :\
     screen:expect([[
       {1:  }{2:------------------}{3:│}{1:  }{4:0                }|
       {1:  }^1                 {3:│}{1:  }1                |

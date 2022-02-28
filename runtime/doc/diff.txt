@@ -402,7 +402,7 @@ Another similar example with '->' prefix instead (this does almost the same as
 	set diffexpr=->v:lua.MyDiff
 
 	lua <<EOF
- 	function buffer_to_string(bufnr)
+	function buffer_to_string(bufnr)
 	    local content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	    return table.concat(content, "\n")
 	end
