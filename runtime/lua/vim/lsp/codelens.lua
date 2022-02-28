@@ -1,4 +1,4 @@
-local util = require('vim.lsp.util')
+local util = require 'vim.lsp.util'
 local api = vim.api
 local M = {}
 
@@ -44,9 +44,9 @@ local function execute_lens(lens, bufnr, client_id)
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
   if not vim.tbl_contains(commands, command.command) then
     vim.notify(string.format(
-      "Language server does not support command `%s`. This command may require a client extension.", command.command),
+      'Language server does not support command `%s`. This command may require a client extension.', command.command),
       vim.log.levels.WARN)
-      return
+    return
   end
   client.request('workspace/executeCommand', command, function(...)
     local result = vim.lsp.handlers['workspace/executeCommand'](...)
@@ -81,12 +81,12 @@ function M.run()
   for client, lenses in pairs(lenses_by_client) do
     for _, lens in pairs(lenses) do
       if lens.range.start.line == (line - 1) then
-        table.insert(options, {client=client, lens=lens})
+        table.insert(options, { client = client, lens = lens })
       end
     end
   end
   if #options == 0 then
-    vim.notify('No executable codelens found at current line')
+    vim.notify 'No executable codelens found at current line'
   elseif #options == 1 then
     local option = options[1]
     execute_lens(option.lens, bufnr, option.client)
@@ -132,14 +132,14 @@ function M.display(lenses, bufnr, client_id)
     local num_line_lenses = #line_lenses
     for j, lens in ipairs(line_lenses) do
       local text = lens.command and lens.command.title or 'Unresolved lens ...'
-      table.insert(chunks, {text, 'LspCodeLens' })
+      table.insert(chunks, { text, 'LspCodeLens' })
       if j < num_line_lenses then
-        table.insert(chunks, {' | ', 'LspCodeLensSeparator' })
+        table.insert(chunks, { ' | ', 'LspCodeLensSeparator' })
       end
     end
     if #chunks > 0 then
       api.nvim_buf_set_extmark(bufnr, ns, i, 0, { virt_text = chunks,
-                                                  hl_mode="combine" })
+        hl_mode = 'combine' })
     end
   end
 end
@@ -200,8 +200,8 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
             ns,
             lens.range.start.line,
             0,
-            { virt_text = {{ lens.command.title, 'LspCodeLens' }},
-                hl_mode="combine" }
+            { virt_text = { { lens.command.title, 'LspCodeLens' } },
+              hl_mode = 'combine' }
           )
         end
         countdown()

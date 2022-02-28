@@ -29,7 +29,7 @@ end
 
 --- like {...} except preserve the length explicitly
 function F.pack_len(...)
-  return {n=select('#', ...), ...}
+  return { n = select('#', ...), ... }
 end
 
 --- like unpack() but use the length set by F.pack_len if present

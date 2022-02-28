@@ -40,8 +40,8 @@ end
 ---@see |vim.lsp.buf_request()|
 local function request(method, params, handler)
   validate {
-    method = {method, 's'};
-    handler = {handler, 'f', true};
+    method = { method, 's' };
+    handler = { handler, 'f', true };
   }
   return vim.lsp.buf_request(0, method, params, handler)
 end
@@ -51,7 +51,7 @@ end
 ---
 ---@returns `true` if server responds.
 function M.server_ready()
-  return not not vim.lsp.buf_notify(0, "window/progress", {})
+  return not not vim.lsp.buf_notify(0, 'window/progress', {})
 end
 
 --- Displays hover information about the symbol under the cursor in a floating
@@ -226,11 +226,11 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   for _, client in pairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+      local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       elseif err then
-        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
+        vim.notify(string.format('vim.lsp.buf.formatting_seq_sync: (%s) %s', client.name, err), vim.log.levels.WARN)
       end
     end
   end
@@ -261,7 +261,7 @@ end
 ---name using |vim.ui.input()|.
 function M.rename(new_name)
   local opts = {
-    prompt = "New Name: "
+    prompt = 'New Name: '
   }
 
   ---@private
@@ -283,8 +283,8 @@ function M.rename(new_name)
       if not new_name then npcall(vim.ui.input, opts, on_confirm) end
     elseif result and result.start and result['end'] and
       result.start.line == result['end'].line then
-      local line = vfn.getline(result.start.line+1)
-      local start_char = result.start.character+1
+      local line = vfn.getline(result.start.line + 1)
+      local start_char = result.start.character + 1
       local end_char = result['end'].character
       opts.default = string.sub(line, start_char, end_char)
       if not new_name then npcall(vim.ui.input, opts, on_confirm) end
@@ -295,7 +295,7 @@ function M.rename(new_name)
       -- returns an unexpected response, or requests for "default behavior"
       --
       -- see https://microsoft.github.io/language-server-protocol/specification#textDocument_prepareRename
-      opts.default = vfn.expand('<cword>')
+      opts.default = vfn.expand '<cword>'
       if not new_name then npcall(vim.ui.input, opts, on_confirm) end
     end
     if new_name then on_confirm(new_name) end
@@ -332,7 +332,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   local items = {}
   for i, item in pairs(call_hierarchy_items) do
     local entry = item.detail or item.name
-    table.insert(items, string.format("%d. %s", i, entry))
+    table.insert(items, string.format('%d. %s', i, entry))
   end
   local choice = vim.fn.inputlist(items)
   if choice < 1 or choice > #items then
@@ -366,14 +366,14 @@ end
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist|.
 function M.incoming_calls()
-  call_hierarchy('callHierarchy/incomingCalls')
+  call_hierarchy 'callHierarchy/incomingCalls'
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist|.
 function M.outgoing_calls()
-  call_hierarchy('callHierarchy/outgoingCalls')
+  call_hierarchy 'callHierarchy/outgoingCalls'
 end
 
 --- List workspace folders.
@@ -391,20 +391,20 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'), 'dir')
-  vim.api.nvim_command("redraw")
+  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand '%:p:h', 'dir')
+  vim.api.nvim_command 'redraw'
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then
-    print(workspace_folder, " is not a valid directory")
+    print(workspace_folder, ' is not a valid directory')
     return
   end
-  local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
+  local params = util.make_workspace_params({ { uri = vim.uri_from_fname(workspace_folder); name = workspace_folder } }, { {} })
   for _, client in pairs(vim.lsp.buf_get_clients()) do
     local found = false
     for _, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
         found = true
-        print(workspace_folder, "is already part of this workspace")
+        print(workspace_folder, 'is already part of this workspace')
         break
       end
     end
@@ -422,10 +422,10 @@ end
 --- {path} is not provided, the user will be prompted for
 --- a path using |input()|.
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
-  vim.api.nvim_command("redraw")
+  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand '%:p:h')
+  vim.api.nvim_command 'redraw'
   if not (workspace_folder and #workspace_folder > 0) then return end
-  local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
+  local params = util.make_workspace_params({ {} }, { { uri = vim.uri_from_fname(workspace_folder); name = workspace_folder } })
   for _, client in pairs(vim.lsp.buf_get_clients()) do
     for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
@@ -435,7 +435,7 @@ function M.remove_workspace_folder(workspace_folder)
       end
     end
   end
-  print(workspace_folder,  "is not currently part of the workspace")
+  print(workspace_folder, 'is not currently part of the workspace')
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
@@ -446,11 +446,11 @@ end
 ---
 ---@param query (string, optional)
 function M.workspace_symbol(query)
-  query = query or npcall(vfn.input, "Query: ")
+  query = query or npcall(vfn.input, 'Query: ')
   if query == nil then
     return
   end
-  local params = {query = query}
+  local params = { query = query }
   request('workspace/symbol', params)
 end
 
@@ -541,9 +541,9 @@ local function on_code_action_results(results, ctx)
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
     if not action.edit
-        and client
-        and type(client.resolved_capabilities.code_action) == 'table'
-        and client.resolved_capabilities.code_action.resolveProvider then
+      and client
+      and type(client.resolved_capabilities.code_action) == 'table'
+      and client.resolved_capabilities.code_action.resolveProvider then
 
       client.request('codeAction/resolve', action, function(err, resolved_action)
         if err then
@@ -638,11 +638,11 @@ function M.execute_command(command_params)
     arguments = { command_params.arguments, 't', true }
   }
   command_params = {
-    command=command_params.command,
-    arguments=command_params.arguments,
-    workDoneToken=command_params.workDoneToken,
+    command = command_params.command,
+    arguments = command_params.arguments,
+    workDoneToken = command_params.workDoneToken,
   }
-  request('workspace/executeCommand', command_params )
+  request('workspace/executeCommand', command_params)
 end
 
 return M

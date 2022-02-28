@@ -42,7 +42,7 @@ function M.select(items, opts, on_choice)
     on_choice = { on_choice, 'function', false },
   }
   opts = opts or {}
-  local choices = {opts.prompt or 'Select one of:'}
+  local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
   for i, item in pairs(items) do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))

@@ -755,7 +755,7 @@ function protocol.make_client_capabilities()
       workspaceFolders = true;
       applyEdit = true;
       workspaceEdit = {
-        resourceOperations = {'rename', 'create', 'delete',},
+        resourceOperations = { 'rename', 'create', 'delete', },
       };
     };
     callHierarchy = {
@@ -790,7 +790,7 @@ function protocol.resolve_capabilities(server_capabilities)
       text_document_sync_properties = {
         text_document_open_close = false;
         text_document_did_change = TextDocumentSyncKind.None;
---        text_document_did_change = false;
+        --        text_document_did_change = false;
         text_document_will_save = false;
         text_document_will_save_wait_until = false;
         text_document_save = false;
@@ -799,7 +799,7 @@ function protocol.resolve_capabilities(server_capabilities)
     elseif type(textDocumentSync) == 'number' then
       -- Backwards compatibility
       if not TextDocumentSyncKind[textDocumentSync] then
-        return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+        return nil, 'Invalid server TextDocumentSyncKind for textDocumentSync'
       end
       text_document_sync_properties = {
         text_document_open_close = true;
@@ -817,10 +817,10 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false);
         text_document_save = if_nil(textDocumentSync.save, false);
         text_document_save_include_text = if_nil(type(textDocumentSync.save) == 'table'
-                                                and textDocumentSync.save.includeText, false);
+        and textDocumentSync.save.includeText, false);
       }
     else
-      return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+      return nil, string.format('Invalid type for textDocumentSync: %q', type(textDocumentSync))
     end
   end
   general_properties.completion = server_capabilities.completionProvider ~= nil
@@ -850,7 +850,7 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.code_lens = true
     general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
   else
-    error("The server sent invalid codeLensProvider")
+    error 'The server sent invalid codeLensProvider'
   end
 
   if server_capabilities.codeActionProvider == nil then
@@ -859,7 +859,7 @@ function protocol.resolve_capabilities(server_capabilities)
     or type(server_capabilities.codeActionProvider) == 'table' then
     general_properties.code_action = server_capabilities.codeActionProvider
   else
-    error("The server sent invalid codeActionProvider")
+    error 'The server sent invalid codeActionProvider'
   end
 
   if server_capabilities.declarationProvider == nil then
@@ -869,7 +869,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.declarationProvider) == 'table' then
     general_properties.declaration = server_capabilities.declarationProvider
   else
-    error("The server sent invalid declarationProvider")
+    error 'The server sent invalid declarationProvider'
   end
 
   if server_capabilities.typeDefinitionProvider == nil then
@@ -879,7 +879,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
     general_properties.type_definition = server_capabilities.typeDefinitionProvider
   else
-    error("The server sent invalid typeDefinitionProvider")
+    error 'The server sent invalid typeDefinitionProvider'
   end
 
   if server_capabilities.implementationProvider == nil then
@@ -889,7 +889,7 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.implementationProvider) == 'table' then
     general_properties.implementation = server_capabilities.implementationProvider
   else
-    error("The server sent invalid implementationProvider")
+    error 'The server sent invalid implementationProvider'
   end
 
   local workspace = server_capabilities.workspace
@@ -897,9 +897,9 @@ function protocol.resolve_capabilities(server_capabilities)
   if workspace == nil or workspace.workspaceFolders == nil then
     -- Defaults if omitted.
     workspace_properties = {
-      workspace_folder_properties =  {
+      workspace_folder_properties = {
         supported = false;
-        changeNotifications=false;
+        changeNotifications = false;
       }
     }
   elseif type(workspace.workspaceFolders) == 'table' then
@@ -911,7 +911,7 @@ function protocol.resolve_capabilities(server_capabilities)
       }
     }
   else
-    error("The server sent invalid workspace")
+    error 'The server sent invalid workspace'
   end
 
   local signature_help_properties
@@ -927,15 +927,15 @@ function protocol.resolve_capabilities(server_capabilities)
       signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters or {};
     }
   else
-    error("The server sent invalid signatureHelpProvider")
+    error 'The server sent invalid signatureHelpProvider'
   end
 
-  return vim.tbl_extend("error"
-      , text_document_sync_properties
-      , signature_help_properties
-      , workspace_properties
-      , general_properties
-      )
+  return vim.tbl_extend('error'
+    , text_document_sync_properties
+    , signature_help_properties
+    , workspace_properties
+    , general_properties
+  )
 end
 
 return protocol

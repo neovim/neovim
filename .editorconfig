@@ -14,3 +14,8 @@ max_line_length = 100
 [{Makefile,**/Makefile,runtime/doc/*.txt}]
 indent_style = tab
 indent_size = 8
+[*.lua]
+quote_style = single
+call_arg_parentheses = unambiguous_remove_string_only
+continuation_indent_size = 2
+keep_line_after_function_define_statement = minLine:0

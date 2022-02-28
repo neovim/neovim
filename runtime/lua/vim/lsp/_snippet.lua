@@ -207,20 +207,20 @@ end
 --@see https://code.visualstudio.com/docs/editor/userdefinedsnippets#_grammar
 
 local S = {}
-S.dollar = P.token('$')
-S.open = P.token('{')
-S.close = P.token('}')
-S.colon = P.token(':')
-S.slash = P.token('/')
-S.comma = P.token(',')
-S.pipe = P.token('|')
-S.plus = P.token('+')
-S.minus = P.token('-')
-S.question = P.token('?')
-S.int = P.map(P.pattern('[0-9]+'), function(value)
+S.dollar = P.token '$'
+S.open = P.token '{'
+S.close = P.token '}'
+S.colon = P.token ':'
+S.slash = P.token '/'
+S.comma = P.token ','
+S.pipe = P.token '|'
+S.plus = P.token '+'
+S.minus = P.token '-'
+S.question = P.token '?'
+S.int = P.map(P.pattern '[0-9]+', function(value)
   return tonumber(value, 10)
 end)
-S.var = P.pattern('[%a_][%w_]+')
+S.var = P.pattern '[%a_][%w_]+'
 S.text = function(targets, specials)
   return P.map(P.take_until(targets, specials), function(value)
     return setmetatable({
@@ -249,11 +249,11 @@ S.format = P.any(
     }, Node)
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.colon, S.slash, P.any(
-    P.token('upcase'),
-    P.token('downcase'),
-    P.token('capitalize'),
-    P.token('camelcase'),
-    P.token('pascalcase')
+    P.token 'upcase',
+    P.token 'downcase',
+    P.token 'capitalize',
+    P.token 'camelcase',
+    P.token 'pascalcase'
   ), S.close), function(values)
     return setmetatable({
       type = Node.Type.FORMAT,
@@ -265,7 +265,7 @@ S.format = P.any(
     P.seq(S.question, P.take_until({ ':' }, { '\\' }), S.colon, P.take_until({ '}' }, { '\\' })),
     P.seq(S.plus, P.take_until({ '}' }, { '\\' })),
     P.seq(S.minus, P.take_until({ '}' }, { '\\' }))
-  ),  S.close), function(values)
+  ), S.close), function(values)
     return setmetatable({
       type = Node.Type.FORMAT,
       capture_index = values[3],
@@ -281,7 +281,7 @@ S.transform = P.map(P.seq(
   S.slash,
   P.many(P.any(S.format, S.text({ '$', '/' }, { '\\' }))),
   S.slash,
-  P.opt(P.pattern('[ig]+'))
+  P.opt(P.pattern '[ig]+')
 ), function(values)
   return setmetatable({
     type = Node.Type.TRANSFORM,
@@ -391,7 +391,7 @@ M.NodeType = Node.Type
 function M.parse(input)
   local result = S.snippet(input, 1)
   if not result.parsed then
-    error('snippet parsing failed.')
+    error 'snippet parsing failed.'
   end
   return result.value
 end

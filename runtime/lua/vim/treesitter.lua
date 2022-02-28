@@ -1,32 +1,32 @@
 local a = vim.api
-local query = require'vim.treesitter.query'
-local language = require'vim.treesitter.language'
-local LanguageTree = require'vim.treesitter.languagetree'
+local query = require 'vim.treesitter.query'
+local language = require 'vim.treesitter.language'
+local LanguageTree = require 'vim.treesitter.languagetree'
 
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
 -- it.
 local parsers = {}
 
-local M = vim.tbl_extend("error", query, language)
+local M = vim.tbl_extend('error', query, language)
 
 M.language_version = vim._ts_get_language_version()
 M.minimum_language_version = vim._ts_get_minimum_language_version()
 
 setmetatable(M, {
-  __index = function (t, k)
-      if k == "highlighter" then
-        t[k] = require'vim.treesitter.highlighter'
-        return t[k]
-      elseif k == "language" then
-        t[k] = require"vim.treesitter.language"
-        return t[k]
-      elseif k == "query" then
-        t[k] = require"vim.treesitter.query"
-        return t[k]
-      end
-   end
- })
+  __index = function(t, k)
+    if k == 'highlighter' then
+      t[k] = require 'vim.treesitter.highlighter'
+      return t[k]
+    elseif k == 'language' then
+      t[k] = require 'vim.treesitter.language'
+      return t[k]
+    elseif k == 'query' then
+      t[k] = require 'vim.treesitter.query'
+      return t[k]
+    end
+  end
+})
 
 --- Creates a new parser.
 ---
@@ -63,7 +63,7 @@ function M._create_parser(bufnr, lang, opts)
     self:_on_reload(...)
   end
 
-  a.nvim_buf_attach(self:source(), false, {on_bytes=bytes_cb, on_detach=detach_cb, on_reload=reload_cb, preview=true})
+  a.nvim_buf_attach(self:source(), false, { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true })
 
   self:parse()
 
@@ -87,7 +87,7 @@ function M.get_parser(bufnr, lang, opts)
     bufnr = a.nvim_get_current_buf()
   end
   if lang == nil then
-    lang = a.nvim_buf_get_option(bufnr, "filetype")
+    lang = a.nvim_buf_get_option(bufnr, 'filetype')
   end
 
   if parsers[bufnr] == nil then

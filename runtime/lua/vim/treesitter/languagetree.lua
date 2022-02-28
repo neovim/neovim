@@ -1,6 +1,6 @@
 local a = vim.api
-local query = require'vim.treesitter.query'
-local language = require'vim.treesitter.language'
+local query = require 'vim.treesitter.query'
+local language = require 'vim.treesitter.language'
 
 local LanguageTree = {}
 LanguageTree.__index = LanguageTree
@@ -20,7 +20,7 @@ function LanguageTree.new(source, lang, opts)
   opts = opts or {}
 
   if opts.queries then
-    a.nvim_err_writeln("'queries' is no longer supported. Use 'injections' now")
+    a.nvim_err_writeln "'queries' is no longer supported. Use 'injections' now"
     opts.injections = opts.queries
   end
 
@@ -34,7 +34,7 @@ function LanguageTree.new(source, lang, opts)
     _opts = opts,
     _injection_query = injections[lang]
       and query.parse_query(lang, injections[lang])
-      or query.get_query(lang, "injections"),
+      or query.get_query(lang, 'injections'),
     _valid = false,
     _parser = vim._create_ts_parser(lang),
     _callbacks = {
@@ -264,11 +264,11 @@ end
 ---@param regions A list of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
   -- TODO(vigoux): I don't think string parsers are useful for now
-  if type(self._source) == "number" then
+  if type(self._source) == 'number' then
     -- Transform the tables from 4 element long to 6 element long (with byte offset)
     for _, region in ipairs(regions) do
       for i, range in ipairs(region) do
-        if type(range) == "table" and #range == 4 then
+        if type(range) == 'table' and #range == 4 then
           local start_row, start_col, end_row, end_col = unpack(range)
           -- Easy case, this is a buffer parser
           -- TODO(vigoux): proper byte computation here, and account for EOL ?
@@ -311,7 +311,7 @@ function LanguageTree:_get_injections()
     local root_node = tree:root()
     local start_line, _, end_line, _ = root_node:range()
 
-    for pattern, match, metadata in self._injection_query:iter_matches(root_node, self._source, start_line, end_line+1) do
+    for pattern, match, metadata in self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1) do
       local lang = nil
       local ranges = {}
       local combined = metadata.combined
@@ -322,8 +322,8 @@ function LanguageTree:_get_injections()
         local content = metadata.content
 
         -- Allow for captured nodes to be used
-        if type(content) == "number" then
-          content = {match[content]}
+        if type(content) == 'number' then
+          content = { match[content] }
         end
 
         if content then
@@ -342,15 +342,15 @@ function LanguageTree:_get_injections()
         local name = self._injection_query.captures[id]
 
         -- Lang should override any other language tag
-        if name == "language" and not lang then
+        if name == 'language' and not lang then
           lang = query.get_node_text(node, self._source)
-        elseif name == "combined" then
+        elseif name == 'combined' then
           combined = true
-        elseif name == "content" and #ranges == 0 then
+        elseif name == 'content' and #ranges == 0 then
           table.insert(ranges, node)
-        -- Ignore any tags that start with "_"
-        -- Allows for other tags to be used in matches
-        elseif string.sub(name, 1, 1) ~= "_" then
+          -- Ignore any tags that start with "_"
+          -- Allows for other tags to be used in matches
+        elseif string.sub(name, 1, 1) ~= '_' then
           if not lang then
             lang = name
           end
@@ -415,9 +415,9 @@ end
 
 ---@private
 function LanguageTree:_on_bytes(bufnr, changed_tick,
-                          start_row, start_col, start_byte,
-                          old_row, old_col, old_byte,
-                          new_row, new_col, new_byte)
+                                start_row, start_col, start_byte,
+                                old_row, old_col, old_byte,
+                                new_row, new_col, new_byte)
   self:invalidate()
 
   local old_end_col = old_col + ((old_row == 0) and start_col or 0)
@@ -426,16 +426,16 @@ function LanguageTree:_on_bytes(bufnr, changed_tick,
   -- Edit all trees recursively, together BEFORE emitting a bytes callback.
   -- In most cases this callback should only be called from the root tree.
   self:for_each_tree(function(tree)
-    tree:edit(start_byte,start_byte+old_byte,start_byte+new_byte,
+    tree:edit(start_byte, start_byte + old_byte, start_byte + new_byte,
       start_row, start_col,
-      start_row+old_row, old_end_col,
-      start_row+new_row, new_end_col)
+      start_row + old_row, old_end_col,
+      start_row + new_row, new_end_col)
   end)
 
   self:_do_callback('bytes', bufnr, changed_tick,
-      start_row, start_col, start_byte,
-      old_row, old_col, old_byte,
-      new_row, new_col, new_byte)
+    start_row, start_col, start_byte,
+    old_row, old_col, old_byte,
+    new_row, new_col, new_byte)
 end
 
 ---@private

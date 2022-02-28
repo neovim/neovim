@@ -1,5 +1,5 @@
 local a = vim.api
-local query = require"vim.treesitter.query"
+local query = require 'vim.treesitter.query'
 
 -- support reload for quick experimentation
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
@@ -10,13 +10,13 @@ TSHighlighter.active = TSHighlighter.active or {}
 local TSHighlighterQuery = {}
 TSHighlighterQuery.__index = TSHighlighterQuery
 
-local ns = a.nvim_create_namespace("treesitter/highlighter")
+local ns = a.nvim_create_namespace 'treesitter/highlighter'
 
 local _default_highlights = {}
 local _link_default_highlight_once = function(from, to)
   if not _default_highlights[from] then
     _default_highlights[from] = true
-    vim.cmd(string.format("highlight default link %s %s", from, to))
+    vim.cmd(string.format('highlight default link %s %s', from, to))
   end
 
   return from
@@ -28,58 +28,58 @@ local subcapture_fallback = {
     local rtn
     local shortened = capture
     while not rtn and shortened do
-      shortened = shortened:match('(.*)%.')
+      shortened = shortened:match '(.*)%.'
       rtn = shortened and rawget(self, shortened)
     end
-    rawset(self, capture, rtn or "__notfound")
+    rawset(self, capture, rtn or '__notfound')
     return rtn
   end
 }
 
 TSHighlighter.hl_map = setmetatable({
-    ["error"] = "Error",
+  ['error'] = 'Error',
 
--- Miscs
-    ["comment"] = "Comment",
-    ["punctuation.delimiter"] = "Delimiter",
-    ["punctuation.bracket"] = "Delimiter",
-    ["punctuation.special"] = "Delimiter",
+  -- Miscs
+  ['comment'] = 'Comment',
+  ['punctuation.delimiter'] = 'Delimiter',
+  ['punctuation.bracket'] = 'Delimiter',
+  ['punctuation.special'] = 'Delimiter',
 
--- Constants
-    ["constant"] = "Constant",
-    ["constant.builtin"] = "Special",
-    ["constant.macro"] = "Define",
-    ["string"] = "String",
-    ["string.regex"] = "String",
-    ["string.escape"] = "SpecialChar",
-    ["character"] = "Character",
-    ["number"] = "Number",
-    ["boolean"] = "Boolean",
-    ["float"] = "Float",
+  -- Constants
+  ['constant'] = 'Constant',
+  ['constant.builtin'] = 'Special',
+  ['constant.macro'] = 'Define',
+  ['string'] = 'String',
+  ['string.regex'] = 'String',
+  ['string.escape'] = 'SpecialChar',
+  ['character'] = 'Character',
+  ['number'] = 'Number',
+  ['boolean'] = 'Boolean',
+  ['float'] = 'Float',
 
--- Functions
-    ["function"] = "Function",
-    ["function.special"] = "Function",
-    ["function.builtin"] = "Special",
-    ["function.macro"] = "Macro",
-    ["parameter"] = "Identifier",
-    ["method"] = "Function",
-    ["field"] = "Identifier",
-    ["property"] = "Identifier",
-    ["constructor"] = "Special",
+  -- Functions
+  ['function'] = 'Function',
+  ['function.special'] = 'Function',
+  ['function.builtin'] = 'Special',
+  ['function.macro'] = 'Macro',
+  ['parameter'] = 'Identifier',
+  ['method'] = 'Function',
+  ['field'] = 'Identifier',
+  ['property'] = 'Identifier',
+  ['constructor'] = 'Special',
 
--- Keywords
-    ["conditional"] = "Conditional",
-    ["repeat"] = "Repeat",
-    ["label"] = "Label",
-    ["operator"] = "Operator",
-    ["keyword"] = "Keyword",
-    ["exception"] = "Exception",
+  -- Keywords
+  ['conditional'] = 'Conditional',
+  ['repeat'] = 'Repeat',
+  ['label'] = 'Label',
+  ['operator'] = 'Operator',
+  ['keyword'] = 'Keyword',
+  ['exception'] = 'Exception',
 
-    ["type"] = "Type",
-    ["type.builtin"] = "Type",
-    ["structure"] = "Structure",
-    ["include"] = "Include",
+  ['type'] = 'Type',
+  ['type.builtin'] = 'Type',
+  ['structure'] = 'Structure',
+  ['include'] = 'Include',
 }, subcapture_fallback)
 
 ---@private
@@ -109,7 +109,7 @@ function TSHighlighterQuery.new(lang, query_string)
   if query_string then
     self._query = query.parse_query(lang, query_string)
   else
-    self._query = query.get_query(lang, "highlights")
+    self._query = query.get_query(lang, 'highlights')
   end
 
   return self
@@ -142,8 +142,8 @@ end
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
-  if type(tree:source()) ~= "number" then
-    error("TSHighlighter can not be used with a string parser source.")
+  if type(tree:source()) ~= 'number' then
+    error 'TSHighlighter can not be used with a string parser source.'
   end
 
   opts = opts or {}
@@ -171,7 +171,7 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
-  a.nvim_buf_set_option(self.bufnr, "syntax", "")
+  a.nvim_buf_set_option(self.bufnr, 'syntax', '')
 
   TSHighlighter.active[self.bufnr] = self
 
@@ -180,7 +180,7 @@ function TSHighlighter.new(tree, opts)
   -- syntax FileType autocmds. Later on we should integrate with the
   -- `:syntax` and `set syntax=...` machinery properly.
   if vim.g.syntax_on ~= 1 then
-    vim.api.nvim_command("runtime! syntax/synload.vim")
+    vim.api.nvim_command 'runtime! syntax/synload.vim'
   end
 
   self.tree:parse()
@@ -225,7 +225,7 @@ end
 ---@private
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes or {}) do
-    a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3]+1)
+    a.nvim__buf_redraw_range(self.bufnr, ch[1], ch[3] + 1)
   end
 end
 
@@ -271,11 +271,11 @@ local function on_line_impl(self, buf, line)
 
       if hl and end_row >= line then
         a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
-                               { end_line = end_row, end_col = end_col,
-                                 hl_group = hl,
-                                 ephemeral = true,
-                                 priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
-                                })
+          { end_line = end_row, end_col = end_col,
+            hl_group = hl,
+            ephemeral = true,
+            priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
+          })
       end
       if start_row > line then
         state.next_row = start_row
