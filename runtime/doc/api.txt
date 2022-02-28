@@ -3109,6 +3109,130 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 
 
 ==============================================================================
+Autocmd Functions                                                *api-autocmd*
+
+nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
+                Create or get an augroup.
+
+                To get an existing augroup ID, do: >
+                    local id = vim.api.nvim_create_augroup(name, {
+                        clear = false
+                    })
+<
+
+                Parameters: ~
+                    {name}  String: The name of the augroup to create
+                    {opts}  Parameters
+                            • clear (bool): Whether to clear existing commands
+                              or not. Defaults to true. See |autocmd-groups|
+
+                Return: ~
+                    opaque value to use with nvim_del_augroup_by_id
+
+nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
+                Create an autocmd.
+
+                Examples:
+                • event: "pat1,pat2,pat3",
+                • event: "pat1"
+                • event: { "pat1" }
+                • event: { "pat1", "pat2", "pat3" }
+
+                Parameters: ~
+                    {event}  The event or events to register this autocmd
+                             Required keys: event: string | ArrayOf(string)
+
+                Parameters: ~
+                    {opts}  Optional Parameters:
+                            • callback: (string|function)
+                              • (string): The name of the viml function to
+                                execute when triggering this autocmd
+                              • (function): The lua function to execute when
+                                triggering this autocmd
+                              • NOTE: Cannot be used with {command}
+
+                            • command: (string) command
+                              • vimscript command
+                              • NOTE: Cannot be used with {callback} Eg.
+                                command = "let g:value_set = v:true"
+
+                            • pattern: (string|table)
+                              • pattern or patterns to match against
+                              • defaults to "*".
+                              • NOTE: Cannot be used with {buffer}
+
+                            • buffer: (bufnr)
+                              • create a |autocmd-buflocal| autocmd.
+                              • NOTE: Cannot be used with {pattern}
+
+                            • group: (string) The augroup name
+                            • once: (boolean) - See |autocmd-once|
+                            • nested: (boolean) - See |autocmd-nested|
+                            • desc: (string) - Description of the autocmd
+
+                Return: ~
+                    opaque value to use with nvim_del_autocmd
+
+nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
+                Delete an augroup by {id}. {id} can only be returned when
+                augroup was created with |nvim_create_augroup|.
+
+                NOTE: behavior differs from augroup-delete.
+
+                When deleting an augroup, autocmds contained by this augroup
+                will also be deleted and cleared. This augroup will no longer
+                exist
+
+nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
+                Delete an augroup by {name}.
+
+                NOTE: behavior differs from augroup-delete.
+
+                When deleting an augroup, autocmds contained by this augroup
+                will also be deleted and cleared. This augroup will no longer
+                exist
+
+nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
+                Delete an autocmd by {id}. Autocmds only return IDs when
+                created via the API. Will not error if called and no autocmds
+                match the {id}.
+
+                Parameters: ~
+                    {id}  Integer The ID returned by nvim_create_autocmd
+
+nvim_do_autocmd({event}, {*opts})                          *nvim_do_autocmd()*
+                Do one autocmd.
+
+                Parameters: ~
+                    {event}  The event or events to execute
+                    {opts}   Optional Parameters:
+                             • buffer (number) - buffer number
+                               • NOTE: Cannot be used with {pattern}
+
+                             • pattern (string|table) - optional, defaults to
+                               "*".
+                               • NOTE: Cannot be used with {buffer}
+
+                             • group (string) - autocmd group name
+                             • modeline (boolean) - Default true, see
+                               |<nomodeline>|
+
+nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
+                Get autocmds that match the requirements passed to {opts}.
+
+                Parameters: ~
+                    {opts}  Optional Parameters:
+                            • event : Name or list of name of events to match
+                              against
+                            • group (string): Name of group to match against
+                            • pattern: Pattern or list of patterns to match
+                              against
+
+                Return: ~
+                    A list of autocmds that match
+
+
+==============================================================================
 UI Functions                                                          *api-ui*
 
 nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*

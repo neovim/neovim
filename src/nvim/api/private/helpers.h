@@ -152,13 +152,15 @@ typedef struct {
 #endif
 
 #define WITH_SCRIPT_CONTEXT(channel_id, code) \
-  const sctx_T save_current_sctx = current_sctx; \
-  current_sctx.sc_sid = \
-    (channel_id) == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT; \
-  current_sctx.sc_lnum = 0; \
-  current_channel_id = channel_id; \
-  code; \
-  current_sctx = save_current_sctx;
+  do { \
+    const sctx_T save_current_sctx = current_sctx; \
+    current_sctx.sc_sid = \
+      (channel_id) == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT; \
+    current_sctx.sc_lnum = 0; \
+    current_channel_id = channel_id; \
+    code; \
+    current_sctx = save_current_sctx; \
+  } while (0);
 
 
 #endif  // NVIM_API_PRIVATE_HELPERS_H

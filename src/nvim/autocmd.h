@@ -27,7 +27,7 @@ typedef struct AutoCmd {
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
-  int64_t id;                           // TODO(tjdevries): Explain
+  int64_t id;                           // ID used for uniquely tracking an autocmd.
   sctx_T script_ctx;                    // script context where defined
   char *desc;                           // Description for the autocmd.
   struct AutoCmd *next;                 // Next AutoCmd in list

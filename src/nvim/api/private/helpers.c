@@ -406,6 +406,7 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   });
 }
 
+
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 {
   if (buffer == 0) {
@@ -1614,8 +1615,8 @@ int find_sid(uint64_t channel_id)
 {
   switch (channel_id) {
   case VIML_INTERNAL_CALL:
-    // TODO(autocmd): Figure out what this should be
-    // return SID_API_CLIENT;
+  // TODO(autocmd): Figure out what this should be
+  // return SID_API_CLIENT;
   case LUA_INTERNAL_CALL:
     return SID_LUA;
   default:
