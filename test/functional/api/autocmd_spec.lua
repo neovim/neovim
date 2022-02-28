@@ -217,6 +217,14 @@ describe('autocmd api', function()
         eq(1, #new_aus)
         eq(first, new_aus[1])
       end)
+
+      it('should return event name', function()
+        command [[au! InsertEnter]]
+        command [[au InsertEnter * :echo "1"]]
+
+        local aus = meths.get_autocmds { event = "InsertEnter" }
+        eq({ { buflocal = false, command = ':echo "1"', event = "InsertEnter", once = false, pattern = "*" } }, aus)
+      end)
     end)
 
     describe('groups', function()
