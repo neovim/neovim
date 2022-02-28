@@ -57,7 +57,7 @@ typedef struct {
     const size_t len_ = (size_t)(len); \
     const blob_T *const blob_ = (blob); \
     kvi_push(edata->stack, STRING_OBJ(((String) { \
-      .data = len_ != 0 ? xmemdup(blob_->bv_ga.ga_data, len_) : NULL, \
+      .data = len_ != 0 ? xmemdupz(blob_->bv_ga.ga_data, len_) : xstrdup(""), \
       .size = len_ \
     }))); \
   } while (0)
