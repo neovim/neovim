@@ -245,7 +245,6 @@ enum key_extra {
   KE_EVENT = 102,           // event
   KE_LUA = 103,  // lua special key
   KE_COMMAND = 104,  // <Cmd> special key
-  KE_AUCMD_SPECIAL = 105,
 };
 
 /*
@@ -443,8 +442,6 @@ enum key_extra {
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
 #define K_LUA           TERMCAP2KEY(KS_EXTRA, KE_LUA)
-
-#define K_AUCMD_SPECIAL TERMCAP2KEY(KS_EXTRA, KE_AUCMD_SPECIAL)
 
 // Bits for modifier mask
 // 0x01 cannot be used, because the modifier must be 0x02 or higher
