@@ -119,7 +119,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [Managed packages]: https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-package
 [Debian]: https://packages.debian.org/testing/neovim
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
-[Fedora]: https://apps.fedoraproject.org/packages/neovim
+[Fedora]: https://packages.fedoraproject.org/pkgs/neovim/neovim/
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
