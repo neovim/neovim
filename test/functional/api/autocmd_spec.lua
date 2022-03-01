@@ -281,6 +281,31 @@ describe('autocmd api', function()
 
         eq("Too many buffers. Please limit yourself to 256 or fewer", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = bufs }))
       end)
+
+      it('should return autocmds when group is specified by id', function()
+        local auid = meths.create_augroup("nvim_test_augroup", { clear = true })
+        meths.create_autocmd("FileType", { group = auid, command = 'echo "1"' })
+        meths.create_autocmd("FileType", { group = auid, command = 'echo "2"' })
+
+        local aus = meths.get_autocmds { group = auid }
+        eq(2, #aus)
+
+        local aus2 = meths.get_autocmds { group = auid, event = "InsertEnter" }
+        eq(0, #aus2)
+      end)
+
+      it('should return autocmds when group is specified by name', function()
+        local auname = "nvim_test_augroup"
+        meths.create_augroup(auname, { clear = true })
+        meths.create_autocmd("FileType", { group = auname, command = 'echo "1"' })
+        meths.create_autocmd("FileType", { group = auname, command = 'echo "2"' })
+
+        local aus = meths.get_autocmds { group = auname }
+        eq(2, #aus)
+
+        local aus2 = meths.get_autocmds { group = auname, event = "InsertEnter" }
+        eq(0, #aus2)
+      end)
     end)
 
     describe('groups', function()
@@ -331,7 +356,7 @@ describe('autocmd api', function()
     end)
 
     describe('groups: 2', function()
-      it('raises error for undefined augroup', function()
+      it('raises error for undefined augroup name', function()
         local success, code = unpack(meths.exec_lua([[
           return {pcall(function()
             vim.api.nvim_create_autocmd("FileType", {
@@ -344,6 +369,39 @@ describe('autocmd api', function()
 
         eq(false, success)
         matches('invalid augroup: NotDefined', code)
+      end)
+
+      it('raises error for undefined augroup id', function()
+        local success, code = unpack(meths.exec_lua([[
+          return {pcall(function()
+            -- Make sure the augroup is deleted
+            vim.api.nvim_del_augroup_by_id(1)
+
+            vim.api.nvim_create_autocmd("FileType", {
+              pattern = "*",
+              group = 1,
+              command = "echo 'hello'",
+            })
+          end)}
+        ]], {}))
+
+        eq(false, success)
+        matches('invalid augroup: 1', code)
+      end)
+
+      it('raises error for invalid group type', function()
+        local success, code = unpack(meths.exec_lua([[
+          return {pcall(function()
+            vim.api.nvim_create_autocmd("FileType", {
+              pattern = "*",
+              group = true,
+              command = "echo 'hello'",
+            })
+          end)}
+        ]], {}))
+
+        eq(false, success)
+        matches("'group' must be a string or an integer", code)
       end)
     end)
 
@@ -496,6 +554,35 @@ describe('autocmd api', function()
       eq('none', meths.get_var('matched'))
       meths.do_autocmd("User", { pattern = "TestCommand" })
       eq('matched', meths.get_var('matched'))
+    end)
+
+    it('can pass group by id', function()
+      meths.set_var("group_executed", false)
+
+      local auid = meths.create_augroup("nvim_test_augroup", { clear = true })
+      meths.create_autocmd("FileType", {
+        group = auid,
+        command = 'let g:group_executed = v:true',
+      })
+
+      eq(false, meths.get_var("group_executed"))
+      meths.do_autocmd("FileType", { group = auid })
+      eq(true, meths.get_var("group_executed"))
+    end)
+
+    it('can pass group by name', function()
+      meths.set_var("group_executed", false)
+
+      local auname = "nvim_test_augroup"
+      meths.create_augroup(auname, { clear = true })
+      meths.create_autocmd("FileType", {
+        group = auname,
+        command = 'let g:group_executed = v:true',
+      })
+
+      eq(false, meths.get_var("group_executed"))
+      meths.do_autocmd("FileType", { group = auname })
+      eq(true, meths.get_var("group_executed"))
     end)
   end)
 

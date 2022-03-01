@@ -3165,7 +3165,7 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                               • create a |autocmd-buflocal| autocmd.
                               • NOTE: Cannot be used with {pattern}
 
-                            • group: (string) The augroup name
+                            • group: (string|int) The augroup name or id
                             • once: (boolean) - See |autocmd-once|
                             • nested: (boolean) - See |autocmd-nested|
                             • desc: (string) - Description of the autocmd
@@ -3213,7 +3213,7 @@ nvim_do_autocmd({event}, {*opts})                          *nvim_do_autocmd()*
                                "*".
                                • NOTE: Cannot be used with {buffer}
 
-                             • group (string) - autocmd group name
+                             • group (string|int) - autocmd group name or id
                              • modeline (boolean) - Default true, see
                                |<nomodeline>|
 
@@ -3224,7 +3224,8 @@ nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
                     {opts}  Optional Parameters:
                             • event : Name or list of name of events to match
                               against
-                            • group (string): Name of group to match against
+                            • group (string|int): Name or id of group to match
+                              against
                             • pattern: Pattern or list of patterns to match
                               against. Cannot be used with {buffer}
                             • buffer: Buffer number or list of buffer numbers
