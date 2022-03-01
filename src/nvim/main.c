@@ -357,7 +357,7 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
-  if (!vimrc_none) {
+  if (!vimrc_none || params.clean) {
     // Sources ftplugin.vim and indent.vim. We do this *before* the user startup scripts to ensure
     // ftplugins run before FileType autocommands defined in the init file (which allows those
     // autocommands to overwrite settings from ftplugins).
@@ -368,7 +368,7 @@ int main(int argc, char **argv)
   source_startup_scripts(&params);
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
-  if (!vimrc_none) {
+  if (!vimrc_none || params.clean) {
     // Sources filetype.lua and filetype.vim unless the user explicitly disabled it with :filetype
     // off.
     filetype_maybe_enable();
