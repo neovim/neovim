@@ -83,7 +83,10 @@ return {
     "standout";
     "strikethrough";
     "underline";
+    "underlineline";
     "undercurl";
+    "underdot";
+    "underdash";
     "italic";
     "reverse";
     "nocombine";
@@ -105,7 +108,10 @@ return {
     "standout";
     "strikethrough";
     "underline";
+    "underlineline";
     "undercurl";
+    "underdot";
+    "underdash";
     "italic";
     "reverse";
     "nocombine";
