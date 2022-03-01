@@ -43,6 +43,9 @@ assert(vim.inspect)
 vim.filetype = package.loaded['vim.filetype']
 assert(vim.filetype)
 
+vim.keymap = package.loaded['vim.keymap']
+assert(vim.keymap)
+
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 setmetatable(vim, {
@@ -69,9 +72,6 @@ setmetatable(vim, {
     elseif key == 'ui' then
       t.ui = require('vim.ui')
       return t.ui
-    elseif key == 'keymap' then
-      t.keymap = require('vim.keymap')
-      return t.keymap
     end
   end
 })

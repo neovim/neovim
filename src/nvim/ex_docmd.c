@@ -5277,6 +5277,7 @@ int uc_add_command(char_u *name, size_t name_len, char_u *rep, uint32_t argt, lo
   cmd->uc_compl = compl;
   cmd->uc_script_ctx = current_sctx;
   cmd->uc_script_ctx.sc_lnum += sourcing_lnum;
+  nlua_set_sctx(&cmd->uc_script_ctx);
   cmd->uc_compl_arg = compl_arg;
   cmd->uc_compl_luaref = compl_luaref;
   cmd->uc_addr_type = addr_type;
