@@ -598,7 +598,7 @@ event_T event_name2nr(const char_u *start, char_u **end)
 /// @param[in]  event  Event to return name for.
 ///
 /// @return Event name, static string. Returns "Unknown" for unknown events.
-static const char *event_nr2name(event_T event)
+const char *event_nr2name(event_T event)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
   int i;

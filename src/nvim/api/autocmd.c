@@ -197,6 +197,10 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
             "pattern",
             STRING_OBJ(cstr_to_string((char *)ap->pat)));
 
+        PUT(autocmd_info,
+            "event",
+            STRING_OBJ(cstr_to_string((char *)event_nr2name(event))));
+
         PUT(autocmd_info, "once", BOOLEAN_OBJ(ac->once));
 
         if (ap->buflocal_nr) {
