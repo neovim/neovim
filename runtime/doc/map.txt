@@ -65,9 +65,8 @@ modes.
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
 			used to redefine a command.
-			Note: "nore" is ignored for a mapping whose result
-			starts with <Plug>.  <Plug> is always remapped even if
-			"nore" is used.
+			Note: A mapping whose {lhs} starts with <Plug> is
+			always applied even if mapping is disallowed.
 
 
 :unm[ap]  {lhs}			|mapmode-nvo|		*:unm*  *:unmap*

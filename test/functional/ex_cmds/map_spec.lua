@@ -30,7 +30,7 @@ describe(':*map', function()
     expect('-foo-')
   end)
 
-  it('<Plug> keymaps ignore nore', function()
+  it('<Plug> mappings ignore nore', function()
     command('let x = 0')
     eq(0, meths.eval('x'))
     command [[
@@ -43,7 +43,8 @@ describe(':*map', function()
     feed('increase_x_noremap')
     eq(2, meths.eval('x'))
   end)
-  it("Doesn't auto ignore nore for keys before or after <Plug> keymap", function()
+
+  it("Doesn't auto ignore nore for keys before or after <Plug> mapping", function()
     command('let x = 0')
     eq(0, meths.eval('x'))
     command [[
