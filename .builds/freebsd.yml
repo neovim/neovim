@@ -5,7 +5,6 @@ packages:
 - gmake
 - ninja
 - libtool
-- sha
 - automake
 - pkgconf
 - unzip
