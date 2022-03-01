@@ -14,8 +14,25 @@ max_line_length = 100
 [{Makefile,**/Makefile,runtime/doc/*.txt}]
 indent_style = tab
 indent_size = 8
+
+# see https://github.com/CppCXY/EmmyLuaCodeStyle/blob/master/docs/format_config_EN.md
 [*.lua]
+# indicates whether all string literals expressed in quotation marks
+# are unified into single quotation marks or double or remain the same.
+# This option has three optional values none/single/double
+# When quote_style = single or double, if there is an unescaped
+# target quote type in the string, it will not be formatted.
 quote_style = single
+# if the parameter in the call expression has only a single-string literal constant or a table expression,
+# consider keeping or removing the parentheses. 
+# the optional value of this option is keep/remove/remove_table_only/remove_string_only/unambiguous_remove_string_only
+# for unambiguous_remove_string_only, parentheses are not removed if the call expression
+# is in an index expression 
 call_arg_parentheses = unambiguous_remove_string_only
+# indicates the number of subsequent indented columns when a long expression 
+# or expression list is expressed in a new line
 continuation_indent_size = 2
+# keep the line-space between the function statement and the next statement 
+# the current setting value is to avoid forced setting 
+# for detail see document
 keep_line_after_function_define_statement = minLine:0
