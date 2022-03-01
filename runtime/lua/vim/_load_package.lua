@@ -47,3 +47,6 @@ end
 
 -- Insert vim._load_package after the preloader at position 2
 table.insert(package.loaders, 2, vim._load_package)
+
+-- should always be available
+vim.inspect = require'vim.inspect'

@@ -53,6 +53,12 @@ typedef struct {
   String lua_err_str;
 } LuaError;
 
+typedef struct {
+  char *name;
+  const uint8_t *data;
+  size_t size;
+} ModuleDef;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.c.generated.h"
 # include "lua/vim_module.generated.h"
@@ -519,60 +525,70 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_pop(lstate, 3);
 }
 
-static void nlua_common_package_init(lua_State *lstate)
+static void nlua_preload_modules(lua_State *lstate)
+{
+  lua_getglobal(lstate, "package");  // [package]
+  lua_getfield(lstate, -1, "preload");  // [package, preload]
+  for (size_t i = 0; i < ARRAY_SIZE(builtin_modules); i++) {
+    ModuleDef def = builtin_modules[i];
+    lua_pushinteger(lstate, (long)i);  // [package, preload, i]
+    lua_pushcclosure(lstate, nlua_module_preloader, 1);  // [package, preload, cclosure]
+    lua_setfield(lstate, -2, def.name);  // [package, preload]
+
+    if (nlua_disable_preload && strequal(def.name, "vim")) {
+      break;
+    }
+  }
+
+  lua_pop(lstate, 2);  // []
+}
+
+static int nlua_module_preloader(lua_State *lstate)
+{
+  size_t i = (size_t)lua_tointeger(lstate, lua_upvalueindex(1));
+  ModuleDef def = builtin_modules[i];
+  char name[256];
+  name[0] = '@';
+  size_t off = xstrlcpy(name+1, def.name, (sizeof name) - 2);
+  strchrsub(name+1, '.', '/');
+  xstrlcpy(name+1+off, ".lua", (sizeof name)-2-off);
+
+  if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
+    return lua_error(lstate);
+  }
+
+  lua_call(lstate, 0, 1);  // propagates error to caller
+  return 1;
+}
+
+static bool nlua_common_package_init(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  {
-    const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(shared_module) - 1, "@vim/shared.lua")
-        || nlua_pcall(lstate, 0, 0)) {
+  nlua_preload_modules(lstate);
+
+  lua_getglobal(lstate, "require");
+  lua_pushstring(lstate, "vim._load_package");
+  if (nlua_pcall(lstate, 1, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating _load_package module: %.*s\n"));
+      return false;
+  }
+
+  // TODO(bfredl): ideally all initialization should be done as a single require
+  // call.
+  lua_getglobal(lstate, "require");
+  lua_pushstring(lstate, "vim.shared");
+  if (nlua_pcall(lstate, 1, 0)) {
       nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
-      return;
-    }
+      return false;
   }
 
-  {
-    const char *code = (char *)&lua_load_package_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_load_package_module) - 1, "@vim/_load_package.lua")
-        || lua_pcall(lstate, 0, 0, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating _load_package module: %.*s"));
-      return;
-    }
-  }
-
-  {
-    lua_getglobal(lstate, "package");  // [package]
-    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
-
-    const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(inspect_module) - 1, "@vim/inspect.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
-      return;
-    }
-
-    // [package, loaded, inspect]
-    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
-  }
-
-  {
-    const char *code = (char *)&lua_F_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_F_module) - 1, "@vim/F.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s\n"));
-      return;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
-
-    lua_pop(lstate, 2);  // []
-  }
+  return true;
 }
 
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
-static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   // print
   lua_pushcfunction(lstate, &nlua_print);
@@ -638,59 +654,18 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_setglobal(lstate, "vim");
 
-  nlua_common_package_init(lstate);
-
-  {
-    lua_getglobal(lstate, "package");  // [package]
-    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
-
-    char *code = (char *)&lua_filetype_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_filetype_module) - 1, "@vim/filetype.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim.filetype module: %.*s"));
-      return 1;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim.filetype");  // [package, loaded]
-
-    code = (char *)&lua_keymap_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_keymap_module) - 1, "@vim/keymap.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim.keymap module: %.*s"));
-      return 1;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim.keymap");  // [package, loaded]
-
-    lua_pop(lstate, 2);  // []
+  if (!nlua_common_package_init(lstate)) {
+    return false;
   }
 
-  {
-    const char *code = (char *)&vim_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(vim_module) - 1, "@vim.lua")
-        || nlua_pcall(lstate, 0, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating vim module: %.*s\n"));
-      return 1;
-    }
+  lua_getglobal(lstate, "require");
+  lua_pushstring(lstate, "vim");
+  if (nlua_pcall(lstate, 1, 0)) {
+    nlua_error(lstate, _("E5106: Error while creating vim module: %.*s\n"));
+    return false;
   }
 
-  {
-    lua_getglobal(lstate, "package");  // [package]
-    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
-
-    const char *code = (char *)&lua_meta_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_meta_module) - 1, "@vim/_meta.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim._meta module: %.*s\n"));
-      return 1;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim._meta");  // [package, loaded]
-
-    lua_pop(lstate, 2);  // []
-  }
-
-  return 0;
+  return true;
 }
 
 /// Initialize global lua interpreter
@@ -707,11 +682,14 @@ void nlua_init(void)
 
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
-    emsg(_("E970: Failed to initialize lua interpreter"));
-    preserve_exit();
+    mch_errmsg(_("E970: Failed to initialize lua interpreter\n"));
+    os_exit(1);
   }
   luaL_openlibs(lstate);
-  nlua_state_init(lstate);
+  if (!nlua_state_init(lstate)) {
+    mch_errmsg(_("E970: Failed to initialize builtin lua modules\n"));
+    os_exit(1);
+  }
 
   luv_set_thread_cb(nlua_thread_acquire_vm, nlua_common_free_all_mem);
 
@@ -747,23 +725,20 @@ static lua_State *nlua_thread_acquire_vm(void)
 
   nlua_state_add_stdlib(lstate, true);
 
-  lua_setglobal(lstate, "vim");
-
-  nlua_common_package_init(lstate);
-
-  lua_getglobal(lstate, "vim");
-  lua_getglobal(lstate, "package");
-  lua_getfield(lstate, -1, "loaded");
-  lua_getfield(lstate, -1, "vim.inspect");
-  lua_setfield(lstate, -4, "inspect");
-  lua_pop(lstate, 3);
-
-  lua_getglobal(lstate, "vim");
   lua_createtable(lstate, 0, 0);
   lua_pushcfunction(lstate, nlua_thr_api_nvim__get_runtime);
   lua_setfield(lstate, -2, "nvim__get_runtime");
   lua_setfield(lstate, -2, "api");
-  lua_pop(lstate, 1);
+
+  lua_setglobal(lstate, "vim");
+
+  nlua_common_package_init(lstate);
+
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_getglobal(lstate, "vim");
+  lua_setfield(lstate, -2, "vim");
+  lua_pop(lstate, 2);
 
   return lstate;
 }
