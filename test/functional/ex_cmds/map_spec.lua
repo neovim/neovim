@@ -30,6 +30,27 @@ describe(':*map', function()
     expect('-foo-')
   end)
 
+  it('shows <nop> as mapping rhs', function()
+    command('nmap asdf <Nop>')
+    eq([[
+
+n  asdf          <Nop>]],
+       helpers.exec_capture('nmap asdf'))
+  end)
+
+  it('mappings with description can be filtered', function()
+    meths.set_keymap('n', 'asdf1', 'qwert', {desc='do the one thing'})
+    meths.set_keymap('n', 'asdf2', 'qwert', {desc='doesnot really do anything'})
+    meths.set_keymap('n', 'asdf3', 'qwert', {desc='do the other thing'})
+    eq([[
+
+n  asdf3         qwert
+                 do the other thing
+n  asdf1         qwert
+                 do the one thing]],
+       helpers.exec_capture('filter the nmap'))
+  end)
+
   it('<Plug> mappings ignore nore', function()
     command('let x = 0')
     eq(0, meths.eval('x'))
