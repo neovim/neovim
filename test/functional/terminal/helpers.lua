@@ -94,7 +94,7 @@ local function screen_setup(extra_rows, command, cols, opts)
     table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 14)))
     screen:expect(table.concat(expected, '|\n')..'|')
   else
-    -- This eval also acts as a wait().
+    -- This eval also acts as a poke_eventloop().
     if 0 == nvim('eval', "exists('b:terminal_job_id')") then
       error("terminal job failed to start")
     end
