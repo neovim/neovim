@@ -424,13 +424,6 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     ADD(patterns, STRING_OBJ(cstr_to_string((char *)pattern_buflocal)));
   }
 
-  if (aucmd.type == CALLABLE_NONE) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "'command' or 'callback' is required");
-    goto cleanup;
-  }
-
   if (opts->desc.type != kObjectTypeNil) {
     if (opts->desc.type == kObjectTypeString) {
       desc = opts->desc.data.string.data;
