@@ -674,15 +674,19 @@ FuncUndefined			When a user function is used but it isn't
 				alternative is to use an autoloaded function.
 				See |autoload-functions|.
 							*UIEnter*
-UIEnter				After a UI connects via |nvim_ui_attach()|,
-				after VimEnter.  Can be used for GUI-specific
-				configuration.
+UIEnter				After a UI connects via |nvim_ui_attach()|, or
+				after builtin TUI is started, after |VimEnter|.
 				Sets these |v:event| keys:
-				    chan
+				    chan: 0 for builtin TUI
+				          1 for |--embed|
+				          |channel-id| of the UI otherwise
 							*UILeave*
-UILeave				After a UI disconnects from Nvim.
+UILeave				After a UI disconnects from Nvim, or after
+				builtin TUI is stopped, after |VimLeave|.
 				Sets these |v:event| keys:
-				    chan
+				    chan: 0 for builtin TUI
+				          1 for |--embed|
+				          |channel-id| of the UI otherwise
 							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable
