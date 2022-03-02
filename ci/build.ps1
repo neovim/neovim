@@ -164,21 +164,17 @@ if (-not $NoTests) {
     exit $LastExitCode
   }
 
-  # FIXME: These tests freezes on github CI and causes all jobs to fail.
-  # Comment out until this is fixed.
-  
   # Old tests
   # Add MSYS to path, required for e.g. `find` used in test scripts.
   # But would break functionaltests, where its `more` would be used then.
-  
-  # $OldPath = $env:PATH
-  # $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-  # & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
-  # $env:PATH = $OldPath
+  $OldPath = $env:PATH
+  $env:PATH = "C:\msys64\usr\bin;$env:PATH"
+  & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
+  $env:PATH = $OldPath
 
-  # if ($uploadToCodecov) {
-  #   bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
-  # }
+  if ($uploadToCodecov) {
+    bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  }
 }
 
 # Ensure choco's cpack is not in PATH otherwise, it conflicts with CMake's
