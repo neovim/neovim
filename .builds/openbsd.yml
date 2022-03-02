@@ -36,12 +36,13 @@ tasks:
     cmake --build . --config RelWithDebInfo
     ./bin/nvim --version
 
-# FIXME: Both the functionaltest and oldtests are tanking on sourcehut CI for
-# some reason. Skip these tasks for now.
+- functionaltest: |
+    cd neovim/build
+    env BUSTED_ARGS="--exclude-pattern=buffer_updates_spec --exclude-pattern=proc_spec --exclude-pattern=server_requests_spec --exclude-pattern=vim_spec --exclude-pattern=autocmd_oldtest_spec" cmake --build . --config RelWithDebInfo --target functionaltest
 
-#- functionaltest: |
-#   cd neovim/build
-#   cmake --build . --config RelWithDebInfo --target functionaltest
+
+# FIXME: Oldtests are tanking on sourcehut CI for some reason. Skip it for now.
+
 #- oldtest: |
 #    cd neovim
 #    gmake oldtest
