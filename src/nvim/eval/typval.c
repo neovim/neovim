@@ -1155,27 +1155,6 @@ void callback_free(Callback *callback)
   callback->data.funcref = NULL;
 }
 
-/// Check if callback is freed
-bool callback_is_freed(Callback callback)
-{
-  switch (callback.type) {
-  case kCallbackFuncref:
-    return false;
-    break;
-  case kCallbackPartial:
-    return false;
-    break;
-  case kCallbackLua:
-    return callback.data.luaref == LUA_NOREF;
-    break;
-  case kCallbackNone:
-    return true;
-    break;
-  }
-
-  return true;
-}
-
 /// Copy a callback into a typval_T.
 void callback_put(Callback *cb, typval_T *tv)
   FUNC_ATTR_NONNULL_ALL

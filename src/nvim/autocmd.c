@@ -2473,7 +2473,7 @@ bool aucmd_exec_is_deleted(AucmdExecutable acc)
   case CALLABLE_EX:
     return acc.callable.cmd == NULL;
   case CALLABLE_CB:
-    return callback_is_freed(acc.callable.cb);
+    return acc.callable.cb.type == kCallbackNone;
   case CALLABLE_NONE:
     return true;
   }
