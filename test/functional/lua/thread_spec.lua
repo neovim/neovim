@@ -102,6 +102,28 @@ describe('thread', function()
         print in thread                                   |
       ]])
     end)
+
+    it('vim.inspect', function()
+      exec_lua [[
+        local thread = vim.loop.new_thread(function()
+          print(vim.inspect({1,2}))
+        end)
+        vim.loop.thread_join(thread)
+      ]]
+
+      screen:expect([[
+        ^                                                  |
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        {1:~                                                 }|
+        { 1, 2 }                                          |
+      ]])
+    end)
   end)
 
   describe('vim.*', function()

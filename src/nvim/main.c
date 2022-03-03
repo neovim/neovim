@@ -253,11 +253,11 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
-  nlua_init();
-
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
+
+  nlua_init();
 
   if (embedded_mode) {
     const char *err;
@@ -918,6 +918,8 @@ static void command_line_scan(mparm_T *parmp)
           parmp->use_vimrc = "NONE";
           parmp->clean = true;
           set_option_value("shadafile", 0L, "NONE", 0);
+        } else if (STRNICMP(argv[0] + argv_idx, "luamod-dev", 9) == 0) {
+          nlua_disable_preload = true;
         } else {
           if (argv[0][argv_idx]) {
             mainerr(err_opt_unknown, argv[0]);
@@ -1990,6 +1992,8 @@ static void mainerr(const char *errstr, const char *str)
 /// Prints version information for "nvim -v" or "nvim --version".
 static void version(void)
 {
+  // TODO(bfred): not like this?
+  nlua_init();
   info_message = true;  // use mch_msg(), not mch_errmsg()
   list_version();
   msg_putchar('\n');

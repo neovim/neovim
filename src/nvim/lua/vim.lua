@@ -36,15 +36,7 @@
 
 local vim = vim
 assert(vim)
-
-vim.inspect = package.loaded['vim.inspect']
 assert(vim.inspect)
-
-vim.filetype = package.loaded['vim.filetype']
-assert(vim.filetype)
-
-vim.keymap = package.loaded['vim.keymap']
-assert(vim.keymap)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
@@ -53,6 +45,9 @@ setmetatable(vim, {
     if key == 'treesitter' then
       t.treesitter = require('vim.treesitter')
       return t.treesitter
+    elseif key == 'filetype' then
+      t.filetype = require('vim.filetype')
+      return t.filetype
     elseif key == 'F' then
       t.F = require('vim.F')
       return t.F
@@ -69,6 +64,9 @@ setmetatable(vim, {
     elseif key == 'diagnostic' then
       t.diagnostic = require('vim.diagnostic')
       return t.diagnostic
+    elseif key == 'keymap' then
+      t.keymap = require('vim.keymap')
+      return t.keymap
     elseif key == 'ui' then
       t.ui = require('vim.ui')
       return t.ui
@@ -662,4 +660,7 @@ function vim.pretty_print(...)
   return ...
 end
 
-return module
+
+require('vim._meta')
+
+return vim
