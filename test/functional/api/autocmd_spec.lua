@@ -8,6 +8,7 @@ local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local meths = helpers.meths
 local source = helpers.source
+local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -224,6 +225,61 @@ describe('autocmd api', function()
 
         local aus = meths.get_autocmds { event = "InsertEnter" }
         eq({ { buflocal = false, command = ':echo "1"', event = "InsertEnter", once = false, pattern = "*" } }, aus)
+      end)
+
+      it('should work with buffer numbers', function()
+        command [[new]]
+        command [[au! InsertEnter]]
+        command [[au InsertEnter <buffer=1> :echo "1"]]
+        command [[au InsertEnter <buffer=2> :echo "2"]]
+
+        local aus = meths.get_autocmds { event = "InsertEnter", buffer = 0 }
+        eq({{
+          buffer = 2,
+          buflocal = true,
+          command = ':echo "2"',
+          event = 'InsertEnter',
+          once = false,
+          pattern = '<buffer=2>',
+        }}, aus)
+
+        aus = meths.get_autocmds { event = "InsertEnter", buffer = 1 }
+        eq({{
+          buffer = 1,
+          buflocal = true,
+          command = ':echo "1"',
+          event = "InsertEnter",
+          once = false,
+          pattern = "<buffer=1>",
+        }}, aus)
+
+        aus = meths.get_autocmds { event = "InsertEnter", buffer = { 1, 2 } }
+        eq({{
+          buffer = 1,
+          buflocal = true,
+          command = ':echo "1"',
+          event = "InsertEnter",
+          once = false,
+          pattern = "<buffer=1>",
+        }, {
+          buffer = 2,
+          buflocal = true,
+          command = ':echo "2"',
+          event = "InsertEnter",
+          once = false,
+          pattern = "<buffer=2>",
+        }}, aus)
+
+        eq("Invalid value for 'buffer': must be an integer or array of integers", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = "foo" }))
+        eq("Invalid value for 'buffer': must be an integer", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { "foo", 42 } }))
+        eq("Invalid buffer id: 42", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = { 42 } }))
+
+        local bufs = {}
+        for _ = 1, 257 do
+          table.insert(bufs, meths.create_buf(true, false))
+        end
+
+        eq("Too many buffers. Please limit yourself to 256 or fewer", pcall_err(meths.get_autocmds, { event = "InsertEnter", buffer = bufs }))
       end)
     end)
 

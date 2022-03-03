@@ -41,7 +41,9 @@ static int64_t next_autocmd_id = 1;
 /// @param opts Optional Parameters:
 ///     - event : Name or list of name of events to match against
 ///     - group (string): Name of group to match against
-///     - pattern: Pattern or list of patterns to match against
+///     - pattern: Pattern or list of patterns to match against. Cannot be used with {buffer}
+///     - buffer: Buffer number or list of buffer numbers for buffer local autocommands
+///               |autocmd-buflocal|. Cannot be used with {pattern}
 ///
 /// @return A list of autocmds that match
 Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
@@ -52,6 +54,8 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   Array autocmd_list = ARRAY_DICT_INIT;
   char_u *pattern_filters[AUCMD_MAX_PATTERNS];
   char_u pattern_buflocal[BUFLOCAL_PAT_LEN];
+
+  Array buffers = ARRAY_DICT_INIT;
 
   bool event_set[NUM_EVENTS] = { false };
   bool check_event = false;
@@ -100,6 +104,12 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
     }
   }
 
+  if (opts->pattern.type != kObjectTypeNil && opts->buffer.type != kObjectTypeNil) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Cannot use both 'pattern' and 'buffer'");
+    goto cleanup;
+  }
+
   int pattern_filter_count = 0;
   if (opts->pattern.type != kObjectTypeNil) {
     Object v = opts->pattern;
@@ -107,24 +117,69 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       pattern_filters[pattern_filter_count] = (char_u *)v.data.string.data;
       pattern_filter_count += 1;
     } else if (v.type == kObjectTypeArray) {
+      if (v.data.array.size > AUCMD_MAX_PATTERNS) {
+        api_set_error(err, kErrorTypeValidation,
+                      "Too many patterns. Please limit yourself to %d or fewer",
+                      AUCMD_MAX_PATTERNS);
+        goto cleanup;
+      }
+
       FOREACH_ITEM(v.data.array, item, {
+        if (item.type != kObjectTypeString) {
+          api_set_error(err, kErrorTypeValidation, "Invalid value for 'pattern': must be a string");
+          goto cleanup;
+        }
+
         pattern_filters[pattern_filter_count] = (char_u *)item.data.string.data;
         pattern_filter_count += 1;
       });
     } else {
-      api_set_error(err,
-                    kErrorTypeValidation,
+      api_set_error(err, kErrorTypeValidation,
                     "Not a valid 'pattern' value. Must be a string or an array");
       goto cleanup;
     }
+  }
 
-    if (pattern_filter_count >= AUCMD_MAX_PATTERNS) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Too many patterns. Please limit yourself to less");
+  if (opts->buffer.type == kObjectTypeInteger || opts->buffer.type == kObjectTypeBuffer) {
+    buf_T *buf = find_buffer_by_handle((Buffer)opts->buffer.data.integer, err);
+    if (ERROR_SET(err)) {
       goto cleanup;
     }
+
+    snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
+    ADD(buffers, CSTR_TO_OBJ((char *)pattern_buflocal));
+  } else if (opts->buffer.type == kObjectTypeArray) {
+    if (opts->buffer.data.array.size > AUCMD_MAX_PATTERNS) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "Too many buffers. Please limit yourself to %d or fewer", AUCMD_MAX_PATTERNS);
+      goto cleanup;
+    }
+
+    FOREACH_ITEM(opts->buffer.data.array, bufnr, {
+      if (bufnr.type != kObjectTypeInteger && bufnr.type != kObjectTypeBuffer) {
+        api_set_error(err, kErrorTypeValidation, "Invalid value for 'buffer': must be an integer");
+        goto cleanup;
+      }
+
+      buf_T *buf = find_buffer_by_handle((Buffer)bufnr.data.integer, err);
+      if (ERROR_SET(err)) {
+        goto cleanup;
+      }
+
+      snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
+      ADD(buffers, CSTR_TO_OBJ((char *)pattern_buflocal));
+    });
+  } else if (opts->buffer.type != kObjectTypeNil) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Invalid value for 'buffer': must be an integer or array of integers");
+    goto cleanup;
   }
+
+  FOREACH_ITEM(buffers, bufnr, {
+    pattern_filters[pattern_filter_count] = (char_u *)bufnr.data.string.data;
+    pattern_filter_count += 1;
+  });
 
   FOR_ALL_AUEVENTS(event) {
     if (check_event && !event_set[event]) {
@@ -234,6 +289,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   }
 
 cleanup:
+  api_free_array(buffers);
   return autocmd_list;
 }
 
