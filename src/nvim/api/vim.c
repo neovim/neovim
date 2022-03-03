@@ -1991,7 +1991,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
 
   size_t proc_count;
   int rv = os_proc_children((int)pid, &proc_list, &proc_count);
-  if (rv != 0) {
+  if (rv == 2) {
     // syscall failed (possibly because of kernel options), try shelling out.
     DLOG("fallback to vim._os_proc_children()");
     Array a = ARRAY_DICT_INIT;
