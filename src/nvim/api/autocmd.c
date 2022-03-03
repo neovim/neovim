@@ -131,10 +131,8 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
       continue;
     }
 
-    for (AutoPat *ap = au_get_autopat_for_event(event);
-         ap != NULL;
-         ap = ap->next) {
-      if (ap == NULL || ap->cmds == NULL) {
+    for (AutoPat *ap = au_get_autopat_for_event(event); ap != NULL; ap = ap->next) {
+      if (ap->cmds == NULL) {
         continue;
       }
 
@@ -424,13 +422,6 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
     snprintf((char *)pattern_buflocal, BUFLOCAL_PAT_LEN, "<buffer=%d>", (int)buf->handle);
     ADD(patterns, STRING_OBJ(cstr_to_string((char *)pattern_buflocal)));
-  }
-
-  if (aucmd.type == CALLABLE_NONE) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "'command' or 'callback' is required");
-    goto cleanup;
   }
 
   if (opts->desc.type != kObjectTypeNil) {
