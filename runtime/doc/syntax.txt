@@ -4898,9 +4898,9 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	"underlineline", "undercurl", "underdot", and "underdash" falls back
-	to "underline" in a terminal that does not support it. The color is set
-	using |highlight-guisp|.
+	"underlineline", "undercurl", "underdot", and "underdash" fall back
+	to "underline" in a terminal that does not support them. The color is
+	set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
