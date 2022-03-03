@@ -239,7 +239,6 @@ void aupat_del_for_event_and_group(event_T event, int group)
     }
   }
 
-  au_need_clean = true;
   au_cleanup();  // may really delete removed patterns/commands now
 }
 
