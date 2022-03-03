@@ -638,56 +638,39 @@ end
 
 function vim._cs_remote(rcid, args)
   local f_silent = false
-  local f_wait = false
   local f_tab = false
 
   local subcmd = string.sub(args[1],10)
 
-  if subcmd == '' then
-    -- no flags to set
-  elseif subcmd == 'tab' then
+  if subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then
     f_silent = true
-  elseif subcmd == 'wait' then
-    f_wait = true
-  elseif subcmd == 'wait-silent' then
-    f_wait = true
-    f_silent = true
-  elseif subcmd == 'tab-wait' then
-    f_tab = true
-    f_wait = true
+  elseif subcmd == 'wait' or subcmd == 'wait-silent' or subcmd == 'tab-wait' or subcmd == 'tab-wait-silent' then
+    return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
   elseif subcmd == 'tab-silent' then
     f_tab = true
     f_silent = true
-  elseif subcmd == 'tab-wait-silent' then
-    f_tab = true
-    f_wait = true
-    f_silent = true
   elseif subcmd == 'send' then
     if rcid == 0 then
-      vim.cmd('echoerr "E247: Remote server does not exist. Send failed."')
-      return
+      return { errmsg = 'E247: Remote server does not exist. Send failed.' }
     end
     vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
     return { should_exit = true, tabbed = false }
   elseif subcmd == 'expr' then
     if rcid == 0 then
-      vim.cmd('echoerr "E247: Remote server does not exist. Send expression failed."')
-      return
+      return { errmsg = 'E247: Remote server does not exist. Send expression failed.' }
     end
-    vim.fn.rpcrequest(rcid, 'nvim_eval', args[2])
+    print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
     return { should_exit = true, tabbed = false }
-  else
-    vim.cmd('echoerr "Unknown option argument: ' .. args[1] .. '"')
-    return
+  elseif subcmd ~= '' then
+    return { errmsg='Unknown option argument: ' .. args[1] }
   end
 
   if rcid == 0 then
     if not f_silent then
       vim.cmd('echohl WarningMsg | echomsg "E247: Remote server does not exist. Editing locally" | echohl None')
     end
-    should_exit = false
   else
     local command = {}
     if f_tab then table.insert(command, 'tab') end

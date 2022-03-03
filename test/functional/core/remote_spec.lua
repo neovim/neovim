@@ -9,7 +9,6 @@ local insert = helpers.insert
 local meths = helpers.meths
 local new_argv = helpers.new_argv
 local neq = helpers.neq
-local run = helpers.run
 local set_session = helpers.set_session
 local spawn = helpers.spawn
 local tmpname = helpers.tmpname
@@ -38,7 +37,7 @@ describe('Remote', function()
       server:close()
     end)
 
-    function run_remote(...)
+    local function run_remote(...)
       set_session(server)
       local addr = funcs.serverlist()[1]
       local client_argv = new_argv({args={'--server', addr, ...}})
@@ -121,7 +120,7 @@ describe('Remote', function()
       -- to wait for the remote instance to exit and calling jobwait blocks
       -- the event loop. If the server event loop is blocked, it can't process
       -- our incoming --remote calls.
-      local client_starter = clear()
+      clear()
       local bogus_job_id = funcs.jobstart(bogus_argv)
       eq({2}, funcs.jobwait({bogus_job_id}))
     end
@@ -135,6 +134,9 @@ describe('Remote', function()
 
     it('expr without server', function()
       run_and_check_exit_code('--remote-expr', 'setline(1, "Yo")')
+    end)
+    it('wait subcommand', function()
+      run_and_check_exit_code('--remote-wait', fname)
     end)
   end)
 end)

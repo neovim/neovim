@@ -816,8 +816,10 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     rvobj.type = kObjectTypeDictionary;
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
-    uint64_t rc_id = server_addr == NULL ? 0 : channel_connect(false,
-                     server_addr, true, on_data, 50, &error);
+    uint64_t rc_id = 0;
+    if (server_addr != NULL) {
+      rc_id = channel_connect(false, server_addr, true, on_data, 50, &error);
+    }
 
     Boolean should_exit = true;
     Boolean tabbed;
@@ -848,17 +850,33 @@ static void handle_remote_client(mparm_T *params, int remote_args,
       rvobj.data.dictionary = o.data.dictionary;
     } else {
       mch_errmsg("vim._cs_remote returned unexpected value\n");
-      os_exit(3);
+      os_exit(2);
     }
 
     for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
-      if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
-        // should we check items[i].value.type here?
+      if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
+          mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
+          os_exit(2);
+        }
+        mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
+        mch_errmsg("\n");
+        os_exit(2);
+      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+          mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
+          os_exit(2);
+        }
         tabbed = rvobj.data.dictionary.items[i].value.data.boolean;
       } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+          mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
+          os_exit(2);
+        }
         should_exit = rvobj.data.dictionary.items[i].value.data.boolean;
       }
     }
+    api_free_object(o);
 
     if (should_exit) {
       os_exit(0);
