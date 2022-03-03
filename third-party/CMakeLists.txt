@@ -144,7 +144,7 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/7ae0c9543d0080968766288c73874aee3798ae30.tar.gz)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/e592ebe9d31088add987025df1271d2bf7daa957.tar.gz)
 set(LIBUV_SHA256 SKIP)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
