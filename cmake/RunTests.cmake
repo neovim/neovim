@@ -95,7 +95,5 @@ if(NOT res EQUAL 0)
     endif()
   endif()
 
-  IF (NOT WIN32)
-    message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
-  ENDIF()
+  message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
 endif()
