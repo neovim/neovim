@@ -1712,11 +1712,10 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   int local_State = get_real_state();
   bool is_plug_map = false;
 
-  // Check if typehead starts with a <Plug> mapping.
-  // In that case we will ignore nore flag on it.
+  // If typehead starts with <Plug> then remap, even for a "noremap" mapping.
   if (typebuf.tb_buf[typebuf.tb_off] == K_SPECIAL
-      && typebuf.tb_buf[typebuf.tb_off+1] == KS_EXTRA
-      && typebuf.tb_buf[typebuf.tb_off+2] == KE_PLUG) {
+      && typebuf.tb_buf[typebuf.tb_off + 1] == KS_EXTRA
+      && typebuf.tb_buf[typebuf.tb_off + 2] == KE_PLUG) {
     is_plug_map = true;
   }
 

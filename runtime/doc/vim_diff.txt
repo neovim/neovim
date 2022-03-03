@@ -358,10 +358,6 @@ Macro/|recording| behavior
   macros and 'keymap' at the same time. This also means you can use |:imap| on
   the results of keys from 'keymap'.
 
-Mappings:
-- A mapping whose {lhs} starts with <Plug> is always applied even if mapping
-  is disallowed by |nore|.
-
 Motion:
   The |jumplist| avoids useless/phantom jumps.
 
