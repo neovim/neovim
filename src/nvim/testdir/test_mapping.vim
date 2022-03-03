@@ -646,4 +646,34 @@ func Test_abbreviate_multi_byte()
   bwipe!
 endfunc
 
+" Test for <Plug> always being mapped, even when used with "noremap".
+func Test_plug_remap()
+  let g:foo = 0
+  nnoremap <Plug>(Increase_x) <Cmd>let g:foo += 1<CR>
+  nmap <F2> <Plug>(Increase_x)
+  nnoremap <F3> <Plug>(Increase_x)
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(1, g:foo)
+  call feedkeys("\<F3>", 'xt')
+  call assert_equal(2, g:foo)
+  nnoremap x <Nop>
+  nmap <F4> x<Plug>(Increase_x)x
+  nnoremap <F5> x<Plug>(Increase_x)x
+  call setline(1, 'Some text')
+  normal! gg$
+  call feedkeys("\<F4>", 'xt')
+  call assert_equal(3, g:foo)
+  call assert_equal('Some text', getline(1))
+  call feedkeys("\<F5>", 'xt')
+  call assert_equal(4, g:foo)
+  call assert_equal('Some te', getline(1))
+  nunmap <Plug>(Increase_x)
+  nunmap <F2>
+  nunmap <F3>
+  nunmap <F4>
+  nunmap <F5>
+  unlet g:foo
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
