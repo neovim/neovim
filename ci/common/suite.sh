@@ -29,13 +29,11 @@ exit_suite() {
 
 fail() {
   local test_name="$1"
-  local fail_char="$2"
-  local message="$3"
+  local message="$2"
 
-  : ${fail_char:=F}
   : ${message:=Test $test_name failed}
 
-  local full_msg="$fail_char $NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
+  local full_msg="$NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
   FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
