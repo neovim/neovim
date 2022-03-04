@@ -54,6 +54,9 @@
 #include "nvim/marktree.h"
 
 #define T MT_BRANCH_FACTOR
+#define M MT_MAX_NODE_SIZE
+
+// Size of the node pointers used for children nodes
 #define ILEN (sizeof(mtnode_t)+(2 * T) * sizeof(void *))
 
 #define ID_INCR (((uint64_t)1) << 2)
@@ -100,6 +103,7 @@ static void compose(mtpos_t *base, mtpos_t val)
 # include "marktree.c.generated.h"
 #endif
 
+// Compare positions of two mt keys.
 #define mt_generic_cmp(a, b) (((b) < (a)) - ((a) < (b)))
 static int key_cmp(mtkey_t a, mtkey_t b)
 {
@@ -116,6 +120,17 @@ static int key_cmp(mtkey_t a, mtkey_t b)
   return mt_generic_cmp(a.flags, b.flags);
 }
 
+/// Given a key with a set position, find the closest key in a given node
+/// via bisection.
+///
+/// @param      x  Node to search.
+/// @param      k  Key with a position (and flags) used to search.
+/// @param[out] r  Comparison of key 'k' with the closest key in the node:
+///                  1  : k is greater
+///                  0  : k is equal
+///                  -1 : k is less
+///
+/// @return index in node of the closest key.
 static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
 {
   int tr, *rr, begin = 0, end = x->n;
@@ -132,7 +147,8 @@ static inline int marktree_getp_aux(const mtnode_t *x, mtkey_t k, int *r)
     }
   }
   if (begin == x->n) {
-    *rr = 1; return x->n - 1;
+    *rr = 1;
+    return x->n - 1;
   }
   if ((*rr = key_cmp(k, x->key[begin])) < 0) {
     begin--;
@@ -147,13 +163,18 @@ static inline void refkey(MarkTree *b, mtnode_t *x, int i)
 
 // put functions
 
-// x must be an internal node, which is not full
-// x->ptr[i] should be a full node, i e x->ptr[i]->n == 2*T-1
+/// Split a full node
+///
+/// x must be an internal node, which is not full
+/// x->ptr[i] should be a full node, i e x->ptr[i]->n == 2*T-1
+///
+/// @param b Mark tree
+/// @param x Node containing child node to split
+/// @param i Child node index to split
 static inline void split_node(MarkTree *b, mtnode_t *x, const int i)
 {
   mtnode_t *y = x->ptr[i];
-  mtnode_t *z;
-  z = (mtnode_t *)xcalloc(1, y->level ? ILEN : sizeof(mtnode_t));
+  mtnode_t *z = (mtnode_t *)xcalloc(1, y->level ? ILEN : sizeof(mtnode_t));
   b->n_nodes++;
   z->level = y->level;
   z->n = T - 1;
@@ -202,7 +223,7 @@ static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
     x->n++;
   } else {
     i = marktree_getp_aux(x, k, 0) + 1;
-    if (x->ptr[i]->n == 2 * T - 1) {
+    if (x->ptr[i]->n == M) {
       split_node(b, x, i);
       if (key_cmp(k, x->key[i]) > 0) {
         i++;
@@ -244,11 +265,13 @@ void marktree_put_key(MarkTree *b, mtkey_t k)
   mtnode_t *r, *s;
   b->n_keys++;
   r = b->root;
-  if (r->n == 2 * T - 1) {
+  if (r->n == M) {
     b->n_nodes++;
     s = (mtnode_t *)xcalloc(1, ILEN);
-    b->root = s; s->level = r->level+1; s->n = 0;
+    s->level = r->level+1;
+    s->n = 0;
     s->ptr[0] = r;
+    b->root = s;
     r->parent = s;
     split_node(b, s, 0);
     r = s;
@@ -589,6 +612,17 @@ bool marktree_itr_get(MarkTree *b, int row, int col, MarkTreeIter *itr)
                               itr, false, false, NULL);
 }
 
+/// Find a mark in a given mark tree for a particular position and populate a given iterator.
+///
+/// @param      b        Marktree to search.
+/// @param      p        Position to get.
+/// @param[out] itr      Iterator to populate.
+/// @param      last
+/// @param      gravity
+/// @param[out] oldbase  When traversing levels in the tree, keep track of the last visited position
+///                      at each level.
+///
+/// @return Whether a mark was found
 bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, bool gravity,
                           mtpos_t *oldbase)
 {
@@ -608,6 +642,7 @@ bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, 
     oldbase[itr->lvl] = itr->pos;
   }
   while (true) {
+    // set the current index to the first mark after k
     itr->i = marktree_getp_aux(itr->node, k, 0)+1;
 
     if (itr->node->level == 0) {
@@ -618,6 +653,7 @@ bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, 
     itr->s[itr->lvl].oldcol = itr->pos.col;
 
     if (itr->i > 0) {
+      // update positions
       compose(&itr->pos, itr->node->key[itr->i-1].pos);
       relative(itr->node->key[itr->i-1].pos, &k.pos);
     }
@@ -811,7 +847,7 @@ mtkey_t marktree_itr_current(MarkTreeIter *itr)
 {
   if (itr->node) {
     mtkey_t key = rawkey(itr);
-    key.pos = marktree_itr_pos(itr);
+    unrelative(itr->pos, &key.pos);
     return key;
   }
   return MT_INVALID_KEY;
@@ -1145,7 +1181,7 @@ void marktree_check(MarkTree *b)
 #ifndef NDEBUG
 static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_right)
 {
-  assert(x->n <= 2 * T - 1);
+  assert(x->n <= M);
   // TODO(bfredl): too strict if checking "in repair" post-delete tree.
   assert(x->n >= (x != b->root ? T-1 : 0));
   size_t n_keys = (size_t)x->n;

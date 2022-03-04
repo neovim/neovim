@@ -12,6 +12,7 @@
 
 #define MT_MAX_DEPTH 20
 #define MT_BRANCH_FACTOR 10
+#define MT_MAX_NODE_SIZE 2 * MT_BRANCH_FACTOR - 1
 
 typedef struct {
   int32_t row;
@@ -72,11 +73,6 @@ static inline uint64_t mt_lookup_id(uint32_t ns, uint32_t id, bool enda)
 }
 #undef MARKTREE_END_FLAG
 
-static inline uint64_t mt_lookup_key(mtkey_t key)
-{
-  return mt_lookup_id(key.ns, key.id, key.flags & MT_FLAG_END);
-}
-
 static inline bool mt_paired(mtkey_t key)
 {
   return key.flags & MT_FLAG_PAIRED;
@@ -106,12 +102,12 @@ static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
 
 
 struct mtnode_s {
-  int32_t n;
+  int32_t n;   // size of node
   int32_t level;
   // TODO(bfredl): we could consider having a only-sometimes-valid
   // index into parent for faster "cached" lookup.
   mtnode_t *parent;
-  mtkey_t key[2 * MT_BRANCH_FACTOR - 1];
+  mtkey_t key[MT_MAX_NODE_SIZE];
   mtnode_t *ptr[];
 };
 
