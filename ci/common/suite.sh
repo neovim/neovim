@@ -1,28 +1,9 @@
-# HACK: get newline for use in strings given that "\n" and $'' do not work.
-NL="$(printf '\nE')"
-NL="${NL%E}"
-
-FAIL_SUMMARY=""
-
 # Test success marker. If END_MARKER file exists, we know that all tests 
 # finished. If FAIL_SUMMARY_FILE exists we know that some tests failed, this 
 # file will contain information about failed tests. Build is considered 
 # successful if tests ended without any of them failing.
 END_MARKER="$BUILD_DIR/.tests_finished"
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
-
-enter_suite() {
-  FAILED=0
-  rm -f "${END_MARKER}"
-}
-
-exit_suite() {
-  if test $FAILED -ne 0 ; then
-    echo "Test failed, summary:"
-    echo "${FAIL_SUMMARY}"
-  fi
-  FAILED=0
-}
 
 fail() {
   local test_name="$1"
@@ -31,10 +12,8 @@ fail() {
   : ${message:=Test $test_name failed}
 
   local full_msg="$test_name :: $message"
-  FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
-  FAILED=1
 }
 
 ended_successfully() {
@@ -64,7 +43,6 @@ run_suite() {
   local command="$1"
   local suite_name="$2"
 
-  enter_suite
+  rm -f "${END_MARKER}"
   eval "$command" || fail "$suite_name"
-  exit_suite
 }
