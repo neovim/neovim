@@ -14,16 +14,13 @@ FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 enter_suite() {
   FAILED=0
   rm -f "${END_MARKER}"
-  local suite_name="$1"
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
 }
 
 exit_suite() {
   if test $FAILED -ne 0 ; then
-    echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
+    echo "Test failed, summary:"
     echo "${FAIL_SUMMARY}"
   fi
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   FAILED=0
 }
 
@@ -33,7 +30,7 @@ fail() {
 
   : ${message:=Test $test_name failed}
 
-  local full_msg="$NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
+  local full_msg="$test_name :: $message"
   FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
@@ -67,8 +64,7 @@ run_suite() {
   local command="$1"
   local suite_name="$2"
 
-  enter_suite "$suite_name"
+  enter_suite
   eval "$command" || fail "$suite_name"
   exit_suite
 }
-
