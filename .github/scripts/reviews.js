@@ -13,6 +13,10 @@ module.exports = async ({github, context}) => {
     reviewers.add("muniter")
   }
 
+  if (labels.includes('build')) {
+    reviewers.add("jamessan")
+  }
+
   if (labels.includes('ci')) {
     reviewers.add("jamessan")
   }
@@ -27,6 +31,10 @@ module.exports = async ({github, context}) => {
 
   if (labels.includes('diff')) {
     reviewers.add("lewis6991")
+  }
+
+  if (labels.includes('dependencies')) {
+    reviewers.add("jamessan")
   }
 
   if (labels.includes('distribution')) {
@@ -70,7 +78,6 @@ module.exports = async ({github, context}) => {
   }
 
   if (labels.includes('vim-patch')) {
-    reviewers.add("janlazo")
     reviewers.add("seandewar")
     reviewers.add("zeertzjq")
   }
