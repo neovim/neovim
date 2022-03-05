@@ -12,6 +12,9 @@ endif()
 if(POLICY CMP0060)
   cmake_policy(SET CMP0060 NEW)
 endif()
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
