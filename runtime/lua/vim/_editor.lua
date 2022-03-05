@@ -156,21 +156,21 @@ do
   ---                - 3: ends the paste (exactly once)
   ---@returns false if client should cancel the paste.
   function vim.paste(lines, phase)
-    local call = vim.api.nvim_call_function
     local now = vim.loop.now()
-    local mode = call('mode', {}):sub(1,1)
+    local mode = vim.api.nvim_get_mode().mode
+    local is_cmdline = vim.fn.getcmdtype() ~= ''
     if phase < 2 then  -- Reset flags.
       tdots, tick, got_line1 = now, 0, false
-    elseif mode ~= 'c' then
+    elseif not is_cmdline then
       vim.api.nvim_command('undojoin')
     end
-    if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
+    if is_cmdline and not got_line1 then  -- cmdline-mode: paste only 1 line.
       got_line1 = (#lines > 1)
       vim.api.nvim_set_option('paste', true)  -- For nvim_input().
       local line1 = lines[1]:gsub('<', '<lt>'):gsub('[\r\n\012\027]', ' ')  -- Scrub.
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
-    elseif mode ~= 'c' then
+    elseif not is_cmdline then
       if phase < 2 and mode:find('^[vV\22sS\19]') then
         vim.api.nvim_command([[exe "normal! \<Del>"]])
         vim.api.nvim_put(lines, 'c', false, true)
@@ -178,7 +178,7 @@ do
         vim.api.nvim_put(lines, 'c', true, true)
         -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
         vim.api.nvim_command('normal! a')
-      elseif phase < 2 and mode == 'R' then
+      elseif phase < 2 and mode:find('^R') then
         local nchars = 0
         for _, line in ipairs(lines) do
             nchars = nchars + line:len()
