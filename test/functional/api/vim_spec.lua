@@ -630,10 +630,6 @@ describe('API', function()
   end)
 
   describe('nvim_paste', function()
-    before_each(function()
-      -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
-      feed('ifoo<Esc>u')
-    end)
     it('validates args', function()
       eq('Invalid phase: -2',
         pcall_err(request, 'nvim_paste', 'foo', true, -2))
@@ -670,166 +666,333 @@ describe('API', function()
       expect(expected1)
     end)
     it('stream: Insert mode', function()
+      -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+      feed('afoo<Esc>u')
       feed('i')
       nvim('paste', 'aaaaaa', false, 1)
       nvim('paste', 'bbbbbb', false, 2)
       nvim('paste', 'cccccc', false, 2)
       nvim('paste', 'dddddd', false, 3)
       expect('aaaaaabbbbbbccccccdddddd')
-    end)
-    it('stream: Normal mode on empty line', function()
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('aaaaaabbbbbbccccccdddddd')
-      feed('u')
+      feed('<Esc>u')
       expect('')
     end)
-    it('stream: Normal mode on empty line pasting multiple lines', function()
-      nvim('paste', 'aaaaaa\n', false, 1)
-      nvim('paste', 'bbbbbb\n', false, 2)
-      nvim('paste', 'cccccc\n', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect([[
-        aaaaaa
-        bbbbbb
-        cccccc
-        dddddd]])
-      feed('u')
-      expect('')
+    describe('stream: Normal mode', function()
+      describe('on empty line', function()
+        before_each(function()
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+        end)
+        after_each(function()
+          feed('u')
+          expect('')
+        end)
+        it('pasting one line', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('aaaaaabbbbbbccccccdddddd')
+        end)
+        it('pasting multiple lines', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+          aaaaaa
+          bbbbbb
+          cccccc
+          dddddd]])
+        end)
+      end)
+      describe('not at the end of a line', function()
+        before_each(function()
+          feed('i||<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+          feed('0')
+        end)
+        after_each(function()
+          feed('u')
+          expect('||')
+        end)
+        it('pasting one line', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('|aaaaaabbbbbbccccccdddddd|')
+        end)
+        it('pasting multiple lines', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+          |aaaaaa
+          bbbbbb
+          cccccc
+          dddddd|]])
+        end)
+      end)
+      describe('at the end of a line', function()
+        before_each(function()
+          feed('i||<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+          feed('$')
+        end)
+        after_each(function()
+          feed('u')
+          expect('||')
+        end)
+        it('pasting one line', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('||aaaaaabbbbbbccccccdddddd')
+        end)
+        it('pasting multiple lines', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+            ||aaaaaa
+            bbbbbb
+            cccccc
+            dddddd]])
+        end)
+      end)
     end)
-    it('stream: Normal mode not at the end of a line', function()
-      feed('i||<Esc>0')
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('|aaaaaabbbbbbccccccdddddd|')
-      feed('u')
-      expect('||')
+    describe('stream: Visual mode', function()
+      describe('neither end at the end of a line', function()
+        before_each(function()
+          feed('i|xxx<CR>xxx|<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+          feed('hvhk')
+        end)
+        after_each(function()
+          feed('u')
+          expect([[
+          |xxx
+          xxx|]])
+        end)
+        it('with non-empty chunks', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('|aaaaaabbbbbbccccccdddddd|')
+        end)
+        it('with empty first chunk', function()
+          nvim('paste', '', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('|bbbbbbccccccdddddd|')
+        end)
+        it('with all chunks empty', function()
+          nvim('paste', '', false, 1)
+          nvim('paste', '', false, 2)
+          nvim('paste', '', false, 2)
+          nvim('paste', '', false, 3)
+          expect('||')
+        end)
+      end)
+      describe('cursor at the end of a line', function()
+        before_each(function()
+          feed('i||xxx<CR>xxx<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+          feed('vko')
+        end)
+        after_each(function()
+          feed('u')
+          expect([[
+            ||xxx
+            xxx]])
+        end)
+        it('with non-empty chunks', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('||aaaaaabbbbbbccccccdddddd')
+        end)
+        it('with empty first chunk', function()
+          nvim('paste', '', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('||bbbbbbccccccdddddd')
+        end)
+      end)
+      describe('other end at the end of a line', function()
+        before_each(function()
+          feed('i||xxx<CR>xxx<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+          feed('vk')
+        end)
+        after_each(function()
+          feed('u')
+          expect([[
+            ||xxx
+            xxx]])
+        end)
+        it('with non-empty chunks', function()
+          nvim('paste', 'aaaaaa', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('||aaaaaabbbbbbccccccdddddd')
+        end)
+        it('with empty first chunk', function()
+          nvim('paste', '', false, 1)
+          nvim('paste', 'bbbbbb', false, 2)
+          nvim('paste', 'cccccc', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect('||bbbbbbccccccdddddd')
+        end)
+      end)
     end)
-    it('stream: Normal mode not at the end of a line pasting multiple lines', function()
-      feed('i||<Esc>0')
-      nvim('paste', 'aaaaaa\n', false, 1)
-      nvim('paste', 'bbbbbb\n', false, 2)
-      nvim('paste', 'cccccc\n', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect([[
-        |aaaaaa
-        bbbbbb
-        cccccc
-        dddddd|]])
-      feed('u')
-      expect('||')
-    end)
-    it('stream: Normal mode at the end of a line', function()
-      feed('i||<Esc>')
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('||aaaaaabbbbbbccccccdddddd')
-      feed('u')
-      expect('||')
-    end)
-    it('stream: Normal mode at the end of a line pasting multiple lines', function()
-      feed('i||<Esc>')
-      nvim('paste', 'aaaaaa\n', false, 1)
-      nvim('paste', 'bbbbbb\n', false, 2)
-      nvim('paste', 'cccccc\n', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect([[
-        ||aaaaaa
-        bbbbbb
-        cccccc
-        dddddd]])
-      feed('u')
-      expect('||')
-    end)
-    it('stream: Visual mode neither end at the end of a line', function()
-      feed('i|xxx<CR>xxx|<Esc>hvhk')
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('|aaaaaabbbbbbccccccdddddd|')
-      feed('u')
-      expect([[
-        |xxx
-        xxx|]])
-    end)
-    it('stream: Visual mode neither end at the end of a line with empty first chunk', function()
-      feed('i|xxx<CR>xxx|<Esc>hvhk')
-      nvim('paste', '', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('|bbbbbbccccccdddddd|')
-      feed('u')
-      expect([[
-        |xxx
-        xxx|]])
-    end)
-    it('stream: Visual mode neither end at the end of a line with all chunks empty', function()
-      feed('i|xxx<CR>xxx|<Esc>hvhk')
-      nvim('paste', '', false, 1)
-      nvim('paste', '', false, 2)
-      nvim('paste', '', false, 2)
-      nvim('paste', '', false, 3)
-      expect('||')
-      feed('u')
-      expect([[
-        |xxx
-        xxx|]])
-    end)
-    it('stream: Visual mode cursor at the end of a line', function()
-      feed('i||xxx<CR>xxx<Esc>vko')
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('||aaaaaabbbbbbccccccdddddd')
-      feed('u')
-      expect([[
-        ||xxx
-        xxx]])
-    end)
-    it('stream: Visual mode cursor at the end of a line with empty first chunk', function()
-      feed('i||xxx<CR>xxx<Esc>vko')
-      nvim('paste', '', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('||bbbbbbccccccdddddd')
-      feed('u')
-      expect([[
-        ||xxx
-        xxx]])
-    end)
-    it('stream: Visual mode other end at the end of a line', function()
-      feed('i||xxx<CR>xxx<Esc>vk')
-      nvim('paste', 'aaaaaa', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('||aaaaaabbbbbbccccccdddddd')
-      feed('u')
-      expect([[
-        ||xxx
-        xxx]])
-    end)
-    it('stream: Visual mode other end at the end of a line with empty first chunk', function()
-      feed('i||xxx<CR>xxx<Esc>vk')
-      nvim('paste', '', false, 1)
-      nvim('paste', 'bbbbbb', false, 2)
-      nvim('paste', 'cccccc', false, 2)
-      nvim('paste', 'dddddd', false, 3)
-      expect('||bbbbbbccccccdddddd')
-      feed('u')
-      expect([[
-        ||xxx
-        xxx]])
+    describe('stream: linewise Visual mode', function()
+      before_each(function()
+        feed('i123456789<CR>987654321<CR>123456789<Esc>')
+        -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+        feed('afoo<Esc>u')
+      end)
+      after_each(function()
+        feed('u')
+        expect([[
+          123456789
+          987654321
+          123456789]])
+      end)
+      describe('selecting the start of a file', function()
+        before_each(function()
+          feed('ggV')
+        end)
+        it('pasting text without final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd987654321
+            123456789]])
+        end)
+        it('pasting text with final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd\n', false, 3)
+          expect([[
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd
+            987654321
+            123456789]])
+        end)
+      end)
+      describe('selecting the middle of a file', function()
+        before_each(function()
+          feed('2ggV')
+        end)
+        it('pasting text without final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+            123456789
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd123456789]])
+        end)
+        it('pasting text with final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd\n', false, 3)
+          expect([[
+            123456789
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd
+            123456789]])
+        end)
+      end)
+      describe('selecting the end of a file', function()
+        before_each(function()
+          feed('3ggV')
+        end)
+        it('pasting text without final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+            123456789
+            987654321
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd]])
+        end)
+        it('pasting text with final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd\n', false, 3)
+          expect([[
+            123456789
+            987654321
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd
+            ]])
+        end)
+      end)
+      describe('selecting the whole file', function()
+        before_each(function()
+          feed('ggVG')
+        end)
+        it('pasting text without final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd', false, 3)
+          expect([[
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd]])
+        end)
+        it('pasting text with final new line', function()
+          nvim('paste', 'aaaaaa\n', false, 1)
+          nvim('paste', 'bbbbbb\n', false, 2)
+          nvim('paste', 'cccccc\n', false, 2)
+          nvim('paste', 'dddddd\n', false, 3)
+          expect([[
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd
+            ]])
+        end)
+      end)
     end)
     it('non-streaming', function()
       -- With final "\n".
