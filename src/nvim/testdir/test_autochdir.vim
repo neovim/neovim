@@ -26,6 +26,34 @@ func Test_set_filename()
   call delete('samples/Xtest')
 endfunc
 
+func Test_set_filename_other_window()
+  CheckFunction test_autochdir
+  call ch_logfile('logfile', 'w')
+  let cwd = getcwd()
+  call test_autochdir()
+  call mkdir('Xa')
+  call mkdir('Xb')
+  call mkdir('Xc')
+  try
+    args Xa/aaa.txt Xb/bbb.txt
+    set acd
+    let winid = win_getid()
+    snext
+    call assert_equal('Xb', substitute(getcwd(), '.*/\([^/]*\)$', '\1', ''))
+    call win_execute(winid, 'file ' .. cwd .. '/Xc/ccc.txt')
+    call assert_equal('Xb', substitute(getcwd(), '.*/\([^/]*\)$', '\1', ''))
+  finally
+    set noacd
+    call chdir(cwd)
+    call delete('Xa', 'rf')
+    call delete('Xb', 'rf')
+    call delete('Xc', 'rf')
+    bwipe! aaa.txt
+    bwipe! bbb.txt
+    bwipe! ccc.txt
+  endtry
+endfunc
+
 func Test_verbose_pwd()
   CheckFunction test_autochdir
   let cwd = getcwd()
@@ -55,6 +83,8 @@ func Test_verbose_pwd()
   set noacd
   call assert_match('\[autochdir\].*testdir[/\\]Xautodir', execute('verbose pwd'))
   wincmd w
+  call assert_match('\[autochdir\].*testdir[/\\]Xautodir', execute('verbose pwd'))
+  execute 'cd' cwd
   call assert_match('\[global\].*testdir', execute('verbose pwd'))
   wincmd w
   call assert_match('\[window\].*testdir[/\\]Xautodir', execute('verbose pwd'))

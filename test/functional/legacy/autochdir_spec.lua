@@ -1,8 +1,12 @@
 local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, matches = helpers.clear, helpers.eq, helpers.matches
-local eval, command, call = helpers.eval, helpers.command, helpers.call
-local exec_capture = helpers.exec_capture
+local eval, command, call, meths = helpers.eval, helpers.command, helpers.call, helpers.meths
+local source, exec_capture = helpers.source, helpers.exec_capture
+
+local function expected_empty()
+  eq({}, meths.get_vvar('errors'))
+end
 
 describe('autochdir behavior', function()
   local dir = 'Xtest_functional_legacy_autochdir'
@@ -23,6 +27,38 @@ describe('autochdir behavior', function()
     command('w '..dir..'/Xtest')
     eq('Xtest', eval("expand('%')"))
     eq(dir, eval([[substitute(getcwd(), '.*[/\\]\(\k*\)', '\1', '')]]))
+  end)
+
+  it(':file in win_execute() does not cause wrong directory', function()
+    command('cd '..dir)
+    source([[
+      func Test_set_filename_other_window()
+        let cwd = getcwd()
+        call mkdir('Xa')
+        call mkdir('Xb')
+        call mkdir('Xc')
+        try
+          args Xa/aaa.txt Xb/bbb.txt
+          set acd
+          let winid = win_getid()
+          snext
+          call assert_equal('Xb', substitute(getcwd(), '.*/\([^/]*\)$', '\1', ''))
+          call win_execute(winid, 'file ' .. cwd .. '/Xc/ccc.txt')
+          call assert_equal('Xb', substitute(getcwd(), '.*/\([^/]*\)$', '\1', ''))
+        finally
+          set noacd
+          call chdir(cwd)
+          call delete('Xa', 'rf')
+          call delete('Xb', 'rf')
+          call delete('Xc', 'rf')
+          bwipe! aaa.txt
+          bwipe! bbb.txt
+          bwipe! ccc.txt
+        endtry
+      endfunc
+    ]])
+    call('Test_set_filename_other_window')
+    expected_empty()
   end)
 
   it(':verbose pwd shows whether autochdir is used', function()
@@ -51,6 +87,8 @@ describe('autochdir behavior', function()
     command('set noautochdir')
     matches('%[autochdir%].*'..dir..'[/\\]'..subdir, exec_capture('verbose pwd'))
     command('wincmd w')
+    matches('%[autochdir%].*'..dir..'[/\\]'..subdir, exec_capture('verbose pwd'))
+    command('cd '..cwd)
     matches('%[global%].*'..dir, exec_capture('verbose pwd'))
     command('wincmd w')
     matches('%[window%].*'..dir..'[/\\]'..subdir, exec_capture('verbose pwd'))
