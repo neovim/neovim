@@ -630,6 +630,10 @@ describe('API', function()
   end)
 
   describe('nvim_paste', function()
+    before_each(function()
+      -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+      feed('ifoo<Esc>u')
+    end)
     it('validates args', function()
       eq('Invalid phase: -2',
         pcall_err(request, 'nvim_paste', 'foo', true, -2))
@@ -702,13 +706,37 @@ describe('API', function()
       feed('u')
       expect('||')
     end)
-    it('stream: Visual mode either end not at the end of a line', function()
+    it('stream: Visual mode neither end at the end of a line', function()
       feed('i|xxx<CR>xxx|<Esc>hvhk')
       nvim('paste', 'aaaaaa', false, 1)
       nvim('paste', 'bbbbbb', false, 2)
       nvim('paste', 'cccccc', false, 2)
       nvim('paste', 'dddddd', false, 3)
       expect('|aaaaaabbbbbbccccccdddddd|')
+      feed('u')
+      expect([[
+        |xxx
+        xxx|]])
+    end)
+    it('stream: Visual mode neither end at the end of a line with empty first chunk', function()
+      feed('i|xxx<CR>xxx|<Esc>hvhk')
+      nvim('paste', '', false, 1)
+      nvim('paste', 'bbbbbb', false, 2)
+      nvim('paste', 'cccccc', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect('|bbbbbbccccccdddddd|')
+      feed('u')
+      expect([[
+        |xxx
+        xxx|]])
+    end)
+    it('stream: Visual mode neither end at the end of a line with all chunks empty', function()
+      feed('i|xxx<CR>xxx|<Esc>hvhk')
+      nvim('paste', '', false, 1)
+      nvim('paste', '', false, 2)
+      nvim('paste', '', false, 2)
+      nvim('paste', '', false, 3)
+      expect('||')
       feed('u')
       expect([[
         |xxx
@@ -726,6 +754,18 @@ describe('API', function()
         ||xxx
         xxx]])
     end)
+    it('stream: Visual mode cursor at the end of a line with empty first chunk', function()
+      feed('i||xxx<CR>xxx<Esc>vko')
+      nvim('paste', '', false, 1)
+      nvim('paste', 'bbbbbb', false, 2)
+      nvim('paste', 'cccccc', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect('||bbbbbbccccccdddddd')
+      feed('u')
+      expect([[
+        ||xxx
+        xxx]])
+    end)
     it('stream: Visual mode other end at the end of a line', function()
       feed('i||xxx<CR>xxx<Esc>vk')
       nvim('paste', 'aaaaaa', false, 1)
@@ -733,6 +773,18 @@ describe('API', function()
       nvim('paste', 'cccccc', false, 2)
       nvim('paste', 'dddddd', false, 3)
       expect('||aaaaaabbbbbbccccccdddddd')
+      feed('u')
+      expect([[
+        ||xxx
+        xxx]])
+    end)
+    it('stream: Visual mode other end at the end of a line with empty first chunk', function()
+      feed('i||xxx<CR>xxx<Esc>vk')
+      nvim('paste', '', false, 1)
+      nvim('paste', 'bbbbbb', false, 2)
+      nvim('paste', 'cccccc', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect('||bbbbbbccccccdddddd')
       feed('u')
       expect([[
         ||xxx
@@ -816,6 +868,19 @@ describe('API', function()
       nvim('paste', 'aabbccdd', true, -1)
       eq('aabbccdd', funcs.getcmdline())
       expect('')
+    end)
+    it('pasting with empty last chunk in Cmdline mode', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      feed(':')
+      nvim('paste', 'Foo', true, 1)
+      nvim('paste', '', true, 3)
+      screen:expect([[
+                            |
+        ~                   |
+        ~                   |
+        :Foo^                |
+      ]])
     end)
     it('crlf=false does not break lines at CR, CRLF', function()
       nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)

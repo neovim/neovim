@@ -128,7 +128,7 @@ local function inspect(object, options)  -- luacheck: no unused
 end
 
 do
-  local tdots, tick, got_line1 = 0, 0, false
+  local tdots, tick, got_line1, undo_started = 0, 0, false, false
 
   --- Paste handler, invoked by |nvim_paste()| when a conforming UI
   --- (such as the |TUI|) pastes text into the editor.
@@ -158,8 +158,17 @@ do
   function vim.paste(lines, phase)
     local now = vim.loop.now()
     local is_first_chunk = phase < 2
+    local is_last_chunk = phase == -1 or phase == 3
     if is_first_chunk then  -- Reset flags.
-      tdots, tick, got_line1 = now, 0, false
+      tdots, tick, got_line1, undo_started = now, 0, false, false
+    end
+    if #lines == 0 then
+      lines = {''}
+    end
+    if #lines == 1 and lines[1] == '' and not is_last_chunk then
+      -- An empty chunk can cause some edge cases in streamed pasting,
+      -- so don't do anything unless it is the last chunk.
+      return true
     end
     -- Note: mode doesn't always start with "c" in cmdline mode, so use getcmdtype() instead.
     if vim.fn.getcmdtype() ~= '' then  -- cmdline-mode: paste only 1 line.
@@ -173,7 +182,7 @@ do
       return true
     end
     local mode = vim.api.nvim_get_mode().mode
-    if not is_first_chunk then
+    if undo_started then
       vim.api.nvim_command('undojoin')
     end
     if mode:find('^i') or mode:find('^n?t') then  -- Insert mode or Terminal buffer
@@ -190,7 +199,6 @@ do
       local firstline = lines[1]
       firstline = bufline:sub(1, col)..firstline
       lines[1] = firstline
-      -- FIXME: #lines can be 0
       lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
       vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
     elseif mode:find('^[nvV\22sS\19]') then  -- Normal or Visual or Select mode
@@ -216,6 +224,7 @@ do
     else  -- Don't know what to do in other modes
       return false
     end
+    undo_started = true
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
       tdots = now
@@ -224,7 +233,7 @@ do
       -- message when there are zero dots.
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
-    if phase == -1 or phase == 3 then
+    if is_last_chunk then
       vim.api.nvim_command('redraw'..(tick > 1 and '|echo ""' or ''))
     end
     return true  -- Paste will not continue if not returning `true`.
