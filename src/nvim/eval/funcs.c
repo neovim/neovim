@@ -11410,14 +11410,14 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     break;
   case 'u': {
-    int len = STRLEN(what);
+    const size_t len = STRLEN(what);
     if (len <= 5 || (TOLOWER_ASC(what[5]) == 'l' && len <= 9)) {  // underline
       p = highlight_has_attr(id, HL_UNDERCURL, modec);
     } else if (TOLOWER_ASC(what[5]) == 'c') {  // undercurl
        p = highlight_has_attr(id, HL_UNDERCURL, modec);
     } else if (len > 9 && TOLOWER_ASC(what[9]) == 'l') {  // underlineline
        p = highlight_has_attr(id, HL_UNDERLINELINE, modec);
-    } else if (len > 5 && TOLOWER_ASC(what[6]) == 'o') {  // underdot
+    } else if (len > 6 && TOLOWER_ASC(what[6]) == 'o') {  // underdot
        p = highlight_has_attr(id, HL_UNDERDOT, modec);
     } else {  // underdash
        p = highlight_has_attr(id, HL_UNDERDASH, modec);
