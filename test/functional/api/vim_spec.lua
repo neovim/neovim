@@ -686,6 +686,19 @@ describe('API', function()
       feed('u')
       expect('')
     end)
+    it('stream: Normal mode on empty line pasting multiple lines', function()
+      nvim('paste', 'aaaaaa\n', false, 1)
+      nvim('paste', 'bbbbbb\n', false, 2)
+      nvim('paste', 'cccccc\n', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect([[
+        aaaaaa
+        bbbbbb
+        cccccc
+        dddddd]])
+      feed('u')
+      expect('')
+    end)
     it('stream: Normal mode not at the end of a line', function()
       feed('i||<Esc>0')
       nvim('paste', 'aaaaaa', false, 1)
@@ -696,6 +709,20 @@ describe('API', function()
       feed('u')
       expect('||')
     end)
+    it('stream: Normal mode not at the end of a line pasting multiple lines', function()
+      feed('i||<Esc>0')
+      nvim('paste', 'aaaaaa\n', false, 1)
+      nvim('paste', 'bbbbbb\n', false, 2)
+      nvim('paste', 'cccccc\n', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect([[
+        |aaaaaa
+        bbbbbb
+        cccccc
+        dddddd|]])
+      feed('u')
+      expect('||')
+    end)
     it('stream: Normal mode at the end of a line', function()
       feed('i||<Esc>')
       nvim('paste', 'aaaaaa', false, 1)
@@ -703,6 +730,20 @@ describe('API', function()
       nvim('paste', 'cccccc', false, 2)
       nvim('paste', 'dddddd', false, 3)
       expect('||aaaaaabbbbbbccccccdddddd')
+      feed('u')
+      expect('||')
+    end)
+    it('stream: Normal mode at the end of a line pasting multiple lines', function()
+      feed('i||<Esc>')
+      nvim('paste', 'aaaaaa\n', false, 1)
+      nvim('paste', 'bbbbbb\n', false, 2)
+      nvim('paste', 'cccccc\n', false, 2)
+      nvim('paste', 'dddddd', false, 3)
+      expect([[
+        ||aaaaaa
+        bbbbbb
+        cccccc
+        dddddd]])
       feed('u')
       expect('||')
     end)

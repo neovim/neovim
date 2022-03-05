@@ -128,7 +128,7 @@ local function inspect(object, options)  -- luacheck: no unused
 end
 
 do
-  local tdots, tick, got_line1, undo_started = 0, 0, false, false
+  local tdots, tick, got_line1, undo_started, trailing_nl = 0, 0, false, false, false
 
   --- Paste handler, invoked by |nvim_paste()| when a conforming UI
   --- (such as the |TUI|) pastes text into the editor.
@@ -160,7 +160,7 @@ do
     local is_first_chunk = phase < 2
     local is_last_chunk = phase == -1 or phase == 3
     if is_first_chunk then  -- Reset flags.
-      tdots, tick, got_line1, undo_started = now, 0, false, false
+      tdots, tick, got_line1, undo_started, trailing_nl = now, 0, false, false, false
     end
     if #lines == 0 then
       lines = {''}
@@ -203,7 +203,10 @@ do
       vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
     elseif mode:find('^[nvV\22sS\19]') then  -- Normal or Visual or Select mode
       if mode:find('^n') then  -- Normal mode
-        vim.api.nvim_put(lines, 'c', true, false)
+        -- When there was a trailing new line in the previous chunk,
+        -- the cursor is on the first character of the next line,
+        -- so paste before the cursor instead of after it.
+        vim.api.nvim_put(lines, 'c', not trailing_nl, false)
       else  -- Visual or Select mode
         vim.api.nvim_command([[exe "silent normal! \<Del>"]])
         local del_start = vim.fn.getpos("'[")
@@ -221,6 +224,7 @@ do
       end
       -- put cursor at the end of the text instead of one character after it
       vim.fn.setpos('.', vim.fn.getpos("']"))
+      trailing_nl = lines[#lines] == ''
     else  -- Don't know what to do in other modes
       return false
     end
