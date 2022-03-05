@@ -528,7 +528,7 @@ static bool attrs_differ(UI *ui, int id1, int id2, bool rgb)
     return a1.cterm_fg_color != a2.cterm_fg_color
            || a1.cterm_bg_color != a2.cterm_bg_color
            || a1.cterm_ae_attr != a2.cterm_ae_attr
-           || (a1.cterm_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)
+           || (a1.cterm_ae_attr & HL_ANY_UNDERLINE
                && a1.rgb_sp_color != a2.rgb_sp_color);
   }
 }
@@ -552,14 +552,26 @@ static void update_attrs(UI *ui, int attr_id)
   bool strikethrough = attr & HL_STRIKETHROUGH;
 
   bool underline;
+  bool underlineline;
   bool undercurl;
+  bool underdot;
+  bool underdash;
   if (data->unibi_ext.set_underline_style != -1) {
     underline = attr & HL_UNDERLINE;
+    underlineline = attr & HL_UNDERLINELINE;
     undercurl = attr & HL_UNDERCURL;
+    underdash = attr & HL_UNDERDASH;
+    underdot = attr & HL_UNDERDOT;
   } else {
-    underline = (attr & HL_UNDERLINE) || (attr & HL_UNDERCURL);
+    underline = attr & HL_ANY_UNDERLINE;
+    underlineline = false;
     undercurl = false;
+    underdot = false;
+    underdash = false;
   }
+
+  bool has_any_underline = undercurl || underline
+                           || underdot || underdash || underlineline;
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
     if (bold || reverse || underline || standout) {
@@ -599,11 +611,24 @@ static void update_attrs(UI *ui, int attr_id)
   if (strikethrough && data->unibi_ext.enter_strikethrough_mode != -1) {
     unibi_out_ext(ui, data->unibi_ext.enter_strikethrough_mode);
   }
+  if (underlineline && data->unibi_ext.set_underline_style != -1) {
+    UNIBI_SET_NUM_VAR(data->params[0], 2);
+    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
+  }
   if (undercurl && data->unibi_ext.set_underline_style != -1) {
     UNIBI_SET_NUM_VAR(data->params[0], 3);
     unibi_out_ext(ui, data->unibi_ext.set_underline_style);
   }
-  if ((undercurl || underline) && data->unibi_ext.set_underline_color != -1) {
+  if (underdot && data->unibi_ext.set_underline_style != -1) {
+    UNIBI_SET_NUM_VAR(data->params[0], 4);
+    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
+  }
+  if (underdash && data->unibi_ext.set_underline_style != -1) {
+    UNIBI_SET_NUM_VAR(data->params[0], 5);
+    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
+  }
+
+  if (has_any_underline && data->unibi_ext.set_underline_color != -1) {
     int color = attrs.rgb_sp_color;
     if (color != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], (color >> 16) & 0xff);  // red
@@ -652,13 +677,13 @@ static void update_attrs(UI *ui, int attr_id)
 
 
   data->default_attr = fg == -1 && bg == -1
-                       && !bold && !italic && !underline && !undercurl && !reverse && !standout
+                       && !bold && !italic && !has_any_underline && !reverse && !standout
                        && !strikethrough;
 
   // Non-BCE terminals can't clear with non-default background color. Some BCE
   // terminals don't support attributes either, so don't rely on it. But assume
   // italic and bold has no effect if there is no text.
-  data->can_clear_attr = !reverse && !standout && !underline && !undercurl
+  data->can_clear_attr = !reverse && !standout && !has_any_underline
                          && !strikethrough && (data->bce || bg == -1);
 }
 

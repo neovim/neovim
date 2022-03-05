@@ -558,7 +558,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     cattrs = battrs;
     cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
                                     fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
+    if (cattrs.rgb_ae_attr & (HL_ANY_UNDERLINE)) {
       cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
                                       fattrs.rgb_bg_color);
     } else {
@@ -576,7 +576,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     }
     cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
+    if (cattrs.rgb_ae_attr & (HL_ANY_UNDERLINE)) {
       cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
                                       fattrs.rgb_sp_color);
     } else {
@@ -743,9 +743,22 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_UNDERLINELINE) {
+    PUT(hl, "underlineline", BOOLEAN_OBJ(true));
+  }
+
   if (mask & HL_UNDERCURL) {
     PUT(hl, "undercurl", BOOLEAN_OBJ(true));
   }
+
+  if (mask & HL_UNDERDOT) {
+    PUT(hl, "underdot", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_UNDERDASH) {
+    PUT(hl, "underdash", BOOLEAN_OBJ(true));
+  }
+
 
   if (mask & HL_ITALIC) {
     PUT(hl, "italic", BOOLEAN_OBJ(true));
@@ -813,7 +826,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, bold, , HL_BOLD);
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
+  CHECK_FLAG(dict, mask, underlineline, , HL_UNDERLINELINE);
   CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
+  CHECK_FLAG(dict, mask, underdot, , HL_UNDERDOT);
+  CHECK_FLAG(dict, mask, underdash, , HL_UNDERDASH);
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);

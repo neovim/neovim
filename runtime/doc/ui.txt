@@ -283,19 +283,24 @@ numerical highlight ids to the actual attributes.
 	attributes specified by the `rgb_attr` and `cterm_attr` dicts, with the
 	following (all optional) keys.
 
-	`foreground`:	foreground color.
-	`background`:	background color.
-	`special`:	color to use for underline and undercurl, when present.
-	`reverse`:	reverse video. Foreground and background colors are
-			switched.
-	`italic`:	italic text.
-	`bold`:		bold text.
-	`strikethrough`:  struckthrough text.
-	`underline`:	underlined text. The line has `special` color.
-	`undercurl`:	undercurled text. The curl has `special` color.
-	`blend`:	Blend level (0-100). Could be used by UIs to support
-			blending floating windows to the background or to
-			signal a transparent cursor.
+	`foreground`:		foreground color.
+	`background`:		background color.
+	`special`:		color to use for various underlines, when
+				present.
+	`reverse`:		reverse video. Foreground and background colors
+				are switched.
+	`italic`:		italic text.
+	`bold`:			bold text.
+	`strikethrough`:	struckthrough text.
+	`underline`:		underlined text. The line has `special` color.
+	`underlineline`:	double underlined text. The lines have `special`
+				color.
+	`undercurl`:		undercurled text. The curl has `special` color.
+	`underdot`:		underdotted text. The dots have `special` color.
+	`underdash`:		underdashed text. The dashes have `special` color.
+	`blend`:		Blend level (0-100). Could be used by UIs to
+				support blending floating windows to the
+				background or to signal a transparent cursor.
 
 	For absent color keys the default color should be used. Don't store
 	the default value in the table, rather a sentinel value, so that
@@ -444,14 +449,17 @@ is not active. New UIs should implement |ui-linegrid| instead.
 
 	`foreground`:	foreground color.
 	`background`:	background color.
-	`special`:	color to use for underline and undercurl, when present.
+	`special`:	color to use for various underlines, when present.
 	`reverse`:	reverse video. Foreground and background colors are
 			switched.
 	`italic`:	italic text.
 	`bold`:		bold text.
 	`strikethrough`:  struckthrough text.
 	`underline`:	underlined text. The line has `special` color.
+	`underlineline`:  double underlined text. The lines have `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
+	`underdot`:	underdotted text. The dots have `special` color.
+	`underdash`:	underdashed text. The dashes have `special` color.
 
 ["put", text]
 	The (utf-8 encoded) string `text` is put at the cursor position

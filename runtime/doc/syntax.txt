@@ -4875,7 +4875,8 @@ the same syntax file on all UIs.
 
 1. TUI highlight arguments
 
-					*bold* *underline* *undercurl*
+					*bold* *underline* *underlineline*
+					*undercurl* *underdot* *underdash*
 					*inverse* *italic* *standout*
 					*nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
@@ -4883,7 +4884,10 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	following items (in any order):
 		bold
 		underline
+		underlineline	double underline
 		undercurl	curly underline
+		underdot	dotted underline
+		underdash	dashed underline
 		strikethrough
 		reverse
 		inverse		same as reverse
@@ -4894,8 +4898,9 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	"undercurl" falls back to "underline" in a terminal that does not
-	support it.  The color is set using |highlight-guisp|.
+	"underlineline", "undercurl", "underdot", and "underdash" fall back
+	to "underline" in a terminal that does not support them. The color is
+	set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -5028,8 +5033,8 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	These give the foreground (guifg), background (guibg) and special
-	(guisp) color to use in the GUI.  "guisp" is used for undercurl
-	and underline.
+	(guisp) color to use in the GUI.  "guisp" is used for various
+	underlines.
 	There are a few special names:
 		NONE		no color (transparent)
 		bg		use normal background color

@@ -121,11 +121,11 @@ static int include_link = 0;    // when 2 include "nvim/link" and "clear"
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-{ "bold", "standout", "underline", "undercurl",
-  "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+{ "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
+  "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
-{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
-  HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
+  HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
 
