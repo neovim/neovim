@@ -4858,7 +4858,6 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   long numval;
   char_u *stringval;
   int opt_type;
-  int c;
   bool working = (**arg == '+');  // has("+option")
   int ret = OK;
   int opt_flags;
@@ -4877,7 +4876,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
     return OK;
   }
 
-  c = *option_end;
+  char c = *option_end;
   *option_end = NUL;
   opt_type = get_option_value(*arg, &numval,
                               rettv == NULL ? NULL : &stringval, opt_flags);

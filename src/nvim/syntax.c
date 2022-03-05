@@ -4208,7 +4208,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       p = flagtab[fidx].name;
       int i;
       for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
-        if (arg[len] != p[i] && arg[len] != p[i + 1]) {
+        if (arg[len] != (char_u)p[i] && arg[len] != (char_u)p[i + 1]) {
           break;
         }
       }

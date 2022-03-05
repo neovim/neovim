@@ -823,7 +823,6 @@ static void command_line_scan(mparm_T *parmp)
   bool had_stdin_file = false;          // found explicit "-" argument
   bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
-  int c;
   long n;
 
   argc--;
@@ -845,7 +844,7 @@ static void command_line_scan(mparm_T *parmp)
       // Optional argument.
     } else if (argv[0][0] == '-' && !had_minmin) {
       want_argument = false;
-      c = argv[0][argv_idx++];
+      char c = argv[0][argv_idx++];
       switch (c) {
       case NUL:    // "nvim -"  read from stdin
         if (exmode_active) {

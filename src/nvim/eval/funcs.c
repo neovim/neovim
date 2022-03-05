@@ -8296,7 +8296,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   // Repeat until {skip} returns false.
   for (;;) {
     subpatnum
-        = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
+      = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1, options, RE_SEARCH, &sia);
     // finding the first match again means there is no match where {skip}
     // evaluates to zero.
     if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
@@ -9339,7 +9339,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
 {
   static char *e_invact = N_("E927: Invalid action: '%s'");
   const char *title = NULL;
-  int action = ' ';
+  char action = ' ';
   static int recursive = 0;
   rettv->vval.v_number = -1;
   dict_T *what = NULL;
@@ -9569,7 +9569,6 @@ static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *c
  */
 static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int regname;
   bool append = false;
   MotionType yank_type;
   long block_len;
@@ -9583,13 +9582,13 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (strregname == NULL) {
     return;  // Type error; errmsg already given.
   }
-  regname = (uint8_t)(*strregname);
+  char regname = (uint8_t)(*strregname);
   if (regname == 0 || regname == '@') {
     regname = '"';
   }
 
   const typval_T *regcontents = NULL;
-  int pointreg = 0;
+  char pointreg = 0;
   if (argvars[1].v_type == VAR_DICT) {
     dict_T *const d = argvars[1].vval.v_dict;
 
@@ -9759,7 +9758,7 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   static char *e_invact2 = N_("E962: Invalid action: '%s'");
   win_T *wp;
   dict_T *d;
-  int action = 'r';
+  char action = 'r';
 
   rettv->vval.v_number = -1;
 

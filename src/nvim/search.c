@@ -1071,7 +1071,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
    * Find out the direction of the search.
    */
   if (dirc == 0) {
-    dirc = spats[0].off.dir;
+    dirc = (char_u)spats[0].off.dir;
   } else {
     spats[0].off.dir = dirc;
     set_vv_searchforward();
