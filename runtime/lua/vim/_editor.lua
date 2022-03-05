@@ -192,8 +192,19 @@ do
         if mode:find('^n') then  -- Normal mode
           vim.api.nvim_put(lines, 'c', true, false)
         else  -- Visual or Select mode
-          vim.api.nvim_command([[exe "normal! \<Del>"]])
-          vim.api.nvim_put(lines, 'c', false, false)
+          vim.api.nvim_command([[exe "silent normal! \<Del>"]])
+          local del_start = vim.fn.getpos("'[")
+          local cursor_pos = vim.fn.getpos('.')
+          if mode:find('^[VS]') then  -- linewise
+            if cursor_pos[2] < del_start[2] then  -- replacing lines at eof
+              -- create a new line
+              vim.api.nvim_put({''}, 'l', true, true)
+            end
+            vim.api.nvim_put(lines, 'c', false, false)
+          else
+            -- paste after cursor when replacing text at eol, otherwise paste before cursor
+            vim.api.nvim_put(lines, 'c', cursor_pos[3] < del_start[3], false)
+          end
         end
         -- put cursor at the end of the text instead of one character after it
         vim.fn.setpos('.', vim.fn.getpos("']"))
