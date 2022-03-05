@@ -48,5 +48,18 @@ end
 -- Insert vim._load_package after the preloader at position 2
 table.insert(package.loaders, 2, vim._load_package)
 
--- should always be available
+-- builtin functions which always should be available
+require'vim.shared'
 vim.inspect = require'vim.inspect'
+
+--- <Docs described in |vim.empty_dict()| >
+---@private
+--- TODO: should be in vim.shared when vim.shared always uses nvim-lua
+function vim.empty_dict()
+  return setmetatable({}, vim._empty_dict_mt)
+end
+
+-- only on main thread: functions for interacting with editor state
+if not vim.is_thread() then
+  require'vim._editor'
+end

@@ -34,8 +34,7 @@
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
-local vim = vim
-assert(vim)
+local vim = assert(vim)
 assert(vim.inspect)
 
 -- These are for loading runtime modules lazily since they aren't available in
@@ -242,12 +241,6 @@ function vim.schedule_wrap(cb)
     local args = vim.F.pack_len(...)
     vim.schedule(function() cb(vim.F.unpack_len(args)) end)
   end)
-end
-
---- <Docs described in |vim.empty_dict()| >
----@private
-function vim.empty_dict()
-  return setmetatable({}, vim._empty_dict_mt)
 end
 
 -- vim.fn.{func}(...)
