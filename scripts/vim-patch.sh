@@ -36,7 +36,7 @@ usage() {
   echo "                       can be a Vim version (8.0.xxx) or a Git hash."
   echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
   echo "    -g {vim-revision}  Download a Vim patch."
-  echo "    -s                 Create a vim-patch pull request."
+  echo "    -s [pr args]       Create a vim-patch pull request."
   echo "    -r {pr-number}     Review a vim-patch pull request."
   echo "    -V                 Clone the Vim source code to \$VIM_SOURCE_DIR."
   echo
@@ -329,7 +329,8 @@ stage_patch() {
     * Do this only for _related_ patches (otherwise it increases the
       size of the pull request, making it harder to review)
 
-  When you are done, try "%s -s" to create the pull request.
+  When you are done, try "%s -s" to create the pull request,
+  or "%s -s --draft" to create a draft pull request.
 
   See the wiki for more information:
     * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
@@ -338,13 +339,19 @@ stage_patch() {
 }
 
 gh_pr() {
-  gh pr create --title "$1" --body "$2"
+  local pr_title
+  local pr_body
+  pr_title="$1"
+  pr_body="$2"
+  shift 2
+  gh pr create --title "${pr_title}" --body "${pr_body}" "$@"
 }
 
 git_hub_pr() {
   local pr_message
   pr_message="$(printf '%s\n\n%s\n' "$1" "$2")"
-  git hub pull new -m "${pr_message}"
+  shift 2
+  git hub pull new -m "${pr_message}" "$@"
 }
 
 submit_pr() {
@@ -408,7 +415,7 @@ submit_pr() {
   fi
 
   echo "Creating pull request."
-  if output="$($submit_fn "$pr_title" "$pr_body" 2>&1)"; then
+  if output="$($submit_fn "$pr_title" "$pr_body" "$@" 2>&1)"; then
     msg_ok "$output"
   else
     msg_err "$output"
@@ -799,7 +806,8 @@ while getopts "hlLmMVp:P:g:r:s" opt; do
       exit 0
       ;;
     s)
-      submit_pr
+      shift  # remove opt
+      submit_pr "$@"
       exit 0
       ;;
     V)
