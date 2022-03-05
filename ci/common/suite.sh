@@ -38,11 +38,3 @@ end_tests() {
   touch "${END_MARKER}"
   ended_successfully
 }
-
-run_suite() {
-  local command="$1"
-  local suite_name="$2"
-
-  rm -f "${END_MARKER}"
-  eval "$command" || fail "$suite_name"
-}
