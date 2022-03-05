@@ -10,41 +10,26 @@ source "${CI_DIR}/common/suite.sh"
 
 rm -f "$END_MARKER"
 
-if [[ "$GITHUB_ACTIONS" != "true" ]]; then
-  build_nvim || fail 'build'
+# Run all tests (with some caveats) if no input argument is given
+if (($# == 0)); then
+  tests=('build_nvim')
 
   if test "$CLANG_SANITIZER" != "TSAN"; then
     # Additional threads are only created when the builtin UI starts, which
     # doesn't happen in the unit/functional tests
     if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
-      run_unittests || fail 'unittests'
+      tests+=('unittests')
     fi
-    run_functionaltests || fail 'functionaltests'
+    tests+=('functionaltests')
   fi
-  run_oldtests || fail 'oldtests'
-  install_nvim || fail 'install_nvim'
 
-  end_tests
+  tests+=('oldtests' 'install_nvim')
 else
-  case "$1" in
-    build)
-      build_nvim || fail 'build'
-      ;;
-    unittests)
-      run_unittests || fail 'unittests'
-      ;;
-    functionaltests)
-      run_functionaltests || fail 'functionaltests'
-      ;;
-    oldtests)
-      run_oldtests || fail 'oldtests'
-      ;;
-    install_nvim)
-      install_nvim || fail 'install_nvim'
-      ;;
-    *)
-      :;;
-  esac
-
-  end_tests
+  tests=("$@")
 fi
+
+for i in "${tests[@]}"; do
+  eval "$i" || fail "$i"
+done
+
+end_tests

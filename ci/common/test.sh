@@ -86,7 +86,7 @@ check_sanitizer() {
   fi
 }
 
-run_unittests() {(
+unittests() {(
   ulimit -c unlimited || true
   if ! build_make unittest ; then
     fail 'unittests' 'Unit tests failed'
@@ -95,7 +95,7 @@ run_unittests() {(
   check_core_dumps "$(command -v luajit)"
 )}
 
-run_functionaltests() {(
+functionaltests() {(
   ulimit -c unlimited || true
   if ! build_make ${FUNCTIONALTEST}; then
     fail 'functionaltests' 'Functional tests failed'
@@ -106,7 +106,7 @@ run_functionaltests() {(
   check_core_dumps
 )}
 
-run_oldtests() {(
+oldtests() {(
   ulimit -c unlimited || true
   if ! make oldtest; then
     reset
