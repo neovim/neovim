@@ -171,27 +171,34 @@ do
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
     elseif not is_cmdline then
-      if phase < 2 and mode:find('^[vV\22sS\19]') then
-        vim.api.nvim_command([[exe "normal! \<Del>"]])
+      if mode:find('^i') or mode:find('^n?t') then  -- Insert mode or Terminal buffer
         vim.api.nvim_put(lines, 'c', false, true)
-      elseif phase < 2 and not mode:find('^[iRt]') then
-        vim.api.nvim_put(lines, 'c', true, true)
-        -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
-        vim.api.nvim_command('normal! a')
-      elseif phase < 2 and mode:find('^R') then
+      elseif phase < 2 and mode:find('^R') and not mode:find('^Rv') then  -- Replace mode
+        -- TODO: implement Replace mode streamed pasting
+        -- TODO: support Virtual Replace mode
         local nchars = 0
         for _, line in ipairs(lines) do
-            nchars = nchars + line:len()
+          nchars = nchars + line:len()
         end
         local row, col = unpack(vim.api.nvim_win_get_cursor(0))
         local bufline = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
         local firstline = lines[1]
         firstline = bufline:sub(1, col)..firstline
         lines[1] = firstline
+        -- FIXME: #lines can be 0
         lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
         vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
-      else
-        vim.api.nvim_put(lines, 'c', false, true)
+      elseif mode:find('^[nvV\22sS\19]') then  -- Normal or Visual or Select mode
+        if mode:find('^n') then  -- Normal mode
+          vim.api.nvim_put(lines, 'c', true, false)
+        else  -- Visual or Select mode
+          vim.api.nvim_command([[exe "normal! \<Del>"]])
+          vim.api.nvim_put(lines, 'c', false, false)
+        end
+        -- put cursor at the end of the text instead of one character after it
+        vim.fn.setpos('.', vim.fn.getpos("']"))
+      else  -- Don't know what to do in other modes
+        return false
       end
     end
     if phase ~= -1 and (now - tdots >= 100) then
