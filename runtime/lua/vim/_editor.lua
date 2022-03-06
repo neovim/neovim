@@ -3,9 +3,11 @@
 -- Lua code lives in one of three places:
 --    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
 --       `inspect` and `lpeg` modules.
---    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
---       (This will go away if we migrate to nvim as the test-runner.)
---    3. runtime/lua/vim/_editor.lua: Compiled-into Nvim itself.
+--    2. runtime/lua/vim/shared.lua: pure lua functions which always
+--       are available. Used in the test runner, as well as worker threads
+--       and processes launched from Nvim.
+--    3. runtime/lua/vim/_editor.lua: Code which directly interacts with
+--       the Nvim editor state. Only available in the main thread.
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
@@ -35,43 +37,19 @@
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
 local vim = assert(vim)
-assert(vim.inspect)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
-setmetatable(vim, {
-  __index = function(t, key)
-    if key == 'treesitter' then
-      t.treesitter = require('vim.treesitter')
-      return t.treesitter
-    elseif key == 'filetype' then
-      t.filetype = require('vim.filetype')
-      return t.filetype
-    elseif key == 'F' then
-      t.F = require('vim.F')
-      return t.F
-    elseif require('vim.uri')[key] ~= nil then
-      -- Expose all `vim.uri` functions on the `vim` module.
-      t[key] = require('vim.uri')[key]
-      return t[key]
-    elseif key == 'lsp' then
-      t.lsp = require('vim.lsp')
-      return t.lsp
-    elseif key == 'highlight' then
-      t.highlight = require('vim.highlight')
-      return t.highlight
-    elseif key == 'diagnostic' then
-      t.diagnostic = require('vim.diagnostic')
-      return t.diagnostic
-    elseif key == 'keymap' then
-      t.keymap = require('vim.keymap')
-      return t.keymap
-    elseif key == 'ui' then
-      t.ui = require('vim.ui')
-      return t.ui
-    end
-  end
-})
+for k,v in pairs {
+  treesitter=true;
+  filetype = true;
+  F=true;
+  lsp=true;
+  highlight=true;
+  diagnostic=true;
+  keymap=true;
+  ui=true;
+} do vim._submodules[k] = v end
 
 vim.log = {
   levels = {
