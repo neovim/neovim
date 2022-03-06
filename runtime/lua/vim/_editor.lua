@@ -48,6 +48,7 @@ for k,v in pairs {
   highlight=true;
   diagnostic=true;
   keymap=true;
+  subprocess=true;
   ui=true;
 } do vim._submodules[k] = v end
 

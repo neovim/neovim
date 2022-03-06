@@ -2039,4 +2039,53 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                 See also: ~
                     |nvim_set_keymap()|
 
+
+==============================================================================
+Lua module: subprocess                                        *lua-subprocess*
+
+subprocess({spec}, {on_exit})                    *vim.subprocess.subprocess()*
+                Run a subprocess
+
+                Convenience wrapper for vim.loop.spawn with automatic IO
+                handling.
+
+                Examples: >
+
+                  local on_exit = function(code, signal, stdout, stderr)
+                    print(code)
+                    print(signal)
+                    print(stdout)
+                    print(stderr)
+                  end
+
+                  vim.subprocess('echo hello', on_exit)
+                  vim.subprocess({'echo', 'hello'}, on_exit)
+                  vim.subprocess({command = 'echo', args = {'hello'}}, on_exit)
+<
+
+                When passed as a keyed table, accepts all options as
+                vim.loop.spawn in addition to:
+                • command: (string) command to execute
+                • input: (string|string array) cannot be used with stdin
+                • stdin: (uv_pipe_t) cannot be used with input
+                • stdout: (uv_pipe_t)
+                • stderr: (uv_pipe_t)
+
+                Parameters: ~
+                    {spec}  table When passed as a string or a string array,
+                            the argument is interpreted as a command.
+
+                Parameters: ~
+                    {on_exit}  function Called when subprocess exits. Has the
+                               following arguments:
+                               • code: (integer)
+                               • signal: (integer)
+                               • stdout: (string), nil if stdout argument is
+                                 passed
+                               • stderr: (string), nil if stderr argument is
+                                 passed
+
+                Return: ~
+                    process handle (uv_process_t userdata), PID (integer)
+
  vim:tw=78:ts=8:ft=help:norl:

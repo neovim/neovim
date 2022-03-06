@@ -66,6 +66,7 @@ set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lua)
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
+set(LUA_SUBPROCESS_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/subprocess.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -349,6 +350,7 @@ add_custom_command(
       ${LUA_META_MODULE_SOURCE} "vim._meta"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
+      ${LUA_SUBPROCESS_MODULE_SOURCE} "vim.subprocess"
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
@@ -360,6 +362,7 @@ add_custom_command(
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_LOAD_PACKAGE_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
+    ${LUA_SUBPROCESS_MODULE_SOURCE}
   VERBATIM
 )
 

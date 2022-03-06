@@ -127,6 +127,7 @@ CONFIG = {
             'ui.lua',
             'filetype.lua',
             'keymap.lua',
+            'subprocess.lua',
         ],
         'files': [
             'runtime/lua/vim/_editor.lua',
@@ -135,6 +136,7 @@ CONFIG = {
             'runtime/lua/vim/ui.lua',
             'runtime/lua/vim/filetype.lua',
             'runtime/lua/vim/keymap.lua',
+            'runtime/lua/vim/subprocess.lua',
         ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
@@ -160,6 +162,7 @@ CONFIG = {
             'ui': 'vim.ui',
             'filetype': 'vim.filetype',
             'keymap': 'vim.keymap',
+            'subprocess': 'vim.subprocess',
         },
         'append_only': [
             'shared.lua',
