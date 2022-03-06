@@ -305,10 +305,17 @@ describe('synIDattr()', function()
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)
 
-  it('returns "1" if group has "strikethrough" attribute', function()
-    eq('', eval('synIDattr(hlID("Normal"), "strikethrough")'))
-    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough")'))
-    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough", "gui")'))
+  it('returns "1" if group has given highlight attribute', function()
+    local hl_attrs = {
+      'underline', 'underlineline', 'undercurl', 'underdot', 'underdash', 'strikethrough'
+    }
+    for _,hl_attr in ipairs(hl_attrs) do
+      local context = 'using ' .. hl_attr .. ' attr'
+      command('highlight Keyword cterm=' .. hl_attr .. ' gui=' .. hl_attr)
+      eq('', eval('synIDattr(hlID("Normal"), "'.. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '", "gui")'), context)
+    end
   end)
 end)
 
