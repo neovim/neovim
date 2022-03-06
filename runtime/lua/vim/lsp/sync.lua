@@ -138,10 +138,18 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   -- new lines(O), the new newline is inserted at the line indicated by
   -- new_lastline.
   if firstline == lastline then
+    local line_idx
     local line = prev_lines[firstline - 1]
-    byte_idx = #line + 1
-    char_idx = compute_line_length(line, offset_encoding) + 1
-    return { line_idx = firstline - 1, byte_idx = byte_idx, char_idx = char_idx }
+    if line then
+      line_idx = firstline - 1
+      byte_idx = #line + 1
+      char_idx = compute_line_length(line, offset_encoding) + 1
+    else
+      line_idx = firstline
+      byte_idx = 1
+      char_idx = 1
+    end
+    return { line_idx = line_idx, byte_idx = byte_idx, char_idx = char_idx }
   end
 
   -- If firstline == new_lastline, the first change occurred on a line that was deleted.
