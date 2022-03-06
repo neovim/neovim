@@ -6763,9 +6763,6 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
     curwin = switchwin->sw_curwin;
     curbuf = curwin->w_buffer;
   }
-  // If called by win_execute() and executing the command changed the
-  // directory, it now has to be restored.
-  fix_current_dir();
 }
 
 /// Make "buf" the current buffer.
