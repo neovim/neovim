@@ -6,7 +6,7 @@ local clear = helpers.clear
 local command = helpers.command
 local insert = helpers.insert
 local write_file = helpers.write_file
-local source = helpers.source
+local exec = helpers.exec
 
 describe('Diff mode screen', function()
   local fname = 'Xtest-functional-diff-screen-1'
@@ -1075,10 +1075,8 @@ it('diff updates line numbers below filler lines', function()
     [9] = {background = Screen.colors.LightMagenta},
     [10] = {bold = true, foreground = Screen.colors.Brown},
     [11] = {foreground = Screen.colors.Brown},
-    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
-    [13] = {background = Screen.colors.Gray90};
   })
-  source([[
+  exec([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
@@ -1135,24 +1133,6 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
-  command("set signcolumn number tgc cursorline cursorlineopt=number,line")
-  command("hi CursorLineNr guibg=red")
-  screen:expect{grid=[[
-    {1:  }a                {3:│}{11:  2 }a               |
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }a                {3:│}{12:3   }{13:^a               }|
-    {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }b                {3:│}{11:  2 }b               |
-    {1:  }b                {3:│}{11:  3 }b               |
-    {1:  }b                {3:│}{11:  4 }b               |
-    {1:  }b                {3:│}{11:  5 }b               |
-    {1:  }b                {3:│}{11:  6 }b               |
-    {6:~                  }{3:│}{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
-      signcolumn=auto                       |
-  ]]}
 end)
 
 it('Align the filler lines when changing text in diff mode', function()
@@ -1169,7 +1149,7 @@ it('Align the filler lines when changing text in diff mode', function()
     [7] = {foreground = Screen.colors.Blue1, bold = true};
     [8] = {reverse = true, bold = true};
   })
-  source([[
+  exec([[
     call setline(1, range(1, 15))
     vnew
     call setline(1, range(9, 15))
