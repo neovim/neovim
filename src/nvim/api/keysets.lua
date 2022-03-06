@@ -142,6 +142,7 @@ return {
     "event";
     "group";
     "pattern";
+    "buffer";
   };
   create_augroup = {
     "clear";
