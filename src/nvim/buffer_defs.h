@@ -875,6 +875,7 @@ struct file_buffer {
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
   size_t b_virt_line_blocks;    // number of virt_line blocks
+  size_t b_signs;               // number of sign extmarks
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.

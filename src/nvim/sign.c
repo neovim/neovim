@@ -506,6 +506,8 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
         if (sp->sn_num_hl != 0) {
           sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
         }
+        // Store the priority so we can mesh in extmark signs later
+        sattr.sat_prio = sign->se_priority;
       }
 
       sattrs[nr_matches] = sattr;

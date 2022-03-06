@@ -1362,3 +1362,276 @@ if (h->n_buckets < new_n_buckets) { // expand
   end)
 
 end)
+
+describe('decorations: signs', function()
+  local screen, ns
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Grey};
+      [2] = {foreground = Screen.colors.Blue1, bold = true};
+    }
+
+    ns = meths.create_namespace 'test'
+    meths.win_set_option(0, 'signcolumn', 'auto:9')
+  end)
+
+  local example_text = [[
+l1
+l2
+l3
+l4
+l5
+]]
+
+  it('can add a single sign (no end row)', function()
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S'})
+
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S l2                                              |
+      {1:  }l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+  end)
+
+  it('can add a single sign (with end row)', function()
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S', end_row=1})
+
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S l2                                              |
+      {1:  }l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+  end)
+
+  it('can add multiple signs (single extmark)', function()
+    pending('TODO(lewis6991): Support ranged signs')
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S', end_row = 2})
+
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S l2                                              |
+      S l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+  end)
+
+  it('can add multiple signs (multiple extmarks)', function()
+    pending('TODO(lewis6991): Support ranged signs')
+    insert(example_text)
+    feed'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 3, -1, {sign_text='S2', end_row = 4})
+
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S1l2                                              |
+      {1:  }l3                                              |
+      S2l4                                              |
+      S2l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+  end)
+
+  it('can add multiple signs (multiple extmarks) 2', function()
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
+
+    screen:expect{grid=[[
+      {1:    }^l1                                            |
+      S2S1l2                                            |
+      {1:    }l3                                            |
+      {1:    }l4                                            |
+      {1:    }l5                                            |
+      {1:    }                                              |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+    -- TODO(lewis6991): Support ranged signs
+    -- meths.buf_set_extmark(1, ns, 1, -1, {sign_text='S3', end_row = 2})
+
+    -- screen:expect{grid=[[
+    --   {1:      }^l1                                          |
+    --   S3S2S1l2                                          |
+    --   S3{1:    }l3                                          |
+    --   {1:      }l4                                          |
+    --   {1:      }l5                                          |
+    --   {1:      }                                            |
+    --   {2:~                                                 }|
+    --   {2:~                                                 }|
+    --   {2:~                                                 }|
+    --                                                     |
+    -- ]]}
+
+  end)
+
+  it('can add multiple signs (multiple extmarks) 3', function()
+    pending('TODO(lewis6991): Support ranged signs')
+
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S1', end_row=2})
+    meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S2', end_row=3})
+
+    screen:expect{grid=[[
+      {1:    }^l1                                            |
+      S1{1:  }l2                                            |
+      S2S1l3                                            |
+      S2{1:  }l4                                            |
+      {1:    }l5                                            |
+      {1:    }                                              |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('can add multiple signs (multiple extmarks) 4', function()
+    insert(example_text)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=0})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row=1})
+
+    screen:expect{grid=[[
+      S1^l1                                              |
+      S2l2                                              |
+      {1:  }l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('works with old signs', function()
+    insert(example_text)
+    feed 'gg'
+
+    helpers.command('sign define Oldsign text=x')
+    helpers.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S4'})
+    meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
+
+    screen:expect{grid=[[
+      S4S1^l1                                            |
+      S2x l2                                            |
+      S5{1:  }l3                                            |
+      {1:    }l4                                            |
+      {1:    }l5                                            |
+      {1:    }                                              |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('works with old signs (with range)', function()
+    pending('TODO(lewis6991): Support ranged signs')
+    insert(example_text)
+    feed 'gg'
+
+    helpers.command('sign define Oldsign text=x')
+    helpers.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S3', end_row = 4})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S4'})
+    meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
+
+    screen:expect{grid=[[
+      S3S4S1^l1                                          |
+      S2S3x l2                                          |
+      S5S3{1:  }l3                                          |
+      S3{1:    }l4                                          |
+      S3{1:    }l5                                          |
+      {1:      }                                            |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('can add a ranged sign (with start out of view)', function()
+    pending('TODO(lewis6991): Support ranged signs')
+
+    insert(example_text)
+    command 'set signcolumn=yes:2'
+    feed 'gg'
+    feed '2<C-e>'
+
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='X', end_row=3})
+
+    screen:expect{grid=[[
+      X {1:  }^l3                                            |
+      X {1:  }l4                                            |
+      {1:    }l5                                            |
+      {1:    }                                              |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+  end)
+
+end)
