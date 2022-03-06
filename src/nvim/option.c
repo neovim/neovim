@@ -3851,7 +3851,7 @@ static bool parse_winhl_opt(win_T *wp)
     if (strncmp("Normal", p, nlen) == 0) {
       w_hl_id_normal = hl_id;
     } else {
-      for (hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+      for (hlf = 0; hlf < HLF_COUNT; hlf++) {
         if (strlen(hlf_names[hlf]) == nlen
             && strncmp(hlf_names[hlf], p, nlen) == 0) {
           w_hl_ids[hlf] = hl_id;
@@ -5267,7 +5267,7 @@ static void showoptions(int all, int opt_flags)
              && Columns + GAP >= INT_MIN + 3
              && (Columns + GAP - 3) / INC >= INT_MIN
              && (Columns + GAP - 3) / INC <= INT_MAX);
-      cols = (int)((Columns + GAP - 3) / INC);
+      cols = (Columns + GAP - 3) / INC;
       if (cols == 0) {
         cols = 1;
       }
@@ -5666,11 +5666,11 @@ void comp_col(void)
   assert(sc_col >= 0
          && INT_MIN + sc_col <= Columns
          && Columns - sc_col <= INT_MAX);
-  sc_col = (int)(Columns - sc_col);
+  sc_col = Columns - sc_col;
   assert(ru_col >= 0
          && INT_MIN + ru_col <= Columns
          && Columns - ru_col <= INT_MAX);
-  ru_col = (int)(Columns - ru_col);
+  ru_col = Columns - ru_col;
   if (sc_col <= 0) {            // screen too narrow, will become a mess
     sc_col = 1;
   }

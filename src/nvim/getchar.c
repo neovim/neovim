@@ -4140,7 +4140,7 @@ int makemap(FILE *fd, buf_T *buf)
         }
         for (p = mp->m_str; *p != NUL; p++) {
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
-              && p[2] == (int)KE_SNR) {
+              && p[2] == KE_SNR) {
             break;
           }
         }

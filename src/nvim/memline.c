@@ -303,7 +303,7 @@ int ml_open(buf_T *buf)
 
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
-  b0p->b0_magic_long = (long)B0_MAGIC_LONG;
+  b0p->b0_magic_long = B0_MAGIC_LONG;
   b0p->b0_magic_int = (int)B0_MAGIC_INT;
   b0p->b0_magic_short = (short)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
@@ -3709,7 +3709,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
 static int b0_magic_wrong(ZERO_BL *b0p)
 {
-  return b0p->b0_magic_long != (long)B0_MAGIC_LONG
+  return b0p->b0_magic_long != B0_MAGIC_LONG
          || b0p->b0_magic_int != (int)B0_MAGIC_INT
          || b0p->b0_magic_short != (short)B0_MAGIC_SHORT
          || b0p->b0_magic_char != B0_MAGIC_CHAR;

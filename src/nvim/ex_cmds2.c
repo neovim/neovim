@@ -1796,7 +1796,7 @@ scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
   if (sid_out != NULL) {
     *sid_out = sid;
   }
-  ga_grow(&script_items, (int)(sid - script_items.ga_len));
+  ga_grow(&script_items, sid - script_items.ga_len);
   while (script_items.ga_len < sid) {
     script_items.ga_len++;
     SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
@@ -2186,7 +2186,6 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
 
   return si;
 }
-
 
 
 /// ":scriptnames"
