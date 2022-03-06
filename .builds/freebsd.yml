@@ -12,6 +12,7 @@ packages:
 - gettext
 - python
 - libffi
+- gdb
 
 sources:
 - https://github.com/neovim/neovim

@@ -12,6 +12,7 @@ packages:
 - libtool
 - ninja-1.10.2p0
 - unzip-6.0p14
+- gdb
 
 sources:
 - https://github.com/neovim/neovim
