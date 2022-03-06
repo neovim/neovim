@@ -28,7 +28,6 @@ endfunc
 
 func Test_set_filename_other_window()
   CheckFunction test_autochdir
-  call ch_logfile('logfile', 'w')
   let cwd = getcwd()
   call test_autochdir()
   call mkdir('Xa')
