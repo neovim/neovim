@@ -259,6 +259,25 @@ describe('incremental synchronization', function()
       }
       test_edit({""}, {"o"}, expected_text_changes, 'utf-16', '\n')
     end)
+    it('insert a line above the current line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0
+            },
+            ['end'] = {
+              character = 0,
+              line = 0
+            }
+          },
+          rangeLength = 0,
+          text = '\n'
+        }
+      }
+      test_edit({""}, {"O"}, expected_text_changes, 'utf-16', '\n')
+    end)
   end)
   describe('multi line edit', function()
     it('deletion and insertion', function()
