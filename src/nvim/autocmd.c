@@ -113,10 +113,11 @@ static Map(int, String) map_augroup_id_to_name = MAP_INIT;
 
 static void augroup_map_del(int id, char *name)
 {
-  String key = map_key(String, int)(&map_augroup_name_to_id, cstr_as_string(name));
-  map_del(String, int)(&map_augroup_name_to_id, key);
-  api_free_string(key);
-
+  if (name != NULL) {
+    String key = map_key(String, int)(&map_augroup_name_to_id, cstr_as_string(name));
+    map_del(String, int)(&map_augroup_name_to_id, key);
+    api_free_string(key);
+  }
   if (id > 0) {
     String mapped = map_get(int, String)(&map_augroup_id_to_name, id);
     api_free_string(mapped);
@@ -427,6 +428,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
           if (ap->group == i && ap->pat != NULL) {
             give_warning((char_u *)_("W19: Deleting augroup that is still in use"), true);
             map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
+            augroup_map_del(ap->group, NULL);
             return;
           }
         }
