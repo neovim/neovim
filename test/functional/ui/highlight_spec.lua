@@ -840,7 +840,7 @@ describe("'listchars' highlight", function()
   end)
 end)
 
-describe('CursorLine highlight', function()
+describe('CursorLine and CursorLineNr highlights', function()
   before_each(clear)
 
   it('overridden by Error, ColorColumn if fg not set', function()
@@ -1081,7 +1081,7 @@ describe('CursorLine highlight', function()
     ]])
   end)
 
-  it('with split-windows in diff-mode', function()
+  it('with split windows in diff mode', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
       [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
@@ -1093,7 +1093,6 @@ describe('CursorLine highlight', function()
       [7] = {background = Screen.colors.Red, foreground = Screen.colors.White},
       [8] = {bold = true, foreground = Screen.colors.Blue1},
       [9] = {bold = true, reverse = true},
-      [10] = {bold = true},
     })
     screen:attach()
 
@@ -1169,6 +1168,61 @@ describe('CursorLine highlight', function()
       [12] = {bold = true, underline = true,
               background = Screen.colors.Red},
     })
+  end)
+
+  it('CursorLineNr shows correctly just below filler lines', function()
+    local screen = Screen.new(50,12)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+      [3] = {reverse = true},
+      [4] = {background = Screen.colors.LightBlue},
+      [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},
+      [6] = {background = Screen.colors.White, bold = true, foreground = Screen.colors.Black},
+      [7] = {bold = true, foreground = Screen.colors.Blue1},
+      [8] = {bold = true, reverse = true},
+      [9] = {foreground = Screen.colors.Brown},
+    })
+    screen:attach()
+
+    command('hi CursorLine guibg=red guifg=white')
+    command('hi CursorLineNr guibg=white guifg=black gui=bold')
+    command('set cursorline number')
+    command('call setline(1, ["baz", "foo", "foo", "bar"])')
+    feed('2gg0')
+    command('vnew')
+    command('call setline(1, ["foo", "foo", "bar"])')
+    command('windo diffthis')
+    command('1wincmd w')
+    screen:expect([[
+      {1:  }{9:    }{2:-------------------}{3:│}{1:  }{9:  1 }{4:baz               }|
+      {1:  }{6:  1 }{5:^foo                }{3:│}{1:  }{6:  2 }{5:foo               }|
+      {1:  }{9:  2 }foo                {3:│}{1:  }{9:  3 }foo               |
+      {1:  }{9:  3 }bar                {3:│}{1:  }{9:  4 }bar               |
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+                                                        |
+    ]])
+    command('set cursorlineopt=number')
+    screen:expect([[
+      {1:  }{9:    }{2:-------------------}{3:│}{1:  }{9:  1 }{4:baz               }|
+      {1:  }{6:  1 }^foo                {3:│}{1:  }{6:  2 }{5:foo               }|
+      {1:  }{9:  2 }foo                {3:│}{1:  }{9:  3 }foo               |
+      {1:  }{9:  3 }bar                {3:│}{1:  }{9:  4 }bar               |
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+                                                        |
+    ]])
   end)
 end)
 
