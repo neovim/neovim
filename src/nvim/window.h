@@ -51,7 +51,16 @@ typedef struct {
     char_u cwd_[MAXPATHL]; \
     char_u autocwd_[MAXPATHL]; \
     bool apply_acd_ = false; \
-    const int cwd_status_ = os_dirname(cwd_, MAXPATHL); \
+    int cwd_status_ = FAIL; \
+    /* Getting and setting directory can be slow on some systems, only do */ \
+    /* this when the current or target window/tab have a local directory or */ \
+    /* 'acd' is set. */ \
+    if (curwin != wp \
+        && (curwin->w_localdir != NULL || wp->w_localdir != NULL \
+            || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL)) \
+            || p_acd)) { \
+      cwd_status_ = os_dirname(cwd_, MAXPATHL); \
+    } \
     /* If 'acd' is set, check we are using that directory.  If yes, then */ \
     /* apply 'acd' afterwards, otherwise restore the current directory. */ \
     if (cwd_status_ == OK && p_acd) { \
