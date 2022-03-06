@@ -11411,7 +11411,7 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   case 'u': {
     const size_t len = STRLEN(what);
     if (len <= 5 || (TOLOWER_ASC(what[5]) == 'l' && len <= 9)) {  // underline
-      p = highlight_has_attr(id, HL_UNDERCURL, modec);
+      p = highlight_has_attr(id, HL_UNDERLINE, modec);
     } else if (TOLOWER_ASC(what[5]) == 'c') {  // undercurl
        p = highlight_has_attr(id, HL_UNDERCURL, modec);
     } else if (len > 9 && TOLOWER_ASC(what[9]) == 'l') {  // underlineline
