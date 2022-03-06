@@ -61,6 +61,20 @@ describe('autochdir behavior', function()
     expected_empty()
   end)
 
+  it('win_execute() does not change directory', function()
+    local subdir = 'Xfile'
+    command('cd '..dir)
+    command('set autochdir')
+    call('mkdir', subdir)
+    local winid = eval('win_getid()')
+    command('new '..subdir..'/file')
+    matches('.*'..dir..'[/\\]'..subdir, eval('getcwd()'))
+    command('cd ..')
+    matches('.*'..dir, eval('getcwd()'))
+    call('win_execute', winid, 'echo')
+    matches('.*'..dir, eval('getcwd()'))
+  end)
+
   it(':verbose pwd shows whether autochdir is used', function()
     local subdir = 'Xautodir'
     command('cd '..dir)
