@@ -124,7 +124,7 @@ CONFIG = {
         'filename': 'lua.txt',
         'section_start_token': '*lua-vim*',
         'section_order': [
-            'vim.lua',
+            '_editor.lua',
             'shared.lua',
             'uri.lua',
             'ui.lua',
@@ -132,7 +132,7 @@ CONFIG = {
             'keymap.lua',
         ],
         'files': ' '.join([
-            os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/_editor.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/ui.lua'),
@@ -144,9 +144,18 @@ CONFIG = {
         'section_name': {
             'lsp.lua': 'core',
         },
-        'section_fmt': lambda name: f'Lua module: {name.lower()}',
-        'helptag_fmt': lambda name: f'*lua-{name.lower()}*',
-        'fn_helptag_fmt': lambda fstem, name: f'*{fstem}.{name}()*',
+        'section_fmt': lambda name: (
+            'Lua module: vim'
+            if name.lower() == '_editor'
+            else f'Lua module: {name.lower()}'),
+        'helptag_fmt': lambda name: (
+            '*lua-vim*'
+            if name.lower() == '_editor'
+            else f'*lua-{name.lower()}*'),
+        'fn_helptag_fmt': lambda fstem, name: (
+            f'*vim.{name}()*'
+            if fstem.lower() == '_editor'
+            else f'*{fstem}.{name}()*'),
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',

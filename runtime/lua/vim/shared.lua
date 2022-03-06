@@ -2,7 +2,7 @@
 --
 -- The singular purpose of this module is to share code with the Nvim
 -- test-suite. If, in the future, Nvim itself is used to run the test-suite
--- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
+-- instead of "vanilla Lua", these functions could move to runtime/lua/vim/_editor.lua
 
 local vim = vim or {}
 

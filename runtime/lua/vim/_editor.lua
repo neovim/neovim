@@ -5,7 +5,7 @@
 --       `inspect` and `lpeg` modules.
 --    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
 --       (This will go away if we migrate to nvim as the test-runner.)
---    3. src/nvim/lua/: Compiled-into Nvim itself.
+--    3. runtime/lua/vim/_editor.lua: Compiled-into Nvim itself.
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --

@@ -204,7 +204,7 @@ Docstring format:
 - Use `<pre>`  for code samples.
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
-vim.paste in src/nvim/lua/vim.lua like this: >
+vim.paste in runtime/lua/vim/_editor.lua like this: >
 
     --- Paste handler, invoked by |nvim_paste()| when a conforming UI
     --- (such as the |TUI|) pastes text into the editor.
