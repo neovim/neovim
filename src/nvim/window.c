@@ -4680,10 +4680,6 @@ static void win_enter_ext(win_T *const wp, const int flags)
 /// Used after making another window the current one: change directory if needed.
 void fix_current_dir(void)
 {
-  if (p_acd) {
-    do_autochdir();
-    return;
-  }
   // New directory is either the local directory of the window, tab or NULL.
   char *new_dir = (char *)(curwin->w_localdir
                            ? curwin->w_localdir : curtab->tp_localdir);
