@@ -1,6 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/buffer.h"
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight.h"
@@ -67,11 +68,6 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 {
   if (row2 >= row1) {
-    if (decor && decor->sign_text) {
-      buf->b_signcols_valid = false;
-      changed_line_abv_curs();
-    }
-
     if (!decor || decor->hl_id || decor_has_sign(decor)) {
       redraw_buf_range_later(buf, row1+1, row2+1);
     }
@@ -98,6 +94,9 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
     if (decor_has_sign(decor)) {
       assert(buf->b_signs > 0);
       buf->b_signs--;
+    }
+    if (row2 >= row && decor->sign_text) {
+      buf_signcols_del_check(buf, row+1, row2+1);
     }
   }
   decor_free(decor);

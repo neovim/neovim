@@ -1737,7 +1737,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
     buf->b_vars = tv_dict_alloc();
-    buf->b_signcols_valid = false;
+    buf->b_signcols.valid = false;
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -5468,6 +5468,8 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
   int linesum = 0;
   linenr_T curline = 0;
 
+  buf->b_signcols.sentinel = 0;
+
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (sign->se_lnum > curline) {
       // Counted all signs, now add extmark signs
@@ -5475,13 +5477,14 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
         linesum += decor_signcols(buf, &decor_state, (int)curline-1, (int)curline-1,
                                   maximum-linesum);
       }
+      curline = sign->se_lnum;
       if (linesum > signcols) {
         signcols = linesum;
+        buf->b_signcols.sentinel = curline;
         if (signcols >= maximum) {
           return maximum;
         }
       }
-      curline = sign->se_lnum;
       linesum = 0;
     }
     if (sign->se_has_text_or_icon) {
@@ -5504,6 +5507,7 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
   if (linesum > signcols) {
     signcols = linesum;
+    buf->b_signcols.sentinel = curline;
     if (signcols >= maximum) {
       return maximum;
     }
@@ -5512,28 +5516,96 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
   return signcols;
 }
 
+/// Invalidate the signcolumn if needed after deleting
+/// signs between line1 and line2 (inclusive).
+///
+/// @param buf   buffer to check
+/// @param line1 start of region being deleted
+/// @param line2 end of region being deleted
+void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
+{
+  if (!buf->b_signcols.valid) {
+    return;
+  }
+
+  if (!buf->b_signcols.sentinel) {
+    buf->b_signcols.valid = false;
+    return;
+  }
+
+  linenr_T sent = buf->b_signcols.sentinel;
+
+  if (sent >= line1 && sent <= line2) {
+    // Only invalidate when removing signs at the sentinel line.
+    buf->b_signcols.valid = false;
+  }
+}
+
+/// Re-calculate the signcolumn after adding a sign.
+///
+/// @param buf   buffer to check
+/// @param added sign being added
+void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
+{
+  if (!buf->b_signcols.valid) {
+    return;
+  }
+
+  if (!added || !buf->b_signcols.sentinel) {
+    buf->b_signcols.valid = false;
+    return;
+  }
+
+  if (added->se_lnum == buf->b_signcols.sentinel) {
+    if (buf->b_signcols.size == buf->b_signcols.max) {
+      buf->b_signcols.max++;
+    }
+    buf->b_signcols.size++;
+    return;
+  }
+
+  sign_entry_T *s;
+
+  // Get first sign for added lnum
+  for (s = added; s->se_prev && s->se_lnum == s->se_prev->se_lnum; s = s->se_prev) {}
+
+  // Count signs for lnum
+  int linesum = 1;
+  for (; s->se_next && s->se_lnum == s->se_next->se_lnum; s = s->se_next) {
+    linesum++;
+  }
+  linesum += decor_signcols(buf, &decor_state, (int)s->se_lnum-1, (int)s->se_lnum-1,
+                            SIGN_SHOW_MAX-linesum);
+
+  if (linesum > buf->b_signcols.size) {
+    buf->b_signcols.size = linesum;
+    buf->b_signcols.max = linesum;
+    buf->b_signcols.sentinel = added->se_lnum;
+  }
+}
+
 int buf_signcols(buf_T *buf, int maximum)
 {
   // The maximum can be determined from 'signcolumn' which is window scoped so
   // need to invalidate signcols if the maximum is greater than the previous
   // maximum.
-  if (maximum > buf->b_signcols_max) {
-    buf->b_signcols_valid = false;
+  if (maximum > buf->b_signcols.max) {
+    buf->b_signcols.valid = false;
   }
 
-  if (!buf->b_signcols_valid) {
+  if (!buf->b_signcols.valid) {
     int signcols = buf_signcols_inner(buf, maximum);
     // Check if we need to redraw
-    if (signcols != buf->b_signcols) {
-      buf->b_signcols = signcols;
-      buf->b_signcols_max = maximum;
+    if (signcols != buf->b_signcols.size) {
+      buf->b_signcols.size = signcols;
+      buf->b_signcols.max = maximum;
       redraw_buf_later(buf, NOT_VALID);
     }
 
-    buf->b_signcols_valid = true;
+    buf->b_signcols.valid = true;
   }
 
-  return buf->b_signcols;
+  return buf->b_signcols.size;
 }
 
 // Get "buf->b_fname", use "[No Name]" if it is NULL.
