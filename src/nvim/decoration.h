@@ -17,7 +17,7 @@ typedef enum {
   kVTRightAlign,
 } VirtTextPos;
 
-EXTERN const char *const virt_text_pos_str[] INIT(= { "eol", "overlay", "win_col", "right_align" });
+EXTERN const char *const virt_text_pos_str[] INIT(= {"eol", "overlay", "win_col", "right_align"});
 
 typedef enum {
   kHlModeUnknown,
@@ -26,14 +26,15 @@ typedef enum {
   kHlModeBlend,
 } HlMode;
 
-EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend" });
+EXTERN const char *const hl_mode_str[] INIT(= {"", "replace", "combine", "blend"});
 
 typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
-
-typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
-
+typedef kvec_t(struct virt_line {
+  VirtText line;
+  bool left_col;
+}) VirtLines;
 
 struct Decoration {
   VirtText virt_text;
@@ -49,7 +50,7 @@ struct Decoration {
   bool virt_lines_above;
   // TODO(bfredl): style, etc
   DecorPriority priority;
-  int col;  // fixed col value, like win_col
+  int col;              // fixed col value, like win_col
   int virt_text_width;  // width of virt_text
   char_u *sign_text;
   int sign_hl_id;
@@ -57,8 +58,11 @@ struct Decoration {
   int line_hl_id;
   int cursorline_hl_id;
 };
-#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, \
-                          false, false, false, DECOR_PRIORITY_BASE, 0, 0, NULL, 0, 0, 0, 0 }
+#define DECORATION_INIT                                                                            \
+  {                                                                                                \
+    KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, false, false, false,      \
+        DECOR_PRIORITY_BASE, 0, 0, NULL, 0, 0, 0, 0                                                \
+  }
 
 typedef struct {
   int start_row;
@@ -96,25 +100,23 @@ typedef struct {
 } DecorProvider;
 
 EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
-EXTERN DecorState decor_state INIT(= { 0 });
+EXTERN DecorState decor_state INIT(= {0});
 EXTERN bool provider_active INIT(= false);
 
-#define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-  { ns_id, false, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1 }
+#define DECORATION_PROVIDER_INIT(ns_id)                                                            \
+  (DecorProvider)                                                                                  \
+  {                                                                                                \
+    ns_id, false, LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, -1             \
+  }
 
 static inline bool decor_has_sign(Decoration *decor)
 {
-  return decor->sign_text
-    || decor->sign_hl_id
-    || decor->number_hl_id
-    || decor->line_hl_id
-    || decor->cursorline_hl_id;
+  return decor->sign_text || decor->sign_hl_id || decor->number_hl_id || decor->line_hl_id
+         || decor->cursorline_hl_id;
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.h.generated.h"
+#include "decoration.h.generated.h"
 #endif
 
 #endif  // NVIM_DECORATION_H

@@ -1,24 +1,29 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <string.h>
-
 #include "mpack_core.h"
+
+#include <string.h>
 
 #define UNUSED(p) (void)p;
 #define ADVANCE(buf, buflen) ((*buflen)--, (unsigned char)*((*buf)++))
 #define TLEN(val, range_start) ((mpack_uint32_t)(1 << (val - range_start)))
 #ifndef MIN
-# define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif
 
-static int mpack_rtoken(const char **buf, size_t *buflen,
-    mpack_token_t *tok);
+static int mpack_rtoken(const char **buf, size_t *buflen, mpack_token_t *tok);
 static int mpack_rpending(const char **b, size_t *nl, mpack_tokbuf_t *tb);
-static int mpack_rvalue(mpack_token_type_t t, mpack_uint32_t l,
-    const char **b, size_t *bl, mpack_token_t *tok);
-static int mpack_rblob(mpack_token_type_t t, mpack_uint32_t l,
-    const char **b, size_t *bl, mpack_token_t *tok);
+static int mpack_rvalue(mpack_token_type_t t,
+                        mpack_uint32_t l,
+                        const char **b,
+                        size_t *bl,
+                        mpack_token_t *tok);
+static int mpack_rblob(mpack_token_type_t t,
+                       mpack_uint32_t l,
+                       const char **b,
+                       size_t *bl,
+                       mpack_token_t *tok);
 static int mpack_wtoken(const mpack_token_t *tok, char **b, size_t *bl);
 static int mpack_wpending(char **b, size_t *bl, mpack_tokbuf_t *tb);
 static int mpack_wpint(char **b, size_t *bl, mpack_value_t v);
@@ -26,18 +31,15 @@ static int mpack_wnint(char **b, size_t *bl, mpack_value_t v);
 static int mpack_wfloat(char **b, size_t *bl, const mpack_token_t *v);
 static int mpack_wstr(char **buf, size_t *buflen, mpack_uint32_t len);
 static int mpack_wbin(char **buf, size_t *buflen, mpack_uint32_t len);
-static int mpack_wext(char **buf, size_t *buflen, int type,
-    mpack_uint32_t len);
+static int mpack_wext(char **buf, size_t *buflen, int type, mpack_uint32_t len);
 static int mpack_warray(char **buf, size_t *buflen, mpack_uint32_t len);
 static int mpack_wmap(char **buf, size_t *buflen, mpack_uint32_t len);
 static int mpack_w1(char **b, size_t *bl, mpack_uint32_t v);
 static int mpack_w2(char **b, size_t *bl, mpack_uint32_t v);
 static int mpack_w4(char **b, size_t *bl, mpack_uint32_t v);
 static mpack_value_t mpack_byte(unsigned char b);
-static int mpack_value(mpack_token_type_t t, mpack_uint32_t l,
-    mpack_value_t v, mpack_token_t *tok);
-static int mpack_blob(mpack_token_type_t t, mpack_uint32_t l, int et,
-    mpack_token_t *tok);
+static int mpack_value(mpack_token_type_t t, mpack_uint32_t l, mpack_value_t v, mpack_token_t *tok);
+static int mpack_blob(mpack_token_type_t t, mpack_uint32_t l, int et, mpack_token_t *tok);
 
 MPACK_API void mpack_tokbuf_init(mpack_tokbuf_t *tokbuf)
 {
@@ -46,8 +48,10 @@ MPACK_API void mpack_tokbuf_init(mpack_tokbuf_t *tokbuf)
   tokbuf->passthrough = 0;
 }
 
-MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf, const char **buf,
-    size_t *buflen, mpack_token_t *tok)
+MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf,
+                         const char **buf,
+                         size_t *buflen,
+                         mpack_token_t *tok)
 {
   int status;
   size_t initial_ppos, ptrlen, advanced;
@@ -82,7 +86,8 @@ MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf, const char **buf,
   ptr_save = ptr;
 
   if ((status = mpack_rtoken(&ptr, &ptrlen, tok))) {
-    if (status != MPACK_EOF) return MPACK_ERROR;
+    if (status != MPACK_EOF)
+      return MPACK_ERROR;
     /* need more data */
     assert(!tokbuf->plen);
     /* read the remainder of *buf to tokbuf->pending so it can be parsed
@@ -98,7 +103,7 @@ MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf, const char **buf,
 
   advanced = (size_t)(ptr - ptr_save) - initial_ppos;
   tokbuf->plen = tokbuf->ppos = 0;
-  *buflen -= advanced; 
+  *buflen -= advanced;
   *buf += advanced;
 
   if (tok->type > MPACK_TOKEN_MAP) {
@@ -109,8 +114,10 @@ done:
   return MPACK_OK;
 }
 
-MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
-    const mpack_token_t *t)
+MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf,
+                          char **buf,
+                          size_t *buflen,
+                          const mpack_token_t *t)
 {
   int status;
   char *ptr;
@@ -120,7 +127,8 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
 
   if (tok.type == MPACK_TOKEN_CHUNK) {
     size_t written, pending, count;
-    if (!tokbuf->plen) tokbuf->ppos = 0;
+    if (!tokbuf->plen)
+      tokbuf->ppos = 0;
     written = tokbuf->ppos;
     pending = tok.length - written;
     count = MIN(pending, *buflen);
@@ -137,7 +145,8 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
     }
   }
 
-  if (tokbuf->plen) return mpack_wpending(buf, buflen, tokbuf);
+  if (tokbuf->plen)
+    return mpack_wpending(buf, buflen, tokbuf);
 
   if (*buflen < MPACK_MAX_TOKEN_LEN) {
     ptr = tokbuf->pending;
@@ -147,7 +156,8 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
     ptrlen = *buflen;
   }
 
-  if ((status = mpack_wtoken(&tok, &ptr, &ptrlen))) return status;
+  if ((status = mpack_wtoken(&tok, &ptr, &ptrlen)))
+    return status;
 
   if (*buflen < MPACK_MAX_TOKEN_LEN) {
     size_t toklen = sizeof(tokbuf->pending) - ptrlen;
@@ -170,8 +180,7 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
   return MPACK_OK;
 }
 
-static int mpack_rtoken(const char **buf, size_t *buflen,
-    mpack_token_t *tok)
+static int mpack_rtoken(const char **buf, size_t *buflen, mpack_token_t *tok)
 {
   unsigned char t = ADVANCE(buf, buflen);
   if (t < 0x80) {
@@ -188,38 +197,38 @@ static int mpack_rtoken(const char **buf, size_t *buflen,
     return mpack_blob(MPACK_TOKEN_STR, t & 0x1f, 0, tok);
   } else if (t < 0xe0) {
     switch (t) {
-      case 0xc0:  /* nil */
+      case 0xc0: /* nil */
         return mpack_value(MPACK_TOKEN_NIL, 0, mpack_byte(0), tok);
-      case 0xc2:  /* false */
+      case 0xc2: /* false */
         return mpack_value(MPACK_TOKEN_BOOLEAN, 1, mpack_byte(0), tok);
-      case 0xc3:  /* true */
+      case 0xc3: /* true */
         return mpack_value(MPACK_TOKEN_BOOLEAN, 1, mpack_byte(1), tok);
-      case 0xc4:  /* bin 8 */
-      case 0xc5:  /* bin 16 */
-      case 0xc6:  /* bin 32 */
+      case 0xc4: /* bin 8 */
+      case 0xc5: /* bin 16 */
+      case 0xc6: /* bin 32 */
         return mpack_rblob(MPACK_TOKEN_BIN, TLEN(t, 0xc4), buf, buflen, tok);
-      case 0xc7:  /* ext 8 */
-      case 0xc8:  /* ext 16 */
-      case 0xc9:  /* ext 32 */
+      case 0xc7: /* ext 8 */
+      case 0xc8: /* ext 16 */
+      case 0xc9: /* ext 32 */
         return mpack_rblob(MPACK_TOKEN_EXT, TLEN(t, 0xc7), buf, buflen, tok);
-      case 0xca:  /* float 32 */
-      case 0xcb:  /* float 64 */
+      case 0xca: /* float 32 */
+      case 0xcb: /* float 64 */
         return mpack_rvalue(MPACK_TOKEN_FLOAT, TLEN(t, 0xc8), buf, buflen, tok);
-      case 0xcc:  /* uint 8 */
-      case 0xcd:  /* uint 16 */
-      case 0xce:  /* uint 32 */
-      case 0xcf:  /* uint 64 */
+      case 0xcc: /* uint 8 */
+      case 0xcd: /* uint 16 */
+      case 0xce: /* uint 32 */
+      case 0xcf: /* uint 64 */
         return mpack_rvalue(MPACK_TOKEN_UINT, TLEN(t, 0xcc), buf, buflen, tok);
-      case 0xd0:  /* int 8 */
-      case 0xd1:  /* int 16 */
-      case 0xd2:  /* int 32 */
-      case 0xd3:  /* int 64 */
+      case 0xd0: /* int 8 */
+      case 0xd1: /* int 16 */
+      case 0xd2: /* int 32 */
+      case 0xd3: /* int 64 */
         return mpack_rvalue(MPACK_TOKEN_SINT, TLEN(t, 0xd0), buf, buflen, tok);
-      case 0xd4:  /* fixext 1 */
-      case 0xd5:  /* fixext 2 */
-      case 0xd6:  /* fixext 4 */
-      case 0xd7:  /* fixext 8 */
-      case 0xd8:  /* fixext 16 */
+      case 0xd4: /* fixext 1 */
+      case 0xd5: /* fixext 2 */
+      case 0xd6: /* fixext 4 */
+      case 0xd7: /* fixext 8 */
+      case 0xd8: /* fixext 16 */
         if (*buflen == 0) {
           /* require only one extra byte for the type code */
           tok->length = 1;
@@ -229,15 +238,15 @@ static int mpack_rtoken(const char **buf, size_t *buflen,
         tok->type = MPACK_TOKEN_EXT;
         tok->data.ext_type = ADVANCE(buf, buflen);
         return MPACK_OK;
-      case 0xd9:  /* str 8 */
-      case 0xda:  /* str 16 */
-      case 0xdb:  /* str 32 */
+      case 0xd9: /* str 8 */
+      case 0xda: /* str 16 */
+      case 0xdb: /* str 32 */
         return mpack_rblob(MPACK_TOKEN_STR, TLEN(t, 0xd9), buf, buflen, tok);
-      case 0xdc:  /* array 16 */
-      case 0xdd:  /* array 32 */
+      case 0xdc: /* array 16 */
+      case 0xdd: /* array 32 */
         return mpack_rblob(MPACK_TOKEN_ARRAY, TLEN(t, 0xdb), buf, buflen, tok);
-      case 0xde:  /* map 16 */
-      case 0xdf:  /* map 32 */
+      case 0xde: /* map 16 */
+      case 0xdf: /* map 32 */
         return mpack_rblob(MPACK_TOKEN_MAP, TLEN(t, 0xdd), buf, buflen, tok);
       default:
         return MPACK_ERROR;
@@ -248,8 +257,7 @@ static int mpack_rtoken(const char **buf, size_t *buflen,
   }
 }
 
-static int mpack_rpending(const char **buf, size_t *buflen,
-    mpack_tokbuf_t *state)
+static int mpack_rpending(const char **buf, size_t *buflen, mpack_tokbuf_t *state)
 {
   size_t count;
   assert(state->ppos < state->plen);
@@ -265,8 +273,11 @@ static int mpack_rpending(const char **buf, size_t *buflen,
   return 1;
 }
 
-static int mpack_rvalue(mpack_token_type_t type, mpack_uint32_t remaining,
-    const char **buf, size_t *buflen, mpack_token_t *tok)
+static int mpack_rvalue(mpack_token_type_t type,
+                        mpack_uint32_t remaining,
+                        const char **buf,
+                        size_t *buflen,
+                        mpack_token_t *tok)
 {
   if (*buflen < remaining) {
     tok->length = remaining;
@@ -291,10 +302,8 @@ static int mpack_rvalue(mpack_token_type_t type, mpack_uint32_t remaining,
   if (type == MPACK_TOKEN_SINT) {
     mpack_uint32_t hi = tok->data.value.hi;
     mpack_uint32_t lo = tok->data.value.lo;
-    mpack_uint32_t msb = (tok->length == 8 && hi >> 31) ||
-                         (tok->length == 4 && lo >> 31) ||
-                         (tok->length == 2 && lo >> 15) ||
-                         (tok->length == 1 && lo >> 7);
+    mpack_uint32_t msb = (tok->length == 8 && hi >> 31) || (tok->length == 4 && lo >> 31)
+                         || (tok->length == 2 && lo >> 15) || (tok->length == 1 && lo >> 7);
     if (!msb) {
       tok->type = MPACK_TOKEN_UINT;
     }
@@ -303,8 +312,11 @@ static int mpack_rvalue(mpack_token_type_t type, mpack_uint32_t remaining,
   return MPACK_OK;
 }
 
-static int mpack_rblob(mpack_token_type_t type, mpack_uint32_t tlen,
-    const char **buf, size_t *buflen, mpack_token_t *tok)
+static int mpack_rblob(mpack_token_type_t type,
+                       mpack_uint32_t tlen,
+                       const char **buf,
+                       size_t *buflen,
+                       mpack_token_t *tok)
 {
   mpack_token_t l;
   mpack_uint32_t required = tlen + (type == MPACK_TOKEN_EXT ? 1 : 0);
@@ -326,8 +338,7 @@ static int mpack_rblob(mpack_token_type_t type, mpack_uint32_t tlen,
   return MPACK_OK;
 }
 
-static int mpack_wtoken(const mpack_token_t *tok, char **buf,
-    size_t *buflen)
+static int mpack_wtoken(const mpack_token_t *tok, char **buf, size_t *buflen)
 {
   switch (tok->type) {
     case MPACK_TOKEN_NIL:
@@ -378,21 +389,16 @@ static int mpack_wpint(char **buf, size_t *buflen, mpack_value_t val)
 
   if (hi) {
     /* uint 64 */
-    return mpack_w1(buf, buflen, 0xcf) ||
-           mpack_w4(buf, buflen, hi)   ||
-           mpack_w4(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xcf) || mpack_w4(buf, buflen, hi) || mpack_w4(buf, buflen, lo);
   } else if (lo > 0xffff) {
     /* uint 32 */
-    return mpack_w1(buf, buflen, 0xce) ||
-           mpack_w4(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xce) || mpack_w4(buf, buflen, lo);
   } else if (lo > 0xff) {
     /* uint 16 */
-    return mpack_w1(buf, buflen, 0xcd) ||
-           mpack_w2(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xcd) || mpack_w2(buf, buflen, lo);
   } else if (lo > 0x7f) {
     /* uint 8 */
-    return mpack_w1(buf, buflen, 0xcc) ||
-           mpack_w1(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xcc) || mpack_w1(buf, buflen, lo);
   } else {
     return mpack_w1(buf, buflen, lo);
   }
@@ -405,37 +411,29 @@ static int mpack_wnint(char **buf, size_t *buflen, mpack_value_t val)
 
   if (lo < 0x80000000) {
     /* int 64 */
-    return mpack_w1(buf, buflen, 0xd3) ||
-           mpack_w4(buf, buflen, hi)   ||
-           mpack_w4(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xd3) || mpack_w4(buf, buflen, hi) || mpack_w4(buf, buflen, lo);
   } else if (lo < 0xffff7fff) {
     /* int 32 */
-    return mpack_w1(buf, buflen, 0xd2) ||
-           mpack_w4(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xd2) || mpack_w4(buf, buflen, lo);
   } else if (lo < 0xffffff7f) {
     /* int 16 */
-    return mpack_w1(buf, buflen, 0xd1) ||
-           mpack_w2(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xd1) || mpack_w2(buf, buflen, lo);
   } else if (lo < 0xffffffe0) {
     /* int 8 */
-    return mpack_w1(buf, buflen, 0xd0) ||
-           mpack_w1(buf, buflen, lo);
+    return mpack_w1(buf, buflen, 0xd0) || mpack_w1(buf, buflen, lo);
   } else {
     /* negative fixint */
     return mpack_w1(buf, buflen, (mpack_uint32_t)(0x100 + lo));
   }
 }
 
-static int mpack_wfloat(char **buf, size_t *buflen,
-    const mpack_token_t *tok)
+static int mpack_wfloat(char **buf, size_t *buflen, const mpack_token_t *tok)
 {
   if (tok->length == 4) {
-    return mpack_w1(buf, buflen, 0xca) ||
-           mpack_w4(buf, buflen, tok->data.value.lo);
+    return mpack_w1(buf, buflen, 0xca) || mpack_w4(buf, buflen, tok->data.value.lo);
   } else if (tok->length == 8) {
-    return mpack_w1(buf, buflen, 0xcb) ||
-           mpack_w4(buf, buflen, tok->data.value.hi) ||
-           mpack_w4(buf, buflen, tok->data.value.lo);
+    return mpack_w1(buf, buflen, 0xcb) || mpack_w4(buf, buflen, tok->data.value.hi)
+           || mpack_w4(buf, buflen, tok->data.value.lo);
   } else {
     return MPACK_ERROR;
   }
@@ -446,56 +444,56 @@ static int mpack_wstr(char **buf, size_t *buflen, mpack_uint32_t len)
   if (len < 0x20) {
     return mpack_w1(buf, buflen, 0xa0 | len);
   } else if (len < 0x100) {
-    return mpack_w1(buf, buflen, 0xd9) ||
-           mpack_w1(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xd9) || mpack_w1(buf, buflen, len);
   } else if (len < 0x10000) {
-    return mpack_w1(buf, buflen, 0xda) ||
-           mpack_w2(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xda) || mpack_w2(buf, buflen, len);
   } else {
-    return mpack_w1(buf, buflen, 0xdb) ||
-           mpack_w4(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xdb) || mpack_w4(buf, buflen, len);
   }
 }
 
 static int mpack_wbin(char **buf, size_t *buflen, mpack_uint32_t len)
 {
   if (len < 0x100) {
-    return mpack_w1(buf, buflen, 0xc4) ||
-           mpack_w1(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xc4) || mpack_w1(buf, buflen, len);
   } else if (len < 0x10000) {
-    return mpack_w1(buf, buflen, 0xc5) ||
-           mpack_w2(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xc5) || mpack_w2(buf, buflen, len);
   } else {
-    return mpack_w1(buf, buflen, 0xc6) ||
-           mpack_w4(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xc6) || mpack_w4(buf, buflen, len);
   }
 }
 
-static int mpack_wext(char **buf, size_t *buflen, int type,
-    mpack_uint32_t len)
+static int mpack_wext(char **buf, size_t *buflen, int type, mpack_uint32_t len)
 {
   mpack_uint32_t t;
   assert(type >= 0 && type < 0x80);
   t = (mpack_uint32_t)type;
   switch (len) {
-    case 1: mpack_w1(buf, buflen, 0xd4); return mpack_w1(buf, buflen, t);
-    case 2: mpack_w1(buf, buflen, 0xd5); return mpack_w1(buf, buflen, t);
-    case 4: mpack_w1(buf, buflen, 0xd6); return mpack_w1(buf, buflen, t);
-    case 8: mpack_w1(buf, buflen, 0xd7); return mpack_w1(buf, buflen, t);
-    case 16: mpack_w1(buf, buflen, 0xd8); return mpack_w1(buf, buflen, t);
+    case 1:
+      mpack_w1(buf, buflen, 0xd4);
+      return mpack_w1(buf, buflen, t);
+    case 2:
+      mpack_w1(buf, buflen, 0xd5);
+      return mpack_w1(buf, buflen, t);
+    case 4:
+      mpack_w1(buf, buflen, 0xd6);
+      return mpack_w1(buf, buflen, t);
+    case 8:
+      mpack_w1(buf, buflen, 0xd7);
+      return mpack_w1(buf, buflen, t);
+    case 16:
+      mpack_w1(buf, buflen, 0xd8);
+      return mpack_w1(buf, buflen, t);
     default:
       if (len < 0x100) {
-        return mpack_w1(buf, buflen, 0xc7) ||
-               mpack_w1(buf, buflen, len)  ||
-               mpack_w1(buf, buflen, t);
+        return mpack_w1(buf, buflen, 0xc7) || mpack_w1(buf, buflen, len)
+               || mpack_w1(buf, buflen, t);
       } else if (len < 0x10000) {
-        return mpack_w1(buf, buflen, 0xc8) ||
-               mpack_w2(buf, buflen, len)  ||
-               mpack_w1(buf, buflen, t);
+        return mpack_w1(buf, buflen, 0xc8) || mpack_w2(buf, buflen, len)
+               || mpack_w1(buf, buflen, t);
       } else {
-        return mpack_w1(buf, buflen, 0xc9) ||
-               mpack_w4(buf, buflen, len)  ||
-               mpack_w1(buf, buflen, t);
+        return mpack_w1(buf, buflen, 0xc9) || mpack_w4(buf, buflen, len)
+               || mpack_w1(buf, buflen, t);
       }
   }
 }
@@ -505,11 +503,9 @@ static int mpack_warray(char **buf, size_t *buflen, mpack_uint32_t len)
   if (len < 0x10) {
     return mpack_w1(buf, buflen, 0x90 | len);
   } else if (len < 0x10000) {
-    return mpack_w1(buf, buflen, 0xdc) ||
-           mpack_w2(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xdc) || mpack_w2(buf, buflen, len);
   } else {
-    return mpack_w1(buf, buflen, 0xdd) ||
-           mpack_w4(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xdd) || mpack_w4(buf, buflen, len);
   }
 }
 
@@ -518,11 +514,9 @@ static int mpack_wmap(char **buf, size_t *buflen, mpack_uint32_t len)
   if (len < 0x10) {
     return mpack_w1(buf, buflen, 0x80 | len);
   } else if (len < 0x10000) {
-    return mpack_w1(buf, buflen, 0xde) ||
-           mpack_w2(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xde) || mpack_w2(buf, buflen, len);
   } else {
-    return mpack_w1(buf, buflen, 0xdf) ||
-           mpack_w4(buf, buflen, len);
+    return mpack_w1(buf, buflen, 0xdf) || mpack_w4(buf, buflen, len);
   }
 }
 
@@ -551,8 +545,10 @@ static int mpack_w4(char **b, size_t *bl, mpack_uint32_t v)
   return MPACK_OK;
 }
 
-static int mpack_value(mpack_token_type_t type, mpack_uint32_t length,
-    mpack_value_t value, mpack_token_t *tok)
+static int mpack_value(mpack_token_type_t type,
+                       mpack_uint32_t length,
+                       mpack_value_t value,
+                       mpack_token_t *tok)
 {
   tok->type = type;
   tok->length = length;
@@ -560,8 +556,10 @@ static int mpack_value(mpack_token_type_t type, mpack_uint32_t length,
   return MPACK_OK;
 }
 
-static int mpack_blob(mpack_token_type_t type, mpack_uint32_t length,
-    int ext_type, mpack_token_t *tok)
+static int mpack_blob(mpack_token_type_t type,
+                      mpack_uint32_t length,
+                      int ext_type,
+                      mpack_token_t *tok)
 {
   tok->type = type;
   tok->length = length;

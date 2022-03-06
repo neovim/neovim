@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/msgpack_rpc/server.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -15,7 +17,6 @@
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
@@ -27,7 +28,7 @@
 static garray_T watchers = GA_EMPTY_INIT_VALUE;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/server.c.generated.h"
+#include "msgpack_rpc/server.c.generated.h"
 #endif
 
 /// Initializes the module
@@ -64,9 +65,7 @@ static void close_socket_watcher(SocketWatcher **watcher)
 /// servers are known.
 static void set_vservername(garray_T *srvs)
 {
-  char *default_server = (srvs->ga_len > 0)
-    ? ((SocketWatcher **)srvs->ga_data)[0]->addr
-    : NULL;
+  char *default_server = (srvs->ga_len > 0) ? ((SocketWatcher **)srvs->ga_data)[0]->addr : NULL;
   set_vim_var_string(VV_SEND_SERVER, default_server, -1);
 }
 
@@ -89,8 +88,8 @@ char *server_address_new(void)
 #ifdef WIN32
   static uint32_t count = 0;
   char template[ADDRESS_MAX_SIZE];
-  snprintf(template, ADDRESS_MAX_SIZE,
-           "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(), count++);
+  snprintf(template, ADDRESS_MAX_SIZE, "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(),
+           count++);
   return xstrdup(template);
 #else
   return (char *)vim_tempname();
@@ -210,8 +209,8 @@ bool server_stop(char *endpoint)
 
   // Remove this server from the list by swapping it with the last item.
   if (i != watchers.ga_len - 1) {
-    ((SocketWatcher **)watchers.ga_data)[i] =
-      ((SocketWatcher **)watchers.ga_data)[watchers.ga_len - 1];
+    ((SocketWatcher **)watchers.ga_data)[i]
+        = ((SocketWatcher **)watchers.ga_data)[watchers.ga_len - 1];
   }
   watchers.ga_len--;
 
@@ -225,8 +224,7 @@ bool server_stop(char *endpoint)
 
 /// Returns an allocated array of server addresses.
 /// @param[out] size The size of the returned array.
-char **server_address_list(size_t *size)
-  FUNC_ATTR_NONNULL_ALL
+char **server_address_list(size_t *size) FUNC_ATTR_NONNULL_ALL
 {
   if ((*size = (size_t)watchers.ga_len) == 0) {
     return NULL;

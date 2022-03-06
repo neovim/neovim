@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/cursor.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -8,7 +10,6 @@
 #include "nvim/assert.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
-#include "nvim/cursor.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/mark.h"
@@ -22,7 +23,7 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor.c.generated.h"
+#include "cursor.c.generated.h"
 #endif
 
 /*
@@ -107,9 +108,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
   int one_more;
   int head = 0;
 
-  one_more = (State & INSERT)
-             || (State & TERM_FOCUS)
-             || restart_edit != NUL
+  one_more = (State & INSERT) || (State & TERM_FOCUS) || restart_edit != NUL
              || (VIsual_active && *p_sel != 'o')
              || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
   line = ml_get_buf(curbuf, pos->lnum, false);
@@ -127,10 +126,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
   } else {
     int width = curwin->w_width_inner - win_col_off(curwin);
 
-    if (finetune
-        && curwin->w_p_wrap
-        && curwin->w_width_inner != 0
-        && wcol >= (colnr_T)width
+    if (finetune && curwin->w_p_wrap && curwin->w_width_inner != 0 && wcol >= (colnr_T)width
         && width > 0) {
       csize = linetabsize(line);
       if (csize > 0) {
@@ -168,9 +164,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       col -= csize;
     }
 
-    if (virtual_active()
-        && addspaces
-        && wcol >= 0
+    if (virtual_active() && addspaces && wcol >= 0
         && ((col != wcol && col != wcol + 1) || csize > 1)) {
       /* 'virtualedit' is set: The difference between wcol and col is
        * filled with spaces. */
@@ -191,7 +185,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       } else {
         // Break a tab
         int linelen = (int)STRLEN(line);
-        int correct = wcol - col - csize + 1;             // negative!!
+        int correct = wcol - col - csize + 1;  // negative!!
         char_u *newline;
 
         if (-correct > csize) {
@@ -342,8 +336,7 @@ void check_cursor_lnum(void)
   if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
     /* If there is a closed fold at the end of the file, put the cursor in
      * its first line.  Otherwise in the last line. */
-    if (!hasFolding(curbuf->b_ml.ml_line_count,
-                    &curwin->w_cursor.lnum, NULL)) {
+    if (!hasFolding(curbuf->b_ml.ml_line_count, &curwin->w_cursor.lnum, NULL)) {
       curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     }
   }
@@ -377,10 +370,8 @@ void check_cursor_col_win(win_T *win)
      * - in Insert mode or restarting Insert mode
      * - in Visual mode and 'selection' isn't "old"
      * - 'virtualedit' is set */
-    if ((State & INSERT) || restart_edit
-        || (VIsual_active && *p_sel != 'o')
-        || (cur_ve_flags & VE_ONEMORE)
-        || virtual_active()) {
+    if ((State & INSERT) || restart_edit || (VIsual_active && *p_sel != 'o')
+        || (cur_ve_flags & VE_ONEMORE) || virtual_active()) {
       win->w_cursor.col = len;
     } else {
       win->w_cursor.col = len - 1;
@@ -434,9 +425,7 @@ void check_cursor(void)
  */
 void adjust_cursor_col(void)
 {
-  if (curwin->w_cursor.col > 0
-      && (!VIsual_active || *p_sel == 'o')
-      && gchar_cursor() == NUL) {
+  if (curwin->w_cursor.col > 0 && (!VIsual_active || *p_sel == 'o') && gchar_cursor() == NUL) {
     --curwin->w_cursor.col;
   }
 }
@@ -480,8 +469,8 @@ bool leftcol_changed(void)
     coladvance(s - 1);
   } else if (s < curwin->w_leftcol) {
     retval = true;
-    if (coladvance(e + 1) == FAIL) {    // there isn't another character
-      curwin->w_leftcol = s;            // adjust w_leftcol instead
+    if (coladvance(e + 1) == FAIL) {  // there isn't another character
+      curwin->w_leftcol = s;          // adjust w_leftcol instead
       changed_cline_bef_curs();
     }
   }
@@ -504,8 +493,7 @@ int gchar_cursor(void)
  */
 void pchar_cursor(char_u c)
 {
-  *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true)
-    + curwin->w_cursor.col) = c;
+  *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true) + curwin->w_cursor.col) = c;
 }
 
 /*
@@ -521,6 +509,5 @@ char_u *get_cursor_line_ptr(void)
  */
 char_u *get_cursor_pos_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) +
-         curwin->w_cursor.col;
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) + curwin->w_cursor.col;
 }

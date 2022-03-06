@@ -21,13 +21,14 @@
 /// of the entries is empty to keep the lookup efficient (at the cost of extra
 /// memory).
 
+#include "nvim/hashtab.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/hashtab.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/vim.h"
@@ -36,7 +37,7 @@
 #define PERTURB_SHIFT 5
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "hashtab.c.generated.h"
+#include "hashtab.c.generated.h"
 #endif
 
 char hash_removed;
@@ -118,7 +119,9 @@ hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key, cons
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const size_t key_len,
+hashitem_T *hash_lookup(const hashtab_T *const ht,
+                        const char *const key,
+                        const size_t key_len,
                         const hash_T hash)
 {
 #ifdef HT_DEBUG
@@ -139,8 +142,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
   hashitem_T *freeitem = NULL;
   if (hi->hi_key == HI_KEY_REMOVED) {
     freeitem = hi;
-  } else if ((hi->hi_hash == hash)
-             && (STRNCMP(hi->hi_key, key, key_len) == 0)
+  } else if ((hi->hi_hash == hash) && (STRNCMP(hi->hi_key, key, key_len) == 0)
              && hi->hi_key[key_len] == NUL) {
     return hi;
   }
@@ -164,10 +166,8 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
       return freeitem == NULL ? hi : freeitem;
     }
 
-    if ((hi->hi_hash == hash)
-        && (hi->hi_key != HI_KEY_REMOVED)
-        && (STRNCMP(hi->hi_key, key, key_len) == 0)
-        && hi->hi_key[key_len] == NUL) {
+    if ((hi->hi_hash == hash) && (hi->hi_key != HI_KEY_REMOVED)
+        && (STRNCMP(hi->hi_key, key, key_len) == 0) && hi->hi_key[key_len] == NUL) {
       return hi;
     }
 
@@ -185,10 +185,8 @@ void hash_debug_results(void)
 {
 #ifdef HT_DEBUG
   fprintf(stderr, "\r\n\r\n\r\n\r\n");
-  fprintf(stderr, "Number of hashtable lookups: %" PRId64 "\r\n",
-          (int64_t)hash_count_lookup);
-  fprintf(stderr, "Number of perturb loops: %" PRId64 "\r\n",
-          (int64_t)hash_count_perturb);
+  fprintf(stderr, "Number of hashtable lookups: %" PRId64 "\r\n", (int64_t)hash_count_lookup);
+  fprintf(stderr, "Number of perturb loops: %" PRId64 "\r\n", (int64_t)hash_count_perturb);
   fprintf(stderr, "Percentage of perturb loops: %" PRId64 "%%\r\n",
           (int64_t)(hash_count_perturb * 100 / hash_count_lookup));
 #endif  // ifdef HT_DEBUG
@@ -293,8 +291,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   if (minitems == 0) {
     // Return quickly for small tables with at least two NULL items.
     // items are required for the lookup to decide a key isn't there.
-    if ((ht->ht_filled < HT_INIT_SIZE - 1)
-        && (ht->ht_array == ht->ht_smallarray)) {
+    if ((ht->ht_filled < HT_INIT_SIZE - 1) && (ht->ht_array == ht->ht_smallarray)) {
       return;
     }
 
@@ -333,18 +330,15 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   }
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
-  bool keep_smallarray = newarray_is_small
-                         && ht->ht_array == ht->ht_smallarray;
+  bool keep_smallarray = newarray_is_small && ht->ht_array == ht->ht_smallarray;
 
   // Make sure that oldarray and newarray do not overlap,
   // so that copying is possible.
   hashitem_T temparray[HT_INIT_SIZE];
-  hashitem_T *oldarray = keep_smallarray
-    ? memcpy(temparray, ht->ht_smallarray, sizeof(temparray))
-    : ht->ht_array;
-  hashitem_T *newarray = newarray_is_small
-    ? ht->ht_smallarray
-    : xmalloc(sizeof(hashitem_T) * newsize);
+  hashitem_T *oldarray
+      = keep_smallarray ? memcpy(temparray, ht->ht_smallarray, sizeof(temparray)) : ht->ht_array;
+  hashitem_T *newarray
+      = newarray_is_small ? ht->ht_smallarray : xmalloc(sizeof(hashitem_T) * newsize);
 
   memset(newarray, 0, sizeof(hashitem_T) * newsize);
 
@@ -384,8 +378,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_filled = ht->ht_used;
 }
 
-#define HASH_CYCLE_BODY(hash, p) \
-  hash = hash * 101 + *p++
+#define HASH_CYCLE_BODY(hash, p) hash = hash * 101 + *p++
 
 /// Get the hash number for a key.
 ///
@@ -420,8 +413,7 @@ hash_T hash_hash(const char_u *key)
 /// @param[in]  len  Key length.
 ///
 /// @return Key hash.
-hash_T hash_hash_len(const char *key, const size_t len)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+hash_T hash_hash_len(const char *key, const size_t len) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (len == 0) {
     return 0;
@@ -444,8 +436,7 @@ hash_T hash_hash_len(const char *key, const size_t len)
 ///
 /// Used for testing because luajit ffi does not allow getting addresses of
 /// globals.
-const char_u *_hash_key_removed(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+const char_u *_hash_key_removed(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return HI_KEY_REMOVED;
 }

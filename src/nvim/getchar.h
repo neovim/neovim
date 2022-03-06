@@ -11,17 +11,17 @@
 ///
 /// Also used for map->m_noremap and menu->noremap[].
 enum RemapValues {
-  REMAP_YES = 0,  ///< Allow remapping.
-  REMAP_NONE = -1,  ///< No remapping.
+  REMAP_YES = 0,      ///< Allow remapping.
+  REMAP_NONE = -1,    ///< No remapping.
   REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
-  REMAP_SKIP = -3,  ///< No remapping for first char.
+  REMAP_SKIP = -3,    ///< No remapping for first char.
 };
 
 // Argument for flush_buffers().
 typedef enum {
   FLUSH_MINIMAL,
   FLUSH_TYPEAHEAD,  // flush current typebuf contents
-  FLUSH_INPUT,  // flush typebuf and inchar() input
+  FLUSH_INPUT,      // flush typebuf and inchar() input
 } flush_buffers_T;
 
 /// All possible |:map-arguments| usable in a |:map| command.
@@ -50,7 +50,7 @@ struct map_arguments {
 
   char_u *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
-  LuaRef rhs_lua;  /// lua function as rhs
+  LuaRef rhs_lua;    /// lua function as rhs
   bool rhs_is_noop;  /// True when the {orig_rhs} is <nop>.
 
   char_u *orig_rhs;  /// The original text of the {rhs}.
@@ -58,19 +58,24 @@ struct map_arguments {
   char *desc;  /// map description
 };
 typedef struct map_arguments MapArguments;
-#define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, \
-                             { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
+#define MAP_ARGUMENTS_INIT                                                                         \
+  {                                                                                                \
+    false, false, false, false, false, false, false, {0}, 0, NULL, 0, LUA_NOREF, false, NULL, 0,   \
+        NULL                                                                                       \
+  }
 
 #define KEYLEN_PART_KEY -1  // keylen value for incomplete key-code
 #define KEYLEN_PART_MAP -2  // keylen value for incomplete mapping
 
 /// Maximum number of streams to read script from
-enum { NSCRIPT = 15, };
+enum {
+  NSCRIPT = 15,
+};
 
 /// Streams to read script from
 extern FileDescriptor *scriptin[NSCRIPT];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.h.generated.h"
+#include "getchar.h.generated.h"
 #endif
 #endif  // NVIM_GETCHAR_H

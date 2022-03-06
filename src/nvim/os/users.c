@@ -12,10 +12,10 @@
 #include "nvim/os/os.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
-# include <pwd.h>
+#include <pwd.h>
 #endif
 #ifdef WIN32
-# include <lm.h>
+#include <lm.h>
 #endif
 
 // All user names (for ~user completion as done by shell).
@@ -25,8 +25,7 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 // Do nothing if user name is NULL or empty.
 static void add_user(garray_T *users, char *user, bool need_copy)
 {
-  char *user_copy = (user != NULL && need_copy)
-    ? xstrdup(user) : user;
+  char *user_copy = (user != NULL && need_copy) ? xstrdup(user) : user;
 
   if (user_copy == NULL || *user_copy == NUL) {
     if (need_copy) {
@@ -61,8 +60,8 @@ int os_get_usernames(garray_T *users)
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;
 
-    if (NetUserEnum(NULL, 0, 0, (LPBYTE *)&uinfo, MAX_PREFERRED_LENGTH,
-                    &nusers, &ntotal, NULL) == NERR_Success) {
+    if (NetUserEnum(NULL, 0, 0, (LPBYTE *)&uinfo, MAX_PREFERRED_LENGTH, &nusers, &ntotal, NULL)
+        == NERR_Success) {
       for (i = 0; i < nusers; i++) {
         char *user;
         int conversion_result = utf16_to_utf8(uinfo[i].usri0_name, -1, &user);
@@ -160,7 +159,6 @@ char *os_get_user_directory(const char *name)
   return NULL;
 }
 
-
 #if defined(EXITFREE)
 
 void free_users(void)
@@ -209,10 +207,10 @@ int match_user(char_u *name)
   init_users();
   for (int i = 0; i < ga_users.ga_len; i++) {
     if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
-      return 2;       // full match
+      return 2;  // full match
     }
     if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
-      result = 1;       // partial match
+      result = 1;  // partial match
     }
   }
   return result;

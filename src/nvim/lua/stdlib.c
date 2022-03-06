@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/lua/stdlib.h"
+
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
@@ -28,10 +30,9 @@
 #include "nvim/globals.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
-#include "nvim/lua/stdlib.h"
+#include "nvim/lua/spell.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/lua/spell.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
@@ -47,7 +48,7 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/stdlib.c.generated.h"
+#include "lua/stdlib.c.generated.h"
 #endif
 
 static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
@@ -59,8 +60,8 @@ static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
   *prog = rm.regprog;
 
   if (match) {
-    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0]-str));
-    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0]-str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - str));
     return 2;
   }
   return 0;
@@ -110,7 +111,7 @@ static int regex_match_line(lua_State *lstate)
     return luaL_error(lstate, "invalid row");
   }
 
-  char_u *line = ml_get_buf(buf, rownr+1, false);
+  char_u *line = ml_get_buf(buf, rownr + 1, false);
   size_t len = STRLEN(line);
 
   if (start < 0 || (size_t)start > len) {
@@ -126,7 +127,7 @@ static int regex_match_line(lua_State *lstate)
     line[end] = NUL;
   }
 
-  int nret = regex_match(lstate, prog, line+start);
+  int nret = regex_match(lstate, prog, line + start);
 
   if (end >= 0) {
     line[end] = save;
@@ -157,13 +158,11 @@ static int regex_tostring(lua_State *lstate)
   return 1;
 }
 
-static struct luaL_Reg regex_meta[] = {
-  { "__gc", regex_gc },
-  { "__tostring", regex_tostring },
-  { "match_str", regex_match_str },
-  { "match_line", regex_match_line },
-  { NULL, NULL }
-};
+static struct luaL_Reg regex_meta[] = {{"__gc", regex_gc},
+                                       {"__tostring", regex_tostring},
+                                       {"match_str", regex_match_str},
+                                       {"match_line", regex_match_line},
+                                       {NULL, NULL}};
 
 /// convert byte index to UTF-32 and UTF-16 indices
 ///
@@ -208,7 +207,7 @@ static int nlua_str_utf_pos(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t idx = 1;
   size_t clen;
   for (size_t i = 0; i < s1_len && s1[i] != NUL; i += clen) {
-    clen = (size_t)utf_ptr2len_len((const char_u *)(s1)+i, (int)(s1_len-i));
+    clen = (size_t)utf_ptr2len_len((const char_u *)(s1) + i, (int)(s1_len - i));
     lua_pushinteger(lstate, (long)i + 1);
     lua_rawseti(lstate, -2, (int)idx);
     idx++;
@@ -276,8 +275,7 @@ int nlua_str_byteindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     use_utf16 = lua_toboolean(lstate, 3);
   }
 
-  ssize_t byteidx = mb_utf_index_to_bytes((const char_u *)s1, s1_len,
-                                          (size_t)idx, use_utf16);
+  ssize_t byteidx = mb_utf_index_to_bytes((const char_u *)s1, s1_len, (size_t)idx, use_utf16);
   if (byteidx == -1) {
     return luaL_error(lstate, "index out of range");
   }
@@ -308,7 +306,7 @@ int nlua_regex(lua_State *lstate)
   *p = prog;
 
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim_regex");  // [udata, meta]
-  lua_setmetatable(lstate, -2);  // [udata]
+  lua_setmetatable(lstate, -2);                           // [udata]
   return 1;
 }
 
@@ -348,7 +346,6 @@ static dict_T *nlua_get_var_scope(lua_State *lstate)
   }
   return dict;
 }
-
 
 int nlua_setvar(lua_State *lstate)
 {
@@ -411,7 +408,7 @@ int nlua_getvar(lua_State *lstate)
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
   if (di == NULL && dict == &globvardict) {  // try to autoload script
     if (!script_autoload(name, len, false) || aborting()) {
-       return 0;  // nil
+      return 0;  // nil
     }
     di = tv_dict_find(dict, name, (ptrdiff_t)len);
   }
@@ -470,7 +467,6 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
@@ -501,9 +497,9 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     luaL_newmetatable(lstate, "nvim_regex");
     luaL_register(lstate, NULL, regex_meta);
 
-    lua_pushvalue(lstate, -1);  // [meta, meta]
+    lua_pushvalue(lstate, -1);            // [meta, meta]
     lua_setfield(lstate, -2, "__index");  // [meta]
-    lua_pop(lstate, 1);  // don't use metatable now
+    lua_pop(lstate, 1);                   // don't use metatable now
 
     // _getvar
     lua_pushcfunction(lstate, &nlua_getvar);

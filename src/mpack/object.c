@@ -1,16 +1,15 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <string.h>
-
 #include "object.h"
+
+#include <string.h>
 
 static int mpack_parser_full(mpack_parser_t *w);
 static mpack_node_t *mpack_parser_push(mpack_parser_t *w);
 static mpack_node_t *mpack_parser_pop(mpack_parser_t *w);
 
-MPACK_API void mpack_parser_init(mpack_parser_t *parser,
-    mpack_uint32_t capacity)
+MPACK_API void mpack_parser_init(mpack_parser_t *parser, mpack_uint32_t capacity)
 {
   mpack_tokbuf_init(&parser->tokbuf);
   parser->data.p = NULL;
@@ -22,52 +21,68 @@ MPACK_API void mpack_parser_init(mpack_parser_t *parser,
   parser->status = 0;
 }
 
-#define MPACK_EXCEPTION_CHECK(parser)                                           \
-  do {                                                                      \
-    if (parser->status == MPACK_EXCEPTION) {                                    \
-      return MPACK_EXCEPTION;                                                   \
-    }                                                                       \
+#define MPACK_EXCEPTION_CHECK(parser)                                                              \
+  do {                                                                                             \
+    if (parser->status == MPACK_EXCEPTION) {                                                       \
+      return MPACK_EXCEPTION;                                                                      \
+    }                                                                                              \
   } while (0)
 
-#define MPACK_WALK(action)                                                  \
-  do {                                                                      \
-    mpack_node_t *n;                                                        \
-                                                                            \
-    if (parser->exiting) goto exit;                                         \
-    if (mpack_parser_full(parser)) return MPACK_NOMEM;                      \
-    n = mpack_parser_push(parser);                                          \
-    action;                                                                 \
-    MPACK_EXCEPTION_CHECK(parser);                                              \
-    parser->exiting = 1;                                                    \
-    return MPACK_EOF;                                                       \
-                                                                            \
-exit:                                                                       \
-    parser->exiting = 0;                                                    \
-    while ((n = mpack_parser_pop(parser))) {                                \
-      exit_cb(parser, n);                                                   \
-      MPACK_EXCEPTION_CHECK(parser);                                            \
-      if (!parser->size) return MPACK_OK;                                   \
-    }                                                                       \
-                                                                            \
-    return MPACK_EOF;                                                       \
+#define MPACK_WALK(action)                                                                         \
+  do {                                                                                             \
+    mpack_node_t *n;                                                                               \
+                                                                                                   \
+    if (parser->exiting)                                                                           \
+      goto exit;                                                                                   \
+    if (mpack_parser_full(parser))                                                                 \
+      return MPACK_NOMEM;                                                                          \
+    n = mpack_parser_push(parser);                                                                 \
+    action;                                                                                        \
+    MPACK_EXCEPTION_CHECK(parser);                                                                 \
+    parser->exiting = 1;                                                                           \
+    return MPACK_EOF;                                                                              \
+                                                                                                   \
+  exit:                                                                                            \
+    parser->exiting = 0;                                                                           \
+    while ((n = mpack_parser_pop(parser))) {                                                       \
+      exit_cb(parser, n);                                                                          \
+      MPACK_EXCEPTION_CHECK(parser);                                                               \
+      if (!parser->size)                                                                           \
+        return MPACK_OK;                                                                           \
+    }                                                                                              \
+                                                                                                   \
+    return MPACK_EOF;                                                                              \
   } while (0)
 
-MPACK_API int mpack_parse_tok(mpack_parser_t *parser, mpack_token_t tok,
-    mpack_walk_cb enter_cb, mpack_walk_cb exit_cb)
+MPACK_API int mpack_parse_tok(mpack_parser_t *parser,
+                              mpack_token_t tok,
+                              mpack_walk_cb enter_cb,
+                              mpack_walk_cb exit_cb)
 {
   MPACK_EXCEPTION_CHECK(parser);
-  MPACK_WALK({n->tok = tok; enter_cb(parser, n);});
+  MPACK_WALK({
+    n->tok = tok;
+    enter_cb(parser, n);
+  });
 }
 
-MPACK_API int mpack_unparse_tok(mpack_parser_t *parser, mpack_token_t *tok,
-    mpack_walk_cb enter_cb, mpack_walk_cb exit_cb)
+MPACK_API int mpack_unparse_tok(mpack_parser_t *parser,
+                                mpack_token_t *tok,
+                                mpack_walk_cb enter_cb,
+                                mpack_walk_cb exit_cb)
 {
   MPACK_EXCEPTION_CHECK(parser);
-  MPACK_WALK({enter_cb(parser, n); *tok = n->tok;});
+  MPACK_WALK({
+    enter_cb(parser, n);
+    *tok = n->tok;
+  });
 }
 
-MPACK_API int mpack_parse(mpack_parser_t *parser, const char **buf,
-    size_t *buflen, mpack_walk_cb enter_cb, mpack_walk_cb exit_cb)
+MPACK_API int mpack_parse(mpack_parser_t *parser,
+                          const char **buf,
+                          size_t *buflen,
+                          mpack_walk_cb enter_cb,
+                          mpack_walk_cb exit_cb)
 {
   int status = MPACK_EOF;
   MPACK_EXCEPTION_CHECK(parser);
@@ -78,17 +93,20 @@ MPACK_API int mpack_parse(mpack_parser_t *parser, const char **buf,
     const char *buf_save = *buf;
     size_t buflen_save = *buflen;
 
-    if ((status = mpack_read(tb, buf, buflen, &tok)) == MPACK_EOF) continue;
-    else if (status == MPACK_ERROR) goto rollback;
+    if ((status = mpack_read(tb, buf, buflen, &tok)) == MPACK_EOF)
+      continue;
+    else if (status == MPACK_ERROR)
+      goto rollback;
 
     do {
       status = mpack_parse_tok(parser, tok, enter_cb, exit_cb);
       MPACK_EXCEPTION_CHECK(parser);
     } while (parser->exiting);
 
-    if (status != MPACK_NOMEM) continue;
+    if (status != MPACK_NOMEM)
+      continue;
 
-rollback:
+  rollback:
     /* restore buf/buflen so the next call will try to read the same token */
     *buf = buf_save;
     *buflen = buflen_save;
@@ -98,8 +116,11 @@ rollback:
   return status;
 }
 
-MPACK_API int mpack_unparse(mpack_parser_t *parser, char **buf, size_t *buflen,
-    mpack_walk_cb enter_cb, mpack_walk_cb exit_cb)
+MPACK_API int mpack_unparse(mpack_parser_t *parser,
+                            char **buf,
+                            size_t *buflen,
+                            mpack_walk_cb enter_cb,
+                            mpack_walk_cb exit_cb)
 {
   int status = MPACK_EOF;
   MPACK_EXCEPTION_CHECK(parser);
@@ -131,7 +152,7 @@ MPACK_API int mpack_unparse(mpack_parser_t *parser, char **buf, size_t *buflen,
 MPACK_API void mpack_parser_copy(mpack_parser_t *dst, mpack_parser_t *src)
 {
   mpack_uint32_t i;
-  mpack_uint32_t dst_capacity = dst->capacity; 
+  mpack_uint32_t dst_capacity = dst->capacity;
   assert(src->capacity <= dst_capacity);
   /* copy all fields except the stack */
   memcpy(dst, src, sizeof(mpack_one_parser_t) - sizeof(mpack_node_t));
@@ -195,4 +216,3 @@ static mpack_node_t *mpack_parser_pop(mpack_parser_t *parser)
   parser->size--;
   return top;
 }
-

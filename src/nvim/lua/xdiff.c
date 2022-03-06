@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/lua/xdiff.h"
+
 #include <errno.h>
 #include <lauxlib.h>
 #include <lua.h>
@@ -12,7 +14,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
-#include "nvim/lua/xdiff.h"
 #include "nvim/vim.h"
 #include "xdiff/xdiff.h"
 
@@ -28,7 +29,7 @@ typedef struct {
 } hunkpriv_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/xdiff.c.generated.h"
+#include "lua/xdiff.c.generated.h"
 #endif
 
 static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
@@ -74,7 +75,7 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
   lua_pushinteger(lstate, count_b);
   lua_rawseti(lstate, -2, 4);
 
-  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2)+1);
+  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
 
   return 0;
 }
@@ -103,8 +104,7 @@ static int call_on_hunk_cb(long start_a, long count_a, long start_b, long count_
   lua_pushinteger(lstate, count_b);
 
   if (lua_pcall(lstate, 4, 1, 0) != 0) {
-    api_set_error(err, kErrorTypeException,
-                  "error running function on_hunk: %s",
+    api_set_error(err, kErrorTypeException, "error running function on_hunk: %s",
                   lua_tostring(lstate, -1));
     return -1;
   }
@@ -133,22 +133,24 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
 static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *name, Error *err)
 {
   if (actType != expType) {
-    const char *type_str =
-      expType == kObjectTypeString  ? "string"   :
-      expType == kObjectTypeInteger ? "integer"  :
-      expType == kObjectTypeBoolean ? "boolean"  :
-      expType == kObjectTypeLuaRef  ? "function" :
-      "NA";
+    const char *type_str = expType == kObjectTypeString
+                               ? "string"
+                               : expType == kObjectTypeInteger
+                                     ? "integer"
+                                     : expType == kObjectTypeBoolean
+                                           ? "boolean"
+                                           : expType == kObjectTypeLuaRef ? "function" : "NA";
 
-    api_set_error(err, kErrorTypeValidation, "%s is not a %s", name,
-                  type_str);
+    api_set_error(err, kErrorTypeValidation, "%s is not a %s", name, type_str);
     return true;
   }
 
   return false;
 }
 
-static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg, xpparam_t *params,
+static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
+                                           xdemitconf_t *cfg,
+                                           xpparam_t *params,
                                            Error *err)
 {
   const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
@@ -199,8 +201,7 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
       }
       cfg->ctxlen = v->data.integer;
     } else if (strequal("interhunkctxlen", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeInteger, "interhunkctxlen",
-                          err)) {
+      if (check_xdiff_opt(v->type, kObjectTypeInteger, "interhunkctxlen", err)) {
         goto exit_1;
       }
       cfg->interhunkctxlen = v->data.integer;
@@ -209,19 +210,18 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
         const char *name;
         unsigned long value;
       } flags[] = {
-        { "ignore_whitespace", XDF_IGNORE_WHITESPACE },
-        { "ignore_whitespace_change", XDF_IGNORE_WHITESPACE_CHANGE },
-        { "ignore_whitespace_change_at_eol", XDF_IGNORE_WHITESPACE_AT_EOL },
-        { "ignore_cr_at_eol", XDF_IGNORE_CR_AT_EOL },
-        { "ignore_blank_lines", XDF_IGNORE_BLANK_LINES },
-        { "indent_heuristic", XDF_INDENT_HEURISTIC },
-        {  NULL, 0 },
+          {"ignore_whitespace", XDF_IGNORE_WHITESPACE},
+          {"ignore_whitespace_change", XDF_IGNORE_WHITESPACE_CHANGE},
+          {"ignore_whitespace_change_at_eol", XDF_IGNORE_WHITESPACE_AT_EOL},
+          {"ignore_cr_at_eol", XDF_IGNORE_CR_AT_EOL},
+          {"ignore_blank_lines", XDF_IGNORE_BLANK_LINES},
+          {"indent_heuristic", XDF_INDENT_HEURISTIC},
+          {NULL, 0},
       };
       bool key_used = false;
       for (size_t j = 0; flags[j].name; j++) {
         if (strequal(flags[j].name, k.data)) {
-          if (check_xdiff_opt(v->type, kObjectTypeBoolean, flags[j].name,
-                              err)) {
+          if (check_xdiff_opt(v->type, kObjectTypeBoolean, flags[j].name, err)) {
             goto exit_1;
           }
           if (v->data.boolean) {
@@ -289,27 +289,26 @@ int nlua_xdl_diff(lua_State *lstate)
   luaL_Buffer buf;
   hunkpriv_t *priv = NULL;
   switch (mode) {
-  case kNluaXdiffModeUnified:
-    luaL_buffinit(lstate, &buf);
-    ecb.priv = &buf;
-    ecb.out_line = write_string;
-    break;
-  case kNluaXdiffModeOnHunkCB:
-    priv = xmalloc(sizeof(*priv));
-    priv->lstate = lstate;
-    priv->err = &err;
-    ecb.priv = priv;
-    break;
-  case kNluaXdiffModeLocations:
-    lua_createtable(lstate, 0, 0);
-    ecb.priv = lstate;
-    break;
+    case kNluaXdiffModeUnified:
+      luaL_buffinit(lstate, &buf);
+      ecb.priv = &buf;
+      ecb.out_line = write_string;
+      break;
+    case kNluaXdiffModeOnHunkCB:
+      priv = xmalloc(sizeof(*priv));
+      priv->lstate = lstate;
+      priv->err = &err;
+      ecb.priv = priv;
+      break;
+    case kNluaXdiffModeLocations:
+      lua_createtable(lstate, 0, 0);
+      ecb.priv = lstate;
+      break;
   }
 
   if (xdl_diff(&ma, &mb, &params, &cfg, &ecb) == -1) {
     if (!ERROR_SET(&err)) {
-      api_set_error(&err, kErrorTypeException,
-                    "Error while performing diff operation");
+      api_set_error(&err, kErrorTypeException, "Error while performing diff operation");
     }
   }
 

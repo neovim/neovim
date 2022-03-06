@@ -8,6 +8,6 @@
 #include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellfile.h.generated.h"
+#include "spellfile.h.generated.h"
 #endif
 #endif  // NVIM_SPELLFILE_H

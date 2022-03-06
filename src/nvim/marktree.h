@@ -1,14 +1,14 @@
 #ifndef NVIM_MARKTREE_H
 #define NVIM_MARKTREE_H
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "nvim/assert.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
-#include "nvim/types.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 #define MT_MAX_DEPTH 20
 #define MT_BRANCH_FACTOR 10
@@ -32,7 +32,6 @@ typedef struct {
   iterstate_t s[MT_MAX_DEPTH];
 } MarkTreeIter;
 
-
 // Internal storage
 //
 // NB: actual marks have flags > 0, so we can use (row,col,0) pseudo-key for
@@ -46,7 +45,11 @@ typedef struct {
   uint16_t priority;
   Decoration *decor_full;
 } mtkey_t;
-#define MT_INVALID_KEY (mtkey_t) { { -1, -1 }, 0, 0, 0, 0, 0, NULL }
+#define MT_INVALID_KEY                                                                             \
+  (mtkey_t)                                                                                        \
+  {                                                                                                \
+    {-1, -1}, 0, 0, 0, 0, 0, NULL                                                                  \
+  }
 
 #define MT_FLAG_REAL (((uint16_t)1) << 0)
 #define MT_FLAG_END (((uint16_t)1) << 1)
@@ -55,7 +58,7 @@ typedef struct {
 
 #define DECOR_LEVELS 4
 #define MT_FLAG_DECOR_OFFSET 4
-#define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS-1)) << MT_FLAG_DECOR_OFFSET)
+#define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS - 1)) << MT_FLAG_DECOR_OFFSET)
 
 // next flag is (((uint16_t)1) << 6)
 
@@ -68,7 +71,7 @@ typedef struct {
 #define MARKTREE_END_FLAG (((uint64_t)1) << 63)
 static inline uint64_t mt_lookup_id(uint32_t ns, uint32_t id, bool enda)
 {
-  return (uint64_t)ns << 32 | id | (enda?MARKTREE_END_FLAG:0);
+  return (uint64_t)ns << 32 | id | (enda ? MARKTREE_END_FLAG : 0);
 }
 #undef MARKTREE_END_FLAG
 
@@ -99,7 +102,7 @@ static inline bool mt_right(mtkey_t key)
 
 static inline uint8_t marktree_decor_level(mtkey_t key)
 {
-  return (uint8_t)((key.flags&MT_FLAG_DECOR_MASK) >> MT_FLAG_DECOR_OFFSET);
+  return (uint8_t)((key.flags & MT_FLAG_DECOR_MASK) >> MT_FLAG_DECOR_OFFSET);
 }
 
 static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
@@ -108,7 +111,6 @@ static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
   return (uint16_t)((right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
                     | (decor_level << MT_FLAG_DECOR_OFFSET));
 }
-
 
 struct mtnode_s {
   int32_t n;
@@ -130,9 +132,8 @@ typedef struct {
   PMap(uint64_t) id2node[1];
 } MarkTree;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "marktree.h.generated.h"
+#include "marktree.h.generated.h"
 #endif
 
 #endif  // NVIM_MARKTREE_H

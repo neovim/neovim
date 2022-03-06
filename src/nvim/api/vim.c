@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/vim.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -14,7 +16,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -60,7 +61,7 @@
 #define LINE_BUFFER_SIZE 4096
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vim.c.generated.h"
+#include "api/vim.c.generated.h"
 #endif
 
 /// Gets a highlight definition by name.
@@ -70,15 +71,13 @@
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_id
-Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
-  FUNC_API_SINCE(3)
+Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err) FUNC_API_SINCE(3)
 {
   Dictionary result = ARRAY_DICT_INIT;
   int id = syn_name2id(name.data);
 
   if (id == 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s",
-                  name.data);
+    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s", name.data);
     return result;
   }
   result = nvim_get_hl_by_id(id, rgb, err);
@@ -92,13 +91,11 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_name
-Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
-  FUNC_API_SINCE(3)
+Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err) FUNC_API_SINCE(3)
 {
   Dictionary dic = ARRAY_DICT_INIT;
   if (syn_get_final_id((int)hl_id) == 0) {
-    api_set_error(err, kErrorTypeException,
-                  "Invalid highlight id: %" PRId64, hl_id);
+    api_set_error(err, kErrorTypeException, "Invalid highlight id: %" PRId64, hl_id);
     return dic;
   }
   int attrcode = syn_id2attr((int)hl_id);
@@ -108,8 +105,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 /// Gets a highlight group by name
 ///
 /// similar to |hlID()|, but allocates a new ID if not present.
-Integer nvim_get_hl_id_by_name(String name)
-  FUNC_API_SINCE(7)
+Integer nvim_get_hl_id_by_name(String name) FUNC_API_SINCE(7)
 {
   return syn_check_group(name.data, (int)name.size);
 }
@@ -145,8 +141,7 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
-void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
-  FUNC_API_SINCE(7)
+void nvim_set_hl(Integer ns_id, String name, Dict(highlight) * val, Error *err) FUNC_API_SINCE(7)
 {
   int hl_id = syn_check_group(name.data, (int)name.size);
   int link_id = -1;
@@ -166,8 +161,7 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
 ///
 /// @param ns_id the namespace to activate
 /// @param[out] err Error details, if any
-void nvim__set_hl_ns(Integer ns_id, Error *err)
-  FUNC_API_FAST
+void nvim__set_hl_ns(Integer ns_id, Error *err) FUNC_API_FAST
 {
   if (ns_id >= 0) {
     ns_hl_active = (NS)ns_id;
@@ -187,7 +181,6 @@ static void on_redraw_event(void **argv)
 {
   redraw_all_later(NOT_VALID);
 }
-
 
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
 /// flags. This is a blocking call, unlike |nvim_input()|.
@@ -211,8 +204,7 @@ static void on_redraw_event(void **argv)
 ///                     |nvim_replace_termcodes()|, and true otherwise.
 /// @see feedkeys()
 /// @see vim_strsave_escape_ks
-void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
-  FUNC_API_SINCE(1)
+void nvim_feedkeys(String keys, String mode, Boolean escape_ks) FUNC_API_SINCE(1)
 {
   bool remap = true;
   bool insert = false;
@@ -222,18 +214,24 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 
   for (size_t i = 0; i < mode.size; ++i) {
     switch (mode.data[i]) {
-    case 'n':
-      remap = false; break;
-    case 'm':
-      remap = true; break;
-    case 't':
-      typed = true; break;
-    case 'i':
-      insert = true; break;
-    case 'x':
-      execute = true; break;
-    case '!':
-      dangerous = true; break;
+      case 'n':
+        remap = false;
+        break;
+      case 'm':
+        remap = true;
+        break;
+      case 't':
+        typed = true;
+        break;
+      case 'i':
+        insert = true;
+        break;
+      case 'x':
+        execute = true;
+        break;
+      case '!':
+        dangerous = true;
+        break;
     }
   }
 
@@ -249,8 +247,8 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   } else {
     keys_esc = keys.data;
   }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-              insert ? 0 : typebuf.tb_len, !typed, false);
+  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE), insert ? 0 : typebuf.tb_len,
+              !typed, false);
   if (vgetc_busy) {
     typebuf_was_filled = true;
   }
@@ -290,8 +288,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
 ///         requested if the buffer becomes full).
-Integer nvim_input(String keys)
-  FUNC_API_SINCE(1) FUNC_API_FAST
+Integer nvim_input(String keys) FUNC_API_SINCE(1) FUNC_API_FAST
 {
   return (Integer)input_enqueue(keys);
 }
@@ -318,9 +315,13 @@ Integer nvim_input(String keys)
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
 /// @param[out] err Error details, if any
-void nvim_input_mouse(String button, String action, String modifier, Integer grid, Integer row,
-                      Integer col, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_FAST
+void nvim_input_mouse(String button,
+                      String action,
+                      String modifier,
+                      Integer grid,
+                      Integer row,
+                      Integer col,
+                      Error *err) FUNC_API_SINCE(6) FUNC_API_FAST
 {
   if (button.data == NULL || action.data == NULL) {
     goto error;
@@ -372,8 +373,7 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
     }
     int mod = name_to_mod_mask(byte);
     if (mod == 0) {
-      api_set_error(err, kErrorTypeValidation,
-                    "invalid modifier %c", byte);
+      api_set_error(err, kErrorTypeValidation, "invalid modifier %c", byte);
       return;
     }
     modmask |= mod;
@@ -383,8 +383,7 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
   return;
 
 error:
-  api_set_error(err, kErrorTypeValidation,
-                "invalid button or action");
+  api_set_error(err, kErrorTypeValidation, "invalid button or action");
 }
 
 /// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
@@ -397,19 +396,18 @@ error:
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   if (str.size == 0) {
     // Empty string
-    return (String) { .data = NULL, .size = 0 };
+    return (String){.data = NULL, .size = 0};
   }
 
   char *ptr = NULL;
-  replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr,
-                    from_part, do_lt, special, CPO_TO_CPO_FLAGS);
+  replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr, from_part, do_lt, special,
+                    CPO_TO_CPO_FLAGS);
   return cstr_as_string(ptr);
 }
-
 
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
@@ -423,9 +421,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_exec_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(7)
-  FUNC_API_REMOTE_ONLY
+Object nvim_exec_lua(String code, Array args, Error *err) FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
 {
   return nlua_exec(code, args, err);
 }
@@ -439,8 +435,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
 /// @param log_level  The log level
 /// @param opts       Reserved for future use.
 /// @param[out] err   Error details, if any
-Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
-  FUNC_API_SINCE(7)
+Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err) FUNC_API_SINCE(7)
 {
   FIXED_TEMP_ARRAY(args, 3);
   args.items[0] = STRING_OBJ(msg);
@@ -456,8 +451,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 /// @param text       Some text
 /// @param[out] err   Error details, if any
 /// @return Number of cells
-Integer nvim_strwidth(String text, Error *err)
-  FUNC_API_SINCE(1)
+Integer nvim_strwidth(String text, Error *err) FUNC_API_SINCE(1)
 {
   if (text.size > INT_MAX) {
     api_set_error(err, kErrorTypeValidation, "String is too long");
@@ -470,8 +464,7 @@ Integer nvim_strwidth(String text, Error *err)
 /// Gets the paths contained in 'runtimepath'.
 ///
 /// @return List of paths
-ArrayOf(String) nvim_list_runtime_paths(Error *err)
-  FUNC_API_SINCE(1)
+ArrayOf(String) nvim_list_runtime_paths(Error *err) FUNC_API_SINCE(1)
 {
   return nvim_get_runtime_file(NULL_STRING, true, err);
 }
@@ -494,8 +487,7 @@ Array nvim__runtime_inspect(void)
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
 ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
-  FUNC_API_SINCE(7)
-  FUNC_API_FAST
+    FUNC_API_SINCE(7) FUNC_API_FAST
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -503,8 +495,7 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 
   TRY_WRAP({
     try_start();
-    do_in_runtimepath((char_u *)(name.size ? name.data : ""),
-                      flags, find_runtime_cb, &rv);
+    do_in_runtimepath((char_u *)(name.size ? name.data : ""), flags, find_runtime_cb, &rv);
     try_end(err);
   });
   return rv;
@@ -530,9 +521,8 @@ String nvim__get_lib_dir(void)
 /// @param options
 ///          is_lua: only search lua subdirs
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Error *err)
-  FUNC_API_SINCE(8)
-  FUNC_API_FAST
+ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) * opts, Error *err)
+    FUNC_API_SINCE(8) FUNC_API_FAST
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
   if (ERROR_SET(err)) {
@@ -541,13 +531,11 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   return runtime_get_named(is_lua, pat, all);
 }
 
-
 /// Changes the global working directory.
 ///
 /// @param dir      Directory path
 /// @param[out] err Error details, if any
-void nvim_set_current_dir(String dir, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_set_current_dir(String dir, Error *err) FUNC_API_SINCE(1)
 {
   if (dir.size >= MAXPATHL) {
     api_set_error(err, kErrorTypeValidation, "Directory name is too long");
@@ -574,8 +562,7 @@ void nvim_set_current_dir(String dir, Error *err)
 ///
 /// @param[out] err Error details, if any
 /// @return Current line string
-String nvim_get_current_line(Error *err)
-  FUNC_API_SINCE(1)
+String nvim_get_current_line(Error *err) FUNC_API_SINCE(1)
 {
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
@@ -584,9 +571,7 @@ String nvim_get_current_line(Error *err)
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
-void nvim_set_current_line(String line, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_CHECK_TEXTLOCK
+void nvim_set_current_line(String line, Error *err) FUNC_API_SINCE(1) FUNC_API_CHECK_TEXTLOCK
 {
   buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
@@ -594,9 +579,7 @@ void nvim_set_current_line(String line, Error *err)
 /// Deletes the current line.
 ///
 /// @param[out] err Error details, if any
-void nvim_del_current_line(Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_CHECK_TEXTLOCK
+void nvim_del_current_line(Error *err) FUNC_API_SINCE(1) FUNC_API_CHECK_TEXTLOCK
 {
   buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
@@ -606,8 +589,7 @@ void nvim_del_current_line(Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Variable value
-Object nvim_get_var(String name, Error *err)
-  FUNC_API_SINCE(1)
+Object nvim_get_var(String name, Error *err) FUNC_API_SINCE(1)
 {
   dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
@@ -629,8 +611,7 @@ Object nvim_get_var(String name, Error *err)
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
-void nvim_set_var(String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_set_var(String name, Object value, Error *err) FUNC_API_SINCE(1)
 {
   dict_set_var(&globvardict, name, value, false, false, err);
 }
@@ -639,8 +620,7 @@ void nvim_set_var(String name, Object value, Error *err)
 ///
 /// @param name     Variable name
 /// @param[out] err Error details, if any
-void nvim_del_var(String name, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_del_var(String name, Error *err) FUNC_API_SINCE(1)
 {
   dict_set_var(&globvardict, name, NIL, true, false, err);
 }
@@ -650,8 +630,7 @@ void nvim_del_var(String name, Error *err)
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return         Variable value
-Object nvim_get_vvar(String name, Error *err)
-  FUNC_API_SINCE(1)
+Object nvim_get_vvar(String name, Error *err) FUNC_API_SINCE(1)
 {
   return dict_get_value(&vimvardict, name, err);
 }
@@ -661,8 +640,7 @@ Object nvim_get_vvar(String name, Error *err)
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
-void nvim_set_vvar(String name, Object value, Error *err)
-  FUNC_API_SINCE(6)
+void nvim_set_vvar(String name, Object value, Error *err) FUNC_API_SINCE(6)
 {
   dict_set_var(&vimvardict, name, value, false, false, err);
 }
@@ -672,8 +650,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return         Option value (global)
-Object nvim_get_option(String name, Error *err)
-  FUNC_API_SINCE(1)
+Object nvim_get_option(String name, Error *err) FUNC_API_SINCE(1)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
@@ -691,8 +668,7 @@ Object nvim_get_option(String name, Error *err)
 ///                  |:setglobal| and |:setlocal|, respectively.
 /// @param[out] err  Error details, if any
 /// @return          Option value
-Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(9)
+Object nvim_get_option_value(String name, Dict(option) * opts, Error *err) FUNC_API_SINCE(9)
 {
   Object rv = OBJECT_INIT;
 
@@ -714,28 +690,28 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   long numval = 0;
   char *stringval = NULL;
   switch (get_option_value(name.data, &numval, (char_u **)&stringval, scope)) {
-  case 0:
-    rv = STRING_OBJ(cstr_as_string(stringval));
-    break;
-  case 1:
-    rv = INTEGER_OBJ(numval);
-    break;
-  case 2:
-    switch (numval) {
-      case 0:
-      case 1:
-        rv = BOOLEAN_OBJ(numval);
-        break;
-      default:
-        // Boolean options that return something other than 0 or 1 should return nil. Currently this
-        // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
-        rv = NIL;
-        break;
-    }
-    break;
-  default:
-    api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
-    goto end;
+    case 0:
+      rv = STRING_OBJ(cstr_as_string(stringval));
+      break;
+    case 1:
+      rv = INTEGER_OBJ(numval);
+      break;
+    case 2:
+      switch (numval) {
+        case 0:
+        case 1:
+          rv = BOOLEAN_OBJ(numval);
+          break;
+        default:
+          // Boolean options that return something other than 0 or 1 should return nil. Currently
+          // this only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+          rv = NIL;
+          break;
+      }
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
+      goto end;
   }
 
 end:
@@ -752,8 +728,8 @@ end:
 ///                  - scope: One of 'global' or 'local'. Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 /// @param[out] err  Error details, if any
-void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(9)
+void nvim_set_option_value(String name, Object value, Dict(option) * opts, Error *err)
+    FUNC_API_SINCE(9)
 {
   int scope = 0;
   if (opts->scope.type == kObjectTypeString) {
@@ -774,21 +750,21 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
   char *stringval = NULL;
 
   switch (value.type) {
-  case kObjectTypeInteger:
-    numval = value.data.integer;
-    break;
-  case kObjectTypeBoolean:
-    numval = value.data.boolean ? 1 : 0;
-    break;
-  case kObjectTypeString:
-    stringval = value.data.string.data;
-    break;
-  case kObjectTypeNil:
-    scope |= OPT_CLEAR;
-    break;
-  default:
-    api_set_error(err, kErrorTypeValidation, "invalid value for option");
-    return;
+    case kObjectTypeInteger:
+      numval = value.data.integer;
+      break;
+    case kObjectTypeBoolean:
+      numval = value.data.boolean ? 1 : 0;
+      break;
+    case kObjectTypeString:
+      stringval = value.data.string.data;
+      break;
+    case kObjectTypeNil:
+      scope |= OPT_CLEAR;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "invalid value for option");
+      return;
   }
 
   char *e = set_option_value(name.data, numval, stringval, scope);
@@ -803,8 +779,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
 /// dictionaries as detailed at |nvim_get_option_info|.
 ///
 /// @return dictionary of all options
-Dictionary nvim_get_all_options_info(Error *err)
-  FUNC_API_SINCE(7)
+Dictionary nvim_get_all_options_info(Error *err) FUNC_API_SINCE(7)
 {
   return get_all_vimoptions();
 }
@@ -832,8 +807,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dictionary nvim_get_option_info(String name, Error *err)
-  FUNC_API_SINCE(7)
+Dictionary nvim_get_option_info(String name, Error *err) FUNC_API_SINCE(7)
 {
   return get_vimoption(name, err);
 }
@@ -844,8 +818,7 @@ Dictionary nvim_get_option_info(String name, Error *err)
 /// @param name     Option name
 /// @param value    New option value
 /// @param[out] err Error details, if any
-void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err) FUNC_API_SINCE(1)
 {
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
@@ -857,8 +830,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 ///                can be omitted for no highlight.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters. Reserved for future use.
-void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
-  FUNC_API_SINCE(7)
+void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err) FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, err);
   if (ERROR_SET(err)) {
@@ -876,8 +848,7 @@ void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
   bool need_clear = false;
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
-    msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
-                       true, &need_clear);
+    msg_multiline_attr((const char *)chunk.text.data, chunk.attr, true, &need_clear);
   }
   if (history) {
     msg_ext_set_kind("echomsg");
@@ -896,8 +867,7 @@ error:
 /// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
-void nvim_out_write(String str)
-  FUNC_API_SINCE(1)
+void nvim_out_write(String str) FUNC_API_SINCE(1)
 {
   write_msg(str, false);
 }
@@ -906,8 +876,7 @@ void nvim_out_write(String str)
 /// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
-void nvim_err_write(String str)
-  FUNC_API_SINCE(1)
+void nvim_err_write(String str) FUNC_API_SINCE(1)
 {
   write_msg(str, true);
 }
@@ -917,11 +886,10 @@ void nvim_err_write(String str)
 ///
 /// @param str Message
 /// @see nvim_err_write()
-void nvim_err_writeln(String str)
-  FUNC_API_SINCE(1)
+void nvim_err_writeln(String str) FUNC_API_SINCE(1)
 {
   nvim_err_write(str);
-  nvim_err_write((String) { .data = "\n", .size = 1 });
+  nvim_err_write((String){.data = "\n", .size = 1});
 }
 
 /// Gets the current list of buffer handles
@@ -930,19 +898,20 @@ void nvim_err_writeln(String str)
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
 /// @return List of buffer handles
-ArrayOf(Buffer) nvim_list_bufs(void)
-  FUNC_API_SINCE(1)
+ArrayOf(Buffer) nvim_list_bufs(void) FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  FOR_ALL_BUFFERS(b) {
+  FOR_ALL_BUFFERS(b)
+  {
     rv.size++;
   }
 
   rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
-  FOR_ALL_BUFFERS(b) {
+  FOR_ALL_BUFFERS(b)
+  {
     rv.items[i++] = BUFFER_OBJ(b->handle);
   }
 
@@ -952,8 +921,7 @@ ArrayOf(Buffer) nvim_list_bufs(void)
 /// Gets the current buffer.
 ///
 /// @return Buffer handle
-Buffer nvim_get_current_buf(void)
-  FUNC_API_SINCE(1)
+Buffer nvim_get_current_buf(void) FUNC_API_SINCE(1)
 {
   return curbuf->handle;
 }
@@ -962,9 +930,7 @@ Buffer nvim_get_current_buf(void)
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
-void nvim_set_current_buf(Buffer buffer, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_CHECK_TEXTLOCK
+void nvim_set_current_buf(Buffer buffer, Error *err) FUNC_API_SINCE(1) FUNC_API_CHECK_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -975,29 +941,27 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   try_start();
   int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
   if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to buffer %d",
-                  buffer);
+    api_set_error(err, kErrorTypeException, "Failed to switch to buffer %d", buffer);
   }
 }
 
 /// Gets the current list of window handles.
 ///
 /// @return List of window handles
-ArrayOf(Window) nvim_list_wins(void)
-  FUNC_API_SINCE(1)
+ArrayOf(Window) nvim_list_wins(void) FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+  {
     rv.size++;
   }
 
   rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+  {
     rv.items[i++] = WINDOW_OBJ(wp->handle);
   }
 
@@ -1007,8 +971,7 @@ ArrayOf(Window) nvim_list_wins(void)
 /// Gets the current window.
 ///
 /// @return Window handle
-Window nvim_get_current_win(void)
-  FUNC_API_SINCE(1)
+Window nvim_get_current_win(void) FUNC_API_SINCE(1)
 {
   return curwin->handle;
 }
@@ -1017,9 +980,7 @@ Window nvim_get_current_win(void)
 ///
 /// @param window Window handle
 /// @param[out] err Error details, if any
-void nvim_set_current_win(Window window, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_CHECK_TEXTLOCK
+void nvim_set_current_win(Window window, Error *err) FUNC_API_SINCE(1) FUNC_API_CHECK_TEXTLOCK
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -1030,10 +991,7 @@ void nvim_set_current_win(Window window, Error *err)
   try_start();
   goto_tabpage_win(win_find_tabpage(win), win);
   if (!try_end(err) && win != curwin) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  window);
+    api_set_error(err, kErrorTypeException, "Failed to switch to window %d", window);
   }
 }
 
@@ -1046,12 +1004,11 @@ void nvim_set_current_win(Window window, Error *err)
 /// @return Buffer handle, or 0 on error
 ///
 /// @see buf_open_scratch
-Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
-  FUNC_API_SINCE(6)
+Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err) FUNC_API_SINCE(6)
 {
   try_start();
-  buf_T *buf = buflist_new(NULL, NULL, (linenr_T)0,
-                           BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
+  buf_T *buf
+      = buflist_new(NULL, NULL, (linenr_T)0, BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
   try_end(err);
   if (buf == NULL) {
     goto fail;
@@ -1110,8 +1067,7 @@ fail:
 ///                 ["input", term, bufnr, data]
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
-  FUNC_API_SINCE(7)
+Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err) FUNC_API_SINCE(7)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1124,8 +1080,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
     Object *v = &opts.items[i].value;
     if (strequal("on_input", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation,
-                      "%s is not a function", "on_input");
+        api_set_error(err, kErrorTypeValidation, "%s is not a function", "on_input");
         return 0;
       }
       cb = v->data.luaref;
@@ -1163,7 +1118,7 @@ static void term_write(char *buf, size_t size, void *data)
   FIXED_TEMP_ARRAY(args, 3);
   args.items[0] = INTEGER_OBJ((Integer)chan->id);
   args.items[1] = BUFFER_OBJ(terminal_buf(chan->term));
-  args.items[2] = STRING_OBJ(((String){ .data = buf, .size = size }));
+  args.items[2] = STRING_OBJ(((String){.data = buf, .size = size}));
   textlock++;
   nlua_call_ref(cb, "input", args, false, NULL);
   textlock--;
@@ -1184,7 +1139,6 @@ static void term_close(void *data)
   channel_decref(chan);
 }
 
-
 /// Send data to channel `id`. For a job, it writes it to the
 /// stdin of the process. For the stdio channel |channel-stdio|,
 /// it writes to Nvim's stdout.  For an internal terminal instance
@@ -1199,15 +1153,14 @@ static void term_close(void *data)
 /// @param data data to write. 8-bit clean: can contain NUL bytes.
 /// @param[out] err Error details, if any
 void nvim_chan_send(Integer chan, String data, Error *err)
-  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
+    FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
 {
   const char *error = NULL;
   if (!data.size) {
     return;
   }
 
-  channel_send((uint64_t)chan, data.data, data.size,
-               false, &error);
+  channel_send((uint64_t)chan, data.data, data.size, false, &error);
   if (error) {
     api_set_error(err, kErrorTypeValidation, "%s", error);
   }
@@ -1216,19 +1169,20 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// Gets the current list of tabpage handles.
 ///
 /// @return List of tabpage handles
-ArrayOf(Tabpage) nvim_list_tabpages(void)
-  FUNC_API_SINCE(1)
+ArrayOf(Tabpage) nvim_list_tabpages(void) FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  FOR_ALL_TABS(tp) {
+  FOR_ALL_TABS(tp)
+  {
     rv.size++;
   }
 
   rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
-  FOR_ALL_TABS(tp) {
+  FOR_ALL_TABS(tp)
+  {
     rv.items[i++] = TABPAGE_OBJ(tp->handle);
   }
 
@@ -1238,8 +1192,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(void)
 /// Gets the current tabpage.
 ///
 /// @return Tabpage handle
-Tabpage nvim_get_current_tabpage(void)
-  FUNC_API_SINCE(1)
+Tabpage nvim_get_current_tabpage(void) FUNC_API_SINCE(1)
 {
   return curtab->handle;
 }
@@ -1248,9 +1201,7 @@ Tabpage nvim_get_current_tabpage(void)
 ///
 /// @param tabpage  Tabpage handle
 /// @param[out] err Error details, if any
-void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
-  FUNC_API_SINCE(1)
-  FUNC_API_CHECK_TEXTLOCK
+void nvim_set_current_tabpage(Tabpage tabpage, Error *err) FUNC_API_SINCE(1) FUNC_API_CHECK_TEXTLOCK
 {
   tabpage_T *tp = find_tab_by_handle(tabpage, err);
 
@@ -1261,10 +1212,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   try_start();
   goto_tabpage_tp(tp, true, true);
   if (!try_end(err) && tp != curtab) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to tabpage %d",
-                  tabpage);
+    api_set_error(err, kErrorTypeException, "Failed to switch to tabpage %d", tabpage);
   }
 }
 
@@ -1291,8 +1239,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 ///     - true: Client may continue pasting.
 ///     - false: Client must cancel the paste.
 Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
-  FUNC_API_SINCE(6)
-  FUNC_API_CHECK_TEXTLOCK
+    FUNC_API_SINCE(6) FUNC_API_CHECK_TEXTLOCK
 {
   static bool draining = false;
   bool cancel = false;
@@ -1312,8 +1259,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   Array lines = string_to_array(data, crlf);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
-                     err);
+  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args, err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
@@ -1363,8 +1309,7 @@ theend:
 /// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
 void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Error *err)
-  FUNC_API_SINCE(6)
-  FUNC_API_CHECK_TEXTLOCK
+    FUNC_API_SINCE(6) FUNC_API_CHECK_TEXTLOCK
 {
   yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
@@ -1377,8 +1322,7 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
 
   for (size_t i = 0; i < lines.size; i++) {
     if (lines.items[i].type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Invalid lines (expected array of strings)");
+      api_set_error(err, kErrorTypeValidation, "Invalid lines (expected array of strings)");
       goto cleanup;
     }
     String line = lines.items[i].data.string;
@@ -1407,8 +1351,7 @@ cleanup:
 ///
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
-void nvim_subscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+void nvim_subscribe(uint64_t channel_id, String event) FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
   char e[METHOD_MAXLEN + 1];
@@ -1421,12 +1364,9 @@ void nvim_subscribe(uint64_t channel_id, String event)
 ///
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
-void nvim_unsubscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+void nvim_unsubscribe(uint64_t channel_id, String event) FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  size_t length = (event.size < METHOD_MAXLEN ?
-                   event.size :
-                   METHOD_MAXLEN);
+  size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
   char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
@@ -1444,8 +1384,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 ///
 /// @param name Color name or "#rrggbb" string
 /// @return 24-bit RGB value, or -1 for invalid argument.
-Integer nvim_get_color_by_name(String name)
-  FUNC_API_SINCE(1)
+Integer nvim_get_color_by_name(String name) FUNC_API_SINCE(1)
 {
   return name_to_color(name.data);
 }
@@ -1456,14 +1395,12 @@ Integer nvim_get_color_by_name(String name)
 /// (e.g. 65535).
 ///
 /// @return Map of color names and RGB values.
-Dictionary nvim_get_color_map(void)
-  FUNC_API_SINCE(1)
+Dictionary nvim_get_color_map(void) FUNC_API_SINCE(1)
 {
   Dictionary colors = ARRAY_DICT_INIT;
 
   for (int i = 0; color_name_table[i].name != NULL; i++) {
-    PUT(colors, color_name_table[i].name,
-        INTEGER_OBJ(color_name_table[i].color));
+    PUT(colors, color_name_table[i].name, INTEGER_OBJ(color_name_table[i].color));
   }
   return colors;
 }
@@ -1476,8 +1413,7 @@ Dictionary nvim_get_color_map(void)
 /// @param[out]  err  Error details, if any
 ///
 /// @return map of global |context|.
-Dictionary nvim_get_context(Dict(context) *opts, Error *err)
-  FUNC_API_SINCE(6)
+Dictionary nvim_get_context(Dict(context) * opts, Error *err) FUNC_API_SINCE(6)
 {
   Array types = ARRAY_DICT_INIT;
   if (opts->types.type == kObjectTypeArray) {
@@ -1522,8 +1458,7 @@ Dictionary nvim_get_context(Dict(context) *opts, Error *err)
 /// Sets the current editor state from the given |context| map.
 ///
 /// @param  dict  |Context| map.
-Object nvim_load_context(Dictionary dict)
-  FUNC_API_SINCE(6)
+Object nvim_load_context(Dictionary dict) FUNC_API_SINCE(6)
 {
   Context ctx = CONTEXT_INIT;
 
@@ -1545,8 +1480,7 @@ Object nvim_load_context(Dictionary dict)
 /// "blocking" is true if Nvim is waiting for input.
 ///
 /// @returns Dictionary { "mode": String, "blocking": Boolean }
-Dictionary nvim_get_mode(void)
-  FUNC_API_SINCE(2) FUNC_API_FAST
+Dictionary nvim_get_mode(void) FUNC_API_SINCE(2) FUNC_API_FAST
 {
   Dictionary rv = ARRAY_DICT_INIT;
   char *modestr = get_mode();
@@ -1563,8 +1497,7 @@ Dictionary nvim_get_mode(void)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of maparg()-like dictionaries describing mappings.
 ///          The "buffer" key is always zero.
-ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
-  FUNC_API_SINCE(3)
+ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode) FUNC_API_SINCE(3)
 {
   return keymap_array(mode, NULL, channel_id == LUA_INTERNAL_CALL);
 }
@@ -1598,9 +1531,12 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 ///               a Lua function to call when the mapping is executed.
 ///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, Dict(keymap) *opts,
-                     Error *err)
-  FUNC_API_SINCE(6)
+void nvim_set_keymap(uint64_t channel_id,
+                     String mode,
+                     String lhs,
+                     String rhs,
+                     Dict(keymap) * opts,
+                     Error *err) FUNC_API_SINCE(6)
 {
   modify_keymap(channel_id, -1, false, mode, lhs, rhs, opts, err);
 }
@@ -1610,8 +1546,7 @@ void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, D
 /// To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
 ///
 /// @see |nvim_set_keymap()|
-void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
-  FUNC_API_SINCE(6)
+void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err) FUNC_API_SINCE(6)
 {
   nvim_buf_del_keymap(channel_id, -1, mode, lhs, err);
 }
@@ -1625,8 +1560,7 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
-  FUNC_API_SINCE(4)
+Dictionary nvim_get_commands(Dict(get_commands) * opts, Error *err) FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, err);
 }
@@ -1635,8 +1569,7 @@ Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
 /// 1 is the |api-metadata| map (Dictionary).
 ///
 /// @returns 2-tuple [{channel-id}, {api-metadata}]
-Array nvim_get_api_info(uint64_t channel_id)
-  FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY
+Array nvim_get_api_info(uint64_t channel_id) FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -1696,9 +1629,13 @@ Array nvim_get_api_info(uint64_t channel_id)
 ///                  .png or .svg format is preferred.
 ///
 /// @param[out] err Error details, if any
-void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
-                          Dictionary methods, Dictionary attributes, Error *err)
-  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+void nvim_set_client_info(uint64_t channel_id,
+                          String name,
+                          Dictionary version,
+                          String type,
+                          Dictionary methods,
+                          Dictionary attributes,
+                          Error *err) FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   Dictionary info = ARRAY_DICT_INIT;
   PUT(info, "name", copy_object(STRING_OBJ(name)));
@@ -1746,8 +1683,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 ///                 the RPC channel), if provided by it via
 ///                 |nvim_set_client_info()|.
 ///
-Dictionary nvim_get_chan_info(Integer chan, Error *err)
-  FUNC_API_SINCE(4)
+Dictionary nvim_get_chan_info(Integer chan, Error *err) FUNC_API_SINCE(4)
 {
   if (chan < 0) {
     return (Dictionary)ARRAY_DICT_INIT;
@@ -1759,8 +1695,7 @@ Dictionary nvim_get_chan_info(Integer chan, Error *err)
 ///
 /// @returns Array of Dictionaries, each describing a channel with
 ///          the format specified at |nvim_get_chan_info()|.
-Array nvim_list_chans(void)
-  FUNC_API_SINCE(4)
+Array nvim_list_chans(void) FUNC_API_SINCE(4)
 {
   return channel_all_info();
 }
@@ -1786,7 +1721,7 @@ Array nvim_list_chans(void)
 /// which resulted in an error, the error type and the error message. If an
 /// error occurred, the values from all preceding calls will still be returned.
 Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
   Array results = ARRAY_DICT_INIT;
@@ -1795,39 +1730,29 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   size_t i;  // also used for freeing the variables
   for (i = 0; i < calls.size; i++) {
     if (calls.items[i].type != kObjectTypeArray) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Items in calls array must be arrays");
+      api_set_error(err, kErrorTypeValidation, "Items in calls array must be arrays");
       goto validation_error;
     }
     Array call = calls.items[i].data.array;
     if (call.size != 2) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Items in calls array must be arrays of size 2");
+      api_set_error(err, kErrorTypeValidation, "Items in calls array must be arrays of size 2");
       goto validation_error;
     }
 
     if (call.items[0].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Name must be String");
+      api_set_error(err, kErrorTypeValidation, "Name must be String");
       goto validation_error;
     }
     String name = call.items[0].data.string;
 
     if (call.items[1].type != kObjectTypeArray) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Args must be Array");
+      api_set_error(err, kErrorTypeValidation, "Args must be Array");
       goto validation_error;
     }
     Array args = call.items[1].data.array;
 
-    MsgpackRpcRequestHandler handler =
-      msgpack_rpc_get_handler_for(name.data,
-                                  name.size,
-                                  &nested_error);
+    MsgpackRpcRequestHandler handler
+        = msgpack_rpc_get_handler_for(name.data, name.size, &nested_error);
 
     if (ERROR_SET(&nested_error)) {
       break;
@@ -1871,13 +1796,13 @@ static void write_msg(String message, bool to_err)
   static size_t out_pos = 0, err_pos = 0;
   static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
 
-#define PUSH_CHAR(i, pos, line_buf, msg) \
-  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
-    line_buf[pos] = NUL; \
-    msg(line_buf); \
-    pos = 0; \
-    continue; \
-  } \
+#define PUSH_CHAR(i, pos, line_buf, msg)                                                           \
+  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) {                                      \
+    line_buf[pos] = NUL;                                                                           \
+    msg(line_buf);                                                                                 \
+    pos = 0;                                                                                       \
+    continue;                                                                                      \
+  }                                                                                                \
   line_buf[pos++] = message.data[i];
 
   ++no_wait_return;
@@ -1969,8 +1894,7 @@ Dictionary nvim__stats(void)
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
 ///   - "ext_..." Requested UI extensions, see |ui-option|
 ///   - "chan"    Channel id of remote UI (not present for TUI)
-Array nvim_list_uis(void)
-  FUNC_API_SINCE(4)
+Array nvim_list_uis(void) FUNC_API_SINCE(4)
 {
   return ui_array();
 }
@@ -1978,8 +1902,7 @@ Array nvim_list_uis(void)
 /// Gets the immediate children of process `pid`.
 ///
 /// @return Array of child process ids, empty if process not found.
-Array nvim_get_proc_children(Integer pid, Error *err)
-  FUNC_API_SINCE(4)
+Array nvim_get_proc_children(Integer pid, Error *err) FUNC_API_SINCE(4)
 {
   Array rvobj = ARRAY_DICT_INIT;
   int *proc_list = NULL;
@@ -2004,8 +1927,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
       rvobj = o.data.array;
     } else if (!ERROR_SET(err)) {
       api_set_error(err, kErrorTypeException,
-                    "Failed to get process children. pid=%" PRId64 " error=%d",
-                    pid, rv);
+                    "Failed to get process children. pid=%" PRId64 " error=%d", pid, rv);
     }
     goto end;
   }
@@ -2022,8 +1944,7 @@ end:
 /// Gets info describing process `pid`.
 ///
 /// @return Map of process properties, or NIL if process not found.
-Object nvim_get_proc(Integer pid, Error *err)
-  FUNC_API_SINCE(4)
+Object nvim_get_proc(Integer pid, Error *err) FUNC_API_SINCE(4)
 {
   Object rvobj = OBJECT_INIT;
   rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
@@ -2051,8 +1972,7 @@ Object nvim_get_proc(Integer pid, Error *err)
   } else if (o.type == kObjectTypeDictionary) {
     rvobj.data.dictionary = o.data.dictionary;
   } else if (!ERROR_SET(err)) {
-    api_set_error(err, kErrorTypeException,
-                  "Failed to get process info. pid=%" PRId64, pid);
+    api_set_error(err, kErrorTypeException, "Failed to get process info. pid=%" PRId64, pid);
   }
 #endif
   return rvobj;
@@ -2072,9 +1992,11 @@ Object nvim_get_proc(Integer pid, Error *err)
 ///               `insert`.
 /// @param  opts  Optional parameters. Reserved for future use.
 /// @param[out] err Error details, if any
-void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Dictionary opts,
-                                Error *err)
-  FUNC_API_SINCE(6)
+void nvim_select_popupmenu_item(Integer item,
+                                Boolean insert,
+                                Boolean finish,
+                                Dictionary opts,
+                                Error *err) FUNC_API_SINCE(6)
 {
   if (opts.size > 0) {
     api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
@@ -2103,14 +2025,12 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
       g = &wp->w_grid_alloc;
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "No grid with the given handle");
+      api_set_error(err, kErrorTypeValidation, "No grid with the given handle");
       return ret;
     }
   }
 
-  if (row < 0 || row >= g->Rows
-      || col < 0 || col >= g->Columns) {
+  if (row < 0 || row >= g->Rows || col < 0 || col >= g->Columns) {
     return ret;
   }
   size_t off = g->line_offset[(size_t)row] + (size_t)col;
@@ -2124,12 +2044,10 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   return ret;
 }
 
-void nvim__screenshot(String path)
-  FUNC_API_FAST
+void nvim__screenshot(String path) FUNC_API_FAST
 {
   ui_call_screenshot(path);
 }
-
 
 /// Deletes an uppercase/file named mark. See |mark-motions|.
 ///
@@ -2138,13 +2056,11 @@ void nvim__screenshot(String path)
 /// @return true if the mark was deleted, else false.
 /// @see |nvim_buf_del_mark()|
 /// @see |nvim_get_mark()|
-Boolean nvim_del_mark(String name, Error *err)
-  FUNC_API_SINCE(8)
+Boolean nvim_del_mark(String name, Error *err) FUNC_API_SINCE(8)
 {
   bool res = false;
   if (name.size != 1) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Mark name must be a single character");
+    api_set_error(err, kErrorTypeValidation, "Mark name must be a single character");
     return res;
   }
   // Only allow file/uppercase marks
@@ -2153,8 +2069,7 @@ Boolean nvim_del_mark(String name, Error *err)
     res = set_mark(NULL, name, 0, 0, err);
   } else {
     api_set_error(err, kErrorTypeValidation,
-                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
-                  *name.data);
+                  "Only file/uppercase marks allowed, invalid mark name: '%c'", *name.data);
   }
   return res;
 }
@@ -2171,19 +2086,16 @@ Boolean nvim_del_mark(String name, Error *err)
 /// not set.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_del_mark()|
-Array nvim_get_mark(String name, Dictionary opts, Error *err)
-  FUNC_API_SINCE(8)
+Array nvim_get_mark(String name, Dictionary opts, Error *err) FUNC_API_SINCE(8)
 {
   Array rv = ARRAY_DICT_INIT;
 
   if (name.size != 1) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Mark name must be a single character");
+    api_set_error(err, kErrorTypeValidation, "Mark name must be a single character");
     return rv;
   } else if (!(ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data))) {
     api_set_error(err, kErrorTypeValidation,
-                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
-                  *name.data);
+                  "Only file/uppercase marks allowed, invalid mark name: '%c'", *name.data);
     return rv;
   }
 
@@ -2255,8 +2167,8 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 ///                     |Dictionary| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
 ///           - group: (string) Name of highlight group.
-Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *err)
-  FUNC_API_SINCE(8) FUNC_API_FAST
+Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) * opts, Error *err)
+    FUNC_API_SINCE(8) FUNC_API_FAST
 {
   Dictionary result = ARRAY_DICT_INIT;
 
@@ -2340,15 +2252,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int p_crb_save = ewp->w_p_crb;
   ewp->w_p_crb = false;
 
-  int width = build_stl_str_hl(ewp,
-                               (char_u *)buf,
-                               sizeof(buf),
-                               (char_u *)str.data,
-                               false,
-                               fillchar,
-                               maxwidth,
-                               hltab_ptr,
-                               NULL);
+  int width = build_stl_str_hl(ewp, (char_u *)buf, sizeof(buf), (char_u *)str.data, false, fillchar,
+                               maxwidth, hltab_ptr, NULL);
 
   PUT(result, "width", INTEGER_OBJ(width));
 
@@ -2435,8 +2340,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                                  {command}.
 ///                 - force: (boolean, default true) Override any previous definition.
 /// @param[out] err Error details, if any.
-void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
-  FUNC_API_SINCE(9)
+void nvim_add_user_command(String name, Object command, Dict(user_command) * opts, Error *err)
+    FUNC_API_SINCE(9)
 {
   add_user_command(name, command, opts, 0, err);
 }
@@ -2445,8 +2350,7 @@ void nvim_add_user_command(String name, Object command, Dict(user_command) *opts
 ///
 /// @param  name    Name of the command to delete.
 /// @param[out] err Error details, if any.
-void nvim_del_user_command(String name, Error *err)
-  FUNC_API_SINCE(9)
+void nvim_del_user_command(String name, Error *err) FUNC_API_SINCE(9)
 {
   nvim_buf_del_user_command(-1, name, err);
 }

@@ -10,25 +10,25 @@
 #include "nvim/map_defs.h"
 
 #if defined(__NetBSD__)
-# undef uint64_t
-# define uint64_t uint64_t
+#undef uint64_t
+#define uint64_t uint64_t
 #endif
 
-#define MAP_DECLS(T, U) \
-  KHASH_DECLARE(T##_##U##_map, T, U) \
-  typedef struct { \
-    khash_t(T##_##U##_map) table; \
-  } Map(T, U); \
-  Map(T, U) *map_##T##_##U##_new(void); \
-  void map_##T##_##U##_free(Map(T, U) *map); \
-  void map_##T##_##U##_destroy(Map(T, U) *map); \
-  U map_##T##_##U##_get(Map(T, U) *map, T key); \
-  bool map_##T##_##U##_has(Map(T, U) *map, T key); \
-  T map_##T##_##U##_key(Map(T, U) *map, T key); \
-  U map_##T##_##U##_put(Map(T, U) *map, T key, U value); \
-  U *map_##T##_##U##_ref(Map(T, U) *map, T key, bool put); \
-  U map_##T##_##U##_del(Map(T, U) *map, T key); \
-  void map_##T##_##U##_clear(Map(T, U) *map);
+#define MAP_DECLS(T, U)                                                                            \
+  KHASH_DECLARE(T##_##U##_map, T, U)                                                               \
+  typedef struct {                                                                                 \
+    khash_t(T##_##U##_map) table;                                                                  \
+  } Map(T, U);                                                                                     \
+  Map(T, U) * map_##T##_##U##_new(void);                                                           \
+  void map_##T##_##U##_free(Map(T, U) * map);                                                      \
+  void map_##T##_##U##_destroy(Map(T, U) * map);                                                   \
+  U map_##T##_##U##_get(Map(T, U) * map, T key);                                                   \
+  bool map_##T##_##U##_has(Map(T, U) * map, T key);                                                \
+  T map_##T##_##U##_key(Map(T, U) * map, T key);                                                   \
+  U map_##T##_##U##_put(Map(T, U) * map, T key, U value);                                          \
+  U *map_##T##_##U##_ref(Map(T, U) * map, T key, bool put);                                        \
+  U map_##T##_##U##_del(Map(T, U) * map, T key);                                                   \
+  void map_##T##_##U##_clear(Map(T, U) * map);
 
 //
 // NOTE: Keys AND values must be allocated! khash.h does not make a copy.
@@ -50,8 +50,16 @@ MAP_DECLS(String, int)
 
 MAP_DECLS(ColorKey, ColorItem)
 
-#define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
-#define map_init(k, v, map) do { *(map) = (Map(k, v)) MAP_INIT; } while (false)
+#define MAP_INIT                                                                                   \
+  {                                                                                                \
+    {                                                                                              \
+      0, 0, 0, 0, NULL, NULL, NULL                                                                 \
+    }                                                                                              \
+  }
+#define map_init(k, v, map)                                                                        \
+  do {                                                                                             \
+    *(map) = (Map(k, v))MAP_INIT;                                                                  \
+  } while (false)
 
 #define map_destroy(T, U) map_##T##_##U##_destroy
 #define map_get(T, U) map_##T##_##U##_get
@@ -75,12 +83,10 @@ MAP_DECLS(ColorKey, ColorItem)
 #define pmap_clear(T) map_clear(T, ptr_t)
 #define pmap_init(k, map) map_init(k, ptr_t, map)
 
-#define map_foreach(map, key, value, block) \
-  kh_foreach(&(map)->table, key, value, block)
+#define map_foreach(map, key, value, block) kh_foreach(&(map)->table, key, value, block)
 
-#define map_foreach_value(map, value, block) \
-  kh_foreach_value(&(map)->table, value, block)
+#define map_foreach_value(map, value, block) kh_foreach_value(&(map)->table, value, block)
 
-void pmap_del2(PMap(cstr_t) *map, const char *key);
+void pmap_del2(PMap(cstr_t) * map, const char *key);
 
 #endif  // NVIM_MAP_H

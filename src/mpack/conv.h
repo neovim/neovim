@@ -15,7 +15,7 @@ typedef mpack_uint32_t mpack_uintmax_t;
 #endif
 
 #ifndef bool
-# define bool unsigned
+#define bool unsigned
 #endif
 
 MPACK_API mpack_token_t mpack_pack_nil(void) FUNUSED FPURE;
@@ -25,12 +25,10 @@ MPACK_API mpack_token_t mpack_pack_sint(mpack_sintmax_t v) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_float_compat(double v) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_float_fast(double v) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_number(double v) FUNUSED FPURE;
-MPACK_API mpack_token_t mpack_pack_chunk(const char *p, mpack_uint32_t l)
-  FUNUSED FPURE FNONULL;
+MPACK_API mpack_token_t mpack_pack_chunk(const char *p, mpack_uint32_t l) FUNUSED FPURE FNONULL;
 MPACK_API mpack_token_t mpack_pack_str(mpack_uint32_t l) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_bin(mpack_uint32_t l) FUNUSED FPURE;
-MPACK_API mpack_token_t mpack_pack_ext(int type, mpack_uint32_t l)
-  FUNUSED FPURE;
+MPACK_API mpack_token_t mpack_pack_ext(int type, mpack_uint32_t l) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_array(mpack_uint32_t l) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_map(mpack_uint32_t l) FUNUSED FPURE;
 MPACK_API bool mpack_unpack_boolean(mpack_token_t t) FUNUSED FPURE;
@@ -46,10 +44,10 @@ MPACK_API double mpack_unpack_number(mpack_token_t t) FUNUSED FPURE;
  * -Dmpack_{pack,unpack}_float=mpack_{pack,unpack}_float_compat to the
  *  compiler.*/
 #ifndef mpack_pack_float
-# define mpack_pack_float mpack_pack_float_fast
+#define mpack_pack_float mpack_pack_float_fast
 #endif
 #ifndef mpack_unpack_float
-# define mpack_unpack_float mpack_unpack_float_fast
+#define mpack_unpack_float mpack_unpack_float_fast
 #endif
 
-#endif  /* MPACK_CONV_H */
+#endif /* MPACK_CONV_H */

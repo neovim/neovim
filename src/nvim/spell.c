@@ -117,16 +117,16 @@
 #include "nvim/undo.h"
 
 // only used for su_badflags
-#define WF_MIXCAP   0x20        // mix of upper and lower case: macaRONI
+#define WF_MIXCAP 0x20  // mix of upper and lower case: macaRONI
 
 #define WF_CAPMASK (WF_ONECAP | WF_ALLCAP | WF_KEEPCAP | WF_FIXCAP)
 
 // Result values.  Lower number is accepted over higher one.
-#define SP_BANNED       -1
-#define SP_RARE         0
-#define SP_OK           1
-#define SP_LOCAL        2
-#define SP_BAD          3
+#define SP_BANNED -1
+#define SP_RARE 0
+#define SP_OK 1
+#define SP_LOCAL 2
+#define SP_BAD 3
 
 // First language that is loaded, start of the linked list of loaded
 // languages.
@@ -136,41 +136,41 @@ slang_T *first_lang = NULL;
 char_u *int_wordlist = NULL;
 
 typedef struct wordcount_S {
-  uint16_t wc_count;                // nr of times word was seen
-  char_u wc_word[1];                // word, actually longer
+  uint16_t wc_count;  // nr of times word was seen
+  char_u wc_word[1];  // word, actually longer
 } wordcount_T;
 
-#define WC_KEY_OFF   offsetof(wordcount_T, wc_word)
-#define HI2WC(hi)    ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
+#define WC_KEY_OFF offsetof(wordcount_T, wc_word)
+#define HI2WC(hi) ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
 #define MAXWORDCOUNT 0xffff
 
 // Information used when looking for suggestions.
 typedef struct suginfo_S {
-  garray_T su_ga;                   // suggestions, contains "suggest_T"
-  int su_maxcount;                  // max. number of suggestions displayed
-  int su_maxscore;                  // maximum score for adding to su_ga
-  int su_sfmaxscore;                // idem, for when doing soundfold words
-  garray_T su_sga;                  // like su_ga, sound-folded scoring
-  char_u *su_badptr;           // start of bad word in line
-  int su_badlen;                    // length of detected bad word in line
-  int su_badflags;                  // caps flags for bad word
-  char_u su_badword[MAXWLEN];       // bad word truncated at su_badlen
-  char_u su_fbadword[MAXWLEN];      // su_badword case-folded
-  char_u su_sal_badword[MAXWLEN];   // su_badword soundfolded
-  hashtab_T su_banned;              // table with banned words
-  slang_T *su_sallang;          // default language for sound folding
+  garray_T su_ga;                  // suggestions, contains "suggest_T"
+  int su_maxcount;                 // max. number of suggestions displayed
+  int su_maxscore;                 // maximum score for adding to su_ga
+  int su_sfmaxscore;               // idem, for when doing soundfold words
+  garray_T su_sga;                 // like su_ga, sound-folded scoring
+  char_u *su_badptr;               // start of bad word in line
+  int su_badlen;                   // length of detected bad word in line
+  int su_badflags;                 // caps flags for bad word
+  char_u su_badword[MAXWLEN];      // bad word truncated at su_badlen
+  char_u su_fbadword[MAXWLEN];     // su_badword case-folded
+  char_u su_sal_badword[MAXWLEN];  // su_badword soundfolded
+  hashtab_T su_banned;             // table with banned words
+  slang_T *su_sallang;             // default language for sound folding
 } suginfo_T;
 
 // One word suggestion.  Used in "si_ga".
 typedef struct {
-  char_u *st_word;         // suggested word, allocated string
-  int st_wordlen;               // STRLEN(st_word)
-  int st_orglen;                // length of replaced text
-  int st_score;                 // lower is better
-  int st_altscore;              // used when st_score compares equal
-  bool st_salscore;             // st_score is for soundalike
-  bool st_had_bonus;            // bonus already included in score
-  slang_T *st_slang;        // language used for sound folding
+  char_u *st_word;    // suggested word, allocated string
+  int st_wordlen;     // STRLEN(st_word)
+  int st_orglen;      // length of replaced text
+  int st_score;       // lower is better
+  int st_altscore;    // used when st_score compares equal
+  bool st_salscore;   // st_score is for soundalike
+  bool st_had_bonus;  // bonus already included in score
+  slang_T *st_slang;  // language used for sound folding
 } suggest_T;
 
 #define SUG(ga, i) (((suggest_T *)(ga).ga_data)[i])
@@ -181,107 +181,107 @@ typedef struct {
 // Number of suggestions kept when cleaning up.  We need to keep more than
 // what is displayed, because when rescore_suggestions() is called the score
 // may change and wrong suggestions may be removed later.
-#define SUG_CLEAN_COUNT(su)    ((su)->su_maxcount < \
-                                130 ? 150 : (su)->su_maxcount + 20)
+#define SUG_CLEAN_COUNT(su) ((su)->su_maxcount < 130 ? 150 : (su)->su_maxcount + 20)
 
 // Threshold for sorting and cleaning up suggestions.  Don't want to keep lots
 // of suggestions that are not going to be displayed.
-#define SUG_MAX_COUNT(su)       (SUG_CLEAN_COUNT(su) + 50)
+#define SUG_MAX_COUNT(su) (SUG_CLEAN_COUNT(su) + 50)
 
 // score for various changes
-#define SCORE_SPLIT     149     // split bad word
-#define SCORE_SPLIT_NO  249     // split bad word with NOSPLITSUGS
-#define SCORE_ICASE     52      // slightly different case
-#define SCORE_REGION    200     // word is for different region
-#define SCORE_RARE      180     // rare word
-#define SCORE_SWAP      75      // swap two characters
-#define SCORE_SWAP3     110     // swap two characters in three
-#define SCORE_REP       65      // REP replacement
-#define SCORE_SUBST     93      // substitute a character
-#define SCORE_SIMILAR   33      // substitute a similar character
-#define SCORE_SUBCOMP   33      // substitute a composing character
-#define SCORE_DEL       94      // delete a character
-#define SCORE_DELDUP    66      // delete a duplicated character
-#define SCORE_DELCOMP   28      // delete a composing character
-#define SCORE_INS       96      // insert a character
-#define SCORE_INSDUP    67      // insert a duplicate character
-#define SCORE_INSCOMP   30      // insert a composing character
-#define SCORE_NONWORD   103     // change non-word to word char
+#define SCORE_SPLIT 149     // split bad word
+#define SCORE_SPLIT_NO 249  // split bad word with NOSPLITSUGS
+#define SCORE_ICASE 52      // slightly different case
+#define SCORE_REGION 200    // word is for different region
+#define SCORE_RARE 180      // rare word
+#define SCORE_SWAP 75       // swap two characters
+#define SCORE_SWAP3 110     // swap two characters in three
+#define SCORE_REP 65        // REP replacement
+#define SCORE_SUBST 93      // substitute a character
+#define SCORE_SIMILAR 33    // substitute a similar character
+#define SCORE_SUBCOMP 33    // substitute a composing character
+#define SCORE_DEL 94        // delete a character
+#define SCORE_DELDUP 66     // delete a duplicated character
+#define SCORE_DELCOMP 28    // delete a composing character
+#define SCORE_INS 96        // insert a character
+#define SCORE_INSDUP 67     // insert a duplicate character
+#define SCORE_INSCOMP 30    // insert a composing character
+#define SCORE_NONWORD 103   // change non-word to word char
 
-#define SCORE_FILE      30      // suggestion from a file
-#define SCORE_MAXINIT   350     // Initial maximum score: higher == slower.
-                                // 350 allows for about three changes.
+#define SCORE_FILE 30  // suggestion from a file
+#define SCORE_MAXINIT                                                                              \
+  350  // Initial maximum score: higher == slower.
+       // 350 allows for about three changes.
 
-#define SCORE_COMMON1   30      // subtracted for words seen before
-#define SCORE_COMMON2   40      // subtracted for words often seen
-#define SCORE_COMMON3   50      // subtracted for words very often seen
-#define SCORE_THRES2    10      // word count threshold for COMMON2
-#define SCORE_THRES3    100     // word count threshold for COMMON3
+#define SCORE_COMMON1 30  // subtracted for words seen before
+#define SCORE_COMMON2 40  // subtracted for words often seen
+#define SCORE_COMMON3 50  // subtracted for words very often seen
+#define SCORE_THRES2 10   // word count threshold for COMMON2
+#define SCORE_THRES3 100  // word count threshold for COMMON3
 
 // When trying changed soundfold words it becomes slow when trying more than
 // two changes.  With less than two changes it's slightly faster but we miss a
 // few good suggestions.  In rare cases we need to try three of four changes.
-#define SCORE_SFMAX1    200     // maximum score for first try
-#define SCORE_SFMAX2    300     // maximum score for second try
-#define SCORE_SFMAX3    400     // maximum score for third try
+#define SCORE_SFMAX1 200  // maximum score for first try
+#define SCORE_SFMAX2 300  // maximum score for second try
+#define SCORE_SFMAX3 400  // maximum score for third try
 
-#define SCORE_BIG       SCORE_INS * 3   // big difference
-#define SCORE_MAXMAX    999999          // accept any score
-#define SCORE_LIMITMAX  350             // for spell_edit_score_limit()
+#define SCORE_BIG SCORE_INS * 3  // big difference
+#define SCORE_MAXMAX 999999      // accept any score
+#define SCORE_LIMITMAX 350       // for spell_edit_score_limit()
 
 // for spell_edit_score_limit() we need to know the minimum value of
 // SCORE_ICASE, SCORE_SWAP, SCORE_DEL, SCORE_SIMILAR and SCORE_INS
-#define SCORE_EDIT_MIN  SCORE_SIMILAR
+#define SCORE_EDIT_MIN SCORE_SIMILAR
 
 // Structure to store info for word matching.
 typedef struct matchinf_S {
-  langp_T *mi_lp;                   // info for language and region
+  langp_T *mi_lp;  // info for language and region
 
   // pointers to original text to be checked
-  char_u *mi_word;                 // start of word being checked
-  char_u *mi_end;                  // end of matching word so far
-  char_u *mi_fend;                 // next char to be added to mi_fword
-  char_u *mi_cend;                 // char after what was used for
-                                   // mi_capflags
+  char_u *mi_word;  // start of word being checked
+  char_u *mi_end;   // end of matching word so far
+  char_u *mi_fend;  // next char to be added to mi_fword
+  char_u *mi_cend;  // char after what was used for
+                    // mi_capflags
 
   // case-folded text
-  char_u mi_fword[MAXWLEN + 1];         // mi_word case-folded
-  int mi_fwordlen;                      // nr of valid bytes in mi_fword
+  char_u mi_fword[MAXWLEN + 1];  // mi_word case-folded
+  int mi_fwordlen;               // nr of valid bytes in mi_fword
 
   // for when checking word after a prefix
-  int mi_prefarridx;                    // index in sl_pidxs with list of
-                                        // affixID/condition
-  int mi_prefcnt;                       // number of entries at mi_prefarridx
-  int mi_prefixlen;                     // byte length of prefix
-  int mi_cprefixlen;                    // byte length of prefix in original
-                                        // case
+  int mi_prefarridx;  // index in sl_pidxs with list of
+                      // affixID/condition
+  int mi_prefcnt;     // number of entries at mi_prefarridx
+  int mi_prefixlen;   // byte length of prefix
+  int mi_cprefixlen;  // byte length of prefix in original
+                      // case
 
   // for when checking a compound word
-  int mi_compoff;                       // start of following word offset
-  char_u mi_compflags[MAXWLEN];         // flags for compound words used
-  int mi_complen;                       // nr of compound words used
-  int mi_compextra;                     // nr of COMPOUNDROOT words
+  int mi_compoff;                // start of following word offset
+  char_u mi_compflags[MAXWLEN];  // flags for compound words used
+  int mi_complen;                // nr of compound words used
+  int mi_compextra;              // nr of COMPOUNDROOT words
 
   // others
-  int mi_result;                        // result so far: SP_BAD, SP_OK, etc.
-  int mi_capflags;                      // WF_ONECAP WF_ALLCAP WF_KEEPCAP
-  win_T *mi_win;                  // buffer being checked
+  int mi_result;    // result so far: SP_BAD, SP_OK, etc.
+  int mi_capflags;  // WF_ONECAP WF_ALLCAP WF_KEEPCAP
+  win_T *mi_win;    // buffer being checked
 
   // for NOBREAK
-  int mi_result2;                       // "mi_resul" without following word
-  char_u *mi_end2;                 // "mi_end" without following word
+  int mi_result2;   // "mi_resul" without following word
+  char_u *mi_end2;  // "mi_end" without following word
 } matchinf_T;
 
 // Structure used for the cookie argument of do_in_runtimepath().
 typedef struct spelload_S {
-  char_u sl_lang[MAXWLEN + 1];          // language name
-  slang_T *sl_slang;                    // resulting slang_T struct
-  int sl_nobreak;                       // NOBREAK language found
+  char_u sl_lang[MAXWLEN + 1];  // language name
+  slang_T *sl_slang;            // resulting slang_T struct
+  int sl_nobreak;               // NOBREAK language found
 } spelload_T;
 
-#define SY_MAXLEN   30
+#define SY_MAXLEN 30
 typedef struct syl_item_S {
-  char_u sy_chars[SY_MAXLEN];               // the sequence of chars
+  char_u sy_chars[SY_MAXLEN];  // the sequence of chars
   int sy_len;
 } syl_item_T;
 
@@ -291,8 +291,8 @@ int did_set_spelltab;
 // structure used to store soundfolded words that add_sound_suggest() has
 // handled already.
 typedef struct {
-  short sft_score;              // lowest score used
-  char_u sft_word[1];           // soundfolded word, actually longer
+  short sft_score;     // lowest score used
+  char_u sft_word[1];  // soundfolded word, actually longer
 } sftword_T;
 
 typedef struct {
@@ -301,32 +301,31 @@ typedef struct {
   int score;
 } limitscore_T;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spell.c.generated.h"
+#include "spell.c.generated.h"
 #endif
 
 // values for ts_isdiff
-#define DIFF_NONE       0       // no different byte (yet)
-#define DIFF_YES        1       // different byte found
-#define DIFF_INSERT     2       // inserting character
+#define DIFF_NONE 0    // no different byte (yet)
+#define DIFF_YES 1     // different byte found
+#define DIFF_INSERT 2  // inserting character
 
 // values for ts_flags
-#define TSF_PREFIXOK    1       // already checked that prefix is OK
-#define TSF_DIDSPLIT    2       // tried split at this point
-#define TSF_DIDDEL      4       // did a delete, "ts_delidx" has index
+#define TSF_PREFIXOK 1  // already checked that prefix is OK
+#define TSF_DIDSPLIT 2  // tried split at this point
+#define TSF_DIDDEL 4    // did a delete, "ts_delidx" has index
 
 // special values ts_prefixdepth
-#define PFD_NOPREFIX    0xff    // not using prefixes
-#define PFD_PREFIXTREE  0xfe    // walking through the prefix tree
-#define PFD_NOTSPECIAL  0xfd    // highest value that's not special
+#define PFD_NOPREFIX 0xff    // not using prefixes
+#define PFD_PREFIXTREE 0xfe  // walking through the prefix tree
+#define PFD_NOTSPECIAL 0xfd  // highest value that's not special
 
 // mode values for find_word
-#define FIND_FOLDWORD       0   // find word case-folded
-#define FIND_KEEPWORD       1   // find keep-case word
-#define FIND_PREFIX         2   // find word after prefix
-#define FIND_COMPOUND       3   // find case-folded compound word
-#define FIND_KEEPCOMPOUND   4   // find keep-case compound word
+#define FIND_FOLDWORD 0      // find word case-folded
+#define FIND_KEEPWORD 1      // find keep-case word
+#define FIND_PREFIX 2        // find word after prefix
+#define FIND_COMPOUND 3      // find case-folded compound word
+#define FIND_KEEPCOMPOUND 4  // find keep-case compound word
 
 char *e_format = N_("E759: Format error in spell file");
 
@@ -353,9 +352,9 @@ static char_u *repl_to = NULL;
 /// caller can skip over the word.
 size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docount)
 {
-  matchinf_T mi;              // Most things are put in "mi" so that it can
-                              // be passed to functions quickly.
-  size_t nrlen = 0;              // found a number first
+  matchinf_T mi;     // Most things are put in "mi" so that it can
+                     // be passed to functions quickly.
+  size_t nrlen = 0;  // found a number first
   int c;
   size_t wrongcaplen = 0;
   int lpi;
@@ -409,8 +408,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
         this_upper = SPELL_ISUPPER(c);
         camel_case = !prev_upper && this_upper;
       }
-    } while (*mi.mi_fend != NUL && spell_iswordp(mi.mi_fend, wp)
-             && !camel_case);
+    } while (*mi.mi_fend != NUL && spell_iswordp(mi.mi_fend, wp) && !camel_case);
 
     if (capcol != NULL && *capcol == 0 && wp->w_s->b_cap_prog != NULL) {
       // Check word starting with capital letter.
@@ -439,8 +437,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     MB_PTR_ADV(mi.mi_fend);
   }
 
-  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
-                       MAXWLEN + 1);
+  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword, MAXWLEN + 1);
   mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
 
   if (camel_case) {
@@ -475,16 +472,14 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     // For a NOBREAK language, may want to use a word without a following
     // word as a backup.
-    if (mi.mi_lp->lp_slang->sl_nobreak && mi.mi_result == SP_BAD
-        && mi.mi_result2 != SP_BAD) {
+    if (mi.mi_lp->lp_slang->sl_nobreak && mi.mi_result == SP_BAD && mi.mi_result2 != SP_BAD) {
       mi.mi_result = mi.mi_result2;
       mi.mi_end = mi.mi_end2;
     }
 
     // Count the word in the first language where it's found to be OK.
     if (count_word && mi.mi_result == SP_OK) {
-      count_common_word(mi.mi_lp->lp_slang, ptr,
-                        (int)(mi.mi_end - ptr), 1);
+      count_common_word(mi.mi_lp->lp_slang, ptr, (int)(mi.mi_end - ptr), 1);
       count_word = false;
     }
   }
@@ -517,8 +512,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
       // Always include at least one character.  Required for when there
       // is a mixup in "midword".
       MB_PTR_ADV(mi.mi_end);
-    } else if (mi.mi_result == SP_BAD
-               && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
+    } else if (mi.mi_result == SP_BAD && LANGP_ENTRY(wp->w_s->b_langp, 0)->lp_slang->sl_nobreak) {
       char_u *p, *fp;
       int save_result = mi.mi_result;
 
@@ -582,7 +576,7 @@ static void find_word(matchinf_T *mip, int mode)
   if (mode == FIND_KEEPWORD || mode == FIND_KEEPCOMPOUND) {
     // Check for word with matching case in keep-case tree.
     ptr = mip->mi_word;
-    flen = 9999;                    // no case folding, always enough bytes
+    flen = 9999;  // no case folding, always enough bytes
     byts = slang->sl_kbyts;
     idxs = slang->sl_kidxs;
 
@@ -593,7 +587,7 @@ static void find_word(matchinf_T *mip, int mode)
   } else {
     // Check for case-folded in case-folded tree.
     ptr = mip->mi_fword;
-    flen = mip->mi_fwordlen;        // available case-folded bytes
+    flen = mip->mi_fwordlen;  // available case-folded bytes
     byts = slang->sl_fbyts;
     idxs = slang->sl_fidxs;
 
@@ -609,11 +603,11 @@ static void find_word(matchinf_T *mip, int mode)
   }
 
   if (byts == NULL) {
-    return;                     // array is empty
+    return;  // array is empty
   }
   idx_T arridx = 0;
-  int endlen[MAXWLEN];              // length at possible word endings
-  idx_T endidx[MAXWLEN];            // possible word endings
+  int endlen[MAXWLEN];    // length at possible word endings
+  idx_T endidx[MAXWLEN];  // possible word endings
   int endidxcnt = 0;
   int len;
   int c;
@@ -648,7 +642,7 @@ static void find_word(matchinf_T *mip, int mode)
         --len;
       }
       if (len == 0) {
-        break;              // no children, word must end here
+        break;  // no children, word must end here
       }
     }
 
@@ -659,7 +653,7 @@ static void find_word(matchinf_T *mip, int mode)
 
     // Perform a binary search in the list of accepted bytes.
     c = ptr[wlen];
-    if (c == TAB) {         // <Tab> is handled like <Space>
+    if (c == TAB) {  // <Tab> is handled like <Space>
       c = ' ';
     }
     idx_T lo = arridx;
@@ -713,11 +707,11 @@ static void find_word(matchinf_T *mip, int mode)
     wlen = endlen[endidxcnt];
 
     if (utf_head_off(ptr, ptr + wlen) > 0) {
-      continue;             // not at first byte of character
+      continue;  // not at first byte of character
     }
     if (spell_iswordp(ptr + wlen, mip->mi_win)) {
       if (slang->sl_compprog == NULL && !slang->sl_nobreak) {
-        continue;                   // next char is a word character
+        continue;  // next char is a word character
       }
       word_ends = false;
     } else {
@@ -744,8 +738,7 @@ static void find_word(matchinf_T *mip, int mode)
     // prefix ID.
     // Repeat this if there are more flags/region alternatives until there
     // is a match.
-    for (len = byts[arridx - 1]; len > 0 && byts[arridx] == 0;
-         --len, ++arridx) {
+    for (len = byts[arridx - 1]; len > 0 && byts[arridx] == 0; --len, ++arridx) {
       uint32_t flags = idxs[arridx];
 
       // For the fold-case tree check that the case of the checked word
@@ -760,8 +753,7 @@ static void find_word(matchinf_T *mip, int mode)
           mip->mi_capflags = captype(mip->mi_word, mip->mi_cend);
         }
 
-        if (mip->mi_capflags == WF_KEEPCAP
-            || !spell_valid_case(mip->mi_capflags, flags)) {
+        if (mip->mi_capflags == WF_KEEPCAP || !spell_valid_case(mip->mi_capflags, flags)) {
           continue;
         }
       }
@@ -769,10 +761,8 @@ static void find_word(matchinf_T *mip, int mode)
       // check the prefix ID and the condition.  Do that for the list at
       // mip->mi_prefarridx that find_prefix() filled.
       else if (mode == FIND_PREFIX && !prefix_found) {
-        c = valid_word_prefix(mip->mi_prefcnt, mip->mi_prefarridx,
-                              flags,
-                              mip->mi_word + mip->mi_cprefixlen, slang,
-                              false);
+        c = valid_word_prefix(mip->mi_prefcnt, mip->mi_prefarridx, flags,
+                              mip->mi_word + mip->mi_cprefixlen, slang, false);
         if (c == 0) {
           continue;
         }
@@ -785,36 +775,32 @@ static void find_word(matchinf_T *mip, int mode)
       }
 
       if (slang->sl_nobreak) {
-        if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND)
-            && (flags & WF_BANNED) == 0) {
+        if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND) && (flags & WF_BANNED) == 0) {
           // NOBREAK: found a valid following word.  That's all we
           // need to know, so return.
           mip->mi_result = SP_OK;
           break;
         }
-      } else if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND
-                  || !word_ends)) {
+      } else if ((mode == FIND_COMPOUND || mode == FIND_KEEPCOMPOUND || !word_ends)) {
         // If there is no compound flag or the word is shorter than
         // COMPOUNDMIN reject it quickly.
         // Makes you wonder why someone puts a compound flag on a word
         // that's too short...  Myspell compatibility requires this
         // anyway.
-        if (((unsigned)flags >> 24) == 0
-            || wlen - mip->mi_compoff < slang->sl_compminlen) {
+        if (((unsigned)flags >> 24) == 0 || wlen - mip->mi_compoff < slang->sl_compminlen) {
           continue;
         }
         // For multi-byte chars check character length against
         // COMPOUNDMIN.
         if (slang->sl_compminlen > 0
-            && mb_charlen_len(mip->mi_word + mip->mi_compoff,
-                              wlen - mip->mi_compoff) < slang->sl_compminlen) {
+            && mb_charlen_len(mip->mi_word + mip->mi_compoff, wlen - mip->mi_compoff)
+                   < slang->sl_compminlen) {
           continue;
         }
 
         // Limit the number of compound words to COMPOUNDWORDMAX if no
         // maximum for syllables is specified.
-        if (!word_ends && mip->mi_complen + mip->mi_compextra + 2
-            > slang->sl_compmax
+        if (!word_ends && mip->mi_complen + mip->mi_compextra + 2 > slang->sl_compmax
             && slang->sl_compsylmax == MAXWLEN) {
           continue;
         }
@@ -829,9 +815,7 @@ static void find_word(matchinf_T *mip, int mode)
         }
 
         // Quickly check if compounding is possible with this flag.
-        if (!byte_in_str(mip->mi_complen == 0
-                ? slang->sl_compstartflags
-                : slang->sl_compallflags,
+        if (!byte_in_str(mip->mi_complen == 0 ? slang->sl_compstartflags : slang->sl_compallflags,
                          ((unsigned)flags >> 24))) {
           continue;
         }
@@ -857,8 +841,7 @@ static void find_word(matchinf_T *mip, int mode)
             p = mip->mi_word + mip->mi_compoff;
           }
           capflags = captype(p, mip->mi_word + wlen);
-          if (capflags == WF_KEEPCAP || (capflags == WF_ALLCAP
-                                         && (flags & WF_FIXCAP) != 0)) {
+          if (capflags == WF_KEEPCAP || (capflags == WF_ALLCAP && (flags & WF_FIXCAP) != 0)) {
             continue;
           }
 
@@ -869,9 +852,8 @@ static void find_word(matchinf_T *mip, int mode)
             // word specifies ONECAP.
             MB_PTR_BACK(mip->mi_word, p);
             if (spell_iswordp_nmw(p, mip->mi_win)
-                ? capflags == WF_ONECAP
-                : (flags & WF_ONECAP) != 0
-                && capflags != WF_ONECAP) {
+                    ? capflags == WF_ONECAP
+                    : (flags & WF_ONECAP) != 0 && capflags != WF_ONECAP) {
               continue;
             }
           }
@@ -883,7 +865,7 @@ static void find_word(matchinf_T *mip, int mode)
         mip->mi_compflags[mip->mi_complen] = ((unsigned)flags >> 24);
         mip->mi_compflags[mip->mi_complen + 1] = NUL;
         if (word_ends) {
-          char_u fword[MAXWLEN] = { 0 };
+          char_u fword[MAXWLEN] = {0};
 
           if (slang->sl_compsylmax < MAXWLEN) {
             // "fword" is only needed for checking syllables.
@@ -896,8 +878,7 @@ static void find_word(matchinf_T *mip, int mode)
           if (!can_compound(slang, fword, mip->mi_compflags)) {
             continue;
           }
-        } else if (slang->sl_comprules != NULL
-                   && !match_compoundrule(slang, mip->mi_compflags)) {
+        } else if (slang->sl_comprules != NULL && !match_compoundrule(slang, mip->mi_compflags)) {
           // The compound flags collected so far do not match any
           // COMPOUNDRULE, discard the compounded word.
           continue;
@@ -952,8 +933,7 @@ static void find_word(matchinf_T *mip, int mode)
         for (int lpi = 0; lpi < mip->mi_win->w_s->b_langp.ga_len; ++lpi) {
           if (slang->sl_nobreak) {
             mip->mi_lp = LANGP_ENTRY(mip->mi_win->w_s->b_langp, lpi);
-            if (mip->mi_lp->lp_slang->sl_fidxs == NULL
-                || !mip->mi_lp->lp_slang->sl_nobreak) {
+            if (mip->mi_lp->lp_slang->sl_fidxs == NULL || !mip->mi_lp->lp_slang->sl_nobreak) {
               continue;
             }
           }
@@ -968,9 +948,9 @@ static void find_word(matchinf_T *mip, int mode)
             mip->mi_compoff = wlen;
             find_word(mip, FIND_KEEPCOMPOUND);
 
-#if 0       // Disabled, a prefix must not appear halfway through a compound
-            // word, unless the COMPOUNDPERMITFLAG is used, in which case it
-            // can't be a postponed prefix.
+#if 0  // Disabled, a prefix must not appear halfway through a compound
+       // word, unless the COMPOUNDPERMITFLAG is used, in which case it
+       // can't be a postponed prefix.
             if (!slang->sl_nobreak || mip->mi_result == SP_BAD) {
               // Check for following word with prefix.
               mip->mi_compoff = c;
@@ -1024,8 +1004,7 @@ static void find_word(matchinf_T *mip, int mode)
         if (mip->mi_result2 > res) {
           mip->mi_result2 = res;
           mip->mi_end2 = mip->mi_word + wlen;
-        } else if (mip->mi_result2 == res
-                   && mip->mi_end2 < mip->mi_word + wlen) {
+        } else if (mip->mi_result2 == res && mip->mi_end2 < mip->mi_word + wlen) {
           mip->mi_end2 = mip->mi_word + wlen;
         }
       } else if (mip->mi_result > res) {
@@ -1075,10 +1054,11 @@ static bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap)
 
 // Returns true if "flags" is a valid sequence of compound flags and "word"
 // does not have too many syllables.
-static bool can_compound(slang_T *slang, const char_u *word, const char_u *flags)
-  FUNC_ATTR_NONNULL_ALL
+static bool can_compound(slang_T *slang,
+                         const char_u *word,
+                         const char_u *flags) FUNC_ATTR_NONNULL_ALL
 {
-  char_u uflags[MAXWLEN * 2] = { 0 };
+  char_u uflags[MAXWLEN * 2] = {0};
 
   if (slang->sl_compprog == NULL) {
     return false;
@@ -1097,8 +1077,7 @@ static bool can_compound(slang_T *slang, const char_u *word, const char_u *flags
   // Count the number of syllables.  This may be slow, do it last.  If there
   // are too many syllables AND the number of compound words is above
   // COMPOUNDWORDMAX then compounding is not allowed.
-  if (slang->sl_compsylmax < MAXWLEN
-      && count_syllables(slang, word) > slang->sl_compsylmax) {
+  if (slang->sl_compsylmax < MAXWLEN && count_syllables(slang, word) > slang->sl_compsylmax) {
     return (int)STRLEN(flags) < slang->sl_compmax;
   }
   return true;
@@ -1111,8 +1090,9 @@ static bool can_be_compound(trystate_T *sp, slang_T *slang, char_u *compflags, i
 {
   // If the flag doesn't appear in sl_compstartflags or sl_compallflags
   // then it can't possibly compound.
-  if (!byte_in_str(sp->ts_complen == sp->ts_compsplit
-          ? slang->sl_compstartflags : slang->sl_compallflags, flag)) {
+  if (!byte_in_str(
+          sp->ts_complen == sp->ts_compsplit ? slang->sl_compstartflags : slang->sl_compallflags,
+          flag)) {
     return false;
   }
 
@@ -1151,7 +1131,7 @@ static bool match_compoundrule(slang_T *slang, char_u *compflags)
         return true;
       }
       if (*p == '/' || *p == NUL) {
-        break;          // end of rule, it's too short
+        break;  // end of rule, it's too short
       }
       if (*p == '[') {
         bool match = false;
@@ -1164,10 +1144,10 @@ static bool match_compoundrule(slang_T *slang, char_u *compflags)
           }
         }
         if (!match) {
-          break;            // none matches
+          break;  // none matches
         }
       } else if (*p != c) {
-        break;          // flag of word doesn't match flag in pattern
+        break;  // flag of word doesn't match flag in pattern
       }
       ++p;
     }
@@ -1191,7 +1171,11 @@ static bool match_compoundrule(slang_T *slang, char_u *compflags)
 /// @param totprefcnt  nr of prefix IDs
 /// @param arridx  idx in sl_pidxs[]
 /// @param cond_req  only use prefixes with a condition
-static int valid_word_prefix(int totprefcnt, int arridx, int flags, char_u *word, slang_T *slang,
+static int valid_word_prefix(int totprefcnt,
+                             int arridx,
+                             int flags,
+                             char_u *word,
+                             slang_T *slang,
                              bool cond_req)
 {
   int prefcnt;
@@ -1252,12 +1236,12 @@ static void find_prefix(matchinf_T *mip, int mode)
 
   byts = slang->sl_pbyts;
   if (byts == NULL) {
-    return;                     // array is empty
+    return;  // array is empty
   }
   // We use the case-folded word here, since prefixes are always
   // case-folded.
   ptr = mip->mi_fword;
-  flen = mip->mi_fwordlen;      // available case-folded bytes
+  flen = mip->mi_fwordlen;  // available case-folded bytes
   if (mode == FIND_COMPOUND) {
     // Skip over the previously found word(s).
     ptr += mip->mi_compoff;
@@ -1299,13 +1283,11 @@ static void find_prefix(matchinf_T *mip, int mode)
       }
 
       // Case-folded length may differ from original length.
-      mip->mi_cprefixlen = nofold_len(mip->mi_fword, mip->mi_prefixlen,
-                                      mip->mi_word);
+      mip->mi_cprefixlen = nofold_len(mip->mi_fword, mip->mi_prefixlen, mip->mi_word);
       find_word(mip, FIND_PREFIX);
 
-
       if (len == 0) {
-        break;              // no children, word must end here
+        break;  // no children, word must end here
       }
     }
 
@@ -1360,8 +1342,7 @@ static int fold_more(matchinf_T *mip)
     MB_PTR_ADV(mip->mi_fend);
   }
 
-  (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
-                       mip->mi_fword + mip->mi_fwordlen,
+  (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p), mip->mi_fword + mip->mi_fwordlen,
                        MAXWLEN - mip->mi_fwordlen);
   flen = (int)STRLEN(mip->mi_fword + mip->mi_fwordlen);
   mip->mi_fwordlen += flen;
@@ -1377,15 +1358,13 @@ static bool spell_valid_case(int wordflags, int treeflags)
 {
   return (wordflags == WF_ALLCAP && (treeflags & WF_FIXCAP) == 0)
          || ((treeflags & (WF_ALLCAP | WF_KEEPCAP)) == 0
-             && ((treeflags & WF_ONECAP) == 0
-                 || (wordflags & WF_ONECAP) != 0));
+             && ((treeflags & WF_ONECAP) == 0 || (wordflags & WF_ONECAP) != 0));
 }
 
 // Returns true if spell checking is not enabled.
 static bool no_spell_checking(win_T *wp)
 {
-  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
-      || GA_EMPTY(&wp->w_s->b_langp)) {
+  if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL || GA_EMPTY(&wp->w_s->b_langp)) {
     emsg(_(e_no_spell));
     return true;
   }
@@ -1474,18 +1453,14 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     // possible.
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      spell_cat_line(buf + STRLEN(buf),
-                     ml_get_buf(wp->w_buffer, lnum + 1, false),
-                     MAXWLEN);
+      spell_cat_line(buf + STRLEN(buf), ml_get_buf(wp->w_buffer, lnum + 1, false), MAXWLEN);
     }
     p = buf + skip;
     endp = buf + len;
     while (p < endp) {
       // When searching backward don't search after the cursor.  Unless
       // we wrapped around the end of the buffer.
-      if (dir == BACKWARD
-          && lnum == wp->w_cursor.lnum
-          && !wrapped
+      if (dir == BACKWARD && lnum == wp->w_cursor.lnum && !wrapped
           && (colnr_T)(p - buf) >= wp->w_cursor.col) {
         break;
       }
@@ -1499,16 +1474,11 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
         if (allwords || attr == HLF_SPB) {
           // When searching forward only accept a bad word after
           // the cursor.
-          if (dir == BACKWARD
-              || lnum != wp->w_cursor.lnum
-              || wrapped
-              || ((colnr_T)(curline
-                            ? p - buf + (ptrdiff_t)len
-                            : p - buf) > wp->w_cursor.col)) {
+          if (dir == BACKWARD || lnum != wp->w_cursor.lnum || wrapped
+              || ((colnr_T)(curline ? p - buf + (ptrdiff_t)len : p - buf) > wp->w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
-              (void)syn_get_id(wp, lnum, (colnr_T)col,
-                               FALSE, &can_spell, FALSE);
+              (void)syn_get_id(wp, lnum, (colnr_T)col, FALSE, &can_spell, FALSE);
               if (!can_spell) {
                 attr = HLF_COUNT;
               }
@@ -1557,7 +1527,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     }
 
     if (curline) {
-      break;            // only check cursor line
+      break;  // only check cursor line
     }
 
     // If we are back at the starting line and searched it again there
@@ -1571,7 +1541,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
       if (lnum > 1) {
         lnum--;
       } else if (!p_ws) {
-        break;              // at first line and 'nowrapscan'
+        break;  // at first line and 'nowrapscan'
       } else {
         // Wrap around to the end of the buffer.  May search the
         // starting line again and accept the last match.
@@ -1586,7 +1556,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
       if (lnum < wp->w_buffer->b_ml.ml_line_count) {
         ++lnum;
       } else if (!p_ws) {
-        break;              // at first line and 'nowrapscan'
+        break;  // at first line and 'nowrapscan'
       } else {
         // Wrap around to the start of the buffer.  May search the
         // starting line again and accept the first match.
@@ -1647,7 +1617,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
     n = (int)(p - line) + 1;
     if (n < maxlen - 1) {
       memset(buf, ' ', n);
-      STRLCPY(buf +  n, p, maxlen - n);
+      STRLCPY(buf + n, p, maxlen - n);
     }
   }
 }
@@ -1671,19 +1641,16 @@ static void spell_load_lang(char_u *lang)
   // autocommand may load it then.
   for (round = 1; round <= 2; ++round) {
     // Find the first spell file for "lang" in 'runtimepath' and load it.
-    vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                 "spell/%s.%s.spl", lang, spell_enc());
+    vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.%s.spl", lang, spell_enc());
     r = do_in_runtimepath(fname_enc, 0, spell_load_cb, &sl);
 
     if (r == FAIL && *sl.sl_lang != NUL) {
       // Try loading the ASCII version.
-      vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                   "spell/%s.ascii.spl", lang);
+      vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.ascii.spl", lang);
       r = do_in_runtimepath(fname_enc, 0, spell_load_cb, &sl);
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
-          && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
-                            curbuf->b_fname, FALSE, curbuf)) {
+          && apply_autocmds(EVENT_SPELLFILEMISSING, lang, curbuf->b_fname, FALSE, curbuf)) {
         continue;
       }
       break;
@@ -1695,14 +1662,13 @@ static void spell_load_lang(char_u *lang)
     if (starting) {
       // Prompt the user at VimEnter if spell files are missing. #3027
       // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
-      char autocmd_buf[512] = { 0 };
+      char autocmd_buf[512] = {0};
       snprintf(autocmd_buf, sizeof(autocmd_buf),
-               "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
-               lang);
+               "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell", lang);
       do_cmdline_cmd(autocmd_buf);
     } else {
-      smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
-           lang, spell_enc(), lang);
+      smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""), lang, spell_enc(),
+           lang);
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
@@ -1725,14 +1691,12 @@ char_u *spell_enc(void)
 // "fname[MAXPATHL]".
 static void int_wordlist_spl(char_u *fname)
 {
-  vim_snprintf((char *)fname, MAXPATHL, SPL_FNAME_TMPL,
-               int_wordlist, spell_enc());
+  vim_snprintf((char *)fname, MAXPATHL, SPL_FNAME_TMPL, int_wordlist, spell_enc());
 }
 
 // Allocate a new slang_T for language "lang".  "lang" can be NULL.
 // Caller must fill "sl_next".
-slang_T *slang_alloc(char_u *lang)
-  FUNC_ATTR_NONNULL_RET
+slang_T *slang_alloc(char_u *lang) FUNC_ATTR_NONNULL_RET
 {
   slang_T *lp = xcalloc(1, sizeof(slang_T));
 
@@ -1899,7 +1863,7 @@ void count_common_word(slang_T *lp, char_u *word, int len, int count)
     hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
   } else {
     wc = HI2WC(hi);
-    if ((wc->wc_count += count) < (unsigned)count) {    // check for overflow
+    if ((wc->wc_count += count) < (unsigned)count) {  // check for overflow
       wc->wc_count = MAXWORDCOUNT;
     }
   }
@@ -1964,7 +1928,7 @@ int init_syl_tab(slang_T *slang)
   p = vim_strchr(slang->sl_syllable, '/');
   while (p != NULL) {
     *p++ = NUL;
-    if (*p == NUL) {        // trailing slash
+    if (*p == NUL) {  // trailing slash
       break;
     }
     s = p;
@@ -1988,8 +1952,7 @@ int init_syl_tab(slang_T *slang)
 // Count the number of syllables in "word".
 // When "word" contains spaces the syllables after the last space are counted.
 // Returns zero if syllables are not defines.
-static int count_syllables(slang_T *slang, const char_u *word)
-  FUNC_ATTR_NONNULL_ALL
+static int count_syllables(slang_T *slang, const char_u *word) FUNC_ATTR_NONNULL_ALL
 {
   int cnt = 0;
   bool skip = false;
@@ -2013,12 +1976,11 @@ static int count_syllables(slang_T *slang, const char_u *word)
     len = 0;
     for (int i = 0; i < slang->sl_syl_items.ga_len; ++i) {
       syl = ((syl_item_T *)slang->sl_syl_items.ga_data) + i;
-      if (syl->sy_len > len
-          && STRNCMP(p, syl->sy_chars, syl->sy_len) == 0) {
+      if (syl->sy_len > len && STRNCMP(p, syl->sy_chars, syl->sy_len) == 0) {
         len = syl->sy_len;
       }
     }
-    if (len != 0) {     // found a match, count syllable
+    if (len != 0) {  // found a match, count syllable
       ++cnt;
       skip = false;
     } else {
@@ -2026,10 +1988,10 @@ static int count_syllables(slang_T *slang, const char_u *word)
       c = utf_ptr2char(p);
       len = utfc_ptr2len(p);
       if (vim_strchr(slang->sl_syllable, c) == NULL) {
-        skip = false;               // No, search for next syllable
+        skip = false;  // No, search for next syllable
       } else if (!skip) {
-        ++cnt;                      // Yes, count it
-        skip = true;                // don't count following syllable chars
+        ++cnt;        // Yes, count it
+        skip = true;  // don't count following syllable chars
       }
     }
   }
@@ -2106,8 +2068,7 @@ char *did_set_spelllang(win_T *wp)
 
       // Locate a region and remove it from the file name.
       p = vim_strchr(path_tail(lang), '_');
-      if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
-          && !ASCII_ISALPHA(p[3])) {
+      if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2]) && !ASCII_ISALPHA(p[3])) {
         STRLCPY(region_cp, p + 1, 3);
         memmove(p, p + 3, len - (p - lang) - 2);
         region = region_cp;
@@ -2117,8 +2078,7 @@ char *did_set_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare(lang, slang->sl_fname, false, true)
-            == kEqualFiles) {
+        if (path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles) {
           break;
         }
       }
@@ -2165,9 +2125,8 @@ char *did_set_spelllang(win_T *wp)
 
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (filename
-          ? path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles
-          : STRICMP(lang, slang->sl_name) == 0) {
+      if (filename ? path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles
+                   : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
           // find region in sl_regions
@@ -2181,8 +2140,7 @@ char *did_set_spelllang(win_T *wp)
             } else {
               // This is probably an error.  Give a warning and
               // accept the words anyway.
-              smsg(_("Warning: region %s not supported"),
-                   region);
+              smsg(_("Warning: region %s not supported"), region);
             }
           } else {
             region_mask = 1 << c;
@@ -2223,8 +2181,7 @@ char *did_set_spelllang(win_T *wp)
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL
-            && path_full_compare(spf_name, p, false, true) == kEqualFiles) {
+        if (p != NULL && path_full_compare(spf_name, p, false, true) == kEqualFiles) {
           break;
         }
       }
@@ -2235,8 +2192,7 @@ char *did_set_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (path_full_compare(spf_name, slang->sl_fname, false, true)
-          == kEqualFiles) {
+      if (path_full_compare(spf_name, slang->sl_fname, false, true) == kEqualFiles) {
         break;
       }
     }
@@ -2250,7 +2206,7 @@ char *did_set_spelllang(win_T *wp)
         STRLCPY(lang, path_tail(spf_name), MAXWLEN + 1);
         p = vim_strchr(lang, '.');
         if (p != NULL) {
-          *p = NUL;             // truncate at ".encoding.add"
+          *p = NUL;  // truncate at ".encoding.add"
         }
       }
       slang = spell_load_file(spf_name, lang, NULL, true);
@@ -2305,8 +2261,7 @@ char *did_set_spelllang(win_T *wp)
       for (int j = 0; j < ga.ga_len; ++j) {
         lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_sal)
-            && STRNCMP(lp->lp_slang->sl_name,
-                       lp2->lp_slang->sl_name, 2) == 0) {
+            && STRNCMP(lp->lp_slang->sl_name, lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_sallang = lp2->lp_slang;
           break;
         }
@@ -2322,8 +2277,7 @@ char *did_set_spelllang(win_T *wp)
       for (int j = 0; j < ga.ga_len; ++j) {
         lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_rep)
-            && STRNCMP(lp->lp_slang->sl_name,
-                       lp2->lp_slang->sl_name, 2) == 0) {
+            && STRNCMP(lp->lp_slang->sl_name, lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_replang = lp2->lp_slang;
           break;
         }
@@ -2347,8 +2301,7 @@ static void clear_midword(win_T *wp)
 
 // Use the "sl_midword" field of language "lp" for buffer "buf".
 // They add up to any currently used midword characters.
-static void use_midword(slang_T *lp, win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+static void use_midword(slang_T *lp, win_T *wp) FUNC_ATTR_NONNULL_ALL
 {
   if (lp->sl_midword == NULL) {  // there aren't any
     return;
@@ -2402,18 +2355,17 @@ static int find_region(char_u *rp, char_u *region)
 /// @param[in]  end  End of word or NULL for NUL delimited string
 ///
 /// @returns  Case type of word
-int captype(char_u *word, char_u *end)
-  FUNC_ATTR_NONNULL_ARG(1)
+int captype(char_u *word, char_u *end) FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *p;
   int firstcap;
   bool allcap;
-  bool past_second = false;              // past second word char
+  bool past_second = false;  // past second word char
 
   // find first letter
   for (p = word; !spell_iswordp_nmw(p, curwin); MB_PTR_ADV(p)) {
     if (end == NULL ? *p == NUL : p >= end) {
-      return 0;             // only non-word characters, illegal word
+      return 0;  // only non-word characters, illegal word
     }
   }
   int c = mb_ptr2char_adv((const char_u **)&p);
@@ -2450,8 +2402,7 @@ int captype(char_u *word, char_u *end)
 // Like captype() but for a KEEPCAP word add ONECAP if the word starts with a
 // capital.  So that make_case_word() can turn WOrd into Word.
 // Add ALLCAP for "WOrD".
-static int badword_captype(char_u *word, char_u *end)
-  FUNC_ATTR_NONNULL_ALL
+static int badword_captype(char_u *word, char_u *end) FUNC_ATTR_NONNULL_ALL
 {
   int flags = captype(word, end);
   int c;
@@ -2485,7 +2436,7 @@ static int badword_captype(char_u *word, char_u *end)
       flags |= WF_ONECAP;
     }
 
-    if (u >= 2 && l >= 2) {     // maCARONI maCAroni
+    if (u >= 2 && l >= 2) {  // maCARONI maCAroni
       flags |= WF_MIXCAP;
     }
   }
@@ -2495,7 +2446,7 @@ static int badword_captype(char_u *word, char_u *end)
 // Delete the internal wordlist and its .spl file.
 void spell_delete_wordlist(void)
 {
-  char_u fname[MAXPATHL] = { 0 };
+  char_u fname[MAXPATHL] = {0};
 
   if (int_wordlist != NULL) {
     os_remove((char *)int_wordlist);
@@ -2511,7 +2462,8 @@ void spell_free_all(void)
   slang_T *slang;
 
   // Go through all buffers and handle 'spelllang'. <VN>
-  FOR_ALL_BUFFERS(buf) {
+  FOR_ALL_BUFFERS(buf)
+  {
     ga_clear(&buf->b_s.b_langp);
   }
 
@@ -2538,7 +2490,8 @@ void spell_reload(void)
   spell_free_all();
 
   // Go through all buffers and handle 'spelllang'.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab)
+  {
     // Only load the wordlists when 'spelllang' is set and there is a
     // window for this buffer in which 'spell' is set.
     if (*wp->w_s->b_p_spl != NUL) {
@@ -2550,7 +2503,6 @@ void spell_reload(void)
   }
 }
 
-
 // Opposite of offset2bytes().
 // "pp" points to the bytes and is advanced over it.
 // Returns the offset.
@@ -2561,16 +2513,16 @@ static int bytes2offset(char_u **pp)
   int c;
 
   c = *p++;
-  if ((c & 0x80) == 0x00) {             // 1 byte
+  if ((c & 0x80) == 0x00) {  // 1 byte
     nr = c - 1;
-  } else if ((c & 0xc0) == 0x80) {      // 2 bytes
+  } else if ((c & 0xc0) == 0x80) {  // 2 bytes
     nr = (c & 0x3f) - 1;
     nr = nr * 255 + (*p++ - 1);
-  } else if ((c & 0xe0) == 0xc0) {      // 3 bytes
+  } else if ((c & 0xe0) == 0xc0) {  // 3 bytes
     nr = (c & 0x1f) - 1;
     nr = nr * 255 + (*p++ - 1);
     nr = nr * 255 + (*p++ - 1);
-  } else {                              // 4 bytes
+  } else {  // 4 bytes
     nr = (c & 0x0f) - 1;
     nr = nr * 255 + (*p++ - 1);
     nr = nr * 255 + (*p++ - 1);
@@ -2591,11 +2543,11 @@ buf_T *open_spellbuf(void)
   buf_T *buf = xcalloc(1, sizeof(buf_T));
 
   buf->b_spell = true;
-  buf->b_p_swf = true;        // may create a swap file
+  buf->b_p_swf = true;  // may create a swap file
   if (ml_open(buf) == FAIL) {
     ELOG("Error opening a new memline");
   }
-  ml_open_file(buf);          // create swap file now
+  ml_open_file(buf);  // create swap file now
 
   return buf;
 }
@@ -2669,8 +2621,7 @@ void init_spell_chartab(void)
 /// Thus this only works properly when past the first character of the word.
 ///
 /// @param wp Buffer used.
-static bool spell_iswordp(const char_u *p, const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+static bool spell_iswordp(const char_u *p, const win_T *wp) FUNC_ATTR_NONNULL_ALL
 {
   int c;
 
@@ -2679,14 +2630,13 @@ static bool spell_iswordp(const char_u *p, const win_T *wp)
   if (l == 1) {
     // be quick for ASCII
     if (wp->w_s->b_spell_ismw[*p]) {
-      s = p + 1;                      // skip a mid-word character
+      s = p + 1;  // skip a mid-word character
     }
   } else {
     c = utf_ptr2char(p);
-    if (c < 256
-        ? wp->w_s->b_spell_ismw[c]
-        : (wp->w_s->b_spell_ismw_mb != NULL
-           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
+    if (c < 256 ? wp->w_s->b_spell_ismw[c]
+                : (wp->w_s->b_spell_ismw_mb != NULL
+                   && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
       s = p + l;
     }
   }
@@ -2714,7 +2664,7 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 // Unicode subscript and superscript are not considered word characters.
 // See also utf_class() in mbyte.c.
 static bool spell_mb_isword_class(int cl, const win_T *wp)
-  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (wp->w_s->b_cjk) {
     // East Asian characters are not considered word characters.
@@ -2725,8 +2675,7 @@ static bool spell_mb_isword_class(int cl, const win_T *wp)
 
 // Returns true if "p" points to a word character.
 // Wide version of spell_iswordp().
-static bool spell_iswordp_w(const int *p, const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+static bool spell_iswordp_w(const int *p, const win_T *wp) FUNC_ATTR_NONNULL_ALL
 {
   const int *s;
 
@@ -2749,11 +2698,11 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 // When using a multi-byte 'encoding' the length may change!
 // Returns FAIL when something wrong.
 int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int buflen)
-  FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_NONNULL_ALL
 {
   if (len >= buflen) {
     buf[0] = NUL;
-    return FAIL;                // result will not fit
+    return FAIL;  // result will not fit
   }
 
   int outi = 0;
@@ -2787,12 +2736,12 @@ int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf, int bufle
 }
 
 // values for sps_flags
-#define SPS_BEST    1
-#define SPS_FAST    2
-#define SPS_DOUBLE  4
+#define SPS_BEST 1
+#define SPS_FAST 2
+#define SPS_DOUBLE 4
 
-static int sps_flags = SPS_BEST;        // flags from 'spellsuggest'
-static int sps_limit = 9999;            // max nr of suggestions given
+static int sps_flags = SPS_BEST;  // flags from 'spellsuggest'
+static int sps_limit = 9999;      // max nr of suggestions given
 
 // Check the 'spellsuggest' option.  Return FAIL if it's wrong.
 // Sets "sps_flags" and "sps_limit".
@@ -2822,8 +2771,7 @@ int spell_check_sps(void)
       f = SPS_FAST;
     } else if (STRCMP(buf, "double") == 0) {
       f = SPS_DOUBLE;
-    } else if (STRNCMP(buf, "expr:", 5) != 0
-               && STRNCMP(buf, "file:", 5) != 0) {
+    } else if (STRNCMP(buf, "expr:", 5) != 0 && STRNCMP(buf, "file:", 5) != 0) {
       f = -1;
     }
 
@@ -2891,9 +2839,9 @@ void spell_suggest(int count)
     badlen++;
     end_visual_mode();
   } else
-  // Find the start of the badly spelled word.
-  if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
-      || curwin->w_cursor.col > prev_cursor.col) {
+      // Find the start of the badly spelled word.
+      if (spell_move_to(curwin, FORWARD, true, true, NULL) == 0
+          || curwin->w_cursor.col > prev_cursor.col) {
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
     curwin->w_cursor = prev_cursor;
@@ -2908,7 +2856,7 @@ void spell_suggest(int count)
       MB_PTR_ADV(p);
     }
 
-    if (!spell_iswordp_nmw(p, curwin)) {                // No word found.
+    if (!spell_iswordp_nmw(p, curwin)) {  // No word found.
       beep_flush();
       return;
     }
@@ -2930,15 +2878,13 @@ void spell_suggest(int count)
   } else {
     limit = sps_limit;
   }
-  spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
-                     true, need_cap, true);
+  spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit, true, need_cap, true);
 
   if (GA_EMPTY(&sug.su_ga)) {
     msg(_("Sorry, no suggestions"));
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
-      smsg(_("Sorry, only %" PRId64 " suggestions"),
-           (int64_t)sug.su_ga.ga_len);
+      smsg(_("Sorry, only %" PRId64 " suggestions"), (int64_t)sug.su_ga.ga_len);
     }
   } else {
     // When 'rightleft' is set the list is drawn right-left.
@@ -2949,15 +2895,13 @@ void spell_suggest(int count)
 
     // List the suggestions.
     msg_start();
-    msg_row = Rows - 1;         // for when 'cmdheight' > 1
-    lines_left = Rows;          // avoid more prompt
-    vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"),
-                 sug.su_badlen, sug.su_badptr);
+    msg_row = Rows - 1;  // for when 'cmdheight' > 1
+    lines_left = Rows;   // avoid more prompt
+    vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"), sug.su_badlen, sug.su_badptr);
     if (cmdmsg_rl && STRNCMP(IObuff, "Change", 6) == 0) {
       // And now the rabbit from the high hat: Avoid showing the
       // untranslated message rightleft.
-      vim_snprintf((char *)IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
-                   sug.su_badlen, sug.su_badptr);
+      vim_snprintf((char *)IObuff, IOSIZE, ":ot \"%.*s\" egnahC", sug.su_badlen, sug.su_badptr);
     }
     msg_puts((const char *)IObuff);
     msg_clr_eos();
@@ -2971,8 +2915,7 @@ void spell_suggest(int count)
       // the not replaced part.
       STRLCPY(wcopy, stp->st_word, MAXWLEN + 1);
       if (sug.su_badlen > stp->st_orglen) {
-        STRLCPY(wcopy + stp->st_wordlen,
-                sug.su_badptr + stp->st_orglen,
+        STRLCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen,
                 sug.su_badlen - stp->st_orglen + 1);
       }
       vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
@@ -2986,20 +2929,17 @@ void spell_suggest(int count)
 
       // The word may replace more than "su_badlen".
       if (sug.su_badlen < stp->st_orglen) {
-        vim_snprintf((char *)IObuff, IOSIZE, _(" < \"%.*s\""),
-                     stp->st_orglen, sug.su_badptr);
+        vim_snprintf((char *)IObuff, IOSIZE, _(" < \"%.*s\""), stp->st_orglen, sug.su_badptr);
         msg_puts((const char *)IObuff);
       }
 
       if (p_verbose > 0) {
         // Add the score.
         if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
-          vim_snprintf((char *)IObuff, IOSIZE, " (%s%d - %d)",
-                       stp->st_salscore ? "s " : "",
+          vim_snprintf((char *)IObuff, IOSIZE, " (%s%d - %d)", stp->st_salscore ? "s " : "",
                        stp->st_score, stp->st_altscore);
         } else {
-          vim_snprintf((char *)IObuff, IOSIZE, " (%d)",
-                       stp->st_score);
+          vim_snprintf((char *)IObuff, IOSIZE, " (%d)", stp->st_score);
         }
         if (cmdmsg_rl) {
           // Mirror the numbers, but keep the leading space.
@@ -3023,7 +2963,7 @@ void spell_suggest(int count)
     if (mouse_used) {
       selected -= lines_left;
     }
-    lines_left = Rows;                  // avoid more prompt
+    lines_left = Rows;  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
   }
@@ -3038,8 +2978,7 @@ void spell_suggest(int count)
       // Replacing less than "su_badlen", append the remainder to
       // repl_to.
       repl_from = vim_strnsave(sug.su_badptr, sug.su_badlen);
-      vim_snprintf((char *)IObuff, IOSIZE, "%s%.*s", stp->st_word,
-                   sug.su_badlen - stp->st_orglen,
+      vim_snprintf((char *)IObuff, IOSIZE, "%s%.*s", stp->st_word, sug.su_badlen - stp->st_orglen,
                    sug.su_badptr + stp->st_orglen);
       repl_to = vim_strsave(IObuff);
     } else {
@@ -3058,8 +2997,7 @@ void spell_suggest(int count)
     // For redo we use a change-word command.
     ResetRedobuff();
     AppendToRedobuff("ciw");
-    AppendToRedobuffLit(p + c,
-                        stp->st_wordlen + sug.su_badlen - stp->st_orglen);
+    AppendToRedobuffLit(p + c, stp->st_wordlen + sug.su_badlen - stp->st_orglen);
     AppendCharToRedobuff(ESC);
 
     // "p" may be freed here
@@ -3123,8 +3061,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
       if (p == line || spell_iswordp_nmw(p, curwin)) {
         break;
       }
-      if (vim_regexec(&regmatch, p, 0)
-          && regmatch.endp[0] == line + endcol) {
+      if (vim_regexec(&regmatch, p, 0) && regmatch.endp[0] == line + endcol) {
         need_cap = true;
         break;
       }
@@ -3136,7 +3073,6 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
 
   return need_cap;
 }
-
 
 // ":spellrepall"
 void ex_spellrepall(exarg_T *eap)
@@ -3163,16 +3099,14 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
-        || u_save_cursor() == FAIL) {
+    if (do_search(NULL, '/', '/', frompat, 1L, SEARCH_KEEP, NULL) == 0 || u_save_cursor() == FAIL) {
       break;
     }
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
     line = get_cursor_line_ptr();
-    if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
-                               repl_to, STRLEN(repl_to)) != 0) {
+    if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col, repl_to, STRLEN(repl_to)) != 0) {
       p = xmalloc(STRLEN(line) + addlen + 1);
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
@@ -3221,8 +3155,7 @@ void spell_suggest_list(garray_T *gap, char_u *word, int maxcount, bool need_cap
 
     // The suggested word may replace only part of "word", add the not
     // replaced part.
-    wcopy = xmalloc(stp->st_wordlen
-                    + STRLEN(sug.su_badptr + stp->st_orglen) + 1);
+    wcopy = xmalloc(stp->st_wordlen + STRLEN(sug.su_badptr + stp->st_orglen) + 1);
     STRCPY(wcopy, stp->st_word);
     STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
     ((char_u **)gap->ga_data)[gap->ga_len++] = wcopy;
@@ -3240,8 +3173,13 @@ void spell_suggest_list(garray_T *gap, char_u *word, int maxcount, bool need_cap
 /// @param badlen  length of bad word or 0 if unknown
 /// @param banbadword  don't include badword in suggestions
 /// @param need_cap  word should start with capital
-static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int maxcount,
-                               bool banbadword, bool need_cap, bool interactive)
+static void spell_find_suggest(char_u *badptr,
+                               int badlen,
+                               suginfo_T *su,
+                               int maxcount,
+                               bool banbadword,
+                               bool need_cap,
+                               bool interactive)
 {
   hlf_T attr = HLF_COUNT;
   char_u buf[MAXPATHL];
@@ -3274,11 +3212,10 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   su->su_maxscore = SCORE_MAXINIT;
 
   if (su->su_badlen >= MAXWLEN) {
-    su->su_badlen = MAXWLEN - 1;        // just in case
+    su->su_badlen = MAXWLEN - 1;  // just in case
   }
   STRLCPY(su->su_badword, su->su_badptr, su->su_badlen + 1);
-  (void)spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
-                       MAXWLEN);
+  (void)spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword, MAXWLEN);
 
   // TODO(vim): make this work if the case-folded text is longer than the
   // original text. Currently an illegal byte causes wrong pointer
@@ -3286,8 +3223,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   su->su_fbadword[su->su_badlen] = NUL;
 
   // get caps flags for bad word
-  su->su_badflags = badword_captype(su->su_badptr,
-                                    su->su_badptr + su->su_badlen);
+  su->su_badflags = badword_captype(su->su_badptr, su->su_badptr + su->su_badlen);
   if (need_cap) {
     su->su_badflags |= WF_ONECAP;
   }
@@ -3307,8 +3243,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   // Soundfold the bad word with the default sound folding, so that we don't
   // have to do this many times.
   if (su->su_sallang != NULL) {
-    spell_soundfold(su->su_sallang, su->su_fbadword, true,
-                    su->su_sal_badword);
+    spell_soundfold(su->su_sallang, su->su_fbadword, true, su->su_sal_badword);
   }
 
   // If the word is not capitalised and spell_check() doesn't consider the
@@ -3317,8 +3252,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   c = utf_ptr2char(su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
     make_case_word(su->su_badword, buf, WF_ONECAP);
-    add_suggestion(su, &su->su_ga, buf, su->su_badlen, SCORE_ICASE,
-                   0, true, su->su_sallang, false);
+    add_suggestion(su, &su->su_ga, buf, su->su_badlen, SCORE_ICASE, 0, true, su->su_sallang, false);
   }
 
   // Ban the bad word itself.  It may appear in another region.
@@ -3380,8 +3314,8 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
         // Get the word and the score from the items.
         score = get_spellword(TV_LIST_ITEM_TV(li)->vval.v_list, &p);
         if (score >= 0 && score <= su->su_maxscore) {
-          add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen,
-                         score, 0, true, su->su_sallang, false);
+          add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen, score, 0, true,
+                         su->su_sallang, false);
         }
       }
     });
@@ -3415,7 +3349,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
 
     p = vim_strchr(line, '/');
     if (p == NULL) {
-      continue;             // No Tab found, just skip the line.
+      continue;  // No Tab found, just skip the line.
     }
     *p++ = NUL;
     if (STRICMP(su->su_badword, line) == 0) {
@@ -3431,8 +3365,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
         p = cword;
       }
 
-      add_suggestion(su, &su->su_ga, p, su->su_badlen,
-                     SCORE_FILE, 0, true, su->su_sallang, false);
+      add_suggestion(su, &su->su_ga, p, su->su_badlen, SCORE_FILE, 0, true, su->su_sallang, false);
     }
   }
 
@@ -3600,8 +3533,8 @@ static void suggest_try_special(suginfo_T *su)
 
     // Give a soundalike score of 0, compute the score as if deleting one
     // character.
-    add_suggestion(su, &su->su_ga, word, su->su_badlen,
-                   RESCORE(SCORE_REP, 0), 0, true, su->su_sallang, false);
+    add_suggestion(su, &su->su_ga, word, su->su_badlen, RESCORE(SCORE_REP, 0), 0, true,
+                   su->su_sallang, false);
   }
 }
 
@@ -3632,7 +3565,7 @@ static void prof_store(state_T state)
   counts[state]++;
   profile_start(&current);
 }
-# define PROF_STORE(state) prof_store(state);
+#define PROF_STORE(state) prof_store(state);
 
 static void prof_report(char *name)
 {
@@ -3642,19 +3575,19 @@ static void prof_report(char *name)
   fprintf(fd, "-----------------------\n");
   fprintf(fd, "%s: %s\n", name, profile_msg(&total));
   for (int i = 0; i <= STATE_FINAL; i++) {
-    fprintf(fd, "%d: %s ("%" PRId64)\n", i, profile_msg(&times[i]), counts[i]);
+    fprintf(fd, "%d: %s (" % " PRId64)\n", i, profile_msg(&times[i]), counts[i]);
   }
   fclose(fd);
 }
 #else
-# define PROF_STORE(state)
+#define PROF_STORE(state)
 #endif
 
 // Try finding suggestions by adding/removing/swapping letters.
 
 static void suggest_try_change(suginfo_T *su)
 {
-  char_u fword[MAXWLEN];            // copy of the bad word, case-folded
+  char_u fword[MAXWLEN];  // copy of the bad word, case-folded
   int n;
   char_u *p;
   langp_T *lp;
@@ -3689,8 +3622,7 @@ static void suggest_try_change(suginfo_T *su)
 }
 
 // Check the maximum score, if we go over it we won't try this change.
-#define TRY_DEEPER(su, stack, depth, add) \
-  (stack[depth].ts_score + (add) < su->su_maxscore)
+#define TRY_DEEPER(su, stack, depth, add) (stack[depth].ts_score + (add) < su->su_maxscore)
 
 // Try finding suggestions by adding/removing/swapping letters.
 //
@@ -3723,14 +3655,14 @@ static void suggest_try_change(suginfo_T *su)
 //      use "slang->sl_repsal" instead of "lp->lp_replang->sl_rep"
 static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool soundfold)
 {
-  char_u tword[MAXWLEN];            // good word collected so far
+  char_u tword[MAXWLEN];  // good word collected so far
   trystate_T stack[MAXWLEN];
-  char_u preword[MAXWLEN * 3] = { 0 };  // word found with proper case;
+  char_u preword[MAXWLEN * 3] = {0};  // word found with proper case;
   // concatenation of prefix compound
   // words and split word.  NUL terminated
   // when going deeper but not when coming
   // back.
-  char_u compflags[MAXWLEN];        // compound flags, one for each word
+  char_u compflags[MAXWLEN];  // compound flags, one for each word
   trystate_T *sp;
   int newscore;
   int score;
@@ -3746,7 +3678,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   char_u *p;
   fromto_T *ftp;
   int fl = 0, tl;
-  int repextra = 0;                 // extra bytes in fword[] from REP item
+  int repextra = 0;  // extra bytes in fword[] from REP item
   slang_T *slang = lp->lp_slang;
   int fword_ends;
   bool goodword_ends;
@@ -3785,7 +3717,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       byts = pbyts;
       idxs = pidxs;
       sp->ts_prefixdepth = PFD_PREFIXTREE;
-      sp->ts_state = STATE_NOPREFIX;            // try without prefix first
+      sp->ts_state = STATE_NOPREFIX;  // try without prefix first
     } else {
       byts = fbyts;
       idxs = fidxs;
@@ -3802,1136 +3734,1061 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   while (depth >= 0 && !got_int) {
     sp = &stack[depth];
     switch (sp->ts_state) {
-    case STATE_START:
-    case STATE_NOPREFIX:
-      // Start of node: Deal with NUL bytes, which means
-      // tword[] may end here.
-      arridx = sp->ts_arridx;               // current node in the tree
-      len = byts[arridx];                   // bytes in this node
-      arridx += sp->ts_curi;                // index of current byte
+      case STATE_START:
+      case STATE_NOPREFIX:
+        // Start of node: Deal with NUL bytes, which means
+        // tword[] may end here.
+        arridx = sp->ts_arridx;  // current node in the tree
+        len = byts[arridx];      // bytes in this node
+        arridx += sp->ts_curi;   // index of current byte
 
-      if (sp->ts_prefixdepth == PFD_PREFIXTREE) {
-        // Skip over the NUL bytes, we use them later.
-        for (n = 0; n < len && byts[arridx + n] == 0; ++n) {
-        }
-        sp->ts_curi += n;
+        if (sp->ts_prefixdepth == PFD_PREFIXTREE) {
+          // Skip over the NUL bytes, we use them later.
+          for (n = 0; n < len && byts[arridx + n] == 0; ++n) {
+          }
+          sp->ts_curi += n;
 
-        // Always past NUL bytes now.
-        n = (int)sp->ts_state;
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_ENDNUL;
-        sp->ts_save_badflags = su->su_badflags;
+          // Always past NUL bytes now.
+          n = (int)sp->ts_state;
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_ENDNUL;
+          sp->ts_save_badflags = su->su_badflags;
 
-        // At end of a prefix or at start of prefixtree: check for
-        // following word.
-        if (byts[arridx] == 0 || n == (int)STATE_NOPREFIX) {
-          // Set su->su_badflags to the caps type at this position.
-          // Use the caps type until here for the prefix itself.
-          n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
-          flags = badword_captype(su->su_badptr, su->su_badptr + n);
-          su->su_badflags = badword_captype(su->su_badptr + n,
-                                            su->su_badptr + su->su_badlen);
+          // At end of a prefix or at start of prefixtree: check for
+          // following word.
+          if (byts[arridx] == 0 || n == (int)STATE_NOPREFIX) {
+            // Set su->su_badflags to the caps type at this position.
+            // Use the caps type until here for the prefix itself.
+            n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
+            flags = badword_captype(su->su_badptr, su->su_badptr + n);
+            su->su_badflags = badword_captype(su->su_badptr + n, su->su_badptr + su->su_badlen);
 #ifdef DEBUG_TRIEWALK
-          sprintf(changename[depth], "prefix");
+            sprintf(changename[depth], "prefix");
 #endif
-          go_deeper(stack, depth, 0);
-          ++depth;
-          sp = &stack[depth];
-          sp->ts_prefixdepth = depth - 1;
-          byts = fbyts;
-          idxs = fidxs;
-          sp->ts_arridx = 0;
+            go_deeper(stack, depth, 0);
+            ++depth;
+            sp = &stack[depth];
+            sp->ts_prefixdepth = depth - 1;
+            byts = fbyts;
+            idxs = fidxs;
+            sp->ts_arridx = 0;
 
-          // Move the prefix to preword[] with the right case
-          // and make find_keepcap_word() works.
-          tword[sp->ts_twordlen] = NUL;
-          make_case_word(tword + sp->ts_splitoff,
-                         preword + sp->ts_prewordlen, flags);
-          sp->ts_prewordlen = (char_u)STRLEN(preword);
-          sp->ts_splitoff = sp->ts_twordlen;
-        }
-        break;
-      }
-
-      if (sp->ts_curi > len || byts[arridx] != 0) {
-        // Past bytes in node and/or past NUL bytes.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_ENDNUL;
-        sp->ts_save_badflags = su->su_badflags;
-        break;
-      }
-
-      // End of word in tree.
-      ++sp->ts_curi;                    // eat one NUL byte
-
-      flags = (int)idxs[arridx];
-
-      // Skip words with the NOSUGGEST flag.
-      if (flags & WF_NOSUGGEST) {
-        break;
-      }
-
-      fword_ends = (fword[sp->ts_fidx] == NUL
-                    || (soundfold
-                        ? ascii_iswhite(fword[sp->ts_fidx])
-                        : !spell_iswordp(fword + sp->ts_fidx, curwin)));
-      tword[sp->ts_twordlen] = NUL;
-
-      if (sp->ts_prefixdepth <= PFD_NOTSPECIAL
-          && (sp->ts_flags & TSF_PREFIXOK) == 0
-          && pbyts != NULL) {
-        // There was a prefix before the word.  Check that the prefix
-        // can be used with this word.
-        // Count the length of the NULs in the prefix.  If there are
-        // none this must be the first try without a prefix.
-        n = stack[sp->ts_prefixdepth].ts_arridx;
-        len = pbyts[n++];
-        for (c = 0; c < len && pbyts[n + c] == 0; ++c) {
-        }
-        if (c > 0) {
-          c = valid_word_prefix(c, n, flags,
-                                tword + sp->ts_splitoff, slang, false);
-          if (c == 0) {
-            break;
+            // Move the prefix to preword[] with the right case
+            // and make find_keepcap_word() works.
+            tword[sp->ts_twordlen] = NUL;
+            make_case_word(tword + sp->ts_splitoff, preword + sp->ts_prewordlen, flags);
+            sp->ts_prewordlen = (char_u)STRLEN(preword);
+            sp->ts_splitoff = sp->ts_twordlen;
           }
-
-          // Use the WF_RARE flag for a rare prefix.
-          if (c & WF_RAREPFX) {
-            flags |= WF_RARE;
-          }
-
-          // Tricky: when checking for both prefix and compounding
-          // we run into the prefix flag first.
-          // Remember that it's OK, so that we accept the prefix
-          // when arriving at a compound flag.
-          sp->ts_flags |= TSF_PREFIXOK;
-        }
-      }
-
-      // Check NEEDCOMPOUND: can't use word without compounding.  Do try
-      // appending another compound word below.
-      if (sp->ts_complen == sp->ts_compsplit && fword_ends
-          && (flags & WF_NEEDCOMP)) {
-        goodword_ends = false;
-      } else {
-        goodword_ends = true;
-      }
-
-      p = NULL;
-      compound_ok = true;
-      if (sp->ts_complen > sp->ts_compsplit) {
-        if (slang->sl_nobreak) {
-          // There was a word before this word.  When there was no
-          // change in this word (it was correct) add the first word
-          // as a suggestion.  If this word was corrected too, we
-          // need to check if a correct word follows.
-          if (sp->ts_fidx - sp->ts_splitfidx
-              == sp->ts_twordlen - sp->ts_splitoff
-              && STRNCMP(fword + sp->ts_splitfidx,
-                         tword + sp->ts_splitoff,
-                         sp->ts_fidx - sp->ts_splitfidx) == 0) {
-            preword[sp->ts_prewordlen] = NUL;
-            newscore = score_wordcount_adj(slang, sp->ts_score,
-                                           preword + sp->ts_prewordlen,
-                                           sp->ts_prewordlen > 0);
-            // Add the suggestion if the score isn't too bad.
-            if (newscore <= su->su_maxscore) {
-              add_suggestion(su, &su->su_ga, preword,
-                             sp->ts_splitfidx - repextra,
-                             newscore, 0, false,
-                             lp->lp_sallang, false);
-            }
-            break;
-          }
-        } else {
-          // There was a compound word before this word.  If this
-          // word does not support compounding then give up
-          // (splitting is tried for the word without compound
-          // flag).
-          if (((unsigned)flags >> 24) == 0
-              || sp->ts_twordlen - sp->ts_splitoff
-              < slang->sl_compminlen) {
-            break;
-          }
-          // For multi-byte chars check character length against
-          // COMPOUNDMIN.
-          if (slang->sl_compminlen > 0
-              && mb_charlen(tword + sp->ts_splitoff)
-              < slang->sl_compminlen) {
-            break;
-          }
-
-          compflags[sp->ts_complen] = ((unsigned)flags >> 24);
-          compflags[sp->ts_complen + 1] = NUL;
-          STRLCPY(preword + sp->ts_prewordlen,
-                  tword + sp->ts_splitoff,
-                  sp->ts_twordlen - sp->ts_splitoff + 1);
-
-          // Verify CHECKCOMPOUNDPATTERN  rules.
-          if (match_checkcompoundpattern(preword,  sp->ts_prewordlen,
-                                         &slang->sl_comppat)) {
-            compound_ok = false;
-          }
-
-          if (compound_ok) {
-            p = preword;
-            while (*skiptowhite(p) != NUL) {
-              p = skipwhite(skiptowhite(p));
-            }
-            if (fword_ends && !can_compound(slang, p,
-                                            compflags + sp->ts_compsplit)) {
-              // Compound is not allowed.  But it may still be
-              // possible if we add another (short) word.
-              compound_ok = false;
-            }
-          }
-
-          // Get pointer to last char of previous word.
-          p = preword + sp->ts_prewordlen;
-          MB_PTR_BACK(preword, p);
-        }
-      }
-
-      // Form the word with proper case in preword.
-      // If there is a word from a previous split, append.
-      // For the soundfold tree don't change the case, simply append.
-      if (soundfold) {
-        STRCPY(preword + sp->ts_prewordlen, tword + sp->ts_splitoff);
-      } else if (flags & WF_KEEPCAP) {
-        // Must find the word in the keep-case tree.
-        find_keepcap_word(slang, tword + sp->ts_splitoff,
-                          preword + sp->ts_prewordlen);
-      } else {
-        // Include badflags: If the badword is onecap or allcap
-        // use that for the goodword too.  But if the badword is
-        // allcap and it's only one char long use onecap.
-        c = su->su_badflags;
-        if ((c & WF_ALLCAP)
-            && su->su_badlen ==
-            utfc_ptr2len(su->su_badptr)) {
-          c = WF_ONECAP;
-        }
-        c |= flags;
-
-        // When appending a compound word after a word character don't
-        // use Onecap.
-        if (p != NULL && spell_iswordp_nmw(p, curwin)) {
-          c &= ~WF_ONECAP;
-        }
-        make_case_word(tword + sp->ts_splitoff,
-                       preword + sp->ts_prewordlen, c);
-      }
-
-      if (!soundfold) {
-        // Don't use a banned word.  It may appear again as a good
-        // word, thus remember it.
-        if (flags & WF_BANNED) {
-          add_banned(su, preword + sp->ts_prewordlen);
           break;
         }
-        if ((sp->ts_complen == sp->ts_compsplit
-             && WAS_BANNED(su, preword + sp->ts_prewordlen))
-            || WAS_BANNED(su, preword)) {
-          if (slang->sl_compprog == NULL) {
-            break;
+
+        if (sp->ts_curi > len || byts[arridx] != 0) {
+          // Past bytes in node and/or past NUL bytes.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_ENDNUL;
+          sp->ts_save_badflags = su->su_badflags;
+          break;
+        }
+
+        // End of word in tree.
+        ++sp->ts_curi;  // eat one NUL byte
+
+        flags = (int)idxs[arridx];
+
+        // Skip words with the NOSUGGEST flag.
+        if (flags & WF_NOSUGGEST) {
+          break;
+        }
+
+        fword_ends = (fword[sp->ts_fidx] == NUL
+                      || (soundfold ? ascii_iswhite(fword[sp->ts_fidx])
+                                    : !spell_iswordp(fword + sp->ts_fidx, curwin)));
+        tword[sp->ts_twordlen] = NUL;
+
+        if (sp->ts_prefixdepth <= PFD_NOTSPECIAL && (sp->ts_flags & TSF_PREFIXOK) == 0
+            && pbyts != NULL) {
+          // There was a prefix before the word.  Check that the prefix
+          // can be used with this word.
+          // Count the length of the NULs in the prefix.  If there are
+          // none this must be the first try without a prefix.
+          n = stack[sp->ts_prefixdepth].ts_arridx;
+          len = pbyts[n++];
+          for (c = 0; c < len && pbyts[n + c] == 0; ++c) {
           }
-          // the word so far was banned but we may try compounding
-          goodword_ends = false;
-        }
-      }
-
-      newscore = 0;
-      if (!soundfold) {         // soundfold words don't have flags
-        if ((flags & WF_REGION)
-            && (((unsigned)flags >> 16) & lp->lp_region) == 0) {
-          newscore += SCORE_REGION;
-        }
-        if (flags & WF_RARE) {
-          newscore += SCORE_RARE;
-        }
-
-        if (!spell_valid_case(su->su_badflags,
-                              captype(preword + sp->ts_prewordlen, NULL))) {
-          newscore += SCORE_ICASE;
-        }
-      }
-
-      // TODO: how about splitting in the soundfold tree?
-      if (fword_ends
-          && goodword_ends
-          && sp->ts_fidx >= sp->ts_fidxtry
-          && compound_ok) {
-        // The badword also ends: add suggestions.
-#ifdef DEBUG_TRIEWALK
-        if (soundfold && STRCMP(preword, "smwrd") == 0) {
-          int j;
-
-          // print the stack of changes that brought us here
-          smsg("------ %s -------", fword);
-          for (j = 0; j < depth; ++j) {
-            smsg("%s", changename[j]);
-          }
-        }
-#endif
-        if (soundfold) {
-          // For soundfolded words we need to find the original
-          // words, the edit distance and then add them.
-          add_sound_suggest(su, preword, sp->ts_score, lp);
-        } else if (sp->ts_fidx > 0) {
-          // Give a penalty when changing non-word char to word
-          // char, e.g., "thes," -> "these".
-          p = fword + sp->ts_fidx;
-          MB_PTR_BACK(fword, p);
-          if (!spell_iswordp(p, curwin) && *preword != NUL) {
-            p = preword + STRLEN(preword);
-            MB_PTR_BACK(preword, p);
-            if (spell_iswordp(p, curwin)) {
-              newscore += SCORE_NONWORD;
+          if (c > 0) {
+            c = valid_word_prefix(c, n, flags, tword + sp->ts_splitoff, slang, false);
+            if (c == 0) {
+              break;
             }
+
+            // Use the WF_RARE flag for a rare prefix.
+            if (c & WF_RAREPFX) {
+              flags |= WF_RARE;
+            }
+
+            // Tricky: when checking for both prefix and compounding
+            // we run into the prefix flag first.
+            // Remember that it's OK, so that we accept the prefix
+            // when arriving at a compound flag.
+            sp->ts_flags |= TSF_PREFIXOK;
           }
+        }
 
-          // Give a bonus to words seen before.
-          score = score_wordcount_adj(slang,
-                                      sp->ts_score + newscore,
-                                      preword + sp->ts_prewordlen,
-                                      sp->ts_prewordlen > 0);
+        // Check NEEDCOMPOUND: can't use word without compounding.  Do try
+        // appending another compound word below.
+        if (sp->ts_complen == sp->ts_compsplit && fword_ends && (flags & WF_NEEDCOMP)) {
+          goodword_ends = false;
+        } else {
+          goodword_ends = true;
+        }
 
-          // Add the suggestion if the score isn't too bad.
-          if (score <= su->su_maxscore) {
-            add_suggestion(su, &su->su_ga, preword,
-                           sp->ts_fidx - repextra,
-                           score, 0, false, lp->lp_sallang, false);
+        p = NULL;
+        compound_ok = true;
+        if (sp->ts_complen > sp->ts_compsplit) {
+          if (slang->sl_nobreak) {
+            // There was a word before this word.  When there was no
+            // change in this word (it was correct) add the first word
+            // as a suggestion.  If this word was corrected too, we
+            // need to check if a correct word follows.
+            if (sp->ts_fidx - sp->ts_splitfidx == sp->ts_twordlen - sp->ts_splitoff
+                && STRNCMP(fword + sp->ts_splitfidx, tword + sp->ts_splitoff,
+                           sp->ts_fidx - sp->ts_splitfidx)
+                       == 0) {
+              preword[sp->ts_prewordlen] = NUL;
+              newscore = score_wordcount_adj(slang, sp->ts_score, preword + sp->ts_prewordlen,
+                                             sp->ts_prewordlen > 0);
+              // Add the suggestion if the score isn't too bad.
+              if (newscore <= su->su_maxscore) {
+                add_suggestion(su, &su->su_ga, preword, sp->ts_splitfidx - repextra, newscore, 0,
+                               false, lp->lp_sallang, false);
+              }
+              break;
+            }
+          } else {
+            // There was a compound word before this word.  If this
+            // word does not support compounding then give up
+            // (splitting is tried for the word without compound
+            // flag).
+            if (((unsigned)flags >> 24) == 0
+                || sp->ts_twordlen - sp->ts_splitoff < slang->sl_compminlen) {
+              break;
+            }
+            // For multi-byte chars check character length against
+            // COMPOUNDMIN.
+            if (slang->sl_compminlen > 0
+                && mb_charlen(tword + sp->ts_splitoff) < slang->sl_compminlen) {
+              break;
+            }
 
-            if (su->su_badflags & WF_MIXCAP) {
-              // We really don't know if the word should be
-              // upper or lower case, add both.
-              c = captype(preword, NULL);
-              if (c == 0 || c == WF_ALLCAP) {
-                make_case_word(tword + sp->ts_splitoff,
-                               preword + sp->ts_prewordlen,
-                               c == 0 ? WF_ALLCAP : 0);
+            compflags[sp->ts_complen] = ((unsigned)flags >> 24);
+            compflags[sp->ts_complen + 1] = NUL;
+            STRLCPY(preword + sp->ts_prewordlen, tword + sp->ts_splitoff,
+                    sp->ts_twordlen - sp->ts_splitoff + 1);
 
-                add_suggestion(su, &su->su_ga, preword,
-                               sp->ts_fidx - repextra,
-                               score + SCORE_ICASE, 0, false,
-                               lp->lp_sallang, false);
+            // Verify CHECKCOMPOUNDPATTERN  rules.
+            if (match_checkcompoundpattern(preword, sp->ts_prewordlen, &slang->sl_comppat)) {
+              compound_ok = false;
+            }
+
+            if (compound_ok) {
+              p = preword;
+              while (*skiptowhite(p) != NUL) {
+                p = skipwhite(skiptowhite(p));
+              }
+              if (fword_ends && !can_compound(slang, p, compflags + sp->ts_compsplit)) {
+                // Compound is not allowed.  But it may still be
+                // possible if we add another (short) word.
+                compound_ok = false;
               }
             }
+
+            // Get pointer to last char of previous word.
+            p = preword + sp->ts_prewordlen;
+            MB_PTR_BACK(preword, p);
           }
         }
-      }
 
-      // Try word split and/or compounding.
-      if ((sp->ts_fidx >= sp->ts_fidxtry || fword_ends)
-          // Don't split in the middle of a character
-          && (sp->ts_tcharlen == 0)) {
-        bool try_compound;
-        int try_split;
-
-        // If past the end of the bad word don't try a split.
-        // Otherwise try changing the next word.  E.g., find
-        // suggestions for "the the" where the second "the" is
-        // different.  It's done like a split.
-        // TODO: word split for soundfold words
-        try_split = (sp->ts_fidx - repextra < su->su_badlen)
-                    && !soundfold;
-
-        // Get here in several situations:
-        // 1. The word in the tree ends:
-        //    If the word allows compounding try that.  Otherwise try
-        //    a split by inserting a space.  For both check that a
-        //    valid words starts at fword[sp->ts_fidx].
-        //    For NOBREAK do like compounding to be able to check if
-        //    the next word is valid.
-        // 2. The badword does end, but it was due to a change (e.g.,
-        //    a swap).  No need to split, but do check that the
-        //    following word is valid.
-        // 3. The badword and the word in the tree end.  It may still
-        //    be possible to compound another (short) word.
-        try_compound = false;
-        if (!soundfold
-            && !slang->sl_nocompoundsugs
-            && slang->sl_compprog != NULL
-            && ((unsigned)flags >> 24) != 0
-            && sp->ts_twordlen - sp->ts_splitoff
-            >= slang->sl_compminlen
-            && (slang->sl_compminlen == 0
-                || mb_charlen(tword + sp->ts_splitoff)
-                >= slang->sl_compminlen)
-            && (slang->sl_compsylmax < MAXWLEN
-                || sp->ts_complen + 1 - sp->ts_compsplit
-                < slang->sl_compmax)
-            && (can_be_compound(sp, slang,
-                                compflags, ((unsigned)flags >> 24)))) {
-          try_compound = true;
-          compflags[sp->ts_complen] = ((unsigned)flags >> 24);
-          compflags[sp->ts_complen + 1] = NUL;
-        }
-
-        // For NOBREAK we never try splitting, it won't make any word
-        // valid.
-        if (slang->sl_nobreak && !slang->sl_nocompoundsugs) {
-          try_compound = true;
-        } else if (!fword_ends
-                   && try_compound
-                   && (sp->ts_flags & TSF_DIDSPLIT) == 0) {
-          // If we could add a compound word, and it's also possible to
-          // split at this point, do the split first and set
-          // TSF_DIDSPLIT to avoid doing it again.
-          try_compound = false;
-          sp->ts_flags |= TSF_DIDSPLIT;
-          --sp->ts_curi;                    // do the same NUL again
-          compflags[sp->ts_complen] = NUL;
+        // Form the word with proper case in preword.
+        // If there is a word from a previous split, append.
+        // For the soundfold tree don't change the case, simply append.
+        if (soundfold) {
+          STRCPY(preword + sp->ts_prewordlen, tword + sp->ts_splitoff);
+        } else if (flags & WF_KEEPCAP) {
+          // Must find the word in the keep-case tree.
+          find_keepcap_word(slang, tword + sp->ts_splitoff, preword + sp->ts_prewordlen);
         } else {
-          sp->ts_flags &= ~TSF_DIDSPLIT;
+          // Include badflags: If the badword is onecap or allcap
+          // use that for the goodword too.  But if the badword is
+          // allcap and it's only one char long use onecap.
+          c = su->su_badflags;
+          if ((c & WF_ALLCAP) && su->su_badlen == utfc_ptr2len(su->su_badptr)) {
+            c = WF_ONECAP;
+          }
+          c |= flags;
+
+          // When appending a compound word after a word character don't
+          // use Onecap.
+          if (p != NULL && spell_iswordp_nmw(p, curwin)) {
+            c &= ~WF_ONECAP;
+          }
+          make_case_word(tword + sp->ts_splitoff, preword + sp->ts_prewordlen, c);
         }
 
-        if (try_split || try_compound) {
-          if (!try_compound && (!fword_ends || !goodword_ends)) {
-            // If we're going to split need to check that the
-            // words so far are valid for compounding.  If there
-            // is only one word it must not have the NEEDCOMPOUND
-            // flag.
-            if (sp->ts_complen == sp->ts_compsplit
-                && (flags & WF_NEEDCOMP)) {
+        if (!soundfold) {
+          // Don't use a banned word.  It may appear again as a good
+          // word, thus remember it.
+          if (flags & WF_BANNED) {
+            add_banned(su, preword + sp->ts_prewordlen);
+            break;
+          }
+          if ((sp->ts_complen == sp->ts_compsplit && WAS_BANNED(su, preword + sp->ts_prewordlen))
+              || WAS_BANNED(su, preword)) {
+            if (slang->sl_compprog == NULL) {
               break;
             }
-            p = preword;
-            while (*skiptowhite(p) != NUL) {
-              p = skipwhite(skiptowhite(p));
-            }
-            if (sp->ts_complen > sp->ts_compsplit
-                && !can_compound(slang, p,
-                                 compflags + sp->ts_compsplit)) {
-              break;
-            }
+            // the word so far was banned but we may try compounding
+            goodword_ends = false;
+          }
+        }
 
-            if (slang->sl_nosplitsugs) {
-              newscore += SCORE_SPLIT_NO;
-            } else {
-              newscore += SCORE_SPLIT;
+        newscore = 0;
+        if (!soundfold) {  // soundfold words don't have flags
+          if ((flags & WF_REGION) && (((unsigned)flags >> 16) & lp->lp_region) == 0) {
+            newscore += SCORE_REGION;
+          }
+          if (flags & WF_RARE) {
+            newscore += SCORE_RARE;
+          }
+
+          if (!spell_valid_case(su->su_badflags, captype(preword + sp->ts_prewordlen, NULL))) {
+            newscore += SCORE_ICASE;
+          }
+        }
+
+        // TODO: how about splitting in the soundfold tree?
+        if (fword_ends && goodword_ends && sp->ts_fidx >= sp->ts_fidxtry && compound_ok) {
+          // The badword also ends: add suggestions.
+#ifdef DEBUG_TRIEWALK
+          if (soundfold && STRCMP(preword, "smwrd") == 0) {
+            int j;
+
+            // print the stack of changes that brought us here
+            smsg("------ %s -------", fword);
+            for (j = 0; j < depth; ++j) {
+              smsg("%s", changename[j]);
+            }
+          }
+#endif
+          if (soundfold) {
+            // For soundfolded words we need to find the original
+            // words, the edit distance and then add them.
+            add_sound_suggest(su, preword, sp->ts_score, lp);
+          } else if (sp->ts_fidx > 0) {
+            // Give a penalty when changing non-word char to word
+            // char, e.g., "thes," -> "these".
+            p = fword + sp->ts_fidx;
+            MB_PTR_BACK(fword, p);
+            if (!spell_iswordp(p, curwin) && *preword != NUL) {
+              p = preword + STRLEN(preword);
+              MB_PTR_BACK(preword, p);
+              if (spell_iswordp(p, curwin)) {
+                newscore += SCORE_NONWORD;
+              }
             }
 
             // Give a bonus to words seen before.
-            newscore = score_wordcount_adj(slang, newscore,
-                                           preword + sp->ts_prewordlen, true);
-          }
+            score = score_wordcount_adj(slang, sp->ts_score + newscore, preword + sp->ts_prewordlen,
+                                        sp->ts_prewordlen > 0);
 
-          if (TRY_DEEPER(su, stack, depth, newscore)) {
-            go_deeper(stack, depth, newscore);
-#ifdef DEBUG_TRIEWALK
-            if (!try_compound && !fword_ends) {
-              sprintf(changename[depth], "%.*s-%s: split",
-                      sp->ts_twordlen, tword, fword + sp->ts_fidx);
-            } else {
-              sprintf(changename[depth], "%.*s-%s: compound",
-                      sp->ts_twordlen, tword, fword + sp->ts_fidx);
-            }
-#endif
-            // Save things to be restored at STATE_SPLITUNDO.
-            sp->ts_save_badflags = su->su_badflags;
-            PROF_STORE(sp->ts_state)
-            sp->ts_state = STATE_SPLITUNDO;
+            // Add the suggestion if the score isn't too bad.
+            if (score <= su->su_maxscore) {
+              add_suggestion(su, &su->su_ga, preword, sp->ts_fidx - repextra, score, 0, false,
+                             lp->lp_sallang, false);
 
-            ++depth;
-            sp = &stack[depth];
+              if (su->su_badflags & WF_MIXCAP) {
+                // We really don't know if the word should be
+                // upper or lower case, add both.
+                c = captype(preword, NULL);
+                if (c == 0 || c == WF_ALLCAP) {
+                  make_case_word(tword + sp->ts_splitoff, preword + sp->ts_prewordlen,
+                                 c == 0 ? WF_ALLCAP : 0);
 
-            // Append a space to preword when splitting.
-            if (!try_compound && !fword_ends) {
-              STRCAT(preword, " ");
-            }
-            sp->ts_prewordlen = (char_u)STRLEN(preword);
-            sp->ts_splitoff = sp->ts_twordlen;
-            sp->ts_splitfidx = sp->ts_fidx;
-
-            // If the badword has a non-word character at this
-            // position skip it.  That means replacing the
-            // non-word character with a space.  Always skip a
-            // character when the word ends.  But only when the
-            // good word can end.
-            if (((!try_compound && !spell_iswordp_nmw(fword
-                                                      + sp->ts_fidx,
-                                                      curwin))
-                 || fword_ends)
-                && fword[sp->ts_fidx] != NUL
-                && goodword_ends) {
-              int l;
-
-              l = utfc_ptr2len(fword + sp->ts_fidx);
-              if (fword_ends) {
-                // Copy the skipped character to preword.
-                memmove(preword + sp->ts_prewordlen,
-                        fword + sp->ts_fidx, l);
-                sp->ts_prewordlen += l;
-                preword[sp->ts_prewordlen] = NUL;
-              } else {
-                sp->ts_score -= SCORE_SPLIT - SCORE_SUBST;
-              }
-              sp->ts_fidx += l;
-            }
-
-            // When compounding include compound flag in
-            // compflags[] (already set above).  When splitting we
-            // may start compounding over again.
-            if (try_compound) {
-              ++sp->ts_complen;
-            } else {
-              sp->ts_compsplit = sp->ts_complen;
-            }
-            sp->ts_prefixdepth = PFD_NOPREFIX;
-
-            // set su->su_badflags to the caps type at this
-            // position
-            n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
-            su->su_badflags = badword_captype(su->su_badptr + n,
-                                              su->su_badptr + su->su_badlen);
-
-            // Restart at top of the tree.
-            sp->ts_arridx = 0;
-
-            // If there are postponed prefixes, try these too.
-            if (pbyts != NULL) {
-              byts = pbyts;
-              idxs = pidxs;
-              sp->ts_prefixdepth = PFD_PREFIXTREE;
-              PROF_STORE(sp->ts_state)
-              sp->ts_state = STATE_NOPREFIX;
-            }
-          }
-        }
-      }
-      break;
-
-    case STATE_SPLITUNDO:
-      // Undo the changes done for word split or compound word.
-      su->su_badflags = sp->ts_save_badflags;
-
-      // Continue looking for NUL bytes.
-      PROF_STORE(sp->ts_state)
-      sp->ts_state = STATE_START;
-
-      // In case we went into the prefix tree.
-      byts = fbyts;
-      idxs = fidxs;
-      break;
-
-    case STATE_ENDNUL:
-      // Past the NUL bytes in the node.
-      su->su_badflags = sp->ts_save_badflags;
-      if (fword[sp->ts_fidx] == NUL
-          && sp->ts_tcharlen == 0) {
-        // The badword ends, can't use STATE_PLAIN.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_DEL;
-        break;
-      }
-      PROF_STORE(sp->ts_state)
-      sp->ts_state = STATE_PLAIN;
-      FALLTHROUGH;
-
-    case STATE_PLAIN:
-      // Go over all possible bytes at this node, add each to tword[]
-      // and use child node.  "ts_curi" is the index.
-      arridx = sp->ts_arridx;
-      if (sp->ts_curi > byts[arridx]) {
-        // Done all bytes at this node, do next state.  When still at
-        // already changed bytes skip the other tricks.
-        PROF_STORE(sp->ts_state)
-        if (sp->ts_fidx >= sp->ts_fidxtry) {
-          sp->ts_state = STATE_DEL;
-        } else {
-          sp->ts_state = STATE_FINAL;
-        }
-      } else {
-        arridx += sp->ts_curi++;
-        c = byts[arridx];
-
-        // Normal byte, go one level deeper.  If it's not equal to the
-        // byte in the bad word adjust the score.  But don't even try
-        // when the byte was already changed.  And don't try when we
-        // just deleted this byte, accepting it is always cheaper than
-        // delete + substitute.
-        if (c == fword[sp->ts_fidx]
-            || (sp->ts_tcharlen > 0
-                && sp->ts_isdiff != DIFF_NONE)) {
-          newscore = 0;
-        } else {
-          newscore = SCORE_SUBST;
-        }
-        if ((newscore == 0
-             || (sp->ts_fidx >= sp->ts_fidxtry
-                 && ((sp->ts_flags & TSF_DIDDEL) == 0
-                     || c != fword[sp->ts_delidx])))
-            && TRY_DEEPER(su, stack, depth, newscore)) {
-          go_deeper(stack, depth, newscore);
-#ifdef DEBUG_TRIEWALK
-          if (newscore > 0) {
-            sprintf(changename[depth], "%.*s-%s: subst %c to %c",
-                    sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                    fword[sp->ts_fidx], c);
-          } else {
-            sprintf(changename[depth], "%.*s-%s: accept %c",
-                    sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                    fword[sp->ts_fidx]);
-          }
-#endif
-          ++depth;
-          sp = &stack[depth];
-          ++sp->ts_fidx;
-          tword[sp->ts_twordlen++] = c;
-          sp->ts_arridx = idxs[arridx];
-          if (newscore == SCORE_SUBST) {
-            sp->ts_isdiff = DIFF_YES;
-          }
-          // Multi-byte characters are a bit complicated to
-          // handle: They differ when any of the bytes differ
-          // and then their length may also differ.
-          if (sp->ts_tcharlen == 0) {
-            // First byte.
-            sp->ts_tcharidx = 0;
-            sp->ts_tcharlen = MB_BYTE2LEN(c);
-            sp->ts_fcharstart = sp->ts_fidx - 1;
-            sp->ts_isdiff = (newscore != 0)
-                            ? DIFF_YES : DIFF_NONE;
-          } else if (sp->ts_isdiff == DIFF_INSERT) {
-            // When inserting trail bytes don't advance in the
-            // bad word.
-            sp->ts_fidx--;
-          }
-          if (++sp->ts_tcharidx == sp->ts_tcharlen) {
-            // Last byte of character.
-            if (sp->ts_isdiff == DIFF_YES) {
-              // Correct ts_fidx for the byte length of the
-              // character (we didn't check that before).
-              sp->ts_fidx = sp->ts_fcharstart
-                            + utfc_ptr2len(fword + sp->ts_fcharstart);
-
-              // For changing a composing character adjust
-              // the score from SCORE_SUBST to
-              // SCORE_SUBCOMP.
-              if (utf_iscomposing(utf_ptr2char(tword + sp->ts_twordlen
-                                               - sp->ts_tcharlen))
-                  && utf_iscomposing(utf_ptr2char(fword
-                                                  + sp->ts_fcharstart))) {
-                sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
-              } else if (
-                         !soundfold
-                         && slang->sl_has_map
-                         && similar_chars(slang,
-                                          utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen),
-                                          utf_ptr2char(fword + sp->ts_fcharstart))) {
-                // For a similar character adjust score from
-                // SCORE_SUBST to SCORE_SIMILAR.
-                sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
-              }
-            } else if (sp->ts_isdiff == DIFF_INSERT
-                       && sp->ts_twordlen > sp->ts_tcharlen) {
-              p = tword + sp->ts_twordlen - sp->ts_tcharlen;
-              c = utf_ptr2char(p);
-              if (utf_iscomposing(c)) {
-                // Inserting a composing char doesn't
-                // count that much.
-                sp->ts_score -= SCORE_INS - SCORE_INSCOMP;
-              } else {
-                // If the previous character was the same,
-                // thus doubling a character, give a bonus
-                // to the score.  Also for the soundfold
-                // tree (might seem illogical but does
-                // give better scores).
-                MB_PTR_BACK(tword, p);
-                if (c == utf_ptr2char(p)) {
-                  sp->ts_score -= SCORE_INS - SCORE_INSDUP;
+                  add_suggestion(su, &su->su_ga, preword, sp->ts_fidx - repextra,
+                                 score + SCORE_ICASE, 0, false, lp->lp_sallang, false);
                 }
               }
             }
-
-            // Starting a new char, reset the length.
-            sp->ts_tcharlen = 0;
           }
         }
-      }
-      break;
 
-    case STATE_DEL:
-      // When past the first byte of a multi-byte char don't try
-      // delete/insert/swap a character.
-      if (sp->ts_tcharlen > 0) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_FINAL;
-        break;
-      }
-      // Try skipping one character in the bad word (delete it).
-      PROF_STORE(sp->ts_state)
-      sp->ts_state = STATE_INS_PREP;
-      sp->ts_curi = 1;
-      if (soundfold && sp->ts_fidx == 0 && fword[sp->ts_fidx] == '*') {
-        // Deleting a vowel at the start of a word counts less, see
-        // soundalike_score().
-        newscore = 2 * SCORE_DEL / 3;
-      } else {
-        newscore = SCORE_DEL;
-      }
-      if (fword[sp->ts_fidx] != NUL
-          && TRY_DEEPER(su, stack, depth, newscore)) {
-        go_deeper(stack, depth, newscore);
+        // Try word split and/or compounding.
+        if ((sp->ts_fidx >= sp->ts_fidxtry || fword_ends)
+            // Don't split in the middle of a character
+            && (sp->ts_tcharlen == 0)) {
+          bool try_compound;
+          int try_split;
+
+          // If past the end of the bad word don't try a split.
+          // Otherwise try changing the next word.  E.g., find
+          // suggestions for "the the" where the second "the" is
+          // different.  It's done like a split.
+          // TODO: word split for soundfold words
+          try_split = (sp->ts_fidx - repextra < su->su_badlen) && !soundfold;
+
+          // Get here in several situations:
+          // 1. The word in the tree ends:
+          //    If the word allows compounding try that.  Otherwise try
+          //    a split by inserting a space.  For both check that a
+          //    valid words starts at fword[sp->ts_fidx].
+          //    For NOBREAK do like compounding to be able to check if
+          //    the next word is valid.
+          // 2. The badword does end, but it was due to a change (e.g.,
+          //    a swap).  No need to split, but do check that the
+          //    following word is valid.
+          // 3. The badword and the word in the tree end.  It may still
+          //    be possible to compound another (short) word.
+          try_compound = false;
+          if (!soundfold && !slang->sl_nocompoundsugs && slang->sl_compprog != NULL
+              && ((unsigned)flags >> 24) != 0
+              && sp->ts_twordlen - sp->ts_splitoff >= slang->sl_compminlen
+              && (slang->sl_compminlen == 0
+                  || mb_charlen(tword + sp->ts_splitoff) >= slang->sl_compminlen)
+              && (slang->sl_compsylmax < MAXWLEN
+                  || sp->ts_complen + 1 - sp->ts_compsplit < slang->sl_compmax)
+              && (can_be_compound(sp, slang, compflags, ((unsigned)flags >> 24)))) {
+            try_compound = true;
+            compflags[sp->ts_complen] = ((unsigned)flags >> 24);
+            compflags[sp->ts_complen + 1] = NUL;
+          }
+
+          // For NOBREAK we never try splitting, it won't make any word
+          // valid.
+          if (slang->sl_nobreak && !slang->sl_nocompoundsugs) {
+            try_compound = true;
+          } else if (!fword_ends && try_compound && (sp->ts_flags & TSF_DIDSPLIT) == 0) {
+            // If we could add a compound word, and it's also possible to
+            // split at this point, do the split first and set
+            // TSF_DIDSPLIT to avoid doing it again.
+            try_compound = false;
+            sp->ts_flags |= TSF_DIDSPLIT;
+            --sp->ts_curi;  // do the same NUL again
+            compflags[sp->ts_complen] = NUL;
+          } else {
+            sp->ts_flags &= ~TSF_DIDSPLIT;
+          }
+
+          if (try_split || try_compound) {
+            if (!try_compound && (!fword_ends || !goodword_ends)) {
+              // If we're going to split need to check that the
+              // words so far are valid for compounding.  If there
+              // is only one word it must not have the NEEDCOMPOUND
+              // flag.
+              if (sp->ts_complen == sp->ts_compsplit && (flags & WF_NEEDCOMP)) {
+                break;
+              }
+              p = preword;
+              while (*skiptowhite(p) != NUL) {
+                p = skipwhite(skiptowhite(p));
+              }
+              if (sp->ts_complen > sp->ts_compsplit
+                  && !can_compound(slang, p, compflags + sp->ts_compsplit)) {
+                break;
+              }
+
+              if (slang->sl_nosplitsugs) {
+                newscore += SCORE_SPLIT_NO;
+              } else {
+                newscore += SCORE_SPLIT;
+              }
+
+              // Give a bonus to words seen before.
+              newscore = score_wordcount_adj(slang, newscore, preword + sp->ts_prewordlen, true);
+            }
+
+            if (TRY_DEEPER(su, stack, depth, newscore)) {
+              go_deeper(stack, depth, newscore);
 #ifdef DEBUG_TRIEWALK
-        sprintf(changename[depth], "%.*s-%s: delete %c",
-                sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                fword[sp->ts_fidx]);
+              if (!try_compound && !fword_ends) {
+                sprintf(changename[depth], "%.*s-%s: split", sp->ts_twordlen, tword,
+                        fword + sp->ts_fidx);
+              } else {
+                sprintf(changename[depth], "%.*s-%s: compound", sp->ts_twordlen, tword,
+                        fword + sp->ts_fidx);
+              }
 #endif
-        ++depth;
+              // Save things to be restored at STATE_SPLITUNDO.
+              sp->ts_save_badflags = su->su_badflags;
+              PROF_STORE(sp->ts_state)
+              sp->ts_state = STATE_SPLITUNDO;
 
-        // Remember what character we deleted, so that we can avoid
-        // inserting it again.
-        stack[depth].ts_flags |= TSF_DIDDEL;
-        stack[depth].ts_delidx = sp->ts_fidx;
+              ++depth;
+              sp = &stack[depth];
 
-        // Advance over the character in fword[].  Give a bonus to the
-        // score if the same character is following "nn" -> "n".  It's
-        // a bit illogical for soundfold tree but it does give better
-        // results.
-        c = utf_ptr2char(fword + sp->ts_fidx);
-        stack[depth].ts_fidx += utfc_ptr2len(fword + sp->ts_fidx);
-        if (utf_iscomposing(c)) {
-          stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
-        } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
-          stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
+              // Append a space to preword when splitting.
+              if (!try_compound && !fword_ends) {
+                STRCAT(preword, " ");
+              }
+              sp->ts_prewordlen = (char_u)STRLEN(preword);
+              sp->ts_splitoff = sp->ts_twordlen;
+              sp->ts_splitfidx = sp->ts_fidx;
+
+              // If the badword has a non-word character at this
+              // position skip it.  That means replacing the
+              // non-word character with a space.  Always skip a
+              // character when the word ends.  But only when the
+              // good word can end.
+              if (((!try_compound && !spell_iswordp_nmw(fword + sp->ts_fidx, curwin)) || fword_ends)
+                  && fword[sp->ts_fidx] != NUL && goodword_ends) {
+                int l;
+
+                l = utfc_ptr2len(fword + sp->ts_fidx);
+                if (fword_ends) {
+                  // Copy the skipped character to preword.
+                  memmove(preword + sp->ts_prewordlen, fword + sp->ts_fidx, l);
+                  sp->ts_prewordlen += l;
+                  preword[sp->ts_prewordlen] = NUL;
+                } else {
+                  sp->ts_score -= SCORE_SPLIT - SCORE_SUBST;
+                }
+                sp->ts_fidx += l;
+              }
+
+              // When compounding include compound flag in
+              // compflags[] (already set above).  When splitting we
+              // may start compounding over again.
+              if (try_compound) {
+                ++sp->ts_complen;
+              } else {
+                sp->ts_compsplit = sp->ts_complen;
+              }
+              sp->ts_prefixdepth = PFD_NOPREFIX;
+
+              // set su->su_badflags to the caps type at this
+              // position
+              n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
+              su->su_badflags = badword_captype(su->su_badptr + n, su->su_badptr + su->su_badlen);
+
+              // Restart at top of the tree.
+              sp->ts_arridx = 0;
+
+              // If there are postponed prefixes, try these too.
+              if (pbyts != NULL) {
+                byts = pbyts;
+                idxs = pidxs;
+                sp->ts_prefixdepth = PFD_PREFIXTREE;
+                PROF_STORE(sp->ts_state)
+                sp->ts_state = STATE_NOPREFIX;
+              }
+            }
+          }
         }
-
         break;
-      }
-      FALLTHROUGH;
 
-    case STATE_INS_PREP:
-      if (sp->ts_flags & TSF_DIDDEL) {
-        // If we just deleted a byte then inserting won't make sense,
-        // a substitute is always cheaper.
+      case STATE_SPLITUNDO:
+        // Undo the changes done for word split or compound word.
+        su->su_badflags = sp->ts_save_badflags;
+
+        // Continue looking for NUL bytes.
         PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_SWAP;
-        break;
-      }
+        sp->ts_state = STATE_START;
 
-      // skip over NUL bytes
-      n = sp->ts_arridx;
-      for (;;) {
-        if (sp->ts_curi > byts[n]) {
-          // Only NUL bytes at this node, go to next state.
+        // In case we went into the prefix tree.
+        byts = fbyts;
+        idxs = fidxs;
+        break;
+
+      case STATE_ENDNUL:
+        // Past the NUL bytes in the node.
+        su->su_badflags = sp->ts_save_badflags;
+        if (fword[sp->ts_fidx] == NUL && sp->ts_tcharlen == 0) {
+          // The badword ends, can't use STATE_PLAIN.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_DEL;
+          break;
+        }
+        PROF_STORE(sp->ts_state)
+        sp->ts_state = STATE_PLAIN;
+        FALLTHROUGH;
+
+      case STATE_PLAIN:
+        // Go over all possible bytes at this node, add each to tword[]
+        // and use child node.  "ts_curi" is the index.
+        arridx = sp->ts_arridx;
+        if (sp->ts_curi > byts[arridx]) {
+          // Done all bytes at this node, do next state.  When still at
+          // already changed bytes skip the other tricks.
+          PROF_STORE(sp->ts_state)
+          if (sp->ts_fidx >= sp->ts_fidxtry) {
+            sp->ts_state = STATE_DEL;
+          } else {
+            sp->ts_state = STATE_FINAL;
+          }
+        } else {
+          arridx += sp->ts_curi++;
+          c = byts[arridx];
+
+          // Normal byte, go one level deeper.  If it's not equal to the
+          // byte in the bad word adjust the score.  But don't even try
+          // when the byte was already changed.  And don't try when we
+          // just deleted this byte, accepting it is always cheaper than
+          // delete + substitute.
+          if (c == fword[sp->ts_fidx] || (sp->ts_tcharlen > 0 && sp->ts_isdiff != DIFF_NONE)) {
+            newscore = 0;
+          } else {
+            newscore = SCORE_SUBST;
+          }
+          if ((newscore == 0
+               || (sp->ts_fidx >= sp->ts_fidxtry
+                   && ((sp->ts_flags & TSF_DIDDEL) == 0 || c != fword[sp->ts_delidx])))
+              && TRY_DEEPER(su, stack, depth, newscore)) {
+            go_deeper(stack, depth, newscore);
+#ifdef DEBUG_TRIEWALK
+            if (newscore > 0) {
+              sprintf(changename[depth], "%.*s-%s: subst %c to %c", sp->ts_twordlen, tword,
+                      fword + sp->ts_fidx, fword[sp->ts_fidx], c);
+            } else {
+              sprintf(changename[depth], "%.*s-%s: accept %c", sp->ts_twordlen, tword,
+                      fword + sp->ts_fidx, fword[sp->ts_fidx]);
+            }
+#endif
+            ++depth;
+            sp = &stack[depth];
+            ++sp->ts_fidx;
+            tword[sp->ts_twordlen++] = c;
+            sp->ts_arridx = idxs[arridx];
+            if (newscore == SCORE_SUBST) {
+              sp->ts_isdiff = DIFF_YES;
+            }
+            // Multi-byte characters are a bit complicated to
+            // handle: They differ when any of the bytes differ
+            // and then their length may also differ.
+            if (sp->ts_tcharlen == 0) {
+              // First byte.
+              sp->ts_tcharidx = 0;
+              sp->ts_tcharlen = MB_BYTE2LEN(c);
+              sp->ts_fcharstart = sp->ts_fidx - 1;
+              sp->ts_isdiff = (newscore != 0) ? DIFF_YES : DIFF_NONE;
+            } else if (sp->ts_isdiff == DIFF_INSERT) {
+              // When inserting trail bytes don't advance in the
+              // bad word.
+              sp->ts_fidx--;
+            }
+            if (++sp->ts_tcharidx == sp->ts_tcharlen) {
+              // Last byte of character.
+              if (sp->ts_isdiff == DIFF_YES) {
+                // Correct ts_fidx for the byte length of the
+                // character (we didn't check that before).
+                sp->ts_fidx = sp->ts_fcharstart + utfc_ptr2len(fword + sp->ts_fcharstart);
+
+                // For changing a composing character adjust
+                // the score from SCORE_SUBST to
+                // SCORE_SUBCOMP.
+                if (utf_iscomposing(utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen))
+                    && utf_iscomposing(utf_ptr2char(fword + sp->ts_fcharstart))) {
+                  sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
+                } else if (!soundfold && slang->sl_has_map
+                           && similar_chars(slang,
+                                            utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen),
+                                            utf_ptr2char(fword + sp->ts_fcharstart))) {
+                  // For a similar character adjust score from
+                  // SCORE_SUBST to SCORE_SIMILAR.
+                  sp->ts_score -= SCORE_SUBST - SCORE_SIMILAR;
+                }
+              } else if (sp->ts_isdiff == DIFF_INSERT && sp->ts_twordlen > sp->ts_tcharlen) {
+                p = tword + sp->ts_twordlen - sp->ts_tcharlen;
+                c = utf_ptr2char(p);
+                if (utf_iscomposing(c)) {
+                  // Inserting a composing char doesn't
+                  // count that much.
+                  sp->ts_score -= SCORE_INS - SCORE_INSCOMP;
+                } else {
+                  // If the previous character was the same,
+                  // thus doubling a character, give a bonus
+                  // to the score.  Also for the soundfold
+                  // tree (might seem illogical but does
+                  // give better scores).
+                  MB_PTR_BACK(tword, p);
+                  if (c == utf_ptr2char(p)) {
+                    sp->ts_score -= SCORE_INS - SCORE_INSDUP;
+                  }
+                }
+              }
+
+              // Starting a new char, reset the length.
+              sp->ts_tcharlen = 0;
+            }
+          }
+        }
+        break;
+
+      case STATE_DEL:
+        // When past the first byte of a multi-byte char don't try
+        // delete/insert/swap a character.
+        if (sp->ts_tcharlen > 0) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_FINAL;
+          break;
+        }
+        // Try skipping one character in the bad word (delete it).
+        PROF_STORE(sp->ts_state)
+        sp->ts_state = STATE_INS_PREP;
+        sp->ts_curi = 1;
+        if (soundfold && sp->ts_fidx == 0 && fword[sp->ts_fidx] == '*') {
+          // Deleting a vowel at the start of a word counts less, see
+          // soundalike_score().
+          newscore = 2 * SCORE_DEL / 3;
+        } else {
+          newscore = SCORE_DEL;
+        }
+        if (fword[sp->ts_fidx] != NUL && TRY_DEEPER(su, stack, depth, newscore)) {
+          go_deeper(stack, depth, newscore);
+#ifdef DEBUG_TRIEWALK
+          sprintf(changename[depth], "%.*s-%s: delete %c", sp->ts_twordlen, tword,
+                  fword + sp->ts_fidx, fword[sp->ts_fidx]);
+#endif
+          ++depth;
+
+          // Remember what character we deleted, so that we can avoid
+          // inserting it again.
+          stack[depth].ts_flags |= TSF_DIDDEL;
+          stack[depth].ts_delidx = sp->ts_fidx;
+
+          // Advance over the character in fword[].  Give a bonus to the
+          // score if the same character is following "nn" -> "n".  It's
+          // a bit illogical for soundfold tree but it does give better
+          // results.
+          c = utf_ptr2char(fword + sp->ts_fidx);
+          stack[depth].ts_fidx += utfc_ptr2len(fword + sp->ts_fidx);
+          if (utf_iscomposing(c)) {
+            stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
+          } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
+            stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;
+          }
+
+          break;
+        }
+        FALLTHROUGH;
+
+      case STATE_INS_PREP:
+        if (sp->ts_flags & TSF_DIDDEL) {
+          // If we just deleted a byte then inserting won't make sense,
+          // a substitute is always cheaper.
           PROF_STORE(sp->ts_state)
           sp->ts_state = STATE_SWAP;
           break;
         }
-        if (byts[n + sp->ts_curi] != NUL) {
-          // Found a byte to insert.
+
+        // skip over NUL bytes
+        n = sp->ts_arridx;
+        for (;;) {
+          if (sp->ts_curi > byts[n]) {
+            // Only NUL bytes at this node, go to next state.
+            PROF_STORE(sp->ts_state)
+            sp->ts_state = STATE_SWAP;
+            break;
+          }
+          if (byts[n + sp->ts_curi] != NUL) {
+            // Found a byte to insert.
+            PROF_STORE(sp->ts_state)
+            sp->ts_state = STATE_INS;
+            break;
+          }
+          ++sp->ts_curi;
+        }
+        break;
+
+      case STATE_INS:
+        // Insert one byte.  Repeat this for each possible byte at this
+        // node.
+        n = sp->ts_arridx;
+        if (sp->ts_curi > byts[n]) {
+          // Done all bytes at this node, go to next state.
           PROF_STORE(sp->ts_state)
-          sp->ts_state = STATE_INS;
+          sp->ts_state = STATE_SWAP;
           break;
         }
-        ++sp->ts_curi;
-      }
-      break;
 
-    case STATE_INS:
-      // Insert one byte.  Repeat this for each possible byte at this
-      // node.
-      n = sp->ts_arridx;
-      if (sp->ts_curi > byts[n]) {
-        // Done all bytes at this node, go to next state.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_SWAP;
-        break;
-      }
-
-      // Do one more byte at this node, but:
-      // - Skip NUL bytes.
-      // - Skip the byte if it's equal to the byte in the word,
-      //   accepting that byte is always better.
-      n += sp->ts_curi++;
-      c = byts[n];
-      if (soundfold && sp->ts_twordlen == 0 && c == '*') {
-        // Inserting a vowel at the start of a word counts less,
-        // see soundalike_score().
-        newscore = 2 * SCORE_INS / 3;
-      } else {
-        newscore = SCORE_INS;
-      }
-      if (c != fword[sp->ts_fidx]
-          && TRY_DEEPER(su, stack, depth, newscore)) {
-        go_deeper(stack, depth, newscore);
-#ifdef DEBUG_TRIEWALK
-        sprintf(changename[depth], "%.*s-%s: insert %c",
-                sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                c);
-#endif
-        ++depth;
-        sp = &stack[depth];
-        tword[sp->ts_twordlen++] = c;
-        sp->ts_arridx = idxs[n];
-        fl = MB_BYTE2LEN(c);
-        if (fl > 1) {
-          // There are following bytes for the same character.
-          // We must find all bytes before trying
-          // delete/insert/swap/etc.
-          sp->ts_tcharlen = fl;
-          sp->ts_tcharidx = 1;
-          sp->ts_isdiff = DIFF_INSERT;
+        // Do one more byte at this node, but:
+        // - Skip NUL bytes.
+        // - Skip the byte if it's equal to the byte in the word,
+        //   accepting that byte is always better.
+        n += sp->ts_curi++;
+        c = byts[n];
+        if (soundfold && sp->ts_twordlen == 0 && c == '*') {
+          // Inserting a vowel at the start of a word counts less,
+          // see soundalike_score().
+          newscore = 2 * SCORE_INS / 3;
+        } else {
+          newscore = SCORE_INS;
         }
-        if (fl == 1) {
-          // If the previous character was the same, thus doubling a
-          // character, give a bonus to the score.  Also for
-          // soundfold words (illogical but does give a better
-          // score).
-          if (sp->ts_twordlen >= 2
-              && tword[sp->ts_twordlen - 2] == c) {
-            sp->ts_score -= SCORE_INS - SCORE_INSDUP;
+        if (c != fword[sp->ts_fidx] && TRY_DEEPER(su, stack, depth, newscore)) {
+          go_deeper(stack, depth, newscore);
+#ifdef DEBUG_TRIEWALK
+          sprintf(changename[depth], "%.*s-%s: insert %c", sp->ts_twordlen, tword,
+                  fword + sp->ts_fidx, c);
+#endif
+          ++depth;
+          sp = &stack[depth];
+          tword[sp->ts_twordlen++] = c;
+          sp->ts_arridx = idxs[n];
+          fl = MB_BYTE2LEN(c);
+          if (fl > 1) {
+            // There are following bytes for the same character.
+            // We must find all bytes before trying
+            // delete/insert/swap/etc.
+            sp->ts_tcharlen = fl;
+            sp->ts_tcharidx = 1;
+            sp->ts_isdiff = DIFF_INSERT;
+          }
+          if (fl == 1) {
+            // If the previous character was the same, thus doubling a
+            // character, give a bonus to the score.  Also for
+            // soundfold words (illogical but does give a better
+            // score).
+            if (sp->ts_twordlen >= 2 && tword[sp->ts_twordlen - 2] == c) {
+              sp->ts_score -= SCORE_INS - SCORE_INSDUP;
+            }
           }
         }
-      }
-      break;
-
-    case STATE_SWAP:
-      // Swap two bytes in the bad word: "12" -> "21".
-      // We change "fword" here, it's changed back afterwards at
-      // STATE_UNSWAP.
-      p = fword + sp->ts_fidx;
-      c = *p;
-      if (c == NUL) {
-        // End of word, can't swap or replace.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_FINAL;
         break;
-      }
 
-      // Don't swap if the first character is not a word character.
-      // SWAP3 etc. also don't make sense then.
-      if (!soundfold && !spell_iswordp(p, curwin)) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-        break;
-      }
-
-      n = utf_ptr2len(p);
-      c = utf_ptr2char(p);
-      if (p[n] == NUL) {
-        c2 = NUL;
-      } else if (!soundfold && !spell_iswordp(p + n, curwin)) {
-        c2 = c;  // don't swap non-word char
-      } else {
-        c2 = utf_ptr2char(p + n);
-      }
-
-      // When the second character is NUL we can't swap.
-      if (c2 == NUL) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-        break;
-      }
-
-      // When characters are identical, swap won't do anything.
-      // Also get here if the second char is not a word character.
-      if (c == c2) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_SWAP3;
-        break;
-      }
-      if (TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
-        go_deeper(stack, depth, SCORE_SWAP);
-#ifdef DEBUG_TRIEWALK
-        snprintf(changename[depth], sizeof(changename[0]),
-                 "%.*s-%s: swap %c and %c",
-                 sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                 c, c2);
-#endif
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_UNSWAP;
-        depth++;
-        fl = utf_char2len(c2);
-        memmove(p, p + n, fl);
-        utf_char2bytes(c, p + fl);
-        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-      } else {
-        // If this swap doesn't work then SWAP3 won't either.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-      }
-      break;
-
-    case STATE_UNSWAP:
-      // Undo the STATE_SWAP swap: "21" -> "12".
-      p = fword + sp->ts_fidx;
-      n = utfc_ptr2len(p);
-      c = utf_ptr2char(p + n);
-      memmove(p + utfc_ptr2len(p + n), p, n);
-      utf_char2bytes(c, p);
-
-      FALLTHROUGH;
-
-    case STATE_SWAP3:
-      // Swap two bytes, skipping one: "123" -> "321".  We change
-      // "fword" here, it's changed back afterwards at STATE_UNSWAP3.
-      p = fword + sp->ts_fidx;
-      n = utf_ptr2len(p);
-      c = utf_ptr2char(p);
-      fl = utf_ptr2len(p + n);
-      c2 = utf_ptr2char(p + n);
-      if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
-        c3 = c;  // don't swap non-word char
-      } else {
-        c3 = utf_ptr2char(p + n + fl);
-      }
-
-      // When characters are identical: "121" then SWAP3 result is
-      // identical, ROT3L result is same as SWAP: "211", ROT3L result is
-      // same as SWAP on next char: "112".  Thus skip all swapping.
-      // Also skip when c3 is NUL.
-      // Also get here when the third character is not a word character.
-      // Second character may any char: "a.b" -> "b.a"
-      if (c == c3 || c3 == NUL) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-        break;
-      }
-      if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
-        go_deeper(stack, depth, SCORE_SWAP3);
-#ifdef DEBUG_TRIEWALK
-        sprintf(changename[depth], "%.*s-%s: swap3 %c and %c",
-                sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                c, c3);
-#endif
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_UNSWAP3;
-        depth++;
-        tl = utf_char2len(c3);
-        memmove(p, p + n + fl, tl);
-        utf_char2bytes(c2, p + tl);
-        utf_char2bytes(c, p + fl + tl);
-        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl + tl;
-      } else {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-      }
-      break;
-
-    case STATE_UNSWAP3:
-      // Undo STATE_SWAP3: "321" -> "123"
-      p = fword + sp->ts_fidx;
-      n = utfc_ptr2len(p);
-      c2 = utf_ptr2char(p + n);
-      fl = utfc_ptr2len(p + n);
-      c = utf_ptr2char(p + n + fl);
-      tl = utfc_ptr2len(p + n + fl);
-      memmove(p + fl + tl, p, n);
-      utf_char2bytes(c, p);
-      utf_char2bytes(c2, p + tl);
-      p = p + tl;
-
-      if (!soundfold && !spell_iswordp(p, curwin)) {
-        // Middle char is not a word char, skip the rotate.  First and
-        // third char were already checked at swap and swap3.
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-        break;
-      }
-
-      // Rotate three characters left: "123" -> "231".  We change
-      // "fword" here, it's changed back afterwards at STATE_UNROT3L.
-      if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
-        go_deeper(stack, depth, SCORE_SWAP3);
-#ifdef DEBUG_TRIEWALK
+      case STATE_SWAP:
+        // Swap two bytes in the bad word: "12" -> "21".
+        // We change "fword" here, it's changed back afterwards at
+        // STATE_UNSWAP.
         p = fword + sp->ts_fidx;
-        sprintf(changename[depth], "%.*s-%s: rotate left %c%c%c",
-                sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                p[0], p[1], p[2]);
+        c = *p;
+        if (c == NUL) {
+          // End of word, can't swap or replace.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_FINAL;
+          break;
+        }
+
+        // Don't swap if the first character is not a word character.
+        // SWAP3 etc. also don't make sense then.
+        if (!soundfold && !spell_iswordp(p, curwin)) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+          break;
+        }
+
+        n = utf_ptr2len(p);
+        c = utf_ptr2char(p);
+        if (p[n] == NUL) {
+          c2 = NUL;
+        } else if (!soundfold && !spell_iswordp(p + n, curwin)) {
+          c2 = c;  // don't swap non-word char
+        } else {
+          c2 = utf_ptr2char(p + n);
+        }
+
+        // When the second character is NUL we can't swap.
+        if (c2 == NUL) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+          break;
+        }
+
+        // When characters are identical, swap won't do anything.
+        // Also get here if the second char is not a word character.
+        if (c == c2) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_SWAP3;
+          break;
+        }
+        if (TRY_DEEPER(su, stack, depth, SCORE_SWAP)) {
+          go_deeper(stack, depth, SCORE_SWAP);
+#ifdef DEBUG_TRIEWALK
+          snprintf(changename[depth], sizeof(changename[0]), "%.*s-%s: swap %c and %c",
+                   sp->ts_twordlen, tword, fword + sp->ts_fidx, c, c2);
 #endif
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_UNROT3L;
-        ++depth;
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_UNSWAP;
+          depth++;
+          fl = utf_char2len(c2);
+          memmove(p, p + n, fl);
+          utf_char2bytes(c, p + fl);
+          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
+        } else {
+          // If this swap doesn't work then SWAP3 won't either.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+        }
+        break;
+
+      case STATE_UNSWAP:
+        // Undo the STATE_SWAP swap: "21" -> "12".
+        p = fword + sp->ts_fidx;
+        n = utfc_ptr2len(p);
+        c = utf_ptr2char(p + n);
+        memmove(p + utfc_ptr2len(p + n), p, n);
+        utf_char2bytes(c, p);
+
+        FALLTHROUGH;
+
+      case STATE_SWAP3:
+        // Swap two bytes, skipping one: "123" -> "321".  We change
+        // "fword" here, it's changed back afterwards at STATE_UNSWAP3.
         p = fword + sp->ts_fidx;
         n = utf_ptr2len(p);
         c = utf_ptr2char(p);
         fl = utf_ptr2len(p + n);
-        fl += utf_ptr2len(p + n + fl);
-        memmove(p, p + n, fl);
-        utf_char2bytes(c, p + fl);
-        stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
-      } else {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-      }
-      break;
+        c2 = utf_ptr2char(p + n);
+        if (!soundfold && !spell_iswordp(p + n + fl, curwin)) {
+          c3 = c;  // don't swap non-word char
+        } else {
+          c3 = utf_ptr2char(p + n + fl);
+        }
 
-    case STATE_UNROT3L:
-      // Undo ROT3L: "231" -> "123"
-      p = fword + sp->ts_fidx;
-      n = utfc_ptr2len(p);
-      n += utfc_ptr2len(p + n);
-      c = utf_ptr2char(p + n);
-      tl = utfc_ptr2len(p + n);
-      memmove(p + tl, p, n);
-      utf_char2bytes(c, p);
-
-      // Rotate three bytes right: "123" -> "312".  We change "fword"
-      // here, it's changed back afterwards at STATE_UNROT3R.
-      if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
-        go_deeper(stack, depth, SCORE_SWAP3);
+        // When characters are identical: "121" then SWAP3 result is
+        // identical, ROT3L result is same as SWAP: "211", ROT3L result is
+        // same as SWAP on next char: "112".  Thus skip all swapping.
+        // Also skip when c3 is NUL.
+        // Also get here when the third character is not a word character.
+        // Second character may any char: "a.b" -> "b.a"
+        if (c == c3 || c3 == NUL) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+          break;
+        }
+        if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
+          go_deeper(stack, depth, SCORE_SWAP3);
 #ifdef DEBUG_TRIEWALK
-        p = fword + sp->ts_fidx;
-        sprintf(changename[depth], "%.*s-%s: rotate right %c%c%c",
-                sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                p[0], p[1], p[2]);
+          sprintf(changename[depth], "%.*s-%s: swap3 %c and %c", sp->ts_twordlen, tword,
+                  fword + sp->ts_fidx, c, c3);
 #endif
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_UNROT3R;
-        ++depth;
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_UNSWAP3;
+          depth++;
+          tl = utf_char2len(c3);
+          memmove(p, p + n + fl, tl);
+          utf_char2bytes(c2, p + tl);
+          utf_char2bytes(c, p + fl + tl);
+          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl + tl;
+        } else {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+        }
+        break;
+
+      case STATE_UNSWAP3:
+        // Undo STATE_SWAP3: "321" -> "123"
         p = fword + sp->ts_fidx;
-        n = utf_ptr2len(p);
-        n += utf_ptr2len(p + n);
+        n = utfc_ptr2len(p);
+        c2 = utf_ptr2char(p + n);
+        fl = utfc_ptr2len(p + n);
+        c = utf_ptr2char(p + n + fl);
+        tl = utfc_ptr2len(p + n + fl);
+        memmove(p + fl + tl, p, n);
+        utf_char2bytes(c, p);
+        utf_char2bytes(c2, p + tl);
+        p = p + tl;
+
+        if (!soundfold && !spell_iswordp(p, curwin)) {
+          // Middle char is not a word char, skip the rotate.  First and
+          // third char were already checked at swap and swap3.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+          break;
+        }
+
+        // Rotate three characters left: "123" -> "231".  We change
+        // "fword" here, it's changed back afterwards at STATE_UNROT3L.
+        if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
+          go_deeper(stack, depth, SCORE_SWAP3);
+#ifdef DEBUG_TRIEWALK
+          p = fword + sp->ts_fidx;
+          sprintf(changename[depth], "%.*s-%s: rotate left %c%c%c", sp->ts_twordlen, tword,
+                  fword + sp->ts_fidx, p[0], p[1], p[2]);
+#endif
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_UNROT3L;
+          ++depth;
+          p = fword + sp->ts_fidx;
+          n = utf_ptr2len(p);
+          c = utf_ptr2char(p);
+          fl = utf_ptr2len(p + n);
+          fl += utf_ptr2len(p + n + fl);
+          memmove(p, p + n, fl);
+          utf_char2bytes(c, p + fl);
+          stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
+        } else {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+        }
+        break;
+
+      case STATE_UNROT3L:
+        // Undo ROT3L: "231" -> "123"
+        p = fword + sp->ts_fidx;
+        n = utfc_ptr2len(p);
+        n += utfc_ptr2len(p + n);
         c = utf_ptr2char(p + n);
-        tl = utf_ptr2len(p + n);
+        tl = utfc_ptr2len(p + n);
         memmove(p + tl, p, n);
         utf_char2bytes(c, p);
-        stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
-      } else {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_REP_INI;
-      }
-      break;
 
-    case STATE_UNROT3R:
-      // Undo ROT3R: "312" -> "123"
-      p = fword + sp->ts_fidx;
-      c = utf_ptr2char(p);
-      tl = utfc_ptr2len(p);
-      n = utfc_ptr2len(p + tl);
-      n += utfc_ptr2len(p + tl + n);
-      memmove(p, p + tl, n);
-      utf_char2bytes(c, p + n);
-
-      FALLTHROUGH;
-
-    case STATE_REP_INI:
-      // Check if matching with REP items from the .aff file would work.
-      // Quickly skip if:
-      // - there are no REP items and we are not in the soundfold trie
-      // - the score is going to be too high anyway
-      // - already applied a REP item or swapped here
-      if ((lp->lp_replang == NULL && !soundfold)
-          || sp->ts_score + SCORE_REP >= su->su_maxscore
-          || sp->ts_fidx < sp->ts_fidxtry) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_FINAL;
-        break;
-      }
-
-      // Use the first byte to quickly find the first entry that may
-      // match.  If the index is -1 there is none.
-      if (soundfold) {
-        sp->ts_curi = slang->sl_repsal_first[fword[sp->ts_fidx]];
-      } else {
-        sp->ts_curi = lp->lp_replang->sl_rep_first[fword[sp->ts_fidx]];
-      }
-
-      if (sp->ts_curi < 0) {
-        PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_FINAL;
-        break;
-      }
-
-      PROF_STORE(sp->ts_state)
-      sp->ts_state = STATE_REP;
-      FALLTHROUGH;
-
-    case STATE_REP:
-      // Try matching with REP items from the .aff file.  For each match
-      // replace the characters and check if the resulting word is
-      // valid.
-      p = fword + sp->ts_fidx;
-
-      if (soundfold) {
-        gap = &slang->sl_repsal;
-      } else {
-        gap = &lp->lp_replang->sl_rep;
-      }
-      while (sp->ts_curi < gap->ga_len) {
-        ftp = (fromto_T *)gap->ga_data + sp->ts_curi++;
-        if (*ftp->ft_from != *p) {
-          // past possible matching entries
-          sp->ts_curi = gap->ga_len;
-          break;
-        }
-        if (STRNCMP(ftp->ft_from, p, STRLEN(ftp->ft_from)) == 0
-            && TRY_DEEPER(su, stack, depth, SCORE_REP)) {
-          go_deeper(stack, depth, SCORE_REP);
+        // Rotate three bytes right: "123" -> "312".  We change "fword"
+        // here, it's changed back afterwards at STATE_UNROT3R.
+        if (TRY_DEEPER(su, stack, depth, SCORE_SWAP3)) {
+          go_deeper(stack, depth, SCORE_SWAP3);
 #ifdef DEBUG_TRIEWALK
-          sprintf(changename[depth], "%.*s-%s: replace %s with %s",
-                  sp->ts_twordlen, tword, fword + sp->ts_fidx,
-                  ftp->ft_from, ftp->ft_to);
+          p = fword + sp->ts_fidx;
+          sprintf(changename[depth], "%.*s-%s: rotate right %c%c%c", sp->ts_twordlen, tword,
+                  fword + sp->ts_fidx, p[0], p[1], p[2]);
 #endif
-          // Need to undo this afterwards.
           PROF_STORE(sp->ts_state)
-          sp->ts_state = STATE_REP_UNDO;
-
-          // Change the "from" to the "to" string.
+          sp->ts_state = STATE_UNROT3R;
           ++depth;
-          fl = (int)STRLEN(ftp->ft_from);
-          tl = (int)STRLEN(ftp->ft_to);
-          if (fl != tl) {
-            STRMOVE(p + tl, p + fl);
-            repextra += tl - fl;
-          }
-          memmove(p, ftp->ft_to, tl);
-          stack[depth].ts_fidxtry = sp->ts_fidx + tl;
-          stack[depth].ts_tcharlen = 0;
+          p = fword + sp->ts_fidx;
+          n = utf_ptr2len(p);
+          n += utf_ptr2len(p + n);
+          c = utf_ptr2char(p + n);
+          tl = utf_ptr2len(p + n);
+          memmove(p + tl, p, n);
+          utf_char2bytes(c, p);
+          stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
+        } else {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_REP_INI;
+        }
+        break;
+
+      case STATE_UNROT3R:
+        // Undo ROT3R: "312" -> "123"
+        p = fword + sp->ts_fidx;
+        c = utf_ptr2char(p);
+        tl = utfc_ptr2len(p);
+        n = utfc_ptr2len(p + tl);
+        n += utfc_ptr2len(p + tl + n);
+        memmove(p, p + tl, n);
+        utf_char2bytes(c, p + n);
+
+        FALLTHROUGH;
+
+      case STATE_REP_INI:
+        // Check if matching with REP items from the .aff file would work.
+        // Quickly skip if:
+        // - there are no REP items and we are not in the soundfold trie
+        // - the score is going to be too high anyway
+        // - already applied a REP item or swapped here
+        if ((lp->lp_replang == NULL && !soundfold) || sp->ts_score + SCORE_REP >= su->su_maxscore
+            || sp->ts_fidx < sp->ts_fidxtry) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_FINAL;
           break;
         }
-      }
 
-      if (sp->ts_curi >= gap->ga_len && sp->ts_state == STATE_REP) {
-        // No (more) matches.
+        // Use the first byte to quickly find the first entry that may
+        // match.  If the index is -1 there is none.
+        if (soundfold) {
+          sp->ts_curi = slang->sl_repsal_first[fword[sp->ts_fidx]];
+        } else {
+          sp->ts_curi = lp->lp_replang->sl_rep_first[fword[sp->ts_fidx]];
+        }
+
+        if (sp->ts_curi < 0) {
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_FINAL;
+          break;
+        }
+
         PROF_STORE(sp->ts_state)
-        sp->ts_state = STATE_FINAL;
-      }
+        sp->ts_state = STATE_REP;
+        FALLTHROUGH;
 
-      break;
+      case STATE_REP:
+        // Try matching with REP items from the .aff file.  For each match
+        // replace the characters and check if the resulting word is
+        // valid.
+        p = fword + sp->ts_fidx;
 
-    case STATE_REP_UNDO:
-      // Undo a REP replacement and continue with the next one.
-      if (soundfold) {
-        gap = &slang->sl_repsal;
-      } else {
-        gap = &lp->lp_replang->sl_rep;
-      }
-      ftp = (fromto_T *)gap->ga_data + sp->ts_curi - 1;
-      fl = (int)STRLEN(ftp->ft_from);
-      tl = (int)STRLEN(ftp->ft_to);
-      p = fword + sp->ts_fidx;
-      if (fl != tl) {
-        STRMOVE(p + fl, p + tl);
-        repextra -= tl - fl;
-      }
-      memmove(p, ftp->ft_from, fl);
-      PROF_STORE(sp->ts_state)
-      sp->ts_state = STATE_REP;
-      break;
+        if (soundfold) {
+          gap = &slang->sl_repsal;
+        } else {
+          gap = &lp->lp_replang->sl_rep;
+        }
+        while (sp->ts_curi < gap->ga_len) {
+          ftp = (fromto_T *)gap->ga_data + sp->ts_curi++;
+          if (*ftp->ft_from != *p) {
+            // past possible matching entries
+            sp->ts_curi = gap->ga_len;
+            break;
+          }
+          if (STRNCMP(ftp->ft_from, p, STRLEN(ftp->ft_from)) == 0
+              && TRY_DEEPER(su, stack, depth, SCORE_REP)) {
+            go_deeper(stack, depth, SCORE_REP);
+#ifdef DEBUG_TRIEWALK
+            sprintf(changename[depth], "%.*s-%s: replace %s with %s", sp->ts_twordlen, tword,
+                    fword + sp->ts_fidx, ftp->ft_from, ftp->ft_to);
+#endif
+            // Need to undo this afterwards.
+            PROF_STORE(sp->ts_state)
+            sp->ts_state = STATE_REP_UNDO;
 
-    default:
-      // Did all possible states at this level, go up one level.
-      --depth;
+            // Change the "from" to the "to" string.
+            ++depth;
+            fl = (int)STRLEN(ftp->ft_from);
+            tl = (int)STRLEN(ftp->ft_to);
+            if (fl != tl) {
+              STRMOVE(p + tl, p + fl);
+              repextra += tl - fl;
+            }
+            memmove(p, ftp->ft_to, tl);
+            stack[depth].ts_fidxtry = sp->ts_fidx + tl;
+            stack[depth].ts_tcharlen = 0;
+            break;
+          }
+        }
 
-      if (depth >= 0 && stack[depth].ts_prefixdepth == PFD_PREFIXTREE) {
-        // Continue in or go back to the prefix tree.
-        byts = pbyts;
-        idxs = pidxs;
-      }
+        if (sp->ts_curi >= gap->ga_len && sp->ts_state == STATE_REP) {
+          // No (more) matches.
+          PROF_STORE(sp->ts_state)
+          sp->ts_state = STATE_FINAL;
+        }
 
-      // Don't check for CTRL-C too often, it takes time.
-      if (--breakcheckcount == 0) {
-        os_breakcheck();
-        breakcheckcount = 1000;
-      }
+        break;
+
+      case STATE_REP_UNDO:
+        // Undo a REP replacement and continue with the next one.
+        if (soundfold) {
+          gap = &slang->sl_repsal;
+        } else {
+          gap = &lp->lp_replang->sl_rep;
+        }
+        ftp = (fromto_T *)gap->ga_data + sp->ts_curi - 1;
+        fl = (int)STRLEN(ftp->ft_from);
+        tl = (int)STRLEN(ftp->ft_to);
+        p = fword + sp->ts_fidx;
+        if (fl != tl) {
+          STRMOVE(p + fl, p + tl);
+          repextra -= tl - fl;
+        }
+        memmove(p, ftp->ft_from, fl);
+        PROF_STORE(sp->ts_state)
+        sp->ts_state = STATE_REP;
+        break;
+
+      default:
+        // Did all possible states at this level, go up one level.
+        --depth;
+
+        if (depth >= 0 && stack[depth].ts_prefixdepth == PFD_PREFIXTREE) {
+          // Continue in or go back to the prefix tree.
+          byts = pbyts;
+          idxs = pidxs;
+        }
+
+        // Don't check for CTRL-C too often, it takes time.
+        if (--breakcheckcount == 0) {
+          os_breakcheck();
+          breakcheckcount = 1000;
+        }
     }
   }
 }
-
 
 // Go one level deeper in the tree.
 static void go_deeper(trystate_T *stack, int depth, int score_add)
@@ -4939,7 +4796,7 @@ static void go_deeper(trystate_T *stack, int depth, int score_add)
   stack[depth + 1] = stack[depth];
   stack[depth + 1].ts_state = STATE_START;
   stack[depth + 1].ts_score = stack[depth].ts_score + score_add;
-  stack[depth + 1].ts_curi = 1;         // start just after length byte
+  stack[depth + 1].ts_curi = 1;  // start just after length byte
   stack[depth + 1].ts_flags = 0;
 }
 
@@ -4965,7 +4822,7 @@ static int nofold_len(char_u *fword, int flen, char_u *word)
 // same case-folded word, but we only find one...
 static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
 {
-  char_u uword[MAXWLEN];                // "fword" in upper-case
+  char_u uword[MAXWLEN];  // "fword" in upper-case
   int depth;
   idx_T tryidx;
 
@@ -4982,8 +4839,8 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
   int c;
   idx_T lo, hi, m;
   char_u *p;
-  char_u *byts = slang->sl_kbyts;      // array with bytes of the words
-  idx_T *idxs = slang->sl_kidxs;      // array with indexes
+  char_u *byts = slang->sl_kbyts;  // array with bytes of the words
+  idx_T *idxs = slang->sl_kidxs;   // array with indexes
 
   if (byts == NULL) {
     // array is empty: "cannot happen"
@@ -5062,12 +4919,10 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
         // Found the matching char.  Copy it to "kword" and go a
         // level deeper.
         if (round[depth] == 1) {
-          STRNCPY(kword + kwordlen[depth], fword + fwordidx[depth],
-                  flen);
+          STRNCPY(kword + kwordlen[depth], fword + fwordidx[depth], flen);
           kwordlen[depth + 1] = kwordlen[depth] + flen;
         } else {
-          STRNCPY(kword + kwordlen[depth], uword + uwordidx[depth],
-                  ulen);
+          STRNCPY(kword + kwordlen[depth], uword + uwordidx[depth], ulen);
           kwordlen[depth + 1] = kwordlen[depth] + ulen;
         }
         fwordidx[depth + 1] = fwordidx[depth] + flen;
@@ -5153,8 +5008,7 @@ static void score_combine(suginfo_T *su)
         if (stp->st_altscore == SCORE_MAXMAX) {
           stp->st_score = (stp->st_score * 3 + SCORE_BIG) / 4;
         } else {
-          stp->st_score = (stp->st_score * 3
-                           + stp->st_altscore) / 4;
+          stp->st_score = (stp->st_score * 3 + stp->st_altscore) / 4;
         }
         stp->st_salscore = false;
       }
@@ -5163,16 +5017,14 @@ static void score_combine(suginfo_T *su)
   }
 
   if (slang == NULL) {  // Using "double" without sound folding.
-    (void)cleanup_suggestions(&su->su_ga, su->su_maxscore,
-                              su->su_maxcount);
+    (void)cleanup_suggestions(&su->su_ga, su->su_maxscore, su->su_maxcount);
     return;
   }
 
   // Add the alternate score to su_sga.
   for (int i = 0; i < su->su_sga.ga_len; ++i) {
     stp = &SUG(su->su_sga, i);
-    stp->st_altscore = spell_edit_score(slang,
-                                        su->su_badword, stp->st_word);
+    stp->st_altscore = spell_edit_score(slang, su->su_badword, stp->st_word);
     if (stp->st_score == SCORE_MAXMAX) {
       stp->st_score = (SCORE_BIG * 7 + stp->st_altscore) / 8;
     } else {
@@ -5255,8 +5107,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
     // removing the space.  Don't do it when the good word also contains a
     // space.
-    if (ascii_iswhite(su->su_badptr[su->su_badlen])
-        && *skiptowhite(stp->st_word) == NUL) {
+    if (ascii_iswhite(su->su_badptr[su->su_badlen]) && *skiptowhite(stp->st_word) == NUL) {
       for (p = fword; *(p = skiptowhite(p)) != NUL;) {
         STRMOVE(p, p + 1);
       }
@@ -5270,8 +5121,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // Add part of the bad word to the good word, so that we soundfold
     // what replaces the bad word.
     STRCPY(goodword, stp->st_word);
-    STRLCPY(goodword + stp->st_wordlen,
-            su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
+    STRLCPY(goodword + stp->st_wordlen, su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
     pgood = goodword;
   } else {
     pgood = stp->st_word;
@@ -5284,8 +5134,8 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
 }
 
 static sftword_T dumsft;
-#define HIKEY2SFT(p)  ((sftword_T *)(p - (dumsft.sft_word - (char_u *)&dumsft)))
-#define HI2SFT(hi)     HIKEY2SFT((hi)->hi_key)
+#define HIKEY2SFT(p) ((sftword_T *)(p - (dumsft.sft_word - (char_u *)&dumsft)))
+#define HI2SFT(hi) HIKEY2SFT((hi)->hi_key)
 
 // Prepare for calling suggest_try_soundalike().
 static void suggest_try_soundalike_prep(void)
@@ -5372,7 +5222,7 @@ static void suggest_try_soundalike_finish(void)
 /// @param score  soundfold score
 static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_T *lp)
 {
-  slang_T *slang = lp->lp_slang;    // language for sound folding
+  slang_T *slang = lp->lp_slang;  // language for sound folding
   int sfwordnr;
   char_u *nrline;
   int orgnr;
@@ -5397,8 +5247,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
   // remember the words that have been done.
   hash = hash_hash(goodword);
   const size_t goodword_len = STRLEN(goodword);
-  hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len,
-                   hash);
+  hi = hash_lookup(&slang->sl_sounddone, (const char *)goodword, goodword_len, hash);
   if (HASHITEM_EMPTY(hi)) {
     sft = xmalloc(sizeof(sftword_T) + goodword_len);
     sft->sft_score = score;
@@ -5436,7 +5285,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
     for (wlen = 0; wlen < MAXWLEN - 3; ++wlen) {
       i = 1;
       if (wordcount == orgnr && byts[n + 1] == NUL) {
-        break;          // found end of word
+        break;  // found end of word
       }
       if (byts[n + 1] == NUL) {
         ++wordcount;
@@ -5444,7 +5293,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
 
       // skip over the NUL bytes
       for (; byts[n + i] == NUL; ++i) {
-        if (i > byts[n]) {              // safety check
+        if (i > byts[n]) {  // safety check
           STRCPY(theword + wlen, "BAD");
           wlen += 3;
           goto badword;
@@ -5453,7 +5302,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
 
       // One of the siblings must have the word.
       for (; i < byts[n]; ++i) {
-        wc = idxs[idxs[n + i]];         // nr of words under this byte
+        wc = idxs[idxs[n + i]];  // nr of words under this byte
         if (wordcount + wc > orgnr) {
           break;
         }
@@ -5463,7 +5312,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
       theword[wlen] = byts[n + i];
       n = idxs[n + i];
     }
-badword:
+  badword:
     theword[wlen] = NUL;
 
     // Go over the possible flags and regions.
@@ -5496,13 +5345,11 @@ badword:
       if (sps_flags & SPS_DOUBLE) {
         // Add the suggestion if the score isn't too bad.
         if (score <= su->su_maxscore) {
-          add_suggestion(su, &su->su_sga, p, su->su_badlen,
-                         score, 0, false, slang, false);
+          add_suggestion(su, &su->su_sga, p, su->su_badlen, score, 0, false, slang, false);
         }
       } else {
         // Add a penalty for words in another region.
-        if ((flags & WF_REGION)
-            && (((unsigned)flags >> 16) & lp->lp_region) == 0) {
+        if ((flags & WF_REGION) && (((unsigned)flags >> 16) & lp->lp_region) == 0) {
           goodscore = SCORE_REGION;
         } else {
           goodscore = 0;
@@ -5515,8 +5362,7 @@ badword:
         gc = utf_ptr2char(p);
         if (SPELL_ISUPPER(gc)) {
           bc = utf_ptr2char(su->su_badword);
-          if (!SPELL_ISUPPER(bc)
-              && SPELL_TOFOLD(bc) != SPELL_TOFOLD(gc)) {
+          if (!SPELL_ISUPPER(bc) && SPELL_TOFOLD(bc) != SPELL_TOFOLD(gc)) {
             goodscore += SCORE_ICASE / 2;
           }
         }
@@ -5532,8 +5378,7 @@ badword:
         if (limit > SCORE_LIMITMAX) {
           goodscore += spell_edit_score(slang, su->su_badword, p);
         } else {
-          goodscore += spell_edit_score_limit(slang, su->su_badword,
-                                              p, limit);
+          goodscore += spell_edit_score_limit(slang, su->su_badword, p, limit);
         }
 
         // When going over the limit don't bother to do the rest.
@@ -5544,8 +5389,7 @@ badword:
           // Add the suggestion if the score isn't too bad.
           goodscore = RESCORE(goodscore, score);
           if (goodscore <= su->su_sfmaxscore) {
-            add_suggestion(su, &su->su_ga, p, su->su_badlen,
-                           goodscore, score, true, slang, true);
+            add_suggestion(su, &su->su_ga, p, su->su_badlen, goodscore, score, true, slang, true);
           }
         }
       }
@@ -5586,7 +5430,7 @@ static int soundfold_find(slang_T *slang, char_u *word)
         --len;
       }
       if (len == 0) {
-        return -1;            // no children, word should have ended here
+        return -1;  // no children, word should have ended here
       }
       ++wordnr;
     }
@@ -5597,18 +5441,18 @@ static int soundfold_find(slang_T *slang, char_u *word)
     }
 
     // Perform a binary search in the list of accepted bytes.
-    if (c == TAB) {         // <Tab> is handled like <Space>
+    if (c == TAB) {  // <Tab> is handled like <Space>
       c = ' ';
     }
     while (byts[arridx] < c) {
       // The word count is in the first idxs[] entry of the child.
       wordnr += idxs[idxs[arridx]];
       ++arridx;
-      if (--len == 0) {         // end of the bytes, didn't find it
+      if (--len == 0) {  // end of the bytes, didn't find it
         return -1;
       }
     }
-    if (byts[arridx] != c) {    // didn't find the byte
+    if (byts[arridx] != c) {  // didn't find the byte
       return -1;
     }
 
@@ -5689,11 +5533,18 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
 /// @param had_bonus  value for st_had_bonus
 /// @param slang  language for sound folding
 /// @param maxsf  su_maxscore applies to soundfold score, su_sfmaxscore to the total score.
-static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword, int badlenarg,
-                           int score, int altscore, bool had_bonus, slang_T *slang, bool maxsf)
+static void add_suggestion(suginfo_T *su,
+                           garray_T *gap,
+                           const char_u *goodword,
+                           int badlenarg,
+                           int score,
+                           int altscore,
+                           bool had_bonus,
+                           slang_T *slang,
+                           bool maxsf)
 {
-  int goodlen;                  // len of goodword changed
-  int badlen;                   // len of bad word changed
+  int goodlen;  // len of goodword changed
+  int badlen;   // len of bad word changed
   suggest_T *stp;
   suggest_T new_sug;
 
@@ -5729,8 +5580,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword,
     // "thes" -> "these".
     stp = &SUG(*gap, 0);
     for (i = gap->ga_len; --i >= 0; ++stp) {
-      if (stp->st_wordlen == goodlen
-          && stp->st_orglen == badlen
+      if (stp->st_wordlen == goodlen && stp->st_orglen == badlen
           && STRNCMP(stp->st_word, goodword, goodlen) == 0) {
         // Found it.  Remember the word with the lowest score.
         if (stp->st_slang == NULL) {
@@ -5784,11 +5634,9 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword,
     // the best suggestions.
     if (gap->ga_len > SUG_MAX_COUNT(su)) {
       if (maxsf) {
-        su->su_sfmaxscore = cleanup_suggestions(gap,
-                                                su->su_sfmaxscore, SUG_CLEAN_COUNT(su));
+        su->su_sfmaxscore = cleanup_suggestions(gap, su->su_sfmaxscore, SUG_CLEAN_COUNT(su));
       } else {
-        su->su_maxscore = cleanup_suggestions(gap,
-                                              su->su_maxscore, SUG_CLEAN_COUNT(su));
+        su->su_maxscore = cleanup_suggestions(gap, su->su_maxscore, SUG_CLEAN_COUNT(su));
       }
     }
   }
@@ -5813,8 +5661,7 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
     // Need to append what follows to check for "the the".
     STRLCPY(longword, stp[i].st_word, MAXWLEN + 1);
     len = stp[i].st_wordlen;
-    STRLCPY(longword + len, su->su_badptr + stp[i].st_orglen,
-            MAXWLEN - len + 1);
+    STRLCPY(longword + len, su->su_badptr + stp[i].st_orglen, MAXWLEN - len + 1);
     attr = HLF_COUNT;
     (void)spell_check(curwin, longword, &attr, NULL, false);
     if (attr != HLF_COUNT) {
@@ -5822,13 +5669,11 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
       xfree(stp[i].st_word);
       --gap->ga_len;
       if (i < gap->ga_len) {
-        memmove(stp + i, stp + i + 1,
-                sizeof(suggest_T) * (gap->ga_len - i));
+        memmove(stp + i, stp + i + 1, sizeof(suggest_T) * (gap->ga_len - i));
       }
     }
   }
 }
-
 
 // Add a word to be banned.
 static void add_banned(suginfo_T *su, char_u *word)
@@ -5883,7 +5728,6 @@ static void rescore_one(suginfo_T *su, suggest_T *stp)
   }
 }
 
-
 // Function given to qsort() to sort the suggestions on st_score.
 // First on "st_score", then "st_altscore" then alphabetically.
 static int sug_compare(const void *s1, const void *s2)
@@ -5908,8 +5752,7 @@ static int sug_compare(const void *s1, const void *s2)
 /// @param keep  nr of suggestions to keep
 ///
 /// @return  the maximum score in the list or "maxscore" unmodified.
-static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
-  FUNC_ATTR_NONNULL_ALL
+static int cleanup_suggestions(garray_T *gap, int maxscore, int keep) FUNC_ATTR_NONNULL_ALL
 {
   if (gap->ga_len > 0) {
     // Sort the list.
@@ -5939,7 +5782,7 @@ static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
 ///                     copy of the input string if soundfolding is not
 ///                     supported by any of the languages in &spellang.
 char *eval_soundfold(const char *const word)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     // Use the sound-folding of the first language that supports it.
@@ -6012,15 +5855,15 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
       c = slang->sl_sal_first[c];
     } else {
       int *ip = ((int **)slang->sl_sal.ga_data)[c & 0xff];
-      if (ip == NULL) {               // empty list, can't match
+      if (ip == NULL) {  // empty list, can't match
         c = NUL;
       } else {
-        for (;;) {                   // find "c" in the list
-          if (*ip == 0) {             // not found
+        for (;;) {         // find "c" in the list
+          if (*ip == 0) {  // not found
             c = NUL;
             break;
           }
-          if (*ip == c) {             // match!
+          if (*ip == c) {  // match!
             c = ip[1];
             break;
           }
@@ -6046,8 +5889,8 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
 static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 {
   salitem_T *smp = (salitem_T *)slang->sl_sal.ga_data;
-  int word[MAXWLEN] = { 0 };
-  int wres[MAXWLEN] = { 0 };
+  int word[MAXWLEN] = {0};
+  int wres[MAXWLEN] = {0};
   int l;
   int *ws;
   int *pf;
@@ -6063,7 +5906,6 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   int c0;
   bool did_white = false;
   int wordlen;
-
 
   // Convert the multi-byte string to a wide-character string.
   // Remove accents, if wanted.  We actually remove all non-word characters.
@@ -6103,8 +5945,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
       // Check all rules for the same index byte.
       // If c is 0x300 need extra check for the end of the array, as
       // (c & 0xff) is NUL.
-      for (; ((ws = smp[n].sm_lead_w)[0] & 0xff) == (c & 0xff)
-           && ws[0] != NUL; ++n) {
+      for (; ((ws = smp[n].sm_lead_w)[0] & 0xff) == (c & 0xff) && ws[0] != NUL; ++n) {
         // Quickly skip entries that don't match the word.  Most
         // entries are less than three chars, optimize for that.
         if (c != ws[0]) {
@@ -6138,7 +5979,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
           ++k;
         }
         char_u *s = smp[n].sm_rules;
-        pri = 5;            // default priority
+        pri = 5;  // default priority
 
         p0 = *s;
         k0 = k;
@@ -6160,24 +6001,19 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 
         if (*s == NUL
             || (*s == '^'
-                && (i == 0 || !(word[i - 1] == ' '
-                                || spell_iswordp_w(word + i - 1, curwin)))
-                && (*(s + 1) != '$'
-                    || (!spell_iswordp_w(word + i + k0, curwin))))
-            || (*s == '$' && i > 0
-                && spell_iswordp_w(word + i - 1, curwin)
+                && (i == 0 || !(word[i - 1] == ' ' || spell_iswordp_w(word + i - 1, curwin)))
+                && (*(s + 1) != '$' || (!spell_iswordp_w(word + i + k0, curwin))))
+            || (*s == '$' && i > 0 && spell_iswordp_w(word + i - 1, curwin)
                 && (!spell_iswordp_w(word + i + k0, curwin)))) {
           // search for followup rules, if:
           // followup and k > 1  and  NO '-' in searchstring
           c0 = word[i + k - 1];
           n0 = slang->sl_sal_first[c0 & 0xff];
 
-          if (slang->sl_followup && k > 1 && n0 >= 0
-              && p0 != '-' && word[i + k] != NUL) {
+          if (slang->sl_followup && k > 1 && n0 >= 0 && p0 != '-' && word[i + k] != NUL) {
             // Test follow-up rule for "word[i + k]"; loop over
             // all entries with the same index byte.
-            for (; ((ws = smp[n0].sm_lead_w)[0] & 0xff)
-                 == (c0 & 0xff); ++n0) {
+            for (; ((ws = smp[n0].sm_lead_w)[0] & 0xff) == (c0 & 0xff); ++n0) {
               // Quickly skip entries that don't match the word.
               if (c0 != ws[0]) {
                 continue;
@@ -6230,9 +6066,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 
               if (*s == NUL
                   // *s == '^' cuts
-                  || (*s == '$'
-                      && !spell_iswordp_w(word + i + k0,
-                                          curwin))) {
+                  || (*s == '$' && !spell_iswordp_w(word + i + k0, curwin))) {
                 if (k0 == k) {
                   // this is just a piece of the string
                   continue;
@@ -6247,8 +6081,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
               }
             }
 
-            if (p0 >= pri && (smp[n0].sm_lead_w[0] & 0xff)
-                == (c0 & 0xff)) {
+            if (p0 >= pri && (smp[n0].sm_lead_w[0] & 0xff) == (c0 & 0xff)) {
               continue;
             }
           }
@@ -6260,8 +6093,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
           if (p0 == 1 && z == 0) {
             // rule with '<' is used
             if (reslen > 0 && ws != NULL && *ws != NUL
-                && (wres[reslen - 1] == c
-                    || wres[reslen - 1] == *ws)) {
+                && (wres[reslen - 1] == c || wres[reslen - 1] == *ws)) {
               reslen--;
             }
             z0 = 1;
@@ -6275,8 +6107,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
               }
             }
             if (k > k0) {
-              memmove(word + i + k0, word + i + k,
-                      sizeof(int) * (wordlen - (i + k) + 1));
+              memmove(word + i + k0, word + i + k, sizeof(int) * (wordlen - (i + k) + 1));
             }
 
             // new "actual letter"
@@ -6286,8 +6117,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
             i += k - 1;
             z = 0;
             if (ws != NULL) {
-              while (*ws != NUL && ws[1] != NUL
-                     && reslen < MAXWLEN) {
+              while (*ws != NUL && ws[1] != NUL && reslen < MAXWLEN) {
                 if (reslen == 0 || wres[reslen - 1] != *ws) {
                   wres[reslen++] = *ws;
                 }
@@ -6304,8 +6134,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
               if (c != NUL) {
                 wres[reslen++] = c;
               }
-              memmove(word, word + i + 1,
-                      sizeof(int) * (wordlen - (i + 1) + 1));
+              memmove(word, word + i + 1, sizeof(int) * (wordlen - (i + 1) + 1));
               i = 0;
               z0 = 1;
             }
@@ -6320,8 +6149,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 
     if (z0 == 0) {
       if (k && !p0 && reslen < MAXWLEN && c != NUL
-          && (!slang->sl_collapse || reslen == 0
-              || wres[reslen - 1] != c)) {
+          && (!slang->sl_collapse || reslen == 0 || wres[reslen - 1] != c)) {
         // condense only double letters
         wres[reslen++] = c;
       }
@@ -6375,9 +6203,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
     }
 
     if (badsound[1] == goodsound[1]
-        || (badsound[1] != NUL
-            && goodsound[1] != NUL
-            && badsound[2] == goodsound[2])) {
+        || (badsound[1] != NUL && goodsound[1] != NUL && badsound[2] == goodsound[2])) {
       // handle like a substitute
     } else {
       score = 2 * SCORE_DEL / 3;
@@ -6400,10 +6226,10 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
   }
 
   if (n > 0) {
-    pl = goodsound;         // goodsound is longest
+    pl = goodsound;  // goodsound is longest
     ps = badsound;
   } else {
-    pl = badsound;          // badsound is longest
+    pl = badsound;  // badsound is longest
     ps = goodsound;
   }
 
@@ -6414,154 +6240,151 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
   }
 
   switch (n) {
-  case -2:
-  case 2:
-    // Must delete two characters from "pl".
-    ++pl;               // first delete
-    while (*pl == *ps) {
-      ++pl;
-      ++ps;
-    }
-    // strings must be equal after second delete
-    if (STRCMP(pl + 1, ps) == 0) {
-      return score + SCORE_DEL * 2;
-    }
-
-    // Failed to compare.
-    break;
-
-  case -1:
-  case 1:
-    // Minimal one delete from "pl" required.
-
-    // 1: delete
-    pl2 = pl + 1;
-    ps2 = ps;
-    while (*pl2 == *ps2) {
-      if (*pl2 == NUL) {                // reached the end
-        return score + SCORE_DEL;
+    case -2:
+    case 2:
+      // Must delete two characters from "pl".
+      ++pl;  // first delete
+      while (*pl == *ps) {
+        ++pl;
+        ++ps;
       }
-      ++pl2;
-      ++ps2;
-    }
+      // strings must be equal after second delete
+      if (STRCMP(pl + 1, ps) == 0) {
+        return score + SCORE_DEL * 2;
+      }
 
-    // 2: delete then swap, then rest must be equal
-    if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && STRCMP(pl2 + 2, ps2 + 2) == 0) {
-      return score + SCORE_DEL + SCORE_SWAP;
-    }
+      // Failed to compare.
+      break;
 
-    // 3: delete then substitute, then the rest must be equal
-    if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
-      return score + SCORE_DEL + SCORE_SUBST;
-    }
+    case -1:
+    case 1:
+      // Minimal one delete from "pl" required.
 
-    // 4: first swap then delete
-    if (pl[0] == ps[1] && pl[1] == ps[0]) {
-      pl2 = pl + 2;                 // swap, skip two chars
-      ps2 = ps + 2;
+      // 1: delete
+      pl2 = pl + 1;
+      ps2 = ps;
+      while (*pl2 == *ps2) {
+        if (*pl2 == NUL) {  // reached the end
+          return score + SCORE_DEL;
+        }
+        ++pl2;
+        ++ps2;
+      }
+
+      // 2: delete then swap, then rest must be equal
+      if (pl2[0] == ps2[1] && pl2[1] == ps2[0] && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+        return score + SCORE_DEL + SCORE_SWAP;
+      }
+
+      // 3: delete then substitute, then the rest must be equal
+      if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
+        return score + SCORE_DEL + SCORE_SUBST;
+      }
+
+      // 4: first swap then delete
+      if (pl[0] == ps[1] && pl[1] == ps[0]) {
+        pl2 = pl + 2;  // swap, skip two chars
+        ps2 = ps + 2;
+        while (*pl2 == *ps2) {
+          ++pl2;
+          ++ps2;
+        }
+        // delete a char and then strings must be equal
+        if (STRCMP(pl2 + 1, ps2) == 0) {
+          return score + SCORE_SWAP + SCORE_DEL;
+        }
+      }
+
+      // 5: first substitute then delete
+      pl2 = pl + 1;  // substitute, skip one char
+      ps2 = ps + 1;
       while (*pl2 == *ps2) {
         ++pl2;
         ++ps2;
       }
       // delete a char and then strings must be equal
       if (STRCMP(pl2 + 1, ps2) == 0) {
-        return score + SCORE_SWAP + SCORE_DEL;
+        return score + SCORE_SUBST + SCORE_DEL;
       }
-    }
 
-    // 5: first substitute then delete
-    pl2 = pl + 1;                   // substitute, skip one char
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      ++pl2;
-      ++ps2;
-    }
-    // delete a char and then strings must be equal
-    if (STRCMP(pl2 + 1, ps2) == 0) {
-      return score + SCORE_SUBST + SCORE_DEL;
-    }
+      // Failed to compare.
+      break;
 
-    // Failed to compare.
-    break;
+    case 0:
+      // Lengths are equal, thus changes must result in same length: An
+      // insert is only possible in combination with a delete.
+      // 1: check if for identical strings
+      if (*pl == NUL) {
+        return score;
+      }
 
-  case 0:
-    // Lengths are equal, thus changes must result in same length: An
-    // insert is only possible in combination with a delete.
-    // 1: check if for identical strings
-    if (*pl == NUL) {
-      return score;
-    }
+      // 2: swap
+      if (pl[0] == ps[1] && pl[1] == ps[0]) {
+        pl2 = pl + 2;  // swap, skip two chars
+        ps2 = ps + 2;
+        while (*pl2 == *ps2) {
+          if (*pl2 == NUL) {  // reached the end
+            return score + SCORE_SWAP;
+          }
+          ++pl2;
+          ++ps2;
+        }
+        // 3: swap and swap again
+        if (pl2[0] == ps2[1] && pl2[1] == ps2[0] && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+          return score + SCORE_SWAP + SCORE_SWAP;
+        }
 
-    // 2: swap
-    if (pl[0] == ps[1] && pl[1] == ps[0]) {
-      pl2 = pl + 2;                 // swap, skip two chars
-      ps2 = ps + 2;
+        // 4: swap and substitute
+        if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
+          return score + SCORE_SWAP + SCORE_SUBST;
+        }
+      }
+
+      // 5: substitute
+      pl2 = pl + 1;
+      ps2 = ps + 1;
       while (*pl2 == *ps2) {
-        if (*pl2 == NUL) {              // reached the end
-          return score + SCORE_SWAP;
+        if (*pl2 == NUL) {  // reached the end
+          return score + SCORE_SUBST;
         }
         ++pl2;
         ++ps2;
       }
-      // 3: swap and swap again
-      if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-          && STRCMP(pl2 + 2, ps2 + 2) == 0) {
-        return score + SCORE_SWAP + SCORE_SWAP;
+
+      // 6: substitute and swap
+      if (pl2[0] == ps2[1] && pl2[1] == ps2[0] && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+        return score + SCORE_SUBST + SCORE_SWAP;
       }
 
-      // 4: swap and substitute
+      // 7: substitute and substitute
       if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
-        return score + SCORE_SWAP + SCORE_SUBST;
+        return score + SCORE_SUBST + SCORE_SUBST;
       }
-    }
 
-    // 5: substitute
-    pl2 = pl + 1;
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      if (*pl2 == NUL) {                // reached the end
-        return score + SCORE_SUBST;
+      // 8: insert then delete
+      pl2 = pl;
+      ps2 = ps + 1;
+      while (*pl2 == *ps2) {
+        ++pl2;
+        ++ps2;
       }
-      ++pl2;
-      ++ps2;
-    }
+      if (STRCMP(pl2 + 1, ps2) == 0) {
+        return score + SCORE_INS + SCORE_DEL;
+      }
 
-    // 6: substitute and swap
-    if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && STRCMP(pl2 + 2, ps2 + 2) == 0) {
-      return score + SCORE_SUBST + SCORE_SWAP;
-    }
+      // 9: delete then insert
+      pl2 = pl + 1;
+      ps2 = ps;
+      while (*pl2 == *ps2) {
+        ++pl2;
+        ++ps2;
+      }
+      if (STRCMP(pl2, ps2 + 1) == 0) {
+        return score + SCORE_INS + SCORE_DEL;
+      }
 
-    // 7: substitute and substitute
-    if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
-      return score + SCORE_SUBST + SCORE_SUBST;
-    }
-
-    // 8: insert then delete
-    pl2 = pl;
-    ps2 = ps + 1;
-    while (*pl2 == *ps2) {
-      ++pl2;
-      ++ps2;
-    }
-    if (STRCMP(pl2 + 1, ps2) == 0) {
-      return score + SCORE_INS + SCORE_DEL;
-    }
-
-    // 9: delete then insert
-    pl2 = pl + 1;
-    ps2 = ps;
-    while (*pl2 == *ps2) {
-      ++pl2;
-      ++ps2;
-    }
-    if (STRCMP(pl2, ps2 + 1) == 0) {
-      return score + SCORE_INS + SCORE_DEL;
-    }
-
-    // Failed to compare.
-    break;
+      // Failed to compare.
+      break;
   }
 
   return SCORE_MAXMAX;
@@ -6603,7 +6426,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
   }
 
   // We use "cnt" as an array: CNT(badword_idx, goodword_idx).
-#define CNT(a, b)   cnt[(a) + (b) * (badlen + 1)]
+#define CNT(a, b) cnt[(a) + (b) * (badlen + 1)]
   cnt = xmalloc(sizeof(int) * (badlen + 1) * (goodlen + 1));
 
   CNT(0, 0) = 0;
@@ -6624,9 +6447,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
           CNT(i, j) = SCORE_ICASE + CNT(i - 1, j - 1);
         } else {
           // For a similar character use SCORE_SIMILAR.
-          if (slang != NULL
-              && slang->sl_has_map
-              && similar_chars(slang, gc, bc)) {
+          if (slang != NULL && slang->sl_has_map && similar_chars(slang, gc, bc)) {
             CNT(i, j) = SCORE_SIMILAR + CNT(i - 1, j - 1);
           } else {
             CNT(i, j) = SCORE_SUBST + CNT(i - 1, j - 1);
@@ -6675,7 +6496,7 @@ static int spell_edit_score_limit(slang_T *slang, char_u *badword, char_u *goodw
 // Keep it in sync with the above!
 static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goodword, int limit)
 {
-  limitscore_T stack[10];               // allow for over 3 * 2 edits
+  limitscore_T stack[10];  // allow for over 3 * 2 edits
   int stackidx;
   int bi, gi;
   int bi2, gi2;
@@ -6719,34 +6540,34 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
       bc = wbadword[bi];
       gc = wgoodword[gi];
 
-      if (bc != gc) {           // stop at a char that's different
+      if (bc != gc) {  // stop at a char that's different
         break;
       }
-      if (bc == NUL) {          // both words end
+      if (bc == NUL) {  // both words end
         if (score < minscore) {
           minscore = score;
         }
-        goto pop;               // do next alternative
+        goto pop;  // do next alternative
       }
       ++bi;
       ++gi;
     }
 
-    if (gc == NUL) {      // goodword ends, delete badword chars
+    if (gc == NUL) {  // goodword ends, delete badword chars
       do {
         if ((score += SCORE_DEL) >= minscore) {
-          goto pop;                 // do next alternative
+          goto pop;  // do next alternative
         }
       } while (wbadword[++bi] != NUL);
       minscore = score;
-    } else if (bc == NUL) {   // badword ends, insert badword chars
+    } else if (bc == NUL) {  // badword ends, insert badword chars
       do {
         if ((score += SCORE_INS) >= minscore) {
-          goto pop;                 // do next alternative
+          goto pop;  // do next alternative
         }
       } while (wgoodword[++gi] != NUL);
       minscore = score;
-    } else {                  // both words continue
+    } else {  // both words continue
       // If not close to the limit, perform a change.  Only try changes
       // that may lead to a lower score than "minscore".
       // round 0: try deleting a char from badword
@@ -6798,9 +6619,7 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
         score += SCORE_ICASE;
       } else {
         // For a similar character use SCORE_SIMILAR.
-        if (slang != NULL
-            && slang->sl_has_map
-            && similar_chars(slang, gc, bc)) {
+        if (slang != NULL && slang->sl_has_map && similar_chars(slang, gc, bc)) {
           score += SCORE_SIMILAR;
         } else {
           score += SCORE_SUBST;
@@ -6814,9 +6633,9 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
         continue;
       }
     }
-pop:
+  pop:
     // Get here to try the next alternative, pop it from the stack.
-    if (stackidx == 0) {                // stack is empty, finished
+    if (stackidx == 0) {  // stack is empty, finished
       break;
     }
 
@@ -6858,11 +6677,11 @@ void ex_spellinfo(exarg_T *eap)
   msg_end();
 }
 
-#define DUMPFLAG_KEEPCASE   1   // round 2: keep-case tree
-#define DUMPFLAG_COUNT      2   // include word count
-#define DUMPFLAG_ICASE      4   // ignore case when finding matches
-#define DUMPFLAG_ONECAP     8   // pattern starts with capital
-#define DUMPFLAG_ALLCAP     16  // pattern is all capitals
+#define DUMPFLAG_KEEPCASE 1  // round 2: keep-case tree
+#define DUMPFLAG_COUNT 2     // include word count
+#define DUMPFLAG_ICASE 4     // ignore case when finding matches
+#define DUMPFLAG_ONECAP 8    // pattern starts with capital
+#define DUMPFLAG_ALLCAP 16   // pattern is all capitals
 
 // ":spelldump"
 void ex_spelldump(exarg_T *eap)
@@ -6880,7 +6699,7 @@ void ex_spelldump(exarg_T *eap)
 
   // enable spelling locally in the new window
   set_option_value("spell", true, "", OPT_LOCAL);
-  set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
+  set_option_value("spl", dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
   if (!buf_is_empty(curbuf)) {
@@ -6920,8 +6739,8 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
   int depth;
   int n;
   int flags;
-  char_u *region_names = NULL;         // region names being used
-  bool do_region = true;                    // dump region names and numbers
+  char_u *region_names = NULL;  // region names being used
+  bool do_region = true;        // dump region names and numbers
   char_u *p;
   int dumpflags = dumpflags_arg;
   int patlen;
@@ -6935,8 +6754,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
       n = captype(pat, NULL);
       if (n == WF_ONECAP) {
         dumpflags |= DUMPFLAG_ONECAP;
-      } else if (n == WF_ALLCAP
-                 && (int)STRLEN(pat) > utfc_ptr2len(pat)) {
+      } else if (n == WF_ALLCAP && (int)STRLEN(pat) > utfc_ptr2len(pat)) {
         dumpflags |= DUMPFLAG_ALLCAP;
       }
     }
@@ -6948,10 +6766,10 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     p = lp->lp_slang->sl_regions;
     if (p[0] != 0) {
-      if (region_names == NULL) {           // first language with regions
+      if (region_names == NULL) {  // first language with regions
         region_names = p;
       } else if (STRCMP(region_names, p) != 0) {
-        do_region = false;                  // region names are different
+        do_region = false;  // region names are different
         break;
       }
     }
@@ -6970,7 +6788,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     slang = lp->lp_slang;
-    if (slang->sl_fbyts == NULL) {          // reloading failed
+    if (slang->sl_fbyts == NULL) {  // reloading failed
       continue;
     }
 
@@ -7000,13 +6818,12 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
         idxs = slang->sl_kidxs;
       }
       if (byts == NULL) {
-        continue;                       // array is empty
+        continue;  // array is empty
       }
       depth = 0;
       arridx[0] = 0;
       curi[0] = 1;
-      while (depth >= 0 && !got_int
-             && (pat == NULL || !compl_interrupted)) {
+      while (depth >= 0 && !got_int && (pat == NULL || !compl_interrupted)) {
         if (curi[depth] > byts[arridx[depth]]) {
           // Done all bytes at this node, go up one level.
           --depth;
@@ -7023,12 +6840,9 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
             // they will appear in the keep-case tree.
             // Only use the word when the region matches.
             flags = (int)idxs[n];
-            if ((round == 2 || (flags & WF_KEEPCAP) == 0)
-                && (flags & WF_NEEDCOMP) == 0
-                && (do_region
-                    || (flags & WF_REGION) == 0
-                    || (((unsigned)flags >> 16)
-                        & lp->lp_region) != 0)) {
+            if ((round == 2 || (flags & WF_KEEPCAP) == 0) && (flags & WF_NEEDCOMP) == 0
+                && (do_region || (flags & WF_REGION) == 0
+                    || (((unsigned)flags >> 16) & lp->lp_region) != 0)) {
               word[depth] = NUL;
               if (!do_region) {
                 flags &= ~WF_REGION;
@@ -7038,8 +6852,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
               // when it's the first one.
               c = (unsigned)flags >> 24;
               if (c == 0 || curi[depth] == 2) {
-                dump_word(slang, word, pat, dir,
-                          dumpflags, flags, lnum);
+                dump_word(slang, word, pat, dir, dumpflags, flags, lnum);
                 if (pat == NULL) {
                   ++lnum;
                 }
@@ -7047,8 +6860,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
 
               // Apply the prefix, if there is one.
               if (c != 0) {
-                lnum = dump_prefixes(slang, word, pat, dir,
-                                     dumpflags, flags, lnum);
+                lnum = dump_prefixes(slang, word, pat, dir, dumpflags, flags, lnum);
               }
             }
           } else {
@@ -7064,8 +6876,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
             // length changes for multi-byte characters with
             // ignore case...
             assert(depth >= 0);
-            if (depth <= patlen
-                && mb_strnicmp(word, pat, (size_t)depth) != 0) {
+            if (depth <= patlen && mb_strnicmp(word, pat, (size_t)depth) != 0) {
               --depth;
             }
           }
@@ -7077,8 +6888,13 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
 
 // Dumps one word: apply case modifications and append a line to the buffer.
 // When "lnum" is zero add insert mode completion.
-static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir, int dumpflags,
-                      int wordflags, linenr_T lnum)
+static void dump_word(slang_T *slang,
+                      char_u *word,
+                      char_u *pat,
+                      Direction *dir,
+                      int dumpflags,
+                      int wordflags,
+                      linenr_T lnum)
 {
   bool keepcap = false;
   char_u *p;
@@ -7102,8 +6918,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
   } else {
     p = word;
     if ((dumpflags & DUMPFLAG_KEEPCASE)
-        && ((captype(word, NULL) & WF_KEEPCAP) == 0
-            || (flags & WF_FIXCAP) != 0)) {
+        && ((captype(word, NULL) & WF_KEEPCAP) == 0 || (flags & WF_FIXCAP) != 0)) {
       keepcap = true;
     }
   }
@@ -7126,9 +6941,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
         for (i = 0; i < 7; i++) {
           if (flags & (0x10000 << i)) {
             const size_t badword_len = STRLEN(badword);
-            snprintf((char *)badword + badword_len,
-                     sizeof(badword) - badword_len,
-                     "%d", i + 1);
+            snprintf((char *)badword + badword_len, sizeof(badword) - badword_len, "%d", i + 1);
           }
         }
       }
@@ -7141,18 +6954,15 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       // Include the word count for ":spelldump!".
       hi = hash_find(&slang->sl_wordcount, tw);
       if (!HASHITEM_EMPTY(hi)) {
-        vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d",
-                     tw, HI2WC(hi)->wc_count);
+        vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d", tw, HI2WC(hi)->wc_count);
         p = IObuff;
       }
     }
 
     ml_append(lnum, p, (colnr_T)0, false);
-  } else if (((dumpflags & DUMPFLAG_ICASE)
-              ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
-              : STRNCMP(p, pat, STRLEN(pat)) == 0)
-             && ins_compl_add_infercase(p, (int)STRLEN(p),
-                                        p_ic, NULL, *dir, false) == OK) {
+  } else if (((dumpflags & DUMPFLAG_ICASE) ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
+                                           : STRNCMP(p, pat, STRLEN(pat)) == 0)
+             && ins_compl_add_infercase(p, (int)STRLEN(p), p_ic, NULL, *dir, false) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
   }
@@ -7166,8 +6976,13 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
 /// @param flags  flags with prefix ID
 ///
 /// @return  the updated line number.
-static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
-                              int dumpflags, int flags, linenr_T startlnum)
+static linenr_T dump_prefixes(slang_T *slang,
+                              char_u *word,
+                              char_u *pat,
+                              Direction *dir,
+                              int dumpflags,
+                              int flags,
+                              linenr_T startlnum)
 {
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
@@ -7193,7 +7008,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
 
   byts = slang->sl_pbyts;
   idxs = slang->sl_pidxs;
-  if (byts != NULL) {           // array not is empty
+  if (byts != NULL) {  // array not is empty
     // Loop over all prefixes, building them byte-by-byte in prefix[].
     // When at the end of a prefix check that it supports "flags".
     depth = 0;
@@ -7224,8 +7039,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           if (c != 0) {
             STRLCPY(prefix + depth, word, MAXWLEN - depth);
             dump_word(slang, prefix, pat, dir, dumpflags,
-                      (c & WF_RAREPFX) ? (flags | WF_RARE)
-                                       : flags, lnum);
+                      (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
             if (lnum != 0) {
               ++lnum;
             }
@@ -7235,13 +7049,11 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
           // first letter is upper-case, but only if the prefix has
           // a condition.
           if (has_word_up) {
-            c = valid_word_prefix(i, n, flags, word_up, slang,
-                                  true);
+            c = valid_word_prefix(i, n, flags, word_up, slang, true);
             if (c != 0) {
               STRLCPY(prefix + depth, word_up, MAXWLEN - depth);
               dump_word(slang, prefix, pat, dir, dumpflags,
-                        (c & WF_RAREPFX) ? (flags | WF_RARE)
-                                         : flags, lnum);
+                        (c & WF_RAREPFX) ? (flags | WF_RARE) : flags, lnum);
               if (lnum != 0) {
                 ++lnum;
               }

@@ -21,6 +21,6 @@ typedef struct {
 } TerminalOptions;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.h.generated.h"
+#include "terminal.h.generated.h"
 #endif
 #endif  // NVIM_TERMINAL_H

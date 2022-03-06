@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/os/input.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -18,7 +20,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/os/input.h"
 #include "nvim/state.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -32,14 +33,14 @@ typedef enum {
   kInputEof,
 } InbufPollResult;
 
-static Stream read_stream = { .closed = true };  // Input before UI starts.
+static Stream read_stream = {.closed = true};  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
 static bool blocking = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/input.c.generated.h"
+#include "os/input.c.generated.h"
 #endif
 
 void input_init(void)
@@ -216,7 +217,6 @@ void veryfast_breakcheck(void)
   }
 }
 
-
 /// Test whether a file descriptor refers to a terminal.
 ///
 /// @param fd File descriptor.
@@ -237,10 +237,9 @@ size_t input_enqueue(String keys)
     // In the case of K_SPECIAL(0x80), 3 bytes are escaped and needed,
     // but since the keys are UTF-8, so the first byte cannot be
     // K_SPECIAL(0x80).
-    uint8_t buf[19] = { 0 };
+    uint8_t buf[19] = {0};
     unsigned int new_size
-      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                      false);
+        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true, false);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);
@@ -265,9 +264,9 @@ size_t input_enqueue(String keys)
 
     // copy the character, escaping K_SPECIAL
     if ((uint8_t)(*ptr) == K_SPECIAL) {
-      rbuffer_write(input_buffer, (char *)&(uint8_t){ K_SPECIAL }, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){ KS_SPECIAL }, 1);
-      rbuffer_write(input_buffer, (char *)&(uint8_t){ KE_FILLER }, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){K_SPECIAL}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KS_SPECIAL}, 1);
+      rbuffer_write(input_buffer, (char *)&(uint8_t){KE_FILLER}, 1);
     } else {
       rbuffer_write(input_buffer, ptr, 1);
     }
@@ -288,22 +287,17 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   static int orig_mouse_row = 0;
   static uint64_t orig_mouse_time = 0;  // time of previous mouse click
 
-  if (code == KE_LEFTRELEASE || code == KE_RIGHTRELEASE
-      || code == KE_MIDDLERELEASE) {
+  if (code == KE_LEFTRELEASE || code == KE_RIGHTRELEASE || code == KE_MIDDLERELEASE) {
     return 0;
   }
-  uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
+  uint64_t mouse_time = os_hrtime();  // time of current mouse click (ns)
 
   // compute the time elapsed since the previous mouse click and
   // convert p_mouse from ms to ns
   uint64_t timediff = mouse_time - orig_mouse_time;
   uint64_t mouset = (uint64_t)p_mouset * 1000000;
-  if (code == orig_mouse_code
-      && timediff < mouset
-      && orig_num_clicks != 4
-      && orig_mouse_grid == grid
-      && orig_mouse_col == col
-      && orig_mouse_row == row) {
+  if (code == orig_mouse_code && timediff < mouset && orig_num_clicks != 4
+      && orig_mouse_grid == grid && orig_mouse_col == col && orig_mouse_row == row) {
     orig_num_clicks++;
   } else {
     orig_num_clicks = 1;
@@ -324,7 +318,6 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   }
   return modifiers;
 }
-
 
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)
@@ -370,8 +363,7 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
     *ptr += advance;
   }
 
-  uint8_t modifiers = check_multiclick(mouse_code, mouse_grid,
-                                       mouse_row, mouse_col);
+  uint8_t modifiers = check_multiclick(mouse_code, mouse_grid, mouse_row, mouse_col);
 
   if (modifiers) {
     if (buf[1] != KS_MODIFIER) {
@@ -408,7 +400,7 @@ size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int co
   mouse_row = row;
   mouse_col = col;
 
-  size_t written = 3 + (size_t)(p-buf);
+  size_t written = 3 + (size_t)(p - buf);
   rbuffer_write(input_buffer, (char *)buf, written);
   return written;
 }
@@ -437,8 +429,7 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
   }
   DLOG("blocking... events_enabled=%d events_pending=%d", events != NULL,
        events && !multiqueue_empty(events));
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms,
-                            input_ready(events) || input_eof);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready(events) || input_eof);
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
@@ -469,7 +460,8 @@ static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data, bo
   }
 
   assert(rbuffer_space(input_buffer) >= rbuffer_size(buf));
-  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
+  RBUFFER_UNTIL_EMPTY(buf, ptr, len)
+  {
     (void)rbuffer_write(input_buffer, ptr, len);
     rbuffer_consumed(buf, len);
   }
@@ -482,7 +474,8 @@ static void process_interrupts(void)
   }
 
   size_t consume_count = 0;
-  RBUFFER_EACH_REVERSE(input_buffer, c, i) {
+  RBUFFER_EACH_REVERSE(input_buffer, c, i)
+  {
     if ((uint8_t)c == Ctrl_C) {
       got_int = true;
       consume_count = i;
@@ -500,7 +493,7 @@ static void process_interrupts(void)
 // between calls to os_inchar when maxlen < 3
 static int push_event_key(uint8_t *buf, int maxlen)
 {
-  static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
+  static const uint8_t key[3] = {K_SPECIAL, KS_EXTRA, KE_EVENT};
   static int key_idx = 0;
   int buf_idx = 0;
 
@@ -517,7 +510,7 @@ static bool input_ready(MultiQueue *events)
 {
   return (typebuf_was_filled             // API call filled typeahead
           || rbuffer_size(input_buffer)  // Input buffer filled
-          || pending_events(events));          // Events must be processed
+          || pending_events(events));    // Events must be processed
 }
 
 // Exit because of an input read error.

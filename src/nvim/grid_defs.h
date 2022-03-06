@@ -7,10 +7,10 @@
 
 #include "nvim/types.h"
 
-#define MAX_MCO  6  // fixed value for 'maxcombine'
+#define MAX_MCO 6  // fixed value for 'maxcombine'
 
 // The characters and attributes drawn on grids.
-typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
+typedef char_u schar_T[(MAX_MCO + 1) * 4 + 1];
 typedef int sattr_T;
 
 enum {
@@ -20,7 +20,6 @@ enum {
   kZIndexMessages = 200,
   kZIndexCmdlinePopupMenu = 250,
 };
-
 
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
 ///
@@ -107,8 +106,10 @@ struct ScreenGrid {
   bool comp_disabled;
 };
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, NULL, false, true, 0, \
-                           0, 0, 0, 0, 0,  false }
+#define SCREEN_GRID_INIT                                                                           \
+  {                                                                                                \
+    0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, false, 0, 0, NULL, false, true, 0, 0, 0, 0, 0,   \
+        0, false                                                                                   \
+  }
 
 #endif  // NVIM_GRID_DEFS_H

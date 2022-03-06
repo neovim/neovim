@@ -9,11 +9,9 @@
 typedef struct multiqueue MultiQueue;
 typedef void (*PutCallback)(MultiQueue *multiq, void *data);
 
-#define multiqueue_put(q, h, ...) \
-  multiqueue_put_event(q, event_create(h, __VA_ARGS__));
-
+#define multiqueue_put(q, h, ...) multiqueue_put_event(q, event_create(h, __VA_ARGS__));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/multiqueue.h.generated.h"
+#include "event/multiqueue.h.generated.h"
 #endif
 #endif  // NVIM_EVENT_MULTIQUEUE_H

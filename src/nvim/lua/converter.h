@@ -18,6 +18,6 @@ typedef struct {
 } LuaCFunctionState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/converter.h.generated.h"
+#include "lua/converter.h.generated.h"
 #endif
 #endif  // NVIM_LUA_CONVERTER_H

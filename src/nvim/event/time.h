@@ -17,6 +17,6 @@ struct time_watcher {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/time.h.generated.h"
+#include "event/time.h.generated.h"
 #endif
 #endif  // NVIM_EVENT_TIME_H

@@ -36,8 +36,10 @@ int uv_pipe_open(struct uv_pipe_s *handle, int fd)
 
 // Hint Coverity that adding item to d avoids losing track
 // of the memory allocated for item.
-typedef struct {} dictitem_T;
-typedef struct {} dict_T;
+typedef struct {
+} dictitem_T;
+typedef struct {
+} dict_T;
 int tv_dict_add(dict_T *const d, dictitem_T *const item)
 {
   __coverity_escape__(item);

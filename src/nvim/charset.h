@@ -12,17 +12,14 @@
 /// @param[in]  c  Character to transform.
 ///
 /// @return Folded variant.
-#define CH_FOLD(c) \
-  utf_fold((sizeof(c) == sizeof(char)) \
-           ? ((int)(uint8_t)(c)) \
-           : ((int)(c)))
+#define CH_FOLD(c) utf_fold((sizeof(c) == sizeof(char)) ? ((int)(uint8_t)(c)) : ((int)(c)))
 
 /// Flags for vim_str2nr()
 typedef enum {
   STR2NR_DEC = 0,
-  STR2NR_BIN = (1 << 0),  ///< Allow binary numbers.
-  STR2NR_OCT = (1 << 1),  ///< Allow octal numbers.
-  STR2NR_HEX = (1 << 2),  ///< Allow hexadecimal numbers.
+  STR2NR_BIN = (1 << 0),   ///< Allow binary numbers.
+  STR2NR_OCT = (1 << 1),   ///< Allow octal numbers.
+  STR2NR_HEX = (1 << 2),   ///< Allow hexadecimal numbers.
   STR2NR_OOCT = (1 << 3),  ///< Octal with prefix "0o": 0o777
   /// Force one of the above variants.
   ///
@@ -40,12 +37,10 @@ typedef enum {
 } ChStr2NrFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "charset.h.generated.h"
+#include "charset.h.generated.h"
 #endif
 
-static inline bool vim_isbreak(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
+static inline bool vim_isbreak(int c) REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 
 /// Check if `c` is one of the characters in 'breakat'.
 /// Used very often if 'linebreak' is set

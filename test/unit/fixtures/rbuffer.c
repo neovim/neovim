@@ -2,12 +2,13 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/rbuffer.h"
-#include "rbuffer.h"
 
+#include "rbuffer.h"
 
 void ut_rbuffer_each_read_chunk(RBuffer *buf, each_ptr_cb cb)
 {
-  RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) {
+  RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt)
+  {
     cb(rptr, rcnt);
     rbuffer_consumed(buf, rcnt);
   }
@@ -15,7 +16,8 @@ void ut_rbuffer_each_read_chunk(RBuffer *buf, each_ptr_cb cb)
 
 void ut_rbuffer_each_write_chunk(RBuffer *buf, each_ptr_cb cb)
 {
-  RBUFFER_UNTIL_FULL(buf, wptr, wcnt) {
+  RBUFFER_UNTIL_FULL(buf, wptr, wcnt)
+  {
     cb(wptr, wcnt);
     rbuffer_produced(buf, wcnt);
   }

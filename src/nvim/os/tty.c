@@ -5,17 +5,18 @@
 // Terminal/console utils
 //
 
-#include "nvim/os/os.h"
 #include "nvim/os/tty.h"
 
+#include "nvim/os/os.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/tty.c.generated.h"
+#include "os/tty.c.generated.h"
 #endif
 
 #ifdef WIN32
-# if !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-#  define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-# endif
+#if !defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
 /// Guesses the terminal-type.  Calls SetConsoleMode() and uv_set_vterm_state()
 /// if appropriate.
 ///

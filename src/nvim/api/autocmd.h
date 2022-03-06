@@ -6,6 +6,6 @@
 #include "nvim/api/private/defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/autocmd.h.generated.h"
+#include "api/autocmd.h.generated.h"
 #endif
 #endif  // NVIM_API_AUTOCMD_H

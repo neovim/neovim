@@ -29,17 +29,16 @@ struct ui_bridge_data {
   bool stopped;
 };
 
-#define CONTINUE(b) \
-  do { \
-    UIBridgeData *d = (UIBridgeData *)b; \
-    uv_mutex_lock(&d->mutex); \
-    d->ready = true; \
-    uv_cond_signal(&d->cond); \
-    uv_mutex_unlock(&d->mutex); \
+#define CONTINUE(b)                                                                                \
+  do {                                                                                             \
+    UIBridgeData *d = (UIBridgeData *)b;                                                           \
+    uv_mutex_lock(&d->mutex);                                                                      \
+    d->ready = true;                                                                               \
+    uv_cond_signal(&d->cond);                                                                      \
+    uv_mutex_unlock(&d->mutex);                                                                    \
   } while (0)
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_bridge.h.generated.h"
+#include "ui_bridge.h.generated.h"
 #endif
 #endif  // NVIM_UI_BRIDGE_H

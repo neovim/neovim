@@ -6,20 +6,20 @@
 // EXTERN is only defined in main.c. That's where global variables are
 // actually defined and initialized.
 #ifndef EXTERN
-# define EXTERN extern
-# define INIT(...)
+#define EXTERN extern
+#define INIT(...)
 #else
-# ifndef INIT
-#  define INIT(...) __VA_ARGS__
-#  define COMMA ,
-# endif
+#ifndef INIT
+#define INIT(...) __VA_ARGS__
+#define COMMA ,
+#endif
 #endif
 
 #ifndef MIN
-# define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif
 #ifndef MAX
-# define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
 
 /// String with length
@@ -62,56 +62,50 @@
 // Don't apply 'langmap' if the character comes from the Stuff buffer or from a
 // mapping and the langnoremap option was set.
 // The do-while is just to ignore a ';' after the macro.
-#define LANGMAP_ADJUST(c, condition) \
-  do { \
-    if (*p_langmap \
-        && (condition) \
-        && (p_lrm || (vgetc_busy ? typebuf_maplen() == 0 : KeyTyped)) \
-        && !KeyStuffed \
-        && (c) >= 0) \
-    { \
-      if ((c) < 256) \
-      c = langmap_mapchar[c]; \
-      else \
-      c = langmap_adjust_mb(c); \
-    } \
+#define LANGMAP_ADJUST(c, condition)                                                               \
+  do {                                                                                             \
+    if (*p_langmap && (condition) && (p_lrm || (vgetc_busy ? typebuf_maplen() == 0 : KeyTyped))    \
+        && !KeyStuffed && (c) >= 0) {                                                              \
+      if ((c) < 256)                                                                               \
+        c = langmap_mapchar[c];                                                                    \
+      else                                                                                         \
+        c = langmap_adjust_mb(c);                                                                  \
+    }                                                                                              \
   } while (0)
 
-#define WRITEBIN   "wb"        // no CR-LF translation
-#define READBIN    "rb"
-#define APPENDBIN  "ab"
+#define WRITEBIN "wb"  // no CR-LF translation
+#define READBIN "rb"
+#define APPENDBIN "ab"
 
 // mch_open_rw(): invoke os_open() with third argument for user R/W.
 #if defined(UNIX)  // open in rw------- mode
-# define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
+#define mch_open_rw(n, f) os_open((n), (f), (mode_t)0600)
 #elif defined(WIN32)
-# define mch_open_rw(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
+#define mch_open_rw(n, f) os_open((n), (f), S_IREAD | S_IWRITE)
 #else
-# define mch_open_rw(n, f)      os_open((n), (f), 0)
+#define mch_open_rw(n, f) os_open((n), (f), 0)
 #endif
 
-#define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
-
+#define REPLACE_NORMAL(s) (((s)&REPLACE_FLAG) && !((s)&VREPLACE_FLAG))
 
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed. Skip over composing chars.
-#define MB_PTR_ADV(p)      (p += utfc_ptr2len((char_u *)p))
+#define MB_PTR_ADV(p) (p += utfc_ptr2len((char_u *)p))
 
 // Advance multi-byte pointer, do not skip over composing chars.
-#define MB_CPTR_ADV(p)     (p += utf_ptr2len(p))
+#define MB_CPTR_ADV(p) (p += utf_ptr2len(p))
 
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
 // multi-byte characters if needed. Only use with "p" > "s" !
-#define MB_PTR_BACK(s, p) \
-  (p -= utf_head_off((char_u *)s, (char_u *)p - 1) + 1)
+#define MB_PTR_BACK(s, p) (p -= utf_head_off((char_u *)s, (char_u *)p - 1) + 1)
 
 // MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
 #define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), (b)))
 
-#define RESET_BINDING(wp) \
-  do { \
-    (wp)->w_p_scb = false; \
-    (wp)->w_p_crb = false; \
+#define RESET_BINDING(wp)                                                                          \
+  do {                                                                                             \
+    (wp)->w_p_scb = false;                                                                         \
+    (wp)->w_p_crb = false;                                                                         \
   } while (0)
 
 /// Calculate the length of a C array
@@ -122,9 +116,8 @@
 /// a division by zero in those cases (-Wdiv-by-zero in GCC).
 ///
 /// -V:ARRAY_SIZE:1063
-#define ARRAY_SIZE(arr) \
-  ((sizeof(arr)/sizeof((arr)[0])) \
-   / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
+#define ARRAY_SIZE(arr)                                                                            \
+  ((sizeof(arr) / sizeof((arr)[0])) / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
 
 /// Get last array entry
 ///
@@ -139,28 +132,31 @@
 #define STR(x) STR_(x)
 
 #ifndef __has_include
-# define NVIM_HAS_INCLUDE(x) 0
+#define NVIM_HAS_INCLUDE(x) 0
 #else
-# define NVIM_HAS_INCLUDE __has_include
+#define NVIM_HAS_INCLUDE __has_include
 #endif
 
 #ifndef __has_attribute
-# define NVIM_HAS_ATTRIBUTE(x) 0
-#elif defined(__clang__) && __clang__ == 1 \
-  && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ <= 5))
+#define NVIM_HAS_ATTRIBUTE(x) 0
+#elif defined(__clang__) && __clang__ == 1                                                         \
+    && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ <= 5))
 // Starting in Clang 3.6, __has_attribute was fixed to only report true for
 // GNU-style attributes.  Prior to that, it reported true if _any_ backend
 // supported the attribute.
-# define NVIM_HAS_ATTRIBUTE(x) 0
+#define NVIM_HAS_ATTRIBUTE(x) 0
 #else
-# define NVIM_HAS_ATTRIBUTE __has_attribute
+#define NVIM_HAS_ATTRIBUTE __has_attribute
 #endif
 
-#if NVIM_HAS_ATTRIBUTE(fallthrough) \
-  && (!defined(__apple_build_version__) || __apple_build_version__ >= 7000000)
-# define FALLTHROUGH {} __attribute__((fallthrough))
+#if NVIM_HAS_ATTRIBUTE(fallthrough)                                                                \
+    && (!defined(__apple_build_version__) || __apple_build_version__ >= 7000000)
+#define FALLTHROUGH                                                                                \
+  {                                                                                                \
+  }                                                                                                \
+  __attribute__((fallthrough))
 #else
-# define FALLTHROUGH
+#define FALLTHROUGH
 #endif
 
 // -V:STRUCT_CAST:641
@@ -178,53 +174,45 @@
 // Type of uv_buf_t.len is platform-dependent.
 // Related: https://github.com/libuv/libuv/pull/1236
 #if defined(WIN32)
-# define UV_BUF_LEN(x)  (ULONG)(x)
+#define UV_BUF_LEN(x) (ULONG)(x)
 #else
-# define UV_BUF_LEN(x)  (x)
+#define UV_BUF_LEN(x) (x)
 #endif
 
 // Type of read()/write() `count` param is platform-dependent.
 #if defined(WIN32)
-# define IO_COUNT(x)  (unsigned)(x)
+#define IO_COUNT(x) (unsigned)(x)
 #else
-# define IO_COUNT(x)  (x)
+#define IO_COUNT(x) (x)
 #endif
 
 ///
 /// PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 ///
 #if defined(__clang__) && __clang__ == 1
-# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
-  _Pragma("clang diagnostic push") \
-  _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
-# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
-#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("clang diagnostic push") \
-  _Pragma("clang diagnostic ignored \"-Wimplicit-fallthrough\"")
-# else
-#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("clang diagnostic push")
-# endif
-# define PRAGMA_DIAG_POP \
-  _Pragma("clang diagnostic pop")
-#elif defined(__GNUC__)
-# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES \
-  _Pragma("GCC diagnostic push") \
-  _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
-# ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
-#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("GCC diagnostic push") \
-  _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
-# else
-#  define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH \
-  _Pragma("GCC diagnostic push")
-# endif
-# define PRAGMA_DIAG_POP \
-  _Pragma("GCC diagnostic pop")
+#define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES                                                 \
+  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
+#ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH                                               \
+  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wimplicit-fallthrough\"")
 #else
-# define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
-# define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
-# define PRAGMA_DIAG_POP
+#define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH _Pragma("clang diagnostic push")
+#endif
+#define PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
+#elif defined(__GNUC__)
+#define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES                                                 \
+  _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+#ifdef HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH                                               \
+  _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
+#else
+#define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH _Pragma("GCC diagnostic push")
+#endif
+#define PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
+#else
+#define PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
+#define PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
+#define PRAGMA_DIAG_POP
 #endif
 
 #define EMPTY_POS(a) ((a).lnum == 0 && (a).col == 0 && (a).coladd == 0)

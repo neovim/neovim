@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/state.h"
+
 #include <assert.h>
 
 #include "nvim/ascii.h"
@@ -15,14 +17,12 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
-#include "nvim/state.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
+#include "state.c.generated.h"
 #endif
-
 
 void state_enter(VimState *s)
 {
@@ -30,7 +30,7 @@ void state_enter(VimState *s)
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
-      break;     // Terminate this state.
+      break;  // Terminate this state.
     } else if (check_result == -1) {
       continue;  // check() again.
     }
@@ -38,7 +38,7 @@ void state_enter(VimState *s)
 
     int key;
 
-getkey:
+  getkey:
     // Expand mappings first by calling vpeekc() directly.
     // - If vpeekc() returns non-NUL, there is a character already available for processing, so
     //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
@@ -112,7 +112,6 @@ void state_handle_k_event(void)
   }
 }
 
-
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
@@ -160,8 +159,7 @@ char *get_mode(void)
         buf[1] = 's';
       }
     }
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
-             || State == CONFIRM) {
+  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE || State == CONFIRM) {
     buf[0] = 'r';
     if (State == ASKMORE) {
       buf[1] = 'm';
@@ -204,8 +202,7 @@ char *get_mode(void)
       buf[1] = 'o';
       // to be able to detect force-linewise/blockwise/charwise operations
       buf[2] = (char)motion_force;
-    } else if (restart_edit == 'I' || restart_edit == 'R'
-               || restart_edit == 'V') {
+    } else if (restart_edit == 'I' || restart_edit == 'R' || restart_edit == 'V') {
       buf[1] = 'i';
       buf[2] = (char)restart_edit;
     } else if (curbuf->terminal) {

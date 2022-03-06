@@ -1,23 +1,22 @@
 #ifdef USE_KLEE
-# include <klee/klee.h>
+#include <klee/klee.h>
 #else
-# include <string.h>
+#include <string.h>
 #endif
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <assert.h>
 
-#include "nvim/viml/parser/expressions.h"
-#include "nvim/viml/parser/parser.h"
-#include "nvim/mbyte.h"
-
-#include "nvim/memory.c"
-#include "nvim/mbyte.c"
 #include "nvim/charset.c"
 #include "nvim/garray.c"
 #include "nvim/gettext.c"
-#include "nvim/viml/parser/expressions.c"
 #include "nvim/keymap.c"
+#include "nvim/mbyte.c"
+#include "nvim/mbyte.h"
+#include "nvim/memory.c"
+#include "nvim/viml/parser/expressions.c"
+#include "nvim/viml/parser/expressions.h"
+#include "nvim/viml/parser/parser.h"
 
 #define INPUT_SIZE 50
 
@@ -30,8 +29,7 @@ void simple_get_line(void *cookie, ParserLine *ret_pline)
   (*plines_p)++;
 }
 
-int main(const int argc, const char *const *const argv,
-         const char *const *const environ)
+int main(const int argc, const char *const *const argv, const char *const *const environ)
 {
   char input[INPUT_SIZE];
   uint8_t shift;
@@ -48,26 +46,25 @@ int main(const int argc, const char *const *const argv,
   klee_make_symbolic(&shift, sizeof(shift), "shift");
   klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
-  klee_assume(
-      flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC|kExprFlagsParseLet));
+  klee_assume(flags <= (kExprFlagsMulti | kExprFlagsDisallowEOC | kExprFlagsParseLet));
 #endif
 
   ParserLine plines[] = {
-    {
+      {
 #ifdef USE_KLEE
-      .data = &input[shift],
-      .size = sizeof(input) - shift,
+          .data = &input[shift],
+          .size = sizeof(input) - shift,
 #else
-      .data = argv[1],
-      .size = strlen(argv[1]),
+          .data = argv[1],
+          .size = strlen(argv[1]),
 #endif
-      .allocated = false,
-    },
-    {
-      .data = NULL,
-      .size = 0,
-      .allocated = false,
-    },
+          .allocated = false,
+      },
+      {
+          .data = NULL,
+          .size = 0,
+          .allocated = false,
+      },
   };
 #ifdef USE_KLEE
   assert(plines[0].size <= INPUT_SIZE);
@@ -94,18 +91,13 @@ int main(const int argc, const char *const *const argv,
   const ExprAST ast = viml_pexpr_parse(&pstate, (int)flags);
   assert(ast.root != NULL || ast.err.msg);
   if (flags & kExprFlagsParseLet) {
-    assert(ast.err.msg != NULL
-           || ast.root->type == kExprNodeAssignment
-           || (ast.root->type == kExprNodeListLiteral
-               && ast.root->children != NULL)
+    assert(ast.err.msg != NULL || ast.root->type == kExprNodeAssignment
+           || (ast.root->type == kExprNodeListLiteral && ast.root->children != NULL)
            || ast.root->type == kExprNodeComplexIdentifier
            || ast.root->type == kExprNodeCurlyBracesIdentifier
-           || ast.root->type == kExprNodePlainIdentifier
-           || ast.root->type == kExprNodeRegister
-           || ast.root->type == kExprNodeEnvironment
-           || ast.root->type == kExprNodeOption
-           || ast.root->type == kExprNodeSubscript
-           || ast.root->type == kExprNodeConcatOrSubscript);
+           || ast.root->type == kExprNodePlainIdentifier || ast.root->type == kExprNodeRegister
+           || ast.root->type == kExprNodeEnvironment || ast.root->type == kExprNodeOption
+           || ast.root->type == kExprNodeSubscript || ast.root->type == kExprNodeConcatOrSubscript);
   }
   // Can’t possibly have more highlight tokens then there are bytes in string.
   assert(kv_size(colors) <= INPUT_SIZE - shift);

@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/win_config.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -8,7 +10,6 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
@@ -18,9 +19,8 @@
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/win_config.c.generated.h"
+#include "api/win_config.c.generated.h"
 #endif
-
 
 /// Open a new window.
 ///
@@ -141,9 +141,8 @@
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
-  FUNC_API_SINCE(6)
-  FUNC_API_CHECK_TEXTLOCK
+Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) * config, Error *err)
+    FUNC_API_SINCE(6) FUNC_API_CHECK_TEXTLOCK
 {
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
   if (!parse_float_config(config, &fconfig, false, true, err)) {
@@ -184,8 +183,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
 /// @param      config  Map defining the window configuration,
 ///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
-void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
-  FUNC_API_SINCE(6)
+void nvim_win_set_config(Window window, Dict(float_config) * config, Error *err) FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -222,8 +220,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
 /// @param      window Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return     Map defining the window configuration, see |nvim_open_win()|
-Dictionary nvim_win_get_config(Window window, Error *err)
-  FUNC_API_SINCE(6)
+Dictionary nvim_win_get_config(Window window, Error *err) FUNC_API_SINCE(6)
 {
   Dictionary rv = ARRAY_DICT_INIT;
 
@@ -276,8 +273,8 @@ Dictionary nvim_win_get_config(Window window, Error *err)
     }
   }
 
-  const char *rel = (wp->w_floating && !config->external
-                     ? float_relative_str[config->relative] : "");
+  const char *rel
+      = (wp->w_floating && !config->external ? float_relative_str[config->relative] : "");
   PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
 
   return rv;
@@ -320,8 +317,7 @@ static bool parse_float_relative(String relative, FloatRelative *out)
 
 static bool parse_float_bufpos(Array bufpos, lpos_T *out)
 {
-  if (bufpos.size != 2
-      || bufpos.items[0].type != kObjectTypeInteger
+  if (bufpos.size != 2 || bufpos.items[0].type != kObjectTypeInteger
       || bufpos.items[1].type != kObjectTypeInteger) {
     return false;
   }
@@ -337,12 +333,12 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     schar_T chars[8];
     bool shadow_color;
   } defaults[] = {
-    { "double", { "╔", "═", "╗", "║", "╝", "═", "╚", "║" }, false },
-    { "single", { "┌", "─", "┐", "│", "┘", "─", "└", "│" }, false },
-    { "shadow", { "", "", " ", " ", " ", " ", " ", "" }, true },
-    { "rounded", { "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, false },
-    { "solid", { " ", " ", " ", " ", " ", " ", " ", " " }, false },
-    { NULL, { { NUL } }, false },
+      {"double", {"╔", "═", "╗", "║", "╝", "═", "╚", "║"}, false},
+      {"single", {"┌", "─", "┐", "│", "┘", "─", "└", "│"}, false},
+      {"shadow", {"", "", " ", " ", " ", " ", " ", ""}, true},
+      {"rounded", {"╭", "─", "╮", "│", "╯", "─", "╰", "│"}, false},
+      {"solid", {" ", " ", " ", " ", " ", " ", " ", " "}, false},
+      {NULL, {{NUL}}, false},
   };
 
   schar_T *chars = fconfig->border_chars;
@@ -353,9 +349,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   if (style.type == kObjectTypeArray) {
     Array arr = style.data.array;
     size_t size = arr.size;
-    if (!size || size > 8 || (size & (size-1))) {
-      api_set_error(err, kErrorTypeValidation,
-                    "invalid number of border chars");
+    if (!size || size > 8 || (size & (size - 1))) {
+      api_set_error(err, kErrorTypeValidation, "invalid number of border chars");
       return;
     }
     for (size_t i = 0; i < size; i++) {
@@ -385,13 +380,11 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
         api_set_error(err, kErrorTypeValidation, "invalid border char");
         return;
       }
-      if (string.size
-          && mb_string2cells_len((char_u *)string.data, string.size) > 1) {
-        api_set_error(err, kErrorTypeValidation,
-                      "border chars must be one cell");
+      if (string.size && mb_string2cells_len((char_u *)string.data, string.size) > 1) {
+        api_set_error(err, kErrorTypeValidation, "border chars must be one cell");
         return;
       }
-      size_t len = MIN(string.size, sizeof(*chars)-1);
+      size_t len = MIN(string.size, sizeof(*chars) - 1);
       if (len) {
         memcpy(chars[i], string.data, len);
       }
@@ -399,16 +392,14 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
       hl_ids[i] = hl_id;
     }
     while (size < 8) {
-      memcpy(chars+size, chars, sizeof(*chars) * size);
-      memcpy(hl_ids+size, hl_ids, sizeof(*hl_ids) * size);
+      memcpy(chars + size, chars, sizeof(*chars) * size);
+      memcpy(hl_ids + size, hl_ids, sizeof(*hl_ids) * size);
       size <<= 1;
     }
-    if ((chars[7][0] && chars[1][0] && !chars[0][0])
-        || (chars[1][0] && chars[3][0] && !chars[2][0])
+    if ((chars[7][0] && chars[1][0] && !chars[0][0]) || (chars[1][0] && chars[3][0] && !chars[2][0])
         || (chars[3][0] && chars[5][0] && !chars[4][0])
         || (chars[5][0] && chars[7][0] && !chars[6][0])) {
-      api_set_error(err, kErrorTypeValidation,
-                    "corner between used edges must be specified");
+      api_set_error(err, kErrorTypeValidation, "corner between used edges must be specified");
     }
   } else if (style.type == kObjectTypeString) {
     String str = style.data.string;
@@ -432,13 +423,15 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
         return;
       }
     }
-    api_set_error(err, kErrorTypeValidation,
-                  "invalid border style \"%s\"", str.data);
+    api_set_error(err, kErrorTypeValidation, "invalid border style \"%s\"", str.data);
   }
 }
 
-static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig, bool reconf,
-                               bool new_win, Error *err)
+static bool parse_float_config(Dict(float_config) * config,
+                               FloatConfig *fconfig,
+                               bool reconf,
+                               bool new_win,
+                               Error *err)
 {
   bool has_relative = false, relative_is_win = false;
   if (config->relative.type == kObjectTypeString) {
@@ -450,8 +443,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       }
 
       if (!(HAS_KEY(config->row) && HAS_KEY(config->col)) && !HAS_KEY(config->bufpos)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'relative' requires 'row'/'col' or 'bufpos'");
+        api_set_error(err, kErrorTypeValidation, "'relative' requires 'row'/'col' or 'bufpos'");
         return false;
       }
 
@@ -486,8 +478,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     } else if (config->row.type == kObjectTypeFloat) {
       fconfig->row = config->row.data.floating;
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "'row' key must be Integer or Float");
+      api_set_error(err, kErrorTypeValidation, "'row' key must be Integer or Float");
       return false;
     }
   }
@@ -501,8 +492,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     } else if (config->col.type == kObjectTypeFloat) {
       fconfig->col = config->col.data.floating;
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "'col' key must be Integer or Float");
+      api_set_error(err, kErrorTypeValidation, "'col' key must be Integer or Float");
       return false;
     }
   }
@@ -577,18 +567,15 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       return false;
     }
     if (fconfig->external && !ui_has(kUIMultigrid)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "UI doesn't support external windows");
+      api_set_error(err, kErrorTypeValidation, "UI doesn't support external windows");
       return false;
     }
   }
 
   if (!reconf && (!has_relative && !fconfig->external)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "One of 'relative' and 'external' must be used");
+    api_set_error(err, kErrorTypeValidation, "One of 'relative' and 'external' must be used");
     return false;
   }
-
 
   if (HAS_KEY(config->focusable)) {
     fconfig->focusable = api_object_to_bool(config->focusable, "'focusable' key", false, err);

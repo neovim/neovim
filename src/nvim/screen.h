@@ -12,14 +12,15 @@
  * flags for update_screen()
  * The higher the value, the higher the priority
  */
-#define VALID                   10  /* buffer not changed, or changes marked
-                                       with b_mod_* */
-#define INVERTED                20  // redisplay inverted part that changed
-#define INVERTED_ALL            25  // redisplay whole inverted part
-#define REDRAW_TOP              30  // display first w_upd_rows screen lines
-#define SOME_VALID              35  // like NOT_VALID but may scroll
-#define NOT_VALID               40  // buffer needs complete redraw
-#define CLEAR                   50  // screen messed up, clear it
+#define VALID                                                                                      \
+  10                     /* buffer not changed, or changes marked                                  \
+                            with b_mod_* */
+#define INVERTED 20      // redisplay inverted part that changed
+#define INVERTED_ALL 25  // redisplay whole inverted part
+#define REDRAW_TOP 30    // display first w_upd_rows screen lines
+#define SOME_VALID 35    // like NOT_VALID but may scroll
+#define NOT_VALID 40     // buffer needs complete redraw
+#define CLEAR 50         // screen messed up, clear it
 
 /// By default, all widows are draw on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
@@ -42,9 +43,9 @@ typedef struct {
     kStlClickTabSwitch,     ///< Switch to the given tab.
     kStlClickTabClose,      ///< Close given tab.
     kStlClickFuncRun,       ///< Run user function.
-  } type;      ///< Type of the click.
-  int tabnr;   ///< Tab page number.
-  char *func;  ///< Function to run.
+  } type;                   ///< Type of the click.
+  int tabnr;                ///< Tab page number.
+  char *func;               ///< Function to run.
 } StlClickDefinition;
 
 /// Used for tabline clicks
@@ -59,10 +60,10 @@ extern StlClickDefinition *tab_page_click_defs;
 /// Size of the tab_page_click_defs array
 extern long tab_page_click_defs_size;
 
-#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
-#define W_ENDROW(wp)   (wp->w_winrow + wp->w_height)
+#define W_ENDCOL(wp) (wp->w_wincol + wp->w_width)
+#define W_ENDROW(wp) (wp->w_winrow + wp->w_height)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "screen.h.generated.h"
+#include "screen.h.generated.h"
 #endif
 #endif  // NVIM_SCREEN_H

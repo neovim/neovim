@@ -8,15 +8,13 @@ static mpack_value_t mpack_pack_ieee754(double v, unsigned m, unsigned e);
 static int mpack_is_be(void) FPURE;
 static double mpack_fmod_pow2_32(double a);
 
+#define POW2(n) ((double)(1 << (n / 2)) * (double)(1 << (n / 2)) * (double)(1 << (n % 2)))
 
-#define POW2(n) \
-  ((double)(1 << (n / 2)) * (double)(1 << (n / 2)) * (double)(1 << (n % 2)))
-
-#define MPACK_SWAP_VALUE(val)                                  \
-  do {                                                         \
-    mpack_uint32_t lo = val.lo;                                \
-    val.lo = val.hi;                                           \
-    val.hi = lo;                                               \
+#define MPACK_SWAP_VALUE(val)                                                                      \
+  do {                                                                                             \
+    mpack_uint32_t lo = val.lo;                                                                    \
+    val.lo = val.hi;                                                                               \
+    val.hi = lo;                                                                                   \
   } while (0)
 
 MPACK_API mpack_token_t mpack_pack_nil(void)
@@ -122,18 +120,28 @@ MPACK_API mpack_token_t mpack_pack_number(double v)
     tok.type = MPACK_TOKEN_SINT;
     tok.data.value.hi = ~tok.data.value.hi;
     tok.data.value.lo = ~tok.data.value.lo + 1;
-    if (!tok.data.value.lo) tok.data.value.hi++;
-    if (tok.data.value.lo == 0 && tok.data.value.hi == 0) tok.length = 1;
-    else if (tok.data.value.lo < 0x80000000) tok.length = 8;
-    else if (tok.data.value.lo < 0xffff7fff) tok.length = 4;
-    else if (tok.data.value.lo < 0xffffff7f) tok.length = 2;
-    else tok.length = 1;
+    if (!tok.data.value.lo)
+      tok.data.value.hi++;
+    if (tok.data.value.lo == 0 && tok.data.value.hi == 0)
+      tok.length = 1;
+    else if (tok.data.value.lo < 0x80000000)
+      tok.length = 8;
+    else if (tok.data.value.lo < 0xffff7fff)
+      tok.length = 4;
+    else if (tok.data.value.lo < 0xffffff7f)
+      tok.length = 2;
+    else
+      tok.length = 1;
   } else {
     tok.type = MPACK_TOKEN_UINT;
-    if (tok.data.value.hi) tok.length = 8;
-    else if (tok.data.value.lo > 0xffff) tok.length = 4;
-    else if (tok.data.value.lo > 0xff) tok.length = 2;
-    else tok.length = 1;
+    if (tok.data.value.hi)
+      tok.length = 8;
+    else if (tok.data.value.lo > 0xffff)
+      tok.length = 4;
+    else if (tok.data.value.lo > 0xff)
+      tok.length = 2;
+    else
+      tok.length = 1;
   }
 
   if (mpack_unpack_number(tok) != v) {
@@ -236,8 +244,10 @@ MPACK_API double mpack_unpack_float_compat(mpack_token_t t)
     /* nothing to do */
     return 0;
 
-  if (t.length == 4) mantbits = 23, expbits = 8;
-  else mantbits = 52, expbits = 11;
+  if (t.length == 4)
+    mantbits = 23, expbits = 8;
+  else
+    mantbits = 52, expbits = 11;
   bias = (1 << (expbits - 1)) - 1;
 
   /* restore sign/exponent/mantissa */
@@ -253,13 +263,17 @@ MPACK_API double mpack_unpack_float_compat(mpack_token_t t)
   }
 
   mant /= POW2(mantbits);
-  if (exponent) mant += 1.0; /* restore leading 1 */
-  else exponent = 1; /* subnormal */
+  if (exponent)
+    mant += 1.0; /* restore leading 1 */
+  else
+    exponent = 1; /* subnormal */
   exponent -= bias;
 
   /* restore original value */
-  while (exponent > 0) mant *= 2.0, exponent--;
-  while (exponent < 0) mant /= 2.0, exponent++;
+  while (exponent > 0)
+    mant *= 2.0, exponent--;
+  while (exponent < 0)
+    mant /= 2.0, exponent++;
   return mant * (sign ? -1 : 1);
 }
 
@@ -278,7 +292,7 @@ MPACK_API double mpack_unpack_float_fast(mpack_token_t t)
       mpack_value_t m;
     } conv;
     conv.m = t.data.value;
-    
+
     if (mpack_is_be()) {
       MPACK_SWAP_VALUE(conv.m);
     }
@@ -291,7 +305,8 @@ MPACK_API double mpack_unpack_number(mpack_token_t t)
 {
   double rv;
   mpack_uint32_t hi, lo;
-  if (t.type == MPACK_TOKEN_FLOAT) return mpack_unpack_float(t);
+  if (t.type == MPACK_TOKEN_FLOAT)
+    return mpack_unpack_float(t);
   assert(t.type == MPACK_TOKEN_UINT || t.type == MPACK_TOKEN_SINT);
   hi = t.data.value.hi;
   lo = t.data.value.lo;
@@ -307,7 +322,8 @@ MPACK_API double mpack_unpack_number(mpack_token_t t)
       lo = ~lo;
     }
     lo++;
-    if (!lo) hi++;
+    if (!lo)
+      hi++;
   }
   rv = (double)lo + POW2(32) * hi;
   return t.type == MPACK_TOKEN_SINT ? -rv : rv;
@@ -318,8 +334,7 @@ static int mpack_fits_single(double v)
   return (float)v == v;
 }
 
-static mpack_value_t mpack_pack_ieee754(double v, unsigned mantbits,
-    unsigned expbits)
+static mpack_value_t mpack_pack_ieee754(double v, unsigned mantbits, unsigned expbits)
 {
   mpack_value_t rv = {0, 0};
   mpack_sint32_t exponent, bias = (1 << (expbits - 1)) - 1;
@@ -332,15 +347,21 @@ static mpack_value_t mpack_pack_ieee754(double v, unsigned mantbits,
     goto end;
   }
 
-  if (v < 0) sign = 1, mant = -v;
-  else sign = 0, mant = v;
+  if (v < 0)
+    sign = 1, mant = -v;
+  else
+    sign = 0, mant = v;
 
   exponent = 0;
-  while (mant >= 2.0) mant /= 2.0, exponent++;
-  while (mant < 1.0 && exponent > -(bias - 1)) mant *= 2.0, exponent--;
+  while (mant >= 2.0)
+    mant /= 2.0, exponent++;
+  while (mant < 1.0 && exponent > -(bias - 1))
+    mant *= 2.0, exponent--;
 
-  if (mant < 1.0) exponent = -bias; /* subnormal value */
-  else mant = mant - 1.0; /* remove leading 1 */
+  if (mant < 1.0)
+    exponent = -bias; /* subnormal value */
+  else
+    mant = mant - 1.0; /* remove leading 1 */
   exponent += bias;
   mant *= POW2(mantbits);
 

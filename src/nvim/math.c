@@ -1,14 +1,14 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/math.h"
+
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
 
-#include "nvim/math.h"
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "math.c.generated.h"
+#include "math.c.generated.h"
 #endif
 
 int xfpclassify(double d)
@@ -21,12 +21,12 @@ int xfpclassify(double d)
   m = 0xfffffffffffffULL & m;
 
   switch (e) {
-  default:
-    return FP_NORMAL;
-  case 0x000:
-    return m ? FP_SUBNORMAL : FP_ZERO;
-  case 0x7ff:
-    return m ? FP_NAN : FP_INFINITE;
+    default:
+      return FP_NORMAL;
+    case 0x000:
+      return m ? FP_SUBNORMAL : FP_ZERO;
+    case 0x7ff:
+      return m ? FP_NAN : FP_INFINITE;
   }
 }
 int xisinf(double d)

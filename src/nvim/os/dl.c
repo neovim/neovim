@@ -3,13 +3,14 @@
 
 /// Functions for using external native libraries
 
+#include "nvim/os/dl.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <uv.h>
 
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/dl.h"
 #include "nvim/os/os.h"
 
 /// possible function prototypes that can be called by os_libcall()
@@ -38,8 +39,12 @@ typedef int (*int_int_fn)(int i);
 ///             not NULL. NULL when using `int_out`.
 /// @param[out] int_out the output integer param
 /// @return true on success, false on failure
-bool os_libcall(const char *libname, const char *funcname, const char *argv, int argi,
-                char **str_out, int *int_out)
+bool os_libcall(const char *libname,
+                const char *funcname,
+                const char *argv,
+                int argi,
+                char **str_out,
+                int *int_out)
 {
   if (!libname || !funcname) {
     return false;
@@ -73,8 +78,7 @@ bool os_libcall(const char *libname, const char *funcname, const char *argv, int
     const char *res = argv ? sfn(argv) : ifn(argi);
 
     // assume that ptr values of NULL, 1 or -1 are illegal
-    *str_out = (res && (intptr_t)res != 1 && (intptr_t)res != -1)
-        ? xstrdup(res) : NULL;
+    *str_out = (res && (intptr_t)res != 1 && (intptr_t)res != -1) ? xstrdup(res) : NULL;
   } else {
     str_int_fn sfn = (str_int_fn)fn;
     int_int_fn ifn = (int_int_fn)fn;

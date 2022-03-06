@@ -1,17 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/buffer_updates.h"
+
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
-#include "nvim/buffer_updates.h"
 #include "nvim/extmark.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"
 #include "nvim/msgpack_rpc/channel.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer_updates.c.generated.h"
+#include "buffer_updates.c.generated.h"
 #endif
 
 // Register a channel. Return True if the channel was added, or already added.
@@ -185,13 +186,14 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
   }
 }
 
-
-void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
-                              int64_t num_removed, bool send_tick)
+void buf_updates_send_changes(buf_T *buf,
+                              linenr_T firstline,
+                              int64_t num_added,
+                              int64_t num_removed,
+                              bool send_tick)
 {
   size_t deleted_codepoints, deleted_codeunits;
-  size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints,
-                                                &deleted_codeunits);
+  size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints, &deleted_codeunits);
 
   if (!buf_updates_active(buf)) {
     return;
@@ -227,8 +229,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
       STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
       linedata.size = (size_t)num_added;
       linedata.items = xcalloc((size_t)num_added, sizeof(Object));
-      buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
-                        NULL);
+      buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata, NULL);
     }
     args.items[4] = ARRAY_OBJ(linedata);
     args.items[5] = BOOLEAN_OBJ(false);
@@ -298,12 +299,18 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   kv_size(buf->update_callbacks) = j;
 }
 
-void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcount_t start_byte,
-                             int old_row, colnr_T old_col, bcount_t old_byte, int new_row,
-                             colnr_T new_col, bcount_t new_byte)
+void buf_updates_send_splice(buf_T *buf,
+                             int start_row,
+                             colnr_T start_col,
+                             bcount_t start_byte,
+                             int old_row,
+                             colnr_T old_col,
+                             bcount_t old_byte,
+                             int new_row,
+                             colnr_T new_col,
+                             bcount_t new_byte)
 {
-  if (!buf_updates_active(buf)
-      || (old_byte == 0 && new_byte == 0)) {
+  if (!buf_updates_active(buf) || (old_byte == 0 && new_byte == 0)) {
     return;
   }
 
@@ -367,8 +374,7 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
-                                 args, true, NULL);
+      Object res = nlua_call_ref(cb.on_changedtick, "changedtick", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {

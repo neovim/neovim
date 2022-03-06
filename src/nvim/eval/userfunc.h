@@ -6,7 +6,7 @@
 
 ///< Structure used by trans_function_name()
 typedef struct {
-  dict_T *fd_dict;  ///< Dictionary used.
+  dict_T *fd_dict;    ///< Dictionary used.
   char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
   dictitem_T *fd_di;  ///< Dictionary item used.
 } funcdict_T;
@@ -32,7 +32,9 @@ typedef enum {
 } FnameTransError;
 
 /// Used in funcexe_T. Returns the new argcount.
-typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
+typedef int (*ArgvFunc)(int current_argcount,
+                        typval_T *argv,
+                        int argskip,
                         int called_func_argcount);
 
 /// Structure passed between functions dealing with function call execution.
@@ -48,21 +50,17 @@ typedef struct {
   typval_T *basetv;    ///< base for base->method()
 } funcexe_T;
 
-#define FUNCEXE_INIT (funcexe_T) { \
-  .argv_func = NULL, \
-  .firstline = 0, \
-  .lastline = 0, \
-  .doesrange = NULL, \
-  .evaluate = false, \
-  .partial = NULL, \
-  .selfdict = NULL, \
-  .basetv = NULL, \
-}
+#define FUNCEXE_INIT                                                                               \
+  (funcexe_T)                                                                                      \
+  {                                                                                                \
+    .argv_func = NULL, .firstline = 0, .lastline = 0, .doesrange = NULL, .evaluate = false,        \
+    .partial = NULL, .selfdict = NULL, .basetv = NULL,                                             \
+  }
 
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
+#define FUNCARG(fp, j) ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/userfunc.h.generated.h"
+#include "eval/userfunc.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_USERFUNC_H

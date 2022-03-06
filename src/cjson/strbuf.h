@@ -22,8 +22,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 /* Workaround for MSVC */
 #ifdef _MSC_VER
@@ -37,13 +37,13 @@
  */
 
 typedef struct {
-    char *buf;
-    int size;
-    int length;
-    int increment;
-    int dynamic;
-    int reallocs;
-    int debug;
+  char *buf;
+  int size;
+  int length;
+  int increment;
+  int dynamic;
+  int reallocs;
+  int debug;
 } strbuf_t;
 
 #ifndef STRBUF_DEFAULT_SIZE
@@ -82,77 +82,77 @@ static void strbuf_ensure_null(strbuf_t *s);
 /* Reset string for before use */
 static inline void strbuf_reset(strbuf_t *s)
 {
-    s->length = 0;
+  s->length = 0;
 }
 
 static inline int strbuf_allocated(strbuf_t *s)
 {
-    return s->buf != NULL;
+  return s->buf != NULL;
 }
 
 /* Return bytes remaining in the string buffer
  * Ensure there is space for a NULL terminator. */
 static inline int strbuf_empty_length(strbuf_t *s)
 {
-    return s->size - s->length - 1;
+  return s->size - s->length - 1;
 }
 
 static inline void strbuf_ensure_empty_length(strbuf_t *s, int len)
 {
-    if (len > strbuf_empty_length(s))
-        strbuf_resize(s, s->length + len);
+  if (len > strbuf_empty_length(s))
+    strbuf_resize(s, s->length + len);
 }
 
 static inline char *strbuf_empty_ptr(strbuf_t *s)
 {
-    return s->buf + s->length;
+  return s->buf + s->length;
 }
 
 static inline void strbuf_extend_length(strbuf_t *s, int len)
 {
-    s->length += len;
+  s->length += len;
 }
 
 static inline int strbuf_length(strbuf_t *s)
 {
-    return s->length;
+  return s->length;
 }
 
 static inline void strbuf_append_char(strbuf_t *s, const char c)
 {
-    strbuf_ensure_empty_length(s, 1);
-    s->buf[s->length++] = c;
+  strbuf_ensure_empty_length(s, 1);
+  s->buf[s->length++] = c;
 }
 
 static inline void strbuf_append_char_unsafe(strbuf_t *s, const char c)
 {
-    s->buf[s->length++] = c;
+  s->buf[s->length++] = c;
 }
 
 static inline void strbuf_append_mem(strbuf_t *s, const char *c, int len)
 {
-    strbuf_ensure_empty_length(s, len);
-    memcpy(s->buf + s->length, c, len);
-    s->length += len;
+  strbuf_ensure_empty_length(s, len);
+  memcpy(s->buf + s->length, c, len);
+  s->length += len;
 }
 
 static inline void strbuf_append_mem_unsafe(strbuf_t *s, const char *c, int len)
 {
-    memcpy(s->buf + s->length, c, len);
-    s->length += len;
+  memcpy(s->buf + s->length, c, len);
+  s->length += len;
 }
 
 static inline void strbuf_ensure_null(strbuf_t *s)
 {
-    s->buf[s->length] = 0;
+  s->buf[s->length] = 0;
 }
 
 static inline char *strbuf_string(strbuf_t *s, int *len)
 {
-    if (len)
-        *len = s->length;
+  if (len)
+    *len = s->length;
 
-    return s->buf;
+  return s->buf;
 }
 
 /* vi:ai et sw=4 ts=4:

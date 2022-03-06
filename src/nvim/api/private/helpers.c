@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/private/helpers.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -10,7 +12,6 @@
 
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
@@ -39,9 +40,9 @@
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/funcs_metadata.generated.h"
-# include "api/private/helpers.c.generated.h"
-# include "api/private/ui_events_metadata.generated.h"
+#include "api/private/funcs_metadata.generated.h"
+#include "api/private/helpers.c.generated.h"
+#include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause VimL exceptions while evaluating another code
@@ -55,14 +56,14 @@ void try_enter(TryState *const tstate)
   // TODO(ZyX-I): Check whether try_enter()/try_leave() may use
   //              enter_cleanup()/leave_cleanup(). Or
   //              save_dbg_stuff()/restore_dbg_stuff().
-  *tstate = (TryState) {
-    .current_exception = current_exception,
-    .msg_list = (const struct msglist *const *)msg_list,
-    .private_msg_list = NULL,
-    .trylevel = trylevel,
-    .got_int = got_int,
-    .need_rethrow = need_rethrow,
-    .did_emsg = did_emsg,
+  *tstate = (TryState){
+      .current_exception = current_exception,
+      .msg_list = (const struct msglist *const *)msg_list,
+      .private_msg_list = NULL,
+      .trylevel = trylevel,
+      .got_int = got_int,
+      .need_rethrow = need_rethrow,
+      .did_emsg = did_emsg,
   };
   msg_list = &tstate->private_msg_list;
   current_exception = NULL;
@@ -81,8 +82,8 @@ void try_enter(TryState *const tstate)
 /// @param[out]  err  Location where error should be saved.
 ///
 /// @return false if error occurred, true otherwise.
-bool try_leave(const TryState *const tstate, Error *const err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+bool try_leave(const TryState *const tstate,
+               Error *const err) FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const bool ret = !try_end(err);
   assert(trylevel == 0);
@@ -139,10 +140,7 @@ bool try_end(Error *err)
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
-    char *msg = get_exception_string(*msg_list,
-                                     ET_ERROR,
-                                     NULL,
-                                     &should_free);
+    char *msg = get_exception_string(*msg_list, ET_ERROR, NULL, &should_free);
     api_set_error(err, kErrorTypeException, "%s", msg);
     free_global_msglist();
 
@@ -221,8 +219,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
-                    key.data);
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     } else {
       // Return the old value
       if (retval) {
@@ -281,12 +278,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  int flags = get_option_value_strict(name.data, &numval, &stringval,
-                                      type, from);
+  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
 
   if (!flags) {
-    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'",
-                  name.data);
+    api_set_error(err, kErrorTypeValidation, "Invalid option name: '%s'", name.data);
     return rv;
   }
 
@@ -302,15 +297,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.data = stringval;
       rv.data.string.size = strlen(stringval);
     } else {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to get value for option '%s'",
-                    name.data);
+      api_set_error(err, kErrorTypeException, "Failed to get value for option '%s'", name.data);
     }
   } else {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Unknown type for option '%s'",
-                  name.data);
+    api_set_error(err, kErrorTypeException, "Unknown type for option '%s'", name.data);
   }
 
   return rv;
@@ -333,19 +323,16 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
-    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'",
-                  name.data);
+    api_set_error(err, kErrorTypeValidation, "Invalid option name '%s'", name.data);
     return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'",
-                    name.data);
+      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'", name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
-      api_set_error(err,
-                    kErrorTypeException,
+      api_set_error(err, kErrorTypeException,
                     "Cannot unset option '%s' "
                     "because it doesn't have a global value",
                     name.data);
@@ -361,35 +348,26 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "Option '%s' requires a Boolean value",
-                    name.data);
+      api_set_error(err, kErrorTypeValidation, "Option '%s' requires a Boolean value", name.data);
       return;
     }
 
     numval = value.data.boolean;
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires an integer value",
-                    name.data);
+      api_set_error(err, kErrorTypeValidation, "Option '%s' requires an integer value", name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Value for option '%s' is out of range",
-                    name.data);
+      api_set_error(err, kErrorTypeValidation, "Value for option '%s' is out of range", name.data);
       return;
     }
 
     numval = (int)value.data.integer;
   } else {
     if (value.type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Option '%s' requires a string value",
-                    name.data);
+      api_set_error(err, kErrorTypeValidation, "Option '%s' requires a string value", name.data);
       return;
     }
 
@@ -398,14 +376,12 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
 
   WITH_SCRIPT_CONTEXT(channel_id, {
     const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
-                          ? 0 : (type == SREQ_GLOBAL)
-                                ? OPT_GLOBAL : OPT_LOCAL;
+                              ? 0
+                              : (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
 
-    set_option_value_for(name.data, numval, stringval,
-                         opt_flags, type, to, err);
+    set_option_value_for(name.data, numval, stringval, opt_flags, type, to, err);
   });
 }
-
 
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 {
@@ -461,11 +437,8 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 ///         empty String is returned
 String cchar_to_string(char c)
 {
-  char buf[] = { c, NUL };
-  return (String){
-    .data = xmemdupz(buf, 1),
-    .size = (c != NUL) ? 1 : 0
-  };
+  char buf[] = {c, NUL};
+  return (String){.data = xmemdupz(buf, 1), .size = (c != NUL) ? 1 : 0};
 }
 
 /// Copies a C string into a String (binary safe string, characters + length).
@@ -483,8 +456,8 @@ String cstr_to_string(const char *str)
 
   size_t len = strlen(str);
   return (String){
-    .data = xmemdupz(str, len),
-    .size = len,
+      .data = xmemdupz(str, len),
+      .size = len,
   };
 }
 
@@ -496,17 +469,12 @@ String cstr_to_string(const char *str)
 /// @param size length of the buffer
 /// @return the resulting String, if the input string was NULL, an
 ///         empty String is returned
-String cbuf_to_string(const char *buf, size_t size)
-  FUNC_ATTR_NONNULL_ALL
+String cbuf_to_string(const char *buf, size_t size) FUNC_ATTR_NONNULL_ALL
 {
-  return (String){
-    .data = xmemdupz(buf, size),
-    .size = size
-  };
+  return (String){.data = xmemdupz(buf, size), .size = size};
 }
 
-String cstrn_to_string(const char *str, size_t maxsize)
-  FUNC_ATTR_NONNULL_ALL
+String cstrn_to_string(const char *str, size_t maxsize) FUNC_ATTR_NONNULL_ALL
 {
   return cbuf_to_string(str, STRNLEN(str, maxsize));
 }
@@ -522,7 +490,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
   if (str == NULL) {
     return (String)STRING_INIT;
   }
-  return (String){ .data = str, .size = strlen(str) };
+  return (String){.data = str, .size = strlen(str)};
 }
 
 /// Return the owned memory of a ga as a String
@@ -530,7 +498,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
 /// Reinitializes the ga to a valid empty state.
 String ga_take_string(garray_T *ga)
 {
-  String str = { .data = (char *)ga->ga_data, .size = (size_t)ga->ga_len };
+  String str = {.data = (char *)ga->ga_data, .size = (size_t)ga->ga_len};
   ga->ga_data = NULL;
   ga->ga_len = 0;
   ga->ga_maxlen = 0;
@@ -564,8 +532,8 @@ Array string_to_array(const String input, bool crlf)
       i += 1;  // Advance past CRLF.
     }
     String s = {
-      .size = line_len,
-      .data = xmemdupz(start, line_len),
+        .size = line_len,
+        .data = xmemdupz(start, line_len),
     };
     memchrsub(s.data, NUL, NL, line_len);
     ADD(ret, STRING_OBJ(s));
@@ -586,8 +554,14 @@ Array string_to_array(const String input, bool crlf)
 /// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
 ///                   buffer, or -1 to signify global behavior ("all buffers")
 /// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mode, String lhs,
-                   String rhs, Dict(keymap) *opts, Error *err)
+void modify_keymap(uint64_t channel_id,
+                   Buffer buffer,
+                   bool is_unmap,
+                   String mode,
+                   String lhs,
+                   String rhs,
+                   Dict(keymap) * opts,
+                   Error *err)
 {
   LuaRef lua_funcref = LUA_NOREF;
   bool global = (buffer == -1);
@@ -608,10 +582,10 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
-#define KEY_TO_BOOL(name) \
-  parsed_args.name = api_object_to_bool(opts->name, #name, false, err); \
-  if (ERROR_SET(err)) { \
-    goto fail_and_free; \
+#define KEY_TO_BOOL(name)                                                                          \
+  parsed_args.name = api_object_to_bool(opts->name, #name, false, err);                            \
+  if (ERROR_SET(err)) {                                                                            \
+    goto fail_and_free;                                                                            \
   }
 
     KEY_TO_BOOL(nowait);
@@ -624,8 +598,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   parsed_args.buffer = !global;
 
-  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
-                     (char_u *)rhs.data, rhs.size, lua_funcref,
+  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size, (char_u *)rhs.data, rhs.size, lua_funcref,
                      CPO_TO_CPO_FLAGS, &parsed_args);
   if (opts != NULL && opts->desc.type == kObjectTypeString) {
     parsed_args.desc = xstrdup(opts->desc.data.string.data);
@@ -633,7 +606,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     parsed_args.desc = NULL;
   }
   if (parsed_args.lhs_len > MAXMAPLEN) {
-    api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
+    api_set_error(err, kErrorTypeValidation, "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;
   }
 
@@ -647,8 +620,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);
-    if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
-        && mode.size > 0) {
+    if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING) && mode.size > 0) {
       // get_map_mode() treats unrecognized mode shortnames as ":map".
       // This is an error unless the given shortname was empty string "".
       api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", (char *)p);
@@ -677,8 +649,8 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     }
   } else if (is_unmap && (parsed_args.rhs_len || parsed_args.rhs_lua != LUA_NOREF)) {
     if (parsed_args.rhs_len) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+      api_set_error(err, kErrorTypeValidation, "Gave nonempty RHS in unmap command: %s",
+                    parsed_args.rhs);
     } else {
       api_set_error(err, kErrorTypeValidation, "Gave nonempty RHS for unmap");
     }
@@ -694,21 +666,21 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
 
   switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
-  case 0:
-    break;
-  case 1:
-    api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
-    goto fail_and_free;
-  case 2:
-    api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
-    goto fail_and_free;
-  case 5:
-    api_set_error(err, kErrorTypeException,
-                  "E227: mapping already exists for %s", parsed_args.lhs);
-    goto fail_and_free;
-  default:
-    assert(false && "Unrecognized return code!");
-    goto fail_and_free;
+    case 0:
+      break;
+    case 1:
+      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+      goto fail_and_free;
+    case 2:
+      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+      goto fail_and_free;
+    case 5:
+      api_set_error(err, kErrorTypeException, "E227: mapping already exists for %s",
+                    parsed_args.lhs);
+      goto fail_and_free;
+    default:
+      assert(false && "Unrecognized return code!");
+      goto fail_and_free;
   }  // switch
 
   parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
@@ -765,7 +737,11 @@ bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl, Arr
 /// @param replace_nl   Replace newlines ('\n') with null ('\0')
 /// @param err          Error object
 /// @return The text between start_col and end_col on line lnum of buffer buf
-String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col, bool replace_nl,
+String buf_get_text(buf_T *buf,
+                    int64_t lnum,
+                    int64_t start_col,
+                    int64_t end_col,
+                    bool replace_nl,
                     Error *err)
 {
   String rv = STRING_INIT;
@@ -815,33 +791,33 @@ void api_free_string(String value)
 void api_free_object(Object value)
 {
   switch (value.type) {
-  case kObjectTypeNil:
-  case kObjectTypeBoolean:
-  case kObjectTypeInteger:
-  case kObjectTypeFloat:
-  case kObjectTypeBuffer:
-  case kObjectTypeWindow:
-  case kObjectTypeTabpage:
-    break;
+    case kObjectTypeNil:
+    case kObjectTypeBoolean:
+    case kObjectTypeInteger:
+    case kObjectTypeFloat:
+    case kObjectTypeBuffer:
+    case kObjectTypeWindow:
+    case kObjectTypeTabpage:
+      break;
 
-  case kObjectTypeString:
-    api_free_string(value.data.string);
-    break;
+    case kObjectTypeString:
+      api_free_string(value.data.string);
+      break;
 
-  case kObjectTypeArray:
-    api_free_array(value.data.array);
-    break;
+    case kObjectTypeArray:
+      api_free_array(value.data.array);
+      break;
 
-  case kObjectTypeDictionary:
-    api_free_dictionary(value.data.dictionary);
-    break;
+    case kObjectTypeDictionary:
+      api_free_dictionary(value.data.dictionary);
+      break;
 
-  case kObjectTypeLuaRef:
-    api_free_luaref(value.data.luaref);
-    break;
+    case kObjectTypeLuaRef:
+      api_free_luaref(value.data.luaref);
+      break;
 
-  default:
-    abort();
+    default:
+      abort();
   }
 }
 
@@ -864,8 +840,7 @@ void api_free_dictionary(Dictionary value)
   xfree(value.items);
 }
 
-void api_clear_error(Error *value)
-  FUNC_ATTR_NONNULL_ALL
+void api_clear_error(Error *value) FUNC_ATTR_NONNULL_ALL
 {
   if (!ERROR_SET(value)) {
     return;
@@ -894,10 +869,8 @@ static void init_function_metadata(Dictionary *metadata)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)funcs_metadata,
-                          sizeof(funcs_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+  if (msgpack_unpack_next(&unpacked, (const char *)funcs_metadata, sizeof(funcs_metadata), NULL)
+      != MSGPACK_UNPACK_SUCCESS) {
     abort();
   }
   Object functions;
@@ -910,10 +883,9 @@ static void init_ui_event_metadata(Dictionary *metadata)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)ui_events_metadata,
-                          sizeof(ui_events_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+  if (msgpack_unpack_next(&unpacked, (const char *)ui_events_metadata, sizeof(ui_events_metadata),
+                          NULL)
+      != MSGPACK_UNPACK_SUCCESS) {
     abort();
   }
   Object ui_events;
@@ -951,18 +923,15 @@ static void init_type_metadata(Dictionary *metadata)
   Dictionary types = ARRAY_DICT_INIT;
 
   Dictionary buffer_metadata = ARRAY_DICT_INIT;
-  PUT(buffer_metadata, "id",
-      INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
+  PUT(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
   PUT(buffer_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_buf_")));
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
-  PUT(window_metadata, "id",
-      INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
+  PUT(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
   PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
-  PUT(tabpage_metadata, "id",
-      INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
+  PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
   PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
@@ -975,7 +944,7 @@ static void init_type_metadata(Dictionary *metadata)
 String copy_string(String str)
 {
   if (str.data != NULL) {
-    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+    return (String){.data = xmemdupz(str.data, str.size), .size = str.size};
   } else {
     return (String)STRING_INIT;
   }
@@ -1004,64 +973,66 @@ Dictionary copy_dictionary(Dictionary dict)
 Object copy_object(Object obj)
 {
   switch (obj.type) {
-  case kObjectTypeBuffer:
-  case kObjectTypeTabpage:
-  case kObjectTypeWindow:
-  case kObjectTypeNil:
-  case kObjectTypeBoolean:
-  case kObjectTypeInteger:
-  case kObjectTypeFloat:
-    return obj;
+    case kObjectTypeBuffer:
+    case kObjectTypeTabpage:
+    case kObjectTypeWindow:
+    case kObjectTypeNil:
+    case kObjectTypeBoolean:
+    case kObjectTypeInteger:
+    case kObjectTypeFloat:
+      return obj;
 
-  case kObjectTypeString:
-    return STRING_OBJ(copy_string(obj.data.string));
+    case kObjectTypeString:
+      return STRING_OBJ(copy_string(obj.data.string));
 
-  case kObjectTypeArray:
-    return ARRAY_OBJ(copy_array(obj.data.array));
+    case kObjectTypeArray:
+      return ARRAY_OBJ(copy_array(obj.data.array));
 
-  case kObjectTypeDictionary:
-    return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
+    case kObjectTypeDictionary:
+      return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
 
-  case kObjectTypeLuaRef:
-    return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
+    case kObjectTypeLuaRef:
+      return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
 
-  default:
-    abort();
+    default:
+      abort();
   }
 }
 
-static void set_option_value_for(char *key, int numval, char *stringval, int opt_flags,
-                                 int opt_type, void *from, Error *err)
+static void set_option_value_for(char *key,
+                                 int numval,
+                                 char *stringval,
+                                 int opt_flags,
+                                 int opt_type,
+                                 void *from,
+                                 Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
 
   try_start();
-  switch (opt_type)
-  {
-  case SREQ_WIN:
-    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
-        == FAIL) {
-      restore_win_noblock(&switchwin, true);
-      if (try_end(err)) {
+  switch (opt_type) {
+    case SREQ_WIN:
+      if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
+          == FAIL) {
+        restore_win_noblock(&switchwin, true);
+        if (try_end(err)) {
+          return;
+        }
+        api_set_error(err, kErrorTypeException, "Problem while switching windows");
         return;
       }
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Problem while switching windows");
-      return;
-    }
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    restore_win_noblock(&switchwin, true);
-    break;
-  case SREQ_BUF:
-    aucmd_prepbuf(&aco, (buf_T *)from);
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    aucmd_restbuf(&aco);
-    break;
-  case SREQ_GLOBAL:
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    break;
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      restore_win_noblock(&switchwin, true);
+      break;
+    case SREQ_BUF:
+      aucmd_prepbuf(&aco, (buf_T *)from);
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      aucmd_restbuf(&aco);
+      break;
+    case SREQ_GLOBAL:
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      break;
   }
 
   if (ERROR_SET(err)) {
@@ -1070,7 +1041,6 @@ static void set_option_value_for(char *key, int numval, char *stringval, int opt
 
   try_end(err);
 }
-
 
 static void set_option_value_err(char *key, int numval, char *stringval, int opt_flags, Error *err)
 {
@@ -1085,8 +1055,8 @@ static void set_option_value_err(char *key, int numval, char *stringval, int opt
   }
 }
 
-void api_set_error(Error *err, ErrorType errType, const char *format, ...)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PRINTF(3, 4)
+void api_set_error(Error *err, ErrorType errType, const char *format, ...) FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_PRINTF(3, 4)
 {
   assert(kErrorTypeNone != errType);
   va_list args1;
@@ -1126,14 +1096,12 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
   long buffer_value = (buf == NULL) ? 0 : buf->handle;
 
   for (int i = 0; i < MAX_MAPHASH; i++) {
-    for (const mapblock_T *current_maphash = get_maphash(i, buf);
-         current_maphash;
+    for (const mapblock_T *current_maphash = get_maphash(i, buf); current_maphash;
          current_maphash = current_maphash->m_next) {
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
-                                                         .vval.v_dict = dict } });
+        Object api_dict = vim_to_object((typval_T[]){{.v_type = VAR_DICT, .vval.v_dict = dict}});
         if (from_lua) {
           Dictionary d = api_dict.data.dictionary;
           for (size_t j = 0; j < d.size; j++) {
@@ -1163,8 +1131,12 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
 /// @param[out] colnr extmark column
 ///
 /// @return true if the extmark was found, else false
-bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
-                                *row, colnr_T *col, Error *err)
+bool extmark_get_index_from_obj(buf_T *buf,
+                                Integer ns_id,
+                                Object obj,
+                                int *row,
+                                colnr_T *col,
+                                Error *err)
 {
   // Check if it is mark id
   if (obj.type == kObjectTypeInteger) {
@@ -1195,16 +1167,14 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
     // Check if it is a position
   } else if (obj.type == kObjectTypeArray) {
     Array pos = obj.data.array;
-    if (pos.size != 2
-        || pos.items[0].type != kObjectTypeInteger
+    if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
         || pos.items[1].type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Position must have 2 integer elements");
+      api_set_error(err, kErrorTypeValidation, "Position must have 2 integer elements");
       return false;
     }
     Integer pos_row = pos.items[0].data.integer;
     Integer pos_col = pos.items[1].data.integer;
-    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *row = (int)(pos_row >= 0 ? pos_row : MAXLNUM);
     *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {
@@ -1224,10 +1194,8 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
       goto free_exit;
     }
     Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
+    if (chunk.size == 0 || chunk.size > 2 || chunk.items[0].type != kObjectTypeString) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array with one or two strings");
       goto free_exit;
     }
 
@@ -1243,9 +1211,8 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
           if (ERROR_SET(err)) {
             goto free_exit;
           }
-          if (j < arr.size-1) {
-            kv_push(virt_text, ((VirtTextChunk){ .text = NULL,
-                                                 .hl_id = hl_id }));
+          if (j < arr.size - 1) {
+            kv_push(virt_text, ((VirtTextChunk){.text = NULL, .hl_id = hl_id}));
           }
         }
       } else {
@@ -1259,7 +1226,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
     char *text = transstr(str.size > 0 ? str.data : "", false);  // allocates
     w += (int)mb_string2cells((char_u *)text);
 
-    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+    kv_push(virt_text, ((VirtTextChunk){.text = text, .hl_id = hl_id}));
   }
 
   *width = w;
@@ -1298,8 +1265,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
-    api_set_error(err, kErrorTypeValidation,
-                  "%s is not a valid highlight", what);
+    api_set_error(err, kErrorTypeValidation, "%s is not a valid highlight", what);
     return 0;
   }
 }
@@ -1313,11 +1279,9 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       goto free_exit;
     }
     Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
+    if (chunk.size == 0 || chunk.size > 2 || chunk.items[0].type != kObjectTypeString
         || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array with one or two strings");
       goto free_exit;
     }
 
@@ -1332,7 +1296,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
     }
-    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .attr = attr }));
+    kv_push(hl_msg, ((HlMessageChunk){.text = str, .attr = attr}));
   }
 
   return hl_msg;
@@ -1391,15 +1355,13 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
       return res;
     }
   }
-  pos_T pos = { line, (int)col, (int)col };
+  pos_T pos = {line, (int)col, (int)col};
   res = setmark_pos(*name.data, &pos, buf->handle);
   if (!res) {
     if (deleting) {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to delete named mark: %c", *name.data);
+      api_set_error(err, kErrorTypeException, "Failed to delete named mark: %c", *name.data);
     } else {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to set named mark: %c", *name.data);
+      api_set_error(err, kErrorTypeException, "Failed to set named mark: %c", *name.data);
     }
   }
   return res;
@@ -1417,7 +1379,7 @@ const char *get_default_stl_hl(win_T *wp)
   }
 }
 
-void add_user_command(String name, Object command, Dict(user_command) *opts, int flags, Error *err)
+void add_user_command(String name, Object command, Dict(user_command) * opts, int flags, Error *err)
 {
   uint32_t argt = 0;
   long def = -1;
@@ -1445,15 +1407,15 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
 
   if (opts->nargs.type == kObjectTypeInteger) {
     switch (opts->nargs.data.integer) {
-    case 0:
-      // Default value, nothing to do
-      break;
-    case 1:
-      argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG;
-      break;
-    default:
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
-      goto err;
+      case 0:
+        // Default value, nothing to do
+        break;
+      case 1:
+        argt |= EX_EXTRA | EX_NOSPC | EX_NEEDARG;
+        break;
+      default:
+        api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+        goto err;
     }
   } else if (opts->nargs.type == kObjectTypeString) {
     if (opts->nargs.data.string.size > 1) {
@@ -1462,18 +1424,18 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     }
 
     switch (opts->nargs.data.string.data[0]) {
-    case '*':
-      argt |= EX_EXTRA;
-      break;
-    case '?':
-      argt |= EX_EXTRA | EX_NOSPC;
-      break;
-    case '+':
-      argt |= EX_EXTRA | EX_NEEDARG;
-      break;
-    default:
-      api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
-      goto err;
+      case '*':
+        argt |= EX_EXTRA;
+        break;
+      case '?':
+        argt |= EX_EXTRA | EX_NOSPC;
+        break;
+      case '+':
+        argt |= EX_EXTRA | EX_NEEDARG;
+        break;
+      default:
+        api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
+        goto err;
     }
   } else if (HAS_KEY(opts->nargs)) {
     api_set_error(err, kErrorTypeValidation, "Invalid value for 'nargs'");
@@ -1524,7 +1486,8 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
 
   if (opts->addr.type == kObjectTypeString) {
     if (parse_addr_type_arg((char_u *)opts->addr.data.string.data, (int)opts->addr.data.string.size,
-                            &addr_type_arg) != OK) {
+                            &addr_type_arg)
+        != OK) {
       api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
       goto err;
     }
@@ -1549,7 +1512,6 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     goto err;
   }
 
-
   if (api_object_to_bool(opts->register_, "register", false, err)) {
     argt |= EX_REGSTR;
   } else if (ERROR_SET(err)) {
@@ -1572,8 +1534,8 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
     compl_luaref = api_new_luaref(opts->complete.data.luaref);
   } else if (opts->complete.type == kObjectTypeString) {
     if (parse_compl_arg((char_u *)opts->complete.data.string.data,
-                        (int)opts->complete.data.string.size, &compl, &argt,
-                        (char_u **)&compl_arg) != OK) {
+                        (int)opts->complete.data.string.size, &compl, &argt, (char_u **)&compl_arg)
+        != OK) {
       api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
       goto err;
     }
@@ -1583,26 +1545,26 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
   }
 
   switch (command.type) {
-  case kObjectTypeLuaRef:
-    luaref = api_new_luaref(command.data.luaref);
-    if (opts->desc.type == kObjectTypeString) {
-      rep = opts->desc.data.string.data;
-    } else {
-      snprintf((char *)IObuff, IOSIZE, "<Lua function %d>", luaref);
-      rep = (char *)IObuff;
-    }
-    break;
-  case kObjectTypeString:
-    rep = command.data.string.data;
-    break;
-  default:
-    api_set_error(err, kErrorTypeValidation, "'command' must be a string or Lua function");
-    goto err;
+    case kObjectTypeLuaRef:
+      luaref = api_new_luaref(command.data.luaref);
+      if (opts->desc.type == kObjectTypeString) {
+        rep = opts->desc.data.string.data;
+      } else {
+        snprintf((char *)IObuff, IOSIZE, "<Lua function %d>", luaref);
+        rep = (char *)IObuff;
+      }
+      break;
+    case kObjectTypeString:
+      rep = command.data.string.data;
+      break;
+    default:
+      api_set_error(err, kErrorTypeValidation, "'command' must be a string or Lua function");
+      goto err;
   }
 
-  if (uc_add_command((char_u *)name.data, name.size, (char_u *)rep, argt, def, flags,
-                     compl, (char_u *)compl_arg, compl_luaref, addr_type_arg, luaref,
-                     force) != OK) {
+  if (uc_add_command((char_u *)name.data, name.size, (char_u *)rep, argt, def, flags, compl,
+                     (char_u *)compl_arg, compl_luaref, addr_type_arg, luaref, force)
+      != OK) {
     api_set_error(err, kErrorTypeException, "Failed to create user command");
     goto err;
   }
@@ -1617,13 +1579,13 @@ err:
 int find_sid(uint64_t channel_id)
 {
   switch (channel_id) {
-  case VIML_INTERNAL_CALL:
-  // TODO(autocmd): Figure out what this should be
-  // return SID_API_CLIENT;
-  case LUA_INTERNAL_CALL:
-    return SID_LUA;
-  default:
-    return SID_API_CLIENT;
+    case VIML_INTERNAL_CALL:
+    // TODO(autocmd): Figure out what this should be
+    // return SID_API_CLIENT;
+    case LUA_INTERNAL_CALL:
+      return SID_LUA;
+    default:
+      return SID_API_CLIENT;
   }
 }
 
@@ -1637,8 +1599,7 @@ sctx_T api_set_sctx(uint64_t channel_id)
 {
   sctx_T old_current_sctx = current_sctx;
   if (channel_id != VIML_INTERNAL_CALL) {
-    current_sctx.sc_sid =
-      channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+    current_sctx.sc_sid = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
     current_sctx.sc_lnum = 0;
   }
   return old_current_sctx;

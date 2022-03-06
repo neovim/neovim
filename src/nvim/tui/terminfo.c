@@ -3,6 +3,8 @@
 
 // Built-in fallback terminfo entries.
 
+#include "nvim/tui/terminfo.h"
+
 #include <stdbool.h>
 #include <string.h>
 #include <unibilium.h>
@@ -13,11 +15,10 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
-#include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/terminfo.c.generated.h"
+#include "tui/terminfo.c.generated.h"
 #endif
 
 bool terminfo_is_term_family(const char *term, const char *family)
@@ -38,17 +39,16 @@ bool terminfo_is_term_family(const char *term, const char *family)
 
 bool terminfo_is_bsd_console(const char *term)
 {
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) \
-  || defined(__DragonFly__)
-  if (strequal(term, "vt220")         // OpenBSD
-      || strequal(term, "vt100")) {   // NetBSD
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+  if (strequal(term, "vt220")        // OpenBSD
+      || strequal(term, "vt100")) {  // NetBSD
     return true;
   }
-# if defined(__FreeBSD__)
+#if defined(__FreeBSD__)
   // FreeBSD console sets TERM=xterm, but it does not support xterm features
   // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
   return strequal(term, "xterm") && !!os_getenv("XTERM_VERSION");
-# endif
+#endif
 #endif
   return false;
 }
@@ -64,68 +64,52 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
 {
   if (terminfo_is_term_family(term, "xterm")) {
     *termname = xstrdup("builtin_xterm");
-    return unibi_from_mem((const char *)xterm_256colour_terminfo,
-                          sizeof xterm_256colour_terminfo);
+    return unibi_from_mem((const char *)xterm_256colour_terminfo, sizeof xterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "screen")) {
     *termname = xstrdup("builtin_screen");
     return unibi_from_mem((const char *)screen_256colour_terminfo,
                           sizeof screen_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "tmux")) {
     *termname = xstrdup("builtin_tmux");
-    return unibi_from_mem((const char *)tmux_256colour_terminfo,
-                          sizeof tmux_256colour_terminfo);
+    return unibi_from_mem((const char *)tmux_256colour_terminfo, sizeof tmux_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "rxvt")) {
     *termname = xstrdup("builtin_rxvt");
-    return unibi_from_mem((const char *)rxvt_256colour_terminfo,
-                          sizeof rxvt_256colour_terminfo);
+    return unibi_from_mem((const char *)rxvt_256colour_terminfo, sizeof rxvt_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "putty")) {
     *termname = xstrdup("builtin_putty");
-    return unibi_from_mem((const char *)putty_256colour_terminfo,
-                          sizeof putty_256colour_terminfo);
+    return unibi_from_mem((const char *)putty_256colour_terminfo, sizeof putty_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "linux")) {
     *termname = xstrdup("builtin_linux");
-    return unibi_from_mem((const char *)linux_16colour_terminfo,
-                          sizeof linux_16colour_terminfo);
+    return unibi_from_mem((const char *)linux_16colour_terminfo, sizeof linux_16colour_terminfo);
   } else if (terminfo_is_term_family(term, "interix")) {
     *termname = xstrdup("builtin_interix");
-    return unibi_from_mem((const char *)interix_8colour_terminfo,
-                          sizeof interix_8colour_terminfo);
-  } else if (terminfo_is_term_family(term, "iterm")
-             || terminfo_is_term_family(term, "iterm2")
+    return unibi_from_mem((const char *)interix_8colour_terminfo, sizeof interix_8colour_terminfo);
+  } else if (terminfo_is_term_family(term, "iterm") || terminfo_is_term_family(term, "iterm2")
              || terminfo_is_term_family(term, "iTerm.app")
              || terminfo_is_term_family(term, "iTerm2.app")) {
     *termname = xstrdup("builtin_iterm");
-    return unibi_from_mem((const char *)iterm_256colour_terminfo,
-                          sizeof iterm_256colour_terminfo);
+    return unibi_from_mem((const char *)iterm_256colour_terminfo, sizeof iterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
     *termname = xstrdup("builtin_st");
-    return unibi_from_mem((const char *)st_256colour_terminfo,
-                          sizeof st_256colour_terminfo);
-  } else if (terminfo_is_term_family(term, "gnome")
-             || terminfo_is_term_family(term, "vte")) {
+    return unibi_from_mem((const char *)st_256colour_terminfo, sizeof st_256colour_terminfo);
+  } else if (terminfo_is_term_family(term, "gnome") || terminfo_is_term_family(term, "vte")) {
     *termname = xstrdup("builtin_vte");
-    return unibi_from_mem((const char *)vte_256colour_terminfo,
-                          sizeof vte_256colour_terminfo);
+    return unibi_from_mem((const char *)vte_256colour_terminfo, sizeof vte_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "cygwin")) {
     *termname = xstrdup("builtin_cygwin");
-    return unibi_from_mem((const char *)cygwin_terminfo,
-                          sizeof cygwin_terminfo);
+    return unibi_from_mem((const char *)cygwin_terminfo, sizeof cygwin_terminfo);
   } else if (terminfo_is_term_family(term, "win32con")) {
     *termname = xstrdup("builtin_win32con");
-    return unibi_from_mem((const char *)win32con_terminfo,
-                          sizeof win32con_terminfo);
+    return unibi_from_mem((const char *)win32con_terminfo, sizeof win32con_terminfo);
   } else if (terminfo_is_term_family(term, "conemu")) {
     *termname = xstrdup("builtin_conemu");
-    return unibi_from_mem((const char *)conemu_terminfo,
-                          sizeof conemu_terminfo);
+    return unibi_from_mem((const char *)conemu_terminfo, sizeof conemu_terminfo);
   } else if (terminfo_is_term_family(term, "vtpcon")) {
     *termname = xstrdup("builtin_vtpcon");
-    return unibi_from_mem((const char *)vtpcon_terminfo,
-                          sizeof vtpcon_terminfo);
+    return unibi_from_mem((const char *)vtpcon_terminfo, sizeof vtpcon_terminfo);
   } else {
     *termname = xstrdup("builtin_ansi");
-    return unibi_from_mem((const char *)ansi_terminfo,
-                          sizeof ansi_terminfo);
+    return unibi_from_mem((const char *)ansi_terminfo, sizeof ansi_terminfo);
   }
 }
 
@@ -166,28 +150,22 @@ void terminfo_info_msg(const unibi_term *const ut)
   }
 
   msg_puts("Boolean capabilities:\n");
-  for (enum unibi_boolean i = unibi_boolean_begin_ + 1;
-       i < unibi_boolean_end_; i++) {
-    msg_printf_attr(0, "  %-25s %-10s = %s\n", unibi_name_bool(i),
-                    unibi_short_name_bool(i),
+  for (enum unibi_boolean i = unibi_boolean_begin_ + 1; i < unibi_boolean_end_; i++) {
+    msg_printf_attr(0, "  %-25s %-10s = %s\n", unibi_name_bool(i), unibi_short_name_bool(i),
                     unibi_get_bool(ut, i) ? "true" : "false");
   }
 
   msg_puts("Numeric capabilities:\n");
-  for (enum unibi_numeric i = unibi_numeric_begin_ + 1;
-       i < unibi_numeric_end_; i++) {
+  for (enum unibi_numeric i = unibi_numeric_begin_ + 1; i < unibi_numeric_end_; i++) {
     int n = unibi_get_num(ut, i);  // -1 means "empty"
-    msg_printf_attr(0, "  %-25s %-10s = %d\n", unibi_name_num(i),
-                    unibi_short_name_num(i), n);
+    msg_printf_attr(0, "  %-25s %-10s = %d\n", unibi_name_num(i), unibi_short_name_num(i), n);
   }
 
   msg_puts("String capabilities:\n");
-  for (enum unibi_string i = unibi_string_begin_ + 1;
-       i < unibi_string_end_; i++) {
+  for (enum unibi_string i = unibi_string_begin_ + 1; i < unibi_string_end_; i++) {
     const char *s = unibi_get_str(ut, i);
     if (s) {
-      msg_printf_attr(0, "  %-25s %-10s = ", unibi_name_str(i),
-                      unibi_short_name_str(i));
+      msg_printf_attr(0, "  %-25s %-10s = ", unibi_name_str(i), unibi_short_name_str(i));
       // Most of these strings will contain escape sequences.
       msg_outtrans_special((char_u *)s, false, 0);
       msg_putchar('\n');
@@ -197,8 +175,7 @@ void terminfo_info_msg(const unibi_term *const ut)
   if (unibi_count_ext_bool(ut)) {
     msg_puts("Extended boolean capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_bool(ut); i++) {
-      msg_printf_attr(0, "  %-25s = %s\n",
-                      unibi_get_ext_bool_name(ut, i),
+      msg_printf_attr(0, "  %-25s = %s\n", unibi_get_ext_bool_name(ut, i),
                       unibi_get_ext_bool(ut, i) ? "true" : "false");
     }
   }
@@ -206,9 +183,7 @@ void terminfo_info_msg(const unibi_term *const ut)
   if (unibi_count_ext_num(ut)) {
     msg_puts("Extended numeric capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_num(ut); i++) {
-      msg_printf_attr(0, "  %-25s = %d\n",
-                      unibi_get_ext_num_name(ut, i),
-                      unibi_get_ext_num(ut, i));
+      msg_printf_attr(0, "  %-25s = %d\n", unibi_get_ext_num_name(ut, i), unibi_get_ext_num(ut, i));
     }
   }
 

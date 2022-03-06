@@ -24,6 +24,6 @@ typedef struct fst {
 } VimLFuncDef;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/funcs.h.generated.h"
+#include "eval/funcs.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_FUNCS_H

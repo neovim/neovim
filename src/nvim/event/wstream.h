@@ -18,6 +18,6 @@ struct wbuffer {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/wstream.h.generated.h"
+#include "event/wstream.h.generated.h"
 #endif
 #endif  // NVIM_EVENT_WSTREAM_H

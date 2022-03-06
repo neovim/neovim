@@ -3,9 +3,7 @@
 
 #include "nvim/api/private/defs.h"
 
-typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
-                                     Array args,
-                                     Error *error);
+typedef Object (*ApiDispatchWrapper)(uint64_t channel_id, Array args, Error *error);
 
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.
@@ -18,8 +16,8 @@ typedef struct {
 } MsgpackRpcRequestHandler;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch.h.generated.h"
-# include "api/private/dispatch_wrappers.h.generated.h"
+#include "api/private/dispatch.h.generated.h"
+#include "api/private/dispatch_wrappers.h.generated.h"
 #endif
 
 #endif  // NVIM_API_PRIVATE_DISPATCH_H

@@ -4,6 +4,6 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "plines.h.generated.h"
+#include "plines.h.generated.h"
 #endif
 #endif  // NVIM_PLINES_H

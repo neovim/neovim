@@ -3,6 +3,8 @@
 
 // plines.c: calculate the vertical and horizontal size of text in a window
 
+#include "nvim/plines.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -24,14 +26,13 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
-#include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "plines.c.generated.h"
+#include "plines.c.generated.h"
 #endif
 
 /// Functions calculating vertical size of text when displayed inside a window.
@@ -44,7 +45,6 @@ int plines_win(win_T *wp, linenr_T lnum, bool winheight)
   // is one line anyway.
   return plines_win_nofill(wp, lnum, winheight) + win_get_fill(wp, lnum);
 }
-
 
 /// Return the number of filler lines above "lnum".
 ///
@@ -61,7 +61,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
     int n = diff_check(wp, lnum);
 
     if (n > 0) {
-      return virt_lines+n;
+      return virt_lines + n;
     }
   }
   return virt_lines;
@@ -125,7 +125,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   }
   col -= (unsigned int)width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
+  assert(col <= INT_MAX && (int)col < INT_MAX - (width - 1));
   return ((int)col + (width - 1)) / width + 1;
 }
 
@@ -159,8 +159,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   // screen position of the TAB.  This only fixes an error when the TAB wraps
   // from one screen line to the next (when 'columns' is not a multiple of
   // 'ts') -- webb.
-  if (*s == TAB && (State & NORMAL)
-      && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
+  if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL) - 1;
   }
 
@@ -187,7 +186,10 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 /// @param[in]  cache    whether to use the window's cache for folds
 ///
 /// @return the total number of screen lines
-int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
+int plines_win_full(win_T *wp,
+                    linenr_T lnum,
+                    linenr_T *const nextp,
+                    bool *const foldedp,
                     const bool cache)
 {
   bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
@@ -273,9 +275,7 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 {
   colnr_T col = 0;
 
-  for (char_u *s = line;
-       *s != NUL && (len == MAXCOL || s < line + len);
-       MB_PTR_ADV(s)) {
+  for (char_u *s = line; *s != NUL && (len == MAXCOL || s < line + len); MB_PTR_ADV(s)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL);
   }
 
@@ -291,14 +291,13 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(char_u *line, unsigned char *s, colnr_T col)
 {
-  if (!curwin->w_p_lbr && *get_showbreak_value(curwin) == NUL
-      && !curwin->w_p_bri) {
+  if (!curwin->w_p_lbr && *get_showbreak_value(curwin) == NUL && !curwin->w_p_bri) {
     if (curwin->w_p_wrap) {
       return win_nolbr_chartabsize(curwin, s, col, NULL);
     }
     return win_chartabsize(curwin, s, col);
   }
-  return win_lbr_chartabsize(curwin, line == NULL ? s: line, s, col, NULL);
+  return win_lbr_chartabsize(curwin, line == NULL ? s : line, s, col, NULL);
 }
 
 /// Call lbr_chartabsize() and advance the pointer.
@@ -358,10 +357,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
 
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here
-  if (wp->w_p_lbr
-      && vim_isbreak(c)
-      && !vim_isbreak((int)s[1])
-      && wp->w_p_wrap
+  if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak((int)s[1]) && wp->w_p_wrap
       && (wp->w_width_inner != 0)) {
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
@@ -383,8 +379,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       MB_PTR_ADV(s);
       c = *s;
 
-      if (!(c != NUL
-            && (vim_isbreak(c) || col2 == col || !vim_isbreak((int)(*ps))))) {
+      if (!(c != NUL && (vim_isbreak(c) || col2 == col || !vim_isbreak((int)(*ps))))) {
         break;
       }
 
@@ -395,10 +390,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
         break;
       }
     }
-  } else if ((size == 2)
-             && (MB_BYTE2LEN(*s) > 1)
-             && wp->w_p_wrap
-             && in_win_border(wp, col)) {
+  } else if ((size == 2) && (MB_BYTE2LEN(*s) > 1) && wp->w_p_wrap && in_win_border(wp, col)) {
     // Count the ">" in the last column.
     size++;
     mb_added = 1;
@@ -443,8 +435,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
         if (size + sbrlen + numberwidth > (colnr_T)wp->w_width_inner) {
           // Calculate effective window width.
           int width = (colnr_T)wp->w_width_inner - sbrlen - numberwidth;
-          int prev_width = col ? ((colnr_T)wp->w_width_inner - (sbrlen + col))
-                               : 0;
+          int prev_width = col ? ((colnr_T)wp->w_width_inner - (sbrlen + col)) : 0;
 
           if (width <= 0) {
             width = 1;
@@ -491,9 +482,7 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   int n;
 
   if ((*s == TAB) && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
-    return tabstop_padding(col,
-                           wp->w_buffer->b_p_ts,
-                           wp->w_buffer->b_p_vts_array);
+    return tabstop_padding(col, wp->w_buffer->b_p_ts, wp->w_buffer->b_p_vts_array);
   }
   n = ptr2cells(s);
 
@@ -507,4 +496,3 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   }
   return n;
 }
-

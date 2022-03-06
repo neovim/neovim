@@ -17,8 +17,7 @@
 #define EXT_OBJECT_TYPE_MAX (kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/helpers.h.generated.h"
+#include "msgpack_rpc/helpers.h.generated.h"
 #endif
 
 #endif  // NVIM_MSGPACK_RPC_HELPERS_H
-

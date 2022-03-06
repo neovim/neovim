@@ -12,21 +12,21 @@
 
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
-# include <libutil.h>
+#include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
-# include <util.h>
+#include <util.h>
 #elif defined(__sun)
-#  include <sys/stream.h>
-#  include <sys/syscall.h>
-#  include <fcntl.h>
-#  include <unistd.h>
-#  include <signal.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/stream.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 #else
-# include <pty.h>
+#include <pty.h>
 #endif
 
 #ifdef __APPLE__
-# include <crt_externs.h>
+#include <crt_externs.h>
 #endif
 
 #include <uv.h>
@@ -41,7 +41,7 @@
 #include "nvim/os/pty_process_unix.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_unix.c.generated.h"
+#include "os/pty_process_unix.c.generated.h"
 #endif
 
 #if defined(__sun) && !defined(HAVE_FORKPTY)
@@ -51,8 +51,11 @@
 // inclusion of the header even though it gets include out of order.
 #include <sys/stropts.h>
 
-static int openpty(int *amaster, int *aslave, char *name,
-                   struct termios *termp, struct winsize *winp)
+static int openpty(int *amaster,
+                   int *aslave,
+                   char *name,
+                   struct termios *termp,
+                   struct winsize *winp)
 {
   int slave = -1;
   int master = open("/dev/ptmx", O_RDWR);
@@ -63,7 +66,7 @@ static int openpty(int *amaster, int *aslave, char *name,
   // grantpt will invoke a setuid program to change permissions
   // and might fail if SIGCHLD handler is set, temporarily reset
   // while running
-  void(*sig_saved)(int) = signal(SIGCHLD, SIG_DFL);
+  void (*sig_saved)(int) = signal(SIGCHLD, SIG_DFL);
   int res = grantpt(master);
   signal(SIGCHLD, sig_saved);
 
@@ -76,7 +79,7 @@ static int openpty(int *amaster, int *aslave, char *name,
     goto error;
   }
 
-  slave = open(slave_name, O_RDWR|O_NOCTTY);
+  slave = open(slave_name, O_RDWR | O_NOCTTY);
   if (slave == -1) {
     goto error;
   }
@@ -129,8 +132,7 @@ static int login_tty(int fd)
   return 0;
 }
 
-static pid_t forkpty(int *amaster, char *name,
-                     struct termios *termp, struct winsize *winp)
+static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 {
   int master, slave;
   if (openpty(&master, &slave, name, termp, winp) == -1) {
@@ -139,18 +141,18 @@ static pid_t forkpty(int *amaster, char *name,
 
   pid_t pid = fork();
   switch (pid) {
-  case -1:
-    close(master);
-    close(slave);
-    return -1;
-  case 0:
-    close(master);
-    login_tty(slave);
-    return 0;
-  default:
-    close(slave);
-    *amaster = master;
-    return pid;
+    case -1:
+      close(master);
+      close(slave);
+      return -1;
+    case 0:
+      close(master);
+      login_tty(slave);
+      return 0;
+    default:
+      close(slave);
+      *amaster = master;
+      return pid;
   }
 }
 
@@ -171,8 +173,7 @@ void pty_process_save_termios(int tty_fd)
 }
 
 /// @returns zero on success, or negative error code
-int pty_process_spawn(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+int pty_process_spawn(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   if (!termios_default.c_cflag) {
     // TODO(jkeyes): We could pass NULL to forkpty() instead ...
@@ -183,7 +184,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   Process *proc = (Process *)ptyproc;
   assert(proc->err.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
+  ptyproc->winsize = (struct winsize){ptyproc->height, ptyproc->width, 0, 0};
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
@@ -216,12 +217,10 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
 
-  if (!proc->in.closed
-      && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
+  if (!proc->in.closed && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (!proc->out.closed
-      && (status = set_duplicating_descriptor(master, &proc->out.uv.pipe))) {
+  if (!proc->out.closed && (status = set_duplicating_descriptor(master, &proc->out.uv.pipe))) {
     goto error;
   }
 
@@ -241,15 +240,13 @@ const char *pty_process_tty_name(PtyProcess *ptyproc)
   return ptsname(ptyproc->tty_fd);
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height) FUNC_ATTR_NONNULL_ALL
 {
-  ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
+  ptyproc->winsize = (struct winsize){height, width, 0, 0};
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
-void pty_process_close(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_close(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   pty_process_close_master(ptyproc);
   Process *proc = (Process *)ptyproc;
@@ -271,11 +268,10 @@ void pty_process_teardown(Loop *loop)
   uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
 #if defined(HAVE__NSGETENVIRON)
-# define environ (*_NSGetEnviron())
+#define environ (*_NSGetEnviron())
 #else
   extern char **environ;
 #endif
@@ -308,13 +304,13 @@ static void init_child(PtyProcess *ptyproc)
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
 {
   // Taken from pangoterm
-  termios->c_iflag = ICRNL|IXON;
-  termios->c_oflag = OPOST|ONLCR;
+  termios->c_iflag = ICRNL | IXON;
+  termios->c_oflag = OPOST | ONLCR;
 #ifdef TAB0
   termios->c_oflag |= TAB0;
 #endif
-  termios->c_cflag = CS8|CREAD;
-  termios->c_lflag = ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK;
+  termios->c_cflag = CS8 | CREAD;
+  termios->c_lflag = ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK;
 
   // not using cfsetspeed, not available on all platforms
   cfsetispeed(termios, 38400);
@@ -345,25 +341,24 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_lflag |= ECHOKE;
 #endif
 
-  termios->c_cc[VINTR]    = 0x1f & 'C';
-  termios->c_cc[VQUIT]    = 0x1f & '\\';
-  termios->c_cc[VERASE]   = 0x7f;
-  termios->c_cc[VKILL]    = 0x1f & 'U';
-  termios->c_cc[VEOF]     = 0x1f & 'D';
-  termios->c_cc[VEOL]     = _POSIX_VDISABLE;
-  termios->c_cc[VEOL2]    = _POSIX_VDISABLE;
-  termios->c_cc[VSTART]   = 0x1f & 'Q';
-  termios->c_cc[VSTOP]    = 0x1f & 'S';
-  termios->c_cc[VSUSP]    = 0x1f & 'Z';
+  termios->c_cc[VINTR] = 0x1f & 'C';
+  termios->c_cc[VQUIT] = 0x1f & '\\';
+  termios->c_cc[VERASE] = 0x7f;
+  termios->c_cc[VKILL] = 0x1f & 'U';
+  termios->c_cc[VEOF] = 0x1f & 'D';
+  termios->c_cc[VEOL] = _POSIX_VDISABLE;
+  termios->c_cc[VEOL2] = _POSIX_VDISABLE;
+  termios->c_cc[VSTART] = 0x1f & 'Q';
+  termios->c_cc[VSTOP] = 0x1f & 'S';
+  termios->c_cc[VSUSP] = 0x1f & 'Z';
   termios->c_cc[VREPRINT] = 0x1f & 'R';
-  termios->c_cc[VWERASE]  = 0x1f & 'W';
-  termios->c_cc[VLNEXT]   = 0x1f & 'V';
-  termios->c_cc[VMIN]     = 1;
-  termios->c_cc[VTIME]    = 0;
+  termios->c_cc[VWERASE] = 0x1f & 'W';
+  termios->c_cc[VLNEXT] = 0x1f & 'V';
+  termios->c_cc[VMIN] = 1;
+  termios->c_cc[VTIME] = 0;
 }
 
-static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
-  FUNC_ATTR_NONNULL_ALL
+static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe) FUNC_ATTR_NONNULL_ALL
 {
   int status = 0;  // zero or negative error code (libuv convention)
   int fd_dup = dup(fd);
@@ -381,8 +376,7 @@ static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
 
   status = uv_pipe_open(pipe, fd_dup);
   if (status) {
-    ELOG("Failed to set pipe to descriptor %d: %s",
-         fd_dup, uv_strerror(status));
+    ELOG("Failed to set pipe to descriptor %d: %s", fd_dup, uv_strerror(status));
     goto error;
   }
   return status;
@@ -399,7 +393,8 @@ static void chld_handler(uv_signal_t *handle, int signum)
 
   Loop *loop = handle->loop->data;
 
-  kl_iter(WatcherPtr, loop->children, current) {
+  kl_iter(WatcherPtr, loop->children, current)
+  {
     Process *proc = (*current)->data;
     do {
       pid = waitpid(proc->pid, &stat, WNOHANG);

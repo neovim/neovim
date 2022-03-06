@@ -3,10 +3,10 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
-#include "nvim/eval/funcs.h"  // For FunPtr
-#include "nvim/event/time.h"  // For TimeWatcher
-#include "nvim/ex_cmds_defs.h"  // For exarg_T
-#include "nvim/os/fileio.h"  // For FileDescriptor
+#include "nvim/eval/funcs.h"        // For FunPtr
+#include "nvim/event/time.h"        // For TimeWatcher
+#include "nvim/ex_cmds_defs.h"      // For exarg_T
+#include "nvim/os/fileio.h"         // For FileDescriptor
 #include "nvim/os/stdpaths_defs.h"  // For XDGVarType
 
 #define COPYID_INC 2
@@ -18,8 +18,8 @@ extern hashtab_T func_hashtab;
 // From user function to hashitem and back.
 EXTERN ufunc_T dumuf;
 #define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
-#define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
+#define HIKEY2UF(p) ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
+#define HI2UF(hi) HIKEY2UF((hi)->hi_key)
 
 /*
  * Structure returned by get_lval() and used by set_var_lval().
@@ -68,9 +68,9 @@ typedef struct lval_S {
 
 /// enum used by var_flavour()
 typedef enum {
-  VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
-  VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
-  VAR_FLAVOUR_SHADA   = 4,  // all uppercase
+  VAR_FLAVOUR_DEFAULT = 1,  // doesn't start with uppercase
+  VAR_FLAVOUR_SESSION = 2,  // starts with uppercase, some lower
+  VAR_FLAVOUR_SHADA = 4,    // all uppercase
 } var_flavour_T;
 
 /// Defines for Vim variables
@@ -168,9 +168,9 @@ typedef enum {
   VV_STDERR,
   VV_MSGPACK_TYPES,
   VV__NULL_STRING,  // String with NULL value. For test purposes only.
-  VV__NULL_LIST,  // List with NULL value. For test purposes only.
-  VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
-  VV__NULL_BLOB,  // Blob with NULL value. For test purposes only.
+  VV__NULL_LIST,    // List with NULL value. For test purposes only.
+  VV__NULL_DICT,    // Dictionary with NULL value. For test purposes only.
+  VV__NULL_BLOB,    // Blob with NULL value. For test purposes only.
   VV_LUA,
 } VimVarIndex;
 
@@ -199,28 +199,28 @@ typedef struct {
   hashtab_T sve_hashtab;
 } save_v_event_T;
 
-
 /// trans_function_name() flags
 typedef enum {
-  TFN_INT = 1,  ///< May use internal function name
-  TFN_QUIET = 2,  ///< Do not emit error messages.
+  TFN_INT = 1,          ///< May use internal function name
+  TFN_QUIET = 2,        ///< Do not emit error messages.
   TFN_NO_AUTOLOAD = 4,  ///< Do not use script autoloading.
-  TFN_NO_DEREF = 8,  ///< Do not dereference a Funcref.
-  TFN_READ_ONLY = 16,  ///< Will not change the variable.
+  TFN_NO_DEREF = 8,     ///< Do not dereference a Funcref.
+  TFN_READ_ONLY = 16,   ///< Will not change the variable.
 } TransFunctionNameFlags;
 
 /// get_lval() flags
 typedef enum {
-  GLV_QUIET = TFN_QUIET,  ///< Do not emit error messages.
+  GLV_QUIET = TFN_QUIET,              ///< Do not emit error messages.
   GLV_NO_AUTOLOAD = TFN_NO_AUTOLOAD,  ///< Do not use script autoloading.
-  GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
-                                  ///< the value (prevents error message).
+  GLV_READ_ONLY = TFN_READ_ONLY,      ///< Indicates that caller will not change
+                                      ///< the value (prevents error message).
 } GetLvalFlags;
 
 /// flags for find_name_end()
-#define FNE_INCL_BR     1       // find_name_end(): include [] in name
-#define FNE_CHECK_START 2       // find_name_end(): check name starts with
-                                // valid character
+#define FNE_INCL_BR 1  // find_name_end(): include [] in name
+#define FNE_CHECK_START                                                                            \
+  2  // find_name_end(): check name starts with
+     // valid character
 
 typedef struct {
   TimeWatcher tw;
@@ -235,8 +235,7 @@ typedef struct {
 } timer_T;
 
 /// Type of assert_* check being performed
-typedef enum
-{
+typedef enum {
   ASSERT_EQUAL,
   ASSERT_NOTEQUAL,
   ASSERT_MATCH,
@@ -248,23 +247,23 @@ typedef enum
 /// types for expressions.
 typedef enum {
   EXPR_UNKNOWN = 0,
-  EXPR_EQUAL,         ///< ==
-  EXPR_NEQUAL,        ///< !=
-  EXPR_GREATER,       ///< >
-  EXPR_GEQUAL,        ///< >=
-  EXPR_SMALLER,       ///< <
-  EXPR_SEQUAL,        ///< <=
-  EXPR_MATCH,         ///< =~
-  EXPR_NOMATCH,       ///< !~
-  EXPR_IS,            ///< is
-  EXPR_ISNOT,         ///< isnot
+  EXPR_EQUAL,    ///< ==
+  EXPR_NEQUAL,   ///< !=
+  EXPR_GREATER,  ///< >
+  EXPR_GEQUAL,   ///< >=
+  EXPR_SMALLER,  ///< <
+  EXPR_SEQUAL,   ///< <=
+  EXPR_MATCH,    ///< =~
+  EXPR_NOMATCH,  ///< !~
+  EXPR_IS,       ///< is
+  EXPR_ISNOT,    ///< isnot
 } exprtype_T;
 
 /// Type for dict_list function
 typedef enum {
-  kDictListKeys,  ///< List dictionary keys.
+  kDictListKeys,    ///< List dictionary keys.
   kDictListValues,  ///< List dictionary values.
-  kDictListItems,  ///< List dictionary contents: [keys, values].
+  kDictListItems,   ///< List dictionary contents: [keys, values].
 } DictListType;
 
 typedef int (*ex_unletlock_callback)(lval_T *, char_u *, exarg_T *, int);
@@ -273,6 +272,6 @@ typedef int (*ex_unletlock_callback)(lval_T *, char_u *, exarg_T *, int);
 extern bool *eval_lavars_used;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.h.generated.h"
+#include "eval.h.generated.h"
 #endif
 #endif  // NVIM_EVAL_H

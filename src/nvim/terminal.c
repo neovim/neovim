@@ -36,6 +36,8 @@
 //              Conque https://code.google.com/p/conque
 // Some code from pangoterm http://www.leonerd.org.uk/code/pangoterm
 
+#include "nvim/terminal.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -71,7 +73,6 @@
 #include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
@@ -79,13 +80,13 @@
 typedef struct terminal_state {
   VimState state;
   Terminal *term;
-  int save_rd;              // saved value of RedrawingDisabled
+  int save_rd;  // saved value of RedrawingDisabled
   bool close;
-  bool got_bsl;             // if the last input was <C-\>
+  bool got_bsl;  // if the last input was <C-\>
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.c.generated.h"
+#include "terminal.c.generated.h"
 #endif
 
 // Delay for refreshing the terminal buffer after receiving updates from
@@ -109,9 +110,9 @@ struct terminal {
   //  - receive data from libvterm as a result of key presses.
   char textbuf[0x1fff];
 
-  ScrollbackLine **sb_buffer;       // Scrollback buffer storage for libvterm
-  size_t sb_current;                // number of rows pushed to sb_buffer
-  size_t sb_size;                   // sb_buffer size
+  ScrollbackLine **sb_buffer;  // Scrollback buffer storage for libvterm
+  size_t sb_current;           // number of rows pushed to sb_buffer
+  size_t sb_size;              // sb_buffer size
   // "virtual index" that points to the first sb_buffer row that we need to
   // push to the terminal buffer when refreshing the scrollback. When negative,
   // it actually points to entries that are no longer in sb_buffer (because the
@@ -130,26 +131,26 @@ struct terminal {
 
   // some vterm properties
   bool forward_mouse;
-  int invalid_start, invalid_end;   // invalid rows in libvterm screen
+  int invalid_start, invalid_end;  // invalid rows in libvterm screen
   struct {
     int row, col;
     bool visible;
   } cursor;
-  bool pending_resize;              // pending width/height
+  bool pending_resize;  // pending width/height
 
   bool color_set[16];
 
-  size_t refcount;                  // reference count
+  size_t refcount;  // reference count
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  .damage      = term_damage,
-  .moverect    = term_moverect,
-  .movecursor  = term_movecursor,
-  .settermprop = term_settermprop,
-  .bell        = term_bell,
-  .sb_pushline = term_sb_push,
-  .sb_popline  = term_sb_pop,
+    .damage = term_damage,
+    .moverect = term_moverect,
+    .movecursor = term_movecursor,
+    .settermprop = term_settermprop,
+    .bell = term_bell,
+    .sb_pushline = term_sb_push,
+    .sb_popline = term_sb_pop,
 };
 
 static PMap(ptr_t) invalidated_terminals = MAP_INIT;
@@ -213,11 +214,11 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
-  buf->b_p_ma = false;     // 'nomodifiable'
-  buf->b_p_ul = -1;        // 'undolevels'
-  buf->b_p_scbk =          // 'scrollback' (initialize local from global)
-                  (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
-  buf->b_p_tw = 0;         // 'textwidth'
+  buf->b_p_ma = false;  // 'nomodifiable'
+  buf->b_p_ul = -1;     // 'undolevels'
+  buf->b_p_scbk =       // 'scrollback' (initialize local from global)
+      (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
+  buf->b_p_tw = 0;  // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   if (buf->b_ffname != NULL) {
@@ -225,7 +226,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   }
   RESET_BINDING(curwin);
   // Reset cursor in current window.
-  curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
+  curwin->w_cursor = (pos_T){.lnum = 1, .col = 0, .coladd = 0};
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
   // Local 'scrollback' _after_ autocmds.
@@ -253,10 +254,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
 
       if (color_val != -1) {
         VTermColor color;
-        vterm_color_rgb(&color,
-                        (uint8_t)((color_val >> 16) & 0xFF),
-                        (uint8_t)((color_val >> 8) & 0xFF),
-                        (uint8_t)((color_val >> 0) & 0xFF));
+        vterm_color_rgb(&color, (uint8_t)((color_val >> 16) & 0xFF),
+                        (uint8_t)((color_val >> 8) & 0xFF), (uint8_t)((color_val >> 0) & 0xFF));
         vterm_state_set_palette_color(state, i, &color);
         rv->color_set[i] = true;
       }
@@ -347,11 +346,10 @@ void terminal_check_size(Terminal *term)
   vterm_get_size(term->vt, &curheight, &curwidth);
   uint16_t width = 0, height = 0;
 
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+  {
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
-      const uint16_t win_width =
-        (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
+      const uint16_t win_width = (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
       width = MAX(width, win_width);
       height = (uint16_t)MAX(height, wp->w_height_inner);
     }
@@ -465,8 +463,7 @@ static void terminal_check_cursor(void)
   Terminal *term = curbuf->terminal;
   curwin->w_wrow = term->cursor.row;
   curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-  curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
-                              row_to_linenr(term, term->cursor.row));
+  curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count, row_to_linenr(term, term->cursor.row));
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
   coladvance(MAX(0, term->cursor.col + off));
@@ -502,60 +499,60 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
-  case K_LEFTMOUSE:
-  case K_LEFTDRAG:
-  case K_LEFTRELEASE:
-  case K_MOUSEMOVE:
-  case K_MIDDLEMOUSE:
-  case K_MIDDLEDRAG:
-  case K_MIDDLERELEASE:
-  case K_RIGHTMOUSE:
-  case K_RIGHTDRAG:
-  case K_RIGHTRELEASE:
-  case K_MOUSEDOWN:
-  case K_MOUSEUP:
-    if (send_mouse_event(s->term, key)) {
-      return 0;
-    }
-    break;
-
-  case K_EVENT:
-    // We cannot let an event free the terminal yet. It is still needed.
-    s->term->refcount++;
-    state_handle_k_event();
-    s->term->refcount--;
-    if (s->term->buf_handle == 0) {
-      s->close = true;
-      return 0;
-    }
-    break;
-
-  case K_COMMAND:
-    do_cmdline(NULL, getcmdkeycmd, NULL, 0);
-    break;
-
-  case K_LUA:
-    map_execute_lua();
-    break;
-
-  case Ctrl_N:
-    if (s->got_bsl) {
-      return 0;
-    }
-    FALLTHROUGH;
-
-  default:
-    if (key == Ctrl_BSL && !s->got_bsl) {
-      s->got_bsl = true;
+    case K_LEFTMOUSE:
+    case K_LEFTDRAG:
+    case K_LEFTRELEASE:
+    case K_MOUSEMOVE:
+    case K_MIDDLEMOUSE:
+    case K_MIDDLEDRAG:
+    case K_MIDDLERELEASE:
+    case K_RIGHTMOUSE:
+    case K_RIGHTDRAG:
+    case K_RIGHTRELEASE:
+    case K_MOUSEDOWN:
+    case K_MOUSEUP:
+      if (send_mouse_event(s->term, key)) {
+        return 0;
+      }
       break;
-    }
-    if (s->term->closed) {
-      s->close = true;
-      return 0;
-    }
 
-    s->got_bsl = false;
-    terminal_send_key(s->term, key);
+    case K_EVENT:
+      // We cannot let an event free the terminal yet. It is still needed.
+      s->term->refcount++;
+      state_handle_k_event();
+      s->term->refcount--;
+      if (s->term->buf_handle == 0) {
+        s->close = true;
+        return 0;
+      }
+      break;
+
+    case K_COMMAND:
+      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+      break;
+
+    case K_LUA:
+      map_execute_lua();
+      break;
+
+    case Ctrl_N:
+      if (s->got_bsl) {
+        return 0;
+      }
+      FALLTHROUGH;
+
+    default:
+      if (key == Ctrl_BSL && !s->got_bsl) {
+        s->got_bsl = true;
+        break;
+      }
+      if (s->term->closed) {
+        s->close = true;
+        return 0;
+      }
+
+      s->got_bsl = false;
+      terminal_send_key(s->term, key);
   }
 
   if (curbuf->terminal == NULL) {
@@ -563,8 +560,7 @@ static int terminal_execute(VimState *state, int key)
   }
   if (s->term != curbuf->terminal) {
     invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-    invalidate_terminal(curbuf->terminal,
-                        curbuf->terminal->cursor.row,
+    invalidate_terminal(curbuf->terminal, curbuf->terminal->cursor.row,
                         curbuf->terminal->cursor.row + 1);
     s->term = curbuf->terminal;
   }
@@ -608,30 +604,30 @@ static bool is_filter_char(int c)
 {
   unsigned int flag = 0;
   switch (c) {
-  case 0x08:
-    flag = TPF_BS;
-    break;
-  case 0x09:
-    flag = TPF_HT;
-    break;
-  case 0x0A:
-  case 0x0D:
-    break;
-  case 0x0C:
-    flag = TPF_FF;
-    break;
-  case 0x1b:
-    flag = TPF_ESC;
-    break;
-  case 0x7F:
-    flag = TPF_DEL;
-    break;
-  default:
-    if (c < ' ') {
-      flag = TPF_C0;
-    } else if (c >= 0x80 && c <= 0x9F) {
-      flag = TPF_C1;
-    }
+    case 0x08:
+      flag = TPF_BS;
+      break;
+    case 0x09:
+      flag = TPF_HT;
+      break;
+    case 0x0A:
+    case 0x0D:
+      break;
+    case 0x0C:
+      flag = TPF_FF;
+      break;
+    case 0x1b:
+      flag = TPF_ESC;
+      break;
+    case 0x7F:
+      flag = TPF_DEL;
+      break;
+    default:
+      if (c < ' ') {
+        flag = TPF_C0;
+      } else if (c >= 0x80 && c <= 0x9F) {
+        flag = TPF_C1;
+      }
   }
   return !!(tpf_flags & flag);
 }
@@ -708,7 +704,6 @@ static int get_rgb(VTermState *state, VTermColor color)
   return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
 }
 
-
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
   int height, width;
@@ -739,38 +734,35 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
     int vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
     int vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
 
-    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx-1];
-    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx-1];
+    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx - 1];
+    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx - 1];
 
-    int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
-                   | (cell.attrs.italic ? HL_ITALIC : 0)
+    int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0) | (cell.attrs.italic ? HL_ITALIC : 0)
                    | (cell.attrs.reverse ? HL_INVERSE : 0)
                    | (cell.attrs.underline ? HL_UNDERLINE : 0)
-                   | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
+                   | (cell.attrs.strike ? HL_STRIKETHROUGH : 0)
                    | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
                    | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
 
     int attr_id = 0;
 
     if (hl_attrs || !fg_default || !bg_default) {
-      attr_id = hl_get_term_attr(&(HlAttrs) {
-        .cterm_ae_attr = (int16_t)hl_attrs,
-        .cterm_fg_color = vt_fg_idx,
-        .cterm_bg_color = vt_bg_idx,
-        .rgb_ae_attr = (int16_t)hl_attrs,
-        .rgb_fg_color = vt_fg,
-        .rgb_bg_color = vt_bg,
-        .rgb_sp_color = -1,
-        .hl_blend = -1,
+      attr_id = hl_get_term_attr(&(HlAttrs){
+          .cterm_ae_attr = (int16_t)hl_attrs,
+          .cterm_fg_color = vt_fg_idx,
+          .cterm_bg_color = vt_bg_idx,
+          .rgb_ae_attr = (int16_t)hl_attrs,
+          .rgb_fg_color = vt_fg,
+          .rgb_bg_color = vt_bg,
+          .rgb_sp_color = -1,
+          .hl_blend = -1,
       });
     }
 
-    if (term->cursor.visible && term->cursor.row == row
-        && term->cursor.col == col) {
-      attr_id = hl_combine_attr(attr_id,
-                                is_focused(term) && wp == curwin
-                                ? win_hl_attr(wp, HLF_TERM)
-                                : win_hl_attr(wp, HLF_TERMNC));
+    if (term->cursor.visible && term->cursor.row == row && term->cursor.col == col) {
+      attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin
+                                             ? win_hl_attr(wp, HLF_TERM)
+                                             : win_hl_attr(wp, HLF_TERMNC));
     }
 
     term_attrs[col] = attr_id;
@@ -798,8 +790,7 @@ static int term_damage(VTermRect rect, void *data)
 
 static int term_moverect(VTermRect dest, VTermRect src, void *data)
 {
-  invalidate_terminal(data, MIN(dest.start_row, src.start_row),
-                      MAX(dest.end_row, src.end_row));
+  invalidate_terminal(data, MIN(dest.start_row, src.start_row), MAX(dest.end_row, src.end_row));
   return 1;
 }
 
@@ -813,16 +804,11 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible, void *data)
   return 1;
 }
 
-static void buf_set_term_title(buf_T *buf, char *title)
-  FUNC_ATTR_NONNULL_ALL
+static void buf_set_term_title(buf_T *buf, char *title) FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
-  dict_set_var(buf->b_vars,
-               STATIC_CSTR_AS_STRING("term_title"),
-               STRING_OBJ(cstr_as_string(title)),
-               false,
-               false,
-               &err);
+  dict_set_var(buf->b_vars, STATIC_CSTR_AS_STRING("term_title"), STRING_OBJ(cstr_as_string(title)),
+               false, false, &err);
   api_clear_error(&err);
   status_redraw_buf(buf);
 }
@@ -832,26 +818,26 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   Terminal *term = data;
 
   switch (prop) {
-  case VTERM_PROP_ALTSCREEN:
-    break;
+    case VTERM_PROP_ALTSCREEN:
+      break;
 
-  case VTERM_PROP_CURSORVISIBLE:
-    term->cursor.visible = val->boolean;
-    invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
-    break;
+    case VTERM_PROP_CURSORVISIBLE:
+      term->cursor.visible = val->boolean;
+      invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+      break;
 
-  case VTERM_PROP_TITLE: {
-    buf_T *buf = handle_get_buffer(term->buf_handle);
-    buf_set_term_title(buf, val->string);
-    break;
-  }
+    case VTERM_PROP_TITLE: {
+      buf_T *buf = handle_get_buffer(term->buf_handle);
+      buf_set_term_title(buf, val->string);
+      break;
+    }
 
-  case VTERM_PROP_MOUSE:
-    term->forward_mouse = (bool)val->number;
-    break;
+    case VTERM_PROP_MOUSE:
+      term->forward_mouse = (bool)val->number;
+      break;
 
-  default:
-    return 0;
+    default:
+      return 0;
   }
 
   return 1;
@@ -888,8 +874,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
             sizeof(term->sb_buffer[0]) * (term->sb_current - 1));
   } else if (term->sb_current > 0) {
     // Make room at the start by shifting to the right.
-    memmove(term->sb_buffer + 1, term->sb_buffer,
-            sizeof(term->sb_buffer[0]) * term->sb_current);
+    memmove(term->sb_buffer + 1, term->sb_buffer, sizeof(term->sb_buffer[0]) * term->sb_current);
   }
 
   if (!sbrow) {
@@ -933,8 +918,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   ScrollbackLine *sbrow = term->sb_buffer[0];
   term->sb_current--;
   // Forget the "popped" row by shifting the rest onto it.
-  memmove(term->sb_buffer, term->sb_buffer + 1,
-          sizeof(term->sb_buffer[0]) * (term->sb_current));
+  memmove(term->sb_buffer, term->sb_buffer + 1, sizeof(term->sb_buffer[0]) * (term->sb_current));
 
   size_t cols_to_copy = (size_t)cols;
   if (cols_to_copy > sbrow->cols) {
@@ -970,30 +954,30 @@ static void convert_modifiers(int key, VTermModifier *statep)
   }
 
   switch (key) {
-  case K_S_TAB:
-  case K_S_UP:
-  case K_S_DOWN:
-  case K_S_LEFT:
-  case K_S_RIGHT:
-  case K_S_F1:
-  case K_S_F2:
-  case K_S_F3:
-  case K_S_F4:
-  case K_S_F5:
-  case K_S_F6:
-  case K_S_F7:
-  case K_S_F8:
-  case K_S_F9:
-  case K_S_F10:
-  case K_S_F11:
-  case K_S_F12:
-    *statep |= VTERM_MOD_SHIFT;
-    break;
+    case K_S_TAB:
+    case K_S_UP:
+    case K_S_DOWN:
+    case K_S_LEFT:
+    case K_S_RIGHT:
+    case K_S_F1:
+    case K_S_F2:
+    case K_S_F3:
+    case K_S_F4:
+    case K_S_F5:
+    case K_S_F6:
+    case K_S_F7:
+    case K_S_F8:
+    case K_S_F9:
+    case K_S_F10:
+    case K_S_F11:
+    case K_S_F12:
+      *statep |= VTERM_MOD_SHIFT;
+      break;
 
-  case K_C_LEFT:
-  case K_C_RIGHT:
-    *statep |= VTERM_MOD_CTRL;
-    break;
+    case K_C_LEFT:
+    case K_C_RIGHT:
+      *statep |= VTERM_MOD_CTRL;
+      break;
   }
 }
 
@@ -1002,212 +986,216 @@ static VTermKey convert_key(int key, VTermModifier *statep)
   convert_modifiers(key, statep);
 
   switch (key) {
-  case K_BS:
-    return VTERM_KEY_BACKSPACE;
-  case K_S_TAB:
-    FALLTHROUGH;
-  case TAB:
-    return VTERM_KEY_TAB;
-  case Ctrl_M:
-    return VTERM_KEY_ENTER;
-  case ESC:
-    return VTERM_KEY_ESCAPE;
+    case K_BS:
+      return VTERM_KEY_BACKSPACE;
+    case K_S_TAB:
+      FALLTHROUGH;
+    case TAB:
+      return VTERM_KEY_TAB;
+    case Ctrl_M:
+      return VTERM_KEY_ENTER;
+    case ESC:
+      return VTERM_KEY_ESCAPE;
 
-  case K_S_UP:
-    FALLTHROUGH;
-  case K_UP:
-    return VTERM_KEY_UP;
-  case K_S_DOWN:
-    FALLTHROUGH;
-  case K_DOWN:
-    return VTERM_KEY_DOWN;
-  case K_S_LEFT:
-    FALLTHROUGH;
-  case K_C_LEFT:
-    FALLTHROUGH;
-  case K_LEFT:
-    return VTERM_KEY_LEFT;
-  case K_S_RIGHT:
-    FALLTHROUGH;
-  case K_C_RIGHT:
-    FALLTHROUGH;
-  case K_RIGHT:
-    return VTERM_KEY_RIGHT;
+    case K_S_UP:
+      FALLTHROUGH;
+    case K_UP:
+      return VTERM_KEY_UP;
+    case K_S_DOWN:
+      FALLTHROUGH;
+    case K_DOWN:
+      return VTERM_KEY_DOWN;
+    case K_S_LEFT:
+      FALLTHROUGH;
+    case K_C_LEFT:
+      FALLTHROUGH;
+    case K_LEFT:
+      return VTERM_KEY_LEFT;
+    case K_S_RIGHT:
+      FALLTHROUGH;
+    case K_C_RIGHT:
+      FALLTHROUGH;
+    case K_RIGHT:
+      return VTERM_KEY_RIGHT;
 
-  case K_INS:
-    return VTERM_KEY_INS;
-  case K_DEL:
-    return VTERM_KEY_DEL;
-  case K_HOME:
-    return VTERM_KEY_HOME;
-  case K_END:
-    return VTERM_KEY_END;
-  case K_PAGEUP:
-    return VTERM_KEY_PAGEUP;
-  case K_PAGEDOWN:
-    return VTERM_KEY_PAGEDOWN;
+    case K_INS:
+      return VTERM_KEY_INS;
+    case K_DEL:
+      return VTERM_KEY_DEL;
+    case K_HOME:
+      return VTERM_KEY_HOME;
+    case K_END:
+      return VTERM_KEY_END;
+    case K_PAGEUP:
+      return VTERM_KEY_PAGEUP;
+    case K_PAGEDOWN:
+      return VTERM_KEY_PAGEDOWN;
 
-  case K_K0:
-    FALLTHROUGH;
-  case K_KINS:
-    return VTERM_KEY_KP_0;
-  case K_K1:
-    FALLTHROUGH;
-  case K_KEND:
-    return VTERM_KEY_KP_1;
-  case K_K2:
-    FALLTHROUGH;
-  case K_KDOWN:
-    return VTERM_KEY_KP_2;
-  case K_K3:
-    FALLTHROUGH;
-  case K_KPAGEDOWN:
-    return VTERM_KEY_KP_3;
-  case K_K4:
-    FALLTHROUGH;
-  case K_KLEFT:
-    return VTERM_KEY_KP_4;
-  case K_K5:
-    FALLTHROUGH;
-  case K_KORIGIN:
-    return VTERM_KEY_KP_5;
-  case K_K6:
-    FALLTHROUGH;
-  case K_KRIGHT:
-    return VTERM_KEY_KP_6;
-  case K_K7:
-    FALLTHROUGH;
-  case K_KHOME:
-    return VTERM_KEY_KP_7;
-  case K_K8:
-    FALLTHROUGH;
-  case K_KUP:
-    return VTERM_KEY_KP_8;
-  case K_K9:
-    FALLTHROUGH;
-  case K_KPAGEUP:
-    return VTERM_KEY_KP_9;
-  case K_KDEL:
-    FALLTHROUGH;
-  case K_KPOINT:
-    return VTERM_KEY_KP_PERIOD;
-  case K_KENTER:
-    return VTERM_KEY_KP_ENTER;
-  case K_KPLUS:
-    return VTERM_KEY_KP_PLUS;
-  case K_KMINUS:
-    return VTERM_KEY_KP_MINUS;
-  case K_KMULTIPLY:
-    return VTERM_KEY_KP_MULT;
-  case K_KDIVIDE:
-    return VTERM_KEY_KP_DIVIDE;
+    case K_K0:
+      FALLTHROUGH;
+    case K_KINS:
+      return VTERM_KEY_KP_0;
+    case K_K1:
+      FALLTHROUGH;
+    case K_KEND:
+      return VTERM_KEY_KP_1;
+    case K_K2:
+      FALLTHROUGH;
+    case K_KDOWN:
+      return VTERM_KEY_KP_2;
+    case K_K3:
+      FALLTHROUGH;
+    case K_KPAGEDOWN:
+      return VTERM_KEY_KP_3;
+    case K_K4:
+      FALLTHROUGH;
+    case K_KLEFT:
+      return VTERM_KEY_KP_4;
+    case K_K5:
+      FALLTHROUGH;
+    case K_KORIGIN:
+      return VTERM_KEY_KP_5;
+    case K_K6:
+      FALLTHROUGH;
+    case K_KRIGHT:
+      return VTERM_KEY_KP_6;
+    case K_K7:
+      FALLTHROUGH;
+    case K_KHOME:
+      return VTERM_KEY_KP_7;
+    case K_K8:
+      FALLTHROUGH;
+    case K_KUP:
+      return VTERM_KEY_KP_8;
+    case K_K9:
+      FALLTHROUGH;
+    case K_KPAGEUP:
+      return VTERM_KEY_KP_9;
+    case K_KDEL:
+      FALLTHROUGH;
+    case K_KPOINT:
+      return VTERM_KEY_KP_PERIOD;
+    case K_KENTER:
+      return VTERM_KEY_KP_ENTER;
+    case K_KPLUS:
+      return VTERM_KEY_KP_PLUS;
+    case K_KMINUS:
+      return VTERM_KEY_KP_MINUS;
+    case K_KMULTIPLY:
+      return VTERM_KEY_KP_MULT;
+    case K_KDIVIDE:
+      return VTERM_KEY_KP_DIVIDE;
 
-  case K_S_F1:
-    FALLTHROUGH;
-  case K_F1:
-    return VTERM_KEY_FUNCTION(1);
-  case K_S_F2:
-    FALLTHROUGH;
-  case K_F2:
-    return VTERM_KEY_FUNCTION(2);
-  case K_S_F3:
-    FALLTHROUGH;
-  case K_F3:
-    return VTERM_KEY_FUNCTION(3);
-  case K_S_F4:
-    FALLTHROUGH;
-  case K_F4:
-    return VTERM_KEY_FUNCTION(4);
-  case K_S_F5:
-    FALLTHROUGH;
-  case K_F5:
-    return VTERM_KEY_FUNCTION(5);
-  case K_S_F6:
-    FALLTHROUGH;
-  case K_F6:
-    return VTERM_KEY_FUNCTION(6);
-  case K_S_F7:
-    FALLTHROUGH;
-  case K_F7:
-    return VTERM_KEY_FUNCTION(7);
-  case K_S_F8:
-    FALLTHROUGH;
-  case K_F8:
-    return VTERM_KEY_FUNCTION(8);
-  case K_S_F9:
-    FALLTHROUGH;
-  case K_F9:
-    return VTERM_KEY_FUNCTION(9);
-  case K_S_F10:
-    FALLTHROUGH;
-  case K_F10:
-    return VTERM_KEY_FUNCTION(10);
-  case K_S_F11:
-    FALLTHROUGH;
-  case K_F11:
-    return VTERM_KEY_FUNCTION(11);
-  case K_S_F12:
-    FALLTHROUGH;
-  case K_F12:
-    return VTERM_KEY_FUNCTION(12);
+    case K_S_F1:
+      FALLTHROUGH;
+    case K_F1:
+      return VTERM_KEY_FUNCTION(1);
+    case K_S_F2:
+      FALLTHROUGH;
+    case K_F2:
+      return VTERM_KEY_FUNCTION(2);
+    case K_S_F3:
+      FALLTHROUGH;
+    case K_F3:
+      return VTERM_KEY_FUNCTION(3);
+    case K_S_F4:
+      FALLTHROUGH;
+    case K_F4:
+      return VTERM_KEY_FUNCTION(4);
+    case K_S_F5:
+      FALLTHROUGH;
+    case K_F5:
+      return VTERM_KEY_FUNCTION(5);
+    case K_S_F6:
+      FALLTHROUGH;
+    case K_F6:
+      return VTERM_KEY_FUNCTION(6);
+    case K_S_F7:
+      FALLTHROUGH;
+    case K_F7:
+      return VTERM_KEY_FUNCTION(7);
+    case K_S_F8:
+      FALLTHROUGH;
+    case K_F8:
+      return VTERM_KEY_FUNCTION(8);
+    case K_S_F9:
+      FALLTHROUGH;
+    case K_F9:
+      return VTERM_KEY_FUNCTION(9);
+    case K_S_F10:
+      FALLTHROUGH;
+    case K_F10:
+      return VTERM_KEY_FUNCTION(10);
+    case K_S_F11:
+      FALLTHROUGH;
+    case K_F11:
+      return VTERM_KEY_FUNCTION(11);
+    case K_S_F12:
+      FALLTHROUGH;
+    case K_F12:
+      return VTERM_KEY_FUNCTION(12);
 
-  case K_F13:
-    return VTERM_KEY_FUNCTION(13);
-  case K_F14:
-    return VTERM_KEY_FUNCTION(14);
-  case K_F15:
-    return VTERM_KEY_FUNCTION(15);
-  case K_F16:
-    return VTERM_KEY_FUNCTION(16);
-  case K_F17:
-    return VTERM_KEY_FUNCTION(17);
-  case K_F18:
-    return VTERM_KEY_FUNCTION(18);
-  case K_F19:
-    return VTERM_KEY_FUNCTION(19);
-  case K_F20:
-    return VTERM_KEY_FUNCTION(20);
-  case K_F21:
-    return VTERM_KEY_FUNCTION(21);
-  case K_F22:
-    return VTERM_KEY_FUNCTION(22);
-  case K_F23:
-    return VTERM_KEY_FUNCTION(23);
-  case K_F24:
-    return VTERM_KEY_FUNCTION(24);
-  case K_F25:
-    return VTERM_KEY_FUNCTION(25);
-  case K_F26:
-    return VTERM_KEY_FUNCTION(26);
-  case K_F27:
-    return VTERM_KEY_FUNCTION(27);
-  case K_F28:
-    return VTERM_KEY_FUNCTION(28);
-  case K_F29:
-    return VTERM_KEY_FUNCTION(29);
-  case K_F30:
-    return VTERM_KEY_FUNCTION(30);
-  case K_F31:
-    return VTERM_KEY_FUNCTION(31);
-  case K_F32:
-    return VTERM_KEY_FUNCTION(32);
-  case K_F33:
-    return VTERM_KEY_FUNCTION(33);
-  case K_F34:
-    return VTERM_KEY_FUNCTION(34);
-  case K_F35:
-    return VTERM_KEY_FUNCTION(35);
-  case K_F36:
-    return VTERM_KEY_FUNCTION(36);
-  case K_F37:
-    return VTERM_KEY_FUNCTION(37);
+    case K_F13:
+      return VTERM_KEY_FUNCTION(13);
+    case K_F14:
+      return VTERM_KEY_FUNCTION(14);
+    case K_F15:
+      return VTERM_KEY_FUNCTION(15);
+    case K_F16:
+      return VTERM_KEY_FUNCTION(16);
+    case K_F17:
+      return VTERM_KEY_FUNCTION(17);
+    case K_F18:
+      return VTERM_KEY_FUNCTION(18);
+    case K_F19:
+      return VTERM_KEY_FUNCTION(19);
+    case K_F20:
+      return VTERM_KEY_FUNCTION(20);
+    case K_F21:
+      return VTERM_KEY_FUNCTION(21);
+    case K_F22:
+      return VTERM_KEY_FUNCTION(22);
+    case K_F23:
+      return VTERM_KEY_FUNCTION(23);
+    case K_F24:
+      return VTERM_KEY_FUNCTION(24);
+    case K_F25:
+      return VTERM_KEY_FUNCTION(25);
+    case K_F26:
+      return VTERM_KEY_FUNCTION(26);
+    case K_F27:
+      return VTERM_KEY_FUNCTION(27);
+    case K_F28:
+      return VTERM_KEY_FUNCTION(28);
+    case K_F29:
+      return VTERM_KEY_FUNCTION(29);
+    case K_F30:
+      return VTERM_KEY_FUNCTION(30);
+    case K_F31:
+      return VTERM_KEY_FUNCTION(31);
+    case K_F32:
+      return VTERM_KEY_FUNCTION(32);
+    case K_F33:
+      return VTERM_KEY_FUNCTION(33);
+    case K_F34:
+      return VTERM_KEY_FUNCTION(34);
+    case K_F35:
+      return VTERM_KEY_FUNCTION(35);
+    case K_F36:
+      return VTERM_KEY_FUNCTION(36);
+    case K_F37:
+      return VTERM_KEY_FUNCTION(37);
 
-  default:
-    return VTERM_KEY_NONE;
+    default:
+      return VTERM_KEY_NONE;
   }
 }
 
-static void mouse_action(Terminal *term, int button, int row, int col, bool pressed,
+static void mouse_action(Terminal *term,
+                         int button,
+                         int row,
+                         int col,
+                         bool pressed,
                          VTermModifier mod)
 {
   vterm_mouse_move(term->vt, row, col, mod);
@@ -1234,29 +1222,40 @@ static bool send_mouse_event(Terminal *term, int c)
     bool pressed = false;
 
     switch (c) {
-    case K_LEFTDRAG:
-    case K_LEFTMOUSE:
-      pressed = true; FALLTHROUGH;
-    case K_LEFTRELEASE:
-      button = 1; break;
-    case K_MOUSEMOVE:
-      button = 0; break;
-    case K_MIDDLEDRAG:
-    case K_MIDDLEMOUSE:
-      pressed = true; FALLTHROUGH;
-    case K_MIDDLERELEASE:
-      button = 2; break;
-    case K_RIGHTDRAG:
-    case K_RIGHTMOUSE:
-      pressed = true; FALLTHROUGH;
-    case K_RIGHTRELEASE:
-      button = 3; break;
-    case K_MOUSEDOWN:
-      pressed = true; button = 4; break;
-    case K_MOUSEUP:
-      pressed = true; button = 5; break;
-    default:
-      return false;
+      case K_LEFTDRAG:
+      case K_LEFTMOUSE:
+        pressed = true;
+        FALLTHROUGH;
+      case K_LEFTRELEASE:
+        button = 1;
+        break;
+      case K_MOUSEMOVE:
+        button = 0;
+        break;
+      case K_MIDDLEDRAG:
+      case K_MIDDLEMOUSE:
+        pressed = true;
+        FALLTHROUGH;
+      case K_MIDDLERELEASE:
+        button = 2;
+        break;
+      case K_RIGHTDRAG:
+      case K_RIGHTMOUSE:
+        pressed = true;
+        FALLTHROUGH;
+      case K_RIGHTRELEASE:
+        button = 3;
+        break;
+      case K_MOUSEDOWN:
+        pressed = true;
+        button = 4;
+        break;
+      case K_MOUSEUP:
+        pressed = true;
+        button = 5;
+        break;
+      default:
+        return false;
     }
 
     mouse_action(term, button, row, col - offset, pressed, 0);
@@ -1298,7 +1297,6 @@ end:
 // }}}
 // terminal buffer refresh & misc {{{
 
-
 static void fetch_row(Terminal *term, int row, int end_col)
 {
   int col = 0;
@@ -1311,8 +1309,7 @@ static void fetch_row(Terminal *term, int row, int end_col)
     int cell_len = 0;
     if (cell.chars[0]) {
       for (int i = 0; cell.chars[i]; i++) {
-        cell_len += utf_char2bytes((int)cell.chars[i],
-                                   (uint8_t *)ptr + cell_len);
+        cell_len += utf_char2bytes((int)cell.chars[i], (uint8_t *)ptr + cell_len);
       }
     } else {
       *ptr = ' ';
@@ -1339,15 +1336,14 @@ static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
       *cell = sbrow->cells[col];
     } else {
       // fill the pointer with an empty cell
-      *cell = (VTermScreenCell) {
-        .chars = { 0 },
-        .width = 1,
+      *cell = (VTermScreenCell){
+          .chars = {0},
+          .width = 1,
       };
       return false;
     }
   } else {
-    vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col },
-                          cell);
+    vterm_screen_get_cell(term->vts, (VTermPos){.row = row, .col = col}, cell);
   }
   return true;
 }
@@ -1399,12 +1395,11 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
     return;
   }
   Terminal *term;
-  void *stub; (void)(stub);
+  void *stub;
+  (void)(stub);
   // don't process autocommands while updating terminal buffers
   block_autocmds();
-  map_foreach(&invalidated_terminals, term, stub, {
-    refresh_terminal(term);
-  });
+  map_foreach(&invalidated_terminals, term, stub, { refresh_terminal(term); });
   pmap_clear(ptr_t)(&invalidated_terminals);
   unblock_autocmds();
 }
@@ -1519,8 +1514,8 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     return;
   }
 
-  for (int r = term->invalid_start, linenr = row_to_linenr(term, r);
-       r < term->invalid_end; r++, linenr++) {
+  for (int r = term->invalid_start, linenr = row_to_linenr(term, r); r < term->invalid_end;
+       r++, linenr++) {
     fetch_row(term, r, width);
 
     if (linenr <= buf->b_ml.ml_line_count) {
@@ -1541,7 +1536,8 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
 static void adjust_topline(Terminal *term, buf_T *buf, long added)
 {
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+  {
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?

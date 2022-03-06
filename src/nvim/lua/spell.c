@@ -1,15 +1,16 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <lua.h>
-#include <lauxlib.h>
-
 #include "nvim/spell.h"
-#include "nvim/vim.h"
+
+#include <lauxlib.h>
+#include <lua.h>
+
 #include "nvim/lua/spell.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/spell.c.generated.h"
+#include "lua/spell.c.generated.h"
 #endif
 
 int nlua_spell_check(lua_State *lstate)
@@ -45,7 +46,7 @@ int nlua_spell_check(lua_State *lstate)
   size_t pos = 0;
   int capcol = -1;
   int no_res = 0;
-  const char * result;
+  const char *result;
 
   lua_createtable(lstate, 0, 0);
 
@@ -60,11 +61,10 @@ int nlua_spell_check(lua_State *lstate)
       lua_pushlstring(lstate, str, len);
       lua_rawseti(lstate, -2, 1);
 
-      result = attr == HLF_SPB ? "bad"   :
-               attr == HLF_SPR ? "rare"  :
-               attr == HLF_SPL ? "local" :
-               attr == HLF_SPC ? "caps"  :
-               NULL;
+      result = attr == HLF_SPB
+                   ? "bad"
+                   : attr == HLF_SPR ? "rare"
+                                     : attr == HLF_SPL ? "local" : attr == HLF_SPC ? "caps" : NULL;
 
       assert(result != NULL);
 
@@ -88,10 +88,7 @@ int nlua_spell_check(lua_State *lstate)
   return 1;
 }
 
-static const luaL_Reg spell_functions[] = {
-  { "check", nlua_spell_check },
-  { NULL   , NULL }
-};
+static const luaL_Reg spell_functions[] = {{"check", nlua_spell_check}, {NULL, NULL}};
 
 int luaopen_spell(lua_State *L)
 {

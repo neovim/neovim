@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/private/dispatch.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <msgpack.h>
@@ -8,7 +10,6 @@
 
 #include "nvim/api/deprecated.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/log.h"
 #include "nvim/map.h"
@@ -40,12 +41,12 @@ static void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandl
 
 /// @param name API method name
 /// @param name_len name size (includes terminating NUL)
-MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name, size_t name_len,
+MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
+                                                     size_t name_len,
                                                      Error *error)
 {
-  String m = { .data = (char *)name, .size = name_len };
-  MsgpackRpcRequestHandler rv =
-    map_get(String, MsgpackRpcRequestHandler)(&methods, m);
+  String m = {.data = (char *)name, .size = name_len};
+  MsgpackRpcRequestHandler rv = map_get(String, MsgpackRpcRequestHandler)(&methods, m);
 
   if (!rv.fn) {
     api_set_error(error, kErrorTypeException, "Invalid method: %.*s",
@@ -56,5 +57,5 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name, size_t na
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch_wrappers.generated.h"
+#include "api/private/dispatch_wrappers.generated.h"
 #endif

@@ -5,11 +5,12 @@
 ///
 /// Functions for handling growing arrays.
 
+#include "nvim/garray.h"
+
 #include <inttypes.h>
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
@@ -20,7 +21,7 @@
 #include "nvim/memline.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "garray.c.generated.h"
+#include "garray.c.generated.h"
 #endif
 
 /// Clear an allocated growing array.
@@ -143,8 +144,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// @param sep
 ///
 /// @returns the concatenated strings
-char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
-  FUNC_ATTR_NONNULL_RET
+char *ga_concat_strings_sep(const garray_T *gap, const char *sep) FUNC_ATTR_NONNULL_RET
 {
   const size_t nelem = (size_t)gap->ga_len;
   const char **strings = gap->ga_data;
@@ -206,8 +206,9 @@ void ga_concat(garray_T *gap, const char *restrict s)
 /// @param[out]  gap  Growarray to modify.
 /// @param[in]  s  String to concatenate.
 /// @param[in]  len  String length.
-void ga_concat_len(garray_T *const gap, const char *restrict s, const size_t len)
-  FUNC_ATTR_NONNULL_ALL
+void ga_concat_len(garray_T *const gap,
+                   const char *restrict s,
+                   const size_t len) FUNC_ATTR_NONNULL_ALL
 {
   if (len) {
     ga_grow(gap, (int)len);

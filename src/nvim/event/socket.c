@@ -1,6 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/event/socket.h"
+
 #include <assert.h>
 #include <stdint.h>
 #include <uv.h>
@@ -9,7 +11,6 @@
 #include "nvim/charset.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/event/socket.h"
 #include "nvim/event/wstream.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
@@ -21,11 +22,12 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/socket.c.generated.h"
+#include "event/socket.c.generated.h"
 #endif
 
-int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
-  FUNC_ATTR_NONNULL_ALL
+int socket_watcher_init(Loop *loop,
+                        SocketWatcher *watcher,
+                        const char *endpoint) FUNC_ATTR_NONNULL_ALL
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
   char *addr = watcher->addr;
@@ -38,7 +40,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
     char *port = host_end + 1;
     intmax_t iport;
 
-    int ok = try_getdigits(&(char_u *){ (char_u *)port }, &iport);
+    int ok = try_getdigits(&(char_u *){(char_u *)port}, &iport);
     if (!ok || iport < 0 || iport > UINT16_MAX) {
       ELOG("Invalid port: %s", port);
       return UV_EINVAL;
@@ -54,9 +56,9 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 
     int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
                                 &(struct addrinfo){
-      .ai_family = AF_UNSPEC,
-      .ai_socktype = SOCK_STREAM,
-    });
+                                    .ai_family = AF_UNSPEC,
+                                    .ai_socktype = SOCK_STREAM,
+                                });
     if (retval != 0) {
       ELOG("Host lookup failed: %s", endpoint);
       return retval;
@@ -80,8 +82,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   return 0;
 }
 
-int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
-  FUNC_ATTR_NONNULL_ALL
+int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb) FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;
   int result = UV_EINVAL;
@@ -101,16 +102,13 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
         // When the endpoint in socket_watcher_init() didn't specify a port
         // number, a free random port number will be assigned. sin_port will
         // contain 0 in this case, unless uv_tcp_getsockname() is used first.
-        uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
-                           &(int){ sizeof(sas) });
-        uint16_t port = (uint16_t)(
-                                   (sas.ss_family == AF_INET)
-            ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
-            : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
+        uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas, &(int){sizeof(sas)});
+        uint16_t port = (uint16_t)((sas.ss_family == AF_INET)
+                                       ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
+                                       : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
-        snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,
-                 ntohs(port));
+        snprintf(watcher->addr + len, sizeof(watcher->addr) - len, ":%" PRIu16, ntohs(port));
         break;
       }
     }
@@ -138,8 +136,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   return 0;
 }
 
-int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+int socket_watcher_accept(SocketWatcher *watcher, Stream *stream) FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
 
@@ -163,8 +161,7 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
   return 0;
 }
 
-void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
-  FUNC_ATTR_NONNULL_ARG(1)
+void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb) FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
   uv_close(STRUCT_CAST(uv_handle_t, watcher->stream), close_cb);
@@ -180,8 +177,7 @@ static void connection_event(void **argv)
 static void connection_cb(uv_stream_t *handle, int status)
 {
   SocketWatcher *watcher = handle->data;
-  CREATE_EVENT(watcher->events, connection_event, 2, watcher,
-               (void *)(uintptr_t)status);
+  CREATE_EVENT(watcher->events, connection_event, 2, watcher, (void *)(uintptr_t)status);
 }
 
 static void close_cb(uv_handle_t *handle)
@@ -201,7 +197,11 @@ static void connect_cb(uv_connect_t *req, int status)
   }
 }
 
-bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address, int timeout,
+bool socket_connect(Loop *loop,
+                    Stream *stream,
+                    bool is_tcp,
+                    const char *address,
+                    int timeout,
                     const char **error)
 {
   bool success = false;
@@ -224,26 +224,24 @@ bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address
     }
     *host_end = NUL;
 
-    const struct addrinfo hints = { .ai_family = AF_UNSPEC,
-                                    .ai_socktype = SOCK_STREAM,
-                                    .ai_flags  = AI_NUMERICSERV };
-    int retval = uv_getaddrinfo(&loop->uv, &addr_req, NULL,
-                                addr, host_end+1, &hints);
+    const struct addrinfo hints
+        = {.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM, .ai_flags = AI_NUMERICSERV};
+    int retval = uv_getaddrinfo(&loop->uv, &addr_req, NULL, addr, host_end + 1, &hints);
     if (retval != 0) {
       *error = _("failed to lookup host or port");
       goto cleanup;
     }
     addrinfo = addr_req.addrinfo;
 
-tcp_retry:
+  tcp_retry:
     uv_tcp_init(&loop->uv, tcp);
     uv_tcp_nodelay(tcp, true);
-    uv_tcp_connect(&req,  tcp, addrinfo->ai_addr, connect_cb);
+    uv_tcp_connect(&req, tcp, addrinfo->ai_addr, connect_cb);
     uv_stream = (uv_stream_t *)tcp;
   } else {
     uv_pipe_t *pipe = &stream->uv.pipe;
     uv_pipe_init(&loop->uv, pipe, 0);
-    uv_pipe_connect(&req,  pipe, address, connect_cb);
+    uv_pipe_connect(&req, pipe, address, connect_cb);
     uv_stream = STRUCT_CAST(uv_stream_t, pipe);
   }
   status = 1;

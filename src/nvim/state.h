@@ -14,7 +14,7 @@ struct vim_state {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.h.generated.h"
+#include "state.h.generated.h"
 #endif
 
 #endif  // NVIM_STATE_H

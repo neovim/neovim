@@ -55,11 +55,12 @@ typedef struct {
   const char *type;
 } CallbackReader;
 
-#define CALLBACK_READER_INIT ((CallbackReader){ .cb = CALLBACK_NONE, \
-                                                .self = NULL, \
-                                                .buffer = GA_EMPTY_INIT_VALUE, \
-                                                .buffered = false, \
-                                                .type = NULL })
+#define CALLBACK_READER_INIT                                                                       \
+  ((CallbackReader){.cb = CALLBACK_NONE,                                                           \
+                    .self = NULL,                                                                  \
+                    .buffer = GA_EMPTY_INIT_VALUE,                                                 \
+                    .buffered = false,                                                             \
+                    .type = NULL})
 static inline bool callback_reader_set(CallbackReader reader)
 {
   return reader.cb.type != kCallbackNone || reader.self;
@@ -99,7 +100,7 @@ EXTERN PMap(uint64_t) channels INIT(= MAP_INIT);
 EXTERN Callback on_print INIT(= CALLBACK_INIT);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.h.generated.h"
+#include "channel.h.generated.h"
 #endif
 
 /// @returns Channel with the id or NULL if not found
@@ -108,45 +109,42 @@ static inline Channel *find_channel(uint64_t id)
   return pmap_get(uint64_t)(&channels, id);
 }
 
-static inline Stream *channel_instream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+static inline Stream *channel_instream(Channel *chan) FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
-  case kChannelStreamProc:
-    return &chan->stream.proc.in;
+    case kChannelStreamProc:
+      return &chan->stream.proc.in;
 
-  case kChannelStreamSocket:
-    return &chan->stream.socket;
+    case kChannelStreamSocket:
+      return &chan->stream.socket;
 
-  case kChannelStreamStdio:
-    return &chan->stream.stdio.out;
+    case kChannelStreamStdio:
+      return &chan->stream.stdio.out;
 
-  case kChannelStreamInternal:
-  case kChannelStreamStderr:
-    abort();
+    case kChannelStreamInternal:
+    case kChannelStreamStderr:
+      abort();
   }
   abort();
 }
 
-static inline Stream *channel_outstream(Channel *chan)
-  FUNC_ATTR_NONNULL_ALL
+static inline Stream *channel_outstream(Channel *chan) FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
-  case kChannelStreamProc:
-    return &chan->stream.proc.out;
+    case kChannelStreamProc:
+      return &chan->stream.proc.out;
 
-  case kChannelStreamSocket:
-    return &chan->stream.socket;
+    case kChannelStreamSocket:
+      return &chan->stream.socket;
 
-  case kChannelStreamStdio:
-    return &chan->stream.stdio.in;
+    case kChannelStreamStdio:
+      return &chan->stream.stdio.in;
 
-  case kChannelStreamInternal:
-  case kChannelStreamStderr:
-    abort();
+    case kChannelStreamInternal:
+    case kChannelStreamStderr:
+      abort();
   }
   abort();
 }
-
 
 #endif  // NVIM_CHANNEL_H

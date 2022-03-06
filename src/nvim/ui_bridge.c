@@ -4,6 +4,8 @@
 // UI wrapper that sends requests to the UI thread.
 // Used by the built-in TUI and libnvim-based UIs.
 
+#include "nvim/ui_bridge.h"
+
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -15,24 +17,23 @@
 #include "nvim/memory.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_bridge.c.generated.h"
+#include "ui_bridge.c.generated.h"
 #endif
 
 #define UI(b) (((UIBridgeData *)b)->ui)
 
 // Schedule a function call on the UI bridge thread.
-#define UI_BRIDGE_CALL(ui, name, argc, ...) \
+#define UI_BRIDGE_CALL(ui, name, argc, ...)                                                        \
   ((UIBridgeData *)ui)->scheduler(event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
 
 #define INT2PTR(i) ((void *)(intptr_t)i)
 #define PTR2INT(p) ((Integer)(intptr_t)p)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_bridge.generated.h"
+#include "ui_events_bridge.generated.h"
 #endif
 
 UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
@@ -137,7 +138,10 @@ static void ui_bridge_stop_event(void **argv)
   ui->stop(ui);
 }
 
-static void ui_bridge_hl_attr_define(UI *ui, Integer id, HlAttrs attrs, HlAttrs cterm_attrs,
+static void ui_bridge_hl_attr_define(UI *ui,
+                                     Integer id,
+                                     HlAttrs attrs,
+                                     HlAttrs cterm_attrs,
                                      Array info)
 {
   HlAttrs *a = xmalloc(sizeof(HlAttrs));
@@ -148,30 +152,34 @@ static void ui_bridge_hl_attr_define_event(void **argv)
 {
   UI *ui = UI(argv[0]);
   Array info = ARRAY_DICT_INIT;
-  ui->hl_attr_define(ui, PTR2INT(argv[1]), *((HlAttrs *)argv[2]),
-                     *((HlAttrs *)argv[2]), info);
+  ui->hl_attr_define(ui, PTR2INT(argv[1]), *((HlAttrs *)argv[2]), *((HlAttrs *)argv[2]), info);
   xfree(argv[2]);
 }
 
 static void ui_bridge_raw_line_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  ui->raw_line(ui, PTR2INT(argv[1]), PTR2INT(argv[2]), PTR2INT(argv[3]),
-               PTR2INT(argv[4]), PTR2INT(argv[5]), PTR2INT(argv[6]),
-               (LineFlags)PTR2INT(argv[7]), argv[8], argv[9]);
+  ui->raw_line(ui, PTR2INT(argv[1]), PTR2INT(argv[2]), PTR2INT(argv[3]), PTR2INT(argv[4]),
+               PTR2INT(argv[5]), PTR2INT(argv[6]), (LineFlags)PTR2INT(argv[7]), argv[8], argv[9]);
   xfree(argv[8]);
   xfree(argv[9]);
 }
-static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
-                               Integer clearcol, Integer clearattr, LineFlags flags,
-                               const schar_T *chunk, const sattr_T *attrs)
+static void ui_bridge_raw_line(UI *ui,
+                               Integer grid,
+                               Integer row,
+                               Integer startcol,
+                               Integer endcol,
+                               Integer clearcol,
+                               Integer clearattr,
+                               LineFlags flags,
+                               const schar_T *chunk,
+                               const sattr_T *attrs)
 {
-  size_t ncol = (size_t)(endcol-startcol);
+  size_t ncol = (size_t)(endcol - startcol);
   schar_T *c = xmemdup(chunk, ncol * sizeof(schar_T));
   sattr_T *hl = xmemdup(attrs, ncol * sizeof(sattr_T));
-  UI_BRIDGE_CALL(ui, raw_line, 10, ui, INT2PTR(grid), INT2PTR(row),
-                 INT2PTR(startcol), INT2PTR(endcol), INT2PTR(clearcol),
-                 INT2PTR(clearattr), INT2PTR(flags), c, hl);
+  UI_BRIDGE_CALL(ui, raw_line, 10, ui, INT2PTR(grid), INT2PTR(row), INT2PTR(startcol),
+                 INT2PTR(endcol), INT2PTR(clearcol), INT2PTR(clearattr), INT2PTR(flags), c, hl);
 }
 
 static void ui_bridge_suspend(UI *b)
@@ -197,8 +205,7 @@ static void ui_bridge_option_set(UI *ui, String name, Object value)
   String copy_name = copy_string(name);
   Object *copy_value = xmalloc(sizeof(Object));
   *copy_value = copy_object(value);
-  UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data,
-                 INT2PTR(copy_name.size), copy_value);
+  UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data, INT2PTR(copy_name.size), copy_value);
   // TODO(bfredl): when/if TUI/bridge teardown is refactored to use events, the
   // commit that introduced this special case can be reverted.
   // For now this is needed for nvim_list_uis().
@@ -209,7 +216,7 @@ static void ui_bridge_option_set(UI *ui, String name, Object value)
 static void ui_bridge_option_set_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  String name = (String){ .data = argv[1], .size = (size_t)argv[2] };
+  String name = (String){.data = argv[1], .size = (size_t)argv[2]};
   Object value = *(Object *)argv[3];
   ui->option_set(ui, name, value);
   api_free_string(name);

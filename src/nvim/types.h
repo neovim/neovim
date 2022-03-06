@@ -27,9 +27,9 @@ typedef handle_T NS;
 typedef struct expand expand_T;
 
 typedef enum {
-  kNone  = -1,
+  kNone = -1,
   kFalse = 0,
-  kTrue  = 1,
+  kTrue = 1,
 } TriState;
 
 typedef struct Decoration Decoration;

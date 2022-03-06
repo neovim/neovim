@@ -4,7 +4,7 @@
 // for INT_MAX, LONG_MAX et al.
 #include <limits.h>
 
-typedef long linenr_T;         // line number type
+typedef long linenr_T;  // line number type
 /// Format used to print values which have linenr_T type
 #define PRIdLINENR "ld"
 
@@ -14,32 +14,39 @@ typedef int colnr_T;
 #define PRIdCOLNR "d"
 
 /// Maximal (invalid) line number
-enum { MAXLNUM = 0x7fffffff, };
+enum {
+  MAXLNUM = 0x7fffffff,
+};
 /// Maximal column number
 /// MAXCOL used to be INT_MAX, but with 64 bit ints that results in running
 /// out of memory when trying to allocate a very long line.
-enum { MAXCOL = 0x7fffffff, };
+enum {
+  MAXCOL = 0x7fffffff,
+};
 // Minimum line number
-enum { MINLNUM = 1, };
+enum {
+  MINLNUM = 1,
+};
 // minimum column number
-enum { MINCOL = 1, };
+enum {
+  MINCOL = 1,
+};
 
 /*
  * position in file or buffer
  */
 typedef struct {
-  linenr_T lnum;        // line number
-  colnr_T col;          // column number
+  linenr_T lnum;  // line number
+  colnr_T col;    // column number
   colnr_T coladd;
 } pos_T;
-
 
 /*
  * Same, but without coladd.
  */
 typedef struct {
-  linenr_T lnum;        // line number
-  colnr_T col;          // column number
+  linenr_T lnum;  // line number
+  colnr_T col;    // column number
 } lpos_T;
 
 #endif  // NVIM_POS_H

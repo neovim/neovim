@@ -4,6 +4,8 @@
 // input.c: high level functions for prompting the user or input
 // like yes/no or number prompts.
 
+#include "nvim/input.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -11,14 +13,13 @@
 #include "nvim/getchar.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/input.h"
 #include "nvim/mouse.h"
 #include "nvim/os/input.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "input.c.generated.h"
+#include "input.c.generated.h"
 #endif
 
 /// Ask for a reply from the user, 'y' or 'n'
@@ -40,7 +41,7 @@ int ask_yesno(const char *const str, const bool direct)
 
   no_wait_return++;
   State = CONFIRM;  // Mouse behaves like with :confirm.
-  setmouse();  // Disable mouse in xterm.
+  setmouse();       // Disable mouse in xterm.
   no_mapping++;
 
   int r = ' ';
@@ -83,7 +84,7 @@ int get_keystroke(MultiQueue *events)
   int save_mapped_ctrl_c = mapped_ctrl_c;
   int waited = 0;
 
-  mapped_ctrl_c = 0;        // mappings are not used here
+  mapped_ctrl_c = 0;  // mappings are not used here
   for (;;) {
     // flush output before waiting
     ui_flush();
@@ -110,7 +111,7 @@ int get_keystroke(MultiQueue *events)
       len += n;
       waited = 0;
     } else if (len > 0) {
-      waited++;             // keep track of the waiting time
+      waited++;  // keep track of the waiting time
     }
     if (n > 0) {  // found a termcode: adjust length
       len = n;
@@ -123,9 +124,7 @@ int get_keystroke(MultiQueue *events)
     n = buf[0];
     if (n == K_SPECIAL) {
       n = TO_SPECIAL(buf[1], buf[2]);
-      if (buf[1] == KS_MODIFIER
-          || n == K_IGNORE
-          || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
+      if (buf[1] == KS_MODIFIER || n == K_IGNORE || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
         if (buf[1] == KS_MODIFIER) {
           mod_mask = buf[2];
         }
@@ -194,7 +193,7 @@ int get_number(int colon, int *mouse_used)
       if (!exmode_active) {
         cmdline_row = msg_row;
       }
-      skip_redraw = true;           // skip redraw once
+      skip_redraw = true;  // skip redraw once
       do_redraw = false;
       break;
     } else if (c == Ctrl_C || c == ESC || c == 'q') {
@@ -220,8 +219,9 @@ int prompt_for_number(int *mouse_used)
 
   // When using ":silent" assume that <CR> was entered.
   if (mouse_used != NULL) {
-    msg_puts(_("Type number and <Enter> or click with the mouse "
-               "(q or empty cancels): "));
+    msg_puts(
+        _("Type number and <Enter> or click with the mouse "
+          "(q or empty cancels): "));
   } else {
     msg_puts(_("Type number and <Enter> (q or empty cancels): "));
   }

@@ -1,11 +1,12 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/extmark.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/extmark.h"
@@ -15,7 +16,7 @@
 #include "nvim/syntax.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/extmark.c.generated.h"
+#include "api/extmark.c.generated.h"
 #endif
 
 void api_extmark_free_all_mem(void)
@@ -25,8 +26,7 @@ void api_extmark_free_all_mem(void)
   map_foreach(&namespace_ids, name, id, {
     (void)id;
     xfree(name.data);
-  })
-  map_destroy(String, handle_T)(&namespace_ids);
+  }) map_destroy(String, handle_T)(&namespace_ids);
 }
 
 /// Creates a new \*namespace\* or gets an existing one.
@@ -40,8 +40,7 @@ void api_extmark_free_all_mem(void)
 ///
 /// @param name Namespace name or empty string
 /// @return Namespace id
-Integer nvim_create_namespace(String name)
-  FUNC_API_SINCE(5)
+Integer nvim_create_namespace(String name) FUNC_API_SINCE(5)
 {
   handle_T id = map_get(String, handle_T)(&namespace_ids, name);
   if (id > 0) {
@@ -58,18 +57,15 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous namespaces.
 ///
 /// @return dict that maps from names to namespace ids.
-Dictionary nvim_get_namespaces(void)
-  FUNC_API_SINCE(5)
+Dictionary nvim_get_namespaces(void) FUNC_API_SINCE(5)
 {
   Dictionary retval = ARRAY_DICT_INIT;
   String name;
   handle_T id;
 
-  map_foreach(&namespace_ids, name, id, {
-    PUT(retval, name.data, INTEGER_OBJ(id));
-  })
+  map_foreach(&namespace_ids, name, id, { PUT(retval, name.data, INTEGER_OBJ(id)); })
 
-  return retval;
+      return retval;
 }
 
 const char *describe_ns(NS ns_id)
@@ -80,8 +76,7 @@ const char *describe_ns(NS ns_id)
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }
-  })
-  return "(UNKNOWN PLUGIN)";
+  }) return "(UNKNOWN PLUGIN)";
 }
 
 // Is the Namespace in use?
@@ -92,7 +87,6 @@ static bool ns_initialized(uint32_t ns)
   }
   return ns < (uint32_t)next_namespace_id;
 }
-
 
 static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 {
@@ -131,8 +125,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
         VirtTextChunk *vtc = &decor->virt_text.items[i];
         ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
         if (vtc->hl_id > 0) {
-          ADD(chunk,
-              STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+          ADD(chunk, STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
         }
         ADD(chunks, ARRAY_OBJ(chunk));
       }
@@ -157,8 +150,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
           VirtTextChunk *vtc = &vt->items[j];
           ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
           if (vtc->hl_id > 0) {
-            ADD(chunk,
-                STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
+            ADD(chunk, STRING_OBJ(cstr_to_string((const char *)syn_id2name(vtc->hl_id))));
           }
           ADD(chunks, ARRAY_OBJ(chunk));
         }
@@ -191,10 +183,11 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dictionary opts,
-                                            Error *err)
-  FUNC_API_SINCE(7)
+ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer,
+                                            Integer ns_id,
+                                            Integer id,
+                                            Dictionary opts,
+                                            Error *err) FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -227,7 +220,6 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
       return rv;
     }
   }
-
 
   ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
   if (extmark.row < 0) {
@@ -279,9 +271,12 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///          - details Whether to include the details dict
 /// @param[out] err   Error details, if any
 /// @return List of [extmark_id, row, col] tuples in "traversal order".
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end, Dictionary opts,
-                            Error *err)
-  FUNC_API_SINCE(7)
+Array nvim_buf_get_extmarks(Buffer buffer,
+                            Integer ns_id,
+                            Object start,
+                            Object end,
+                            Dictionary opts,
+                            Error *err) FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -328,7 +323,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     limit = INT64_MAX;
   }
 
-
   bool reverse = false;
 
   int l_row;
@@ -347,9 +341,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     reverse = true;
   }
 
-
-  ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col,
-                                       u_row, u_col, (int64_t)limit, reverse);
+  ExtmarkInfoArray marks
+      = extmark_get(buf, (uint32_t)ns_id, l_row, l_col, u_row, u_col, (int64_t)limit, reverse);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
     ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, (bool)details)));
@@ -469,9 +462,12 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
-Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer col,
-                             Dict(set_extmark) *opts, Error *err)
-  FUNC_API_SINCE(7)
+Integer nvim_buf_set_extmark(Buffer buffer,
+                             Integer ns_id,
+                             Integer line,
+                             Integer col,
+                             Dict(set_extmark) * opts,
+                             Error *err) FUNC_API_SINCE(7)
 {
   Decoration decor = DECORATION_INIT;
 
@@ -504,10 +500,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     opts->end_row = opts->end_line;
   }
 
-#define OPTION_TO_BOOL(target, name, val) \
-  target = api_object_to_bool(opts->name, #name, val, err); \
-  if (ERROR_SET(err)) { \
-    goto error; \
+#define OPTION_TO_BOOL(target, name, val)                                                          \
+  target = api_object_to_bool(opts->name, #name, val, err);                                        \
+  if (ERROR_SET(err)) {                                                                            \
+    goto error;                                                                                    \
   }
 
   bool strict = true;
@@ -545,12 +541,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     Object *opt;
     int *dest;
   } hls[] = {
-    { "hl_group"           , &opts->hl_group           , &decor.hl_id            },
-    { "sign_hl_group"      , &opts->sign_hl_group      , &decor.sign_hl_id       },
-    { "number_hl_group"    , &opts->number_hl_group    , &decor.number_hl_id     },
-    { "line_hl_group"      , &opts->line_hl_group      , &decor.line_hl_id       },
-    { "cursorline_hl_group", &opts->cursorline_hl_group, &decor.cursorline_hl_id },
-    { NULL, NULL, NULL },
+      {"hl_group", &opts->hl_group, &decor.hl_id},
+      {"sign_hl_group", &opts->sign_hl_group, &decor.sign_hl_id},
+      {"number_hl_group", &opts->number_hl_group, &decor.number_hl_id},
+      {"line_hl_group", &opts->line_hl_group, &decor.line_hl_id},
+      {"cursorline_hl_group", &opts->cursorline_hl_group, &decor.cursorline_hl_id},
+      {NULL, NULL, NULL},
   };
 
   for (int j = 0; hls[j].name && hls[j].dest; j++) {
@@ -563,8 +559,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (opts->virt_text.type == kObjectTypeArray) {
-    decor.virt_text = parse_virt_text(opts->virt_text.data.array, err,
-                                      &decor.virt_text_width);
+    decor.virt_text = parse_virt_text(opts->virt_text.data.array, err, &decor.virt_text_width);
     if (ERROR_SET(err)) {
       goto error;
     }
@@ -611,8 +606,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else if (strequal("blend", str.data)) {
       decor.hl_mode = kHlModeBlend;
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "virt_text_pos: invalid value");
+      api_set_error(err, kErrorTypeValidation, "virt_text_pos: invalid value");
       goto error;
     }
   } else if (HAS_KEY(opts->hl_mode)) {
@@ -632,7 +626,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       }
       int dummig;
       VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig);
-      kv_push(decor.virt_lines, ((struct virt_line){ jtem, virt_lines_leftcol }));
+      kv_push(decor.virt_lines, ((struct virt_line){jtem, virt_lines_leftcol}));
       if (ERROR_SET(err)) {
         goto error;
       }
@@ -641,7 +635,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     api_set_error(err, kErrorTypeValidation, "virt_lines is not an Array");
     goto error;
   }
-
 
   OPTION_TO_BOOL(decor.virt_lines_above, virt_lines_above, false);
 
@@ -659,8 +652,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (opts->sign_text.type == kObjectTypeString) {
-    if (!init_sign_text(&decor.sign_text,
-                        (char_u *)opts->sign_text.data.string.data)) {
+    if (!init_sign_text(&decor.sign_text, (char_u *)opts->sign_text.data.string.data)) {
       api_set_error(err, kErrorTypeValidation, "sign_text is not a valid value");
       goto error;
     }
@@ -699,7 +691,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       line = buf->b_ml.ml_line_count;
     }
   } else if (line < buf->b_ml.ml_line_count) {
-    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
+    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line + 1, false));
   }
 
   if (col == -1) {
@@ -738,7 +730,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     col2 = 0;
   }
 
-
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {
     decor_add_ephemeral((int)line, (int)col, line2, col2, &decor);
@@ -748,8 +739,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       goto error;
     }
 
-    extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
-                &decor, right_gravity, end_right_gravity, kExtmarkNoUndo);
+    extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2, &decor,
+                right_gravity, end_right_gravity, kExtmarkNoUndo);
   }
 
   return (Integer)id;
@@ -767,8 +758,7 @@ error:
 /// @param id Extmark id
 /// @param[out] err   Error details, if any
 /// @return true if the extmark was found, else false
-Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *err)
-  FUNC_API_SINCE(7)
+Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *err) FUNC_API_SINCE(7)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -825,9 +815,13 @@ uint32_t src2ns(Integer *src_id)
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
-Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, Integer line,
-                               Integer col_start, Integer col_end, Error *err)
-  FUNC_API_SINCE(1)
+Integer nvim_buf_add_highlight(Buffer buffer,
+                               Integer ns_id,
+                               String hl_group,
+                               Integer line,
+                               Integer col_start,
+                               Integer col_end,
+                               Error *err) FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -869,10 +863,8 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   Decoration decor = DECORATION_INIT;
   decor.hl_id = hl_id;
 
-  extmark_set(buf, ns, NULL,
-              (int)line, (colnr_T)col_start,
-              end_line, (colnr_T)col_end,
-              &decor, true, false, kExtmarkNoUndo);
+  extmark_set(buf, ns, NULL, (int)line, (colnr_T)col_start, end_line, (colnr_T)col_end, &decor,
+              true, false, kExtmarkNoUndo);
   return ns_id;
 }
 
@@ -888,9 +880,11 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
 ///                   to end of buffer.
 /// @param[out] err   Error details, if any
-void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
-                              Error *err)
-  FUNC_API_SINCE(5)
+void nvim_buf_clear_namespace(Buffer buffer,
+                              Integer ns_id,
+                              Integer line_start,
+                              Integer line_end,
+                              Error *err) FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -904,9 +898,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
   if (line_end < 0 || line_end > MAXLNUM) {
     line_end = MAXLNUM;
   }
-  extmark_clear(buf, (ns_id < 0 ? 0 : (uint32_t)ns_id),
-                (int)line_start, 0,
-                (int)line_end-1, MAXCOL);
+  extmark_clear(buf, (ns_id < 0 ? 0 : (uint32_t)ns_id), (int)line_start, 0, (int)line_end - 1,
+                MAXCOL);
 }
 
 /// Set or change decoration provider for a namespace
@@ -950,7 +943,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]
 void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Error *err)
-  FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
+    FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);
   assert(p != NULL);
@@ -963,13 +956,13 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Erro
     const char *name;
     LuaRef *dest;
   } cbs[] = {
-    { "on_start", &p->redraw_start },
-    { "on_buf", &p->redraw_buf },
-    { "on_win", &p->redraw_win },
-    { "on_line", &p->redraw_line },
-    { "on_end", &p->redraw_end },
-    { "_on_hl_def", &p->hl_def },
-    { NULL, NULL },
+      {"on_start", &p->redraw_start},
+      {"on_buf", &p->redraw_buf},
+      {"on_win", &p->redraw_win},
+      {"on_line", &p->redraw_line},
+      {"on_end", &p->redraw_end},
+      {"_on_hl_def", &p->hl_def},
+      {NULL, NULL},
   };
 
   for (size_t i = 0; i < opts.size; i++) {
@@ -979,8 +972,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Erro
     for (j = 0; cbs[j].name && cbs[j].dest; j++) {
       if (strequal(cbs[j].name, k.data)) {
         if (v->type != kObjectTypeLuaRef) {
-          api_set_error(err, kErrorTypeValidation,
-                        "%s is not a function", cbs[j].name);
+          api_set_error(err, kErrorTypeValidation, "%s is not a function", cbs[j].name);
           goto error;
         }
         *(cbs[j].dest) = v->data.luaref;

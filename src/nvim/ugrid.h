@@ -22,17 +22,17 @@ struct ugrid {
 
 // -V:UGRID_FOREACH_CELL:625
 
-#define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
-  do { \
-    UCell *row_cells = (grid)->cells[row]; \
-    for (int curcol = startcol; curcol < endcol; curcol++) { \
-      UCell *cell = row_cells + curcol; \
-      (void)(cell); \
-      code; \
-    } \
+#define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code)                                      \
+  do {                                                                                             \
+    UCell *row_cells = (grid)->cells[row];                                                         \
+    for (int curcol = startcol; curcol < endcol; curcol++) {                                       \
+      UCell *cell = row_cells + curcol;                                                            \
+      (void)(cell);                                                                                \
+      code;                                                                                        \
+    }                                                                                              \
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ugrid.h.generated.h"
+#include "ugrid.h.generated.h"
 #endif
 #endif  // NVIM_UGRID_H

@@ -25,17 +25,17 @@ typedef enum {
 } UIExtension;
 
 EXTERN const char *ui_ext_names[] INIT(= {
-  "ext_cmdline",
-  "ext_popupmenu",
-  "ext_tabline",
-  "ext_wildmenu",
-  "ext_messages",
-  "ext_linegrid",
-  "ext_multigrid",
-  "ext_hlstate",
-  "ext_termcolors",
-  "_debug_float",
-});
+                                           "ext_cmdline",
+                                           "ext_popupmenu",
+                                           "ext_tabline",
+                                           "ext_wildmenu",
+                                           "ext_messages",
+                                           "ext_linegrid",
+                                           "ext_multigrid",
+                                           "ext_hlstate",
+                                           "ext_termcolors",
+                                           "_debug_float",
+                                       });
 
 typedef struct ui_t UI;
 
@@ -54,7 +54,7 @@ struct ui_t {
   int width;
   int height;
   int pum_nlines;  /// actual nr. lines shown in PUM
-  bool pum_pos;  /// UI reports back pum position?
+  bool pum_pos;    /// UI reports back pum position?
   double pum_row;
   double pum_col;
   double pum_height;
@@ -62,18 +62,16 @@ struct ui_t {
   void *data;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events.generated.h"
+#include "ui_events.generated.h"
 #endif
 
   void (*inspect)(UI *ui, Dictionary *info);
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui.h.generated.h"
-
-# include "ui_events_call.h.generated.h"
+#include "ui.h.generated.h"
+#include "ui_events_call.h.generated.h"
 #endif
-
 
 EXTERN MultiQueue *resize_events;
 #endif  // NVIM_UI_H
