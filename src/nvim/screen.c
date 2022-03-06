@@ -2843,9 +2843,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             } else if (wp->w_p_cul
                        && lnum == wp->w_cursor.lnum
                        && (wp->w_p_culopt_flags & CULOPT_NBR)
-                       && (row == startrow
-                           || wp->w_p_culopt_flags & CULOPT_LINE)
-                       && filler_todo == 0) {
+                       && (row == startrow + filler_lines
+                           || (row > startrow + filler_lines
+                               && wp->w_p_culopt_flags & CULOPT_LINE))) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
               // When 'cursorlineopt' has "screenline" only highlight
