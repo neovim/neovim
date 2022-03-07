@@ -63,10 +63,6 @@ elseif(WIN32)
     set(BUILD_SHARED ON)
   elseif(MINGW)
     set(BUILD_SHARED OFF)
-    set(LIBUV_PATCH_COMMAND
-      ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
-        ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-disable-typedef-MinGW.patch)
   else()
     message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
   endif()
