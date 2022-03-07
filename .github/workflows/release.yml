@@ -85,7 +85,7 @@ jobs:
           fetch-depth: 0
       - name: Install brew packages
         run: |
-          brew update >/dev/null
+          brew update --quiet
           brew install automake ninja
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
