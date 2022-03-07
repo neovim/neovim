@@ -565,7 +565,8 @@ static bool nlua_init_packages(lua_State *lstate)
   lua_getglobal(lstate, "require");
   lua_pushstring(lstate, "vim._init_packages");
   if (nlua_pcall(lstate, 1, 0)) {
-      nlua_error(lstate, _("E5106: Error while loading packages: %.*s\n"));
+      mch_errmsg(lua_tostring(lstate, -1));
+      mch_errmsg("\n");
       return false;
   }
 
