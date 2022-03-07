@@ -183,8 +183,8 @@ jobs:
       - name: Install brew packages
         if: matrix.os == 'osx'
         run: |
-          brew update >/dev/null
-          brew install automake ccache perl cpanminus ninja
+          brew update --quiet
+          brew install automake ccache cpanminus ninja
 
       - name: Setup interpreter packages
         run: ./ci/install.sh
