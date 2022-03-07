@@ -1498,6 +1498,11 @@ void set_curbuf(buf_T *buf, int action)
  */
 void enter_buffer(buf_T *buf)
 {
+  // Get the buffer in the current window.
+  curwin->w_buffer = buf;
+  curbuf = buf;
+  curbuf->b_nwindows++;
+
   // Copy buffer and window local option values.  Not for a help buffer.
   buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
   if (!buf->b_help) {
@@ -1507,11 +1512,6 @@ void enter_buffer(buf_T *buf)
     clearFolding(curwin);
   }
   foldUpdateAll(curwin);        // update folds (later).
-
-  // Get the buffer in the current window.
-  curwin->w_buffer = buf;
-  curbuf = buf;
-  curbuf->b_nwindows++;
 
   if (curwin->w_p_diff) {
     diff_buf_add(curbuf);
