@@ -26,7 +26,8 @@ In the User Manual:
 1. Quick start						*:syn-qstart*
 
 				*:syn-enable* *:syntax-enable* *:syn-on* *:syntax-on*
-This command switches on syntax highlighting: >
+Syntax highlighting is enabled by default. If you need to enable it again
+after it was disabled (see below), use: >
 
 	:syntax enable
 
