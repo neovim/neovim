@@ -19,6 +19,11 @@ concurrency:
 
 jobs:
   lint:
+    # This job tests two things: it lints the code but also builds neovim using
+    # system dependencies instead of bundled dependencies. This is to make sure
+    # we are able to build neovim without pigeonholing ourselves into specifics
+    # of the bundled dependencies.
+
     if: (github.event_name == 'pull_request' && github.base_ref == 'master' && !github.event.pull_request.draft) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-20.04
     timeout-minutes: 10
@@ -100,7 +105,7 @@ jobs:
       - name: Cache dependencies
         run: ./ci/before_cache.sh
 
-  unixish:
+  posix:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
       fail-fast: false
@@ -120,6 +125,12 @@ jobs:
           - cc: clang
             runner: macos-11.0
             os: osx
+
+            # The functionaltest-lua test two things simultaneously:
+            # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
+            # 2. Use as oldest/minimum versions of dependencies/build tools we
+            #    still explicitly support so we don't accidentally rely on
+            #    features that is only available on later versions.
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-20.04
