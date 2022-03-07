@@ -50,7 +50,25 @@ table.insert(package.loaders, 2, vim._load_package)
 
 -- builtin functions which always should be available
 require'vim.shared'
-vim.inspect = require'vim.inspect'
+
+vim._submodules = {inspect=true}
+
+-- These are for loading runtime modules in the vim namespace lazily.
+setmetatable(vim, {
+  __index = function(t, key)
+    if vim._submodules[key] then
+      t[key] = require('vim.'..key)
+      return t[key]
+    elseif vim.startswith(key, 'uri_') then
+      local val = require('vim.uri')[key]
+      if val ~= nil then
+        -- Expose all `vim.uri` functions on the `vim` module.
+        t[key] = val
+        return t[key]
+      end
+    end
+  end
+})
 
 --- <Docs described in |vim.empty_dict()| >
 ---@private
