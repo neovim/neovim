@@ -1,6 +1,5 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
-local isCI = require('test.helpers').isCI
 local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
@@ -2558,9 +2557,6 @@ describe('lua: builtin modules', function()
 
 
   it('does not work when disabled without runtime', function()
-    if isCI('sourcehut') then
-      pending('causes a core dump')
-    end
     clear{args={'--luamod-dev'}, env={VIMRUNTIME='fixtures/a'}}
     -- error checking could be better here. just check that --luamod-dev
     -- does anything at all by breaking with missing runtime..
