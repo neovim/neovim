@@ -1,4 +1,4 @@
-image: freebsd/12.x
+image: freebsd/latest
 
 packages:
 - cmake
