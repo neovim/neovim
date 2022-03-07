@@ -80,7 +80,6 @@ typedef struct {
   int col_until;
   int current;
   int eol_col;
-  bool has_sign_decor;
 } DecorState;
 
 typedef struct {
