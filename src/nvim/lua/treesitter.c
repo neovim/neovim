@@ -182,8 +182,8 @@ int tslua_add_language(lua_State *L)
 
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
-    snprintf(IObuff, IOSIZE, "Failed to load parser: uv_dlopen: %s",
-             uv_dlerror(&lib));
+    snprintf(IObuff, IOSIZE, "Failed to load parser for language '%s': uv_dlopen: %s",
+             lang_name, uv_dlerror(&lib));
     uv_dlclose(&lib);
     lua_pushstring(L, IObuff);
     return lua_error(L);
