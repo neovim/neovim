@@ -705,7 +705,7 @@ matches the pattern "^# *define" it is not considered to be a comment.
 If you want to list matches, and then select one to jump to, you could use a
 mapping to do that for you.  Here is an example: >
 
-  :map <F4> [I:let nr = input("Which one: ")<Bar>exe "normal " . nr ."[\t"<CR>
+  :map <F4> [I:let nr = input("Which one: ")<Bar>exe "normal " .. nr .. "[\t"<CR>
 <
 							*[i*
 [i			Display the first line that contains the keyword

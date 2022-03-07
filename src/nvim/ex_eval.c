@@ -1602,7 +1602,7 @@ void ex_endtry(exarg_T *eap)
 {
   int idx;
   bool rethrow = false;
-  int pending = CSTP_NONE;
+  char pending = CSTP_NONE;
   void *rettv = NULL;
   cstack_T *const cstack = eap->cstack;
 

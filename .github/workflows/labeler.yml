@@ -13,10 +13,10 @@ jobs:
     - uses: actions/labeler@main
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        sync-labels: ""
 
   type-scope:
     runs-on: ubuntu-latest
-    needs: ["triage"]
     permissions:
       contents: write
       pull-requests: write
@@ -38,10 +38,10 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - run: wget https://raw.githubusercontent.com/neovim/neovim/master/ci/reviews.js
+      - uses: actions/checkout@v2
       - name: 'Request reviewers'
         uses: actions/github-script@v6
         with:
           script: |
-            const script = require('./reviews.js')
+            const script = require('./.github/scripts/reviews.js')
             await script({github, context})

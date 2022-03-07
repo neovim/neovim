@@ -1,9 +1,16 @@
 local api = vim.api
 
-local highlight = {}
+local M = {}
+
+M.priorities = {
+  syntax = 50,
+  treesitter = 100,
+  diagnostics = 150,
+  user = 200,
+}
 
 ---@private
-function highlight.create(higroup, hi_info, default)
+function M.create(higroup, hi_info, default)
   local options = {}
   -- TODO: Add validation
   for k, v in pairs(hi_info) do
@@ -13,28 +20,33 @@ function highlight.create(higroup, hi_info, default)
 end
 
 ---@private
-function highlight.link(higroup, link_to, force)
+function M.link(higroup, link_to, force)
   vim.cmd(string.format([[highlight%s link %s %s]], force and "!" or " default", higroup, link_to))
 end
-
 
 --- Highlight range between two positions
 ---
 ---@param bufnr number of buffer to apply highlighting to
 ---@param ns namespace to add highlight to
 ---@param higroup highlight group to use for highlighting
----@param rtype type of range (:help setreg, default charwise)
----@param inclusive boolean indicating whether the range is end-inclusive (default false)
----@param priority number indicating priority of highlight (default 50)
-function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive, priority)
-  rtype = rtype or 'v'
-  inclusive = inclusive or false
-  priority = priority or 50
+---@param start first position (tuple {line,col})
+---@param finish second position (tuple {line,col})
+---@param opts table with options:
+--             - regtype type of range (:help setreg, default charwise)
+--             - inclusive boolean indicating whether the range is end-inclusive (default false)
+--             - priority number indicating priority of highlight (default priorities.user)
+function M.range(bufnr, ns, higroup, start, finish, opts)
+  opts = opts or {}
+  local regtype = opts.regtype or "v"
+  local inclusive = opts.inclusive or false
+  local priority = opts.priority or M.priorities.user
 
   -- sanity check
-  if start[2] < 0 or finish[1] < start[1] then return end
+  if start[2] < 0 or finish[1] < start[1] then
+    return
+  end
 
-  local region = vim.region(bufnr, start, finish, rtype, inclusive)
+  local region = vim.region(bufnr, start, finish, regtype, inclusive)
   for linenr, cols in pairs(region) do
     local end_row
     if cols[2] == -1 then
@@ -46,13 +58,12 @@ function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive, pr
       end_row = end_row,
       end_col = cols[2],
       priority = priority,
-      strict = false
+      strict = false,
     })
   end
-
 end
 
-local yank_ns = api.nvim_create_namespace('hlyank')
+local yank_ns = api.nvim_create_namespace("hlyank")
 --- Highlight the yanked region
 ---
 --- use from init.vim via
@@ -62,26 +73,40 @@ local yank_ns = api.nvim_create_namespace('hlyank')
 --- customize conditions (here: do not highlight a visual selection) via
 ---   au TextYankPost * lua vim.highlight.on_yank {on_visual=false}
 ---
--- @param opts dictionary with options controlling the highlight:
+-- @param opts table with options controlling the highlight:
 --              - higroup   highlight group for yanked region (default "IncSearch")
 --              - timeout   time in ms before highlight is cleared (default 150)
 --              - on_macro  highlight when executing macro (default false)
 --              - on_visual highlight when yanking visual selection (default true)
 --              - event     event structure (default vim.v.event)
-function highlight.on_yank(opts)
-  vim.validate {
-    opts = { opts,
-    function(t) if t == nil then return true else return type(t) == 'table' end end,
-    'a table or nil to configure options (see `:h highlight.on_yank`)',
-  }}
+function M.on_yank(opts)
+  vim.validate({
+    opts = {
+      opts,
+      function(t)
+        if t == nil then
+          return true
+        else
+          return type(t) == "table"
+        end
+      end,
+      "a table or nil to configure options (see `:h highlight.on_yank`)",
+    },
+  })
   opts = opts or {}
   local event = opts.event or vim.v.event
   local on_macro = opts.on_macro or false
   local on_visual = (opts.on_visual ~= false)
 
-  if (not on_macro) and vim.fn.reg_executing() ~= '' then return end
-  if event.operator ~= 'y' or event.regtype == '' then return end
-  if (not on_visual) and event.visual then return end
+  if not on_macro and vim.fn.reg_executing() ~= "" then
+    return
+  end
+  if event.operator ~= "y" or event.regtype == "" then
+    return
+  end
+  if not on_visual and event.visual then
+    return
+  end
 
   local higroup = opts.higroup or "IncSearch"
   local timeout = opts.timeout or 150
@@ -92,19 +117,23 @@ function highlight.on_yank(opts)
   local pos1 = vim.fn.getpos("'[")
   local pos2 = vim.fn.getpos("']")
 
-  pos1 = {pos1[2] - 1, pos1[3] - 1 + pos1[4]}
-  pos2 = {pos2[2] - 1, pos2[3] - 1 + pos2[4]}
+  pos1 = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
+  pos2 = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
 
-  highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive, 200)
-
-  vim.defer_fn(
-    function()
-      if api.nvim_buf_is_valid(bufnr) then
-        api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
-      end
-    end,
-    timeout
+  M.range(
+    bufnr,
+    yank_ns,
+    higroup,
+    pos1,
+    pos2,
+    { regtype = event.regtype, inclusive = event.inclusive, priority = M.priorities.user }
   )
+
+  vim.defer_fn(function()
+    if api.nvim_buf_is_valid(bufnr) then
+      api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
+    end
+  end, timeout)
 end
 
-return highlight
+return M

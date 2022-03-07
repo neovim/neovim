@@ -10,6 +10,7 @@ let s:did_load = 1
 set backspace=
 set directory^=.
 set fillchars=vert:\|,fold:-
+set fsync
 set laststatus=1
 set listchars=eol:$
 set joinspaces

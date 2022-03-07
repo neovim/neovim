@@ -196,7 +196,8 @@ static void insert_sign(buf_T *buf, sign_entry_T *prev, sign_entry_T *next, int 
   if (next != NULL) {
     next->se_prev = newsign;
   }
-  buf->b_signcols_valid = false;
+
+  buf_signcols_add_check(buf, newsign);
 
   if (prev == NULL) {
     // When adding first sign need to redraw the windows to create the
@@ -506,6 +507,8 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
         if (sp->sn_num_hl != 0) {
           sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
         }
+        // Store the priority so we can mesh in extmark signs later
+        sattr.sat_prio = sign->se_priority;
       }
 
       sattrs[nr_matches] = sattr;
@@ -539,7 +542,6 @@ linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
   sign_entry_T *next;    // the next sign in a b_signlist
   linenr_T lnum;       // line number whose sign was deleted
 
-  buf->b_signcols_valid = false;
   lastp = &buf->b_signlist;
   lnum = 0;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
@@ -552,6 +554,7 @@ linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
         next->se_prev = sign->se_prev;
       }
       lnum = sign->se_lnum;
+      buf_signcols_del_check(buf, lnum, lnum);
       if (sign->se_group != NULL) {
         sign_group_unref(sign->se_group->sg_name);
       }
@@ -673,7 +676,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
       lastp = &sign->se_next;
     }
   }
-  buf->b_signcols_valid = false;
+  buf_signcols_del_check(buf, 1, MAXLNUM);
 }
 
 /// List placed signs for "rbuf".  If "rbuf" is NULL do it for all buffers.
@@ -735,14 +738,19 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
   int is_fixed = 0;
   int signcol = win_signcol_configured(curwin, &is_fixed);
 
-  curbuf->b_signcols_valid = false;
+  bool delete = amount == MAXLNUM;
+
+  if (delete) {
+    buf_signcols_del_check(curbuf, line1, line2);
+  }
+
   lastp = &curbuf->b_signlist;
 
   for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
     new_lnum = sign->se_lnum;
     if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
-      if (amount != MAXLNUM) {
+      if (!delete) {
         new_lnum += amount;
       } else if (!is_fixed || signcol >= 2) {
         *lastp = next;

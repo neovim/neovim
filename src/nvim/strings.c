@@ -354,7 +354,7 @@ char *strcase_save(const char *const orig, bool upper)
     int l = utf_ptr2len((const char_u *)p);
     if (c == 0) {
       // overlong sequence, use only the first byte
-      c = *p;
+      c = (char_u)(*p);
       l = 1;
     }
     int uc = upper ? mb_toupper(c) : mb_tolower(c);

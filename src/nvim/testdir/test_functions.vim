@@ -332,37 +332,6 @@ func Test_simplify()
   call assert_fails('call simplify(1.2)', 'E806:')
 endfunc
 
-func Test_setbufvar_options()
-  " This tests that aucmd_prepbuf() and aucmd_restbuf() properly restore the
-  " window layout.
-  call assert_equal(1, winnr('$'))
-  split dummy_preview
-  resize 2
-  set winfixheight winfixwidth
-  let prev_id = win_getid()
-
-  wincmd j
-  let wh = winheight(0)
-  let dummy_buf = bufnr('dummy_buf1', v:true)
-  call setbufvar(dummy_buf, '&buftype', 'nofile')
-  execute 'belowright vertical split #' . dummy_buf
-  call assert_equal(wh, winheight(0))
-  let dum1_id = win_getid()
-
-  wincmd h
-  let wh = winheight(0)
-  let dummy_buf = bufnr('dummy_buf2', v:true)
-  eval 'nofile'->setbufvar(dummy_buf, '&buftype')
-  execute 'belowright vertical split #' . dummy_buf
-  call assert_equal(wh, winheight(0))
-
-  bwipe!
-  call win_gotoid(prev_id)
-  bwipe!
-  call win_gotoid(dum1_id)
-  bwipe!
-endfunc
-
 func Test_pathshorten()
   call assert_equal('', pathshorten(''))
   call assert_equal('foo', pathshorten('foo'))
@@ -1293,6 +1262,37 @@ func Test_shellescape()
   let &shell = save_shell
 endfunc
 
+func Test_setbufvar_options()
+  " This tests that aucmd_prepbuf() and aucmd_restbuf() properly restore the
+  " window layout.
+  call assert_equal(1, winnr('$'))
+  split dummy_preview
+  resize 2
+  set winfixheight winfixwidth
+  let prev_id = win_getid()
+
+  wincmd j
+  let wh = winheight(0)
+  let dummy_buf = bufnr('dummy_buf1', v:true)
+  call setbufvar(dummy_buf, '&buftype', 'nofile')
+  execute 'belowright vertical split #' . dummy_buf
+  call assert_equal(wh, winheight(0))
+  let dum1_id = win_getid()
+
+  wincmd h
+  let wh = winheight(0)
+  let dummy_buf = bufnr('dummy_buf2', v:true)
+  eval 'nofile'->setbufvar(dummy_buf, '&buftype')
+  execute 'belowright vertical split #' . dummy_buf
+  call assert_equal(wh, winheight(0))
+
+  bwipe!
+  call win_gotoid(prev_id)
+  bwipe!
+  call win_gotoid(dum1_id)
+  bwipe!
+endfunc
+
 func Test_redo_in_nested_functions()
   nnoremap g. :set opfunc=Operator<CR>g@
   function Operator( type, ... )
@@ -1348,98 +1348,6 @@ func Test_trim()
 
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> n->nr2char()}), '')
   call assert_equal("x", trim(chars . "x" . chars))
-endfunc
-
-func EditAnotherFile()
-  let word = expand('<cword>')
-  edit Xfuncrange2
-endfunc
-
-func Test_func_range_with_edit()
-  " Define a function that edits another buffer, then call it with a range that
-  " is invalid in that buffer.
-  call writefile(['just one line'], 'Xfuncrange2')
-  new
-  eval 10->range()->setline(1)
-  write Xfuncrange1
-  call assert_fails('5,8call EditAnotherFile()', 'E16:')
-
-  call delete('Xfuncrange1')
-  call delete('Xfuncrange2')
-  bwipe!
-endfunc
-
-func Test_func_exists_on_reload()
-  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists')
-  call assert_equal(0, exists('*ExistingFunction'))
-  source Xfuncexists
-  call assert_equal(1, '*ExistingFunction'->exists())
-  " Redefining a function when reloading a script is OK.
-  source Xfuncexists
-  call assert_equal(1, exists('*ExistingFunction'))
-
-  " But redefining in another script is not OK.
-  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists2')
-  call assert_fails('source Xfuncexists2', 'E122:')
-
-  delfunc ExistingFunction
-  call assert_equal(0, exists('*ExistingFunction'))
-  call writefile([
-	\ 'func ExistingFunction()', 'echo "yes"', 'endfunc',
-	\ 'func ExistingFunction()', 'echo "no"', 'endfunc',
-	\ ], 'Xfuncexists')
-  call assert_fails('source Xfuncexists', 'E122:')
-  call assert_equal(1, exists('*ExistingFunction'))
-
-  call delete('Xfuncexists2')
-  call delete('Xfuncexists')
-  delfunc ExistingFunction
-endfunc
-
-func Test_platform_name()
-  " The system matches at most only one name.
-  let names = ['amiga', 'beos', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
-  call assert_inrange(0, 1, len(filter(copy(names), 'has(v:val)')))
-
-  " Is Unix?
-  call assert_equal(has('beos'), has('beos') && has('unix'))
-  call assert_equal(has('bsd'), has('bsd') && has('unix'))
-  call assert_equal(has('hpux'), has('hpux') && has('unix'))
-  call assert_equal(has('linux'), has('linux') && has('unix'))
-  call assert_equal(has('mac'), has('mac') && has('unix'))
-  call assert_equal(has('qnx'), has('qnx') && has('unix'))
-  call assert_equal(has('sun'), has('sun') && has('unix'))
-  call assert_equal(has('win32'), has('win32') && !has('unix'))
-  call assert_equal(has('win32unix'), has('win32unix') && has('unix'))
-
-  if has('unix') && executable('uname')
-    let uname = system('uname')
-    call assert_equal(uname =~? 'BeOS', has('beos'))
-    " GNU userland on BSD kernels (e.g., GNU/kFreeBSD) don't have BSD defined
-    call assert_equal(uname =~? '\%(GNU/k\w\+\)\@<!BSD\|DragonFly', has('bsd'))
-    call assert_equal(uname =~? 'HP-UX', has('hpux'))
-    call assert_equal(uname =~? 'Linux', has('linux'))
-    call assert_equal(uname =~? 'Darwin', has('mac'))
-    call assert_equal(uname =~? 'QNX', has('qnx'))
-    call assert_equal(uname =~? 'SunOS', has('sun'))
-    call assert_equal(uname =~? 'CYGWIN\|MSYS', has('win32unix'))
-  endif
-endfunc
-
-sandbox function Fsandbox()
-  normal ix
-endfunc
-
-func Test_func_sandbox()
-  sandbox let F = {-> 'hello'}
-  call assert_equal('hello', F())
-
-  sandbox let F = {-> "normal ix\<Esc>"->execute()}
-  call assert_fails('call F()', 'E48:')
-  unlet F
-
-  call assert_fails('call Fsandbox()', 'E48:')
-  delfunc Fsandbox
 endfunc
 
 " Test for reg_recording() and reg_executing()
@@ -1543,6 +1451,10 @@ func Test_getchar()
   call assert_equal('', getcharstr(0))
   call assert_equal('', getcharstr(1))
 
+  call feedkeys("\<M-F2>", '')
+  call assert_equal("\<M-F2>", getchar(0))
+  call assert_equal(0, getchar(0))
+
   call setline(1, 'xxxx')
   " call test_setmouse(1, 3)
   " let v:mouse_win = 9
@@ -1615,47 +1527,96 @@ func Test_libcall_libcallnr()
   call assert_fails("call libcallnr('Xdoesnotexist_', 'strlen', 'abcd')", 'E364:')
 endfunc
 
-func Test_bufadd_bufload()
-  call assert_equal(0, bufexists('someName'))
-  let buf = bufadd('someName')
-  call assert_notequal(0, buf)
-  call assert_equal(1, bufexists('someName'))
-  call assert_equal(0, getbufvar(buf, '&buflisted'))
-  call assert_equal(0, bufloaded(buf))
-  call bufload(buf)
-  call assert_equal(1, bufloaded(buf))
-  call assert_equal([''], getbufline(buf, 1, '$'))
+sandbox function Fsandbox()
+  normal ix
+endfunc
 
-  let curbuf = bufnr('')
-  eval ['some', 'text']->writefile('XotherName')
-  let buf = 'XotherName'->bufadd()
-  call assert_notequal(0, buf)
-  eval 'XotherName'->bufexists()->assert_equal(1)
-  call assert_equal(0, getbufvar(buf, '&buflisted'))
-  call assert_equal(0, bufloaded(buf))
-  eval buf->bufload()
-  call assert_equal(1, bufloaded(buf))
-  call assert_equal(['some', 'text'], getbufline(buf, 1, '$'))
-  call assert_equal(curbuf, bufnr(''))
+func Test_func_sandbox()
+  sandbox let F = {-> 'hello'}
+  call assert_equal('hello', F())
 
-  let buf1 = bufadd('')
-  let buf2 = bufadd('')
-  call assert_notequal(0, buf1)
-  call assert_notequal(0, buf2)
-  call assert_notequal(buf1, buf2)
-  call assert_equal(1, bufexists(buf1))
-  call assert_equal(1, bufexists(buf2))
-  call assert_equal(0, bufloaded(buf1))
-  exe 'bwipe ' .. buf1
-  call assert_equal(0, bufexists(buf1))
-  call assert_equal(1, bufexists(buf2))
-  exe 'bwipe ' .. buf2
-  call assert_equal(0, bufexists(buf2))
+  sandbox let F = {-> "normal ix\<Esc>"->execute()}
+  call assert_fails('call F()', 'E48:')
+  unlet F
 
-  bwipe someName
-  bwipe XotherName
-  call assert_equal(0, bufexists('someName'))
-  call delete('XotherName')
+  call assert_fails('call Fsandbox()', 'E48:')
+  delfunc Fsandbox
+endfunc
+
+func EditAnotherFile()
+  let word = expand('<cword>')
+  edit Xfuncrange2
+endfunc
+
+func Test_func_range_with_edit()
+  " Define a function that edits another buffer, then call it with a range that
+  " is invalid in that buffer.
+  call writefile(['just one line'], 'Xfuncrange2')
+  new
+  eval 10->range()->setline(1)
+  write Xfuncrange1
+  call assert_fails('5,8call EditAnotherFile()', 'E16:')
+
+  call delete('Xfuncrange1')
+  call delete('Xfuncrange2')
+  bwipe!
+endfunc
+
+func Test_func_exists_on_reload()
+  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists')
+  call assert_equal(0, exists('*ExistingFunction'))
+  source Xfuncexists
+  call assert_equal(1, '*ExistingFunction'->exists())
+  " Redefining a function when reloading a script is OK.
+  source Xfuncexists
+  call assert_equal(1, exists('*ExistingFunction'))
+
+  " But redefining in another script is not OK.
+  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists2')
+  call assert_fails('source Xfuncexists2', 'E122:')
+
+  delfunc ExistingFunction
+  call assert_equal(0, exists('*ExistingFunction'))
+  call writefile([
+	\ 'func ExistingFunction()', 'echo "yes"', 'endfunc',
+	\ 'func ExistingFunction()', 'echo "no"', 'endfunc',
+	\ ], 'Xfuncexists')
+  call assert_fails('source Xfuncexists', 'E122:')
+  call assert_equal(1, exists('*ExistingFunction'))
+
+  call delete('Xfuncexists2')
+  call delete('Xfuncexists')
+  delfunc ExistingFunction
+endfunc
+
+func Test_platform_name()
+  " The system matches at most only one name.
+  let names = ['amiga', 'beos', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
+  call assert_inrange(0, 1, len(filter(copy(names), 'has(v:val)')))
+
+  " Is Unix?
+  call assert_equal(has('beos'), has('beos') && has('unix'))
+  call assert_equal(has('bsd'), has('bsd') && has('unix'))
+  call assert_equal(has('hpux'), has('hpux') && has('unix'))
+  call assert_equal(has('linux'), has('linux') && has('unix'))
+  call assert_equal(has('mac'), has('mac') && has('unix'))
+  call assert_equal(has('qnx'), has('qnx') && has('unix'))
+  call assert_equal(has('sun'), has('sun') && has('unix'))
+  call assert_equal(has('win32'), has('win32') && !has('unix'))
+  call assert_equal(has('win32unix'), has('win32unix') && has('unix'))
+
+  if has('unix') && executable('uname')
+    let uname = system('uname')
+    call assert_equal(uname =~? 'BeOS', has('beos'))
+    " GNU userland on BSD kernels (e.g., GNU/kFreeBSD) don't have BSD defined
+    call assert_equal(uname =~? '\%(GNU/k\w\+\)\@<!BSD\|DragonFly', has('bsd'))
+    call assert_equal(uname =~? 'HP-UX', has('hpux'))
+    call assert_equal(uname =~? 'Linux', has('linux'))
+    call assert_equal(uname =~? 'Darwin', has('mac'))
+    call assert_equal(uname =~? 'QNX', has('qnx'))
+    call assert_equal(uname =~? 'SunOS', has('sun'))
+    call assert_equal(uname =~? 'CYGWIN\|MSYS', has('win32unix'))
+  endif
 endfunc
 
 func Test_readdir()
@@ -1712,6 +1673,49 @@ endfunc
 
 func Test_eventhandler()
   call assert_equal(0, eventhandler())
+endfunc
+
+func Test_bufadd_bufload()
+  call assert_equal(0, bufexists('someName'))
+  let buf = bufadd('someName')
+  call assert_notequal(0, buf)
+  call assert_equal(1, bufexists('someName'))
+  call assert_equal(0, getbufvar(buf, '&buflisted'))
+  call assert_equal(0, bufloaded(buf))
+  call bufload(buf)
+  call assert_equal(1, bufloaded(buf))
+  call assert_equal([''], getbufline(buf, 1, '$'))
+
+  let curbuf = bufnr('')
+  eval ['some', 'text']->writefile('XotherName')
+  let buf = 'XotherName'->bufadd()
+  call assert_notequal(0, buf)
+  eval 'XotherName'->bufexists()->assert_equal(1)
+  call assert_equal(0, getbufvar(buf, '&buflisted'))
+  call assert_equal(0, bufloaded(buf))
+  eval buf->bufload()
+  call assert_equal(1, bufloaded(buf))
+  call assert_equal(['some', 'text'], getbufline(buf, 1, '$'))
+  call assert_equal(curbuf, bufnr(''))
+
+  let buf1 = bufadd('')
+  let buf2 = bufadd('')
+  call assert_notequal(0, buf1)
+  call assert_notequal(0, buf2)
+  call assert_notequal(buf1, buf2)
+  call assert_equal(1, bufexists(buf1))
+  call assert_equal(1, bufexists(buf2))
+  call assert_equal(0, bufloaded(buf1))
+  exe 'bwipe ' .. buf1
+  call assert_equal(0, bufexists(buf1))
+  call assert_equal(1, bufexists(buf2))
+  exe 'bwipe ' .. buf2
+  call assert_equal(0, bufexists(buf2))
+
+  bwipe someName
+  bwipe XotherName
+  call assert_equal(0, bufexists('someName'))
+  call delete('XotherName')
 endfunc
 
 " Test for the eval() function

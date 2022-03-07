@@ -138,3 +138,15 @@ describe('vim_strchr()', function()
     eq(nil, vim_strchr('«\237\175\191\237\188\128»', 0x10FF00))
   end)
 end)
+
+describe('strcase_save()' , function()
+  local strcase_save = function(input_string, upper)
+    local res = strings.strcase_save(to_cstr(input_string), upper)
+    return ffi.string(res)
+  end
+
+  itp('decodes overlong encoded characters.', function()
+    eq("A", strcase_save("\xc1\x81", true))
+    eq("a", strcase_save("\xc1\x81", false))
+  end)
+end)

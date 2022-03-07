@@ -1600,11 +1600,13 @@ theend:
   return file_name;
 }
 
-void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre)
 {
   static bool recursive = false;
 
-  if (recursive || !has_event(EVENT_DIRCHANGED)) {
+  event_T event = pre ? EVENT_DIRCHANGEDPRE : EVENT_DIRCHANGED;
+
+  if (recursive || !has_event(event)) {
     // No autocommand was defined or we changed
     // the directory from this autocommand.
     return;
@@ -1638,8 +1640,12 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
   new_dir = new_dir_buf;
 #endif
 
+  if (pre) {
+    tv_dict_add_str(dict, S_LEN("directory"), new_dir);
+  } else {
+    tv_dict_add_str(dict, S_LEN("cwd"), new_dir);
+  }
   tv_dict_add_str(dict, S_LEN("scope"), buf);  // -V614
-  tv_dict_add_str(dict, S_LEN("cwd"), new_dir);
   tv_dict_add_bool(dict, S_LEN("changed_window"), cause == kCdCauseWindow);
   tv_dict_set_keys_readonly(dict);
 
@@ -1655,8 +1661,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
     abort();
   }
 
-  apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
-                 curbuf);
+  apply_autocmds(event, (char_u *)buf, (char_u *)new_dir, false, curbuf);
 
   restore_v_event(dict, &save_v_event);
 
@@ -1682,12 +1687,16 @@ int vim_chdirfile(char_u *fname, CdCause cause)
     return OK;
   }
 
+  if (cause != kCdCauseOther) {
+    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, true);
+  }
+
   if (os_chdir(dir) != 0) {
     return FAIL;
   }
 
   if (cause != kCdCauseOther) {
-    do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
+    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, false);
   }
 
   return OK;

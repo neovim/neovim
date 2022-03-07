@@ -923,7 +923,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
 	Example, to highlight the line where the cursor currently is: >
-		:exe '/\%' . line(".") . 'l.*'
+		:exe '/\%' .. line(".") .. 'l.*'
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 
@@ -939,7 +939,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
 	Example, to highlight the column where the cursor currently is: >
-		:exe '/\%' . col(".") . 'c'
+		:exe '/\%' .. col(".") .. 'c'
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 	Example for matching a single byte in column 44: >

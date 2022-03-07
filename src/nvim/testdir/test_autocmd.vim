@@ -502,7 +502,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   [CODE]
 
   call writefile(content, 'Xvimrc')
-  call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
+  call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
   call assert_match('E814', errors)
 
@@ -562,7 +562,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
   [CODE]
 
   call writefile(content, 'Xvimrc')
-  call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
+  call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
   " This probably only ever matches on unix.
   call assert_notmatch('Caught deadly signal SEGV', errors)
@@ -1506,7 +1506,7 @@ func Test_bufunload_all()
   call writefile(content, 'Xtest')
 
   call delete('Xout')
-  call system(v:progpath. ' -u NORC -i NONE -N -S Xtest')
+  call system(GetVimCommandClean() .. ' -N --headless -S Xtest')
   call assert_true(filereadable('Xout'))
 
   call delete('Xxx1')
@@ -1827,6 +1827,14 @@ func Test_autocommand_all_events()
   call assert_fails('au * x bwipe', 'E1155:')
 endfunc
 
+func Test_autocmd_user()
+  au User MyEvent let s:res = [expand("<afile>"), expand("<amatch>")]
+  doautocmd User MyEvent
+  call assert_equal(['MyEvent', 'MyEvent'], s:res)
+  au! User
+  unlet s:res
+endfunc
+
 function s:Before_test_dirchanged()
   augroup test_dirchanged
     autocmd!
@@ -1850,14 +1858,16 @@ endfunc
 
 function Test_dirchanged_global()
   call s:Before_test_dirchanged()
+  autocmd test_dirchanged DirChangedPre global call add(s:li, expand("<amatch>") .. " pre cd " .. v:event.directory)
   autocmd test_dirchanged DirChanged global call add(s:li, "cd:")
   autocmd test_dirchanged DirChanged global call add(s:li, expand("<afile>"))
   call chdir(s:dir_foo)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  let expected = ["global pre cd " .. s:dir_foo, "cd:", s:dir_foo]
+  call assert_equal(expected, s:li)
   call chdir(s:dir_foo)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  call assert_equal(expected, s:li)
   exe 'lcd ' .. fnameescape(s:dir_bar)
-  call assert_equal(["cd:", s:dir_foo], s:li)
+  call assert_equal(expected, s:li)
   call s:After_test_dirchanged()
 endfunc
 
@@ -1879,6 +1889,7 @@ function Test_dirchanged_auto()
   CheckOption autochdir
   call s:Before_test_dirchanged()
   call test_autochdir()
+  autocmd test_dirchanged DirChangedPre auto call add(s:li, "pre cd " .. v:event.directory)
   autocmd test_dirchanged DirChanged auto call add(s:li, "auto:")
   autocmd test_dirchanged DirChanged auto call add(s:li, expand("<afile>"))
   set acd
@@ -1886,7 +1897,8 @@ function Test_dirchanged_auto()
   call assert_equal([], s:li)
   exe 'edit ' . s:dir_foo . '/Xfile'
   call assert_equal(s:dir_foo, getcwd())
-  call assert_equal(["auto:", s:dir_foo], s:li)
+  let expected = ["pre cd " .. s:dir_foo, "auto:", s:dir_foo]
+  call assert_equal(expected, s:li)
   set noacd
   bwipe!
   call s:After_test_dirchanged()

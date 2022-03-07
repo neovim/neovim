@@ -67,7 +67,9 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
 
   uint8_t decor_level = kDecorLevelNone;  // no decor
   if (decor) {
-    if (kv_size(decor->virt_text) || kv_size(decor->virt_lines)) {
+    if (kv_size(decor->virt_text)
+        || kv_size(decor->virt_lines)
+        || decor_has_sign(decor)) {
       decor_full = true;
       decor = xmemdup(decor, sizeof *decor);
     }
@@ -141,6 +143,13 @@ revised:
   if (decor) {
     if (kv_size(decor->virt_lines)) {
       buf->b_virt_line_blocks++;
+    }
+    if (decor_has_sign(decor)) {
+      buf->b_signs++;
+    }
+    if (decor->sign_text) {
+      // TODO(lewis6991): smarter invalidation
+      buf_signcols_add_check(buf, NULL);
     }
     decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
   }

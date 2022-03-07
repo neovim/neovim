@@ -568,6 +568,26 @@ Example: TCP echo-server                                *tcp-server*
     end)
     print('TCP echo-server listening on port: '..server:getsockname().port)
 
+
+Multithreading						*lua-loop-threading*
+
+Plugins can perform work in separate (os-level) threads using the threading
+APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+gets its own separate lua interpreter state, with no access to lua globals
+in the main thread. Neither can the state of the editor (buffers, windows,
+etc) be directly accessed from threads.
+
+A subset of the `vim.*` API is available in threads. This includes:
+
+- `vim.loop` with a separate event loop per thread.
+- `vim.mpack` and `vim.json` (useful for serializing messages between threads)
+- `require` in threads can use lua packages from the global |lua-package-path|
+- `print()` and `vim.inspect`
+- `vim.diff`
+- most utility functions in `vim.*` for working with pure lua values
+  like `vim.split`, `vim.tbl_*`, `vim.list_*`, and so on.
+- `vim.is_thread()` returns true from a non-main thread.
+
 ------------------------------------------------------------------------------
 VIM.HIGHLIGHT                                           *lua-highlight*
 
@@ -595,13 +615,33 @@ vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
           - {on_visual} highlight when yanking visual selection (default `true`)
           - {event} event structure (default |v:event|)
 
-vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
+vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                                                        *vim.highlight.range()*
-        Highlights the range between {start} and {finish} (tuples of {line,col})
-        in buffer {bufnr} with the highlight group {higroup} using the namespace
-        {ns}. Optional arguments are the type of range (characterwise, linewise,
-        or blockwise, see |setreg|; default to characterwise) and whether the
-        range is inclusive (default false).
+
+        Apply highlight group to range of text.
+
+                Parameters: ~
+                    {bufnr}   buffer number
+                    {ns}      namespace for highlights
+                    {hlgroup} highlight group name
+                    {start}   starting position (tuple {line,col})
+                    {finish}  finish position (tuple {line,col})
+                    {opts}    optional parameters:
+                              • `regtype`: type of range (characterwise, linewise,
+                                or blockwise, see |setreg|), default `'v'`
+                              • `inclusive`: range includes end position, default
+                                `false`
+                              • `priority`: priority of highlight, default
+                                `vim.highlight.user` (see below)
+
+vim.highlight.priorities                           *vim.highlight.priorities*
+
+        Table with default priorities used for highlighting:
+            • `syntax`: `50`, used for standard syntax highlighting
+            • `treesitter`: `100`, used for tree-sitter-based highlighting
+            • `diagnostics`: `150`, used for code analysis such as diagnostics
+            • `user`: `200`, used for user-triggered highlights such as LSP
+              document symbols or `on_yank` autocommands
 
 ------------------------------------------------------------------------------
 VIM.REGEX                                                       *lua-regex*
@@ -1974,9 +2014,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                               result of Lua expr maps.
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
-                              |nvim_set_keymap()|. Default `true` if `lhs` is
-                              a string starting with `<plug>`
-                              (case-insensitive), `false` otherwise.
+                              |nvim_set_keymap()|. Default `false` .
 
                 See also: ~
                     |nvim_set_keymap()|

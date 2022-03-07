@@ -1,8 +1,10 @@
 -- Functions shared by Nvim and its test-suite.
 --
--- The singular purpose of this module is to share code with the Nvim
--- test-suite. If, in the future, Nvim itself is used to run the test-suite
--- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
+-- These are "pure" lua functions not depending of the state of the editor.
+-- Thus they should always be available whenever nvim-related lua code is run,
+-- regardless if it is code in the editor itself, or in worker threads/processes,
+-- or the test suite. (Eventually the test suite will be run in a worker process,
+-- so this wouldn't be a separate case to consider)
 
 local vim = vim or {}
 

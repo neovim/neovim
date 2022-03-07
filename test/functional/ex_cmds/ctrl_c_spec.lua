@@ -10,8 +10,7 @@ describe("CTRL-C (mapped)", function()
 
   it("interrupts :global", function()
     -- Crashes luajit.
-    if helpers.skip_fragile(pending,
-      helpers.isCI('travis') or helpers.isCI('appveyor')) then
+    if helpers.skip_fragile(pending) then
       return
     end
 

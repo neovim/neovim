@@ -433,7 +433,8 @@ Vimscript compatibility:
   `this_session` does not alias to |v:this_session|
 
 Working directory (Vim implemented some of these later than Nvim):
-- |DirChanged| can be triggered when switching to another window.
+- |DirChanged| and |DirChangedPre| can be triggered when switching to another
+  window or tab.
 - |getcwd()| and |haslocaldir()| may throw errors if the tab page or window
   cannot be found.  *E5000* *E5001* *E5002*
 - |haslocaldir()| checks for tab-local directory if and only if -1 is passed as
@@ -493,6 +494,9 @@ Eval:
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
+  *v:sizeofint*
+  *v:sizeoflong*
+  *v:sizeofpointer*
 
 Events:
   *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.

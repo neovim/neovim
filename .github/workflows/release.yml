@@ -39,12 +39,17 @@ jobs:
           printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
           printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
-          cd "$GITHUB_WORKSPACE/build/release"
-          tar cfz nvim-linux64.tar.gz nvim-linux64
+          cd "$GITHUB_WORKSPACE/build/"
+          cpack -C $NVIM_BUILD_TYPE
       - uses: actions/upload-artifact@v2
         with:
           name: nvim-linux64
-          path: build/release/nvim-linux64.tar.gz
+          path: build/nvim-linux64.tar.gz
+          retention-days: 1
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nvim-linux64
+          path: build/nvim-linux64.deb
           retention-days: 1
 
   appimage:
@@ -114,7 +119,7 @@ jobs:
           retention-days: 1
 
   windows:
-    runs-on: windows-2016
+    runs-on: windows-2019
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
@@ -131,11 +136,20 @@ jobs:
       - run: powershell ci\build.ps1 -NoTests
         env:
           CONFIGURATION: ${{ matrix.config }}
-      - run: move build\Neovim.zip build\${{ matrix.archive }}.zip
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.archive }}
           path: build/${{ matrix.archive }}.zip
+          retention-days: 1
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.archive }}
+          path: build/${{ matrix.archive }}.msi
+          retention-days: 1
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.archive }}
+          path: build/${{ matrix.archive }}.exe
           retention-days: 1
 
   publish:
@@ -187,7 +201,9 @@ jobs:
         run: |
           cd ./nvim-linux64
           sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
-          echo "SHA_LINUX_64=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_64_TAR=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
+          sha256sum nvim-linux64.deb > nvim-linux64.deb.sha256sum
+          echo "SHA_LINUX_64_DEB=$(cat nvim-linux64.deb.sha256sum)" >> $GITHUB_ENV
       - name: Generate App Image SHA256 checksums
         run: |
           cd ./appimage
@@ -207,7 +223,11 @@ jobs:
         run: |
           cd ./nvim-win64
           sha256sum nvim-win64.zip > nvim-win64.zip.sha256sum
-          echo "SHA_WIN_64=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_WIN_64_ZIP=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
+          sha256sum nvim-win64.msi > nvim-win64.msi.sha256sum
+          echo "SHA_WIN_64_MSI=$(cat nvim-win64.msi.sha256sum)" >> $GITHUB_ENV
+          sha256sum nvim-win64.exe > nvim-win64.exe.sha256sum
+          echo "SHA_WIN_64_EXE=$(cat nvim-win64.exe.sha256sum)" >> $GITHUB_ENV
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

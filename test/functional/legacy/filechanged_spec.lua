@@ -11,6 +11,11 @@ describe('file changed dialog', function()
     clear()
     meths.ui_attach(80, 24, {})
     meths.set_option('autoread', false)
+    meths.set_option('fsync', true)
+  end)
+
+  it('works', function()
+    if helpers.pending_win32(pending) then return end
     source([[
       func Test_file_changed_dialog()
         au! FileChangedShell
@@ -66,11 +71,61 @@ describe('file changed dialog', function()
         call delete('Xchanged_d')
       endfunc
     ]])
+    call('Test_file_changed_dialog')
+    expected_empty()
   end)
 
-  it('works', function()
-    if helpers.pending_win32(pending) then return end
-    call('Test_file_changed_dialog')
+  it('works with FileChangedShell', function()
+    source([[
+      func Test_FileChangedShell_edit_dialog()
+        new Xchanged_r
+        call setline(1, 'reload this')
+        set fileformat=unix
+        silent write  " Use :silent to prevent a hit-enter prompt
+
+        " File format changed, reload (content only) via prompt
+        augroup testreload
+          au!
+          au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
+        augroup END
+        call assert_equal(&fileformat, 'unix')
+        sleep 10m  " make the test less flaky in Nvim
+        call writefile(["line1\r", "line2\r"], 'Xchanged_r')
+        let g:reason = ''
+        call nvim_input('L') " load file content only
+        checktime
+        call assert_equal('changed', g:reason)
+        call assert_equal(&fileformat, 'unix')
+        call assert_equal("line1\r", getline(1))
+        call assert_equal("line2\r", getline(2))
+        %s/\r
+        silent write  " Use :silent to prevent a hit-enter prompt
+
+        " File format changed, reload (file and options) via prompt
+        augroup testreload
+          au!
+          au FileChangedShell Xchanged_r let g:reason = v:fcs_reason | let v:fcs_choice = 'ask'
+        augroup END
+        call assert_equal(&fileformat, 'unix')
+        sleep 10m  " make the test less flaky in Nvim
+        call writefile(["line1\r", "line2\r"], 'Xchanged_r')
+        let g:reason = ''
+        call nvim_input('a') " load file content and options
+        checktime
+        call assert_equal('changed', g:reason)
+        call assert_equal(&fileformat, 'dos')
+        call assert_equal("line1", getline(1))
+        call assert_equal("line2", getline(2))
+        set fileformat=unix
+        silent write  " Use :silent to prevent a hit-enter prompt
+
+        au! testreload
+        bwipe!
+        call delete(undofile('Xchanged_r'))
+        call delete('Xchanged_r')
+      endfunc
+    ]])
+    call('Test_FileChangedShell_edit_dialog')
     expected_empty()
   end)
 end)

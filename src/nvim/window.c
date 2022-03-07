@@ -958,6 +958,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int wmh1;
   bool did_set_fraction = false;
 
+  // aucmd_win should always remain floating
+  if (new_wp != NULL && new_wp == aucmd_win) {
+    return FAIL;
+  }
+
   if (flags & WSP_TOP) {
     oldwin = firstwin;
   } else if (flags & WSP_BOT || curwin->w_floating) {
@@ -1727,6 +1732,12 @@ static void win_exchange(long Prenum)
 
   (void)win_comp_pos();                 // recompute window positions
 
+  if (wp->w_buffer != curbuf) {
+    reset_VIsual_and_resel();
+  } else if (VIsual_active) {
+    wp->w_cursor = curwin->w_cursor;
+  }
+
   win_enter(wp, true);
   redraw_later(curwin, NOT_VALID);
   redraw_later(wp, NOT_VALID);
@@ -1825,6 +1836,9 @@ static void win_totop(int size, int flags)
 
   if (firstwin == curwin && lastwin_nofloating() == curwin) {
     beep_flush();
+    return;
+  }
+  if (curwin == aucmd_win) {
     return;
   }
 
@@ -4682,20 +4696,29 @@ void fix_current_dir(void)
         globaldir = (char_u *)xstrdup(cwd);
       }
     }
-    if (os_chdir(new_dir) == 0) {
-      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
-        do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
-      }
-      last_chdir_reason = NULL;
-      shorten_fnames(true);
+    bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
+    if (!p_acd && dir_differs) {
+      do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
+                            kCdCauseWindow, true);
     }
+    if (os_chdir(new_dir) == 0) {
+      if (!p_acd && dir_differs) {
+        do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
+                              kCdCauseWindow, false);
+      }
+    }
+    last_chdir_reason = NULL;
+    shorten_fnames(true);
   } else if (globaldir != NULL) {
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
+    bool dir_differs = pathcmp((char *)globaldir, cwd, -1) != 0;
+    if (!p_acd && dir_differs) {
+      do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, true);
+    }
     if (os_chdir((char *)globaldir) == 0) {
-      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
+      if (!p_acd && dir_differs) {
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, false);
       }
     }
     XFREE_CLEAR(globaldir);
@@ -6740,9 +6763,6 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
     curwin = switchwin->sw_curwin;
     curbuf = curwin->w_buffer;
   }
-  // If called by win_execute() and executing the command changed the
-  // directory, it now has to be restored.
-  fix_current_dir();
 }
 
 /// Make "buf" the current buffer.

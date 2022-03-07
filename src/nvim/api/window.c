@@ -71,6 +71,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 }
 
 /// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
+/// Unlike |win_execute()| this scrolls the window.
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param pos      (row, col) tuple representing the new position
@@ -118,6 +119,8 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   update_topline_win(win);
 
   redraw_later(win, VALID);
+  redraw_for_cursorline(win);
+  win->w_redr_status = true;
 }
 
 /// Gets the window height

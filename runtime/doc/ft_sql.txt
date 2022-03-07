@@ -109,8 +109,8 @@ must be configurable.  The filetype plugin attempts to define many of the
 standard objects, plus many additional ones.  In order to make this as
 flexible as possible, you can override the list of objects from within your
 |vimrc| with the following: >
-    let g:ftplugin_sql_objects = 'function,procedure,event,table,trigger' .
-		\ ',schema,service,publication,database,datatype,domain' .
+    let g:ftplugin_sql_objects = 'function,procedure,event,table,trigger' ..
+		\ ',schema,service,publication,database,datatype,domain' ..
 		\ ',index,subscription,synchronization,view,variable'
 
 The following |Normal| mode and |Visual| mode maps have been created which use
@@ -131,10 +131,10 @@ Repeatedly pressing ]} will cycle through each of these create statements: >
     create index i1 on t1 (c1);
 
 The default setting for g:ftplugin_sql_objects is: >
-    let g:ftplugin_sql_objects = 'function,procedure,event,' .
-		\ '\\(existing\\\\|global\\s\\+temporary\\s\\+\\)\\\{,1}' .
-		\ 'table,trigger' .
-		\ ',schema,service,publication,database,datatype,domain' .
+    let g:ftplugin_sql_objects = 'function,procedure,event,' ..
+		\ '\\(existing\\\\|global\\s\\+temporary\\s\\+\\)\\\{,1}' ..
+		\ 'table,trigger' ..
+		\ ',schema,service,publication,database,datatype,domain' ..
 		\ ',index,subscription,synchronization,view,variable'
 
 The above will also handle these cases: >

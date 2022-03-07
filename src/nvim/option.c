@@ -3878,6 +3878,7 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 {
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
+  nlua_set_sctx(&script_ctx);
   const LastSet last_set = {
     .script_ctx = {
       script_ctx.sc_sid,
@@ -4277,7 +4278,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   }
 
   // Save the global value before changing anything. This is needed as for
-  // a global-only option setting the "local value" infact sets the global
+  // a global-only option setting the "local value" in fact sets the global
   // value (since there is only one value).
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
@@ -8165,7 +8166,7 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   }
 
   int needed_signcols = buf_signcols(wp->w_buffer, maximum);
-  int ret = MAX(minimum, needed_signcols);
+  int ret = MAX(minimum, MIN(maximum, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
 }

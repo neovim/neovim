@@ -423,6 +423,13 @@ describe('api/buf', function()
       -- will join multiple lines if needed
       set_text(0, 6, 3, 4, {'bar'})
       eq({'hello bar'}, get_lines(0,  1, true))
+
+      -- can use negative line numbers
+      set_text(-2, 0, -2, 5, {'goodbye'})
+      eq({'goodbye bar', ''}, get_lines(0, -1, true))
+
+      set_text(-1, 0, -1, 0, {'text'})
+      eq({'goodbye bar', 'text'}, get_lines(0, 2, true))
     end)
 
     it('works with undo', function()
@@ -534,6 +541,34 @@ describe('api/buf', function()
 
       ]])
 
+    end)
+  end)
+
+  describe('nvim_buf_get_text', function()
+    local get_text = curbufmeths.get_text
+
+    it('works', function()
+      insert([[
+      hello foo!
+      text]])
+
+      eq({'hello'}, get_text(0, 0, 0, 5, {}))
+      eq({'hello foo!'}, get_text(0, 0, 0, 42, {}))
+      eq({'foo!'}, get_text(0, 6, 0, 10, {}))
+      eq({'foo!', 'tex'}, get_text(0, 6, 1, 3, {}))
+      eq({'foo!', 'tex'}, get_text(-2, 6, -1, 3, {}))
+      eq({''}, get_text(0, 18, 0, 20, {}))
+      eq({'ext'}, get_text(-1, 1, -1, 4, {}))
+    end)
+
+    it('errors on out-of-range', function()
+      eq(false, pcall(get_text, 2, 0, 3, 0, {}))
+      eq(false, pcall(get_text, 0, 0, 4, 0, {}))
+    end)
+
+    it('errors when start is greater than end', function()
+      eq(false, pcall(get_text, 1, 0, 0, 0, {}))
+      eq(false, pcall(get_text, 0, 1, 0, 0, {}))
     end)
   end)
 

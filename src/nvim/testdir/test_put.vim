@@ -138,6 +138,50 @@ func Test_p_with_count_leaves_mark_at_end()
   bwipe!
 endfunc
 
+func Test_very_large_count()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  let @" = repeat('x', 100)
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  let @" = repeat('x', 100)
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>99ly"
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>$y"
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
 func Test_put_above_first_line()
   new
   let @" = 'text'

@@ -864,7 +864,7 @@ Groß): >
 	    else
 		let res = []
 		let h = ''
-		for l in split(system('aiksaurus '.shellescape(a:base)), '\n')
+		for l in split(system('aiksaurus ' .. shellescape(a:base)), '\n')
 		    if l[:3] == '=== '
 		    	let h = substitute(l[4:], ' =*$', '', '')
 		    elseif l[0] =~ '\a'
@@ -1199,7 +1199,7 @@ An example that completes the names of the months: >
 	    " find months matching with "a:base"
 	    let res = []
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call add(res, m)
 	      endif
 	    endfor
@@ -1221,7 +1221,7 @@ The same, but now pretending searching for matches is slow: >
 	  else
 	    " find months matching with "a:base"
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call complete_add(m)
 	      endif
 	      sleep 300m	" simulate searching for next match

@@ -2324,7 +2324,7 @@ describe('builtin popupmenu', function()
   it('is closed by :stopinsert from timer #12976', function()
     screen:try_resize(32,14)
     command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
-    feed('Gah<C-N>')
+    feed('Gah<c-x><c-n>')
     screen:expect([[
       hello                           |
       hullo                           |

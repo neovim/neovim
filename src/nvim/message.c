@@ -3464,6 +3464,7 @@ void msg_advance(int col)
 ///
 /// @param textfiel  IObuff for inputdialog(), NULL otherwise
 /// @param ex_cmd  when TRUE pressing : accepts default and starts Ex command
+/// @returns 0 if cancelled, otherwise the nth button (1-indexed).
 int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfltbutton,
               char_u *textfield, int ex_cmd)
 {

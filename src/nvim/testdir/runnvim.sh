@@ -65,9 +65,6 @@ main() {(
       fi
     fi
   fi
-  if test "$FAILED" = 1 ; then
-    ci_fold start "$test_name"
-  fi
   valgrind_check .
   if test -n "$LOG_DIR" ; then
     check_sanitizer "$LOG_DIR"
@@ -77,9 +74,6 @@ main() {(
     cat "$tlog"
   fi
   rm -f "$tlog"
-  if test "$FAILED" = 1 ; then
-    ci_fold end ""
-  fi
   if test "$FAILED" = 1 ; then
     echo "Test $test_name failed, see output above and summary for more details" >> test.log
     # When Neovim crashed/aborted it might not have created messages.

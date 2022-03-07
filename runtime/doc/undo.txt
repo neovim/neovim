@@ -272,12 +272,12 @@ history file.  E.g.: >
 	au BufReadPost * call ReadUndo()
 	au BufWritePost * call WriteUndo()
 	func ReadUndo()
-	  if filereadable(expand('%:h'). '/UNDO/' . expand('%:t'))
+	  if filereadable(expand('%:h') .. '/UNDO/' .. expand('%:t'))
 	    rundo %:h/UNDO/%:t
 	  endif
 	endfunc
 	func WriteUndo()
-	  let dirname = expand('%:h') . '/UNDO'
+	  let dirname = expand('%:h') .. '/UNDO'
 	  if !isdirectory(dirname)
 	    call mkdir(dirname)
 	  endif

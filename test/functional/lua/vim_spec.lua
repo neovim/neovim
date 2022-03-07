@@ -1,5 +1,6 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
+local isCI = require('test.helpers').isCI
 local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
@@ -23,9 +24,9 @@ local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 
-before_each(clear)
 
 describe('lua stdlib', function()
+  before_each(clear)
   -- İ: `tolower("İ")` is `i` which has length 1 while `İ` itself has
   --    length 2 (in bytes).
   -- Ⱥ: `tolower("Ⱥ")` is `ⱥ` which has length 2 while `Ⱥ` itself has
@@ -2534,9 +2535,42 @@ describe('lua stdlib', function()
   end)
 end)
 
+describe('lua: builtin modules', function()
+  local function do_tests()
+    eq(2, exec_lua[[return vim.tbl_count {x=1,y=2}]])
+    eq('{ 10, "spam" }', exec_lua[[return vim.inspect {10, 'spam'}]])
+  end
+
+  it('works', function()
+    clear()
+    do_tests()
+  end)
+
+  it('works when disabled', function()
+    clear('--luamod-dev')
+    do_tests()
+  end)
+
+  it('works without runtime', function()
+    clear{env={VIMRUNTIME='fixtures/a'}}
+    do_tests()
+  end)
+
+
+  it('does not work when disabled without runtime', function()
+    if isCI('sourcehut') then
+      pending('causes a core dump')
+    end
+    clear{args={'--luamod-dev'}, env={VIMRUNTIME='fixtures/a'}}
+    -- error checking could be better here. just check that --luamod-dev
+    -- does anything at all by breaking with missing runtime..
+    eq(nil, exec_lua[[return vim.tbl_count {x=1,y=2}]])
+  end)
+end)
+
 describe('lua: require("mod") from packages', function()
   before_each(function()
-    command('set rtp+=test/functional/fixtures pp+=test/functional/fixtures')
+    clear('--cmd', 'set rtp+=test/functional/fixtures pp+=test/functional/fixtures')
   end)
 
   it('propagates syntax error', function()
@@ -2559,6 +2593,8 @@ describe('lua: require("mod") from packages', function()
 end)
 
 describe('vim.keymap', function()
+  before_each(clear)
+
   it('can make a mapping', function()
     eq(0, exec_lua [[
       GlobalCount = 0

@@ -24,6 +24,10 @@ typedef enum {
   HL_FG_INDEXED    = 0x0200,
   HL_DEFAULT       = 0x0400,
   HL_GLOBAL        = 0x0800,
+  HL_UNDERLINELINE = 0x1000,
+  HL_UNDERDOT      = 0x2000,
+  HL_UNDERDASH     = 0x4000,
+  HL_ANY_UNDERLINE = HL_UNDERLINE | HL_UNDERLINELINE | HL_UNDERCURL | HL_UNDERDOT | HL_UNDERDASH,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes

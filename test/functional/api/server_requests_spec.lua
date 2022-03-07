@@ -181,12 +181,6 @@ describe('server -> client', function()
   end)
 
   describe('recursive (child) nvim client', function()
-    if helpers.isCI('travis') and helpers.is_os('mac') then
-      -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]", function() end)
-      return
-    end
-
     before_each(function()
       command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])")
       neq(0, eval('vim'))

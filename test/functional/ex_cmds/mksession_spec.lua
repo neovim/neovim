@@ -14,6 +14,7 @@ local rmdir = helpers.rmdir
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
 describe(':mksession', function()
+  if helpers.pending_win32(pending) then return end
   local session_file = file_prefix .. '.vim'
   local tab_dir = file_prefix .. '.d'
 

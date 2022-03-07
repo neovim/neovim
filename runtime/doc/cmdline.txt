@@ -207,7 +207,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 		Example: >
 			:cmap <F7> <C-\>eAppendSome()<CR>
 			:func AppendSome()
-			   :let cmd = getcmdline() . " Some()"
+			   :let cmd = getcmdline() .. " Some()"
 			   :" place the cursor on the )
 			   :call setcmdpos(strlen(cmd))
 			   :return cmd

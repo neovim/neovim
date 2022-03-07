@@ -480,7 +480,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Remove final line if needed
   local fix_eol = has_eol_text_edit
-  fix_eol = fix_eol and api.nvim_buf_get_option(bufnr, 'fixeol')
+  fix_eol = fix_eol and (api.nvim_buf_get_option(bufnr, 'eol') or (api.nvim_buf_get_option(bufnr, 'fixeol') and not api.nvim_buf_get_option('binary')))
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
@@ -1556,9 +1556,7 @@ do --[[ References ]]
                       document_highlight_kind[kind],
                       { start_line, start_idx },
                       { end_line, end_idx },
-                      nil,
-                      false,
-                      40)
+                      { priority = vim.highlight.priorities.user })
     end
   end
 end

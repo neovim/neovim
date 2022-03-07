@@ -1,6 +1,8 @@
 " Tests for mappings and abbreviations
 
 source shared.vim
+source check.vim
+source screendump.vim
 
 func Test_abbreviation()
   " abbreviation with 0x80 should work
@@ -451,6 +453,82 @@ func Test_expr_map_gets_cursor()
   nunmap !
 endfunc
 
+func Test_expr_map_restore_cursor()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['one', 'two', 'three'])
+      2
+      set ls=2
+      hi! link StatusLine ErrorMsg
+      noremap <expr> <C-B> Func()
+      func Func()
+	  let g:on = !get(g:, 'on', 0)
+	  redraws
+	  return ''
+      endfunc
+      func Status()
+	  return get(g:, 'on', 0) ? '[on]' : ''
+      endfunc
+      set stl=%{Status()}
+  END
+  call writefile(lines, 'XtestExprMap')
+  let buf = RunVimInTerminal('-S XtestExprMap', #{rows: 10})
+  call term_sendkeys(buf, "\<C-B>")
+  call VerifyScreenDump(buf, 'Test_map_expr_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestExprMap')
+endfunc
+
+func Test_map_listing()
+  CheckScreendump
+
+  let lines =<< trim END
+      nmap a b
+  END
+  call writefile(lines, 'XtestMapList')
+  let buf = RunVimInTerminal('-S XtestMapList', #{rows: 6})
+  call term_sendkeys(buf, ":                      nmap a\<CR>")
+  call VerifyScreenDump(buf, 'Test_map_list_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestMapList')
+endfunc
+
+func Test_expr_map_error()
+  CheckScreendump
+
+  let lines =<< trim END
+      func Func()
+        throw 'test'
+        return ''
+      endfunc
+
+      nnoremap <expr> <F2> Func()
+      cnoremap <expr> <F2> Func()
+
+      call test_override('ui_delay', 10)
+  END
+  call writefile(lines, 'XtestExprMap')
+  let buf = RunVimInTerminal('-S XtestExprMap', #{rows: 10})
+  call term_sendkeys(buf, "\<F2>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<CR>")
+  call VerifyScreenDump(buf, 'Test_map_expr_2', {})
+
+  call term_sendkeys(buf, ":abc\<F2>")
+  call VerifyScreenDump(buf, 'Test_map_expr_3', {})
+  call term_sendkeys(buf, "\<Esc>0")
+  call VerifyScreenDump(buf, 'Test_map_expr_4', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestExprMap')
+endfunc
+
 " Test for mapping errors
 func Test_map_error()
   call assert_fails('unmap', 'E474:')
@@ -566,6 +644,36 @@ func Test_abbreviate_multi_byte()
   call assert_equal("bar…", getline(1))
   iunabbrev foo
   bwipe!
+endfunc
+
+" Test for <Plug> always being mapped, even when used with "noremap".
+func Test_plug_remap()
+  let g:foo = 0
+  nnoremap <Plug>(Increase_x) <Cmd>let g:foo += 1<CR>
+  nmap <F2> <Plug>(Increase_x)
+  nnoremap <F3> <Plug>(Increase_x)
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(1, g:foo)
+  call feedkeys("\<F3>", 'xt')
+  call assert_equal(2, g:foo)
+  nnoremap x <Nop>
+  nmap <F4> x<Plug>(Increase_x)x
+  nnoremap <F5> x<Plug>(Increase_x)x
+  call setline(1, 'Some text')
+  normal! gg$
+  call feedkeys("\<F4>", 'xt')
+  call assert_equal(3, g:foo)
+  call assert_equal('Some text', getline(1))
+  call feedkeys("\<F5>", 'xt')
+  call assert_equal(4, g:foo)
+  call assert_equal('Some te', getline(1))
+  nunmap <Plug>(Increase_x)
+  nunmap <F2>
+  nunmap <F3>
+  nunmap <F4>
+  nunmap <F5>
+  unlet g:foo
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

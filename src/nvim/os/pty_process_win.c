@@ -281,7 +281,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
 
-  if (proc->out.closed || !uv_is_readable(proc->out.uvstream)) {
+  if (proc->out.closed || proc->out.did_eof || !uv_is_readable(proc->out.uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
     pty_process_finish2(ptyproc);
   }

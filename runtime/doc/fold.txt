@@ -497,7 +497,7 @@ Note the use of backslashes to avoid some characters to be interpreted by the
     :function MyFoldText()
     :  let line = getline(v:foldstart)
     :  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-    :  return v:folddashes . sub
+    :  return v:folddashes .. sub
     :endfunction
 
 Evaluating 'foldtext' is done in the |sandbox|.  The current window is set to

@@ -27,6 +27,7 @@
 #include "nvim/highlight.h"
 #include "nvim/indent_c.h"
 #include "nvim/keymap.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -120,11 +121,11 @@ static int include_link = 0;    // when 2 include "nvim/link" and "clear"
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-{ "bold", "standout", "underline", "undercurl",
-  "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+{ "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
+  "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
-{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
-  HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
+  HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 static char e_illegal_arg[] = N_("E390: Illegal argument: %s");
 
@@ -4207,7 +4208,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       p = flagtab[fidx].name;
       int i;
       for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
-        if (arg[len] != p[i] && arg[len] != p[i + 1]) {
+        if (arg[len] != (char_u)p[i] && arg[len] != (char_u)p[i + 1]) {
           break;
         }
       }
@@ -6758,16 +6759,26 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     { NULL, -1, NIL },
   };
 
+  char hex_name[8];
+  char *name;
+
   for (int j = 0; cattrs[j].dest; j++) {
-    if (cattrs[j].val != -1) {
+    if (cattrs[j].val < 0) {
+      XFREE_CLEAR(*cattrs[j].dest);
+      continue;
+    }
+
+    if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
+      name = cattrs[j].name.data.string.data;
+    } else {
+      snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
+      name = hex_name;
+    }
+
+    if (!*cattrs[j].dest
+        || STRCMP(*cattrs[j].dest, name) != 0) {
       xfree(*cattrs[j].dest);
-      if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
-        *cattrs[j].dest = xstrdup(cattrs[j].name.data.string.data);
-      } else {
-        char hex_name[8];
-        snprintf(hex_name, sizeof(hex_name), "#%06x", cattrs[j].val);
-        *cattrs[j].dest = xstrdup(hex_name);
-      }
+      *cattrs[j].dest = xstrdup(name);
     }
   }
 
@@ -6909,6 +6920,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         hlgroup->sg_deflink = to_id;
         hlgroup->sg_deflink_sctx = current_sctx;
         hlgroup->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+        nlua_set_sctx(&hlgroup->sg_deflink_sctx);
       }
     }
 
@@ -6929,6 +6941,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         hlgroup->sg_link = to_id;
         hlgroup->sg_script_ctx = current_sctx;
         hlgroup->sg_script_ctx.sc_lnum += sourcing_lnum;
+        nlua_set_sctx(&hlgroup->sg_script_ctx);
         hlgroup->sg_cleared = false;
         redraw_all_later(SOME_VALID);
 
@@ -7309,6 +7322,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     }
     HL_TABLE()[idx].sg_script_ctx = current_sctx;
     HL_TABLE()[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
+    nlua_set_sctx(&HL_TABLE()[idx].sg_script_ctx);
   }
   xfree(key);
   xfree(arg);
@@ -8849,6 +8863,22 @@ RgbValue name_to_color(const char *name)
   return -1;
 }
 
+int name_to_ctermcolor(const char *name)
+{
+  int i;
+  int off = TOUPPER_ASC(*name);
+  for (i = ARRAY_SIZE(color_names); --i >= 0;) {
+    if (off == color_names[i][0]
+        && STRICMP(name+1, color_names[i]+1) == 0) {
+      break;
+    }
+  }
+  if (i < 0) {
+    return -1;
+  }
+  TriState bold = kNone;
+  return lookup_color(i, false, &bold);
+}
 
 /**************************************
 *  End of Highlighting stuff          *

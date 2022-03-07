@@ -1439,7 +1439,7 @@ bool vim_isblankline(char_u *lbuf)
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
 /// @param strict If true, fail if the number has unexpected trailing
-///               alpha-numeric chars: *len is set to 0 and nothing else is
+///               alphanumeric chars: *len is set to 0 and nothing else is
 ///               returned.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len, const int what,
                 varnumber_T *const nptr, uvarnumber_T *const unptr, const int maxlen,
@@ -1500,7 +1500,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len, cons
   } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
              && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'
              && ptr[1] != '9') {
-    pre = ptr[1];
+    pre = (char_u)ptr[1];
     // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
         && !STRING_ENDED(ptr + 2)
@@ -1585,7 +1585,7 @@ vim_str2nr_hex:
 #undef PARSE_NUMBER
 
 vim_str2nr_proceed:
-  // Check for an alpha-numeric character immediately following, that is
+  // Check for an alphanumeric character immediately following, that is
   // most likely a typo.
   if (strict && ptr - (const char *)start != maxlen && ASCII_ISALNUM(*ptr)) {
     return;

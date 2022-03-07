@@ -36,6 +36,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
+#include "nvim/decoration.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
@@ -1441,7 +1442,7 @@ void set_curbuf(buf_T *buf, int action)
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
 
-  // Autocommands may delete the curren buffer and/or the buffer we want to go
+  // Autocommands may delete the current buffer and/or the buffer we want to go
   // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
       || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
@@ -1454,6 +1455,7 @@ void set_curbuf(buf_T *buf, int action)
     }
     if (bufref_valid(&prevbufref) && !aborting()) {
       win_T *previouswin = curwin;
+
       // Do not sync when in Insert mode and the buffer is open in
       // another window, might be a timer doing something in another
       // window.
@@ -1735,7 +1737,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
     buf->b_vars = tv_dict_alloc();
-    buf->b_signcols_valid = false;
+    buf->b_signcols.valid = false;
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -3438,8 +3440,12 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
   if (stl_items == NULL) {
     stl_items = xmalloc(sizeof(stl_item_t) * stl_items_len);
     stl_groupitems = xmalloc(sizeof(int) * stl_items_len);
-    stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * stl_items_len);
-    stl_tabtab = xmalloc(sizeof(StlClickRecord) * stl_items_len);
+
+    // Allocate one more, because the last element is used to indicate the
+    // end of the list.
+    stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
+    stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
+
     stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
@@ -3514,8 +3520,8 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
       stl_items = xrealloc(stl_items, sizeof(stl_item_t) * new_len);
       stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
-      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * new_len);
-      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * new_len);
+      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
+      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
       stl_separator_locations =
         xrealloc(stl_separator_locations, sizeof(int) * new_len);
 
@@ -5462,15 +5468,23 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
   int linesum = 0;
   linenr_T curline = 0;
 
+  buf->b_signcols.sentinel = 0;
+
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (sign->se_lnum > curline) {
+      // Counted all signs, now add extmark signs
+      if (curline > 0) {
+        linesum += decor_signcols(buf, &decor_state, (int)curline-1, (int)curline-1,
+                                  maximum-linesum);
+      }
+      curline = sign->se_lnum;
       if (linesum > signcols) {
         signcols = linesum;
+        buf->b_signcols.sentinel = curline;
         if (signcols >= maximum) {
           return maximum;
         }
       }
-      curline = sign->se_lnum;
       linesum = 0;
     }
     if (sign->se_has_text_or_icon) {
@@ -5478,8 +5492,22 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
     }
   }
 
+  if (curline > 0) {
+    linesum += decor_signcols(buf, &decor_state, (int)curline-1, (int)curline-1, maximum-linesum);
+  }
   if (linesum > signcols) {
     signcols = linesum;
+    if (signcols >= maximum) {
+      return maximum;
+    }
+  }
+
+  // Check extmarks between signs
+  linesum = decor_signcols(buf, &decor_state, 0, (int)buf->b_ml.ml_line_count-1, maximum);
+
+  if (linesum > signcols) {
+    signcols = linesum;
+    buf->b_signcols.sentinel = curline;
     if (signcols >= maximum) {
       return maximum;
     }
@@ -5488,20 +5516,96 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
   return signcols;
 }
 
+/// Invalidate the signcolumn if needed after deleting
+/// signs between line1 and line2 (inclusive).
+///
+/// @param buf   buffer to check
+/// @param line1 start of region being deleted
+/// @param line2 end of region being deleted
+void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
+{
+  if (!buf->b_signcols.valid) {
+    return;
+  }
+
+  if (!buf->b_signcols.sentinel) {
+    buf->b_signcols.valid = false;
+    return;
+  }
+
+  linenr_T sent = buf->b_signcols.sentinel;
+
+  if (sent >= line1 && sent <= line2) {
+    // Only invalidate when removing signs at the sentinel line.
+    buf->b_signcols.valid = false;
+  }
+}
+
+/// Re-calculate the signcolumn after adding a sign.
+///
+/// @param buf   buffer to check
+/// @param added sign being added
+void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
+{
+  if (!buf->b_signcols.valid) {
+    return;
+  }
+
+  if (!added || !buf->b_signcols.sentinel) {
+    buf->b_signcols.valid = false;
+    return;
+  }
+
+  if (added->se_lnum == buf->b_signcols.sentinel) {
+    if (buf->b_signcols.size == buf->b_signcols.max) {
+      buf->b_signcols.max++;
+    }
+    buf->b_signcols.size++;
+    return;
+  }
+
+  sign_entry_T *s;
+
+  // Get first sign for added lnum
+  for (s = added; s->se_prev && s->se_lnum == s->se_prev->se_lnum; s = s->se_prev) {}
+
+  // Count signs for lnum
+  int linesum = 1;
+  for (; s->se_next && s->se_lnum == s->se_next->se_lnum; s = s->se_next) {
+    linesum++;
+  }
+  linesum += decor_signcols(buf, &decor_state, (int)s->se_lnum-1, (int)s->se_lnum-1,
+                            SIGN_SHOW_MAX-linesum);
+
+  if (linesum > buf->b_signcols.size) {
+    buf->b_signcols.size = linesum;
+    buf->b_signcols.max = linesum;
+    buf->b_signcols.sentinel = added->se_lnum;
+  }
+}
+
 int buf_signcols(buf_T *buf, int maximum)
 {
-  if (!buf->b_signcols_valid) {
+  // The maximum can be determined from 'signcolumn' which is window scoped so
+  // need to invalidate signcols if the maximum is greater than the previous
+  // maximum.
+  if (maximum > buf->b_signcols.max) {
+    buf->b_signcols.valid = false;
+  }
+
+  if (!buf->b_signcols.valid) {
     int signcols = buf_signcols_inner(buf, maximum);
     // Check if we need to redraw
-    if (signcols != buf->b_signcols) {
-      buf->b_signcols = signcols;
+    if (signcols != buf->b_signcols.size) {
+      buf->b_signcols.size = signcols;
+      buf->b_signcols.max = maximum;
       redraw_buf_later(buf, NOT_VALID);
     }
 
-    buf->b_signcols_valid = true;
+    buf->b_signcols.valid = true;
   }
 
-  return buf->b_signcols;
+  return buf->b_signcols.size;
 }
 
 // Get "buf->b_fname", use "[No Name]" if it is NULL.

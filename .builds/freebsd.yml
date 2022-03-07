@@ -5,7 +5,6 @@ packages:
 - gmake
 - ninja
 - libtool
-- sha
 - automake
 - pkgconf
 - unzip
@@ -13,6 +12,7 @@ packages:
 - gettext
 - python
 - libffi
+- gdb
 
 sources:
 - https://github.com/neovim/neovim

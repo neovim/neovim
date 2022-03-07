@@ -658,7 +658,7 @@ To see what version of Python is being used: >
 							*has-pythonx*
 To check if `pyx*` functions and commands are available: >
 	if has('pythonx')
-	  echo 'pyx* commands are available. (Python ' . &pyx . ')'
+	  echo 'pyx* commands are available. (Python ' .. &pyx .. ')'
 	endif
 
 ==============================================================================

@@ -22,6 +22,11 @@ return {
     "virt_lines_above";
     "virt_lines_leftcol";
     "strict";
+    "sign_text";
+    "sign_hl_group";
+    "number_hl_group";
+    "line_hl_group";
+    "cursorline_hl_group";
   };
   keymap = {
     "noremap";
@@ -83,7 +88,10 @@ return {
     "standout";
     "strikethrough";
     "underline";
+    "underlineline";
     "undercurl";
+    "underdot";
+    "underdash";
     "italic";
     "reverse";
     "nocombine";
@@ -97,6 +105,7 @@ return {
     "special"; "sp";
     "link";
     "fallback";
+    "blend";
     "temp";
   };
   highlight_cterm = {
@@ -104,10 +113,39 @@ return {
     "standout";
     "strikethrough";
     "underline";
+    "underlineline";
     "undercurl";
+    "underdot";
+    "underdash";
     "italic";
     "reverse";
     "nocombine";
+  };
+  -- Autocmds
+  create_autocmd = {
+    "buffer";
+    "callback";
+    "command";
+    "desc";
+    "group";
+    "once";
+    "nested";
+    "pattern";
+  };
+  do_autocmd = {
+    "buffer";
+    "group";
+    "modeline";
+    "pattern";
+  };
+  get_autocmds = {
+    "event";
+    "group";
+    "pattern";
+    "buffer";
+  };
+  create_augroup = {
+    "clear";
   };
 }
 

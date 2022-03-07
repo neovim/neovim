@@ -26,7 +26,7 @@ behavior of the plugin.
 g:rustc_path~
 	Set this option to the path to rustc for use in the |:RustRun| and
 	|:RustExpand| commands. If unset, "rustc" will be located in $PATH: >
-	    let g:rustc_path = $HOME."/bin/rustc"
+	    let g:rustc_path = $HOME .. "/bin/rustc"
 <
 
                                                   *g:rustc_makeprg_no_percent*
@@ -87,7 +87,7 @@ g:rust_bang_comment_leader~
 g:ftplugin_rust_source_path~
 	Set this option to a path that should be prepended to 'path' for Rust
 	source files: >
-	    let g:ftplugin_rust_source_path = $HOME.'/dev/rust'
+	    let g:ftplugin_rust_source_path = $HOME .. '/dev/rust'
 <
 
                                                        *g:rustfmt_command*
