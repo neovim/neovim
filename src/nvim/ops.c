@@ -1023,6 +1023,60 @@ static int stuff_yank(int regname, char_u *p)
 
 static int execreg_lastc = NUL;
 
+/// When executing a register as a series of ex-commands, if the
+/// line-continuation character is used for a line, then join it with one or
+/// more previous lines. Note that lines are processed backwards starting from
+/// the last line in the register.
+///
+/// @param lines list of lines in the register
+/// @param idx   index of the line starting with \ or "\. Join this line with all the immediate
+///              predecessor lines that start with a \ and the first line that doesn't start
+///              with a \. Lines that start with a comment "\ character are ignored.
+/// @returns the concatenated line. The index of the line that should be
+///          processed next is returned in idx.
+static char_u *execreg_line_continuation(char_u **lines, size_t *idx)
+{
+  size_t i = *idx;
+  assert(i > 0);
+  const size_t cmd_end = i;
+
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char_u), 400);
+
+  char_u *p;
+
+  // search backwards to find the first line of this command.
+  // Any line not starting with \ or "\ is the start of the
+  // command.
+  while (--i > 0) {
+    p = skipwhite(lines[i]);
+    if (*p != '\\' && (p[0] != '"' || p[1] != '\\' || p[2] != ' ')) {
+      break;
+    }
+  }
+  const size_t cmd_start = i;
+
+  // join all the lines
+  ga_concat(&ga, (char *)lines[cmd_start]);
+  for (size_t j = cmd_start + 1; j <= cmd_end; j++) {
+    p = skipwhite(lines[j]);
+    if (*p == '\\') {
+      // Adjust the growsize to the current length to
+      // speed up concatenating many lines.
+      if (ga.ga_len > 400) {
+        ga_set_growsize(&ga, MIN(ga.ga_len, 8000));
+      }
+      ga_concat(&ga, (char *)(p + 1));
+    }
+  }
+  ga_append(&ga, NUL);
+  char_u *str = vim_strsave(ga.ga_data);
+  ga_clear(&ga);
+
+  *idx = i;
+  return str;
+}
+
 /// Execute a yank register: copy it into the stuff buffer
 ///
 /// @param colon   insert ':' before each line
@@ -1111,7 +1165,21 @@ int do_execreg(int regname, int colon, int addcr, int silent)
           return FAIL;
         }
       }
-      escaped = vim_strsave_escape_ks(reg->y_array[i]);
+
+      // Handle line-continuation for :@<register>
+      char_u *str = reg->y_array[i];
+      bool free_str = false;
+      if (colon && i > 0) {
+        p = skipwhite(str);
+        if (*p == '\\' || (p[0] == '"' && p[1] == '\\' && p[2] == ' ')) {
+          str = execreg_line_continuation(reg->y_array, &i);
+          free_str = true;
+        }
+      }
+      escaped = vim_strsave_escape_ks(str);
+      if (free_str) {
+        xfree(str);
+      }
       retval = ins_typebuf(escaped, remap, 0, true, silent);
       xfree(escaped);
       if (retval == FAIL) {
