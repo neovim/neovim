@@ -171,6 +171,7 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
         goto exit_1;
       }
       if (strequal("unified", v->data.string.data)) {
+        // the default
       } else if (strequal("indices", v->data.string.data)) {
         had_result_type_indices = true;
       } else {

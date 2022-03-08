@@ -1159,8 +1159,6 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
     if (i > 0) {
       unrelative(x->key[i-1].pos, last);
     }
-    if (x->level) {
-    }
     assert(pos_leq(*last, x->key[i].pos));
     if (last->row == x->key[i].pos.row && last->col == x->key[i].pos.col) {
       assert(!*last_right || mt_right(x->key[i]));
