@@ -359,7 +359,7 @@ return {
     sqrt={args=1, base=1, func="float_op_wrapper", data="&sqrt"},
     srand={args={0, 1}, base=1},
     stdpath={args=1},
-    str2float={args=1, base=1},
+    str2float={args={1, 2}, base=1},
     str2list={args={1, 2}, base=1},
     str2nr={args={1, 3}, base=1},
     strcharpart={args={2, 3}, base=1},
