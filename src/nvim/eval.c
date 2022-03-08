@@ -7789,7 +7789,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    nlua_call_ref(callback->data.luaref, "aucmd", args, false, NULL);
+    nlua_call_ref(callback->data.luaref, NULL, args, false, NULL);
 
     return false;
     break;
