@@ -7789,7 +7789,6 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    ILOG(" We tryin  to call dat dang lua ref ");
     nlua_call_ref(callback->data.luaref, "aucmd", args, false, NULL);
 
     return false;
