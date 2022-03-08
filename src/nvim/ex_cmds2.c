@@ -1698,7 +1698,7 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize,
     return false;
   }
   if (ga->ga_len > init_growsize) {
-    ga_set_growsize(ga, MAX(ga->ga_len, 8000));
+    ga_set_growsize(ga, MIN(ga->ga_len, 8000));
   }
   ga_concat_len(ga, (const char *)line + 1, len - 1);
   return true;
@@ -1852,7 +1852,7 @@ static void cmd_source_buffer(const exarg_T *const eap)
   for (linenr_T curr_lnum = eap->line1; curr_lnum <= final_lnum; curr_lnum++) {
     // Adjust growsize to current length to speed up concatenating many lines.
     if (ga.ga_len > 400) {
-      ga_set_growsize(&ga, MAX(ga.ga_len, 8000));
+      ga_set_growsize(&ga, MIN(ga.ga_len, 8000));
     }
     ga_concat(&ga, (char *)ml_get(curr_lnum));
     ga_append(&ga, NL);
