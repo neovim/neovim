@@ -1,23 +1,26 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
+local dedent = helpers.dedent
+local exec = helpers.exec
 local feed = helpers.feed
 local clear = helpers.clear
 local funcs = helpers.funcs
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
-
-before_each(function()
-  clear()
-  curbufmeths.set_lines(0, 1, true, { 'foo', 'bar', 'baz' })
-end)
-
-local buffer_contents = function()
-  return curbufmeths.get_lines(0, -1, false)
-end
+local Screen = require('test.functional.ui.screen')
 
 local cmdtest = function(cmd, prep, ret1)
   describe(':' .. cmd, function()
+    before_each(function()
+      clear()
+      curbufmeths.set_lines(0, 1, true, { 'foo', 'bar', 'baz' })
+    end)
+
+    local buffer_contents = function()
+      return curbufmeths.get_lines(0, -1, false)
+    end
+
     it(cmd .. 's' .. prep .. ' the current line by default', function()
       command(cmd .. '\nabc\ndef\n')
       eq(ret1, buffer_contents())
@@ -52,3 +55,52 @@ end
 cmdtest('insert', ' before', { 'abc', 'def', 'foo', 'bar', 'baz' })
 cmdtest('append', ' after', { 'foo', 'abc', 'def', 'bar', 'baz' })
 cmdtest('change', '', { 'abc', 'def', 'bar', 'baz' })
+
+describe('the first line is redrawn correctly after inserting text in an empty buffer', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(20, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},
+      [2] = {bold = true, reverse = true},
+    })
+    screen:attach()
+  end)
+
+  it('using :append', function()
+    exec(dedent([[
+      append
+      aaaaa
+      bbbbb
+      .]]))
+    screen:expect([[
+      aaaaa               |
+      ^bbbbb               |
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+                          |
+    ]])
+  end)
+
+  it('using :insert', function()
+    exec(dedent([[
+      insert
+      aaaaa
+      bbbbb
+      .]]))
+    screen:expect([[
+      aaaaa               |
+      ^bbbbb               |
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+                          |
+    ]])
+  end)
+end)
