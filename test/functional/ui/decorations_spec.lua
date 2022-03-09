@@ -1372,6 +1372,7 @@ describe('decorations: signs', function()
     screen:set_default_attr_ids {
       [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Grey};
       [2] = {foreground = Screen.colors.Blue1, bold = true};
+      [3] = {background = Screen.colors.Yellow1, foreground = Screen.colors.Blue1};
     }
 
     ns = meths.create_namespace 'test'
@@ -1632,6 +1633,101 @@ l5
                                                         |
     ]]}
 
+  end)
+
+  it('can add lots of signs', function()
+    screen:try_resize(40, 10)
+    command 'normal 10oa b c d e f g h'
+
+    for i = 1, 10 do
+      meths.buf_set_extmark(0, ns, i,  0, { end_col =  1, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i,  2, { end_col =  3, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i,  4, { end_col =  5, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i,  6, { end_col =  7, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i,  8, { end_col =  9, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i, 10, { end_col = 11, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i, 12, { end_col = 13, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i, 14, { end_col = 15, hl_group='Todo' })
+      meths.buf_set_extmark(0, ns, i, -1, { sign_text='W' })
+      meths.buf_set_extmark(0, ns, i, -1, { sign_text='X' })
+      meths.buf_set_extmark(0, ns, i, -1, { sign_text='Y' })
+      meths.buf_set_extmark(0, ns, i, -1, { sign_text='Z' })
+    end
+
+    screen:expect{grid=[[
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
+                                              |
+    ]]}
+  end)
+
+end)
+
+describe('decorations: virt_text', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Brown};
+      [2] = {foreground = Screen.colors.Fuchsia};
+      [3] = {bold = true, foreground = Screen.colors.Blue1};
+    }
+  end)
+
+  it('avoids regression in #17638', function()
+    exec_lua[[
+      vim.wo.number = true
+      vim.wo.relativenumber = true
+    ]]
+
+    command 'normal 4ohello'
+    command 'normal aVIRTUAL'
+
+    local ns = meths.create_namespace('test')
+
+    meths.buf_set_extmark(0, ns, 2, 0, {
+      virt_text = {{"hello", "String"}},
+      virt_text_win_col = 20,
+    })
+
+    screen:expect{grid=[[
+      {1:  4 }                                              |
+      {1:  3 }hello                                         |
+      {1:  2 }hello               {2:hello}                     |
+      {1:  1 }hello                                         |
+      {1:5   }helloVIRTUA^L                                  |
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+                                                        |
+    ]]}
+
+    -- Trigger a screen update
+    feed('k')
+
+    screen:expect{grid=[[
+      {1:  3 }                                              |
+      {1:  2 }hello                                         |
+      {1:  1 }hello               {2:hello}                     |
+      {1:4   }hell^o                                         |
+      {1:  1 }helloVIRTUAL                                  |
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+                                                        |
+    ]]}
   end)
 
 end)
