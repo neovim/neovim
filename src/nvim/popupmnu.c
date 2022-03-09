@@ -289,8 +289,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_rl) {
         pum_width = pum_col - pum_scrollbar + 1;
       } else {
-        assert(Columns - pum_col - pum_scrollbar >= INT_MIN
-               && Columns - pum_col - pum_scrollbar <= INT_MAX);
+        assert(Columns - pum_col - pum_scrollbar >= 0);
         pum_width = Columns - pum_col - pum_scrollbar;
       }
 
