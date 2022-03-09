@@ -1475,7 +1475,7 @@ static void tui_guess_size(UI *ui)
   // 1 - look for non-default 'columns' and 'lines' options during startup
   if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
     did_user_set_dimensions = true;
-    assert(Columns >= INT_MIN && Columns <= INT_MAX);
+    assert(Columns >= 0);
     assert(Rows >= 0);
     width = Columns;
     height = Rows;
