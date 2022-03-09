@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:		tcsh
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Previous Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+" Previous Maintainer:	Dan Sharp
 " Last Change:		2021 Oct 15
 
 if exists("b:did_ftplugin") | finish | endif

@@ -1,8 +1,10 @@
 " Vim filetype plugin file
 " Language:	config
-" Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+"
+" This runtime file is looking for a new maintainer.
+"
+" Former maintainer:	Dan Sharp
 " Last Changed: 20 Jan 2009
-" URL:		http://dwsharp.users.sourceforge.net/vim/ftplugin
 
 if exists("b:did_ftplugin") | finish | endif
 

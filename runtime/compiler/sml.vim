@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:	SML/NJ Compiler
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2020 Feb 10
+" Last Change:	2022 Feb 09
 
 if exists("current_compiler")
   finish
@@ -16,10 +16,10 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 CompilerSet makeprg=sml
-CompilerSet errorformat=%f:%l.%c-%\\d%\\+.%\\d%\\+\ %trror:\ %m,
+CompilerSet errorformat=%f:%l.%c-%e.%k\ %trror:\ %m,
 		       \%f:%l.%c\ %trror:\ %m,
-		       \%trror:\ %m
-		       \%f:%l.%c-%\\d%\\+.%\\d%\\+\ %tarning:\ %m,
+		       \%trror:\ %m,
+		       \%f:%l.%c-%e.%k\ %tarning:\ %m,
 		       \%f:%l.%c\ %tarning:\ %m,
 		       \%tarning:\ %m,
 		       \%-G%.%#

@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Feb 23
+" Last Change:	2022 Mar 01
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -105,7 +105,7 @@ function GetVimIndentIntern()
     " terminated dict.
     " ":function" starts a block but "function(" doesn't.
     if prev_text !~ '^\s*au\%[tocmd]' && prev_text !~ '^\s*{.*}'
-      let i = match(prev_text, '\(^\||\)\s*\(export\s\+\)\?\({\|\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\|finall\%[y]\|def\|el\%[seif]\)\>\|fu\%[nction]\s\)')
+      let i = match(prev_text, '\(^\||\)\s*\(export\s\+\)\?\({\|\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\|finall\%[y]\|def\|el\%[seif]\)\>\|fu\%[nction][! ]\)')
       if i >= 0
         let ind += shiftwidth()
 	if strpart(prev_text, i, 1) == '|' && has('syntax_items')
