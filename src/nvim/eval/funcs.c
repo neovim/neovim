@@ -7066,10 +7066,12 @@ static void init_srand(uint32_t *const x)
   if (dev_urandom_state != OK) {
     // Reading /dev/urandom doesn't work, fall back to time().
 #endif
+  // uncrustify:off
     *x = time(NULL);
 #ifndef MSWIN
   }
 #endif
+  // uncrustify:on
 }
 
 static inline uint32_t splitmix32(uint32_t *const x)

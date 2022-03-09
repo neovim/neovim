@@ -3,6 +3,8 @@
 
 // fileio.c: read from and write to a file
 
+// uncrustify:off
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
