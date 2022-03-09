@@ -3824,7 +3824,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         // At end of a prefix or at start of prefixtree: check for
         // following word.
-        if (byts[arridx] == 0 || n == (int)STATE_NOPREFIX) {
+        if (byts[arridx] == 0 || n == STATE_NOPREFIX) {
           // Set su->su_badflags to the caps type at this position.
           // Use the caps type until here for the prefix itself.
           n = nofold_len(fword, sp->ts_fidx, su->su_badptr);

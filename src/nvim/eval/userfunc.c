@@ -516,7 +516,7 @@ static char_u *fname_trans_sid(const char_u *const name, char_u *const fname_buf
   if (llen > 0) {
     fname_buf[0] = K_SPECIAL;
     fname_buf[1] = KS_EXTRA;
-    fname_buf[2] = (int)KE_SNR;
+    fname_buf[2] = KE_SNR;
     int i = 3;
     if (eval_fname_sid((const char *)name)) {  // "<SID>" or "s:"
       if (current_sctx.sc_sid <= 0) {
@@ -1713,7 +1713,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   // Check for hard coded <SNR>: already translated function ID (from a user
   // command).
   if ((*pp)[0] == K_SPECIAL && (*pp)[1] == KS_EXTRA
-      && (*pp)[2] == (int)KE_SNR) {
+      && (*pp)[2] == KE_SNR) {
     *pp += 3;
     len = get_id_len((const char **)pp) + 3;
     return (char_u *)xmemdupz(start, len);
@@ -1821,7 +1821,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       // Change "<SNR>" to the byte sequence.
       name[0] = K_SPECIAL;
       name[1] = KS_EXTRA;
-      name[2] = (int)KE_SNR;
+      name[2] = KE_SNR;
       memmove(name + 3, name + 5, strlen((char *)name + 5) + 1);
     }
     goto theend;
@@ -1888,7 +1888,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   if (!skip && lead > 0) {
     name[0] = K_SPECIAL;
     name[1] = KS_EXTRA;
-    name[2] = (int)KE_SNR;
+    name[2] = KE_SNR;
     if (sid_buf_len > 0) {  // If it's "<SID>"
       memcpy(name + 3, sid_buf, sid_buf_len);
     }

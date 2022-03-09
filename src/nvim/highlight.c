@@ -327,7 +327,7 @@ void update_window_hl(win_T *wp, bool invalid)
                                            wp->w_hl_attr_normal);
   }
 
-  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
     int attr;
     if (wp->w_hl_ids[hlf] != 0) {
       attr = hl_get_ui_attr(hlf, wp->w_hl_ids[hlf], false);

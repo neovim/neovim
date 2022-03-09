@@ -5043,8 +5043,7 @@ static bool regmatch(
             } else {
               MB_PTR_BACK(rex.line, rp->rs_un.regsave.rs_u.ptr);
               if (limit > 0
-                  && (long)(behind_pos.rs_u.ptr
-                            - rp->rs_un.regsave.rs_u.ptr) > limit) {
+                  && (behind_pos.rs_u.ptr - rp->rs_un.regsave.rs_u.ptr) > (ptrdiff_t)limit) {
                 no = FAIL;
               }
             }

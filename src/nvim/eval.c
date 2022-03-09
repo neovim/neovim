@@ -9440,7 +9440,7 @@ void new_script_vars(scid_T id)
   hashtab_T *ht;
   scriptvar_T *sv;
 
-  ga_grow(&ga_scripts, (int)(id - ga_scripts.ga_len));
+  ga_grow(&ga_scripts, id - ga_scripts.ga_len);
   {
     /* Re-allocating ga_data means that an ht_array pointing to
      * ht_smallarray becomes invalid.  We can recognize this: ht_mask is
