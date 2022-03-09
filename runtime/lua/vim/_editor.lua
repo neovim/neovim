@@ -519,6 +519,8 @@ function vim._expand_pat(pat, env)
       local mt = getmetatable(final_env)
       if mt and type(mt.__index) == "table" then
         field = rawget(mt.__index, key)
+      elseif final_env == vim and vim._submodules[key] then
+        field = vim[key]
       end
     end
     final_env = field
@@ -544,6 +546,9 @@ function vim._expand_pat(pat, env)
   local mt = getmetatable(final_env)
   if mt and type(mt.__index) == "table" then
     insert_keys(mt.__index)
+  end
+  if final_env == vim then
+    insert_keys(vim._submodules)
   end
 
   table.sort(keys)
