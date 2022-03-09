@@ -355,7 +355,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       } else {
         pum_col = 0;
       }
-      assert(Columns - 1 >= INT_MIN);
       pum_width = Columns - 1;
     } else {
       if (max_width > p_pw) {
