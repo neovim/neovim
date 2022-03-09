@@ -34,9 +34,9 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
-#include "nvim/decoration.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
@@ -4508,7 +4508,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
         char_u *start = stl_items[stl_separator_locations[i]].start;
         char_u *seploc = start + dislocation;
         STRMOVE(seploc, start);
-        for (char_u *s = start; s < seploc; ) {
+        for (char_u *s = start; s < seploc;) {
           MB_CHAR2BYTES(fillchar, s);
         }
 

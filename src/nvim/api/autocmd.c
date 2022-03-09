@@ -63,26 +63,26 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   int group = 0;
 
   switch (opts->group.type) {
-    case kObjectTypeNil:
-      break;
-    case kObjectTypeString:
-      group = augroup_find(opts->group.data.string.data);
-      if (group < 0) {
-        api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
-        goto cleanup;
-      }
-      break;
-    case kObjectTypeInteger:
-      group = (int)opts->group.data.integer;
-      char *name = augroup_name(group);
-      if (!augroup_exists(name)) {
-        api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
-        goto cleanup;
-      }
-      break;
-    default:
-      api_set_error(err, kErrorTypeValidation, "group must be a string or an integer.");
+  case kObjectTypeNil:
+    break;
+  case kObjectTypeString:
+    group = augroup_find(opts->group.data.string.data);
+    if (group < 0) {
+      api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
       goto cleanup;
+    }
+    break;
+  case kObjectTypeInteger:
+    group = (int)opts->group.data.integer;
+    char *name = augroup_name(group);
+    if (!augroup_exists(name)) {
+      api_set_error(err, kErrorTypeValidation, "invalid augroup passed.");
+      goto cleanup;
+    }
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "group must be a string or an integer.");
+    goto cleanup;
   }
 
   if (opts->event.type != kObjectTypeNil) {
@@ -415,28 +415,28 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   bool is_nested = api_object_to_bool(opts->nested, "nested", false, err);
 
   switch (opts->group.type) {
-    case kObjectTypeNil:
-      break;
-    case kObjectTypeString:
-      au_group = augroup_find(opts->group.data.string.data);
-      if (au_group == AUGROUP_ERROR) {
-        api_set_error(err,
-                      kErrorTypeValidation,
-                      "invalid augroup: %s", opts->group.data.string.data);
-        goto cleanup;
-      }
-      break;
-    case kObjectTypeInteger:
-      au_group = (int)opts->group.data.integer;
-      char *name = augroup_name(au_group);
-      if (!augroup_exists(name)) {
-        api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
-        goto cleanup;
-      }
-      break;
-    default:
-      api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
+  case kObjectTypeNil:
+    break;
+  case kObjectTypeString:
+    au_group = augroup_find(opts->group.data.string.data);
+    if (au_group == AUGROUP_ERROR) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "invalid augroup: %s", opts->group.data.string.data);
       goto cleanup;
+    }
+    break;
+  case kObjectTypeInteger:
+    au_group = (int)opts->group.data.integer;
+    char *name = augroup_name(au_group);
+    if (!augroup_exists(name)) {
+      api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
+      goto cleanup;
+    }
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
+    goto cleanup;
   }
 
   if (opts->pattern.type != kObjectTypeNil && opts->buffer.type != kObjectTypeNil) {
@@ -659,28 +659,28 @@ void nvim_do_autocmd(Object event, Dict(do_autocmd) *opts, Error *err)
   }
 
   switch (opts->group.type) {
-    case kObjectTypeNil:
-      break;
-    case kObjectTypeString:
-      au_group = augroup_find(opts->group.data.string.data);
-      if (au_group == AUGROUP_ERROR) {
-        api_set_error(err,
-                      kErrorTypeValidation,
-                      "invalid augroup: %s", opts->group.data.string.data);
-        goto cleanup;
-      }
-      break;
-    case kObjectTypeInteger:
-      au_group = (int)opts->group.data.integer;
-      char *name = augroup_name(au_group);
-      if (!augroup_exists(name)) {
-        api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
-        goto cleanup;
-      }
-      break;
-    default:
-      api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
+  case kObjectTypeNil:
+    break;
+  case kObjectTypeString:
+    au_group = augroup_find(opts->group.data.string.data);
+    if (au_group == AUGROUP_ERROR) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "invalid augroup: %s", opts->group.data.string.data);
       goto cleanup;
+    }
+    break;
+  case kObjectTypeInteger:
+    au_group = (int)opts->group.data.integer;
+    char *name = augroup_name(au_group);
+    if (!augroup_exists(name)) {
+      api_set_error(err, kErrorTypeValidation, "invalid augroup: %d", au_group);
+      goto cleanup;
+    }
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "'group' must be a string or an integer.");
+    goto cleanup;
   }
 
   if (opts->buffer.type != kObjectTypeNil) {

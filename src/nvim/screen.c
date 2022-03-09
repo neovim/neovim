@@ -4680,9 +4680,9 @@ static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
 // @param[in, out] sign_idxp Index of the displayed sign
 static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
                                   int row, int startrow, int filler_lines, int filler_todo,
-                                  int *c_extrap, int *c_finalp, char_u *extra,
-                                  size_t extra_size, char_u **pp_extra, int *n_extrap,
-                                  int *char_attrp, int *draw_statep, int *sign_idxp)
+                                  int *c_extrap, int *c_finalp, char_u *extra, size_t extra_size,
+                                  char_u **pp_extra, int *n_extrap, int *char_attrp,
+                                  int *draw_statep, int *sign_idxp)
 {
   int count = wp->w_scwidth;
   // Draw cells with the sign value or blank.

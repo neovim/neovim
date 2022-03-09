@@ -5421,9 +5421,8 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
 
 /// Search for a pattern in a list of files and populate the quickfix list with
 /// the matches.
-static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args,
-                             bool *redraw_for_dummy, buf_T **first_match_buf,
-                             char_u **target_dir)
+static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, bool *redraw_for_dummy,
+                             buf_T **first_match_buf, char_u **target_dir)
 {
   int status = FAIL;
   unsigned save_qfid = qf_get_curlist(qi)->qf_id;

@@ -14,7 +14,7 @@
 #endif
 
 #if !defined(NAME_MAX) && defined(_XOPEN_NAME_MAX)
-#define NAME_MAX _XOPEN_NAME_MAX
+# define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
 #define BASENAMELEN (NAME_MAX - 5)
