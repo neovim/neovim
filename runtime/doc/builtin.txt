@@ -4900,7 +4900,7 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		empty list is returned. If length of {str} is greater than
 		256, then returns an empty list.
 
-		Refer to |fuzzy-match| for more information about fuzzy
+		Refer to |fuzzy-matching| for more information about fuzzy
 		matching strings.
 
 		Example: >

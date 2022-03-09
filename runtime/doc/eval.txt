@@ -1651,6 +1651,7 @@ Some variables can be set by the user, but the type cannot be changed.
 					*v:argv* *argv-variable*
 v:argv		The command line arguments Vim was invoked with.  This is a
 		list of strings.  The first item is the Vim command.
+		See |v:progpath| for the command with full path.
 
 					*v:beval_col* *beval_col-variable*
 v:beval_col	The number of the column, over which the mouse pointer is.
@@ -2027,6 +2028,9 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		used as a String (e.g. in |expr5| with string concatenation
 		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators). Read-only.
+		In some places `v:null` can be used for a List, Dict, etc.
+		that is not set.  That is slightly different than an empty
+		List, Dict, etc.
 
 					*v:numbermax* *numbermax-variable*
 v:numbermax	Maximum value of a number.
@@ -3062,16 +3066,17 @@ text...
 			opposite of |:lockvar|.
 
 :if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
-:en[dif]		Execute the commands until the next matching ":else"
-			or ":endif" if {expr1} evaluates to non-zero.
+:en[dif]		Execute the commands until the next matching `:else`
+			or `:endif` if {expr1} evaluates to non-zero.
 			Although the short forms work, it is recommended to
-			always use `:endif` to avoid confusion.
+			always use `:endif` to avoid confusion and to make
+			auto-indenting work properly.
 
 			From Vim version 4.5 until 5.0, every Ex command in
-			between the ":if" and ":endif" is ignored.  These two
+			between the `:if` and `:endif` is ignored.  These two
 			commands were just to allow for future expansions in a
 			backward compatible way.  Nesting was allowed.  Note
-			that any ":else" or ":elseif" was ignored, the "else"
+			that any `:else` or `:elseif` was ignored, the `else`
 			part was not executed either.
 
 			You can use this to remain compatible with older
@@ -3080,32 +3085,32 @@ text...
 				:  version-5-specific-commands
 				:endif
 <			The commands still need to be parsed to find the
-			"endif".  Sometimes an older Vim has a problem with a
-			new command.  For example, ":silent" is recognized as
-			a ":substitute" command.  In that case ":execute" can
+			`endif`.  Sometimes an older Vim has a problem with a
+			new command.  For example, `:silent` is recognized as
+			a `:substitute` command.  In that case `:execute` can
 			avoid problems: >
 				:if version >= 600
 				:  execute "silent 1,$delete"
 				:endif
 <
-			NOTE: The ":append" and ":insert" commands don't work
-			properly in between ":if" and ":endif".
+			NOTE: The `:append` and `:insert` commands don't work
+			properly in between `:if` and `:endif`.
 
 						*:else* *:el* *E581* *E583*
-:el[se]			Execute the commands until the next matching ":else"
-			or ":endif" if they previously were not being
+:el[se]			Execute the commands until the next matching `:else`
+			or `:endif` if they previously were not being
 			executed.
 
 					*:elseif* *:elsei* *E582* *E584*
-:elsei[f] {expr1}	Short for ":else" ":if", with the addition that there
-			is no extra ":endif".
+:elsei[f] {expr1}	Short for `:else` `:if`, with the addition that there
+			is no extra `:endif`.
 
 :wh[ile] {expr1}			*:while* *:endwhile* *:wh* *:endw*
 						*E170* *E585* *E588* *E733*
-:endw[hile]		Repeat the commands between ":while" and ":endwhile",
+:endw[hile]		Repeat the commands between `:while` and `:endwhile`,
 			as long as {expr1} evaluates to non-zero.
 			When an error is detected from a command inside the
-			loop, execution continues after the "endwhile".
+			loop, execution continues after the `endwhile`.
 			Example: >
 				:let lnum = 1
 				:while lnum <= line("$")
@@ -3113,16 +3118,16 @@ text...
 				   :let lnum = lnum + 1
 				:endwhile
 <
-			NOTE: The ":append" and ":insert" commands don't work
-			properly inside a ":while" and ":for" loop.
+			NOTE: The `:append` and `:insert` commands don't work
+			properly inside a `:while` and `:for` loop.
 
 :for {var} in {object}					*:for* *E690* *E732*
 :endfo[r]						*:endfo* *:endfor*
-			Repeat the commands between ":for" and ":endfor" for
+			Repeat the commands between `:for` and `:endfor` for
 			each item in {object}.  {object} can be a |List| or
 			a |Blob|.  Variable {var} is set to the value of each
 			item.  When an error is detected for a command inside
-			the loop, execution continues after the "endfor".
+			the loop, execution continues after the `endfor`.
 			Changing {object} inside the loop affects what items
 			are used.  Make a copy if this is unwanted: >
 				:for item in copy(mylist)
@@ -3146,7 +3151,7 @@ text...
 
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]
-			Like ":for" above, but each item in {listlist} must be
+			Like `:for` above, but each item in {listlist} must be
 			a list, of which each item is assigned to {var1},
 			{var2}, etc.  Example: >
 				:for [lnum, col] in [[1, 3], [2, 5], [3, 8]]
@@ -3154,38 +3159,39 @@ text...
 				:endfor
 <
 						*:continue* *:con* *E586*
-:con[tinue]		When used inside a ":while" or ":for" loop, jumps back
+:con[tinue]		When used inside a `:while` or `:for` loop, jumps back
 			to the start of the loop.
-			If it is used after a |:try| inside the loop but
-			before the matching |:finally| (if present), the
-			commands following the ":finally" up to the matching
-			|:endtry| are executed first.  This process applies to
-			all nested ":try"s inside the loop.  The outermost
-			":endtry" then jumps back to the start of the loop.
+
+			If it is used after a `:try` inside the loop but
+			before the matching `:finally` (if present), the
+			commands following the `:finally` up to the matching
+			`:endtry` are executed first.  This process applies to
+			all nested `:try`s inside the loop.  The outermost
+			`:endtry` then jumps back to the start of the loop.
 
 						*:break* *:brea* *E587*
-:brea[k]		When used inside a ":while" or ":for" loop, skips to
-			the command after the matching ":endwhile" or
-			":endfor".
-			If it is used after a |:try| inside the loop but
-			before the matching |:finally| (if present), the
-			commands following the ":finally" up to the matching
-			|:endtry| are executed first.  This process applies to
-			all nested ":try"s inside the loop.  The outermost
-			":endtry" then jumps to the command after the loop.
+:brea[k]		When used inside a `:while` or `:for` loop, skips to
+			the command after the matching `:endwhile` or
+			`:endfor`.
+			If it is used after a `:try` inside the loop but
+			before the matching `:finally` (if present), the
+			commands following the `:finally` up to the matching
+			`:endtry` are executed first.  This process applies to
+			all nested `:try`s inside the loop.  The outermost
+			`:endtry` then jumps to the command after the loop.
 
 :try				*:try* *:endt* *:endtry* *E600* *E601* *E602*
 :endt[ry]		Change the error handling for the commands between
-			":try" and ":endtry" including everything being
-			executed across ":source" commands, function calls,
+			`:try` and `:endtry` including everything being
+			executed across `:source` commands, function calls,
 			or autocommand invocations.
 
 			When an error or interrupt is detected and there is
-			a |:finally| command following, execution continues
-			after the ":finally".  Otherwise, or when the
-			":endtry" is reached thereafter, the next
-			(dynamically) surrounding ":try" is checked for
-			a corresponding ":finally" etc.  Then the script
+			a `:finally` command following, execution continues
+			after the `:finally`.  Otherwise, or when the
+			`:endtry` is reached thereafter, the next
+			(dynamically) surrounding `:try` is checked for
+			a corresponding `:finally` etc.  Then the script
 			processing is terminated.  Whether a function
 			definition has an "abort" argument does not matter.
 			Example: >
@@ -3193,9 +3199,9 @@ text...
 		echomsg "not reached"
 <
 			Moreover, an error or interrupt (dynamically) inside
-			":try" and ":endtry" is converted to an exception.  It
-			can be caught as if it were thrown by a |:throw|
-			command (see |:catch|).  In this case, the script
+			`:try` and `:endtry` is converted to an exception.  It
+			can be caught as if it were thrown by a `:throw`
+			command (see `:catch`).  In this case, the script
 			processing is not terminated.
 
 			The value "Vim:Interrupt" is used for an interrupt
@@ -3211,11 +3217,11 @@ text...
 		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
 					*:cat* *:catch* *E603* *E604* *E605*
-:cat[ch] /{pattern}/	The following commands until the next |:catch|,
-			|:finally|, or |:endtry| that belongs to the same
-			|:try| as the ":catch" are executed when an exception
+:cat[ch] /{pattern}/	The following commands until the next `:catch`,
+			`:finally`, or `:endtry` that belongs to the same
+			`:try` as the `:catch` are executed when an exception
 			matching {pattern} is being thrown and has not yet
-			been caught by a previous ":catch".  Otherwise, these
+			been caught by a previous `:catch`.  Otherwise, these
 			commands are skipped.
 			When {pattern} is omitted all errors are caught.
 			Examples: >
@@ -3239,27 +3245,27 @@ text...
 			locales.
 
 					*:fina* *:finally* *E606* *E607*
-:fina[lly]		The following commands until the matching |:endtry|
+:fina[lly]		The following commands until the matching `:endtry`
 			are executed whenever the part between the matching
-			|:try| and the ":finally" is left:  either by falling
-			through to the ":finally" or by a |:continue|,
-			|:break|, |:finish|, or |:return|, or by an error or
-			interrupt or exception (see |:throw|).
+			`:try` and the `:finally` is left:  either by falling
+			through to the `:finally` or by a `:continue`,
+			`:break`, `:finish`, or `:return`, or by an error or
+			interrupt or exception (see `:throw`).
 
 							*:th* *:throw* *E608*
 :th[row] {expr1}	The {expr1} is evaluated and thrown as an exception.
-			If the ":throw" is used after a |:try| but before the
-			first corresponding |:catch|, commands are skipped
-			until the first ":catch" matching {expr1} is reached.
-			If there is no such ":catch" or if the ":throw" is
-			used after a ":catch" but before the |:finally|, the
-			commands following the ":finally" (if present) up to
-			the matching |:endtry| are executed.  If the ":throw"
-			is after the ":finally", commands up to the ":endtry"
-			are skipped.  At the ":endtry", this process applies
-			again for the next dynamically surrounding ":try"
+			If the `:throw` is used after a `:try` but before the
+			first corresponding `:catch`, commands are skipped
+			until the first `:catch` matching {expr1} is reached.
+			If there is no such `:catch` or if the `:throw` is
+			used after a `:catch` but before the `:finally`, the
+			commands following the `:finally` (if present) up to
+			the matching `:endtry` are executed.  If the `:throw`
+			is after the `:finally`, commands up to the `:endtry`
+			are skipped.  At the `:endtry`, this process applies
+			again for the next dynamically surrounding `:try`
 			(which may be found in a calling function or sourcing
-			script), until a matching ":catch" has been found.
+			script), until a matching `:catch` has been found.
 			If the exception is not caught, the command processing
 			is terminated.
 			Example: >
@@ -3274,7 +3280,7 @@ text...
 			Also see |:comment|.
 			Use "\n" to start a new line.  Use "\r" to move the
 			cursor to the first column.
-			Uses the highlighting set by the |:echohl| command.
+			Uses the highlighting set by the `:echohl` command.
 			Cannot be followed by a comment.
 			Example: >
 		:echo "the value of 'shell' is" &shell
@@ -3283,9 +3289,9 @@ text...
 			And since Vim mostly postpones redrawing until it's
 			finished with a sequence of commands this happens
 			quite often.  To avoid that a command from before the
-			":echo" causes a redraw afterwards (redraws are often
+			`:echo` causes a redraw afterwards (redraws are often
 			postponed until you type something), force a redraw
-			with the |:redraw| command.  Example: >
+			with the `:redraw` command.  Example: >
 		:new | redraw | echo "there is a new window"
 <							*:echo-self-refer*
 			When printing nested containers echo prints second
@@ -3304,13 +3310,13 @@ text...
 							*:echon*
 :echon {expr1} ..	Echoes each {expr1}, without anything added.  Also see
 			|:comment|.
-			Uses the highlighting set by the |:echohl| command.
+			Uses the highlighting set by the `:echohl` command.
 			Cannot be followed by a comment.
 			Example: >
 				:echon "the value of 'shell' is " &shell
 <
-			Note the difference between using ":echo", which is a
-			Vim command, and ":!echo", which is an external shell
+			Note the difference between using `:echo`, which is a
+			Vim command, and `:!echo`, which is an external shell
 			command: >
 		:!echo %		--> filename
 <			The arguments of ":!" are expanded, see |:_%|. >
@@ -3326,8 +3332,8 @@ text...
 
 							*:echoh* *:echohl*
 :echoh[l] {name}	Use the highlight group {name} for the following
-			|:echo|, |:echon| and |:echomsg| commands.  Also used
-			for the |input()| prompt.  Example: >
+			`:echo`, `:echon` and `:echomsg` commands.  Also used
+			for the `input()` prompt.  Example: >
 		:echohl WarningMsg | echo "Don't panic!" | echohl None
 <			Don't forget to set the group back to "None",
 			otherwise all following echo's will be highlighted.
@@ -3336,14 +3342,14 @@ text...
 :echom[sg] {expr1} ..	Echo the expression(s) as a true message, saving the
 			message in the |message-history|.
 			Spaces are placed between the arguments as with the
-			|:echo| command.  But unprintable characters are
+			`:echo` command.  But unprintable characters are
 			displayed, not interpreted.
-			The parsing works slightly different from |:echo|,
-			more like |:execute|.  All the expressions are first
+			The parsing works slightly different from `:echo`,
+			more like `:execute`.  All the expressions are first
 			evaluated and concatenated before echoing anything.
 			If expressions does not evaluate to a Number or
 			String, string() is used to turn it into a string.
-			Uses the highlighting set by the |:echohl| command.
+			Uses the highlighting set by the `:echohl` command.
 			Example: >
 		:echomsg "It's a Zizzer Zazzer Zuzz, as you can plainly see."
 <			See |:echo-redraw| to avoid the message disappearing
@@ -3353,12 +3359,12 @@ text...
 			message in the |message-history|.  When used in a
 			script or function the line number will be added.
 			Spaces are placed between the arguments as with the
-			|:echomsg| command.  When used inside a try conditional,
+			`:echomsg` command.  When used inside a try conditional,
 			the message is raised as an error exception instead
 			(see |try-echoerr|).
 			Example: >
 		:echoerr "This script just failed!"
-<			If you just want a highlighted message use |:echohl|.
+<			If you just want a highlighted message use `:echohl`.
 			And to get a beep: >
 		:exe "normal \<Esc>"
 <
