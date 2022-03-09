@@ -153,9 +153,10 @@ index, on which the cursor is. This can look like this: >
 Note: the count does not take offset into account.
 
 When no match is found you get the error: *E486* Pattern not found
-Note that for the |:global| command this behaves like a normal message, for Vi
-compatibility.  For the |:s| command the "e" flag can be used to avoid the
-error message |:s_flags|.
+Note that for the `:global` command, you get a normal message "Pattern not
+found", for Vi compatibility.
+For the |:s| command the "e" flag can be used to avoid the error message
+|:s_flags|.
 
 					*search-offset* *{offset}*
 These commands search for the specified pattern.  With "/" and "?" an
@@ -1422,7 +1423,7 @@ Finally, these constructs are unique to Perl:
 		":2match" for another plugin.
 
 ==============================================================================
-11. Fuzzy matching					*fuzzy-match*
+11. Fuzzy matching					*fuzzy-matching*
 
 Fuzzy matching refers to matching strings using a non-exact search string.
 Fuzzy matching will match a string, if all the characters in the search string

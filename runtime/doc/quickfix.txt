@@ -642,22 +642,25 @@ instead.  If the buffer in the used window has changed, and the error is in
 another file, jumping to the error will fail.  You will first have to make
 sure the window contains a buffer which can be abandoned.
 
-The following steps are used to find a window to open the file selected from
-the quickfix window:
-1. If 'switchbuf' contains "usetab", then find a window in any tabpage
-   (starting with the first tabpage) that has the selected file and jump to
-   it.
-2. Otherwise find a window displaying the selected file in the current tab
-   page (starting with the window before the quickfix window) and use it.
-3. Otherwise find a window displaying a normal buffer ('buftype' is empty)
-   starting with the window before the quickfix window. If a window is found,
-   open the file in that window.
-4. If a usable window is not found and 'switchbuf' contains "uselast", then
-   open the file in the last used window.
-5. Otherwise open the file in the window before the quickfix window.  If there
-   is no previous window, then open the file in the next window.
-6. If a usable window is not found in the above steps, then create a new
-   horizontally split window above the quickfix window and open the file.
+When you select a file from the quickfix window, the following steps are used
+to find a window to edit the file:
+
+1. If a window displaying the selected file is present in the current tabpage
+   (starting with the window before the quickfix window), then that window is
+   used.
+2. If the above step fails and if 'switchbuf' contains "usetab" and a window
+   displaying the selected file is present in any one of the tabpages
+   (starting with the first tabpage) then that window is used.
+3. If the above step fails then a window in the current tabpage displaying a
+   buffer with 'buftype' not set (starting with the window before the quickfix
+   window) is used.
+4. If the above step fails and if 'switchbuf' contains "uselast", then the
+   previously accessed window is used.
+5. If the above step fails then the window before the quickfix window is used.
+   If there is no previous window, then the window after the quickfix window
+   is used.
+6. If the above step fails, then a new horizontally split window above the
+   quickfix window is used.
 
 					*CTRL-W_<Enter>* *CTRL-W_<CR>*
 You can use CTRL-W <Enter> to open a new window and jump to the error there.
@@ -697,13 +700,15 @@ this window, the displayed location list is used.
 When you select a file from the location list window, the following steps are
 used to find a window to edit the file:
 
-1. If a window with the location list displayed in the location list window is
-   present, then the file is opened in that window.
-2. If the above step fails and if the file is already opened in another
-   window, then that window is used.
-3. If the above step fails then an existing window showing a buffer with
-   'buftype' not set is used.
-4. If the above step fails, then the file is edited in a new window.
+1. If a non-quickfix window associated with the location list is present in
+   the current tabpage, then that window is used.
+2. If the above step fails and if the file is already opened in another window
+   in the current tabpage, then that window is used.
+3. If the above step fails and 'switchbuf' contains "usetab" and if the file
+   is opened in a window in any one of the tabpages, then that window is used.
+4. If the above step fails then a window in the current tabpage showing a
+   buffer with 'buftype' not set is used.
+5. If the above step fails, then the file is edited in a new window.
 
 In all of the above cases, if the location list for the selected window is not
 yet set, then it is set to the location list displayed in the location list
@@ -1036,7 +1041,7 @@ commands can be combined to create a NewGrep command: >
 			     matching is used to find matching lines. In this
 			     case, {pattern} is treated as a literal string
 			     instead of a regular expression.  See
-			     |fuzzy-match| for more information about fuzzy
+			     |fuzzy-matching| for more information about fuzzy
 			     matching strings.
 
 			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.

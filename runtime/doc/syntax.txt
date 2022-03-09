@@ -4388,7 +4388,7 @@ Leading context			*:syn-lc* *:syn-leading* *:syn-context*
 
 Note: This is an obsolete feature, only included for backwards compatibility
 with previous Vim versions.  It's now recommended to use the |/\@<=| construct
-in the pattern.
+in the pattern.  You can also often use |/\zs|.
 
 The "lc" offset specifies leading context -- a part of the pattern that must
 be present, but is not considered part of the match.  An offset of "lc=n" will
