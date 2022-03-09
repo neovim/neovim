@@ -1476,7 +1476,7 @@ static void tui_guess_size(UI *ui)
   if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
     did_user_set_dimensions = true;
     assert(Columns >= INT_MIN && Columns <= INT_MAX);
-    assert(Rows >= INT_MIN && Rows <= INT_MAX);
+    assert(Rows >= 0);
     width = Columns;
     height = Rows;
     goto end;
