@@ -2704,10 +2704,6 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (close_curwin) {
     win_enter_ext(wp, WEE_CURWIN_INVALID | WEE_TRIGGER_ENTER_AUTOCMDS
                   | WEE_TRIGGER_LEAVE_AUTOCMDS);
-    if (other_buffer) {
-      // careful: after this wp and win may be invalid!
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
-    }
   }
 
   /*
