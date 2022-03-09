@@ -5664,8 +5664,7 @@ void comp_col(void)
     }
   }
   assert(sc_col >= 0
-         && INT_MIN + sc_col <= Columns
-         && Columns - sc_col <= INT_MAX);
+         && INT_MIN + sc_col <= Columns);
   sc_col = Columns - sc_col;
   assert(ru_col >= 0
          && INT_MIN + ru_col <= Columns
