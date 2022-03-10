@@ -14,6 +14,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"

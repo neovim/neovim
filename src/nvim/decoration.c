@@ -523,59 +523,6 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
 }
 
 
-DecorProvider *get_decor_provider(NS ns_id, bool force)
-{
-  size_t i;
-  size_t len = kv_size(decor_providers);
-  for (i = 0; i < len; i++) {
-    DecorProvider *item = &kv_A(decor_providers, i);
-    if (item->ns_id == ns_id) {
-      return item;
-    } else if (item->ns_id > ns_id) {
-      break;
-    }
-  }
-
-  if (!force) {
-    return NULL;
-  }
-
-  // Adding a new provider, so allocate room in the vector
-  (void)kv_a(decor_providers, len);
-  if (i < len) {
-    // New ns_id needs to be inserted between existing providers to maintain
-    // ordering, so shift other providers with larger ns_id
-    memmove(&kv_A(decor_providers, i + 1),
-            &kv_A(decor_providers, i),
-            (len - i) * sizeof(kv_a(decor_providers, i)));
-  }
-  DecorProvider *item = &kv_a(decor_providers, i);
-  *item = DECORATION_PROVIDER_INIT(ns_id);
-
-  return item;
-}
-
-void decor_provider_clear(DecorProvider *p)
-{
-  if (p == NULL) {
-    return;
-  }
-  NLUA_CLEAR_REF(p->redraw_start);
-  NLUA_CLEAR_REF(p->redraw_buf);
-  NLUA_CLEAR_REF(p->redraw_win);
-  NLUA_CLEAR_REF(p->redraw_line);
-  NLUA_CLEAR_REF(p->redraw_end);
-  p->active = false;
-}
-
-void decor_free_all_mem(void)
-{
-  for (size_t i = 0; i < kv_size(decor_providers); i++) {
-    decor_provider_clear(&kv_A(decor_providers, i));
-  }
-  kv_destroy(decor_providers);
-}
-
 
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
 {
