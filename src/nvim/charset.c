@@ -928,10 +928,12 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
     // continue until the NUL
     posptr = NULL;
   } else {
-    // Special check for an empty line, which can happen on exit, when
-    // ml_get_buf() always returns an empty string.
-    if (*ptr == NUL) {
-      pos->col = 0;
+    // In a few cases the position can be beyond the end of the line.
+    for (colnr_T i = 0; i < pos->col; i++) {
+      if (ptr[i] == NUL) {
+        pos->col = i;
+        break;
+      }
     }
     posptr = ptr + pos->col;
     posptr -= utf_head_off(line, posptr);

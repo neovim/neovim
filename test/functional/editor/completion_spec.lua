@@ -1193,4 +1193,23 @@ describe('completion', function()
     eq('foobar', eval('g:word'))
     feed('<esc>')
   end)
+
+  it('does not crash if text is changed by first call to complete function #17489', function()
+    source([[
+      func Complete(findstart, base) abort
+        if a:findstart
+          let col = col('.')
+          call complete_add('#')
+          return col - 1
+        else
+          return []
+        endif
+      endfunc
+
+      set completeopt=longest
+      set completefunc=Complete
+    ]])
+    feed('ifoo#<C-X><C-U>')
+    assert_alive()
+  end)
 end)

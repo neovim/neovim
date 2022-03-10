@@ -1136,8 +1136,8 @@ static bool reg_match_visual(void)
     return false;
   }
 
+  col = (colnr_T)(rex.input - rex.line);
   if (mode == 'v') {
-    col = (colnr_T)(rex.input - rex.line);
     if ((lnum == top.lnum && col < top.col)
         || (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e'))) {
       return false;
@@ -1152,8 +1152,12 @@ static bool reg_match_visual(void)
     if (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL) {
       end = MAXCOL;
     }
-    unsigned int cols_u = win_linetabsize(wp, rex.line,
-                                          (colnr_T)(rex.input - rex.line));
+
+    // getvvcol() flushes rex.line, need to get it again
+    rex.line = reg_getline(rex.lnum);
+    rex.input = rex.line + col;
+
+    unsigned int cols_u = win_linetabsize(wp, rex.line, col);
     assert(cols_u <= MAXCOL);
     colnr_T cols = (colnr_T)cols_u;
     if (cols < start || cols > end - (*p_sel == 'e')) {
