@@ -1500,7 +1500,7 @@ static void f_ctxsize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Set the cursor position.
-/// If 'charcol' is true, then use the column number as a character offet.
+/// If 'charcol' is true, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
 static void set_cursorpos(typval_T *argvars, typval_T *rettv, bool charcol)
 {
@@ -7781,7 +7781,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/// "reduce(list, { accumlator, element -> value } [, initial])" function
+/// "reduce(list, { accumulator, element -> value } [, initial])" function
 static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_LIST && argvars[0].v_type != VAR_BLOB) {
@@ -8885,7 +8885,7 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Set the cursor or mark position.
-/// If 'charpos' is TRUE, then use the column number as a character offet.
+/// If 'charpos' is TRUE, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
 static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
 {

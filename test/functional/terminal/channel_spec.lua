@@ -33,7 +33,7 @@ describe('terminal channel is closed and later released if', function()
     -- channel has been closed but not released
     eq("Vim(call):Can't send data to closed stream",
        pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
-    screen:expect({any='%[Terminal closed]'})
+    screen:expect({any='%[Terminal closed%]'})
     eq(chans, eval('len(nvim_list_chans())'))
     -- delete terminal
     feed('i<CR>')
@@ -49,7 +49,7 @@ describe('terminal channel is closed and later released if', function()
     -- channel has been closed but not released
     eq("Vim(call):Can't send data to closed stream",
        pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
-    screen:expect({any='%[Terminal closed]'})
+    screen:expect({any='%[Terminal closed%]'})
     eq(chans, eval('len(nvim_list_chans())'))
     -- channel still hasn't been released yet
     eq("Vim(call):Can't send data to closed stream",

@@ -9655,7 +9655,7 @@ static void ex_filetype(exarg_T *eap)
 
 /// Source ftplugin.vim and indent.vim to create the necessary FileType
 /// autocommands. We do this separately from filetype.vim so that these
-/// autocommands will always fire first (and thus can be overriden) while still
+/// autocommands will always fire first (and thus can be overridden) while still
 /// allowing general filetype detection to be disabled in the user's init file.
 void filetype_plugin_enable(void)
 {

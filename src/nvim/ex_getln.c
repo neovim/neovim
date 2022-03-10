@@ -231,7 +231,7 @@ static int compl_selected;
 
 /// |:checkhealth| completion items
 ///
-/// Regenerates on every new command line prompt, to accomodate changes on the
+/// Regenerates on every new command line prompt, to accommodate changes on the
 /// runtime files.
 typedef struct {
   garray_T names;  // healthcheck names

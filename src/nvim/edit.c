@@ -5116,10 +5116,10 @@ static int ins_complete(int c, bool enable_pum)
           || ctrl_x_mode == CTRL_X_PATH_PATTERNS
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (compl_startpos.lnum != curwin->w_cursor.lnum) {
-          /* line (probably) wrapped, set compl_startpos to the
-           * first non_blank in the line, if it is not a wordchar
-           * include it to get a better pattern, but then we don't
-           * want the "\\<" prefix, check it bellow */
+          // line (probably) wrapped, set compl_startpos to the
+          // first non_blank in the line, if it is not a wordchar
+          // include it to get a better pattern, but then we don't
+          // want the "\\<" prefix, check it below.
           compl_col = (colnr_T)getwhitecols(line);
           compl_startpos.col = compl_col;
           compl_startpos.lnum = curwin->w_cursor.lnum;

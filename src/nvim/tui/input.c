@@ -115,6 +115,7 @@ static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
   if (rbuffer_size(input->key_buffer) == 0 && input->paste == 3) {
+    // End streamed paste with an empty string.
     const String keys = { .data = "", .size = 0 };
     String copy = copy_string(keys);
     multiqueue_put(main_loop.events, tinput_paste_event, 3,

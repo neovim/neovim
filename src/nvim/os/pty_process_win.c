@@ -307,7 +307,7 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 /// Build the command line to pass to CreateProcessW.
 ///
 /// @param[in]  argv  Array with string arguments.
-/// @param[out]  cmd_line  Location where saved builded cmd line.
+/// @param[out]  cmd_line  Location where saved built cmd line.
 ///
 /// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
