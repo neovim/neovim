@@ -820,9 +820,13 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     if (server_addr != NULL) {
       rc_id = channel_connect(false, server_addr, true, on_data, 50, &error);
     }
-
-    Boolean should_exit = true;
-    Boolean tabbed;
+    if (error) {
+      mch_msg("Failed to connect to server ");
+      mch_msg(server_addr);
+      mch_msg("\nReason: ");
+      mch_msg(error);
+      mch_msg("Continuing with remote command in case we can execute locally\n");
+    }
 
     int t_argc = remote_args;
     Array args = ARRAY_DICT_INIT;
@@ -853,6 +857,9 @@ static void handle_remote_client(mparm_T *params, int remote_args,
       os_exit(2);
     }
 
+    TriState should_exit = kNone;
+    TriState tabbed = kNone;
+
     for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
       if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
         if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
@@ -867,21 +874,25 @@ static void handle_remote_client(mparm_T *params, int remote_args,
           mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
           os_exit(2);
         }
-        tabbed = rvobj.data.dictionary.items[i].value.data.boolean;
+        tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
       } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
         if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
           mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
           os_exit(2);
         }
-        should_exit = rvobj.data.dictionary.items[i].value.data.boolean;
+        should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
       }
+    }
+    if (should_exit == kNone || tabbed == kNone) {
+      mch_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
+      os_exit(2);
     }
     api_free_object(o);
 
-    if (should_exit) {
+    if (should_exit == kTrue) {
       os_exit(0);
     }
-    if (tabbed) {
+    if (tabbed == kTrue) {
       params->window_count = argc - remote_args - 1;
       params->window_layout = WIN_TABS;
     }
