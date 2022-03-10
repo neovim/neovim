@@ -4961,9 +4961,8 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    // Don't do anything for a directory.  Might contain the file
-    // explorer.
     if (os_isdir(buf->b_fname)) {
+      // Don't do anything for a directory.  Might contain the file explorer.
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still

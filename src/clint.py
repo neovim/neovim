@@ -369,7 +369,7 @@ def Search(pattern, s):
     return _regexp_compile_cache[pattern].search(s)
 
 
-class _IncludeState(dict):
+class _IncludeState(dict):  # lgtm [py/missing-equals]
 
     """Tracks line numbers for includes, and the order in which includes appear.
 

@@ -9706,8 +9706,7 @@ free_lstval:
 
   if (set_unnamed) {
     // Discard the result. We already handle the error case.
-    if (op_reg_set_previous(regname)) {
-    }
+    op_reg_set_previous(regname);
   }
 }
 

@@ -7379,7 +7379,6 @@ const yankreg_T *op_reg_get(const char name)
 ///
 /// @return true on success, false on failure.
 bool op_reg_set_previous(const char name)
-  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int i = op_reg_index(name);
   if (i == -1) {
