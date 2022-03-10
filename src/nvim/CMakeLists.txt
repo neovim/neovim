@@ -135,6 +135,9 @@ foreach(sfile ${NVIM_SOURCES})
   if(${f} MATCHES "^(regexp_nfa.c)$")
     list(APPEND to_remove ${sfile})
   endif()
+  if(${f} MATCHES "^(regexp_bt.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
     list(APPEND to_remove ${sfile})
   endif()
@@ -261,6 +264,7 @@ endif()
 # NVIM_GENERATED_SOURCES: generated source files
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
+              "${CMAKE_CURRENT_LIST_DIR}/regexp_bt.c"
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
               ${GENERATED_API_DISPATCH}
               "${GENERATED_UI_EVENTS_CALL}"
