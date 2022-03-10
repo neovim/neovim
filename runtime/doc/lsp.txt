@@ -355,8 +355,8 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
                                                       *lsp-handler-resolution*
 Handlers can be set by:
 
-- Setting a field in |vim.lsp.handlers|.                      *vim.lsp.handlers*
-    |vim.lsp.handlers| is a global table that contains the default mapping of
+- Setting a field in vim.lsp.handlers.                      *vim.lsp.handlers*
+    vim.lsp.handlers is a global table that contains the default mapping of
     |lsp-method| names to |lsp-handlers|.
 
     To override the handler for the `"textDocument/definition"` method: >

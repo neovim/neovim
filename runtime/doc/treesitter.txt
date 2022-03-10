@@ -207,14 +207,14 @@ Here is a list of built-in predicates :
 
 	`eq?`						*ts-predicate-eq?*
 		This predicate will check text correspondence between nodes or
-		strings : >
+		strings: >
 			((identifier) @foo (#eq? @foo "foo"))
 			((node1) @left (node2) @right (#eq? @left @right))
 <
 	`match?`					*ts-predicate-match?*
 	`vim-match?`				    *ts-predicate-vim-match?*
 		This will match if the provided vim regex matches the text
-		corresponding to a node : >
+		corresponding to a node: >
 			((identifier) @constant (#match? @constant "^[A-Z_]+$"))
 <		Note: the `^` and `$` anchors will respectively match the
 			start and end of the node's text.
@@ -225,17 +225,18 @@ Here is a list of built-in predicates :
 
 	`contains?`				     *ts-predicate-contains?*
 		Will check if any of the following arguments appears in the
-		text corresponding to the node : >
+		text corresponding to the node: >
 			((identifier) @foo (#contains? @foo "foo"))
 			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
 	`any-of?`				       *ts-predicate-any-of?*
-		Will check if the text is the same as any of the following.
+		Will check if the text is the same as any of the following
+		arguments: >
+			((identifier) @foo (#any-of? @foo "foo" "bar"))
+<
 		This is the recommended way to check if the node matches one
 		of many keywords for example, as it has been optimized for
 		this.
-		arguments : >
-			((identifier) @foo (#any-of? @foo "foo" "bar"))
 <
 						 *lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of

@@ -482,7 +482,7 @@ describe('Signs', function()
       ]])
     end)
 
-    it('ignores signs with no icon and text when calculting the signcolumn width', function()
+    it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('set number')
       command('set signcolumn=auto:2')

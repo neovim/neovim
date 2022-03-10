@@ -1083,7 +1083,7 @@ from within Lua.
             `vim.opt.wildignore = '*.o,*.a,__pycache__'`
 
         However, vim.opt also supports a more elegent way of setting
-        list-style options, but using lua tables:
+        list-style options by using lua tables:
             `vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }`
 
     To replicate the behavior of |:set+=|, use: >
