@@ -106,6 +106,14 @@ describe('nlua_expand_pat', function()
     )
   end)
 
+  it('should work with lazy submodules of "vim" global', function()
+    eq({{ 'inspect' }, 4 },
+       get_completions('vim.inspec'))
+
+    eq({{ 'set' }, 11 },
+       get_completions('vim.keymap.se'))
+  end)
+
   it('should be able to interpolate globals', function()
     eq(
       {{
