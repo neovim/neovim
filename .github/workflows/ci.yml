@@ -80,11 +80,11 @@ jobs:
         run: ./ci/before_script.sh
 
       - name: Build nvim
-        run: ./ci/run_tests.sh build
+        run: ./ci/run_tests.sh build_nvim
 
       - if: "!cancelled()"
-        name: clint
-        run: ./ci/run_lint.sh clint
+        name: clint-full
+        run: ./ci/run_lint.sh clint-full
 
       - if: "!cancelled()"
         name: lualint
@@ -99,8 +99,8 @@ jobs:
         run: ./ci/run_lint.sh shlint
 
       - if: "!cancelled()"
-        name: single-includes
-        run: ./ci/run_lint.sh single-includes
+        name: check-single-includes
+        run: ./ci/run_lint.sh check-single-includes
 
       - name: Cache dependencies
         run: ./ci/before_cache.sh
@@ -201,7 +201,7 @@ jobs:
         run: ./ci/before_script.sh
 
       - name: Build
-        run: ./ci/run_tests.sh build
+        run: ./ci/run_tests.sh build_nvim
 
       - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
         name: Unittests
