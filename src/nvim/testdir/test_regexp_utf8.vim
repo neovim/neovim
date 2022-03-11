@@ -594,7 +594,7 @@ endfunc
 
 func Test_match_too_complicated()
   set regexpengine=1
-  exe "vsplit \xeb\xdb\x99"
+  exe "noswapfile vsplit \xeb\xdb\x99"
   silent! buf \&\zs*\zs*0
   bwipe!
   set regexpengine=0
