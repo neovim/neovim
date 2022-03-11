@@ -636,6 +636,68 @@ function vim.pretty_print(...)
   return ...
 end
 
+function vim._cs_remote(rcid, server_addr, connect_error, args)
+  local function connection_failure_errmsg(consequence)
+    local explanation
+    if server_addr == '' then
+      explanation = "No server specified with --server"
+    else
+      explanation = "Failed to connect to '" .. server_addr .. "'"
+      if connect_error ~= "" then
+        explanation = explanation .. ": " .. connect_error
+      end
+    end
+    return "E247: " .. explanation .. ". " .. consequence
+  end
+
+  local f_silent = false
+  local f_tab = false
+
+  local subcmd = string.sub(args[1],10)
+  if subcmd == 'tab' then
+    f_tab = true
+  elseif subcmd == 'silent' then
+    f_silent = true
+  elseif subcmd == 'wait' or subcmd == 'wait-silent' or subcmd == 'tab-wait' or subcmd == 'tab-wait-silent' then
+    return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
+  elseif subcmd == 'tab-silent' then
+    f_tab = true
+    f_silent = true
+  elseif subcmd == 'send' then
+    if rcid == 0 then
+      return { errmsg = connection_failure_errmsg('Send failed.') }
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
+    return { should_exit = true, tabbed = false }
+  elseif subcmd == 'expr' then
+    if rcid == 0 then
+      return { errmsg = connection_failure_errmsg('Send expression failed.') }
+    end
+    print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
+    return { should_exit = true, tabbed = false }
+  elseif subcmd ~= '' then
+    return { errmsg='Unknown option argument: ' .. args[1] }
+  end
+
+  if rcid == 0 then
+    if not f_silent then
+      vim.notify(connection_failure_errmsg("Editing locally"), vim.log.levels.WARN)
+    end
+  else
+    local command = {}
+    if f_tab then table.insert(command, 'tab') end
+    table.insert(command, 'drop')
+    for i = 2, #args do
+      table.insert(command, vim.fn.fnameescape(args[i]))
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+  end
+
+  return {
+    should_exit = rcid ~= 0,
+    tabbed = f_tab,
+  }
+end
 
 require('vim._meta')
 
