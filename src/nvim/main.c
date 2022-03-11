@@ -815,17 +815,10 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
     rvobj.type = kObjectTypeDictionary;
     CallbackReader on_data = CALLBACK_READER_INIT;
-    const char *error = NULL;
+    const char *connect_error = NULL;
     uint64_t rc_id = 0;
     if (server_addr != NULL) {
-      rc_id = channel_connect(false, server_addr, true, on_data, 50, &error);
-    }
-    if (error) {
-      mch_msg("Failed to connect to server ");
-      mch_msg(server_addr);
-      mch_msg("\nReason: ");
-      mch_msg(error);
-      mch_msg("Continuing with remote command in case we can execute locally\n");
+      rc_id = channel_connect(false, server_addr, true, on_data, 50, &connect_error);
     }
 
     int t_argc = remote_args;
@@ -839,6 +832,8 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     Error err = ERROR_INIT;
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ((int)rc_id));
+    ADD(a, CSTR_TO_OBJ(server_addr));
+    ADD(a, CSTR_TO_OBJ(connect_error));
     ADD(a, ARRAY_OBJ(args));
     String s = cstr_to_string("return vim._cs_remote(...)");
     Object o = nlua_exec(s, a, &err);

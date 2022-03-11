@@ -636,12 +636,24 @@ function vim.pretty_print(...)
   return ...
 end
 
-function vim._cs_remote(rcid, args)
+function vim._cs_remote(rcid, server_addr, connect_error, args)
+  local function connection_failure_errmsg(consequence)
+    local explanation
+    if server_addr == '' then
+      explanation = "No server specified with --server"
+    else
+      explanation = "Failed to connect to '" .. server_addr .. "'"
+      if connect_error ~= "" then
+        explanation = explanation .. ": " .. connect_error
+      end
+    end
+    return "E247: " .. explanation .. ". " .. consequence
+  end
+
   local f_silent = false
   local f_tab = false
 
   local subcmd = string.sub(args[1],10)
-
   if subcmd == 'tab' then
     f_tab = true
   elseif subcmd == 'silent' then
@@ -653,13 +665,13 @@ function vim._cs_remote(rcid, args)
     f_silent = true
   elseif subcmd == 'send' then
     if rcid == 0 then
-      return { errmsg = 'E247: Remote server does not exist. Send failed.' }
+      return { errmsg = connection_failure_errmsg('Send failed.') }
     end
     vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
     return { should_exit = true, tabbed = false }
   elseif subcmd == 'expr' then
     if rcid == 0 then
-      return { errmsg = 'E247: Remote server does not exist. Send expression failed.' }
+      return { errmsg = connection_failure_errmsg('Send expression failed.') }
     end
     print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
     return { should_exit = true, tabbed = false }
@@ -669,7 +681,7 @@ function vim._cs_remote(rcid, args)
 
   if rcid == 0 then
     if not f_silent then
-      vim.cmd('echohl WarningMsg | echomsg "E247: Remote server does not exist. Editing locally" | echohl None')
+      vim.notify(connection_failure_errmsg("Editing locally"), vim.log.levels.WARN)
     end
   else
     local command = {}
