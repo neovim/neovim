@@ -111,7 +111,7 @@ bool try_leave(const TryState *const tstate, Error *const err)
 /// try_enter()/try_leave() pair should be used instead.
 void try_start(void)
 {
-  ++trylevel;
+  trylevel++;
 }
 
 /// End try block, set the error message if any and return true if an error
@@ -1037,8 +1037,7 @@ static void set_option_value_for(char *key, int numval, char *stringval, int opt
   aco_save_T aco;
 
   try_start();
-  switch (opt_type)
-  {
+  switch (opt_type) {
   case SREQ_WIN:
     if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
         == FAIL) {

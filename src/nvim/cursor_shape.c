@@ -74,8 +74,7 @@ Array mode_style_array(void)
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
       PUT(dic, "attr_id", INTEGER_OBJ(cur->id ? syn_id2attr(cur->id) : 0));
-      PUT(dic, "attr_id_lm", INTEGER_OBJ(cur->id_lm ? syn_id2attr(cur->id_lm)
-                                                    : 0));
+      PUT(dic, "attr_id_lm", INTEGER_OBJ(cur->id_lm ? syn_id2attr(cur->id_lm) : 0));
     }
     PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));
     PUT(dic, "short_name", STRING_OBJ(cstr_to_string(cur->name)));
@@ -147,7 +146,7 @@ char *parse_shape_opt(int what)
           if (len == 1 && TOLOWER_ASC(modep[0]) == 'a') {
             all_idx = SHAPE_IDX_COUNT - 1;
           } else {
-            for (idx = 0; idx < SHAPE_IDX_COUNT; ++idx) {
+            for (idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
               if (STRNICMP(modep, shape_table[idx].name, len) == 0) {
                 break;
               }
@@ -170,9 +169,7 @@ char *parse_shape_opt(int what)
         // Parse the part after the colon
         for (p = colonp + 1; *p && *p != ',';) {
           {
-            /*
-             * First handle the ones with a number argument.
-             */
+            // First handle the ones with a number argument.
             i = *p;
             len = 0;
             if (STRNICMP(p, "ver", 3) == 0) {
@@ -245,7 +242,7 @@ char *parse_shape_opt(int what)
           }           // if (what != SHAPE_MOUSE)
 
           if (*p == '-') {
-            ++p;
+            p++;
           }
         }
       }

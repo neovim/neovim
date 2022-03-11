@@ -720,7 +720,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
             && dst[-1] != ':'
 #endif
             && vim_ispathsep(*tail)) {
-          ++tail;
+          tail++;
         }
         dst += c;
         src = tail;
@@ -738,7 +738,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
         *dst++ = *src++;
-        --dstlen;
+        dstlen--;
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }

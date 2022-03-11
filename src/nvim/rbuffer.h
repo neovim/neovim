@@ -38,17 +38,15 @@
 // create infinite loops
 #define RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) \
   for (size_t rcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
-  for (  /* NOLINT(readability/braces) */ \
-         char *rptr = rbuffer_read_ptr(buf, &rcnt); \
-         buf->size; \
-         rptr = rbuffer_read_ptr(buf, &rcnt))
+  for (char *rptr = rbuffer_read_ptr(buf, &rcnt);  /* NOLINT(readability/braces) */ \
+       buf->size; \
+       rptr = rbuffer_read_ptr(buf, &rcnt))
 
 #define RBUFFER_UNTIL_FULL(buf, wptr, wcnt) \
   for (size_t wcnt = 0, _r = 1; _r; _r = 0)  /* NOLINT(readability/braces) */ \
-  for (  /* NOLINT(readability/braces) */ \
-         char *wptr = rbuffer_write_ptr(buf, &wcnt); \
-         rbuffer_space(buf); \
-         wptr = rbuffer_write_ptr(buf, &wcnt))
+  for (char *wptr = rbuffer_write_ptr(buf, &wcnt);  /* NOLINT(readability/braces) */ \
+       rbuffer_space(buf); \
+       wptr = rbuffer_write_ptr(buf, &wcnt))
 
 
 // Iteration

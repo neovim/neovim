@@ -70,7 +70,7 @@ int get_indent_str(const char_u *ptr, int ts, bool list)
 {
   int count = 0;
 
-  for (; *ptr; ++ptr) {
+  for (; *ptr; ptr++) {
     // Count a tab for what it is worth.
     if (*ptr == TAB) {
       if (!list || curwin->w_p_lcs_chars.tab1) {
@@ -442,10 +442,9 @@ int get_breakindent_win(win_T *wp, char_u *line)
   static long *prev_vts = NULL;    // Cached vartabs values.
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
-  const int eff_wwidth = wp->w_width_inner
-                         - ((wp->w_p_nu || wp->w_p_rnu)
-                            && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
-        ? number_width(wp) + 1 : 0);
+  const int eff_wwidth = wp->w_width_inner -
+                         ((wp->w_p_nu || wp->w_p_rnu)
+                          && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL) ? number_width(wp) + 1 : 0);
 
   // used cached indent, unless pointer or 'tabstop' changed
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
@@ -512,7 +511,7 @@ int inindent(int extra)
   char_u *ptr;
   colnr_T col;
 
-  for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); ++col) {
+  for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); col++) {
     ptr++;
   }
 
@@ -630,7 +629,7 @@ int get_lisp_indent(void)
         continue;
       }
 
-      for (that = get_cursor_line_ptr(); *that != NUL; ++that) {
+      for (that = get_cursor_line_ptr(); *that != NUL; that++) {
         if (*that == ';') {
           while (*(that + 1) != NUL) {
             that++;

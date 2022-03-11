@@ -286,9 +286,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       break;
     case LUA_TBOOLEAN:
       cur.tv->v_type = VAR_BOOL;
-      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1)
-                               ? kBoolVarTrue
-                               : kBoolVarFalse);
+      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1) ? kBoolVarTrue : kBoolVarFalse);
       break;
     case LUA_TSTRING: {
       size_t len;
@@ -551,8 +549,8 @@ static bool typval_conv_special = false;
       const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
       if (mpval.type == conv_type) { \
         if (conv_type == kMPConvDict \
-              ? (void *)mpval.data.d.dict == (void *)(val) \
-              : (void *)mpval.data.l.list == (void *)(val)) { \
+            ? (void *)mpval.data.d.dict == (void *)(val) \
+            : (void *)mpval.data.l.list == (void *)(val)) { \
           lua_pushvalue(lstate, \
                         -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
           break; \
@@ -1133,10 +1131,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
     case LUA_TSTRING: {
       size_t len;
       const char *s = lua_tolstring(lstate, -1, &len);
-      *cur.obj = STRING_OBJ(((String) {
-          .data = xmemdupz(s, len),
-          .size = len,
-        }));
+      *cur.obj = STRING_OBJ(((String) { .data = xmemdupz(s, len), .size = len }));
       break;
     }
     case LUA_TNUMBER: {
@@ -1154,11 +1149,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
       switch (table_props.type) {
       case kObjectTypeArray:
-        *cur.obj = ARRAY_OBJ(((Array) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = ARRAY_OBJ(((Array) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.maxidx != 0) {
           cur.obj->data.array.items =
             xcalloc(table_props.maxidx,
@@ -1169,11 +1160,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         }
         break;
       case kObjectTypeDictionary:
-        *cur.obj = DICTIONARY_OBJ(((Dictionary) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = DICTIONARY_OBJ(((Dictionary) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.string_keys_num != 0) {
           cur.obj->data.dictionary.items =
             xcalloc(table_props.string_keys_num,

@@ -1229,7 +1229,7 @@ static void read_input(DynamicBuffer *buf)
         dynamic_buffer_ensure(buf, buf->len + 1);
         buf->data[buf->len++] = NL;
       }
-      ++lnum;
+      lnum++;
       if (lnum > curbuf->b_op_end.lnum) {
         break;
       }
