@@ -7,13 +7,16 @@ FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
 fail() {
   local test_name="$1"
-  local message="$2"
+  local fail_char="$2"
+  local message="$3"
 
+  : ${fail_char:=F}
   : ${message:=Test $test_name failed}
 
-  local full_msg="$test_name :: $message"
+  local full_msg="$fail_char $test_name :: $message"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
+  FAILED=1
 }
 
 ended_successfully() {
