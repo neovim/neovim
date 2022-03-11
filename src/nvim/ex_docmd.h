@@ -1,8 +1,8 @@
 #ifndef NVIM_EX_DOCMD_H
 #define NVIM_EX_DOCMD_H
 
-#include "nvim/ex_cmds_defs.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
 
 // flags for do_cmdline()

@@ -1171,10 +1171,10 @@ void callback_put(Callback *cb, typval_T *tv)
     func_ref(cb->data.funcref);
     break;
   case kCallbackLua:
-    // TODO(tjdevries): Unified Callback.
-    // At this point this isn't possible, but it'd be nice to put
-    // these handled more neatly in one place.
-    // So instead, we just do the default and put nil
+  // TODO(tjdevries): Unified Callback.
+  // At this point this isn't possible, but it'd be nice to put
+  // these handled more neatly in one place.
+  // So instead, we just do the default and put nil
   default:
     tv->v_type = VAR_SPECIAL;
     tv->vval.v_special = kSpecialVarNull;

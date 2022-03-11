@@ -965,8 +965,7 @@ void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String
 /// @see |nvim_del_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_del_keymap(uint64_t channel_id, Buffer buffer, String mode,
-                         String lhs, Error *err)
+void nvim_buf_del_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
   String rhs = { .data = "", .size = 0 };
@@ -1380,8 +1379,8 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_add_user_command
-void nvim_buf_add_user_command(Buffer buffer, String name, Object command,
-                               Dict(user_command) *opts, Error *err)
+void nvim_buf_add_user_command(Buffer buffer, String name, Object command, Dict(user_command) *opts,
+                               Error *err)
   FUNC_API_SINCE(9)
 {
   buf_T *target_buf = find_buffer_by_handle(buffer, err);

@@ -1,12 +1,12 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <lua.h>
 #include <lauxlib.h>
+#include <lua.h>
 
+#include "nvim/lua/spell.h"
 #include "nvim/spell.h"
 #include "nvim/vim.h"
-#include "nvim/lua/spell.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/spell.c.generated.h"
@@ -45,7 +45,7 @@ int nlua_spell_check(lua_State *lstate)
   size_t pos = 0;
   int capcol = -1;
   int no_res = 0;
-  const char * result;
+  const char *result;
 
   lua_createtable(lstate, 0, 0);
 
@@ -90,7 +90,7 @@ int nlua_spell_check(lua_State *lstate)
 
 static const luaL_Reg spell_functions[] = {
   { "check", nlua_spell_check },
-  { NULL   , NULL }
+  { NULL, NULL }
 };
 
 int luaopen_spell(lua_State *L)

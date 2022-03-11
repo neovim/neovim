@@ -11,8 +11,8 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/log.h"
-#include "nvim/memory.h"
 #include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

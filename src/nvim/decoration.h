@@ -87,10 +87,10 @@ EXTERN DecorState decor_state INIT(= { 0 });
 static inline bool decor_has_sign(Decoration *decor)
 {
   return decor->sign_text
-    || decor->sign_hl_id
-    || decor->number_hl_id
-    || decor->line_hl_id
-    || decor->cursorline_hl_id;
+         || decor->sign_hl_id
+         || decor->number_hl_id
+         || decor->line_hl_id
+         || decor->cursorline_hl_id;
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

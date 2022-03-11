@@ -558,7 +558,7 @@ void marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level, mtkey_
 {
   // TODO(bfredl): clean up this mess and re-instantiate &= and |= forms
   // once we upgrade to a non-broken version of gcc in functionaltest-lua CI
-  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t)~MT_FLAG_DECOR_MASK);
+  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_DECOR_MASK);
   rawkey(itr).flags = (uint16_t)(rawkey(itr).flags
                                  | (uint16_t)(decor_level << MT_FLAG_DECOR_OFFSET)
                                  | (uint16_t)(key.flags & MT_FLAG_DECOR_MASK));
@@ -1111,7 +1111,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t id, int row, int col, bool right_gravity)
 {
   mtkey_t key = { { row, col }, UINT32_MAX, id, 0,
-                    mt_flags(right_gravity, 0), 0, NULL };
+                  mt_flags(right_gravity, 0), 0, NULL };
   marktree_put(b, key, -1, -1, false);
 }
 

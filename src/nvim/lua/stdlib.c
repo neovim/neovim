@@ -28,10 +28,10 @@
 #include "nvim/globals.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/lua/spell.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
@@ -411,7 +411,7 @@ int nlua_getvar(lua_State *lstate)
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
   if (di == NULL && dict == &globvardict) {  // try to autoload script
     if (!script_autoload(name, len, false) || aborting()) {
-       return 0;  // nil
+      return 0;  // nil
     }
     di = tv_dict_find(dict, name, (ptrdiff_t)len);
   }

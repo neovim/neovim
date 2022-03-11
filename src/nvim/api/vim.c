@@ -723,15 +723,15 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     break;
   case 2:
     switch (numval) {
-      case 0:
-      case 1:
-        rv = BOOLEAN_OBJ(numval);
-        break;
-      default:
-        // Boolean options that return something other than 0 or 1 should return nil. Currently this
-        // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
-        rv = NIL;
-        break;
+    case 0:
+    case 1:
+      rv = BOOLEAN_OBJ(numval);
+      break;
+    default:
+      // Boolean options that return something other than 0 or 1 should return nil. Currently this
+      // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+      rv = NIL;
+      break;
     }
     break;
   default:

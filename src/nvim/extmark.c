@@ -118,7 +118,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
   }
 
   mtkey_t mark = { { row, col }, ns_id, id, 0,
-                    mt_flags(right_gravity, decor_level), 0, NULL };
+                   mt_flags(right_gravity, decor_level), 0, NULL };
   if (decor_full) {
     mark.decor_full = decor;
   } else if (decor) {

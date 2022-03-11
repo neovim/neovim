@@ -217,9 +217,9 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 
 #define STRLEN(s)           strlen((char *)(s))
 #ifdef HAVE_STRNLEN
-#  define STRNLEN(s, n)     strnlen((char *)(s), (size_t)(n))
+# define STRNLEN(s, n)     strnlen((char *)(s), (size_t)(n))
 #else
-#  define STRNLEN(s, n)     xstrnlen((char *)(s), (size_t)(n))
+# define STRNLEN(s, n)     xstrnlen((char *)(s), (size_t)(n))
 #endif
 #define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))
 #define STRNCPY(d, s, n)    strncpy((char *)(d), (char *)(s), (size_t)(n))

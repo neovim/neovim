@@ -2710,7 +2710,7 @@ bool next_for_item(void *fi_void, char_u *arg)
     tv.vval.v_string = vim_strnsave(fi->fi_string + fi->fi_byte_idx, len);
     fi->fi_byte_idx += len;
     const int result
-        = ex_let_vars(arg, &tv, true, fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK;
+      = ex_let_vars(arg, &tv, true, fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK;
     xfree(tv.vval.v_string);
     return result;
   }
