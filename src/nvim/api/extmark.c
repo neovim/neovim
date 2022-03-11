@@ -8,6 +8,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/extmark.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"

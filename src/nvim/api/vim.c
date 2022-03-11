@@ -22,6 +22,7 @@
 #include "nvim/charset.h"
 #include "nvim/context.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"

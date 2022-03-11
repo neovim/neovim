@@ -82,26 +82,7 @@ typedef struct {
   int eol_col;
 } DecorState;
 
-typedef struct {
-  NS ns_id;
-  bool active;
-  LuaRef redraw_start;
-  LuaRef redraw_buf;
-  LuaRef redraw_win;
-  LuaRef redraw_line;
-  LuaRef redraw_end;
-  LuaRef hl_def;
-  int hl_valid;
-} DecorProvider;
-
-EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
 EXTERN DecorState decor_state INIT(= { 0 });
-EXTERN bool provider_active INIT(= false);
-
-#define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-  { ns_id, false, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1 }
 
 static inline bool decor_has_sign(Decoration *decor)
 {
