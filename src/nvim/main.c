@@ -835,9 +835,8 @@ static void handle_remote_client(mparm_T *params, int remote_args,
     ADD(a, CSTR_TO_OBJ(server_addr));
     ADD(a, CSTR_TO_OBJ(connect_error));
     ADD(a, ARRAY_OBJ(args));
-    String s = cstr_to_string("return vim._cs_remote(...)");
+    String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
     Object o = nlua_exec(s, a, &err);
-    api_free_string(s);
     api_free_array(a);
     if (ERROR_SET(&err)) {
       mch_errmsg(err.msg);
