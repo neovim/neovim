@@ -1018,7 +1018,7 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			in [range] (default: current line |cmdline-ranges|),
 			[into register x].
 
-							*p* *put* *E353*
+						*p* *put* *E353* *E1240*
 ["x]p			Put the text [from register x] after the cursor
 			[count] times.
 

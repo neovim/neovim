@@ -188,7 +188,8 @@ A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
-an error when using other characters.
+an error when using other characters.  The maxium length of a group name is
+about 200 bytes.  *E1249*
 
 To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
@@ -1499,6 +1500,14 @@ this mode define the following variable in your vimrc file >
 The enhanced mode also takes advantage of additional color features for a dark
 gvim display.  Here, statements are colored LightYellow instead of Yellow, and
 conditionals are LightBlue for better distinction.
+
+Both Visual Basic and FORM use the extension ".frm".  To detect which one
+should be used, Vim checks for the string "VB_Name" in the first five lines of
+the file.  If it is found, filetype will be "vb", otherwise "form".
+
+If the automatic detection doesn't work for you or you only edit, for
+example, FORM files, use this in your startup vimrc: >
+   :let filetype_frm = "form"
 
 
 FORTH						*forth.vim* *ft-forth-syntax*

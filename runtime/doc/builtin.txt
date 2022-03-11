@@ -6880,12 +6880,14 @@ setqflist({list} [, {action} [, {what}]])		*setqflist()*
 		    filename	name of a file; only used when "bufnr" is not
 				present or it is invalid.
 		    module	name of a module; if given it will be used in
-				quickfix error window instead of the filename
+				quickfix error window instead of the filename.
 		    lnum	line number in the file
+		    end_lnum	end of lines, if the item spans multiple lines
 		    pattern	search pattern used to locate the error
 		    col		column number
 		    vcol	when non-zero: "col" is visual column
 				when zero: "col" is byte index
+		    end_col	end column, if the item spans multiple columns
 		    nr		error number
 		    text	description of the error
 		    type	single-character error type, 'E', 'W', etc.

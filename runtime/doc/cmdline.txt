@@ -679,7 +679,7 @@ If more line specifiers are given than required for the command, the first
 one(s) will be ignored.
 
 Line numbers may be specified with:		*:range* *{address}*
-	{number}	an absolute line number
+	{number}	an absolute line number  *E1247*
 	.		the current line			  *:.*
 	$		the last line in the file		  *:$*
 	%		equal to 1,$ (the entire file)		  *:%*

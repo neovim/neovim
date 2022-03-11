@@ -133,7 +133,10 @@ something else.
 		    :tabclose +	    " close the next tab page
 		    :tabclose 3	    " close the third tab page
 		    :tabclose $	    " close the last tab page
-<
+		    :tabclose #     " close the last accessed tab page
+
+When a tab is closed the next tab page will become the current one.
+
 							*:tabo* *:tabonly*
 :tabo[nly][!]	Close all other tab pages.
 		When the 'hidden' option is set, all buffers in closed windows
@@ -159,6 +162,8 @@ something else.
 				    " one
 		    :tabonly 1	    " close all tab pages except the first one
 		    :tabonly $	    " close all tab pages except the last one
+		    :tabonly #	    " close all tab pages except the last
+				    " accessed one
 
 
 SWITCHING TO ANOTHER TAB PAGE:
@@ -181,6 +186,7 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		    :+2tabnext	" go to the two next tab page
 		    :1tabnext	" go to the first tab page
 		    :$tabnext	" go to the last tab page
+		    :tabnext #  " go to the last accessed tab page
 		    :tabnext $	" as above
 		    :tabnext -	" go to the previous tab page
 		    :tabnext -1	" as above
@@ -245,6 +251,8 @@ REORDERING TAB PAGES:
 		    :tabmove	" move the tab page to the last
 		    :$tabmove	" as above
 		    :tabmove $	" as above
+		    :tabmove #  " move the tab page after the last accessed
+				" tab page
 
 :tabm[ove] +[N]
 :tabm[ove] -[N]
