@@ -5664,12 +5664,10 @@ void comp_col(void)
     }
   }
   assert(sc_col >= 0
-         && INT_MIN + sc_col <= Columns
-         && Columns - sc_col <= INT_MAX);
+         && INT_MIN + sc_col <= Columns);
   sc_col = Columns - sc_col;
   assert(ru_col >= 0
-         && INT_MIN + ru_col <= Columns
-         && Columns - ru_col <= INT_MAX);
+         && INT_MIN + ru_col <= Columns);
   ru_col = Columns - ru_col;
   if (sc_col <= 0) {            // screen too narrow, will become a mess
     sc_col = 1;

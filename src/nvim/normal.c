@@ -3568,7 +3568,6 @@ static void nv_zet(cmdarg_T *cap)
   bool undo = false;
 
   int l_p_siso = (int)get_sidescrolloff_value(curwin);
-  assert(l_p_siso <= INT_MAX);
 
   if (ascii_isdigit(nchar)) {
     /*

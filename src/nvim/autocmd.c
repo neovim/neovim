@@ -2428,9 +2428,8 @@ char *aucmd_exec_default_desc(AucmdExecutable acc)
   default:
     return NULL;
   }
-
-  abort();
 }
+
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
 {
   switch (acc.type) {
