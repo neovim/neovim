@@ -355,14 +355,14 @@ CTRL-A			Add [count] to the number or alphabetic character at
 
                                                        *v_CTRL-A*
 {Visual}CTRL-A		Add [count] to the number or alphabetic character in
-			the highlighted text.  {not in Vi}
+			the highlighted text.
 
 							*v_g_CTRL-A*
 {Visual}g CTRL-A	Add [count] to the number or alphabetic character in
 			the highlighted text. If several lines are
 		        highlighted, each one will be incremented by an
 			additional [count] (so effectively creating a
-			[count] incrementing sequence).  {not in Vi}
+			[count] incrementing sequence).
 			For Example, if you have this list of numbers:
 				1. ~
 				1. ~
@@ -381,14 +381,14 @@ CTRL-X			Subtract [count] from the number or alphabetic
 
 							*v_CTRL-X*
 {Visual}CTRL-X		Subtract [count] from the number or alphabetic
-			character in the highlighted text.  {not in Vi}
+			character in the highlighted text.
 
 							*v_g_CTRL-X*
 {Visual}g CTRL-X	Subtract [count] from the number or alphabetic
 			character in the highlighted text. If several lines
 			are highlighted, each value will be decremented by an
 			additional [count] (so effectively creating a [count]
-			decrementing sequence).  {not in Vi}
+			decrementing sequence).
 
 The CTRL-A and CTRL-X commands work for (signed) decimal numbers, unsigned
 binary/octal/hexadecimal numbers and alphabetic characters.
