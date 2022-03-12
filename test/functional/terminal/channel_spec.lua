@@ -1,45 +1,94 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local eq = helpers.eq
+local eval = helpers.eval
 local command = helpers.command
 local pcall_err = helpers.pcall_err
 local feed = helpers.feed
-local sleep = helpers.sleep
 local poke_eventloop = helpers.poke_eventloop
 
-describe('associated channel is closed and later freed for terminal', function()
-  before_each(clear)
+describe('terminal channel is closed and later released if', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new()
+    screen:attach()
+  end)
 
   it('opened by nvim_open_term() and deleted by :bdelete!', function()
     command([[let id = nvim_open_term(0, {})]])
-    -- channel hasn't been freed yet
-    eq("Vim(call):Can't send data to closed stream", pcall_err(command, [[bdelete! | call chansend(id, 'test')]]))
-    -- channel has been freed after one main loop iteration
-    eq("Vim(call):E900: Invalid channel id", pcall_err(command, [[call chansend(id, 'test')]]))
+    local chans = eval('len(nvim_list_chans())')
+    -- channel hasn't been released yet
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[bdelete! | call chansend(id, 'test')]]))
+    -- channel has been released after one main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
-  it('opened by termopen(), exited, and deleted by pressing a key', function()
-    command([[let id = termopen('echo')]])
-    sleep(500)
-    -- process has exited
-    eq("Vim(call):Can't send data to closed stream", pcall_err(command, [[call chansend(id, 'test')]]))
+  it('opened by nvim_open_term(), closed by chanclose(), and deleted by pressing a key', function()
+    command('let id = nvim_open_term(0, {})')
+    local chans = eval('len(nvim_list_chans())')
+    -- channel has been closed but not released
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
+    screen:expect({any='%[Terminal closed]'})
+    eq(chans, eval('len(nvim_list_chans())'))
     -- delete terminal
     feed('i<CR>')
     -- need to first process input
     poke_eventloop()
-    -- channel has been freed after another main loop iteration
-    eq("Vim(call):E900: Invalid channel id", pcall_err(command, [[call chansend(id, 'test')]]))
+    -- channel has been released after another main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
+  end)
+
+  it('opened by nvim_open_term(), closed by chanclose(), and deleted by :bdelete', function()
+    command('let id = nvim_open_term(0, {})')
+    local chans = eval('len(nvim_list_chans())')
+    -- channel has been closed but not released
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[call chanclose(id) | call chansend(id, 'test')]]))
+    screen:expect({any='%[Terminal closed]'})
+    eq(chans, eval('len(nvim_list_chans())'))
+    -- channel still hasn't been released yet
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    -- channel has been released after one main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
+  end)
+
+  it('opened by termopen(), exited, and deleted by pressing a key', function()
+    command([[let id = termopen('echo')]])
+    local chans = eval('len(nvim_list_chans())')
+    -- wait for process to exit
+    screen:expect({any='%[Process exited 0%]'})
+    -- process has exited but channel has't been released
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[call chansend(id, 'test')]]))
+    eq(chans, eval('len(nvim_list_chans())'))
+    -- delete terminal
+    feed('i<CR>')
+    -- need to first process input
+    poke_eventloop()
+    -- channel has been released after another main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
   -- This indirectly covers #16264
   it('opened by termopen(), exited, and deleted by :bdelete', function()
     command([[let id = termopen('echo')]])
-    sleep(500)
-    -- process has exited
-    eq("Vim(call):Can't send data to closed stream", pcall_err(command, [[call chansend(id, 'test')]]))
-    -- channel hasn't been freed yet
-    eq("Vim(call):Can't send data to closed stream", pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
-    -- channel has been freed after one main loop iteration
-    eq("Vim(call):E900: Invalid channel id", pcall_err(command, [[call chansend(id, 'test')]]))
+    local chans = eval('len(nvim_list_chans())')
+    -- wait for process to exit
+    screen:expect({any='%[Process exited 0%]'})
+    -- process has exited but channel hasn't been released
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[call chansend(id, 'test')]]))
+    eq(chans, eval('len(nvim_list_chans())'))
+    -- channel still hasn't been released yet
+    eq("Vim(call):Can't send data to closed stream",
+       pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    -- channel has been released after one main loop iteration
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 end)

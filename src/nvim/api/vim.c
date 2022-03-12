@@ -1140,6 +1140,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
   chan->stream.internal.cb = cb;
+  chan->stream.internal.closed = false;
   topts.data = chan;
   // NB: overridden in terminal_check_size if a window is already
   // displaying the buffer
