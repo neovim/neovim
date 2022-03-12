@@ -123,26 +123,24 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
   abort();
 }
 
-/// Set a highlight group.
+/// Sets a highlight group.
 ///
-/// Note: unlike the `:highlight` command which can update a highlight group,
+/// Note: Unlike the `:highlight` command which can update a highlight group,
 /// this function completely replaces the definition. For example:
 /// `nvim_set_hl(0, 'Visual', {})` will clear the highlight group 'Visual'.
 ///
-/// @param ns_id number of namespace for this highlight. Use value 0
-///              to set a highlight group in the global (`:highlight`)
-///              namespace.
-/// @param name highlight group name, like ErrorMsg
-/// @param val highlight definition map, like |nvim_get_hl_by_name|.
-///            in addition the following keys are also recognized:
-///              `default`: don't override existing definition,
-///                         like `hi default`
-///              `ctermfg`: sets foreground of cterm color
-///              `ctermbg`: sets background of cterm color
-///              `cterm`  : cterm attribute map. sets attributed for
-///                         cterm colors. similer to `hi cterm`
-///                         Note: by default cterm attributes are
-///                               same as attributes of gui color
+/// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
+///              Use 0 to set a highlight group globally |:highlight|.
+/// @param name  Highlight group name, e.g. "ErrorMsg"
+/// @param val   Highlight definition map, like |synIDattr()|. In
+///              addition, the following keys are recognized:
+///                - default: Don't override existing definition |:hi-default|
+///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
+///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
+///                - cterm: cterm attribute map, like
+///                  |highlight-args|.
+///                  Note: Attributes default to those set for `gui`
+///                        if not set.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
