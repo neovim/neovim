@@ -1948,6 +1948,27 @@ static inline void provider_err_virt_text(linenr_T lnum, char *err)
   decor_add_ephemeral(lnum-1, 0, lnum-1, 0, &err_decor);
 }
 
+static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len)
+{
+  long num;
+  char *fmt = "%*ld ";
+
+  if (wp->w_p_nu && !wp->w_p_rnu) {
+    // 'number' + 'norelativenumber'
+    num = (long)lnum;
+  } else {
+    // 'relativenumber', don't use negative numbers
+    num = labs((long)get_cursor_rel_lnum(wp, lnum));
+    if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
+      // 'number' + 'relativenumber'
+      num = lnum;
+      fmt = "%-*ld ";
+    }
+  }
+
+  snprintf((char *)buf, buf_len, fmt, number_width(wp), num);
+}
+
 /// Display line "lnum" of window 'wp' on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -2702,8 +2723,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           get_sign_display_info(false, wp, lnum, sattrs, row,
                                 startrow, filler_lines, filler_todo,
                                 &c_extra, &c_final, extra, sizeof(extra),
-                                &p_extra, &n_extra,
-                                &char_attr, &draw_state, &sign_idx);
+                                &p_extra, &n_extra, &char_attr, sign_idx);
+          sign_idx++;
+          if (sign_idx < wp->w_scwidth) {
+            draw_state = WL_SIGN - 1;
+          } else {
+            sign_idx = 0;
+          }
         }
       }
 
@@ -2722,29 +2748,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo,
                                   &c_extra, &c_final, extra, sizeof(extra),
-                                  &p_extra, &n_extra,
-                                  &char_attr, &draw_state, &sign_idx);
+                                  &p_extra, &n_extra, &char_attr, sign_idx);
           } else {
+            // Draw the line number (empty space after wrapping).
             if (row == startrow + filler_lines) {
-              // Draw the line number (empty space after wrapping). */
-              long num;
-              char *fmt = "%*ld ";
-
-              if (wp->w_p_nu && !wp->w_p_rnu) {
-                // 'number' + 'norelativenumber'
-                num = (long)lnum;
-              } else {
-                // 'relativenumber', don't use negative numbers
-                num = labs((long)get_cursor_rel_lnum(wp, lnum));
-                if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
-                  // 'number' + 'relativenumber'
-                  num = lnum;
-                  fmt = "%-*ld ";
-                }
-              }
-
-              snprintf((char *)extra, sizeof(extra),
-                       fmt, number_width(wp), num);
+              get_line_number_str(wp, lnum, (char_u *)extra, sizeof(extra));
               if (wp->w_skipcol > 0) {
                 for (p_extra = extra; *p_extra == ' '; p_extra++) {
                   *p_extra = '-';
@@ -2762,41 +2770,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               }
               p_extra = extra;
               c_extra = NUL;
-              c_final = NUL;
             } else {
               c_extra = ' ';
-              c_final = NUL;
             }
+            c_final = NUL;
             n_extra = number_width(wp) + 1;
-            char_attr = win_hl_attr(wp, HLF_N);
-
-            if (wp->w_p_rnu && lnum < wp->w_cursor.lnum) {
-              // Use LineNrAbove
-              char_attr = win_hl_attr(wp, HLF_LNA);
-            }
-            if (wp->w_p_rnu && lnum > wp->w_cursor.lnum) {
-              // Use LineNrBelow
-              char_attr = win_hl_attr(wp, HLF_LNB);
-            }
-
-            sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
-            if (num_sattr != NULL) {
-              // :sign defined with "numhl" highlight.
-              char_attr = num_sattr->sat_numhl;
-            } else if (wp->w_p_cul
-                       && lnum == wp->w_cursor.lnum
-                       && (wp->w_p_culopt_flags & CULOPT_NBR)
-                       && (row == startrow + filler_lines
-                           || (row > startrow + filler_lines
-                               && (wp->w_p_culopt_flags & CULOPT_LINE)))) {
-              // When 'cursorline' is set highlight the line number of
-              // the current line differently.
-              // When 'cursorlineopt' does not have "line" only
-              // highlight the line number itself.
-              // TODO(vim): Can we use CursorLine instead of CursorLineNr
-              // when CursorLineNr isn't set?
-              char_attr = win_hl_attr(wp, HLF_CLN);
-            }
+            char_attr = get_line_number_attr(wp, lnum, row, startrow, filler_lines, sattrs);
           }
         }
       }
@@ -4569,20 +4548,66 @@ static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
          && (wp->w_p_culopt_flags & CULOPT_NBR);
 }
 
+/// Return true if CursorLineNr highlight is to be used for the number column.
+///
+/// - 'cursorline' must be set
+/// - lnum must be the cursor line
+/// - 'cursorlineopt' has "number"
+/// - don't highlight filler lines (when in diff mode)
+/// - When line is wrapped and 'cursorlineopt' does not have "line", only highlight the line number
+///   itself on the first screenline of the wrapped line, otherwise highlight the number column of
+///   all screenlines of the wrapped line.
+static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
+{
+  return wp->w_p_cul
+         && lnum == wp->w_cursor.lnum
+         && (wp->w_p_culopt_flags & CULOPT_NBR)
+         && (row == startrow + filler_lines
+             || (row > startrow + filler_lines
+                 && (wp->w_p_culopt_flags & CULOPT_LINE)));
+}
+
+static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
+                                sign_attrs_T *sattrs)
+{
+  sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
+  if (num_sattr != NULL) {
+    // :sign defined with "numhl" highlight.
+    return num_sattr->sat_numhl;
+  }
+
+  if (wp->w_p_rnu) {
+    if (lnum < wp->w_cursor.lnum) {
+      // Use LineNrAbove
+      return win_hl_attr(wp, HLF_LNA);
+    }
+    if (lnum > wp->w_cursor.lnum) {
+      // Use LineNrBelow
+      return win_hl_attr(wp, HLF_LNB);
+    }
+  }
+
+  if (use_cursor_line_nr(wp, lnum, row, startrow, filler_lines)) {
+    // TODO(vim): Can we use CursorLine instead of CursorLineNr
+    // when CursorLineNr isn't set?
+    return win_hl_attr(wp, HLF_CLN);
+  }
+
+  return win_hl_attr(wp, HLF_N);
+}
+
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
 //
 // @param count max number of signs
 // @param[out] n_extrap number of characters from pp_extra to display
-// @param[in, out] sign_idxp Index of the displayed sign
+// @param sign_idxp Index of the displayed sign
 static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
                                   int row, int startrow, int filler_lines, int filler_todo,
                                   int *c_extrap, int *c_finalp, char_u *extra, size_t extra_size,
-                                  char_u **pp_extra, int *n_extrap, int *char_attrp,
-                                  int *draw_statep, int *sign_idxp)
+                                  char_u **pp_extra, int *n_extrap, int *char_attrp, int sign_idx)
 {
-  int count = wp->w_scwidth;
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
   *c_finalp = NUL;
@@ -4598,7 +4623,7 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, *sign_idxp, count);
+    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, sign_idx, wp->w_scwidth);
     if (sattr != NULL) {
       *pp_extra = sattr->sat_text;
       if (*pp_extra != NULL) {
@@ -4640,13 +4665,6 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
         *char_attrp = sattr->sat_texthl;
       }
     }
-  }
-
-  (*sign_idxp)++;
-  if (*sign_idxp < count) {
-    *draw_statep = WL_SIGN - 1;
-  } else {
-    *sign_idxp = 0;
   }
 }
 
