@@ -42,7 +42,7 @@
 /// Careful: may trigger autocommands that reload the buffer.
 void change_warning(buf_T *buf, int col)
 {
-  static char *w_readonly = N_("W10: Warning: Changing a readonly file");
+  static const char *w_readonly = N_("W10: Warning: Changing a readonly file");
 
   if (buf->b_did_warn == false
       && curbufIsChanged() == 0
@@ -140,10 +140,6 @@ void changed_internal(void)
 /// Careful: may trigger autocommands that reload the buffer.
 static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra)
 {
-  int i;
-  pos_T *p;
-  int add;
-
   // mark the buffer as modified
   changed();
 
@@ -158,13 +154,14 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
     // Create a new entry if a new undo-able change was started or we
     // don't have an entry yet.
     if (curbuf->b_new_change || curbuf->b_changelistlen == 0) {
+      int add;
       if (curbuf->b_changelistlen == 0) {
         add = true;
       } else {
         // Don't create a new entry when the line number is the same
         // as the last one and the column is not too far away.  Avoids
         // creating many entries for typing "xxxxx".
-        p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
+        pos_T *p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
         if (p->lnum != lnum) {
           add = true;
         } else {
@@ -243,7 +240,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       // If the changed line is in a range of previously folded lines,
       // compare with the first line in that range.
       if (wp->w_cursor.lnum <= lnum) {
-        i = find_wl_entry(wp, lnum);
+        int i = find_wl_entry(wp, lnum);
         if (i >= 0 && wp->w_cursor.lnum > wp->w_lines[i].wl_lnum) {
           changed_line_abv_curs_win(wp);
         }
@@ -264,7 +261,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       // For entries below the change: Correct the lnums for
       // inserted/deleted lines.  Makes it possible to stop displaying
       // after the change.
-      for (i = 0; i < wp->w_lines_valid; i++) {
+      for (int i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid) {
           if (wp->w_lines[i].wl_lnum >= lnum) {
             if (wp->w_lines[i].wl_lnum < lnume) {
@@ -352,12 +349,10 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
   // Diff highlighting in other diff windows may need to be updated too.
   if (curwin->w_p_diff) {
-    linenr_T wlnum;
-
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_later(wp, VALID);
-        wlnum = diff_lnum_win(lnum, wp);
+        linenr_T wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changedOneline(wp->w_buffer, wlnum);
         }
@@ -673,21 +668,18 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 /// Caller must have prepared for undo.
 void ins_str(char_u *s)
 {
-  char_u *oldp, *newp;
   int newlen = (int)STRLEN(s);
-  int oldlen;
-  colnr_T col;
   linenr_T lnum = curwin->w_cursor.lnum;
 
   if (virtual_active() && curwin->w_cursor.coladd > 0) {
     coladvance_force(getviscol());
   }
 
-  col = curwin->w_cursor.col;
-  oldp = ml_get(lnum);
-  oldlen = (int)STRLEN(oldp);
+  colnr_T col = curwin->w_cursor.col;
+  char_u *oldp = ml_get(lnum);
+  int oldlen = (int)STRLEN(oldp);
 
-  newp = (char_u *)xmalloc((size_t)oldlen + (size_t)newlen + 1);
+  char_u *newp = (char_u *)xmalloc((size_t)oldlen + (size_t)newlen + 1);
   if (col > 0) {
     memmove(newp, oldp, (size_t)col);
   }
@@ -719,13 +711,9 @@ int del_char(bool fixpos)
 int del_chars(long count, int fixpos)
 {
   int bytes = 0;
-  long i;
-  char_u *p;
-  int l;
-
-  p = get_cursor_pos_ptr();
-  for (i = 0; i < count && *p != NUL; i++) {
-    l = utfc_ptr2len(p);
+  char_u *p = get_cursor_pos_ptr();
+  for (long i = 0; i < count && *p != NUL; i++) {
+    int l = utfc_ptr2len(p);
     bytes += l;
     p += l;
   }
@@ -768,12 +756,11 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   if (p_deco && use_delcombine
       && utfc_ptr2len(oldp + col) >= count) {
     int cc[MAX_MCO];
-    int n;
 
     (void)utfc_ptr2char(oldp + col, cc);
     if (cc[0] != NUL) {
       // Find the last composing char, there can be several.
-      n = col;
+      int n = col;
       do {
         col = n;
         count = utf_ptr2len(oldp + n);
@@ -828,23 +815,18 @@ int copy_indent(int size, char_u *src)
 {
   char_u *p = NULL;
   char_u *line = NULL;
-  char_u *s;
-  int todo;
   int ind_len;
   int line_len = 0;
   int tab_pad;
-  int ind_done;
-  int round;
-  int ind_col;
 
   // Round 1: compute the number of characters needed for the indent
   // Round 2: copy the characters.
-  for (round = 1; round <= 2; round++) {
-    todo = size;
+  for (int round = 1; round <= 2; round++) {
+    int todo = size;
     ind_len = 0;
-    ind_done = 0;
-    ind_col = 0;
-    s = src;
+    int ind_done = 0;
+    int ind_col = 0;
+    char_u *s = src;
 
     // Count/copy the usable portion of the source line.
     while (todo > 0 && ascii_iswhite(*s)) {
@@ -1065,7 +1047,6 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     if (!trunc_line && do_si && *saved_line != NUL
         && (p_extra == NULL || first_char != '{')) {
       char_u *ptr;
-      char_u last_char;
 
       old_cursor = curwin->w_cursor;
       ptr = saved_line;
@@ -1075,8 +1056,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         lead_len = 0;
       }
       if (dir == FORWARD) {
-        // Skip preprocessor directives, unless they are
-        // recognised as comments.
+        // Skip preprocessor directives, unless they are recognised as comments.
         if (lead_len == 0 && ptr[0] == '#') {
           while (ptr[0] == '#' && curwin->w_cursor.lnum > 1) {
             ptr = ml_get(--curwin->w_cursor.lnum);
@@ -1119,7 +1099,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           while (p > ptr && ascii_iswhite(*p)) {
             p--;
           }
-          last_char = *p;
+          char_u last_char = *p;
 
           // find the character just before the '{' or ';'
           if (last_char == '{' || last_char == ';') {
@@ -1896,10 +1876,8 @@ void del_lines(long nlines, bool undo)
 /// If "include_space" is set, include trailing whitespace while calculating the length.
 int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_space)
 {
-  int i, j;
-  int result;
+  int j;
   int got_com = false;
-  int found_one;
   char_u part_buf[COM_MAX_LEN];         // buffer for one option part
   char_u *string;                  // pointer to comment string
   char_u *list;
@@ -1907,7 +1885,8 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
   char_u *prev_list;
   char_u *saved_flags = NULL;
 
-  result = i = 0;
+  int result = 0;
+  int i = 0;
   while (ascii_iswhite(line[i])) {  // leading white space is ignored
     i++;
   }
@@ -1915,7 +1894,7 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
   // Repeat to match several nested comment strings.
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
-    found_one = false;
+    int found_one = false;
     for (list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
@@ -2041,20 +2020,19 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
 int get_last_leader_offset(char_u *line, char_u **flags)
 {
   int result = -1;
-  int i, j;
+  int j;
   int lower_check_bound = 0;
   char_u *string;
   char_u *com_leader;
   char_u *com_flags;
   char_u *list;
-  int found_one;
   char_u part_buf[COM_MAX_LEN];         // buffer for one option part
 
   // Repeat to match several nested comment strings.
-  i = (int)STRLEN(line);
+  int i = (int)STRLEN(line);
   while (--i >= lower_check_bound) {
     // scan through the 'comments' option for a match
-    found_one = false;
+    int found_one = false;
     for (list = curbuf->b_p_com; *list;) {
       char_u *flags_save = list;
 

@@ -51,11 +51,10 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(2)
 {
-  Integer rv = 0;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return rv;
+    return 0;
   }
 
   return buf->b_fnum;

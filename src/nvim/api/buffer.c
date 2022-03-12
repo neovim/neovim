@@ -597,12 +597,11 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   if (start_row == end_row) {
     old_byte = (bcount_t)end_col - start_col;
   } else {
-    const char *bufline;
     old_byte += (bcount_t)strlen(str_at_start) - start_col;
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 
-      bufline = (char *)ml_get_buf(buf, lnum, false);
+      const char *bufline = (char *)ml_get_buf(buf, lnum, false);
       old_byte += (bcount_t)(strlen(bufline))+1;
     }
     old_byte += (bcount_t)end_col+1;
