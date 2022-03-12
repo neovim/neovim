@@ -84,7 +84,7 @@ void grid_clear(Integer grid)
 void grid_cursor_goto(Integer grid, Integer row, Integer col)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_line(Integer grid, Integer row, Integer col_start, Array data)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void grid_scroll(Integer grid, Integer top, Integer bot,
                  Integer left, Integer right, Integer rows, Integer cols)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
