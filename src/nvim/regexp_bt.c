@@ -4083,6 +4083,10 @@ static bool regmatch(
                 break;
               if (rex.input == rex.line) {
                 // backup to last char of previous line
+                if (rex.lnum == 0) {
+                  status = RA_NOMATCH;
+                  break;
+                }
                 rex.lnum--;
                 rex.line = reg_getline(rex.lnum);
                 // Just in case regrepeat() didn't count right.
