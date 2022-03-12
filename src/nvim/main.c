@@ -29,6 +29,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/ui_client.h"
 #include "nvim/vim.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -269,8 +270,7 @@ int main(int argc, char **argv)
 
   server_init(params.listen_addr);
   if (params.remote) {
-    remote_request(&params, params.remote,
-                         params.server_addr, argc, argv);
+    remote_request(&params, params.remote, params.server_addr, argc, argv);
   }
 
   if (GARGCOUNT > 0) {
@@ -834,10 +834,20 @@ static void remote_request(mparm_T *params, int remote_args,
   uint64_t chan = server_connect(server_addr, &connect_error);
   Object rvobj = OBJECT_INIT;
 
-  int t_argc = remote_args;
+  if (strequal(argv[remote_args], "--remote-ui-test")) {
+    if (!chan) {
+      emsg(connect_error);
+      exit(1);
+    }
+
+    ui_client_init(chan);
+    ui_client_execute(chan);
+    abort();  // unreachable
+  }
+
   Array args = ARRAY_DICT_INIT;
   String arg_s;
-  for (; t_argc < argc; t_argc++) {
+  for (int t_argc = remote_args; t_argc < argc; t_argc++) {
     arg_s = cstr_to_string(argv[t_argc]);
     ADD(args, STRING_OBJ(arg_s));
   }
