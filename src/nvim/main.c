@@ -29,6 +29,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/ui_client.h"
 #include "nvim/vim.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
@@ -269,8 +270,7 @@ int main(int argc, char **argv)
 
   server_init(params.listen_addr);
   if (params.remote) {
-    handle_remote_client(&params, params.remote,
-                         params.server_addr, argc, argv);
+    remote_request(&params, params.remote, params.server_addr, argc, argv);
   }
 
   if (GARGCOUNT > 0) {
@@ -807,90 +807,114 @@ static void init_locale(void)
 }
 #endif
 
-/// Handle remote subcommands
-static void handle_remote_client(mparm_T *params, int remote_args,
-                                 char *server_addr, int argc, char **argv)
+
+static uint64_t server_connect(char *server_addr, const char **errmsg)
 {
-    Object rvobj = OBJECT_INIT;
-    rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
-    rvobj.type = kObjectTypeDictionary;
-    CallbackReader on_data = CALLBACK_READER_INIT;
-    const char *connect_error = NULL;
-    uint64_t rc_id = 0;
-    if (server_addr != NULL) {
-      rc_id = channel_connect(false, server_addr, true, on_data, 50, &connect_error);
+  if (server_addr == NULL) {
+    *errmsg = "no address specified";
+    return 0;
+  }
+  CallbackReader on_data = CALLBACK_READER_INIT;
+  const char *error = NULL;
+  bool is_tcp = strrchr(server_addr, ':') ? true : false;
+  // connected to channel
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &error);
+  if (error) {
+    *errmsg = error;
+    return 0;
+  }
+  return chan;
+}
+
+/// Handle remote subcommands
+static void remote_request(mparm_T *params, int remote_args,
+                           char *server_addr, int argc, char **argv)
+{
+  const char *connect_error = NULL;
+  uint64_t chan = server_connect(server_addr, &connect_error);
+  Object rvobj = OBJECT_INIT;
+
+  if (strequal(argv[remote_args], "--remote-ui-test")) {
+    if (!chan) {
+      emsg(connect_error);
+      exit(1);
     }
 
-    int t_argc = remote_args;
-    Array args = ARRAY_DICT_INIT;
-    String arg_s;
-    for (; t_argc < argc; t_argc++) {
-      arg_s = cstr_to_string(argv[t_argc]);
-      ADD(args, STRING_OBJ(arg_s));
-    }
+    ui_client_init(chan);
+    ui_client_execute(chan);
+    abort();  // unreachable
+  }
 
-    Error err = ERROR_INIT;
-    Array a = ARRAY_DICT_INIT;
-    ADD(a, INTEGER_OBJ((int)rc_id));
-    ADD(a, CSTR_TO_OBJ(server_addr));
-    ADD(a, CSTR_TO_OBJ(connect_error));
-    ADD(a, ARRAY_OBJ(args));
-    String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
-    Object o = nlua_exec(s, a, &err);
-    api_free_array(a);
-    if (ERROR_SET(&err)) {
-      mch_errmsg(err.msg);
+  Array args = ARRAY_DICT_INIT;
+  String arg_s;
+  for (int t_argc = remote_args; t_argc < argc; t_argc++) {
+    arg_s = cstr_to_string(argv[t_argc]);
+    ADD(args, STRING_OBJ(arg_s));
+  }
+
+  Error err = ERROR_INIT;
+  Array a = ARRAY_DICT_INIT;
+  ADD(a, INTEGER_OBJ((int)chan));
+  ADD(a, CSTR_TO_OBJ(server_addr));
+  ADD(a, CSTR_TO_OBJ(connect_error));
+  ADD(a, ARRAY_OBJ(args));
+  String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
+  Object o = nlua_exec(s, a, &err);
+  api_free_array(a);
+  if (ERROR_SET(&err)) {
+    mch_errmsg(err.msg);
+    mch_errmsg("\n");
+    os_exit(2);
+  }
+
+  if (o.type == kObjectTypeDictionary) {
+    rvobj.data.dictionary = o.data.dictionary;
+  } else {
+    mch_errmsg("vim._cs_remote returned unexpected value\n");
+    os_exit(2);
+  }
+
+  TriState should_exit = kNone;
+  TriState tabbed = kNone;
+
+  for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
+    if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
+      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
+        mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
+        os_exit(2);
+      }
+      mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
       mch_errmsg("\n");
       os_exit(2);
-    }
-
-    if (o.type == kObjectTypeDictionary) {
-      rvobj.data.dictionary = o.data.dictionary;
-    } else {
-      mch_errmsg("vim._cs_remote returned unexpected value\n");
-      os_exit(2);
-    }
-
-    TriState should_exit = kNone;
-    TriState tabbed = kNone;
-
-    for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
-      if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
-        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
-          mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
-          os_exit(2);
-        }
-        mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
-        mch_errmsg("\n");
+    } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
+      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+        mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
         os_exit(2);
-      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
-        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-          mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
-          os_exit(2);
-        }
-        tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
-      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
-        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-          mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
-          os_exit(2);
-        }
-        should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
       }
+      tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
+    } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
+      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+        mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
+        os_exit(2);
+      }
+      should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
     }
-    if (should_exit == kNone || tabbed == kNone) {
-      mch_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
-      os_exit(2);
-    }
-    api_free_object(o);
+  }
+  if (should_exit == kNone || tabbed == kNone) {
+    mch_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
+    os_exit(2);
+  }
+  api_free_object(o);
 
-    if (should_exit == kTrue) {
-      os_exit(0);
-    }
-    if (tabbed == kTrue) {
-      params->window_count = argc - remote_args - 1;
-      params->window_layout = WIN_TABS;
-    }
+  if (should_exit == kTrue) {
+    os_exit(0);
+  }
+  if (tabbed == kTrue) {
+    params->window_count = argc - remote_args - 1;
+    params->window_layout = WIN_TABS;
+  }
 }
+
 
 /// Decides whether text (as opposed to commands) will be read from stdin.
 /// @see EDIT_STDIN

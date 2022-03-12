@@ -30,12 +30,20 @@
 #include "nvim/api/vimscript.h"
 #include "nvim/api/win_config.h"
 #include "nvim/api/window.h"
+#include "nvim/ui_client.h"
 
 static Map(String, MsgpackRpcRequestHandler) methods = MAP_INIT;
 
 static void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
 {
   map_put(String, MsgpackRpcRequestHandler)(&methods, method, handler);
+}
+
+void msgpack_rpc_add_redraw(void)
+{
+  msgpack_rpc_add_method_handler(STATIC_CSTR_AS_STRING("redraw"),
+                                 (MsgpackRpcRequestHandler) { .fn = ui_client_handle_redraw,
+                                                              .fast = true });
 }
 
 /// @param name API method name
