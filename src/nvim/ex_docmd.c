@@ -6230,7 +6230,6 @@ static void do_ucmd(exarg_T *eap)
   size_t split_len = 0;
   char_u *split_buf = NULL;
   ucmd_T *cmd;
-  const sctx_T save_current_sctx = current_sctx;
 
   if (eap->cmdidx == CMD_USER) {
     cmd = USER_CMD(eap->useridx);
@@ -6320,12 +6319,19 @@ static void do_ucmd(exarg_T *eap)
     buf = xmalloc(totlen + 1);
   }
 
+  sctx_T save_current_sctx;
+  bool restore_current_sctx = false;
   if ((cmd->uc_argt & EX_KEEPSCRIPT) == 0) {
+    restore_current_sctx = true;
+    save_current_sctx = current_sctx;
     current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
   }
   (void)do_cmdline(buf, eap->getline, eap->cookie,
                    DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
-  if ((cmd->uc_argt & EX_KEEPSCRIPT) == 0) {
+
+  // Careful: Do not use "cmd" here, it may have become invalid if a user
+  // command was added.
+  if (restore_current_sctx) {
     current_sctx = save_current_sctx;
   }
   xfree(buf);
