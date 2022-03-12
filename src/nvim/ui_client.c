@@ -26,21 +26,21 @@ static void add_redraw_event_handler(String method, ApiRedrawWrapper handler)
 void ui_client_init(uint64_t chan)
 {
   Array args = ARRAY_DICT_INIT;
-  int width = 80;
-  int height = 25;
+  int width = Columns;
+  int height = Rows;
   Dictionary opts = ARRAY_DICT_INIT;
 
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
   PUT(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
-  // TODO(bfredl): use the size of the client UI
   ADD(args, INTEGER_OBJ((int)width));
   ADD(args, INTEGER_OBJ((int)height));
   ADD(args, DICTIONARY_OBJ(opts));
 
   rpc_send_event(chan, "nvim_ui_attach", args);
   msgpack_rpc_add_redraw();  // GAME!
+  redraw_methods_table_init();
   ui_client_channel_id = chan;
 }
 
@@ -61,9 +61,22 @@ Object ui_client_handle_redraw(uint64_t channel_id, Array args, Error *error)
 {
   for (size_t i = 0; i < args.size; i++) {
     Array call = args.items[i].data.array;
-    char *method_name = call.items[0].data.string.data;
+    String name = call.items[0].data.string;
 
-    fprintf(stderr, "%s: %zu\n", method_name, call.size-1);
+    ApiRedrawWrapper handler = map_get(String, ApiRedrawWrapper)(&redraw_methods, name);
+    if (!handler) {
+      ELOG("No redraw handler by name: %s", name.size ? name.data : "<empty>");
+      continue;
+    }
+
+    // fprintf(stderr, "%s: %zu\n", name.data, call.size-1);
+
+    DLOG("Invoke redraw handler by name: %s", name.data);
+    for (size_t j = 1; j < call.size; j++) {
+      Array internal_call_args = call.items[j].data.array;
+      handler(internal_call_args);
+    }
+
   }
   return NIL;
 }
@@ -78,22 +91,6 @@ void ui_client_execute(uint64_t chan)
   }
 
   getout(0);
-}
-
-/// @param name Redraw method name
-/// @param name_len name size (includes terminating NUL)
-ApiRedrawWrapper get_redraw_event_handler(const char *name, size_t name_len, Error *error)
-{
-  String m = { .data = (char *)name, .size = name_len };
-  ApiRedrawWrapper rv =
-    map_get(String, ApiRedrawWrapper)(&redraw_methods, m);
-
-  if (!rv) {
-    api_set_error(error, kErrorTypeException, "Invalid method: %.*s",
-                  m.size > 0 ? (int)m.size : (int)sizeof("<empty>"),
-                  m.size > 0 ? m.data : "<empty>");
-  }
-  return rv;
 }
 
 static HlAttrs redraw_dict2hlattrs(Dictionary redraw_dict, bool rgb)
