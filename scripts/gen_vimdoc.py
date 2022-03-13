@@ -1116,7 +1116,8 @@ def main(config, args):
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
                                 CONFIG[target]['filename'])
 
-        delete_lines_below(doc_file, first_section_tag)
+        if os.path.exists(doc_file):
+            delete_lines_below(doc_file, first_section_tag)
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
