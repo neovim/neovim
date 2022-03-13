@@ -96,8 +96,8 @@ CONFIG = {
             'autocmd.c',
             'ui.c',
         ],
-        # List of files/directories for doxygen to read, separated by blanks
-        'files': os.path.join(base_dir, 'src/nvim/api'),
+        # List of files/directories for doxygen to read, relative to `base_dir`
+        'files': ['src/nvim/api'],
         # file patterns used by doxygen
         'file_patterns': '*.h *.c',
         # Only function with this prefix are considered
@@ -128,14 +128,14 @@ CONFIG = {
             'filetype.lua',
             'keymap.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/_editor.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/ui.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/filetype.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/keymap.lua'),
-        ]),
+        'files': [
+            'runtime/lua/vim/_editor.lua',
+            'runtime/lua/vim/shared.lua',
+            'runtime/lua/vim/uri.lua',
+            'runtime/lua/vim/ui.lua',
+            'runtime/lua/vim/filetype.lua',
+            'runtime/lua/vim/keymap.lua',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {
@@ -181,10 +181,10 @@ CONFIG = {
             'sync.lua',
             'protocol.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/lsp'),
-            os.path.join(base_dir, 'runtime/lua/vim/lsp.lua'),
-        ]),
+        'files': [
+            'runtime/lua/vim/lsp',
+            'runtime/lua/vim/lsp.lua',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {'lsp.lua': 'lsp'},
@@ -213,7 +213,7 @@ CONFIG = {
         'section_order': [
             'diagnostic.lua',
         ],
-        'files': os.path.join(base_dir, 'runtime/lua/vim/diagnostic.lua'),
+        'files': ['runtime/lua/vim/diagnostic.lua'],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {'diagnostic.lua': 'diagnostic'},
@@ -233,10 +233,10 @@ CONFIG = {
             'highlighter.lua',
             'languagetree.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/treesitter/'),
-        ]),
+        'files': [
+            'runtime/lua/vim/treesitter.lua',
+            'runtime/lua/vim/treesitter/',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {},
@@ -1000,7 +1000,8 @@ def main(config, args):
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             config.format(
-                input=CONFIG[target]['files'],
+                input=' '.join(
+                    [f'"{file}"' for file in CONFIG[target]['files']]),
                 output=output_dir,
                 filter=filter_cmd,
                 file_patterns=CONFIG[target]['file_patterns'])
