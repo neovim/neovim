@@ -18,6 +18,11 @@
 
 static Map(String, UIClientHandler) ui_client_handlers = MAP_INIT;
 
+// Temporary buffer for converting a single grid_line event
+static size_t buf_size = 0;
+static schar_T *buf_char = NULL;
+static sattr_T *buf_attr = NULL;
+
 static void add_ui_client_event_handler(String method, UIClientHandler handler)
 {
   map_put(String, UIClientHandler)(&ui_client_handlers, method, handler);
@@ -105,74 +110,98 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 #include "ui_events_client.generated.h"
 #endif
 
+void ui_client_event_grid_resize(Array args)
+{
+  // TODO: typesafe!
+  Integer grid = args.items[0].data.integer;
+  Integer width = args.items[1].data.integer;
+  Integer height = args.items[2].data.integer;
+  ui_call_grid_resize(grid, width, height);
+
+  if (buf_size < (size_t)width) {
+    xfree(buf_char);
+    xfree(buf_attr);
+    buf_size = (size_t)width;
+    buf_char = xmalloc(buf_size * sizeof(schar_T));
+    buf_attr = xmalloc(buf_size * sizeof(sattr_T));
+  }
+}
+
 void ui_client_event_grid_line(Array args)
 {
+  if (args.size < 4
+      || args.items[0].type != kObjectTypeInteger
+      || args.items[1].type != kObjectTypeInteger
+      || args.items[2].type != kObjectTypeInteger
+      || args.items[3].type != kObjectTypeArray) {
+    goto error;
+  }
+
   Integer grid = args.items[0].data.integer;
   Integer row = args.items[1].data.integer;
   Integer startcol = args.items[2].data.integer;
   Array cells = args.items[3].data.array;
-  Integer endcol, clearcol, clearattr;
+
+  Integer endcol, clearcol;
   // TODO(hlpr98): Accomodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
-  schar_T *chunk;
-  sattr_T *attrs;
-  size_t size_of_cells = cells.size;
-  size_t no_of_cells = size_of_cells;
   endcol = startcol;
 
-  // checking if clearcol > endcol
-  if (!STRCMP(cells.items[size_of_cells-1].data.array
-              .items[0].data.string.data, " ")
-      && cells.items[size_of_cells-1].data.array.size == 3) {
-    no_of_cells = size_of_cells - 1;
-  }
-
-  // getting endcol
-  for (size_t i = 0; i < no_of_cells; i++) {
-    endcol++;
-    if (cells.items[i].data.array.size == 3) {
-      endcol += cells.items[i].data.array.items[2].data.integer - 1;
-    }
-  }
-
-  if (!STRCMP(cells.items[size_of_cells-1].data.array
-              .items[0].data.string.data, " ")
-      && cells.items[size_of_cells-1].data.array.size == 3) {
-    clearattr = cells.items[size_of_cells-1].data.array.items[1].data.integer;
-    clearcol = endcol + cells.items[size_of_cells-1].data.array
-                                                      .items[2].data.integer;
-  } else {
-    clearattr = 0;
-    clearcol = endcol;
-  }
-
-  size_t ncells = (size_t)(endcol - startcol);
-  chunk = xmalloc(ncells * sizeof(schar_T) + 1);
-  attrs = xmalloc(ncells * sizeof(sattr_T) + 1);
-
   size_t j = 0;
-  size_t k = 0;
-  for (size_t i = 0; i < no_of_cells; i++) {
-    STRCPY(chunk[j++], cells.items[i].data.array.items[0].data.string.data);
-    if (cells.items[i].data.array.size == 3) {
-      // repeat present
-      for (size_t i_intr = 1;
-           i_intr < (size_t)cells.items[i].data.array.items[2].data.integer;
-           i_intr++) {
-        STRCPY(chunk[j++], cells.items[i].data.array.items[0].data.string.data);
-        attrs[k++] = (sattr_T)cells.items[i].data.array.items[1].data.integer;
-      }
-    } else if (cells.items[i].data.array.size == 2) {
-      // repeat = 1 but attrs != last_hl
-      attrs[k++] = (sattr_T)cells.items[i].data.array.items[1].data.integer;
+  int cur_attr = 0;
+  int clear_attr = 0;
+  int clear_width = 0;
+  for (size_t i = 0; i < cells.size; i++) {
+    if (cells.items[i].type != kObjectTypeArray) {
+      goto error;
     }
-    if (j > k) {
-      // attrs == last_hl
-      attrs[k] = attrs[k-1];
-      k++;
+    Array cell = cells.items[i].data.array;
+
+    if (cell.size < 1 || cell.items[0].type != kObjectTypeString) {
+      goto error;
+    }
+    String sstring = cell.items[0].data.string;
+
+    char *schar = sstring.data;
+    int repeat = 1;
+    if (cell.size >= 2) {
+      if (cell.items[1].type != kObjectTypeInteger
+          || cell.items[1].data.integer < 0) {
+        goto error;
+      }
+      cur_attr = (int)cell.items[1].data.integer;
+    }
+
+    if (cell.size >= 3) {
+      if (cell.items[2].type != kObjectTypeInteger
+          || cell.items[2].data.integer < 0) {
+        goto error;
+      }
+      repeat = (int)cell.items[2].data.integer;
+    }
+
+    if (i == cells.size - 1 && sstring.size == 1 && sstring.data[0] == ' ' && repeat > 1) {
+      clear_width = repeat;
+      break;
+    }
+
+    for (int r = 0; r < repeat; r++) {
+      if (j >= buf_size) {
+        goto error;  // _YIKES_
+      }
+      STRCPY(buf_char[j], schar);
+      buf_attr[j++] = cur_attr;
     }
   }
 
-  ui_call_raw_line(grid, row, startcol, endcol, clearcol, clearattr, lineflags,
-                   (const schar_T *)chunk, (const sattr_T *)attrs);
+  endcol = startcol + (int)j;
+  clearcol = endcol + clear_width;
+  clear_attr = cur_attr;
+
+  ui_call_raw_line(grid, row, startcol, endcol, clearcol, clear_attr, lineflags,
+                   buf_char, buf_attr);
+  return;
+
+error:
+    ELOG("malformatted 'grid_line' event");
 }
