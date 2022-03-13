@@ -2788,11 +2788,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                        && (wp->w_p_culopt_flags & CULOPT_NBR)
                        && (row == startrow + filler_lines
                            || (row > startrow + filler_lines
-                               && wp->w_p_culopt_flags & CULOPT_LINE))) {
+                               && (wp->w_p_culopt_flags & CULOPT_LINE)))) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
-              // When 'cursorlineopt' has "screenline" only highlight
-              // the line number itself.
+              // When 'cursorlineopt' does not have "line" only
+              // highlight the line number itself.
               // TODO(vim): Can we use CursorLine instead of CursorLineNr
               // when CursorLineNr isn't set?
               char_attr = win_hl_attr(wp, HLF_CLN);
