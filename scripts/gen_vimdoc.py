@@ -84,8 +84,6 @@ CONFIG = {
     'api': {
         'mode': 'c',
         'filename': 'api.txt',
-        # String used to find the start of the generated part of the doc.
-        'section_start_token': '*api-global*',
         # Section ordering.
         'section_order': [
             'vim.c',
@@ -122,7 +120,6 @@ CONFIG = {
     'lua': {
         'mode': 'lua',
         'filename': 'lua.txt',
-        'section_start_token': '*lua-vim*',
         'section_order': [
             '_editor.lua',
             'shared.lua',
@@ -171,7 +168,6 @@ CONFIG = {
     'lsp': {
         'mode': 'lua',
         'filename': 'lsp.txt',
-        'section_start_token': '*lsp-core*',
         'section_order': [
             'lsp.lua',
             'buf.lua',
@@ -214,7 +210,6 @@ CONFIG = {
     'diagnostic': {
         'mode': 'lua',
         'filename': 'diagnostic.txt',
-        'section_start_token': '*diagnostic-api*',
         'section_order': [
             'diagnostic.lua',
         ],
@@ -231,7 +226,6 @@ CONFIG = {
     'treesitter': {
         'mode': 'lua',
         'filename': 'treesitter.txt',
-        'section_start_token': '*lua-treesitter-core*',
         'section_order': [
             'treesitter.lua',
             'language.lua',
@@ -1096,6 +1090,7 @@ def main(config, args):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
                     set(sections).difference(CONFIG[target]['section_order'])))
+        first_section_tag = sections[CONFIG[target]['section_order'][0]][1]
 
         docs = ''
 
@@ -1121,7 +1116,7 @@ def main(config, args):
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
                                 CONFIG[target]['filename'])
 
-        delete_lines_below(doc_file, CONFIG[target]['section_start_token'])
+        delete_lines_below(doc_file, first_section_tag)
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
