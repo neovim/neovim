@@ -14,6 +14,7 @@ fail() {
   local full_msg="$test_name :: $message"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
+  FAILED=1
 }
 
 ended_successfully() {
