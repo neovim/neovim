@@ -16,11 +16,11 @@
 #include "nvim/highlight.h"
 #include "nvim/screen.h"
 
-static Map(String, ApiRedrawWrapper) redraw_methods = MAP_INIT;
+static Map(String, UIClientHandler) ui_client_handlers = MAP_INIT;
 
-static void add_redraw_event_handler(String method, ApiRedrawWrapper handler)
+static void add_ui_client_event_handler(String method, UIClientHandler handler)
 {
-  map_put(String, ApiRedrawWrapper)(&redraw_methods, method, handler);
+  map_put(String, UIClientHandler)(&ui_client_handlers, method, handler);
 }
 
 void ui_client_init(uint64_t chan)
@@ -40,17 +40,16 @@ void ui_client_init(uint64_t chan)
 
   rpc_send_event(chan, "nvim_ui_attach", args);
   msgpack_rpc_add_redraw();  // GAME!
-  redraw_methods_table_init();
+  // TODO(bfredl): use a keyset instead
+  ui_client_methods_table_init();
   ui_client_channel_id = chan;
 }
 
 /// Handler for "redraw" events sent by the NVIM server
 ///
-/// This is just a stub. The mentioned functionality will be implemented.
-///
-/// This function will be called by handle_request (in msgpack_rpc/channle.c)
+/// This function will be called by handle_request (in msgpack_rpc/channel.c)
 /// The individual ui_events sent by the server are individually handled
-/// by their respective handlers defined in ui_events_redraw.generated.h
+/// by their respective handlers defined in ui_events_client.generated.h
 ///
 /// @note The "flush" event is called only once and only after handling all
 ///       the other events
@@ -63,21 +62,19 @@ Object ui_client_handle_redraw(uint64_t channel_id, Array args, Error *error)
     Array call = args.items[i].data.array;
     String name = call.items[0].data.string;
 
-    ApiRedrawWrapper handler = map_get(String, ApiRedrawWrapper)(&redraw_methods, name);
+    UIClientHandler handler = map_get(String, UIClientHandler)(&ui_client_handlers, name);
     if (!handler) {
-      ELOG("No redraw handler by name: %s", name.size ? name.data : "<empty>");
+      ELOG("No ui client handler for %s", name.size ? name.data : "<empty>");
       continue;
     }
 
     // fprintf(stderr, "%s: %zu\n", name.data, call.size-1);
-
-    DLOG("Invoke redraw handler by name: %s", name.data);
+    DLOG("Invoke ui client handler for %s", name.data);
     for (size_t j = 1; j < call.size; j++) {
-      Array internal_call_args = call.items[j].data.array;
-      handler(internal_call_args);
+      handler(call.items[j].data.array);
     }
-
   }
+
   return NIL;
 }
 
@@ -93,11 +90,11 @@ void ui_client_execute(uint64_t chan)
   getout(0);
 }
 
-static HlAttrs redraw_dict2hlattrs(Dictionary redraw_dict, bool rgb)
+static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 {
   Error err = ERROR_INIT;
   Dict(highlight) dict = { 0 };
-  if (!api_dict_to_keydict(&dict, KeyDict_highlight_get_field, redraw_dict, &err)) {
+  if (!api_dict_to_keydict(&dict, KeyDict_highlight_get_field, d, &err)) {
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;
   }
@@ -105,10 +102,10 @@ static HlAttrs redraw_dict2hlattrs(Dictionary redraw_dict, bool rgb)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "ui_events_redraw.generated.h"
+#include "ui_events_client.generated.h"
 #endif
 
-void ui_redraw_event_grid_line(Array args)
+void ui_client_event_grid_line(Array args)
 {
   Integer grid = args.items[0].data.integer;
   Integer row = args.items[1].data.integer;

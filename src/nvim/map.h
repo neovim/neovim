@@ -49,7 +49,7 @@ MAP_DECLS(HlEntry, int)
 MAP_DECLS(String, handle_T)
 MAP_DECLS(String, int)
 MAP_DECLS(int, String)
-MAP_DECLS(String, ApiRedrawWrapper)
+MAP_DECLS(String, UIClientHandler)
 
 MAP_DECLS(ColorKey, ColorItem)
 
