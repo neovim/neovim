@@ -94,7 +94,6 @@ Array mode_style_array(void)
 /// @returns error message for an illegal option, NULL otherwise.
 char *parse_shape_opt(int what)
 {
-  char_u *modep;
   char_u *colonp;
   char_u *commap;
   char_u *slashp;
@@ -119,7 +118,7 @@ char *parse_shape_opt(int what)
       }
     }
     // Repeat for all comma separated parts.
-    modep = p_guicursor;
+    char_u *modep = p_guicursor;
     while (modep != NULL && *modep != NUL) {
       colonp = vim_strchr(modep, ':');
       commap = vim_strchr(modep, ',');

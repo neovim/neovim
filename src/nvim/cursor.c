@@ -92,19 +92,16 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
 {
   colnr_T wcol = wcol_arg;
   int idx;
-  char_u *ptr;
-  char_u *line;
   colnr_T col = 0;
-  int csize = 0;
-  int one_more;
   int head = 0;
 
-  one_more = (State & INSERT)
-             || (State & TERM_FOCUS)
-             || restart_edit != NUL
-             || (VIsual_active && *p_sel != 'o')
-             || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
-  line = ml_get_buf(curbuf, pos->lnum, false);
+  int one_more = (State & INSERT)
+                 || (State & TERM_FOCUS)
+                 || restart_edit != NUL
+                 || (VIsual_active && *p_sel != 'o')
+                 || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
+
+  char_u *line = ml_get_buf(curbuf, pos->lnum, false);
 
   if (wcol >= MAXCOL) {
     idx = (int)STRLEN(line) - 1 + one_more;
@@ -118,6 +115,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     }
   } else {
     int width = curwin->w_width_inner - win_col_off(curwin);
+    int csize = 0;
 
     if (finetune
         && curwin->w_p_wrap
@@ -139,7 +137,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       }
     }
 
-    ptr = line;
+    char_u *ptr = line;
     while (col <= wcol && *ptr != NUL) {
       // Count a tab for what it's worth (if list mode not on)
       csize = win_lbr_chartabsize(curwin, line, ptr, col, &head);
@@ -301,16 +299,13 @@ linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum)
 /// This allows for the col to be on the NUL byte.
 void check_pos(buf_T *buf, pos_T *pos)
 {
-  char_u *line;
-  colnr_T len;
-
   if (pos->lnum > buf->b_ml.ml_line_count) {
     pos->lnum = buf->b_ml.ml_line_count;
   }
 
   if (pos->col > 0) {
-    line = ml_get_buf(buf, pos->lnum, false);
-    len = (colnr_T)STRLEN(line);
+    char_u *line = ml_get_buf(buf, pos->lnum, false);
+    colnr_T len = (colnr_T)STRLEN(line);
     if (pos->col > len) {
       pos->col = len;
     }
@@ -343,12 +338,11 @@ void check_cursor_col(void)
 /// @see mb_check_adjust_col
 void check_cursor_col_win(win_T *win)
 {
-  colnr_T len;
   colnr_T oldcol = win->w_cursor.col;
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
   unsigned int cur_ve_flags = get_ve_flags();
 
-  len = (colnr_T)STRLEN(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
+  colnr_T len = (colnr_T)STRLEN(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {

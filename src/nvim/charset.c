@@ -268,15 +268,12 @@ int buf_init_chartab(buf_T *buf, int global)
 /// @param bufsize
 void trans_characters(char_u *buf, int bufsize)
 {
-  int len;          // length of string needing translation
-  int room;         // room in buffer after string
-  char_u *trs;      // translated character
-  int trs_len;      // length of trs[]
-
-  len = (int)STRLEN(buf);
-  room = bufsize - len;
+  char_u *trs;                 // translated character
+  int len = (int)STRLEN(buf);  // length of string needing translation
+  int room = bufsize - len;    // room in buffer after string
 
   while (*buf != 0) {
+    int trs_len;      // length of trs[]
     // Assume a multi-byte character doesn't need translation.
     if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
@@ -873,14 +870,11 @@ bool vim_isprintc_strict(int c)
 bool in_win_border(win_T *wp, colnr_T vcol)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  int width1;             // width of first line (after line number)
-  int width2;             // width of further lines
-
   if (wp->w_width_inner == 0) {
     // there is no border
     return false;
   }
-  width1 = wp->w_width_inner - win_col_off(wp);
+  int width1 = wp->w_width_inner - win_col_off(wp);  // width of first line (after line number)
 
   if ((int)vcol < width1 - 1) {
     return false;
@@ -889,7 +883,7 @@ bool in_win_border(win_T *wp, colnr_T vcol)
   if ((int)vcol == width1 - 1) {
     return true;
   }
-  width2 = width1 + win_col_off2(wp);
+  int width2 = width1 + win_col_off2(wp);  // width of further lines
 
   if (width2 <= 0) {
     return false;
@@ -911,18 +905,15 @@ bool in_win_border(win_T *wp, colnr_T vcol)
 /// @param end
 void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
-  colnr_T vcol;
   char_u *ptr;    // points to current char
   char_u *posptr;  // points to char at pos->col
-  char_u *line;   // start of the line
   int incr;
   int head;
   long *vts = wp->w_buffer->b_p_vts_array;
   int ts = (int)wp->w_buffer->b_p_ts;
-  int c;
 
-  vcol = 0;
-  line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
+  colnr_T vcol = 0;
+  char_u *line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);  // start of the line
 
   if (pos->col == MAXCOL) {
     // continue until the NUL
@@ -949,7 +940,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       && !wp->w_p_bri) {
     for (;;) {
       head = 0;
-      c = *ptr;
+      int c = *ptr;
 
       // make sure we don't go past the end of the line
       if (c == NUL) {
@@ -1066,19 +1057,16 @@ colnr_T getvcol_nolist(pos_T *posp)
 void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T col;
-  colnr_T coladd;
-  colnr_T endadd;
-  char_u *ptr;
 
   if (virtual_active()) {
     // For virtual mode, only want one value
     getvcol(wp, pos, &col, NULL, NULL);
 
-    coladd = pos->coladd;
-    endadd = 0;
+    colnr_T coladd = pos->coladd;
+    colnr_T endadd = 0;
 
     // Cannot put the cursor on part of a wide character.
-    ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
+    char_u *ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
       int c = utf_ptr2char(ptr + pos->col);

@@ -58,7 +58,6 @@ void do_debug(char_u *cmd)
   tasave_T typeaheadbuf;
   bool typeahead_saved = false;
   int save_ignore_script = 0;
-  int save_ex_normal_busy;
   int n;
   char_u *cmdline = NULL;
   char_u *p;
@@ -117,7 +116,7 @@ void do_debug(char_u *cmd)
     // with the commands being executed.  Reset "ex_normal_busy" to avoid
     // the side effects of using ":normal". Save the stuff buffer and make
     // it empty. Set ignore_script to avoid reading from script input.
-    save_ex_normal_busy = ex_normal_busy;
+    int save_ex_normal_busy = ex_normal_busy;
     ex_normal_busy = 0;
     if (!debug_greedy) {
       save_typeahead(&typeaheadbuf);
@@ -390,11 +389,10 @@ static char_u *debug_skipped_name;
 /// Called from do_one_cmd() before executing a command.
 void dbg_check_breakpoint(exarg_T *eap)
 {
-  char *p;
-
   debug_skipped = false;
   if (debug_breakpoint_name != NULL) {
     if (!eap->skip) {
+      char *p;
       // replace K_SNR with "<SNR>"
       if (debug_breakpoint_name[0] == K_SPECIAL
           && debug_breakpoint_name[1] == KS_EXTRA
@@ -430,12 +428,10 @@ void dbg_check_breakpoint(exarg_T *eap)
 /// @return true when the debug mode is entered this time.
 bool dbg_check_skipped(exarg_T *eap)
 {
-  int prev_got_int;
-
   if (debug_skipped) {
     // Save the value of got_int and reset it.  We don't want a previous
     // interruption cause flushing the input buffer.
-    prev_got_int = got_int;
+    int prev_got_int = got_int;
     got_int = false;
     debug_breakpoint_name = debug_skipped_name;
     // eap->skip is true
@@ -482,12 +478,11 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
 {
   char_u *p = arg;
   char_u *q;
-  struct debuggy *bp;
   bool here = false;
 
   ga_grow(gap, 1);
 
-  bp = &DEBUGGY(gap, gap->ga_len);
+  struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
 
   // Find "func" or "file".
   if (STRNCMP(p, "func", 4) == 0) {
@@ -564,16 +559,13 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
 /// ":breakadd".  Also used for ":profile".
 void ex_breakadd(exarg_T *eap)
 {
-  struct debuggy *bp;
-  garray_T *gap;
-
-  gap = &dbg_breakp;
+  garray_T *gap = &dbg_breakp;
   if (eap->cmdidx == CMD_profile) {
     gap = &prof_ga;
   }
 
   if (dbg_parsearg(eap->arg, gap) == OK) {
-    bp = &DEBUGGY(gap, gap->ga_len);
+    struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
     bp->dbg_forceit = eap->forceit;
 
     if (bp->dbg_type != DBG_EXPR) {
@@ -616,20 +608,18 @@ void ex_debuggreedy(exarg_T *eap)
 void ex_breakdel(exarg_T *eap)
 {
   struct debuggy *bp, *bpi;
-  int nr;
   int todel = -1;
   bool del_all = false;
   linenr_T best_lnum = 0;
-  garray_T *gap;
+  garray_T *gap = &dbg_breakp;
 
-  gap = &dbg_breakp;
   if (eap->cmdidx == CMD_profdel) {
     gap = &prof_ga;
   }
 
   if (ascii_isdigit(*eap->arg)) {
     // ":breakdel {nr}"
-    nr = atoi((char *)eap->arg);
+    int nr = atoi((char *)eap->arg);
     for (int i = 0; i < gap->ga_len; i++) {
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
@@ -693,13 +683,11 @@ void ex_breakdel(exarg_T *eap)
 /// ":breaklist".
 void ex_breaklist(exarg_T *eap)
 {
-  struct debuggy *bp;
-
   if (GA_EMPTY(&dbg_breakp)) {
     msg(_("No breakpoints defined"));
   } else {
     for (int i = 0; i < dbg_breakp.ga_len; i++) {
-      bp = &BREAKP(i);
+      struct debuggy *bp = &BREAKP(i);
       if (bp->dbg_type == DBG_FILE) {
         home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, true);
       }
