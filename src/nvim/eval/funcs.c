@@ -3753,18 +3753,15 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       winrow = row + 1 + wp->w_border_adj[0];  // Adjust by 1 for top border
       wincol = col + 1 + wp->w_border_adj[3];  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
-        char_u *p;
         int count;
 
         mouse_comp_pos(wp, &row, &col, &line);
 
-        // limit to text length plus one
-        p = ml_get_buf(wp->w_buffer, line, false);
-        count = (int)STRLEN(p);
+        // limit to text size plus one
+        count = linetabsize(ml_get_buf(wp->w_buffer, line, false));
         if (col > count) {
           col = count;
         }
-
         column = col + 1;
       }
     }
