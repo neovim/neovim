@@ -71,7 +71,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 }
 
 /// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
-/// Unlike |win_execute()| this scrolls the window.
+/// This scrolls the window even if it is not the current one.
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param pos      (row, col) tuple representing the new position
