@@ -594,7 +594,8 @@ nvim__id_float({flt})                                       *nvim__id_float()*
                     its argument.
 
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
-                TODO: Documentation
+                NB: if your UI doesn't use hlstate, this will not return
+                hlstate first time.
 
 nvim__runtime_inspect()                              *nvim__runtime_inspect()*
                 TODO: Documentation

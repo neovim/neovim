@@ -843,7 +843,9 @@ def extract_from_xml(filename, target, width):
             'seealso': [],
         }
         if fmt_vimhelp:
-            fn['desc_node'] = desc  # HACK :(
+            # HACK :(
+            fn['desc_node'] = desc
+            fn['brief_desc_node'] = brief_desc
 
         for m in paras:
             if 'text' in m:
@@ -891,6 +893,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
         # Generate Vim :help for parameters.
         if fn['desc_node']:
             doc = fmt_node_as_vimhelp(fn['desc_node'])
+        if not doc and fn['brief_desc_node']:
+            doc = fmt_node_as_vimhelp(fn['brief_desc_node'])
         if not doc:
             doc = 'TODO: Documentation'
 
