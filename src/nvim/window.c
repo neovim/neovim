@@ -1420,12 +1420,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     p_wh = i;
   }
 
-  if (!win_valid(oldwin)) {
-    return FAIL;
+  if (win_valid(oldwin)) {
+    // Send the window positions to the UI
+    oldwin->w_pos_changed = true;
   }
-
-  // Send the window positions to the UI
-  oldwin->w_pos_changed = true;
 
   return OK;
 }
@@ -2596,6 +2594,13 @@ int win_close(win_T *win, bool free_buf, bool force)
   // Free independent synblock before the buffer is freed.
   if (win->w_buffer != NULL) {
     reset_synblock(win);
+  }
+
+  // When a quickfix/location list window is closed and the buffer is
+  // displayed in only one window, then unlist the buffer.
+  if (win->w_buffer != NULL && bt_quickfix(win->w_buffer)
+      && win->w_buffer->b_nwindows == 1) {
+    win->w_buffer->b_p_bl = false;
   }
 
   /*
@@ -7197,16 +7202,14 @@ void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
   tv_list_append_number(list, winnr);
 }
 
-win_T *win_id2wp(typval_T *argvars)
+win_T *win_id2wp(int id)
 {
-  return win_id2wp_tp(argvars, NULL);
+  return win_id2wp_tp(id, NULL);
 }
 
 // Return the window and tab pointer of window "id".
-win_T *win_id2wp_tp(typval_T *argvars, tabpage_T **tpp)
+win_T *win_id2wp_tp(int id, tabpage_T **tpp)
 {
-  int id = tv_get_number(&argvars[0]);
-
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
       if (tpp != NULL) {

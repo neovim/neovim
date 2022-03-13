@@ -1,4 +1,4 @@
-" Test for the quickfix commands.
+" Test for the quickfix feature.
 
 source check.vim
 CheckFeature quickfix
@@ -169,8 +169,8 @@ func XlistTests(cchar)
         \ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
   let l = split(execute('Xlist', ""), "\n")
   call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
-        \ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
-        \ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
+	\ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
+	\ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
 
   " For help entries in the quickfix list, only the filename without directory
   " should be displayed
@@ -1655,7 +1655,7 @@ func XquickfixSetListWithAct(cchar)
           \    {'filename': 'fnameD', 'text': 'D'},
           \    {'filename': 'fnameE', 'text': 'E'}]
 
-  " {action} is unspecified.  Same as specifing ' '.
+  " {action} is unspecified.  Same as specifying ' '.
   new | only
   silent! Xnewer 99
   call g:Xsetlist(list1)
@@ -2020,6 +2020,7 @@ func s:test_xgrep(cchar)
   enew
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 9)
 
   " Try with 'grepprg' set to 'internal'
   set grepprg=internal
@@ -2028,12 +2029,12 @@ func s:test_xgrep(cchar)
   call assert_true(len(g:Xgetlist()) == 9)
   set grepprg&vim
 
-   call writefile(['Vim'], 'XtestTempFile')
-   set makeef=XtestTempFile
-   silent Xgrep Grep_Test_Text: test_quickfix.vim
-   call assert_equal(5, len(g:Xgetlist()))
-   call assert_false(filereadable('XtestTempFile'))
-   set makeef&vim
+  call writefile(['Vim'], 'XtestTempFile')
+  set makeef=XtestTempFile
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  call assert_equal(5, len(g:Xgetlist()))
+  call assert_false(filereadable('XtestTempFile'))
+  set makeef&vim
 endfunc
 
 func Test_grep()
@@ -2706,7 +2707,7 @@ func Test_cwindow_jump()
   " Open a new window and create a location list
   " Open the location list window and close the other window
   " Jump to an entry.
-  " Should create a new window and jump to the entry. The scrtach buffer
+  " Should create a new window and jump to the entry. The scratch buffer
   " should not be used.
   enew | only
   set buftype=nofile
@@ -2738,6 +2739,25 @@ func Test_cwindow_jump()
   cnext
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
+
+  " open the quickfix buffer in two windows and jump to an entry. Should open
+  " the file in the first quickfix window.
+  enew | only
+  copen
+  let bnum = bufnr('')
+  exe 'sbuffer ' . bnum
+  wincmd b
+  cfirst
+  call assert_equal(2, winnr())
+  call assert_equal('F1', bufname(''))
+  enew | only
+  exe 'sb' bnum
+  exe 'botright sb' bnum
+  wincmd t
+  clast
+  call assert_equal(2, winnr())
+  call assert_equal('quickfix', getwinvar(1, '&buftype'))
+  call assert_equal('quickfix', getwinvar(3, '&buftype'))
 
   " Jumping to a file from the location list window should find a usable
   " window by wrapping around the window list.
@@ -3548,20 +3568,21 @@ func Xgetlist_empty_tests(cchar)
   call assert_equal(0, g:Xgetlist({'changedtick' : 0}).changedtick)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
-		  \ 'items' : [], 'nr' : 0, 'size' : 0,
+		  \ 'items' : [], 'nr' : 0, 'size' : 0, 'qfbufnr' : 0,
 		  \ 'title' : '', 'winid' : 0, 'changedtick': 0,
                   \ 'quickfixtextfunc' : ''}, g:Xgetlist({'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
 		\ 'items' : [], 'nr' : 0, 'size' : 0, 'title' : '',
 		\ 'winid' : 0, 'changedtick': 0, 'filewinid' : 0,
-		\ 'quickfixtextfunc' : ''},
+		\ 'qfbufnr' : 0, 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'all' : 0}))
   endif
 
   " Quickfix window with empty stack
   silent! Xopen
   let qfwinid = (a:cchar == 'c') ? win_getid() : 0
+  let qfbufnr = (a:cchar == 'c') ? bufnr('') : 0
   call assert_equal(qfwinid, g:Xgetlist({'winid' : 0}).winid)
   Xclose
 
@@ -3593,12 +3614,12 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'quickfixtextfunc' : '',
+		\ 'qfbufnr' : qfbufnr, 'quickfixtextfunc' : '',
 		\ 'changedtick' : 0}, g:Xgetlist({'id' : qfid, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0,
+		\ 'changedtick' : 0, 'filewinid' : 0, 'qfbufnr' : 0,
                 \ 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'id' : qfid, 'all' : 0}))
   endif
@@ -3616,12 +3637,12 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0,
+		\ 'changedtick' : 0, 'qfbufnr' : qfbufnr,
                 \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0,
+		\ 'changedtick' : 0, 'filewinid' : 0, 'qfbufnr' : 0,
                 \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   endif
 endfunc
@@ -4360,7 +4381,7 @@ func Test_splitview()
   new | only
 
   " When split opening files from a helpgrep location list window, a new help
-  " window should be opend with a copy of the location list.
+  " window should be opened with a copy of the location list.
   lhelpgrep window
   let locid = getloclist(0, {'id' : 0}).id
   lwindow
@@ -4456,10 +4477,18 @@ func Xqfbuf_test(cchar)
   Xclose
   " Even after the quickfix window is closed, the buffer should be loaded
   call assert_true(bufloaded(qfbnum))
+  call assert_true(qfbnum, g:Xgetlist({'qfbufnr' : 0}).qfbufnr)
   Xopen
   " Buffer should be reused when opening the window again
   call assert_equal(qfbnum, bufnr(''))
   Xclose
+
+  " When quickfix buffer is wiped out, getqflist() should return 0
+  %bw!
+  Xexpr ""
+  Xopen
+  bw!
+  call assert_equal(0, g:Xgetlist({'qfbufnr': 0}).qfbufnr)
 
   if a:cchar == 'l'
     %bwipe
@@ -4474,7 +4503,7 @@ func Xqfbuf_test(cchar)
     close
     " When the location list window is closed, the buffer name should not
     " change to 'Quickfix List'
-    call assert_match(qfbnum . '  h-  "\[Location List]"', execute('ls'))
+    call assert_match(qfbnum . 'u h-  "\[Location List]"', execute('ls!'))
     call assert_true(bufloaded(qfbnum))
 
     " After deleting a location list buffer using ":bdelete", opening the
@@ -4491,6 +4520,7 @@ func Xqfbuf_test(cchar)
     " removed
     call setloclist(0, [], 'f')
     call assert_false(bufexists(qfbnum))
+    call assert_equal(0, getloclist(0, {'qfbufnr' : 0}).qfbufnr)
 
     " When the location list is freed with the location list window open, the
     " location list buffer should not be lost. It should be reused when the
@@ -4515,9 +4545,34 @@ func Xqfbuf_test(cchar)
 endfunc
 
 func Test_qfbuf()
-  throw 'skipped: enable after porting patch 8.1.0877'
   call Xqfbuf_test('c')
   call Xqfbuf_test('l')
+endfunc
+
+" If there is an autocmd to use only one window, then opening the location
+" list window used to crash Vim.
+func Test_winonly_autocmd()
+  call s:create_test_file('Xtest1')
+  " Autocmd to show only one Vim window at a time
+  autocmd WinEnter * only
+  new
+  " Load the location list
+  lexpr "Xtest1:5:Line5\nXtest1:10:Line10\nXtest1:15:Line15"
+  let loclistid = getloclist(0, {'id' : 0}).id
+  " Open the location list window. Only this window will be shown and the file
+  " window is closed.
+  lopen
+  call assert_equal(loclistid, getloclist(0, {'id' : 0}).id)
+  " Jump to an entry in the location list and make sure that the cursor is
+  " positioned correctly.
+  ll 3
+  call assert_equal(loclistid, getloclist(0, {'id' : 0}).id)
+  call assert_equal('Xtest1', bufname(''))
+  call assert_equal(15, line('.'))
+  " Cleanup
+  autocmd! WinEnter
+  new | only
+  call delete('Xtest1')
 endfunc
 
 " Test to make sure that an empty quickfix buffer is not reused for loading
@@ -5207,16 +5262,14 @@ func Xtest_qftextfunc(cchar)
 
   " Non-existing function
   set quickfixtextfunc=Tabc
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
   call assert_fails("Xwindow", 'E117:')
   Xclose
   set quickfixtextfunc&
 
   " set option to a non-function
   set quickfixtextfunc=[10,\ 20]
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
   call assert_fails("Xwindow", 'E117:')
   Xclose
   set quickfixtextfunc&
@@ -5226,8 +5279,7 @@ func Xtest_qftextfunc(cchar)
     return a:a .. a:b .. a:c
   endfunc
   set quickfixtextfunc=Xqftext
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E119:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue']"
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E119:')
   call assert_fails("Xwindow", 'E119:')
   Xclose
 
@@ -5236,9 +5288,8 @@ func Xtest_qftextfunc(cchar)
     return ['one', [], 'two']
   endfunc
   set quickfixtextfunc=Xqftext2
-  " call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']",
-  "                                                                 \ 'E730:')
-  Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']",
+                                                                  \ 'E730:')
   call assert_fails('Xwindow', 'E730:')
   call assert_equal(['one', 'F1|20 col 4| blue', 'F1|30 col 6| red'],
         \ getline(1, '$'))
@@ -5400,6 +5451,42 @@ func Test_win_gettype()
   wincmd p
   call assert_equal("loclist", win_gettype(wid))
   lclose
+endfunc
+
+" Test for opening the quickfix window in two tab pages and then closing one
+" of the quickfix windows. This should not make the quickfix buffer unlisted.
+" (github issue #9300).
+func Test_two_qf_windows()
+  cexpr "F1:1:line1"
+  copen
+  tabnew
+  copen
+  call assert_true(&buflisted)
+  cclose
+  tabfirst
+  call assert_true(&buflisted)
+  let bnum = bufnr()
+  cclose
+  " if all the quickfix windows are closed, then buffer should be unlisted.
+  call assert_false(buflisted(bnum))
+  %bw!
+
+  " Repeat the test for a location list
+  lexpr "F2:2:line2"
+  lopen
+  let bnum = bufnr()
+  tabnew
+  exe "buffer" bnum
+  tabfirst
+  lclose
+  tablast
+  call assert_true(buflisted(bnum))
+  tabclose
+  lopen
+  call assert_true(buflisted(bnum))
+  lclose
+  call assert_false(buflisted(bnum))
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

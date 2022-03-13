@@ -75,6 +75,7 @@ struct qfline_S {
 // There is a stack of error lists.
 #define LISTCOUNT   10
 #define INVALID_QFIDX (-1)
+#define INVALID_QFBUFNR (0)
 
 /// Quickfix list type.
 typedef enum
@@ -126,6 +127,7 @@ struct qf_info_S {
   int qf_curlist;                   // current error list
   qf_list_T qf_lists[LISTCOUNT];
   qfltype_T qfl_type;  // type of list
+  int qf_bufnr;                     // quickfix window buffer number
 };
 
 static qf_info_T ql_info;         // global quickfix list
@@ -1703,6 +1705,28 @@ static void locstack_queue_delreq(qf_info_T *qi)
   qf_delq_head = q;
 }
 
+/// Return the global quickfix stack window buffer number.
+int qf_stack_get_bufnr(void)
+{
+  return ql_info.qf_bufnr;
+}
+
+/// Wipe the quickfix window buffer (if present) for the specified
+/// quickfix/location list.
+static void wipe_qf_buffer(qf_info_T *qi)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (qi->qf_bufnr != INVALID_QFBUFNR) {
+    buf_T *const qfbuf = buflist_findnr(qi->qf_bufnr);
+    if (qfbuf != NULL && qfbuf->b_nwindows == 0) {
+      // If the quickfix buffer is not loaded in any window, then
+      // wipe the buffer.
+      close_buffer(NULL, qfbuf, DOBUF_WIPE, false);
+      qi->qf_bufnr = INVALID_QFBUFNR;
+    }
+  }
+}
+
 /// Free a location list stack
 static void ll_free_all(qf_info_T **pqi)
 {
@@ -1715,19 +1739,23 @@ static void ll_free_all(qf_info_T **pqi)
   }
   *pqi = NULL;          // Remove reference to this list
 
+  // If the location list is still in use, then queue the delete request
+  // to be processed later.
+  if (quickfix_busy > 0) {
+    locstack_queue_delreq(qi);
+    return;
+  }
+
   qi->qf_refcount--;
   if (qi->qf_refcount < 1) {
     // No references to this location list.
-    // If the location list is still in use, then queue the delete request
-    // to be processed later.
-    if (quickfix_busy > 0) {
-      locstack_queue_delreq(qi);
-    } else {
-      for (i = 0; i < qi->qf_listcount; i++) {
-        qf_free(qf_get_list(qi, i));
-      }
-      xfree(qi);
+    // If the quickfix window buffer is loaded, then wipe it
+    wipe_qf_buffer(qi);
+
+    for (i = 0; i < qi->qf_listcount; i++) {
+      qf_free(qf_get_list(qi, i));
     }
+    xfree(qi);
   }
 }
 
@@ -1885,6 +1913,7 @@ static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
   qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
   qi->qf_refcount++;
   qi->qfl_type = qfltype;
+  qi->qf_bufnr = INVALID_QFBUFNR;
 
   return qi;
 }
@@ -2446,7 +2475,7 @@ static qfline_T *qf_get_entry(qf_list_T *qfl, int errornr, int dir, int *new_qfi
   return qf_ptr;
 }
 
-// Find a window displaying a Vim help file.
+// Find a window displaying a Vim help file in the current tab page.
 static win_T *qf_find_help_win(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2520,8 +2549,9 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
   return OK;
 }
 
-// Find a non-quickfix window using the given location list.
-// Returns NULL if a matching window is not found.
+/// Find a non-quickfix window using the given location list stack in the
+/// current tabpage.
+/// Returns NULL if a matching window is not found.
 static win_T *qf_find_win_with_loclist(const qf_info_T *ll)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2533,7 +2563,7 @@ static win_T *qf_find_win_with_loclist(const qf_info_T *ll)
   return NULL;
 }
 
-// Find a window containing a normal buffer
+/// Find a window containing a normal buffer in the current tab page.
 static win_T *qf_find_win_with_normal_buf(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2589,7 +2619,7 @@ static void qf_goto_win_with_ll_file(win_T *use_win, int qf_fnum, qf_info_T *ll_
   win_T *win = use_win;
 
   if (win == NULL) {
-    // Find the window showing the selected file
+    // Find the window showing the selected file in the current tab page.
     FOR_ALL_WINDOWS_IN_TAB(win2, curtab) {
       if (win2->w_buffer->b_fnum == qf_fnum) {
         win = win2;
@@ -2721,7 +2751,7 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin, int *opened_window
 }
 
 /// Edit the selected file or help file.
-static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, win_T *oldwin,
+static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int prev_winid,
                                int *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
@@ -2740,7 +2770,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, win
     } else {
       retval = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, (linenr_T)1,
                        ECMD_HIDE + ECMD_SET_HELP,
-                       oldwin == curwin ? curwin : NULL);
+                       prev_winid == curwin->handle ? curwin : NULL);
     }
   } else {
     retval = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
@@ -2748,10 +2778,13 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, win
   }
   // If a location list, check whether the associated window is still
   // present.
-  if (qfl_type == QFLT_LOCATION && !win_valid_any_tab(oldwin)) {
-    emsg(_("E924: Current window was closed"));
-    *opened_window = false;
-    return NOTDONE;
+  if (qfl_type == QFLT_LOCATION) {
+    win_T *wp = win_id2wp(prev_winid);
+    if (wp == NULL && curwin->w_llist != qi) {
+      emsg(_("E924: Current window was closed"));
+      *opened_window = false;
+      return NOTDONE;
+    }
   }
 
   if (qfl_type == QFLT_QUICKFIX && !qflist_valid(NULL, save_qfid)) {
@@ -2906,7 +2939,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
 /// NOTDONE if the quickfix/location list is freed by an autocmd when opening
 /// the file.
 static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int forceit,
-                             win_T *oldwin, int *opened_window, int openfold, int print_message)
+                             int prev_winid, int *opened_window, int openfold, int print_message)
 {
   buf_T *old_curbuf;
   linenr_T old_lnum;
@@ -2918,7 +2951,7 @@ static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int 
   old_lnum = curwin->w_cursor.lnum;
 
   if (qf_ptr->qf_fnum != 0) {
-    retval = qf_jump_edit_buffer(qi, qf_ptr, forceit, oldwin,
+    retval = qf_jump_edit_buffer(qi, qf_ptr, forceit, prev_winid,
                                  opened_window);
     if (retval != OK) {
       return retval;
@@ -2967,8 +3000,8 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
   int old_qf_index;
   char_u *old_swb = p_swb;
   unsigned old_swb_flags = swb_flags;
+  int prev_winid;
   int opened_window = false;
-  win_T *oldwin = curwin;
   int print_message = true;
   const bool old_KeyTyped = KeyTyped;           // getting file may reset it
   int retval = OK;
@@ -2981,6 +3014,8 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
     emsg(_(e_quickfix));
     return;
   }
+
+  incr_quickfix_busy();
 
   qfl = qf_get_curlist(qi);
 
@@ -3004,6 +3039,8 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
     print_message = false;
   }
 
+  prev_winid = curwin->handle;
+
   retval = qf_jump_open_window(qi, qf_ptr, newwin, &opened_window);
   if (retval == FAIL) {
     goto failed;
@@ -3012,7 +3049,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
     goto theend;
   }
 
-  retval = qf_jump_to_buffer(qi, qf_index, qf_ptr, forceit, oldwin,
+  retval = qf_jump_to_buffer(qi, qf_index, qf_ptr, forceit, prev_winid,
                              &opened_window, old_KeyTyped, print_message);
   if (retval == NOTDONE) {
     // Quickfix/location list is freed by an autocmd
@@ -3037,12 +3074,13 @@ theend:
     qfl->qf_ptr = qf_ptr;
     qfl->qf_index = qf_index;
   }
-  if (p_swb != old_swb && p_swb == empty_option && opened_window) {
+  if (p_swb != old_swb && p_swb == empty_option) {
     // Restore old 'switchbuf' value, but not when an autocommand or
     // modeline has changed the value.
     p_swb = old_swb;
     swb_flags = old_swb_flags;
   }
+  decr_quickfix_busy();
 }
 
 
@@ -3612,7 +3650,7 @@ static void qf_set_cwindow_options(void)
   // switch off 'swapfile'
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
   set_option_value("bt", 0L, "quickfix", OPT_LOCAL);
-  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+  set_option_value("bh", 0L, "hide", OPT_LOCAL);
   RESET_BINDING(curwin);
   curwin->w_p_diff = false;
   set_option_value("fdm", 0L, "manual", OPT_LOCAL);
@@ -3646,22 +3684,13 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   if (win_split(height, flags) == FAIL) {
     return FAIL;  // not enough room for window
   }
-
-  // User autocommands may have invalidated the previous window after calling
-  // win_split, so add a check to ensure that the win is still here
-  if (IS_LL_STACK(qi) && !win_valid(win)) {
-    // close the window that was supposed to be for the loclist
-    win_close(curwin, false, false);
-    return FAIL;
-  }
-
   RESET_BINDING(curwin);
 
   if (IS_LL_STACK(qi)) {
     // For the location list window, create a reference to the
-    // location list from the window 'win'.
-    curwin->w_llist_ref = win->w_llist;
-    win->w_llist->qf_refcount++;
+    // location list stack from the window 'win'.
+    curwin->w_llist_ref = qi;
+    qi->qf_refcount++;
   }
 
   if (oldwin != curwin) {
@@ -3678,6 +3707,8 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
     if (do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE + ECMD_NOWINENTER, oldwin) == FAIL) {
       return FAIL;
     }
+    // save the number of the new buffer
+    qi->qf_bufnr = curbuf->b_fnum;
   }
 
   // Set the options for the quickfix buffer/window (if not already done)
@@ -3856,8 +3887,8 @@ static int is_qf_win(const win_T *win, const qf_info_T *qi)
   return false;
 }
 
-/// Find a window displaying the quickfix/location stack 'qi'
-/// Only searches in the current tabpage.
+/// Find a window displaying the quickfix/location stack 'qi' in the current tab
+/// page.
 static win_T *qf_find_win(const qf_info_T *qi)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3870,11 +3901,20 @@ static win_T *qf_find_win(const qf_info_T *qi)
   return NULL;
 }
 
-// Find a quickfix buffer.
-// Searches in windows opened in all the tabs.
+/// Find a quickfix buffer.
+/// Searches in windows opened in all the tab pages.
 static buf_T *qf_find_buf(qf_info_T *qi)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (qi->qf_bufnr != INVALID_QFBUFNR) {
+    buf_T *const qfbuf = buflist_findnr(qi->qf_bufnr);
+    if (qfbuf != NULL) {
+      return qfbuf;
+    }
+    // buffer is no longer present
+    qi->qf_bufnr = INVALID_QFBUFNR;
+  }
+
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (is_qf_win(win, qi)) {
       return win->w_buffer;
@@ -5979,6 +6019,21 @@ static int qf_winid(qf_info_T *qi)
   return 0;
 }
 
+/// Returns the number of the buffer displayed in the quickfix/location list
+/// window. If there is no buffer associated with the list or the buffer is
+/// wiped out, then returns 0.
+static int qf_getprop_qfbufnr(const qf_info_T *qi, dict_T *retdict)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  int bufnum = 0;
+
+  if (qi != NULL && buflist_findnr(qi->qf_bufnr) != NULL) {
+    bufnum = qi->qf_bufnr;
+  }
+
+  return tv_dict_add_nr(retdict, S_LEN("qfbufnr"), bufnum);
+}
+
 /// Convert the keys in 'what' to quickfix list property flags.
 static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -6021,6 +6076,9 @@ static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   }
   if (loclist && tv_dict_find(what, S_LEN("filewinid")) != NULL) {
     flags |= QF_GETLIST_FILEWINID;
+  }
+  if (tv_dict_find(what, S_LEN("qfbufnr")) != NULL) {
+    flags |= QF_GETLIST_QFBUFNR;
   }
   if (tv_dict_find(what, S_LEN("quickfixtextfunc")) != NULL) {
     flags |= QF_GETLIST_QFTF;
@@ -6112,6 +6170,9 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, int locstack, dict_T *r
   }
   if ((status == OK) && locstack && (flags & QF_GETLIST_FILEWINID)) {
     status = tv_dict_add_nr(retdict, S_LEN("filewinid"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
   if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
     status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
@@ -6281,6 +6342,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
   if ((status == OK) && (wp != NULL) && (flags & QF_GETLIST_FILEWINID)) {
     status = qf_getprop_filewinid(wp, qi, retdict);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_QFBUFNR)) {
+    status = qf_getprop_qfbufnr(qi, retdict);
   }
   if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
     status = qf_getprop_qftf(qfl, retdict);
@@ -6670,20 +6734,6 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action, char
   return retval;
 }
 
-/// Find the non-location list window with the specified location list stack in
-/// the current tabpage.
-static win_T *find_win_with_ll(const qf_info_T *qi)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if ((wp->w_llist == qi) && !bt_quickfix(wp->w_buffer)) {
-      return wp;
-    }
-  }
-
-  return NULL;
-}
-
 // Free the entire quickfix/location list stack.
 // If the quickfix/location list window is open, then clear it.
 static void qf_free_stack(win_T *wp, qf_info_T *qi)
@@ -6698,12 +6748,10 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
     qf_update_buffer(qi, NULL);
   }
 
-  win_T *llwin = NULL;
-  win_T *orig_wp = wp;
   if (wp != NULL && IS_LL_WINDOW(wp)) {
     // If in the location list window, then use the non-location list
     // window with this location list (if present)
-    llwin = find_win_with_ll(qi);
+    win_T *const llwin = qf_find_win_with_loclist(qi);
     if (llwin != NULL) {
       wp = llwin;
     }
@@ -6714,16 +6762,17 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
     // quickfix list
     qi->qf_curlist = 0;
     qi->qf_listcount = 0;
-  } else if (IS_LL_WINDOW(orig_wp)) {
+  } else if (qfwin != NULL) {
     // If the location list window is open, then create a new empty location
     // list
     qf_info_T *new_ll = qf_alloc_stack(QFLT_LOCATION);
+    new_ll->qf_bufnr = qfwin->w_buffer->b_fnum;
 
     // first free the list reference in the location list window
-    ll_free_all(&orig_wp->w_llist_ref);
+    ll_free_all(&qfwin->w_llist_ref);
 
-    orig_wp->w_llist_ref = new_ll;
-    if (llwin != NULL) {
+    qfwin->w_llist_ref = new_ll;
+    if (wp != qfwin) {
       win_set_loclist(wp, new_ll);
     }
   }
