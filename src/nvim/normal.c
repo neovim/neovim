@@ -431,15 +431,15 @@ static int find_command(int cmdchar)
   return idx;
 }
 
-// Normal state entry point. This is called on:
-//
-// - Startup, In this case the function never returns.
-// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
-// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
-//   for example. Returns when re-entering ex mode(because ex mode recursion is
-//   not allowed)
-//
-// This used to be called main_loop on main.c
+/// Normal state entry point. This is called on:
+///
+/// - Startup, In this case the function never returns.
+/// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
+/// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
+///   for example. Returns when re-entering ex mode(because ex mode recursion is
+///   not allowed)
+///
+/// This used to be called main_loop on main.c
 void normal_enter(bool cmdwin, bool noexmode)
 {
   NormalState state;
@@ -1315,11 +1315,12 @@ static void normal_redraw(NormalState *s)
   setcursor();
 }
 
-// Function executed before each iteration of normal mode.
-// Return:
-//   1 if the iteration should continue normally
-//   -1 if the iteration should be skipped
-//   0 if the main loop must exit
+/// Function executed before each iteration of normal mode.
+///
+/// @return:
+///           1 if the iteration should continue normally
+///          -1 if the iteration should be skipped
+///           0 if the main loop must exit
 static int normal_check(VimState *state)
 {
   NormalState *s = (NormalState *)state;
@@ -1418,8 +1419,8 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
   *set_prevcount = false;    // only set v:prevcount once
 }
 
-// Move the current tab to tab in same column as mouse or to end of the
-// tabline if there is no tab there.
+/// Move the current tab to tab in same column as mouse or to end of the
+/// tabline if there is no tab there.
 static void move_tab_to_mouse(void)
 {
   int tabnr = tab_page_click_defs[mouse_col].tabnr;
@@ -2271,12 +2272,14 @@ void restore_visual_mode(void)
   }
 }
 
-// Check for a balloon-eval special item to include when searching for an
-// identifier.  When "dir" is BACKWARD "ptr[-1]" must be valid!
-// Returns true if the character at "*ptr" should be included.
-// "dir" is FORWARD or BACKWARD, the direction of searching.
-// "*colp" is in/decremented if "ptr[-dir]" should also be included.
-// "bnp" points to a counter for square brackets.
+/// Check for a balloon-eval special item to include when searching for an
+/// identifier.  When "dir" is BACKWARD "ptr[-1]" must be valid!
+///
+/// @return  true if the character at "*ptr" should be included.
+///
+/// @param dir    the direction of searching, is either FORWARD or BACKWARD
+/// @param *colp  is in/decremented if "ptr[-dir]" should also be included.
+/// @param bnp    points to a counter for square brackets.
 static bool find_is_eval_item(const char_u *const ptr, int *const colp, int *const bnp,
                               const int dir)
 {
@@ -2305,25 +2308,26 @@ static bool find_is_eval_item(const char_u *const ptr, int *const colp, int *con
   return false;
 }
 
-// Find the identifier under or to the right of the cursor.
-// "find_type" can have one of three values:
-// FIND_IDENT:   find an identifier (keyword)
-// FIND_STRING:  find any non-white text
-// FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
-// FIND_EVAL:  find text useful for C program debugging
-//
-// There are three steps:
-// 1. Search forward for the start of an identifier/text.  Doesn't move if
-//    already on one.
-// 2. Search backward for the start of this identifier/text.
-//    This doesn't match the real Vi but I like it a little better and it
-//    shouldn't bother anyone.
-// 3. Search forward to the end of this identifier/text.
-//    When FIND_IDENT isn't defined, we backup until a blank.
-//
-// Returns the length of the text, or zero if no text is found.
-// If text is found, a pointer to the text is put in "*text".  This
-// points into the current buffer line and is not always NUL terminated.
+/// Find the identifier under or to the right of the cursor.
+/// "find_type" can have one of three values:
+/// FIND_IDENT:   find an identifier (keyword)
+/// FIND_STRING:  find any non-white text
+/// FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
+/// FIND_EVAL:  find text useful for C program debugging
+///
+/// There are three steps:
+/// 1. Search forward for the start of an identifier/text.  Doesn't move if
+///    already on one.
+/// 2. Search backward for the start of this identifier/text.
+///    This doesn't match the real Vi but I like it a little better and it
+///    shouldn't bother anyone.
+/// 3. Search forward to the end of this identifier/text.
+///    When FIND_IDENT isn't defined, we backup until a blank.
+///
+/// @return  the length of the text, or zero if no text is found.
+///
+/// If text is found, a pointer to the text is put in "*text".  This
+/// points into the current buffer line and is not always NUL terminated.
 size_t find_ident_under_cursor(char_u **text, int find_type)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -4015,8 +4019,8 @@ static void nv_ctrlo(cmdarg_T *cap)
   }
 }
 
-// CTRL-^ command, short for ":e #".  Works even when the alternate buffer is
-// not named.
+/// CTRL-^ command, short for ":e #".  Works even when the alternate buffer is
+/// not named.
 static void nv_hat(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
@@ -6369,7 +6373,7 @@ static void nv_dot(cmdarg_T *cap)
   }
 }
 
-// CTRL-R: undo undo or specify register in select mode
+/// CTRL-R: undo undo or specify register in select mode
 static void nv_redo_or_register(cmdarg_T *cap)
 {
   if (VIsual_select && VIsual_active) {
@@ -6789,7 +6793,7 @@ static void nv_esc(cmdarg_T *cap)
   clearop(cap->oap);
 }
 
-// Move the cursor for the "A" command.
+/// Move the cursor for the "A" command.
 void set_cursor_for_append_to_line(void)
 {
   curwin->w_set_curswant = true;
@@ -7052,8 +7056,9 @@ static void nv_put(cmdarg_T *cap)
   nv_put_opt(cap, false);
 }
 
-// "P", "gP", "p" and "gp" commands.
-// "fix_indent" is true for "[p", "[P", "]p" and "]P".
+/// "P", "gP", "p" and "gp" commands.
+///
+/// @param fix_indent  true for "[p", "[P", "]p" and "]P".
 static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 {
   int regname = 0;
@@ -7203,7 +7208,7 @@ static void nv_open(cmdarg_T *cap)
   }
 }
 
-// Handle an arbitrary event in normal mode
+/// Handle an arbitrary event in normal mode
 static void nv_event(cmdarg_T *cap)
 {
   // Garbage collection should have been executed before blocking for events in
@@ -7226,7 +7231,7 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
-/// @return true when 'mousemodel' is set to "popup" or "popup_setpos".
+/// @return  true when 'mousemodel' is set to "popup" or "popup_setpos".
 static bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
