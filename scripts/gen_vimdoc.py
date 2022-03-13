@@ -343,14 +343,6 @@ def self_or_child(n):
     return n.childNodes[0]
 
 
-def clean_text(text):
-    """Cleans text.
-
-    Only cleans superfluous whitespace at the moment.
-    """
-    return ' '.join(text.split()).strip()
-
-
 def clean_lines(text):
     """Removes superfluous lines.
 
@@ -371,12 +363,12 @@ def get_text(n, preformatted=False):
     if n.nodeName == 'computeroutput':
         for node in n.childNodes:
             text += get_text(node)
-        return '`{}` '.format(text)
+        return '`{}`'.format(text)
     for node in n.childNodes:
         if node.nodeType == node.TEXT_NODE:
-            text += node.data if preformatted else clean_text(node.data)
+            text += node.data
         elif node.nodeType == node.ELEMENT_NODE:
-            text += ' ' + get_text(node, preformatted)
+            text += get_text(node, preformatted)
     return text
 
 

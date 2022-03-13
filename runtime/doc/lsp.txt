@@ -563,7 +563,7 @@ buf_request_all({bufnr}, {method}, {params}, {callback})
 
                 Return: ~
                     (function) A function that will cancel all requests which
-                    is the same as the one returned from `buf_request` .
+                    is the same as the one returned from `buf_request`.
 
                                                   *vim.lsp.buf_request_sync()*
 buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
@@ -600,9 +600,9 @@ client()                                                      *vim.lsp.client*
                     {handler} is not specified, If one is not found there,
                     then an error will occur. Returns: {status},
                     {[client_id]}. {status} is a boolean indicating if the
-                    notification was successful. If it is `false` , then it
+                    notification was successful. If it is `false`, then it
                     will always be `false` (the client has shutdown). If
-                    {status} is `true` , the function returns {request_id} as
+                    {status} is `true`, the function returns {request_id} as
                     the second result. You can use this with
                     `client.cancel_request(request_id)` to cancel the request.
                   • request_sync(method, params, timeout_ms, bufnr) Sends a
@@ -612,13 +612,13 @@ client()                                                      *vim.lsp.client*
                     `err` and `result` come from the |lsp-handler|. On
                     timeout, cancel or error, returns `(nil, err)` where `err`
                     is a string describing the failure reason. If the request
-                    was unsuccessful returns `nil` .
+                    was unsuccessful returns `nil`.
                   • notify(method, params) Sends a notification to an LSP
                     server. Returns: a boolean to indicate if the notification
                     was successful. If it is false, then it will always be
                     false (the client has shutdown).
                   • cancel_request(id) Cancels a request with a given request
-                    id. Returns: same as `notify()` .
+                    id. Returns: same as `notify()`.
                   • stop([force]) Stops a client, optionally with force. By
                     default, it will just ask the server to shutdown without
                     force. If you request to stop a client which has
@@ -639,14 +639,14 @@ client()                                                      *vim.lsp.client*
                     interaction with the client. See |vim.lsp.rpc.start()|.
                   • {offset_encoding} (string): The encoding used for
                     communicating with the server. You can modify this in the
-                    `config` 's `on_init` method before text is sent to the
+                    `config`'s `on_init` method before text is sent to the
                     server.
                   • {handlers} (table): The handlers used by the client as
                     described in |lsp-handler|.
                   • {requests} (table): The current pending requests in flight
                     to the server. Entries are key-value pairs with the key
                     being the request ID while the value is a table with
-                    `type` , `bufnr` , and `method` key-value pairs. `type` is
+                    `type`, `bufnr`, and `method` key-value pairs. `type` is
                     either "pending" for an active request, or "cancel" for a
                     cancel request.
                   • {config} (table): copy of the table that was passed by the
@@ -655,7 +655,7 @@ client()                                                      *vim.lsp.client*
                     sent on `initialize` describing the server's capabilities.
                   • {resolved_capabilities} (table): Normalized table of
                     capabilities that we have detected based on the initialize
-                    response from the server in `server_capabilities` .
+                    response from the server in `server_capabilities`.
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
                 Checks whether a client is stopped.
@@ -775,7 +775,7 @@ start_client({config})                                *vim.lsp.start_client()*
                                          initiates the LSP client.
                     {cmd_cwd}            (string, default=|getcwd()|)
                                          Directory to launch the `cmd`
-                                         process. Not related to `root_dir` .
+                                         process. Not related to `root_dir`.
                     {cmd_env}            (table) Environment flags to pass to
                                          the LSP on spawn. Can be specified
                                          using keys like a map or as a list
@@ -800,15 +800,15 @@ start_client({config})                                *vim.lsp.start_client()*
                                          its result.
                                          • Note: To send an empty dictionary
                                            use
-                                           `{[vim.type_idx]=vim.types.dictionary}`
-                                           , else it will be encoded as an
+                                           `{[vim.type_idx]=vim.types.dictionary}`,
+                                           else it will be encoded as an
                                            array.
                     {handlers}           Map of language server method names
                                          to |lsp-handler|
                     {settings}           Map with language server specific
                                          settings. These are returned to the
                                          language server if requested via
-                                         `workspace/configuration` . Keys are
+                                         `workspace/configuration`. Keys are
                                          case-sensitive.
                     {commands}           table Table that maps string of
                                          clientside commands to user-defined
@@ -821,7 +821,7 @@ start_client({config})                                *vim.lsp.start_client()*
                                          action, code lenses, ...) triggers
                                          the command.
                     {init_options}       Values to pass in the initialization
-                                         request as `initializationOptions` .
+                                         request as `initializationOptions`.
                                          See `initialize` in the LSP spec.
                     {name}               (string, default=client-id) Name in
                                          log messages.
@@ -976,7 +976,7 @@ code_action({context})                             *vim.lsp.buf.code_action()*
                                • only: (string|nil) LSP `CodeActionKind` used
                                  to filter the code actions. Most language
                                  servers support values like `refactor` or
-                                 `quickfix` .
+                                 `quickfix`.
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
@@ -1007,7 +1007,7 @@ definition()                                        *vim.lsp.buf.definition()*
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
                 the current text document position. This request can be
-                triggered by a key mapping or by events such as `CursorHold` ,
+                triggered by a key mapping or by events such as `CursorHold`,
                 e.g.:
 >
     autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
@@ -1124,7 +1124,7 @@ range_code_action({context}, {start_pos}, {end_pos})
                                  • only: (string|nil) LSP `CodeActionKind`
                                    used to filter the code actions. Most
                                    language servers support values like
-                                   `refactor` or `quickfix` .
+                                   `refactor` or `quickfix`.
                     {start_pos}  ({number, number}, optional) mark-indexed
                                  position. Defaults to the start of the last
                                  visual selection.
@@ -1246,8 +1246,8 @@ display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
                 Display the lenses using virtual text
 
                 Parameters: ~
-                    {lenses}     table of lenses to display ( `CodeLens[] |
-                                 null` )
+                    {lenses}     table of lenses to display (`CodeLens[] |
+                                 null`)
                     {bufnr}      number
                     {client_id}  number
 
@@ -1259,7 +1259,7 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
                              current buffer.
 
                 Return: ~
-                    table ( `CodeLens[]` )
+                    table (`CodeLens[]`)
 
                                               *vim.lsp.codelens.on_codelens()*
 on_codelens({err}, {result}, {ctx}, {_})
@@ -1281,8 +1281,8 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
                 Store lenses for a specific buffer and client
 
                 Parameters: ~
-                    {lenses}     table of lenses to store ( `CodeLens[] |
-                                 null` )
+                    {lenses}     table of lenses to store (`CodeLens[] |
+                                 null`)
                     {bufnr}      number
                     {client_id}  number
 
@@ -1333,7 +1333,7 @@ Lua module: vim.lsp.util                                            *lsp-util*
 
                                      *vim.lsp.util.apply_text_document_edit()*
 apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
-                Applies a `TextDocumentEdit` , which is a list of changes to a
+                Applies a `TextDocumentEdit`, which is a list of changes to a
                 single document.
 
                 Parameters: ~
@@ -1360,7 +1360,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
 
                                          *vim.lsp.util.apply_workspace_edit()*
 apply_workspace_edit({workspace_edit}, {offset_encoding})
-                Applies a `WorkspaceEdit` .
+                Applies a `WorkspaceEdit`.
 
                 Parameters: ~
                     {workspace_edit}   table `WorkspaceEdit`
@@ -1408,13 +1408,13 @@ convert_input_to_markdown_lines({input}, {contents})
                 Converts any of `MarkedString` | `MarkedString[]` |
                 `MarkupContent` into a list of lines containing valid
                 markdown. Useful to populate the hover window for
-                `textDocument/hover` , for parsing the result of
-                `textDocument/signatureHelp` , and potentially others.
+                `textDocument/hover`, for parsing the result of
+                `textDocument/signatureHelp`, and potentially others.
 
                 Parameters: ~
-                    {input}     ( `MarkedString` | `MarkedString[]` |
-                                `MarkupContent` )
-                    {contents}  (table, optional, default `{}` ) List of
+                    {input}     (`MarkedString` | `MarkedString[]` |
+                                `MarkupContent`)
+                    {contents}  (table, optional, default `{}`) List of
                                 strings to extend with converted lines
 
                 Return: ~
@@ -1475,7 +1475,7 @@ jump_to_location({location}, {offset_encoding})
                 Jumps to a location.
 
                 Parameters: ~
-                    {location}         table ( `Location` | `LocationLink` )
+                    {location}         table (`Location`|`LocationLink`)
                     {offset_encoding}  string utf-8|utf-16|utf-32 (required)
 
                 Return: ~
@@ -1491,8 +1491,8 @@ locations_to_items({locations}, {offset_encoding})
                 |setqflist()| or |setloclist()|.
 
                 Parameters: ~
-                    {locations}        table list of `Location` s or
-                                       `LocationLink` s
+                    {locations}        table list of `Location`s or
+                                       `LocationLink`s
                     {offset_encoding}  string offset_encoding for locations
                                        utf-8|utf-16|utf-32
 
@@ -1526,7 +1526,7 @@ make_floating_popup_options({width}, {height}, {opts})
                               • border (string or table) override `border`
                               • focusable (string or table) override
                                 `focusable`
-                              • zindex (string or table) override `zindex` ,
+                              • zindex (string or table) override `zindex`,
                                 defaults to 50
 
                 Return: ~
@@ -1566,7 +1566,7 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
-                    start = `start_position` , end = `end_position` } }
+                    start = `start_position`, end = `end_position` } }
 
                                          *vim.lsp.util.make_position_params()*
 make_position_params({window}, {offset_encoding})
@@ -1590,9 +1590,9 @@ make_position_params({window}, {offset_encoding})
 make_range_params({window}, {offset_encoding})
                 Using the current position in the current buffer, creates an
                 object that can be used as a building block for several LSP
-                requests, such as `textDocument/codeAction` ,
-                `textDocument/colorPresentation` ,
-                `textDocument/rangeFormatting` .
+                requests, such as `textDocument/codeAction`,
+                `textDocument/colorPresentation`,
+                `textDocument/rangeFormatting`.
 
                 Parameters: ~
                     {window}           (optional, number): window handle or 0
@@ -1603,7 +1603,7 @@ make_range_params({window}, {offset_encoding})
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
-                    start = `current_position` , end = `current_position` } }
+                    start = `current_position`, end = `current_position` } }
 
                                     *vim.lsp.util.make_text_document_params()*
 make_text_document_params({bufnr})
@@ -1657,8 +1657,8 @@ open_floating_preview({contents}, {syntax}, {opts})
                                   closes the floating window
                                 • focusable: (boolean, default true) Make
                                   float focusable
-                                • focus: (boolean, default true) If `true` ,
-                                  and if {focusable} is also `true` , focus an
+                                • focus: (boolean, default true) If `true`,
+                                  and if {focusable} is also `true`, focus an
                                   existing floating window with the same
                                   {focus_id}
 
@@ -1757,7 +1757,7 @@ text_document_completion_list_to_complete_items({result}, {prefix})
                 Parameters: ~
                     {result}  The result of a `textDocument/completion` call,
                               e.g. from |vim.lsp.buf.completion()|, which may
-                              be one of `CompletionItem[]` , `CompletionList`
+                              be one of `CompletionItem[]`, `CompletionList`
                               or `null`
                     {prefix}  (string) the prefix to filter the completion
                               items
