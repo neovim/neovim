@@ -58,8 +58,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   if (os_has_conpty_working()) {
     if ((conpty_object =
-           os_conpty_init(&in_name, &out_name,
-                          ptyproc->width, ptyproc->height)) != NULL) {
+         os_conpty_init(&in_name, &out_name, ptyproc->width, ptyproc->height)) != NULL) {
       ptyproc->type = kConpty;
     }
   }

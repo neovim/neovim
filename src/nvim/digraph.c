@@ -1555,24 +1555,24 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
 
   // Search user digraphs first.
   digr_T *dp = (digr_T *)user_digraphs.ga_data;
-  for (int i = 0; i < user_digraphs.ga_len; ++i) {
+  for (int i = 0; i < user_digraphs.ga_len; i++) {
     if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
       retval = dp->result;
       break;
     }
-    ++dp;
+    dp++;
   }
 
   // Search default digraphs.
   if (retval == 0) {
     dp = digraphdefault;
 
-    for (int i = 0; dp->char1 != 0; ++i) {
+    for (int i = 0; dp->char1 != 0; i++) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         retval = dp->result;
         break;
       }
-      ++dp;
+      dp++;
     }
   }
 
@@ -1647,12 +1647,12 @@ void putdigraph(char_u *str)
     dp = (digr_T *)user_digraphs.ga_data;
 
     int i;
-    for (i = 0; i < user_digraphs.ga_len; ++i) {
+    for (i = 0; i < user_digraphs.ga_len; i++) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         dp->result = n;
         break;
       }
-      ++dp;
+      dp++;
     }
 
     // Add a new digraph to the table.
@@ -1684,7 +1684,7 @@ void listdigraphs(bool use_headers)
 
   dp = digraphdefault;
 
-  for (int i = 0; dp->char1 != NUL && !got_int; ++i) {
+  for (int i = 0; dp->char1 != NUL && !got_int; i++) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1911,7 +1911,7 @@ void ex_loadkeymap(exarg_T *eap)
         }
         xfree(kp->from);
         xfree(kp->to);
-        --curbuf->b_kmap_ga.ga_len;
+        curbuf->b_kmap_ga.ga_len--;
       }
     }
     xfree(line);

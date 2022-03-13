@@ -12,13 +12,11 @@
 #define FNAME_EXP       2       // expand to path
 #define FNAME_HYP       4       // check for hypertext link
 #define FNAME_INCL      8       // apply 'includeexpr'
-#define FNAME_REL       16      /* ".." and "./" are relative to the (current)
-                                   file instead of the current directory */
+#define FNAME_REL       16      // ".." and "./" are relative to the (current)
+                                // file instead of the current directory
 #define FNAME_UNESC     32      // remove backslashes used for escaping
 
-/*
- * arguments for win_split()
- */
+// arguments for win_split()
 #define WSP_ROOM        1       // require enough room
 #define WSP_VERT        2       // split vertically
 #define WSP_TOP         4       // window at top-left of shell
@@ -28,9 +26,7 @@
 #define WSP_ABOVE       64      // put new window above/left
 #define WSP_NEWLOC      128     // don't copy location list
 
-/*
- * Minimum screen size
- */
+// Minimum screen size
 #define MIN_COLUMNS     12      // minimal columns for screen
 #define MIN_LINES       2       // minimal lines for screen
 

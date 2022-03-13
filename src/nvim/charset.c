@@ -159,7 +159,7 @@ int buf_init_chartab(buf_T *buf, int global)
 
       if ((*p == '^') && (p[1] != NUL)) {
         tilde = true;
-        ++p;
+        p++;
       }
 
       if (ascii_isdigit(*p)) {
@@ -170,7 +170,7 @@ int buf_init_chartab(buf_T *buf, int global)
       c2 = -1;
 
       if ((*p == '-') && (p[1] != NUL)) {
-        ++p;
+        p++;
 
         if (ascii_isdigit(*p)) {
           c2 = getdigits_int((char_u **)&p, true, 0);
@@ -243,7 +243,7 @@ int buf_init_chartab(buf_T *buf, int global)
             }
           }
         }
-        ++c;
+        c++;
       }
 
       c = *p;
@@ -292,7 +292,7 @@ void trans_characters(char_u *buf, int bufsize)
         memmove(buf + trs_len, buf + 1, (size_t)len);
       }
       memmove(buf, trs, (size_t)trs_len);
-      --len;
+      len--;
     }
     buf += trs_len;
   }
@@ -1314,9 +1314,9 @@ char_u *skiptowhite_esc(char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
-      ++p;
+      p++;
     }
-    ++p;
+    p++;
   }
   return p;
 }
@@ -1686,7 +1686,7 @@ bool rem_backslash(const char_u *str)
 /// @param p
 void backslash_halve(char_u *p)
 {
-  for (; *p; ++p) {
+  for (; *p; p++) {
     if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
     }

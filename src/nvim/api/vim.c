@@ -219,7 +219,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool execute = false;
   bool dangerous = false;
 
-  for (size_t i = 0; i < mode.size; ++i) {
+  for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
     case 'n':
       remap = false; break;
@@ -1880,7 +1880,7 @@ static void write_msg(String message, bool to_err)
   } \
   line_buf[pos++] = message.data[i];
 
-  ++no_wait_return;
+  no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {
     if (got_int) {
       break;
@@ -1891,7 +1891,7 @@ static void write_msg(String message, bool to_err)
       PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
   }
-  --no_wait_return;
+  no_wait_return--;
   msg_end();
 }
 

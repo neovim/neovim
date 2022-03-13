@@ -8,12 +8,10 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
-/*
- * flags for update_screen()
- * The higher the value, the higher the priority
- */
-#define VALID                   10  /* buffer not changed, or changes marked
-                                       with b_mod_* */
+// flags for update_screen()
+// The higher the value, the higher the priority
+#define VALID                   10  // buffer not changed, or changes marked
+                                    // with b_mod_*
 #define INVERTED                20  // redisplay inverted part that changed
 #define INVERTED_ALL            25  // redisplay whole inverted part
 #define REDRAW_TOP              30  // display first w_upd_rows screen lines

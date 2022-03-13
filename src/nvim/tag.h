@@ -4,9 +4,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
 
-/*
- * Values for do_tag().
- */
+// Values for do_tag().
 #define DT_TAG          1       // jump to newer position or same tag again
 #define DT_POP          2       // jump to older position
 #define DT_NEXT         3       // jump to next match of same tag
@@ -20,9 +18,7 @@
 #define DT_LTAG         11      // tag using location list
 #define DT_FREE         99      // free cached matches
 
-//
 // flags for find_tags().
-//
 #define TAG_HELP        1       // only search for help tags
 #define TAG_NAMES       2       // only return name of tag
 #define TAG_REGEXP      4       // use tag pattern as regexp
@@ -36,9 +32,7 @@
 #define TAG_MANY        300     // When finding many tags (for completion),
                                 // find up to this many tags
 
-/*
- * Structure used for get_tagfname().
- */
+// Structure used for get_tagfname().
 typedef struct {
   char_u *tn_tags;         // value of 'tags' when starting
   char_u *tn_np;           // current position in tn_tags

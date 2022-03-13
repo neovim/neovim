@@ -81,10 +81,8 @@ typedef struct {
   bool can_continuate;
 } ParserState;
 
-static inline void viml_parser_init(
-                                    ParserState *const ret_pstate,
-                                    const ParserLineGetter get_line, void *const cookie,
-                                    ParserHighlight *const colors)
+static inline void viml_parser_init(ParserState *const ret_pstate, const ParserLineGetter get_line,
+                                    void *const cookie, ParserHighlight *const colors)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
 
 /// Initialize a new parser state instance

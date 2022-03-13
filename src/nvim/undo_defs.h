@@ -33,8 +33,8 @@ struct u_entry {
 };
 
 struct u_header {
-  /* The following have a pointer and a number. The number is used when
-   * reading the undo file in u_read_undo() */
+  // The following have a pointer and a number. The number is used when reading
+  // the undo file in u_read_undo()
   union {
     u_header_T *ptr;            // pointer to next undo header in list
     long seq;
@@ -80,4 +80,4 @@ typedef struct {
   FILE *bi_fp;
 } bufinfo_T;
 
-#endif // NVIM_UNDO_DEFS_H
+#endif  // NVIM_UNDO_DEFS_H
