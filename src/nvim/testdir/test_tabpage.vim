@@ -692,6 +692,7 @@ func Test_lastused_tabpage()
   call assert_beeps('call feedkeys("g\<Tab>", "xt")')
   call assert_beeps('call feedkeys("\<C-Tab>", "xt")')
   call assert_beeps('call feedkeys("\<C-W>g\<Tab>", "xt")')
+  call assert_fails('tabnext #', 'E475:')
 
   " open four tab pages
   tabnew
@@ -716,17 +717,41 @@ func Test_lastused_tabpage()
   call assert_equal(4, tabpagenr())
   call assert_equal(2, tabpagenr('#'))
 
+  " Test for :tabnext #
+  tabnext #
+  call assert_equal(2, tabpagenr())
+  call assert_equal(4, tabpagenr('#'))
+
   " Try to jump to a closed tab page
-  tabclose 2
+  tabclose #
   call assert_equal(0, tabpagenr('#'))
   call feedkeys("g\<Tab>", "xt")
-  call assert_equal(3, tabpagenr())
+  call assert_equal(2, tabpagenr())
   call feedkeys("\<C-Tab>", "xt")
-  call assert_equal(3, tabpagenr())
+  call assert_equal(2, tabpagenr())
   call feedkeys("\<C-W>g\<Tab>", "xt")
-  call assert_equal(3, tabpagenr())
+  call assert_equal(2, tabpagenr())
+  call assert_fails('tabnext #', 'E475:')
+  call assert_equal(2, tabpagenr())
 
-  tabclose!
+  " Test for :tabonly #
+  let wnum = win_getid()
+  $tabnew
+  tabonly #
+  call assert_equal(wnum, win_getid())
+  call assert_equal(1, tabpagenr('$'))
+
+  " Test for :tabmove #
+  tabnew
+  let wnum = win_getid()
+  tabnew
+  tabnew
+  tabnext 2
+  tabmove #
+  call assert_equal(4, tabpagenr())
+  call assert_equal(wnum, win_getid())
+
+  tabonly!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -2036,6 +2036,18 @@ doend:
   return ea.nextcmd;
 }
 
+static char ex_error_buf[MSG_BUF_LEN];
+
+/// @return an error message with argument included.
+/// Uses a static buffer, only the last error will be kept.
+/// "msg" will be translated, caller should use N_().
+char *ex_errmsg(const char *const msg, const char_u *const arg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  vim_snprintf(ex_error_buf, MSG_BUF_LEN, _(msg), arg);
+  return ex_error_buf;
+}
+
 // Parse and skip over command modifiers:
 // - update eap->cmd
 // - store flags in "cmdmod".
@@ -4861,7 +4873,13 @@ static int get_tabpage_arg(exarg_T *eap)
       if (STRCMP(p, "$") == 0) {
         tab_number = LAST_TAB_NR;
       } else if (STRCMP(p, "#") == 0) {
-        tab_number = tabpage_index(lastused_tabpage);
+        if (valid_tabpage(lastused_tabpage)) {
+          tab_number = tabpage_index(lastused_tabpage);
+        } else {
+          eap->errmsg = ex_errmsg(e_invargval, eap->arg);
+          tab_number = 0;
+          goto theend;
+        }
       } else if (p == p_save || *p_save == '-' || *p != NUL
                  || tab_number > LAST_TAB_NR) {
         // No numbers as argument.
