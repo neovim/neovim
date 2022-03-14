@@ -112,7 +112,14 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 
 void ui_client_event_grid_resize(Array args)
 {
-  // TODO: typesafe!
+  if (args.size < 3
+      || args.items[0].type != kObjectTypeInteger
+      || args.items[1].type != kObjectTypeInteger
+      || args.items[2].type != kObjectTypeInteger) {
+    ELOG("Error handling ui event 'grid_resize'");
+    return;
+  }
+
   Integer grid = args.items[0].data.integer;
   Integer width = args.items[1].data.integer;
   Integer height = args.items[2].data.integer;
@@ -189,7 +196,7 @@ void ui_client_event_grid_line(Array args)
       if (j >= buf_size) {
         goto error;  // _YIKES_
       }
-      STRCPY(buf_char[j], schar);
+      STRLCPY(buf_char[j], schar, sizeof(schar_T));
       buf_attr[j++] = cur_attr;
     }
   }
@@ -199,9 +206,9 @@ void ui_client_event_grid_line(Array args)
   clear_attr = cur_attr;
 
   ui_call_raw_line(grid, row, startcol, endcol, clearcol, clear_attr, lineflags,
-                   buf_char, buf_attr);
+                   (const schar_T *)buf_char, (const sattr_T *)buf_attr);
   return;
 
 error:
-    ELOG("malformatted 'grid_line' event");
+    ELOG("Error handling ui event 'grid_line'");
 }

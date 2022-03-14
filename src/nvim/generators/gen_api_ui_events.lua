@@ -51,8 +51,25 @@ local function write_arglist(output, ev, need_copy)
   end
 end
 
-local function extract_and_write_arglist(output, ev)
+local function call_ui_event_method(output, ev)
+  output:write('void ui_client_event_'..ev.name..'(Array args)\n{\n')
+
   local hlattrs_args_count = 0
+  if #ev.parameters > 0 then
+    output:write('  if (args.size < '..(#ev.parameters))
+    for j = 1, #ev.parameters do
+      local kind = ev.parameters[j][1]
+      if kind ~= "Object" then
+        if kind == 'HlAttrs' then kind = 'Dictionary' end
+        output:write('\n      || args.items['..(j-1)..'].type != kObjectType'..kind..'')
+      end
+    end
+    output:write(') {\n')
+    output:write('    ELOG("Error handling ui event \''..ev.name..'\'");\n')
+    output:write('    return;\n')
+    output:write('  }\n')
+  end
+
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = param[1]
@@ -67,9 +84,7 @@ local function extract_and_write_arglist(output, ev)
       output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
     end
   end
-end
 
-local function call_ui_event_method(output, ev)
   output:write('  ui_call_'..ev.name..'(')
   for j = 1, #ev.parameters do
     output:write('arg_'..j)
@@ -78,6 +93,8 @@ local function call_ui_event_method(output, ev)
     end
   end
   output:write(');\n')
+
+  output:write('}\n\n')
 end
 
 for i = 1, #events do
@@ -192,10 +209,7 @@ for i = 1, #events do
   end
 
   if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
-    client_output:write('void ui_client_event_'..ev.name..'(Array args)\n{\n')
-    extract_and_write_arglist(client_output, ev)
     call_ui_event_method(client_output, ev)
-    client_output:write('}\n\n')
   end
 end
 
