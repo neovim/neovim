@@ -3257,9 +3257,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   }
 
   // b: variables
-  // In cmdwin, the alternative buffer should be used.
-  hashtab_T *ht
-    = is_in_cmdwin() ? &prevwin->w_buffer->b_vars->dv_hashtab : &curbuf->b_vars->dv_hashtab;
+  const hashtab_T *ht = &prevwin_curwin()->w_buffer->b_vars->dv_hashtab;
   if (bdone < ht->ht_used) {
     if (bdone++ == 0) {
       hi = ht->ht_array;
@@ -3273,8 +3271,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   }
 
   // w: variables
-  // In cmdwin, the alternative window should be used.
-  ht = is_in_cmdwin() ? &prevwin->w_vars->dv_hashtab : &curwin->w_vars->dv_hashtab;
+  ht = &prevwin_curwin()->w_vars->dv_hashtab;
   if (wdone < ht->ht_used) {
     if (wdone++ == 0) {
       hi = ht->ht_array;

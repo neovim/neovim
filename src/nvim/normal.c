@@ -5869,7 +5869,7 @@ static void nv_gomark(cmdarg_T *cap)
   }
 }
 
-// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
+/// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
 static void nv_pcmark(cmdarg_T *cap)
 {
   pos_T *pos;
@@ -5878,7 +5878,9 @@ static void nv_pcmark(cmdarg_T *cap)
 
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == TAB && mod_mask == MOD_MASK_CTRL) {
-      goto_tabpage_lastused();
+      if (!goto_tabpage_lastused()) {
+        clearopbeep(cap->oap);
+      }
       return;
     }
     if (cap->cmdchar == 'g') {
@@ -6642,9 +6644,10 @@ static void nv_g_cmd(cmdarg_T *cap)
       goto_tabpage(-(int)cap->count1);
     }
     break;
+
   case TAB:
-    if (!checkclearop(oap)) {
-      goto_tabpage_lastused();
+    if (!checkclearop(oap) && !goto_tabpage_lastused()) {
+      clearopbeep(oap);
     }
     break;
 

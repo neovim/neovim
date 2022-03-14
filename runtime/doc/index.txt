@@ -431,6 +431,7 @@ tag		char	      note action in Normal mode	~
 |<C-LeftMouse>|	<C-LeftMouse>	   ":ta" to the keyword at the mouse click
 |<C-Right>|	<C-Right>	1  same as "w"
 |<C-RightMouse>| <C-RightMouse>	   same as "CTRL-T"
+|<C-Tab>|	<C-Tab>		   same as "g<Tab>"
 |<Del>|		["x]<Del>	2  same as "x"
 |N<Del>|	{count}<Del>	   remove the last digit from {count}
 |<Down>|	<Down>		1  same as "j"
@@ -577,7 +578,7 @@ tag		command		   action in Normal mode	~
 				   following the file name.
 |CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
 |CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
-|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as `g<Tab>` : go to last accessed tab
+|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as |g<Tab>|: go to last accessed tab
 				   page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of

@@ -73,6 +73,15 @@ typedef enum {
 
 static char *m_onlyone = N_("Already only one window");
 
+/// @return the current window, unless in the cmdline window and "prevwin" is
+/// set, then return "prevwin".
+win_T *prevwin_curwin(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // In cmdwin, the alternative buffer should be used.
+  return is_in_cmdwin() && prevwin != NULL ? prevwin : curwin;
+}
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -521,10 +530,6 @@ wingotofile:
       do_nv_ident('g', xchar);
       break;
 
-    case TAB:
-      goto_tabpage_lastused();
-      break;
-
     case 'f':                       // CTRL-W gf: "gf" in a new tab page
     case 'F':                       // CTRL-W gF: "gF" in a new tab page
       cmdmod.tab = tabpage_index(curtab) + 1;
@@ -536,6 +541,12 @@ wingotofile:
 
     case 'T':                       // CTRL-W gT: go to previous tab page
       goto_tabpage(-(int)Prenum1);
+      break;
+
+    case TAB:                       // CTRL-W g<Tab>: go to last used tab page
+      if (!goto_tabpage_lastused()) {
+        beep_flush();
+      }
       break;
 
     case 'e':
@@ -2895,6 +2906,9 @@ void win_free_all(void)
 {
   int dummy;
 
+  // avoid an error for switching tabpage with the cmdline window open
+  cmdwin_type = 0;
+
   while (first_tabpage->tp_next != NULL) {
     tabpage_close(TRUE);
   }
@@ -3857,6 +3871,11 @@ int win_new_tabpage(int after, char_u *filename)
   tabpage_T *newtp;
   int n;
 
+  if (cmdwin_type != 0) {
+    emsg(_(e_cmdwin));
+    return FAIL;
+  }
+
   newtp = alloc_tabpage();
 
   // Remember the current windows in this Tab page.
@@ -4102,8 +4121,8 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
 {
   int old_off = tp->tp_firstwin->w_winrow;
   win_T *next_prevwin = tp->tp_prevwin;
-
   tabpage_T *old_curtab = curtab;
+
   curtab = tp;
   firstwin = tp->tp_firstwin;
   lastwin = tp->tp_lastwin;
@@ -4255,6 +4274,10 @@ void goto_tabpage(int n)
 /// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
 void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
+  if (trigger_enter_autocmds || trigger_leave_autocmds) {
+    CHECK_CMDWIN;
+  }
+
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
 
@@ -4270,13 +4293,15 @@ void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_le
   }
 }
 
-// Go to the last accessed tab page, if there is one.
-void goto_tabpage_lastused(void)
+/// Go to the last accessed tab page, if there is one.
+/// @return true if the tab page is valid, false otherwise.
+bool goto_tabpage_lastused(void)
 {
-  int index = tabpage_index(lastused_tabpage);
-  if (index < tabpage_index(NULL)) {
-    goto_tabpage(index);
+  if (valid_tabpage(lastused_tabpage)) {
+    goto_tabpage_tp(lastused_tabpage, true, true);
+    return true;
   }
+  return false;
 }
 
 /*

@@ -8103,14 +8103,14 @@ tabpagebuflist([{arg}])					*tabpagebuflist()*
 tabpagenr([{arg}])					*tabpagenr()*
 		The result is a Number, which is the number of the current
 		tab page.  The first tab page has number 1.
+
 		The optional argument {arg} supports the following values:
 			$	the number of the last tab page (the tab page
 				count).
-			#	the number of the last accessed tab page (where
-				|g<Tab>| goes to).  If there is no previous
-				tab page, 0 is returned.
+			#	the number of the last accessed tab page
+				(where |g<Tab>| goes to).  If there is no
+				previous tab page, 0 is returned.
 		The number can be used with the |:tab| command.
-
 
 tabpagewinnr({tabarg} [, {arg}])			*tabpagewinnr()*
 		Like |winnr()| but for tab page {tabarg}.

@@ -448,10 +448,11 @@ EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
 EXTERN frame_T *topframe;      // top of the window frame tree
 
 // Tab pages are alternative topframes.  "first_tabpage" points to the first
-// one in the list, "curtab" is the current one.
+// one in the list, "curtab" is the current one. "lastused_tabpage" is the
+// last used one.
 EXTERN tabpage_T *first_tabpage;
-EXTERN tabpage_T *lastused_tabpage;
 EXTERN tabpage_T *curtab;
+EXTERN tabpage_T *lastused_tabpage;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list
