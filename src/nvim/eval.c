@@ -33,6 +33,7 @@
 #include "nvim/ex_session.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"

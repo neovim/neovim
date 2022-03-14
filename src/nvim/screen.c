@@ -88,6 +88,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"

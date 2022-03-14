@@ -22,6 +22,7 @@
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
@@ -32,7 +33,6 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
-#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
@@ -1293,7 +1293,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
 {
   if (obj.type == kObjectTypeString) {
     String str = obj.data.string;
-    return str.size ? syn_check_group(str.data, (int)str.size) : 0;
+    return str.size ? syn_check_group(str.data, str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
@@ -1327,7 +1327,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
         // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group(hl.data, (int)hl.size);
+        int hl_id = syn_check_group(hl.data, hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
     }

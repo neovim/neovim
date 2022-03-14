@@ -22,6 +22,7 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/hardcopy.h"
+#include "nvim/highlight_group.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

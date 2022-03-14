@@ -5,10 +5,10 @@
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/move.h"
 #include "nvim/screen.h"
-#include "nvim/syntax.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
