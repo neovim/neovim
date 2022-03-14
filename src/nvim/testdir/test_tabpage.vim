@@ -128,6 +128,8 @@ function Test_tabpage()
   1tabmove
   call assert_equal(2, tabpagenr())
 
+  call assert_fails('let t = tabpagenr("@")', 'E15:')
+  call assert_equal(0, tabpagewinnr(-1))
   call assert_fails("99tabmove", 'E16:')
   call assert_fails("+99tabmove", 'E16:')
   call assert_fails("-99tabmove", 'E16:')
@@ -681,6 +683,50 @@ func Test_tabline_tabmenu()
   call assert_equal(5, tabpagenr('$'))
 
   %bw!
+endfunc
+
+" Test for jumping to last accessed tabpage
+func Test_lastused_tabpage()
+  tabonly!
+  call assert_equal(0, tabpagenr('#'))
+  call assert_beeps('call feedkeys("g\<Tab>", "xt")')
+  call assert_beeps('call feedkeys("\<C-Tab>", "xt")')
+  call assert_beeps('call feedkeys("\<C-W>g\<Tab>", "xt")')
+
+  " open four tab pages
+  tabnew
+  tabnew
+  tabnew
+
+  2tabnext
+
+  " Test for g<Tab>
+  call assert_equal(4, tabpagenr('#'))
+  call feedkeys("g\<Tab>", "xt")
+  call assert_equal(4, tabpagenr())
+  call assert_equal(2, tabpagenr('#'))
+
+  " Test for <C-Tab>
+  call feedkeys("\<C-Tab>", "xt")
+  call assert_equal(2, tabpagenr())
+  call assert_equal(4, tabpagenr('#'))
+
+  " Test for <C-W>g<Tab>
+  call feedkeys("\<C-W>g\<Tab>", "xt")
+  call assert_equal(4, tabpagenr())
+  call assert_equal(2, tabpagenr('#'))
+
+  " Try to jump to a closed tab page
+  tabclose 2
+  call assert_equal(0, tabpagenr('#'))
+  call feedkeys("g\<Tab>", "xt")
+  call assert_equal(3, tabpagenr())
+  call feedkeys("\<C-Tab>", "xt")
+  call assert_equal(3, tabpagenr())
+  call feedkeys("\<C-W>g\<Tab>", "xt")
+  call assert_equal(3, tabpagenr())
+
+  tabclose!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

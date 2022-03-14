@@ -11213,9 +11213,7 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (strcmp(arg, "$") == 0) {
         nr = tabpage_index(NULL) - 1;
       } else if (strcmp(arg, "#") == 0) {
-        nr = valid_tabpage(lastused_tabpage)
-             ? tabpage_index(lastused_tabpage)
-             : nr;
+        nr = valid_tabpage(lastused_tabpage) ? tabpage_index(lastused_tabpage) : 0;
       } else {
         semsg(_(e_invexpr2), arg);
       }
