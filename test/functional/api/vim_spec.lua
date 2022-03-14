@@ -1097,6 +1097,18 @@ describe('API', function()
         :Foo^                |
       ]])
     end)
+    it('pasting text with control characters in Cmdline mode', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      feed(':')
+      nvim('paste', 'normal! \023\022\006\027', true, -1)
+      screen:expect([[
+                            |
+        ~                   |
+        ~                   |
+        :normal! ^W^V^F^[^   |
+      ]])
+    end)
     it('crlf=false does not break lines at CR, CRLF', function()
       nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)
       expect('line 1\r\n\r\rline 2\nline 3\rline 4\r')
