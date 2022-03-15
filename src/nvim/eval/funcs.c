@@ -3734,7 +3734,7 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   varnumber_T winid = 0;
   varnumber_T winrow = 0;
   varnumber_T wincol = 0;
-  linenr_T line = 0;
+  linenr_T lnum = 0;
   varnumber_T column = 0;
 
   tv_dict_alloc_ret(rettv);
@@ -3753,18 +3753,8 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       winrow = row + 1 + wp->w_border_adj[0];  // Adjust by 1 for top border
       wincol = col + 1 + wp->w_border_adj[3];  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
-        char_u *p;
-        int count;
-
-        mouse_comp_pos(wp, &row, &col, &line);
-
-        // limit to text length plus one
-        p = ml_get_buf(wp->w_buffer, line, false);
-        count = (int)STRLEN(p);
-        if (col > count) {
-          col = count;
-        }
-
+        (void)mouse_comp_pos(wp, &row, &col, &lnum);
+        col = vcol2col(wp, lnum, col);
         column = col + 1;
       }
     }
@@ -3772,7 +3762,7 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_add_nr(d, S_LEN("winid"), winid);
   tv_dict_add_nr(d, S_LEN("winrow"), winrow);
   tv_dict_add_nr(d, S_LEN("wincol"), wincol);
-  tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)line);
+  tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)lnum);
   tv_dict_add_nr(d, S_LEN("column"), column);
 }
 

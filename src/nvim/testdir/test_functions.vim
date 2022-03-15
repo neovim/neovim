@@ -1762,6 +1762,75 @@ func Test_getcurpos_setpos()
   call assert_equal([0, 0, 0, 0, 0], getcurpos(1999))
 endfunc
 
+func Test_getmousepos()
+  enew!
+  call setline(1, "\t\t\t1234")
+  " call test_setmouse(1, 1)
+  call nvim_input_mouse('left', 'press', '', 0, 0, 0)
+  call getchar() " wait for and consume the mouse press
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 1,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 1,
+        \ line: 1,
+        \ column: 1,
+        \ }, getmousepos())
+  " call test_setmouse(1, 25)
+  call nvim_input_mouse('left', 'press', '', 0, 0, 24)
+  call getchar() " wait for and consume the mouse press
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 25,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 25,
+        \ line: 1,
+        \ column: 4,
+        \ }, getmousepos())
+  " call test_setmouse(1, 50)
+  call nvim_input_mouse('left', 'press', '', 0, 0, 49)
+  call getchar() " wait for and consume the mouse press
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 50,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 50,
+        \ line: 1,
+        \ column: 8,
+        \ }, getmousepos())
+
+  " If the mouse is positioned past the last buffer line, "line" and "column"
+  " should act like it's positioned on the last buffer line.
+  " call test_setmouse(2, 25)
+  call nvim_input_mouse('left', 'press', '', 0, 1, 24)
+  call getchar() " wait for and consume the mouse press
+  call assert_equal(#{
+        \ screenrow: 2,
+        \ screencol: 25,
+        \ winid: win_getid(),
+        \ winrow: 2,
+        \ wincol: 25,
+        \ line: 1,
+        \ column: 4,
+        \ }, getmousepos())
+  " call test_setmouse(2, 50)
+  call nvim_input_mouse('left', 'press', '', 0, 1, 49)
+  call getchar() " wait for and consume the mouse press
+  call assert_equal(#{
+        \ screenrow: 2,
+        \ screencol: 50,
+        \ winid: win_getid(),
+        \ winrow: 2,
+        \ wincol: 50,
+        \ line: 1,
+        \ column: 8,
+        \ }, getmousepos())
+  bwipe!
+endfunc
+
 func HasDefault(msg = 'msg')
   return a:msg
 endfunc
