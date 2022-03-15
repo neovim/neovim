@@ -365,7 +365,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       // edit that buffer, to not lose folding information (:edit resets
       // folds in other buffers)
       if (fprintf(fd,
-                  "if bufexists(\"%s\") | buffer %s | else | edit %s | endif\n"
+                  "if bufexists(fnamemodify(\"%s\", \":p\")) | buffer %s | else | edit %s | endif\n"
                   // Fixup :terminal buffer name. #7836
                   "if &buftype ==# 'terminal'\n"
                   "  silent file %s\n"
