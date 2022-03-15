@@ -3753,9 +3753,8 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       winrow = row + 1 + wp->w_border_adj[0];  // Adjust by 1 for top border
       wincol = col + 1 + wp->w_border_adj[3];  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
-        if (!mouse_comp_pos(wp, &row, &col, &lnum)) {
-          col = vcol2col(wp, lnum, col);
-        }
+        (void)mouse_comp_pos(wp, &row, &col, &lnum);
+        col = vcol2col(wp, lnum, col);
         column = col + 1;
       }
     }
