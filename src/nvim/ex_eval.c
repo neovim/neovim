@@ -88,27 +88,26 @@
  */
 static int cause_abort = FALSE;
 
-// Return true when immediately aborting on error, or when an interrupt
-// occurred or an exception was thrown but not caught.  Use for ":{range}call"
-// to check whether an aborted function that does not handle a range itself
-// should be called again for the next line in the range.  Also used for
-// cancelling expression evaluation after a function call caused an immediate
-// abort.  Note that the first emsg() call temporarily resets "force_abort"
-// until the throw point for error messages has been reached.  That is, during
-// cancellation of an expression evaluation after an aborting function call or
-// due to a parsing error, aborting() always returns the same value.
-// "got_int" is also set by calling interrupt().
+/// @return  true when immediately aborting on error, or when an interrupt
+///          occurred or an exception was thrown but not caught.
+///
+/// Use for ":{range}call" to check whether an aborted function that does not
+/// handle a range itself should be called again for the next line in the range.
+/// Also used for cancelling expression evaluation after a function call caused
+/// an immediate abort.  Note that the first emsg() call temporarily resets
+/// "force_abort" until the throw point for error messages has been reached.
+/// That is, during cancellation of an expression evaluation after an aborting
+/// function call or due to a parsing error, aborting() always returns the same
+/// value. "got_int" is also set by calling interrupt().
 int aborting(void)
 {
   return (did_emsg && force_abort) || got_int || current_exception;
 }
 
-/*
- * The value of "force_abort" is temporarily reset by the first emsg() call
- * during an expression evaluation, and "cause_abort" is used instead.  It might
- * be necessary to restore "force_abort" even before the throw point for the
- * error message has been reached.  update_force_abort() should be called then.
- */
+/// The value of "force_abort" is temporarily reset by the first emsg() call
+/// during an expression evaluation, and "cause_abort" is used instead.  It might
+/// be necessary to restore "force_abort" even before the throw point for the
+/// error message has been reached.  update_force_abort() should be called then.
 void update_force_abort(void)
 {
   if (cause_abort) {
@@ -116,23 +115,19 @@ void update_force_abort(void)
   }
 }
 
-/*
- * Return TRUE if a command with a subcommand resulting in "retcode" should
- * abort the script processing.  Can be used to suppress an autocommand after
- * execution of a failing subcommand as long as the error message has not been
- * displayed and actually caused the abortion.
- */
+/// @return  TRUE if a command with a subcommand resulting in "retcode" should
+/// abort the script processing.  Can be used to suppress an autocommand after
+/// execution of a failing subcommand as long as the error message has not been
+/// displayed and actually caused the abortion.
 int should_abort(int retcode)
 {
   return (retcode == FAIL && trylevel != 0 && !emsg_silent) || aborting();
 }
 
-/*
- * Return TRUE if a function with the "abort" flag should not be considered
- * ended on an error.  This means that parsing commands is continued in order
- * to find finally clauses to be executed, and that some errors in skipped
- * commands are still reported.
- */
+/// @return  TRUE if a function with the "abort" flag should not be considered
+/// ended on an error.  This means that parsing commands is continued in order
+/// to find finally clauses to be executed, and that some errors in skipped
+/// commands are still reported.
 int aborted_in_try(void)
 {
   // This function is only called after an error.  In this case, "force_abort"
@@ -140,13 +135,15 @@ int aborted_in_try(void)
   return force_abort;
 }
 
-// cause_errthrow(): Cause a throw of an error exception if appropriate.
-// Return true if the error message should not be displayed by emsg().
-// Sets "ignore", if the emsg() call should be ignored completely.
-//
-// When several messages appear in the same command, the first is usually the
-// most specific one and used as the exception value.  The "severe" flag can be
-// set to true, if a later but severer message should be used instead.
+/// cause_errthrow(): Cause a throw of an error exception if appropriate.
+///
+/// @return  true if the error message should not be displayed by emsg().
+///
+/// Sets "ignore", if the emsg() call should be ignored completely.
+///
+/// When several messages appear in the same command, the first is usually the
+/// most specific one and used as the exception value.  The "severe" flag can be
+/// set to true, if a later but severer message should be used instead.
 bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -279,9 +276,7 @@ bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
   }
 }
 
-/*
- * Free a "msg_list" and the messages it contains.
- */
+/// Free a "msg_list" and the messages it contains.
 static void free_msglist(struct msglist *l)
 {
   struct msglist *messages, *next;
@@ -295,21 +290,17 @@ static void free_msglist(struct msglist *l)
   }
 }
 
-/*
- * Free global "*msg_list" and the messages it contains, then set "*msg_list"
- * to NULL.
- */
+/// Free global "*msg_list" and the messages it contains, then set "*msg_list"
+/// to NULL.
 void free_global_msglist(void)
 {
   free_msglist(*msg_list);
   *msg_list = NULL;
 }
 
-/*
- * Throw the message specified in the call to cause_errthrow() above as an
- * error exception.  If cstack is NULL, postpone the throw until do_cmdline()
- * has returned (see do_one_cmd()).
- */
+/// Throw the message specified in the call to cause_errthrow() above as an
+/// error exception.  If cstack is NULL, postpone the throw until do_cmdline()
+/// has returned (see do_one_cmd()).
 void do_errthrow(cstack_T *cstack, char_u *cmdname)
 {
   /*
@@ -339,11 +330,11 @@ void do_errthrow(cstack_T *cstack, char_u *cmdname)
   *msg_list = NULL;
 }
 
-/*
- * do_intthrow(): Replace the current exception by an interrupt or interrupt
- * exception if appropriate.  Return TRUE if the current exception is discarded,
- * FALSE otherwise.
- */
+/// do_intthrow(): Replace the current exception by an interrupt or interrupt
+/// exception if appropriate.
+///
+/// @return  TRUE if the current exception is discarded or,
+///          FALSE otherwise.
 int do_intthrow(cstack_T *cstack)
 {
   // If no interrupt occurred or no try conditional is active and no exception
@@ -386,7 +377,7 @@ int do_intthrow(cstack_T *cstack)
   return true;
 }
 
-// Get an exception message that is to be stored in current_exception->value.
+/// Get an exception message that is to be stored in current_exception->value.
 char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int *should_free)
 {
   char *ret, *mesg;
@@ -445,10 +436,12 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
 }
 
 
-// Throw a new exception.  Return FAIL when out of memory or it was tried to
-// throw an illegal user exception.  "value" is the exception string for a
-// user or interrupt exception, or points to a message list in case of an
-// error exception.
+/// Throw a new exception.  "value" is the exception string for a
+/// user or interrupt exception, or points to a message list in case of an
+/// error exception.
+///
+/// @return  FAIL when out of memory or it was tried to throw an illegal user
+///          exception.
 static int throw_exception(void *value, except_type_T type, char_u *cmdname)
 {
   except_T *excp;
@@ -524,10 +517,8 @@ fail:
   return FAIL;
 }
 
-/*
- * Discard an exception.  "was_finished" is set when the exception has been
- * caught and the catch clause has been ended normally.
- */
+/// Discard an exception.  "was_finished" is set when the exception has been
+/// caught and the catch clause has been ended normally.
 static void discard_exception(except_T *excp, bool was_finished)
 {
   char_u *saved_IObuff;
@@ -579,9 +570,7 @@ static void discard_exception(except_T *excp, bool was_finished)
   xfree(excp);
 }
 
-/*
- * Discard the exception currently being thrown.
- */
+/// Discard the exception currently being thrown.
 void discard_current_exception(void)
 {
   if (current_exception != NULL) {
@@ -592,9 +581,7 @@ void discard_current_exception(void)
   need_rethrow = false;
 }
 
-/*
- * Put an exception on the caught stack.
- */
+/// Put an exception on the caught stack.
 static void catch_exception(except_T *excp)
 {
   excp->caught = caught_stack;
@@ -640,9 +627,7 @@ static void catch_exception(except_T *excp)
   }
 }
 
-/*
- * Remove an exception from the caught stack.
- */
+/// Remove an exception from the caught stack.
 static void finish_exception(except_T *excp)
 {
   if (excp != caught_stack) {
@@ -682,13 +667,11 @@ static void finish_exception(except_T *excp)
 #define RP_RESUME       1
 #define RP_DISCARD      2
 
-/*
- * Report information about something pending in a finally clause if required by
- * the 'verbose' option or when debugging.  "action" tells whether something is
- * made pending or something pending is resumed or discarded.  "pending" tells
- * what is pending.  "value" specifies the return value for a pending ":return"
- * or the exception value for a pending exception.
- */
+/// Report information about something pending in a finally clause if required by
+/// the 'verbose' option or when debugging.  "action" tells whether something is
+/// made pending or something pending is resumed or discarded.  "pending" tells
+/// what is pending.  "value" specifies the return value for a pending ":return"
+/// or the exception value for a pending exception.
 static void report_pending(int action, int pending, void *value)
 {
   char *mesg;
@@ -764,10 +747,8 @@ static void report_pending(int action, int pending, void *value)
   }
 }
 
-/*
- * If something is made pending in a finally clause, report it if required by
- * the 'verbose' option or when debugging.
- */
+/// If something is made pending in a finally clause, report it if required by
+/// the 'verbose' option or when debugging.
 void report_make_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
@@ -781,10 +762,8 @@ void report_make_pending(int pending, void *value)
   }
 }
 
-/*
- * If something pending in a finally clause is resumed at the ":endtry", report
- * it if required by the 'verbose' option or when debugging.
- */
+/// If something pending in a finally clause is resumed at the ":endtry", report
+/// it if required by the 'verbose' option or when debugging.
 void report_resume_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
@@ -798,10 +777,8 @@ void report_resume_pending(int pending, void *value)
   }
 }
 
-/*
- * If something pending in a finally clause is discarded, report it if required
- * by the 'verbose' option or when debugging.
- */
+/// If something pending in a finally clause is discarded, report it if required
+/// by the 'verbose' option or when debugging.
 void report_discard_pending(int pending, void *value)
 {
   if (p_verbose >= 14 || debug_break_level > 0) {
@@ -815,7 +792,7 @@ void report_discard_pending(int pending, void *value)
   }
 }
 
-// ":eval".
+/// Handle ":eval".
 void ex_eval(exarg_T *eap)
 {
   typval_T tv;
@@ -825,9 +802,7 @@ void ex_eval(exarg_T *eap)
   }
 }
 
-/*
- * ":if".
- */
+/// Handle ":if".
 void ex_if(exarg_T *eap)
 {
   int skip;
@@ -856,9 +831,7 @@ void ex_if(exarg_T *eap)
   }
 }
 
-/*
- * ":endif".
- */
+/// Handle ":endif".
 void ex_endif(exarg_T *eap)
 {
   did_endif = true;
@@ -883,9 +856,7 @@ void ex_endif(exarg_T *eap)
   }
 }
 
-/*
- * ":else" and ":elseif".
- */
+/// Handle ":else" and ":elseif".
 void ex_else(exarg_T *eap)
 {
   int result;
@@ -958,9 +929,7 @@ void ex_else(exarg_T *eap)
   }
 }
 
-/*
- * Handle ":while" and ":for".
- */
+/// Handle ":while" and ":for".
 void ex_while(exarg_T *eap)
 {
   bool error;
@@ -1041,9 +1010,7 @@ void ex_while(exarg_T *eap)
   }
 }
 
-/*
- * ":continue"
- */
+/// Handle ":continue"
 void ex_continue(exarg_T *eap)
 {
   int idx;
@@ -1075,9 +1042,7 @@ void ex_continue(exarg_T *eap)
   }
 }
 
-/*
- * ":break"
- */
+/// Handle ":break"
 void ex_break(exarg_T *eap)
 {
   int idx;
@@ -1098,9 +1063,7 @@ void ex_break(exarg_T *eap)
   }
 }
 
-/*
- * ":endwhile" and ":endfor"
- */
+/// Handle ":endwhile" and ":endfor"
 void ex_endwhile(exarg_T *eap)
 {
   cstack_T *const cstack = eap->cstack;
@@ -1175,9 +1138,7 @@ void ex_endwhile(exarg_T *eap)
 }
 
 
-/*
- * ":throw expr"
- */
+/// Handle ":throw expr"
 void ex_throw(exarg_T *eap)
 {
   const char *arg = (const char *)eap->arg;
@@ -1202,11 +1163,9 @@ void ex_throw(exarg_T *eap)
   }
 }
 
-/*
- * Throw the current exception through the specified cstack.  Common routine
- * for ":throw" (user exception) and error and interrupt exceptions.  Also
- * used for rethrowing an uncaught exception.
- */
+/// Throw the current exception through the specified cstack.  Common routine
+/// for ":throw" (user exception) and error and interrupt exceptions.  Also
+/// used for rethrowing an uncaught exception.
 void do_throw(cstack_T *cstack)
 {
   int idx;
@@ -1263,9 +1222,7 @@ void do_throw(cstack_T *cstack)
   }
 }
 
-/*
- * ":try"
- */
+/// Handle ":try"
 void ex_try(exarg_T *eap)
 {
   int skip;
@@ -1315,9 +1272,7 @@ void ex_try(exarg_T *eap)
   }
 }
 
-/*
- * ":catch /{pattern}/" and ":catch"
- */
+/// Handle ":catch /{pattern}/" and ":catch"
 void ex_catch(exarg_T *eap)
 {
   int idx = 0;
@@ -1471,9 +1426,7 @@ void ex_catch(exarg_T *eap)
   }
 }
 
-/*
- * ":finally"
- */
+/// Handle ":finally"
 void ex_finally(exarg_T *eap)
 {
   int idx;
@@ -1595,9 +1548,7 @@ void ex_finally(exarg_T *eap)
   }
 }
 
-/*
- * ":endtry"
- */
+/// Handle ":endtry"
 void ex_endtry(exarg_T *eap)
 {
   int idx;
@@ -1784,14 +1735,12 @@ void ex_endtry(exarg_T *eap)
  * error/interrupt/exception state.
  */
 
-/*
- * This function works a bit like ex_finally() except that there was not
- * actually an extra try block around the part that failed and an error or
- * interrupt has not (yet) been converted to an exception.  This function
- * saves the error/interrupt/ exception state and prepares for the call to
- * do_cmdline() that is going to be made for the cleanup autocommand
- * execution.
- */
+/// This function works a bit like ex_finally() except that there was not
+/// actually an extra try block around the part that failed and an error or
+/// interrupt has not (yet) been converted to an exception.  This function
+/// saves the error/interrupt/ exception state and prepares for the call to
+/// do_cmdline() that is going to be made for the cleanup autocommand
+/// execution.
 void enter_cleanup(cleanup_T *csp)
 {
   int pending = CSTP_NONE;
@@ -1834,21 +1783,19 @@ void enter_cleanup(cleanup_T *csp)
   }
 }
 
-/*
- * See comment above enter_cleanup() for how this function is used.
- *
- * This function is a bit like ex_endtry() except that there was not actually
- * an extra try block around the part that failed and an error or interrupt
- * had not (yet) been converted to an exception when the cleanup autocommand
- * sequence was invoked.
- *
- * This function has to be called with the address of the cleanup_T structure
- * filled by enter_cleanup() as an argument; it restores the error/interrupt/
- * exception state saved by that function - except there was an aborting
- * error, an interrupt or an uncaught exception during execution of the
- * cleanup autocommands.  In the latter case, the saved error/interrupt/
- * exception state is discarded.
- */
+/// This function is a bit like ex_endtry() except that there was not actually
+/// an extra try block around the part that failed and an error or interrupt
+/// had not (yet) been converted to an exception when the cleanup autocommand
+/// sequence was invoked.
+///
+/// See comment above enter_cleanup() for how this function is used.
+///
+/// This function has to be called with the address of the cleanup_T structure
+/// filled by enter_cleanup() as an argument; it restores the error/interrupt/
+/// exception state saved by that function - except there was an aborting
+/// error, an interrupt or an uncaught exception during execution of the
+/// cleanup autocommands.  In the latter case, the saved error/interrupt/
+/// exception state is discarded.
 void leave_cleanup(cleanup_T *csp)
 {
   int pending = csp->pending;
@@ -1913,22 +1860,25 @@ void leave_cleanup(cleanup_T *csp)
 }
 
 
-/*
- * Make conditionals inactive and discard what's pending in finally clauses
- * until the conditional type searched for or a try conditional not in its
- * finally clause is reached.  If this is in an active catch clause, finish
- * the caught exception.
- * Return the cstack index where the search stopped.
- * Values used for "searched_cond" are (CSF_WHILE | CSF_FOR) or CSF_TRY or 0,
- * the latter meaning the innermost try conditional not in its finally clause.
- * "inclusive" tells whether the conditional searched for should be made
- * inactive itself (a try conditional not in its finally clause possibly find
- * before is always made inactive).  If "inclusive" is TRUE and
- * "searched_cond" is CSF_TRY|CSF_SILENT, the saved former value of
- * "emsg_silent", if reset when the try conditional finally reached was
- * entered, is restored (used by ex_endtry()).  This is normally done only
- * when such a try conditional is left.
- */
+/// Make conditionals inactive and discard what's pending in finally clauses
+/// until the conditional type searched for or a try conditional not in its
+/// finally clause is reached.  If this is in an active catch clause, finish
+/// the caught exception.
+///
+///
+/// @param searched_cond  Possible values are (CSF_WHILE | CSF_FOR) or CSF_TRY or 0,
+///                       the latter meaning the innermost try conditional not
+///                       in its finally clause.
+/// @param inclusive      tells whether the conditional searched for should be made
+///                       inactive itself (a try conditional not in its finally
+///                       clause possibly find before is always made inactive).
+///
+/// If "inclusive" is TRUE and "searched_cond" is CSF_TRY|CSF_SILENT, the saved
+/// former value of "emsg_silent", if reset when the try conditional finally
+/// reached was entered, is restored (used by ex_endtry()).  This is normally
+/// done only when such a try conditional is left.
+///
+/// @return  the cstack index where the search stopped.
 int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 {
   int idx;
@@ -2037,9 +1987,7 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
   return idx;
 }
 
-/*
- * Return an appropriate error message for a missing endwhile/endfor/endif.
- */
+/// @return  an appropriate error message for a missing endwhile/endfor/endif.
 static char *get_end_emsg(cstack_T *cstack)
 {
   if (cstack->cs_flags[cstack->cs_idx] & CSF_WHILE) {
@@ -2052,13 +2000,11 @@ static char *get_end_emsg(cstack_T *cstack)
 }
 
 
-/*
- * Rewind conditionals until index "idx" is reached.  "cond_type" and
- * "cond_level" specify a conditional type and the address of a level variable
- * which is to be decremented with each skipped conditional of the specified
- * type.
- * Also free "for info" structures where needed.
- */
+/// Rewind conditionals until index "idx" is reached.  "cond_type" and
+/// "cond_level" specify a conditional type and the address of a level variable
+/// which is to be decremented with each skipped conditional of the specified
+/// type.
+/// Also free "for info" structures where needed.
 void rewind_conditionals(cstack_T *cstack, int idx, int cond_type, int *cond_level)
 {
   while (cstack->cs_idx > idx) {
@@ -2072,17 +2018,13 @@ void rewind_conditionals(cstack_T *cstack, int idx, int cond_type, int *cond_lev
   }
 }
 
-/*
- * ":endfunction" when not after a ":function"
- */
+/// Handle ":endfunction" when not after a ":function"
 void ex_endfunction(exarg_T *eap)
 {
   emsg(_("E193: :endfunction not inside a function"));
 }
 
-/*
- * Return TRUE if the string "p" looks like a ":while" or ":for" command.
- */
+/// @return  TRUE if the string "p" looks like a ":while" or ":for" command.
 int has_loop_cmd(char_u *p)
 {
   int len;
@@ -2104,4 +2046,3 @@ int has_loop_cmd(char_u *p)
   }
   return FALSE;
 }
-
