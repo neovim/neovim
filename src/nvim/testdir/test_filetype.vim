@@ -196,7 +196,7 @@ let s:filename_checks = {
     \ 'fstab': ['fstab', 'mtab'],
     \ 'fusion': ['file.fusion'],
     \ 'fvwm': ['/.fvwm/file', 'any/.fvwm/file'],
-    \ 'gdb': ['.gdbinit', 'gdbinit'],
+    \ 'gdb': ['.gdbinit', 'gdbinit', 'file.gdb', '.config/gdbearlyinit', '.gdbearlyinit'],
     \ 'gdresource': ['file.tscn', 'file.tres'],
     \ 'gdscript': ['file.gd'],
     \ 'gdmo': ['file.mo', 'file.gdmo'],
