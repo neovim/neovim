@@ -19,6 +19,7 @@
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/event/rstream.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #define KEY_BUFFER_SIZE 0xfff
 
@@ -134,7 +135,17 @@ static void tinput_wait_enqueue(void **argv)
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
     } else {
-      const size_t consumed = input_enqueue(keys);
+      size_t consumed;
+      if (ui_client_channel_id) {
+        Array args = ARRAY_DICT_INIT;
+        Error err = ERROR_INIT;
+        ADD(args, STRING_OBJ(copy_string(keys)));
+        // TODO(bfredl): could be non-blocking now with paste?
+        Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &err);
+        consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
+      } else {
+        consumed = input_enqueue(keys);
+      }
       if (consumed) {
         rbuffer_consumed(input->key_buffer, consumed);
       }
