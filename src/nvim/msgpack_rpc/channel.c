@@ -547,12 +547,8 @@ void rpc_close(Channel *channel)
   channel->rpc.closed = true;
   channel_decref(channel);
 
-  if (channel->id == ui_client_channel_id) {
-    // TODO(bfredl): handle this in ui_client, where os_exit() is safe
-    exit(0);
-  }
-
-  if (channel->streamtype == kChannelStreamStdio) {
+  if (channel->streamtype == kChannelStreamStdio
+      || channel->id == ui_client_channel_id) {
     multiqueue_put(main_loop.fast_events, exit_event, 0);
   }
 }
