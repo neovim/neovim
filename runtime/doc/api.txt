@@ -594,7 +594,8 @@ nvim__id_float({flt})                                       *nvim__id_float()*
                     its argument.
 
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
-                TODO: Documentation
+                NB: if your UI doesn't use hlstate, this will not return
+                hlstate first time.
 
 nvim__runtime_inspect()                              *nvim__runtime_inspect()*
                 TODO: Documentation
@@ -709,7 +710,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     be returned.
 
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
-                Send data to channel `id` . For a job, it writes it to the
+                Send data to channel `id`. For a job, it writes it to the
                 stdin of the process. For the stdio channel |channel-stdio|,
                 it writes to Nvim's stdout. For an internal terminal instance
                 (|nvim_open_term()|) it writes directly to terminal output.
@@ -849,7 +850,7 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 inside the chunk. The chunk can return a value.
 
                 Only statements are executed. To evaluate an expression,
-                prefix it with `return` : return my_function(...)
+                prefix it with `return`: return my_function(...)
 
                 Parameters: ~
                     {code}  Lua code to execute
@@ -1132,13 +1133,13 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
                     Option value
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
-                Gets info describing process `pid` .
+                Gets info describing process `pid`.
 
                 Return: ~
                     Map of process properties, or NIL if process not found.
 
 nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
-                Gets the immediate children of process `pid` .
+                Gets the immediate children of process `pid`.
 
                 Return: ~
                     Array of child process ids, empty if process not found.
@@ -1247,8 +1248,8 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
 nvim_list_bufs()                                            *nvim_list_bufs()*
                 Gets the current list of buffer handles
 
-                Includes unlisted (unloaded/deleted) buffers, like `:ls!` .
-                Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
+                Includes unlisted (unloaded/deleted) buffers, like `:ls!`. Use
+                |nvim_buf_is_loaded()| to check if a buffer is loaded.
 
                 Return: ~
                     List of buffer handles
@@ -1357,7 +1358,7 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
 
                 Errors ('nomodifiable', `vim.paste()` failure, …) are
                 reflected in `err` but do not affect the return value (which
-                is strictly decided by `vim.paste()` ). On error, subsequent
+                is strictly decided by `vim.paste()`). On error, subsequent
                 calls are ignored ("drained") until the next paste is
                 initiated (phase 1 or -1).
 
@@ -1434,7 +1435,7 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
                     {insert}  Whether the selection should be inserted in the
                               buffer.
                     {finish}  Finish the completion and dismiss the popupmenu.
-                              Implies `insert` .
+                              Implies `insert`.
                     {opts}    Optional parameters. Reserved for future use.
 
                                                       *nvim_set_client_info()*
@@ -1547,18 +1548,21 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                 Sets a highlight group.
 
                 Parameters: ~
-                    {ns_id}  Namespace id for this highlight |nvim_create_namespace()|.
-                             Use 0 to set a highlight group globally |:highlight|.
+                    {ns_id}  Namespace id for this highlight
+                             |nvim_create_namespace()|. Use 0 to set a
+                             highlight group globally |:highlight|.
                     {name}   Highlight group name, e.g. "ErrorMsg"
                     {val}    Highlight definition map, like |synIDattr()|. In
                              addition, the following keys are recognized:
-                             • default: Don't override existing definition |:hi-default|
-                             • ctermfg: Sets foreground of cterm color |highlight-ctermfg|
-                             • ctermbg: Sets background of cterm color |highlight-ctermbg|
+                             • default: Don't override existing definition
+                               |:hi-default|
+                             • ctermfg: Sets foreground of cterm color
+                               |highlight-ctermfg|
+                             • ctermbg: Sets background of cterm color
+                               |highlight-ctermbg|
                              • cterm: cterm attribute map, like
-                               |highlight-args|.
-                               Note: Attributes default to those set for `gui`
-                                     if not set.
+                               |highlight-args|. Note: Attributes default to
+                               those set for `gui` if not set.
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
@@ -1627,7 +1631,7 @@ nvim_set_vvar({name}, {value})                               *nvim_set_vvar()*
                     {value}  Variable value
 
 nvim_strwidth({text})                                        *nvim_strwidth()*
-                Calculates the number of display cells occupied by `text` .
+                Calculates the number of display cells occupied by `text`.
                 <Tab> counts as one cell.
 
                 Parameters: ~
@@ -1879,9 +1883,10 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                     {buffer}       Buffer handle, or 0 for current buffer
                     {send_buffer}  True if the initial notification should
                                    contain the whole buffer: first
-                                   notification will be `nvim_buf_lines_event`
-                                   . Else the first notification will be
-                                   `nvim_buf_changedtick_event` . Not for Lua
+                                   notification will be
+                                   `nvim_buf_lines_event`. Else the first
+                                   notification will be
+                                   `nvim_buf_changedtick_event`. Not for Lua
                                    callbacks.
                     {opts}         Optional parameters.
                                    • on_lines: Lua callback invoked on change.
@@ -1937,7 +1942,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
 
                                    • utf_sizes: include UTF-32 and UTF-16 size
                                      of the replaced region, as args to
-                                     `on_lines` .
+                                     `on_lines`.
                                    • preview: also attach to command preview
                                      (i.e. 'inccommand') events.
 
@@ -2352,7 +2357,7 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
                 namespace. All highlights in the same namespace can then be
                 cleared with single call to |nvim_buf_clear_namespace()|. If
                 the highlight never will be deleted by an API call, pass
-                `ns_id = -1` .
+                `ns_id = -1`.
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the highlight, the allocated id is then
@@ -2432,8 +2437,8 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
     nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
 <
 
-                If `end` is less than `start` , traversal works backwards.
-                (Useful with `limit` , to get the first marks prior to a given
+                If `end` is less than `start`, traversal works backwards.
+                (Useful with `limit`, to get the first marks prior to a given
                 position.)
 
                 Example:
@@ -2780,7 +2785,7 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
                 |:hide| with a |window-ID|).
 
                 Like |:hide| the buffer becomes hidden unless another window
-                is editing it, or 'bufhidden' is `unload` , `delete` or `wipe`
+                is editing it, or 'bufhidden' is `unload`, `delete` or `wipe`
                 as opposed to |:close| or |nvim_win_close|, which will close
                 the buffer.
 
@@ -3028,7 +3033,7 @@ nvim_win_set_config({window}, {*config})               *nvim_win_set_config()*
                 layouts).
 
                 When reconfiguring a floating window, absent option keys will
-                not be changed. `row` / `col` and `relative` must be
+                not be changed. `row`/`col` and `relative` must be
                 reconfigured together.
 
                 Parameters: ~

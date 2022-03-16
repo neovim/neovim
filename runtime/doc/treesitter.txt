@@ -468,7 +468,7 @@ parse_query({lang}, {query})                                   *parse_query()*
 
                 Exposes `info` and `captures` with additional context about {query}.
                 • `captures` contains the list of unique capture names defined
-                  in {query}. - `info.captures` also points to `captures` .
+                  in {query}. -`info.captures` also points to `captures`.
                 • `info.patterns` contains information about predicates.
 
                 Parameters: ~
@@ -528,8 +528,8 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
                 a table mapping capture indices to nodes, and metadata from
                 any directives processing the match. If the query has more
                 than one pattern the capture table might be sparse, and e.g.
-                `pairs()` method should be used over `ipairs` . Here an
-                example iterating over all captures in every match:
+                `pairs()` method should be used over `ipairs`. Here an example
+                iterating over all captures in every match:
 >
 
     for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do

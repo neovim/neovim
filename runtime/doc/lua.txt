@@ -1418,7 +1418,7 @@ deep_equal({a}, {b})                                        *vim.deep_equal()*
                     {b}  second value
 
                 Return: ~
-                    `true` if values are equals, else `false` .
+                    `true` if values are equals, else `false`.
 
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
@@ -1435,7 +1435,7 @@ deepcopy({orig})                                              *vim.deepcopy()*
                     New table of copied keys and (nested) values.
 
 endswith({s}, {suffix})                                       *vim.endswith()*
-                Tests if `s` ends with `suffix` .
+                Tests if `s` ends with `suffix`.
 
                 Parameters: ~
                     {s}       (string) a string
@@ -1539,7 +1539,7 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
                     |vim.gsplit()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
-                Tests if `s` starts with `prefix` .
+                Tests if `s` starts with `prefix`.
 
                 Parameters: ~
                     {s}       (string) a string
@@ -1556,7 +1556,7 @@ tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                     {o}  table The table to add the reverse to.
 
 tbl_contains({t}, {value})                                *vim.tbl_contains()*
-                Checks if a list-like (vector) table contains `value` .
+                Checks if a list-like (vector) table contains `value`.
 
                 Parameters: ~
                     {t}      Table to check
@@ -1566,7 +1566,7 @@ tbl_contains({t}, {value})                                *vim.tbl_contains()*
                     true if `t` contains `value`
 
 tbl_count({t})                                               *vim.tbl_count()*
-                Counts the number of non-nil values in table `t` .
+                Counts the number of non-nil values in table `t`.
 >
 
     vim.tbl_count({ a=1, b=2 }) => 2
@@ -1651,7 +1651,7 @@ tbl_islist({t})                                             *vim.tbl_islist()*
                     {t}  Table
 
                 Return: ~
-                    `true` if array-like table, else `false` .
+                    `true` if array-like table, else `false`.
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
@@ -1813,7 +1813,7 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                 Parameters: ~
                     {opts}        table Additional options. See |input()|
                                   • prompt (string|nil) Text of the prompt.
-                                    Defaults to `Input:` .
+                                    Defaults to `Input:`.
                                   • default (string|nil) Default reply to the
                                     input
                                   • completion (string|nil) Specifies type of
@@ -1856,16 +1856,16 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                    Defaults to `Select one of:`
                                  • format_item (function item -> text)
                                    Function to format an individual item from
-                                   `items` . Defaults to `tostring` .
+                                   `items`. Defaults to `tostring`.
                                  • kind (string|nil) Arbitrary hint string
                                    indicating the item shape. Plugins
                                    reimplementing `vim.ui.select` may wish to
                                    use this to infer the structure or
-                                   semantics of `items` , or the context in
+                                   semantics of `items`, or the context in
                                    which select() was called.
                     {on_choice}  function ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
-                                 1-based index of `item` within `item` . `nil`
+                                 1-based index of `item` within `item`. `nil`
                                  if the user aborted the dialog.
 
 
@@ -1990,9 +1990,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 <
 
-                the require('jkl') gets evaluated during this call in order to
-                access the function. If you want to avoid this cost at startup
-                you can wrap it in a function, for example: >
+                the require('jkl )` gets evaluated during this call in order to access the
+                function. If you want to avoid this cost at startup you can
+                wrap it in a function, for example: >
 
                     vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 <
@@ -2014,7 +2014,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                               result of Lua expr maps.
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
-                              |nvim_set_keymap()|. Default `false` .
+                              |nvim_set_keymap()|. Default `false`.
 
                 See also: ~
                     |nvim_set_keymap()|
