@@ -436,8 +436,8 @@ static void script_dump_profile(FILE *fd)
   }
 }
 
-/// Return true when a function defined in the current script should be
-/// profiled.
+/// @return  true when a function defined in the current script should be
+///          profiled.
 bool prof_def_func(void)
 {
   if (current_sctx.sc_sid > 0) {
@@ -492,7 +492,7 @@ void autowrite_all(void)
   }
 }
 
-/// Return true if buffer was changed and cannot be abandoned.
+/// @return  true if buffer was changed and cannot be abandoned.
 /// For flags use the CCGD_ values.
 bool check_changed(buf_T *buf, int flags)
 {
@@ -616,7 +616,7 @@ bool dialog_close_terminal(buf_T *buf)
   return ret == VIM_YES;
 }
 
-/// Return true if the buffer "buf" can be abandoned, either by making it
+/// @return true if the buffer "buf" can be abandoned, either by making it
 /// hidden, autowriting it or unloading it.
 bool can_abandon(buf_T *buf, int forceit)
 {
@@ -771,8 +771,8 @@ theend:
   return ret;
 }
 
-/// Return FAIL if there is no file name, OK if there is one.
-/// Give error message for FAIL.
+/// @return  FAIL if there is no file name, OK if there is one.
+///          Give error message for FAIL.
 int check_fname(void)
 {
   if (curbuf->b_ffname == NULL) {
@@ -784,7 +784,7 @@ int check_fname(void)
 
 /// Flush the contents of a buffer, unless it has no file name.
 ///
-/// @return FAIL for failure, OK otherwise
+/// @return  FAIL for failure, OK otherwise
 int buf_write_all(buf_T *buf, int forceit)
 {
   int retval;
@@ -808,7 +808,8 @@ int buf_write_all(buf_T *buf, int forceit)
 
 /// Isolate one argument, taking backticks.
 /// Changes the argument in-place, puts a NUL after it.  Backticks remain.
-/// Return a pointer to the start of the next argument.
+///
+/// @return  a pointer to the start of the next argument.
 static char_u *do_one_arg(char_u *str)
 {
   char_u *p;
@@ -859,7 +860,7 @@ static void get_arglist(garray_T *gap, char_u *str, int escaped)
 /// Parse a list of arguments (file names), expand them and return in
 /// "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
 ///
-/// @return FAIL or OK.
+/// @return  FAIL or OK.
 int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 {
   garray_T ga;
@@ -889,7 +890,7 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 ///         0 means before first one
 /// @param will_edit  will edit added argument
 ///
-/// @return FAIL for failure, OK otherwise.
+/// @return  FAIL for failure, OK otherwise.
 static int do_arglist(char_u *str, int what, int after, bool will_edit)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -988,8 +989,8 @@ static void alist_check_arg_idx(void)
   }
 }
 
-/// Return true if window "win" is editing the file at the current argument
-/// index.
+/// @return  true if window "win" is editing the file at the current argument
+///          index.
 static bool editing_arg_idx(win_T *win)
 {
   return !(win->w_arg_idx >= WARGCOUNT(win)
@@ -1717,13 +1718,13 @@ linenr_T *source_breakpoint(void *cookie)
   return &((struct source_cookie *)cookie)->breakpoint;
 }
 
-/// Return the address holding the debug tick for a source cookie.
+/// @return  the address holding the debug tick for a source cookie.
 int *source_dbg_tick(void *cookie)
 {
   return &((struct source_cookie *)cookie)->dbg_tick;
 }
 
-/// Return the nesting level for a source cookie.
+/// @return  the nesting level for a source cookie.
 int source_level(void *cookie)
 {
   return ((struct source_cookie *)cookie)->level;
@@ -1788,7 +1789,8 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
 ///
 /// @param  name  File name of the script. NULL for anonymous :source.
 /// @param[out]  sid_out  SID of the new item.
-/// @return pointer to the created script item.
+///
+/// @return  pointer to the created script item.
 scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
 {
   static scid_T last_current_SID = 0;
@@ -1896,7 +1898,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
 /// @param check_other  check for .vimrc and _vimrc
 /// @param is_vimrc     DOSO_ value
 ///
-/// @return FAIL if file could not be opened, OK otherwise
+/// @return  FAIL if file could not be opened, OK otherwise
 int do_source(char *fname, int check_other, int is_vimrc)
 {
   struct source_cookie cookie;
@@ -2145,6 +2147,7 @@ theend:
 
 /// Check if fname was sourced before to finds its SID.
 /// If it's new, generate a new SID.
+///
 /// @param[in] fname file path of script
 /// @param[out] ret_sctx sctx of this script
 scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
@@ -2614,9 +2617,9 @@ void do_finish(exarg_T *eap, int reanimate)
 }
 
 
-/// Return true when a sourced file had the ":finish" command: Don't give error
-/// message for missing ":endif".
-/// Return false when not sourcing a file.
+/// @return  true when a sourced file had the ":finish" command: Don't give error
+///          message for missing ":endif".
+///          false when not sourcing a file.
 bool source_finished(LineGetter fgetline, void *cookie)
 {
   return getline_equal(fgetline, cookie, getsourceline)
@@ -2653,8 +2656,8 @@ static char *get_locale_val(int what)
 }
 #endif
 
-// Return true when "lang" starts with a valid language name.
-// Rejects NULL, empty string, "C", "C.UTF-8" and others.
+/// @return  true when "lang" starts with a valid language name.
+///          Rejects NULL, empty string, "C", "C.UTF-8" and others.
 static bool is_valid_mess_lang(char *lang)
 {
   return lang != NULL && ASCII_ISALPHA(lang[0]) && ASCII_ISALPHA(lang[1]);
@@ -2757,11 +2760,10 @@ void set_lang_var(void)
 }
 
 #ifdef HAVE_WORKING_LIBINTL
-///
+
 /// ":language":  Set the language (locale).
 ///
 /// @param eap
-///
 void ex_language(exarg_T *eap)
 {
   char *loc;
@@ -2870,8 +2872,9 @@ static char_u **locales = NULL;       // Array of all available locales
 # ifndef WIN32
 static bool did_init_locales = false;
 
-/// Return an array of strings for all available locales + NULL for the
-/// last element.  Return NULL in case of error.
+/// @return  an array of strings for all available locales + NULL for the
+///          last element or,
+///          NULL in case of error.
 static char_u **find_locales(void)
 {
   garray_T locales_ga;
