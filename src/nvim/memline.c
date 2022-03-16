@@ -585,16 +585,14 @@ void ml_close(buf_T *buf, int del_file)
   buf->b_flags &= ~BF_RECOVERED;
 }
 
-/*
- * Close all existing memlines and memfiles.
- * Only used when exiting.
- * When 'del_file' is TRUE, delete the memfiles.
- * But don't delete files that were ":preserve"d when we are POSIX compatible.
- */
-void ml_close_all(int del_file)
+/// Close all existing memlines and memfiles.
+/// Only used when exiting.
+///
+/// @param del_file  if true, delete the memfiles.
+void ml_close_all(bool del_file)
 {
   FOR_ALL_BUFFERS(buf) {
-    ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0));
+    ml_close(buf, del_file);
   }
   spell_delete_wordlist();      // delete the internal wordlist
   vim_deltempdir();             // delete created temp directory

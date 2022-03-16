@@ -10,6 +10,7 @@ local feed = helpers.feed
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
 local rmdir = helpers.rmdir
+local os_kill = helpers.os_kill
 local set_session = helpers.set_session
 local spawn = helpers.spawn
 local nvim_async = helpers.nvim_async
@@ -62,6 +63,7 @@ describe(':preserve', function()
 
     local swappath1 = eval('g:swapname')
 
+    os_kill(eval('getpid()'))
     -- Start another Nvim instance.
     local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
                                 true)
@@ -122,6 +124,7 @@ describe('swapfile detection', function()
     feed('isometext<esc>')
     command('preserve')
 
+    os_kill(eval('getpid()'))
     -- Start another Nvim instance.
     local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
                         true)
