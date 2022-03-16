@@ -92,6 +92,7 @@ void ui_client_execute(uint64_t chan)
 {
   while (true) {
     loop_poll_events(&main_loop, -1);
+    multiqueue_process_events(resize_events);
   }
 
   getout(0);
