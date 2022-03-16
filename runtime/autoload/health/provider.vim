@@ -301,7 +301,7 @@ function! s:check_python() abort
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
-  let [pyname, pythonx_errors] = provider#pythonx#Detect(3)
+  let [pyname, pythonx_warnings] = provider#pythonx#Detect(3)
 
   if empty(pyname)
     call health#report_warn('No Python executable found that can `import neovim`. '
@@ -311,11 +311,9 @@ function! s:check_python() abort
   endif
 
   " No Python executable could `import neovim`, or host_prog_var was used.
-  if !empty(pythonx_errors)
-    call health#report_warn(pythonx_errors, ["See :help provider-python for more information.", 
-          \ "You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim"
-          \])
-"If you wish to disable the Python provider (and this warning), then "
+  if !empty(pythonx_warnings)
+    call health#report_warn(pythonx_warnings, ['See :help provider-python for more information.',
+          \ 'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim'])
 
   elseif !empty(pyname) && empty(python_exe)
     if !exists('g:'.host_prog_var)
@@ -577,7 +575,7 @@ function! s:check_ruby() abort
           \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
           \  'If you are using rvm/rbenv/chruby, try "rehashing".',
           \  'See :help g:ruby_host_prog for non-standard gem installations.',
-          \ "You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim"])
+          \  'You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim'])
     return
   endif
   call health#report_info('Host: '. host)
@@ -639,7 +637,7 @@ function! s:check_node() abort
     call health#report_warn('Missing "neovim" npm (or yarn) package.',
           \ ['Run in shell: npm install -g neovim',
           \  'Run in shell (if you use yarn): yarn global add neovim',
-          \ "You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim"])
+          \  'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
     return
   endif
   call health#report_info('Nvim node.js host: '. host)
@@ -691,12 +689,12 @@ function! s:check_perl() abort
   let [perl_exec, perl_warnings] = provider#perl#Detect()
   if empty(perl_exec)
     if !empty(perl_warnings)
-      call health#report_warn(perl_warnings,["See :help provider-perl for more information." ,
-            \ "You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim"])
-	else
+      call health#report_warn(perl_warnings, ['See :help provider-perl for more information.',
+            \ 'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
+    else
       call health#report_warn('No usable perl executable found')
     endif
-	return
+    return
   endif
 
   call health#report_info('perl executable: '. perl_exec)
