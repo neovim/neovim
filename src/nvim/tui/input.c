@@ -126,8 +126,16 @@ static void tinput_wait_enqueue(void **argv)
     const String keys = { .data = buf, .size = len };
     if (input->paste) {
       String copy = copy_string(keys);
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     copy.data, copy.size, (intptr_t)input->paste);
+      if (ui_client_channel_id) {
+        Array args = ARRAY_DICT_INIT;
+        ADD(args, STRING_OBJ(copy_string(keys)));  // 'data'
+        ADD(args, BOOLEAN_OBJ(true));  // 'crlf'
+        ADD(args, INTEGER_OBJ(input->paste));  // 'phase'
+        rpc_send_event(ui_client_channel_id, "nvim_paste", args);
+      } else {
+        multiqueue_put(main_loop.events, tinput_paste_event, 3,
+                       copy.data, copy.size, (intptr_t)input->paste);
+      }
       if (input->paste == 1) {
         // Paste phase: "continue"
         input->paste = 2;
