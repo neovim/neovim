@@ -5119,8 +5119,8 @@ TermCursor	cursor in a focused terminal
 TermCursorNC	cursor in an unfocused terminal
 							*hl-ErrorMsg*
 ErrorMsg	error messages on the command line
-							*hl-VertSplit*
-VertSplit	the column separating vertically split windows
+							*hl-WinSeparator*
+WinSeparator	separators between window splits
 							*hl-Folded*
 Folded		line used for closed folds
 							*hl-FoldColumn*

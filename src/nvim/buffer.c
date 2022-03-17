@@ -4947,8 +4947,8 @@ void ex_buffer_all(exarg_T *eap)
       wpnext = wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
            || ((cmdmod.split & WSP_VERT)
-               ? wp->w_height + wp->w_status_height < Rows - p_ch
-               - tabline_height()
+               ? wp->w_height + wp->w_hsep_height + wp->w_status_height < Rows - p_ch
+               - tabline_height() - global_stl_height()
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW

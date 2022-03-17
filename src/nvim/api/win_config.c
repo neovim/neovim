@@ -131,7 +131,7 @@
 ///     An empty string can be used to turn off a specific border, for instance,
 ///       [ "", "", "", ">", "", "", "", "<" ]
 ///     will only make vertical borders but not horizontal ones.
-///     By default, `FloatBorder` highlight is used, which links to `VertSplit`
+///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
 ///   - noautocmd: If true then no buffer-related autocommand events such as

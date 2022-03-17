@@ -211,6 +211,7 @@ Highlight groups:
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
+  |hl-WinSeparator| highlights window separators
   |hl-Whitespace| highlights 'listchars' whitespace
 
 Input/Mappings:
@@ -227,9 +228,11 @@ Options:
   'cpoptions'   flags: |cpo-_|
   'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display')
+  'fillchars'   flags: "msgsep" (see 'display'), "horiz", "horizup",
+                "horizdown", "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
+  'laststatus'  global statusline support
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
@@ -348,6 +351,7 @@ Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
   |hl-CursorLine| is low-priority unless foreground color is set
+  *hl-VertSplit* superseded by |hl-WinSeparator|
 
 Macro/|recording| behavior
   Replay of a macro recorded during :lmap produces the same actions as when it

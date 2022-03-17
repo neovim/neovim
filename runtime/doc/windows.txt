@@ -104,6 +104,8 @@ when the last window also has a status line:
 	'laststatus' = 0	never a status line
 	'laststatus' = 1	status line if there is more than one window
 	'laststatus' = 2	always a status line
+	'laststatus' = 3	have a global statusline at the bottom instead
+				of one for each window
 
 You can change the contents of the status line with the 'statusline' option.
 This option can be local to the window, so that you can have a different

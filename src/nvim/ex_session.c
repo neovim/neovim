@@ -72,7 +72,7 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       n++;
 
       // restore height when not full height
-      if (wp->w_height + wp->w_status_height < topframe->fr_height
+      if (wp->w_height + wp->w_hsep_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
                       "exe '%dresize ' . ((&lines * %" PRId64
                       " + %" PRId64 ") / %" PRId64 ")\n",

@@ -1232,7 +1232,13 @@ struct window_S {
   struct {
     int stl;
     int stlnc;
+    int horiz;
+    int horizup;
+    int horizdown;
     int vert;
+    int vertleft;
+    int vertright;
+    int verthoriz;
     int fold;
     int foldopen;                    ///< when fold is open
     int foldclosed;                  ///< when fold is closed
@@ -1278,7 +1284,8 @@ struct window_S {
   int w_status_height;              // number of status lines (0 or 1)
   int w_wincol;                     // Leftmost column of window in screen.
   int w_width;                      // Width of window, excluding separation.
-  int w_vsep_width;                 // Number of separator columns (0 or 1).
+  int w_hsep_height;                // Number of horizontal separator rows (0 or 1)
+  int w_vsep_width;                 // Number of vertical separator columns (0 or 1).
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
 
   // inner size of window, which can be overridden by external UI

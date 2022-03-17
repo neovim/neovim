@@ -482,6 +482,8 @@ statusline:
 	0	never
 	1	only when there are split windows (the default)
 	2	always
+	3	have a global statusline at the bottom instead of one for each
+		window
 
 Many commands that edit another file have a variant that splits the window.
 For Command-line commands this is done by prepending an "s".  For example:

@@ -19,6 +19,14 @@
 #define NOT_VALID               40  // buffer needs complete redraw
 #define CLEAR                   50  // screen messed up, clear it
 
+/// corner value flags for hsep_connected and vsep_connected
+typedef enum {
+  WC_TOP_LEFT = 0,
+  WC_TOP_RIGHT,
+  WC_BOTTOM_LEFT,
+  WC_BOTTOM_RIGHT
+} WindowCorner;
+
 /// By default, all widows are draw on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
 /// grid, then this is only used for global screen elements that hasn't been
