@@ -52,8 +52,6 @@ void ui_client_init(uint64_t chan)
 
 /// Handler for "redraw" events sent by the NVIM server
 ///
-/// This is just a stub. The mentioned functionality will be implemented.
-///
 /// This function will be called by handle_request (in msgpack_rpc/channel.c)
 /// The individual ui_events sent by the server are individually handled
 /// by their respective handlers defined in ui_events_client.generated.h
