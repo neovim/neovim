@@ -114,26 +114,23 @@ static void tinput_done_event(void **argv)
 static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
-  if (rbuffer_size(input->key_buffer) == 0 && input->paste == 3) {
-    // End streamed paste with an empty string.
-    const String keys = { .data = "", .size = 0 };
+  if (input->paste) {
+    String keys;
+    keys.data = rbuffer_read_ptr(input->key_buffer, &keys.size);
     String copy = copy_string(keys);
     multiqueue_put(main_loop.events, tinput_paste_event, 3,
                    copy.data, copy.size, (intptr_t)input->paste);
-  }
-  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    const String keys = { .data = buf, .size = len };
-    if (input->paste) {
-      String copy = copy_string(keys);
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     copy.data, copy.size, (intptr_t)input->paste);
-      if (input->paste == 1) {
-        // Paste phase: "continue"
-        input->paste = 2;
-      }
-      rbuffer_consumed(input->key_buffer, len);
+    if (input->paste == 1) {
+      // Paste phase: "continue"
+      input->paste = 2;
+    }
+    if (keys.size) {
+      rbuffer_consumed(input->key_buffer, keys.size);
       rbuffer_reset(input->key_buffer);
-    } else {
+    }
+  } else {
+    RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
+      const String keys = { .data = buf, .size = len };
       const size_t consumed = input_enqueue(keys);
       if (consumed) {
         rbuffer_consumed(input->key_buffer, consumed);
