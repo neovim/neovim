@@ -61,6 +61,44 @@ describe('print', function()
     eq('Vim(lua):E5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
        pcall_err(command, 'lua print("foo", v_tblout, "bar")'))
   end)
+  it('coerces error values into strings', function()
+    write_file(fname, [[
+    function string_error() error("my mistake") end
+    function number_error() error(1234) end
+    function nil_error() error(nil) end
+    function table_error() error({message = "my mistake"}) end
+    function custom_error()
+      local err = {message = "my mistake", code = 11234}
+      setmetatable(err, {
+        __tostring = function(t)
+          return "Internal Error [" .. t.code .. "] " .. t.message
+        end
+      })
+      error(err)
+    end
+    function bad_custom_error()
+      local err = {message = "my mistake", code = 11234}
+      setmetatable(err, {
+        -- intentionally not a function, downstream programmer has made an mistake
+        __tostring = "Internal Error [" .. err.code .. "] " .. err.message
+      })
+      error(err)
+    end
+    ]])
+    eq('', exec_capture('luafile ' .. fname))
+    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:0: my mistake',
+      pcall_err(command, 'lua string_error()'))
+    eq('Vim(lua):E5108: Error executing lua Xtest-functional-lua-overrides-luafile:0: 1234',
+      pcall_err(command, 'lua number_error()'))
+    eq('Vim(lua):E5108: Error executing lua [NULL]',
+      pcall_err(command, 'lua nil_error()'))
+    eq('Vim(lua):E5108: Error executing lua [NULL]',
+      pcall_err(command, 'lua table_error()'))
+    eq('Vim(lua):E5108: Error executing lua Internal Error [11234] my mistake',
+      pcall_err(command, 'lua custom_error()'))
+    eq('Vim(lua):E5108: Error executing lua [NULL]',
+      pcall_err(command, 'lua bad_custom_error()'))
+  end)
   it('prints strings with NULs and NLs correctly', function()
     meths.set_option('more', true)
     eq('abc ^@ def\nghi^@^@^@jkl\nTEST\n\n\nT\n',

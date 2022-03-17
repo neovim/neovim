@@ -92,7 +92,22 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
-  const char *const str = lua_tolstring(lstate, -1, &len);
+  const char *str = NULL;
+
+  if (luaL_getmetafield(lstate, -1, "__tostring")) {
+    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
+      // call __tostring, convert the result and pop result.
+      str = lua_tolstring(lstate, -1, &len);
+      lua_pop(lstate, 1);
+    }
+    // pop __tostring.
+    lua_pop(lstate, 1);
+  }
+
+  if (!str) {
+    // defer to lua default conversion, this will render tables as [NULL].
+    str = lua_tolstring(lstate, -1, &len);
+  }
 
   msg_ext_set_kind("lua_error");
   semsg_multiline(msg, (int)len, str);
