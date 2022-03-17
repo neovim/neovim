@@ -476,7 +476,13 @@ static bool typval_conv_special = false;
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
-    TYPVAL_ENCODE_CONV_NIL(tv); \
+    ufunc_T *fp = find_func(fun); \
+    assert(fp != NULL); \
+    if (fp->uf_cb == nlua_CFunction_func_call) { \
+      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+    } else { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+    } \
     goto typval_encode_stop_converting_one_item; \
   } while (0)
 
@@ -614,14 +620,6 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
   if (!lua_checkstack(lstate, initial_size + 2)) {
     semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;
-  }
-  if (tv->v_type == VAR_FUNC) {
-    ufunc_T *fp = find_func(tv->vval.v_string);
-    assert(fp != NULL);
-    if (fp->uf_cb == nlua_CFunction_func_call) {
-      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
-      return true;
-    }
   }
   if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {
     return false;
