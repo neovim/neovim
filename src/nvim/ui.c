@@ -12,6 +12,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/diff.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds2.h"
@@ -224,7 +225,21 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
+  if (!ui_client_channel_id) {
+    screen_resize(width, height);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+    ADD(args, INTEGER_OBJ((int)width));
+    ADD(args, INTEGER_OBJ((int)height));
+    rpc_send_call(ui_client_channel_id, "nvim_ui_try_resize", args, &err);
+
+    if (ERROR_SET(&err)) {
+      ELOG("ui_client resize: %s", err.msg);
+    }
+    api_clear_error(&err);
+  }
+
   p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {
