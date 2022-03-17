@@ -397,7 +397,7 @@ int augroup_add(char *name)
 }
 
 /// Delete the augroup that matches name.
-/// @param stupid_legacy_mode bool: This paremeter determines whether to run the augroup
+/// @param stupid_legacy_mode bool: This parameter determines whether to run the augroup
 ///     deletion in the same fashion as `:augroup! {name}` where if there are any remaining
 ///     autocmds left in the augroup, it will change the name of the augroup to `--- DELETED ---`
 ///     but leave the autocmds existing. These are _separate_ augroups, so if you do this for

@@ -408,7 +408,7 @@ void deleted_lines(linenr_T lnum, long count)
 /// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  // if we deleted the entire buffer, we need to implicity add a new empty line
+  // if we deleted the entire buffer, we need to implicitly add a new empty line
   bool made_empty = (count > 0) && curbuf->b_ml.ml_flags & ML_EMPTY;
 
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM,

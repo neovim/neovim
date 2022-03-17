@@ -331,7 +331,7 @@ end
 
 --- Add the reverse lookup values to an existing table.
 --- For example:
---- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+--- ``tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }``
 --
 --Do note that it *modifies* the input.
 ---@param o table The table to add the reverse to.

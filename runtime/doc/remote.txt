@@ -86,7 +86,7 @@ You can not put options there!
 2. Missing functionality			*E5600* *clientserver-missing*
 
 Vim supports additional functionality in clientserver that's not yet
-implemented in Nvim. In particular, none of the 'wait' variants are supported
+implemented in Nvim. In particular, none of the "wait" variants are supported
 yet. The following command line arguments are not yet available:
 
     argument			meaning	~

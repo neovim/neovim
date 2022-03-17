@@ -5689,7 +5689,7 @@ search_line:
 
           // we read a line, set "already" to check this "line" later
           // if depth >= 0 we'll increase files[depth].lnum far
-          // bellow  -- Acevedo
+          // below  -- Acevedo
           already = aux = p = skipwhite(line);
           p = find_word_start(p);
           p = find_word_end(p);
