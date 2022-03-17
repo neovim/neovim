@@ -1211,6 +1211,8 @@ struct window_S {
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
 
+  linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
+
   // 'listchars' characters. Defaults set in set_chars_option().
   struct {
     int eol;

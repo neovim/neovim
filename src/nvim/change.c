@@ -287,7 +287,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
       }
 
       // Relative numbering may require updating more.
-      if (wp->w_p_rnu) {
+      if (wp->w_p_rnu && xtra != 0) {
         redraw_later(wp, SOME_VALID);
       }
 
