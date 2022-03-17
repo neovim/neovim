@@ -61,7 +61,7 @@ If you are lazy, it also works without the shift key: >
 
 When an error message is displayed, but it is removed before you could read
 it, you can see it again with: >
-  :echo errmsg
+  :echo v:errmsg
 Or view a list of recent messages with: >
   :messages
 See `:messages` above.

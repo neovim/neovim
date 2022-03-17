@@ -188,7 +188,7 @@ function! s:get_healthcheck_list(plugin_names) abort
           \ + nvim_get_runtime_file('lua/**/'.p.'/health/init.lua', v:true)
           \ + nvim_get_runtime_file('lua/**/'.p.'/health.lua', v:true)
     if len(paths) == 0
-      let healthchecks += [[p, '', '']]  " healthchek not found
+      let healthchecks += [[p, '', '']]  " healthcheck not found
     else
       let healthchecks += map(uniq(sort(paths)),
             \'<SID>filepath_to_healthcheck(v:val)')
