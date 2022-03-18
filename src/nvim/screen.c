@@ -2623,9 +2623,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
     next_search_hl(wp, shl, lnum, (colnr_T)v,
                    shl == &search_hl ? NULL : cur);
-    if (wp->w_s->b_syn_slow) {
-      has_syntax = false;
-    }
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
@@ -3381,6 +3378,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             has_syntax = FALSE;
           } else {
             did_emsg = save_did_emsg;
+          }
+
+          if (wp->w_s->b_syn_slow) {
+            has_syntax = false;
           }
 
           // Need to get the line again, a multi-line regexp may
