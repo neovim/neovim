@@ -2,11 +2,14 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 // highlight_group.c: code for managing highlight groups
+// Includes highlighting matches
 
 #include "nvim/autocmd.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/eval/funcs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/highlight.h"
@@ -14,6 +17,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
 #include "nvim/option.h"
+#include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/screen.h"
 
@@ -25,6 +29,8 @@
 /// @}
 
 #define MAX_SYN_NAME 200
+
+static char *e_invalwindow = N_("E957: Invalid window number");
 
 // builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
@@ -2797,3 +2803,484 @@ int name_to_ctermcolor(const char *name)
   TriState bold = kNone;
   return lookup_color(i, false, &bold);
 }
+
+/// Add match to the match list of window 'wp'.  The pattern 'pat' will be
+/// highlighted with the group 'grp' with priority 'prio'.
+/// Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
+///
+/// @param[in] id a desired ID 'id' can be specified
+///               (greater than or equal to 1). -1 must be specified if no
+///               particular ID is desired
+/// @param[in] conceal_char pointer to conceal replacement char
+/// @return ID of added match, -1 on failure.
+int match_add(win_T *wp, const char *const grp, const char *const pat, int prio, int id,
+              list_T *pos_list, const char *const conceal_char)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  matchitem_T *cur;
+  matchitem_T *prev;
+  matchitem_T *m;
+  int hlg_id;
+  regprog_T *regprog = NULL;
+  int rtype = SOME_VALID;
+
+  if (*grp == NUL || (pat != NULL && *pat == NUL)) {
+    return -1;
+  }
+  if (id < -1 || id == 0) {
+    semsg(_("E799: Invalid ID: %" PRId64
+            " (must be greater than or equal to 1)"),
+          (int64_t)id);
+    return -1;
+  }
+  if (id != -1) {
+    cur = wp->w_match_head;
+    while (cur != NULL) {
+      if (cur->id == id) {
+        semsg(_("E801: ID already taken: %" PRId64), (int64_t)id);
+        return -1;
+      }
+      cur = cur->next;
+    }
+  }
+  if ((hlg_id = syn_check_group(grp, strlen(grp))) == 0) {
+    return -1;
+  }
+  if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {
+    semsg(_(e_invarg2), pat);
+    return -1;
+  }
+
+  // Find available match ID.
+  while (id == -1) {
+    cur = wp->w_match_head;
+    while (cur != NULL && cur->id != wp->w_next_match_id) {
+      cur = cur->next;
+    }
+    if (cur == NULL) {
+      id = wp->w_next_match_id;
+    }
+    wp->w_next_match_id++;
+  }
+
+  // Build new match.
+  m = xcalloc(1, sizeof(matchitem_T));
+  m->id = id;
+  m->priority = prio;
+  m->pattern = pat == NULL ? NULL: (char_u *)xstrdup(pat);
+  m->hlg_id = hlg_id;
+  m->match.regprog = regprog;
+  m->match.rmm_ic = false;
+  m->match.rmm_maxcol = 0;
+  m->conceal_char = 0;
+  if (conceal_char != NULL) {
+    m->conceal_char = utf_ptr2char((const char_u *)conceal_char);
+  }
+
+  // Set up position matches
+  if (pos_list != NULL) {
+    linenr_T toplnum = 0;
+    linenr_T botlnum = 0;
+
+    int i = 0;
+    TV_LIST_ITER(pos_list, li, {
+      linenr_T lnum = 0;
+      colnr_T col = 0;
+      int len = 1;
+      bool error = false;
+
+      if (TV_LIST_ITEM_TV(li)->v_type == VAR_LIST) {
+        const list_T *const subl = TV_LIST_ITEM_TV(li)->vval.v_list;
+        const listitem_T *subli = tv_list_first(subl);
+        if (subli == NULL) {
+          semsg(_("E5030: Empty list at position %d"),
+                (int)tv_list_idx_of_item(pos_list, li));
+          goto fail;
+        }
+        lnum = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+        if (error) {
+          goto fail;
+        }
+        if (lnum <= 0) {
+          continue;
+        }
+        m->pos.pos[i].lnum = lnum;
+        subli = TV_LIST_ITEM_NEXT(subl, subli);
+        if (subli != NULL) {
+          col = (colnr_T)tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+          if (error) {
+            goto fail;
+          }
+          if (col < 0) {
+            continue;
+          }
+          subli = TV_LIST_ITEM_NEXT(subl, subli);
+          if (subli != NULL) {
+            len = (colnr_T)tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+            if (len < 0) {
+              continue;
+            }
+            if (error) {
+              goto fail;
+            }
+          }
+        }
+        m->pos.pos[i].col = col;
+        m->pos.pos[i].len = len;
+      } else if (TV_LIST_ITEM_TV(li)->v_type == VAR_NUMBER) {
+        if (TV_LIST_ITEM_TV(li)->vval.v_number <= 0) {
+          continue;
+        }
+        m->pos.pos[i].lnum = TV_LIST_ITEM_TV(li)->vval.v_number;
+        m->pos.pos[i].col = 0;
+        m->pos.pos[i].len = 0;
+      } else {
+        semsg(_("E5031: List or number required at position %d"),
+              (int)tv_list_idx_of_item(pos_list, li));
+        goto fail;
+      }
+      if (toplnum == 0 || lnum < toplnum) {
+        toplnum = lnum;
+      }
+      if (botlnum == 0 || lnum >= botlnum) {
+        botlnum = lnum + 1;
+      }
+      i++;
+      if (i >= MAXPOSMATCH) {
+        break;
+      }
+    });
+
+    // Calculate top and bottom lines for redrawing area
+    if (toplnum != 0) {
+      if (wp->w_buffer->b_mod_set) {
+        if (wp->w_buffer->b_mod_top > toplnum) {
+          wp->w_buffer->b_mod_top = toplnum;
+        }
+        if (wp->w_buffer->b_mod_bot < botlnum) {
+          wp->w_buffer->b_mod_bot = botlnum;
+        }
+      } else {
+        wp->w_buffer->b_mod_set = true;
+        wp->w_buffer->b_mod_top = toplnum;
+        wp->w_buffer->b_mod_bot = botlnum;
+        wp->w_buffer->b_mod_xlines = 0;
+      }
+      m->pos.toplnum = toplnum;
+      m->pos.botlnum = botlnum;
+      rtype = VALID;
+    }
+  }
+
+  // Insert new match.  The match list is in ascending order with regard to
+  // the match priorities.
+  cur = wp->w_match_head;
+  prev = cur;
+  while (cur != NULL && prio >= cur->priority) {
+    prev = cur;
+    cur = cur->next;
+  }
+  if (cur == prev) {
+    wp->w_match_head = m;
+  } else {
+    prev->next = m;
+  }
+  m->next = cur;
+
+  redraw_later(wp, rtype);
+  return id;
+
+fail:
+  xfree(m);
+  return -1;
+}
+
+/// Delete match with ID 'id' in the match list of window 'wp'.
+///
+/// @param perr  print error messages if true.
+int match_delete(win_T *wp, int id, bool perr)
+{
+  matchitem_T *cur = wp->w_match_head;
+  matchitem_T *prev = cur;
+  int rtype = SOME_VALID;
+
+  if (id < 1) {
+    if (perr) {
+      semsg(_("E802: Invalid ID: %" PRId64
+              " (must be greater than or equal to 1)"),
+            (int64_t)id);
+    }
+    return -1;
+  }
+  while (cur != NULL && cur->id != id) {
+    prev = cur;
+    cur = cur->next;
+  }
+  if (cur == NULL) {
+    if (perr) {
+      semsg(_("E803: ID not found: %" PRId64), (int64_t)id);
+    }
+    return -1;
+  }
+  if (cur == prev) {
+    wp->w_match_head = cur->next;
+  } else {
+    prev->next = cur->next;
+  }
+  vim_regfree(cur->match.regprog);
+  xfree(cur->pattern);
+  if (cur->pos.toplnum != 0) {
+    if (wp->w_buffer->b_mod_set) {
+      if (wp->w_buffer->b_mod_top > cur->pos.toplnum) {
+        wp->w_buffer->b_mod_top = cur->pos.toplnum;
+      }
+      if (wp->w_buffer->b_mod_bot < cur->pos.botlnum) {
+        wp->w_buffer->b_mod_bot = cur->pos.botlnum;
+      }
+    } else {
+      wp->w_buffer->b_mod_set = true;
+      wp->w_buffer->b_mod_top = cur->pos.toplnum;
+      wp->w_buffer->b_mod_bot = cur->pos.botlnum;
+      wp->w_buffer->b_mod_xlines = 0;
+    }
+    rtype = VALID;
+  }
+  xfree(cur);
+  redraw_later(wp, rtype);
+  return 0;
+}
+
+/// Delete all matches in the match list of window 'wp'.
+void clear_matches(win_T *wp)
+{
+  matchitem_T *m;
+
+  while (wp->w_match_head != NULL) {
+    m = wp->w_match_head->next;
+    vim_regfree(wp->w_match_head->match.regprog);
+    xfree(wp->w_match_head->pattern);
+    xfree(wp->w_match_head);
+    wp->w_match_head = m;
+  }
+  redraw_later(wp, SOME_VALID);
+}
+
+/// Get match from ID 'id' in window 'wp'.
+/// Return NULL if match not found.
+matchitem_T *get_match(win_T *wp, int id)
+{
+  matchitem_T *cur = wp->w_match_head;
+
+  while (cur != NULL && cur->id != id) {
+    cur = cur->next;
+  }
+  return cur;
+}
+
+int matchadd_dict_arg(typval_T *tv, const char **conceal_char, win_T **win)
+{
+  dictitem_T *di;
+
+  if (tv->v_type != VAR_DICT) {
+    emsg(_(e_dictreq));
+    return FAIL;
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("conceal"))) != NULL) {
+    *conceal_char = tv_get_string(&di->di_tv);
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
+    *win = find_win_by_nr_or_id(&di->di_tv);
+    if (*win == NULL) {
+      emsg(_(e_invalwindow));
+      return FAIL;
+    }
+  }
+
+  return OK;
+}
+
+/// "getmatches()" function
+void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  matchitem_T *cur;
+  int i;
+  win_T *win = get_optional_window(argvars, 0);
+
+  if (win == NULL) {
+    return;
+  }
+
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+  cur = win->w_match_head;
+  while (cur != NULL) {
+    dict_T *dict = tv_dict_alloc();
+    if (cur->match.regprog == NULL) {
+      // match added with matchaddpos()
+      for (i = 0; i < MAXPOSMATCH; i++) {
+        llpos_T *llpos;
+        char buf[30];  // use 30 to avoid compiler warning
+
+        llpos = &cur->pos.pos[i];
+        if (llpos->lnum == 0) {
+          break;
+        }
+        list_T *const l = tv_list_alloc(1 + (llpos->col > 0 ? 2 : 0));
+        tv_list_append_number(l, (varnumber_T)llpos->lnum);
+        if (llpos->col > 0) {
+          tv_list_append_number(l, (varnumber_T)llpos->col);
+          tv_list_append_number(l, (varnumber_T)llpos->len);
+        }
+        int len = snprintf(buf, sizeof(buf), "pos%d", i + 1);
+        assert((size_t)len < sizeof(buf));
+        tv_dict_add_list(dict, buf, (size_t)len, l);
+      }
+    } else {
+      tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cur->pattern);
+    }
+    tv_dict_add_str(dict, S_LEN("group"),
+                    (const char *)syn_id2name(cur->hlg_id));
+    tv_dict_add_nr(dict, S_LEN("priority"), (varnumber_T)cur->priority);
+    tv_dict_add_nr(dict, S_LEN("id"), (varnumber_T)cur->id);
+
+    if (cur->conceal_char) {
+      char buf[MB_MAXBYTES + 1];
+
+      buf[utf_char2bytes(cur->conceal_char, (char_u *)buf)] = NUL;
+      tv_dict_add_str(dict, S_LEN("conceal"), buf);
+    }
+
+    tv_list_append_dict(rettv->vval.v_list, dict);
+    cur = cur->next;
+  }
+}
+
+/// "matchadd()" function
+void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char grpbuf[NUMBUFLEN];
+  char patbuf[NUMBUFLEN];
+  // group
+  const char *const grp = tv_get_string_buf_chk(&argvars[0], grpbuf);
+  // pattern
+  const char *const pat = tv_get_string_buf_chk(&argvars[1], patbuf);
+  // default priority
+  int prio = 10;
+  int id = -1;
+  bool error = false;
+  const char *conceal_char = NULL;
+  win_T *win = curwin;
+
+  rettv->vval.v_number = -1;
+
+  if (grp == NULL || pat == NULL) {
+    return;
+  }
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    prio = (int)tv_get_number_chk(&argvars[2], &error);
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      id = (int)tv_get_number_chk(&argvars[3], &error);
+      if (argvars[4].v_type != VAR_UNKNOWN
+          && matchadd_dict_arg(&argvars[4], &conceal_char, &win) == FAIL) {
+        return;
+      }
+    }
+  }
+  if (error) {
+    return;
+  }
+  if (id >= 1 && id <= 3) {
+    semsg(_("E798: ID is reserved for \":match\": %" PRId64), (int64_t)id);
+    return;
+  }
+
+  rettv->vval.v_number = match_add(win, grp, pat, prio, id, NULL, conceal_char);
+}
+
+/// "matchaddpo()" function
+void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = -1;
+
+  char buf[NUMBUFLEN];
+  const char *const group = tv_get_string_buf_chk(&argvars[0], buf);
+  if (group == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_LIST) {
+    semsg(_(e_listarg), "matchaddpos()");
+    return;
+  }
+
+  list_T *l;
+  l = argvars[1].vval.v_list;
+  if (l == NULL) {
+    return;
+  }
+
+  bool error = false;
+  int prio = 10;
+  int id = -1;
+  const char *conceal_char = NULL;
+  win_T *win = curwin;
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    prio = (int)tv_get_number_chk(&argvars[2], &error);
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      id = (int)tv_get_number_chk(&argvars[3], &error);
+      if (argvars[4].v_type != VAR_UNKNOWN
+          && matchadd_dict_arg(&argvars[4], &conceal_char, &win) == FAIL) {
+        return;
+      }
+    }
+  }
+  if (error == true) {
+    return;
+  }
+
+  // id == 3 is ok because matchaddpos() is supposed to substitute :3match
+  if (id == 1 || id == 2) {
+    semsg(_("E798: ID is reserved for \"match\": %" PRId64), (int64_t)id);
+    return;
+  }
+
+  rettv->vval.v_number = match_add(win, group, NULL, prio, id, l, conceal_char);
+}
+
+/// "matcharg()" function
+void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  const int id = (int)tv_get_number(&argvars[0]);
+
+  tv_list_alloc_ret(rettv, (id >= 1 && id <= 3
+                            ? 2
+                            : 0));
+
+  if (id >= 1 && id <= 3) {
+    matchitem_T *const m = get_match(curwin, id);
+
+    if (m != NULL) {
+      tv_list_append_string(rettv->vval.v_list,
+                            (const char *)syn_id2name(m->hlg_id), -1);
+      tv_list_append_string(rettv->vval.v_list, (const char *)m->pattern, -1);
+    } else {
+      tv_list_append_string(rettv->vval.v_list, NULL, 0);
+      tv_list_append_string(rettv->vval.v_list, NULL, 0);
+    }
+  }
+}
+
+/// "matchdelete()" function
+void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *win = get_optional_window(argvars, 1);
+  if (win == NULL) {
+    rettv->vval.v_number = -1;
+  } else {
+    rettv->vval.v_number = match_delete(win,
+                                        (int)tv_get_number(&argvars[0]), true);
+  }
+}
+
