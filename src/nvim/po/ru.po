@@ -959,7 +959,6 @@ msgstr "E129: Требуется имя функции"
 #, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
 msgstr "E128: Имя функции должно начинаться с заглавной буквы или \"s:\": %s"
-"двоеточие: %s"
 
 #: ../eval.c:17833
 #, c-format
@@ -1578,7 +1577,7 @@ msgstr "E494: Используйте w или w>>"
 
 #: ../ex_docmd.c:3454
 msgid "E319: The command is not available in this version"
-msgstr "E319: Извините, эта команда недоступна в данной версии"
+msgstr "E319: Эта команда недоступна в данной версии"
 
 #: ../ex_docmd.c:3752
 msgid "E172: Only one file name allowed"
@@ -2055,7 +2054,7 @@ msgstr "E201: Автокоманды *ReadPre не должны изменять
 
 #: ../fileio.c:672
 msgid "Nvim: Reading from stdin...\n"
-msgstr "Vim: Чтение из стандартного потока ввода stdin...\n"
+msgstr "Nvim: Чтение из стандартного потока ввода stdin...\n"
 
 #. Re-opening the original file failed!
 #: ../fileio.c:909
@@ -2427,7 +2426,7 @@ msgstr "--Удалено--"
 #: ../fileio.c:5732
 #, c-format
 msgid "auto-removing autocommand: %s <buffer=%d>"
-msgstr "авто-удаление автокоманды: %s <буффер=%d>"
+msgstr "авто-удаление автокоманды: %s <буфер=%d>"
 
 #. the group doesn't exist
 #: ../fileio.c:5772
@@ -2666,11 +2665,11 @@ msgstr "E17: \"%s\" является каталогом"
 #: ../globals.h:1020
 #, fuzzy
 msgid "E900: Invalid job id"
-msgstr "E49: Недопустимый размер прокрутки"
+msgstr "E900: Недопустимый идентификатор задания"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: Таблица заданий переполнена"
 
 #: ../globals.h:1024
 #, c-format
@@ -2707,9 +2706,7 @@ msgstr "E477: ! не допускается"
 
 #: ../globals.h:1035
 msgid "E25: Nvim does not have a built-in GUI"
-msgstr ""
-"E25: Возможность использования графического интерфейса выключена при "
-"компиляции"
+msgstr "E25: У Nvim нет встроенного графического интерфейса"
 
 #: ../globals.h:1036
 #, c-format
@@ -3351,10 +3348,10 @@ msgstr "E282: Невозможно выполнить чтение из \"%s\""
 #: ../main.c:2149
 msgid ""
 "\n"
-"More info with: \"vim -h\"\n"
+"More info with: \""
 msgstr ""
 "\n"
-"Дополнительная информация: \"vim -h\"\n"
+"Дополнительная информация: \""
 
 #: ../main.c:2178
 msgid "[file ..]       edit specified file(s)"
@@ -4413,7 +4410,7 @@ msgstr "E663: В конце списка изменений"
 
 #: ../normal.c:7053
 msgid "Type  :quit<Enter>  to exit Nvim"
-msgstr "Введите :quit<Enter>  для выхода из Vim"
+msgstr "Введите :quit<Enter>  для выхода из Nvim"
 
 #: ../ops.c:248
 #, c-format
@@ -4521,6 +4518,7 @@ msgid ""
 "lines"
 msgstr ""
 "E883: шаблон поиска и регистр выражения не могут содержать двух или более "
+"строк"
 
 #: ../ops.c:5089
 #, c-format
@@ -6137,7 +6135,7 @@ msgstr "Vim: Ошибка чтения ввода, выход...\n"
 #: ../undo.c:379
 #, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E834: Неожиданно изменился счётчик строк"
+msgstr "E881: Неожиданно изменился счётчик строк"
 
 #: ../undo.c:627
 #, c-format
