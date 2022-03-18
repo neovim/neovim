@@ -5482,6 +5482,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
       buf->b_signcols.max++;
     }
     buf->b_signcols.size++;
+    redraw_buf_later(buf, NOT_VALID);
     return;
   }
 
@@ -5502,6 +5503,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
     buf->b_signcols.size = linesum;
     buf->b_signcols.max = linesum;
     buf->b_signcols.sentinel = added->se_lnum;
+    redraw_buf_later(buf, NOT_VALID);
   }
 }
 
