@@ -52,7 +52,7 @@
 /// whether a buffer is loaded.
 
 
-/// Gets the buffer line count
+/// Returns the number of lines in the given buffer.
 ///
 /// @param buffer   Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any

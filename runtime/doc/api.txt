@@ -2215,7 +2215,7 @@ nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
                     true if the buffer is valid, false otherwise.
 
 nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
-                Gets the buffer line count
+                Returns the number of lines in the given buffer.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
