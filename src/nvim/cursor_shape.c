@@ -9,8 +9,8 @@
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/ex_getln.h"
+#include "nvim/highlight_group.h"
 #include "nvim/strings.h"
-#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -226,11 +226,11 @@ char *parse_shape_opt(int what)
               slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
                 // "group/langmap_group"
-                i = syn_check_group((char *)p, (int)(slashp - p));
+                i = syn_check_group((char *)p, (size_t)(slashp - p));
                 p = slashp + 1;
               }
               if (round == 2) {
-                shape_table[idx].id = syn_check_group((char *)p, (int)(endp - p));
+                shape_table[idx].id = syn_check_group((char *)p, (size_t)(endp - p));
                 shape_table[idx].id_lm = shape_table[idx].id;
                 if (slashp != NULL && slashp < endp) {
                   shape_table[idx].id = i;

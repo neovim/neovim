@@ -31,6 +31,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
+#include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"

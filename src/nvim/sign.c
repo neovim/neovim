@@ -13,6 +13,7 @@
 #include "nvim/edit.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
+#include "nvim/highlight_group.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
@@ -954,7 +955,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*linehl == NUL) {
       sp->sn_line_hl = 0;
     } else {
-      sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+      sp->sn_line_hl = syn_check_group((char *)linehl, STRLEN(linehl));
     }
   }
 
@@ -962,7 +963,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*texthl == NUL) {
       sp->sn_text_hl = 0;
     } else {
-      sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+      sp->sn_text_hl = syn_check_group((char *)texthl, STRLEN(texthl));
     }
   }
 
@@ -970,7 +971,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*culhl == NUL) {
       sp->sn_cul_hl = 0;
     } else {
-      sp->sn_cul_hl = syn_check_group((char *)culhl, (int)STRLEN(culhl));
+      sp->sn_cul_hl = syn_check_group((char *)culhl, STRLEN(culhl));
     }
   }
 
@@ -978,7 +979,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*numhl == NUL) {
       sp->sn_num_hl = 0;
     } else {
-      sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+      sp->sn_num_hl = syn_check_group(numhl, STRLEN(numhl));
     }
   }
 

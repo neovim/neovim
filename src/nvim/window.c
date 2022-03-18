@@ -25,6 +25,7 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/highlight_group.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"

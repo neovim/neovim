@@ -10,10 +10,10 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/extmark.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"
 #include "nvim/screen.h"
-#include "nvim/syntax.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/extmark.c.generated.h"
@@ -856,7 +856,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 
   int hl_id = 0;
   if (hl_group.size > 0) {
-    hl_id = syn_check_group(hl_group.data, (int)hl_group.size);
+    hl_id = syn_check_group(hl_group.data, hl_group.size);
   } else {
     return ns_id;
   }
