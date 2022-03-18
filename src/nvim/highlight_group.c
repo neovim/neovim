@@ -3101,6 +3101,16 @@ int matchadd_dict_arg(typval_T *tv, const char **conceal_char, win_T **win)
   return OK;
 }
 
+/// "clearmatches()" function
+void f_clearmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *win = get_optional_window(argvars, 0);
+
+  if (win != NULL) {
+    clear_matches(win);
+  }
+}
+
 /// "getmatches()" function
 void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -3155,6 +3165,110 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     cur = cur->next;
   }
 }
+
+/// "setmatches()" function
+void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  dict_T *d;
+  list_T *s = NULL;
+  win_T *win = get_optional_window(argvars, 1);
+
+  rettv->vval.v_number = -1;
+  if (argvars[0].v_type != VAR_LIST) {
+    emsg(_(e_listreq));
+    return;
+  }
+  if (win == NULL) {
+    return;
+  }
+
+  list_T *const l = argvars[0].vval.v_list;
+  // To some extent make sure that we are dealing with a list from
+  // "getmatches()".
+  int li_idx = 0;
+  TV_LIST_ITER_CONST(l, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
+        || (d = TV_LIST_ITEM_TV(li)->vval.v_dict) == NULL) {
+      semsg(_("E474: List item %d is either not a dictionary "
+              "or an empty one"), li_idx);
+      return;
+    }
+    if (!(tv_dict_find(d, S_LEN("group")) != NULL
+          && (tv_dict_find(d, S_LEN("pattern")) != NULL
+              || tv_dict_find(d, S_LEN("pos1")) != NULL)
+          && tv_dict_find(d, S_LEN("priority")) != NULL
+          && tv_dict_find(d, S_LEN("id")) != NULL)) {
+      semsg(_("E474: List item %d is missing one of the required keys"),
+            li_idx);
+      return;
+    }
+    li_idx++;
+  });
+
+  clear_matches(win);
+  bool match_add_failed = false;
+  TV_LIST_ITER_CONST(l, li, {
+    int i = 0;
+
+    d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+    dictitem_T *const di = tv_dict_find(d, S_LEN("pattern"));
+    if (di == NULL) {
+      if (s == NULL) {
+        s = tv_list_alloc(9);
+      }
+
+      // match from matchaddpos()
+      for (i = 1; i < 9; i++) {
+        char buf[30];  // use 30 to avoid compiler warning
+        snprintf(buf, sizeof(buf), "pos%d", i);
+        dictitem_T *const pos_di = tv_dict_find(d, buf, -1);
+        if (pos_di != NULL) {
+          if (pos_di->di_tv.v_type != VAR_LIST) {
+            return;
+          }
+
+          tv_list_append_tv(s, &pos_di->di_tv);
+          tv_list_ref(s);
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Note: there are three number buffers involved:
+    // - group_buf below.
+    // - numbuf in tv_dict_get_string().
+    // - mybuf in tv_get_string().
+    //
+    // If you change this code make sure that buffers will not get
+    // accidentally reused.
+    char group_buf[NUMBUFLEN];
+    const char *const group = tv_dict_get_string_buf(d, "group", group_buf);
+    const int priority = (int)tv_dict_get_number(d, "priority");
+    const int id = (int)tv_dict_get_number(d, "id");
+    dictitem_T *const conceal_di = tv_dict_find(d, S_LEN("conceal"));
+    const char *const conceal = (conceal_di != NULL
+                                 ? tv_get_string(&conceal_di->di_tv)
+                                 : NULL);
+    if (i == 0) {
+      if (match_add(win, group,
+                    tv_dict_get_string(d, "pattern", false),
+                    priority, id, NULL, conceal) != id) {
+        match_add_failed = true;
+      }
+    } else {
+      if (match_add(win, group, NULL, priority, id, s, conceal) != id) {
+        match_add_failed = true;
+      }
+      tv_list_unref(s);
+      s = NULL;
+    }
+  });
+  if (!match_add_failed) {
+    rettv->vval.v_number = 0;
+  }
+}
+
 
 /// "matchadd()" function
 void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -3282,5 +3396,69 @@ void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = match_delete(win,
                                         (int)tv_get_number(&argvars[0]), true);
   }
+}
+
+/// ":[N]match {group} {pattern}"
+/// Sets nextcmd to the start of the next command, if any.  Also called when
+/// skipping commands to find the next command.
+void ex_match(exarg_T *eap)
+{
+  char_u *p;
+  char_u *g = NULL;
+  char_u *end;
+  int c;
+  int id;
+
+  if (eap->line2 <= 3) {
+    id = (int)eap->line2;
+  } else {
+    emsg(e_invcmd);
+    return;
+  }
+
+  // First clear any old pattern.
+  if (!eap->skip) {
+    match_delete(curwin, id, false);
+  }
+
+  if (ends_excmd(*eap->arg)) {
+    end = eap->arg;
+  } else if ((STRNICMP(eap->arg, "none", 4) == 0
+              && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
+    end = eap->arg + 4;
+  } else {
+    p = skiptowhite(eap->arg);
+    if (!eap->skip) {
+      g = vim_strnsave(eap->arg, (size_t)(p - eap->arg));
+    }
+    p = skipwhite(p);
+    if (*p == NUL) {
+      // There must be two arguments.
+      xfree(g);
+      semsg(_(e_invarg2), eap->arg);
+      return;
+    }
+    end = skip_regexp(p + 1, *p, true, NULL);
+    if (!eap->skip) {
+      if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
+        xfree(g);
+        eap->errmsg = e_trailing;
+        return;
+      }
+      if (*end != *p) {
+        xfree(g);
+        semsg(_(e_invarg2), p);
+        return;
+      }
+
+      c = *end;
+      *end = NUL;
+      match_add(curwin, (const char *)g, (const char *)p + 1, 10, id,
+                NULL, NULL);
+      xfree(g);
+      *end = (char_u)c;
+    }
+  }
+  eap->nextcmd = find_nextcmd(end);
 }
 

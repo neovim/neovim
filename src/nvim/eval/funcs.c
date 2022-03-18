@@ -1138,16 +1138,6 @@ win_T *get_optional_window(typval_T *argvars, int idx)
   return win;
 }
 
-/// "clearmatches()" function
-static void f_clearmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  win_T *win = get_optional_window(argvars, 0);
-
-  if (win != NULL) {
-    clear_matches(win);
-  }
-}
-
 /// "col(string)" function
 static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -8936,109 +8926,6 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   win = find_win_by_nr_or_id(&argvars[0]);
   if (win != NULL) {
     set_qf_ll_list(win, &argvars[1], rettv);
-  }
-}
-
-/// "setmatches()" function
-static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  dict_T *d;
-  list_T *s = NULL;
-  win_T *win = get_optional_window(argvars, 1);
-
-  rettv->vval.v_number = -1;
-  if (argvars[0].v_type != VAR_LIST) {
-    emsg(_(e_listreq));
-    return;
-  }
-  if (win == NULL) {
-    return;
-  }
-
-  list_T *const l = argvars[0].vval.v_list;
-  // To some extent make sure that we are dealing with a list from
-  // "getmatches()".
-  int li_idx = 0;
-  TV_LIST_ITER_CONST(l, li, {
-    if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
-        || (d = TV_LIST_ITEM_TV(li)->vval.v_dict) == NULL) {
-      semsg(_("E474: List item %d is either not a dictionary "
-              "or an empty one"), li_idx);
-      return;
-    }
-    if (!(tv_dict_find(d, S_LEN("group")) != NULL
-          && (tv_dict_find(d, S_LEN("pattern")) != NULL
-              || tv_dict_find(d, S_LEN("pos1")) != NULL)
-          && tv_dict_find(d, S_LEN("priority")) != NULL
-          && tv_dict_find(d, S_LEN("id")) != NULL)) {
-      semsg(_("E474: List item %d is missing one of the required keys"),
-            li_idx);
-      return;
-    }
-    li_idx++;
-  });
-
-  clear_matches(win);
-  bool match_add_failed = false;
-  TV_LIST_ITER_CONST(l, li, {
-    int i = 0;
-
-    d = TV_LIST_ITEM_TV(li)->vval.v_dict;
-    dictitem_T *const di = tv_dict_find(d, S_LEN("pattern"));
-    if (di == NULL) {
-      if (s == NULL) {
-        s = tv_list_alloc(9);
-      }
-
-      // match from matchaddpos()
-      for (i = 1; i < 9; i++) {
-        char buf[30];  // use 30 to avoid compiler warning
-        snprintf(buf, sizeof(buf), "pos%d", i);
-        dictitem_T *const pos_di = tv_dict_find(d, buf, -1);
-        if (pos_di != NULL) {
-          if (pos_di->di_tv.v_type != VAR_LIST) {
-            return;
-          }
-
-          tv_list_append_tv(s, &pos_di->di_tv);
-          tv_list_ref(s);
-        } else {
-          break;
-        }
-      }
-    }
-
-    // Note: there are three number buffers involved:
-    // - group_buf below.
-    // - numbuf in tv_dict_get_string().
-    // - mybuf in tv_get_string().
-    //
-    // If you change this code make sure that buffers will not get
-    // accidentally reused.
-    char group_buf[NUMBUFLEN];
-    const char *const group = tv_dict_get_string_buf(d, "group", group_buf);
-    const int priority = (int)tv_dict_get_number(d, "priority");
-    const int id = (int)tv_dict_get_number(d, "id");
-    dictitem_T *const conceal_di = tv_dict_find(d, S_LEN("conceal"));
-    const char *const conceal = (conceal_di != NULL
-                                 ? tv_get_string(&conceal_di->di_tv)
-                                 : NULL);
-    if (i == 0) {
-      if (match_add(win, group,
-                    tv_dict_get_string(d, "pattern", false),
-                    priority, id, NULL, conceal) != id) {
-        match_add_failed = true;
-      }
-    } else {
-      if (match_add(win, group, NULL, priority, id, s, conceal) != id) {
-        match_add_failed = true;
-      }
-      tv_list_unref(s);
-      s = NULL;
-    }
-  });
-  if (!match_add_failed) {
-    rettv->vval.v_number = 0;
   }
 }
 
