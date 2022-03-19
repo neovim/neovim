@@ -1282,7 +1282,6 @@ static void nfa_emit_equi_class(int c)
 
   EMIT2(c);
 #undef EMIT2
-#undef EMIT2
 }
 
 /*
