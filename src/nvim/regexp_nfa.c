@@ -1651,6 +1651,7 @@ static int nfa_regatom(void)
       while (ascii_isdigit(c)) {
         if (cur) {
           semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+          return FAIL;
         }
         if (n > (INT32_MAX - (c - '0')) / 10) {
           // overflow.
