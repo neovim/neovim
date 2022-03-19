@@ -477,8 +477,7 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
     ufunc_T *fp = find_func(fun); \
-    assert(fp != NULL); \
-    if (fp->uf_cb == nlua_CFunction_func_call) { \
+    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
       nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \

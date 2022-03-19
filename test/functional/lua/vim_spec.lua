@@ -1043,6 +1043,17 @@ describe('lua stdlib', function()
     exec_lua([[vim.api.nvim_get_var('funcs').add()]])
     eq(6, exec_lua([[return vim.api.nvim_get_var('funcs').get()]]))
 
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let g:Unknown_func = function('Test')
+      let g:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.g.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.g.Unknown_script_func]]))
+
     -- Check if autoload works properly
     local pathsep = helpers.get_pathsep()
     local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
@@ -1136,6 +1147,17 @@ describe('lua stdlib', function()
     exec_lua([[vim.api.nvim_buf_get_var(0, 'funcs').add()]])
     eq(6, exec_lua([[return vim.api.nvim_buf_get_var(0, 'funcs').get()]]))
 
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let b:Unknown_func = function('Test')
+      let b:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.b.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.b.Unknown_script_func]]))
+
     exec_lua [[
     vim.cmd "vnew"
     ]]
@@ -1218,6 +1240,17 @@ describe('lua stdlib', function()
     eq(5, exec_lua([[return vim.w.funcs.get()]]))
     exec_lua([[vim.api.nvim_win_get_var(0, 'funcs').add()]])
     eq(6, exec_lua([[return vim.api.nvim_win_get_var(0, 'funcs').get()]]))
+
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let w:Unknown_func = function('Test')
+      let w:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.w.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.w.Unknown_script_func]]))
 
     exec_lua [[
     vim.cmd "vnew"
