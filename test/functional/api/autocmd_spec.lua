@@ -154,6 +154,34 @@ describe('autocmd api', function()
         eq(1, #aus, aus)
       end)
     end)
+
+    it('removes an autocommand if the callback returns true', function()
+      meths.set_var("some_condition", false)
+
+      exec_lua [[
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "Test",
+        desc = "A test autocommand",
+        callback = function()
+          return vim.g.some_condition
+        end,
+      })
+      ]]
+
+      meths.do_autocmd("User", {pattern = "Test"})
+      eq({{
+        buflocal = false,
+        command = 'A test autocommand',
+        desc = 'A test autocommand',
+        event = 'User',
+        id = 1,
+        once = false,
+        pattern = 'Test',
+      }}, meths.get_autocmds({event = "User", pattern = "Test"}))
+      meths.set_var("some_condition", true)
+      meths.do_autocmd("User", {pattern = "Test"})
+      eq({}, meths.get_autocmds({event = "User", pattern = "Test"}))
+    end)
   end)
 
   describe('nvim_get_autocmds', function()
