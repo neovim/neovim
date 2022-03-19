@@ -126,7 +126,7 @@
 ///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
 ///     If the number of chars are less than eight, they will be repeated. Thus
 ///     an ASCII border could be specified as
-///       [ "/", "-", "\\", "|" ],
+///       [ "/", "-", \"\\\\\", "|" ],
 ///     or all chars the same as
 ///       [ "x" ].
 ///     An empty string can be used to turn off a specific border, for instance,
