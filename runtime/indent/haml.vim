@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Haml
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2019 Dec 05
+" Last Change:	2022 Mar 15
 
 if exists("b:did_indent")
   finish
@@ -13,6 +13,8 @@ let b:did_indent = 1
 setlocal autoindent
 setlocal indentexpr=GetHamlIndent()
 setlocal indentkeys=o,O,*<Return>,},],0),!^F,=end,=else,=elsif,=rescue,=ensure,=when
+
+let b:undo_indent = "setl ai< inde< indk<"
 
 " Only define the function once.
 if exists("*GetHamlIndent")

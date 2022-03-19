@@ -4,10 +4,11 @@
 " Copyright: Vim license applies, see ":help license"
 " Last Change: 2022 Jan 17
 "
-" WORK IN PROGRESS - Only the basics work
-" Note: On MS-Windows you need a recent version of gdb.  The one included with
-" MingW is too old (7.6.1).
-" I used version 7.12 from http://www.equation.com/servlet/equation.cmd?fa=gdb
+" WORK IN PROGRESS - The basics works stable, more to come
+" Note: In general you need at least GDB 7.12 because this provides the
+" frame= response in MI thread-selected events we need to sync stack to file.
+" The one included with "old" MingW is too old (7.6.1), you may upgrade it or
+" use a newer version from http://www.equation.com/servlet/equation.cmd?fa=gdb
 "
 " There are two ways to run gdb:
 " - In a terminal window; used if possible, does not work on MS-Windows
@@ -1026,7 +1027,7 @@ func s:Evaluate(range, arg)
   call s:SendEval(expr)
 endfunc
 
-" get what is specified / under the cursor 
+" get what is specified / under the cursor
 func s:GetEvaluationExpression(range, arg)
   if a:arg != ''
     " user supplied evaluation

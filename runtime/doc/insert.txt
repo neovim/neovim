@@ -1342,11 +1342,16 @@ in 'runtimepath'.  Thus for "java" it is autoload/javacomplete.vim.
 
 C							*ft-c-omni*
 
-Completion of C code requires a tags file.  You should use Exuberant ctags,
-because it adds extra information that is needed for completion.  You can find
-it here: http://ctags.sourceforge.net/  Version 5.6 or later is recommended.
+Completion of C code requires a tags file.  You should use Universal/
+Exuberant ctags, because it adds extra information that is needed for
+completion.  You can find it here:
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
-For version 5.5.4 you should add a patch that adds the "typename:" field:
+Universal Ctags is preferred, Exuberant Ctags is no longer being developed.
+
+For Exuberant ctags, version 5.6 or later is recommended.  For version 5.5.4
+you should add a patch that adds the "typename:" field:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 A compiled .exe for MS-Windows can be found at:
 	http://ctags.sourceforge.net/
@@ -1467,8 +1472,11 @@ will be suggested. All other elements are not placed in suggestion list.
 PHP							*ft-php-omni*
 
 Completion of PHP code requires a tags file for completion of data from
-external files and for class aware completion. You should use Exuberant ctags
-version 5.5.4 or newer. You can find it here: http://ctags.sourceforge.net/
+external files and for class aware completion. You should use Universal/
+Exuberant ctags version 5.5.4 or newer. You can find it here:
+
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
 Script completes:
 
