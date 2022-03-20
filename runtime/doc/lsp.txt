@@ -1458,17 +1458,17 @@ extract_completion_items({result})
                     https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
-                Returns visual width of tabstop.
+                Returns indentation size.
 
                 Parameters: ~
                     {bufnr}  (optional, number): Buffer handle, defaults to
                              current
 
                 Return: ~
-                    (number) tabstop visual width
+                    (number) indentation size
 
                 See also: ~
-                    |softtabstop|
+                    |shiftwidth|
 
                                              *vim.lsp.util.jump_to_location()*
 jump_to_location({location}, {offset_encoding})
