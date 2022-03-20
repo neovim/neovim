@@ -672,6 +672,46 @@ describe('treesitter highlighting', function()
     ]]}
   end)
 
+  it("supports conceal attribute", function()
+    if pending_c_parser(pending) then return end
+    insert(hl_text)
+
+    -- conceal can be empty or a single cchar.
+    exec_lua [=[
+      vim.opt.cole = 2
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
+        ("static" @keyword
+         (set! conceal "R"))
+
+        ((identifier) @Identifier
+         (set! conceal "")
+         (eq? @Identifier "lstate"))
+      ]]}})
+    ]=]
+
+    screen:expect{grid=[[
+      /// Schedule Lua callback on main loop's event queue             |
+      {4:R} int nlua_schedule(lua_State *const )                           |
+      {                                                                |
+        if (lua_type(, 1) != LUA_TFUNCTION                             |
+            ||  != ) {                                                 |
+          lua_pushliteral(, "vim.schedule: expected function");        |
+          return lua_error();                                          |
+        }                                                              |
+                                                                       |
+        LuaRef cb = nlua_ref(, 1);                                     |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       1, (void *)(ptrdiff_t)cb);                      |
+        return 0;                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
   it("hl_map has the correct fallback behavior", function()
     exec_lua [[
       local hl_map = vim.treesitter.highlighter.hl_map

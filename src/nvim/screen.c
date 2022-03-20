@@ -2682,6 +2682,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   // Repeat for the whole displayed line.
   for (;;) {
     int has_match_conc = 0;  ///< match wants to conceal
+    int decor_conceal = 0;
+
     bool did_decrement_ptr = false;
 
     // Skip this quickly when working on the text.
@@ -3506,6 +3508,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
           }
+
+          decor_conceal = decor_state.conceal;
+          if (decor_conceal && decor_state.conceal_char) {
+            decor_conceal = 2;  // really??
+          }
         }
 
         // Found last space before word: check for line break.
@@ -3809,19 +3816,25 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (wp->w_p_cole > 0
           && (wp != curwin || lnum != wp->w_cursor.lnum
               || conceal_cursor_line(wp))
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)
           && !(lnum_in_visual_area
                && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         char_attr = conceal_attr;
-        if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
+        if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1 || decor_conceal > 1)
             && (syn_get_sub_char() != NUL
                 || (has_match_conc && match_conc)
+                || (decor_conceal && decor_state.conceal_char)
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           // First time at this concealed item: display one
           // character.
           if (has_match_conc && match_conc) {
             c = match_conc;
+          } else if (decor_conceal && decor_state.conceal_char) {
+            c = decor_state.conceal_char;
+            if (decor_state.conceal_attr) {
+              char_attr = decor_state.conceal_attr;
+            }
           } else if (syn_get_sub_char() != NUL) {
             c = syn_get_sub_char();
           } else if (wp->w_p_lcs_chars.conceal != NUL) {

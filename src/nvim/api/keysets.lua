@@ -27,6 +27,7 @@ return {
     "number_hl_group";
     "line_hl_group";
     "cursorline_hl_group";
+    "conceal";
   };
   keymap = {
     "noremap";

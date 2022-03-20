@@ -274,7 +274,8 @@ local function on_line_impl(self, buf, line)
                                { end_line = end_row, end_col = end_col,
                                  hl_group = hl,
                                  ephemeral = true,
-                                 priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
+                                 priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
+                                 conceal = metadata.conceal,
                                 })
       end
       if start_row > line then
