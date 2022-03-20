@@ -6333,9 +6333,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	linear search can be avoided when case is ignored.  Use a value of '2'
 	in the "!_TAG_FILE_SORTED" line for this.  A tag file can be case-fold
 	sorted with the -f switch to "sort" in most unices, as in the command:
-	"sort -f -o tags tags".  For "Exuberant ctags" version 5.x or higher
-	(at least 5.5) the --sort=foldcase switch can be used for this as
-	well.  Note that case must be folded to uppercase for this to work.
+	"sort -f -o tags tags".  For Universal ctags and Exuberant ctags
+	version 5.x or higher (at least 5.5) the --sort=foldcase switch can be
+	used for this as well.  Note that case must be folded to uppercase for
+	this to work.
 
 	By default, tag searches are case-sensitive.  Case is ignored when
 	'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is

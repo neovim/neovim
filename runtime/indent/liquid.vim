@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:     Liquid
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2017 Jun 13
+" Last Change:	2022 Mar 15
 
 if exists('b:did_indent')
   finish
@@ -29,17 +29,19 @@ let b:did_indent = 1
 setlocal indentexpr=GetLiquidIndent()
 setlocal indentkeys=o,O,*<Return>,<>>,{,},0),0],o,O,!^F,=end,=endif,=endunless,=endifchanged,=endcase,=endfor,=endtablerow,=endcapture,=else,=elsif,=when,=empty
 
+let b:undo_indent = "setl inde< indk<"
+
 " Only define the function once.
 if exists('*GetLiquidIndent')
   finish
 endif
 
-function! s:count(string,pattern)
+function! s:count(string, pattern) abort
   let string = substitute(a:string,'\C'.a:pattern,"\n",'g')
   return strlen(substitute(string,"[^\n]",'','g'))
 endfunction
 
-function! GetLiquidIndent(...)
+function! GetLiquidIndent(...) abort
   if a:0 && a:1 == '.'
     let v:lnum = line('.')
   elseif a:0 && a:1 =~ '^\d'
@@ -51,13 +53,14 @@ function! GetLiquidIndent(...)
   let lnum = prevnonblank(v:lnum-1)
   let line = getline(lnum)
   let cline = getline(v:lnum)
-  let line  = substitute(line,'\C^\%(\s*{%\s*end\w*\s*%}\)\+','','')
-  let line .= matchstr(cline,'\C^\%(\s*{%\s*end\w*\s*%}\)\+')
-  let cline = substitute(cline,'\C^\%(\s*{%\s*end\w*\s*%}\)\+','','')
+  let line  = substitute(line,'\C^\%(\s*{%-\=\s*end\w*\s*-\=%}\)\+','','')
+  let line  = substitute(line,'\C\%(\s*{%-\=\s*if.\+-\=%}.\+{%-\=\s*endif\s*-\=%}\)\+','','g')
+  let line .= matchstr(cline,'\C^\%(\s*{%-\=\s*end\w*\s*-\=%}\)\+')
+  let cline = substitute(cline,'\C^\%(\s*{%-\=\s*end\w*\s*-\=%}\)\+','','')
   let sw = shiftwidth()
-  let ind += sw * s:count(line,'{%\s*\%(if\|elsif\|else\|unless\|ifchanged\|case\|when\|for\|empty\|tablerow\|capture\)\>')
-  let ind -= sw * s:count(line,'{%\s*end\%(if\|unless\|ifchanged\|case\|for\|tablerow\|capture\)\>')
-  let ind -= sw * s:count(cline,'{%\s*\%(elsif\|else\|when\|empty\)\>')
-  let ind -= sw * s:count(cline,'{%\s*end\w*$')
+  let ind += sw * s:count(line,'{%-\=\s*\%(if\|elsif\|else\|unless\|ifchanged\|case\|when\|for\|empty\|tablerow\|capture\)\>')
+  let ind -= sw * s:count(line,'{%-\=\s*end\%(if\|unless\|ifchanged\|case\|for\|tablerow\|capture\)\>')
+  let ind -= sw * s:count(cline,'{%-\=\s*\%(elsif\|else\|when\|empty\)\>')
+  let ind -= sw * s:count(cline,'{%-\=\s*end\w*$')
   return ind
 endfunction
