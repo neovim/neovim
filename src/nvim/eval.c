@@ -7730,6 +7730,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   partial_T *partial;
   char_u *name;
   Array args = ARRAY_DICT_INIT;
+  Object rv;
   switch (callback->type) {
   case kCallbackFuncref:
     name = callback->data.funcref;
@@ -7742,10 +7743,13 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    nlua_call_ref(callback->data.luaref, NULL, args, false, NULL);
-
-    return false;
-    break;
+    rv = nlua_call_ref(callback->data.luaref, NULL, args, true, NULL);
+    switch (rv.type) {
+    case kObjectTypeBoolean:
+      return rv.data.boolean;
+    default:
+      return false;
+    }
 
   case kCallbackNone:
     return false;
