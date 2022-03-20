@@ -1899,6 +1899,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv, const bool copy, cons
             case '%':
               n = num_modulus(numval, n); break;
             }
+            s = NULL;
           } else if (opt_type == 0 && stringval != NULL) {  // string
             char *const oldstringval = stringval;
             stringval = (char *)concat_str((const char_u *)stringval,
