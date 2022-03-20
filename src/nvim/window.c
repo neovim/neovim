@@ -1082,7 +1082,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       }
     }
   } else {
-    hsep_height = global_stl_height() > 0 ? 1 : STATUS_HEIGHT;
+    hsep_height = STATUS_HEIGHT;
     layout = FR_COL;
 
     /*
@@ -1374,8 +1374,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       }
       frame_new_height(curfrp, new_fr_height, flags & WSP_TOP, false);
     } else {
-      win_new_height(oldwin, oldwin_height - (new_size
-                                              + (global_stl_height() > 0 ? 1 : STATUS_HEIGHT)));
+      win_new_height(oldwin, oldwin_height - (new_size + STATUS_HEIGHT));
     }
 
     if (before) {       // new window above current one
@@ -1643,7 +1642,7 @@ int make_windows(int count, bool vertical)
     // Each window needs at least 'winminheight' lines
     // If statusline isn't global, each window also needs a statusline
     maxcount = (curwin->w_height + curwin->w_hsep_height + curwin->w_status_height
-                - (p_wh - p_wmh)) / (p_wmh + (global_stl_height() > 0 ? 1 : STATUS_HEIGHT));
+                - (p_wh - p_wmh)) / (p_wmh + STATUS_HEIGHT);
   }
 
   if (maxcount < 2) {
@@ -2166,7 +2165,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       totwincount -= wincount;
     }
   } else {  // topfr->fr_layout == FR_COL
-    hsep_height = global_stl_height() > 0 ? 1 : STATUS_HEIGHT;
+    hsep_height = STATUS_HEIGHT;
     topfr->fr_width = width;
     topfr->fr_height = height;
 
