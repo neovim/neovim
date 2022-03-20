@@ -197,7 +197,7 @@ func s:CloseBuffers()
 endfunc
 
 func s:CheckGdbRunning()
-  if nvim_get_chan_info(s:gdb_job_id) == {}
+  if !s:running
       echoerr string(s:GetCommand()[0]) . ' exited unexpectedly'
       call s:CloseBuffers()
       return ''
@@ -280,6 +280,8 @@ func s:StartDebug_term(dict)
     call s:CloseBuffers()
     return
   endif
+  let s:running = v:true
+  let s:starting = v:true
   let gdb_job_info = nvim_get_chan_info(s:gdb_job_id)
   let s:gdbbuf = gdb_job_info['buffer']
   let s:gdbwin = win_getid(winnr())
@@ -354,6 +356,8 @@ func s:StartDebug_term(dict)
     endif
     sleep 10m
   endwhile
+
+  let s:starting = v:false
 
   " Set the filetype, this can be used to add mappings.
   set filetype=termdebug
@@ -663,6 +667,11 @@ func s:GetAsmAddr(msg)
 endfunc
 
 function s:EndTermDebug(job_id, exit_code, event)
+  let s:running = v:false
+  if s:starting
+    return
+  endif
+
   if exists('#User#TermdebugStopPre')
     doauto <nomodeline> User TermdebugStopPre
   endif
