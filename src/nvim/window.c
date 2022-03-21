@@ -300,7 +300,7 @@ newwindow:
 
   // move window to new tab page
   case 'T':
-    if (one_window()) {
+    if (one_window(curwin)) {
       msg(_(m_onlyone));
     } else {
       tabpage_T *oldtab = curtab;
@@ -2401,23 +2401,24 @@ void close_windows(buf_T *buf, int keep_curwin)
   }
 }
 
-/// Check that current window is the last one.
+/// Check that the specified window is the last one.
+/// @param win  counted even if floating
 ///
-/// @return true if the current window is the only window that exists, false if
-///         there is another, possibly in another tab page.
-static bool last_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+/// @return  true if the specified window is the only window that exists,
+///          false if there is another, possibly in another tab page.
+static bool last_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return one_window() && first_tabpage->tp_next == NULL;
+  return one_window(win) && first_tabpage->tp_next == NULL;
 }
 
-/// Check that current tab page contains no more then one window other than
-/// "aucmd_win". Only counts floating window if it is current.
-bool one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+/// Check that current tab page contains no more then one window other than `aucmd_win`.
+/// @param counted_float  counted even if floating, but not if it is `aucmd_win`
+bool one_window(win_T *counted_float) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool seen_one = false;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp != aucmd_win && (!wp->w_floating || wp == curwin)) {
+    if (wp != aucmd_win && (!wp->w_floating || wp == counted_float)) {
       if (seen_one) {
         return false;
       }
@@ -2532,7 +2533,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
   const bool had_diffmode = win->w_p_diff;
 
-  if (last_window() && !win->w_floating) {
+  if (last_window(win)) {
     emsg(_("E444: Cannot close last window"));
     return FAIL;
   }
@@ -2545,7 +2546,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if (lastwin == aucmd_win && one_window()) {
+  if (lastwin == aucmd_win && one_window(win)) {
     emsg(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
@@ -2607,7 +2608,7 @@ int win_close(win_T *win, bool free_buf, bool force)
         return FAIL;
       }
       win->w_closing = false;
-      if (last_window()) {
+      if (last_window(win)) {
         return FAIL;
       }
     }
@@ -2617,7 +2618,7 @@ int win_close(win_T *win, bool free_buf, bool force)
       return FAIL;
     }
     win->w_closing = false;
-    if (last_window()) {
+    if (last_window(win)) {
       return FAIL;
     }
     // autocmds may abort script processing
@@ -2686,7 +2687,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   }
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
-      && (last_window() || curtab != prev_curtab
+      && (last_window(win) || curtab != prev_curtab
           || close_last_window_tabpage(win, free_buf, prev_curtab))
       && !win->w_floating) {
     // Autocommands have closed all windows, quit now.  Restore
@@ -2706,7 +2707,7 @@ int win_close(win_T *win, bool free_buf, bool force)
 
   // Autocommands may have closed the window already, or closed the only
   // other window or moved to another tab page.
-  if (!win_valid(win) || (!win->w_floating && last_window())
+  if (!win_valid(win) || (!win->w_floating && last_window(win))
       || close_last_window_tabpage(win, free_buf, prev_curtab)) {
     return FAIL;
   }
@@ -3745,7 +3746,7 @@ void close_others(int message, int forceit)
     return;
   }
 
-  if (one_window() && !lastwin->w_floating) {
+  if (one_nonfloat() && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
       msg(_(m_onlyone));
@@ -6500,7 +6501,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 void last_status(bool morewin)
 {
   // Don't make a difference between horizontal or vertical split.
-  last_status_rec(topframe, (p_ls == 2 || (p_ls == 1 && (morewin || !one_window()))),
+  last_status_rec(topframe, (p_ls == 2 || (p_ls == 1 && (morewin || !one_window(curwin)))),
                   global_stl_height() > 0);
 }
 

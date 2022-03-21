@@ -417,26 +417,44 @@ describe('float window', function()
     eq(winids, eval('winids'))
   end)
 
-  it('closed when the last non-float window is closed', function()
-    local tabpage = exec_lua([[
-      vim.cmd('edit ./src/nvim/main.c')
-      vim.cmd('tabedit %')
+  describe('with only one tabpage', function()
+    describe('closing the last non-floating window gives E444', function()
+      local old_win
+      before_each(function()
+        old_win = meths.get_current_win()
+        meths.open_win(0, true, {relative = 'editor', row = 1, col = 1, width = 1, height = 1})
+      end)
+      it('if called from non-floating window', function()
+        meths.set_current_win(old_win)
+        eq('Vim:E444: Cannot close last window', pcall_err(meths.win_close, old_win, false))
+      end)
+      it('if called from floating window', function()
+        eq('Vim:E444: Cannot close last window', pcall_err(meths.win_close, old_win, false))
+      end)
+    end)
+  end)
 
-      local buf = vim.api.nvim_create_buf(false, true)
-      local win = vim.api.nvim_open_win(buf, false, {
-        relative = 'win',
-        row = 1,
-        col = 1,
-        width = 10,
-        height = 2
-      })
-
-      vim.cmd('quit')
-
-      return vim.api.nvim_get_current_tabpage()
-    ]])
-
-    eq(1, tabpage)
+  describe('with multiple tabpages', function()
+    describe('closing the last non-floating window', function()
+      local old_tabpage, old_win
+      before_each(function()
+        old_tabpage = meths.get_current_tabpage()
+        command('tabnew')
+        old_win = meths.get_current_win()
+        meths.open_win(0, true, {relative = 'editor', row = 1, col = 1, width = 1, height = 1})
+      end)
+      describe('when all floating windows are closeable closes the tabpage', function()
+        it('if called from non-floating window', function()
+          meths.set_current_win(old_win)
+          meths.win_close(old_win, false)
+          eq(old_tabpage, meths.get_current_tabpage())
+        end)
+        it('if called from floating window', function()
+          meths.win_close(old_win, false)
+          eq(old_tabpage, meths.get_current_tabpage())
+        end)
+      end)
+    end)
   end)
 
   local function with_ext_multigrid(multigrid)
