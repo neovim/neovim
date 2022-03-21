@@ -1,0 +1,17 @@
+name: Missing API docs
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches-ignore:
+      - 'marvim/api-doc-update**'
+    paths:
+      - 'src/nvim/api/*.[ch]'
+      - 'src/nvim/**.lua'
+      - 'runtime/lua/**.lua'
+
+jobs:
+  call-regen-api-docs:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/api-docs.yml
+    with:
+      check_only: true
