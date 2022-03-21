@@ -560,7 +560,7 @@ wingotofile:
       config.height = curwin->w_height;
       config.external = true;
       Error err = ERROR_INIT;
-      if (!win_new_float(curwin, config, &err)) {
+      if (!win_new_float(curwin, false, config, &err)) {
         emsg(err.msg);
         api_clear_error(&err);
         beep_flush();
@@ -629,16 +629,18 @@ void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
 
 /// Create a new float.
 ///
-/// if wp == NULL allocate a new window, otherwise turn existing window into a
-/// float. It must then already belong to the current tabpage!
-///
-/// config must already have been validated!
-win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
+/// @param wp      if NULL, allocate a new window, otherwise turn existing window into a float.
+///                It must then already belong to the current tabpage!
+/// @param last    make the window the last one in the window list.
+///                Only used when allocating the autocommand window.
+/// @param config  must already have been validated!
+win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
 {
   if (wp == NULL) {
-    wp = win_alloc(lastwin_nofloating(), false);
+    wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
     win_init(wp, curwin, 0);
   } else {
+    assert(!last);
     assert(!wp->w_floating);
     if (firstwin == wp && lastwin_nofloating() == wp) {
       // last non-float
@@ -2543,7 +2545,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     emsg(_(e_autocmd_close));
     return FAIL;
   }
-  if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
+  if (lastwin == aucmd_win && one_window()) {
     emsg(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
@@ -3844,7 +3846,7 @@ void win_alloc_aucmd_win(void)
   fconfig.width = Columns;
   fconfig.height = 5;
   fconfig.focusable = false;
-  aucmd_win = win_new_float(NULL, fconfig, &err);
+  aucmd_win = win_new_float(NULL, true, fconfig, &err);
   aucmd_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win);
 }
