@@ -100,8 +100,12 @@ local tests = {}
 
 function tests.basic_init()
   skeleton {
-    on_init = function(_params)
-      return { capabilities = {} }
+    on_init = function(_)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.None;
+        }
+      }
     end;
     body = function()
       notify('test')
@@ -132,8 +136,11 @@ function tests.prepare_rename_nil()
   skeleton {
     on_init = function()
       return { capabilities = {
-        renameProvider = true,
-      } }
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
     end;
     body = function()
       notify('start')
@@ -149,8 +156,11 @@ function tests.prepare_rename_placeholder()
   skeleton {
     on_init = function()
       return { capabilities = {
-        renameProvider = true,
-      } }
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
     end;
     body = function()
       notify('start')
@@ -170,8 +180,11 @@ function tests.prepare_rename_range()
   skeleton {
     on_init = function()
       return { capabilities = {
-        renameProvider = true,
-      } }
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
     end;
     body = function()
       notify('start')
@@ -193,9 +206,13 @@ end
 function tests.prepare_rename_error()
   skeleton {
     on_init = function()
-      return { capabilities = {
-        renameProvider = true,
-      } }
+      return {
+        capabilities = {
+          renameProvider = {
+            prepareProvider = true
+          },
+        }
+      }
     end;
     body = function()
       notify('start')
@@ -219,6 +236,7 @@ function tests.basic_check_capabilities()
       return {
         capabilities = {
           textDocumentSync = protocol.TextDocumentSyncKind.Full;
+          codeLensProvider = false
         }
       }
     end;
@@ -237,6 +255,7 @@ function tests.capabilities_for_client_supports_method()
           textDocumentSync = protocol.TextDocumentSyncKind.Full;
           completionProvider = true;
           hoverProvider = true;
+          renameProvider = false;
           definitionProvider = false;
           referencesProvider = false;
           codeLensProvider = { resolveProvider = true; };
@@ -544,7 +563,15 @@ function tests.basic_check_buffer_open_and_change_incremental()
       assert_eq(params.capabilities, expected_capabilities)
       return {
         capabilities = {
-          textDocumentSync = protocol.TextDocumentSyncKind.Incremental;
+          textDocumentSync = {
+            openClose = true,
+            change = protocol.TextDocumentSyncKind.Incremental,
+            willSave = true,
+            willSaveWaitUntil = true,
+            save = {
+              includeText = true,
+            }
+          }
         }
       }
     end;

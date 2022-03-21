@@ -653,9 +653,6 @@ client()                                                      *vim.lsp.client*
                     user to |vim.lsp.start_client()|.
                   • {server_capabilities} (table): Response from the server
                     sent on `initialize` describing the server's capabilities.
-                  • {resolved_capabilities} (table): Normalized table of
-                    capabilities that we have detected based on the initialize
-                    response from the server in `server_capabilities`.
 
 client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
                 Checks whether a client is stopped.
@@ -1970,6 +1967,15 @@ resolve_capabilities({server_capabilities})
                 Creates a normalized object describing LSP server
                 capabilities.
 
+                Parameters: ~
+                    {server_capabilities}  table Table of capabilities
+                                           supported by the server
+
+                Return: ~
+                    table Normalized table of capabilities
+
+                              *vim.lsp.protocol.resolve_capabilities_compat()*
+resolve_capabilities_compat({server_capabilities})
                 Parameters: ~
                     {server_capabilities}  table Table of capabilities
                                            supported by the server
