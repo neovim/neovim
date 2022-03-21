@@ -6507,7 +6507,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 void last_status(bool morewin)
 {
   // Don't make a difference between horizontal or vertical split.
-  last_status_rec(topframe, (p_ls == 2 || (p_ls == 1 && (morewin || !one_window(curwin)))),
+  last_status_rec(topframe, (p_ls == 2 || (p_ls == 1 && (morewin || !one_nonfloat()))),
                   global_stl_height() > 0);
 }
 
