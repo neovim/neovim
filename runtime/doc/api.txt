@@ -826,6 +826,7 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                             • maxwidth: (number) Maximum width of statusline.
                             • fillchar: (string) Character to fill blank
                               spaces in the statusline (see 'fillchars').
+                              Treated as single-width even if it isn't.
                             • highlights: (boolean) Return highlight
                               information.
                             • use_tabline: (boolean) Evaluate tabline instead
@@ -1547,6 +1548,11 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
 nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                 Sets a highlight group.
 
+                Note: Unlike the `:highlight` command which can update a
+                highlight group, this function completely replaces the
+                definition. For example: `nvim_set_hl(0, 'Visual', {})` will
+                clear the highlight group 'Visual'.
+
                 Parameters: ~
                     {ns_id}  Namespace id for this highlight
                              |nvim_create_namespace()|. Use 0 to set a
@@ -1937,7 +1943,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                    • on_reload: Lua callback invoked on
                                      reload. The entire buffer content should
                                      be considered changed. Args:
-                                     • the string "detach"
+                                     • the string "reload"
                                      • buffer handle
 
                                    • utf_sizes: include UTF-32 and UTF-16 size
@@ -2582,6 +2588,35 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                                 not be placed if the line or column value is
                                 past the end of the buffer or end of the line
                                 respectively. Defaults to true.
+                              • sign_text: string of length 1-2 used to
+                                display in the sign column. Note: ranges are
+                                unsupported and decorations are only applied
+                                to start_row
+                              • sign_hl_group: name of the highlight group
+                                used to highlight the sign column text. Note:
+                                ranges are unsupported and decorations are
+                                only applied to start_row
+                              • number_hl_group: name of the highlight group
+                                used to highlight the number column. Note:
+                                ranges are unsupported and decorations are
+                                only applied to start_row
+                              • line_hl_group: name of the highlight group
+                                used to highlight the whole line. Note: ranges
+                                are unsupported and decorations are only
+                                applied to start_row
+                              • cursorline_hl_group: name of the highlight
+                                group used to highlight the line when the
+                                cursor is on the same line as the mark and
+                                'cursorline' is enabled. Note: ranges are
+                                unsupported and decorations are only applied
+                                to start_row
+                              • conceal: string which should be either empty
+                                or a single character. Enable concealing
+                                similar to |:syn-conceal|. When a character is
+                                supplied it is used as |:syn-cchar|.
+                                "hl_group" is used as highlight for the cchar
+                                if provided, otherwise it defaults to
+                                |hl-Conceal|.
 
                 Return: ~
                     Id of the created/updated extmark
@@ -2816,7 +2851,8 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
                 Sets the (1,0)-indexed cursor position in the window.
-                |api-indexing|
+                |api-indexing| This scrolls the window even if it is not the
+                current one.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
@@ -3001,9 +3037,10 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
                                   ">", "", "", "", "<" ] will only make
                                   vertical borders but not horizontal ones. By
                                   default, `FloatBorder` highlight is used,
-                                  which links to `VertSplit` when not defined.
-                                  It could also be specified by character: [
-                                  {"+", "MyCorner"}, {"x", "MyBorder"} ].
+                                  which links to `WinSeparator` when not
+                                  defined. It could also be specified by
+                                  character: [ {"+", "MyCorner"}, {"x",
+                                  "MyBorder"} ].
 
                               • noautocmd: If true then no buffer-related
                                 autocommand events such as |BufEnter|,

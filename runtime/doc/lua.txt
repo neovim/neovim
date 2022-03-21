@@ -1259,6 +1259,10 @@ vim.wo                                                  *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+                                             *vim.connection_failure_errmsg()*
+connection_failure_errmsg({consequence})
+                TODO: Documentation
+
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Defers calling `fn` until `timeout` ms passes.
 
@@ -1550,7 +1554,7 @@ startswith({s}, {prefix})                                   *vim.startswith()*
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
-                example: tbl_add_reverse_lookup { A = 1 } == { [1] = 'A , A = 1 }`
+                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 
                 Parameters: ~
                     {o}  table The table to add the reverse to.
@@ -1990,7 +1994,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 <
 
-                the require('jkl )` gets evaluated during this call in order to access the
+                the `require('jkl')` gets evaluated during this call in order to access the
                 function. If you want to avoid this cost at startup you can
                 wrap it in a function, for example: >
 
