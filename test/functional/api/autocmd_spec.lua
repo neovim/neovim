@@ -334,6 +334,33 @@ describe('autocmd api', function()
         local aus2 = meths.get_autocmds { group = auname, event = "InsertEnter" }
         eq(0, #aus2)
       end)
+
+      it('should respect nested', function()
+        local bufs = exec_lua [[
+          local count = 0
+          vim.api.nvim_create_autocmd("BufNew", {
+            once = false,
+            nested = true,
+            callback = function()
+              count = count + 1
+              if count > 5 then
+                return true
+              end
+
+              vim.cmd(string.format("new README_%s.md", count))
+            end
+          })
+
+          vim.cmd "new First.md"
+
+          return vim.api.nvim_list_bufs()
+        ]]
+
+        -- 1 for the first buffer
+        -- 2 for First.md
+        -- 3-7 for the 5 we make in the autocmd
+        eq({1, 2, 3, 4, 5, 6, 7}, bufs)
+      end)
     end)
 
     describe('groups', function()

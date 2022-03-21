@@ -2022,6 +2022,11 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
     verbose_leave_scroll();
   }
 
+  // Make sure to set autocmd_nested before executing
+  // lua code, so that it works properly
+  autocmd_nested = ac->nested;
+  current_sctx = ac->script_ctx;
+
   if (ac->exec.type == CALLABLE_CB) {
     typval_T argsin = TV_INITIAL_VALUE;
     typval_T rettv = TV_INITIAL_VALUE;
@@ -2052,8 +2057,6 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
   if (oneshot) {
     aucmd_del(ac);
   }
-  autocmd_nested = ac->nested;
-  current_sctx = ac->script_ctx;
   if (ac->last) {
     acp->nextcmd = NULL;
   } else {
