@@ -9,6 +9,7 @@ local missing_provider = helpers.missing_provider
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
+local dedent = helpers.dedent
 
 do
   clear()
@@ -49,7 +50,12 @@ describe('python3 provider', function()
     local very_long_symbol = string.rep('a', 1200)
     feed_command(':silent! py3 print('..very_long_symbol..' b)')
     -- Error message will contain this (last) line.
-    eq('Error invoking \'python_execute\' on channel 3 (python3-script-host):\n  File "<string>", line 1\n    print('..very_long_symbol..' b)\n          '..string.rep(' ',1200)..' ^\nSyntaxError: invalid syntax', eval('v:errmsg'))
+    matches(string.format(dedent([[
+      ^Error invoking 'python_execute' on channel 3 %%(python3%%-script%%-host%%):
+        File "<string>", line 1
+          print%%(%s b%%)
+      %%C*
+      SyntaxError: invalid syntax%%C*$]]), very_long_symbol), eval('v:errmsg'))
   end)
 
   it('python3_execute with nested commands', function()

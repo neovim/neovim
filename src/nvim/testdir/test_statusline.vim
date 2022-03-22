@@ -507,5 +507,20 @@ func Test_statusline_after_split_vsplit()
   set ls& stl&
 endfunc
 
+" Test using a multibyte character for 'stl' and 'stlnc' items in 'fillchars'
+" with a custom 'statusline'
+func Test_statusline_mbyte_fillchar()
+  only
+  set laststatus=2
+  set fillchars=vert:\|,fold:-,stl:━,stlnc:═
+  set statusline=a%=b
+  call assert_match('^a\+━\+b$', s:get_statusline())
+  vnew
+  call assert_match('^a\+━\+b━a\+═\+b$', s:get_statusline())
+  wincmd w
+  call assert_match('^a\+═\+b═a\+━\+b$', s:get_statusline())
+  set statusline& fillchars& laststatus&
+  %bw!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

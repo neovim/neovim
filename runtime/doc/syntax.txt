@@ -188,7 +188,8 @@ A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
-an error when using other characters.
+an error when using other characters.  The maxium length of a group name is
+about 200 bytes.  *E1249*
 
 To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
@@ -616,7 +617,7 @@ evaluate to get a unique string to append to each ID used in a given document,
 so that the full IDs will be unique even when combined with other content in a
 larger HTML document. Example, to append _ and the buffer number to each ID: >
 
-	:let g:html_id_expr = '"_".bufnr("%")'
+	:let g:html_id_expr = '"_" .. bufnr("%")'
 <
 To append a string "_mystring" to the end of each ID: >
 
@@ -1499,6 +1500,14 @@ this mode define the following variable in your vimrc file >
 The enhanced mode also takes advantage of additional color features for a dark
 gvim display.  Here, statements are colored LightYellow instead of Yellow, and
 conditionals are LightBlue for better distinction.
+
+Both Visual Basic and FORM use the extension ".frm".  To detect which one
+should be used, Vim checks for the string "VB_Name" in the first five lines of
+the file.  If it is found, filetype will be "vb", otherwise "form".
+
+If the automatic detection doesn't work for you or you only edit, for
+example, FORM files, use this in your startup vimrc: >
+   :let filetype_frm = "form"
 
 
 FORTH						*forth.vim* *ft-forth-syntax*
@@ -3550,8 +3559,8 @@ Do you want to draw with the mouse?  Try the following: >
    :function! GetPixel()
    :   let c = getline(".")[col(".") - 1]
    :   echo c
-   :   exe "noremap <LeftMouse> <LeftMouse>r".c
-   :   exe "noremap <LeftDrag>	<LeftMouse>r".c
+   :   exe "noremap <LeftMouse> <LeftMouse>r" .. c
+   :   exe "noremap <LeftDrag>	<LeftMouse>r" .. c
    :endfunction
    :noremap <RightMouse> <LeftMouse>:call GetPixel()<CR>
    :set guicursor=n:hor20	   " to see the color beneath the cursor
@@ -4388,7 +4397,7 @@ Leading context			*:syn-lc* *:syn-leading* *:syn-context*
 
 Note: This is an obsolete feature, only included for backwards compatibility
 with previous Vim versions.  It's now recommended to use the |/\@<=| construct
-in the pattern.
+in the pattern.  You can also often use |/\zs|.
 
 The "lc" offset specifies leading context -- a part of the pattern that must
 be present, but is not considered part of the match.  An offset of "lc=n" will
@@ -4875,7 +4884,8 @@ the same syntax file on all UIs.
 
 1. TUI highlight arguments
 
-					*bold* *underline* *undercurl*
+					*bold* *underline* *underlineline*
+					*undercurl* *underdot* *underdash*
 					*inverse* *italic* *standout*
 					*nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
@@ -4883,7 +4893,10 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	following items (in any order):
 		bold
 		underline
+		underlineline	double underline
 		undercurl	curly underline
+		underdot	dotted underline
+		underdash	dashed underline
 		strikethrough
 		reverse
 		inverse		same as reverse
@@ -4894,8 +4907,9 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	"undercurl" falls back to "underline" in a terminal that does not
-	support it.  The color is set using |highlight-guisp|.
+	"underlineline", "undercurl", "underdot", and "underdash" fall back
+	to "underline" in a terminal that does not support them. The color is
+	set using |highlight-guisp|.
 
 start={term-list}				*highlight-start* *E422*
 stop={term-list}				*term-list* *highlight-stop*
@@ -5028,8 +5042,8 @@ guifg={color-name}					*highlight-guifg*
 guibg={color-name}					*highlight-guibg*
 guisp={color-name}					*highlight-guisp*
 	These give the foreground (guifg), background (guibg) and special
-	(guisp) color to use in the GUI.  "guisp" is used for undercurl
-	and underline.
+	(guisp) color to use in the GUI.  "guisp" is used for various
+	underlines.
 	There are a few special names:
 		NONE		no color (transparent)
 		bg		use normal background color
@@ -5105,8 +5119,8 @@ TermCursor	cursor in a focused terminal
 TermCursorNC	cursor in an unfocused terminal
 							*hl-ErrorMsg*
 ErrorMsg	error messages on the command line
-							*hl-VertSplit*
-VertSplit	the column separating vertically split windows
+							*hl-WinSeparator*
+WinSeparator	separators between window splits
 							*hl-Folded*
 Folded		line used for closed folds
 							*hl-FoldColumn*
@@ -5349,11 +5363,12 @@ WARNING: The longer the tags file, the slower this will be, and the more
 memory Vim will consume.
 
 Only highlighting typedefs, unions and structs can be done too.  For this you
-must use Exuberant ctags (found at http://ctags.sf.net).
+must use Universal Ctags (found at https://ctags.io) or Exuberant ctags (found
+at http://ctags.sf.net).
 
 Put these lines in your Makefile:
 
-# Make a highlight file for types.  Requires Exuberant ctags and awk
+# Make a highlight file for types.  Requires Universal/Exuberant ctags and awk
 types: types.vim
 types.vim: *.[ch]
 	ctags --c-kinds=gstu -o- *.[ch] |\
@@ -5363,9 +5378,9 @@ types.vim: *.[ch]
 And put these lines in your vimrc: >
 
    " load the types.vim highlighting file, if it exists
-   autocmd BufRead,BufNewFile *.[ch] let fname = expand('<afile>:p:h') . '/types.vim'
+   autocmd BufRead,BufNewFile *.[ch] let fname = expand('<afile>:p:h') .. '/types.vim'
    autocmd BufRead,BufNewFile *.[ch] if filereadable(fname)
-   autocmd BufRead,BufNewFile *.[ch]   exe 'so ' . fname
+   autocmd BufRead,BufNewFile *.[ch]   exe 'so ' .. fname
    autocmd BufRead,BufNewFile *.[ch] endif
 
 ==============================================================================

@@ -289,9 +289,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_rl) {
         pum_width = pum_col - pum_scrollbar + 1;
       } else {
-        assert(Columns - pum_col - pum_scrollbar >= INT_MIN
-               && Columns - pum_col - pum_scrollbar <= INT_MAX);
-        pum_width = (int)(Columns - pum_col - pum_scrollbar);
+        assert(Columns - pum_col - pum_scrollbar >= 0);
+        pum_width = Columns - pum_col - pum_scrollbar;
       }
 
       if ((pum_width > max_width + pum_kind_width + pum_extra_width + 1)
@@ -352,12 +351,11 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // not enough room, will use what we have
       if (pum_rl) {
         assert(Columns - 1 >= INT_MIN);
-        pum_col = (int)(Columns - 1);
+        pum_col = Columns - 1;
       } else {
         pum_col = 0;
       }
-      assert(Columns - 1 >= INT_MIN);
-      pum_width = (int)(Columns - 1);
+      pum_width = Columns - 1;
     } else {
       if (max_width > p_pw) {
         // truncate
@@ -367,9 +365,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_rl) {
         pum_col = max_width - 1;
       } else {
-        assert(Columns - max_width >= INT_MIN
-               && Columns - max_width <= INT_MAX);
-        pum_col = (int)(Columns - max_width);
+        assert(Columns - max_width >= 0);
+        pum_col = Columns - max_width;
       }
       pum_width = max_width - pum_scrollbar;
     }

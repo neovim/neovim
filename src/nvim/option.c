@@ -47,6 +47,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hardcopy.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
 #include "nvim/keymap.h"
 #include "nvim/macros.h"
@@ -1781,7 +1782,7 @@ static char *illegal_char(char *errbuf, size_t errbuflen, int c)
   if (errbuf == NULL) {
     return "";
   }
-  vim_snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
+  vim_snprintf(errbuf, errbuflen, _("E539: Illegal character <%s>"),
                (char *)transchar(c));
   return errbuf;
 }
@@ -1984,10 +1985,9 @@ static void didset_options(void)
   (void)did_set_spell_option(true);
   // set cedit_key
   (void)check_cedit();
-  briopt_check(curwin);
   // initialize the table for 'breakat'.
   fill_breakat_flags();
-  fill_culopt_flags(NULL, curwin);
+  didset_window_options(curwin);
 }
 
 // More side effects of setting options.
@@ -2284,12 +2284,12 @@ static char *set_string_option(const int opt_idx, const char *const value, const
   *varp = s;
 
   char *const saved_oldval = xstrdup(oldval);
-  char *const saved_oldval_l = (oldval_l != NULL) ? xstrdup((char *)oldval_l) : 0;
-  char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup((char *)oldval_g) : 0;
+  char *const saved_oldval_l = (oldval_l != NULL) ? xstrdup(oldval_l) : 0;
+  char *const saved_oldval_g = (oldval_g != NULL) ? xstrdup(oldval_g) : 0;
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  char *const r = did_set_string_option(opt_idx, (char_u **)varp, (int)true,
+  char *const r = did_set_string_option(opt_idx, (char_u **)varp, true,
                                         (char_u *)oldval,
                                         NULL, 0, opt_flags, &value_checked);
   if (r == NULL) {
@@ -2777,7 +2777,7 @@ ambw_end:
 
         if (!ascii_isdigit(*(s - 1))) {
           if (errbuf != NULL) {
-            vim_snprintf((char *)errbuf, errbuflen,
+            vim_snprintf(errbuf, errbuflen,
                          _("E526: Missing number after <%s>"),
                          transchar_byte(*(s - 1)));
             errmsg = errbuf;
@@ -2911,7 +2911,7 @@ ambw_end:
         || check_opt_strings(curbuf->b_p_bt, p_buftype_values, false) != OK) {
       errmsg = e_invarg;
     } else {
-      if (curwin->w_status_height) {
+      if (curwin->w_status_height || global_stl_height()) {
         curwin->w_redr_status = true;
         redraw_later(curwin, VALID);
       }
@@ -2968,7 +2968,7 @@ ambw_end:
           }
         } else {
           if (errbuf != NULL) {
-            vim_snprintf((char *)errbuf, errbuflen,
+            vim_snprintf(errbuf, errbuflen,
                          _("E535: Illegal character after <%c>"),
                          *--s);
             errmsg = errbuf;
@@ -3178,10 +3178,7 @@ ambw_end:
     char_u *cp;
 
     if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-      if (curbuf->b_p_vsts_array) {
-        xfree(curbuf->b_p_vsts_array);
-        curbuf->b_p_vsts_array = 0;
-      }
+      XFREE_CLEAR(curbuf->b_p_vsts_array);
     } else {
       for (cp = *varp; *cp; cp++) {
         if (ascii_isdigit(*cp)) {
@@ -3206,10 +3203,7 @@ ambw_end:
     char_u *cp;
 
     if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-      if (curbuf->b_p_vts_array) {
-        xfree(curbuf->b_p_vts_array);
-        curbuf->b_p_vts_array = NULL;
-      }
+      XFREE_CLEAR(curbuf->b_p_vts_array);
     } else {
       for (cp = *varp; *cp; cp++) {
         if (ascii_isdigit(*cp)) {
@@ -3560,16 +3554,22 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
   struct chars_tab *tab;
 
   struct chars_tab fcs_tab[] = {
-    { &wp->w_p_fcs_chars.stl,     "stl",      ' '  },
-    { &wp->w_p_fcs_chars.stlnc,   "stlnc",    ' '  },
-    { &wp->w_p_fcs_chars.vert,    "vert",     9474 },  // │
-    { &wp->w_p_fcs_chars.fold,    "fold",     183  },  // ·
-    { &wp->w_p_fcs_chars.foldopen,   "foldopen",  '-'  },
-    { &wp->w_p_fcs_chars.foldclosed, "foldclose", '+'  },
-    { &wp->w_p_fcs_chars.foldsep,    "foldsep",   9474 },  // │
-    { &wp->w_p_fcs_chars.diff,    "diff",     '-'  },
-    { &wp->w_p_fcs_chars.msgsep,  "msgsep",   ' '  },
-    { &wp->w_p_fcs_chars.eob,     "eob",      '~'  },
+    { &wp->w_p_fcs_chars.stl,        "stl",        ' '  },
+    { &wp->w_p_fcs_chars.stlnc,      "stlnc",      ' '  },
+    { &wp->w_p_fcs_chars.horiz,      "horiz",      9472 },  // ─
+    { &wp->w_p_fcs_chars.horizup,    "horizup",    9524 },  // ┴
+    { &wp->w_p_fcs_chars.horizdown,  "horizdown",  9516 },  // ┬
+    { &wp->w_p_fcs_chars.vert,       "vert",       9474 },  // │
+    { &wp->w_p_fcs_chars.vertleft,   "vertleft",   9508 },  // ┤
+    { &wp->w_p_fcs_chars.vertright,  "vertright",  9500 },  // ├
+    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz",  9532 },  // ┼
+    { &wp->w_p_fcs_chars.fold,       "fold",       183  },  // ·
+    { &wp->w_p_fcs_chars.foldopen,   "foldopen",   '-'  },
+    { &wp->w_p_fcs_chars.foldclosed, "foldclose",  '+'  },
+    { &wp->w_p_fcs_chars.foldsep,    "foldsep",    9474 },  // │
+    { &wp->w_p_fcs_chars.diff,       "diff",       '-'  },
+    { &wp->w_p_fcs_chars.msgsep,     "msgsep",     ' '  },
+    { &wp->w_p_fcs_chars.eob,        "eob",        '~'  },
   };
   struct chars_tab lcs_tab[] = {
     { &wp->w_p_lcs_chars.eol,     "eol",      NUL  },
@@ -3596,15 +3596,17 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
       varp = &p_fcs;
     }
     if (*p_ambw == 'd') {
-      // XXX: If ambiwidth=double then "|" and "·" take 2 columns, which is
-      // forbidden (TUI limitation?). Set old defaults.
-      fcs_tab[2].def = '|';
-      fcs_tab[6].def = '|';
-      fcs_tab[3].def = '-';
-    } else {
-      fcs_tab[2].def = 9474;  // │
-      fcs_tab[6].def = 9474;  // │
-      fcs_tab[3].def = 183;   // ·
+      // XXX: If ambiwidth=double then some characters take 2 columns,
+      // which is forbidden (TUI limitation?). Set old defaults.
+      fcs_tab[2].def  = '-';
+      fcs_tab[3].def  = '-';
+      fcs_tab[4].def  = '-';
+      fcs_tab[5].def  = '|';
+      fcs_tab[6].def  = '|';
+      fcs_tab[7].def  = '|';
+      fcs_tab[8].def  = '+';
+      fcs_tab[9].def  = '-';
+      fcs_tab[12].def = '|';
     }
   }
 
@@ -3852,13 +3854,13 @@ static bool parse_winhl_opt(win_T *wp)
     size_t nlen = (size_t)(colon-p);
     char *hi = colon+1;
     char *commap = xstrchrnul(hi, ',');
-    int len = (int)(commap-hi);
+    size_t len = (size_t)(commap-hi);
     int hl_id = len ? syn_check_group(hi, len) : -1;
 
     if (strncmp("Normal", p, nlen) == 0) {
       w_hl_id_normal = hl_id;
     } else {
-      for (hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+      for (hlf = 0; hlf < HLF_COUNT; hlf++) {
         if (strlen(hlf_names[hlf]) == nlen
             && strncmp(hlf_names[hlf], p, nlen) == 0) {
           w_hl_ids[hlf] = hl_id;
@@ -3885,6 +3887,7 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 {
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
+  nlua_set_sctx(&script_ctx);
   const LastSet last_set = {
     .script_ctx = {
       script_ctx.sc_sid,
@@ -4284,7 +4287,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   }
 
   // Save the global value before changing anything. This is needed as for
-  // a global-only option setting the "local value" infact sets the global
+  // a global-only option setting the "local value" in fact sets the global
   // value (since there is only one value).
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
@@ -4420,6 +4423,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
     if (value < 1) {
       errmsg = e_positive;
+    } else if (value > TABSTOP_MAX) {
+      errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
     if (value < 0) {
@@ -4433,7 +4438,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
 
   // Don't change the value and return early if validation failed.
   if (errmsg != NULL) {
-    return (char *)errmsg;
+    return errmsg;
   }
 
   *pp = value;
@@ -4479,6 +4484,20 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     // 'winminwidth'
     win_setminwidth();
   } else if (pp == &p_ls) {
+    // When switching to global statusline, decrease topframe height
+    // Also clear the cmdline to remove the ruler if there is one
+    if (value == 3 && old_value != 3) {
+      frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
+      (void)win_comp_pos();
+      clear_cmdline = true;
+    }
+    // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
+    // in order to to re-add the space that was previously taken by the global statusline
+    if (old_value == 3 && value != 3) {
+      frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
+      (void)win_comp_pos();
+    }
+
     last_status(false);  // (re)set last window status line.
   } else if (pp == &p_stal) {
     // (re)set tab page line
@@ -4557,7 +4576,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   // Check the (new) bounds for Rows and Columns here.
   if (p_lines < min_rows() && full_screen) {
     if (errbuf != NULL) {
-      vim_snprintf((char *)errbuf, errbuflen,
+      vim_snprintf(errbuf, errbuflen,
                    _("E593: Need at least %d lines"), min_rows());
       errmsg = errbuf;
     }
@@ -4565,7 +4584,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   }
   if (p_columns < MIN_COLUMNS && full_screen) {
     if (errbuf != NULL) {
-      vim_snprintf((char *)errbuf, errbuflen,
+      vim_snprintf(errbuf, errbuflen,
                    _("E594: Need at least %d columns"), MIN_COLUMNS);
       errmsg = errbuf;
     }
@@ -4681,7 +4700,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   }
   check_redraw(options[opt_idx].flags);
 
-  return (char *)errmsg;
+  return errmsg;
 }
 
 /// Trigger the OptionSet autocommand.
@@ -5271,7 +5290,7 @@ static void showoptions(int all, int opt_flags)
              && Columns + GAP >= INT_MIN + 3
              && (Columns + GAP - 3) / INC >= INT_MIN
              && (Columns + GAP - 3) / INC <= INT_MAX);
-      cols = (int)((Columns + GAP - 3) / INC);
+      cols = (Columns + GAP - 3) / INC;
       if (cols == 0) {
         cols = 1;
       }
@@ -5650,7 +5669,7 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
 
 void comp_col(void)
 {
-  int last_has_status = (p_ls == 2 || (p_ls == 1 && !ONE_WINDOW));
+  int last_has_status = (p_ls > 1 || (p_ls == 1 && !ONE_WINDOW));
 
   sc_col = 0;
   ru_col = 0;
@@ -5668,13 +5687,11 @@ void comp_col(void)
     }
   }
   assert(sc_col >= 0
-         && INT_MIN + sc_col <= Columns
-         && Columns - sc_col <= INT_MAX);
-  sc_col = (int)(Columns - sc_col);
+         && INT_MIN + sc_col <= Columns);
+  sc_col = Columns - sc_col;
   assert(ru_col >= 0
-         && INT_MIN + ru_col <= Columns
-         && Columns - ru_col <= INT_MAX);
-  ru_col = (int)(Columns - ru_col);
+         && INT_MIN + ru_col <= Columns);
+  ru_col = Columns - ru_col;
   if (sc_col <= 0) {            // screen too narrow, will become a mess
     sc_col = 1;
   }
@@ -6178,6 +6195,7 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
+  didset_window_options(wp_to);
 }
 
 /// Copy the options from one winopt_T to another.
@@ -6236,6 +6254,9 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fcs = vim_strsave(from->wo_fcs);
   to->wo_lcs = vim_strsave(from->wo_lcs);
   to->wo_winbl = from->wo_winbl;
+
+  // Copy the script context so that we know were the value was last set.
+  memmove(to->wo_script_ctx, from->wo_script_ctx, sizeof(to->wo_script_ctx));
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -6308,11 +6329,30 @@ void didset_window_options(win_T *wp)
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
+/// Index into the options table for a buffer-local option enum.
+static int buf_opt_idx[BV_COUNT];
+#define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].last_set
+
+/// Initialize buf_opt_idx[] if not done already.
+static void init_buf_opt_idx(void)
+{
+  static int did_init_buf_opt_idx = false;
+
+  if (did_init_buf_opt_idx) {
+    return;
+  }
+  did_init_buf_opt_idx = true;
+  for (int i = 0; options[i].fullname != NULL; i++) {
+    if (options[i].indir & PV_BUF) {
+      buf_opt_idx[options[i].indir & PV_MASK] = i;
+    }
+  }
+}
 
 /// Copy global option values to local options for one buffer.
 /// Used when creating a new buffer and sometimes when entering a buffer.
 /// flags:
-/// BCO_ENTER    We will enter the buf buffer.
+/// BCO_ENTER    We will enter the buffer "buf".
 /// BCO_ALWAYS   Always copy the options, but only set b_p_initialized when
 ///      appropriate.
 /// BCO_NOHELP   Don't copy the values to a help buffer.
@@ -6348,11 +6388,12 @@ void buf_copy_options(buf_T *buf, int flags)
     }
 
     if (should_copy || (flags & BCO_ALWAYS)) {
-      /* Don't copy the options specific to a help buffer when
-      * BCO_NOHELP is given or the options were initialized already
-      * (jumping back to a help file with CTRL-T or CTRL-O) */
-      dont_do_help = ((flags & BCO_NOHELP) && buf->b_help)
-                     || buf->b_p_initialized;
+      memset(buf->b_p_script_ctx, 0, sizeof(buf->b_p_script_ctx));
+      init_buf_opt_idx();
+      // Don't copy the options specific to a help buffer when
+      // BCO_NOHELP is given or the options were initialized already
+      // (jumping back to a help file with CTRL-T or CTRL-O)
+      dont_do_help = ((flags & BCO_NOHELP) && buf->b_help) || buf->b_p_initialized;
       if (dont_do_help) {               // don't free b_p_isk
         save_p_isk = buf->b_p_isk;
         buf->b_p_isk = NULL;
@@ -6384,80 +6425,129 @@ void buf_copy_options(buf_T *buf, int flags)
       }
 
       buf->b_p_ai = p_ai;
+      COPY_OPT_SCTX(buf, BV_AI);
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
+      COPY_OPT_SCTX(buf, BV_SW);
       buf->b_p_scbk = p_scbk;
+      COPY_OPT_SCTX(buf, BV_SCBK);
       buf->b_p_tw = p_tw;
+      COPY_OPT_SCTX(buf, BV_TW);
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;
       buf->b_p_wm = p_wm;
+      COPY_OPT_SCTX(buf, BV_WM);
       buf->b_p_wm_nopaste = p_wm_nopaste;
       buf->b_p_wm_nobin = p_wm_nobin;
       buf->b_p_bin = p_bin;
+      COPY_OPT_SCTX(buf, BV_BIN);
       buf->b_p_bomb = p_bomb;
+      COPY_OPT_SCTX(buf, BV_BOMB);
       buf->b_p_et = p_et;
+      COPY_OPT_SCTX(buf, BV_ET);
       buf->b_p_fixeol = p_fixeol;
+      COPY_OPT_SCTX(buf, BV_FIXEOL);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;
+      COPY_OPT_SCTX(buf, BV_ML);
       buf->b_p_ml_nobin = p_ml_nobin;
       buf->b_p_inf = p_inf;
-      buf->b_p_swf = cmdmod.noswapfile ? false : p_swf;
+      COPY_OPT_SCTX(buf, BV_INF);
+      if (cmdmod.noswapfile) {
+        buf->b_p_swf = false;
+      } else {
+        buf->b_p_swf = p_swf;
+        COPY_OPT_SCTX(buf, BV_SWF);
+      }
       buf->b_p_cpt = vim_strsave(p_cpt);
+      COPY_OPT_SCTX(buf, BV_CPT);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = vim_strsave(p_csl);
+      COPY_OPT_SCTX(buf, BV_CSL);
 #endif
       buf->b_p_cfu = vim_strsave(p_cfu);
+      COPY_OPT_SCTX(buf, BV_CFU);
       buf->b_p_ofu = vim_strsave(p_ofu);
+      COPY_OPT_SCTX(buf, BV_OFU);
       buf->b_p_tfu = vim_strsave(p_tfu);
+      COPY_OPT_SCTX(buf, BV_TFU);
       buf->b_p_sts = p_sts;
+      COPY_OPT_SCTX(buf, BV_STS);
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = vim_strsave(p_vsts);
+      COPY_OPT_SCTX(buf, BV_VSTS);
       if (p_vsts && p_vsts != empty_option) {
         (void)tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
-        buf->b_p_vsts_array = 0;
+        buf->b_p_vsts_array = NULL;
       }
       buf->b_p_vsts_nopaste = p_vsts_nopaste
                                 ? vim_strsave(p_vsts_nopaste)
                                 : NULL;
       buf->b_p_com = vim_strsave(p_com);
+      COPY_OPT_SCTX(buf, BV_COM);
       buf->b_p_cms = vim_strsave(p_cms);
+      COPY_OPT_SCTX(buf, BV_CMS);
       buf->b_p_fo = vim_strsave(p_fo);
+      COPY_OPT_SCTX(buf, BV_FO);
       buf->b_p_flp = vim_strsave(p_flp);
+      COPY_OPT_SCTX(buf, BV_FLP);
       buf->b_p_nf = vim_strsave(p_nf);
+      COPY_OPT_SCTX(buf, BV_NF);
       buf->b_p_mps = vim_strsave(p_mps);
+      COPY_OPT_SCTX(buf, BV_MPS);
       buf->b_p_si = p_si;
+      COPY_OPT_SCTX(buf, BV_SI);
       buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
+      COPY_OPT_SCTX(buf, BV_CI);
       buf->b_p_cin = p_cin;
+      COPY_OPT_SCTX(buf, BV_CIN);
       buf->b_p_cink = vim_strsave(p_cink);
+      COPY_OPT_SCTX(buf, BV_CINK);
       buf->b_p_cino = vim_strsave(p_cino);
+      COPY_OPT_SCTX(buf, BV_CINO);
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;
+      COPY_OPT_SCTX(buf, BV_PI);
       buf->b_p_cinw = vim_strsave(p_cinw);
+      COPY_OPT_SCTX(buf, BV_CINW);
       buf->b_p_lisp = p_lisp;
+      COPY_OPT_SCTX(buf, BV_LISP);
       // Don't copy 'syntax', it must be set
       buf->b_p_syn = empty_option;
       buf->b_p_smc = p_smc;
+      COPY_OPT_SCTX(buf, BV_SMC);
       buf->b_s.b_syn_isk = empty_option;
       buf->b_s.b_p_spc = vim_strsave(p_spc);
+      COPY_OPT_SCTX(buf, BV_SPC);
       (void)compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = vim_strsave(p_spf);
+      COPY_OPT_SCTX(buf, BV_SPF);
       buf->b_s.b_p_spl = vim_strsave(p_spl);
+      COPY_OPT_SCTX(buf, BV_SPL);
       buf->b_s.b_p_spo = vim_strsave(p_spo);
+      COPY_OPT_SCTX(buf, BV_SPO);
       buf->b_p_inde = vim_strsave(p_inde);
+      COPY_OPT_SCTX(buf, BV_INDE);
       buf->b_p_indk = vim_strsave(p_indk);
+      COPY_OPT_SCTX(buf, BV_INDK);
       buf->b_p_fp = empty_option;
       buf->b_p_fex = vim_strsave(p_fex);
+      COPY_OPT_SCTX(buf, BV_FEX);
       buf->b_p_sua = vim_strsave(p_sua);
+      COPY_OPT_SCTX(buf, BV_SUA);
       buf->b_p_keymap = vim_strsave(p_keymap);
+      COPY_OPT_SCTX(buf, BV_KMAP);
       buf->b_kmap_state |= KEYMAP_INIT;
       // This isn't really an option, but copying the langmap and IME
       // state from the current buffer is better than resetting it.
       buf->b_p_iminsert = p_iminsert;
+      COPY_OPT_SCTX(buf, BV_IMI);
       buf->b_p_imsearch = p_imsearch;
+      COPY_OPT_SCTX(buf, BV_IMS);
 
       // options that are normally global but also have a local value
       // are not copied, start using the global value
@@ -6477,11 +6567,14 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_def = empty_option;
       buf->b_p_inc = empty_option;
       buf->b_p_inex = vim_strsave(p_inex);
+      COPY_OPT_SCTX(buf, BV_INEX);
       buf->b_p_dict = empty_option;
       buf->b_p_tsr = empty_option;
       buf->b_p_tsrfu = empty_option;
       buf->b_p_qe = vim_strsave(p_qe);
+      COPY_OPT_SCTX(buf, BV_QE);
       buf->b_p_udf = p_udf;
+      COPY_OPT_SCTX(buf, BV_UDF);
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
 
@@ -6500,9 +6593,12 @@ void buf_copy_options(buf_T *buf, int flags)
         }
       } else {
         buf->b_p_isk = vim_strsave(p_isk);
+        COPY_OPT_SCTX(buf, BV_ISK);
         did_isk = true;
         buf->b_p_ts = p_ts;
+        COPY_OPT_SCTX(buf, BV_TS);
         buf->b_p_vts = vim_strsave(p_vts);
+        COPY_OPT_SCTX(buf, BV_VTS);
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
           (void)tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
@@ -6513,6 +6609,7 @@ void buf_copy_options(buf_T *buf, int flags)
           clear_string_option(&buf->b_p_bt);
         }
         buf->b_p_ma = p_ma;
+        COPY_OPT_SCTX(buf, BV_MA);
       }
     }
 
@@ -7153,10 +7250,7 @@ static void paste_option_changed(void)
         free_string_option(buf->b_p_vsts);
       }
       buf->b_p_vsts = empty_option;
-      if (buf->b_p_vsts_array) {
-        xfree(buf->b_p_vsts_array);
-      }
-      buf->b_p_vsts_array = 0;
+      XFREE_CLEAR(buf->b_p_vsts_array);
     }
 
     // set global options
@@ -7193,13 +7287,11 @@ static void paste_option_changed(void)
       buf->b_p_vsts = buf->b_p_vsts_nopaste
                         ? vim_strsave(buf->b_p_vsts_nopaste)
                         : empty_option;
-      if (buf->b_p_vsts_array) {
-        xfree(buf->b_p_vsts_array);
-      }
+      xfree(buf->b_p_vsts_array);
       if (buf->b_p_vsts && buf->b_p_vsts != empty_option) {
         (void)tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
       } else {
-        buf->b_p_vsts_array = 0;
+        buf->b_p_vsts_array = NULL;
       }
     }
 
@@ -7560,7 +7652,7 @@ bool tabstop_set(char_u *var, long **array)
     int n = atoi((char *)cp);
 
     // Catch negative values, overflow and ridiculous big values.
-    if (n < 0 || n > 9999) {
+    if (n <= 0 || n > TABSTOP_MAX) {
       semsg(_(e_invarg2), cp);
       XFREE_CLEAR(*array);
       return false;
@@ -8055,7 +8147,6 @@ int win_signcol_count(win_T *wp)
 /// Return the number of requested sign columns, based on user / configuration.
 int win_signcol_configured(win_T *wp, int *is_fixed)
 {
-  int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
   if (is_fixed) {
@@ -8068,7 +8159,6 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
                                 && (wp->w_p_nu || wp->w_p_rnu)))) {
     return 0;
   }
-  needed_signcols = buf_signcols(wp->w_buffer);
 
   // yes or yes
   if (!strncmp(scl, "yes:", 4)) {
@@ -8084,6 +8174,8 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
     *is_fixed = 0;
   }
 
+  int minimum = 0, maximum = 1;
+
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';
@@ -8094,6 +8186,7 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
     }
   }
 
+  int needed_signcols = buf_signcols(wp->w_buffer, maximum);
   int ret = MAX(minimum, MIN(maximum, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;

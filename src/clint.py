@@ -191,7 +191,6 @@ _ERROR_CATEGORIES = [
     'readability/fn_size',
     'readability/multiline_comment',
     'readability/multiline_string',
-    'readability/nolint',
     'readability/nul',
     'readability/todo',
     'readability/utf8',
@@ -298,9 +297,6 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
                 if category in _ERROR_CATEGORIES:
                     _error_suppressions.setdefault(
                         category, set()).add(linenum)
-                else:
-                    error(filename, linenum, 'readability/nolint', 5,
-                          'Unknown NOLINT error category: %s' % category)
 
 
 def ParseKnownErrorSuppressions(filename, raw_lines, linenum):
@@ -373,7 +369,7 @@ def Search(pattern, s):
     return _regexp_compile_cache[pattern].search(s)
 
 
-class _IncludeState(dict):
+class _IncludeState(dict):  # lgtm [py/missing-equals]
 
     """Tracks line numbers for includes, and the order in which includes appear.
 

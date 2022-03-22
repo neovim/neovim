@@ -81,6 +81,7 @@ let s:filename_checks = {
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
     \ 'bib': ['file.bib'],
+    \ 'bicep': ['file.bicep'],
     \ 'beancount': ['file.beancount'],
     \ 'bindzone': ['named.root', '/bind/db.file', '/named/db.file', 'any/bind/db.file', 'any/named/db.file'],
     \ 'blank': ['file.bl'],
@@ -131,6 +132,7 @@ let s:filename_checks = {
     \ 'cvs': ['cvs123'],
     \ 'cvsrc': ['.cvsrc'],
     \ 'cynpp': ['file.cyn'],
+    \ 'd': ['file.d'],
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
@@ -153,6 +155,7 @@ let s:filename_checks = {
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
+    \ 'dtrace': ['/usr/lib/dtrace/io.d'],
     \ 'dts': ['file.dts', 'file.dtsi'],
     \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
     \ 'dylan': ['file.dylan'],
@@ -183,6 +186,7 @@ let s:filename_checks = {
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
     \ 'fish': ['file.fish'],
     \ 'focexec': ['file.fex', 'file.focexec'],
+    \ 'form': ['file.frm'],
     \ 'forth': ['file.ft', 'file.fth'],
     \ 'fortran': ['file.f', 'file.for', 'file.fortran', 'file.fpp', 'file.ftn', 'file.f77', 'file.f90', 'file.f95', 'file.f03', 'file.f08'],
     \ 'fpcmake': ['file.fpc'],
@@ -192,7 +196,7 @@ let s:filename_checks = {
     \ 'fstab': ['fstab', 'mtab'],
     \ 'fusion': ['file.fusion'],
     \ 'fvwm': ['/.fvwm/file', 'any/.fvwm/file'],
-    \ 'gdb': ['.gdbinit', 'gdbinit'],
+    \ 'gdb': ['.gdbinit', 'gdbinit', 'file.gdb', '.config/gdbearlyinit', '.gdbearlyinit'],
     \ 'gdresource': ['file.tscn', 'file.tres'],
     \ 'gdscript': ['file.gd'],
     \ 'gdmo': ['file.mo', 'file.gdmo'],
@@ -270,6 +274,7 @@ let s:filename_checks = {
     \ 'java': ['file.java', 'file.jav'],
     \ 'javacc': ['file.jj', 'file.jjt'],
     \ 'javascript': ['file.js', 'file.javascript', 'file.es', 'file.mjs', 'file.cjs'],
+    \ 'javascript.glimmer': ['file.gjs'],
     \ 'javascriptreact': ['file.jsx'],
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
@@ -434,6 +439,7 @@ let s:filename_checks = {
     \ 'readline': ['.inputrc', 'inputrc'],
     \ 'remind': ['.reminders', 'file.remind', 'file.rem', '.reminders-file'],
     \ 'rego': ['file.rego'],
+    \ 'rescript': ['file.res', 'file.resi'],
     \ 'resolv': ['resolv.conf'],
     \ 'reva': ['file.frt'],
     \ 'rexx': ['file.rex', 'file.orx', 'file.rxo', 'file.rxj', 'file.jrexx', 'file.rexxj', 'file.rexx', 'file.testGroup', 'file.testUnit'],
@@ -475,6 +481,7 @@ let s:filename_checks = {
     \ 'skill': ['file.il', 'file.ils', 'file.cdf'],
     \ 'slang': ['file.sl'],
     \ 'slice': ['file.ice'],
+    \ 'solidity': ['file.sol'],
     \ 'solution': ['file.sln'],
     \ 'slpconf': ['/etc/slp.conf', 'any/etc/slp.conf'],
     \ 'slpreg': ['/etc/slp.reg', 'any/etc/slp.reg'],
@@ -542,6 +549,7 @@ let s:filename_checks = {
     \ 'tssgm': ['file.tssgm'],
     \ 'tssop': ['file.tssop'],
     \ 'twig': ['file.twig'],
+    \ 'typescript.glimmer': ['file.gts'],
     \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf', 'any/etc/udev/udev.conf'],
@@ -730,101 +738,162 @@ func Test_setfiletype_completion()
   call assert_equal('"setfiletype java javacc javascript javascriptreact', @:)
 endfunc
 
-func Test_hook_file()
+"""""""""""""""""""""""""""""""""""""""""""""""""
+" Tests for specific extentions and filetypes.
+" Keep sorted.
+"""""""""""""""""""""""""""""""""""""""""""""""""
+
+func Test_bas_file()
   filetype on
 
-  call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook')
-  split Xfile.hook
-  call assert_equal('dosini', &filetype)
+  call writefile(['looks like BASIC'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('basic', &filetype)
   bwipe!
 
-  call writefile(['not pacman'], 'Xfile.hook')
-  split Xfile.hook
-  call assert_notequal('dosini', &filetype)
+  " Test dist#ft#FTbas()
+
+  let g:filetype_bas = 'freebasic'
+  split Xfile.bas
+  call assert_equal('freebasic', &filetype)
+  bwipe!
+  unlet g:filetype_bas
+
+  " FreeBASIC
+
+  call writefile(["/' FreeBASIC multiline comment '/"], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('freebasic', &filetype)
   bwipe!
 
-  call delete('Xfile.hook')
+  call writefile(['#define TESTING'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('freebasic', &filetype)
+  bwipe!
+
+  call writefile(['option byval'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('freebasic', &filetype)
+  bwipe!
+
+  call writefile(['extern "C"'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('freebasic', &filetype)
+  bwipe!
+
+  " QB64
+
+  call writefile(['$LET TESTING = 1'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('qb64', &filetype)
+  bwipe!
+
+  call writefile(['OPTION _EXPLICIT'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('qb64', &filetype)
+  bwipe!
+
+  " Visual Basic
+
+  call writefile(['Attribute VB_NAME = "Testing"'], 'Xfile.bas')
+  split Xfile.bas
+  call assert_equal('vb', &filetype)
+  bwipe!
+
+  call delete('Xfile.bas')
   filetype off
 endfunc
 
-func Test_tf_file()
+func Test_d_file()
   filetype on
 
-  call writefile([';;; TF MUD client is super duper cool'], 'Xfile.tf')
-  split Xfile.tf
-  call assert_equal('tf', &filetype)
+  call writefile(['looks like D'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
   bwipe!
 
-  call writefile(['provider "azurerm" {'], 'Xfile.tf')
-  split Xfile.tf
-  call assert_equal('terraform', &filetype)
+  call writefile(['#!/some/bin/dtrace'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
   bwipe!
 
-  call delete('Xfile.tf')
+  call writefile(['#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
+  bwipe!
+
+  call writefile([':some:thing:'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('dtrace', &filetype)
+  bwipe!
+
+  call writefile(['module this', '#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
+  bwipe!
+
+  call writefile(['import that', '#pragma  D  option'], 'Xfile.d')
+  split Xfile.d
+  call assert_equal('d', &filetype)
+  bwipe!
+
   filetype off
 endfunc
 
-
-func Test_ts_file()
+func Test_dep3patch_file()
   filetype on
 
-  call writefile(['<?xml version="1.0" encoding="utf-8"?>'], 'Xfile.ts')
-  split Xfile.ts
-  call assert_equal('xml', &filetype)
+  call assert_true(mkdir('debian/patches', 'p'))
+
+  " series files are not patches
+  call writefile(['Description: some awesome patch'], 'debian/patches/series')
+  split debian/patches/series
+  call assert_notequal('dep3patch', &filetype)
   bwipe!
 
-  call writefile(['// looks like Typescript'], 'Xfile.ts')
-  split Xfile.ts
-  call assert_equal('typescript', &filetype)
+  " diff/patch files without the right headers should still show up as ft=diff
+  call writefile([], 'debian/patches/foo.diff')
+  split debian/patches/foo.diff
+  call assert_equal('diff', &filetype)
   bwipe!
 
-  call delete('Xfile.hook')
-  filetype off
+  " Files with the right headers are detected as dep3patch, even if they don't
+  " have a diff/patch extension
+  call writefile(['Subject: dep3patches'], 'debian/patches/bar')
+  split debian/patches/bar
+  call assert_equal('dep3patch', &filetype)
+  bwipe!
+
+  " Files in sub-directories are detected
+  call assert_true(mkdir('debian/patches/s390x', 'p'))
+  call writefile(['Subject: dep3patches'], 'debian/patches/s390x/bar')
+  split debian/patches/s390x/bar
+  call assert_equal('dep3patch', &filetype)
+  bwipe!
+
+  " The detection stops when seeing the "header end" marker
+  call writefile(['---', 'Origin: the cloud'], 'debian/patches/baz')
+  split debian/patches/baz
+  call assert_notequal('dep3patch', &filetype)
+  bwipe!
+
+  call delete('debian', 'rf')
 endfunc
 
-func Test_ttl_file()
+func Test_dsl_file()
   filetype on
 
-  call writefile(['@base <http://example.org/> .'], 'Xfile.ttl')
-  split Xfile.ttl
-  call assert_equal('turtle', &filetype)
+  call writefile(['  <!doctype dsssl-spec ['], 'dslfile.dsl')
+  split dslfile.dsl
+  call assert_equal('dsl', &filetype)
   bwipe!
 
-  call writefile(['looks like Tera Term Language'], 'Xfile.ttl')
-  split Xfile.ttl
-  call assert_equal('teraterm', &filetype)
+  call writefile(['workspace {'], 'dslfile.dsl')
+  split dslfile.dsl
+  call assert_equal('structurizr', &filetype)
   bwipe!
 
-  call delete('Xfile.ttl')
-  filetype off
-endfunc
-
-func Test_pp_file()
-  filetype on
-
-  call writefile(['looks like puppet'], 'Xfile.pp')
-  split Xfile.pp
-  call assert_equal('puppet', &filetype)
-  bwipe!
-
-  let g:filetype_pp = 'pascal'
-  split Xfile.pp
-  call assert_equal('pascal', &filetype)
-  bwipe!
-  unlet g:filetype_pp
-
-  " Test dist#ft#FTpp()
-  call writefile(['{ pascal comment'], 'Xfile.pp')
-  split Xfile.pp
-  call assert_equal('pascal', &filetype)
-  bwipe!
-
-  call writefile(['procedure pascal'], 'Xfile.pp')
-  split Xfile.pp
-  call assert_equal('pascal', &filetype)
-  bwipe!
-
-  call delete('Xfile.pp')
+  call delete('dslfile.dsl')
   filetype off
 endfunc
 
@@ -865,20 +934,183 @@ func Test_ex_file()
   filetype off
 endfunc
 
-func Test_dsl_file()
+func Test_foam_file()
+  filetype on
+  call assert_true(mkdir('0', 'p'))
+  call assert_true(mkdir('0.orig', 'p'))
+
+  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict')
+  split Xfile1Dict
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict.something')
+  split Xfile1Dict.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
+  split XfileProperties
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
+  split XfileProperties.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
+  split XfileProperties
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
+  split XfileProperties.something
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], '0/Xfile')
+  split 0/Xfile
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call writefile(['FoamFile {', '    object something;'], '0.orig/Xfile')
+  split 0.orig/Xfile
+  call assert_equal('foam', &filetype)
+  bwipe!
+
+  call delete('0', 'rf')
+  call delete('0.orig', 'rf')
+  call delete('Xfile1Dict')
+  call delete('Xfile1Dict.something')
+  call delete('XfileProperties')
+  call delete('XfileProperties.something')
+  filetype off
+endfunc
+
+func Test_frm_file()
   filetype on
 
-  call writefile(['  <!doctype dsssl-spec ['], 'dslfile.dsl')
-  split dslfile.dsl
-  call assert_equal('dsl', &filetype)
+  call writefile(['looks like FORM'], 'Xfile.frm')
+  split Xfile.frm
+  call assert_equal('form', &filetype)
   bwipe!
 
-  call writefile(['workspace {'], 'dslfile.dsl')
-  split dslfile.dsl
-  call assert_equal('structurizr', &filetype)
+  " Test dist#ft#FTfrm()
+
+  let g:filetype_frm = 'form'
+  split Xfile.frm
+  call assert_equal('form', &filetype)
+  bwipe!
+  unlet g:filetype_frm
+
+  " Visual Basic
+
+  call writefile(['Begin VB.Form Form1'], 'Xfile.frm')
+  split Xfile.frm
+  call assert_equal('vb', &filetype)
   bwipe!
 
-  call delete('dslfile.dsl')
+  call delete('Xfile.frm')
+  filetype off
+endfunc
+
+func Test_fs_file()
+  filetype on
+
+  call writefile(['looks like F#'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('fsharp', &filetype)
+  bwipe!
+
+  let g:filetype_fs = 'forth'
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+  unlet g:filetype_fs
+
+  " Test dist#ft#FTfs()
+
+  " Forth (Gforth)
+
+  call writefile(['( Forth inline comment )'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  call writefile(['.( Forth displayed inline comment )'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  call writefile(['\ Forth line comment'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  " empty line comment - no space required
+  call writefile(['\'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  call writefile(['\G Forth documentation comment '], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  call writefile([': squared ( n -- n^2 )', 'dup * ;'], 'Xfile.fs')
+  split Xfile.fs
+  call assert_equal('forth', &filetype)
+  bwipe!
+
+  call delete('Xfile.fs')
+  filetype off
+endfunc
+
+func Test_git_file()
+  filetype on
+
+  call assert_true(mkdir('Xrepo.git', 'p'))
+
+  call writefile([], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('', &filetype)
+  bwipe!
+
+  call writefile(['0000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call writefile(['0000000000000000000000000000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call writefile(['ref: refs/heads/master'], 'Xrepo.git/HEAD')
+  split Xrepo.git/HEAD
+  call assert_equal('git', &filetype)
+  bwipe!
+
+  call delete('Xrepo.git', 'rf')
+  filetype off
+endfunc
+
+func Test_hook_file()
+  filetype on
+
+  call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook')
+  split Xfile.hook
+  call assert_equal('dosini', &filetype)
+  bwipe!
+
+  call writefile(['not pacman'], 'Xfile.hook')
+  split Xfile.hook
+  call assert_notequal('dosini', &filetype)
+  bwipe!
+
+  call delete('Xfile.hook')
   filetype off
 endfunc
 
@@ -982,111 +1214,6 @@ func Test_m_file()
   filetype off
 endfunc
 
-func Test_xpm_file()
-  filetype on
-
-  call writefile(['this is XPM2'], 'file.xpm')
-  split file.xpm
-  call assert_equal('xpm2', &filetype)
-  bwipe!
-
-  call delete('file.xpm')
-  filetype off
-endfunc
-
-func Test_fs_file()
-  filetype on
-
-  call writefile(['looks like F#'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('fsharp', &filetype)
-  bwipe!
-
-  let g:filetype_fs = 'forth'
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-  unlet g:filetype_fs
-
-  " Test dist#ft#FTfs()
-
-  " Forth (Gforth)
-
-  call writefile(['( Forth inline comment )'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call writefile(['.( Forth displayed inline comment )'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call writefile(['\ Forth line comment'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  " empty line comment - no space required
-  call writefile(['\'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call writefile(['\G Forth documentation comment '], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call writefile([': squared ( n -- n^2 )', 'dup * ;'], 'Xfile.fs')
-  split Xfile.fs
-  call assert_equal('forth', &filetype)
-  bwipe!
-
-  call delete('Xfile.fs')
-  filetype off
-endfunc
-
-func Test_dep3patch_file()
-  filetype on
-
-  call assert_true(mkdir('debian/patches', 'p'))
-
-  " series files are not patches
-  call writefile(['Description: some awesome patch'], 'debian/patches/series')
-  split debian/patches/series
-  call assert_notequal('dep3patch', &filetype)
-  bwipe!
-
-  " diff/patch files without the right headers should still show up as ft=diff
-  call writefile([], 'debian/patches/foo.diff')
-  split debian/patches/foo.diff
-  call assert_equal('diff', &filetype)
-  bwipe!
-
-  " Files with the right headers are detected as dep3patch, even if they don't
-  " have a diff/patch extension
-  call writefile(['Subject: dep3patches'], 'debian/patches/bar')
-  split debian/patches/bar
-  call assert_equal('dep3patch', &filetype)
-  bwipe!
-
-  " Files in sub-directories are detected
-  call assert_true(mkdir('debian/patches/s390x', 'p'))
-  call writefile(['Subject: dep3patches'], 'debian/patches/s390x/bar')
-  split debian/patches/s390x/bar
-  call assert_equal('dep3patch', &filetype)
-  bwipe!
-
-  " The detection stops when seeing the "header end" marker
-  call writefile(['---', 'Origin: the cloud'], 'debian/patches/baz')
-  split debian/patches/baz
-  call assert_notequal('dep3patch', &filetype)
-  bwipe!
-
-  call delete('debian', 'rf')
-endfunc
-
 func Test_patch_file()
   filetype on
 
@@ -1109,144 +1236,132 @@ func Test_patch_file()
   filetype off
 endfunc
 
-func Test_git_file()
+func Test_perl_file()
   filetype on
 
-  call assert_true(mkdir('Xrepo.git', 'p'))
+  " only tests one case, should do more
+  let lines =<< trim END
 
-  call writefile([], 'Xrepo.git/HEAD')
-  split Xrepo.git/HEAD
-  call assert_equal('', &filetype)
-  bwipe!
+    use a
+  END
+  call writefile(lines, "Xfile.t")
+  split Xfile.t
+  call assert_equal('perl', &filetype)
+  bwipe
 
-  call writefile(['0000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
-  split Xrepo.git/HEAD
-  call assert_equal('git', &filetype)
-  bwipe!
-
-  call writefile(['0000000000000000000000000000000000000000000000000000000000000000'], 'Xrepo.git/HEAD')
-  split Xrepo.git/HEAD
-  call assert_equal('git', &filetype)
-  bwipe!
-
-  call writefile(['ref: refs/heads/master'], 'Xrepo.git/HEAD')
-  split Xrepo.git/HEAD
-  call assert_equal('git', &filetype)
-  bwipe!
-
-  call delete('Xrepo.git', 'rf')
+  call delete('Xfile.t')
   filetype off
 endfunc
 
-func Test_foam_file()
+func Test_pp_file()
   filetype on
-  call assert_true(mkdir('0', 'p'))
-  call assert_true(mkdir('0.orig', 'p'))
 
-  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict')
-  split Xfile1Dict
-  call assert_equal('foam', &filetype)
+  call writefile(['looks like puppet'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('puppet', &filetype)
   bwipe!
 
-  call writefile(['FoamFile {', '    object something;'], 'Xfile1Dict.something')
-  split Xfile1Dict.something
-  call assert_equal('foam', &filetype)
+  let g:filetype_pp = 'pascal'
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+  unlet g:filetype_pp
+
+  " Test dist#ft#FTpp()
+  call writefile(['{ pascal comment'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
   bwipe!
 
-  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
-  split XfileProperties
-  call assert_equal('foam', &filetype)
+  call writefile(['procedure pascal'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
   bwipe!
 
-  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
-  split XfileProperties.something
-  call assert_equal('foam', &filetype)
-  bwipe!
-
-  call writefile(['FoamFile {', '    object something;'], 'XfileProperties')
-  split XfileProperties
-  call assert_equal('foam', &filetype)
-  bwipe!
-
-  call writefile(['FoamFile {', '    object something;'], 'XfileProperties.something')
-  split XfileProperties.something
-  call assert_equal('foam', &filetype)
-  bwipe!
-
-  call writefile(['FoamFile {', '    object something;'], '0/Xfile')
-  split 0/Xfile
-  call assert_equal('foam', &filetype)
-  bwipe!
-
-  call writefile(['FoamFile {', '    object something;'], '0.orig/Xfile')
-  split 0.orig/Xfile
-  call assert_equal('foam', &filetype)
-  bwipe!
-
-  call delete('0', 'rf')
-  call delete('0.orig', 'rf')
+  call delete('Xfile.pp')
   filetype off
 endfunc
 
-func Test_bas_file()
+func Test_tex_file()
   filetype on
 
-  call writefile(['looks like BASIC'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('basic', &filetype)
-  bwipe!
+  " only tests one case, should do more
+  let lines =<< trim END
+      % This is a sentence.
 
-  " Test dist#ft#FTbas()
+      This is a sentence.
+  END
+  call writefile(lines, "Xfile.tex")
+  split Xfile.tex
+  call assert_equal('plaintex', &filetype)
+  bwipe
 
-  let g:filetype_bas = 'freebasic'
-  split Xfile.bas
-  call assert_equal('freebasic', &filetype)
-  bwipe!
-  unlet g:filetype_bas
-
-  " FreeBASIC
-
-  call writefile(["/' FreeBASIC multiline comment '/"], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('freebasic', &filetype)
-  bwipe!
-
-  call writefile(['#define TESTING'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('freebasic', &filetype)
-  bwipe!
-
-  call writefile(['option byval'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('freebasic', &filetype)
-  bwipe!
-
-  call writefile(['extern "C"'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('freebasic', &filetype)
-  bwipe!
-
-  " QB64
-
-  call writefile(['$LET TESTING = 1'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('qb64', &filetype)
-  bwipe!
-
-  call writefile(['OPTION _EXPLICIT'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('qb64', &filetype)
-  bwipe!
-
-  " Visual Basic
-
-  call writefile(['Attribute VB_NAME = "Testing"'], 'Xfile.bas')
-  split Xfile.bas
-  call assert_equal('vb', &filetype)
-  bwipe!
-
-  call delete('Xfile.bas')
+  call delete('Xfile.tex')
   filetype off
 endfunc
+
+func Test_tf_file()
+  filetype on
+
+  call writefile([';;; TF MUD client is super duper cool'], 'Xfile.tf')
+  split Xfile.tf
+  call assert_equal('tf', &filetype)
+  bwipe!
+
+  call writefile(['provider "azurerm" {'], 'Xfile.tf')
+  split Xfile.tf
+  call assert_equal('terraform', &filetype)
+  bwipe!
+
+  call delete('Xfile.tf')
+  filetype off
+endfunc
+
+func Test_ts_file()
+  filetype on
+
+  call writefile(['<?xml version="1.0" encoding="utf-8"?>'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('xml', &filetype)
+  bwipe!
+
+  call writefile(['// looks like Typescript'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('typescript', &filetype)
+  bwipe!
+
+  call delete('Xfile.ts')
+  filetype off
+endfunc
+
+func Test_ttl_file()
+  filetype on
+
+  call writefile(['@base <http://example.org/> .'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('turtle', &filetype)
+  bwipe!
+
+  call writefile(['looks like Tera Term Language'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('teraterm', &filetype)
+  bwipe!
+
+  call delete('Xfile.ttl')
+  filetype off
+endfunc
+
+func Test_xpm_file()
+  filetype on
+
+  call writefile(['this is XPM2'], 'file.xpm')
+  split file.xpm
+  call assert_equal('xpm2', &filetype)
+  bwipe!
+
+  call delete('file.xpm')
+  filetype off
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

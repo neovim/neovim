@@ -1,9 +1,3 @@
-# HACK: get newline for use in strings given that "\n" and $'' do not work.
-NL="$(printf '\nE')"
-NL="${NL%E}"
-
-FAIL_SUMMARY=""
-
 # Test success marker. If END_MARKER file exists, we know that all tests 
 # finished. If FAIL_SUMMARY_FILE exists we know that some tests failed, this 
 # file will contain information about failed tests. Build is considered 
@@ -11,81 +5,27 @@ FAIL_SUMMARY=""
 END_MARKER="$BUILD_DIR/.tests_finished"
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
-ci_fold() {
-  if test "$GITHUB_ACTIONS" = "true"; then
-    local action="$1"
-    local name="$2"
-    case "$action" in
-      start)
-        echo "::group::${name}"
-        ;;
-      end)
-        echo "::endgroup::"
-        ;;
-      *)
-        :;;
-    esac
-  fi
-}
-
-enter_suite() {
-  set +x
-  FAILED=0
-  rm -f "${END_MARKER}"
-  local suite_name="$1"
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
-  ci_fold "start" "$suite_name"
-  set -x
-}
-
-exit_suite() {
-  set +x
-  if test $FAILED -ne 0 ; then
-    echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
-    echo "${FAIL_SUMMARY}"
-  else
-    ci_fold "end" ""
-  fi
-  export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
-  if test "$1" != "--continue" ; then
-    exit $FAILED
-  else
-    local saved_failed=$FAILED
-    FAILED=0
-    return $saved_failed
-  fi
-}
-
 fail() {
   local test_name="$1"
-  local fail_char="$2"
-  local message="$3"
+  local message="$2"
 
-  : ${fail_char:=F}
   : ${message:=Test $test_name failed}
 
-  local full_msg="$fail_char $NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
-  FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
+  local full_msg="$test_name :: $message"
   echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
   FAILED=1
-}
-
-run_test() {
-  local cmd="$1"
-  test $# -gt 0 && shift
-  local test_name="$1"
-  : ${test_name:=$cmd}
-  test $# -gt 0 && shift
-  if ! eval "$cmd" ; then
-    fail "${test_name}" "$@"
-  fi
 }
 
 ended_successfully() {
   if test -f "${FAIL_SUMMARY_FILE}" ; then
     echo 'Test failed, complete summary:'
     cat "${FAIL_SUMMARY_FILE}"
+
+    if [[ "$GITHUB_ACTIONS" == "true" ]]; then
+        rm -f "$FAIL_SUMMARY_FILE"
+    fi
+
     return 1
   fi
   if ! test -f "${END_MARKER}" ; then

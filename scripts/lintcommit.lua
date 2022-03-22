@@ -94,10 +94,24 @@ local function validate_commit(commit_message)
     return [[Description ends with a period (".").]]
   end
 
-  -- Check that description has exactly one whitespace after colon, followed by
-  -- a lowercase letter and then any number of letters.
-  if not string.match(after_colon, '^ %l%a*') then
-    return [[There should be one whitespace after the colon and the first letter should lowercase.]]
+  -- Check that description starts with a whitespace.
+  if after_colon:sub(1,1) ~= " " then
+    return [[There should be a whitespace after the colon.]]
+  end
+
+  -- Check that description doesn't start with multiple whitespaces.
+  if after_colon:sub(1,2) == "  " then
+    return [[There should only be one whitespace after the colon.]]
+  end
+
+  -- Check that first character after space isn't uppercase.
+  if string.match(after_colon:sub(2,2), '%u') then
+    return [[First character should not be uppercase.]]
+   end
+
+  -- Check that description isn't just whitespaces
+  if vim.trim(after_colon) == "" then
+    return [[Description shouldn't be empty.]]
   end
 
   return nil
@@ -168,12 +182,14 @@ function M._test()
     ['ci(tui)!: message with scope and breaking change'] = true,
     ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
     ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
+    ['revert: "ci: use continue-on-error instead of "|| true""'] = true,
     [':no type before colon 1'] = false,
     [' :no type before colon 2'] = false,
     ['  :no type before colon 3'] = false,
     ['ci(empty description):'] = false,
-    ['ci(whitespace as description): '] = false,
+    ['ci(only whitespace as description): '] = false,
     ['docs(multiple whitespaces as description):   '] = false,
+    ['revert(multiple whitespaces and then characters as description):  description'] = false,
     ['ci no colon after type'] = false,
     ['test:  extra space after colon'] = false,
     ['ci:	tab after colon'] = false,

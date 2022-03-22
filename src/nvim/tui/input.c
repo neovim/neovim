@@ -5,7 +5,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/aucmd.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/macros.h"
@@ -19,6 +19,7 @@
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/event/rstream.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #define KEY_BUFFER_SIZE 0xfff
 
@@ -114,26 +115,39 @@ static void tinput_done_event(void **argv)
 static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
-  if (rbuffer_size(input->key_buffer) == 0 && input->paste == 3) {
-    const String keys = { .data = "", .size = 0 };
-    String copy = copy_string(keys);
-    multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                   copy.data, copy.size, (intptr_t)input->paste);
-  }
-  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    const String keys = { .data = buf, .size = len };
-    if (input->paste) {
-      String copy = copy_string(keys);
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     copy.data, copy.size, (intptr_t)input->paste);
-      if (input->paste == 1) {
-        // Paste phase: "continue"
-        input->paste = 2;
-      }
-      rbuffer_consumed(input->key_buffer, len);
-      rbuffer_reset(input->key_buffer);
+  if (input->paste) {  // produce exactly one paste event
+    const size_t len = rbuffer_size(input->key_buffer);
+    String keys = { .data = xmallocz(len), .size = len };
+    rbuffer_read(input->key_buffer, keys.data, len);
+    if (ui_client_channel_id) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(keys));  // 'data'
+      ADD(args, BOOLEAN_OBJ(true));  // 'crlf'
+      ADD(args, INTEGER_OBJ(input->paste));  // 'phase'
+      rpc_send_event(ui_client_channel_id, "nvim_paste", args);
     } else {
-      const size_t consumed = input_enqueue(keys);
+      multiqueue_put(main_loop.events, tinput_paste_event, 3,
+                     keys.data, keys.size, (intptr_t)input->paste);
+    }
+    if (input->paste == 1) {
+      // Paste phase: "continue"
+      input->paste = 2;
+    }
+    rbuffer_reset(input->key_buffer);
+  } else {  // enqueue input for the main thread or Nvim server
+    RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
+      const String keys = { .data = buf, .size = len };
+      size_t consumed;
+      if (ui_client_channel_id) {
+        Array args = ARRAY_DICT_INIT;
+        Error err = ERROR_INIT;
+        ADD(args, STRING_OBJ(copy_string(keys)));
+        // TODO(bfredl): could be non-blocking now with paste?
+        Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &err);
+        consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
+      } else {
+        consumed = input_enqueue(keys);
+      }
       if (consumed) {
         rbuffer_consumed(input->key_buffer, consumed);
       }
@@ -227,7 +241,7 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
         && !(key->modifiers & TERMKEY_KEYMOD_SHIFT)
         && ASCII_ISUPPER(key->code.codepoint)) {
       assert(len <= 62);
-      // Make remove for the S-
+      // Make room for the S-
       memmove(buf + 3, buf + 1, len - 1);
       buf[1] = 'S';
       buf[2] = '-';
@@ -315,7 +329,6 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
 static void tk_getkeys(TermInput *input, bool force)
 {
@@ -379,7 +392,7 @@ static bool handle_focus_event(TermInput *input)
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 3);
-    aucmd_schedule_focusgained(focus_gained);
+    autocmd_schedule_focusgained(focus_gained);
     return true;
   }
   return false;

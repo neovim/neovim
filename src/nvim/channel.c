@@ -138,8 +138,14 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       *error = (const char *)e_invstream;
       return false;
     }
-    api_free_luaref(chan->stream.internal.cb);
-    chan->stream.internal.cb = LUA_NOREF;
+    if (chan->term) {
+      api_free_luaref(chan->stream.internal.cb);
+      chan->stream.internal.cb = LUA_NOREF;
+      chan->stream.internal.closed = true;
+      terminal_close(chan->term, 0);
+    } else {
+      channel_decref(chan);
+    }
     break;
 
   default:
@@ -536,7 +542,11 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
   }
 
   if (chan->streamtype == kChannelStreamInternal) {
-    if (!chan->term) {
+    if (chan->is_rpc) {
+      *error = _("Can't send raw data to rpc channel");
+      goto retfree;
+    }
+    if (!chan->term || chan->stream.internal.closed) {
       *error = _("Can't send data to closed stream");
       goto retfree;
     }
@@ -613,7 +623,6 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, size_
   } else {
     if (chan->term) {
       terminal_receive(chan->term, ptr, count);
-      terminal_flush_output(chan->term);
     }
 
     rbuffer_consumed(buf, count);

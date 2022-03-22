@@ -50,29 +50,33 @@ local function basic_register_test(noblock)
     text, stuff and some more
     some some text, stuff and some more]])
 
-  -- deleting a word to named ("a) updates "1 (and not "-)
+  -- deleting a word to named ("a) doesn't update "1 or "-
   feed('gg"adwj"1P^"-P')
   expect([[
     , stuff and some more
-    some textsome some text, stuff and some more]])
+    some some random text
+    some some text, stuff and some more]])
 
   -- deleting a line does update ""
   feed('ggdd""P')
   expect([[
     , stuff and some more
-    some textsome some text, stuff and some more]])
+    some some random text
+    some some text, stuff and some more]])
 
   feed('ggw<c-v>jwyggP')
   if noblock then
     expect([[
       stuf
-      me t
+      me s
       , stuff and some more
-      some textsome some text, stuff and some more]])
+      some some random text
+      some some text, stuff and some more]])
   else
     expect([[
       stuf, stuff and some more
-      me tsome textsome some text, stuff and some more]])
+      me ssome some random text
+      some some text, stuff and some more]])
   end
 
   -- pasting in visual does unnamed delete of visual selection

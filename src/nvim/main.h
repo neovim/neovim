@@ -39,6 +39,8 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  int remote;                           // --remote-[subcmd] {file1} {file2}
+  char *server_addr;                    // --server {address}
 } mparm_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

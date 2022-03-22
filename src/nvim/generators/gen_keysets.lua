@@ -27,7 +27,8 @@ local defspipe = io.open(defs_file, 'wb')
 local keysets = require'api.keysets'
 
 local keywords = {
-  register = true,
+  register = true;
+  default = true;
 }
 
 local function sanitize(key)

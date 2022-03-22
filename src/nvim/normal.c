@@ -824,13 +824,10 @@ static bool normal_get_command_count(NormalState *s)
     if (s->c == K_DEL || s->c == K_KDEL) {
       s->ca.count0 /= 10;
       del_from_showcmd(4);            // delete the digit and ~@%
+    } else if (s->ca.count0 > 99999999L) {
+      s->ca.count0 = 999999999L;
     } else {
       s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
-    }
-
-    if (s->ca.count0 < 0) {
-      // overflow
-      s->ca.count0 = 999999999L;
     }
 
     // Set v:count here, when called from main() and not a stuffed
@@ -1030,7 +1027,7 @@ static int normal_execute(VimState *state, int key)
 
   s->need_flushbuf = add_to_showcmd(s->c);
 
-  while (normal_get_command_count(s)) { continue; }
+  while (normal_get_command_count(s)) { }
 
   if (s->c == K_EVENT) {
     // Save the count values so that ca.opcount and ca.count0 are exactly
@@ -1046,13 +1043,13 @@ static int normal_execute(VimState *state, int key)
     // If you give a count before AND after the operator, they are
     // multiplied.
     if (s->ca.count0) {
-      s->ca.count0 = (long)((uint64_t)s->ca.count0 * (uint64_t)s->ca.opcount);
+      if (s->ca.opcount >= 999999999L / s->ca.count0) {
+        s->ca.count0 = 999999999L;
+      } else {
+        s->ca.count0 *= s->ca.opcount;
+      }
     } else {
       s->ca.count0 = s->ca.opcount;
-    }
-    if (s->ca.count0 < 0) {
-      // overflow
-      s->ca.count0 = 999999999L;
     }
   }
 
@@ -2108,10 +2105,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     } else {  // MOUSE_RIGHT
       stuffcharReadbuff('#');
     }
-  }
-  // Handle double clicks, unless on status line
-  else if (in_status_line) {
-  } else if (in_sep_line) {
+  } else if (in_status_line || in_sep_line) {
+    // Do nothing if on status line or vertical separator
+    // Handle double clicks otherwise
   } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (NORMAL | INSERT))) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
@@ -3098,8 +3094,14 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
       || !find_decl(ptr, len, nchar == 'd', thisblock, SEARCH_START)) {
     clearopbeep(oap);
-  } else if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP) {
-    foldOpenCursor();
+  } else {
+    if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP) {
+      foldOpenCursor();
+    }
+    // clear any search statistics
+    if (messaging() && !msg_silent && !shortmess(SHM_SEARCHCOUNT)) {
+      clear_cmdline = true;
+    }
   }
 }
 
@@ -3566,7 +3568,6 @@ static void nv_zet(cmdarg_T *cap)
   bool undo = false;
 
   int l_p_siso = (int)get_sidescrolloff_value(curwin);
-  assert(l_p_siso <= INT_MAX);
 
   if (ascii_isdigit(nchar)) {
     /*
@@ -4093,7 +4094,7 @@ static void nv_colon(cmdarg_T *cap)
     if (is_lua) {
       cmd_result = map_execute_lua();
     } else {
-    // get a command line and execute it
+      // get a command line and execute it
       cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
                               cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
     }
@@ -5027,9 +5028,7 @@ static void nv_brackets(cmdarg_T *cap)
    * identifier     "]i"  "[i"   "]I"  "[I"     "]^I"  "[^I"
    * define           "]d"  "[d"   "]D"  "[D"   "]^D"  "[^D"
    */
-  if (vim_strchr((char_u *)
-                 "iI\011dD\004",
-                 cap->nchar) != NULL) {
+  if (vim_strchr((char_u *)"iI\011dD\004", cap->nchar) != NULL) {
     char_u *ptr;
     size_t len;
 
@@ -5870,7 +5869,7 @@ static void nv_gomark(cmdarg_T *cap)
   }
 }
 
-// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
+/// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
 static void nv_pcmark(cmdarg_T *cap)
 {
   pos_T *pos;
@@ -5879,7 +5878,9 @@ static void nv_pcmark(cmdarg_T *cap)
 
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == TAB && mod_mask == MOD_MASK_CTRL) {
-      goto_tabpage_lastused();
+      if (!goto_tabpage_lastused()) {
+        clearopbeep(cap->oap);
+      }
       return;
     }
     if (cap->cmdchar == 'g') {
@@ -6330,7 +6331,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     curwin->w_set_curswant = true;
     break;
 
-  case 'M': {
+  case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
     i = linetabsize(get_cursor_line_ptr());
@@ -6340,8 +6341,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       coladvance((colnr_T)(i / 2));
     }
     curwin->w_set_curswant = true;
-  }
-  break;
+    break;
 
   case '_':
     /* "g_": to the last non-blank character in the line or <count> lines
@@ -6644,9 +6644,10 @@ static void nv_g_cmd(cmdarg_T *cap)
       goto_tabpage(-(int)cap->count1);
     }
     break;
+
   case TAB:
-    if (!checkclearop(oap)) {
-      goto_tabpage_lastused();
+    if (!checkclearop(oap) && !goto_tabpage_lastused()) {
+      clearopbeep(oap);
     }
     break;
 
@@ -6685,9 +6686,8 @@ static void n_opencmd(cmdarg_T *cap)
                           (cap->cmdchar == 'o' ? 1 : 0))
                )
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
-                     has_format_option(FO_OPEN_COMS)
-                     ? OPENLINE_DO_COM : 0,
-                     0)) {
+                     has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM : 0,
+                     0, NULL)) {
       if (win_cursorline_standout(curwin)) {
         // force redraw of cursorline
         curwin->w_valid &= ~VALID_CROW;
@@ -7507,9 +7507,9 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // overwrites if the old contents is being put.
       was_visual = true;
       regname = cap->oap->regname;
+      bool save_unnamed = cap->cmdchar == 'P';
       // '+' and '*' could be the same selection
-      bool clipoverwrite = (regname == '+' || regname == '*')
-                           && (cb_flags & CB_UNNAMEDMASK);
+      bool clipoverwrite = (regname == '+' || regname == '*') && (cb_flags & CB_UNNAMEDMASK);
       if (regname == 0 || regname == '"' || clipoverwrite
           || ascii_isdigit(regname) || regname == '-') {
         // The delete might overwrite the register we want to put, save it first
@@ -7522,6 +7522,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
         // Now delete the selected text. Avoid messages here.
+        yankreg_T *old_y_previous;
+        if (save_unnamed) {
+          old_y_previous = get_y_previous();
+        }
         cap->cmdchar = 'd';
         cap->nchar = NUL;
         cap->oap->regname = NUL;
@@ -7530,6 +7534,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
         do_pending_operator(cap, 0, false);
         empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
         msg_silent--;
+
+        if (save_unnamed) {
+          set_y_previous(old_y_previous);
+        }
 
         // delete PUT_LINE_BACKWARD;
         cap->oap->regname = regname;

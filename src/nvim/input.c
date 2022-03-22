@@ -9,9 +9,9 @@
 
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
+#include "nvim/input.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
-#include "nvim/input.h"
 #include "nvim/mouse.h"
 #include "nvim/os/input.h"
 #include "nvim/ui.h"

@@ -25,8 +25,8 @@ local keymap = {}
 ---    vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 --- </pre>
 ---
---- the require('jkl') gets evaluated during this call in order to access the function. If you want to
---- avoid this cost at startup you can wrap it in a function, for example:
+--- the ``require('jkl')`` gets evaluated during this call in order to access the function.
+--- If you want to avoid this cost at startup you can wrap it in a function, for example:
 --- <pre>
 ---    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 --- </pre>
@@ -42,7 +42,7 @@ local keymap = {}
 ---                  |nvim_replace_termcodes()| is applied to the result of Lua expr maps.
 ---                  - remap: (boolean) Make the mapping recursive. This is the
 ---                  inverse of the "noremap" option from |nvim_set_keymap()|.
----                  Default `true` if `lhs` is a string starting with `<plug>` (case-insensitive), `false` otherwise.
+---                  Default `false`.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate {
@@ -66,8 +66,8 @@ function keymap.set(mode, lhs, rhs, opts)
   opts.replace_keycodes = nil
 
   if opts.remap == nil then
-    -- remap by default on <plug> mappings and don't otherwise.
-    opts.noremap = is_rhs_luaref or rhs:lower():match("^<plug>") == nil
+    -- default remap value is false
+    opts.noremap = true
   else
     -- remaps behavior is opposite of noremap option.
     opts.noremap = not opts.remap

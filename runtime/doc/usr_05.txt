@@ -131,7 +131,7 @@ it worked before Vim 5.0.  Otherwise the "Q" command starts Ex mode, but you
 will not need it.
 
 >
-	vnoremap _g y:exe "grep /" . escape(@", '\\/') . "/ *.c *.h"<CR>
+	vnoremap _g y:exe "grep /" .. escape(@", '\\/') .. "/ *.c *.h"<CR>
 
 This mapping yanks the visually selected text and searches for it in C files.
 This is a complicated mapping.  You can see that mappings can be used to do

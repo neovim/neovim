@@ -77,11 +77,16 @@ if ($compiler -eq 'MINGW') {
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
-  if ($bits -eq 32) {
-    $cmakeGenerator = 'Visual Studio 15 2017'
-  }
-  elseif ($bits -eq 64) {
-    $cmakeGenerator = 'Visual Studio 15 2017 Win64'
+  $cmakeGenerator = 'Visual Studio 16 2019'
+}
+
+if ($compiler -eq 'MSVC') {
+  $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+  if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+    & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x${bits} -no_logo && set" | foreach-object {
+      $name, $value = $_ -split '=', 2
+      set-content env:\"$name" $value
+    }
   }
 }
 
@@ -99,24 +104,35 @@ if (-not $NoTests) {
   npm.cmd link neovim
 }
 
-if ($compiler -eq 'MSVC') {
-  # Required for LuaRocks (https://github.com/luarocks/luarocks/issues/1039#issuecomment-507296940).
-  $env:VCINSTALLDIR = "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/"
-}
-
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
 cd $env:DEPS_BUILD_DIR
-cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+if ($compiler -eq 'MSVC') {
+  if ($bits -eq 32) {
+    cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+  } else {
+    cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+  }
+} else {
+  cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+}
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd $buildDir
 
 # Build Neovim
 mkdir build
 cd build
-cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+if ($compiler -eq 'MSVC') {
+  if ($bits -eq 32) {
+    cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+  } else {
+    cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+  }
+} else {
+  cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+}
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 .\bin\nvim --version ; exitIfFailed
 
@@ -167,7 +183,4 @@ if (Test-Path -Path $env:ChocolateyInstall\bin\cpack.exe) {
 }
 
 # Build artifacts
-cpack -G ZIP -C RelWithDebInfo
-if ($env:APPVEYOR_REPO_TAG_NAME -ne $null) {
-  cpack -G NSIS -C RelWithDebInfo
-}
+cpack -C $cmakeBuildType

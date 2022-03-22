@@ -56,7 +56,7 @@ function! provider#pythonx#DetectByModule(module, major_version) abort
   endfor
 
   " No suitable Python executable found.
-  return ['', 'provider/pythonx: Could not load Python '.a:major_version.":\n".join(errors, "\n")]
+  return ['', 'Could not load Python '.a:major_version.":\n".join(errors, "\n")]
 endfunction
 
 " Returns array: [prog_exitcode, prog_version]
@@ -99,7 +99,7 @@ function! provider#pythonx#CheckForModule(prog, module, major_version) abort
   endif
 
   if prog_exitcode == 2
-    return [0, prog_path.' does not have the "' . a:module . '" module. :help provider-python']
+    return [0, prog_path.' does not have the "' . a:module . '" module.']
   elseif prog_exitcode == 127
     " This can happen with pyenv's shims.
     return [0, prog_path . ' does not exist: ' . prog_version]

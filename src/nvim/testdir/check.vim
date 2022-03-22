@@ -63,6 +63,15 @@ func CheckUnix()
   endif
 endfunc
 
+" Command to check for not running on a BSD system.
+" TODO: using this checks should not be needed
+command CheckNotBSD call CheckNotBSD()
+func CheckNotBSD()
+  if has('bsd')
+    throw 'Skipped: does not work on BSD'
+  endif
+endfunc
+
 " Command to check that making screendumps is supported.
 " Caller must source screendump.vim
 command CheckScreendump call CheckScreendump()
@@ -104,6 +113,14 @@ func CheckNotGui()
   endif
 endfunc
 
+" Command to check that test is not running as root
+command CheckNotRoot call CheckNotRoot()
+func CheckNotRoot()
+  if IsRoot()
+    throw 'Skipped: cannot run test as root'
+  endif
+endfunc
+
 " Command to check that the current language is English
 command CheckEnglish call CheckEnglish()
 func CheckEnglish()
@@ -117,6 +134,14 @@ command CheckNotMSWindows call CheckNotMSWindows()
 func CheckNotMSWindows()
   if has('win32')
     throw 'Skipped: does not work on MS-Windows'
+  endif
+endfunc
+
+" Command to check for not running under ASAN
+command CheckNotAsan call CheckNotAsan()
+func CheckNotAsan()
+  if execute('version') =~# '-fsanitize=[a-z,]*\<address\>'
+    throw 'Skipped: does not work with ASAN'
   endif
 endfunc
 

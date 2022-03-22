@@ -104,8 +104,10 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = diagnostic.message,
       source = diagnostic.source,
+      code = diagnostic.code,
       user_data = {
         lsp = {
+          -- usage of user_data.lsp.code is deprecated in favor of the top-level code field
           code = diagnostic.code,
           codeDescription = diagnostic.codeDescription,
           tags = diagnostic.tags,
@@ -120,7 +122,8 @@ end
 ---@private
 local function diagnostic_vim_to_lsp(diagnostics)
   return vim.tbl_map(function(diagnostic)
-    return vim.tbl_extend("error", {
+    return vim.tbl_extend("keep", {
+      -- "keep" the below fields over any duplicate fields in diagnostic.user_data.lsp
       range = {
         start = {
           line = diagnostic.lnum,
@@ -134,6 +137,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       severity = severity_vim_to_lsp(diagnostic.severity),
       message = diagnostic.message,
       source = diagnostic.source,
+      code = diagnostic.code,
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end

@@ -87,7 +87,7 @@ the delete is undone the sign does not move back.
 Here is an example that places a sign "piet", displayed with the text ">>", in
 line 23 of the current file: >
 	:sign define piet text=>> texthl=Search
-	:exe ":sign place 2 line=23 name=piet file=" . expand("%:p")
+	:exe ":sign place 2 line=23 name=piet file=" .. expand("%:p")
 
 And here is the command to delete it again: >
 	:sign unplace 2

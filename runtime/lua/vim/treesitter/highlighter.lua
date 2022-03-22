@@ -22,7 +22,21 @@ local _link_default_highlight_once = function(from, to)
   return from
 end
 
-TSHighlighter.hl_map = {
+-- If @definition.special does not exist use @definition instead
+local subcapture_fallback = {
+  __index = function(self, capture)
+    local rtn
+    local shortened = capture
+    while not rtn and shortened do
+      shortened = shortened:match('(.*)%.')
+      rtn = shortened and rawget(self, shortened)
+    end
+    rawset(self, capture, rtn or "__notfound")
+    return rtn
+  end
+}
+
+TSHighlighter.hl_map = setmetatable({
     ["error"] = "Error",
 
 -- Miscs
@@ -66,7 +80,7 @@ TSHighlighter.hl_map = {
     ["type.builtin"] = "Type",
     ["structure"] = "Structure",
     ["include"] = "Include",
-}
+}, subcapture_fallback)
 
 ---@private
 local function is_highlight_name(capture_name)
@@ -260,7 +274,8 @@ local function on_line_impl(self, buf, line)
                                { end_line = end_row, end_col = end_col,
                                  hl_group = hl,
                                  ephemeral = true,
-                                 priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
+                                 priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
+                                 conceal = metadata.conceal,
                                 })
       end
       if start_row > line then

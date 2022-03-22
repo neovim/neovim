@@ -12,6 +12,9 @@ endif()
 if(POLICY CMP0060)
   cmake_policy(SET CMP0060 NEW)
 endif()
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -387,7 +390,7 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-find_package(LibLUV 1.30.0 REQUIRED)
+find_package(LibLUV 1.43.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
 find_package(TreeSitter REQUIRED)
@@ -736,17 +739,6 @@ else()
     COMMENT "lualint: LUACHECK_PRG not defined")
 endif()
 
-set(CPACK_PACKAGE_NAME "Neovim")
-set(CPACK_PACKAGE_VENDOR "neovim.io")
-set(CPACK_PACKAGE_VERSION ${NVIM_VERSION_MEDIUM})
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Neovim")
-# Set toplevel directory/installer name as Neovim
-set(CPACK_PACKAGE_FILE_NAME "Neovim")
-set(CPACK_TOPLEVEL_TAG "Neovim")
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
-set(CPACK_NSIS_MODIFY_PATH ON)
-set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-include(CPack)
 
 #add uninstall target
 if(NOT TARGET uninstall)
@@ -757,4 +749,9 @@ if(NOT TARGET uninstall)
 
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake)
+endif()
+
+
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+  add_subdirectory(packaging)
 endif()

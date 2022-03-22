@@ -53,10 +53,8 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
     uv_getaddrinfo_t request;
 
     int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
-                                &(struct addrinfo){
-      .ai_family = AF_UNSPEC,
-      .ai_socktype = SOCK_STREAM,
-    });
+                                &(struct addrinfo){ .ai_family = AF_UNSPEC,
+                                                    .ai_socktype = SOCK_STREAM, });
     if (retval != 0) {
       ELOG("Host lookup failed: %s", endpoint);
       return retval;
@@ -103,10 +101,9 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
         // contain 0 in this case, unless uv_tcp_getsockname() is used first.
         uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
                            &(int){ sizeof(sas) });
-        uint16_t port = (uint16_t)(
-                                   (sas.ss_family == AF_INET)
-            ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
-            : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
+        uint16_t port = (uint16_t)((sas.ss_family == AF_INET)
+                                   ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
+                                   : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
         snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,

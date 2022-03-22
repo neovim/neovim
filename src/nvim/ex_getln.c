@@ -35,6 +35,7 @@
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/keymap.h"
@@ -231,7 +232,7 @@ static int compl_selected;
 
 /// |:checkhealth| completion items
 ///
-/// Regenerates on every new command line prompt, to accomodate changes on the
+/// Regenerates on every new command line prompt, to accommodate changes on the
 /// runtime files.
 typedef struct {
   garray_T names;  // healthcheck names
@@ -311,7 +312,7 @@ static char_u *get_healthcheck_names(expand_T *xp, int idx)
     healthchecks.last_gen = last_prompt_id;
   }
   return idx <
-         (int)healthchecks.names.ga_len ? ((char_u **)(healthchecks.names.ga_data))[idx] : NULL;
+         healthchecks.names.ga_len ? ((char_u **)(healthchecks.names.ga_data))[idx] : NULL;
 }
 
 /// Transform healthcheck file path into it's name.
@@ -632,7 +633,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
 
   validate_cursor();
   // May redraw the status line to show the cursor position.
-  if (p_ru && curwin->w_status_height > 0) {
+  if (p_ru && (curwin->w_status_height > 0 || global_stl_height() > 0)) {
     curwin->w_redr_status = true;
   }
 
@@ -3631,7 +3632,7 @@ void compute_cmdrow(void)
   } else {
     win_T *wp = lastwin_nofloating();
     cmdline_row = wp->w_winrow + wp->w_height
-                  + wp->w_status_height;
+                  + wp->w_hsep_height + wp->w_status_height + global_stl_height();
   }
   lines_left = cmdline_row;
 }
@@ -5049,8 +5050,8 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
       { EXPAND_SYNTAX, get_syntax_name, true, true },
       { EXPAND_SYNTIME, get_syntime_arg, true, true },
       { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
-      { EXPAND_EVENTS, get_event_name, true, true },
-      { EXPAND_AUGROUP, get_augroup_name, true, true },
+      { EXPAND_EVENTS, expand_get_event_name, true, true },
+      { EXPAND_AUGROUP, expand_get_augroup_name, true, true },
       { EXPAND_CSCOPE, get_cscope_name, true, true },
       { EXPAND_SIGN, get_sign_name, true, true },
       { EXPAND_PROFILE, get_profile_name, true, true },
@@ -6563,7 +6564,7 @@ static int open_cmdwin(void)
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
     if (win_valid(wp) && wp != curwin) {
-      win_close(wp, true);
+      win_close(wp, true, false);
     }
 
     // win_close() may have already wiped the buffer when 'bh' is
@@ -6585,6 +6586,13 @@ static int open_cmdwin(void)
   setmouse();
 
   return cmdwin_result;
+}
+
+/// @return true if in the cmdwin, not editing the command line.
+bool is_in_cmdwin(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return cmdwin_type != 0 && get_cmdline_type() == NUL;
 }
 
 /// Get script string

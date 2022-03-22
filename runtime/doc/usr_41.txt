@@ -608,6 +608,8 @@ String manipulation:					*string-functions*
 	toupper()		turn a string to uppercase
 	match()			position where a pattern matches in a string
 	matchend()		position where a pattern match ends in a string
+	matchfuzzy()		fuzzy matches a string in a list of strings
+	matchfuzzypos()		fuzzy matches a string in a list of strings
 	matchstr()		match of a pattern in a string
 	matchstrpos()		match and positions of a pattern in a string
 	matchlist()		like matchstr() and also return submatches
@@ -746,6 +748,11 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	screenchar()		get character code at a screen line/row
 	screenchars()		get character codes at a screen line/row
 	screenstring()		get string of characters at a screen line/row
+	charcol()		character number of the cursor or a mark
+	getcharpos()		get character position of cursor, mark, etc.
+	setcharpos()		set character position of cursor, mark, etc.
+	getcursorcharpos()	get character position of the cursor
+	setcursorcharpos()	set character position of the cursor
 
 Working with text in the current buffer:		*text-functions*
 	getline()		get a line or list of lines from the buffer

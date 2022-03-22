@@ -186,7 +186,7 @@ About the `functions` map:
     a type name, e.g. `nvim_buf_get_lines` is the `get_lines` method of
     a Buffer instance. |dev-api|
   - Global functions have the "method=false" flag and are prefixed with just
-    `nvim_`, e.g. `nvim_get_buffers`.
+    `nvim_`, e.g. `nvim_list_bufs`.
 
 							*api-mapping*
 External programs (clients) can use the metadata to discover the API, using
@@ -594,7 +594,8 @@ nvim__id_float({flt})                                       *nvim__id_float()*
                     its argument.
 
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
-                TODO: Documentation
+                NB: if your UI doesn't use hlstate, this will not return
+                hlstate first time.
 
 nvim__runtime_inspect()                              *nvim__runtime_inspect()*
                 TODO: Documentation
@@ -651,6 +652,9 @@ nvim_add_user_command({name}, {command}, {*opts})
                                that contains the following keys:
                                • args: (string) The args passed to the
                                  command, if any |<args>|
+                               • fargs: (table) The args split by unescaped
+                                 whitespace (when more than one argument is
+                                 allowed), if any |<f-args>|
                                • bang: (boolean) "true" if the command was
                                  executed with a ! modifier |<bang>|
                                • line1: (number) The starting line of the
@@ -706,7 +710,7 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     be returned.
 
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
-                Send data to channel `id` . For a job, it writes it to the
+                Send data to channel `id`. For a job, it writes it to the
                 stdin of the process. For the stdio channel |channel-stdio|,
                 it writes to Nvim's stdout. For an internal terminal instance
                 (|nvim_open_term()|) it writes directly to terminal output.
@@ -822,6 +826,7 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                             • maxwidth: (number) Maximum width of statusline.
                             • fillchar: (string) Character to fill blank
                               spaces in the statusline (see 'fillchars').
+                              Treated as single-width even if it isn't.
                             • highlights: (boolean) Return highlight
                               information.
                             • use_tabline: (boolean) Evaluate tabline instead
@@ -846,7 +851,7 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 inside the chunk. The chunk can return a value.
 
                 Only statements are executed. To evaluate an expression,
-                prefix it with `return` : return my_function(...)
+                prefix it with `return`: return my_function(...)
 
                 Parameters: ~
                     {code}  Lua code to execute
@@ -855,7 +860,7 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Return: ~
                     Return value of Lua code if present or NIL.
 
-nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
+nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
                 Sends input-keys to Nvim, subject to various quirks controlled
                 by `mode` flags. This is a blocking call, unlike
                 |nvim_input()|.
@@ -863,23 +868,25 @@ nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 On execution error: does not fail, but updates v:errmsg.
 
                 To input sequences like <C-o> use |nvim_replace_termcodes()|
-                (typically with escape_csi=true) to replace |keycodes|, then
+                (typically with escape_ks=false) to replace |keycodes|, then
                 pass the result to nvim_feedkeys().
 
                 Example: >
                     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
-                    :call nvim_feedkeys(key, 'n', v:true)
+                    :call nvim_feedkeys(key, 'n', v:false)
 <
 
                 Parameters: ~
-                    {keys}        to be typed
-                    {mode}        behavior flags, see |feedkeys()|
-                    {escape_csi}  If true, escape K_SPECIAL/CSI bytes in
-                                  `keys`
+                    {keys}       to be typed
+                    {mode}       behavior flags, see |feedkeys()|
+                    {escape_ks}  If true, escape K_SPECIAL bytes in `keys`
+                                 This should be false if you already used
+                                 |nvim_replace_termcodes()|, and true
+                                 otherwise.
 
                 See also: ~
                     feedkeys()
-                    vim_strsave_escape_csi
+                    vim_strsave_escape_ks
 
 nvim_get_all_options_info()                      *nvim_get_all_options_info()*
                 Gets the option information for all options.
@@ -1127,13 +1134,13 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
                     Option value
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
-                Gets info describing process `pid` .
+                Gets info describing process `pid`.
 
                 Return: ~
                     Map of process properties, or NIL if process not found.
 
 nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
-                Gets the immediate children of process `pid` .
+                Gets the immediate children of process `pid`.
 
                 Return: ~
                     Array of child process ids, empty if process not found.
@@ -1242,8 +1249,8 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
 nvim_list_bufs()                                            *nvim_list_bufs()*
                 Gets the current list of buffer handles
 
-                Includes unlisted (unloaded/deleted) buffers, like `:ls!` .
-                Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
+                Includes unlisted (unloaded/deleted) buffers, like `:ls!`. Use
+                |nvim_buf_is_loaded()| to check if a buffer is loaded.
 
                 Return: ~
                     List of buffer handles
@@ -1352,7 +1359,7 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
 
                 Errors ('nomodifiable', `vim.paste()` failure, …) are
                 reflected in `err` but do not affect the return value (which
-                is strictly decided by `vim.paste()` ). On error, subsequent
+                is strictly decided by `vim.paste()`). On error, subsequent
                 calls are ignored ("drained") until the next paste is
                 initiated (phase 1 or -1).
 
@@ -1429,7 +1436,7 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
                     {insert}  Whether the selection should be inserted in the
                               buffer.
                     {finish}  Finish the completion and dismiss the popupmenu.
-                              Implies `insert` .
+                              Implies `insert`.
                     {opts}    Optional parameters. Reserved for future use.
 
                                                       *nvim_set_client_info()*
@@ -1538,25 +1545,30 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
                 Parameters: ~
                     {window}  Window handle
 
-nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
-                Set a highlight group.
+nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
+                Sets a highlight group.
 
-                TODO: ns_id = 0, should modify :highlight namespace TODO val
-                should take update vs reset flag
+                Note: Unlike the `:highlight` command which can update a
+                highlight group, this function completely replaces the
+                definition. For example: `nvim_set_hl(0, 'Visual', {})` will
+                clear the highlight group 'Visual'.
 
                 Parameters: ~
-                    {ns_id}  number of namespace for this highlight
-                    {name}   highlight group name, like ErrorMsg
-                    {val}    highlight definition map, like
-                             |nvim_get_hl_by_name|. in addition the following
-                             keys are also recognized: `default` : don't
-                             override existing definition, like `hi default`
-                             `ctermfg` : sets foreground of cterm color
-                             `ctermbg` : sets background of cterm color
-                             `cterm` : cterm attribute map. sets attributed
-                             for cterm colors. similer to `hi cterm` Note: by
-                             default cterm attributes are same as attributes
-                             of gui color
+                    {ns_id}  Namespace id for this highlight
+                             |nvim_create_namespace()|. Use 0 to set a
+                             highlight group globally |:highlight|.
+                    {name}   Highlight group name, e.g. "ErrorMsg"
+                    {val}    Highlight definition map, like |synIDattr()|. In
+                             addition, the following keys are recognized:
+                             • default: Don't override existing definition
+                               |:hi-default|
+                             • ctermfg: Sets foreground of cterm color
+                               |highlight-ctermfg|
+                             • ctermbg: Sets background of cterm color
+                               |highlight-ctermbg|
+                             • cterm: cterm attribute map, like
+                               |highlight-args|. Note: Attributes default to
+                               those set for `gui` if not set.
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
@@ -1583,7 +1595,7 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                     {rhs}   Right-hand-side |{rhs}| of the mapping.
                     {opts}  Optional parameters map. Accepts all
                             |:map-arguments| as keys excluding |<buffer>| but
-                            including |noremap| and "desc". |desc| can be used
+                            including |noremap| and "desc". "desc" can be used
                             to give a description to keymap. When called from
                             Lua, also accepts a "callback" key that takes a
                             Lua function to call when the mapping is executed.
@@ -1625,7 +1637,7 @@ nvim_set_vvar({name}, {value})                               *nvim_set_vvar()*
                     {value}  Variable value
 
 nvim_strwidth({text})                                        *nvim_strwidth()*
-                Calculates the number of display cells occupied by `text` .
+                Calculates the number of display cells occupied by `text`.
                 <Tab> counts as one cell.
 
                 Parameters: ~
@@ -1877,9 +1889,10 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                     {buffer}       Buffer handle, or 0 for current buffer
                     {send_buffer}  True if the initial notification should
                                    contain the whole buffer: first
-                                   notification will be `nvim_buf_lines_event`
-                                   . Else the first notification will be
-                                   `nvim_buf_changedtick_event` . Not for Lua
+                                   notification will be
+                                   `nvim_buf_lines_event`. Else the first
+                                   notification will be
+                                   `nvim_buf_changedtick_event`. Not for Lua
                                    callbacks.
                     {opts}         Optional parameters.
                                    • on_lines: Lua callback invoked on change.
@@ -1930,12 +1943,12 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                    • on_reload: Lua callback invoked on
                                      reload. The entire buffer content should
                                      be considered changed. Args:
-                                     • the string "detach"
+                                     • the string "reload"
                                      • buffer handle
 
                                    • utf_sizes: include UTF-32 and UTF-16 size
                                      of the replaced region, as args to
-                                     `on_lines` .
+                                     `on_lines`.
                                    • preview: also attach to command preview
                                      (i.e. 'inccommand') events.
 
@@ -2151,6 +2164,29 @@ nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
                 Return: ~
                     Option value
 
+                                                         *nvim_buf_get_text()*
+nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
+                  {opts})
+                Gets a range from the buffer.
+
+                This differs from |nvim_buf_get_lines()| in that it allows
+                retrieving only portions of a line.
+
+                Indexing is zero-based. Column indices are end-exclusive.
+
+                Prefer |nvim_buf_get_lines()| when retrieving entire lines.
+
+                Parameters: ~
+                    {buffer}     Buffer handle, or 0 for current buffer
+                    {start_row}  First line index
+                    {start_col}  Starting byte offset of first line
+                    {end_row}    Last line index
+                    {end_col}    Ending byte offset of last line (exclusive)
+                    {opts}       Optional parameters. Currently unused.
+
+                Return: ~
+                    Array of lines, or empty array for unloaded buffer.
+
 nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Gets a buffer-scoped (b:) variable.
 
@@ -2185,7 +2221,7 @@ nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
                     true if the buffer is valid, false otherwise.
 
 nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
-                Gets the buffer line count
+                Returns the number of lines in the given buffer.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -2327,7 +2363,7 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
                 namespace. All highlights in the same namespace can then be
                 cleared with single call to |nvim_buf_clear_namespace()|. If
                 the highlight never will be deleted by an API call, pass
-                `ns_id = -1` .
+                `ns_id = -1`.
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the highlight, the allocated id is then
@@ -2407,8 +2443,8 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
     nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
 <
 
-                If `end` is less than `start` , traversal works backwards.
-                (Useful with `limit` , to get the first marks prior to a given
+                If `end` is less than `start`, traversal works backwards.
+                (Useful with `limit`, to get the first marks prior to a given
                 position.)
 
                 Example:
@@ -2552,6 +2588,35 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                                 not be placed if the line or column value is
                                 past the end of the buffer or end of the line
                                 respectively. Defaults to true.
+                              • sign_text: string of length 1-2 used to
+                                display in the sign column. Note: ranges are
+                                unsupported and decorations are only applied
+                                to start_row
+                              • sign_hl_group: name of the highlight group
+                                used to highlight the sign column text. Note:
+                                ranges are unsupported and decorations are
+                                only applied to start_row
+                              • number_hl_group: name of the highlight group
+                                used to highlight the number column. Note:
+                                ranges are unsupported and decorations are
+                                only applied to start_row
+                              • line_hl_group: name of the highlight group
+                                used to highlight the whole line. Note: ranges
+                                are unsupported and decorations are only
+                                applied to start_row
+                              • cursorline_hl_group: name of the highlight
+                                group used to highlight the line when the
+                                cursor is on the same line as the mark and
+                                'cursorline' is enabled. Note: ranges are
+                                unsupported and decorations are only applied
+                                to start_row
+                              • conceal: string which should be either empty
+                                or a single character. Enable concealing
+                                similar to |:syn-conceal|. When a character is
+                                supplied it is used as |:syn-cchar|.
+                                "hl_group" is used as highlight for the cchar
+                                if provided, otherwise it defaults to
+                                |hl-Conceal|.
 
                 Return: ~
                     Id of the created/updated extmark
@@ -2755,7 +2820,7 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
                 |:hide| with a |window-ID|).
 
                 Like |:hide| the buffer becomes hidden unless another window
-                is editing it, or 'bufhidden' is `unload` , `delete` or `wipe`
+                is editing it, or 'bufhidden' is `unload`, `delete` or `wipe`
                 as opposed to |:close| or |nvim_win_close|, which will close
                 the buffer.
 
@@ -2786,7 +2851,8 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
                 Sets the (1,0)-indexed cursor position in the window.
-                |api-indexing|
+                |api-indexing| This scrolls the window even if it is not the
+                current one.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
@@ -2971,9 +3037,10 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
                                   ">", "", "", "", "<" ] will only make
                                   vertical borders but not horizontal ones. By
                                   default, `FloatBorder` highlight is used,
-                                  which links to `VertSplit` when not defined.
-                                  It could also be specified by character: [
-                                  {"+", "MyCorner"}, {"x", "MyBorder"} ].
+                                  which links to `WinSeparator` when not
+                                  defined. It could also be specified by
+                                  character: [ {"+", "MyCorner"}, {"x",
+                                  "MyBorder"} ].
 
                               • noautocmd: If true then no buffer-related
                                 autocommand events such as |BufEnter|,
@@ -3003,7 +3070,7 @@ nvim_win_set_config({window}, {*config})               *nvim_win_set_config()*
                 layouts).
 
                 When reconfiguring a floating window, absent option keys will
-                not be changed. `row` / `col` and `relative` must be
+                not be changed. `row`/`col` and `relative` must be
                 reconfigured together.
 
                 Parameters: ~
@@ -3079,6 +3146,135 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
                     {tabpage}  Tabpage handle, or 0 for current tabpage
                     {name}     Variable name
                     {value}    Variable value
+
+
+==============================================================================
+Autocmd Functions                                                *api-autocmd*
+
+nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
+                Create or get an augroup.
+
+                To get an existing augroup ID, do: >
+                    local id = vim.api.nvim_create_augroup(name, {
+                        clear = false
+                    })
+<
+
+                Parameters: ~
+                    {name}  String: The name of the augroup to create
+                    {opts}  Parameters
+                            • clear (bool): Whether to clear existing commands
+                              or not. Defaults to true. See |autocmd-groups|
+
+                Return: ~
+                    opaque value to use with nvim_del_augroup_by_id
+
+nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
+                Create an autocmd.
+
+                Examples:
+                • event: "pat1,pat2,pat3",
+                • event: "pat1"
+                • event: { "pat1" }
+                • event: { "pat1", "pat2", "pat3" }
+
+                Parameters: ~
+                    {event}  The event or events to register this autocmd
+                             Required keys: event: string | ArrayOf(string)
+
+                Parameters: ~
+                    {opts}  Optional Parameters:
+                            • callback: (string|function)
+                              • (string): The name of the viml function to
+                                execute when triggering this autocmd
+                              • (function): The lua function to execute when
+                                triggering this autocmd
+                              • NOTE: Cannot be used with {command}
+
+                            • command: (string) command
+                              • vimscript command
+                              • NOTE: Cannot be used with {callback} Eg.
+                                command = "let g:value_set = v:true"
+
+                            • pattern: (string|table)
+                              • pattern or patterns to match against
+                              • defaults to "*".
+                              • NOTE: Cannot be used with {buffer}
+
+                            • buffer: (bufnr)
+                              • create a |autocmd-buflocal| autocmd.
+                              • NOTE: Cannot be used with {pattern}
+
+                            • group: (string|int) The augroup name or id
+                            • once: (boolean) - See |autocmd-once|
+                            • nested: (boolean) - See |autocmd-nested|
+                            • desc: (string) - Description of the autocmd
+
+                Return: ~
+                    opaque value to use with nvim_del_autocmd
+
+nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
+                Delete an augroup by {id}. {id} can only be returned when
+                augroup was created with |nvim_create_augroup|.
+
+                NOTE: behavior differs from augroup-delete.
+
+                When deleting an augroup, autocmds contained by this augroup
+                will also be deleted and cleared. This augroup will no longer
+                exist
+
+nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
+                Delete an augroup by {name}.
+
+                NOTE: behavior differs from augroup-delete.
+
+                When deleting an augroup, autocmds contained by this augroup
+                will also be deleted and cleared. This augroup will no longer
+                exist
+
+nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
+                Delete an autocmd by {id}. Autocmds only return IDs when
+                created via the API. Will not error if called and no autocmds
+                match the {id}.
+
+                Parameters: ~
+                    {id}  Integer The ID returned by nvim_create_autocmd
+
+nvim_do_autocmd({event}, {*opts})                          *nvim_do_autocmd()*
+                Do one autocmd.
+
+                Parameters: ~
+                    {event}  The event or events to execute
+                    {opts}   Optional Parameters:
+                             • buffer (number) - buffer number
+                               • NOTE: Cannot be used with {pattern}
+
+                             • pattern (string|table) - optional, defaults to
+                               "*".
+                               • NOTE: Cannot be used with {buffer}
+
+                             • group (string|int) - autocmd group name or id
+                             • modeline (boolean) - Default true, see
+                               |<nomodeline>|
+
+nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
+                Get autocmds that match the requirements passed to {opts}.
+
+                Parameters: ~
+                    {opts}  Optional Parameters:
+                            • event : Name or list of name of events to match
+                              against
+                            • group (string|int): Name or id of group to match
+                              against
+                            • pattern: Pattern or list of patterns to match
+                              against. Cannot be used with {buffer}
+                            • buffer: Buffer number or list of buffer numbers
+                              for buffer local autocommands
+                              |autocmd-buflocal|. Cannot be used with
+                              {pattern}
+
+                Return: ~
+                    A list of autocmds that match
 
 
 ==============================================================================

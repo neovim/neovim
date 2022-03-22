@@ -52,7 +52,7 @@
 /// whether a buffer is loaded.
 
 
-/// Gets the buffer line count
+/// Returns the number of lines in the given buffer.
 ///
 /// @param buffer   Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
@@ -133,7 +133,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - buffer handle
 ///             - on_reload: Lua callback invoked on reload. The entire buffer
 ///                          content should be considered changed. Args:
-///               - the string "detach"
+///               - the string "reload"
 ///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
@@ -287,8 +287,8 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   }
 
   bool oob = false;
-  start = normalize_index(buf, start, &oob);
-  end = normalize_index(buf, end, &oob);
+  start = normalize_index(buf, start, true, &oob);
+  end = normalize_index(buf, end, true, &oob);
 
   if (strict_indexing && oob) {
     api_set_error(err, kErrorTypeValidation, "Index out of bounds");
@@ -374,14 +374,13 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   }
 
   bool oob = false;
-  start = normalize_index(buf, start, &oob);
-  end = normalize_index(buf, end, &oob);
+  start = normalize_index(buf, start, true, &oob);
+  end = normalize_index(buf, end, true, &oob);
 
   if (strict_indexing && oob) {
     api_set_error(err, kErrorTypeValidation, "Index out of bounds");
     return;
   }
-
 
   if (start > end) {
     api_set_error(err,
@@ -554,13 +553,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
-  start_row = normalize_index(buf, start_row, &oob);
+  start_row = normalize_index(buf, start_row, false, &oob);
   if (oob || start_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
     return;
   }
 
-  end_row = normalize_index(buf, end_row, &oob);
+  end_row = normalize_index(buf, end_row, false, &oob);
   if (oob || end_row == buf->b_ml.ml_line_count + 1) {
     api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
     return;
@@ -598,12 +597,11 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   if (start_row == end_row) {
     old_byte = (bcount_t)end_col - start_col;
   } else {
-    const char *bufline;
     old_byte += (bcount_t)strlen(str_at_start) - start_col;
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 
-      bufline = (char *)ml_get_buf(buf, lnum, false);
+      const char *bufline = (char *)ml_get_buf(buf, lnum, false);
       old_byte += (bcount_t)(strlen(bufline))+1;
     }
     old_byte += (bcount_t)end_col+1;
@@ -757,6 +755,108 @@ end:
   try_end(err);
 }
 
+/// Gets a range from the buffer.
+///
+/// This differs from |nvim_buf_get_lines()| in that it allows retrieving only
+/// portions of a line.
+///
+/// Indexing is zero-based. Column indices are end-exclusive.
+///
+/// Prefer |nvim_buf_get_lines()| when retrieving entire lines.
+///
+/// @param channel_id
+/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param start_row  First line index
+/// @param start_col  Starting byte offset of first line
+/// @param end_row    Last line index
+/// @param end_col    Ending byte offset of last line (exclusive)
+/// @param opts       Optional parameters. Currently unused.
+/// @param[out] err   Error details, if any
+/// @return Array of lines, or empty array for unloaded buffer.
+ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
+                                  Integer start_row, Integer start_col,
+                                  Integer end_row, Integer end_col,
+                                  Dictionary opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return rv;
+  }
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  // return sentinel value if the buffer isn't loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    return rv;
+  }
+
+  bool oob = false;
+  start_row = normalize_index(buf, start_row, false, &oob);
+  end_row = normalize_index(buf, end_row, false, &oob);
+
+  if (oob) {
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
+    return rv;
+  }
+
+  // nvim_buf_get_lines doesn't care if the start row is greater than the end
+  // row (it will just return an empty array), but nvim_buf_get_text does in
+  // order to maintain symmetry with nvim_buf_set_text.
+  if (start_row > end_row) {
+    api_set_error(err, kErrorTypeValidation, "start is higher than end");
+    return rv;
+  }
+
+  bool replace_nl = (channel_id != VIML_INTERNAL_CALL);
+
+  if (start_row == end_row) {
+    String line = buf_get_text(buf, start_row, start_col, end_col, replace_nl, err);
+    if (ERROR_SET(err)) {
+      return rv;
+    }
+
+    ADD(rv, STRING_OBJ(line));
+    return rv;
+  }
+
+  rv.size = (size_t)(end_row - start_row) + 1;
+  rv.items = xcalloc(rv.size, sizeof(Object));
+
+  rv.items[0] = STRING_OBJ(buf_get_text(buf, start_row, start_col, MAXCOL-1, replace_nl, err));
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+  if (rv.size > 2) {
+    Array tmp = ARRAY_DICT_INIT;
+    tmp.items = &rv.items[1];
+    if (!buf_collect_lines(buf, rv.size - 2, start_row + 1, replace_nl, &tmp, err)) {
+      goto end;
+    }
+  }
+
+  rv.items[rv.size-1] = STRING_OBJ(buf_get_text(buf, end_row, 0, end_col, replace_nl, err));
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+end:
+  if (ERROR_SET(err)) {
+    api_free_array(rv);
+    rv.size = 0;
+    rv.items = NULL;
+  }
+
+  return rv;
+}
+
 /// Returns the byte offset of a line (0-indexed). |api-indexing|
 ///
 /// Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is one byte.
@@ -852,11 +952,11 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(uint64_t channel_id, Buffer buffer, Stri
 /// @see |nvim_set_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs, Dict(keymap) *opts,
-                         Error *err)
+void nvim_buf_set_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, String rhs,
+                         Dict(keymap) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(buffer, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, buffer, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a buffer-local |mapping| for the given mode.
@@ -864,11 +964,11 @@ void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs, Dic
 /// @see |nvim_del_keymap()|
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
-void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
+void nvim_buf_del_keymap(uint64_t channel_id, Buffer buffer, String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
   String rhs = { .data = "", .size = 0 };
-  modify_keymap(buffer, true, mode, lhs, rhs, NULL, err);
+  modify_keymap(channel_id, buffer, true, mode, lhs, rhs, NULL, err);
 }
 
 /// Gets a map of buffer-local |user-commands|.
@@ -1278,8 +1378,8 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_add_user_command
-void nvim_buf_add_user_command(Buffer buffer, String name, Object command,
-                               Dict(user_command) *opts, Error *err)
+void nvim_buf_add_user_command(Buffer buffer, String name, Object command, Dict(user_command) *opts,
+                               Error *err)
   FUNC_API_SINCE(9)
 {
   buf_T *target_buf = find_buffer_by_handle(buffer, err);
@@ -1386,11 +1486,11 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 }
 
 // Normalizes 0-based indexes to buffer line numbers
-static int64_t normalize_index(buf_T *buf, int64_t index, bool *oob)
+static int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob)
 {
   int64_t line_count = buf->b_ml.ml_line_count;
   // Fix if < 0
-  index = index < 0 ? line_count + index +1 : index;
+  index = index < 0 ? line_count + index + (int)end_exclusive : index;
 
   // Check for oob
   if (index > line_count) {

@@ -249,7 +249,7 @@ describe('buffer functions', function()
     --
     -- @param arg Options can be placed in an optional dictionary as the last parameter
     --    .expected_cell_count The expected number of cells build_stl_str_hl will return
-    --    .expected_byte_length The expected byte length of the string
+    --    .expected_byte_length The expected byte length of the string (defaults to byte length of expected_stl)
     --    .file_name The name of the file to be tested (useful in %f type tests)
     --    .fillchar The character that will be used to fill any 'extra' space in the stl
     local function statusline_test (description,
@@ -264,7 +264,7 @@ describe('buffer functions', function()
 
       local fillchar = option.fillchar or (' '):byte()
       local expected_cell_count = option.expected_cell_count or statusline_cell_count
-      local expected_byte_length = option.expected_byte_length or expected_cell_count
+      local expected_byte_length = option.expected_byte_length or #expected_stl
 
       itp(description, function()
         if option.file_name then
@@ -312,12 +312,12 @@ describe('buffer functions', function()
     statusline_test('should put fillchar `~` in between text', 10,
       'abc%=def',            'abc~~~~def',
       {fillchar=('~'):byte()})
+    statusline_test('should put fillchar `━` in between text', 10,
+      'abc%=def',            'abc━━━━def',
+      {fillchar=0x2501})
     statusline_test('should handle zero-fillchar as a space', 10,
       'abcde%=',             'abcde     ',
       {fillchar=0})
-    statusline_test('should handle multibyte-fillchar as a dash', 10,
-      'abcde%=',             'abcde-----',
-      {fillchar=0x80})
     statusline_test('should print the tail file name', 80,
       '%t',                  'buffer_spec.lua',
       {file_name='test/unit/buffer_spec.lua', expected_cell_count=15})
@@ -366,70 +366,86 @@ describe('buffer functions', function()
 
     statusline_test('should ignore trailing %', 3, 'abc%', 'abc')
 
-    -- alignment testing
-    statusline_test('should right align when using =', 20,
-      'neo%=vim',            'neo              vim')
-    statusline_test('should, when possible, center text when using %=text%=', 20,
-      'abc%=neovim%=def',    'abc    neovim    def')
-    statusline_test('should handle uneven spacing in the buffer when using %=text%=', 20,
-      'abc%=neo_vim%=def',   'abc   neo_vim    def')
-    statusline_test('should have equal spaces even with non-equal sides when using =', 20,
-      'foobar%=test%=baz',   'foobar   test    baz')
-    statusline_test('should have equal spaces even with longer right side when using =', 20,
-      'a%=test%=longtext',   'a   test    longtext')
-    statusline_test('should handle an empty left side when using ==', 20,
-      '%=test%=baz',         '      test       baz')
-    statusline_test('should handle an empty right side when using ==', 20,
-      'foobar%=test%=',      'foobar     test     ')
-    statusline_test('should handle consecutive empty ==', 20,
-      '%=%=test%=',          '          test      ')
-    statusline_test('should handle an = alone', 20,
-      '%=',                  '                    ')
-    statusline_test('should right align text when it is alone with =', 20,
-      '%=foo',               '                 foo')
-    statusline_test('should left align text when it is alone with =', 20,
-      'foo%=',               'foo                 ')
+    -- alignment testing with fillchar
+    local function statusline_test_align (description,
+                                                       statusline_cell_count,
+                                                       input_stl,
+                                                       expected_stl,
+                                                       arg)
+      arg = arg or {}
+      statusline_test(description .. ' without fillchar',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', ' '), arg)
+      arg.fillchar = ('!'):byte()
+      statusline_test(description .. ' with fillchar `!`',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', '!'), arg)
+      arg.fillchar = 0x2501
+      statusline_test(description .. ' with fillchar `━`',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', '━'), arg)
+    end
 
-    statusline_test('should approximately center text when using %=text%=', 21,
-      'abc%=neovim%=def',    'abc    neovim     def')
-    statusline_test('should completely fill the buffer when using %=text%=', 21,
-      'abc%=neo_vim%=def',   'abc    neo_vim    def')
-    statusline_test('should have equal spaces even with non-equal sides when using =', 21,
-      'foobar%=test%=baz',   'foobar    test    baz')
-    statusline_test('should have equal spaces even with longer right side when using =', 21,
-      'a%=test%=longtext',   'a    test    longtext')
-    statusline_test('should handle an empty left side when using ==', 21,
-      '%=test%=baz',         '       test       baz')
-    statusline_test('should handle an empty right side when using ==', 21,
-      'foobar%=test%=',      'foobar     test      ')
+    statusline_test_align('should right align when using =', 20,
+      'neo%=vim',            'neo~~~~~~~~~~~~~~vim')
+    statusline_test_align('should, when possible, center text when using %=text%=', 20,
+      'abc%=neovim%=def',    'abc~~~~neovim~~~~def')
+    statusline_test_align('should handle uneven spacing in the buffer when using %=text%=', 20,
+      'abc%=neo_vim%=def',   'abc~~~neo_vim~~~~def')
+    statusline_test_align('should have equal spaces even with non-equal sides when using =', 20,
+      'foobar%=test%=baz',   'foobar~~~test~~~~baz')
+    statusline_test_align('should have equal spaces even with longer right side when using =', 20,
+      'a%=test%=longtext',   'a~~~test~~~~longtext')
+    statusline_test_align('should handle an empty left side when using ==', 20,
+      '%=test%=baz',         '~~~~~~test~~~~~~~baz')
+    statusline_test_align('should handle an empty right side when using ==', 20,
+      'foobar%=test%=',      'foobar~~~~~test~~~~~')
+    statusline_test_align('should handle consecutive empty ==', 20,
+      '%=%=test%=',          '~~~~~~~~~~test~~~~~~')
+    statusline_test_align('should handle an = alone', 20,
+      '%=',                  '~~~~~~~~~~~~~~~~~~~~')
+    statusline_test_align('should right align text when it is alone with =', 20,
+      '%=foo',               '~~~~~~~~~~~~~~~~~foo')
+    statusline_test_align('should left align text when it is alone with =', 20,
+      'foo%=',               'foo~~~~~~~~~~~~~~~~~')
 
-    statusline_test('should quadrant the text when using 3 %=', 40,
-      'abcd%=n%=eovim%=ef',  'abcd         n         eovim          ef')
-    statusline_test('should work well with %t', 40,
-      '%t%=right_aligned',   'buffer_spec.lua            right_aligned',
+    statusline_test_align('should approximately center text when using %=text%=', 21,
+      'abc%=neovim%=def',    'abc~~~~neovim~~~~~def')
+    statusline_test_align('should completely fill the buffer when using %=text%=', 21,
+      'abc%=neo_vim%=def',   'abc~~~~neo_vim~~~~def')
+    statusline_test_align('should have equal spacing even with non-equal sides when using =', 21,
+      'foobar%=test%=baz',   'foobar~~~~test~~~~baz')
+    statusline_test_align('should have equal spacing even with longer right side when using =', 21,
+      'a%=test%=longtext',   'a~~~~test~~~~longtext')
+    statusline_test_align('should handle an empty left side when using ==', 21,
+      '%=test%=baz',         '~~~~~~~test~~~~~~~baz')
+    statusline_test_align('should handle an empty right side when using ==', 21,
+      'foobar%=test%=',      'foobar~~~~~test~~~~~~')
+
+    statusline_test_align('should quadrant the text when using 3 %=', 40,
+      'abcd%=n%=eovim%=ef',  'abcd~~~~~~~~~n~~~~~~~~~eovim~~~~~~~~~~ef')
+    statusline_test_align('should work well with %t', 40,
+      '%t%=right_aligned',   'buffer_spec.lua~~~~~~~~~~~~right_aligned',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %t and regular text', 40,
-      'l%=m_l %t m_r%=r',    'l       m_l buffer_spec.lua m_r        r',
+    statusline_test_align('should work well with %t and regular text', 40,
+      'l%=m_l %t m_r%=r',    'l~~~~~~~m_l buffer_spec.lua m_r~~~~~~~~r',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %=, %t, %L, and %l', 40,
-      '%t %= %L %= %l',      'buffer_spec.lua           1            0',
+    statusline_test_align('should work well with %=, %t, %L, and %l', 40,
+      '%t %= %L %= %l',      'buffer_spec.lua ~~~~~~~~~ 1 ~~~~~~~~~~ 0',
       {file_name='test/unit/buffer_spec.lua'})
 
-    statusline_test('should quadrant the text when using 3 %=', 41,
-      'abcd%=n%=eovim%=ef',  'abcd         n         eovim           ef')
-    statusline_test('should work well with %t', 41,
-      '%t%=right_aligned',   'buffer_spec.lua             right_aligned',
+    statusline_test_align('should quadrant the text when using 3 %=', 41,
+      'abcd%=n%=eovim%=ef',  'abcd~~~~~~~~~n~~~~~~~~~eovim~~~~~~~~~~~ef')
+    statusline_test_align('should work well with %t', 41,
+      '%t%=right_aligned',   'buffer_spec.lua~~~~~~~~~~~~~right_aligned',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %t and regular text', 41,
-      'l%=m_l %t m_r%=r',    'l        m_l buffer_spec.lua m_r        r',
+    statusline_test_align('should work well with %t and regular text', 41,
+      'l%=m_l %t m_r%=r',    'l~~~~~~~~m_l buffer_spec.lua m_r~~~~~~~~r',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %=, %t, %L, and %l', 41,
-      '%t %= %L %= %l',      'buffer_spec.lua            1            0',
+    statusline_test_align('should work well with %=, %t, %L, and %l', 41,
+      '%t %= %L %= %l',      'buffer_spec.lua ~~~~~~~~~~ 1 ~~~~~~~~~~ 0',
       {file_name='test/unit/buffer_spec.lua'})
 
-    statusline_test('should work with 10 %=', 50,
+    statusline_test_align('should work with 10 %=', 50,
       'aaaa%=b%=c%=d%=e%=fg%=hi%=jk%=lmnop%=qrstuv%=wxyz',
-      'aaaa  b  c  d  e  fg  hi  jk  lmnop  qrstuv   wxyz')
+      'aaaa~~b~~c~~d~~e~~fg~~hi~~jk~~lmnop~~qrstuv~~~wxyz')
 
     -- stl item testing
     local tabline = ''
@@ -452,11 +468,10 @@ describe('buffer functions', function()
 
     -- multi-byte testing
     statusline_test('should handle multibyte characters', 10,
-      'Ĉ%=x',                'Ĉ        x',
-      {expected_byte_length=11})
+      'Ĉ%=x',                'Ĉ        x')
     statusline_test('should handle multibyte characters and different fillchars', 10,
       'Ą%=mid%=end',         'Ą@mid@@end',
-      {fillchar=('@'):byte(), expected_byte_length=11})
+      {fillchar=('@'):byte()})
 
     -- escaping % testing
     statusline_test('should handle escape of %', 4, 'abc%%', 'abc%')

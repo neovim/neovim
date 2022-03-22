@@ -3,6 +3,8 @@
 
 // fileio.c: read from and write to a file
 
+// uncrustify:off
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -405,6 +407,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
       curbuf->b_mtime_read = curbuf->b_mtime;
+      curbuf->b_mtime_read_ns = curbuf->b_mtime_ns;
 #ifdef UNIX
       /*
        * Use the protection bits of the original file for the swap file.
@@ -421,7 +424,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
 #endif
     } else {
       curbuf->b_mtime = 0;
+      curbuf->b_mtime_ns = 0;
       curbuf->b_mtime_read = 0;
+      curbuf->b_mtime_read_ns = 0;
       curbuf->b_orig_size = 0;
       curbuf->b_orig_mode = 0;
     }
@@ -2010,10 +2015,8 @@ static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, char_u *endp)
   return lnum;
 }
 
-/*
- * Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary to be
- * equal to the buffer "buf".  Used for calling readfile().
- */
+/// Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary' to be
+/// equal to the buffer "buf".  Used for calling readfile().
 void prep_exarg(exarg_T *eap, const buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3318,7 +3321,7 @@ restore_backup:
       if (end == 0
           || (lnum == end
               && (write_bin || !buf->b_p_fixeol)
-              && (lnum == buf->b_no_eol_lnum
+              && ((write_bin && lnum == buf->b_no_eol_lnum)
                   || (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol)))) {
         lnum++;                           // written the line, count it
         no_eol = true;
@@ -3695,11 +3698,12 @@ nofail:
       msg_puts_attr(_("don't quit the editor until the file is successfully written!"),
                     attr | MSG_HIST);
 
-      /* Update the timestamp to avoid an "overwrite changed file"
-       * prompt when writing again. */
+      // Update the timestamp to avoid an "overwrite changed file"
+      // prompt when writing again.
       if (os_fileinfo((char *)fname, &file_info_old)) {
         buf_store_file_info(buf, &file_info_old);
         buf->b_mtime_read = buf->b_mtime;
+        buf->b_mtime_read_ns = buf->b_mtime_ns;
       }
     }
   }
@@ -3794,7 +3798,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
 
   // Do filetype detection now if 'filetype' is empty.
   if (*curbuf->b_p_ft == NUL) {
-    if (au_has_group((char_u *)"filetypedetect")) {
+    if (augroup_exists("filetypedetect")) {
       (void)do_doautocmd((char_u *)"filetypedetect BufRead", false, NULL);
     }
     do_modelines(0);
@@ -3863,7 +3867,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
     *p++ = ' ';
   }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf((char *)p, IOSIZE - (p - IObuff), "%" PRId64 "L, %" PRId64 "C",
+    vim_snprintf((char *)p, IOSIZE - (p - IObuff), "%" PRId64 "L, %" PRId64 "B",
                  (int64_t)lnum, (int64_t)nchars);
   } else {
     vim_snprintf((char *)p, IOSIZE - (p - IObuff),
@@ -3871,7 +3875,7 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
                  (int64_t)lnum);
     p += STRLEN(p);
     vim_snprintf((char *)p, IOSIZE - (p - IObuff),
-                 NGETTEXT("%" PRId64 " character", "%" PRId64 " characters", nchars),
+                 NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
                  (int64_t)nchars);
   }
 }
@@ -3893,8 +3897,7 @@ static void msg_add_eol(void)
 static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
-      && time_differs(file_info->stat.st_mtim.tv_sec,
-                      buf->b_mtime_read)) {
+      && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
@@ -3908,19 +3911,17 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   return OK;
 }
 
-/// Return true if the times differ
-///
-/// @param t1 first time
-/// @param t2 second time
-static bool time_differs(long t1, long t2) FUNC_ATTR_CONST
+static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) FUNC_ATTR_CONST
 {
+  return file_info->stat.st_mtim.tv_nsec != mtime_ns
 #if defined(__linux__) || defined(MSWIN)
-  // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
-  // the seconds.  Since the roundoff is done when flushing the inode, the
-  // time may change unexpectedly by one second!!!
-  return t1 - t2 > 1 || t2 - t1 > 1;
+         // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
+         // the seconds.  Since the roundoff is done when flushing the inode, the
+         // time may change unexpectedly by one second!!!
+         || file_info->stat.st_mtim.tv_sec - mtime > 1
+         || mtime - file_info->stat.st_mtim.tv_sec > 1;
 #else
-  return t1 != t2;
+         || (long)file_info->stat.st_mtim.tv_sec != mtime;
 #endif
 }
 
@@ -4900,13 +4901,11 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
-/*
- * Check if buffer "buf" has been changed.
- * Also check if the file for a new buffer unexpectedly appeared.
- * return 1 if a changed buffer was found.
- * return 2 if a message has been displayed.
- * return 0 otherwise.
- */
+/// Check if buffer "buf" has been changed.
+/// Also check if the file for a new buffer unexpectedly appeared.
+/// return 1 if a changed buffer was found.
+/// return 2 if a message has been displayed.
+/// return 0 otherwise.
 int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4915,7 +4914,11 @@ int buf_check_timestamp(buf_T *buf)
   char *mesg = NULL;
   char *mesg2 = "";
   bool helpmesg = false;
-  bool reload = false;
+  enum {
+    RELOAD_NONE,
+    RELOAD_NORMAL,
+    RELOAD_DETECT
+  } reload = RELOAD_NONE;
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
@@ -4943,7 +4946,7 @@ int buf_check_timestamp(buf_T *buf)
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
       && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
-          || time_differs(file_info.stat.st_mtim.tv_sec, buf->b_mtime)
+          || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
           || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
     const long prev_b_mtime = buf->b_mtime;
 
@@ -4960,15 +4963,14 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    // Don't do anything for a directory.  Might contain the file
-    // explorer.
     if (os_isdir(buf->b_fname)) {
+      // Don't do anything for a directory.  Might contain the file explorer.
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it
       // was set, the global option value otherwise.
-      reload = true;
+      reload = RELOAD_NORMAL;
     } else {
       if (!file_info_ok) {
         reason = "deleted";
@@ -4999,7 +5001,9 @@ int buf_check_timestamp(buf_T *buf)
         }
         s = get_vim_var_str(VV_FCS_CHOICE);
         if (STRCMP(s, "reload") == 0 && *reason != 'd') {
-          reload = true;
+          reload = RELOAD_NORMAL;
+        } else if (STRCMP(s, "edit") == 0) {
+          reload = RELOAD_DETECT;
         } else if (STRCMP(s, "ask") == 0) {
           n = false;
         } else {
@@ -5034,6 +5038,7 @@ int buf_check_timestamp(buf_T *buf)
             // Only timestamp changed, store it to avoid a warning
             // in check_mtime() later.
             buf->b_mtime_read = buf->b_mtime;
+            buf->b_mtime_read_ns = buf->b_mtime_ns;
           }
         }
       }
@@ -5062,9 +5067,15 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "\n", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      if (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
-                    (char_u *)_("&OK\n&Load File"), 1, NULL, true) == 2) {
-        reload = true;
+      switch (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
+                        (char_u *)_("&OK\n&Load File\nLoad File &and Options"),
+                        1, NULL, true)) {
+        case 2:
+          reload = RELOAD_NORMAL;
+          break;
+        case 3:
+          reload = RELOAD_DETECT;
+          break;
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
@@ -5098,9 +5109,9 @@ int buf_check_timestamp(buf_T *buf)
     xfree(tbuf);
   }
 
-  if (reload) {
+  if (reload != RELOAD_NONE) {
     // Reload the buffer.
-    buf_reload(buf, orig_mode);
+    buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
       char_u hash[UNDO_HASH_SIZE];
 
@@ -5118,13 +5129,11 @@ int buf_check_timestamp(buf_T *buf)
   return retval;
 }
 
-/*
- * Reload a buffer that is already loaded.
- * Used when the file was changed outside of Vim.
- * "orig_mode" is buf->b_orig_mode before the need for reloading was detected.
- * buf->b_orig_mode may have been reset already.
- */
-void buf_reload(buf_T *buf, int orig_mode)
+/// Reload a buffer that is already loaded.
+/// Used when the file was changed outside of Vim.
+/// "orig_mode" is buf->b_orig_mode before the need for reloading was detected.
+/// buf->b_orig_mode may have been reset already.
+void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 {
   exarg_T ea;
   pos_T old_cursor;
@@ -5139,11 +5148,15 @@ void buf_reload(buf_T *buf, int orig_mode)
   // set curwin/curbuf for "buf" and save some things
   aucmd_prepbuf(&aco, buf);
 
-  // We only want to read the text from the file, not reset the syntax
-  // highlighting, clear marks, diff status, etc.  Force the fileformat and
-  // encoding to be the same.
+  // Unless reload_options is set, we only want to read the text from the
+  // file, not reset the syntax highlighting, clear marks, diff status, etc.
+  // Force the fileformat and encoding to be the same.
+  if (reload_options) {
+    memset(&ea, 0, sizeof(ea));
+  } else {
+    prep_exarg(&ea, buf);
+  }
 
-  prep_exarg(&ea, buf);
   old_cursor = curwin->w_cursor;
   old_topline = curwin->w_topline;
 
@@ -5262,6 +5275,7 @@ void buf_store_file_info(buf_T *buf, FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   buf->b_mtime = file_info->stat.st_mtim.tv_sec;
+  buf->b_mtime_ns = file_info->stat.st_mtim.tv_nsec;
   buf->b_orig_size = os_fileinfo_size(file_info);
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }

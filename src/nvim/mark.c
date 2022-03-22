@@ -217,8 +217,8 @@ void checkpcmark(void)
       && (equalpos(curwin->w_pcmark, curwin->w_cursor)
           || curwin->w_pcmark.lnum == 0)) {
     curwin->w_pcmark = curwin->w_prev_pcmark;
-    curwin->w_prev_pcmark.lnum = 0;             // Show it has been checked
   }
+  curwin->w_prev_pcmark.lnum = 0;  // it has been checked
 }
 
 /*
@@ -630,7 +630,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count) {
     return vim_strsave((char_u *)"-invalid-");
   }
-  assert(Columns >= 0 && (size_t)Columns <= SIZE_MAX);
+  assert(Columns >= 0);
   // Allow for up to 5 bytes per character.
   s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 

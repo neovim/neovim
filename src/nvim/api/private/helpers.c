@@ -22,6 +22,7 @@
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
@@ -32,7 +33,6 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
-#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
@@ -111,7 +111,7 @@ bool try_leave(const TryState *const tstate, Error *const err)
 /// try_enter()/try_leave() pair should be used instead.
 void try_start(void)
 {
-  ++trylevel;
+  trylevel++;
 }
 
 /// End try block, set the error message if any and return true if an error
@@ -139,10 +139,10 @@ bool try_end(Error *err)
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
-    char *msg = (char *)get_exception_string(*msg_list,
-                                             ET_ERROR,
-                                             NULL,
-                                             &should_free);
+    char *msg = get_exception_string(*msg_list,
+                                     ET_ERROR,
+                                     NULL,
+                                     &should_free);
     api_set_error(err, kErrorTypeException, "%s", msg);
     free_global_msglist();
 
@@ -396,19 +396,14 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
     stringval = value.data.string.data;
   }
 
-  const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid =
-    channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
-  current_sctx.sc_lnum = 0;
-  current_channel_id = channel_id;
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
+                          ? 0 : (type == SREQ_GLOBAL)
+                                ? OPT_GLOBAL : OPT_LOCAL;
 
-  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
-                        ? 0 : (type == SREQ_GLOBAL)
-                              ? OPT_GLOBAL : OPT_LOCAL;
-  set_option_value_for(name.data, numval, stringval,
-                       opt_flags, type, to, err);
-
-  current_sctx = save_current_sctx;
+    set_option_value_for(name.data, numval, stringval,
+                         opt_flags, type, to, err);
+  });
 }
 
 
@@ -591,8 +586,8 @@ Array string_to_array(const String input, bool crlf)
 /// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
 ///                   buffer, or -1 to signify global behavior ("all buffers")
 /// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String rhs,
-                   Dict(keymap) *opts, Error *err)
+void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mode, String lhs,
+                   String rhs, Dict(keymap) *opts, Error *err)
 {
   LuaRef lua_funcref = LUA_NOREF;
   bool global = (buffer == -1);
@@ -604,6 +599,8 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   if (!target_buf) {
     return;
   }
+
+  const sctx_T save_current_sctx = api_set_sctx(channel_id);
 
   if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
     lua_funcref = opts->callback.data.luaref;
@@ -716,11 +713,11 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
 
   parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
 fail_and_free:
+  current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
   XFREE_CLEAR(parsed_args.desc);
-  return;
 }
 
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines
@@ -759,6 +756,52 @@ bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl, Arr
   return true;
 }
 
+/// Returns a substring of a buffer line
+///
+/// @param buf          Buffer handle
+/// @param lnum         Line number (1-based)
+/// @param start_col    Starting byte offset into line (0-based)
+/// @param end_col      Ending byte offset into line (0-based, exclusive)
+/// @param replace_nl   Replace newlines ('\n') with null ('\0')
+/// @param err          Error object
+/// @return The text between start_col and end_col on line lnum of buffer buf
+String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col, bool replace_nl,
+                    Error *err)
+{
+  String rv = STRING_INIT;
+
+  if (lnum >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line index is too high");
+    return rv;
+  }
+
+  const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+  size_t line_length = strlen(bufstr);
+
+  start_col = start_col < 0 ? (int64_t)line_length + start_col + 1 : start_col;
+  end_col = end_col < 0 ? (int64_t)line_length + end_col + 1 : end_col;
+
+  if (start_col >= MAXCOL || end_col >= MAXCOL) {
+    api_set_error(err, kErrorTypeValidation, "Column index is too high");
+    return rv;
+  }
+
+  if (start_col > end_col) {
+    api_set_error(err, kErrorTypeValidation, "start_col must be less than end_col");
+    return rv;
+  }
+
+  if ((size_t)start_col >= line_length) {
+    return rv;
+  }
+
+  rv = cstrn_to_string(&bufstr[start_col], (size_t)(end_col - start_col));
+  if (replace_nl) {
+    strchrsub(rv.data, '\n', '\0');
+  }
+
+  return rv;
+}
 
 void api_free_string(String value)
 {
@@ -990,18 +1033,15 @@ Object copy_object(Object obj)
 static void set_option_value_for(char *key, int numval, char *stringval, int opt_flags,
                                  int opt_type, void *from, Error *err)
 {
-  win_T *save_curwin = NULL;
-  tabpage_T *save_curtab = NULL;
+  switchwin_T switchwin;
   aco_save_T aco;
 
   try_start();
-  switch (opt_type)
-  {
+  switch (opt_type) {
   case SREQ_WIN:
-    if (switch_win_noblock(&save_curwin, &save_curtab, (win_T *)from,
-                           win_find_tabpage((win_T *)from), true)
+    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
         == FAIL) {
-      restore_win_noblock(save_curwin, save_curtab, true);
+      restore_win_noblock(&switchwin, true);
       if (try_end(err)) {
         return;
       }
@@ -1011,7 +1051,7 @@ static void set_option_value_for(char *key, int numval, char *stringval, int opt
       return;
     }
     set_option_value_err(key, numval, stringval, opt_flags, err);
-    restore_win_noblock(save_curwin, save_curtab, true);
+    restore_win_noblock(&switchwin, true);
     break;
   case SREQ_BUF:
     aucmd_prepbuf(&aco, (buf_T *)from);
@@ -1253,7 +1293,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
 {
   if (obj.type == kObjectTypeString) {
     String str = obj.data.string;
-    return str.size ? syn_check_group(str.data, (int)str.size) : 0;
+    return str.size ? syn_check_group(str.data, str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
@@ -1287,7 +1327,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
         // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group(hl.data, (int)hl.size);
+        int hl_id = syn_check_group(hl.data, hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
     }
@@ -1386,6 +1426,11 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
   char *rep = NULL;
   LuaRef luaref = LUA_NOREF;
   LuaRef compl_luaref = LUA_NOREF;
+
+  if (!uc_validate_name(name.data)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid command name");
+    goto err;
+  }
 
   if (mb_islower(name.data[0])) {
     api_set_error(err, kErrorTypeValidation, "'name' must begin with an uppercase letter");
@@ -1566,4 +1611,70 @@ void add_user_command(String name, Object command, Dict(user_command) *opts, int
 err:
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+}
+
+int find_sid(uint64_t channel_id)
+{
+  switch (channel_id) {
+  case VIML_INTERNAL_CALL:
+  // TODO(autocmd): Figure out what this should be
+  // return SID_API_CLIENT;
+  case LUA_INTERNAL_CALL:
+    return SID_LUA;
+  default:
+    return SID_API_CLIENT;
+  }
+}
+
+/// Sets sctx for API calls.
+///
+/// @param channel_id     api clients id. Used to determine if it's a internal
+///                       call or a rpc call.
+/// @return returns       previous value of current_sctx. To be used
+///                       to be used for restoring sctx to previous state.
+sctx_T api_set_sctx(uint64_t channel_id)
+{
+  sctx_T old_current_sctx = current_sctx;
+  if (channel_id != VIML_INTERNAL_CALL) {
+    current_sctx.sc_sid =
+      channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+    current_sctx.sc_lnum = 0;
+  }
+  return old_current_sctx;
+}
+
+// adapted from sign.c:sign_define_init_text.
+// TODO(lewis6991): Consider merging
+int init_sign_text(char_u **sign_text, char_u *text)
+{
+  char_u *s;
+
+  char_u *endp = text + (int)STRLEN(text);
+
+  // Count cells and check for non-printable chars
+  int cells = 0;
+  for (s = text; s < endp; s += utfc_ptr2len(s)) {
+    if (!vim_isprintc(utf_ptr2char(s))) {
+      break;
+    }
+    cells += utf_ptr2cells(s);
+  }
+  // Currently must be empty, one or two display cells
+  if (s != endp || cells > 2) {
+    return FAIL;
+  }
+  if (cells < 1) {
+    return OK;
+  }
+
+  // Allocate one byte more if we need to pad up
+  // with a space.
+  size_t len = (size_t)(endp - text + ((cells == 1) ? 1 : 0));
+  *sign_text = vim_strnsave(text, len);
+
+  if (cells == 1) {
+    STRCPY(*sign_text + len - 1, " ");
+  }
+
+  return OK;
 }

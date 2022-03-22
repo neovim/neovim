@@ -35,6 +35,7 @@ describe('CursorMoved', function()
   it("is not triggered by cursor movement prior to first CursorMoved instantiation", function()
     source([[
     let g:cursormoved = 0
+    autocmd! CursorMoved
     autocmd CursorMoved * let g:cursormoved += 1
     ]])
     eq(0, eval('g:cursormoved'))

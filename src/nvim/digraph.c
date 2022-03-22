@@ -1506,7 +1506,6 @@ char_u *get_digraph_for_char(int val_arg)
 /// @returns composed character, or NUL when ESC was used.
 int get_digraph(bool cmdline)
 {
-  int cc;
   no_mapping++;
   int c = plain_vgetc();
   no_mapping--;
@@ -1526,7 +1525,7 @@ int get_digraph(bool cmdline)
       add_to_showcmd(c);
     }
     no_mapping++;
-    cc = plain_vgetc();
+    int cc = plain_vgetc();
     no_mapping--;
 
     if (cc != ESC) {
@@ -1555,24 +1554,24 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
 
   // Search user digraphs first.
   digr_T *dp = (digr_T *)user_digraphs.ga_data;
-  for (int i = 0; i < user_digraphs.ga_len; ++i) {
+  for (int i = 0; i < user_digraphs.ga_len; i++) {
     if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
       retval = dp->result;
       break;
     }
-    ++dp;
+    dp++;
   }
 
   // Search default digraphs.
   if (retval == 0) {
     dp = digraphdefault;
 
-    for (int i = 0; dp->char1 != 0; ++i) {
+    for (int i = 0; dp->char1 != 0; i++) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         retval = dp->result;
         break;
       }
-      ++dp;
+      dp++;
     }
   }
 
@@ -1614,17 +1613,14 @@ int getdigraph(int char1, int char2, bool meta_char)
 /// @param str
 void putdigraph(char_u *str)
 {
-  char_u char1, char2;
-  digr_T *dp;
-
   while (*str != NUL) {
     str = skipwhite(str);
 
     if (*str == NUL) {
       return;
     }
-    char1 = *str++;
-    char2 = *str++;
+    char_u char1 = *str++;
+    char_u char2 = *str++;
 
     if (char2 == 0) {
       emsg(_(e_invarg));
@@ -1644,15 +1640,15 @@ void putdigraph(char_u *str)
     int n = getdigits_int(&str, true, 0);
 
     // If the digraph already exists, replace the result.
-    dp = (digr_T *)user_digraphs.ga_data;
+    digr_T *dp = (digr_T *)user_digraphs.ga_data;
 
     int i;
-    for (i = 0; i < user_digraphs.ga_len; ++i) {
+    for (i = 0; i < user_digraphs.ga_len; i++) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         dp->result = n;
         break;
       }
-      ++dp;
+      dp++;
     }
 
     // Add a new digraph to the table.
@@ -1677,14 +1673,13 @@ static void digraph_header(const char *msg)
 
 void listdigraphs(bool use_headers)
 {
-  digr_T *dp;
   result_T previous = 0;
 
   msg_putchar('\n');
 
-  dp = digraphdefault;
+  digr_T *dp = digraphdefault;
 
-  for (int i = 0; dp->char1 != NUL && !got_int; ++i) {
+  for (int i = 0; dp->char1 != NUL && !got_int; i++) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1749,11 +1744,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u buf[30];
-  char_u *p;
-
-  int list_width;
-
-  list_width = 13;
+  int list_width = 13;
 
   if (dp->result != 0) {
     if (previous != NULL) {
@@ -1780,7 +1771,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
       }
     }
 
-    p = &buf[0];
+    char_u *p = &buf[0];
     *p++ = dp->char1;
     *p++ = dp->char2;
     *p++ = ' ';
@@ -1863,8 +1854,6 @@ char *keymap_init(void)
 /// @param eap
 void ex_loadkeymap(exarg_T *eap)
 {
-  char_u *line;
-  char_u *p;
   char_u *s;
 
 #define KMAP_LLEN 200  // max length of "to" and "from" together
@@ -1887,13 +1876,13 @@ void ex_loadkeymap(exarg_T *eap)
 
   // Get each line of the sourced file, break at the end.
   for (;;) {
-    line = eap->getline(0, eap->cookie, 0, true);
+    char_u *line = eap->getline(0, eap->cookie, 0, true);
 
     if (line == NULL) {
       break;
     }
 
-    p = skipwhite(line);
+    char_u *p = skipwhite(line);
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
@@ -1911,7 +1900,7 @@ void ex_loadkeymap(exarg_T *eap)
         }
         xfree(kp->from);
         xfree(kp->to);
-        --curbuf->b_kmap_ga.ga_len;
+        curbuf->b_kmap_ga.ga_len--;
       }
     }
     xfree(line);
@@ -1946,7 +1935,6 @@ static void keymap_unload(void)
 {
   char_u buf[KMAP_MAXLEN + 10];
   char_u *save_cpo = p_cpo;
-  kmap_T *kp;
 
   if (!(curbuf->b_kmap_state & KEYMAP_LOADED)) {
     return;
@@ -1956,7 +1944,7 @@ static void keymap_unload(void)
   p_cpo = (char_u *)"C";
 
   // clear the ":lmap"s
-  kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
+  kmap_T *kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
 
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);

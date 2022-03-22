@@ -303,7 +303,7 @@ int ml_open(buf_T *buf)
 
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
-  b0p->b0_magic_long = (long)B0_MAGIC_LONG;
+  b0p->b0_magic_long = B0_MAGIC_LONG;
   b0p->b0_magic_int = (int)B0_MAGIC_INT;
   b0p->b0_magic_short = (short)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
@@ -704,11 +704,14 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       long_to_char((long)os_fileinfo_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
+      buf->b_mtime_read_ns = buf->b_mtime_ns;
     } else {
       long_to_char(0L, b0p->b0_mtime);
       long_to_char(0L, b0p->b0_ino);
       buf->b_mtime = 0;
+      buf->b_mtime_ns = 0;
       buf->b_mtime_read = 0;
+      buf->b_mtime_read_ns = 0;
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     }
@@ -1720,6 +1723,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
       FileInfo file_info;
       if (!os_fileinfo((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
+          || file_info.stat.st_mtim.tv_nsec != buf->b_mtime_read_ns
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
         ml_preserve(buf, false, do_fsync);
         did_check_timestamps = false;
@@ -3705,7 +3709,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
 static int b0_magic_wrong(ZERO_BL *b0p)
 {
-  return b0p->b0_magic_long != (long)B0_MAGIC_LONG
+  return b0p->b0_magic_long != B0_MAGIC_LONG
          || b0p->b0_magic_int != (int)B0_MAGIC_INT
          || b0p->b0_magic_short != (short)B0_MAGIC_SHORT
          || b0p->b0_magic_char != B0_MAGIC_CHAR;

@@ -353,6 +353,7 @@ tag		char	      note action in Normal mode	~
 				   register x]
 |Y|		["x]Y		   yank N lines [into register x]; synonym for
 				   "yy"
+				   Note: Mapped to "y$" by default. |default-mappings|
 |ZZ|		ZZ		   write if buffer changed and close window
 |ZQ|		ZQ		   close window without writing
 |[|		[{char}		   square bracket command (see |[| below)
@@ -430,6 +431,7 @@ tag		char	      note action in Normal mode	~
 |<C-LeftMouse>|	<C-LeftMouse>	   ":ta" to the keyword at the mouse click
 |<C-Right>|	<C-Right>	1  same as "w"
 |<C-RightMouse>| <C-RightMouse>	   same as "CTRL-T"
+|<C-Tab>|	<C-Tab>		   same as "g<Tab>"
 |<Del>|		["x]<Del>	2  same as "x"
 |N<Del>|	{count}<Del>	   remove the last digit from {count}
 |<Down>|	<Down>		1  same as "j"
@@ -576,7 +578,7 @@ tag		command		   action in Normal mode	~
 				   following the file name.
 |CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
 |CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
-|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as `g<Tab>` : go to last accessed tab
+|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as |g<Tab>|: go to last accessed tab
 				   page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of
@@ -923,7 +925,9 @@ tag		command	      note action in Visual mode	~
 				   before the highlighted area
 |v_J|		J		2  join the highlighted lines
 |v_K|		K		   run 'keywordprg' on the highlighted area
-|v_O|		O		   Move horizontally to other corner of area.
+|v_O|		O		   move horizontally to other corner of area
+|v_P|		P		   replace highlighted area with register
+				   contents; unnamed register is unchanged
 		Q		   does not start Ex mode
 |v_R|		R		2  delete the highlighted lines and start
 				   insert
@@ -986,6 +990,8 @@ tag		command	      note action in Visual mode	~
 |v_i{|		i{		   same as iB
 |v_i}|		i}		   same as iB
 |v_o|		o		   move cursor to other corner of area
+|v_p|		p		   replace highlighted area with register
+				   contents; deleted text in unnamed register
 |v_r|		r		2  replace highlighted area with a character
 |v_s|		s		2  delete highlighted area and start insert
 |v_u|		u		2  make highlighted area lowercase

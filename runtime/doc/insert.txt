@@ -269,8 +269,8 @@ start	    allow backspacing over the start position of insert; CTRL-W and
 When 'backspace' is empty, Vi compatible backspacing is used.  You cannot
 backspace over autoindent, before column 1 or before where insert started.
 
-For backwards compatibility the values "0", "1" and "2" are also allowed, see
-|'backspace'|.
+For backwards compatibility the values "0", "1", "2" and "3" are also allowed,
+see |'backspace'|.
 
 If the 'backspace' option does contain "eol" and the cursor is in column 1
 when one of the three keys is used, the current line is joined with the
@@ -798,6 +798,7 @@ CTRL-X CTRL-K		Search the files given with the 'dictionary' option
 			the 'dictionary' option is empty.
 			For suggestions where to find a list of words, see the
 			'dictionary' option.
+			'ignorecase', 'smartcase' and 'infercase' apply.
 
 	CTRL-K	or
 	CTRL-N		Search forward for next matching keyword.  This
@@ -864,7 +865,7 @@ Groß): >
 	    else
 		let res = []
 		let h = ''
-		for l in split(system('aiksaurus '.shellescape(a:base)), '\n')
+		for l in split(system('aiksaurus ' .. shellescape(a:base)), '\n')
 		    if l[:3] == '=== '
 		    	let h = substitute(l[4:], ' =*$', '', '')
 		    elseif l[0] =~ '\a'
@@ -1199,7 +1200,7 @@ An example that completes the names of the months: >
 	    " find months matching with "a:base"
 	    let res = []
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call add(res, m)
 	      endif
 	    endfor
@@ -1221,7 +1222,7 @@ The same, but now pretending searching for matches is slow: >
 	  else
 	    " find months matching with "a:base"
 	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' . a:base
+	      if m =~ '^' .. a:base
 		call complete_add(m)
 	      endif
 	      sleep 300m	" simulate searching for next match
@@ -1341,11 +1342,16 @@ in 'runtimepath'.  Thus for "java" it is autoload/javacomplete.vim.
 
 C							*ft-c-omni*
 
-Completion of C code requires a tags file.  You should use Exuberant ctags,
-because it adds extra information that is needed for completion.  You can find
-it here: http://ctags.sourceforge.net/  Version 5.6 or later is recommended.
+Completion of C code requires a tags file.  You should use Universal/
+Exuberant ctags, because it adds extra information that is needed for
+completion.  You can find it here:
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
-For version 5.5.4 you should add a patch that adds the "typename:" field:
+Universal Ctags is preferred, Exuberant Ctags is no longer being developed.
+
+For Exuberant ctags, version 5.6 or later is recommended.  For version 5.5.4
+you should add a patch that adds the "typename:" field:
 	ftp://ftp.vim.org/pub/vim/unstable/patches/ctags-5.5.4.patch
 A compiled .exe for MS-Windows can be found at:
 	http://ctags.sourceforge.net/
@@ -1466,8 +1472,11 @@ will be suggested. All other elements are not placed in suggestion list.
 PHP							*ft-php-omni*
 
 Completion of PHP code requires a tags file for completion of data from
-external files and for class aware completion. You should use Exuberant ctags
-version 5.5.4 or newer. You can find it here: http://ctags.sourceforge.net/
+external files and for class aware completion. You should use Universal/
+Exuberant ctags version 5.5.4 or newer. You can find it here:
+
+	Universal Ctags: https://ctags.io
+	Exuberant Ctags: http://ctags.sourceforge.net
 
 Script completes:
 

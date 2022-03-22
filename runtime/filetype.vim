@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Jan 23
+" Last Change:	2022 Jan 31
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -44,7 +44,7 @@ endif
 " file name matches ft_ignore_pat.
 " When using this, the entry should probably be further down below with the
 " other StarSetf() calls.
-func! s:StarSetf(ft)
+func s:StarSetf(ft)
   if expand("<amatch>") !~ g:ft_ignore_pat
     exe 'setf ' . a:ft
   endif
@@ -224,6 +224,9 @@ au BufNewFile,BufRead *.bib			setf bib
 
 " BibTeX Bibliography Style
 au BufNewFile,BufRead *.bst			setf bst
+
+" Bicep
+au BufNewFile,BufRead *.bicep			setf bicep
 
 " BIND configuration
 " sudoedit uses namedXXXX.conf
@@ -477,6 +480,7 @@ au BufNewFile,BufRead */etc/dnsmasq.conf	setf dnsmasq
 au BufNewFile,BufRead *.desc			setf desc
 
 " the D language or dtrace
+au BufNewFile,BufRead */dtrace/*.d		setf dtrace
 au BufNewFile,BufRead *.d			call dist#ft#DtraceCheck()
 
 " Desktop files
@@ -660,7 +664,7 @@ au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
 au BufNewFile,BufRead *.fsi,*.fsx		setf fsharp
 
 " GDB command files
-au BufNewFile,BufRead .gdbinit,gdbinit		setf gdb
+au BufNewFile,BufRead .gdbinit,gdbinit,.gdbearlyinit,gdbearlyinit,*.gdb		setf gdb
 
 " GDMO
 au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
@@ -722,6 +726,10 @@ au BufNewFile,BufRead gnashrc,.gnashrc,gnashpluginrc,.gnashpluginrc setf gnash
 " Gitolite
 au BufNewFile,BufRead gitolite.conf		setf gitolite
 au BufNewFile,BufRead {,.}gitolite.rc,example.gitolite.rc	setf perl
+
+" Glimmer-flavored TypeScript and JavaScript
+au BufNewFile,BufRead *.gts	setf typescript.glimmer
+au BufNewFile,BufRead *.gjs	setf javascript.glimmer
 
 " Gnuplot scripts
 au BufNewFile,BufRead *.gpi,.gnuplot		setf gnuplot
@@ -1543,6 +1551,9 @@ au BufNewFile,BufRead *.r,*.R				call dist#ft#FTr()
 " Remind
 au BufNewFile,BufRead .reminders,*.remind,*.rem		setf remind
 
+" ReScript
+au BufNewFile,BufRead *.res,*.resi			setf rescript
+
 " Resolv.conf
 au BufNewFile,BufRead resolv.conf		setf resolv
 
@@ -1784,6 +1795,9 @@ au BufNewFile,BufRead *.mib,*.my		setf mib
 " Snort Configuration
 au BufNewFile,BufRead *.hog,snort.conf,vision.conf	setf hog
 au BufNewFile,BufRead *.rules			call dist#ft#FTRules()
+
+" Solidity
+au BufRead,BufNewFile *.sol			setf solidity
 
 " SPARQL queries
 au BufNewFile,BufRead *.rq,*.sparql		setf sparql
@@ -2050,7 +2064,7 @@ au BufRead,BufNewFile *.hw,*.module,*.pkg
 	\ endif
 
 " Visual Basic (also uses *.bas) or FORM
-au BufNewFile,BufRead *.frm			call dist#ft#FTVB("form")
+au BufNewFile,BufRead *.frm			call dist#ft#FTfrm()
 
 " SaxBasic is close to Visual Basic
 au BufNewFile,BufRead *.sba			setf vb
@@ -2514,7 +2528,7 @@ endif
 " Function called for testing all functions defined here.  These are
 " script-local, thus need to be executed here.
 " Returns a string with error messages (hopefully empty).
-func! TestFiletypeFuncs(testlist)
+func TestFiletypeFuncs(testlist)
   let output = ''
   for f in a:testlist
     try

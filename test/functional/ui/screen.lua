@@ -576,16 +576,16 @@ to the test if they make sense.
     print([[
 
 warning: Screen changes were received after the expected state. This indicates
-indeterminism in the test. Try adding screen:expect(...) (or wait()) between
-asynchronous (feed(), nvim_input()) and synchronous API calls.
+indeterminism in the test. Try adding screen:expect(...) (or poke_eventloop())
+between asynchronous (feed(), nvim_input()) and synchronous API calls.
   - Use screen:redraw_debug() to investigate; it may find relevant intermediate
     states that should be added to the test to make it more robust.
   - If the purpose of the test is to assert state after some user input sent
     with feed(), adding screen:expect() before the feed() will help to ensure
     the input is sent when Nvim is in a predictable state. This is preferable
-    to wait(), for being closer to real user interaction.
-  - wait() can trigger redraws and consequently generate more indeterminism.
-    Try removing wait().
+    to poke_eventloop(), for being closer to real user interaction.
+  - poke_eventloop() can trigger redraws and thus generate more indeterminism.
+    Try removing poke_eventloop().
       ]])
     did_warn = true
   end
@@ -1559,10 +1559,11 @@ end
 
 function Screen:_equal_attrs(a, b)
     return a.bold == b.bold and a.standout == b.standout and
-       a.underline == b.underline and a.undercurl == b.undercurl and
-       a.italic == b.italic and a.reverse == b.reverse and
-       a.foreground == b.foreground and a.background == b.background and
-       a.special == b.special and a.blend == b.blend and
+       a.underline == b.underline and a.underlineline == b.underlineline and
+       a.undercurl == b.undercurl and a.underdot == b.underdot and
+       a.underdash == b.underdash and a.italic == b.italic and
+       a.reverse == b.reverse and a.foreground == b.foreground and
+       a.background == b.background and a.special == b.special and a.blend == b.blend and
        a.strikethrough == b.strikethrough and
        a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end

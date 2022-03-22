@@ -285,6 +285,25 @@ end]]
     eq(true, result)
   end)
 
+  it('support getting empty text if node range is zero width', function()
+    local text = [[
+```lua
+{}
+```]]
+    insert(text)
+    local result = exec_lua([[
+      local fake_node = {}
+      function fake_node:start()
+        return 1, 0, 7
+      end
+      function fake_node:end_()
+        return 1, 0, 7
+      end
+      return vim.treesitter.get_node_text(fake_node, 0) == ''
+    ]])
+    eq(true, result)
+  end)
+
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 

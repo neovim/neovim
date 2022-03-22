@@ -293,6 +293,70 @@ describe(":substitute, 'inccommand' preserves", function()
     end)
   end
 
+  for _, case in ipairs({'', 'split', 'nosplit'}) do
+    it('previous substitute string ~ (inccommand='..case..') #12109', function()
+      local screen = Screen.new(30,10)
+      common_setup(screen, case, default_text)
+
+      feed(':%s/Inc/SUB<CR>')
+      expect([[
+        SUB substitution on
+        two lines
+        ]])
+
+      feed(':%s/line/')
+      poke_eventloop()
+      feed('~')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        SUB substitution on
+        two SUBs
+        ]])
+
+      feed(':%s/sti/')
+      poke_eventloop()
+      feed('~')
+      poke_eventloop()
+      feed('B')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        SUB subSUBBtution on
+        two SUBs
+        ]])
+
+      feed(':%s/ion/NEW<CR>')
+      expect([[
+        SUB subSUBBtutNEW on
+        two SUBs
+        ]])
+
+      feed(':%s/two/')
+      poke_eventloop()
+      feed('N')
+      poke_eventloop()
+      feed('~')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        SUB subSUBBtutNEW on
+        NNEW SUBs
+        ]])
+
+      feed(':%s/bS/')
+      poke_eventloop()
+      feed('~')
+      poke_eventloop()
+      feed('W')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        SUB suNNEWWUBBtutNEW on
+        NNEW SUBs
+        ]])
+    end)
+  end
 end)
 
 describe(":substitute, 'inccommand' preserves undo", function()

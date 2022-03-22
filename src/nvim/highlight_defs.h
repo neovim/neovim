@@ -24,6 +24,10 @@ typedef enum {
   HL_FG_INDEXED    = 0x0200,
   HL_DEFAULT       = 0x0400,
   HL_GLOBAL        = 0x0800,
+  HL_UNDERLINELINE = 0x1000,
+  HL_UNDERDOT      = 0x2000,
+  HL_UNDERDASH     = 0x4000,
+  HL_ANY_UNDERLINE = HL_UNDERLINE | HL_UNDERLINELINE | HL_UNDERCURL | HL_UNDERDOT | HL_UNDERDASH,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes
@@ -70,7 +74,8 @@ typedef enum {
   HLF_R,          // return to continue message and yes/no questions
   HLF_S,          // status lines
   HLF_SNC,        // status lines of not-current windows
-  HLF_C,          // column to separate vertically split windows
+  HLF_C,          // window split separators
+  HLF_VSP,        // VertSplit
   HLF_T,          // Titles for output from ":set all", ":autocmd" etc.
   HLF_V,          // Visual mode
   HLF_VNC,        // Visual mode, autoselecting and not clipboard owner
@@ -129,10 +134,11 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_R] = "Question",
   [HLF_S] = "StatusLine",
   [HLF_SNC] = "StatusLineNC",
-  [HLF_C] = "VertSplit",
+  [HLF_C] = "WinSeparator",
   [HLF_T] = "Title",
   [HLF_V] = "Visual",
   [HLF_VNC] = "VisualNC",
+  [HLF_VSP] = "VertSplit",
   [HLF_W] = "WarningMsg",
   [HLF_WM] = "WildMenu",
   [HLF_FL] = "Folded",

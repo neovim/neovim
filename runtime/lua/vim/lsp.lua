@@ -1598,7 +1598,7 @@ end
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range.start.line == lnum - 1 then
+    if item.filterText == nil and item.textEdit and item.textEdit.range.start.line == lnum - 1 then
       if min_start_char and min_start_char ~= item.textEdit.range.start.character then
         return nil
       end
@@ -1689,7 +1689,7 @@ end
 ---
 --- Currently only supports a single client. This can be set via
 --- `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` but will typically or in `on_attach`
---- via `vim.api.nvim_buf_set_option(bufnr, 'formatexpr', 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')`.
+--- via ``vim.api.nvim_buf_set_option(bufnr, 'formatexpr', 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')``.
 ---
 ---@param opts table options for customizing the formatting expression which takes the
 ---                   following optional keys:

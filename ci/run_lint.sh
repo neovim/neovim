@@ -8,24 +8,17 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/suite.sh"
 
-enter_suite 'clint'
-run_test 'make clint-full' clint
-exit_suite --continue
+rm -f "$END_MARKER"
 
-enter_suite 'lualint'
-run_test 'make lualint' lualint
-exit_suite --continue
+# Run all tests if no input argument is given
+if (($# == 0)); then
+  tests=('clint-full' 'lualint' 'pylint' 'shlint' 'check-single-includes')
+else
+  tests=("$@")
+fi
 
-enter_suite 'pylint'
-run_test 'make pylint' pylint
-exit_suite --continue
-
-enter_suite 'shlint'
-run_test 'make shlint' shlint
-exit_suite --continue
-
-enter_suite single-includes
-run_test 'make check-single-includes' single-includes
-exit_suite --continue
+for i in "${tests[@]}"; do
+  make "$i" || fail "$i"
+done
 
 end_tests

@@ -102,11 +102,10 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
-  Window rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab || !valid_tabpage(tab)) {
-    return rv;
+    return 0;
   }
 
   if (tab == curtab) {
@@ -130,11 +129,10 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
-  Integer rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab) {
-    return rv;
+    return 0;
   }
 
   return tabpage_index(tab);

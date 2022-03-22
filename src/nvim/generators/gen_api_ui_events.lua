@@ -3,13 +3,14 @@ local mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 7)
+assert(#arg == 8)
 local input = io.open(arg[2], 'rb')
 local proto_output = io.open(arg[3], 'wb')
 local call_output = io.open(arg[4], 'wb')
 local remote_output = io.open(arg[5], 'wb')
 local bridge_output = io.open(arg[6], 'wb')
 local metadata_output = io.open(arg[7], 'wb')
+local client_output = io.open(arg[8], 'wb')
 
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -48,6 +49,52 @@ local function write_arglist(output, ev, need_copy)
     end
     output:write(');\n')
   end
+end
+
+local function call_ui_event_method(output, ev)
+  output:write('void ui_client_event_'..ev.name..'(Array args)\n{\n')
+
+  local hlattrs_args_count = 0
+  if #ev.parameters > 0 then
+    output:write('  if (args.size < '..(#ev.parameters))
+    for j = 1, #ev.parameters do
+      local kind = ev.parameters[j][1]
+      if kind ~= "Object" then
+        if kind == 'HlAttrs' then kind = 'Dictionary' end
+        output:write('\n      || args.items['..(j-1)..'].type != kObjectType'..kind..'')
+      end
+    end
+    output:write(') {\n')
+    output:write('    ELOG("Error handling ui event \''..ev.name..'\'");\n')
+    output:write('    return;\n')
+    output:write('  }\n')
+  end
+
+  for j = 1, #ev.parameters do
+    local param = ev.parameters[j]
+    local kind = param[1]
+    output:write('  '..kind..' arg_'..j..' = ')
+    if kind == 'HlAttrs' then
+      -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
+      output:write('ui_client_dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
+      hlattrs_args_count = hlattrs_args_count + 1
+    elseif kind == 'Object' then
+      output:write('args.items['..(j-1)..'];\n')
+    else
+      output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
+    end
+  end
+
+  output:write('  ui_call_'..ev.name..'(')
+  for j = 1, #ev.parameters do
+    output:write('arg_'..j)
+    if j ~= #ev.parameters then
+      output:write(', ')
+    end
+  end
+  output:write(');\n')
+
+  output:write('}\n\n')
 end
 
 for i = 1, #events do
@@ -160,12 +207,35 @@ for i = 1, #events do
     call_output:write(";\n")
     call_output:write("}\n\n")
   end
+
+  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
+    call_ui_event_method(client_output, ev)
+  end
 end
+
+-- Generate the map_init method for client handlers
+client_output:write([[
+void ui_client_methods_table_init(void)
+{
+
+]])
+
+for i = 1, #events do
+  local fn = events[i]
+  if (not fn.noexport) and ((not fn.remote_only) or fn.client_impl) then
+    client_output:write('  add_ui_client_event_handler('..
+                '(String) {.data = "'..fn.name..'", '..
+                '.size = sizeof("'..fn.name..'") - 1}, '..
+                '(UIClientHandler) ui_client_event_'..fn.name..');\n')
+  end
+end
+
+client_output:write('\n}\n\n')
 
 proto_output:close()
 call_output:close()
 remote_output:close()
-bridge_output:close()
+client_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
 local exported_attributes = {'name', 'parameters',

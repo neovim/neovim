@@ -65,11 +65,9 @@ func Test_E963()
 endfunc
 
 func Test_for_invalid()
-  " Vim gives incorrect emsg here until v8.2.3284, but the exact emsg from that
-  " patch cannot be used until v8.2.2658 is ported (for loop over Strings)
-  call assert_fails("for x in 99", 'E897:')
-  call assert_fails("for x in function('winnr')", 'E897:')
-  call assert_fails("for x in {'a': 9}", 'E897:')
+  call assert_fails("for x in 99", 'E1098:')
+  call assert_fails("for x in function('winnr')", 'E1098:')
+  call assert_fails("for x in {'a': 9}", 'E1098:')
 
   if 0
     /1/5/2/s/\n

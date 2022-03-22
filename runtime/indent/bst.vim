@@ -1,20 +1,18 @@
 " Vim indent file
 " Language:	bst
 " Author:	Tim Pope <vimNOSPAM@tpope.info>
-" $Id: bst.vim,v 1.1 2007/05/05 18:11:12 vimboss Exp $
+" Last Change:	2022 Mar 15
 
 if exists("b:did_indent")
     finish
 endif
 let b:did_indent = 1
 
-setlocal expandtab
 setlocal indentexpr=GetBstIndent(v:lnum)
-"setlocal smartindent
 setlocal cinkeys&
 setlocal cinkeys-=0#
 setlocal indentkeys&
-"setlocal indentkeys+=0%
+let b:undo_indent = 'setlocal indentexpr< cinkeys< indentkeys<'
 
 " Only define the function once.
 if exists("*GetBstIndent")

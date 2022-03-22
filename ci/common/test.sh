@@ -51,7 +51,7 @@ check_core_dumps() {
     fi
   done
   if test "$app" != quiet ; then
-    fail 'cores' E 'Core dumps found'
+    fail 'cores' 'Core dumps found'
   fi
 }
 
@@ -72,7 +72,7 @@ check_logs() {
     rm "${log}"
   done
   if test -n "${err}" ; then
-    fail 'logs' E 'Runtime errors detected.'
+    fail 'logs' 'Runtime errors detected.'
   fi
 }
 
@@ -86,46 +86,39 @@ check_sanitizer() {
   fi
 }
 
-run_unittests() {(
-  enter_suite unittests
+unittests() {(
   ulimit -c unlimited || true
   if ! build_make unittest ; then
-    fail 'unittests' F 'Unit tests failed'
+    fail 'unittests' 'Unit tests failed'
   fi
   submit_coverage unittest
   check_core_dumps "$(command -v luajit)"
-  exit_suite
 )}
 
-run_functionaltests() {(
-  enter_suite functionaltests
+functionaltests() {(
   ulimit -c unlimited || true
   if ! build_make ${FUNCTIONALTEST}; then
-    fail 'functionaltests' F 'Functional tests failed'
+    fail 'functionaltests' 'Functional tests failed'
   fi
   submit_coverage functionaltest
   check_sanitizer "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
-  exit_suite
 )}
 
-run_oldtests() {(
-  enter_suite oldtests
+oldtests() {(
   ulimit -c unlimited || true
   if ! make oldtest; then
     reset
-    fail 'oldtests' F 'Legacy tests failed'
+    fail 'oldtests' 'Legacy tests failed'
   fi
   submit_coverage oldtest
   check_sanitizer "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
-  exit_suite
 )}
 
 check_runtime_files() {(
-  set +x
   local test_name="$1" ; shift
   local message="$1" ; shift
   local tst="$1" ; shift
@@ -136,27 +129,25 @@ check_runtime_files() {(
     # Prefer failing the build over using more robust construct because files
     # with IFS are not welcome.
     if ! test -e "$file" ; then
-      fail "$test_name" E \
-        "It appears that $file is only a part of the file name"
+      fail "$test_name" "It appears that $file is only a part of the file name"
     fi
     if ! test "$tst" "$INSTALL_PREFIX/share/nvim/runtime/$file" ; then
-      fail "$test_name" F "$(printf "$message" "$file")"
+      fail "$test_name" "$(printf "$message" "$file")"
     fi
   done
 )}
 
 install_nvim() {(
-  enter_suite 'install_nvim'
   if ! build_make install ; then
-    fail 'install' E 'make install failed'
-    exit_suite
+    fail 'install' 'make install failed'
+    exit 1
   fi
 
   "${INSTALL_PREFIX}/bin/nvim" --version
   if ! "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall' ; then
     echo "Running ':help' in the installed nvim failed."
     echo "Maybe the helptags have not been generated properly."
-    fail 'help' F 'Failed running :help'
+    fail 'help' 'Failed running :help'
   fi
 
   # Check that all runtime files were installed
@@ -177,13 +168,6 @@ install_nvim() {(
   local genvimsynf=syntax/vim/generated.vim
   local gpat='syn keyword vimFuncName .*eval'
   if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf" ; then
-    fail 'funcnames' F "It appears that $genvimsynf does not contain $gpat."
+    fail 'funcnames' "It appears that $genvimsynf does not contain $gpat."
   fi
-
-  exit_suite
 )}
-
-csi_clean() {
-  find "${BUILD_DIR}/bin" -name 'test-includes-*' -delete
-  find "${BUILD_DIR}" -name '*test-include*.o' -delete
-}

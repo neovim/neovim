@@ -229,12 +229,12 @@ prompt. >
 	  call chansend(g:shell_job, [a:text, ''])
 	endfunc
 
-	" Function handling output from the shell: Added above the prompt.
+	" Function handling output from the shell: Add it above the prompt.
 	func GotOutput(channel, msg, name)
 	  call append(line("$") - 1, a:msg)
 	endfunc
 
-	" Function handling the shell exit: close the window.
+	" Function handling the shell exits: close the window.
 	func JobExit(job, status, event)
 	  quit!
 	endfunc

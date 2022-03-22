@@ -196,6 +196,130 @@ func Test_text_format()
   enew!
 endfunc
 
+func Test_format_c_comment()
+  new
+  setl ai cindent tw=40 et fo=croql
+  let text =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf
+  END
+  call setline(1, text)
+  normal gql
+  let expected =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf
+                   // asdf asdf asdf asdf asdf
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  %del
+  let text =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf asdf
+  END
+  call setline(1, text)
+  normal gql
+  let expected =<< trim END
+      var = 2345;  // asdf asdf asdf asdf asdf
+                   // asdf asdf asdf asdf asdf
+                   // asdf asdf
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  %del
+  let text =<< trim END
+      #if 0           // This is another long end of
+                      // line comment that
+                      // wraps.
+  END
+  call setline(1, text)
+  normal gq2j
+  let expected =<< trim END
+      #if 0           // This is another long
+                      // end of line comment
+                      // that wraps.
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Using either "o" or "O" repeats a line comment occupying a whole line.
+  %del
+  let text =<< trim END
+      nop;
+      // This is a comment
+      val = val;
+  END
+  call setline(1, text)
+  normal 2Go
+  let expected =<< trim END
+      nop;
+      // This is a comment
+      //
+      val = val;
+  END
+  call assert_equal(expected, getline(1, '$'))
+  normal 2GO
+  let expected =<< trim END
+      nop;
+      //
+      // This is a comment
+      //
+      val = val;
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Using "o" repeats a line comment after a statement, "O" does not.
+  %del
+  let text =<< trim END
+      nop;
+      val = val;      // This is a comment
+  END
+  call setline(1, text)
+  normal 2Go
+  let expected =<< trim END
+      nop;
+      val = val;      // This is a comment
+                      //
+  END
+  call assert_equal(expected, getline(1, '$'))
+  normal 2GO
+  let expected =<< trim END
+      nop;
+
+      val = val;      // This is a comment
+                      //
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Using "o" does not repeat a comment in a string
+  %del
+  let text =<< trim END
+      nop;
+      val = " // This is not a comment";
+  END
+  call setline(1, text)
+  normal 2Gox
+  let expected =<< trim END
+      nop;
+      val = " // This is not a comment";
+      x
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Using CTRL-U after "o" fixes the indent
+  %del
+  let text =<< trim END
+      {
+         val = val;      // This is a comment
+  END
+  call setline(1, text)
+  exe "normal! 2Go\<C-U>x\<Esc>"
+  let expected =<< trim END
+      {
+         val = val;      // This is a comment
+         x
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  bwipe!
+endfunc
+
 " Tests for :right, :center and :left on text with embedded TAB.
 func Test_format_align()
   enew!
@@ -432,6 +556,21 @@ func Test_format_align()
   right
   call assert_equal("\t\t Vim", getline(1))
   q!
+
+  " align text with 'rightleft'
+  if has('rightleft')
+    new
+    call setline(1, 'Vim')
+    setlocal rightleft
+    left 20
+    setlocal norightleft
+    call assert_equal("\t\t Vim", getline(1))
+    setlocal rightleft
+    right
+    setlocal norightleft
+    call assert_equal("Vim", getline(1))
+    close!
+  endif
 
   set tw&
 endfunc

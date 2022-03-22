@@ -159,7 +159,7 @@ int buf_init_chartab(buf_T *buf, int global)
 
       if ((*p == '^') && (p[1] != NUL)) {
         tilde = true;
-        ++p;
+        p++;
       }
 
       if (ascii_isdigit(*p)) {
@@ -170,7 +170,7 @@ int buf_init_chartab(buf_T *buf, int global)
       c2 = -1;
 
       if ((*p == '-') && (p[1] != NUL)) {
-        ++p;
+        p++;
 
         if (ascii_isdigit(*p)) {
           c2 = getdigits_int((char_u **)&p, true, 0);
@@ -217,9 +217,7 @@ int buf_init_chartab(buf_T *buf, int global)
             }
           } else if (i == 1) {
             // (re)set printable
-            // For double-byte we keep the cell width, so
-            // that we can detect it from the first byte.
-            if (((c < ' ') || (c > '~'))) {
+            if (c < ' ' || c > '~') {
               if (tilde) {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
                                          + ((dy_flags & DY_UHEX) ? 4 : 2));
@@ -245,7 +243,7 @@ int buf_init_chartab(buf_T *buf, int global)
             }
           }
         }
-        ++c;
+        c++;
       }
 
       c = *p;
@@ -270,15 +268,12 @@ int buf_init_chartab(buf_T *buf, int global)
 /// @param bufsize
 void trans_characters(char_u *buf, int bufsize)
 {
-  int len;          // length of string needing translation
-  int room;         // room in buffer after string
-  char_u *trs;      // translated character
-  int trs_len;      // length of trs[]
-
-  len = (int)STRLEN(buf);
-  room = bufsize - len;
+  char_u *trs;                 // translated character
+  int len = (int)STRLEN(buf);  // length of string needing translation
+  int room = bufsize - len;    // room in buffer after string
 
   while (*buf != 0) {
+    int trs_len;      // length of trs[]
     // Assume a multi-byte character doesn't need translation.
     if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
@@ -294,7 +289,7 @@ void trans_characters(char_u *buf, int bufsize)
         memmove(buf + trs_len, buf + 1, (size_t)len);
       }
       memmove(buf, trs, (size_t)trs_len);
-      --len;
+      len--;
     }
     buf += trs_len;
   }
@@ -539,7 +534,7 @@ char_u *transchar_buf(const buf_T *buf, int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))))
+  if ((!chartab_initialized && (c >= ' ' && c <= '~'))
       || ((c <= 0xFF) && vim_isprintc_strict(c))) {
     // printable character
     transchar_charbuf[i] = (char_u)c;
@@ -875,14 +870,11 @@ bool vim_isprintc_strict(int c)
 bool in_win_border(win_T *wp, colnr_T vcol)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
-  int width1;             // width of first line (after line number)
-  int width2;             // width of further lines
-
   if (wp->w_width_inner == 0) {
     // there is no border
     return false;
   }
-  width1 = wp->w_width_inner - win_col_off(wp);
+  int width1 = wp->w_width_inner - win_col_off(wp);  // width of first line (after line number)
 
   if ((int)vcol < width1 - 1) {
     return false;
@@ -891,7 +883,7 @@ bool in_win_border(win_T *wp, colnr_T vcol)
   if ((int)vcol == width1 - 1) {
     return true;
   }
-  width2 = width1 + win_col_off2(wp);
+  int width2 = width1 + win_col_off2(wp);  // width of further lines
 
   if (width2 <= 0) {
     return false;
@@ -913,27 +905,26 @@ bool in_win_border(win_T *wp, colnr_T vcol)
 /// @param end
 void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
-  colnr_T vcol;
   char_u *ptr;    // points to current char
   char_u *posptr;  // points to char at pos->col
-  char_u *line;   // start of the line
   int incr;
   int head;
   long *vts = wp->w_buffer->b_p_vts_array;
   int ts = (int)wp->w_buffer->b_p_ts;
-  int c;
 
-  vcol = 0;
-  line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
+  colnr_T vcol = 0;
+  char_u *line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);  // start of the line
 
   if (pos->col == MAXCOL) {
     // continue until the NUL
     posptr = NULL;
   } else {
-    // Special check for an empty line, which can happen on exit, when
-    // ml_get_buf() always returns an empty string.
-    if (*ptr == NUL) {
-      pos->col = 0;
+    // In a few cases the position can be beyond the end of the line.
+    for (colnr_T i = 0; i < pos->col; i++) {
+      if (ptr[i] == NUL) {
+        pos->col = i;
+        break;
+      }
     }
     posptr = ptr + pos->col;
     posptr -= utf_head_off(line, posptr);
@@ -949,7 +940,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       && !wp->w_p_bri) {
     for (;;) {
       head = 0;
-      c = *ptr;
+      int c = *ptr;
 
       // make sure we don't go past the end of the line
       if (c == NUL) {
@@ -1066,19 +1057,16 @@ colnr_T getvcol_nolist(pos_T *posp)
 void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T col;
-  colnr_T coladd;
-  colnr_T endadd;
-  char_u *ptr;
 
   if (virtual_active()) {
     // For virtual mode, only want one value
     getvcol(wp, pos, &col, NULL, NULL);
 
-    coladd = pos->coladd;
-    endadd = 0;
+    colnr_T coladd = pos->coladd;
+    colnr_T endadd = 0;
 
     // Cannot put the cursor on part of a wide character.
-    ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
+    char_u *ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
       int c = utf_ptr2char(ptr + pos->col);
@@ -1314,9 +1302,9 @@ char_u *skiptowhite_esc(char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
-      ++p;
+      p++;
     }
-    ++p;
+    p++;
   }
   return p;
 }
@@ -1441,7 +1429,7 @@ bool vim_isblankline(char_u *lbuf)
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
 /// @param strict If true, fail if the number has unexpected trailing
-///               alpha-numeric chars: *len is set to 0 and nothing else is
+///               alphanumeric chars: *len is set to 0 and nothing else is
 ///               returned.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len, const int what,
                 varnumber_T *const nptr, uvarnumber_T *const unptr, const int maxlen,
@@ -1502,7 +1490,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len, cons
   } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
              && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'
              && ptr[1] != '9') {
-    pre = ptr[1];
+    pre = (char_u)ptr[1];
     // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
         && !STRING_ENDED(ptr + 2)
@@ -1587,7 +1575,7 @@ vim_str2nr_hex:
 #undef PARSE_NUMBER
 
 vim_str2nr_proceed:
-  // Check for an alpha-numeric character immediately following, that is
+  // Check for an alphanumeric character immediately following, that is
   // most likely a typo.
   if (strict && ptr - (const char *)start != maxlen && ASCII_ISALNUM(*ptr)) {
     return;
@@ -1686,7 +1674,7 @@ bool rem_backslash(const char_u *str)
 /// @param p
 void backslash_halve(char_u *p)
 {
-  for (; *p; ++p) {
+  for (; *p; p++) {
     if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
     }

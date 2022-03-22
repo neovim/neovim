@@ -355,14 +355,14 @@ CTRL-A			Add [count] to the number or alphabetic character at
 
                                                        *v_CTRL-A*
 {Visual}CTRL-A		Add [count] to the number or alphabetic character in
-			the highlighted text.  {not in Vi}
+			the highlighted text.
 
 							*v_g_CTRL-A*
 {Visual}g CTRL-A	Add [count] to the number or alphabetic character in
 			the highlighted text. If several lines are
 		        highlighted, each one will be incremented by an
 			additional [count] (so effectively creating a
-			[count] incrementing sequence).  {not in Vi}
+			[count] incrementing sequence).
 			For Example, if you have this list of numbers:
 				1. ~
 				1. ~
@@ -381,14 +381,14 @@ CTRL-X			Subtract [count] from the number or alphabetic
 
 							*v_CTRL-X*
 {Visual}CTRL-X		Subtract [count] from the number or alphabetic
-			character in the highlighted text.  {not in Vi}
+			character in the highlighted text.
 
 							*v_g_CTRL-X*
 {Visual}g CTRL-X	Subtract [count] from the number or alphabetic
 			character in the highlighted text. If several lines
 			are highlighted, each value will be decremented by an
 			additional [count] (so effectively creating a [count]
-			decrementing sequence).  {not in Vi}
+			decrementing sequence).
 
 The CTRL-A and CTRL-X commands work for (signed) decimal numbers, unsigned
 binary/octal/hexadecimal numbers and alphabetic characters.
@@ -906,7 +906,7 @@ Consider using a character like "@" or ":".  There is no problem if the result
 of the expression contains the separation character.
 
 Examples: >
-	:s@\n@\="\r" . expand("$HOME") . "\r"@
+	:s@\n@\="\r" .. expand("$HOME") .. "\r"@
 This replaces an end-of-line with a new line containing the value of $HOME. >
 
 	s/E/\="\<Char-0x20ac>"/g
@@ -1018,7 +1018,7 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			in [range] (default: current line |cmdline-ranges|),
 			[into register x].
 
-							*p* *put* *E353*
+						*p* *put* *E353* *E1240*
 ["x]p			Put the text [from register x] after the cursor
 			[count] times.
 
@@ -1065,7 +1065,7 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			the command.  You need to escape the '|' and '"'
 			characters to prevent them from terminating the
 			command.  Example: >
-				:put ='path' . \",/test\"
+				:put ='path' .. \",/test\"
 <			If there is no expression after '=', Vim uses the
 			previous expression.  You can see it with ":dis =".
 
@@ -1118,10 +1118,13 @@ register.  With blockwise selection it also depends on the size of the block
 and whether the corners are on an existing character.  (Implementation detail:
 it actually works by first putting the register after the selection and then
 deleting the selection.)
-The previously selected text is put in the unnamed register.  If you want to
-put the same text into a Visual selection several times you need to use
+With 'p' the previously selected text is put in the unnamed register.  This is
+useful if you want to put that text somewhere else.  But you cannot repeat the
+same change.
+With 'P' the unnamed register is not changed, you can repeat the same change.
+But the deleted text cannot be used.  If you do need it you can use 'p' with
 another register.  E.g., yank the text to copy, Visually select the text to
-replace and use "0p .  You can repeat this as many times as you like, the
+replace and use "0p .  You can repeat this as many times as you like, and the
 unnamed register will be changed each time.
 
 When you use a blockwise Visual mode command and yank only a single line into

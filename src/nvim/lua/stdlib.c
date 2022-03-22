@@ -25,12 +25,13 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
+#include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/lua/spell.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
@@ -408,6 +409,12 @@ int nlua_getvar(lua_State *lstate)
   const char *name = luaL_checklstring(lstate, 3, &len);
 
   dictitem_T *di = tv_dict_find(dict, name, (ptrdiff_t)len);
+  if (di == NULL && dict == &globvardict) {  // try to autoload script
+    if (!script_autoload(name, len, false) || aborting()) {
+      return 0;  // nil
+    }
+    di = tv_dict_find(dict, name, (ptrdiff_t)len);
+  }
   if (di == NULL) {
     return 0;  // nil
   }
@@ -464,43 +471,52 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 }
 
 
-void nlua_state_add_stdlib(lua_State *const lstate)
+void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
-  // stricmp
-  lua_pushcfunction(lstate, &nlua_stricmp);
-  lua_setfield(lstate, -2, "stricmp");
-  // str_utfindex
-  lua_pushcfunction(lstate, &nlua_str_utfindex);
-  lua_setfield(lstate, -2, "str_utfindex");
-  // str_byteindex
-  lua_pushcfunction(lstate, &nlua_str_byteindex);
-  lua_setfield(lstate, -2, "str_byteindex");
-  // str_utf_pos
-  lua_pushcfunction(lstate, &nlua_str_utf_pos);
-  lua_setfield(lstate, -2, "str_utf_pos");
-  // str_utf_start
-  lua_pushcfunction(lstate, &nlua_str_utf_start);
-  lua_setfield(lstate, -2, "str_utf_start");
-  // str_utf_end
-  lua_pushcfunction(lstate, &nlua_str_utf_end);
-  lua_setfield(lstate, -2, "str_utf_end");
-  // regex
-  lua_pushcfunction(lstate, &nlua_regex);
-  lua_setfield(lstate, -2, "regex");
-  luaL_newmetatable(lstate, "nvim_regex");
-  luaL_register(lstate, NULL, regex_meta);
+  if (!is_thread) {
+    // TODO(bfredl): some of basic string functions should already be
+    // (or be easy to make) threadsafe
 
-  lua_pushvalue(lstate, -1);  // [meta, meta]
-  lua_setfield(lstate, -2, "__index");  // [meta]
-  lua_pop(lstate, 1);  // don't use metatable now
+    // stricmp
+    lua_pushcfunction(lstate, &nlua_stricmp);
+    lua_setfield(lstate, -2, "stricmp");
+    // str_utfindex
+    lua_pushcfunction(lstate, &nlua_str_utfindex);
+    lua_setfield(lstate, -2, "str_utfindex");
+    // str_byteindex
+    lua_pushcfunction(lstate, &nlua_str_byteindex);
+    lua_setfield(lstate, -2, "str_byteindex");
+    // str_utf_pos
+    lua_pushcfunction(lstate, &nlua_str_utf_pos);
+    lua_setfield(lstate, -2, "str_utf_pos");
+    // str_utf_start
+    lua_pushcfunction(lstate, &nlua_str_utf_start);
+    lua_setfield(lstate, -2, "str_utf_start");
+    // str_utf_end
+    lua_pushcfunction(lstate, &nlua_str_utf_end);
+    lua_setfield(lstate, -2, "str_utf_end");
+    // regex
+    lua_pushcfunction(lstate, &nlua_regex);
+    lua_setfield(lstate, -2, "regex");
+    luaL_newmetatable(lstate, "nvim_regex");
+    luaL_register(lstate, NULL, regex_meta);
 
-  // _getvar
-  lua_pushcfunction(lstate, &nlua_getvar);
-  lua_setfield(lstate, -2, "_getvar");
+    lua_pushvalue(lstate, -1);  // [meta, meta]
+    lua_setfield(lstate, -2, "__index");  // [meta]
+    lua_pop(lstate, 1);  // don't use metatable now
 
-  // _setvar
-  lua_pushcfunction(lstate, &nlua_setvar);
-  lua_setfield(lstate, -2, "_setvar");
+    // _getvar
+    lua_pushcfunction(lstate, &nlua_getvar);
+    lua_setfield(lstate, -2, "_getvar");
+
+    // _setvar
+    lua_pushcfunction(lstate, &nlua_setvar);
+    lua_setfield(lstate, -2, "_setvar");
+
+    // vim.spell
+    luaopen_spell(lstate);
+    lua_setfield(lstate, -2, "spell");
+  }
 
   // vim.mpack
   luaopen_mpack(lstate);
@@ -519,10 +535,7 @@ void nlua_state_add_stdlib(lua_State *const lstate)
   lua_pushcfunction(lstate, &nlua_xdl_diff);
   lua_setfield(lstate, -2, "diff");
 
-  // vim.spell
-  luaopen_spell(lstate);
-  lua_setfield(lstate, -2, "spell");
-
+  // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
 }

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command = helpers.command
+local command, exec = helpers.command, helpers.exec
 local eval, exc_exec = helpers.eval, helpers.exc_exec
 local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
@@ -840,7 +840,7 @@ describe("'listchars' highlight", function()
   end)
 end)
 
-describe('CursorLine highlight', function()
+describe('CursorLine and CursorLineNr highlights', function()
   before_each(clear)
 
   it('overridden by Error, ColorColumn if fg not set', function()
@@ -1081,7 +1081,7 @@ describe('CursorLine highlight', function()
     ]])
   end)
 
-  it('with split-windows in diff-mode', function()
+  it('with split windows in diff mode', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
       [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
@@ -1093,7 +1093,6 @@ describe('CursorLine highlight', function()
       [7] = {background = Screen.colors.Red, foreground = Screen.colors.White},
       [8] = {bold = true, foreground = Screen.colors.Blue1},
       [9] = {bold = true, reverse = true},
-      [10] = {bold = true},
     })
     screen:attach()
 
@@ -1170,8 +1169,162 @@ describe('CursorLine highlight', function()
               background = Screen.colors.Red},
     })
   end)
+
+  it('CursorLineNr shows correctly just below filler lines', function()
+    local screen = Screen.new(50,12)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+      [3] = {reverse = true},
+      [4] = {background = Screen.colors.LightBlue},
+      [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},
+      [6] = {background = Screen.colors.White, bold = true, foreground = Screen.colors.Black},
+      [7] = {bold = true, foreground = Screen.colors.Blue1},
+      [8] = {bold = true, reverse = true},
+      [9] = {foreground = Screen.colors.Brown},
+    })
+    screen:attach()
+
+    command('hi CursorLine guibg=red guifg=white')
+    command('hi CursorLineNr guibg=white guifg=black gui=bold')
+    command('set cursorline number')
+    command('call setline(1, ["baz", "foo", "foo", "bar"])')
+    feed('2gg0')
+    command('vnew')
+    command('call setline(1, ["foo", "foo", "bar"])')
+    command('windo diffthis')
+    command('1wincmd w')
+    screen:expect([[
+      {1:  }{9:    }{2:-------------------}{3:│}{1:  }{9:  1 }{4:baz               }|
+      {1:  }{6:  1 }{5:^foo                }{3:│}{1:  }{6:  2 }{5:foo               }|
+      {1:  }{9:  2 }foo                {3:│}{1:  }{9:  3 }foo               |
+      {1:  }{9:  3 }bar                {3:│}{1:  }{9:  4 }bar               |
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+                                                        |
+    ]])
+    command('set cursorlineopt=number')
+    screen:expect([[
+      {1:  }{9:    }{2:-------------------}{3:│}{1:  }{9:  1 }{4:baz               }|
+      {1:  }{6:  1 }^foo                {3:│}{1:  }{6:  2 }{5:foo               }|
+      {1:  }{9:  2 }foo                {3:│}{1:  }{9:  3 }foo               |
+      {1:  }{9:  3 }bar                {3:│}{1:  }{9:  4 }bar               |
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {7:~                        }{3:│}{7:~                       }|
+      {8:[No Name] [+]             }{3:[No Name] [+]           }|
+                                                        |
+    ]])
+  end)
 end)
 
+describe('ColorColumn highlight', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(40, 15)
+    Screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.LightRed},  -- ColorColumn
+      [2] = {background = Screen.colors.Grey90},  -- CursorLine
+      [3] = {foreground = Screen.colors.Brown},  -- LineNr
+      [4] = {foreground = Screen.colors.Brown, bold = true},  -- CursorLineNr
+      [5] = {foreground = Screen.colors.Blue, bold = true},  -- NonText
+      -- NonText and ColorColumn
+      [6] = {foreground = Screen.colors.Blue, background = Screen.colors.LightRed, bold = true},
+      [7] = {reverse = true, bold = true},  -- StatusLine
+      [8] = {reverse = true},  -- StatusLineNC
+    })
+    screen:attach()
+  end)
+
+  it('when entering a buffer vim-patch:8.1.2073', function()
+    exec([[
+      set nohidden
+      split
+      edit X
+      call setline(1, ["1111111111","22222222222","3333333333"])
+      set nomodified
+      set colorcolumn=3,9
+      set number cursorline cursorlineopt=number
+      wincmd w
+      buf X
+    ]])
+    screen:expect([[
+      {4:  1 }11{1:1}11111{1:1}1                          |
+      {3:  2 }22{1:2}22222{1:2}22                         |
+      {3:  3 }33{1:3}33333{1:3}3                          |
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {8:X                                       }|
+      {4:  1 }^11{1:1}11111{1:1}1                          |
+      {3:  2 }22{1:2}22222{1:2}22                         |
+      {3:  3 }33{1:3}33333{1:3}3                          |
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {7:X                                       }|
+                                              |
+    ]])
+  end)
+
+  it("in 'breakindent' vim-patch:8.2.1689", function()
+    exec([[
+      call setline(1, 'The quick brown fox jumped over the lazy dogs')
+      set co=40 linebreak bri briopt=shift:2 cc=40,41,43
+    ]])
+    screen:expect([[
+      ^The quick brown fox jumped over the    {1: }|
+      {1: } {1:l}azy dogs                             |
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+                                              |
+    ]])
+  end)
+
+  it("in 'showbreak' vim-patch:8.2.1689", function()
+    exec([[
+      call setline(1, 'The quick brown fox jumped over the lazy dogs')
+      set co=40 showbreak=+++>\\  cc=40,41,43
+    ]])
+    screen:expect([[
+      ^The quick brown fox jumped over the laz{1:y}|
+      {6:+}{5:+}{6:+}{5:>\} dogs                              |
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+      {5:~                                       }|
+                                              |
+    ]])
+  end)
+end)
 
 describe("MsgSeparator highlight and msgsep fillchar", function()
   local screen

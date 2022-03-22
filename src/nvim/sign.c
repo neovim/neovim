@@ -13,6 +13,7 @@
 #include "nvim/edit.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
+#include "nvim/highlight_group.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
@@ -196,7 +197,8 @@ static void insert_sign(buf_T *buf, sign_entry_T *prev, sign_entry_T *next, int 
   if (next != NULL) {
     next->se_prev = newsign;
   }
-  buf->b_signcols_valid = false;
+
+  buf_signcols_add_check(buf, newsign);
 
   if (prev == NULL) {
     // When adding first sign need to redraw the windows to create the
@@ -506,6 +508,8 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
         if (sp->sn_num_hl != 0) {
           sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
         }
+        // Store the priority so we can mesh in extmark signs later
+        sattr.sat_prio = sign->se_priority;
       }
 
       sattrs[nr_matches] = sattr;
@@ -539,7 +543,6 @@ linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
   sign_entry_T *next;    // the next sign in a b_signlist
   linenr_T lnum;       // line number whose sign was deleted
 
-  buf->b_signcols_valid = false;
   lastp = &buf->b_signlist;
   lnum = 0;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
@@ -552,6 +555,7 @@ linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
         next->se_prev = sign->se_prev;
       }
       lnum = sign->se_lnum;
+      buf_signcols_del_check(buf, lnum, lnum);
       if (sign->se_group != NULL) {
         sign_group_unref(sign->se_group->sg_name);
       }
@@ -673,7 +677,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
       lastp = &sign->se_next;
     }
   }
-  buf->b_signcols_valid = false;
+  buf_signcols_del_check(buf, 1, MAXLNUM);
 }
 
 /// List placed signs for "rbuf".  If "rbuf" is NULL do it for all buffers.
@@ -735,14 +739,19 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
   int is_fixed = 0;
   int signcol = win_signcol_configured(curwin, &is_fixed);
 
-  curbuf->b_signcols_valid = false;
+  bool delete = amount == MAXLNUM;
+
+  if (delete) {
+    buf_signcols_del_check(curbuf, line1, line2);
+  }
+
   lastp = &curbuf->b_signlist;
 
   for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
     new_lnum = sign->se_lnum;
     if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
-      if (amount != MAXLNUM) {
+      if (!delete) {
         new_lnum += amount;
       } else if (!is_fixed || signcol >= 2) {
         *lastp = next;
@@ -946,7 +955,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*linehl == NUL) {
       sp->sn_line_hl = 0;
     } else {
-      sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
+      sp->sn_line_hl = syn_check_group((char *)linehl, STRLEN(linehl));
     }
   }
 
@@ -954,7 +963,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*texthl == NUL) {
       sp->sn_text_hl = 0;
     } else {
-      sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
+      sp->sn_text_hl = syn_check_group((char *)texthl, STRLEN(texthl));
     }
   }
 
@@ -962,7 +971,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*culhl == NUL) {
       sp->sn_cul_hl = 0;
     } else {
-      sp->sn_cul_hl = syn_check_group((char *)culhl, (int)STRLEN(culhl));
+      sp->sn_cul_hl = syn_check_group((char *)culhl, STRLEN(culhl));
     }
   }
 
@@ -970,7 +979,7 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
     if (*numhl == NUL) {
       sp->sn_num_hl = 0;
     } else {
-      sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+      sp->sn_num_hl = syn_check_group(numhl, STRLEN(numhl));
     }
   }
 
@@ -1501,28 +1510,28 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("linehl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("linehl"), p);
   }
   if (sp->sn_text_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_text_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("texthl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("texthl"), p);
   }
   if (sp->sn_cul_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_cul_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("culhl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("culhl"), p);
   }
   if (sp->sn_num_hl > 0) {
     p = get_highlight_name_ext(NULL, sp->sn_num_hl - 1, false);
     if (p == NULL) {
       p = "NONE";
     }
-    tv_dict_add_str(retdict, S_LEN("numhl"), (char *)p);
+    tv_dict_add_str(retdict, S_LEN("numhl"), p);
   }
 }
 

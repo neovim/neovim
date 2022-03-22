@@ -87,6 +87,7 @@ describe(':terminal cursor', function()
 
   describe('when invisible', function()
     it('is not highlighted and is detached from screen cursor', function()
+      if helpers.pending_win32(pending) then return end
       hide_cursor()
       screen:expect([[
         tty ready                                         |
@@ -176,6 +177,7 @@ describe('cursor with customized highlighting', function()
 end)
 
 describe('buffer cursor position is correct in terminal without number column', function()
+  if helpers.pending_win32(pending) then return end
   local screen
 
   local function setup_ex_register(str)
@@ -526,6 +528,7 @@ describe('buffer cursor position is correct in terminal without number column', 
 end)
 
 describe('buffer cursor position is correct in terminal with number column', function()
+  if helpers.pending_win32(pending) then return end
   local screen
 
   local function setup_ex_register(str)

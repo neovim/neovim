@@ -6,6 +6,7 @@ local assert_alive = helpers.assert_alive
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
+local exec = helpers.exec
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
@@ -23,6 +24,7 @@ local next_msg = helpers.next_msg
 local tmpname = helpers.tmpname
 local write_file = helpers.write_file
 local exec_lua = helpers.exec_lua
+local exc_exec = helpers.exc_exec
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -333,6 +335,7 @@ describe('API', function()
 
   describe('nvim_command_output', function()
     it('does not induce hit-enter prompt', function()
+      nvim("ui_attach", 80, 20, {})
       -- Induce a hit-enter prompt use nvim_input (non-blocking).
       nvim('command', 'set cmdheight=1')
       nvim('input', [[:echo "hi\nhi2"<CR>]])
@@ -535,6 +538,31 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_set_current_dir', function()
+    local start_dir
+
+    before_each(function()
+      clear()
+      funcs.mkdir("Xtestdir")
+      start_dir = funcs.getcwd()
+    end)
+
+    after_each(function()
+      helpers.rmdir("Xtestdir")
+    end)
+
+    it('works', function()
+      meths.set_current_dir("Xtestdir")
+      eq(funcs.getcwd(), start_dir .. helpers.get_pathsep() .. "Xtestdir")
+    end)
+
+    it('sets previous directory', function()
+      meths.set_current_dir("Xtestdir")
+      meths.exec('cd -', false)
+      eq(funcs.getcwd(), start_dir)
+    end)
+  end)
+
   describe('nvim_exec_lua', function()
     it('works', function()
       meths.exec_lua('vim.api.nvim_set_var("test", 3)', {})
@@ -609,34 +637,374 @@ describe('API', function()
       eq('Invalid phase: 4',
         pcall_err(request, 'nvim_paste', 'foo', true, 4))
     end)
-    it('stream: multiple chunks form one undo-block', function()
-      nvim('paste', '1/chunk 1 (start)\n', true, 1)
-      nvim('paste', '1/chunk 2 (end)\n', true, 3)
-      local expected1 = [[
-        1/chunk 1 (start)
-        1/chunk 2 (end)
-        ]]
-      expect(expected1)
-      nvim('paste', '2/chunk 1 (start)\n', true, 1)
-      nvim('paste', '2/chunk 2\n', true, 2)
-      expect([[
-        1/chunk 1 (start)
-        1/chunk 2 (end)
-        2/chunk 1 (start)
-        2/chunk 2
-        ]])
-      nvim('paste', '2/chunk 3\n', true, 2)
-      nvim('paste', '2/chunk 4 (end)\n', true, 3)
-      expect([[
-        1/chunk 1 (start)
-        1/chunk 2 (end)
-        2/chunk 1 (start)
-        2/chunk 2
-        2/chunk 3
-        2/chunk 4 (end)
-        ]])
-      feed('u')  -- Undo.
-      expect(expected1)
+    local function run_streamed_paste_tests()
+      it('stream: multiple chunks form one undo-block', function()
+        nvim('paste', '1/chunk 1 (start)\n', true, 1)
+        nvim('paste', '1/chunk 2 (end)\n', true, 3)
+        local expected1 = [[
+          1/chunk 1 (start)
+          1/chunk 2 (end)
+          ]]
+        expect(expected1)
+        nvim('paste', '2/chunk 1 (start)\n', true, 1)
+        nvim('paste', '2/chunk 2\n', true, 2)
+        expect([[
+          1/chunk 1 (start)
+          1/chunk 2 (end)
+          2/chunk 1 (start)
+          2/chunk 2
+          ]])
+        nvim('paste', '2/chunk 3\n', true, 2)
+        nvim('paste', '2/chunk 4 (end)\n', true, 3)
+        expect([[
+          1/chunk 1 (start)
+          1/chunk 2 (end)
+          2/chunk 1 (start)
+          2/chunk 2
+          2/chunk 3
+          2/chunk 4 (end)
+          ]])
+        feed('u')  -- Undo.
+        expect(expected1)
+      end)
+      it('stream: Insert mode', function()
+        -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+        feed('afoo<Esc>u')
+        feed('i')
+        nvim('paste', 'aaaaaa', false, 1)
+        nvim('paste', 'bbbbbb', false, 2)
+        nvim('paste', 'cccccc', false, 2)
+        nvim('paste', 'dddddd', false, 3)
+        expect('aaaaaabbbbbbccccccdddddd')
+        feed('<Esc>u')
+        expect('')
+      end)
+      describe('stream: Normal mode', function()
+        describe('on empty line', function()
+          before_each(function()
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+          end)
+          after_each(function()
+            feed('u')
+            expect('')
+          end)
+          it('pasting one line', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('aaaaaabbbbbbccccccdddddd')
+          end)
+          it('pasting multiple lines', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+            aaaaaa
+            bbbbbb
+            cccccc
+            dddddd]])
+          end)
+        end)
+        describe('not at the end of a line', function()
+          before_each(function()
+            feed('i||<Esc>')
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+            feed('0')
+          end)
+          after_each(function()
+            feed('u')
+            expect('||')
+          end)
+          it('pasting one line', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('|aaaaaabbbbbbccccccdddddd|')
+          end)
+          it('pasting multiple lines', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+            |aaaaaa
+            bbbbbb
+            cccccc
+            dddddd|]])
+          end)
+        end)
+        describe('at the end of a line', function()
+          before_each(function()
+            feed('i||<Esc>')
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+            feed('2|')
+          end)
+          after_each(function()
+            feed('u')
+            expect('||')
+          end)
+          it('pasting one line', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('||aaaaaabbbbbbccccccdddddd')
+          end)
+          it('pasting multiple lines', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+              ||aaaaaa
+              bbbbbb
+              cccccc
+              dddddd]])
+          end)
+        end)
+      end)
+      describe('stream: Visual mode', function()
+        describe('neither end at the end of a line', function()
+          before_each(function()
+            feed('i|xxx<CR>xxx|<Esc>')
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+            feed('3|vhk')
+          end)
+          after_each(function()
+            feed('u')
+            expect([[
+            |xxx
+            xxx|]])
+          end)
+          it('with non-empty chunks', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('|aaaaaabbbbbbccccccdddddd|')
+          end)
+          it('with empty first chunk', function()
+            nvim('paste', '', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('|bbbbbbccccccdddddd|')
+          end)
+          it('with all chunks empty', function()
+            nvim('paste', '', false, 1)
+            nvim('paste', '', false, 2)
+            nvim('paste', '', false, 2)
+            nvim('paste', '', false, 3)
+            expect('||')
+          end)
+        end)
+        describe('cursor at the end of a line', function()
+          before_each(function()
+            feed('i||xxx<CR>xxx<Esc>')
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+            feed('3|vko')
+          end)
+          after_each(function()
+            feed('u')
+            expect([[
+              ||xxx
+              xxx]])
+          end)
+          it('with non-empty chunks', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('||aaaaaabbbbbbccccccdddddd')
+          end)
+          it('with empty first chunk', function()
+            nvim('paste', '', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('||bbbbbbccccccdddddd')
+          end)
+        end)
+        describe('other end at the end of a line', function()
+          before_each(function()
+            feed('i||xxx<CR>xxx<Esc>')
+            -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+            feed('afoo<Esc>u')
+            feed('3|vk')
+          end)
+          after_each(function()
+            feed('u')
+            expect([[
+              ||xxx
+              xxx]])
+          end)
+          it('with non-empty chunks', function()
+            nvim('paste', 'aaaaaa', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('||aaaaaabbbbbbccccccdddddd')
+          end)
+          it('with empty first chunk', function()
+            nvim('paste', '', false, 1)
+            nvim('paste', 'bbbbbb', false, 2)
+            nvim('paste', 'cccccc', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect('||bbbbbbccccccdddddd')
+          end)
+        end)
+      end)
+      describe('stream: linewise Visual mode', function()
+        before_each(function()
+          feed('i123456789<CR>987654321<CR>123456789<Esc>')
+          -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
+          feed('afoo<Esc>u')
+        end)
+        after_each(function()
+          feed('u')
+          expect([[
+            123456789
+            987654321
+            123456789]])
+        end)
+        describe('selecting the start of a file', function()
+          before_each(function()
+            feed('ggV')
+          end)
+          it('pasting text without final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd987654321
+              123456789]])
+          end)
+          it('pasting text with final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd\n', false, 3)
+            expect([[
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd
+              987654321
+              123456789]])
+          end)
+        end)
+        describe('selecting the middle of a file', function()
+          before_each(function()
+            feed('2ggV')
+          end)
+          it('pasting text without final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+              123456789
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd123456789]])
+          end)
+          it('pasting text with final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd\n', false, 3)
+            expect([[
+              123456789
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd
+              123456789]])
+          end)
+        end)
+        describe('selecting the end of a file', function()
+          before_each(function()
+            feed('3ggV')
+          end)
+          it('pasting text without final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+              123456789
+              987654321
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd]])
+          end)
+          it('pasting text with final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd\n', false, 3)
+            expect([[
+              123456789
+              987654321
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd
+              ]])
+          end)
+        end)
+        describe('selecting the whole file', function()
+          before_each(function()
+            feed('ggVG')
+          end)
+          it('pasting text without final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd', false, 3)
+            expect([[
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd]])
+          end)
+          it('pasting text with final new line', function()
+            nvim('paste', 'aaaaaa\n', false, 1)
+            nvim('paste', 'bbbbbb\n', false, 2)
+            nvim('paste', 'cccccc\n', false, 2)
+            nvim('paste', 'dddddd\n', false, 3)
+            expect([[
+              aaaaaa
+              bbbbbb
+              cccccc
+              dddddd
+              ]])
+          end)
+        end)
+      end)
+    end
+    describe('without virtualedit,', function()
+      run_streamed_paste_tests()
+    end)
+    describe('with virtualedit=onemore,', function()
+      before_each(function()
+        command('set virtualedit=onemore')
+      end)
+      run_streamed_paste_tests()
     end)
     it('non-streaming', function()
       -- With final "\n".
@@ -710,6 +1078,37 @@ describe('API', function()
       456d
       eeffgghh
       iijjkkll]])
+    end)
+    it('when searching in Visual mode', function()
+      feed('v/')
+      nvim('paste', 'aabbccdd', true, -1)
+      eq('aabbccdd', funcs.getcmdline())
+      expect('')
+    end)
+    it('pasting with empty last chunk in Cmdline mode', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      feed(':')
+      nvim('paste', 'Foo', true, 1)
+      nvim('paste', '', true, 3)
+      screen:expect([[
+                            |
+        ~                   |
+        ~                   |
+        :Foo^                |
+      ]])
+    end)
+    it('pasting text with control characters in Cmdline mode', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      feed(':')
+      nvim('paste', 'normal! \023\022\006\027', true, -1)
+      screen:expect([[
+                            |
+        ~                   |
+        ~                   |
+        :normal! ^W^V^F^[^   |
+      ]])
     end)
     it('crlf=false does not break lines at CR, CRLF', function()
       nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)
@@ -872,6 +1271,30 @@ describe('API', function()
       command('lockvar lua')
       eq('Key is locked: lua', pcall_err(meths.del_var, 'lua'))
       eq('Key is locked: lua', pcall_err(meths.set_var, 'lua', 1))
+
+      exec([[
+        function Test()
+        endfunction
+        function s:Test()
+        endfunction
+        let g:Unknown_func = function('Test')
+        let g:Unknown_script_func = function('s:Test')
+      ]])
+      eq(NIL, meths.get_var('Unknown_func'))
+      eq(NIL, meths.get_var('Unknown_script_func'))
+
+      -- Check if autoload works properly
+      local pathsep = helpers.get_pathsep()
+      local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
+      local xdata = 'Xhome' .. pathsep .. 'Xdata'
+      local autoload_folder = table.concat({xconfig, 'nvim', 'autoload'}, pathsep)
+      local autoload_file = table.concat({autoload_folder , 'testload.vim'}, pathsep)
+      mkdir_p(autoload_folder)
+      write_file(autoload_file , [[let testload#value = 2]])
+
+      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata } }
+      eq(2, meths.get_var('testload#value'))
+      rmdir('Xhome')
     end)
 
     it('nvim_get_vvar, nvim_set_vvar', function()
@@ -1093,7 +1516,20 @@ describe('API', function()
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
 
+    it("during press-enter prompt without UI returns blocking=false", function()
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      command("echom 'msg1'")
+      command("echom 'msg2'")
+      command("echom 'msg3'")
+      command("echom 'msg4'")
+      command("echom 'msg5'")
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim("input", ":messages<CR>")
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
     it("during press-enter prompt returns blocking=true", function()
+      nvim("ui_attach", 80, 20, {})
       eq({mode='n', blocking=false}, nvim("get_mode"))
       command("echom 'msg1'")
       command("echom 'msg2'")
@@ -1117,6 +1553,7 @@ describe('API', function()
 
     -- TODO: bug #6247#issuecomment-286403810
     it("batched with input", function()
+      nvim("ui_attach", 80, 20, {})
       eq({mode='n', blocking=false}, nvim("get_mode"))
       command("echom 'msg1'")
       command("echom 'msg2'")
@@ -2187,6 +2624,14 @@ describe('API', function()
 
       eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
+    it('can handle bad patterns', function()
+      if helpers.pending_win32(pending) then return end
+
+      eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
+
+      eq('Vim(echo):E5555: API call: Vim:E220: Missing }.',
+        exc_exec("echo nvim_get_runtime_file('{', v:false)"))
+    end)
   end)
 
   describe('nvim_get_all_options_info', function()
@@ -2550,6 +2995,34 @@ describe('API', function()
         meths.eval_statusline(
           'Should be truncated%<',
           { maxwidth = 15 }))
+    end)
+    it('supports ASCII fillchar', function()
+      eq({ str = 'a~~~b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '~', maxwidth = 5 }))
+    end)
+    it('supports single-width multibyte fillchar', function()
+      eq({ str = 'a━━━b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '━', maxwidth = 5 }))
+    end)
+    it('treats double-width fillchar as single-width', function()
+      eq({ str = 'a哦哦哦b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '哦', maxwidth = 5 }))
+    end)
+    it('treats control character fillchar as single-width', function()
+      eq({ str = 'a\031\031\031b', width = 5 },
+         meths.eval_statusline('a%=b', { fillchar = '\031', maxwidth = 5 }))
+    end)
+    it('rejects multiple-character fillchar', function()
+      eq('fillchar must be a single character',
+         pcall_err(meths.eval_statusline, '', { fillchar = 'aa' }))
+    end)
+    it('rejects empty string fillchar', function()
+      eq('fillchar must be a single character',
+         pcall_err(meths.eval_statusline, '', { fillchar = '' }))
+    end)
+    it('rejects non-string fillchar', function()
+      eq('fillchar must be a single character',
+         pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
     describe('highlight parsing', function()
       it('works', function()

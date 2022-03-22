@@ -269,16 +269,17 @@ int vim_ispathlistsep(int c)
 #endif
 }
 
-/*
- * Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
- * It's done in-place.
- */
-char_u *shorten_dir(char_u *str)
+/// Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
+/// "trim_len" specifies how many characters to keep for each directory.
+/// Must be 1 or more.
+/// It's done in-place.
+void shorten_dir_len(char_u *str, int trim_len)
 {
   char_u *tail = path_tail(str);
   char_u *d = str;
   bool skip = false;
-  for (char_u *s = str;; ++s) {
+  int dirchunk_len = 0;
+  for (char_u *s = str;; s++) {
     if (s >= tail) {                // copy the whole tail
       *d++ = *s;
       if (*s == NUL) {
@@ -287,10 +288,16 @@ char_u *shorten_dir(char_u *str)
     } else if (vim_ispathsep(*s)) {       // copy '/' and next char
       *d++ = *s;
       skip = false;
+      dirchunk_len = 0;
     } else if (!skip) {
       *d++ = *s;                     // copy next char
       if (*s != '~' && *s != '.') {  // and leading "~" and "."
-        skip = true;
+        dirchunk_len++;  // only count word chars for the size
+        // keep copying chars until we have our preferred length (or
+        // until the above if/else branches move us along)
+        if (dirchunk_len >= trim_len) {
+          skip = true;
+        }
       }
       int l = utfc_ptr2len(s);
       while (--l > 0) {
@@ -298,7 +305,13 @@ char_u *shorten_dir(char_u *str)
       }
     }
   }
-  return str;
+}
+
+/// Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
+/// It's done in-place.
+void shorten_dir(char_u *str)
+{
+  shorten_dir_len(str, 1);
 }
 
 /*
@@ -629,8 +642,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
     } else if (path_end >= path + wildoff
                && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
 #ifndef WIN32
-                   || (!p_fic && (flags & EW_ICASE)
-                       && isalpha(utf_ptr2char(path_end)))
+                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end)))
 #endif
                    )) {
       e = p;
@@ -1508,7 +1520,7 @@ void simplify_filename(char_u *filename)
 
   p = filename;
 #ifdef BACKSLASH_IN_FILENAME
-  if (p[1] == ':') {        // skip "x:"
+  if (p[0] != NUL && p[1] == ':') {        // skip "x:"
     p += 2;
   }
 #endif
@@ -2389,9 +2401,11 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
 int path_is_absolute(const char_u *fname)
 {
 #ifdef WIN32
+  if (*fname == NUL) {
+    return false;
+  }
   // A name like "d:/foo" and "//server/share" is absolute
-  return ((isalpha(fname[0]) && fname[1] == ':'
-           && vim_ispathsep_nocolon(fname[2]))
+  return ((isalpha(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
           || (vim_ispathsep_nocolon(fname[0]) && fname[0] == fname[1]));
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.

@@ -8,6 +8,7 @@
 #include "nvim/extmark_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/ui_client.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t
@@ -46,6 +47,9 @@ MAP_DECLS(handle_T, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
 MAP_DECLS(HlEntry, int)
 MAP_DECLS(String, handle_T)
+MAP_DECLS(String, int)
+MAP_DECLS(int, String)
+MAP_DECLS(String, UIClientHandler)
 
 MAP_DECLS(ColorKey, ColorItem)
 

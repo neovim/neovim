@@ -3,9 +3,11 @@
 -- Lua code lives in one of three places:
 --    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
 --       `inspect` and `lpeg` modules.
---    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
---       (This will go away if we migrate to nvim as the test-runner.)
---    3. src/nvim/lua/: Compiled-into Nvim itself.
+--    2. runtime/lua/vim/shared.lua: pure lua functions which always
+--       are available. Used in the test runner, as well as worker threads
+--       and processes launched from Nvim.
+--    3. runtime/lua/vim/_editor.lua: Code which directly interacts with
+--       the Nvim editor state. Only available in the main thread.
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
@@ -34,93 +36,20 @@
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
-local vim = vim
-assert(vim)
-
-vim.inspect = package.loaded['vim.inspect']
-assert(vim.inspect)
-
-vim.filetype = package.loaded['vim.filetype']
-assert(vim.filetype)
-
-local pathtrails = {}
-vim._so_trails = {}
-for s in  (package.cpath..';'):gmatch('[^;]*;') do
-    s = s:sub(1, -2)  -- Strip trailing semicolon
-  -- Find out path patterns. pathtrail should contain something like
-  -- /?.so, \?.dll. This allows not to bother determining what correct
-  -- suffixes are.
-  local pathtrail = s:match('[/\\][^/\\]*%?.*$')
-  if pathtrail and not pathtrails[pathtrail] then
-    pathtrails[pathtrail] = true
-    table.insert(vim._so_trails, pathtrail)
-  end
-end
-
-function vim._load_package(name)
-  local basename = name:gsub('%.', '/')
-  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
-  local found = vim.api.nvim__get_runtime(paths, false, {is_lua=true})
-  if #found > 0 then
-    local f, err = loadfile(found[1])
-    return f or error(err)
-  end
-
-  local so_paths = {}
-  for _,trail in ipairs(vim._so_trails) do
-    local path = "lua"..trail:gsub('?', basename) -- so_trails contains a leading slash
-    table.insert(so_paths, path)
-  end
-
-  found = vim.api.nvim__get_runtime(so_paths, false, {is_lua=true})
-  if #found > 0 then
-    -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
-    -- a) strip prefix up to and including the first dash, if any
-    -- b) replace all dots by underscores
-    -- c) prepend "luaopen_"
-    -- So "foo-bar.baz" should result in "luaopen_bar_baz"
-    local dash = name:find("-", 1, true)
-    local modname = dash and name:sub(dash + 1) or name
-    local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
-    return f or error(err)
-  end
-  return nil
-end
-
-table.insert(package.loaders, 1, vim._load_package)
+local vim = assert(vim)
 
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
-setmetatable(vim, {
-  __index = function(t, key)
-    if key == 'treesitter' then
-      t.treesitter = require('vim.treesitter')
-      return t.treesitter
-    elseif key == 'F' then
-      t.F = require('vim.F')
-      return t.F
-    elseif require('vim.uri')[key] ~= nil then
-      -- Expose all `vim.uri` functions on the `vim` module.
-      t[key] = require('vim.uri')[key]
-      return t[key]
-    elseif key == 'lsp' then
-      t.lsp = require('vim.lsp')
-      return t.lsp
-    elseif key == 'highlight' then
-      t.highlight = require('vim.highlight')
-      return t.highlight
-    elseif key == 'diagnostic' then
-      t.diagnostic = require('vim.diagnostic')
-      return t.diagnostic
-    elseif key == 'ui' then
-      t.ui = require('vim.ui')
-      return t.ui
-    elseif key == 'keymap' then
-      t.keymap = require('vim.keymap')
-      return t.keymap
-    end
-  end
-})
+for k,v in pairs {
+  treesitter=true;
+  filetype = true;
+  F=true;
+  lsp=true;
+  highlight=true;
+  diagnostic=true;
+  keymap=true;
+  ui=true;
+} do vim._submodules[k] = v end
 
 vim.log = {
   levels = {
@@ -199,7 +128,7 @@ local function inspect(object, options)  -- luacheck: no unused
 end
 
 do
-  local tdots, tick, got_line1 = 0, 0, false
+  local tdots, tick, got_line1, undo_started, trailing_nl = 0, 0, false, false, false
 
   --- Paste handler, invoked by |nvim_paste()| when a conforming UI
   --- (such as the |TUI|) pastes text into the editor.
@@ -227,44 +156,80 @@ do
   ---                - 3: ends the paste (exactly once)
   ---@returns false if client should cancel the paste.
   function vim.paste(lines, phase)
-    local call = vim.api.nvim_call_function
     local now = vim.loop.now()
-    local mode = call('mode', {}):sub(1,1)
-    if phase < 2 then  -- Reset flags.
-      tdots, tick, got_line1 = now, 0, false
-    elseif mode ~= 'c' then
+    local is_first_chunk = phase < 2
+    local is_last_chunk = phase == -1 or phase == 3
+    if is_first_chunk then  -- Reset flags.
+      tdots, tick, got_line1, undo_started, trailing_nl = now, 0, false, false, false
+    end
+    if #lines == 0 then
+      lines = {''}
+    end
+    if #lines == 1 and lines[1] == '' and not is_last_chunk then
+      -- An empty chunk can cause some edge cases in streamed pasting,
+      -- so don't do anything unless it is the last chunk.
+      return true
+    end
+    -- Note: mode doesn't always start with "c" in cmdline mode, so use getcmdtype() instead.
+    if vim.fn.getcmdtype() ~= '' then  -- cmdline-mode: paste only 1 line.
+      if not got_line1 then
+        got_line1 = (#lines > 1)
+        vim.api.nvim_set_option('paste', true)  -- For nvim_input().
+        -- Escape "<" and control characters
+        local line1 = lines[1]:gsub('<', '<lt>'):gsub('(%c)', '\022%1')
+        vim.api.nvim_input(line1)
+        vim.api.nvim_set_option('paste', false)
+      end
+      return true
+    end
+    local mode = vim.api.nvim_get_mode().mode
+    if undo_started then
       vim.api.nvim_command('undojoin')
     end
-    if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
-      got_line1 = (#lines > 1)
-      vim.api.nvim_set_option('paste', true)  -- For nvim_input().
-      local line1 = lines[1]:gsub('<', '<lt>'):gsub('[\r\n\012\027]', ' ')  -- Scrub.
-      vim.api.nvim_input(line1)
-      vim.api.nvim_set_option('paste', false)
-    elseif mode ~= 'c' then
-      if phase < 2 and mode:find('^[vV\22sS\19]') then
-        vim.api.nvim_command([[exe "normal! \<Del>"]])
-        vim.api.nvim_put(lines, 'c', false, true)
-      elseif phase < 2 and not mode:find('^[iRt]') then
-        vim.api.nvim_put(lines, 'c', true, true)
-        -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
-        vim.api.nvim_command('normal! a')
-      elseif phase < 2 and mode == 'R' then
-        local nchars = 0
-        for _, line in ipairs(lines) do
-            nchars = nchars + line:len()
-        end
-        local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-        local bufline = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
-        local firstline = lines[1]
-        firstline = bufline:sub(1, col)..firstline
-        lines[1] = firstline
-        lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
-        vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
-      else
-        vim.api.nvim_put(lines, 'c', false, true)
+    if mode:find('^i') or mode:find('^n?t') then  -- Insert mode or Terminal buffer
+      vim.api.nvim_put(lines, 'c', false, true)
+    elseif phase < 2 and mode:find('^R') and not mode:find('^Rv') then  -- Replace mode
+      -- TODO: implement Replace mode streamed pasting
+      -- TODO: support Virtual Replace mode
+      local nchars = 0
+      for _, line in ipairs(lines) do
+        nchars = nchars + line:len()
       end
+      local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+      local bufline = vim.api.nvim_buf_get_lines(0, row-1, row, true)[1]
+      local firstline = lines[1]
+      firstline = bufline:sub(1, col)..firstline
+      lines[1] = firstline
+      lines[#lines] = lines[#lines]..bufline:sub(col + nchars + 1, bufline:len())
+      vim.api.nvim_buf_set_lines(0, row-1, row, false, lines)
+    elseif mode:find('^[nvV\22sS\19]') then  -- Normal or Visual or Select mode
+      if mode:find('^n') then  -- Normal mode
+        -- When there was a trailing new line in the previous chunk,
+        -- the cursor is on the first character of the next line,
+        -- so paste before the cursor instead of after it.
+        vim.api.nvim_put(lines, 'c', not trailing_nl, false)
+      else  -- Visual or Select mode
+        vim.api.nvim_command([[exe "silent normal! \<Del>"]])
+        local del_start = vim.fn.getpos("'[")
+        local cursor_pos = vim.fn.getpos('.')
+        if mode:find('^[VS]') then  -- linewise
+          if cursor_pos[2] < del_start[2] then  -- replacing lines at eof
+            -- create a new line
+            vim.api.nvim_put({''}, 'l', true, true)
+          end
+          vim.api.nvim_put(lines, 'c', false, false)
+        else
+          -- paste after cursor when replacing text at eol, otherwise paste before cursor
+          vim.api.nvim_put(lines, 'c', cursor_pos[3] < del_start[3], false)
+        end
+      end
+      -- put cursor at the end of the text instead of one character after it
+      vim.fn.setpos('.', vim.fn.getpos("']"))
+      trailing_nl = lines[#lines] == ''
+    else  -- Don't know what to do in other modes
+      return false
     end
+    undo_started = true
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
       tdots = now
@@ -273,7 +238,7 @@ do
       -- message when there are zero dots.
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
-    if phase == -1 or phase == 3 then
+    if is_last_chunk then
       vim.api.nvim_command('redraw'..(tick > 1 and '|echo ""' or ''))
     end
     return true  -- Paste will not continue if not returning `true`.
@@ -290,12 +255,6 @@ function vim.schedule_wrap(cb)
     local args = vim.F.pack_len(...)
     vim.schedule(function() cb(vim.F.unpack_len(args)) end)
   end)
-end
-
---- <Docs described in |vim.empty_dict()| >
----@private
-function vim.empty_dict()
-  return setmetatable({}, vim._empty_dict_mt)
 end
 
 -- vim.fn.{func}(...)
@@ -596,6 +555,8 @@ function vim._expand_pat(pat, env)
       local mt = getmetatable(final_env)
       if mt and type(mt.__index) == "table" then
         field = rawget(mt.__index, key)
+      elseif final_env == vim and vim._submodules[key] then
+        field = vim[key]
       end
     end
     final_env = field
@@ -621,6 +582,9 @@ function vim._expand_pat(pat, env)
   local mt = getmetatable(final_env)
   if mt and type(mt.__index) == "table" then
     insert_keys(mt.__index)
+  end
+  if final_env == vim then
+    insert_keys(vim._submodules)
   end
 
   table.sort(keys)
@@ -708,4 +672,69 @@ function vim.pretty_print(...)
   return ...
 end
 
-return module
+function vim._cs_remote(rcid, server_addr, connect_error, args)
+  local function connection_failure_errmsg(consequence)
+    local explanation
+    if server_addr == '' then
+      explanation = "No server specified with --server"
+    else
+      explanation = "Failed to connect to '" .. server_addr .. "'"
+      if connect_error ~= "" then
+        explanation = explanation .. ": " .. connect_error
+      end
+    end
+    return "E247: " .. explanation .. ". " .. consequence
+  end
+
+  local f_silent = false
+  local f_tab = false
+
+  local subcmd = string.sub(args[1],10)
+  if subcmd == 'tab' then
+    f_tab = true
+  elseif subcmd == 'silent' then
+    f_silent = true
+  elseif subcmd == 'wait' or subcmd == 'wait-silent' or subcmd == 'tab-wait' or subcmd == 'tab-wait-silent' then
+    return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
+  elseif subcmd == 'tab-silent' then
+    f_tab = true
+    f_silent = true
+  elseif subcmd == 'send' then
+    if rcid == 0 then
+      return { errmsg = connection_failure_errmsg('Send failed.') }
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
+    return { should_exit = true, tabbed = false }
+  elseif subcmd == 'expr' then
+    if rcid == 0 then
+      return { errmsg = connection_failure_errmsg('Send expression failed.') }
+    end
+    print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
+    return { should_exit = true, tabbed = false }
+  elseif subcmd ~= '' then
+    return { errmsg='Unknown option argument: ' .. args[1] }
+  end
+
+  if rcid == 0 then
+    if not f_silent then
+      vim.notify(connection_failure_errmsg("Editing locally"), vim.log.levels.WARN)
+    end
+  else
+    local command = {}
+    if f_tab then table.insert(command, 'tab') end
+    table.insert(command, 'drop')
+    for i = 2, #args do
+      table.insert(command, vim.fn.fnameescape(args[i]))
+    end
+    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+  end
+
+  return {
+    should_exit = rcid ~= 0,
+    tabbed = f_tab,
+  }
+end
+
+require('vim._meta')
+
+return vim

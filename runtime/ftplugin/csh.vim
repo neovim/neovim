@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:		csh
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Previous Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+" Previous Maintainer:	Dan Sharp
 " Contributor:		Johannes Zellner <johannes@zellner.org>
 " Last Change:		2021 Oct 15
 

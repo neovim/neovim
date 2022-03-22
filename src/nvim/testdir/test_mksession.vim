@@ -219,6 +219,7 @@ func Test_mksession_one_buffer_two_windows()
   let count1 = 0
   let count2 = 0
   let count2buf = 0
+  let bufexists = 0
   for line in lines
     if line =~ 'edit \f*Xtest1$'
       let count1 += 1
@@ -229,10 +230,14 @@ func Test_mksession_one_buffer_two_windows()
     if line =~ 'buffer \f\{-}Xtest2'
       let count2buf += 1
     endif
+    if line =~ 'bufexists(fnamemodify(.*, ":p")'
+      let bufexists += 1
+    endif
   endfor
   call assert_equal(1, count1, 'Xtest1 count')
   call assert_equal(2, count2, 'Xtest2 count')
   call assert_equal(2, count2buf, 'Xtest2 buffer count')
+  call assert_equal(2, bufexists)
 
   close
   bwipe!

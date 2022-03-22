@@ -14,15 +14,18 @@ local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
-local source = helpers.source
+local exec = helpers.exec
 local NIL = helpers.NIL
 local retry = helpers.retry
 local next_msg = helpers.next_msg
 local remove_trace = helpers.remove_trace
+local mkdir_p = helpers.mkdir_p
+local rmdir = helpers.rmdir
+local write_file = helpers.write_file
 
-before_each(clear)
 
 describe('lua stdlib', function()
+  before_each(clear)
   -- İ: `tolower("İ")` is `i` which has length 1 while `İ` itself has
   --    length 2 (in bytes).
   -- Ⱥ: `tolower("Ⱥ")` is `ⱥ` which has length 2 while `Ⱥ` itself has
@@ -740,7 +743,7 @@ describe('lua stdlib', function()
     -- compat: nvim_call_function uses "special" value for vimL float
     eq(false, exec_lua([[return vim.api.nvim_call_function('sin', {0.0}) == 0.0 ]]))
 
-    source([[
+    exec([[
       func! FooFunc(test)
         let g:test = a:test
         return {}
@@ -768,6 +771,12 @@ describe('lua stdlib', function()
 
     -- error handling
     eq({false, 'Vim:E897: List or Blob required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
+
+    -- conversion between LuaRef and Vim Funcref
+    eq(true, exec_lua([[
+      local x = vim.fn.VarArg(function() return 'foo' end, function() return 'bar' end)
+      return #x == 2 and x[1]() == 'foo' and x[2]() == 'bar'
+    ]]))
   end)
 
   it('vim.fn should error when calling API function', function()
@@ -990,8 +999,11 @@ describe('lua stdlib', function()
 
     exec_lua [[
       local counter = 0
-      vim.g.AddCounter = function() counter = counter + 1 end
-      vim.g.GetCounter = function() return counter end
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.g.AddCounter = add_counter
+      vim.g.GetCounter = get_counter
+      vim.g.funcs = {add = add_counter, get = get_counter}
     ]]
 
     eq(0, eval('g:GetCounter()'))
@@ -1003,11 +1015,18 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.g.GetCounter()]]))
     exec_lua([[vim.api.nvim_get_var('AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_get_var('GetCounter')()]]))
+    exec_lua([[vim.g.funcs.add()]])
+    eq(5, exec_lua([[return vim.g.funcs.get()]]))
+    exec_lua([[vim.api.nvim_get_var('funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_get_var('funcs').get()]]))
 
     exec_lua [[
       local counter = 0
-      vim.api.nvim_set_var('AddCounter', function() counter = counter + 1 end)
-      vim.api.nvim_set_var('GetCounter', function() return counter end)
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.api.nvim_set_var('AddCounter', add_counter)
+      vim.api.nvim_set_var('GetCounter', get_counter)
+      vim.api.nvim_set_var('funcs', {add = add_counter, get = get_counter})
     ]]
 
     eq(0, eval('g:GetCounter()'))
@@ -1019,6 +1038,35 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.g.GetCounter()]]))
     exec_lua([[vim.api.nvim_get_var('AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_get_var('GetCounter')()]]))
+    exec_lua([[vim.g.funcs.add()]])
+    eq(5, exec_lua([[return vim.g.funcs.get()]]))
+    exec_lua([[vim.api.nvim_get_var('funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_get_var('funcs').get()]]))
+
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let g:Unknown_func = function('Test')
+      let g:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.g.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.g.Unknown_script_func]]))
+
+    -- Check if autoload works properly
+    local pathsep = helpers.get_pathsep()
+    local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
+    local xdata = 'Xhome' .. pathsep .. 'Xdata'
+    local autoload_folder = table.concat({xconfig, 'nvim', 'autoload'}, pathsep)
+    local autoload_file = table.concat({autoload_folder , 'testload.vim'}, pathsep)
+    mkdir_p(autoload_folder)
+    write_file(autoload_file , [[let testload#value = 2]])
+
+    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata } }
+
+    eq(2, exec_lua("return vim.g['testload#value']"))
+    rmdir('Xhome')
   end)
 
   it('vim.b', function()
@@ -1055,8 +1103,11 @@ describe('lua stdlib', function()
 
     exec_lua [[
       local counter = 0
-      vim.b.AddCounter = function() counter = counter + 1 end
-      vim.b.GetCounter = function() return counter end
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.b.AddCounter = add_counter
+      vim.b.GetCounter = get_counter
+      vim.b.funcs = {add = add_counter, get = get_counter}
     ]]
 
     eq(0, eval('b:GetCounter()'))
@@ -1068,11 +1119,18 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.b.GetCounter()]]))
     exec_lua([[vim.api.nvim_buf_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_buf_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.b.funcs.add()]])
+    eq(5, exec_lua([[return vim.b.funcs.get()]]))
+    exec_lua([[vim.api.nvim_buf_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_buf_get_var(0, 'funcs').get()]]))
 
     exec_lua [[
       local counter = 0
-      vim.api.nvim_buf_set_var(0, 'AddCounter', function() counter = counter + 1 end)
-      vim.api.nvim_buf_set_var(0, 'GetCounter', function() return counter end)
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.api.nvim_buf_set_var(0, 'AddCounter', add_counter)
+      vim.api.nvim_buf_set_var(0, 'GetCounter', get_counter)
+      vim.api.nvim_buf_set_var(0, 'funcs', {add = add_counter, get = get_counter})
     ]]
 
     eq(0, eval('b:GetCounter()'))
@@ -1084,6 +1142,21 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.b.GetCounter()]]))
     exec_lua([[vim.api.nvim_buf_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_buf_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.b.funcs.add()]])
+    eq(5, exec_lua([[return vim.b.funcs.get()]]))
+    exec_lua([[vim.api.nvim_buf_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_buf_get_var(0, 'funcs').get()]]))
+
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let b:Unknown_func = function('Test')
+      let b:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.b.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.b.Unknown_script_func]]))
 
     exec_lua [[
     vim.cmd "vnew"
@@ -1124,8 +1197,11 @@ describe('lua stdlib', function()
 
     exec_lua [[
       local counter = 0
-      vim.w.AddCounter = function() counter = counter + 1 end
-      vim.w.GetCounter = function() return counter end
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.w.AddCounter = add_counter
+      vim.w.GetCounter = get_counter
+      vim.w.funcs = {add = add_counter, get = get_counter}
     ]]
 
     eq(0, eval('w:GetCounter()'))
@@ -1137,11 +1213,18 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.w.GetCounter()]]))
     exec_lua([[vim.api.nvim_win_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_win_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.w.funcs.add()]])
+    eq(5, exec_lua([[return vim.w.funcs.get()]]))
+    exec_lua([[vim.api.nvim_win_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_win_get_var(0, 'funcs').get()]]))
 
     exec_lua [[
       local counter = 0
-      vim.api.nvim_win_set_var(0, 'AddCounter', function() counter = counter + 1 end)
-      vim.api.nvim_win_set_var(0, 'GetCounter', function() return counter end)
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.api.nvim_win_set_var(0, 'AddCounter', add_counter)
+      vim.api.nvim_win_set_var(0, 'GetCounter', get_counter)
+      vim.api.nvim_win_set_var(0, 'funcs', {add = add_counter, get = get_counter})
     ]]
 
     eq(0, eval('w:GetCounter()'))
@@ -1153,6 +1236,21 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.w.GetCounter()]]))
     exec_lua([[vim.api.nvim_win_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_win_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.w.funcs.add()]])
+    eq(5, exec_lua([[return vim.w.funcs.get()]]))
+    exec_lua([[vim.api.nvim_win_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_win_get_var(0, 'funcs').get()]]))
+
+    exec([[
+      function Test()
+      endfunction
+      function s:Test()
+      endfunction
+      let w:Unknown_func = function('Test')
+      let w:Unknown_script_func = function('s:Test')
+    ]])
+    eq(NIL, exec_lua([[return vim.w.Unknown_func]]))
+    eq(NIL, exec_lua([[return vim.w.Unknown_script_func]]))
 
     exec_lua [[
     vim.cmd "vnew"
@@ -1188,8 +1286,11 @@ describe('lua stdlib', function()
 
     exec_lua [[
       local counter = 0
-      vim.t.AddCounter = function() counter = counter + 1 end
-      vim.t.GetCounter = function() return counter end
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.t.AddCounter = add_counter
+      vim.t.GetCounter = get_counter
+      vim.t.funcs = {add = add_counter, get = get_counter}
     ]]
 
     eq(0, eval('t:GetCounter()'))
@@ -1201,11 +1302,18 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.t.GetCounter()]]))
     exec_lua([[vim.api.nvim_tabpage_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.t.funcs.add()]])
+    eq(5, exec_lua([[return vim.t.funcs.get()]]))
+    exec_lua([[vim.api.nvim_tabpage_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'funcs').get()]]))
 
     exec_lua [[
       local counter = 0
-      vim.api.nvim_tabpage_set_var(0, 'AddCounter', function() counter = counter + 1 end)
-      vim.api.nvim_tabpage_set_var(0, 'GetCounter', function() return counter end)
+      local function add_counter() counter = counter + 1 end
+      local function get_counter() return counter end
+      vim.api.nvim_tabpage_set_var(0, 'AddCounter', add_counter)
+      vim.api.nvim_tabpage_set_var(0, 'GetCounter', get_counter)
+      vim.api.nvim_tabpage_set_var(0, 'funcs', {add = add_counter, get = get_counter})
     ]]
 
     eq(0, eval('t:GetCounter()'))
@@ -1217,6 +1325,10 @@ describe('lua stdlib', function()
     eq(3, exec_lua([[return vim.t.GetCounter()]]))
     exec_lua([[vim.api.nvim_tabpage_get_var(0, 'AddCounter')()]])
     eq(4, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'GetCounter')()]]))
+    exec_lua([[vim.t.funcs.add()]])
+    eq(5, exec_lua([[return vim.t.funcs.get()]]))
+    exec_lua([[vim.api.nvim_tabpage_get_var(0, 'funcs').add()]])
+    eq(6, exec_lua([[return vim.api.nvim_tabpage_get_var(0, 'funcs').get()]]))
 
     exec_lua [[
     vim.cmd "tabnew"
@@ -2406,6 +2518,17 @@ describe('lua stdlib', function()
       eq(buf1, meths.get_current_buf())
       eq(buf2, val)
     end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local a = vim.api
+        local t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
+        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        a.nvim_feedkeys(t "G<C-V>", "txn", false)
+        a.nvim_buf_call(a.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()
@@ -2434,12 +2557,111 @@ describe('lua stdlib', function()
       eq(win1, meths.get_current_win())
       eq(win2, val)
     end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Add lines to the current buffer and make another window looking into an empty buffer.
+      exec_lua [[
+        _G.a = vim.api
+        _G.t = function(s) return a.nvim_replace_termcodes(s, true, true, true) end
+        _G.win_lines = a.nvim_get_current_win()
+        vim.cmd "new"
+        _G.win_empty = a.nvim_get_current_win()
+        a.nvim_set_current_win(win_lines)
+        a.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+      ]]
+
+      -- Start Visual in current window, redraw in other window with fewer lines.
+      -- Should be fixed by vim-patch:8.2.4018.
+      exec_lua [[
+        a.nvim_feedkeys(t "G<C-V>", "txn", false)
+        a.nvim_win_call(win_empty, function() vim.cmd "redraw" end)
+      ]]
+
+      -- Start Visual in current window, extend it in other window with more lines.
+      -- Fixed for win_execute by vim-patch:8.2.4026, but nvim_win_call should also not be affected.
+      exec_lua [[
+        a.nvim_feedkeys(t "<Esc>gg", "txn", false)
+        a.nvim_set_current_win(win_empty)
+        a.nvim_feedkeys(t "gg<C-V>", "txn", false)
+        a.nvim_win_call(win_lines, function() a.nvim_feedkeys(t "G<C-V>", "txn", false) end)
+        vim.cmd "redraw"
+      ]]
+    end)
+
+    it('updates ruler if cursor moved', function()
+      -- Fixed for win_execute in vim-patch:8.1.2124, but should've applied to nvim_win_call too!
+      local screen = Screen.new(30, 5)
+      screen:set_default_attr_ids {
+          [1] = {reverse = true},
+          [2] = {bold = true, reverse = true},
+      }
+      screen:attach()
+      exec_lua [[
+        _G.a = vim.api
+        vim.opt.ruler = true
+        local lines = {}
+        for i = 0, 499 do lines[#lines + 1] = tostring(i) end
+        a.nvim_buf_set_lines(0, 0, -1, true, lines)
+        a.nvim_win_set_cursor(0, {20, 0})
+        vim.cmd "split"
+        _G.win = a.nvim_get_current_win()
+        vim.cmd "wincmd w | redraw"
+      ]]
+      screen:expect [[
+        19                            |
+        {1:[No Name] [+]  20,1         3%}|
+        ^19                            |
+        {2:[No Name] [+]  20,1         3%}|
+                                      |
+      ]]
+      exec_lua [[
+        a.nvim_win_call(win, function() a.nvim_win_set_cursor(0, {100, 0}) end)
+        vim.cmd "redraw"
+      ]]
+      screen:expect [[
+        99                            |
+        {1:[No Name] [+]  100,1       19%}|
+        ^19                            |
+        {2:[No Name] [+]  20,1         3%}|
+                                      |
+      ]]
+    end)
+  end)
+end)
+
+describe('lua: builtin modules', function()
+  local function do_tests()
+    eq(2, exec_lua[[return vim.tbl_count {x=1,y=2}]])
+    eq('{ 10, "spam" }', exec_lua[[return vim.inspect {10, 'spam'}]])
+  end
+
+  it('works', function()
+    clear()
+    do_tests()
+  end)
+
+  it('works when disabled', function()
+    clear('--luamod-dev')
+    do_tests()
+  end)
+
+  it('works without runtime', function()
+    clear{env={VIMRUNTIME='fixtures/a'}}
+    do_tests()
+  end)
+
+
+  it('does not work when disabled without runtime', function()
+    clear{args={'--luamod-dev'}, env={VIMRUNTIME='fixtures/a'}}
+    -- error checking could be better here. just check that --luamod-dev
+    -- does anything at all by breaking with missing runtime..
+    eq(nil, exec_lua[[return vim.tbl_count {x=1,y=2}]])
   end)
 end)
 
 describe('lua: require("mod") from packages', function()
   before_each(function()
-    command('set rtp+=test/functional/fixtures pp+=test/functional/fixtures')
+    clear('--cmd', 'set rtp+=test/functional/fixtures pp+=test/functional/fixtures')
   end)
 
   it('propagates syntax error', function()
@@ -2462,6 +2684,8 @@ describe('lua: require("mod") from packages', function()
 end)
 
 describe('vim.keymap', function()
+  before_each(clear)
+
   it('can make a mapping', function()
     eq(0, exec_lua [[
       GlobalCount = 0

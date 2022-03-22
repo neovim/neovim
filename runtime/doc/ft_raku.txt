@@ -47,20 +47,20 @@ Numbers, subscripts and superscripts are available with 's' and 'S':
 
 But some don't come defined by default. Those are digraph definitions you can
 add in your ~/.vimrc file. >
-	exec 'digraph \\ '.char2nr('∖')
-	exec 'digraph \< '.char2nr('≼')
-	exec 'digraph \> '.char2nr('≽')
-	exec 'digraph (L '.char2nr('⊈')
-	exec 'digraph )L '.char2nr('⊉')
-	exec 'digraph (/ '.char2nr('⊄')
-	exec 'digraph )/ '.char2nr('⊅')
-	exec 'digraph )/ '.char2nr('⊅')
-	exec 'digraph U+ '.char2nr('⊎')
-	exec 'digraph 0- '.char2nr('⊖')
+	exec 'digraph \\ ' .. char2nr('∖')
+	exec 'digraph \< ' .. char2nr('≼')
+	exec 'digraph \> ' .. char2nr('≽')
+	exec 'digraph (L ' .. char2nr('⊈')
+	exec 'digraph )L ' .. char2nr('⊉')
+	exec 'digraph (/ ' .. char2nr('⊄')
+	exec 'digraph )/ ' .. char2nr('⊅')
+	exec 'digraph )/ ' .. char2nr('⊅')
+	exec 'digraph U+ ' .. char2nr('⊎')
+	exec 'digraph 0- ' .. char2nr('⊖')
 	" Euler's constant
-	exec 'digraph ne '.char2nr('𝑒')
+	exec 'digraph ne ' .. char2nr('𝑒')
 	" Raku's atomic operations marker
-	exec 'digraph @@ '.char2nr('⚛')
+	exec 'digraph @@ ' .. char2nr('⚛')
 
 Alternatively, you can write Insert mode abbreviations that convert ASCII-
 based operators into their single-character Unicode equivalent. >

@@ -7,7 +7,7 @@ source shared.vim
 source term_util.vim
 source view_util.vim
 
-function! Test_simple_matchadd()
+func Test_simple_matchadd()
   new
 
   1put='# This is a Test'
@@ -333,7 +333,7 @@ func Test_matchadd_and_syn_conceal()
   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
-endfunction
+endfunc
 
 func Test_cursor_column_in_concealed_line_after_window_scroll()
   CheckRunVimInTerminal

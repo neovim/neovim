@@ -58,9 +58,9 @@ local check_logs_useless_lines = {
 --- Invokes `fn` and includes the tail of `logfile` in the error message if it
 --- fails.
 ---
----@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
----@param fn       Function to invoke
----@param ...      Function arguments
+---@param logfile string  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
+---@param fn string       Function to invoke
+---@param ... string      Function arguments
 local function dumplog(logfile, fn, ...)
   -- module.validate({
   --   logfile={logfile,'s',true},
@@ -102,8 +102,8 @@ end
 
 --- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
 ---
----@param pat  (string) Lua pattern to search for in the log file.
----@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
+---@param pat string      Lua pattern to search for in the log file
+---@param logfile string  Full path to log file (default=$NVIM_LOG_FILE)
 function module.assert_log(pat, logfile)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local nrlines = 10
@@ -801,12 +801,10 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut' or name == 'github')
-  local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
-  local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
+  assert(any or name == 'sourcehut' or name == 'github')
   local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  return tr or av or sh or gh
+  return sh or gh
 
 end
 
@@ -815,7 +813,7 @@ end
 function module.read_nvim_log(logfile, ci_rename)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
-  local keep = is_ci and 999 or 10
+  local keep = is_ci and 100 or 10
   local lines = module.read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'
     ..string.format('$NVIM_LOG_FILE: %s\n', logfile)

@@ -535,6 +535,22 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
+/// Convert a virtual (screen) column to a character column.
+/// The first column is one.
+colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // try to advance to the specified column
+  char_u *ptr = ml_get_buf(wp->w_buffer, lnum, false);
+  char_u *const line = ptr;
+  colnr_T count = 0;
+  while (count < vcol && *ptr != NUL) {
+    count += win_lbr_chartabsize(wp, line, ptr, count, NULL);
+    MB_PTR_ADV(ptr);
+  }
+  return (colnr_T)(ptr - line);
+}
+
 /// Set UI mouse depending on current mode and 'mouse'.
 ///
 /// Emits mouse_on/mouse_off UI event (unless 'mouse' is empty).

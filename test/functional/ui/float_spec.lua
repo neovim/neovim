@@ -417,6 +417,28 @@ describe('float window', function()
     eq(winids, eval('winids'))
   end)
 
+  it('closed when the last non-float window is closed', function()
+    local tabpage = exec_lua([[
+      vim.cmd('edit ./src/nvim/main.c')
+      vim.cmd('tabedit %')
+
+      local buf = vim.api.nvim_create_buf(false, true)
+      local win = vim.api.nvim_open_win(buf, false, {
+        relative = 'win',
+        row = 1,
+        col = 1,
+        width = 10,
+        height = 2
+      })
+
+      vim.cmd('quit')
+
+      return vim.api.nvim_get_current_tabpage()
+    ]])
+
+    eq(1, tabpage)
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()

@@ -135,7 +135,17 @@ func Test_vartabs()
   bwipeout!
 endfunc
 
-func! Test_vartabs_breakindent()
+func Test_retab_invalid_arg()
+  new
+  call setline(1, "\ttext")
+  retab 0
+  call assert_fails("retab -8", 'E487: Argument must be positive')
+  call assert_fails("retab 10000", 'E475:')
+  call assert_fails("retab 720575940379279360", 'E475:')
+  bwipe!
+endfunc
+
+func Test_vartabs_breakindent()
   if !exists("+breakindent")
     return
   endif

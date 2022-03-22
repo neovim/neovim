@@ -446,7 +446,7 @@ describe('Signs', function()
         {1:>>>>>>>>}{6:  1 }a                                        |
         {2:        }{6:  2 }b                                        |
         {2:        }{6:  3 }c                                        |
-        {2:        }{6:^  4 }                                         |
+        {2:        }{6:  4 }^                                         |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
@@ -468,7 +468,7 @@ describe('Signs', function()
         {1:>>>>>>>>>>}{6:  1 }a                                      |
         {2:          }{6:  2 }b                                      |
         {2:          }{6:  3 }c                                      |
-        {2:        ^  }{6:  4 }                                       |
+        {2:          }{6:  4 }^                                       |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
@@ -482,7 +482,7 @@ describe('Signs', function()
       ]])
     end)
 
-    it('ignores signs with no icon and text when calculting the signcolumn width', function()
+    it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('set number')
       command('set signcolumn=auto:2')
@@ -512,7 +512,33 @@ describe('Signs', function()
         {1:>>}{6:  1 }a                                              |
         {2:  }{6:  2 }b                                              |
         {2:  }{6:  3 }c                                              |
-        {2:  }{6:  ^4 }                                               |
+        {2:  }{6:  4 }^                                               |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
+    it('shows the line number when signcolumn=number but no marks on a line have text', function()
+      feed('ia<cr>b<cr>c<cr><esc>')
+      command('set number signcolumn=number')
+      command('sign define pietSearch text=>> texthl=Search numhl=Error')
+      command('sign define pietError text=    texthl=Search numhl=Error')
+      command('sign place 1 line=1 name=pietSearch buffer=1')
+      command('sign place 2 line=2 name=pietError  buffer=1')
+      -- no signcolumn, line number for "a" is Search, for "b" is Error, for "c" is LineNr
+      screen:expect([[
+        {1: >> }a                                                |
+        {8:  2 }b                                                |
+        {6:  3 }c                                                |
+        {6:  4 }^                                                 |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|

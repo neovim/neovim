@@ -8,29 +8,28 @@ source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/test.sh"
 source "${CI_DIR}/common/suite.sh"
 
-enter_suite build
+rm -f "$END_MARKER"
 
-check_core_dumps --delete quiet
+# Run all tests (with some caveats) if no input argument is given
+if (($# == 0)); then
+  tests=('build_nvim')
 
-prepare_build
-build_nvim
-
-exit_suite --continue
-
-enter_suite tests
-
-if test "$CLANG_SANITIZER" != "TSAN" ; then
-  # Additional threads are only created when the builtin UI starts, which
-  # doesn't happen in the unit/functional tests
-  if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
-    run_test run_unittests
+  if test "$CLANG_SANITIZER" != "TSAN"; then
+    # Additional threads are only created when the builtin UI starts, which
+    # doesn't happen in the unit/functional tests
+    if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
+      tests+=('unittests')
+    fi
+    tests+=('functionaltests')
   fi
-  run_test run_functionaltests
+
+  tests+=('oldtests' 'install_nvim')
+else
+  tests=("$@")
 fi
-run_test run_oldtests
 
-run_test install_nvim
-
-exit_suite --continue
+for i in "${tests[@]}"; do
+  eval "$i" || fail "$i"
+done
 
 end_tests

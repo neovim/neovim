@@ -22,11 +22,11 @@
 
 /// @deprecated
 /// @see nvim_exec
-String nvim_command_output(String command, Error *err)
+String nvim_command_output(uint64_t channel_id, String command, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(7)
 {
-  return nvim_exec(command, true, err);
+  return nvim_exec(channel_id, command, true, err);
 }
 
 /// @deprecated Use nvim_exec_lua() instead.
@@ -51,11 +51,10 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(2)
 {
-  Integer rv = 0;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return rv;
+    return 0;
   }
 
   return buf->b_fnum;

@@ -9,10 +9,10 @@
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/eval.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
 #include "nvim/lib/kvec.h"
@@ -27,8 +27,8 @@
 #include "nvim/path.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
 #include "nvim/tag.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -1229,7 +1229,7 @@ static void read_input(DynamicBuffer *buf)
         dynamic_buffer_ensure(buf, buf->len + 1);
         buf->data[buf->len++] = NL;
       }
-      ++lnum;
+      lnum++;
       if (lnum > curbuf->b_op_end.lnum) {
         break;
       }

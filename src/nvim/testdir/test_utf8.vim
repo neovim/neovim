@@ -8,7 +8,7 @@ func Test_visual_block_insert()
   new
   call setline(1, ["aaa", "あああ", "bbb"])
   exe ":norm! gg0l\<C-V>jjIx\<Esc>"
-  call assert_equal(['axaa', 'xあああ', 'bxbb'], getline(1, '$'))
+  call assert_equal(['axaa', ' xあああ', 'bxbb'], getline(1, '$'))
   bwipeout!
 endfunc
 

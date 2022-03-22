@@ -558,8 +558,8 @@ void marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level, mtkey_
 {
   // TODO(bfredl): clean up this mess and re-instantiate &= and |= forms
   // once we upgrade to a non-broken version of gcc in functionaltest-lua CI
-  rawkey(itr).flags = (uint16_t)((uint16_t)rawkey(itr).flags & (uint16_t)~MT_FLAG_DECOR_MASK);
-  rawkey(itr).flags = (uint16_t)((uint16_t)rawkey(itr).flags
+  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_DECOR_MASK);
+  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags
                                  | (uint16_t)(decor_level << MT_FLAG_DECOR_OFFSET)
                                  | (uint16_t)(key.flags & MT_FLAG_DECOR_MASK));
   rawkey(itr).decor_full = key.decor_full;
@@ -1111,7 +1111,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t id, int row, int col, bool right_gravity)
 {
   mtkey_t key = { { row, col }, UINT32_MAX, id, 0,
-                    mt_flags(right_gravity, 0), 0, NULL };
+                  mt_flags(right_gravity, 0), 0, NULL };
   marktree_put(b, key, -1, -1, false);
 }
 
@@ -1158,8 +1158,6 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
     }
     if (i > 0) {
       unrelative(x->key[i-1].pos, last);
-    }
-    if (x->level) {
     }
     assert(pos_leq(*last, x->key[i].pos));
     if (last->row == x->key[i].pos.row && last->col == x->key[i].pos.col) {

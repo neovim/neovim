@@ -146,13 +146,13 @@ local query_cache = setmetatable({}, {
 })
 
 --- Parse {query} as a string. (If the query is in a file, the caller
----       should read the contents into a string before calling).
+--- should read the contents into a string before calling).
 ---
 --- Returns a `Query` (see |lua-treesitter-query|) object which can be used to
 --- search nodes in the syntax tree for the patterns defined in {query}
 --- using `iter_*` methods below.
 ---
---- Exposes `info` and `captures` with additional information about the {query}.
+--- Exposes `info` and `captures` with additional context about {query}.
 ---   - `captures` contains the list of unique capture names defined in
 ---     {query}.
 ---   -` info.captures` also points to `captures`.
@@ -199,11 +199,13 @@ function M.get_node_text(node, source)
       lines = a.nvim_buf_get_lines(source, start_row, end_row + 1, true)
     end
 
-    if #lines == 1 then
-      lines[1]      = string.sub(lines[1], start_col+1, end_col)
-    else
-      lines[1]      = string.sub(lines[1], start_col+1)
-      lines[#lines] = string.sub(lines[#lines], 1, end_col)
+    if #lines > 0 then
+      if #lines == 1 then
+        lines[1]      = string.sub(lines[1], start_col+1, end_col)
+      else
+        lines[1]      = string.sub(lines[1], start_col+1)
+        lines[#lines] = string.sub(lines[#lines], 1, end_col)
+      end
     end
 
     return table.concat(lines, "\n")

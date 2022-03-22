@@ -246,7 +246,7 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
   }
 
 end:
-  if ((size_t)-1 > (mpack_uint32_t)-1 && len > (mpack_uint32_t)-1)
+  if ((size_t)-1 > (mpack_uint32_t)-1 && len > (mpack_uint32_t)-1) // -V560
     /* msgpack spec doesn't allow lengths > 32 bits */
     len = (mpack_uint32_t)-1;
   assert(top == lua_gettop(L));

@@ -301,7 +301,7 @@ function! s:check_python() abort
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
-  let [pyname, pythonx_errors] = provider#pythonx#Detect(3)
+  let [pyname, pythonx_warnings] = provider#pythonx#Detect(3)
 
   if empty(pyname)
     call health#report_warn('No Python executable found that can `import neovim`. '
@@ -311,8 +311,9 @@ function! s:check_python() abort
   endif
 
   " No Python executable could `import neovim`, or host_prog_var was used.
-  if !empty(pythonx_errors)
-    call health#report_error('Python provider error:', pythonx_errors)
+  if !empty(pythonx_warnings)
+    call health#report_warn(pythonx_warnings, ['See :help provider-python for more information.',
+          \ 'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim'])
 
   elseif !empty(pyname) && empty(python_exe)
     if !exists('g:'.host_prog_var)
@@ -565,7 +566,7 @@ function! s:check_ruby() abort
           \ ['Install Ruby and verify that `ruby` and `gem` commands work.'])
     return
   endif
-  call health#report_info('Ruby: '. s:system('ruby -v'))
+  call health#report_info('Ruby: '. s:system(['ruby', '-v']))
 
   let [host, err] = provider#ruby#Detect()
   if empty(host)
@@ -573,7 +574,8 @@ function! s:check_ruby() abort
           \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
           \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
           \  'If you are using rvm/rbenv/chruby, try "rehashing".',
-          \  'See :help g:ruby_host_prog for non-standard gem installations.'])
+          \  'See :help g:ruby_host_prog for non-standard gem installations.',
+          \  'You may disable this provider (and warning) by adding `let g:loaded_ruby_provider = 0` to your init.vim'])
     return
   endif
   call health#report_info('Host: '. host)
@@ -588,11 +590,11 @@ function! s:check_ruby() abort
   endif
   let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 0, 'not found')
 
-  let current_gem_cmd = host .' --version'
+  let current_gem_cmd = [host, '--version']
   let current_gem = s:system(current_gem_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. current_gem_cmd,
-          \ ['Report this issue with the output of: ', current_gem_cmd])
+    call health#report_error('Failed to run: '. join(current_gem_cmd),
+          \ ['Report this issue with the output of: ', join(current_gem_cmd)])
     return
   endif
 
@@ -619,7 +621,7 @@ function! s:check_node() abort
           \ ['Install Node.js and verify that `node` and `npm` (or `yarn`) commands work.'])
     return
   endif
-  let node_v = get(split(s:system('node -v'), "\n"), 0, '')
+  let node_v = get(split(s:system(['node', '-v']), "\n"), 0, '')
   call health#report_info('Node.js: '. node_v)
   if s:shell_error || s:version_cmp(node_v[1:], '6.0.0') < 0
     call health#report_warn('Nvim node.js host does not support '.node_v)
@@ -634,7 +636,8 @@ function! s:check_node() abort
   if empty(host)
     call health#report_warn('Missing "neovim" npm (or yarn) package.',
           \ ['Run in shell: npm install -g neovim',
-          \  'Run in shell (if you use yarn): yarn global add neovim'])
+          \  'Run in shell (if you use yarn): yarn global add neovim',
+          \  'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
     return
   endif
   call health#report_info('Nvim node.js host: '. host)
@@ -660,8 +663,8 @@ function! s:check_node() abort
   let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. string(current_npm_cmd),
-          \ ['Report this issue with the output of: ', string(current_npm_cmd)])
+    call health#report_error('Failed to run: '. join(current_npm_cmd),
+          \ ['Report this issue with the output of: ', join(current_npm_cmd)])
     return
   endif
 
@@ -683,14 +686,15 @@ function! s:check_perl() abort
     return
   endif
 
-  let [perl_exec, perl_errors] = provider#perl#Detect()
+  let [perl_exec, perl_warnings] = provider#perl#Detect()
   if empty(perl_exec)
-    if !empty(perl_errors)
-      call health#report_error('perl provider error:', perl_errors)
-	else
+    if !empty(perl_warnings)
+      call health#report_warn(perl_warnings, ['See :help provider-perl for more information.',
+            \ 'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
+    else
       call health#report_warn('No usable perl executable found')
     endif
-	return
+    return
   endif
 
   call health#report_info('perl executable: '. perl_exec)
@@ -734,8 +738,8 @@ function! s:check_perl() abort
   let current_cpan_cmd = [perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION']
   let current_cpan = s:system(current_cpan_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. string(current_cpan_cmd),
-          \ ['Report this issue with the output of: ', string(current_cpan_cmd)])
+    call health#report_error('Failed to run: '. join(current_cpan_cmd),
+          \ ['Report this issue with the output of: ', join(current_cpan_cmd)])
     return
   endif
 

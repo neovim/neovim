@@ -341,7 +341,7 @@ processing a quickfix or location list command, it will be aborted.
 			cursor position will not be changed. See |:cexpr| for
 			more information.
 			Example: >
-    :g/mypattern/caddexpr expand("%") . ":" . line(".") .  ":" . getline(".")
+    :g/mypattern/caddexpr expand("%") .. ":" .. line(".") ..  ":" .. getline(".")
 <
 						*:lad* *:addd* *:laddexpr*
 :lad[dexpr] {expr}	Same as ":caddexpr", except the location list for the
@@ -497,7 +497,6 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
-			{not in Vi}
 			Also see |:bufdo|, |:tabdo|, |:argdo|, |:windo|,
 			|:ldo|, |:cfdo| and |:lfdo|.
 
@@ -510,7 +509,6 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				:{cmd}
 				etc.
 <			Otherwise it works the same as `:cdo`.
-			{not in Vi}
 
 							*:ldo*
 :ld[o][!] {cmd}		Execute {cmd} in each valid entry in the location list
@@ -523,7 +521,6 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			Only valid entries in the location list are used.
 			Otherwise it works the same as `:cdo`.
-			{not in Vi}
 
 							*:lfdo*
 :lfdo[!] {cmd}		Execute {cmd} in each file in the location list for
@@ -535,7 +532,6 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				:{cmd}
 				etc.
 <			Otherwise it works the same as `:ldo`.
-			{not in Vi}
 
 FILTERING A QUICKFIX OR LOCATION LIST:
 				    *cfilter-plugin* *:Cfilter* *:Lfilter*
@@ -575,6 +571,7 @@ location list.
 			second quickfix window.  If [height] is given the
 			existing window will be resized to it.
 
+							*quickfix-buffer*
 			The window will contain a special buffer, with
 			'buftype' equal to "quickfix".  Don't change this!
 			The window will have the w:quickfix_title variable set
@@ -583,7 +580,11 @@ location list.
 			status line if the value of 'statusline' is adjusted
 			properly. Whenever this buffer is modified by a
 			quickfix command or function, the |b:changedtick|
-			variable is incremented.
+			variable is incremented.  You can get the number of
+			this buffer using the getqflist() and getloclist()
+			functions by passing the 'qfbufnr' item. For a
+			location list, this buffer is wiped out when the
+			location list is removed.
 
 							*:lop* *:lopen*
 :lop[en] [height]	Open a window to show the location list for the
@@ -641,6 +642,27 @@ quickfix window.  If there already is a window for that file, it is used
 instead.  If the buffer in the used window has changed, and the error is in
 another file, jumping to the error will fail.  You will first have to make
 sure the window contains a buffer which can be abandoned.
+
+When you select a file from the quickfix window, the following steps are used
+to find a window to edit the file:
+
+1. If a window displaying the selected file is present in the current tabpage
+   (starting with the window before the quickfix window), then that window is
+   used.
+2. If the above step fails and if 'switchbuf' contains "usetab" and a window
+   displaying the selected file is present in any one of the tabpages
+   (starting with the first tabpage) then that window is used.
+3. If the above step fails then a window in the current tabpage displaying a
+   buffer with 'buftype' not set (starting with the window before the quickfix
+   window) is used.
+4. If the above step fails and if 'switchbuf' contains "uselast", then the
+   previously accessed window is used.
+5. If the above step fails then the window before the quickfix window is used.
+   If there is no previous window, then the window after the quickfix window
+   is used.
+6. If the above step fails, then a new horizontally split window above the
+   quickfix window is used.
+
 					*CTRL-W_<Enter>* *CTRL-W_<CR>*
 You can use CTRL-W <Enter> to open a new window and jump to the error there.
 
@@ -650,7 +672,7 @@ FileType event (also see |qf.vim|).  Then the BufReadPost event is triggered,
 using "quickfix" for the buffer name.  This can be used to perform some action
 on the listed errors.  Example: >
 	au BufReadPost quickfix  setlocal modifiable
-		\ | silent exe 'g/^/s//\=line(".")." "/'
+		\ | silent exe 'g/^/s//\=line(".") .. " "/'
 		\ | setlocal nomodifiable
 This prepends the line number to each line.  Note the use of "\=" in the
 substitute string of the ":s" command, which is used to evaluate an
@@ -679,13 +701,15 @@ this window, the displayed location list is used.
 When you select a file from the location list window, the following steps are
 used to find a window to edit the file:
 
-1. If a window with the location list displayed in the location list window is
-   present, then the file is opened in that window.
-2. If the above step fails and if the file is already opened in another
-   window, then that window is used.
-3. If the above step fails then an existing window showing a buffer with
-   'buftype' not set is used.
-4. If the above step fails, then the file is edited in a new window.
+1. If a non-quickfix window associated with the location list is present in
+   the current tabpage, then that window is used.
+2. If the above step fails and if the file is already opened in another window
+   in the current tabpage, then that window is used.
+3. If the above step fails and 'switchbuf' contains "usetab" and if the file
+   is opened in a window in any one of the tabpages, then that window is used.
+4. If the above step fails then a window in the current tabpage showing a
+   buffer with 'buftype' not set is used.
+5. If the above step fails, then the file is edited in a new window.
 
 In all of the above cases, if the location list for the selected window is not
 yet set, then it is set to the location list displayed in the location list
@@ -749,11 +773,17 @@ using these functions are below:
     " get the quickfix list window id
     :echo getqflist({'winid' : 0}).winid
 
+    " get the quickfix list window buffer number
+    :echo getqflist({'qfbufnr' : 0}).qfbufnr
+
     " get the context of the current location list
     :echo getloclist(0, {'context' : 0}).context
 
     " get the location list window id of the third window
     :echo getloclist(3, {'winid' : 0}).winid
+
+    " get the location list window buffer number of the third window
+    :echo getloclist(3, {'qfbufnr' : 0}).qfbufnr
 
     " get the file window id of a location list window (winnr: 4)
     :echo getloclist(4, {'filewinid' : 0}).filewinid
@@ -989,7 +1019,7 @@ commands can be combined to create a NewGrep command: >
 5.1 using Vim's internal grep
 
 					*:vim* *:vimgrep* *E682* *E683*
-:vim[grep][!] /{pattern}/[g][j] {file} ...
+:vim[grep][!] /{pattern}/[g][j][f] {file} ...
 			Search for {pattern} in the files {file} ... and set
 			the error list to the matches.  Files matching
 			'wildignore' are ignored; files in 'suffixes' are
@@ -1013,6 +1043,13 @@ commands can be combined to create a NewGrep command: >
 			     match.  With 'j' only the quickfix list is
 			     updated.  With the [!] any changes in the current
 			     buffer are abandoned.
+
+			'f'  When the 'f' flag is specified, fuzzy string
+			     matching is used to find matching lines. In this
+			     case, {pattern} is treated as a literal string
+			     instead of a regular expression.  See
+			     |fuzzy-matching| for more information about fuzzy
+			     matching strings.
 
 			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
 			A file that is opened for matching may use a buffer
@@ -1042,20 +1079,20 @@ commands can be combined to create a NewGrep command: >
 				:vimgrep Error *.c
 <
 							*:lv* *:lvimgrep*
-:lv[imgrep][!] /{pattern}/[g][j] {file} ...
+:lv[imgrep][!] /{pattern}/[g][j][f] {file} ...
 :lv[imgrep][!] {pattern} {file} ...
 			Same as ":vimgrep", except the location list for the
 			current window is used instead of the quickfix list.
 
 						*:vimgrepa* *:vimgrepadd*
-:vimgrepa[dd][!] /{pattern}/[g][j] {file} ...
+:vimgrepa[dd][!] /{pattern}/[g][j][f] {file} ...
 :vimgrepa[dd][!] {pattern} {file} ...
 			Just like ":vimgrep", but instead of making a new list
 			of errors the matches are appended to the current
 			list.
 
 						*:lvimgrepa* *:lvimgrepadd*
-:lvimgrepa[dd][!] /{pattern}/[g][j] {file} ...
+:lvimgrepa[dd][!] /{pattern}/[g][j][f] {file} ...
 :lvimgrepa[dd][!] {pattern} {file} ...
 			Same as ":vimgrepadd", except the location list for
 			the current window is used instead of the quickfix
@@ -1332,12 +1369,17 @@ Basic items
 	%f		file name (finds a string)
 	%o		module name (finds a string)
 	%l		line number (finds a number)
+	%e		end line number (finds a number)
 	%c		column number (finds a number representing character
 			column of the error, byte index, a <tab> is 1
 			character column)
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))
+	%k		end column number (finds a number representing
+			the character column of the error, byte index, or a
+			number representing screen end column of the error if
+			it's used with %v)
 	%t		error type (finds a single character):
 			    e - error message
 			    w - warning message

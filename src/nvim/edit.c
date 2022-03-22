@@ -26,6 +26,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/keymap.h"
@@ -5116,10 +5117,10 @@ static int ins_complete(int c, bool enable_pum)
           || ctrl_x_mode == CTRL_X_PATH_PATTERNS
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (compl_startpos.lnum != curwin->w_cursor.lnum) {
-          /* line (probably) wrapped, set compl_startpos to the
-           * first non_blank in the line, if it is not a wordchar
-           * include it to get a better pattern, but then we don't
-           * want the "\\<" prefix, check it bellow */
+          // line (probably) wrapped, set compl_startpos to the
+          // first non_blank in the line, if it is not a wordchar
+          // include it to get a better pattern, but then we don't
+          // want the "\\<" prefix, check it below.
           compl_col = (colnr_T)getwhitecols(line);
           compl_startpos.col = compl_col;
           compl_startpos.lnum = curwin->w_cursor.lnum;
@@ -6021,6 +6022,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     char_u *saved_text = NULL;
     colnr_T col;
     colnr_T end_col;
+    bool did_do_comment = false;
 
     virtcol = get_nolist_virtcol()
               + char2cells(c != NUL ? c : gchar_cursor());
@@ -6136,8 +6138,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
         if (curwin->w_cursor.col <= (colnr_T)wantcol) {
           break;
         }
-      } else if ((cc >= 0x100 || !utf_allow_break_before(cc))
-                 && fo_multibyte) {
+      } else if ((cc >= 0x100 || !utf_allow_break_before(cc)) && fo_multibyte) {
         int ncc;
         bool allow_break;
 
@@ -6294,9 +6295,16 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
               + (fo_white_par ? OPENLINE_KEEPTRAIL : 0)
               + (do_comments ? OPENLINE_DO_COM : 0)
               + ((flags & INSCHAR_COM_LIST) ? OPENLINE_COM_LIST : 0),
-              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent));
+              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent),
+              &did_do_comment);
     if (!(flags & INSCHAR_COM_LIST)) {
       old_indent = 0;
+    }
+
+    // If a comment leader was inserted, may also do this on a following
+    // line.
+    if (did_do_comment) {
+      no_leader = false;
     }
 
     replace_offset = 0;
@@ -7124,9 +7132,7 @@ int stuff_inserted(int c, long count, int no_esc)
     stuffReadbuff((const char *)ptr);
     // A trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^".
     if (last) {
-      stuffReadbuff((last == '0'
-                     ? "\026\060\064\070"
-                     : "\026^"));
+      stuffReadbuff(last == '0' ? "\026\060\064\070" : "\026^");
     }
   } while (--count > 0);
 
@@ -7771,7 +7777,7 @@ int hkmap(int c)
     case ';':
       c = 't'; break;
     default: {
-      static char str[] = "zqbcxlsjphmkwonu ydafe rig";
+      static char_u str[] = "zqbcxlsjphmkwonu ydafe rig";
 
       if (c < 'a' || c > 'z') {
         return c;
@@ -8292,6 +8298,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int in_indent;
   int oldState;
   int cpc[MAX_MCO];                 // composing characters
+  bool call_fix_indent = false;
 
   // can't delete anything in an empty file
   // can't backup past first character in buffer
@@ -8435,6 +8442,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       beginline(BL_WHITE);
       if (curwin->w_cursor.col < save_col) {
         mincol = curwin->w_cursor.col;
+        // should now fix the indent to match with the previous line
+        call_fix_indent = true;
       }
       curwin->w_cursor.col = save_col;
     }
@@ -8569,6 +8578,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   if (curwin->w_cursor.col <= 1) {
     did_ai = false;
   }
+
+  if (call_fix_indent) {
+    fix_indent();
+  }
+
   // It's a little strange to put backspaces into the redo
   // buffer, but it makes auto-indent a lot easier to deal
   // with.
@@ -9183,7 +9197,7 @@ static bool ins_eol(int c)
   AppendToRedobuff(NL_STR);
   bool i = open_line(FORWARD,
                      has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
-                     old_indent);
+                     old_indent, NULL);
   old_indent = 0;
   can_cindent = true;
   // When inserting a line the cursor line must never be in a closed fold.

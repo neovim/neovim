@@ -1017,6 +1017,32 @@ func Test_diff_with_cursorline()
   call delete('Xtest_diff_cursorline')
 endfunc
 
+func Test_diff_with_cursorline_number()
+  CheckScreendump
+
+  let lines =<< trim END
+      hi CursorLine ctermbg=red ctermfg=white
+      hi CursorLineNr ctermbg=white ctermfg=black cterm=underline
+      set cursorline number
+      call setline(1, ["baz", "foo", "foo", "bar"])
+      2
+      vnew
+      call setline(1, ["foo", "foo", "bar"])
+      windo diffthis
+      1wincmd w
+  END
+  call writefile(lines, 'Xtest_diff_cursorline_number')
+  let buf = RunVimInTerminal('-S Xtest_diff_cursorline_number', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_number_01', {})
+  call term_sendkeys(buf, ":set cursorlineopt=number\r")
+  call VerifyScreenDump(buf, 'Test_diff_with_cursorline_number_02', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cursorline_number')
+endfunc
+
 func Test_diff_with_cursorline_breakindent()
   CheckScreendump
 

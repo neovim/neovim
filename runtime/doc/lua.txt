@@ -568,6 +568,26 @@ Example: TCP echo-server                                *tcp-server*
     end)
     print('TCP echo-server listening on port: '..server:getsockname().port)
 
+
+Multithreading						*lua-loop-threading*
+
+Plugins can perform work in separate (os-level) threads using the threading
+APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
+gets its own separate lua interpreter state, with no access to lua globals
+in the main thread. Neither can the state of the editor (buffers, windows,
+etc) be directly accessed from threads.
+
+A subset of the `vim.*` API is available in threads. This includes:
+
+- `vim.loop` with a separate event loop per thread.
+- `vim.mpack` and `vim.json` (useful for serializing messages between threads)
+- `require` in threads can use lua packages from the global |lua-package-path|
+- `print()` and `vim.inspect`
+- `vim.diff`
+- most utility functions in `vim.*` for working with pure lua values
+  like `vim.split`, `vim.tbl_*`, `vim.list_*`, and so on.
+- `vim.is_thread()` returns true from a non-main thread.
+
 ------------------------------------------------------------------------------
 VIM.HIGHLIGHT                                           *lua-highlight*
 
@@ -595,13 +615,33 @@ vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
           - {on_visual} highlight when yanking visual selection (default `true`)
           - {event} event structure (default |v:event|)
 
-vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
+vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                                                        *vim.highlight.range()*
-        Highlights the range between {start} and {finish} (tuples of {line,col})
-        in buffer {bufnr} with the highlight group {higroup} using the namespace
-        {ns}. Optional arguments are the type of range (characterwise, linewise,
-        or blockwise, see |setreg|; default to characterwise) and whether the
-        range is inclusive (default false).
+
+        Apply highlight group to range of text.
+
+                Parameters: ~
+                    {bufnr}   buffer number
+                    {ns}      namespace for highlights
+                    {hlgroup} highlight group name
+                    {start}   starting position (tuple {line,col})
+                    {finish}  finish position (tuple {line,col})
+                    {opts}    optional parameters:
+                              • `regtype`: type of range (characterwise, linewise,
+                                or blockwise, see |setreg|), default `'v'`
+                              • `inclusive`: range includes end position, default
+                                `false`
+                              • `priority`: priority of highlight, default
+                                `vim.highlight.user` (see below)
+
+vim.highlight.priorities                           *vim.highlight.priorities*
+
+        Table with default priorities used for highlighting:
+            • `syntax`: `50`, used for standard syntax highlighting
+            • `treesitter`: `100`, used for tree-sitter-based highlighting
+            • `diagnostics`: `150`, used for code analysis such as diagnostics
+            • `user`: `200`, used for user-triggered highlights such as LSP
+              document symbols or `on_yank` autocommands
 
 ------------------------------------------------------------------------------
 VIM.REGEX                                                       *lua-regex*
@@ -1043,7 +1083,7 @@ from within Lua.
             `vim.opt.wildignore = '*.o,*.a,__pycache__'`
 
         However, vim.opt also supports a more elegent way of setting
-        list-style options, but using lua tables:
+        list-style options by using lua tables:
             `vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }`
 
     To replicate the behavior of |:set+=|, use: >
@@ -1219,6 +1259,10 @@ vim.wo                                                  *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+                                             *vim.connection_failure_errmsg()*
+connection_failure_errmsg({consequence})
+                TODO: Documentation
+
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Defers calling `fn` until `timeout` ms passes.
 
@@ -1378,7 +1422,7 @@ deep_equal({a}, {b})                                        *vim.deep_equal()*
                     {b}  second value
 
                 Return: ~
-                    `true` if values are equals, else `false` .
+                    `true` if values are equals, else `false`.
 
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
@@ -1395,7 +1439,7 @@ deepcopy({orig})                                              *vim.deepcopy()*
                     New table of copied keys and (nested) values.
 
 endswith({s}, {suffix})                                       *vim.endswith()*
-                Tests if `s` ends with `suffix` .
+                Tests if `s` ends with `suffix`.
 
                 Parameters: ~
                     {s}       (string) a string
@@ -1499,7 +1543,7 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
                     |vim.gsplit()|
 
 startswith({s}, {prefix})                                   *vim.startswith()*
-                Tests if `s` starts with `prefix` .
+                Tests if `s` starts with `prefix`.
 
                 Parameters: ~
                     {s}       (string) a string
@@ -1510,13 +1554,13 @@ startswith({s}, {prefix})                                   *vim.startswith()*
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
-                example: tbl_add_reverse_lookup { A = 1 } == { [1] = 'A , A = 1 }`
+                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 
                 Parameters: ~
                     {o}  table The table to add the reverse to.
 
 tbl_contains({t}, {value})                                *vim.tbl_contains()*
-                Checks if a list-like (vector) table contains `value` .
+                Checks if a list-like (vector) table contains `value`.
 
                 Parameters: ~
                     {t}      Table to check
@@ -1526,7 +1570,7 @@ tbl_contains({t}, {value})                                *vim.tbl_contains()*
                     true if `t` contains `value`
 
 tbl_count({t})                                               *vim.tbl_count()*
-                Counts the number of non-nil values in table `t` .
+                Counts the number of non-nil values in table `t`.
 >
 
     vim.tbl_count({ a=1, b=2 }) => 2
@@ -1611,7 +1655,7 @@ tbl_islist({t})                                             *vim.tbl_islist()*
                     {t}  Table
 
                 Return: ~
-                    `true` if array-like table, else `false` .
+                    `true` if array-like table, else `false`.
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
@@ -1763,10 +1807,17 @@ Lua module: ui                                                        *lua-ui*
 input({opts}, {on_confirm})                                   *vim.ui.input()*
                 Prompts the user for input
 
+                Example: >
+
+                 vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+                     vim.o.shiftwidth = tonumber(input)
+                 end)
+<
+
                 Parameters: ~
                     {opts}        table Additional options. See |input()|
                                   • prompt (string|nil) Text of the prompt.
-                                    Defaults to `Input:` .
+                                    Defaults to `Input:`.
                                   • default (string|nil) Default reply to the
                                     input
                                   • completion (string|nil) Specifies type of
@@ -1786,6 +1837,22 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                 Prompts the user to pick a single item from a collection of
                 entries
 
+                Example: >
+
+                 vim.ui.select({ 'tabs', 'spaces' }, {
+                     prompt = 'Select tabs or spaces:',
+                     format_item = function(item)
+                         return "I'd like to choose " .. item
+                     end,
+                 }, function(choice)
+                     if choice == 'spaces' then
+                         vim.o.expandtab = true
+                     else
+                         vim.o.expandtab = false
+                     end
+                 end)
+<
+
                 Parameters: ~
                     {items}      table Arbitrary items
                     {opts}       table Additional options
@@ -1793,16 +1860,16 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                    Defaults to `Select one of:`
                                  • format_item (function item -> text)
                                    Function to format an individual item from
-                                   `items` . Defaults to `tostring` .
+                                   `items`. Defaults to `tostring`.
                                  • kind (string|nil) Arbitrary hint string
                                    indicating the item shape. Plugins
                                    reimplementing `vim.ui.select` may wish to
                                    use this to infer the structure or
-                                   semantics of `items` , or the context in
+                                   semantics of `items`, or the context in
                                    which select() was called.
                     {on_choice}  function ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
-                                 1-based index of `item` within `item` . `nil`
+                                 1-based index of `item` within `item`. `nil`
                                  if the user aborted the dialog.
 
 
@@ -1927,9 +1994,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 <
 
-                the require('jkl') gets evaluated during this call in order to
-                access the function. If you want to avoid this cost at startup
-                you can wrap it in a function, for example: >
+                the `require('jkl')` gets evaluated during this call in order to access the
+                function. If you want to avoid this cost at startup you can
+                wrap it in a function, for example: >
 
                     vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 <
@@ -1951,9 +2018,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                               result of Lua expr maps.
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
-                              |nvim_set_keymap()|. Default `true` if `lhs` is
-                              a string starting with `<plug>`
-                              (case-insensitive), `false` otherwise.
+                              |nvim_set_keymap()|. Default `false`.
 
                 See also: ~
                     |nvim_set_keymap()|

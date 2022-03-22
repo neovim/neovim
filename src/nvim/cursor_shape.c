@@ -9,8 +9,8 @@
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/ex_getln.h"
+#include "nvim/highlight_group.h"
 #include "nvim/strings.h"
-#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -74,8 +74,7 @@ Array mode_style_array(void)
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
       PUT(dic, "attr_id", INTEGER_OBJ(cur->id ? syn_id2attr(cur->id) : 0));
-      PUT(dic, "attr_id_lm", INTEGER_OBJ(cur->id_lm ? syn_id2attr(cur->id_lm)
-                                                    : 0));
+      PUT(dic, "attr_id_lm", INTEGER_OBJ(cur->id_lm ? syn_id2attr(cur->id_lm) : 0));
     }
     PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));
     PUT(dic, "short_name", STRING_OBJ(cstr_to_string(cur->name)));
@@ -95,7 +94,6 @@ Array mode_style_array(void)
 /// @returns error message for an illegal option, NULL otherwise.
 char *parse_shape_opt(int what)
 {
-  char_u *modep;
   char_u *colonp;
   char_u *commap;
   char_u *slashp;
@@ -120,7 +118,7 @@ char *parse_shape_opt(int what)
       }
     }
     // Repeat for all comma separated parts.
-    modep = p_guicursor;
+    char_u *modep = p_guicursor;
     while (modep != NULL && *modep != NUL) {
       colonp = vim_strchr(modep, ':');
       commap = vim_strchr(modep, ',');
@@ -147,7 +145,7 @@ char *parse_shape_opt(int what)
           if (len == 1 && TOLOWER_ASC(modep[0]) == 'a') {
             all_idx = SHAPE_IDX_COUNT - 1;
           } else {
-            for (idx = 0; idx < SHAPE_IDX_COUNT; ++idx) {
+            for (idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
               if (STRNICMP(modep, shape_table[idx].name, len) == 0) {
                 break;
               }
@@ -170,9 +168,7 @@ char *parse_shape_opt(int what)
         // Parse the part after the colon
         for (p = colonp + 1; *p && *p != ',';) {
           {
-            /*
-             * First handle the ones with a number argument.
-             */
+            // First handle the ones with a number argument.
             i = *p;
             len = 0;
             if (STRNICMP(p, "ver", 3) == 0) {
@@ -230,11 +226,11 @@ char *parse_shape_opt(int what)
               slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
                 // "group/langmap_group"
-                i = syn_check_group((char *)p, (int)(slashp - p));
+                i = syn_check_group((char *)p, (size_t)(slashp - p));
                 p = slashp + 1;
               }
               if (round == 2) {
-                shape_table[idx].id = syn_check_group((char *)p, (int)(endp - p));
+                shape_table[idx].id = syn_check_group((char *)p, (size_t)(endp - p));
                 shape_table[idx].id_lm = shape_table[idx].id;
                 if (slashp != NULL && slashp < endp) {
                   shape_table[idx].id = i;
@@ -245,7 +241,7 @@ char *parse_shape_opt(int what)
           }           // if (what != SHAPE_MOUSE)
 
           if (*p == '-') {
-            ++p;
+            p++;
           }
         }
       }

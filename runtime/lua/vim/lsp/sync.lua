@@ -131,13 +131,30 @@ end
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
 ---@returns table<int, int> line_idx, byte_idx, and char_idx of first change position
 local function compute_start_range(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding)
+  local char_idx
+  local byte_idx
   -- If firstline == lastline, no existing text is changed. All edit operations
   -- occur on a new line pointed to by lastline. This occurs during insertion of
   -- new lines(O), the new newline is inserted at the line indicated by
   -- new_lastline.
+  if firstline == lastline then
+    local line_idx
+    local line = prev_lines[firstline - 1]
+    if line then
+      line_idx = firstline - 1
+      byte_idx = #line + 1
+      char_idx = compute_line_length(line, offset_encoding) + 1
+    else
+      line_idx = firstline
+      byte_idx = 1
+      char_idx = 1
+    end
+    return { line_idx = line_idx, byte_idx = byte_idx, char_idx = char_idx }
+  end
+
   -- If firstline == new_lastline, the first change occurred on a line that was deleted.
   -- In this case, the first byte change is also at the first byte of firstline
-  if firstline == new_lastline or firstline == lastline then
+  if firstline == new_lastline then
     return { line_idx = firstline, byte_idx = 1, char_idx = 1 }
   end
 
@@ -158,8 +175,6 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   end
 
   -- Convert byte to codepoint if applicable
-  local char_idx
-  local byte_idx
   if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1)then
     byte_idx = start_byte_idx
     char_idx = 1

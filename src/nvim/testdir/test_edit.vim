@@ -213,7 +213,7 @@ func Test_edit_07()
   bw!
 endfunc
 
-func! Test_edit_08()
+func Test_edit_08()
   throw 'skipped: moved to test/functional/legacy/edit_spec.lua'
   " reset insertmode from i_ctrl-r_=
   let g:bufnr = bufnr('%')
@@ -417,7 +417,7 @@ func Test_edit_13()
   bwipe!
 endfunc
 
-func! Test_edit_CR()
+func Test_edit_CR()
   " Test for <CR> in insert mode
   " basically only in quickfix mode ist tested, the rest
   " has been taken care of by other tests
@@ -450,7 +450,7 @@ func! Test_edit_CR()
   call delete('Xqflist.txt')
 endfunc
 
-func! Test_edit_CTRL_()
+func Test_edit_CTRL_()
   " disabled for Windows builds, why?
   if !has("rightleft") || has("win32")
     return
@@ -590,7 +590,7 @@ func Test_edit_CTRL_K()
   call feedkeys("A\<c-x>\<c-k>\<down>\<down>\<down>\<down>\<cr>\<esc>", 'tnix')
   call assert_equal(['AA'], getline(1, '$'))
 
-  " press an unexecpted key after dictionary completion
+  " press an unexpected key after dictionary completion
   %d
   call setline(1, 'A')
   call cursor(1, 1)
@@ -734,7 +734,7 @@ func Test_edit_CTRL_O()
   bw!
 endfunc
 
-func! Test_edit_CTRL_R()
+func Test_edit_CTRL_R()
   " Insert Register
   new
   " call test_override("ALL", 1)
@@ -1006,8 +1006,6 @@ func Test_edit_DROP()
 endfunc
 
 func Test_edit_CTRL_V()
-  CheckNotFeature ebcdic
-
   new
   call setline(1, ['abc'])
   call cursor(2, 1)
@@ -1561,11 +1559,7 @@ endfunc
 func Test_edit_special_chars()
   new
 
-  if has("ebcdic")
-    let t = "o\<C-V>193\<C-V>xc2\<C-V>o303 \<C-V>90a\<C-V>xfg\<C-V>o578\<Esc>"
-  else
-    let t = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
-  endif
+  let t = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
 
   exe "normal " . t
   call assert_equal("ABC !a\<C-O>g\<C-G>8", getline(2))

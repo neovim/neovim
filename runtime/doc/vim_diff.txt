@@ -84,7 +84,7 @@ Nvim creates the following default mappings at |startup|. You can disable any
 of these in your config by simply removing the mapping, e.g. ":unmap Y".
 >
 	nnoremap Y y$
-	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
+	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>
 	inoremap <C-U> <C-G>u<C-U>
 	inoremap <C-W> <C-G>u<C-W>
 <
@@ -211,6 +211,7 @@ Highlight groups:
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
+  |hl-WinSeparator| highlights window separators
   |hl-Whitespace| highlights 'listchars' whitespace
 
 Input/Mappings:
@@ -227,9 +228,11 @@ Options:
   'cpoptions'   flags: |cpo-_|
   'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display')
+  'fillchars'   flags: "msgsep" (see 'display'), "horiz", "horizup",
+                "horizdown", "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
+  'laststatus'  global statusline support
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
@@ -322,6 +325,8 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
+|CursorMoved| always triggers when moving between windows.
+
 Lua interface (|lua.txt|):
 
 - `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim
@@ -346,6 +351,7 @@ Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
   |hl-CursorLine| is low-priority unless foreground color is set
+  *hl-VertSplit* superseded by |hl-WinSeparator|
 
 Macro/|recording| behavior
   Replay of a macro recorded during :lmap produces the same actions as when it
@@ -431,7 +437,8 @@ Vimscript compatibility:
   `this_session` does not alias to |v:this_session|
 
 Working directory (Vim implemented some of these later than Nvim):
-- |DirChanged| can be triggered when switching to another window.
+- |DirChanged| and |DirChangedPre| can be triggered when switching to another
+  window or tab.
 - |getcwd()| and |haslocaldir()| may throw errors if the tab page or window
   cannot be found.  *E5000* *E5001* *E5002*
 - |haslocaldir()| checks for tab-local directory if and only if -1 is passed as
@@ -483,7 +490,6 @@ Commands:
   :tearoff
 
 Compile-time features:
-  EBCDIC
   Emacs tags support
   X11 integration (see |x11-selection|)
 
@@ -492,6 +498,9 @@ Eval:
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
+  *v:sizeofint*
+  *v:sizeoflong*
+  *v:sizeofpointer*
 
 Events:
   *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
@@ -574,6 +583,7 @@ Test functions:
   test_scrollbar()
   test_setmouse()
   test_settime()
+  test_srand_seed()
 
 TUI:
 			  *t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*

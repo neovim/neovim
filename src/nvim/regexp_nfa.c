@@ -711,7 +711,6 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
 static void nfa_emit_equi_class(int c)
 {
 #define EMIT2(c)   EMIT(c); EMIT(NFA_CONCAT);
-#define EMITMBC(c) EMIT(c); EMIT(NFA_CONCAT);
 
   {
 #define A_grave 0xc0
@@ -771,361 +770,518 @@ static void nfa_emit_equi_class(int c)
 #define y_diaeresis 0xff
     switch (c) {
     case 'A': case A_grave: case A_acute: case A_circumflex:
-              case A_virguilla: case A_diaeresis: case A_ring:
-              CASEMBC(0x100) CASEMBC(0x102) CASEMBC(0x104)
-              CASEMBC(0x1cd) CASEMBC(0x1de) CASEMBC(0x1e0)
-              CASEMBC(0x1ea2)
-      EMIT2('A'); EMIT2(A_grave); EMIT2(A_acute);
-      EMIT2(A_circumflex); EMIT2(A_virguilla);
-      EMIT2(A_diaeresis); EMIT2(A_ring);
-      EMITMBC(0x100) EMITMBC(0x102) EMITMBC(0x104)
-      EMITMBC(0x1cd) EMITMBC(0x1de) EMITMBC(0x1e0)
-      EMITMBC(0x1ea2)
+    case A_virguilla: case A_diaeresis: case A_ring:
+    case 0x100: case 0x102: case 0x104: case 0x1cd:
+    case 0x1de: case 0x1e0: case 0x1fa: case 0x200:
+    case 0x202: case 0x226: case 0x23a: case 0x1e00:
+    case 0x1ea0: case 0x1ea2: case 0x1ea4: case 0x1ea6:
+    case 0x1ea8: case 0x1eaa: case 0x1eac: case 0x1eae:
+    case 0x1eb0: case 0x1eb2: case 0x1eb4: case 0x1eb6:
+      EMIT2('A') EMIT2(A_grave) EMIT2(A_acute)
+      EMIT2(A_circumflex) EMIT2(A_virguilla)
+      EMIT2(A_diaeresis) EMIT2(A_ring)
+      EMIT2(0x100) EMIT2(0x102) EMIT2(0x104)
+      EMIT2(0x1cd) EMIT2(0x1de) EMIT2(0x1e0)
+      EMIT2(0x1fa) EMIT2(0x200) EMIT2(0x202)
+      EMIT2(0x226) EMIT2(0x23a) EMIT2(0x1e00)
+      EMIT2(0x1ea0) EMIT2(0x1ea2) EMIT2(0x1ea4)
+      EMIT2(0x1ea6) EMIT2(0x1ea8) EMIT2(0x1eaa)
+      EMIT2(0x1eac) EMIT2(0x1eae) EMIT2(0x1eb0)
+      EMIT2(0x1eb2) EMIT2(0x1eb6) EMIT2(0x1eb4)
       return;
 
-    case 'B': CASEMBC(0x1e02) CASEMBC(0x1e06)
-      EMIT2('B'); EMITMBC(0x1e02) EMITMBC(0x1e06)
+    case 'B': case 0x181: case 0x243: case 0x1e02:
+    case 0x1e04: case 0x1e06:
+      EMIT2('B')
+      EMIT2(0x181) EMIT2(0x243) EMIT2(0x1e02)
+      EMIT2(0x1e04) EMIT2(0x1e06)
       return;
 
-    case 'C': case C_cedilla: CASEMBC(0x106) CASEMBC(0x108) CASEMBC(0x10a)
-              CASEMBC(0x10c)
-      EMIT2('C'); EMIT2(C_cedilla); EMITMBC(0x106) EMITMBC(0x108)
-      EMITMBC(0x10a) EMITMBC(0x10c)
+    case 'C': case C_cedilla: case 0x106: case 0x108:
+    case 0x10a: case 0x10c: case 0x187: case 0x23b:
+    case 0x1e08: case 0xa792:
+      EMIT2('C') EMIT2(C_cedilla)
+      EMIT2(0x106) EMIT2(0x108) EMIT2(0x10a)
+      EMIT2(0x10c) EMIT2(0x187) EMIT2(0x23b)
+      EMIT2(0x1e08) EMIT2(0xa792)
       return;
 
-    case 'D': CASEMBC(0x10e) CASEMBC(0x110) CASEMBC(0x1e0a)
-              CASEMBC(0x1e0e) CASEMBC(0x1e10)
-      EMIT2('D'); EMITMBC(0x10e) EMITMBC(0x110) EMITMBC(0x1e0a)
-      EMITMBC(0x1e0e) EMITMBC(0x1e10)
+    case 'D': case 0x10e: case 0x110: case 0x18a:
+    case 0x1e0a: case 0x1e0c: case 0x1e0e: case 0x1e10:
+    case 0x1e12:
+      EMIT2('D') EMIT2(0x10e) EMIT2(0x110) EMIT2(0x18a)
+      EMIT2(0x1e0a) EMIT2(0x1e0c) EMIT2(0x1e0e)
+      EMIT2(0x1e10) EMIT2(0x1e12)
       return;
 
     case 'E': case E_grave: case E_acute: case E_circumflex:
-              case E_diaeresis: CASEMBC(0x112) CASEMBC(0x114)
-              CASEMBC(0x116) CASEMBC(0x118) CASEMBC(0x11a)
-              CASEMBC(0x1eba) CASEMBC(0x1ebc)
-      EMIT2('E'); EMIT2(E_grave); EMIT2(E_acute);
-      EMIT2(E_circumflex); EMIT2(E_diaeresis);
-      EMITMBC(0x112) EMITMBC(0x114) EMITMBC(0x116)
-      EMITMBC(0x118) EMITMBC(0x11a) EMITMBC(0x1eba)
-      EMITMBC(0x1ebc)
+    case E_diaeresis: case 0x112: case 0x114: case 0x116:
+    case 0x118: case 0x11a: case 0x204: case 0x206:
+    case 0x228: case 0x246: case 0x1e14: case 0x1e16:
+    case 0x1e18: case 0x1e1a: case 0x1e1c: case 0x1eb8:
+    case 0x1eba: case 0x1ebc: case 0x1ebe: case 0x1ec0:
+    case 0x1ec2: case 0x1ec4: case 0x1ec6:
+      EMIT2('E') EMIT2(E_grave) EMIT2(E_acute)
+      EMIT2(E_circumflex) EMIT2(E_diaeresis)
+      EMIT2(0x112) EMIT2(0x114) EMIT2(0x116)
+      EMIT2(0x118) EMIT2(0x11a) EMIT2(0x204)
+      EMIT2(0x206) EMIT2(0x228) EMIT2(0x246)
+      EMIT2(0x1e14) EMIT2(0x1e16) EMIT2(0x1e18)
+      EMIT2(0x1e1a) EMIT2(0x1e1c) EMIT2(0x1eb8)
+      EMIT2(0x1eba) EMIT2(0x1ebc) EMIT2(0x1ebe)
+      EMIT2(0x1ec0) EMIT2(0x1ec2) EMIT2(0x1ec4)
+      EMIT2(0x1ec6)
       return;
 
-    case 'F': CASEMBC(0x1e1e)
-      EMIT2('F'); EMITMBC(0x1e1e)
+    case 'F': case 0x191: case 0x1e1e: case 0xa798:
+      EMIT2('F') EMIT2(0x191) EMIT2(0x1e1e) EMIT2(0xa798)
       return;
 
-    case 'G': CASEMBC(0x11c) CASEMBC(0x11e) CASEMBC(0x120)
-              CASEMBC(0x122) CASEMBC(0x1e4) CASEMBC(0x1e6)
-              CASEMBC(0x1f4) CASEMBC(0x1e20)
-      EMIT2('G'); EMITMBC(0x11c) EMITMBC(0x11e) EMITMBC(0x120)
-      EMITMBC(0x122) EMITMBC(0x1e4) EMITMBC(0x1e6)
-      EMITMBC(0x1f4) EMITMBC(0x1e20)
+    case 'G': case 0x11c: case 0x11e: case 0x120:
+    case 0x122: case 0x193: case 0x1e4: case 0x1e6:
+    case 0x1f4: case 0x1e20: case 0xa7a0:
+      EMIT2('G') EMIT2(0x11c) EMIT2(0x11e) EMIT2(0x120)
+      EMIT2(0x122) EMIT2(0x193) EMIT2(0x1e4)
+      EMIT2(0x1e6) EMIT2(0x1f4) EMIT2(0x1e20)
+      EMIT2(0xa7a0)
       return;
 
-    case 'H': CASEMBC(0x124) CASEMBC(0x126) CASEMBC(0x1e22)
-              CASEMBC(0x1e26) CASEMBC(0x1e28)
-      EMIT2('H'); EMITMBC(0x124) EMITMBC(0x126) EMITMBC(0x1e22)
-      EMITMBC(0x1e26) EMITMBC(0x1e28)
+    case 'H': case 0x124: case 0x126: case 0x21e:
+    case 0x1e22: case 0x1e24: case 0x1e26: case 0x1e28:
+    case 0x1e2a: case 0x2c67:
+      EMIT2('H') EMIT2(0x124) EMIT2(0x126) EMIT2(0x21e)
+      EMIT2(0x1e22) EMIT2(0x1e24) EMIT2(0x1e26)
+      EMIT2(0x1e28) EMIT2(0x1e2a) EMIT2(0x2c67)
       return;
 
     case 'I': case I_grave: case I_acute: case I_circumflex:
-              case I_diaeresis: CASEMBC(0x128) CASEMBC(0x12a)
-              CASEMBC(0x12c) CASEMBC(0x12e) CASEMBC(0x130)
-              CASEMBC(0x1cf) CASEMBC(0x1ec8)
-      EMIT2('I'); EMIT2(I_grave); EMIT2(I_acute);
-      EMIT2(I_circumflex); EMIT2(I_diaeresis);
-      EMITMBC(0x128) EMITMBC(0x12a)
-      EMITMBC(0x12c) EMITMBC(0x12e) EMITMBC(0x130)
-      EMITMBC(0x1cf) EMITMBC(0x1ec8)
+    case I_diaeresis: case 0x128: case 0x12a: case 0x12c:
+    case 0x12e: case 0x130: case 0x197: case 0x1cf:
+    case 0x208: case 0x20a: case 0x1e2c: case 0x1e2e:
+    case 0x1ec8: case 0x1eca:
+      EMIT2('I') EMIT2(I_grave) EMIT2(I_acute)
+      EMIT2(I_circumflex) EMIT2(I_diaeresis)
+      EMIT2(0x128) EMIT2(0x12a) EMIT2(0x12c)
+      EMIT2(0x12e) EMIT2(0x130) EMIT2(0x197)
+      EMIT2(0x1cf) EMIT2(0x208) EMIT2(0x20a)
+      EMIT2(0x1e2c) EMIT2(0x1e2e) EMIT2(0x1ec8)
+      EMIT2(0x1eca)
       return;
 
-    case 'J': CASEMBC(0x134)
-      EMIT2('J'); EMITMBC(0x134)
+    case 'J': case 0x134: case 0x248:
+      EMIT2('J') EMIT2(0x134) EMIT2(0x248)
       return;
 
-    case 'K': CASEMBC(0x136) CASEMBC(0x1e8) CASEMBC(0x1e30)
-              CASEMBC(0x1e34)
-      EMIT2('K'); EMITMBC(0x136) EMITMBC(0x1e8) EMITMBC(0x1e30)
-      EMITMBC(0x1e34)
+    case 'K': case 0x136: case 0x198: case 0x1e8: case 0x1e30:
+    case 0x1e32: case 0x1e34: case 0x2c69: case 0xa740:
+      EMIT2('K') EMIT2(0x136) EMIT2(0x198) EMIT2(0x1e8)
+      EMIT2(0x1e30) EMIT2(0x1e32) EMIT2(0x1e34)
+      EMIT2(0x2c69) EMIT2(0xa740)
       return;
 
-    case 'L': CASEMBC(0x139) CASEMBC(0x13b) CASEMBC(0x13d)
-              CASEMBC(0x13f) CASEMBC(0x141) CASEMBC(0x1e3a)
-      EMIT2('L'); EMITMBC(0x139) EMITMBC(0x13b) EMITMBC(0x13d)
-      EMITMBC(0x13f) EMITMBC(0x141) EMITMBC(0x1e3a)
+    case 'L': case 0x139: case 0x13b: case 0x13d:
+    case 0x13f: case 0x141: case 0x23d: case 0x1e36:
+    case 0x1e38: case 0x1e3a: case 0x1e3c: case 0x2c60:
+      EMIT2('L') EMIT2(0x139) EMIT2(0x13b)
+      EMIT2(0x13d) EMIT2(0x13f) EMIT2(0x141)
+      EMIT2(0x23d) EMIT2(0x1e36) EMIT2(0x1e38)
+      EMIT2(0x1e3a) EMIT2(0x1e3c) EMIT2(0x2c60)
       return;
 
-    case 'M': CASEMBC(0x1e3e) CASEMBC(0x1e40)
-      EMIT2('M'); EMITMBC(0x1e3e) EMITMBC(0x1e40)
+    case 'M': case 0x1e3e: case 0x1e40: case 0x1e42:
+      EMIT2('M') EMIT2(0x1e3e) EMIT2(0x1e40)
+      EMIT2(0x1e42)
       return;
 
-    case 'N': case N_virguilla: CASEMBC(0x143) CASEMBC(0x145)
-              CASEMBC(0x147) CASEMBC(0x1e44) CASEMBC(0x1e48)
-      EMIT2('N'); EMIT2(N_virguilla);
-      EMITMBC(0x143) EMITMBC(0x145)
-      EMITMBC(0x147) EMITMBC(0x1e44) EMITMBC(0x1e48)
+    case 'N': case N_virguilla:
+    case 0x143: case 0x145: case 0x147: case 0x1f8:
+    case 0x1e44: case 0x1e46: case 0x1e48: case 0x1e4a:
+    case 0xa7a4:
+      EMIT2('N') EMIT2(N_virguilla)
+      EMIT2(0x143) EMIT2(0x145) EMIT2(0x147)
+      EMIT2(0x1f8) EMIT2(0x1e44) EMIT2(0x1e46)
+      EMIT2(0x1e48) EMIT2(0x1e4a) EMIT2(0xa7a4)
       return;
 
     case 'O': case O_grave: case O_acute: case O_circumflex:
-              case O_virguilla: case O_diaeresis: case O_slash:
-              CASEMBC(0x14c) CASEMBC(0x14e) CASEMBC(0x150)
-              CASEMBC(0x1a0) CASEMBC(0x1d1) CASEMBC(0x1ea)
-              CASEMBC(0x1ec) CASEMBC(0x1ece)
-      EMIT2('O'); EMIT2(O_grave); EMIT2(O_acute);
-      EMIT2(O_circumflex); EMIT2(O_virguilla);
-      EMIT2(O_diaeresis); EMIT2(O_slash);
-      EMITMBC(0x14c) EMITMBC(0x14e) EMITMBC(0x150)
-      EMITMBC(0x1a0) EMITMBC(0x1d1) EMITMBC(0x1ea)
-      EMITMBC(0x1ec) EMITMBC(0x1ece)
+    case O_virguilla: case O_diaeresis: case O_slash:
+    case 0x14c: case 0x14e: case 0x150: case 0x19f:
+    case 0x1a0: case 0x1d1: case 0x1ea: case 0x1ec:
+    case 0x1fe: case 0x20c: case 0x20e: case 0x22a:
+    case 0x22c: case 0x22e: case 0x230: case 0x1e4c:
+    case 0x1e4e: case 0x1e50: case 0x1e52: case 0x1ecc:
+    case 0x1ece: case 0x1ed0: case 0x1ed2: case 0x1ed4:
+    case 0x1ed6: case 0x1ed8: case 0x1eda: case 0x1edc:
+    case 0x1ede: case 0x1ee0: case 0x1ee2:
+      EMIT2('O') EMIT2(O_grave) EMIT2(O_acute)
+      EMIT2(O_circumflex) EMIT2(O_virguilla)
+      EMIT2(O_diaeresis) EMIT2(O_slash)
+      EMIT2(0x14c) EMIT2(0x14e) EMIT2(0x150)
+      EMIT2(0x19f) EMIT2(0x1a0) EMIT2(0x1d1)
+      EMIT2(0x1ea) EMIT2(0x1ec) EMIT2(0x1fe)
+      EMIT2(0x20c) EMIT2(0x20e) EMIT2(0x22a)
+      EMIT2(0x22c) EMIT2(0x22e) EMIT2(0x230)
+      EMIT2(0x1e4c) EMIT2(0x1e4e) EMIT2(0x1e50)
+      EMIT2(0x1e52) EMIT2(0x1ecc) EMIT2(0x1ece)
+      EMIT2(0x1ed0) EMIT2(0x1ed2) EMIT2(0x1ed4)
+      EMIT2(0x1ed6) EMIT2(0x1ed8) EMIT2(0x1eda)
+      EMIT2(0x1edc) EMIT2(0x1ede) EMIT2(0x1ee0)
+      EMIT2(0x1ee2)
       return;
 
-    case 'P': case 0x1e54: case 0x1e56:
-      EMIT2('P'); EMITMBC(0x1e54) EMITMBC(0x1e56)
+    case 'P': case 0x1a4: case 0x1e54: case 0x1e56: case 0x2c63:
+      EMIT2('P') EMIT2(0x1a4) EMIT2(0x1e54) EMIT2(0x1e56)
+      EMIT2(0x2c63)
       return;
 
-    case 'R': CASEMBC(0x154) CASEMBC(0x156) CASEMBC(0x158)
-              CASEMBC(0x1e58) CASEMBC(0x1e5e)
-      EMIT2('R'); EMITMBC(0x154) EMITMBC(0x156) EMITMBC(0x158)
-      EMITMBC(0x1e58) EMITMBC(0x1e5e)
+    case 'Q': case 0x24a:
+      EMIT2('Q') EMIT2(0x24a)
       return;
 
-    case 'S': CASEMBC(0x15a) CASEMBC(0x15c) CASEMBC(0x15e)
-              CASEMBC(0x160) CASEMBC(0x1e60)
-      EMIT2('S'); EMITMBC(0x15a) EMITMBC(0x15c) EMITMBC(0x15e)
-      EMITMBC(0x160) EMITMBC(0x1e60)
+    case 'R': case 0x154: case 0x156: case 0x158: case 0x210:
+    case 0x212: case 0x24c: case 0x1e58: case 0x1e5a:
+    case 0x1e5c: case 0x1e5e: case 0x2c64: case 0xa7a6:
+      EMIT2('R') EMIT2(0x154) EMIT2(0x156) EMIT2(0x158)
+      EMIT2(0x210) EMIT2(0x212) EMIT2(0x24c) EMIT2(0x1e58)
+      EMIT2(0x1e5a) EMIT2(0x1e5c) EMIT2(0x1e5e) EMIT2(0x2c64)
+      EMIT2(0xa7a6)
       return;
 
-    case 'T': CASEMBC(0x162) CASEMBC(0x164) CASEMBC(0x166)
-              CASEMBC(0x1e6a) CASEMBC(0x1e6e)
-      EMIT2('T'); EMITMBC(0x162) EMITMBC(0x164) EMITMBC(0x166)
-      EMITMBC(0x1e6a) EMITMBC(0x1e6e)
+    case 'S': case 0x15a: case 0x15c: case 0x15e: case 0x160:
+    case 0x218: case 0x1e60: case 0x1e62: case 0x1e64:
+    case 0x1e66: case 0x1e68: case 0x2c7e: case 0xa7a8:
+      EMIT2('S') EMIT2(0x15a) EMIT2(0x15c) EMIT2(0x15e)
+      EMIT2(0x160) EMIT2(0x218) EMIT2(0x1e60) EMIT2(0x1e62)
+      EMIT2(0x1e64) EMIT2(0x1e66) EMIT2(0x1e68) EMIT2(0x2c7e)
+      EMIT2(0xa7a8)
+      return;
+
+    case 'T': case 0x162: case 0x164: case 0x166: case 0x1ac:
+    case 0x1ae: case 0x21a: case 0x23e: case 0x1e6a: case 0x1e6c:
+    case 0x1e6e: case 0x1e70:
+      EMIT2('T') EMIT2(0x162) EMIT2(0x164) EMIT2(0x166)
+      EMIT2(0x1ac) EMIT2(0x1ae) EMIT2(0x23e) EMIT2(0x21a)
+      EMIT2(0x1e6a) EMIT2(0x1e6c) EMIT2(0x1e6e) EMIT2(0x1e70)
       return;
 
     case 'U': case U_grave: case U_acute: case U_diaeresis:
-              case U_circumflex: CASEMBC(0x168) CASEMBC(0x16a)
-              CASEMBC(0x16c) CASEMBC(0x16e) CASEMBC(0x170)
-              CASEMBC(0x172) CASEMBC(0x1af) CASEMBC(0x1d3)
-              CASEMBC(0x1ee6)
-      EMIT2('U'); EMIT2(U_grave); EMIT2(U_acute);
-      EMIT2(U_diaeresis); EMIT2(U_circumflex);
-      EMITMBC(0x168) EMITMBC(0x16a)
-      EMITMBC(0x16c) EMITMBC(0x16e) EMITMBC(0x170)
-      EMITMBC(0x172) EMITMBC(0x1af) EMITMBC(0x1d3)
-      EMITMBC(0x1ee6)
+    case U_circumflex: case 0x168: case 0x16a: case 0x16c:
+    case 0x16e: case 0x170: case 0x172: case 0x1af:
+    case 0x1d3: case 0x1d5: case 0x1d7: case 0x1d9:
+    case 0x1db: case 0x214: case 0x216: case 0x244:
+    case 0x1e72: case 0x1e74: case 0x1e76: case 0x1e78:
+    case 0x1e7a: case 0x1ee4: case 0x1ee6: case 0x1ee8:
+    case 0x1eea: case 0x1eec: case 0x1eee: case 0x1ef0:
+      EMIT2('U') EMIT2(U_grave) EMIT2(U_acute)
+      EMIT2(U_diaeresis) EMIT2(U_circumflex)
+      EMIT2(0x168) EMIT2(0x16a)
+      EMIT2(0x16c) EMIT2(0x16e) EMIT2(0x170)
+      EMIT2(0x172) EMIT2(0x1af) EMIT2(0x1d3)
+      EMIT2(0x1d5) EMIT2(0x1d7) EMIT2(0x1d9)
+      EMIT2(0x1db) EMIT2(0x214) EMIT2(0x216)
+      EMIT2(0x244) EMIT2(0x1e72) EMIT2(0x1e74)
+      EMIT2(0x1e76) EMIT2(0x1e78) EMIT2(0x1e7a)
+      EMIT2(0x1ee4) EMIT2(0x1ee6) EMIT2(0x1ee8)
+      EMIT2(0x1eea) EMIT2(0x1eec) EMIT2(0x1eee)
+      EMIT2(0x1ef0)
       return;
 
-    case 'V': CASEMBC(0x1e7c)
-      EMIT2('V'); EMITMBC(0x1e7c)
+    case 'V': case 0x1b2: case 0x1e7c: case 0x1e7e:
+      EMIT2('V') EMIT2(0x1b2) EMIT2(0x1e7c) EMIT2(0x1e7e)
       return;
 
-    case 'W': CASEMBC(0x174) CASEMBC(0x1e80) CASEMBC(0x1e82)
-              CASEMBC(0x1e84) CASEMBC(0x1e86)
-      EMIT2('W'); EMITMBC(0x174) EMITMBC(0x1e80) EMITMBC(0x1e82)
-      EMITMBC(0x1e84) EMITMBC(0x1e86)
+    case 'W': case 0x174: case 0x1e80: case 0x1e82: case 0x1e84:
+    case 0x1e86: case 0x1e88:
+      EMIT2('W') EMIT2(0x174) EMIT2(0x1e80) EMIT2(0x1e82)
+      EMIT2(0x1e84) EMIT2(0x1e86) EMIT2(0x1e88)
       return;
 
-    case 'X': CASEMBC(0x1e8a) CASEMBC(0x1e8c)
-      EMIT2('X'); EMITMBC(0x1e8a) EMITMBC(0x1e8c)
+    case 'X': case 0x1e8a: case 0x1e8c:
+      EMIT2('X') EMIT2(0x1e8a) EMIT2(0x1e8c)
       return;
 
-    case 'Y': case Y_acute: CASEMBC(0x176) CASEMBC(0x178)
-              CASEMBC(0x1e8e) CASEMBC(0x1ef2) CASEMBC(0x1ef6)
-              CASEMBC(0x1ef8)
-      EMIT2('Y'); EMIT2(Y_acute);
-      EMITMBC(0x176) EMITMBC(0x178)
-      EMITMBC(0x1e8e) EMITMBC(0x1ef2) EMITMBC(0x1ef6)
-      EMITMBC(0x1ef8)
+    case 'Y': case Y_acute: case 0x176: case 0x178:
+    case 0x1b3: case 0x232: case 0x24e: case 0x1e8e:
+    case 0x1ef2: case 0x1ef4: case 0x1ef6: case 0x1ef8:
+      EMIT2('Y') EMIT2(Y_acute)
+      EMIT2(0x176) EMIT2(0x178) EMIT2(0x1b3)
+      EMIT2(0x232) EMIT2(0x24e) EMIT2(0x1e8e)
+      EMIT2(0x1ef2) EMIT2(0x1ef4) EMIT2(0x1ef6)
+      EMIT2(0x1ef8)
       return;
 
-    case 'Z': CASEMBC(0x179) CASEMBC(0x17b) CASEMBC(0x17d)
-              CASEMBC(0x1b5) CASEMBC(0x1e90) CASEMBC(0x1e94)
-      EMIT2('Z'); EMITMBC(0x179) EMITMBC(0x17b) EMITMBC(0x17d)
-      EMITMBC(0x1b5) EMITMBC(0x1e90) EMITMBC(0x1e94)
+    case 'Z': case 0x179: case 0x17b: case 0x17d:
+    case 0x1b5: case 0x1e90: case 0x1e92: case 0x1e94:
+    case 0x2c6b:
+      EMIT2('Z') EMIT2(0x179) EMIT2(0x17b) EMIT2(0x17d)
+      EMIT2(0x1b5) EMIT2(0x1e90) EMIT2(0x1e92)
+      EMIT2(0x1e94) EMIT2(0x2c6b)
       return;
 
     case 'a': case a_grave: case a_acute: case a_circumflex:
-              case a_virguilla: case a_diaeresis: case a_ring:
-              CASEMBC(0x101) CASEMBC(0x103) CASEMBC(0x105)
-              CASEMBC(0x1ce) CASEMBC(0x1df) CASEMBC(0x1e1)
-              CASEMBC(0x1ea3)
-      EMIT2('a'); EMIT2(a_grave); EMIT2(a_acute);
-      EMIT2(a_circumflex); EMIT2(a_virguilla);
-      EMIT2(a_diaeresis); EMIT2(a_ring);
-      EMITMBC(0x101) EMITMBC(0x103) EMITMBC(0x105)
-      EMITMBC(0x1ce) EMITMBC(0x1df) EMITMBC(0x1e1)
-      EMITMBC(0x1ea3)
+    case a_virguilla: case a_diaeresis: case a_ring:
+    case 0x101: case 0x103: case 0x105: case 0x1ce:
+    case 0x1df: case 0x1e1: case 0x1fb: case 0x201:
+    case 0x203: case 0x227: case 0x1d8f: case 0x1e01:
+    case 0x1e9a: case 0x1ea1: case 0x1ea3: case 0x1ea5:
+    case 0x1ea7: case 0x1ea9: case 0x1eab: case 0x1ead:
+    case 0x1eaf: case 0x1eb1: case 0x1eb3: case 0x1eb5:
+    case 0x1eb7: case 0x2c65:
+      EMIT2('a') EMIT2(a_grave) EMIT2(a_acute)
+      EMIT2(a_circumflex) EMIT2(a_virguilla)
+      EMIT2(a_diaeresis) EMIT2(a_ring)
+      EMIT2(0x101) EMIT2(0x103) EMIT2(0x105)
+      EMIT2(0x1ce) EMIT2(0x1df) EMIT2(0x1e1)
+      EMIT2(0x1fb) EMIT2(0x201) EMIT2(0x203)
+      EMIT2(0x227) EMIT2(0x1d8f) EMIT2(0x1e01)
+      EMIT2(0x1e9a) EMIT2(0x1ea1) EMIT2(0x1ea3)
+      EMIT2(0x1ea5) EMIT2(0x1ea7) EMIT2(0x1ea9)
+      EMIT2(0x1eab) EMIT2(0x1ead) EMIT2(0x1eaf)
+      EMIT2(0x1eb1) EMIT2(0x1eb3) EMIT2(0x1eb5)
+      EMIT2(0x1eb7) EMIT2(0x2c65)
       return;
 
-    case 'b': CASEMBC(0x1e03) CASEMBC(0x1e07)
-      EMIT2('b'); EMITMBC(0x1e03) EMITMBC(0x1e07)
+    case 'b': case 0x180: case 0x253: case 0x1d6c: case 0x1d80:
+    case 0x1e03: case 0x1e05: case 0x1e07:
+      EMIT2('b') EMIT2(0x180) EMIT2(0x253) EMIT2(0x1d6c)
+      EMIT2(0x1d80) EMIT2(0x1e03) EMIT2(0x1e05) EMIT2(0x1e07)
       return;
 
-    case 'c': case c_cedilla: CASEMBC(0x107) CASEMBC(0x109)
-              CASEMBC(0x10b) CASEMBC(0x10d)
-      EMIT2('c'); EMIT2(c_cedilla);
-      EMITMBC(0x107) EMITMBC(0x109)
-      EMITMBC(0x10b) EMITMBC(0x10d)
+    case 'c': case c_cedilla: case 0x107: case 0x109: case 0x10b:
+    case 0x10d: case 0x188: case 0x23c: case 0x1e09: case 0xa793:
+    case 0xa794:
+      EMIT2('c') EMIT2(c_cedilla)
+      EMIT2(0x107) EMIT2(0x109) EMIT2(0x10b)
+      EMIT2(0x10d) EMIT2(0x188) EMIT2(0x23c)
+      EMIT2(0x1e09) EMIT2(0xa793) EMIT2(0xa794)
       return;
 
-    case 'd': CASEMBC(0x10f) CASEMBC(0x111) CASEMBC(0x1e0b)
-              CASEMBC(0x1e0f) CASEMBC(0x1e11)
-      EMIT2('d'); EMITMBC(0x10f) EMITMBC(0x111) EMITMBC(0x1e0b)
-      EMITMBC(0x1e0f) EMITMBC(0x1e11)
+    case 'd': case 0x10f: case 0x111: case 0x257: case 0x1d6d:
+    case 0x1d81: case 0x1d91: case 0x1e0b: case 0x1e0d: case 0x1e0f:
+    case 0x1e11: case 0x1e13:
+      EMIT2('d') EMIT2(0x10f) EMIT2(0x111)
+      EMIT2(0x257) EMIT2(0x1d6d) EMIT2(0x1d81)
+      EMIT2(0x1d91) EMIT2(0x1e0b) EMIT2(0x1e0d)
+      EMIT2(0x1e0f) EMIT2(0x1e11) EMIT2(0x1e13)
       return;
 
     case 'e': case e_grave: case e_acute: case e_circumflex:
-              case e_diaeresis: CASEMBC(0x113) CASEMBC(0x115)
-              CASEMBC(0x117) CASEMBC(0x119) CASEMBC(0x11b)
-              CASEMBC(0x1ebb) CASEMBC(0x1ebd)
-      EMIT2('e'); EMIT2(e_grave); EMIT2(e_acute);
-      EMIT2(e_circumflex); EMIT2(e_diaeresis);
-      EMITMBC(0x113) EMITMBC(0x115)
-      EMITMBC(0x117) EMITMBC(0x119) EMITMBC(0x11b)
-      EMITMBC(0x1ebb) EMITMBC(0x1ebd)
+    case e_diaeresis: case 0x113: case 0x115: case 0x117:
+    case 0x119: case 0x11b: case 0x205: case 0x207:
+    case 0x229: case 0x247: case 0x1d92: case 0x1e15:
+    case 0x1e17: case 0x1e19: case 0x1e1b: case 0x1e1d:
+    case 0x1eb9: case 0x1ebb: case 0x1ebd: case 0x1ebf:
+    case 0x1ec1: case 0x1ec3: case 0x1ec5: case 0x1ec7:
+      EMIT2('e') EMIT2(e_grave) EMIT2(e_acute)
+      EMIT2(e_circumflex) EMIT2(e_diaeresis)
+      EMIT2(0x113) EMIT2(0x115)
+      EMIT2(0x117) EMIT2(0x119) EMIT2(0x11b)
+      EMIT2(0x205) EMIT2(0x207) EMIT2(0x229)
+      EMIT2(0x247) EMIT2(0x1d92) EMIT2(0x1e15)
+      EMIT2(0x1e17) EMIT2(0x1e19) EMIT2(0x1e1b)
+      EMIT2(0x1e1d) EMIT2(0x1eb9) EMIT2(0x1ebb)
+      EMIT2(0x1ebd) EMIT2(0x1ebf) EMIT2(0x1ec1)
+      EMIT2(0x1ec3) EMIT2(0x1ec5) EMIT2(0x1ec7)
       return;
 
-    case 'f': CASEMBC(0x1e1f)
-      EMIT2('f'); EMITMBC(0x1e1f)
+    case 'f': case 0x192: case 0x1d6e: case 0x1d82:
+    case 0x1e1f: case 0xa799:
+      EMIT2('f') EMIT2(0x192) EMIT2(0x1d6e) EMIT2(0x1d82)
+      EMIT2(0x1e1f) EMIT2(0xa799)
       return;
 
-    case 'g': CASEMBC(0x11d) CASEMBC(0x11f) CASEMBC(0x121)
-              CASEMBC(0x123) CASEMBC(0x1e5) CASEMBC(0x1e7)
-              CASEMBC(0x1f5) CASEMBC(0x1e21)
-      EMIT2('g'); EMITMBC(0x11d) EMITMBC(0x11f) EMITMBC(0x121)
-      EMITMBC(0x123) EMITMBC(0x1e5) EMITMBC(0x1e7)
-      EMITMBC(0x1f5) EMITMBC(0x1e21)
+    case 'g': case 0x11d: case 0x11f: case 0x121: case 0x123:
+    case 0x1e5: case 0x1e7: case 0x1f5: case 0x260: case 0x1d83:
+    case 0x1e21: case 0xa7a1:
+      EMIT2('g') EMIT2(0x11d) EMIT2(0x11f) EMIT2(0x121)
+      EMIT2(0x123) EMIT2(0x1e5) EMIT2(0x1e7)
+      EMIT2(0x1f5) EMIT2(0x260) EMIT2(0x1d83)
+      EMIT2(0x1e21) EMIT2(0xa7a1)
       return;
 
-    case 'h': CASEMBC(0x125) CASEMBC(0x127) CASEMBC(0x1e23)
-              CASEMBC(0x1e27) CASEMBC(0x1e29) CASEMBC(0x1e96)
-      EMIT2('h'); EMITMBC(0x125) EMITMBC(0x127) EMITMBC(0x1e23)
-      EMITMBC(0x1e27) EMITMBC(0x1e29) EMITMBC(0x1e96)
+    case 'h': case 0x125: case 0x127: case 0x21f: case 0x1e23:
+    case 0x1e25: case 0x1e27: case 0x1e29: case 0x1e2b:
+    case 0x1e96: case 0x2c68: case 0xa795:
+      EMIT2('h') EMIT2(0x125) EMIT2(0x127) EMIT2(0x21f)
+      EMIT2(0x1e23) EMIT2(0x1e25) EMIT2(0x1e27)
+      EMIT2(0x1e29) EMIT2(0x1e2b) EMIT2(0x1e96)
+      EMIT2(0x2c68) EMIT2(0xa795)
       return;
 
     case 'i': case i_grave: case i_acute: case i_circumflex:
-              case i_diaeresis: CASEMBC(0x129) CASEMBC(0x12b)
-              CASEMBC(0x12d) CASEMBC(0x12f) CASEMBC(0x1d0)
-              CASEMBC(0x1ec9)
-      EMIT2('i'); EMIT2(i_grave); EMIT2(i_acute);
-      EMIT2(i_circumflex); EMIT2(i_diaeresis);
-      EMITMBC(0x129) EMITMBC(0x12b)
-      EMITMBC(0x12d) EMITMBC(0x12f) EMITMBC(0x1d0)
-      EMITMBC(0x1ec9)
+    case i_diaeresis: case 0x129: case 0x12b: case 0x12d:
+    case 0x12f: case 0x1d0: case 0x209: case 0x20b:
+    case 0x268: case 0x1d96: case 0x1e2d: case 0x1e2f:
+    case 0x1ec9: case 0x1ecb:
+      EMIT2('i') EMIT2(i_grave) EMIT2(i_acute)
+      EMIT2(i_circumflex) EMIT2(i_diaeresis)
+      EMIT2(0x129) EMIT2(0x12b) EMIT2(0x12d)
+      EMIT2(0x12f) EMIT2(0x1d0) EMIT2(0x209)
+      EMIT2(0x20b) EMIT2(0x268) EMIT2(0x1d96)
+      EMIT2(0x1e2d) EMIT2(0x1e2f) EMIT2(0x1ec9)
+      EMIT2(0x1ecb) EMIT2(0x1ecb)
       return;
 
-    case 'j': CASEMBC(0x135) CASEMBC(0x1f0)
-      EMIT2('j'); EMITMBC(0x135) EMITMBC(0x1f0)
+    case 'j': case 0x135: case 0x1f0: case 0x249:
+      EMIT2('j') EMIT2(0x135) EMIT2(0x1f0) EMIT2(0x249)
       return;
 
-    case 'k': CASEMBC(0x137) CASEMBC(0x1e9) CASEMBC(0x1e31)
-              CASEMBC(0x1e35)
-      EMIT2('k'); EMITMBC(0x137) EMITMBC(0x1e9) EMITMBC(0x1e31)
-      EMITMBC(0x1e35)
+    case 'k': case 0x137: case 0x199: case 0x1e9: case 0x1d84:
+    case 0x1e31: case 0x1e33: case 0x1e35: case 0x2c6a: case 0xa741:
+      EMIT2('k') EMIT2(0x137) EMIT2(0x199) EMIT2(0x1e9)
+      EMIT2(0x1d84) EMIT2(0x1e31) EMIT2(0x1e33)
+      EMIT2(0x1e35) EMIT2(0x2c6a) EMIT2(0xa741)
       return;
 
-    case 'l': CASEMBC(0x13a) CASEMBC(0x13c) CASEMBC(0x13e)
-              CASEMBC(0x140) CASEMBC(0x142) CASEMBC(0x1e3b)
-      EMIT2('l'); EMITMBC(0x13a) EMITMBC(0x13c) EMITMBC(0x13e)
-      EMITMBC(0x140) EMITMBC(0x142) EMITMBC(0x1e3b)
+    case 'l': case 0x13a: case 0x13c: case 0x13e: case 0x140:
+    case 0x142: case 0x19a: case 0x1e37: case 0x1e39: case 0x1e3b:
+    case 0x1e3d: case 0x2c61:
+      EMIT2('l') EMIT2(0x13a) EMIT2(0x13c)
+      EMIT2(0x13e) EMIT2(0x140) EMIT2(0x142)
+      EMIT2(0x19a) EMIT2(0x1e37) EMIT2(0x1e39)
+      EMIT2(0x1e3b) EMIT2(0x1e3d) EMIT2(0x2c61)
       return;
 
-    case 'm': CASEMBC(0x1e3f) CASEMBC(0x1e41)
-      EMIT2('m'); EMITMBC(0x1e3f) EMITMBC(0x1e41)
+    case 'm': case 0x1d6f: case 0x1e3f: case 0x1e41: case 0x1e43:
+      EMIT2('m') EMIT2(0x1d6f) EMIT2(0x1e3f)
+      EMIT2(0x1e41) EMIT2(0x1e43)
       return;
 
-    case 'n': case n_virguilla: CASEMBC(0x144) CASEMBC(0x146)
-              CASEMBC(0x148) CASEMBC(0x149) CASEMBC(0x1e45)
-              CASEMBC(0x1e49)
-      EMIT2('n'); EMIT2(n_virguilla);
-      EMITMBC(0x144) EMITMBC(0x146)
-      EMITMBC(0x148) EMITMBC(0x149) EMITMBC(0x1e45)
-      EMITMBC(0x1e49)
+    case 'n': case n_virguilla: case 0x144: case 0x146: case 0x148:
+    case 0x149: case 0x1f9: case 0x1d70: case 0x1d87: case 0x1e45:
+    case 0x1e47: case 0x1e49: case 0x1e4b: case 0xa7a5:
+      EMIT2('n') EMIT2(n_virguilla)
+      EMIT2(0x144) EMIT2(0x146) EMIT2(0x148)
+      EMIT2(0x149) EMIT2(0x1f9) EMIT2(0x1d70)
+      EMIT2(0x1d87) EMIT2(0x1e45) EMIT2(0x1e47)
+      EMIT2(0x1e49) EMIT2(0x1e4b) EMIT2(0xa7a5)
       return;
 
     case 'o': case o_grave: case o_acute: case o_circumflex:
-              case o_virguilla: case o_diaeresis: case o_slash:
-              CASEMBC(0x14d) CASEMBC(0x14f) CASEMBC(0x151)
-              CASEMBC(0x1a1) CASEMBC(0x1d2) CASEMBC(0x1eb)
-              CASEMBC(0x1ed) CASEMBC(0x1ecf)
-      EMIT2('o'); EMIT2(o_grave); EMIT2(o_acute);
-      EMIT2(o_circumflex); EMIT2(o_virguilla);
-      EMIT2(o_diaeresis); EMIT2(o_slash);
-      EMITMBC(0x14d) EMITMBC(0x14f) EMITMBC(0x151)
-      EMITMBC(0x1a1) EMITMBC(0x1d2) EMITMBC(0x1eb)
-      EMITMBC(0x1ed) EMITMBC(0x1ecf)
+    case o_virguilla: case o_diaeresis: case o_slash:
+    case 0x14d: case 0x14f: case 0x151: case 0x1a1:
+    case 0x1d2: case 0x1eb: case 0x1ed: case 0x1ff:
+    case 0x20d: case 0x20f: case 0x22b: case 0x22d:
+    case 0x22f: case 0x231: case 0x275: case 0x1e4d:
+    case 0x1e4f: case 0x1e51: case 0x1e53: case 0x1ecd:
+    case 0x1ecf: case 0x1ed1: case 0x1ed3: case 0x1ed5:
+    case 0x1ed7: case 0x1ed9: case 0x1edb: case 0x1edd:
+    case 0x1edf: case 0x1ee1: case 0x1ee3:
+      EMIT2('o') EMIT2(o_grave) EMIT2(o_acute)
+      EMIT2(o_circumflex) EMIT2(o_virguilla)
+      EMIT2(o_diaeresis) EMIT2(o_slash)
+      EMIT2(0x14d) EMIT2(0x14f) EMIT2(0x151)
+      EMIT2(0x1a1) EMIT2(0x1d2) EMIT2(0x1eb)
+      EMIT2(0x1ed) EMIT2(0x1ff) EMIT2(0x20d)
+      EMIT2(0x20f) EMIT2(0x22b) EMIT2(0x22d)
+      EMIT2(0x22f) EMIT2(0x231) EMIT2(0x275)
+      EMIT2(0x1e4d) EMIT2(0x1e4f) EMIT2(0x1e51)
+      EMIT2(0x1e53) EMIT2(0x1ecd) EMIT2(0x1ecf)
+      EMIT2(0x1ed1) EMIT2(0x1ed3) EMIT2(0x1ed5)
+      EMIT2(0x1ed7) EMIT2(0x1ed9) EMIT2(0x1edb)
+      EMIT2(0x1edd) EMIT2(0x1edf) EMIT2(0x1ee1)
+      EMIT2(0x1ee3)
       return;
 
-    case 'p': CASEMBC(0x1e55) CASEMBC(0x1e57)
-      EMIT2('p'); EMITMBC(0x1e55) EMITMBC(0x1e57)
+    case 'p': case 0x1a5: case 0x1d71: case 0x1d7d: case 0x1d88:
+    case 0x1e55: case 0x1e57:
+      EMIT2('p') EMIT2(0x1a5) EMIT2(0x1d71) EMIT2(0x1d7d)
+      EMIT2(0x1d88) EMIT2(0x1e55) EMIT2(0x1e57)
       return;
 
-    case 'r': CASEMBC(0x155) CASEMBC(0x157) CASEMBC(0x159)
-              CASEMBC(0x1e59) CASEMBC(0x1e5f)
-      EMIT2('r'); EMITMBC(0x155) EMITMBC(0x157) EMITMBC(0x159)
-      EMITMBC(0x1e59) EMITMBC(0x1e5f)
+    case 'q': case 0x24b: case 0x2a0:
+      EMIT2('q') EMIT2(0x24b) EMIT2(0x2a0)
       return;
 
-    case 's': CASEMBC(0x15b) CASEMBC(0x15d) CASEMBC(0x15f)
-              CASEMBC(0x161) CASEMBC(0x1e61)
-      EMIT2('s'); EMITMBC(0x15b) EMITMBC(0x15d) EMITMBC(0x15f)
-      EMITMBC(0x161) EMITMBC(0x1e61)
+    case 'r': case 0x155: case 0x157: case 0x159: case 0x211:
+    case 0x213: case 0x24d: case 0x27d: case 0x1d72: case 0x1d73:
+    case 0x1d89: case 0x1e59: case 0x1e5b: case 0x1e5d: case 0x1e5f:
+    case 0xa7a7:
+      EMIT2('r') EMIT2(0x155) EMIT2(0x157) EMIT2(0x159)
+      EMIT2(0x211) EMIT2(0x213) EMIT2(0x24d) EMIT2(0x27d)
+      EMIT2(0x1d72) EMIT2(0x1d73) EMIT2(0x1d89) EMIT2(0x1e59)
+      EMIT2(0x1e5b) EMIT2(0x1e5d) EMIT2(0x1e5f) EMIT2(0xa7a7)
       return;
 
-    case 't': CASEMBC(0x163) CASEMBC(0x165) CASEMBC(0x167)
-              CASEMBC(0x1e6b) CASEMBC(0x1e6f) CASEMBC(0x1e97)
-      EMIT2('t'); EMITMBC(0x163) EMITMBC(0x165) EMITMBC(0x167)
-      EMITMBC(0x1e6b) EMITMBC(0x1e6f) EMITMBC(0x1e97)
+    case 's': case 0x15b: case 0x15d: case 0x15f: case 0x161:
+    case 0x219: case 0x23f: case 0x1d74: case 0x1d8a: case 0x1e61:
+    case 0x1e63: case 0x1e65: case 0x1e67: case 0x1e69: case 0xa7a9:
+      EMIT2('s') EMIT2(0x15b) EMIT2(0x15d) EMIT2(0x15f)
+      EMIT2(0x161) EMIT2(0x219) EMIT2(0x23f) EMIT2(0x1d74)
+      EMIT2(0x1d8a) EMIT2(0x1e61) EMIT2(0x1e63) EMIT2(0x1e65)
+      EMIT2(0x1e67) EMIT2(0x1e69) EMIT2(0xa7a9)
+      return;
+
+    case 't': case 0x163: case 0x165: case 0x167: case 0x1ab:
+    case 0x1ad: case 0x21b: case 0x288: case 0x1d75: case 0x1e6b:
+    case 0x1e6d: case 0x1e6f: case 0x1e71: case 0x1e97: case 0x2c66:
+      EMIT2('t') EMIT2(0x163) EMIT2(0x165) EMIT2(0x167)
+      EMIT2(0x1ab) EMIT2(0x1ad) EMIT2(0x21b) EMIT2(0x288)
+      EMIT2(0x1d75) EMIT2(0x1e6b) EMIT2(0x1e6d) EMIT2(0x1e6f)
+      EMIT2(0x1e71) EMIT2(0x1e97) EMIT2(0x2c66)
       return;
 
     case 'u': case u_grave: case u_acute: case u_circumflex:
-              case u_diaeresis: CASEMBC(0x169) CASEMBC(0x16b)
-              CASEMBC(0x16d) CASEMBC(0x16f) CASEMBC(0x171)
-              CASEMBC(0x173) CASEMBC(0x1b0) CASEMBC(0x1d4)
-              CASEMBC(0x1ee7)
-      EMIT2('u'); EMIT2(u_grave); EMIT2(u_acute);
-      EMIT2(u_circumflex); EMIT2(u_diaeresis);
-      EMITMBC(0x169) EMITMBC(0x16b)
-      EMITMBC(0x16d) EMITMBC(0x16f) EMITMBC(0x171)
-      EMITMBC(0x173) EMITMBC(0x1b0) EMITMBC(0x1d4)
-      EMITMBC(0x1ee7)
+    case u_diaeresis: case 0x169: case 0x16b: case 0x16d:
+    case 0x16f: case 0x171: case 0x173: case 0x1b0: case 0x1d4:
+    case 0x1d6: case 0x1d8: case 0x1da: case 0x1dc: case 0x215:
+    case 0x217: case 0x289: case 0x1d7e: case 0x1d99: case 0x1e73:
+    case 0x1e75: case 0x1e77: case 0x1e79: case 0x1e7b:
+    case 0x1ee5: case 0x1ee7: case 0x1ee9: case 0x1eeb:
+    case 0x1eed: case 0x1eef: case 0x1ef1:
+      EMIT2('u') EMIT2(u_grave) EMIT2(u_acute)
+      EMIT2(u_circumflex) EMIT2(u_diaeresis)
+      EMIT2(0x169) EMIT2(0x16b)
+      EMIT2(0x16d) EMIT2(0x16f) EMIT2(0x171)
+      EMIT2(0x173) EMIT2(0x1d6) EMIT2(0x1d8)
+      EMIT2(0x215) EMIT2(0x217) EMIT2(0x1b0)
+      EMIT2(0x1d4) EMIT2(0x1da) EMIT2(0x1dc)
+      EMIT2(0x289) EMIT2(0x1e73) EMIT2(0x1d7e)
+      EMIT2(0x1d99) EMIT2(0x1e75) EMIT2(0x1e77)
+      EMIT2(0x1e79) EMIT2(0x1e7b) EMIT2(0x1ee5)
+      EMIT2(0x1ee7) EMIT2(0x1ee9) EMIT2(0x1eeb)
+      EMIT2(0x1eed) EMIT2(0x1eef) EMIT2(0x1ef1)
       return;
 
-    case 'v': CASEMBC(0x1e7d)
-      EMIT2('v'); EMITMBC(0x1e7d)
+    case 'v': case 0x28b: case 0x1d8c: case 0x1e7d: case 0x1e7f:
+      EMIT2('v') EMIT2(0x28b) EMIT2(0x1d8c) EMIT2(0x1e7d)
+      EMIT2(0x1e7f)
       return;
 
-    case 'w': CASEMBC(0x175) CASEMBC(0x1e81) CASEMBC(0x1e83)
-              CASEMBC(0x1e85) CASEMBC(0x1e87) CASEMBC(0x1e98)
-      EMIT2('w'); EMITMBC(0x175) EMITMBC(0x1e81) EMITMBC(0x1e83)
-      EMITMBC(0x1e85) EMITMBC(0x1e87) EMITMBC(0x1e98)
+    case 'w': case 0x175: case 0x1e81: case 0x1e83: case 0x1e85:
+    case 0x1e87: case 0x1e89: case 0x1e98:
+      EMIT2('w') EMIT2(0x175) EMIT2(0x1e81) EMIT2(0x1e83)
+      EMIT2(0x1e85) EMIT2(0x1e87) EMIT2(0x1e89) EMIT2(0x1e98)
       return;
 
-    case 'x': CASEMBC(0x1e8b) CASEMBC(0x1e8d)
-      EMIT2('x'); EMITMBC(0x1e8b) EMITMBC(0x1e8d)
+    case 'x': case 0x1e8b: case 0x1e8d:
+      EMIT2('x') EMIT2(0x1e8b) EMIT2(0x1e8d)
       return;
 
-    case 'y': case y_acute: case y_diaeresis: CASEMBC(0x177)
-              CASEMBC(0x1e8f) CASEMBC(0x1e99) CASEMBC(0x1ef3)
-              CASEMBC(0x1ef7) CASEMBC(0x1ef9)
-      EMIT2('y'); EMIT2(y_acute); EMIT2(y_diaeresis);
-      EMITMBC(0x177)
-      EMITMBC(0x1e8f) EMITMBC(0x1e99) EMITMBC(0x1ef3)
-      EMITMBC(0x1ef7) EMITMBC(0x1ef9)
+    case 'y': case y_acute: case y_diaeresis: case 0x177:
+    case 0x1b4: case 0x233: case 0x24f: case 0x1e8f:
+    case 0x1e99: case 0x1ef3: case 0x1ef5: case 0x1ef7:
+    case 0x1ef9:
+      EMIT2('y') EMIT2(y_acute) EMIT2(y_diaeresis)
+      EMIT2(0x177) EMIT2(0x1b4) EMIT2(0x233) EMIT2(0x24f)
+      EMIT2(0x1e8f) EMIT2(0x1e99) EMIT2(0x1ef3)
+      EMIT2(0x1ef5) EMIT2(0x1ef7) EMIT2(0x1ef9)
       return;
 
-    case 'z': CASEMBC(0x17a) CASEMBC(0x17c) CASEMBC(0x17e)
-              CASEMBC(0x1b6) CASEMBC(0x1e91) CASEMBC(0x1e95)
-      EMIT2('z'); EMITMBC(0x17a) EMITMBC(0x17c) EMITMBC(0x17e)
-      EMITMBC(0x1b6) EMITMBC(0x1e91) EMITMBC(0x1e95)
+    case 'z': case 0x17a: case 0x17c: case 0x17e: case 0x1b6:
+    case 0x1d76: case 0x1d8e: case 0x1e91: case 0x1e93:
+    case 0x1e95: case 0x2c6c:
+      EMIT2('z') EMIT2(0x17a) EMIT2(0x17c) EMIT2(0x17e)
+      EMIT2(0x1b6) EMIT2(0x1d76) EMIT2(0x1d8e) EMIT2(0x1e91)
+      EMIT2(0x1e93) EMIT2(0x1e95) EMIT2(0x2c6c)
       return;
 
-      /* default: character itself */
+      // default: character itself
     }
   }
 
   EMIT2(c);
 #undef EMIT2
-#undef EMITMBC
 }
 
 /*

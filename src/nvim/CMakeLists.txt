@@ -39,6 +39,7 @@ set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
 set(GENERATED_UI_EVENTS_BRIDGE ${GENERATED_DIR}/ui_events_bridge.generated.h)
+set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
 set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
@@ -57,12 +58,14 @@ set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
-set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(LUA_EDITOR_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_editor.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
 set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
 set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lua)
+set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
+set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -131,6 +134,9 @@ list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
   if(${f} MATCHES "^(regexp_nfa.c)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+  if(${f} MATCHES "^(regexp_bt.c)$")
     list(APPEND to_remove ${sfile})
   endif()
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
@@ -259,12 +265,14 @@ endif()
 # NVIM_GENERATED_SOURCES: generated source files
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
+              "${CMAKE_CURRENT_LIST_DIR}/regexp_bt.c"
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
               ${GENERATED_API_DISPATCH}
               "${GENERATED_UI_EVENTS_CALL}"
               "${GENERATED_UI_EVENTS_REMOTE}"
               "${GENERATED_UI_EVENTS_BRIDGE}"
               "${GENERATED_KEYSETS}"
+              "${GENERATED_UI_EVENTS_CLIENT}"
               )
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
@@ -330,20 +338,25 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
       "LUAC_PRG=${LUAC_PRG}"
       ${LUA_PRG} ${CHAR_BLOB_GENERATOR} -c ${VIM_MODULE_FILE}
-      ${LUA_VIM_MODULE_SOURCE} vim_module
-      ${LUA_SHARED_MODULE_SOURCE} shared_module
-      ${LUA_INSPECT_MODULE_SOURCE} inspect_module
-      ${LUA_F_MODULE_SOURCE} lua_F_module
-      ${LUA_META_MODULE_SOURCE} lua_meta_module
-      ${LUA_FILETYPE_MODULE_SOURCE} lua_filetype_module
+      ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
+      ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
+      ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
+      ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
+      ${LUA_F_MODULE_SOURCE} "vim.F"
+      ${LUA_META_MODULE_SOURCE} "vim._meta"
+      ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
+      ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
-    ${LUA_VIM_MODULE_SOURCE}
+    ${LUA_INIT_PACKAGES_MODULE_SOURCE}
+    ${LUA_EDITOR_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
     ${LUA_META_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
+    ${LUA_LOAD_PACKAGE_MODULE_SOURCE}
+    ${LUA_KEYMAP_MODULE_SOURCE}
   VERBATIM
 )
 
@@ -357,6 +370,7 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${GENERATED_UI_EVENTS_BRIDGE}
          ${GENERATED_UI_EVENTS_METADATA}
+         ${GENERATED_UI_EVENTS_CLIENT}
   COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
                      ${GENERATED_UI_EVENTS}
@@ -364,6 +378,7 @@ add_custom_command(
                      ${GENERATED_UI_EVENTS_REMOTE}
                      ${GENERATED_UI_EVENTS_BRIDGE}
                      ${GENERATED_UI_EVENTS_METADATA}
+                     ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${API_UI_EVENTS_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
@@ -493,6 +508,9 @@ add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
+if(MSVC)
+  install(FILES $<TARGET_PDB_FILE:nvim> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+endif()
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})

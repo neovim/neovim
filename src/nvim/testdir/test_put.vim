@@ -1,5 +1,7 @@
 " Tests for put commands, e.g. ":put", "p", "gp", "P", "gP", etc.
 
+source check.vim
+
 func Test_put_block()
   new
   call feedkeys("i\<C-V>u2500\<CR>x\<ESC>", 'x')
@@ -109,6 +111,83 @@ func Test_put_p_indent_visual()
   normal k0wve[p
   call assert_equal('select that text', getline(1))
   call assert_equal('select that text', getline(2))
+  bwipe!
+endfunc
+
+func Test_gp_with_count_leaves_cursor_at_end()
+  new
+  call setline(1, '<---->')
+  call setreg('@', "foo\nbar", 'c')
+  normal 1G3|3gp
+  call assert_equal([0, 4, 4, 0], getpos("."))
+  call assert_equal(['<--foo', 'barfoo', 'barfoo', 'bar-->'], getline(1, '$'))
+  call assert_equal([0, 4, 3, 0], getpos("']"))
+
+  bwipe!
+endfunc
+
+func Test_p_with_count_leaves_mark_at_end()
+  new
+  call setline(1, '<---->')
+  call setreg('@', "start\nend", 'c')
+  normal 1G3|3p
+  call assert_equal([0, 1, 4, 0], getpos("."))
+  call assert_equal(['<--start', 'endstart', 'endstart', 'end-->'], getline(1, '$'))
+  call assert_equal([0, 4, 3, 0], getpos("']"))
+
+  bwipe!
+endfunc
+
+func Test_very_large_count()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  let @" = repeat('x', 100)
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  let @" = repeat('x', 100)
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>99ly"
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>$y"
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_put_above_first_line()
+  new
+  let @" = 'text'
+  silent! normal 0o00
+  0put
+  call assert_equal('text', getline(1))
   bwipe!
 endfunc
 

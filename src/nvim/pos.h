@@ -16,7 +16,9 @@ typedef int colnr_T;
 /// Maximal (invalid) line number
 enum { MAXLNUM = 0x7fffffff, };
 /// Maximal column number
-enum { MAXCOL = INT_MAX, };
+/// MAXCOL used to be INT_MAX, but with 64 bit ints that results in running
+/// out of memory when trying to allocate a very long line.
+enum { MAXCOL = 0x7fffffff, };
 // Minimum line number
 enum { MINLNUM = 1, };
 // minimum column number

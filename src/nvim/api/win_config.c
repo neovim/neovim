@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
+#include "nvim/highlight_group.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
@@ -125,13 +126,13 @@
 ///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
 ///     If the number of chars are less than eight, they will be repeated. Thus
 ///     an ASCII border could be specified as
-///       [ "/", "-", "\\", "|" ],
+///       [ "/", "-", \"\\\\\", "|" ],
 ///     or all chars the same as
 ///       [ "x" ].
 ///     An empty string can be used to turn off a specific border, for instance,
 ///       [ "", "", "", ">", "", "", "", "<" ]
 ///     will only make vertical borders but not horizontal ones.
-///     By default, `FloatBorder` highlight is used, which links to `VertSplit`
+///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
 ///   - noautocmd: If true then no buffer-related autocommand events such as

@@ -127,21 +127,21 @@ file: >
     system(['lpr']
            + (empty(&printdevice)?[]:['-P', &printdevice])
            + [v:fname_in])
-    . delete(v:fname_in)
+    .. delete(v:fname_in)
     + v:shell_error
 
 On MS-Dos and MS-Windows machines the default is to copy the file to the
 currently specified printdevice: >
 
     system(['copy', v:fname_in, empty(&printdevice)?'LPT1':&printdevice])
-    . delete(v:fname_in)
+    .. delete(v:fname_in)
 
 If you change this option, using a function is an easy way to avoid having to
 escape all the spaces.  Example: >
 
 	:set printexpr=PrintFile(v:fname_in)
 	:function PrintFile(fname)
-	:  call system("ghostview " . a:fname)
+	:  call system("ghostview " .. a:fname)
 	:  call delete(a:fname)
 	:  return v:shell_error
 	:endfunc

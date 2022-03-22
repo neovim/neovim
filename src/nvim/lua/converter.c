@@ -156,7 +156,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
             && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
       if (tsize == 0 && lua_getmetatable(lstate, -1)) {
-        nlua_pushref(lstate, nlua_empty_dict_ref);
+        nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
         if (lua_rawequal(lstate, -2, -1)) {
           ret.type = kObjectTypeDictionary;
         }
@@ -286,9 +286,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       break;
     case LUA_TBOOLEAN:
       cur.tv->v_type = VAR_BOOL;
-      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1)
-                               ? kBoolVarTrue
-                               : kBoolVarFalse);
+      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1) ? kBoolVarTrue : kBoolVarFalse);
       break;
     case LUA_TSTRING: {
       size_t len;
@@ -316,7 +314,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       LuaRef table_ref = LUA_NOREF;
       if (lua_getmetatable(lstate, -1)) {
         lua_pop(lstate, 1);
-        table_ref = nlua_ref(lstate, -1);
+        table_ref = nlua_ref_global(lstate, -1);
       }
 
       const LuaTableProps table_props = nlua_traverse_table(lstate);
@@ -389,7 +387,7 @@ nlua_pop_typval_table_processing_end:
     }
     case LUA_TFUNCTION: {
       LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-      state->lua_callable.func_ref = nlua_ref(lstate, -1);
+      state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
 
       char_u *name = register_cfunc(&nlua_CFunction_func_call,
                                     &nlua_CFunction_func_free,
@@ -401,7 +399,7 @@ nlua_pop_typval_table_processing_end:
     }
     case LUA_TUSERDATA: {
       // TODO(bfredl): check mt.__call and convert to function?
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
       bool is_nil = lua_rawequal(lstate, -2, -1);
       lua_pop(lstate, 1);
       if (is_nil) {
@@ -445,7 +443,7 @@ static bool typval_conv_special = false;
     if (typval_conv_special) { \
       lua_pushnil(lstate); \
     } else { \
-      nlua_pushref(lstate, nlua_nil_ref); \
+      nlua_pushref(lstate, nlua_global_refs->nil_ref); \
     } \
   } while (0)
 
@@ -478,7 +476,12 @@ static bool typval_conv_special = false;
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
-    TYPVAL_ENCODE_CONV_NIL(tv); \
+    ufunc_T *fp = find_func(fun); \
+    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
+      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+    } else { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+    } \
     goto typval_encode_stop_converting_one_item; \
   } while (0)
 
@@ -495,7 +498,7 @@ static bool typval_conv_special = false;
       nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary); \
     } else { \
       lua_createtable(lstate, 0, 0); \
-      nlua_pushref(lstate, nlua_empty_dict_ref); \
+      nlua_pushref(lstate, nlua_global_refs->empty_dict_ref); \
       lua_setmetatable(lstate, -2); \
     } \
   } while (0)
@@ -551,8 +554,8 @@ static bool typval_conv_special = false;
       const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
       if (mpval.type == conv_type) { \
         if (conv_type == kMPConvDict \
-              ? (void *)mpval.data.d.dict == (void *)(val) \
-              : (void *)mpval.data.l.list == (void *)(val)) { \
+            ? (void *)mpval.data.d.dict == (void *)(val) \
+            : (void *)mpval.data.l.list == (void *)(val)) { \
           lua_pushvalue(lstate, \
                         -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
           break; \
@@ -616,14 +619,6 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
   if (!lua_checkstack(lstate, initial_size + 2)) {
     semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;
-  }
-  if (tv->v_type == VAR_FUNC) {
-    ufunc_T *fp = find_func(tv->vval.v_string);
-    assert(fp != NULL);
-    if (fp->uf_cb == nlua_CFunction_func_call) {
-      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
-      return true;
-    }
   }
   if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {
     return false;
@@ -734,7 +729,7 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, bool special
   } else {
     lua_createtable(lstate, 0, (int)dict.size);
     if (dict.size == 0 && !special) {
-      nlua_pushref(lstate, nlua_empty_dict_ref);
+      nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
       lua_setmetatable(lstate, -2);
     }
   }
@@ -782,7 +777,7 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
     if (special) {
       lua_pushnil(lstate);
     } else {
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
     }
     break;
   case kObjectTypeLuaRef: {
@@ -1133,10 +1128,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
     case LUA_TSTRING: {
       size_t len;
       const char *s = lua_tolstring(lstate, -1, &len);
-      *cur.obj = STRING_OBJ(((String) {
-          .data = xmemdupz(s, len),
-          .size = len,
-        }));
+      *cur.obj = STRING_OBJ(((String) { .data = xmemdupz(s, len), .size = len }));
       break;
     }
     case LUA_TNUMBER: {
@@ -1154,11 +1146,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
       switch (table_props.type) {
       case kObjectTypeArray:
-        *cur.obj = ARRAY_OBJ(((Array) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = ARRAY_OBJ(((Array) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.maxidx != 0) {
           cur.obj->data.array.items =
             xcalloc(table_props.maxidx,
@@ -1169,11 +1157,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         }
         break;
       case kObjectTypeDictionary:
-        *cur.obj = DICTIONARY_OBJ(((Dictionary) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = DICTIONARY_OBJ(((Dictionary) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.string_keys_num != 0) {
           cur.obj->data.dictionary.items =
             xcalloc(table_props.string_keys_num,
@@ -1199,14 +1183,14 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
     case LUA_TFUNCTION:
       if (ref) {
-        *cur.obj = LUAREF_OBJ(nlua_ref(lstate, -1));
+        *cur.obj = LUAREF_OBJ(nlua_ref_global(lstate, -1));
       } else {
         goto type_error;
       }
       break;
 
     case LUA_TUSERDATA: {
-      nlua_pushref(lstate, nlua_nil_ref);
+      nlua_pushref(lstate, nlua_global_refs->nil_ref);
       bool is_nil = lua_rawequal(lstate, -2, -1);
       lua_pop(lstate, 1);
       if (is_nil) {
@@ -1240,7 +1224,7 @@ type_error:
 
 LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
 {
-  LuaRef rv = nlua_ref(lstate, -1);
+  LuaRef rv = nlua_ref_global(lstate, -1);
   lua_pop(lstate, 1);
   return rv;
 }

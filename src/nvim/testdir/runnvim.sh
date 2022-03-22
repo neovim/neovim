@@ -38,7 +38,7 @@ main() {(
     -S runnvim.vim \
     "$tlog" > "out-$tlog" 2> "err-$tlog"
   then
-    fail "$test_name" F "Nvim exited with non-zero code"
+    fail "$test_name" "Nvim exited with non-zero code"
   fi
   {
     echo "Stdout of :terminal runner"
@@ -53,7 +53,7 @@ main() {(
   if test "$oldesttest" = 1 ; then
     if ! diff -q test.out "$test_name.ok" > /dev/null 2>&1 ; then
       if test -f test.out ; then
-        fail "$test_name" F "Oldest test .out file differs from .ok file"
+        fail "$test_name" "Oldest test .out file differs from .ok file"
         {
           echo "Diff between test.out and $test_name.ok"
           echo "$separator"
@@ -65,9 +65,6 @@ main() {(
       fi
     fi
   fi
-  if test "$FAILED" = 1 ; then
-    ci_fold start "$test_name"
-  fi
   valgrind_check .
   if test -n "$LOG_DIR" ; then
     check_sanitizer "$LOG_DIR"
@@ -77,9 +74,6 @@ main() {(
     cat "$tlog"
   fi
   rm -f "$tlog"
-  if test "$FAILED" = 1 ; then
-    ci_fold end ""
-  fi
   if test "$FAILED" = 1 ; then
     echo "Test $test_name failed, see output above and summary for more details" >> test.log
     # When Neovim crashed/aborted it might not have created messages.

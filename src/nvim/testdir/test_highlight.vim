@@ -146,7 +146,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^  ^^^^^^^^^   no highlight
   "      ^             'Search' highlight
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   let attrs0 = ScreenAttrs(1, 15)[0]
   call assert_equal(repeat([attrs0[0]], 4), attrs0[0:3])
   call assert_equal(repeat([attrs0[0]], 9), attrs0[6:14])
@@ -160,7 +160,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^              underline
   "      ^             'Search' highlight with underline
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   "        ^^^^^^^^^   no highlight
 
   " underline
@@ -595,6 +595,31 @@ func Test_cursorline_with_visualmode()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_cursorline_with_visualmode')
+endfunc
+
+func Test_colorcolumn()
+  CheckScreendump
+
+  " check that setting 'colorcolumn' when entering a buffer works
+  let lines =<< trim END
+	split
+	edit X
+	call setline(1, ["1111111111","22222222222","3333333333"])
+	set nomodified
+	set colorcolumn=3,9
+	set number cursorline cursorlineopt=number
+	wincmd w
+	buf X
+  END
+  call writefile(lines, 'Xtest_colorcolumn')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn', {'rows': 10})
+  call term_sendkeys(buf, ":\<CR>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn')
 endfunc
 
 func Test_colorcolumn_bri()

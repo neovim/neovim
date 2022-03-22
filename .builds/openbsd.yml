@@ -1,6 +1,6 @@
 # sourcehut CI: https://builds.sr.ht/~jmk/neovim
 
-image: openbsd/6.9
+image: openbsd/latest
 
 packages:
 - autoconf-2.71
@@ -12,6 +12,7 @@ packages:
 - libtool
 - ninja-1.10.2p0
 - unzip-6.0p14
+- gdb
 
 sources:
 - https://github.com/neovim/neovim

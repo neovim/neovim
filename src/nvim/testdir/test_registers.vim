@@ -62,7 +62,6 @@ func Test_display_registers()
     call assert_match('^\nType Name Content\n'
           \ .         '  c  ""   a\n'
           \ .         '  c  "0   ba\n'
-          \ .         '  c  "1   b\n'
           \ .         '  c  "a   b\n'
           \ .         '.*'
           \ .         '  c  "-   a\n'
@@ -83,6 +82,90 @@ func Test_display_registers()
 
     bwipe!
     let g:clipboard = save_clipboard
+endfunc
+
+func Test_register_one()
+  " delete a line goes into register one
+  new
+  call setline(1, "one")
+  normal dd
+  call assert_equal("one\n", @1)
+
+  " delete a word does not change register one, does change "-
+  call setline(1, "two")
+  normal de
+  call assert_equal("one\n", @1)
+  call assert_equal("two", @-)
+
+  " delete a word with a register does not change register one
+  call setline(1, "three")
+  normal "ade
+  call assert_equal("three", @a)
+  call assert_equal("one\n", @1)
+
+  " delete a word with register DOES change register one with one of a list of
+  " operators
+  " %
+  call setline(1, ["(12)3"])
+  normal "ad%
+  call assert_equal("(12)", @a)
+  call assert_equal("(12)", @1)
+
+  " (
+  call setline(1, ["first second"])
+  normal $"ad(
+  call assert_equal("first secon", @a)
+  call assert_equal("first secon", @1)
+
+  " )
+  call setline(1, ["First Second."])
+  normal gg0"ad)
+  call assert_equal("First Second.", @a)
+  call assert_equal("First Second.", @1)
+
+  " `
+  call setline(1, ["start here."])
+  normal gg0fhmx0"ad`x
+  call assert_equal("start ", @a)
+  call assert_equal("start ", @1)
+
+  " /
+  call setline(1, ["searchX"])
+  exe "normal gg0\"ad/X\<CR>"
+  call assert_equal("search", @a)
+  call assert_equal("search", @1)
+
+  " ?
+  call setline(1, ["Ysearch"])
+  exe "normal gg$\"ad?Y\<CR>"
+  call assert_equal("Ysearc", @a)
+  call assert_equal("Ysearc", @1)
+
+  " n
+  call setline(1, ["Ynext"])
+  normal gg$"adn
+  call assert_equal("Ynex", @a)
+  call assert_equal("Ynex", @1)
+
+  " N
+  call setline(1, ["prevY"])
+  normal gg0"adN
+  call assert_equal("prev", @a)
+  call assert_equal("prev", @1)
+
+  " }
+  call setline(1, ["one", ""])
+  normal gg0"ad}
+  call assert_equal("one\n", @a)
+  call assert_equal("one\n", @1)
+
+  " {
+  call setline(1, ["", "two"])
+  normal 2G$"ad{
+  call assert_equal("\ntw", @a)
+  call assert_equal("\ntw", @1)
+
+  bwipe!
 endfunc
 
 func Test_recording_status_in_ex_line()
@@ -219,7 +302,7 @@ func Test_set_register()
   call setreg('=', 'b', 'a')
   call assert_equal('regwrite', getreg('='))
 
-  " Test for settting a list of lines to special registers
+  " Test for setting a list of lines to special registers
   call setreg('/', [])
   call assert_equal('', @/)
   call setreg('=', [])
@@ -480,6 +563,82 @@ func Test_v_register()
 
   set opfunc&
   bwipe!
+endfunc
+
+" Test for executing the contents of a register as an Ex command with line
+" continuation.
+func Test_execute_reg_as_ex_cmd()
+  " Line continuation with just two lines
+  let code =<< trim END
+    let l = [
+      \ 1]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1], l)
+
+  " Line continuation with more than two lines
+  let code =<< trim END
+    let l = [
+      \ 1,
+      \ 2,
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use comments interspersed with code
+  let code =<< trim END
+    let l = [
+      "\ one
+      \ 1,
+      "\ two
+      \ 2,
+      "\ three
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use line continuation in the middle
+  let code =<< trim END
+    let a = "one"
+    let l = [
+      \ 1,
+      \ 2]
+    let b = "two"
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2], l)
+  call assert_equal("one", a)
+  call assert_equal("two", b)
+
+  " only one line with a \
+  let @r = "\\let l = 1"
+  call assert_fails('@r', 'E10:')
+
+  " only one line with a "\
+  let @r = '   "\ let i = 1'
+  @r
+  call assert_false(exists('i'))
+
+  " first line also begins with a \
+  let @r = "\\let l = [\n\\ 1]"
+  call assert_fails('@r', 'E10:')
+
+  " Test with a large number of lines
+  let @r = "let str = \n"
+  let @r ..= repeat("  \\ 'abcdefghijklmnopqrstuvwxyz' ..\n", 312)
+  let @r ..= '  \ ""'
+  @r
+  call assert_equal(repeat('abcdefghijklmnopqrstuvwxyz', 312), str)
 endfunc
 
 func Test_ve_blockpaste()

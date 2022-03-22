@@ -19,8 +19,10 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/context.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -30,7 +32,10 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
@@ -46,7 +51,6 @@
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
-#include "nvim/syntax.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -108,7 +112,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 Integer nvim_get_hl_id_by_name(String name)
   FUNC_API_SINCE(7)
 {
-  return syn_check_group(name.data, (int)name.size);
+  return syn_check_group(name.data, name.size);
 }
 
 Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
@@ -119,33 +123,36 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
   abort();
 }
 
-/// Set a highlight group.
+/// Sets a highlight group.
 ///
-/// @param ns_id number of namespace for this highlight
-/// @param name highlight group name, like ErrorMsg
-/// @param val highlight definition map, like |nvim_get_hl_by_name|.
-///            in addition the following keys are also recognized:
-///              `default`: don't override existing definition,
-///                         like `hi default`
-///              `ctermfg`: sets foreground of cterm color
-///              `ctermbg`: sets background of cterm color
-///              `cterm`  : cterm attribute map. sets attributed for
-///                         cterm colors. similer to `hi cterm`
-///                         Note: by default cterm attributes are
-///                               same as attributes of gui color
+/// Note: Unlike the `:highlight` command which can update a highlight group,
+/// this function completely replaces the definition. For example:
+/// ``nvim_set_hl(0, 'Visual', {})`` will clear the highlight group 'Visual'.
+///
+/// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
+///              Use 0 to set a highlight group globally |:highlight|.
+/// @param name  Highlight group name, e.g. "ErrorMsg"
+/// @param val   Highlight definition map, like |synIDattr()|. In
+///              addition, the following keys are recognized:
+///                - default: Don't override existing definition |:hi-default|
+///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
+///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
+///                - cterm: cterm attribute map, like
+///                  |highlight-args|.
+///                  Note: Attributes default to those set for `gui`
+///                        if not set.
 /// @param[out] err Error details, if any
 ///
-/// TODO: ns_id = 0, should modify :highlight namespace
-/// TODO val should take update vs reset flag
-void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
+// TODO(bfredl): val should take update vs reset flag
+void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
-  int hl_id = syn_check_group(name.data, (int)name.size);
+  int hl_id = syn_check_group(name.data, name.size);
   int link_id = -1;
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
-    ns_hl_def((NS)ns_id, hl_id, attrs, link_id);
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
   }
 }
 
@@ -212,7 +219,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool execute = false;
   bool dangerous = false;
 
-  for (size_t i = 0; i < mode.size; ++i) {
+  for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
     case 'n':
       remap = false; break;
@@ -493,8 +500,12 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
-  do_in_runtimepath((char_u *)(name.size ? name.data : ""),
-                    flags, find_runtime_cb, &rv);
+  TRY_WRAP({
+    try_start();
+    do_in_runtimepath((char_u *)(name.size ? name.data : ""),
+                      flags, find_runtime_cb, &rv);
+    try_end(err);
+  });
   return rv;
 }
 
@@ -542,20 +553,19 @@ void nvim_set_current_dir(String dir, Error *err)
     return;
   }
 
-  char string[MAXPATHL];
+  char_u string[MAXPATHL];
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
   try_start();
 
-  if (vim_chdir((char_u *)string)) {
+  if (!changedir_func(string, kCdScopeGlobal)) {
     if (!try_end(err)) {
       api_set_error(err, kErrorTypeException, "Failed to change directory");
     }
     return;
   }
 
-  post_chdir(kCdScopeGlobal, true);
   try_end(err);
 }
 
@@ -598,7 +608,19 @@ void nvim_del_current_line(Error *err)
 Object nvim_get_var(String name, Error *err)
   FUNC_API_SINCE(1)
 {
-  return dict_get_value(&globvardict, name, err);
+  dictitem_T *di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+  if (di == NULL) {  // try to autoload script
+    if (!script_autoload(name.data, name.size, false) || aborting()) {
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s", name.data);
+      return (Object)OBJECT_INIT;
+    }
+    di = tv_dict_find(&globvardict, name.data, (ptrdiff_t)name.size);
+  }
+  if (di == NULL) {
+    api_set_error(err, kErrorTypeValidation, "Key not found: %s", name.data);
+    return (Object)OBJECT_INIT;
+  }
+  return vim_to_object(&di->di_tv);
 }
 
 /// Sets a global (g:) variable.
@@ -699,15 +721,15 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     break;
   case 2:
     switch (numval) {
-      case 0:
-      case 1:
-        rv = BOOLEAN_OBJ(numval);
-        break;
-      default:
-        // Boolean options that return something other than 0 or 1 should return nil. Currently this
-        // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
-        rv = NIL;
-        break;
+    case 0:
+    case 1:
+      rv = BOOLEAN_OBJ(numval);
+      break;
+    default:
+      // Boolean options that return something other than 0 or 1 should return nil. Currently this
+      // only applies to 'autoread' which uses -1 as a local value to indicate "unset"
+      rv = NIL;
+      break;
     }
     break;
   default:
@@ -1116,6 +1138,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
   chan->stream.internal.cb = cb;
+  chan->stream.internal.closed = false;
   topts.data = chan;
   // NB: overridden in terminal_check_size if a window is already
   // displaying the buffer
@@ -1563,21 +1586,23 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 ///     nmap <nowait> <Space><NL> <Nop>
 /// </pre>
 ///
+/// @param channel_id
 /// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
 ///               or "!" for |:map!|, or empty string for |:map|.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map. Accepts all |:map-arguments|
 ///               as keys excluding |<buffer>| but including |noremap| and "desc".
-///               |desc| can be used to give a description to keymap.
+///               "desc" can be used to give a description to keymap.
 ///               When called from Lua, also accepts a "callback" key that takes
 ///               a Lua function to call when the mapping is executed.
 ///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(String mode, String lhs, String rhs, Dict(keymap) *opts, Error *err)
+void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, Dict(keymap) *opts,
+                     Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(-1, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, -1, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a global |mapping| for the given mode.
@@ -1585,10 +1610,10 @@ void nvim_set_keymap(String mode, String lhs, String rhs, Dict(keymap) *opts, Er
 /// To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
 ///
 /// @see |nvim_set_keymap()|
-void nvim_del_keymap(String mode, String lhs, Error *err)
+void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
-  nvim_buf_del_keymap(-1, mode, lhs, err);
+  nvim_buf_del_keymap(channel_id, -1, mode, lhs, err);
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
@@ -1855,7 +1880,7 @@ static void write_msg(String message, bool to_err)
   } \
   line_buf[pos++] = message.data[i];
 
-  ++no_wait_return;
+  no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {
     if (got_int) {
       break;
@@ -1866,7 +1891,7 @@ static void write_msg(String message, bool to_err)
       PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
   }
-  --no_wait_return;
+  no_wait_return--;
   msg_end();
 }
 
@@ -1932,7 +1957,7 @@ Dictionary nvim__stats(void)
   Dictionary rv = ARRAY_DICT_INIT;
   PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
-  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_refcount));
+  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
   return rv;
 }
 
@@ -1966,14 +1991,13 @@ Array nvim_get_proc_children(Integer pid, Error *err)
 
   size_t proc_count;
   int rv = os_proc_children((int)pid, &proc_list, &proc_count);
-  if (rv != 0) {
+  if (rv == 2) {
     // syscall failed (possibly because of kernel options), try shelling out.
     DLOG("fallback to vim._os_proc_children()");
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
-    String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
+    String s = STATIC_CSTR_AS_STRING("return vim._os_proc_children(...)");
     Object o = nlua_exec(s, a, err);
-    api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
       rvobj = o.data.array;
@@ -2216,7 +2240,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 ///           - winid: (number) |window-ID| of the window to use as context for statusline.
 ///           - maxwidth: (number) Maximum width of statusline.
 ///           - fillchar: (string) Character to fill blank spaces in the statusline (see
-///                                'fillchars').
+///                                'fillchars'). Treated as single-width even if it isn't.
 ///           - highlights: (boolean) Return highlight information.
 ///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When |TRUE|, {winid}
 ///                                    is ignored.
@@ -2236,7 +2260,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   Dictionary result = ARRAY_DICT_INIT;
 
   int maxwidth;
-  char fillchar = 0;
+  int fillchar = 0;
   Window window = 0;
   bool use_tabline = false;
   bool highlights = false;
@@ -2251,12 +2275,13 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   }
 
   if (HAS_KEY(opts->fillchar)) {
-    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size > 1) {
-      api_set_error(err, kErrorTypeValidation, "fillchar must be an ASCII character");
+    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size == 0
+        || ((size_t)utf_ptr2len((char_u *)opts->fillchar.data.string.data)
+            != opts->fillchar.data.string.size)) {
+      api_set_error(err, kErrorTypeValidation, "fillchar must be a single character");
       return result;
     }
-
-    fillchar = opts->fillchar.data.string.data[0];
+    fillchar = utf_ptr2char((char_u *)opts->fillchar.data.string.data);
   }
 
   if (HAS_KEY(opts->highlights)) {
@@ -2292,7 +2317,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     if (fillchar == 0) {
       int attr;
-      fillchar = (char)fillchar_status(&attr, wp);
+      fillchar = fillchar_status(&attr, wp);
     }
   }
 
@@ -2304,7 +2329,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     maxwidth = (int)opts->maxwidth.data.integer;
   } else {
-    maxwidth = use_tabline ? Columns : wp->w_width;
+    maxwidth = (use_tabline || global_stl_height() > 0) ? Columns : wp->w_width;
   }
 
   char buf[MAXPATHL];
@@ -2320,7 +2345,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                sizeof(buf),
                                (char_u *)str.data,
                                false,
-                               (char_u)fillchar,
+                               fillchar,
                                maxwidth,
                                hltab_ptr,
                                NULL);
@@ -2392,6 +2417,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 from Lua, the command can also be a Lua function. The function is called with a
 ///                 single table argument that contains the following keys:
 ///                 - args: (string) The args passed to the command, if any |<args>|
+///                 - fargs: (table) The args split by unescaped whitespace (when more than one
+///                 argument is allowed), if any |<f-args>|
 ///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
 ///                 - line1: (number) The starting line of the command range |<line1>|
 ///                 - line2: (number) The final line of the command range |<line2>|

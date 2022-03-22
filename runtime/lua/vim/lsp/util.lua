@@ -480,7 +480,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Remove final line if needed
   local fix_eol = has_eol_text_edit
-  fix_eol = fix_eol and api.nvim_buf_get_option(bufnr, 'fixeol')
+  fix_eol = fix_eol and (api.nvim_buf_get_option(bufnr, 'eol') or (api.nvim_buf_get_option(bufnr, 'fixeol') and not api.nvim_buf_get_option('binary')))
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
@@ -1551,9 +1551,7 @@ do --[[ References ]]
                       document_highlight_kind[kind],
                       { start_line, start_idx },
                       { end_line, end_idx },
-                      nil,
-                      false,
-                      40)
+                      { priority = vim.highlight.priorities.user })
     end
   end
 end
@@ -1896,16 +1894,16 @@ end
 function M.make_workspace_params(added, removed)
   return { event = { added = added; removed = removed; } }
 end
---- Returns visual width of tabstop.
+--- Returns indentation size.
 ---
----@see |softtabstop|
+---@see |shiftwidth|
 ---@param bufnr (optional, number): Buffer handle, defaults to current
----@returns (number) tabstop visual width
+---@returns (number) indentation size
 function M.get_effective_tabstop(bufnr)
   validate { bufnr = {bufnr, 'n', true} }
   local bo = bufnr and vim.bo[bufnr] or vim.bo
-  local sts = bo.softtabstop
-  return (sts > 0 and sts) or (sts < 0 and bo.shiftwidth) or bo.tabstop
+  local sw = bo.shiftwidth
+  return (sw == 0 and bo.tabstop) or sw
 end
 
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.

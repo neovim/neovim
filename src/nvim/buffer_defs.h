@@ -587,7 +587,9 @@ struct file_buffer {
                                 // where invoked
 
   long b_mtime;                 // last change time of original file
+  long b_mtime_ns;              // nanoseconds of last change time
   long b_mtime_read;            // last change time when reading
+  long b_mtime_read_ns;         // nanoseconds of last read time
   uint64_t b_orig_size;         // size of original file in bytes
   int b_orig_mode;              // mode of original file
   time_t b_last_used;           // time when the buffer was last used; used
@@ -860,8 +862,12 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   sign_entry_T *b_signlist;     // list of placed signs
-  int b_signcols;               // last calculated number of sign columns
-  bool b_signcols_valid;        // calculated sign columns is valid
+  struct {
+    int size;                   // last calculated number of sign columns
+    bool valid;                 // calculated sign columns is valid
+    linenr_T sentinel;          // a line number which is holding up the signcolumn
+    int max;                    // Maximum value size is valid for.
+  } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
@@ -872,6 +878,7 @@ struct file_buffer {
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
   size_t b_virt_line_blocks;    // number of virt_line blocks
+  size_t b_signs;               // number of sign extmarks
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
@@ -1225,7 +1232,13 @@ struct window_S {
   struct {
     int stl;
     int stlnc;
+    int horiz;
+    int horizup;
+    int horizdown;
     int vert;
+    int vertleft;
+    int vertright;
+    int verthoriz;
     int fold;
     int foldopen;                    ///< when fold is open
     int foldclosed;                  ///< when fold is closed
@@ -1271,7 +1284,8 @@ struct window_S {
   int w_status_height;              // number of status lines (0 or 1)
   int w_wincol;                     // Leftmost column of window in screen.
   int w_width;                      // Width of window, excluding separation.
-  int w_vsep_width;                 // Number of separator columns (0 or 1).
+  int w_hsep_height;                // Number of horizontal separator rows (0 or 1)
+  int w_vsep_width;                 // Number of vertical separator columns (0 or 1).
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
 
   // inner size of window, which can be overridden by external UI
@@ -1351,6 +1365,7 @@ struct window_S {
                                     // recomputed
   int w_nrwidth;                    // width of 'number' and 'relativenumber'
                                     // column being used
+  int w_scwidth;                    // width of 'signcolumn'
 
   /*
    * === end of cached values ===

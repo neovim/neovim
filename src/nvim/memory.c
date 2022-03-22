@@ -10,9 +10,10 @@
 
 #include "nvim/api/extmark.h"
 #include "nvim/context.h"
-#include "nvim/decoration.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/eval.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"

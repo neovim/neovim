@@ -140,6 +140,25 @@ describe('input utf sequences that contain CSI (0x9B)', function()
   end)
 end)
 
+describe('input split utf sequences', function()
+  it('ok', function()
+    local str = '►'
+    feed('i' .. str:sub(1, 1))
+    helpers.sleep(10)
+    feed(str:sub(2, 3))
+    expect('►')
+  end)
+
+  it('can be mapped', function()
+    command('inoremap ► E296BA')
+    local str = '►'
+    feed('i' .. str:sub(1, 1))
+    helpers.sleep(10)
+    feed(str:sub(2, 3))
+    expect('E296BA')
+  end)
+end)
+
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')
@@ -165,7 +184,7 @@ describe('input non-printable chars', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      "Xtest-overwrite" [noeol] 1L, 6C                            |
+      "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
     -- The timestamp is in second resolution, wait two seconds to be sure.

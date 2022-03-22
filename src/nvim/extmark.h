@@ -2,8 +2,8 @@
 #define NVIM_EXTMARK_H
 
 #include "nvim/buffer_defs.h"
-#include "nvim/extmark_defs.h"
 #include "nvim/decoration.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/pos.h"
 

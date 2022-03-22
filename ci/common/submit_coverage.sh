@@ -4,7 +4,7 @@
 # Args:
 # $1: Flag(s) for codecov, separated by comma.
 
-set -ex
+set -e
 
 # Change to grandparent dir (POSIXly).
 CDPATH='' cd -P -- "$(dirname -- "$0")/../.." || exit

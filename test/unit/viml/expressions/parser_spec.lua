@@ -48,6 +48,7 @@ local predefined_hl_defs = {
   TermCursor=true,
   VertSplit=true,
   WildMenu=true,
+  WinSeparator=true,
   EndOfBuffer=true,
   QuickFixLine=true,
   Substitute=true,

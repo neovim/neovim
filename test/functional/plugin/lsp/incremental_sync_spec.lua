@@ -207,16 +207,16 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1
+              character = 11,
+              line = 0,
             },
             ['end'] = {
               character = 0,
               line = 1
             }
           },
-          rangeLength = 0,
-          text = 'hello world\n'
+          rangeLength = 1,
+          text = '\nhello world\n'
         }
       }
       test_edit({"hello world"}, {"yyp"}, expected_text_changes, 'utf-16', '\n')
@@ -226,19 +226,57 @@ describe('incremental synchronization', function()
         {
           range = {
             ['start'] = {
-              character = 0,
-              line = 1
+              character = 11,
+              line = 0
             },
             ['end'] = {
               character = 0,
               line = 1
             }
           },
+          rangeLength = 1,
+          text = '\n\n'
+        }
+      }
+      test_edit({"hello world"}, {"o"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('adding a line to an empty buffer', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0
+            },
+            ['end'] = {
+              character = 0,
+              line = 1
+            }
+          },
+          rangeLength = 1,
+          text = '\n\n'
+        }
+      }
+      test_edit({""}, {"o"}, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('insert a line above the current line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0
+            },
+            ['end'] = {
+              character = 0,
+              line = 0
+            }
+          },
           rangeLength = 0,
           text = '\n'
         }
       }
-      test_edit({"hello world"}, {"o"}, expected_text_changes, 'utf-16', '\n')
+      test_edit({""}, {"O"}, expected_text_changes, 'utf-16', '\n')
     end)
   end)
   describe('multi line edit', function()

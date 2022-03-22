@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Jan 11
+" Last Change:	2022 Mar 05
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -67,6 +67,9 @@ func dist#ft#FTasmsyntax()
   endif
 endfunc
 
+let s:ft_visual_basic_content = '\cVB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)'
+
+" See FTfrm() for Visual Basic form file detection
 func dist#ft#FTbas()
   if exists("g:filetype_bas")
     exe "setf " . g:filetype_bas
@@ -86,7 +89,7 @@ func dist#ft#FTbas()
     setf freebasic
   elseif match(lines, qb64_preproc) > -1
     setf qb64
-  elseif match(lines, '\cVB_Name\|Begin VB\.\(Form\|MDIForm\|UserControl\)') > -1
+  elseif match(lines, s:ft_visual_basic_content) > -1
     setf vb
   else
     setf basic
@@ -208,6 +211,10 @@ func dist#ft#EuphoriaCheck()
 endfunc
 
 func dist#ft#DtraceCheck()
+  if did_filetype()
+    " Filetype was already detected
+    return
+  endif
   let lines = getline(1, min([line("$"), 100]))
   if match(lines, '^module\>\|^import\>') > -1
     " D files often start with a module and/or import statement.
@@ -232,6 +239,21 @@ func dist#ft#FTe()
       let n = n + 1
     endwhile
     setf eiffel
+  endif
+endfunc
+
+func dist#ft#FTfrm()
+  if exists("g:filetype_frm")
+    exe "setf " . g:filetype_frm
+    return
+  endif
+
+  let lines = getline(1, min([line("$"), 5]))
+
+  if match(lines, s:ft_visual_basic_content) > -1
+    setf vb
+  else
+    setf form
   endif
 endfunc
 
@@ -708,7 +730,7 @@ func dist#ft#FTperl()
   endif
   let save_cursor = getpos('.')
   call cursor(1,1)
-  let has_use = search('^use\s\s*\k', 'c', 30)
+  let has_use = search('^use\s\s*\k', 'c', 30) > 0
   call setpos('.', save_cursor)
   if has_use
     setf perl
@@ -740,7 +762,8 @@ func dist#ft#FTtex()
     let save_cursor = getpos('.')
     call cursor(1,1)
     let firstNC = search('^\s*[^[:space:]%]', 'c', 1000)
-    if firstNC " Check the next thousand lines for a LaTeX or ConTeXt keyword.
+    if firstNC > 0
+      " Check the next thousand lines for a LaTeX or ConTeXt keyword.
       let lpat = 'documentclass\>\|usepackage\>\|begin{\|newcommand\>\|renewcommand\>'
       let cpat = 'start\a\+\|setup\a\+\|usemodule\|enablemode\|enableregime\|setvariables\|useencoding\|usesymbols\|stelle\a\+\|verwende\a\+\|stel\a\+\|gebruik\a\+\|usa\a\+\|imposta\a\+\|regle\a\+\|utilisemodule\>'
       let kwline = search('^\s*\\\%(' . lpat . '\)\|^\s*\\\(' . cpat . '\)',

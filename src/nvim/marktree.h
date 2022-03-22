@@ -1,14 +1,14 @@
 #ifndef NVIM_MARKTREE_H
 #define NVIM_MARKTREE_H
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "nvim/assert.h"
 #include "nvim/garray.h"
 #include "nvim/map.h"
-#include "nvim/types.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 #define MT_MAX_DEPTH 20
 #define MT_BRANCH_FACTOR 10
@@ -85,6 +85,11 @@ static inline bool mt_paired(mtkey_t key)
 static inline bool mt_end(mtkey_t key)
 {
   return key.flags & MT_FLAG_END;
+}
+
+static inline bool mt_start(mtkey_t key)
+{
+  return mt_paired(key) && !mt_end(key);
 }
 
 static inline bool mt_right(mtkey_t key)

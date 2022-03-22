@@ -41,7 +41,7 @@ func Test_display_foldcolumn()
   quit!
 endfunc
 
-func! Test_display_foldtext_mbyte()
+func Test_display_foldtext_mbyte()
   CheckFeature folding
 
   call NewWindow(10, 40)

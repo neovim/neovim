@@ -44,6 +44,15 @@ func Test_cd_minus()
   cd -
   call assert_equal(path, getcwd())
 
+  " Test for :cd - after a failed :cd
+  " v8.2.1183 is not ported yet
+  " call assert_fails('cd /nonexistent', 'E344:')
+  call assert_fails('cd /nonexistent', 'E472:')
+  call assert_equal(path, getcwd())
+  cd -
+  call assert_equal(path_dotdot, getcwd())
+  cd -
+
   " Test for :cd - without a previous directory
   let lines =<< trim [SCRIPT]
     call assert_fails('cd -', 'E186:')

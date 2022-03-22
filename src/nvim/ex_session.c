@@ -72,7 +72,7 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       n++;
 
       // restore height when not full height
-      if (wp->w_height + wp->w_status_height < topframe->fr_height
+      if (wp->w_height + wp->w_hsep_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
                       "exe '%dresize ' . ((&lines * %" PRId64
                       " + %" PRId64 ") / %" PRId64 ")\n",
@@ -365,7 +365,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       // edit that buffer, to not lose folding information (:edit resets
       // folds in other buffers)
       if (fprintf(fd,
-                  "if bufexists(\"%s\") | buffer %s | else | edit %s | endif\n"
+                  "if bufexists(fnamemodify(\"%s\", \":p\")) | buffer %s | else | edit %s | endif\n"
                   // Fixup :terminal buffer name. #7836
                   "if &buftype ==# 'terminal'\n"
                   "  silent file %s\n"

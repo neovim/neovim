@@ -720,7 +720,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
             && dst[-1] != ':'
 #endif
             && vim_ispathsep(*tail)) {
-          ++tail;
+          tail++;
         }
         dst += c;
         src = tail;
@@ -738,7 +738,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
         *dst++ = *src++;
-        --dstlen;
+        dstlen--;
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }
@@ -1111,10 +1111,9 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
           *dst_p++ = '~';
         }
 
-        // If it's just the home directory, add  "/".
-        if (!vim_ispathsep(src[0]) && --dstlen > 0) {
-          *dst_p++ = '/';
-        }
+        // Do not add directory separator into dst, because dst is
+        // expected to just return the directory name without the
+        // directory separator '/'.
         break;
       }
       if (p == homedir_env_mod) {

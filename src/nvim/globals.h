@@ -326,21 +326,24 @@ EXTERN int want_garbage_collect INIT(= false);
 EXTERN int garbage_collect_at_exit INIT(= false);
 
 // Special values for current_SID.
-#define SID_MODELINE    -1      // when using a modeline
-#define SID_CMDARG      -2      // for "--cmd" argument
-#define SID_CARG        -3      // for "-c" argument
-#define SID_ENV         -4      // for sourcing environment variable
-#define SID_ERROR       -5      // option was reset because of an error
-#define SID_NONE        -6      // don't set scriptID
-#define SID_WINLAYOUT   -7      // changing window size
-#define SID_LUA         -8      // for Lua scripts/chunks
-#define SID_API_CLIENT  -9      // for API clients
-#define SID_STR         -10     // for sourcing a string with no script item
+#define SID_MODELINE    (-1)      // when using a modeline
+#define SID_CMDARG      (-2)      // for "--cmd" argument
+#define SID_CARG        (-3)      // for "-c" argument
+#define SID_ENV         (-4)      // for sourcing environment variable
+#define SID_ERROR       (-5)      // option was reset because of an error
+#define SID_NONE        (-6)      // don't set scriptID
+#define SID_WINLAYOUT   (-7)      // changing window size
+#define SID_LUA         (-8)      // for Lua scripts/chunks
+#define SID_API_CLIENT  (-9)      // for API clients
+#define SID_STR         (-10)     // for sourcing a string with no script item
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
+
+// ID of the client channel. Used by ui client
+EXTERN uint64_t ui_client_channel_id INIT(= 0);
 
 EXTERN bool did_source_packages INIT(= false);
 
@@ -357,6 +360,11 @@ EXTERN int provider_call_nesting INIT(= 0);
 
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
+
+// Flags to indicate an additional string for highlight name completion.
+EXTERN int include_none INIT(= 0);     // when 1 include "None"
+EXTERN int include_default INIT(= 0);  // when 1 include "default"
+EXTERN int include_link INIT(= 0);     // when 2 include "link" and "clear"
 
 // When highlight_match is true, highlight a match, starting at the cursor
 // position.  Search_match_lines is the number of lines after the match (0 for
@@ -445,10 +453,11 @@ EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
 EXTERN frame_T *topframe;      // top of the window frame tree
 
 // Tab pages are alternative topframes.  "first_tabpage" points to the first
-// one in the list, "curtab" is the current one.
+// one in the list, "curtab" is the current one. "lastused_tabpage" is the
+// last used one.
 EXTERN tabpage_T *first_tabpage;
-EXTERN tabpage_T *lastused_tabpage;
 EXTERN tabpage_T *curtab;
+EXTERN tabpage_T *lastused_tabpage;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list
@@ -979,6 +988,7 @@ EXTERN char e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 EXTERN char e_dirnotf[] INIT(= N_("E919: Directory not found in '%s': \"%s\""));
 EXTERN char e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive behavior"));
 EXTERN char e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
+EXTERN char e_listarg[] INIT(= N_("E686: Argument of %s must be a List"));
 EXTERN char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
@@ -998,6 +1008,10 @@ EXTERN char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"
 EXTERN char e_non_empty_string_required[] INIT(= N_("E1142: Non-empty string required"));
 
 EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
+
+EXTERN char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
+
+EXTERN char e_line_number_out_of_range[] INIT(= N_("E1247: Line number out of range"));
 
 EXTERN char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 

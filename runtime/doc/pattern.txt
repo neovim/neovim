@@ -153,9 +153,10 @@ index, on which the cursor is. This can look like this: >
 Note: the count does not take offset into account.
 
 When no match is found you get the error: *E486* Pattern not found
-Note that for the |:global| command this behaves like a normal message, for Vi
-compatibility.  For the |:s| command the "e" flag can be used to avoid the
-error message |:s_flags|.
+Note that for the `:global` command, you get a normal message "Pattern not
+found", for Vi compatibility.
+For the |:s| command the "e" flag can be used to avoid the error message
+|:s_flags|.
 
 					*search-offset* *{offset}*
 These commands search for the specified pattern.  With "/" and "?" an
@@ -923,7 +924,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
 	Example, to highlight the line where the cursor currently is: >
-		:exe '/\%' . line(".") . 'l.*'
+		:exe '/\%' .. line(".") .. 'l.*'
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 
@@ -939,7 +940,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
 	Example, to highlight the column where the cursor currently is: >
-		:exe '/\%' . col(".") . 'c'
+		:exe '/\%' .. col(".") .. 'c'
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 	Example for matching a single byte in column 44: >
@@ -1420,6 +1421,39 @@ Finally, these constructs are unique to Perl:
 		The ":3match" command is used by the |matchparen| plugin.  You
 		are suggested to use ":match" for manual matching and
 		":2match" for another plugin.
+
+==============================================================================
+11. Fuzzy matching					*fuzzy-matching*
+
+Fuzzy matching refers to matching strings using a non-exact search string.
+Fuzzy matching will match a string, if all the characters in the search string
+are present anywhere in the string in the same order. Case is ignored.  In a
+matched string, other characters can be present between two consecutive
+characters in the search string. If the search string has multiple words, then
+each word is matched separately. So the words in the search string can be
+present in any order in a string.
+
+Fuzzy matching assigns a score for each matched string based on the following
+criteria:
+    - The number of sequentially matching characters.
+    - The number of characters (distance) between two consecutive matching
+      characters.
+    - Matches at the beginning of a word
+    - Matches at a camel case character (e.g. Case in CamelCase)
+    - Matches after a path separator or a hyphen.
+    - The number of unmatched characters in a string.
+The matching string with the highest score is returned first.
+
+For example, when you search for the "get pat" string using fuzzy matching, it
+will match the strings "GetPattern", "PatternGet", "getPattern", "patGetter",
+"getSomePattern", "MatchpatternGet" etc.
+
+The functions |matchfuzzy()| and |matchfuzzypos()| can be used to fuzzy search
+a string in a List of strings. The matchfuzzy() function returns a List of
+matching strings. The matchfuzzypos() functions returns the List of matches,
+the matching positions and the fuzzy match scores.
+
+The "f" flag of `:vimgrep` enables fuzzy matching.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

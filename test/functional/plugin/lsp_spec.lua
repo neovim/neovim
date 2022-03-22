@@ -2374,18 +2374,16 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.get_effective_tabstop', function()
-    local function test_tabstop(tabsize, softtabstop)
+    local function test_tabstop(tabsize, shiftwidth)
       exec_lua(string.format([[
-        vim.api.nvim_buf_set_option(0, 'softtabstop', %d)
+        vim.api.nvim_buf_set_option(0, 'shiftwidth', %d)
         vim.api.nvim_buf_set_option(0, 'tabstop', 2)
-        vim.api.nvim_buf_set_option(0, 'shiftwidth', 3)
-      ]], softtabstop))
+      ]], shiftwidth))
       eq(tabsize, exec_lua('return vim.lsp.util.get_effective_tabstop()'))
     end
 
-    it('with softtabstop = 1', function() test_tabstop(1, 1) end)
-    it('with softtabstop = 0', function() test_tabstop(2, 0) end)
-    it('with softtabstop = -1', function() test_tabstop(3, -1) end)
+    it('with shiftwidth = 1', function() test_tabstop(1, 1) end)
+    it('with shiftwidth = 0', function() test_tabstop(2, 0) end)
   end)
 
   describe('vim.lsp.buf.outgoing_calls', function()

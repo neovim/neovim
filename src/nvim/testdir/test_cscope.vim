@@ -102,7 +102,7 @@ func Test_cscopeWithCscopeConnections()
     for cmd in ['cs find f Xmemfile_test.c', 'cs find 7 Xmemfile_test.c']
       enew
       let a = execute(cmd)
-      call assert_true(a =~ '"Xmemfile_test.c" \d\+L, \d\+C')
+      call assert_true(a =~ '"Xmemfile_test.c" \d\+L, \d\+B')
       call assert_equal('Xmemfile_test.c', @%)
     endfor
 
@@ -112,7 +112,7 @@ func Test_cscopeWithCscopeConnections()
       let a = execute(cmd)
       let alines = split(a, '\n', 1)
       call assert_equal('', alines[0])
-      call assert_true(alines[1] =~ '"Xmemfile_test.c" \d\+L, \d\+C')
+      call assert_true(alines[1] =~ '"Xmemfile_test.c" \d\+L, \d\+B')
       call assert_equal('(1 of 1): <<global>> #include <assert.h>', alines[2])
       call assert_equal('#include <assert.h>', getline('.'))
     endfor
