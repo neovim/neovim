@@ -456,26 +456,26 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (spell_aep.cterm_fg_color > 0) {
     new_en.cterm_fg_color = spell_aep.cterm_fg_color;
-    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+    new_en.rgb_ae_attr &= (int16_t)((~HL_FG_INDEXED)
+                                    | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.cterm_bg_color > 0) {
     new_en.cterm_bg_color = spell_aep.cterm_bg_color;
-    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+    new_en.rgb_ae_attr &= (int16_t)((~HL_BG_INDEXED)
+                                    | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_fg_color >= 0) {
     new_en.rgb_fg_color = spell_aep.rgb_fg_color;
-    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+    new_en.rgb_ae_attr &= (int16_t)((~HL_FG_INDEXED)
+                                    | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.rgb_bg_color >= 0) {
     new_en.rgb_bg_color = spell_aep.rgb_bg_color;
-    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+    new_en.rgb_ae_attr &= (int16_t)((~HL_BG_INDEXED)
+                                    | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_sp_color >= 0) {
