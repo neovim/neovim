@@ -3976,18 +3976,11 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
           f1 = f1 * f2;
         } else if (op == '/') {
           // Division by zero triggers error from AddressSanitizer
-          f1 = (f2 == 0
-                ? (
+          f1 = (f2 == 0 ? (
 #ifdef NAN
-                   f1 == 0
-                    ? NAN
-                    :
+              f1 == 0 ? (float_T)NAN :
 #endif
-                   (f1 > 0
-                     ? INFINITY
-                     : -INFINITY)
-                   )
-                     : f1 / f2);
+              (f1 > 0 ? (float_T)INFINITY : (float_T)-INFINITY)) : f1 / f2);
         } else {
           emsg(_("E804: Cannot use '%' with Float"));
           return FAIL;
@@ -5842,15 +5835,15 @@ size_t string2float(const char *const text, float_T *const ret_value)
 
   // MS-Windows does not deal with "inf" and "nan" properly
   if (STRNICMP(text, "inf", 3) == 0) {
-    *ret_value = INFINITY;
+    *ret_value = (float_T)INFINITY;
     return 3;
   }
   if (STRNICMP(text, "-inf", 3) == 0) {
-    *ret_value = -INFINITY;
+    *ret_value = (float_T)-INFINITY;
     return 4;
   }
   if (STRNICMP(text, "nan", 3) == 0) {
-    *ret_value = NAN;
+    *ret_value = (float_T)NAN;
     return 3;
   }
   *ret_value = strtod(text, &s);

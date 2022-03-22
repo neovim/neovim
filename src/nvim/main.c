@@ -2099,6 +2099,7 @@ static bool file_owned(const char *fname)
 /// @param errstr  string containing an error message
 /// @param str     string to append to the primary error message, or NULL
 static void mainerr(const char *errstr, const char *str)
+  FUNC_ATTR_NORETURN
 {
   char *prgname = (char *)path_tail((char_u *)argv0);
 
