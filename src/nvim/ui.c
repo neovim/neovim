@@ -223,10 +223,11 @@ void ui_refresh(void)
 
   ui_default_colors_set();
 
-  int save_p_lz = p_lz;
-  p_lz = false;  // convince redrawing() to return true ...
   if (!ui_client_channel_id) {
+    int save_p_lz = p_lz;
+    p_lz = false;  // convince redrawing() to return true ...
     screen_resize(width, height);
+    p_lz = save_p_lz;
   } else {
     Array args = ARRAY_DICT_INIT;
     Error err = ERROR_INIT;
@@ -239,8 +240,6 @@ void ui_refresh(void)
     }
     api_clear_error(&err);
   }
-
-  p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {
     p_ch = 0;
