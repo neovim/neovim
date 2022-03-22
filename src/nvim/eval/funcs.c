@@ -39,6 +39,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mark.h"
+#include "nvim/match.h"
 #include "nvim/math.h"
 #include "nvim/memline.h"
 #include "nvim/mouse.h"
