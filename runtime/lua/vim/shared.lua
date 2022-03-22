@@ -286,6 +286,7 @@ end
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 ---@param ... Two or more map-like tables.
+---@returns Merged table
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
@@ -299,6 +300,7 @@ end
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 ---@param ... Two or more map-like tables.
+---@returns Merged table
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
