@@ -80,6 +80,7 @@ typedef struct scriptitem_S {
 } scriptitem_T;
 
 static scid_T last_current_SID = 0;
+static int last_current_SID_seq = 0;
 static PMap(scid_T) script_items = MAP_INIT;
 
 /// Sorted growarray of SIDs associated with a :sourced script file.
@@ -1858,7 +1859,8 @@ scid_T script_new_sid(char *const fname)
   return sid;
 }
 
-static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
+static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name,
+                                   const scid_T sid)
 {
   char *save_sourcing_name = sourcing_name;
   linenr_T save_sourcing_lnum = sourcing_lnum;
@@ -1874,15 +1876,13 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   sourcing_lnum = 0;
 
   const sctx_T save_current_sctx = current_sctx;
-  if (current_sctx.sc_sid != SID_LUA) {
-    current_sctx.sc_sid = ++last_current_SID;
-  }
-  current_sctx.sc_seq = 0;
+  current_sctx.sc_sid = sid;
+  current_sctx.sc_seq = sid > 0 ? ++last_current_SID_seq : 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
   funccal_entry_T entry;
   save_funccal(&entry);
-  int retval = do_cmdline(NULL, fgetline, cookie,
-                          DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
+  const int retval = do_cmdline(NULL, fgetline, cookie,
+                                DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
   current_sctx = save_current_sctx;
@@ -1893,6 +1893,8 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
 static void cmd_source_buffer(const exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
+  static Map(handle_T, scid_T) buf_sids = MAP_INIT;
+
   if (curbuf == NULL) {
     return;
   }
@@ -1913,13 +1915,16 @@ static void cmd_source_buffer(const exarg_T *const eap)
     .buf = ga.ga_data,
     .offset = 0,
   };
-  if (curbuf->b_fname
-      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie,
-                                 ":source (no file)");
+  if (curbuf->b_fname && path_with_extension((const char *)curbuf->b_fname, "lua")) {
+    nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
   } else {
-    source_using_linegetter((void *)&cookie, get_str_line,
-                            ":source (no file)");
+    scid_T sid = map_get(handle_T, scid_T)(&buf_sids, curbuf->handle);
+    if (sid == 0) {
+      // First time sourcing this buffer, use a new SID for it.
+      sid = ++last_current_SID;
+      map_put(handle_T, scid_T)(&buf_sids, curbuf->handle, sid);
+    }
+    source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)", sid);
   }
   ga_clear(&ga);
 }
@@ -1933,7 +1938,8 @@ int do_source_str(const char *cmd, const char *traceback_name)
     .buf = (char *)cmd,
     .offset = 0,
   };
-  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name);
+  const scid_T sid = current_sctx.sc_sid == SID_LUA ? SID_LUA : ++last_current_SID;
+  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name, sid);
 }
 
 /// When fname is a 'lua' file nlua_exec_file() is invoked to source it.
@@ -2200,8 +2206,6 @@ theend:
 static scriptitem_T *new_file_sctx(char_u *fname, sctx_T *ret_sctx)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  static int last_current_SID_seq = 0;
-
   sctx_T script_sctx = { .sc_seq = ++last_current_SID_seq,
                          .sc_lnum = 0,
                          .sc_sid = 0 };

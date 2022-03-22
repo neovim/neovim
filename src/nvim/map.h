@@ -45,6 +45,7 @@ MAP_DECLS(uint64_t, uint64_t)
 MAP_DECLS(uint32_t, uint32_t)
 
 MAP_DECLS(handle_T, ptr_t)
+MAP_DECLS(handle_T, scid_T)
 MAP_DECLS(scid_T, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
 MAP_DECLS(HlEntry, int)

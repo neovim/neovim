@@ -10,7 +10,7 @@ local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
 local uname = helpers.uname
 local load_adjust = helpers.load_adjust
-local write_file = helpers.write_file
+local insert = helpers.insert
 local isCI = helpers.isCI
 
 local function isasan()
@@ -85,12 +85,6 @@ setmetatable(monitor_memory_usage,
 end})
 
 describe('memory usage', function()
-  local tmpfile = 'X_memory_usage'
-
-  after_each(function()
-    os.remove(tmpfile)
-  end)
-
   local function check_result(tbl, status, result)
     if not status then
       print('')
@@ -143,23 +137,21 @@ describe('memory usage', function()
   it('function capture lvars', function()
     local pid = eval('getpid()')
     local before = monitor_memory_usage(pid)
-    write_file(tmpfile, [[
-      if !exists('s:defined_func')
-        func s:f()
-          let x = l:
-        endfunc
-      endif
-      let s:defined_func = 1
+    -- :source from a buffer so that the same SID is used.
+    insert([[
+      func s:f()
+        let x = l:
+      endfunc
       for _ in range(10000)
         call s:f()
       endfor
     ]])
-    feed_command('source '..tmpfile)
+    feed_command("source")
     poke_eventloop()
     local after = monitor_memory_usage(pid)
     for _ = 1, 3 do
       -- TODO: check_result fails if command() is used here. Why? #16064
-      feed_command('source '..tmpfile)
+      feed_command("source")
       poke_eventloop()
     end
     local last = monitor_memory_usage(pid)

@@ -64,14 +64,45 @@ describe(':source', function()
     feed_command(':source')
     eq('4', meths.exec('echo a', true))
     eq("{'K': 'V'}", meths.exec('echo b', true))
-    eq("<SNR>3_C()", meths.exec('echo D()', true))
+    eq("<SNR>1_C()", meths.exec('echo D()', true))
 
     -- Source last line only
     feed_command(':$source')
-    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+    eq("<SNR>1_C()", meths.exec('echo D()', true))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec("'<,'>source"))
+  end)
+
+  it('current buffer reuses SID', function()
+    insert [[
+      " also shouldn't cause a redefinition error when `:source`ing the
+      " same buffer twice (script context uses a new sequence number)
+      func s:Foo()
+      endfunc
+      let id = expand("<SID>")
+    ]]
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+
+    -- Ensure a new buffer has a different SID
+    command('new')
+    insert [[
+      let id = expand("<SID>")
+    ]]
+    command('source')
+    eq("<SNR>2_", eval('g:id'))
+    command('source')
+    eq("<SNR>2_", eval('g:id'))
+
+    command('wincmd p')
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+
+    -- Scripts should be anonymous
+    eq("", exec_capture(':scriptnames'))
   end)
 
   it('does not break if current buffer is modified while sourced', function()
