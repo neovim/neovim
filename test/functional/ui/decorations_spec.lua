@@ -1111,6 +1111,27 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
   end)
 
+  it('does not cause syntax ml_get error at the end of a buffer #17816', function()
+    command([[syntax region foo keepend start='^foo' end='^$']])
+    command('syntax sync minlines=100')
+    insert('foo')
+    meths.buf_set_extmark(0, ns, 0, 0, {virt_lines = {{{'bar', 'Comment'}}}})
+    screen:expect([[
+      fo^o                                               |
+      {6:bar}                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+  end)
+
   it('works with a block scrolling up', function()
     screen:try_resize(30, 7)
     insert("aa\nbb\ncc\ndd\nee\nff\ngg\nhh")
