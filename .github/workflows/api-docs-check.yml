@@ -12,6 +12,9 @@ on:
 jobs:
   call-regen-api-docs:
     if: github.event.pull_request.draft == false
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ./.github/workflows/api-docs.yml
     with:
       check_only: true
