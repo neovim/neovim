@@ -60,7 +60,7 @@ jobs:
           exit 1
 
       - name: Automatic PR
-        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
+        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && !inputs.check_only }}
         run: |
           git add -u
           git commit -m 'docs: regenerate [skip ci]'
