@@ -1616,9 +1616,9 @@ static time_t swapfile_info(char_u *fname)
   return x;
 }
 
-/// Returns TRUE if the swap file looks OK and there are no changes, thus it
-/// can be safely deleted.
-static time_t swapfile_unchanged(char *fname)
+/// @return  true if the swap file looks OK and there are no changes, thus it
+///          can be safely deleted.
+static bool swapfile_unchanged(char *fname)
 {
   struct block0 b0;
   int ret = true;
