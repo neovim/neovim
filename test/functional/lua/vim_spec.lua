@@ -490,6 +490,12 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
   end)
 
+  it('vim.tbl_get', function()
+    eq(true, exec_lua("return vim.tbl_get({ test = { nested_test = true }}, 'test', 'nested_test')"))
+    eq(NIL, exec_lua("return vim.tbl_get({}, 'missing_key')"))
+    eq(NIL, exec_lua("return vim.tbl_get({})"))
+  end)
+
   it('vim.tbl_extend', function()
     ok(exec_lua([[
       local a = {x = 1}
