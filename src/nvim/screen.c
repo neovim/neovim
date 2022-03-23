@@ -1545,17 +1545,17 @@ static void win_update(win_T *wp, DecorProviders *providers)
                        foldinfo.fi_lines ? srow : wp->w_grid.Rows,
                        mod_top == 0, false, foldinfo, &line_providers);
 
-        wp->w_lines[idx].wl_folded = foldinfo.fi_lines != 0;
-        wp->w_lines[idx].wl_lastlnum = lnum;
-        did_update = DID_LINE;
-
-        if (foldinfo.fi_lines > 0) {
-          did_update = DID_FOLD;
+        if (foldinfo.fi_lines == 0) {
+          wp->w_lines[idx].wl_folded = false;
+          wp->w_lines[idx].wl_lastlnum = lnum;
+          did_update = DID_LINE;
+          syntax_last_parsed = lnum;
+        } else {
           foldinfo.fi_lines--;
+          wp->w_lines[idx].wl_folded = true;
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
+          did_update = DID_FOLD;
         }
-
-        syntax_last_parsed = lnum;
       }
 
       wp->w_lines[idx].wl_lnum = lnum;
