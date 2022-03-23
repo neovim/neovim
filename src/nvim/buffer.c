@@ -1042,6 +1042,10 @@ static int empty_curbuf(int close_others, int forceit, int action)
   set_bufref(&bufref, buf);
 
   if (close_others) {
+    if (curwin->w_floating) {
+      // Last window must be non-floating.
+      curwin = firstwin;
+    }
     // Close any other windows on this buffer, then make it empty.
     close_windows(buf, true);
   }
@@ -1224,11 +1228,12 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
 
     // If the deleted buffer is the current one, close the current window
-    // (unless it's the only window).  Repeat this so long as we end up in
-    // a window with this buffer.
+    // (unless it's the only non-floating window).
+    // When the autocommand window is involved win_close() may need to print an error message.
+    // Repeat this so long as we end up in a window with this buffer.
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
-           && (!ONE_WINDOW || first_tabpage->tp_next != NULL)) {
+           && (lastwin == aucmd_win || !last_window(curwin))) {
       if (win_close(curwin, false, false) == FAIL) {
         break;
       }

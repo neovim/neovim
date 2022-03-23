@@ -150,7 +150,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   if (!parse_float_config(config, &fconfig, false, true, err)) {
     return 0;
   }
-  win_T *wp = win_new_float(NULL, fconfig, err);
+  win_T *wp = win_new_float(NULL, false, fconfig, err);
   if (!wp) {
     return 0;
   }
@@ -200,7 +200,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     return;
   }
   if (new_float) {
-    if (!win_new_float(win, fconfig, err)) {
+    if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
     redraw_later(win, NOT_VALID);
