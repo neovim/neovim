@@ -737,6 +737,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
 #define DID_FOLD 3      // updated a folded line
   int did_update = DID_NONE;
   linenr_T syntax_last_parsed = 0;              // last parsed text line
+  // remember the current w_last_cursorline, it changes when drawing the new
+  // cursor line
+  linenr_T last_cursorline = wp->w_last_cursorline;
   linenr_T mod_top = 0;
   linenr_T mod_bot = 0;
   int save_got_int;
@@ -1368,7 +1371,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
                         || (wp->w_match_head != NULL
                             && buf->b_mod_xlines != 0)))))
         || (wp->w_p_cul && (lnum == wp->w_cursor.lnum
-                            || lnum == wp->w_last_cursorline))) {
+                            || lnum == last_cursorline))) {
       if (lnum == mod_top) {
         top_to_mod = false;
       }
@@ -7615,3 +7618,15 @@ win_T *get_win_by_grid_handle(handle_T handle)
   return NULL;
 }
 
+/// Check if the cursor moved and 'cursorline' is set.  Mark for a VALID redraw
+/// if needed.
+void check_redraw_cursorline(void)
+{
+  // When 'cursorlineopt' is "screenline" need to redraw always.
+  if (curwin->w_p_cul
+      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
+          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
+      && !char_avail()) {
+    redraw_later(curwin, VALID);
+  }
+}

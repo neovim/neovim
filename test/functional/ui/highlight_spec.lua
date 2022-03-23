@@ -1081,6 +1081,46 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  it('is updated if cursor is moved up from timer vim-patch:8.2.4591', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.Gray90},  -- CursorLine
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorline
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(2, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      aaaaa                                             |
+      bbbbb                                             |
+      ccccc                                             |
+      {1:^ddddd                                             }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      aaaaa                                             |
+      {1:^bbbbb                                             }|
+      ccccc                                             |
+      ddddd                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
+  end)
+
   it('with split windows in diff mode', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
