@@ -1719,20 +1719,10 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf = curbuf;
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
-    if (curbuf->b_p_bl) {
-      apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
-    }
-    if (buf == curbuf) {
-      apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
-    }
+    buf_freeall(buf, BFA_WIPE | BFA_DEL);
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
-    }
-    if (buf == curbuf) {
-      // Make sure 'bufhidden' and 'buftype' are empty
-      clear_string_option(&buf->b_p_bh);
-      clear_string_option(&buf->b_p_bt);
     }
   }
   if (buf != curbuf || curbuf == NULL) {
@@ -1766,14 +1756,6 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
   }
 
   if (buf == curbuf) {
-    // free all things allocated for this buffer
-    buf_freeall(buf, 0);
-    if (buf != curbuf) {         // autocommands deleted the buffer!
-      return NULL;
-    }
-    if (aborting()) {           // autocmds may abort script processing
-      return NULL;
-    }
     free_buffer_stuff(buf, kBffInitChangedtick);  // delete local vars et al.
 
     // Init the options.

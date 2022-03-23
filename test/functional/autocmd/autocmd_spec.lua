@@ -59,6 +59,23 @@ describe('autocmd', function()
     eq(expected, eval('g:evs'))
   end)
 
+  it('first edit causes BufUnload on NoName', function()
+    local expected = {
+      {'BufUnload', ''},
+      {'BufDelete', ''},
+      {'BufWipeout', ''},
+      {'BufEnter', 'testfile1'},
+    }
+    command('let g:evs = []')
+    command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
+    command('autocmd BufDelete * :call add(g:evs, ["BufDelete", expand("<afile>")])')
+    command('autocmd BufLeave * :call add(g:evs, ["BufLeave", expand("<afile>")])')
+    command('autocmd BufUnload * :call add(g:evs, ["BufUnload", expand("<afile>")])')
+    command('autocmd BufWipeout * :call add(g:evs, ["BufWipeout", expand("<afile>")])')
+    command('edit testfile1')
+    eq(expected, eval('g:evs'))
+  end)
+
   it('WinClosed is non-recursive', function()
     command('let g:triggered = 0')
     command('autocmd WinClosed * :let g:triggered+=1 | :bdelete 2')
