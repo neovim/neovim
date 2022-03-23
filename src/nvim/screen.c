@@ -737,9 +737,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
 #define DID_FOLD 3      // updated a folded line
   int did_update = DID_NONE;
   linenr_T syntax_last_parsed = 0;              // last parsed text line
-  // remember the current w_last_cursorline, it changes when drawing the new
-  // cursor line
-  linenr_T last_cursorline = wp->w_last_cursorline;
   linenr_T mod_top = 0;
   linenr_T mod_bot = 0;
   int save_got_int;
@@ -1326,6 +1323,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
 
+  bool cursorline_standout = win_cursorline_standout(wp);
+
   for (;;) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
@@ -1370,8 +1369,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
                             && buf->b_mod_xlines != 0)))))
-        || (wp->w_p_cul && (lnum == wp->w_cursor.lnum
-                            || lnum == last_cursorline))) {
+        || (cursorline_standout && lnum == wp->w_cursor.lnum)
+        || lnum == wp->w_last_cursorline) {
       if (lnum == mod_top) {
         top_to_mod = false;
       }
@@ -1604,6 +1603,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
    * End of loop over all window lines.
    */
 
+  // Now that the window has been redrawn with the old and new cursor line,
+  // update w_last_cursorline.
+  wp->w_last_cursorline = cursorline_standout ? wp->w_cursor.lnum : 0;
 
   if (idx > wp->w_lines_valid) {
     wp->w_lines_valid = idx;
@@ -2383,8 +2385,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
       area_highlighting = true;
     }
-    // Update w_last_cursorline even if Visual mode is active.
-    wp->w_last_cursorline = wp->w_cursor.lnum;
   }
 
   memset(sattrs, 0, sizeof(sattrs));

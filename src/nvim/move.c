@@ -95,11 +95,6 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-void reset_cursorline(void)
-{
-  curwin->w_last_cursorline = 0;
-}
-
 // Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
@@ -107,21 +102,8 @@ void redraw_for_cursorline(win_T *wp)
   if ((wp->w_p_rnu || win_cursorline_standout(wp))
       && (wp->w_valid & VALID_CROW) == 0
       && !pum_visible()) {
-    if (wp->w_p_rnu) {
-      // win_line() will redraw the number column only.
-      redraw_later(wp, VALID);
-    }
-    if (win_cursorline_standout(wp)) {
-      if (wp->w_redr_type <= VALID && wp->w_last_cursorline != 0) {
-        // "w_last_cursorline" may be outdated, worst case we redraw
-        // too much.  This is optimized for moving the cursor around in
-        // the current window.
-        redrawWinline(wp, wp->w_last_cursorline);
-        redrawWinline(wp, wp->w_cursor.lnum);
-      } else {
-        redraw_later(wp, SOME_VALID);
-      }
-    }
+    // win_line() will redraw the number column and cursorline only.
+    redraw_later(wp, VALID);
   }
 }
 

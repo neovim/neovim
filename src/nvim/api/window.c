@@ -119,7 +119,6 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   update_topline_win(win);
 
   redraw_later(win, VALID);
-  redraw_for_cursorline(win);
   win->w_redr_status = true;
 }
 
