@@ -14,7 +14,6 @@ set fsync
 set laststatus=1
 set listchars=eol:$
 set joinspaces
-set noctrldisambig
 set nohidden nosmarttab noautoindent noautoread complete-=i noruler noshowcmd
 set nrformats+=octal
 set shortmess-=F

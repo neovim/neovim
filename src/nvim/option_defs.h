@@ -401,7 +401,6 @@ EXTERN int p_cst;               // 'cscopetag'
 EXTERN long p_csto;             // 'cscopetagorder'
 EXTERN long p_cspc;             // 'cscopepathcomp'
 EXTERN int p_csverbose;         // 'cscopeverbose'
-EXTERN int p_clbg;            // 'ctrldisambig'
 EXTERN char_u *p_debug;       // 'debug'
 EXTERN char_u *p_def;         // 'define'
 EXTERN char_u *p_inc;
