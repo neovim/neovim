@@ -7155,7 +7155,6 @@ void alist_slash_adjust(void)
 /// ":preserve".
 static void ex_preserve(exarg_T *eap)
 {
-  curbuf->b_flags |= BF_PRESERVED;
   ml_preserve(curbuf, true, true);
 }
 
