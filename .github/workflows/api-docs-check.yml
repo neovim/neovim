@@ -6,7 +6,6 @@ on:
       - 'marvim/api-doc-update**'
     paths:
       - 'src/nvim/api/*.[ch]'
-      - 'src/nvim/**.lua'
       - 'runtime/lua/**.lua'
 
 jobs:
