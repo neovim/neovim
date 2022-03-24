@@ -175,8 +175,9 @@ static bool extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col)
   return true;
 }
 
-// Remove an extmark
-// Returns 0 on missing id
+/// Remove an extmark
+///
+/// @return  0 on missing id
 bool extmark_del(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
   MarkTreeIter itr[1] = { 0 };
@@ -203,8 +204,8 @@ bool extmark_del(buf_T *buf, uint32_t ns_id, uint32_t id)
   return true;
 }
 
-// Free extmarks in a ns between lines
-// if ns = 0, it means clear all namespaces
+/// Free extmarks in a ns between lines
+/// if ns = 0, it means clear all namespaces
 bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row, colnr_T u_col)
 {
   if (!map_size(buf->b_extmark_ns)) {
@@ -287,12 +288,13 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
   return marks_cleared;
 }
 
-// Returns the position of marks between a range,
-// marks found at the start or end index will be included,
-// if upper_lnum or upper_col are negative the buffer
-// will be searched to the start, or end
-// dir can be set to control the order of the array
-// amount = amount of marks to find or -1 for all
+/// @return  the position of marks between a range,
+///          marks found at the start or end index will be included.
+///
+/// if upper_lnum or upper_col are negative the buffer
+/// will be searched to the start, or end
+/// dir can be set to control the order of the array
+/// amount = amount of marks to find or -1 for all
 ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row,
                              colnr_T u_col, int64_t amount, bool reverse)
 {
@@ -334,7 +336,7 @@ next_mark:
   return array;
 }
 
-// Lookup an extmark by id
+/// Lookup an extmark by id
 ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
   ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, false, false, DECORATION_INIT };
@@ -359,7 +361,7 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 }
 
 
-// free extmarks from the buffer
+/// free extmarks from the buffer
 void extmark_free_all(buf_T *buf)
 {
   if (!map_size(buf->b_extmark_ns)) {
@@ -389,7 +391,7 @@ void extmark_free_all(buf_T *buf)
 }
 
 
-// Save info for undo/redo of set marks
+/// Save info for undo/redo of set marks
 static void u_extmark_set(buf_T *buf, uint64_t mark, int row, colnr_T col)
 {
   u_header_T *uhp = u_force_get_undo_header(buf);
@@ -499,7 +501,7 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
 }
 
 
-// Adjust extmark row for inserted/deleted rows (columns stay fixed).
+/// Adjust extmark row for inserted/deleted rows (columns stay fixed).
 void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, long amount, long amount_after,
                     ExtmarkOp undo)
 {

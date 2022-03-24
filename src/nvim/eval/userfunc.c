@@ -201,7 +201,7 @@ static void register_closure(ufunc_T *fp)
 }
 
 
-/// Get a name for a lambda.  Returned in static memory.
+/// @return  a name for a lambda.  Returned in static memory.
 char_u *get_lambda_name(void)
 {
   static char_u name[30];
@@ -544,7 +544,8 @@ static char_u *fname_trans_sid(const char_u *const name, char_u *const fname_buf
 }
 
 /// Find a function by name, return pointer to it in ufuncs.
-/// @return NULL for unknown function.
+///
+/// @return  NULL for unknown function.
 ufunc_T *find_func(const char_u *name)
 {
   hashitem_T *hi;
@@ -556,11 +557,9 @@ ufunc_T *find_func(const char_u *name)
   return NULL;
 }
 
-/*
- * Copy the function name of "fp" to buffer "buf".
- * "buf" must be able to hold the function name plus three bytes.
- * Takes care of script-local function names.
- */
+/// Copy the function name of "fp" to buffer "buf".
+/// "buf" must be able to hold the function name plus three bytes.
+/// Takes care of script-local function names.
 static void cat_func_name(char_u *buf, ufunc_T *fp)
 {
   if (fp->uf_name[0] == K_SPECIAL) {
@@ -571,9 +570,7 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
   }
 }
 
-/*
- * Add a number variable "name" to dict "dp" with value "nr".
- */
+/// Add a number variable "name" to dict "dp" with value "nr".
 static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
 {
 #ifndef __clang_analyzer__
@@ -586,7 +583,7 @@ static void add_nr_var(dict_T *dp, dictitem_T *v, char *name, varnumber_T nr)
   v->di_tv.vval.v_number = nr;
 }
 
-// Free "fc"
+/// Free "fc"
 static void free_funccal(funccall_T *fc)
 {
   for (int i = 0; i < fc->fc_funcs.ga_len; i++) {
@@ -606,9 +603,9 @@ static void free_funccal(funccall_T *fc)
   xfree(fc);
 }
 
-// Free "fc" and what it contains.
-// Can be called only when "fc" is kept beyond the period of it called,
-// i.e. after cleanup_function_call(fc).
+/// Free "fc" and what it contains.
+/// Can be called only when "fc" is kept beyond the period of it called,
+/// i.e. after cleanup_function_call(fc).
 static void free_funccal_contents(funccall_T *fc)
 {
   // Free all l: variables.
@@ -757,7 +754,7 @@ static void func_clear_items(ufunc_T *fp)
 /// Free all things that a function contains. Does not free the function
 /// itself, use func_free() for that.
 ///
-/// param[in]        force        When true, we are exiting.
+/// @param[in] force  When true, we are exiting.
 static void func_clear(ufunc_T *fp, bool force)
 {
   if (fp->uf_cleared) {
@@ -773,7 +770,7 @@ static void func_clear(ufunc_T *fp, bool force)
 /// Free a function and remove it from the list of functions. Does not free
 /// what a function contains, call func_clear() first.
 ///
-/// param[in]        fp        The function to free.
+/// @param[in] fp  The function to free.
 static void func_free(ufunc_T *fp)
 {
   // only remove it when not done already, otherwise we would remove a newer
@@ -786,7 +783,7 @@ static void func_free(ufunc_T *fp)
 
 /// Free all things that a function contains and free the function itself.
 ///
-/// param[in]        force        When true, we are exiting.
+/// @param[in] force  When true, we are exiting.
 static void func_clear_free(ufunc_T *fp, bool force)
 {
   func_clear(fp, force);
@@ -795,13 +792,13 @@ static void func_clear_free(ufunc_T *fp, bool force)
 
 /// Call a user function
 ///
-/// @param  fp  Function to call.
-/// @param[in]  argcount  Number of arguments.
-/// @param  argvars  Arguments.
-/// @param[out]  rettv  Return value.
-/// @param[in]  firstline  First line of range.
-/// @param[in]  lastline  Last line of range.
-/// @param  selfdict  Dictionary for "self" for dictionary functions.
+/// @param fp  Function to call.
+/// @param[in] argcount  Number of arguments.
+/// @param argvars  Arguments.
+/// @param[out] rettv  Return value.
+/// @param[in] firstline  First line of range.
+/// @param[in] lastline  Last line of range.
+/// @param selfdict  Dictionary for "self" for dictionary functions.
 void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                     linenr_T firstline, linenr_T lastline, dict_T *selfdict)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
@@ -1230,8 +1227,8 @@ static bool func_name_refcount(char_u *name)
 
 static funccal_entry_T *funccal_stack = NULL;
 
-// Save the current function call pointer, and set it to NULL.
-// Used when executing autocommands and for ":source".
+/// Save the current function call pointer, and set it to NULL.
+/// Used when executing autocommands and for ":source".
 void save_funccal(funccal_entry_T *entry)
 {
   entry->top_funccal = current_funccal;
@@ -1384,8 +1381,8 @@ func_call_skip_call:
   return r;
 }
 
-// Give an error message for the result of a function.
-// Nothing if "error" is FCERR_NONE.
+/// Give an error message for the result of a function.
+/// Nothing if "error" is FCERR_NONE.
 static void user_func_error(int error, const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1902,9 +1899,7 @@ theend:
   return name;
 }
 
-/*
- * ":function"
- */
+/// ":function"
 void ex_function(exarg_T *eap)
 {
   char_u *theline;
@@ -2595,11 +2590,9 @@ ret_free:
   }
 }  // NOLINT(readability/fn_size)
 
-/*
- * Return 5 if "p" starts with "<SID>" or "<SNR>" (ignoring case).
- * Return 2 if "p" starts with "s:".
- * Return 0 otherwise.
- */
+/// @return  5 if "p" starts with "<SID>" or "<SNR>" (ignoring case).
+///          2 if "p" starts with "s:".
+///          0 otherwise.
 int eval_fname_script(const char *const p)
 {
   // Use mb_strnicmp() because in Turkish comparing the "I" may not work with
@@ -2625,10 +2618,10 @@ bool translated_function_exists(const char *name)
 
 /// Check whether function with the given name exists
 ///
-/// @param[in]  name  Function name.
-/// @param[in]  no_deref  Whether to dereference a Funcref.
+/// @param[in] name  Function name.
+/// @param[in] no_deref  Whether to dereference a Funcref.
 ///
-/// @return True if it exists, false otherwise.
+/// @return  true if it exists, false otherwise.
 bool function_exists(const char *const name, bool no_deref)
 {
   const char_u *nm = (const char_u *)name;
@@ -2651,10 +2644,8 @@ bool function_exists(const char *const name, bool no_deref)
   return n;
 }
 
-/*
- * Function given to ExpandGeneric() to obtain the list of user defined
- * function names.
- */
+/// Function given to ExpandGeneric() to obtain the list of user defined
+/// function names.
 char_u *get_user_func_name(expand_T *xp, int idx)
 {
   static size_t done;
@@ -2771,10 +2762,8 @@ void ex_delfunction(exarg_T *eap)
   }
 }
 
-/*
- * Unreference a Function: decrement the reference count and free it when it
- * becomes zero.
- */
+/// Unreference a Function: decrement the reference count and free it when it
+/// becomes zero.
 void func_unref(char_u *name)
 {
   ufunc_T *fp = NULL;
@@ -2868,9 +2857,7 @@ static int can_free_funccal(funccall_T *fc, int copyID)
          && fc->fc_copyID != copyID;
 }
 
-/*
- * ":return [expr]"
- */
+/// ":return [expr]"
 void ex_return(exarg_T *eap)
 {
   char_u *arg = eap->arg;
@@ -2921,9 +2908,7 @@ void ex_return(exarg_T *eap)
 
 // TODO(ZyX-I): move to eval/ex_cmds
 
-/*
- * ":1,25call func(arg1, arg2)" function call.
- */
+/// ":1,25call func(arg1, arg2)" function call.
 void ex_call(exarg_T *eap)
 {
   char_u *arg = eap->arg;
@@ -3050,14 +3035,16 @@ end:
   xfree(tofree);
 }
 
-/*
- * Return from a function.  Possibly makes the return pending.  Also called
- * for a pending return at the ":endtry" or after returning from an extra
- * do_cmdline().  "reanimate" is used in the latter case.  "is_cmd" is set
- * when called due to a ":return" command.  "rettv" may point to a typval_T
- * with the return rettv.  Returns TRUE when the return can be carried out,
- * FALSE when the return gets pending.
- */
+/// Return from a function.  Possibly makes the return pending.  Also called
+/// for a pending return at the ":endtry" or after returning from an extra
+/// do_cmdline().  "reanimate" is used in the latter case.
+///
+/// @param reanimate  used after returning from an extra do_cmdline().
+/// @param is_cmd     set when called due to a ":return" command.
+/// @param rettv      may point to a typval_T with the return rettv.
+///
+/// @return  TRUE when the return can be carried out,
+///          FALSE when the return gets pending.
 int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 {
   int idx;
@@ -3068,12 +3055,10 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     current_funccal->returned = false;
   }
 
-  //
   // Cleanup (and deactivate) conditionals, but stop when a try conditional
   // not in its finally clause (which then is to be executed next) is found.
   // In this case, make the ":return" pending for execution at the ":endtry".
   // Otherwise, return normally.
-  //
   idx = cleanup_conditionals(eap->cstack, 0, true);
   if (idx >= 0) {
     cstack->cs_pending[idx] = CSTP_RETURN;
@@ -3126,10 +3111,8 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
   return idx < 0;
 }
 
-/*
- * Generate a return command for producing the value of "rettv".  The result
- * is an allocated string.  Used by report_pending() for verbose messages.
- */
+/// Generate a return command for producing the value of "rettv".  The result
+/// is an allocated string.  Used by report_pending() for verbose messages.
 char_u *get_return_cmd(void *rettv)
 {
   char_u *s = NULL;
@@ -3151,11 +3134,10 @@ char_u *get_return_cmd(void *rettv)
   return vim_strsave(IObuff);
 }
 
-/*
- * Get next function line.
- * Called by do_cmdline() to get the next line.
- * Returns allocated string, or NULL for end of function.
- */
+/// Get next function line.
+/// Called by do_cmdline() to get the next line.
+///
+/// @return  allocated string, or NULL for end of function.
 char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 {
   funccall_T *fcp = (funccall_T *)cookie;
@@ -3206,10 +3188,8 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
   return retval;
 }
 
-/*
- * Return TRUE if the currently active function should be ended, because a
- * return was encountered or an error occurred.  Used inside a ":while".
- */
+/// @return  TRUE if the currently active function should be ended, because a
+///          return was encountered or an error occurred.  Used inside a ":while".
 int func_has_ended(void *cookie)
 {
   funccall_T *fcp = (funccall_T *)cookie;
@@ -3220,9 +3200,7 @@ int func_has_ended(void *cookie)
          || fcp->returned;
 }
 
-/*
- * return TRUE if cookie indicates a function which "abort"s on errors.
- */
+/// @return  TRUE if cookie indicates a function which "abort"s on errors.
 int func_has_abort(void *cookie)
 {
   return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
@@ -3289,41 +3267,31 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   }
 }
 
-/*
- * Return the name of the executed function.
- */
+/// @return  the name of the executed function.
 char_u *func_name(void *cookie)
 {
   return ((funccall_T *)cookie)->func->uf_name;
 }
 
-/*
- * Return the address holding the next breakpoint line for a funccall cookie.
- */
+/// @return  the address holding the next breakpoint line for a funccall cookie.
 linenr_T *func_breakpoint(void *cookie)
 {
   return &((funccall_T *)cookie)->breakpoint;
 }
 
-/*
- * Return the address holding the debug tick for a funccall cookie.
- */
+/// @return  the address holding the debug tick for a funccall cookie.
 int *func_dbg_tick(void *cookie)
 {
   return &((funccall_T *)cookie)->dbg_tick;
 }
 
-/*
- * Return the nesting level for a funccall cookie.
- */
+/// @return  the nesting level for a funccall cookie.
 int func_level(void *cookie)
 {
   return ((funccall_T *)cookie)->level;
 }
 
-/*
- * Return TRUE when a function was ended by a ":return" command.
- */
+/// @return  TRUE when a function was ended by a ":return" command.
 int current_func_returned(void)
 {
   return current_funccal->returned;
@@ -3372,8 +3340,8 @@ funccall_T *get_funccal(void)
   return funccal;
 }
 
-/// Return the hashtable used for local variables in the current funccal.
-/// Return NULL if there is no current funccal.
+/// @return  hashtable used for local variables in the current funccal or
+///          NULL if there is no current funccal.
 hashtab_T *get_funccal_local_ht(void)
 {
   if (current_funccal == NULL) {
@@ -3382,8 +3350,8 @@ hashtab_T *get_funccal_local_ht(void)
   return &get_funccal()->l_vars.dv_hashtab;
 }
 
-/// Return the l: scope variable.
-/// Return NULL if there is no current funccal.
+/// @return   the l: scope variable or
+///           NULL if there is no current funccal.
 dictitem_T *get_funccal_local_var(void)
 {
   if (current_funccal == NULL) {
@@ -3392,8 +3360,8 @@ dictitem_T *get_funccal_local_var(void)
   return (dictitem_T *)&get_funccal()->l_vars_var;
 }
 
-/// Return the hashtable used for argument in the current funccal.
-/// Return NULL if there is no current funccal.
+/// @return  the hashtable used for argument in the current funccal or
+///          NULL if there is no current funccal.
 hashtab_T *get_funccal_args_ht(void)
 {
   if (current_funccal == NULL) {
@@ -3402,8 +3370,8 @@ hashtab_T *get_funccal_args_ht(void)
   return &get_funccal()->l_avars.dv_hashtab;
 }
 
-/// Return the a: scope variable.
-/// Return NULL if there is no current funccal.
+/// @return  the a: scope variable or
+///          NULL if there is no current funccal.
 dictitem_T *get_funccal_args_var(void)
 {
   if (current_funccal == NULL) {
@@ -3412,9 +3380,7 @@ dictitem_T *get_funccal_args_var(void)
   return (dictitem_T *)&current_funccal->l_avars_var;
 }
 
-/*
- * List function variables, if there is a function.
- */
+/// List function variables, if there is a function.
 void list_func_vars(int *first)
 {
   if (current_funccal != NULL) {
@@ -3423,9 +3389,8 @@ void list_func_vars(int *first)
   }
 }
 
-/// If "ht" is the hashtable for local variables in the current funccal, return
-/// the dict that contains it.
-/// Otherwise return NULL.
+/// @return  if "ht" is the hashtable for local variables in the current
+///          funccal, return the dict that contains it. Otherwise return NULL.
 dict_T *get_current_funccal_dict(hashtab_T *ht)
 {
   if (current_funccal != NULL && ht == &current_funccal->l_vars.dv_hashtab) {
@@ -3589,7 +3554,7 @@ bool set_ref_in_func_args(int copyID)
 /// "list_stack" is used to add lists to be marked.  Can be NULL.
 /// "ht_stack" is used to add hashtabs to be marked.  Can be NULL.
 ///
-/// @return true if setting references failed somehow.
+/// @return  true if setting references failed somehow.
 bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 {
   ufunc_T *fp = fp_in;

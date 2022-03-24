@@ -85,7 +85,7 @@ static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 
 // Callbacks used by libuv
 
-// Called by libuv to allocate memory for reading.
+/// Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   Stream *stream = handle->data;
@@ -95,9 +95,9 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
   buf->len = UV_BUF_LEN(write_count);
 }
 
-// Callback invoked by libuv after it copies the data into the buffer provided
-// by `alloc_cb`. This is also called on EOF or when `alloc_cb` returns a
-// 0-length buffer.
+/// Callback invoked by libuv after it copies the data into the buffer provided
+/// by `alloc_cb`. This is also called on EOF or when `alloc_cb` returns a
+/// 0-length buffer.
 static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
   Stream *stream = uvstream->data;
@@ -134,11 +134,11 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
   invoke_read_cb(stream, nread, false);
 }
 
-// Called by the by the 'idle' handle to emulate a reading event
-//
-// Idle callbacks are invoked once per event loop:
-//  - to perform some very low priority activity.
-//  - to keep the loop "alive" (so there is always an event to process)
+/// Called by the by the 'idle' handle to emulate a reading event
+///
+/// Idle callbacks are invoked once per event loop:
+///  - to perform some very low priority activity.
+///  - to keep the loop "alive" (so there is always an event to process)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
