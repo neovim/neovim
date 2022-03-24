@@ -628,7 +628,8 @@ LanguageTree:destroy({self})                          *LanguageTree:destroy()*
 
                 Any cleanup logic should be performed here.
 
-                Note: This DOES NOT remove this tree from a parent. Instead, `remove_child` must be called on the parent to remove it.
+                Note: This DOES NOT remove this tree from a parent. Instead,
+                `remove_child` must be called on the parent to remove it.
 
                 Parameters: ~
                     {self}
