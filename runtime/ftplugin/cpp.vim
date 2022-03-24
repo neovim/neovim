@@ -10,6 +10,7 @@ endif
 
 " Behaves mostly just like C
 runtime! ftplugin/c.vim ftplugin/c_*.vim ftplugin/c/*.vim
+runtime! ftplugin/c.lua ftplugin/c_*.lua ftplugin/c/*.lua
 
 " C++ uses templates with <things>
 " Disabled, because it gives an error for typing an unmatched ">".
