@@ -2350,17 +2350,15 @@ void entering_window(win_T *const win)
   }
 }
 
-/// Closes all windows for buffer `buf` until there is only one non-floating window.
+/// Closes all windows for buffer `buf` unless there is only one non-floating window.
 ///
-/// @param keep_curwin  don't close `curwin`, but caller must ensure `curwin` is non-floating.
+/// @param keep_curwin  don't close `curwin`
 void close_windows(buf_T *buf, bool keep_curwin)
 {
   tabpage_T *tp, *nexttp;
   int h = tabline_height();
 
   ++RedrawingDisabled;
-
-  assert(!keep_curwin || !curwin->w_floating);
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
