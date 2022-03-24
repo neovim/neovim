@@ -1,4 +1,5 @@
 local a = vim.api
+local fn = vim.fn
 local query = require"vim.treesitter.query"
 
 -- support reload for quick experimentation
@@ -84,8 +85,7 @@ TSHighlighter.hl_map = setmetatable({
 
 ---@private
 local function is_highlight_name(capture_name)
-  local firstc = string.sub(capture_name, 1, 1)
-  return firstc ~= string.lower(firstc)
+  return fn.hlID(capture_name) ~= 0
 end
 
 ---@private
@@ -126,9 +126,10 @@ end
 function TSHighlighterQuery:_get_hl_from_capture(capture)
   local name = self._query.captures[capture]
 
-  if is_highlight_name(name) then
-    -- From "Normal.left" only keep "Normal"
-    return vim.split(name, '.', true)[1], true
+  -- From "Normal.left" only keep "Normal"
+  local first = vim.split(name, '.', true)[1]
+  if is_highlight_name(first) then
+    return first, true
   else
     return TSHighlighter.hl_map[name] or 0, false
   end
