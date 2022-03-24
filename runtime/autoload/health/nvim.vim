@@ -146,7 +146,7 @@ function! s:check_performance() abort
   endif
 
   " check for slow shell invocation
-  let shell_cmd = 'ls'
+  let shell_cmd = 'echo'
   let slow_cmd_time = 1.5
   if !executable(shell_cmd)
     return
