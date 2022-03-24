@@ -3962,11 +3962,8 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   } else if ((int *)varp == &p_lnr) {
     // 'langnoremap' -> !'langremap'
     p_lrm = !p_lnr;
-  } else if ((int *)varp == &curwin->w_p_cul && !value && old_value) {
-    // 'cursorline'
-    reset_cursorline();
-    // 'undofile'
   } else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
+    // 'undofile'
     // Only take action when the option was set. When reset we do not
     // delete the undo file, the option may be set again without making
     // any changes in between.

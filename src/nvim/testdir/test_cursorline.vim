@@ -268,4 +268,30 @@ END
   call delete('Xtextfile')
 endfunc
 
+func Test_cursorline_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorline
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(2, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcul_timer')
+
+  let buf = RunVimInTerminal('-S Xcul_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorline_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcul_timer')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
