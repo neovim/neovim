@@ -131,6 +131,7 @@ typedef struct {
     int get_bg;
     int set_underline_style;
     int set_underline_color;
+    int enable_extended_keys, disable_extended_keys;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -168,7 +169,7 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->screenshot = tui_screenshot;
-  ui->option_set= tui_option_set;
+  ui->option_set = tui_option_set;
   ui->raw_line = tui_raw_line;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
@@ -308,6 +309,10 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
+  // Enable extended keys (also known as 'modifyOtherKeys' or CSI u). On terminals that don't
+  // support this, this sequence is ignored.
+  unibi_out_ext(ui, data->unibi_ext.enable_extended_keys);
+
   int ret;
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
@@ -365,6 +370,8 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
+  // Disable extended keys
+  unibi_out_ext(ui, data->unibi_ext.disable_extended_keys);
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -1378,7 +1385,6 @@ static void tui_screenshot(UI *ui, String path)
   fclose(f);
 }
 
-
 static void tui_option_set(UI *ui, String name, Object value)
 {
   TUIData *data = ui->data;
@@ -1387,11 +1393,9 @@ static void tui_option_set(UI *ui, String name, Object value)
 
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
-  }
-  if (strequal(name.data, "ttimeout")) {
+  } else if (strequal(name.data, "ttimeout")) {
     data->input.ttimeout = value.data.boolean;
-  }
-  if (strequal(name.data, "ttimeoutlen")) {
+  } else if (strequal(name.data, "ttimeoutlen")) {
     data->input.ttimeoutlen = (long)value.data.integer;
   }
 }
@@ -1944,6 +1948,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                || terminfo_is_term_family(term, "iTerm.app")
                || terminfo_is_term_family(term, "iTerm2.app");
   bool alacritty = terminfo_is_term_family(term, "alacritty");
+  bool kitty = terminfo_is_term_family(term, "xterm-kitty");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
@@ -2066,6 +2071,15 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
     // Only support colon syntax. #9270
     data->unibi_ext.set_underline_color = (int)unibi_add_ext_str(ut, "ext.set_underline_color",
                                                                  "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
+  }
+
+  if (!kitty) {
+    // Kitty does not support these sequences; it only supports it's own CSI > 1 u which enables the
+    // Kitty keyboard protocol
+    data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
+                                                                  "\x1b[>4;1m");
+    data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
+                                                                   "\x1b[>4;0m");
   }
 }
 
