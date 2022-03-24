@@ -977,6 +977,11 @@ function M.make_floating_popup_options(width, height, opts)
     col = 1
   end
 
+  local style = opts.style
+  if style == nil then
+    style = 'minimal'
+  end
+
   return {
     anchor = anchor,
     col = col + (opts.offset_x or 0),
@@ -984,7 +989,7 @@ function M.make_floating_popup_options(width, height, opts)
     focusable = opts.focusable,
     relative = 'cursor',
     row = row + (opts.offset_y or 0),
-    style = 'minimal',
+    style = style,
     width = width,
     border = opts.border or default_border,
     zindex = opts.zindex or 50,
