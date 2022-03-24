@@ -1486,8 +1486,15 @@ void set_curbuf(buf_T *buf, int action)
   // An autocommand may have deleted "buf", already entered it (e.g., when
   // it did ":bunload") or aborted the script processing!
   // If curwin->w_buffer is null, enter_buffer() will make it valid again
-  if ((buf_valid(buf) && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
-    enter_buffer(buf);
+  bool valid = buf_valid(buf);
+  if ((valid && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
+    // If the buffer is not valid but curwin->w_buffer is NULL we must
+    // enter some buffer.  Using the last one is hopefully OK.
+    if (!valid) {
+      enter_buffer(lastbuf);
+    } else {
+      enter_buffer(buf);
+    }
     if (old_tw != curbuf->b_p_tw) {
       check_colorcolumn(curwin);
     }
