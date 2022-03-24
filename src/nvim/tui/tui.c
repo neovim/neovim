@@ -2077,7 +2077,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
     // Kitty does not support these sequences; it only supports it's own CSI > 1 u which enables the
     // Kitty keyboard protocol
     data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
-                                                                  "\x1b[>4;1m");
+                                                                  "\x1b[>4;2m");
     data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
                                                                    "\x1b[>4;0m");
   }
