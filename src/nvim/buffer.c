@@ -1043,8 +1043,20 @@ static int empty_curbuf(int close_others, int forceit, int action)
 
   if (close_others) {
     if (curwin->w_floating) {
-      // Last window must be non-floating.
-      curwin = firstwin;
+      bool can_close_all_others = false;
+      for (win_T *wp = firstwin; !wp->w_floating; wp = wp->w_next) {
+        if (wp->w_buffer != curbuf) {
+          // Found another non-floating window with a different (probably unlisted) buffer.
+          // Closing all other windows with the this buffer is fine in this case.
+          can_close_all_others = true;
+          break;
+        }
+      }
+      if (!can_close_all_others) {
+        // Closing all other windows with this buffer will close all non-floating windows.
+        // Move to a non-floating window then.
+        curwin = firstwin;
+      }
     }
     // Close any other windows on this buffer, then make it empty.
     close_windows(buf, true);
