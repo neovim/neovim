@@ -347,6 +347,33 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
+--- Index into a table (first argument) via string keys passed as subsequent arguments.
+--- Return `nil` if the key does not exist.
+--_
+--- Examples:
+--- <pre>
+---  vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
+---  vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+--- </pre>
+---
+---@param o Table to index
+---@param ... Optional strings (0 or more, variadic) via which to index the table
+---
+---@returns nested value indexed by key if it exists, else nil
+function vim.tbl_get(o, ...)
+  local keys = {...}
+  if #keys == 0 then
+    return
+  end
+  for _, k in ipairs(keys) do
+    o = o[k]
+    if o == nil then
+      return
+    end
+  end
+  return o
+end
+
 --- Extends a list-like table with the values of another list-like table.
 ---
 --- NOTE: This mutates dst!
