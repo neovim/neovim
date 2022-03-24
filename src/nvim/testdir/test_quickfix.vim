@@ -5505,5 +5505,30 @@ func Test_lopen_bwipe()
   delfunc R
 endfunc
 
+" Another sequence of commands that caused all buffers to be wiped out
+func Test_lopen_bwipe_all()
+  let lines =<< trim END
+    func R()
+      silent! tab lopen
+      e foo
+      silent! lfile
+    endfunc
+    cal R()
+    exe "norm \<C-W>\<C-V>0"
+    cal R()
+    bwipe
+
+    call writefile(['done'], 'Xresult')
+    qall!
+  END
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -n -S Xscript')
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

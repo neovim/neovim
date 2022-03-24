@@ -1284,8 +1284,10 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       while (jumpidx != curwin->w_jumplistidx) {
         buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
         if (buf != NULL) {
-          if (buf == curbuf || !buf->b_p_bl) {
-            buf = NULL;                 // skip current and unlisted bufs
+          // Skip current and unlisted bufs.  Also skip a quickfix
+          // buffer, it might be deleted soon.
+          if (buf == curbuf || !buf->b_p_bl || bt_quickfix(buf)) {
+            buf = NULL;
           } else if (buf->b_ml.ml_mfp == NULL) {
             // skip unloaded buf, but may keep it for later
             if (bp == NULL) {
@@ -1323,7 +1325,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
           continue;
         }
         // in non-help buffer, try to skip help buffers, and vv
-        if (buf->b_help == curbuf->b_help && buf->b_p_bl) {
+        if (buf->b_help == curbuf->b_help && buf->b_p_bl && !bt_quickfix(buf)) {
           if (buf->b_ml.ml_mfp != NULL) {           // found loaded buffer
             break;
           }
@@ -1343,7 +1345,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     if (buf == NULL) {          // No loaded buffer, find listed one
       FOR_ALL_BUFFERS(buf2) {
-        if (buf2->b_p_bl && buf2 != curbuf) {
+        if (buf2->b_p_bl && buf2 != curbuf && !bt_quickfix(buf2)) {
           buf = buf2;
           break;
         }
@@ -1354,6 +1356,9 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
         buf = curbuf->b_next;
       } else {
         buf = curbuf->b_prev;
+      }
+      if (bt_quickfix(buf)) {
+        buf = NULL;
       }
     }
   }
