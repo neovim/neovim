@@ -3,6 +3,7 @@ local clear, feed_command = helpers.clear, helpers.feed_command
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command
 local expect = helpers.expect
+local curbuf_contents = helpers.curbuf_contents
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
@@ -156,6 +157,50 @@ describe('input split utf sequences', function()
     helpers.sleep(10)
     feed(str:sub(2, 3))
     expect('E296BA')
+  end)
+end)
+
+describe('input pairs', function()
+  describe('<tab> / <c-i>', function()
+    it('ok', function()
+      feed('i<tab><c-i><esc>')
+      eq('\t\t', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <tab> TAB!')
+      command('inoremap <c-i> CTRL-I!')
+      feed('i<tab><c-i><esc>')
+      eq('TAB!CTRL-I!', curbuf_contents())
+    end)
+  end)
+
+  describe('<cr> / <c-m>', function()
+    it('ok', function()
+      feed('iunos<c-m>dos<cr>tres<esc>')
+      eq('unos\ndos\ntres', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <c-m> SNIPPET!')
+      command('inoremap <cr> , and then<cr>')
+      feed('iunos<c-m>dos<cr>tres<esc>')
+      eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+    end)
+  end)
+
+  describe('<esc> / <c-[>', function()
+    it('ok', function()
+      feed('2adouble<c-[>asingle<esc>')
+      eq('doubledoublesingle', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <c-[> HALLOJ!')
+      command('inoremap <esc> ,<esc>')
+      feed('2adubbel<c-[>upp<esc>')
+      eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+    end)
   end)
 end)
 

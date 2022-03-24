@@ -1583,6 +1583,14 @@ int vgetc(void)
         c = utf_ptr2char(buf);
       }
 
+      if ((mod_mask & MOD_MASK_CTRL) && (c >= '?' && c <= '_')) {
+        c = Ctrl_chr(c);
+        mod_mask &= ~MOD_MASK_CTRL;
+        if (c == 0) {  // <C-@> is <Nul>
+          c = K_ZERO;
+        }
+      }
+
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
       // something with a meta- or alt- modifier that was not mapped, interpret
       // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
