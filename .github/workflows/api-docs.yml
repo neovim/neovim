@@ -6,7 +6,6 @@ on:
   push:
     paths:
       - 'src/nvim/api/*.[ch]'
-      - 'src/nvim/**.lua'
       - 'runtime/lua/**.lua'
     branches:
       - 'master'
