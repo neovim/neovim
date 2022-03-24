@@ -38,6 +38,9 @@ local subcapture_fallback = {
 
 TSHighlighter.hl_map = setmetatable({
     ["error"] = "Error",
+    ["text.underline"] = "Underlined",
+    ["todo"] = "Todo",
+    ["debug"] = "Debug",
 
 -- Miscs
     ["comment"] = "Comment",
@@ -49,10 +52,13 @@ TSHighlighter.hl_map = setmetatable({
     ["constant"] = "Constant",
     ["constant.builtin"] = "Special",
     ["constant.macro"] = "Define",
+    ["define"] = "Define",
+    ["macro"] = "Macro",
     ["string"] = "String",
     ["string.regex"] = "String",
     ["string.escape"] = "SpecialChar",
     ["character"] = "Character",
+    ["character.special"] = "SpecialChar",
     ["number"] = "Number",
     ["boolean"] = "Boolean",
     ["float"] = "Float",
@@ -78,8 +84,12 @@ TSHighlighter.hl_map = setmetatable({
 
     ["type"] = "Type",
     ["type.builtin"] = "Type",
+    ["type.qualifier"] = "Type",
+    ["type.definition"] = "Typedef",
+    ["storageclass"] = "StorageClass",
     ["structure"] = "Structure",
     ["include"] = "Include",
+    ["preproc"] = "PreProc",
 }, subcapture_fallback)
 
 ---@private
