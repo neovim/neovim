@@ -87,6 +87,7 @@ Object ui_client_handle_redraw(uint64_t channel_id, Array args, Error *error)
 ///
 /// This is just a stub. the full version will handle input, resizing, etc
 void ui_client_execute(uint64_t chan)
+  FUNC_ATTR_NORETURN
 {
   while (true) {
     loop_poll_events(&main_loop, -1);

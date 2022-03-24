@@ -6629,6 +6629,7 @@ static void ex_quit(exarg_T *eap)
 
 /// ":cquit".
 static void ex_cquit(exarg_T *eap)
+  FUNC_ATTR_NORETURN
 {
   // this does not always pass on the exit code to the Manx compiler. why?
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
