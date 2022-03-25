@@ -672,7 +672,41 @@ function vim.pretty_print(...)
   return ...
 end
 
-function vim._cs_remote(rcid, server_addr, connect_error, args)
+function vim._remote_server_edit(args)
+  local command = {}
+  if args.flags['tab'] then table.insert(command, 'tab') end
+  table.insert(command, 'drop')
+  for i = 1, #args.to_edit do
+      table.insert(command, vim.fn.fnameescape(args.to_edit[i]))
+  end
+  vim.api.nvim_command('cd ' .. vim.fn.fnameescape(args.cwd))
+  vim.api.nvim_command(table.concat(command, ' '))
+  local bufnrs = {}
+  local bufcnt = 0
+  for i = 1, #args.to_edit do
+    -- Look up the bufnr while we're cd'd into the client's cwd
+    -- Use a set for the bufnrs in case the filenames resolved to the same buffer
+    local bufnr = vim.fn.bufnr(args.to_edit[i])
+    if bufnr ~= -1 and not bufnrs[bufnr] then
+      bufcnt = bufcnt + 1
+      bufnrs[bufnr] = true
+    end
+  end
+  vim.api.nvim_command('cd -')
+  if not args.flags['wait'] then
+    return
+  end
+  for bufnr, _ in pairs(bufnrs) do
+    vim.api.nvim_create_autocmd('BufUnload', {buffer=bufnr, callback=function()
+      bufcnt = bufcnt - 1
+      if bufcnt == 0 then
+        vim.fn.rpcnotify(args.chan_id, 'nvim_command', 'quit')
+      end
+    end})
+  end
+end
+
+function vim._remote_invoke_server(rcid, server_addr, connect_error, args)
   local function connection_failure_errmsg(consequence)
     local explanation
     if server_addr == '' then
@@ -686,53 +720,47 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     return "E247: " .. explanation .. ". " .. consequence
   end
 
-  local f_silent = false
-  local f_tab = false
+  local flags = {}
+  local possible = { tab = true, wait = true, silent = true, send = true, expr = true }
+  for subcommand in string.gmatch(string.sub(args[1], #'--remote' + 1), '-(%a+)') do
+    if not possible[subcommand] then
+      return { errmsg='Unknown option argument: ' .. args[1] }
+    end
+    flags[subcommand] = true
+    if subcommand == 'tab' then
+      possible = { wait = true, silent = true }
+    elseif subcommand == 'wait' then
+      possible = { silent = true }
+    else -- we hit silent, send, or expr. Loop again to make sure we didn't get another subcommand
+      possible = {}
+    end
+  end
 
-  local subcmd = string.sub(args[1],10)
-  if subcmd == 'tab' then
-    f_tab = true
-  elseif subcmd == 'silent' then
-    f_silent = true
-  elseif subcmd == 'wait' or subcmd == 'wait-silent' or subcmd == 'tab-wait' or subcmd == 'tab-wait-silent' then
-    return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
-  elseif subcmd == 'tab-silent' then
-    f_tab = true
-    f_silent = true
-  elseif subcmd == 'send' then
+  if flags['send'] then
     if rcid == 0 then
       return { errmsg = connection_failure_errmsg('Send failed.') }
     end
     vim.fn.rpcrequest(rcid, 'nvim_input', args[2])
-    return { should_exit = true, tabbed = false }
-  elseif subcmd == 'expr' then
+  elseif flags['expr'] then
     if rcid == 0 then
       return { errmsg = connection_failure_errmsg('Send expression failed.') }
     end
     print(vim.fn.rpcrequest(rcid, 'nvim_eval', args[2]))
-    return { should_exit = true, tabbed = false }
-  elseif subcmd ~= '' then
-    return { errmsg='Unknown option argument: ' .. args[1] }
-  end
-
-  if rcid == 0 then
-    if not f_silent then
+  elseif rcid == 0 then
+    if not flags['silent'] then
       vim.notify(connection_failure_errmsg("Editing locally"), vim.log.levels.WARN)
     end
   else
-    local command = {}
-    if f_tab then table.insert(command, 'tab') end
-    table.insert(command, 'drop')
+    local to_edit = {}
     for i = 2, #args do
-      table.insert(command, vim.fn.fnameescape(args[i]))
+      table.insert(to_edit, args[i])
     end
-    vim.fn.rpcrequest(rcid, 'nvim_command', table.concat(command, ' '))
+    local remote_chan_id = vim.fn.rpcrequest(rcid, 'nvim_get_api_info')[1]
+    vim.fn.rpcrequest(rcid, 'nvim_exec_lua', 'return vim._remote_server_edit(...)',
+        {{ chan_id = remote_chan_id, flags = flags, cwd = vim.fn.getcwd(), to_edit = to_edit}})
   end
 
-  return {
-    should_exit = rcid ~= 0,
-    tabbed = f_tab,
-  }
+  return flags
 end
 
 require('vim._meta')

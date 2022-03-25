@@ -106,8 +106,13 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   assert(!stream->closed);
   DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
-  stream->close_cb = on_stream_close;
-  stream->close_cb_data = data;
+  if (on_stream_close != NULL) {
+      if (stream->close_cb != NULL) {
+        DLOG("overwriting existing stream close callback");
+      }
+      stream->close_cb = on_stream_close;
+      stream->close_cb_data = data;
+  }
 
 #ifdef WIN32
   if (UV_TTY == uv_guess_handle(stream->fd)) {

@@ -7136,6 +7136,18 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
   recursive--;
 }
 
+/// Set buffer numbers on all items in "al"
+///
+/// @param set_fnum  1: set buffer number; 2: re-use curbuf
+void alist_set_fnums(alist_T *al, int set_fnum)
+{
+    aentry_T *aentry = AARGLIST(al);
+    for (int i = 0; i < al->al_ga.ga_len; i++) {
+        aentry[i].ae_fnum =
+            buflist_add(aentry[i].ae_fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
+    }
+}
+
 /// Add file "fname" to argument list "al".
 /// "fname" must have been allocated and "al" must have been checked for room.
 ///

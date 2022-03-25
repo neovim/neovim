@@ -7,8 +7,11 @@ local expect = helpers.expect
 local funcs = helpers.funcs
 local insert = helpers.insert
 local meths = helpers.meths
+local mkdir = helpers.mkdir
 local new_argv = helpers.new_argv
 local neq = helpers.neq
+local ok = helpers.ok
+local rmdir = helpers.rmdir
 local set_session = helpers.set_session
 local spawn = helpers.spawn
 local tmpname = helpers.tmpname
@@ -20,24 +23,30 @@ describe('Remote', function()
   local other_contents = "A second file's contents"
 
   before_each(function()
-    fname = tmpname() .. ' with spaces in the filename'
+    fname = 'relative path with spaces'
     other_fname = tmpname()
     write_file(fname, contents)
     write_file(other_fname, other_contents)
   end)
 
+  after_each(function()
+    os.remove(fname)
+  end)
+
   describe('connect to server and', function()
     local server
     before_each(function()
+      mkdir('server_dir')
       server = spawn(new_argv(), true)
       set_session(server)
     end)
 
     after_each(function()
+      rmdir('server_dir')
       server:close()
     end)
 
-    local function run_remote(...)
+    local function start_remote(...)
       set_session(server)
       local addr = funcs.serverlist()[1]
       local client_argv = new_argv({args={'--server', addr, ...}})
@@ -49,12 +58,62 @@ describe('Remote', function()
       local client_starter = spawn(new_argv(), false, nil, true)
       set_session(client_starter)
       local client_job_id = funcs.jobstart(client_argv)
-      eq({ 0 }, funcs.jobwait({client_job_id}))
+      return client_job_id, client_starter
+    end
+
+    local function finish_remote(client_job_id, client_starter)
+      set_session(client_starter)
+      local status = funcs.jobwait({client_job_id}, 5000)[1]
+      ok(status == -3 or status == 0, 'Expected status of -3 or 0 but got ' .. status)
       client_starter:close()
+    end
+
+    local function run_remote(...)
+      local client_job_id, client_starter = start_remote(...)
+      finish_remote(client_job_id, client_starter)
       set_session(server)
     end
 
+    it('stop waiting if server exits', function()
+      local client_job_id, client_starter = start_remote('--remote-wait', fname, other_fname)
+      eq({ -1 }, funcs.jobwait({client_job_id}, 100))
+      set_session(server)
+      server:close()
+      finish_remote(client_job_id, client_starter)
+    end)
+
+    it('wait for multiple files to be edited', function()
+      local client_job_id, client_starter = start_remote('--remote-wait', fname, other_fname)
+      eq({ -1 }, funcs.jobwait({client_job_id}, 100))
+      set_session(server)
+      expect(contents)
+      command('bd')
+      command('bd')
+      expect(other_contents)
+      set_session(client_starter)
+      eq({ -1 }, funcs.jobwait({client_job_id}, 10))
+      set_session(server)
+      command('bd')
+      finish_remote(client_job_id, client_starter)
+    end)
+
+    it('wait for a single file to be edited', function()
+      local client_job_id, client_starter = start_remote('--remote-wait', fname)
+      eq({ -1 }, funcs.jobwait({client_job_id}, 100))
+      set_session(server)
+      expect(contents)
+      command('bd')
+      finish_remote(client_job_id, client_starter)
+    end)
+
     it('edit a single file', function()
+      run_remote('--remote', fname)
+      expect(contents)
+      eq(2, #funcs.getbufinfo())
+    end)
+
+    it('edit in a different directory than the client', function()
+      command('cd server_dir')
       run_remote('--remote', fname)
       expect(contents)
       eq(2, #funcs.getbufinfo())
@@ -134,9 +193,6 @@ describe('Remote', function()
 
     it('expr without server', function()
       run_and_check_exit_code('--remote-expr', 'setline(1, "Yo")')
-    end)
-    it('wait subcommand', function()
-      run_and_check_exit_code('--remote-wait', fname)
     end)
   end)
 end)
