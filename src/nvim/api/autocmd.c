@@ -697,7 +697,7 @@ void nvim_del_augroup_by_name(String name)
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands |<nomodeline>|.
 /// @see |:doautocmd|
-void nvim_do_autocmd(Object event, Dict(do_autocmd) *opts, Error *err)
+void nvim_exec_autocmd(Object event, Dict(exec_autocmd) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   int au_group = AUGROUP_ALL;

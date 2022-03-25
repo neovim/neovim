@@ -133,7 +133,7 @@ return {
     "nested";
     "pattern";
   };
-  do_autocmd = {
+  exec_autocmd = {
     "buffer";
     "group";
     "modeline";
