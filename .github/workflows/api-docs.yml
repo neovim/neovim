@@ -1,5 +1,5 @@
 # Autogenerate the API docs on new commit to important branches
-# Also work as a check for PR's to not forget commiting their doc changes
+# Also work as a check for PR's to not forget committing their doc changes
 # called from api-docs-check.yml
 name: Autogenerate API docs
 on:
@@ -52,7 +52,7 @@ jobs:
           python3 scripts/gen_vimdoc.py
           printf '::set-output name=UPDATED_DOCS::%s\n' $([ -z "$(git diff)" ]; echo $?)
 
-      - name: FAIL, PR has not commited doc changes
+      - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 && inputs.check_only }}
         run: |
           echo "Job failed, run ./scripts/gen_vimdoc.py and commit your doc changes"

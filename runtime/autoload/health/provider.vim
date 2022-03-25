@@ -690,7 +690,7 @@ function! s:check_perl() abort
   if empty(perl_exec)
     if !empty(perl_warnings)
       call health#report_warn(perl_warnings, ['See :help provider-perl for more information.',
-            \ 'You may disable this provider (and warning) by adding `let g:loaded_node_provider = 0` to your init.vim'])
+            \ 'You may disable this provider (and warning) by adding `let g:loaded_perl_provider = 0` to your init.vim'])
     else
       call health#report_warn('No usable perl executable found')
     endif

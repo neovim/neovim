@@ -452,7 +452,7 @@ Extended marks (extmarks) represent buffer annotations that track text changes
 in the buffer. They can represent cursors, folds, misspelled words, anything
 that needs to track a logical location in the buffer over time. |api-indexing|
 
-Extmark position works like "bar" cursor: it exists between characters. Thus
+Extmark position works like "bar" cursor: it exists between characters. Thus,
 the maximum extmark index on a line is 1 more than the character index: >
 
      f o o b a r      line contents
@@ -468,7 +468,7 @@ extmark position and enter some text, the extmark migrates forward. >
      f o o z|b a r    line (| = cursor)
             4         extmark (after typing "z")
 
-If an extmark is on the last index of a line and you inputs a newline at that
+If an extmark is on the last index of a line and you input a newline at that
 point, the extmark will accordingly migrate to the next line: >
 
      f o o z b a r|   line (| = cursor)
@@ -1802,7 +1802,7 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                           there for debugging purposes primary (debugging
                           parser and providing debug information).
                         • "children": a list of nodes described in top/"ast".
-                          There always is zero, one or two children, key will
+                          There is always zero, one or two children, key will
                           not be present if node has no children. Maximum
                           number of children may be found in node_maxchildren
                           array.
@@ -1967,7 +1967,7 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                 current window already shows "buffer", the window is not
                 switched If a window inside the current tabpage (including a
                 float) already shows the buffer One of these windows will be
-                set as current window temporarily. Otherwise a temporary
+                set as current window temporarily. Otherwise, a temporary
                 scratch window (called the "autocmd window" for historical
                 reasons) will be used.
 
@@ -2362,7 +2362,7 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
                 it in to this function as `ns_id` to add highlights to the
                 namespace. All highlights in the same namespace can then be
                 cleared with single call to |nvim_buf_clear_namespace()|. If
-                the highlight never will be deleted by an API call, pass
+                the highlight will never be deleted by an API call, pass
                 `ns_id = -1`.
 
                 As a shorthand, `ns_id = 0` can be used to create a new
@@ -3029,7 +3029,7 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
                                   double box style could be specified as [
                                   "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ]. If
                                   the number of chars are less than eight,
-                                  they will be repeated. Thus an ASCII border
+                                  they will be repeated. Thus, an ASCII border
                                   could be specified as [ "/", "-", "\\", "|"
                                   ], or all chars the same as [ "x" ]. An
                                   empty string can be used to turn off a

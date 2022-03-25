@@ -152,7 +152,7 @@ void ui_client_event_grid_line(Array args)
   Array cells = args.items[3].data.array;
 
   Integer endcol, clearcol;
-  // TODO(hlpr98): Accomodate other LineFlags when included in grid_line
+  // TODO(hlpr98): Accommodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
   endcol = startcol;
 
