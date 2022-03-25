@@ -21,7 +21,7 @@ end
 
 ---@private
 local function getline(bufnr, lnum)
-  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1]
+  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1] or ""
 end
 
 -- Filetypes based on file extension
