@@ -361,7 +361,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
       msg_end();
       msg_scroll = msg_save;
-      return FAIL;
+      return NOTDONE;
     }
   }
 

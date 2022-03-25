@@ -2343,6 +2343,19 @@ func Test_throw_in_BufWritePre()
   au! throwing
 endfunc
 
+func Test_autocmd_in_try_block()
+  call mkdir('Xdir')
+  au BufEnter * let g:fname = expand('%')
+  try
+    edit Xdir/
+  endtry
+  call assert_match('Xdir', g:fname)
+
+  unlet g:fname
+  au! BufEnter
+  call delete('Xdir', 'rf')
+endfunc
+
 func Test_autocmd_CmdWinEnter()
   CheckRunVimInTerminal
   " There is not cmdwin switch, so
