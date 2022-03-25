@@ -16,7 +16,7 @@ local M = {}
 ---               `items`, or the context in which select() was called.
 ---@param on_choice function ((item|nil, idx|nil) -> ())
 ---               Called once the user made a choice.
----               `idx` is the 1-based index of `item` within `item`.
+---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
 ---
 ---

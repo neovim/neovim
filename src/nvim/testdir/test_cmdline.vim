@@ -1127,7 +1127,7 @@ func Test_cmdwin_tabpage()
   tabedit
   " v8.2.1919 isn't ported yet, so E492 is thrown after E11 here.
   " v8.2.1183 also isn't ported yet, so we also can't assert E11 directly.
-  " For now, assert E11 and E492 seperately. When v8.2.1183 is ported, the
+  " For now, assert E11 and E492 separately. When v8.2.1183 is ported, the
   " assert for E492 will fail and this workaround should be removed.
   " call assert_fails("silent norm q/g	:I\<Esc>", 'E11:')
   call assert_fails("silent norm q/g	", 'E11:')

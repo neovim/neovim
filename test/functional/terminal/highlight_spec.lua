@@ -215,7 +215,7 @@ describe(':terminal highlight with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = tonumber('0x123456')}, -- no fg_indexed when overriden
+      [1] = {foreground = tonumber('0x123456')}, -- no fg_indexed when overridden
       [2] = {foreground = 12},
       [3] = {bold = true, reverse = true},
       [5] = {background = 11},

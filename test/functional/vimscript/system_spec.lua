@@ -527,7 +527,7 @@ describe('systemlist()', function()
     end)
 
     -- Unlike `system()` which uses SOH to represent NULs, with `systemlist()`
-    -- input and ouput are the same.
+    -- input and output are the same.
     describe('with linefeed characters inside list items', function()
       it('converts linefeed characters to NULs', function()
         eq({'l1\np2', 'line2\na\nb', 'l3'},

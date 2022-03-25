@@ -27,7 +27,7 @@ typedef enum {
   WC_BOTTOM_RIGHT
 } WindowCorner;
 
-/// By default, all widows are draw on a single rectangular grid, represented by
+/// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
 /// grid, then this is only used for global screen elements that hasn't been
 /// externalized.

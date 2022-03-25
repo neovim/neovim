@@ -285,7 +285,7 @@ endfunc
 " 1
 "     1
 "     1
-"     Expexted:
+"     Expected:
 "     1) g Ctrl-A on block selected indented lines
 "     2
 " 1

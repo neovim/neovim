@@ -5049,7 +5049,7 @@ func Test_quickfix_window_fails_to_open()
   call delete('XquickfixFails')
 endfunc
 
-" Test for updating the quickfix buffer whenever the assocaited quickfix list
+" Test for updating the quickfix buffer whenever the associated quickfix list
 " is changed.
 func Xqfbuf_update(cchar)
   call s:setup_commands(a:cchar)

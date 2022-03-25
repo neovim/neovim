@@ -1038,7 +1038,7 @@ describe('jobs', function()
       local other_jobid = eval("jobstart(['cat', '-'], g:job_opts)")
       local other_pid = eval('jobpid(' .. other_jobid .. ')')
 
-      -- Other job doesn't block first job from recieving SIGHUP on jobclose()
+      -- Other job doesn't block first job from receiving SIGHUP on jobclose()
       command('call jobclose(j)')
       -- Have to wait so that the SIGHUP can be processed by tty-test on time.
       -- Can't wait for the next message in case this test fails, if it fails

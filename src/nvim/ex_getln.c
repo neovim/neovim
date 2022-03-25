@@ -5852,7 +5852,7 @@ HistoryType get_histtype(const char *const name, const size_t len, const bool re
 static int last_maptick = -1;           // last seen maptick
 
 /// Add the given string to the given history.  If the string is already in the
-/// history then it is moved to the front.  "histype" may be one of he HIST_
+/// history then it is moved to the front.  "histype" may be one of the HIST_
 /// values.
 ///
 /// @parma in_map  consider maptick when inside a mapping

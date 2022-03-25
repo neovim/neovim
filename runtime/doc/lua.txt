@@ -1151,7 +1151,7 @@ In any of the above examples, to replicate the behavior |setlocal|, use
 
 |vim.opt| returns an Option object.
 
-For example: `local listchar_object = vim.opt.listchar`
+For example: `local listchar_object = vim.opt.listchars`
 
 An `Option` has the following methods:
 
@@ -1910,7 +1910,7 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                    which select() was called.
                     {on_choice}  function ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
-                                 1-based index of `item` within `item`. `nil`
+                                 1-based index of `item` within `items`. `nil`
                                  if the user aborted the dialog.
 
 

@@ -728,7 +728,7 @@ end]]
     ]]}
   end)
 
-  it('can have virtual text which combines foreground and backround groups', function()
+  it('can have virtual text which combines foreground and background groups', function()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {background = tonumber('0x123456'), foreground = tonumber('0xbbbbbb')};
