@@ -3282,7 +3282,7 @@ nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
                 See also: ~
                     |nvim_create_autocmd()|
 
-nvim_do_autocmd({event}, {*opts})                          *nvim_do_autocmd()*
+nvim_exec_autocmd({event}, {*opts})                      *nvim_exec_autocmd()*
                 Execute an autocommand |autocmd-execute|.
 
                 Parameters: ~
