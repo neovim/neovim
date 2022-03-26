@@ -1536,7 +1536,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   long off;
   int i;
   int notset = true;  // block "*dp" not set yet
-  diffhunk_T *hunk;
+  diffhunk_T *hunk = NULL;  // init to avoid gcc warning
   enum {
     DIFF_ED,
     DIFF_UNIFIED,
