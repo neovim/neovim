@@ -1153,8 +1153,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   }
   HistoryMergerState hms[HIST_COUNT];
   if (srni_flags & kSDReadHistory) {
-    for (uint8_t i = 0; i < HIST_COUNT; i++) {
-      hms_init(&hms[i], i, (size_t)p_hi, true, true);
+    for (HistoryType i = 0; i < HIST_COUNT; i++) {
+      hms_init(&hms[i], (uint8_t)i, (size_t)p_hi, true, true);
     }
   }
   ShadaEntry cur_entry;
@@ -1410,12 +1410,12 @@ shada_read_main_cycle_end:
   //          memory for the history string itself and separator character which
   //          may be assigned right away.
   if (srni_flags & kSDReadHistory) {
-    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+    for (HistoryType i = 0; i < HIST_COUNT; i++) {
       hms_insert_whole_neovim_history(&hms[i]);
       clr_history(i);
       int *new_hisidx;
       int *new_hisnum;
-      histentry_T *hist = hist_get_array(i, &new_hisidx, &new_hisnum);
+      histentry_T *hist = hist_get_array((uint8_t)i, &new_hisidx, &new_hisnum);
       if (hist != NULL) {
         hms_to_he_array(&hms[i], hist, new_hisidx, new_hisnum);
       }
@@ -2485,7 +2485,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
   bool dump_history = false;
 
   // Initialize history merger
-  for (uint8_t i = 0; i < HIST_COUNT; i++) {
+  for (HistoryType i = 0; i < HIST_COUNT; i++) {
     long num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
       num_saved = p_hi;
@@ -2493,7 +2493,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
     if (num_saved > 0) {
       dump_history = true;
       dump_one_history[i] = true;
-      hms_init(&wms->hms[i], i, (size_t)num_saved, sd_reader != NULL, false);
+      hms_init(&wms->hms[i], (uint8_t)i, (size_t)num_saved, sd_reader != NULL, false);
     } else {
       dump_one_history[i] = false;
     }

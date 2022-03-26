@@ -5353,11 +5353,11 @@ bool garbage_collect(bool testing)
 
   // history items (ShaDa additional elements)
   if (p_hi) {
-    for (uint8_t i = 0; i < HIST_COUNT; i++) {
+    for (HistoryType i = 0; i < HIST_COUNT; i++) {
       const void *iter = NULL;
       do {
         histentry_T hist;
-        iter = hist_iter(iter, i, false, &hist);
+        iter = hist_iter(iter, (uint8_t)i, false, &hist);
         if (hist.hisstr != NULL) {
           ABORTING(set_ref_list)(hist.additional_elements, copyID);
         }
