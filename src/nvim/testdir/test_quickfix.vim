@@ -796,101 +796,102 @@ func ReadTestProtocol(name)
 endfunc
 
 func Test_locationlist()
-    enew
+  enew
 
-    augroup testgroup
-      au!
-      autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
-    augroup END
+  augroup testgroup
+    au!
+    autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
+  augroup END
 
-    let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
+  let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
 
-    let qflist = []
-    for word in words
-      call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
-      " NOTE: problem 1:
-      " intentionally not setting 'lnum' so that the quickfix entries are not
-      " valid
-      eval qflist->setloclist(0, ' ')
-    endfor
+  let qflist = []
+  for word in words
+    call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
+    " NOTE: problem 1:
+    " intentionally not setting 'lnum' so that the quickfix entries are not
+    " valid
+    eval qflist->setloclist(0, ' ')
+  endfor
 
-    " Test A
-    lrewind
-    enew
-    lopen
-    4lnext
-    vert split
-    wincmd L
-    lopen
-    wincmd p
-    lnext
-    let fileName = expand("%")
-    wincmd p
-    let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
-    let fileName = substitute(fileName, '\\', '/', 'g')
-    let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
-    call assert_equal("test://bar.txt", fileName)
-    call assert_equal("test://bar.txt", locationListFileName)
+  " Test A
+  lrewind
+  enew
+  lopen
+  4lnext
+  vert split
+  wincmd L
+  lopen
+  wincmd p
+  lnext
+  let fileName = expand("%")
+  wincmd p
+  let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
+  let fileName = substitute(fileName, '\\', '/', 'g')
+  let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
+  call assert_equal("test://bar.txt", fileName)
+  call assert_equal("test://bar.txt", locationListFileName)
 
-    wincmd n | only
+  wincmd n | only
 
-    " Test B:
-    lrewind
-    lopen
-    2
-    exe "normal \<CR>"
-    wincmd p
-    3
-    exe "normal \<CR>"
-    wincmd p
-    4
-    exe "normal \<CR>"
-    call assert_equal(2, winnr('$'))
-    wincmd n | only
+  " Test B:
+  lrewind
+  lopen
+  2
+  exe "normal \<CR>"
+  wincmd p
+  3
+  exe "normal \<CR>"
+  wincmd p
+  4
+  exe "normal \<CR>"
+  call assert_equal(2, winnr('$'))
+  wincmd n | only
 
-    " Test C:
-    lrewind
-    lopen
-    " Let's move the location list window to the top to check whether it (the
-    " first window found) will be reused when we try to open new windows:
-    wincmd K
-    2
-    exe "normal \<CR>"
-    wincmd p
-    3
-    exe "normal \<CR>"
-    wincmd p
-    4
-    exe "normal \<CR>"
-    1wincmd w
-    call assert_equal('quickfix', &buftype)
-    2wincmd w
-    let bufferName = expand("%")
-    let bufferName = substitute(bufferName, '\\', '/', 'g')
-    call assert_equal('test://quux.txt', bufferName)
+  " Test C:
+  lrewind
+  lopen
+  " Let's move the location list window to the top to check whether it (the
+  " first window found) will be reused when we try to open new windows:
+  wincmd K
+  2
+  exe "normal \<CR>"
+  wincmd p
+  3
+  exe "normal \<CR>"
+  wincmd p
+  4
+  exe "normal \<CR>"
+  1wincmd w
+  call assert_equal('quickfix', &buftype)
+  2wincmd w
+  let bufferName = expand("%")
+  let bufferName = substitute(bufferName, '\\', '/', 'g')
+  call assert_equal('test://quux.txt', bufferName)
 
-    wincmd n | only
+  wincmd n | only
 
-    augroup! testgroup
+  augroup! testgroup
 endfunc
 
 func Test_locationlist_curwin_was_closed()
-    augroup testgroup
-      au!
-      autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
-    augroup END
+  augroup testgroup
+    au!
+    autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
+  augroup END
 
-    func! R(n)
-      quit
-    endfunc
+  func! R(n)
+    quit
+  endfunc
 
-    new
-    let q = []
-    call add(q, {'filename': 'test_curwin.txt' })
-    call setloclist(0, q)
-    call assert_fails('lrewind', 'E924:')
+  new
+  let q = []
+  call add(q, {'filename': 'test_curwin.txt' })
+  call setloclist(0, q)
+  call assert_fails('lrewind', 'E924:')
 
-    augroup! testgroup
+  augroup! testgroup
+  delfunc R
 endfunc
 
 func Test_locationlist_cross_tab_jump()
@@ -5488,5 +5489,46 @@ func Test_two_qf_windows()
   call assert_false(buflisted(bnum))
   %bw!
 endfunc
+
+" Weird sequence of commands that caused entering a wiped-out buffer
+func Test_lopen_bwipe()
+  func R()
+    silent! tab lopen
+    e x
+    silent! lfile
+  endfunc
+
+  cal R()
+  cal R()
+  cal R()
+  bw!
+  delfunc R
+endfunc
+
+" Another sequence of commands that caused all buffers to be wiped out
+func Test_lopen_bwipe_all()
+  let lines =<< trim END
+    func R()
+      silent! tab lopen
+      e foo
+      silent! lfile
+    endfunc
+    cal R()
+    exe "norm \<C-W>\<C-V>0"
+    cal R()
+    bwipe
+
+    call writefile(['done'], 'Xresult')
+    qall!
+  END
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -n -S Xscript')
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
