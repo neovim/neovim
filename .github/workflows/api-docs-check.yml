@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/nvim/api/*.[ch]'
       - 'runtime/lua/**.lua'
+      - 'runtime/doc/**'
 
 jobs:
   call-regen-api-docs:
