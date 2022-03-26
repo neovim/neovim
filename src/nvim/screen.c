@@ -4333,6 +4333,9 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
         break;
       }
     }
+    if (!*s.p) {
+      continue;
+    }
     int attr;
     bool through = false;
     if (hl_mode == kHlModeCombine) {
