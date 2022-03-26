@@ -396,6 +396,14 @@ struct stl_item {
   } type;
 };
 
+/// Structure used for listeners added with listener_add().
+typedef struct listener_S listener_T;
+struct listener_S {
+  listener_T *lr_next;
+  int lr_id;
+  Callback lr_callback;
+};
+
 // values for b_syn_spell: what to do with toplevel text
 #define SYNSPL_DEFAULT  0       // spell check if @Spell not defined
 #define SYNSPL_TOP      1       // spell check toplevel text
@@ -830,6 +838,8 @@ struct file_buffer {
 
   ScopeDictDictItem b_bufvar;  ///< Variable for "b:" Dictionary.
   dict_T *b_vars;  ///< b: scope dictionary.
+
+  listener_T *b_listener;
 
   /* When a buffer is created, it starts without a swap file.  b_may_swap is
    * then set to indicate that a swap file may be opened later.  It is reset
