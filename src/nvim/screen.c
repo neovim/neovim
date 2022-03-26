@@ -667,15 +667,11 @@ void conceal_check_cursor_line(void)
 
 /// Whether cursorline is drawn in a special way
 ///
-/// If true, both old and new cursorline will need
-/// to be redrawn when moving cursor within windows.
-/// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
-///               caused by scrolling.
+/// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul
-         || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
+  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /*
