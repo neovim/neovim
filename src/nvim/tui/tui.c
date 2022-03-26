@@ -226,6 +226,8 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
   data->unibi_ext.set_underline_color = -1;
+  data->unibi_ext.enable_extended_keys = -1;
+  data->unibi_ext.disable_extended_keys = -1;
   data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
