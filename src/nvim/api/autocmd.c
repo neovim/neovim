@@ -340,8 +340,7 @@ cleanup:
 ///     -- Vimscript function name (as a string)
 ///     local myvimfun = "g:MyVimFunction"
 ///
-///     vim.api.nvim_create_autocmd({
-///       event = {"BufEnter", "BufWinEnter"},
+///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
 ///       callback = myluafun,  -- Or myvimfun
 ///     })
@@ -349,8 +348,7 @@ cleanup:
 ///
 /// Example using command:
 /// <pre>
-///     vim.api.nvim_create_autocmd({
-///       event = {"BufEnter", "BufWinEnter"},
+///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ///       pattern = {"*.c", "*.h"},
 ///       command = "echo 'Entering a C or C++ file'",
 ///     })
@@ -364,8 +362,8 @@ cleanup:
 ///
 /// Examples values for event:
 /// <pre>
-///   event = "BufPreWrite"
-///   event = {"CursorHold", "BufPreWrite", "BufPostWrite"}
+///   "BufPreWrite"
+///   {"CursorHold", "BufPreWrite", "BufPostWrite"}
 /// </pre>
 ///
 /// @param event (String|Array) The event or events to register this autocommand
