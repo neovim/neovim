@@ -180,6 +180,7 @@ Commands:
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
   |:match| can be invoked before highlight group is defined
+  |:source| works with Lua and anonymous (no file) scripts
 
 Events:
   |RecordingEnter|

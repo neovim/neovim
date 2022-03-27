@@ -3670,8 +3670,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		0: never
 		1: only if there are at least two windows
 		2: always
-		3: have a global statusline at the bottom instead of one for
-		   each window
+		3: always and ONLY the last window
 	The screen looks nicer with a status line if you have several
 	windows, but it takes another screen line. |status-line|
 

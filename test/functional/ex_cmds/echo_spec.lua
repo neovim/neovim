@@ -181,9 +181,9 @@ describe(':echo :echon :echomsg :echoerr', function()
     end)
 
     it('dumps references to script functions', function()
-      eq('<SNR>2_Test2', eval('String(Test2_f)'))
-      eq("function('<SNR>2_Test2')", eval('StringMsg(Test2_f)'))
-      eq("function('<SNR>2_Test2')", eval('StringErr(Test2_f)'))
+      eq('<SNR>1_Test2', eval('String(Test2_f)'))
+      eq("function('<SNR>1_Test2')", eval('StringMsg(Test2_f)'))
+      eq("function('<SNR>1_Test2')", eval('StringErr(Test2_f)'))
     end)
 
     it('dump references to lambdas', function()
@@ -205,11 +205,11 @@ describe(':echo :echon :echomsg :echoerr', function()
 
     it('dumps automatically created partials', function()
       assert_same_echo_dump(
-        "function('<SNR>2_Test2', {'f': function('<SNR>2_Test2')})",
+        "function('<SNR>1_Test2', {'f': function('<SNR>1_Test2')})",
         '{"f": Test2_f}.f',
         true)
       assert_same_echo_dump(
-        "function('<SNR>2_Test2', [1], {'f': function('<SNR>2_Test2', [1])})",
+        "function('<SNR>1_Test2', [1], {'f': function('<SNR>1_Test2', [1])})",
         '{"f": function(Test2_f, [1])}.f',
         true)
     end)
@@ -227,7 +227,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     function()
       meths.set_var('d', {v=true})
       eq(dedent([[
-          {'p': function('<SNR>2_Test2', {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]]),
+          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
         exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
     end)
 
@@ -264,7 +264,7 @@ describe(':echo :echon :echomsg :echoerr', function()
       eval('add(l, function("Test1", l))')
       eval('add(l, function("Test1", d))')
       eq(dedent([=[
-          {'p': function('<SNR>2_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]=]),
+          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
         exec_capture('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
     end)
   end)
