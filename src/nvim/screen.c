@@ -7617,16 +7617,3 @@ win_T *get_win_by_grid_handle(handle_T handle)
   }
   return NULL;
 }
-
-/// Check if the cursor moved and 'cursorline' is set.  Mark for a VALID redraw
-/// if needed.
-void check_redraw_cursorline(void)
-{
-  // When 'cursorlineopt' is "screenline" need to redraw always.
-  if (curwin->w_p_cul
-      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
-          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
-      && !char_avail()) {
-    redraw_later(curwin, VALID);
-  }
-}

@@ -293,5 +293,26 @@ func Test_cursorline_callback()
   call delete('Xcul_timer')
 endfunc
 
+func Test_cursorline_screenline_update()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, repeat('xyz ', 30))
+      set cursorline cursorlineopt=screenline
+      inoremap <F2> <Cmd>call cursor(1, 1)<CR>
+  END
+  call writefile(lines, 'Xcul_screenline')
+
+  let buf = RunVimInTerminal('-S Xcul_screenline', #{rows: 8})
+  call term_sendkeys(buf, "A")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_1', {})
+  call term_sendkeys(buf, "\<F2>")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xcul_screenline')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

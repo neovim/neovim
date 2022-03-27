@@ -597,6 +597,31 @@ func Test_cursorline_with_visualmode()
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
 
+func Test_cursorcolumn_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcuc_timer')
+
+  let buf = RunVimInTerminal('-S Xcuc_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_timer')
+endfunc
+
 func Test_colorcolumn()
   CheckScreendump
 
