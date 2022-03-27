@@ -590,6 +590,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   // Remove the buffer from the list.
   if (wipe_buf) {
+    // Do not wipe out the buffer if it is used in a window.
+    if (buf->b_nwindows > 0) {
+      return false;
+    }
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     } else {

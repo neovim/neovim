@@ -3,8 +3,10 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local neq = helpers.neq
 local feed = helpers.feed
 local eval = helpers.eval
+local exec = helpers.exec
 
 describe('tabpage', function()
   before_each(clear)
@@ -33,6 +35,21 @@ describe('tabpage', function()
     feed('<C-W>gT')
 
     eq(3, eval('tabpagenr()'))
+  end)
+
+  it('does not crash or loop 999 times if BufWipeout autocommand switches window #17868', function()
+    exec([[
+      tabedit
+      let s:window_id = win_getid()
+      botright new
+      setlocal bufhidden=wipe
+      let g:win_closed = 0
+      autocmd WinClosed * let g:win_closed += 1
+      autocmd BufWipeout <buffer> call win_gotoid(s:window_id)
+      tabprevious
+      +tabclose
+    ]])
+    neq(999, eval('g:win_closed'))
   end)
 end)
 

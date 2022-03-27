@@ -6839,7 +6839,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 
     // Autocommands may delete the tab page under our fingers and we may
     // fail to close a window with a modified buffer.
-    if (!valid_tabpage(tp) || tp->tp_firstwin == wp) {
+    if (!valid_tabpage(tp) || tp->tp_lastwin == wp) {
       break;
     }
   }
