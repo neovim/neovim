@@ -166,7 +166,7 @@ _opt_pylint:
 		|| echo "SKIP: pylint (flake8 not found)"
 
 commitlint:
-	$(NVIM_PRG) --clean -es +"lua require('scripts.lintcommit').main({trace=false})"
+	$(NVIM_PRG) -u NONE -es +"lua require('scripts.lintcommit').main({trace=false})"
 
 _opt_commitlint:
 	@test -x build/bin/nvim && { $(MAKE) commitlint; exit $$?; } \
