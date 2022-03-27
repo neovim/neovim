@@ -95,7 +95,7 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -104,6 +104,22 @@ void redraw_for_cursorline(win_T *wp)
       && !pum_visible()) {
     // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, VALID);
+  }
+}
+
+/// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
+/// contains "screenline".
+static void redraw_for_cursorcolumn(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
+    if (wp->w_p_cuc) {
+      // When 'cursorcolumn' is set need to redraw with SOME_VALID.
+      redraw_later(wp, SOME_VALID);
+    } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
+      // When 'cursorlineopt' contains "screenline" need to redraw with VALID.
+      redraw_later(wp, VALID);
+    }
   }
 }
 
@@ -623,11 +639,8 @@ void validate_virtcol_win(win_T *wp)
   check_cursor_moved(wp);
   if (!(wp->w_valid & VALID_VIRTCOL)) {
     getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL);
+    redraw_for_cursorcolumn(wp);
     wp->w_valid |= VALID_VIRTCOL;
-    if (wp->w_p_cuc
-        && !pum_visible()) {
-      redraw_later(wp, SOME_VALID);
-    }
   }
 }
 
@@ -930,11 +943,7 @@ void curs_columns(win_T *wp, int may_scroll)
     redraw_later(wp, NOT_VALID);
   }
 
-  // Redraw when w_virtcol changes and 'cursorcolumn' is set
-  if (wp->w_p_cuc && (wp->w_valid & VALID_VIRTCOL) == 0
-      && !pum_visible()) {
-    redraw_later(wp, SOME_VALID);
-  }
+  redraw_for_cursorcolumn(curwin);
 
   // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
   wp->w_valid_leftcol = wp->w_leftcol;

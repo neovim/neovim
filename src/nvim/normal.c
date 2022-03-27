@@ -1295,9 +1295,6 @@ static void normal_redraw(NormalState *s)
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
-  // Might need to update for 'cursorline'.
-  check_redraw_cursorline();
-
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {

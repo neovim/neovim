@@ -1266,6 +1266,49 @@ describe('CursorLine and CursorLineNr highlights', function()
   end)
 end)
 
+describe('CursorColumn highlight', function()
+  before_each(clear)
+  it('is updated if cursor is moved from timer', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.Gray90},  -- CursorColumn
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      aaaa{1:a}                                             |
+      bbbb{1:b}                                             |
+      cccc{1:c}                                             |
+      dddd^d                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      ^aaaaa                                             |
+      {1:b}bbbb                                             |
+      {1:c}cccc                                             |
+      {1:d}dddd                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
+  end)
+end)
+
 describe('ColorColumn highlight', function()
   local screen
 
@@ -1569,6 +1612,46 @@ describe("'number' and 'relativenumber' highlight", function()
       {3:  1 }8               |
                           |
     ]])
+  end)
+
+  it('relative number highlight is updated if cursor is moved from timer', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown},  -- LineNr
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set relativenumber
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      {1:  3 }aaaaa                                         |
+      {1:  2 }bbbbb                                         |
+      {1:  1 }ccccc                                         |
+      {1:  0 }^ddddd                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      {1:  0 }^aaaaa                                         |
+      {1:  1 }bbbbb                                         |
+      {1:  2 }ccccc                                         |
+      {1:  3 }ddddd                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
   end)
 end)
 
