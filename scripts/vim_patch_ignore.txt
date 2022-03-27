@@ -1,0 +1,11 @@
+# This is an ignore file for vim-patches we haven't decided what to do with
+# yet. This is partly to make it easier for newcomers to not start working on
+# things we may not want, but also to make it easier to have a better overview
+# of which patches we need to focus on.
+
+# Listener functions
+# https://github.com/neovim/neovim/pull/15502#issuecomment-927361742
+v8.1.1320
+v8.1.1321
+v8.1.1332
+v8.1.1335

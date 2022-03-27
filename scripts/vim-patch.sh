@@ -591,7 +591,9 @@ show_vimpatches() {
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
-      printf '  • %s\n' "${vim_commit}"
+      if ! grep -q "^${vim_commit%%:*}" "$NVIM_SOURCE_DIR"/scripts/vim_patch_ignore.txt; then
+        printf '  • %s\n' "${vim_commit}"
+      fi
     fi
   done
 
