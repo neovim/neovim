@@ -3207,8 +3207,8 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
 <
 
                 Examples values for event: >
-                  "BufPreWrite"
-                  {"CursorHold", "BufPreWrite", "BufPostWrite"}
+                  "BufWritePre"
+                  {"CursorHold", "BufWritePre", "BufWritePost"}
 <
 
                 Parameters: ~

@@ -362,8 +362,8 @@ cleanup:
 ///
 /// Examples values for event:
 /// <pre>
-///   "BufPreWrite"
-///   {"CursorHold", "BufPreWrite", "BufPostWrite"}
+///   "BufWritePre"
+///   {"CursorHold", "BufWritePre", "BufWritePost"}
 /// </pre>
 ///
 /// @param event (String|Array) The event or events to register this autocommand
