@@ -96,12 +96,12 @@ static void comp_botline(win_T *wp)
 }
 
 /// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Also when concealing is on and 'concealcursor' is not active.
 void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_p_rnu || win_cursorline_standout(wp))
-      && (wp->w_valid & VALID_CROW) == 0
-      && !pum_visible()) {
+  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
+      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
     // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, VALID);
   }
@@ -109,6 +109,7 @@ void redraw_for_cursorline(win_T *wp)
 
 /// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
 /// contains "screenline".
+/// Also when concealing is on and 'concealcursor' is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -120,6 +121,12 @@ static void redraw_for_cursorcolumn(win_T *wp)
       // When 'cursorlineopt' contains "screenline" need to redraw with VALID.
       redraw_later(wp, VALID);
     }
+  }
+  // If the cursor moves horizontally when 'concealcursor' is active, then the
+  // current line needs to be redrawn in order to calculate the correct
+  // cursor position.
+  if ((wp->w_valid & VALID_VIRTCOL) == 0 && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+    redrawWinline(wp, wp->w_cursor.lnum);
   }
 }
 

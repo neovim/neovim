@@ -1288,13 +1288,6 @@ static void normal_redraw(NormalState *s)
   update_topline(curwin);
   validate_cursor();
 
-  // If the cursor moves horizontally when 'concealcursor' is active, then the
-  // current line needs to be redrawn in order to calculate the correct
-  // cursor position.
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-  }
-
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {

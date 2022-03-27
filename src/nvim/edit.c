@@ -1480,8 +1480,6 @@ bool edit(int cmdchar, bool startln, long count)
 /// @param ready  not busy with something
 static void ins_redraw(bool ready)
 {
-  bool conceal_cursor_moved = false;
-
   if (char_avail()) {
     return;
   }
@@ -1504,7 +1502,6 @@ static void ins_redraw(bool ready)
       update_curswant();
       ins_apply_autocmds(EVENT_CURSORMOVEDI);
     }
-    conceal_cursor_moved = true;
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
@@ -1558,11 +1555,6 @@ static void ins_redraw(bool ready)
       && !pum_visible()) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
     curbuf->b_changed_invalid = false;
-  }
-
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
-      && conceal_cursor_moved) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   pum_check_clear();
