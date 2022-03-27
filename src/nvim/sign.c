@@ -5,6 +5,7 @@
 // sign.c: functions for managing with signs
 //
 
+#include "nvim/sign.h"
 
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -17,9 +18,9 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
-#include "nvim/sign.h"
 #include "nvim/syntax.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Struct to hold the sign properties.
 typedef struct sign sign_T;

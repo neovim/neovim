@@ -32,6 +32,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
+#include "nvim/window.h"
 #if defined(UNIX)
 # include <sys/wait.h>
 #endif

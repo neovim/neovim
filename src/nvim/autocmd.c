@@ -4,7 +4,6 @@
 // autocmd.c: Autocommand related functions
 #include <signal.h>
 
-#include "lauxlib.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -27,6 +26,9 @@
 #include "nvim/state.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
+
+#include "lauxlib.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "auevents_name_map.generated.h"

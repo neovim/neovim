@@ -2,14 +2,11 @@
 #define NVIM_BUFFER_H
 
 #include "nvim/eval.h"
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
 #include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/pos.h"  // for linenr_T
 #include "nvim/screen.h"  // for StlClickRecord
-#include "nvim/vim.h"
-#include "nvim/window.h"
 
 // Values for buflist_getfile()
 enum getf_values {
