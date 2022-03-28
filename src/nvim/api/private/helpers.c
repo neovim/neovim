@@ -661,13 +661,13 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
 
-  bool is_noremap = parsed_args.noremap;
-  assert(!(is_unmap && is_noremap));
+  assert(!(is_unmap && parsed_args.noremap));
 
   if (!is_unmap && lua_funcref == LUA_NOREF
       && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
     if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
       parsed_args.rhs_is_noop = true;
+      parsed_args.has_rhs = true;
     } else {
       // the given RHS was nonempty and not a <Nop>, but was parsed as if it
       // were empty?
@@ -684,34 +684,43 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     }
     goto fail_and_free;
   }
-
-  // buf_do_map() reads noremap/unmap as its own argument.
-  int maptype_val = 0;
+  parsed_args.is_abbrev = false;
+  parsed_args.modes = mode_val;
+  assert(parsed_args.has_lhs);
+  if (is_unmap)
+    assert(!parsed_args.has_rhs);
+  else assert(parsed_args.has_rhs);
+  DoMapResult domap_result = DoMap_unknown_error;
   if (is_unmap) {
-    maptype_val = 1;
-  } else if (is_noremap) {
-    maptype_val = 2;
+    domap_result = deactivate_keymap(&parsed_args, target_buf);
+  } else {
+    domap_result = check_keymap_uniquenss(&parsed_args, target_buf);
+    if (domap_result != DoMap_success)
+      // FIXME: see if we need to separate the api_set_error() handling from the
+      // semsg() reporting that happens in check_keymap_uniquenss().
+      goto fail_and_free;
+    activate_keymap(&parsed_args, target_buf);
   }
 
-  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
-  case 0:
+  switch (domap_result) {
+  case DoMap_success:
+    parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
     break;
-  case 1:
+  case DoMap_invalid_arguments:
     api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
-    goto fail_and_free;
-  case 2:
+    break;
+  case DoMap_no_match:
     api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
-    goto fail_and_free;
-  case 5:
+    break;
+  case DoMap_entry_is_not_unique:
     api_set_error(err, kErrorTypeException,
                   "E227: mapping already exists for %s", parsed_args.lhs);
-    goto fail_and_free;
+    break;
   default:
     assert(false && "Unrecognized return code!");
-    goto fail_and_free;
+    break;
   }  // switch
 
-  parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
 fail_and_free:
   current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
