@@ -49,6 +49,7 @@
 "build":
   - CMakeLists.txt
   - "**/CMakeLists.txt"
+  - "**/Makefile"
   - "**/*.cmake"
 
 "test":
