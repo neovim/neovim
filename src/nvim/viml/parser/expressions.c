@@ -66,7 +66,7 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 
-#define vim_str2nr(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
+#define VIM_STR2NR(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
 
 typedef kvec_withinit_t(ExprASTNode **, 16) ExprASTStack;
 
@@ -371,7 +371,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         significand_part = significand_part * 10 + (pline.data[i] - '0');
       }
       if (exp_start) {
-        vim_str2nr(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
+        VIM_STR2NR(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
                    (int)(ret.len - exp_start), false);
       }
       if (exp_negative) {
@@ -389,7 +389,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     } else {
       int len;
       int prep;
-      vim_str2nr(pline.data, &prep, &len, STR2NR_ALL, NULL,
+      VIM_STR2NR(pline.data, &prep, &len, STR2NR_ALL, NULL,
                  &ret.data.num.val.integer, (int)pline.size, false);
       ret.len = (size_t)len;
       const uint8_t bases[] = {

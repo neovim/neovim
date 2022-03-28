@@ -2503,7 +2503,7 @@ void ex_function(exarg_T *eap)
         p = vim_strchr(scriptname, '/');
         plen = (int)STRLEN(p);
         slen = (int)STRLEN(sourcing_name);
-        if (slen > plen && fnamecmp(p,
+        if (slen > plen && FNAMECMP(p,
                                     sourcing_name + slen - plen) == 0) {
           j = OK;
         }

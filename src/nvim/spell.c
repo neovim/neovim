@@ -2101,7 +2101,7 @@ char *did_set_spelllang(win_T *wp)
     // If the name ends in ".spl" use it as the name of the spell file.
     // If there is a region name let "region" point to it and remove it
     // from the name.
-    if (len > 4 && fnamecmp(lang + len - 4, ".spl") == 0) {
+    if (len > 4 && FNAMECMP(lang + len - 4, ".spl") == 0) {
       filename = true;
 
       // Locate a region and remove it from the file name.

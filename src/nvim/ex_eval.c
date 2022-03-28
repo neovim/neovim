@@ -75,7 +75,10 @@
    || (cstack->cs_idx > 0 \
        && !(cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))
 
-#define discard_pending_return(p) tv_free((typval_T *)(p))
+static void discard_pending_return(typval_T *p)
+{
+  tv_free(p);
+}
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until

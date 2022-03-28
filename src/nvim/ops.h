@@ -108,9 +108,9 @@ static inline int op_reg_index(const int regname)
   if (ascii_isdigit(regname)) {
     return regname - '0';
   } else if (ASCII_ISLOWER(regname)) {
-    return CharOrdLow(regname) + 10;
+    return CHAR_ORD_LOW(regname) + 10;
   } else if (ASCII_ISUPPER(regname)) {
-    return CharOrdUp(regname) + 10;
+    return CHAR_ORD_UP(regname) + 10;
   } else if (regname == '-') {
     return DELETION_REGISTER;
   } else if (regname == '*') {
