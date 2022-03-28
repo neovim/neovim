@@ -148,9 +148,6 @@ function! s:check_performance() abort
   " check for slow shell invocation
   let shell_cmd = 'echo'
   let slow_cmd_time = 1.5
-  if !executable(shell_cmd)
-    return
-  endif
   let start_time = reltime()
 
   call system(shell_cmd)
