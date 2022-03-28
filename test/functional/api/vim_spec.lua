@@ -576,6 +576,11 @@ describe('API', function()
       eq(NIL, meths.exec_lua('function xx(a,b)\nreturn a..b\nend',{}))
       eq("xy", meths.exec_lua('return xx(...)', {'x','y'}))
 
+      eq("<SNR>1_", meths.exec_lua([[
+        vim.api.nvim_exec("let g:a = expand('<SID>')", false)
+        return vim.g.a
+      ]], {}))
+
       -- Deprecated name: nvim_execute_lua.
       eq("xy", meths.execute_lua('return xx(...)', {'x','y'}))
     end)

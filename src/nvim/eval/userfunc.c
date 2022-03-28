@@ -474,7 +474,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, func
   return ret;
 }
 
-#define FLEN_FIXED 40
+#define FLEN_FIXED (SIDBUFLEN + 28)
 
 /// Check whether function name starts with <SID> or s:
 ///
@@ -1845,7 +1845,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   }
 
   size_t sid_buf_len = 0;
-  char sid_buf[20];
+  char sid_buf[SIDBUFLEN];
 
   // Copy the function name to allocated memory.
   // Accept <SID>name() inside a script, translate into <SNR>123_name().

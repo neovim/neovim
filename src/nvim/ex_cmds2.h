@@ -16,6 +16,12 @@
 #define CCGD_ALLBUF     8       // may write all buffers
 #define CCGD_EXCMD      16      // may suggest using !
 
+typedef enum {
+  kSidTraceNone,
+  kSidTraceLua,
+  kSidTraceFromLua,
+} SidTraceType;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds2.h.generated.h"
 #endif

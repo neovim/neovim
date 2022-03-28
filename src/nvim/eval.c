@@ -6170,7 +6170,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref, FunPtr
     int arg_idx = 0;
     list_T *list = NULL;
     if (STRNCMP(s, "s:", 2) == 0 || STRNCMP(s, "<SID>", 5) == 0) {
-      char sid_buf[25];
+      char sid_buf[SIDBUFLEN];
       int off = *s == 's' ? 2 : 5;
 
       // Expand s: and <SID> into <SNR>nr_, so that the function can
@@ -8829,31 +8829,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
     *d = &funccal->l_avars;
   } else if (*name == 'l' && funccal != NULL) {  // local variable
     *d = &funccal->l_vars;
-  } else if (*name == 's'  // script variable
-             && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_LUA)) {
-    // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
-    if (current_sctx.sc_sid == SID_LUA) {
-      // Try to resolve Lua file name & line no so it can be shown in LastSet messages.
-      nlua_set_sctx(&current_sctx);
-      if (current_sctx.sc_sid != SID_LUA) {
-        // We have a valid SID associated with a Lua file name.
-        // Create a new SID with the same fname and set it as the current.
-        // This keeps the usual behaviour of disallowing different anonymous execs
-        // in the same file from accessing each others script-local stuff.
-        const LastSet last_set = (LastSet){
-          .script_ctx = current_sctx,
-          .channel_id = LUA_INTERNAL_CALL,
-        };
-        // should_free should be true, as the script has a file name.
-        // Because script_new_sid consumes sc_name, we don't call free.
-        bool should_free;
-        char *const sc_name = (char *)get_scriptname(last_set, &should_free);
-        assert(should_free);
-        current_sctx.sc_sid = script_new_sid(sc_name);
-      } else {
-        current_sctx.sc_sid = script_new_sid(NULL);
-      }
-    }
+  } else if (*name == 's' && current_sctx.sc_sid > 0) {  // script variable
     // "s:" hash map is lazily allocated; ensure it's allocated now.
     scriptvar_T *sv = script_sv(current_sctx.sc_sid);
     if (sv == NULL) {

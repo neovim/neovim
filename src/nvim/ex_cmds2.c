@@ -79,7 +79,6 @@ typedef struct scriptitem_S {
   int sn_prl_execed;            ///< line being timed was executed
 } scriptitem_T;
 
-static scid_T last_current_SID = 0;
 static int last_current_SID_seq = 0;
 static PMap(scid_T) script_items = MAP_INIT;
 
@@ -1845,16 +1844,26 @@ static scriptitem_T *new_script_item(const scid_T id, char *const name)
   return si;
 }
 
-/// Create a new ID for a script so "s:" scope vars can be used.
-/// @param  fname  allocated file name of the script. NULL for anonymous :source.
-/// @return  SID of the new script.
-scid_T script_new_sid(char *const fname)
+/// @param  trace_type  When `nlua_is_verbose` is true, encodes tracing info in the
+///                     returned SID. Used by `nlua_set_sctx` for :verbose logging.
+/// @return  a new script ID.
+scid_T script_new_sid(const SidTraceType trace_type)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const scid_T sid = ++last_current_SID;
-  // Anonymous :sources don't require an allocated script item.
-  if (fname != NULL) {
-    (void)new_script_item(sid, fname);
+  static scid_T last_current_SID = 0;
+
+  scid_T sid = ++last_current_SID;
+  if (trace_type != kSidTraceNone && nlua_is_verbose()) {
+    switch (trace_type) {
+    case kSidTraceLua:
+      sid += SID_TRACE_LUA;
+      break;
+    case kSidTraceFromLua:
+      sid += SID_TRACE_FROM_LUA;
+      break;
+    default:
+      abort();
+    }
   }
   return sid;
 }
@@ -1915,13 +1924,14 @@ static void cmd_source_buffer(const exarg_T *const eap)
     .buf = ga.ga_data,
     .offset = 0,
   };
+
   if (curbuf->b_fname && path_with_extension((const char *)curbuf->b_fname, "lua")) {
     nlua_source_using_linegetter(get_str_line, (void *)&cookie, ":source (no file)");
   } else {
     scid_T sid = map_get(handle_T, scid_T)(&buf_sids, curbuf->handle);
     if (sid == 0) {
       // First time sourcing this buffer, use a new SID for it.
-      sid = ++last_current_SID;
+      sid = script_new_sid(kSidTraceNone);
       map_put(handle_T, scid_T)(&buf_sids, curbuf->handle, sid);
     }
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)", sid);
@@ -1938,8 +1948,10 @@ int do_source_str(const char *cmd, const char *traceback_name)
     .buf = (char *)cmd,
     .offset = 0,
   };
-  const scid_T sid = current_sctx.sc_sid == SID_LUA ? SID_LUA : ++last_current_SID;
-  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name, sid);
+  const scid_T sid = script_new_sid(
+      current_sctx.sc_sid == SID_LUA || current_sctx.sc_sid >= SID_TRACE_LUA
+      ? kSidTraceFromLua : kSidTraceNone);
+  return source_using_linegetter(&cookie, get_str_line, traceback_name, sid);
 }
 
 /// When fname is a 'lua' file nlua_exec_file() is invoked to source it.
@@ -2087,7 +2099,8 @@ int do_source(char *fname, int check_other, int is_vimrc)
   save_funccal(&funccalp_entry);
 
   const sctx_T save_current_sctx = current_sctx;
-  si = new_file_sctx((char_u *)fname_exp, &current_sctx);
+  const bool is_lua = path_with_extension(fname, "lua");
+  si = new_file_sctx((char_u *)fname_exp, &current_sctx, is_lua);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
@@ -2120,10 +2133,9 @@ int do_source(char *fname, int check_other, int is_vimrc)
     firstline = (uint8_t *)p;
   }
 
-  if (path_with_extension((const char *)fname_exp, "lua")) {
+  if (is_lua) {
     const sctx_T current_sctx_backup = current_sctx;
     const linenr_T sourcing_lnum_backup = sourcing_lnum;
-    current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
     sourcing_lnum = 0;
     // Source the file as lua
@@ -2202,8 +2214,9 @@ theend:
 ///
 /// @param[in]  fname  file path of script.
 /// @param[out]  ret_sctx  sctx of this script.
+/// @param  is_lua  true if a Lua script.
 /// @return  pointer to the script item.
-static scriptitem_T *new_file_sctx(char_u *fname, sctx_T *ret_sctx)
+static scriptitem_T *new_file_sctx(char_u *const fname, sctx_T *const ret_sctx, const bool is_lua)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   sctx_T script_sctx = { .sc_seq = ++last_current_SID_seq,
@@ -2226,7 +2239,7 @@ static scriptitem_T *new_file_sctx(char_u *fname, sctx_T *ret_sctx)
     }
   }
   if (fi < 0) {
-    script_sctx.sc_sid = ++last_current_SID;
+    script_sctx.sc_sid = script_new_sid(is_lua ? kSidTraceLua : kSidTraceNone);
     si = new_script_item(script_sctx.sc_sid, (char *)vim_strsave(fname));
     GA_APPEND(scid_T, &file_sids, script_sctx.sc_sid);
     if (file_id_ok) {
@@ -2241,15 +2254,28 @@ static scriptitem_T *new_file_sctx(char_u *fname, sctx_T *ret_sctx)
   return si;
 }
 
-/// Create a new context referencing a script from its file name.
-/// @param  fname  file name of script.
-/// @return  the new script context.
-sctx_T script_new_sctx(char *const fname)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+/// @param  sid  ID of the script.
+/// @return  Name of the script. NULL for anonymous scripts and special SIDs.
+char_u *script_name(const scid_T sid)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  sctx_T sctx;
-  (void)new_file_sctx((char_u *)fname, &sctx);
-  return sctx;
+  const scriptitem_T *const si = script_item(sid);
+  return si != NULL ? si->sn_name : NULL;
+}
+
+/// Set the name of a script.
+/// @note  Allocates a script item for scripts without one.
+/// @param  sid  ID of the script.
+/// @param  name  Allocated new name of the script, or NULL to make it anonymous.
+void script_set_name(const scid_T sid, char *const name)
+{
+  scriptitem_T *const si = script_item(sid);
+  if (si != NULL) {
+    xfree(si->sn_name);
+    si->sn_name = (char_u *)name;
+  } else {
+    new_script_item(sid, name);
+  }
 }
 
 /// ":scriptnames"
@@ -2316,6 +2342,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
   case SID_STR:
     return (char_u *)_("anonymous :source");
   default: {
+    assert(last_set.script_ctx.sc_sid > 0);
     const scriptitem_T *const si = script_item(last_set.script_ctx.sc_sid);
     if (si == NULL || si->sn_name == NULL) {
       snprintf((char *)IObuff, IOSIZE, _("anonymous :source (script id %" PRIdSCID ")"),
