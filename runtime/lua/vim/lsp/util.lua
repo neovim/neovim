@@ -1138,7 +1138,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     block = {nil, "```+([a-zA-Z0-9_]*)", "```+"},
     pre = {"", "<pre>", "</pre>"},
     code = {"", "<code>", "</code>"},
-    text = {"plaintex", "<text>", "</text>"},
+    text = {"text", "<text>", "</text>"},
   }
 
   local match_begin = function(line)
