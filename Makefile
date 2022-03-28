@@ -127,13 +127,6 @@ endif
 src/nvim/testdir/%.vim: phony_force
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
-build/runtime/doc/tags helptags: | nvim
-	+$(BUILD_TOOL) -C build runtime/doc/tags
-
-# Builds help HTML _and_ checks for invalid help tags.
-helphtml: | nvim build/runtime/doc/tags
-	+$(BUILD_TOOL) -C build doc_html
-
 functionaltest functionaltest-lua unittest benchmark: | nvim
 	$(BUILD_TOOL) -C build $@
 
