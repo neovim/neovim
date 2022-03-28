@@ -38,3 +38,8 @@ BraceWrapping:
 PointerAlignment: Right
 SortIncludes: false
 Cpp11BracedListStyle: false
+ForEachMacros:
+  - FOREACH_MAPBLOCK_WHILE_COND
+  - FOREACH_MAPBLOCK
+  - MUTATING_FOREACH_MAPBLOCK_WHILE_COND
+  - MUTATING_FOREACH_MAPBLOCK

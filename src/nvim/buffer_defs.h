@@ -510,6 +510,98 @@ EXTERN int curbuf_splice_pending INIT(= 0);
 // Maximum number of maphash blocks we will have
 #define MAX_MAPHASH 256
 
+// Walks through an array of linked lists of mapblocks. Use this in cases where
+// you don't intend to change any of the linked lists in mb_table.
+//
+// @param  mb_table  pointer to an array of 1 or MAX_MAPHASH element(s) where
+//                   each element is a ptr-to-mapblock_T, and where each such
+//                   mapblock_T is the head of a linked list. (The array has 1
+//                   element in the case of an abbreviation.)
+// @param  modes     the mode bits we're looking for
+// @param  is_abbrev true iff we are looking through a list of abbreviations
+// @param  condition      tested before each iteration
+#define FOREACH_MAPBLOCK_WHILE_COND(mb_table, modes, is_abbrev, condition)  \
+    for (int hash = 0, max_hash = ((is_abbrev) ? 1 : MAX_MAPHASH);          \
+         hash < max_hash && (condition);                                    \
+          hash++)                                                           \
+      for (mapblock_T *mp = first_mapblock(mb_table[hash], modes);          \
+           mp && (condition);                                               \
+           mp = next_mapblock(mp, modes))
+
+// A convenience wrapper for FOREACH_MAPBLOCK_WHILE_COND()
+#define FOREACH_MAPBLOCK(mb_table, modes, is_abbrev) \
+  FOREACH_MAPBLOCK_WHILE_COND(mb_table, modes, is_abbrev, true)
+
+// Like FOREACH_MAPBLOCK_WHILE_COND(), but slightly more complicated because it
+// accommodates loops where mapblocks are moved to different linked lists within
+// the table.
+#define MUTATING_FOREACH_MAPBLOCK_WHILE_COND(mb_table, modes, is_abbrev, condition) \
+    for (int hash = 0, max_hash = ((is_abbrev) ? 1 : MAX_MAPHASH);                  \
+         hash < max_hash && (condition);                                            \
+         hash++)                                                                    \
+      for (mapblock_T **mpp = mb_table + hash,                                      \
+                        *mp = first_mapblock_mutating(&mpp, modes);                 \
+           mp && (condition);                                                       \
+           mp = next_mapblock_mutating(mp, &mpp, modes))
+
+// A convenience wrapper for MUTATING_FOREACH_MAPBLOCK_WHILE_COND()
+#define MUTATING_FOREACH_MAPBLOCK(mb_table, modes, is_abbrev) \
+  MUTATING_FOREACH_MAPBLOCK_WHILE_COND(mb_table, modes, is_abbrev, true)
+
+// support routines for the FOREACH_MAPBLOCK() macros:
+static inline mapblock_T *first_mapblock(mapblock_T *mp, int modes) REAL_FATTR_ALWAYS_INLINE;
+static inline mapblock_T *next_mapblock(mapblock_T *mp, int modes) REAL_FATTR_ALWAYS_INLINE;
+static inline mapblock_T *first_mapblock_mutating(mapblock_T ***mpp, int modes) REAL_FATTR_ALWAYS_INLINE;
+static inline mapblock_T *next_mapblock_mutating(mapblock_T *mp, mapblock_T ***mpp, int modes) REAL_FATTR_ALWAYS_INLINE;
+
+static inline mapblock_T *first_mapblock(mapblock_T *mp, int modes)
+{
+  if (mp && !(mp->m_mode & modes)) {
+    mp = next_mapblock(mp, modes);
+  }
+  return mp;
+}
+
+static inline mapblock_T *next_mapblock(mapblock_T *mp, int modes)
+{
+  if (!mp)
+    return NULL;
+  do {
+    mp = mp->m_next;
+  } while (mp && !(mp->m_mode & (modes)));
+  return mp;
+}
+
+
+static inline mapblock_T *first_mapblock_mutating(mapblock_T ***mpp, int modes)
+{
+  mapblock_T *mp = **mpp;
+  if (mp && !(mp->m_mode & modes)) {
+    mp = next_mapblock_mutating(mp, mpp, modes);
+  }
+  return mp;
+}
+
+static inline mapblock_T *next_mapblock_mutating(mapblock_T *mp, mapblock_T ***mpp, int modes)
+{
+  if (!mp)
+    return NULL;
+  if (**mpp != mp) {
+    // this happens when mp has been removed from the linked list that we're
+    // traversing (e.g. in mapblock_maybe_relocate())
+    goto starting_point_if_mp_was_removed;
+  }
+
+  do {
+    *mpp = &mp->m_next;
+  starting_point_if_mp_was_removed:
+    mp = **mpp;
+  } while (mp && !(mp->m_mode & (modes)));
+  return mp;
+}
+
+
+
 /*
  * buffer: structure that holds information about one file
  *
