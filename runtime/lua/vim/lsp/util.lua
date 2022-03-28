@@ -360,7 +360,7 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr number Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32 defaults to encoding of first client of `bufnr`
+---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate {

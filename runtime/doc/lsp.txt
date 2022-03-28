@@ -1356,8 +1356,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
                 Parameters: ~
                     {text_edits}       table list of `TextEdit` objects
                     {bufnr}            number Buffer id
-                    {offset_encoding}  string utf-8|utf-16|utf-32 defaults to
-                                       encoding of first client of `bufnr`
+                    {offset_encoding}  string utf-8|utf-16|utf-32
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
