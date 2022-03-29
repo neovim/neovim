@@ -1577,9 +1577,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
       idx++;
       lnum += foldinfo.fi_lines + 1;
     } else {
-      if (wp->w_p_rnu) {
-        // 'relativenumber' set: The text doesn't need to be drawn, but
-        // the number column nearly always does.
+      if (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum) {
+        // 'relativenumber' set and cursor moved vertically: The
+        // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = fold_info(wp, lnum);
         (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
                        info, &line_providers);
@@ -1606,6 +1606,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
   // Now that the window has been redrawn with the old and new cursor line,
   // update w_last_cursorline.
   wp->w_last_cursorline = cursorline_standout ? wp->w_cursor.lnum : 0;
+
+  wp->w_last_cursor_lnum_rnu = wp->w_p_rnu ? wp->w_cursor.lnum : 0;
 
   if (idx > wp->w_lines_valid) {
     wp->w_lines_valid = idx;
