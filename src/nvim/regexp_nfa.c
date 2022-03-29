@@ -2355,7 +2355,7 @@ static int nfa_regbranch(void)
  *	or  branch \| branch \| branch
  *	etc.
  */
-static int
+static int 
 nfa_reg (
     int paren              /* REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN */
 )
@@ -4689,7 +4689,7 @@ static int check_char_class(int class, int c)
  * Check for a match with subexpression "subidx".
  * Return true if it matches.
  */
-static int
+static int 
 match_backref (
     regsub_T *sub,           /* pointers to subexpressions */
     int subidx,
@@ -4746,7 +4746,7 @@ retempty:
  * Check for a match with \z subexpression "subidx".
  * Return true if it matches.
  */
-static int
+static int 
 match_zref (
     int subidx,
     int *bytelen       /* out: length of match in bytes */
@@ -6930,7 +6930,7 @@ static void nfa_regfree(regprog_T *prog)
  *
  * Returns <= 0 for failure, number of lines contained in the match otherwise.
  */
-static int
+static int 
 nfa_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
