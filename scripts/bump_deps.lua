@@ -302,7 +302,7 @@ function M.submit_pr()
 	)
 	pr_body = pr_body:gsub("bump_deps: ", "")
 	p(pr_title .. "\n" .. pr_body .. "\n")
-	-- create_pr(pr_title, pr_body)
+	create_pr(pr_title, pr_body)
 end
 
 -- function M.main(opt)
