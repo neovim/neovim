@@ -789,9 +789,16 @@ endfunc
 
 func Test_using_mark_position()
   " this was using freed memory
+  " new engine
   new
   norm O0
   call assert_fails("s/\\%')", 'E486:')
+  bwipe!
+
+  " old engine
+  new
+  norm O0
+  call assert_fails("s/\\%#=1\\%')", 'E486:')
   bwipe!
 endfunc
 
