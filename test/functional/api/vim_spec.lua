@@ -1589,6 +1589,18 @@ describe('API', function()
       feed(':digraphs<cr>')
       eq({mode='rm', blocking=true}, nvim("get_mode"))
     end)
+
+    it('after <Nop> mapping returns blocking=false #17257', function()
+      command('nnoremap <F2> <Nop>')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it('after empty string <expr> mapping returns blocking=false #17257', function()
+      command('nnoremap <expr> <F2> ""')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
   end)
 
   describe('RPC (K_EVENT)', function()
