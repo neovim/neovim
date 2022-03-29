@@ -795,6 +795,49 @@ func Test_mksession_winminheight()
   set sessionoptions&
 endfunc
 
+" Test for mksession with and without options restores shortmess
+func Test_mksession_shortmess()
+  " Without options
+  set sessionoptions-=options
+  split
+  mksession! Xtest_mks.out
+  let found_save = 0
+  let found_restore = 0
+  let lines = readfile('Xtest_mks.out')
+  for line in lines
+    let line = trim(line)
+
+    if line ==# 'let s:shortmess_save = &shortmess'
+      let found_save += 1
+    endif
+
+    if found_save !=# 0 && line ==# 'let &shortmess = s:shortmess_save'
+      let found_restore += 1
+    endif
+  endfor
+  call assert_equal(1, found_save)
+  call assert_equal(1, found_restore)
+  call delete('Xtest_mks.out')
+  close
+  set sessionoptions&
+
+  " With options
+  set sessionoptions+=options
+  split
+  mksession! Xtest_mks.out
+  let found_restore = 0
+  let lines = readfile('Xtest_mks.out')
+  for line in lines
+    if line =~# 's:shortmess_save'
+      let found_restore += 1
+    endif
+  endfor
+  call assert_equal(0, found_restore)
+  call delete('Xtest_mks.out')
+  close
+  set sessionoptions&
+endfunc
+
 " Test for mksession with 'compatible' option
 func Test_mksession_compatible()
   throw 'skipped: Nvim does not support "compatible" option'
