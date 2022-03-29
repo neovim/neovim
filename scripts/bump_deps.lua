@@ -211,8 +211,6 @@ local function gh_pr(pr_title, pr_body)
 		pr_title,
 		"--body",
 		pr_body,
-		"-R",
-		"https://github.com/abrfr/neovim",
 	}, "Failed to create PR")
 end
 
@@ -260,6 +258,7 @@ local function create_pr(pr_title, pr_body)
 	if check_executable("gh") then
 		submit_fn = gh_pr
 	elseif check_executable("git_hub") then
+		push_first = false
 		submit_fn = git_hub_pr
 	else
 		p("Both gh and git_hub are not executable")
