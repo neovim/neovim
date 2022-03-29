@@ -1,5 +1,4 @@
 local pretty = require 'pl.pretty'
-local global_helpers = require('test.helpers')
 
 -- Colors are disabled by default. #15610
 local colors = setmetatable({}, {__index = function() return function(s) return s == nil and '' or tostring(s) end end})
@@ -192,7 +191,6 @@ return function(options)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
     io.write(globalTeardown)
-    io.write(global_helpers.read_nvim_log(nil, true))
     io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
     io.write(getSummaryString())
     io.flush()
