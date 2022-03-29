@@ -320,3 +320,47 @@ describe("event processing and input", function()
     eq({'notification', 'stop', {}}, next_msg())
   end)
 end)
+
+describe('display is updated', function()
+  local screen
+  before_each(function()
+    screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+      [2] = {bold = true},  -- ModeMsg
+    })
+    screen:attach()
+  end)
+
+  it('in Insert mode after <Nop> mapping #17911', function()
+    command('imap <Plug>test <Nop>')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it('in Insert mode after empty string <expr> mapping #17911', function()
+    command('imap <expr> <Plug>test ""')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
+end)
