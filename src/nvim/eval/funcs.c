@@ -9466,6 +9466,11 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
     res = ITEM_COMPARE_FAIL;
   } else {
     res = tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
+    if (res > 0) {
+      res = 1;
+    } else if (res < 0) {
+      res = -1;
+    }
   }
   if (sortinfo->item_compare_func_err) {
     res = ITEM_COMPARE_FAIL;  // return value has wrong type
