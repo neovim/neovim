@@ -5226,7 +5226,8 @@ VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-Whitespace*
-Whitespace	"nbsp", "space", "tab" and "trail" in 'listchars'
+Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
+		in 'listchars'
 							*hl-WildMenu*
 WildMenu	current match in 'wildmenu' completion
 
