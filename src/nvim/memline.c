@@ -3952,7 +3952,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
                && curix == buf->b_ml.ml_usedchunks - 1
                && buf->b_ml.ml_line_count - line <= 1) {
       /*
-       * We are in the last chunk and it is cheap to crate a new one
+       * We are in the last chunk and it is cheap to create a new one
        * after this. Do it now to avoid the loop above later on
        */
       curchnk = buf->b_ml.ml_chunksize + curix + 1;
