@@ -2,7 +2,7 @@
 " Also test utf8 map with a 0x80 byte.
 " Also test mapcheck()
 
-function s:SID()     
+function s:SID()
   return str2nr(matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$'))
 endfun
 

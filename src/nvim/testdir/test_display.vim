@@ -302,7 +302,7 @@ func Test_eob_fillchars()
   set fillchars=eob:+
   redraw
   call assert_equal('+', Screenline(2))
-  set fillchars=eob:\ 
+  set fillchars=eob:\
   redraw
   call assert_equal(' ', nr2char(screenchar(2, 1)))
   set fillchars&
@@ -313,7 +313,7 @@ func Test_display_linebreak_breakat()
   new
   vert resize 25
   let _breakat = &breakat
-  setl signcolumn=yes linebreak breakat=) showbreak=+\ 
+  setl signcolumn=yes linebreak breakat=) showbreak=+\
   call setline(1, repeat('x', winwidth(0) - 2) .. ')abc')
   let lines = ScreenLines([1, 2], 25)
   let expected = [

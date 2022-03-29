@@ -74,11 +74,11 @@ MPACK_API int mpack_rpc_receive_tok(mpack_rpc_session_t *session,
   }
 
   assert(session->receive.index == 2);
-  
+
   if (tok.type != MPACK_TOKEN_UINT || tok.length > 4)
     /* invalid request/response id */
     return MPACK_RPC_EMSGID;
-    
+
   msg->id = tok.data.value.lo;
   msg->data.p = NULL;
   type = (int)session->receive.toks[1].data.value.lo + MPACK_RPC_REQUEST;
@@ -92,7 +92,7 @@ end:
   return type;
 }
 
-MPACK_API int mpack_rpc_request_tok(mpack_rpc_session_t *session, 
+MPACK_API int mpack_rpc_request_tok(mpack_rpc_session_t *session,
     mpack_token_t *tok, mpack_data_t data)
 {
   if (session->send.index == 0) {
@@ -113,7 +113,7 @@ MPACK_API int mpack_rpc_request_tok(mpack_rpc_session_t *session,
     session->send.index++;
     return MPACK_EOF;
   }
-  
+
   if (session->send.index == 1) {
     *tok = session->send.toks[1];
     session->send.index++;
@@ -242,7 +242,7 @@ MPACK_API void mpack_rpc_session_copy(mpack_rpc_session_t *dst,
     mpack_rpc_session_t *src)
 {
   mpack_uint32_t i;
-  mpack_uint32_t dst_capacity = dst->capacity; 
+  mpack_uint32_t dst_capacity = dst->capacity;
   assert(src->capacity <= dst_capacity);
   /* copy all fields except slots */
   memcpy(dst, src, sizeof(mpack_rpc_one_session_t) -
@@ -319,7 +319,7 @@ static int mpack_rpc_pop(mpack_rpc_session_t *session, mpack_rpc_message_t *msg)
     }
     hash = hash > 0 ? hash - 1 : session->capacity - 1;
   }
-  
+
   if (!slot) return 0;
 
   *msg = slot->msg;

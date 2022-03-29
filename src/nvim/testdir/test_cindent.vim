@@ -765,8 +765,8 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-                           int b 
-                          )  : 
+                           int b
+                          )  :
      BaseClass(a,
                b,
                c),
@@ -775,7 +775,7 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-                           int b )  : 
+                           int b )  :
      BaseClass(a)
   {
   }
@@ -800,9 +800,9 @@ func Test_cindent_1()
      int Test() { return FALSE; }
      int Test1() { return TRUE; }
 
-     CAbc(int a, int b )  : 
+     CAbc(int a, int b )  :
         BaseClass(a)
-     { 
+     {
         switch(xxx)
         {
            case abc:
@@ -917,8 +917,8 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-  		int b 
-  		)  : 
+  		int b
+  		)  :
   	BaseClass(a,
   			b,
   			c),
@@ -1742,8 +1742,8 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-  		int b 
-  		)  : 
+  		int b
+  		)  :
   	BaseClass(a,
   			b,
   			c),
@@ -1752,7 +1752,7 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-  		int b )  : 
+  		int b )  :
   	BaseClass(a)
   {
   }
@@ -1777,9 +1777,9 @@ func Test_cindent_1()
   	int Test() { return FALSE; }
   	int Test1() { return TRUE; }
 
-  	CAbc(int a, int b )  : 
+  	CAbc(int a, int b )  :
   		BaseClass(a)
-  	{ 
+  	{
   		switch(xxx)
   		{
   			case abc:
@@ -1894,8 +1894,8 @@ func Test_cindent_1()
   }
 
   Constructor::Constructor(int a,
-  		int b 
-  		)  : 
+  		int b
+  		)  :
   	BaseClass(a,
   			b,
   			c),
@@ -2094,7 +2094,7 @@ func Test_cindent_2()
 
   let code =<< trim [CODE]
     {
-  
+
     /* this is
      * a real serious important big
      * comment
@@ -3485,7 +3485,7 @@ func Test_cindent_34()
   normal =][
 
   let expected =<< trim [CODE]
-  
+
   	void
   func(int a
   #if defined(FOO)

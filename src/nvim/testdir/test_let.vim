@@ -278,7 +278,7 @@ vim
 
 end
   END
-END 
+END
 END
   call assert_equal(['vim', '', 'end', '  END', 'END '], var3)
 

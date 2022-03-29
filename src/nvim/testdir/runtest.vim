@@ -46,7 +46,7 @@
 
 
 " Check that the screen size is at least 24 x 80 characters.
-if &lines < 24 || &columns < 80 
+if &lines < 24 || &columns < 80
   let error = 'Screen size too small! Tests require at least 24 lines with 80 characters, got ' .. &lines .. ' lines with ' .. &columns .. ' characters'
   echoerr error
   split test.log

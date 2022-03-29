@@ -1083,7 +1083,7 @@ func Test_incsearch_with_change()
   CheckFeature timers
   CheckOption incsearch
   CheckScreendump
- 
+
   call writefile([
 	\ 'set incsearch hlsearch scrolloff=0',
 	\ 'call setline(1, ["one", "two ------ X", "three"])',

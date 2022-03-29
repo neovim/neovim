@@ -17,7 +17,7 @@ endfunc
 func Test_gD()
   let lines =<< trim [CODE]
     int x;
-  
+
     int func(void)
     {
       return x;
@@ -30,7 +30,7 @@ endfunc
 func Test_gD_too()
   let lines =<< trim [CODE]
     Filename x;
-  
+
     int Filename
     int func() {
       Filename x;
@@ -44,7 +44,7 @@ func Test_gD_comment()
   let lines =<< trim [CODE]
     /* int x; */
     int x;
-  
+
     int func(void)
     {
       return x;
@@ -58,7 +58,7 @@ func Test_gD_inline_comment()
   let lines =<< trim [CODE]
     int y /* , x */;
     int x;
-  
+
     int func(void)
     {
       return x;
@@ -72,7 +72,7 @@ func Test_gD_string()
   let lines =<< trim [CODE]
     char *s[] = "x";
     int x = 1;
-  
+
     int func(void)
     {
       return x;
@@ -85,7 +85,7 @@ endfunc
 func Test_gD_string_same_line()
   let lines =<< trim [CODE]
     char *s[] = "x", int x = 1;
-  
+
     int func(void)
     {
       return x;
@@ -99,7 +99,7 @@ func Test_gD_char()
   let lines =<< trim [CODE]
     char c = 'x';
     int x = 1;
-  
+
     int func(void)
     {
       return x;
@@ -112,7 +112,7 @@ endfunc
 func Test_gd()
   let lines =<< trim [CODE]
     int x;
-  
+
     int func(int x)
     {
       return x;
@@ -128,7 +128,7 @@ func Test_gd_not_local()
     {
       return x;
     }
-  
+
     int func2(int x)
     {
       return x;
@@ -155,9 +155,9 @@ func Test_gd_missing_braces()
     def func1(a)
       a + 1
     end
-  
+
     a = 1
-  
+
     def func2()
       return a
     end
@@ -234,11 +234,11 @@ func Test_gd_inline_comment_body()
     int func(void)
     {
       int y /* , x */;
-  
+
       for (/* int x = 0 */; y < 2; y++);
-  
+
       int x = 0;
-  
+
       return x;
     }
   [CODE]
@@ -274,7 +274,7 @@ func Test_gd_string()
     {
       char *s = "x";
       int x = 1;
-  
+
       return x;
     }
   [CODE]
@@ -287,7 +287,7 @@ func Test_gd_string_only()
     int func(void)
     {
       char *s = "x";
-  
+
       return x;
     }
   [CODE]
@@ -324,7 +324,7 @@ func Test_gd_local_block()
         char *b = "NULL";
         return b;
       }
-  
+
       return 0;
     }
   [CODE]

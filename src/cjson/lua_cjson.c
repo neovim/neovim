@@ -1417,9 +1417,9 @@ static int json_decode(lua_State *l)
         lua_getfield(l, 2, "luanil");
 
         /* We only handle the luanil option for now */
-        if (lua_isnil(l, -1)) { 
-            lua_pop(l, 1); 
-            break; 
+        if (lua_isnil(l, -1)) {
+            lua_pop(l, 1);
+            break;
         }
 
         luaL_checktype(l, -1, LUA_TTABLE);

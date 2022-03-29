@@ -98,7 +98,7 @@ MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf, const char **buf,
 
   advanced = (size_t)(ptr - ptr_save) - initial_ppos;
   tokbuf->plen = tokbuf->ppos = 0;
-  *buflen -= advanced; 
+  *buflen -= advanced;
   *buf += advanced;
 
   if (tok->type > MPACK_TOKEN_MAP) {

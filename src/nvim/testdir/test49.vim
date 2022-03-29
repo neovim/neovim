@@ -6521,7 +6521,7 @@ ExecAsScript F
 
 delfunction F
 Xout  "No Crash for vimgrep on BufUnload"
-Xcheck 0 
+Xcheck 0
 
 " Test 87 was moved to test_vimscript.vim
 let Xtest = 88

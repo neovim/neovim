@@ -278,7 +278,7 @@ MPACK_API double mpack_unpack_float_fast(mpack_token_t t)
       mpack_value_t m;
     } conv;
     conv.m = t.data.value;
-    
+
     if (mpack_is_be()) {
       MPACK_SWAP_VALUE(conv.m);
     }
