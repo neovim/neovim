@@ -9433,6 +9433,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   typval_T argv[3];
   const char *func_name;
   partial_T *partial = sortinfo->item_compare_partial;
+  int did_emsg_before = did_emsg;
 
   // shortcut after failure in previous call; compare all items equal
   if (sortinfo->item_compare_func_err) {
@@ -9462,7 +9463,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   tv_clear(&argv[0]);
   tv_clear(&argv[1]);
 
-  if (res == FAIL) {
+  if (res == FAIL || did_emsg > did_emsg_before) {
     res = ITEM_COMPARE_FAIL;
   } else {
     res = tv_get_number_chk(&rettv, &sortinfo->item_compare_func_err);
