@@ -3130,9 +3130,17 @@ static bool regmatch(
         {
           int mark = OPERAND(scan)[0];
           int cmp = OPERAND(scan)[1];
-          pos_T   *pos;
+          pos_T *pos;
+          size_t col = REG_MULTI ? rex.input - rex.line : 0;
 
           pos = getmark_buf(rex.reg_buf, mark, false);
+
+          // Line may have been freed, get it again.
+          if (REG_MULTI) {
+            rex.line = reg_getline(rex.lnum);
+            rex.input = rex.line + col;
+          }
+
           if (pos == NULL                    // mark doesn't exist
               || pos->lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;
