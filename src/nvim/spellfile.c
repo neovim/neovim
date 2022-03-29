@@ -5580,6 +5580,9 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
         fpos_next = ftell(fd);
+        if (fpos_next < 0) {
+          break;  // should never happen
+        }
         if (STRNCMP(word, line, len) == 0
             && (line[len] == '/' || line[len] < ' ')) {
           // Found duplicate word.  Remove it by writing a '#' at
