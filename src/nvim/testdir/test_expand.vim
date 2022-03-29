@@ -42,9 +42,9 @@ endfunc
 
 func Test_expand_tilde_filename()
   split ~
-  call assert_equal('~', expand('%'))
+  call assert_equal('~', expand('%')) 
   call assert_notequal(expand('%:p'), expand('~/'))
-  call assert_match('\~', expand('%:p'))
+  call assert_match('\~', expand('%:p')) 
   bwipe!
 endfunc
 

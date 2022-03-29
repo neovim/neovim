@@ -65,27 +65,27 @@ func Test_join_spaces_marks()
   insert
 asdfasdf.
 asdf
-asdfasdf.
+asdfasdf. 
 asdf
-asdfasdf.
+asdfasdf.  
 asdf
 asdfasdf.	
 asdf
 asdfasdf. 	
 asdf
-asdfasdf.	
+asdfasdf.	 
 asdf
 asdfasdf.		
 asdf
 asdfasdf
 asdf
-asdfasdf
+asdfasdf 
 asdf
-asdfasdf
-asdf
-asdfasdf	
+asdfasdf  
 asdf
 asdfasdf	
+asdf
+asdfasdf	 
 asdf
 asdfasdf 	
 asdf
@@ -420,7 +420,7 @@ int i = 7 /* foo *// 3
      ;
     ># Note that the last character of the ending comment leader (left angle bracket) is a comment leader itself. Make sure that this comment leader is not removed from the next line #< < On this line a new comment is opened which spans 2 lines. This comment should retain its comment leader.
     ># Note that the last character of the ending comment leader (left angle bracket) is a comment leader itself. Make sure that this comment leader is not removed from the next line #< < On this line a new comment is opened which spans 2 lines. This comment should retain its comment leader.
-
+    
     Some code!// Make sure backspacing does not remove this comment leader.
     }
   [CODE]

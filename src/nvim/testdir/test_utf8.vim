@@ -1,5 +1,5 @@
 " Tests for Unicode manipulations
-
+ 
 source check.vim
 source view_util.vim
 
@@ -66,7 +66,7 @@ endfunc
 func Test_screenchar_utf8()
   new
 
-  " 1-cell, with composing characters
+  " 1-cell, with composing characters 
   call setline(1, ["ABC\u0308"])
   redraw
   call assert_equal([0x0041], screenchars(1, 1))
@@ -76,7 +76,7 @@ func Test_screenchar_utf8()
   call assert_equal("B", screenstring(1, 2))
   call assert_equal("C\u0308", screenstring(1, 3))
 
-  " 2-cells, with composing characters
+  " 2-cells, with composing characters 
   let text = "\u3042\u3044\u3046\u3099"
   call setline(1, text)
   redraw

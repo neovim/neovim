@@ -369,7 +369,7 @@ func Test_listchars_composing()
   set list
 
   set listchars=eol:$,space:_,nbsp:=
-
+  
   let nbsp1 = nr2char(0xa0)
   let nbsp2 = nr2char(0x202f)
   call append(0, [

@@ -691,7 +691,7 @@ func Test_tag_guess()
   let code =<< trim [CODE]
 
     int FUNC1  (int x) { }
-    int
+    int 
     func2   (int y) { }
     int * func3 () { }
 
@@ -1062,12 +1062,12 @@ func Test_tselect_listing()
   let expected =<< [DATA]
   # pri kind tag               file
   1 FS  v    first             Xfoo
-               typeref:typename:int
+               typeref:typename:int 
                1
   2 FS  v    first             Xfoo
-               typeref:typename:char
+               typeref:typename:char 
                2
-Type number and <Enter> (q or empty cancels):
+Type number and <Enter> (q or empty cancels): 
 [DATA]
   call assert_equal(expected, l)
 
