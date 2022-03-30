@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
+local exec = helpers.exec
 local feed = helpers.feed
 
 before_each(clear)
@@ -33,6 +34,36 @@ describe('messages', function()
       {3:~                                       }|
       {3:~                                       }|
                                               |
+    ]])
+  end)
+
+  it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
+    local screen = Screen.new(40, 6)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      set shortmess-=F
+
+      file a.txt
+
+      hide edit b.txt
+      call setline(1, "hi")
+      setlocal modified
+
+      hide buffer a.txt
+
+      set updatetime=1
+      autocmd CursorHold * b b.txt | w | echo "'b' written"
+    ]])
+    screen:expect([[
+      ^hi                                      |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      'b' written                             |
     ]])
   end)
 end)

@@ -327,10 +327,11 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1)
-      * Columns + sc_col) {
+  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg((char *)s, 0);
   }
+
+  need_fileinfo = false;
 
   xfree(buf);
   --entered;
@@ -1355,6 +1356,7 @@ void msg_start(void)
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
+    need_fileinfo = false;
   }
 
   if (need_clr_eos) {
@@ -2026,6 +2028,8 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   if (!msg_use_printf() || (headless_mode && default_grid.chars)) {
     msg_puts_display((const char_u *)str, len, attr, false);
   }
+
+  need_fileinfo = false;
 }
 
 /// Print a formatted message
