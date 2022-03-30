@@ -191,3 +191,50 @@ func Test_unicode()
 
   set encoding=utf8
 endfunc
+
+" Test range objects, see :help python-range
+func Test_range()
+  new
+  py3 b = vim.current.buffer
+
+  call setline(1, range(1, 6))
+  py3 r = b.range(2, 4)
+  call assert_equal(6, py3eval('len(b)'))
+  call assert_equal(3, py3eval('len(r)'))
+  call assert_equal('3', py3eval('b[2]'))
+  call assert_equal('4', py3eval('r[2]'))
+
+  call assert_fails('py3 r[3] = "x"', 'IndexError: line number out of range')
+  call assert_fails('py3 x = r[3]', 'IndexError: line number out of range')
+  call assert_fails('py3 r["a"] = "x"', 'TypeError')
+  call assert_fails('py3 x = r["a"]', 'TypeError')
+
+  py3 del r[:]
+  call assert_equal(['1', '5', '6'], getline(1, '$'))
+
+  %d | call setline(1, range(1, 6))
+  py3 r = b.range(2, 5)
+  py3 del r[2]
+  call assert_equal(['1', '2', '3', '5', '6'], getline(1, '$'))
+
+  %d | call setline(1, range(1, 6))
+  py3 r = b.range(2, 4)
+  py3 vim.command("%d,%dnorm Ax" % (r.start + 1, r.end + 1))
+  call assert_equal(['1', '2x', '3x', '4x', '5', '6'], getline(1, '$'))
+
+  %d | call setline(1, range(1, 4))
+  py3 r = b.range(2, 3)
+  py3 r.append(['a', 'b'])
+  call assert_equal(['1', '2', '3', 'a', 'b', '4'], getline(1, '$'))
+  py3 r.append(['c', 'd'], 0)
+  call assert_equal(['1', 'c', 'd', '2', '3', 'a', 'b', '4'], getline(1, '$'))
+
+  %d | call setline(1, range(1, 5))
+  py3 r = b.range(2, 4)
+  py3 r.append('a')
+  call assert_equal(['1', '2', '3', '4', 'a', '5'], getline(1, '$'))
+  py3 r.append('b', 1)
+  call assert_equal(['1', '2', 'b', '3', '4', 'a', '5'], getline(1, '$'))
+
+  bwipe!
+endfunc
