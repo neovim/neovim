@@ -30,15 +30,16 @@ local function die()
 end
 
 -- Executes and returns the output of `cmd`, or nil on failure.
+-- if die_on_fail is true, process dies with die_msg
 --
 -- Prints `cmd` if `trace` is enabled.
-local function run(cmd, die_msg)
+local function _run(cmd, die_on_fail, die_msg)
 	if _trace then
 		p("run: " .. vim.inspect(cmd))
 	end
 	local rv = vim.trim(vim.fn.system(cmd)) or ""
 	if vim.v.shell_error ~= 0 then
-		if die_msg ~= nil then
+		if die_on_fail then
 			p(rv)
 			p(die_msg)
 			die()
@@ -48,27 +49,37 @@ local function run(cmd, die_msg)
 	return rv
 end
 
+-- Run a command, return nil on failure
+local function run(cmd)
+	return _run(cmd, false, "")
+end
+
+-- Run a command, die on failure with err_msg
+local function run_die(cmd, err_msg)
+	return _run(cmd, true, err_msg)
+end
+
 local function check_executable(cmd)
-	local cmd_path = run({ "command", "-v", cmd }, nil)
+	local cmd_path = run({ "command", "-v", cmd })
 	if cmd_path == nil then
 		return false
 	end
-	local rv = run({ "test", "-x", cmd_path }, nil)
+	local rv = run({ "test", "-x", cmd_path })
 	return rv ~= nil
 end
 
 local function require_executable(cmd)
-	local cmd_path = run({ "command", "-v", cmd }, cmd .. " not found!")
-	run({ "test", "-x", cmd_path }, cmd .. " is not executable")
+	local cmd_path = run_die({ "command", "-v", cmd }, cmd .. " not found!")
+	run_die({ "test", "-x", cmd_path }, cmd .. " is not executable")
 end
 
 local function rm_file_if_present(path_to_file)
-	run({ "rm", "-f", path_to_file }, true)
+	run({ "rm", "-f", path_to_file })
 end
 
 local nvim_src_dir = vim.fn.getcwd()
 local temp_dir = nvim_src_dir .. "/tmp"
-run({ "mkdir", "-p", temp_dir }, nil)
+run({ "mkdir", "-p", temp_dir })
 local gh_res_path = temp_dir .. "/gh_res.json"
 
 local function get_dependency(dependency_name)
@@ -103,7 +114,7 @@ local function dl_gh_ref_info(repo, ref)
 	require_executable("jq")
 
 	rm_file_if_present(gh_res_path)
-	local ref_status_code = run({
+	local ref_status_code = run_die({
 		"curl",
 		"-s",
 		"-H",
@@ -128,16 +139,17 @@ local function get_archive_info(repo, ref)
 	local archive_url = "https://github.com/" .. repo .. "/archive/" .. archive_name
 
 	rm_file_if_present(archive_path)
-	run({ "curl", "-sL", archive_url, "-o", archive_path }, "Failed to download archive from GitHub")
+	run_die({ "curl", "-sL", archive_url, "-o", archive_path }, "Failed to download archive from GitHub")
 
-	local archive_sha = run({ "sha256sum", archive_path }, true):gmatch("%w+")()
+	local archive_sha = run({ "sha256sum", archive_path }):gmatch("%w+")()
 	return { url = archive_url, sha = archive_sha }
 end
 
 local function write_cmakelists_line(symbol, kind, value, comment)
 	require_executable("sed")
 
-	run({
+	local cmakelists_path = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
+	run_die({
 		"sed",
 		"-i",
 		"-e",
@@ -155,18 +167,18 @@ local function write_cmakelists_line(symbol, kind, value, comment)
 			.. ")"
 			.. comment
 			.. "/",
-		nvim_src_dir .. "/" .. "third-party/CMakeLists.txt",
-	}, true)
+		cmakelists_path,
+	}, "Failed to write " .. cmakelists_path)
 end
 
 local function update_cmakelists(dependency, archive, comment)
 	local changed_file = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
-	run({ "git", "diff", "--quiet", "HEAD", "--", changed_file }, changed_file .. " has uncommitted changes")
+	run_die({ "git", "diff", "--quiet", "HEAD", "--", changed_file }, changed_file .. " has uncommitted changes")
 
 	p("Updating " .. dependency.symbol .. " to " .. archive.url .. "\n")
 	write_cmakelists_line(dependency.symbol, "URL", archive.url:gsub("/", "\\/"), " # " .. comment)
 	write_cmakelists_line(dependency.symbol, "SHA256", archive.sha, "")
-	run(
+	run_die(
 		{ "git", "commit", changed_file, "-m", "bump_deps: " .. dependency.symbol .. " to " .. comment },
 		"git failed to commit"
 	)
@@ -175,7 +187,7 @@ end
 function M.commit(dependency_name, commit)
 	local dependency = get_dependency(dependency_name)
 	dl_gh_ref_info(dependency.repo, commit)
-	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path }, true)
+	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path })
 	if commit_sha ~= commit then
 		p("Not a commit: " .. commit .. ". Did you mean version?")
 		die()
@@ -187,7 +199,7 @@ end
 function M.version(dependency_name, version)
 	local dependency = get_dependency(dependency_name)
 	dl_gh_ref_info(dependency.repo, version)
-	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path }, true)
+	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path })
 	if commit_sha == version then
 		p("Not a version: " .. version .. ". Did you mean commit?")
 		die()
@@ -199,13 +211,13 @@ end
 function M.head(dependency_name)
 	local dependency = get_dependency(dependency_name)
 	dl_gh_ref_info(dependency.repo, "HEAD")
-	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path }, true)
+	local commit_sha = run({ "jq", "-r", ".sha", gh_res_path })
 	local archive = get_archive_info(dependency.repo, commit_sha)
 	update_cmakelists(dependency, archive, "HEAD: " .. commit_sha)
 end
 
 local function gh_pr(pr_title, pr_body)
-	run({
+	run_die({
 		"gh",
 		"pr",
 		"create",
@@ -218,7 +230,7 @@ end
 
 local function git_hub_pr(pr_title, pr_body)
 	local pr_message = pr_title .. "\n\n" .. pr_body .. "\n"
-	run({
+	run_die({
 		"git",
 		"hub",
 		"pull",
@@ -229,7 +241,7 @@ local function git_hub_pr(pr_title, pr_body)
 end
 
 local function find_git_remote(fork)
-	local remotes = run({ "git", "remote", "-v" }, "")
+	local remotes = run({ "git", "remote", "-v" })
 	local git_remote = ""
 	for remote in remotes:gmatch("[^\r\n]+") do
 		local words = {}
@@ -268,18 +280,18 @@ local function create_pr(pr_title, pr_body)
 	end
 
 	local branch_prefix = "bump_deps_"
-	local checked_out_branch = run({ "git", "rev-parse", "--abbrev-ref", "HEAD" }, "")
+	local checked_out_branch = run({ "git", "rev-parse", "--abbrev-ref", "HEAD" })
 	if not checked_out_branch:match("^" .. branch_prefix) then
 		p("Current branch '" .. checked_out_branch .. "' doesn't seem to start with " .. branch_prefix)
 		die()
 	end
 
 	if push_first then
-		local push_remote = run({ "git", "config", "--get", "branch." .. checked_out_branch .. ".pushRemote" }, nil)
+		local push_remote = run({ "git", "config", "--get", "branch." .. checked_out_branch .. ".pushRemote" })
 		if push_remote == nil then
-			push_remote = run({ "git", "config", "--get", "remote.pushDefault" }, nil)
+			push_remote = run({ "git", "config", "--get", "remote.pushDefault" })
 			if push_remote == nil then
-				push_remote = run({ "git", "config", "--get", "branch." .. checked_out_branch .. ".remote" }, nil)
+				push_remote = run({ "git", "config", "--get", "branch." .. checked_out_branch .. ".remote" })
 				if push_remote == nil or push_remote == find_git_remote(nil) then
 					push_remote = find_git_remote("fork")
 				end
@@ -287,7 +299,7 @@ local function create_pr(pr_title, pr_body)
 		end
 
 		p("Pushing to " .. push_remote .. "/" .. checked_out_branch)
-		run({ "git", "push", push_remote, checked_out_branch }, "Git failed to push")
+		run_die({ "git", "push", push_remote, checked_out_branch }, "Git failed to push")
 	end
 
 	submit_fn(pr_title, pr_body)
@@ -297,10 +309,14 @@ end
 function M.submit_pr()
 	local nvim_remote = find_git_remote(nil)
 	local pr_title = "bump deps"
-	local pr_body = run(
-		{ "git", "log", "--grep=bump_deps", "--reverse", "--format='%s'", nvim_remote .. "/master..HEAD" },
-		""
-	)
+	local pr_body = run({
+		"git",
+		"log",
+		"--grep=bump_deps",
+		"--reverse",
+		"--format='%s'",
+		nvim_remote .. "/master..HEAD",
+	})
 	pr_body = pr_body:gsub("bump_deps: ", "")
 	p(pr_title .. "\n" .. pr_body .. "\n")
 	create_pr(pr_title, pr_body)
