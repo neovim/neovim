@@ -5857,11 +5857,11 @@ void win_drag_status_line(win_T *dragwin, int offset)
   } else {  // drag down
     up = false;
     // Only dragging the last status line can reduce p_ch.
-    room = Rows - cmdline_row - global_stl_height();
+    room = Rows - cmdline_row;
     if (curfr->fr_next == NULL) {
       room -= 1;
     } else {
-      room -= p_ch;
+      room -= p_ch + global_stl_height();
     }
     if (room < 0) {
       room = 0;
