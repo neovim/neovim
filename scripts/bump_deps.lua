@@ -14,6 +14,8 @@
 local M = {}
 
 local _trace = false
+local required_branch_prefix = "bump_deps_"
+local commit_prefix = "bump-deps: "
 
 -- TODO: verify run from root
 
@@ -179,7 +181,7 @@ local function update_cmakelists(dependency, archive, comment)
 	write_cmakelists_line(dependency.symbol, "URL", archive.url:gsub("/", "\\/"), " # " .. comment)
 	write_cmakelists_line(dependency.symbol, "SHA256", archive.sha, "")
 	run_die(
-		{ "git", "commit", changed_file, "-m", "bump_deps: " .. dependency.symbol .. " to " .. comment },
+		{ "git", "commit", changed_file, "-m", commit_prefix .. dependency.symbol .. " to " .. comment },
 		"git failed to commit"
 	)
 end
@@ -307,19 +309,20 @@ end
 
 function M.submit_pr()
 	local nvim_remote = find_git_remote(nil)
-	local pr_title = "bump deps"
-	local branch_prefix = "bump_deps_"
-	local pr_body = run({
+	local relevant_commits = run_die({
 		"git",
 		"log",
-		"--grep=" .. branch_prefix,
+		"--grep=" .. commit_prefix,
 		"--reverse",
 		"--format='%s'",
 		nvim_remote .. "/master..HEAD",
-	})
-	pr_body = pr_body:gsub("bump_deps: ", "")
+	}, "Failed to fetch commits")
+	local escaped_commit_prefix = commit_prefix:gsub("%-", "%%-")
+	relevant_commits = relevant_commits:gsub("'", ""):gsub(escaped_commit_prefix, "")
+	local pr_body = relevant_commits
+	local pr_title = "bump deps: " .. (relevant_commits .. "\n"):gsub(" [^%\n]*%\n", ", "):gsub(", $", "")
 	p(pr_title .. "\n" .. pr_body .. "\n")
-	create_pr(branch_prefix, pr_title, pr_body)
+	create_pr(required_branch_prefix, pr_title, pr_body)
 end
 
 -- function M.main(opt)
