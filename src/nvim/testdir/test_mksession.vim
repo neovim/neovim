@@ -905,6 +905,7 @@ func Test_altfile()
   call assert_equal('Xtwoalt', bufname('#'))
   only
   bwipe!
+  call delete('Xtest_altfile')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
