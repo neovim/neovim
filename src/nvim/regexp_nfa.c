@@ -1639,10 +1639,20 @@ static int nfa_regatom(void)
     {
       int64_t n = 0;
       const int cmp = c;
+      bool cur = false;
 
-      if (c == '<' || c == '>')
+      if (c == '<' || c == '>') {
         c = getchr();
+      }
+      if (no_Magic(c) == '.') {
+        cur = true;
+        c = getchr();
+      }
       while (ascii_isdigit(c)) {
+        if (cur) {
+          semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+          return FAIL;
+        }
         if (n > (INT32_MAX - (c - '0')) / 10) {
           // overflow.
           emsg(_(e_value_too_large));
@@ -1655,6 +1665,9 @@ static int nfa_regatom(void)
         int32_t limit = INT32_MAX;
 
         if (c == 'l') {
+          if (cur) {
+            n = curwin->w_cursor.lnum;
+          }
           // \%{n}l  \%{n}<l  \%{n}>l
           EMIT(cmp == '<' ? NFA_LNUM_LT :
                cmp == '>' ? NFA_LNUM_GT : NFA_LNUM);
@@ -1662,10 +1675,19 @@ static int nfa_regatom(void)
             at_start = true;
           }
         } else if (c == 'c') {
+          if (cur) {
+            n = curwin->w_cursor.col;
+            n++;
+          }
           // \%{n}c  \%{n}<c  \%{n}>c
           EMIT(cmp == '<' ? NFA_COL_LT :
                cmp == '>' ? NFA_COL_GT : NFA_COL);
         } else {
+          if (cur) {
+            colnr_T vcol = 0;
+            getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
+            n = ++vcol;
+          }
           // \%{n}v  \%{n}<v  \%{n}>v
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);

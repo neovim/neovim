@@ -107,8 +107,10 @@ static char_u e_unmatchedpar[] = N_("E55: Unmatched %s)");
 static char_u e_z_not_allowed[] = N_("E66: \\z( not allowed here");
 static char_u e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
 static char_u e_missing_sb[] = N_("E69: Missing ] after %s%%[");
-static char_u e_empty_sb[]  = N_("E70: Empty %s%%[]");
-static char_u e_recursive[]  = N_("E956: Cannot use pattern recursively");
+static char_u e_empty_sb[] = N_("E70: Empty %s%%[]");
+static char_u e_recursive[] = N_("E956: Cannot use pattern recursively");
+static char_u e_regexp_number_after_dot_pos_search[]
+  = N_("E1204: No Number allowed after .: '\\%%%c'");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1
