@@ -160,10 +160,12 @@ local function write_cmakelists_line(symbol, kind, value, comment)
 end
 
 local function update_cmakelists(dependency, archive, comment)
+	local changed_file = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
+	run({ "git", "diff", "--quiet", "HEAD", "--", changed_file }, changed_file .. " has uncommitted changes")
+
 	p("Updating " .. dependency.symbol .. " to " .. archive.url .. "\n")
 	write_cmakelists_line(dependency.symbol, "URL", archive.url:gsub("/", "\\/"), " # " .. comment)
 	write_cmakelists_line(dependency.symbol, "SHA256", archive.sha, "")
-	local changed_file = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
 	run(
 		{ "git", "commit", changed_file, "-m", "bump_deps: " .. dependency.symbol .. " to " .. comment },
 		"git failed to commit"
