@@ -54,9 +54,10 @@ describe('messages', function()
 
       hide buffer a.txt
 
-      set updatetime=1
-      autocmd CursorHold * b b.txt | w | echo "'b' written"
+      autocmd CursorHold * buf b.txt | w | echo "'b' written"
     ]])
+    command('set updatetime=50')
+    feed('0$')
     screen:expect([[
       ^hi                                      |
       {1:~                                       }|

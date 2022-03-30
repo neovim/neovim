@@ -151,12 +151,13 @@ func Test_fileinfo_after_echo()
 
     hide buffer a.txt
 
-    set updatetime=1
-    autocmd CursorHold * b b.txt | w | echo "'b' written"
+    autocmd CursorHold * buf b.txt | w | echo "'b' written"
   END
 
   call writefile(content, 'Xtest_fileinfo_after_echo')
   let buf = RunVimInTerminal('-S Xtest_fileinfo_after_echo', #{rows: 6})
+  call term_sendkeys(buf, ":set updatetime=50\<CR>")
+  call term_sendkeys(buf, "0$")
   call VerifyScreenDump(buf, 'Test_fileinfo_after_echo', {})
 
   call term_sendkeys(buf, ":q\<CR>")
