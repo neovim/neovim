@@ -1319,14 +1319,15 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		or another valid interrupt key, confirm() returns 0.
 
 		An example: >
-   :let choice = confirm("What do you want?", "&Apples\n&Oranges\n&Bananas", 2)
-   :if choice == 0
-   :	echo "make up your mind!"
-   :elseif choice == 3
-   :	echo "tasteful"
-   :else
-   :	echo "I prefer bananas myself."
-   :endif
+		   let choice = confirm("What do you want?",
+		   			\ "&Apples\n&Oranges\n&Bananas", 2)
+		   if choice == 0
+		   	echo "make up your mind!"
+		   elseif choice == 3
+		   	echo "tasteful"
+		   else
+		   	echo "I prefer bananas myself."
+		   endif
 <		In a GUI dialog, buttons are used.  The layout of the buttons
 		depends on the 'v' flag in 'guioptions'.  If it is included,
 		the buttons are always put vertically.  Otherwise,  confirm()

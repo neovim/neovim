@@ -499,10 +499,10 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				mode or to another window.  Also when the text
 				of the cursor line has been changed, e.g. with
 				"x", "rx" or "p".
-				Not triggered when there is typeahead, while
-				executing a script file, or when an operator
-				is pending. Always triggered when moving to
-				another window.
+				Not always triggered when there is typeahead,
+				while executing commands in a script file, or
+				when an operator is pending. Always triggered
+				when moving to another window.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
