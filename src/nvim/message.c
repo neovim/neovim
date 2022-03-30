@@ -382,6 +382,13 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   int i;
   int n;
 
+  if (*s == NUL) {
+    if (buflen > 0) {
+      *buf = NUL;
+    }
+    return;
+  }
+
   if (room_in < 3) {
     room = 0;
   }
