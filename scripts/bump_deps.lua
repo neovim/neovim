@@ -179,7 +179,6 @@ end
 
 local function update_cmakelists(dependency, archive, comment)
 	local changed_file = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
-	run_die({ "git", "diff", "--quiet", "HEAD", "--", changed_file }, changed_file .. " has uncommitted changes")
 
 	p("Updating " .. dependency.symbol .. " to " .. archive.url .. "\n")
 	write_cmakelists_line(dependency.symbol, "URL", archive.url:gsub("/", "\\/"), " # " .. comment)
@@ -190,8 +189,13 @@ local function update_cmakelists(dependency, archive, comment)
 	)
 end
 
+local function verify_cmakelists_committed()
+	run_die({ "git", "diff", "--quiet", "HEAD", "--", changed_file }, changed_file .. " has uncommitted changes")
+end
+
 function M.commit(dependency_name, commit)
 	local dependency = get_dependency(dependency_name)
+  verify_cmakelists_committed()
 	dl_gh_ref_info(dependency.repo, commit)
 	local commit_sha = get_sha256_json(gh_res_path)
 	if commit_sha ~= commit then
@@ -204,6 +208,7 @@ end
 
 function M.version(dependency_name, version)
 	local dependency = get_dependency(dependency_name)
+  verify_cmakelists_committed()
 	dl_gh_ref_info(dependency.repo, version)
 	local commit_sha = get_sha256_json(gh_res_path)
 	if commit_sha == version then
@@ -216,6 +221,7 @@ end
 
 function M.head(dependency_name)
 	local dependency = get_dependency(dependency_name)
+  verify_cmakelists_committed()
 	dl_gh_ref_info(dependency.repo, "HEAD")
 	local commit_sha = get_sha256_json(gh_res_path)
 	local archive = get_archive_info(dependency.repo, commit_sha)
