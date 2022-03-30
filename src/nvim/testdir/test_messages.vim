@@ -164,6 +164,7 @@ func Test_fileinfo_after_echo()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_fileinfo_after_echo')
+  call delete('b.txt')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

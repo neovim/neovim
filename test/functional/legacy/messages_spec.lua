@@ -65,5 +65,6 @@ describe('messages', function()
       {1:~                                       }|
       'b' written                             |
     ]])
+    os.remove('b.txt')
   end)
 end)
