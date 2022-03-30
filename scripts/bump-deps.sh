@@ -22,10 +22,12 @@ usage() {
   echo "Usage:  ${BASENAME} <dependency> [-h | --version=<tag> | --commit=<hash> | --HEAD]"
   echo
   echo "Options:"
-  echo "    -h                 Show this message and exit."
-  echo "    --version=<tag>    Bump to a specific release or tag."
-  echo "    --commit=<hash>    Bump to a specific commit."
-  echo "    --HEAD             Bump to a current HEAD."
+  echo "    -h                    show this message and exit."
+  echo "    --pr                  submit pr for bumping deps."
+  echo "    --dep=<dependency>    bump to a specific release or tag."
+  echo "    --version=<tag>       bump to a specific release or tag."
+  echo "    --commit=<hash>       bump to a specific commit."
+  echo "    --HEAD                bump to a current head."
   echo
   echo "    <dependency> is one of:"
   echo "    \"LuaJIT\", \"libuv\", \"Luv\", \"tree-sitter\""
@@ -50,16 +52,22 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-DEPENDENCY=$1
-shift
+PARSED_ARGS=$(getopt -a -n "$BASENAME" -o h --long dep:,pr,version:,commit:,HEAD -- "$@")
 
-PARSED_ARGS=$(getopt -a -n "$BASENAME" -o h --long version:,commit:,HEAD -- "$@")
-
+DEPENDENCY=""
 eval set -- "$PARSED_ARGS"
 while :; do
   case "$1" in
   -h)
     usage
+    exit 0
+    ;;
+  --dep)
+    DEPENDENCY=$2
+    shift 2
+    ;;
+  --pr)
+    nvim -es +"lua require('scripts.bump_deps').submit_pr()"
     exit 0
     ;;
   --version)
