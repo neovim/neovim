@@ -263,7 +263,7 @@ local function find_git_remote(fork)
 	return git_remote
 end
 
-local function create_pr(pr_title, pr_body)
+local function create_pr(branch_prefix, pr_title, pr_body)
 	require_executable("git")
 
 	local push_first = true
@@ -279,7 +279,6 @@ local function create_pr(pr_title, pr_body)
 		die()
 	end
 
-	local branch_prefix = "bump_deps_"
 	local checked_out_branch = run({ "git", "rev-parse", "--abbrev-ref", "HEAD" })
 	if not checked_out_branch:match("^" .. branch_prefix) then
 		p("Current branch '" .. checked_out_branch .. "' doesn't seem to start with " .. branch_prefix)
@@ -309,17 +308,18 @@ end
 function M.submit_pr()
 	local nvim_remote = find_git_remote(nil)
 	local pr_title = "bump deps"
+	local branch_prefix = "bump_deps_"
 	local pr_body = run({
 		"git",
 		"log",
-		"--grep=bump_deps",
+		"--grep=" .. branch_prefix,
 		"--reverse",
 		"--format='%s'",
 		nvim_remote .. "/master..HEAD",
 	})
 	pr_body = pr_body:gsub("bump_deps: ", "")
 	p(pr_title .. "\n" .. pr_body .. "\n")
-	create_pr(pr_title, pr_body)
+	create_pr(branch_prefix, pr_title, pr_body)
 end
 
 -- function M.main(opt)
