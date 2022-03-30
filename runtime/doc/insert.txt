@@ -780,7 +780,7 @@ If the previous expansion was split, because it got longer than 'textwidth',
 then just the text in the current line will be used.
 
 If the match found is at the end of a line, then the first word in the next
-line will be inserted and the message "word from next line" displayed, if
+line will be inserted and the message "Word from other line" displayed, if
 this word is accepted the next CTRL-X CTRL-P or CTRL-X CTRL-N will search
 for those lines starting with this word.
 

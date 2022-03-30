@@ -751,7 +751,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
 		insert.
 
-	When the value is empty, Vi compatible backspacing is used.
+	When the value is empty, Vi compatible backspacing is used, none of
+	the ways mentioned for the items above are possible.
 
 	For backwards compatibility with version 5.4 and earlier:
 	value	effect	~
