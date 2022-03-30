@@ -2780,6 +2780,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
   // present.
   if (qfl_type == QFLT_LOCATION) {
     win_T *wp = win_id2wp(prev_winid);
+
     if (wp == NULL && curwin->w_llist != qi) {
       emsg(_("E924: Current window was closed"));
       *opened_window = false;
