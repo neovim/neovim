@@ -1291,7 +1291,8 @@ static void normal_redraw(NormalState *s)
   // If the cursor moves horizontally when 'concealcursor' is active, then the
   // current line needs to be redrawn in order to calculate the correct
   // cursor position.
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
+  if ((curwin->w_p_cole > 0 && conceal_cursor_line(curwin))
+      || curwin->w_cursor.lnum == 3) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 

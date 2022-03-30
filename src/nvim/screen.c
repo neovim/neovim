@@ -2110,6 +2110,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int win_col_offset = 0;               // offset for window columns
 
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
+  bool do_anticonceal = true;
 
   bool area_active = false;
 
@@ -2141,6 +2142,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                                         ///< force wrapping
   int vcol_off        = 0;              ///< offset for concealed characters
   int did_wcol        = false;
+  int extratext       = lnum == 3;
   int match_conc      = 0;              ///< cchar for match functions
   int old_boguscols = 0;
 #define VCOL_HLC (vcol - vcol_off)
@@ -2874,6 +2876,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           line_attr = cul_attr;
         }
       }
+    }
+
+    if (lnum == 3 && v == 10 && do_anticonceal) {
+      p_extra = (char_u *)"TEST";
+      c_extra = NUL;
+      n_extra = 4;
+      vcol -= 4; // TODO: this seems awful. But it works?
+      //col += n_extra;
+      //vcol_off -= n_extra;
+      //boguscols -= n_extra;
+      n_attr = 4;
+      extra_attr = win_hl_attr(wp, HLF_E);
+      p_extra_free = NULL;
+      do_anticonceal = false;
     }
 
     // When still displaying '$' of change command, stop at cursor
@@ -3726,11 +3742,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
     }  // end of printing from buffer content
 
+
     /* In the cursor line and we may be concealing characters: correct
      * the cursor column when we reach its position. */
     if (!did_wcol && draw_state == WL_LINE
         && wp == curwin && lnum == wp->w_cursor.lnum
-        && conceal_cursor_line(wp)
+        && (conceal_cursor_line(wp) || extratext)
         && (int)wp->w_virtcol <= vcol + n_skip) {
       if (wp->w_p_rl) {
         wp->w_wcol = grid->Columns - col + boguscols - 1;
