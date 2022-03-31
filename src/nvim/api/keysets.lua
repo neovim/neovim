@@ -123,7 +123,7 @@ return {
     "nocombine";
   };
   -- Autocmds
-  clear_autocmd = {
+  clear_autocmds = {
     "buffer";
     "event";
     "group";
@@ -139,7 +139,7 @@ return {
     "once";
     "pattern";
   };
-  exec_autocmd = {
+  exec_autocmds = {
     "buffer";
     "group";
     "modeline";

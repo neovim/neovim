@@ -168,7 +168,7 @@ describe('autocmd api', function()
       })
       ]]
 
-      meths.exec_autocmd("User", {pattern = "Test"})
+      meths.exec_autocmds("User", {pattern = "Test"})
       eq({{
         buflocal = false,
         command = 'A test autocommand',
@@ -179,7 +179,7 @@ describe('autocmd api', function()
         pattern = 'Test',
       }}, meths.get_autocmds({event = "User", pattern = "Test"}))
       meths.set_var("some_condition", true)
-      meths.exec_autocmd("User", {pattern = "Test"})
+      meths.exec_autocmds("User", {pattern = "Test"})
       eq({}, meths.get_autocmds({event = "User", pattern = "Test"}))
     end)
   end)
@@ -517,7 +517,7 @@ describe('autocmd api', function()
     end)
   end)
 
-  describe('nvim_exec_autocmd', function()
+  describe('nvim_exec_autocmds', function()
     it("can trigger builtin autocmds", function()
       meths.set_var("autocmd_executed", false)
 
@@ -527,7 +527,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("autocmd_executed"))
-      meths.exec_autocmd("BufReadPost", {})
+      meths.exec_autocmds("BufReadPost", {})
       eq(true, meths.get_var("autocmd_executed"))
     end)
 
@@ -541,10 +541,10 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.exec_autocmd("CursorHold", { buffer = 1 })
+      meths.exec_autocmds("CursorHold", { buffer = 1 })
       eq(-1, meths.get_var("buffer_executed"))
 
-      meths.exec_autocmd("BufLeave", { buffer = 1 })
+      meths.exec_autocmds("BufLeave", { buffer = 1 })
       eq(1, meths.get_var("buffer_executed"))
     end)
 
@@ -558,7 +558,7 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.exec_autocmd("CursorHold", { buffer = 1 })
+      meths.exec_autocmds("CursorHold", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
       meths.command('edit __init__.py')
@@ -566,7 +566,7 @@ describe('autocmd api', function()
     end)
 
     it('cannot pass buf and fname', function()
-      local ok = pcall(meths.exec_autocmd, "BufReadPre", { pattern = "literally_cannot_error.rs", buffer = 1 })
+      local ok = pcall(meths.exec_autocmds, "BufReadPre", { pattern = "literally_cannot_error.rs", buffer = 1 })
       eq(false, ok)
     end)
 
@@ -584,16 +584,16 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.exec_autocmd("CursorHoldI", { buffer = 1 })
+      meths.exec_autocmds("CursorHoldI", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
-      meths.exec_autocmd("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
+      meths.exec_autocmds("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
       eq('__init__.py', meths.get_var("filename_executed"))
 
       -- Reset filename
       meths.set_var("filename_executed", 'none')
 
-      meths.exec_autocmd("CursorHoldI", { pattern = '__init__.py' })
+      meths.exec_autocmds("CursorHoldI", { pattern = '__init__.py' })
       eq('__init__.py', meths.get_var("filename_executed"))
     end)
 
@@ -605,9 +605,9 @@ describe('autocmd api', function()
         command = 'let g:matched = "matched"'
       })
 
-      meths.exec_autocmd("User", { pattern = "OtherCommand" })
+      meths.exec_autocmds("User", { pattern = "OtherCommand" })
       eq('none', meths.get_var('matched'))
-      meths.exec_autocmd("User", { pattern = "TestCommand" })
+      meths.exec_autocmds("User", { pattern = "TestCommand" })
       eq('matched', meths.get_var('matched'))
     end)
 
@@ -621,7 +621,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("group_executed"))
-      meths.exec_autocmd("FileType", { group = auid })
+      meths.exec_autocmds("FileType", { group = auid })
       eq(true, meths.get_var("group_executed"))
     end)
 
@@ -636,7 +636,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("group_executed"))
-      meths.exec_autocmd("FileType", { group = auname })
+      meths.exec_autocmds("FileType", { group = auname })
       eq(true, meths.get_var("group_executed"))
     end)
   end)
@@ -981,7 +981,7 @@ describe('autocmd api', function()
     end)
   end)
 
-  describe('nvim_clear_autocmd', function()
+  describe('nvim_clear_autocmds', function()
     it('should clear based on event + pattern', function()
       command('autocmd InsertEnter *.py  :echo "Python can be cool sometimes"')
       command('autocmd InsertEnter *.txt :echo "Text Files Are Cool"')
@@ -993,7 +993,7 @@ describe('autocmd api', function()
       local before_delete_all = meths.get_autocmds { event = search.event }
       eq(2, #before_delete_all)
 
-      meths.clear_autocmd(search)
+      meths.clear_autocmds(search)
       local after_delete = meths.get_autocmds(search)
       eq(0, #after_delete)
 
@@ -1009,7 +1009,7 @@ describe('autocmd api', function()
       local before_delete = meths.get_autocmds(search)
       eq(2, #before_delete)
 
-      meths.clear_autocmd(search)
+      meths.clear_autocmds(search)
       local after_delete = meths.get_autocmds(search)
       eq(0, #after_delete)
     end)
@@ -1026,7 +1026,7 @@ describe('autocmd api', function()
       local before_delete_events = meths.get_autocmds { event = { "InsertEnter", "InsertLeave" } }
       eq(4, #before_delete_events)
 
-      meths.clear_autocmd(search)
+      meths.clear_autocmds(search)
       local after_delete = meths.get_autocmds(search)
       eq(0, #after_delete)
 
@@ -1043,7 +1043,7 @@ describe('autocmd api', function()
       local before_delete = meths.get_autocmds(search)
       eq(2, #before_delete)
 
-      meths.clear_autocmd { buffer = 0 }
+      meths.clear_autocmds { buffer = 0 }
       local after_delete = meths.get_autocmds(search)
       eq(1, #after_delete)
       eq("*.TestPat1", after_delete[1].pattern)
@@ -1061,12 +1061,12 @@ describe('autocmd api', function()
       eq(2, #before_delete)
 
       -- Doesn't clear without passing group.
-      meths.clear_autocmd { buffer = 0 }
+      meths.clear_autocmds { buffer = 0 }
       local without_group = meths.get_autocmds(search)
       eq(2, #without_group)
 
       -- Doest clear with passing group.
-      meths.clear_autocmd { buffer = 0, group = search.group }
+      meths.clear_autocmds { buffer = 0, group = search.group }
       local with_group = meths.get_autocmds(search)
       eq(1, #with_group)
     end)
