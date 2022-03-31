@@ -1273,6 +1273,9 @@ au BufNewFile,BufRead *.[Oo][Pp][Ll]		setf opl
 " Oracle config file
 au BufNewFile,BufRead *.ora			setf ora
 
+" Org
+au BufNewFile,BufRead *.org,*.org_archive	setf org
+
 " Packet filter conf
 au BufNewFile,BufRead pf.conf			setf pf
 
@@ -1728,7 +1731,7 @@ au BufNewFile,BufRead .zshrc,.zshenv,.zlogin,.zlogout,.zcompdump setf zsh
 au BufNewFile,BufRead *.zsh			setf zsh
 
 " Scheme
-au BufNewFile,BufRead *.scm,*.ss,*.sld,*.rkt,*.rktd,*.rktl 	setf scheme
+au BufNewFile,BufRead *.scm,*.ss,*.sld,*.rkt,*.rktd,*.rktl	setf scheme
 
 " Screen RC
 au BufNewFile,BufRead .screenrc,screenrc	setf screen
