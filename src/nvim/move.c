@@ -778,8 +778,13 @@ void curs_columns(win_T *wp, int may_scroll)
   int textwidth = wp->w_width_inner - extra;
   if (textwidth <= 0) {
     // No room for text, put cursor in last char of window.
+    // If not wrapping, the last non-empty line.
     wp->w_wcol = wp->w_width_inner - 1;
-    wp->w_wrow = wp->w_height_inner - 1;
+    if (wp->w_p_wrap) {
+      wp->w_wrow = wp->w_height_inner - 1;
+    } else {
+      wp->w_wrow = wp->w_height_inner - 1 - wp->w_empty_rows;
+    }
   } else if (wp->w_p_wrap
              && wp->w_width_inner != 0) {
     width = textwidth + win_col_off2(wp);
