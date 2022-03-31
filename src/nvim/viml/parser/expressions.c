@@ -2858,7 +2858,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
             // For some reason "function (args)" is a function call, but
             // "(funcref) (args)" is not. AFAIR this somehow involves
             // compatibility and Bram was commenting that this is
-            // intentionally inconsistent and he is not very happy with the
+            // intentionally inconsistent and they is not very happy with the
             // situation himself.
             if ((*top_node_p)->type != kExprNodePlainIdentifier
                 && (*top_node_p)->type != kExprNodeComplexIdentifier

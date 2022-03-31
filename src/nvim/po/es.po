@@ -7264,7 +7264,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ "Where case is ignored prepend / to make flag upper case"
 #~ msgstr ""
 #~ "\n"
-#~ "Cuando mayúscula y minúscula son ignoradas añada \"/\" para \n"
+#~ "Cuando mayúscula y minúscula child ignoradas añada \"/\" para \n"
 #~ "cambiar la marca (\"flag\") a mayúscula"
 
 #~ msgid "-register\t\tRegister this gvim for OLE"
@@ -7624,7 +7624,7 @@ msgstr "E446: No hay un nombre de archivo bajo el cursor"
 #~ msgstr "E617: No puede cambiarse en la interfaz gráfica de GTK+ 2"
 
 #~ msgid "E596: Invalid font(s)"
-#~ msgstr "E596: Las fuente/s de impresión no son válidas"
+#~ msgstr "E596: Las fuente/s de impresión no child válidas"
 
 #~ msgid "E597: can't select fontset"
 #~ msgstr "E597: No se pudo seleccionar ese \"fontset\""

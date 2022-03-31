@@ -2173,7 +2173,7 @@ void ex_function(exarg_T *eap)
    */
   if (KeyTyped) {
     // Check if the function already exists, don't let the user type the
-    // whole function before telling him it doesn't work!  For a script we
+    // whole function before telling them it doesn't work!  For a script we
     // need to skip the body to be able to find what follows.
     if (!eap->skip && !eap->forceit) {
       if (fudi.fd_dict != NULL && fudi.fd_newkey == NULL) {

@@ -5251,7 +5251,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // soundfold the bad word with more characters following
     (void)spell_casefold(curwin, su->su_badptr, stp->st_orglen, fword, MAXWLEN);
 
-    // When joining two words the sound often changes a lot.  E.g., "t he"
+    // When joining two words the sound often changes a lot.  E.g., "t they"
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
     // removing the space.  Don't do it when the good word also contains a
     // space.

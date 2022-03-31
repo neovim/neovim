@@ -2894,7 +2894,7 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
 
     # One or three blank spaces at the beginning of the line is weird; it's
     # hard to reconcile that with 2-space indents.
-    # NOTE: here are the conditions rob pike used for his tests.  Mine aren't
+    # NOTE: here are the conditions rob pike used for their tests.  Mine aren't
     # as sophisticated, but it may be worth becoming so:
     # RLENGTH==initial_spaces
     # if(RLENGTH > 20) complain = 0;

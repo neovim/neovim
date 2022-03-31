@@ -446,7 +446,7 @@ const char *const highlight_init_cmdline[] = {
 
   "default link NvimInvalidSpacing ErrorMsg",
 
-  // Not actually invalid, but we highlight user that he is doing something
+  // Not actually invalid, but we highlight user that they is doing something
   // wrong.
   "default link NvimDoubleQuotedUnknownEscape NvimInvalidValue",
   NULL,
