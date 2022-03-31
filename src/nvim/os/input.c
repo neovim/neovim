@@ -239,8 +239,7 @@ size_t input_enqueue(String keys)
     // K_SPECIAL(0x80).
     uint8_t buf[19] = { 0 };
     unsigned int new_size
-      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                      false);
+      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true, false, true, NULL);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);

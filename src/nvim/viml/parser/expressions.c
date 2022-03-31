@@ -1817,9 +1817,8 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
         }
         // Special key, e.g.: "\<C-W>"
         case '<': {
-          const size_t special_len = (
-                                      trans_special((const char_u **)&p, (size_t)(e - p),
-                                                    (char_u *)v_p, true, true));
+          const size_t special_len = trans_special((const char_u **)&p, (size_t)(e - p),
+                                                   (char_u *)v_p, true, true, true, NULL);
           if (special_len != 0) {
             v_p += special_len;
           } else {

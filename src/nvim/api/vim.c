@@ -403,9 +403,19 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
     return (String) { .data = NULL, .size = 0 };
   }
 
+  int flags = 0;
+  if (from_part) {
+    flags |= REPTERM_FROM_PART;
+  }
+  if (do_lt) {
+    flags |= REPTERM_DO_LT;
+  }
+  if (!special) {
+    flags |= REPTERM_NO_SPECIAL;
+  }
+
   char *ptr = NULL;
-  replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr,
-                    from_part, do_lt, special, CPO_TO_CPO_FLAGS);
+  replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr, flags, NULL, CPO_TO_CPO_FLAGS);
   return cstr_as_string(ptr);
 }
 

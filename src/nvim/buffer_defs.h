@@ -356,6 +356,8 @@ struct mapblock {
   LuaRef m_luaref;         // lua function reference as rhs
   int m_keylen;                 // strlen(m_keys)
   int m_mode;                   // valid mode
+  int m_simplified;             // m_keys was simplified, do no use this map
+                                // if keys are typed
   int m_noremap;                // if non-zero no re-mapping for m_str
   char m_silent;                // <silent> used, don't echo commands
   char m_nowait;                // <nowait> used

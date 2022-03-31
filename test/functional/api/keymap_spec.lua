@@ -582,7 +582,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can set mappings containing literal keycodes', function()
     meths.set_keymap('n', '\n\r\n', 'rhs', {})
     local expected = generate_mapargs('n', '<NL><CR><NL>', 'rhs')
-    eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
+    eq(expected, get_mapargs('n', '<NL><CR><NL>'))
   end)
 
   it('can set mappings whose RHS is a <Nop>', function()

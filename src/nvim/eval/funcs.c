@@ -5684,7 +5684,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 
   mode = get_map_mode((char_u **)&which, 0);
 
-  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, true,
+  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                            CPO_TO_CPO_FLAGS);
   rhs = check_map(keys, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   xfree(keys_buf);

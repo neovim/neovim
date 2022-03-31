@@ -570,16 +570,18 @@ char_u *get_special_key_name(int c, int modifiers)
 //                    be at least 19 bytes per "<x>" form.
 /// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
 /// @param[in]  in_string  Inside a double quoted string
+/// @param[in]  simplify  simplify <C-H>, etc.
+/// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
-unsigned int trans_special(const char_u **srcp, const size_t src_len, char_u *const dst,
-                           const bool keycode, const bool in_string)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+unsigned int trans_special(const char_u **const srcp, const size_t src_len, char_u *const dst,
+                           const bool keycode, const bool in_string, const bool simplify,
+                           bool *const did_simplify)
+  FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
-  int key;
-
-  key = find_special_key(srcp, src_len, &modifiers, keycode, false, in_string);
+  int key = find_special_key(srcp, src_len, &modifiers, keycode, false, in_string, simplify,
+                             did_simplify);
   if (key == 0) {
     return 0;
   }
@@ -626,11 +628,14 @@ unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
 /// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
 /// @param[in]  keep_x_key  Don’t translate xHome to Home key.
 /// @param[in]  in_string  In string, double quote is escaped
+/// @param[in]  simplify  simplify <C-H>, etc.
+/// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Key and modifiers or 0 if there is no match.
-int find_special_key(const char_u **srcp, const size_t src_len, int *const modp, const bool keycode,
-                     const bool keep_x_key, const bool in_string)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+int find_special_key(const char_u **const srcp, const size_t src_len, int *const modp,
+                     const bool keycode, const bool keep_x_key, const bool in_string,
+                     const bool simplify, bool *const did_simplify)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   const char_u *last_dash;
   const char_u *end_of_name;
@@ -748,7 +753,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         // Normal Key with modifier:
         // Try to make a single byte code (except for Alt/Meta modifiers).
         if (!IS_SPECIAL(key)) {
-          key = extract_modifiers(key, &modifiers);
+          key = extract_modifiers(key, &modifiers, simplify, did_simplify);
         }
 
         *modp = modifiers;
@@ -762,7 +767,10 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
 
 /// Try to include modifiers (except alt/meta) in the key.
 /// Changes "Shift-a" to 'A', "Ctrl-@" to <Nul>, etc.
-static int extract_modifiers(int key, int *modp)
+/// @param[in]  simplify  if false, don't do Ctrl
+/// @param[out]  did_simplify  set when it is not NULL and "simplify" is true and
+///                            Ctrl is removed from modifiers
+static int extract_modifiers(int key, int *modp, const bool simplify, bool *const did_simplify)
 {
   int modifiers = *modp;
 
@@ -773,15 +781,19 @@ static int extract_modifiers(int key, int *modp)
       modifiers &= ~MOD_MASK_SHIFT;
     }
   }
-  if ((modifiers & MOD_MASK_CTRL) && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
+  // <C-H> and <C-h> mean the same thing, always use "H"
+  if ((modifiers & MOD_MASK_CTRL) && ASCII_ISALPHA(key)) {
     key = TOUPPER_ASC(key);
-    int new_key = CTRL_CHR(key);
-    if (new_key != TAB && new_key != CAR && new_key != ESC) {
-      key = new_key;
-      modifiers &= ~MOD_MASK_CTRL;
-      if (key == 0) {  // <C-@> is <Nul>
-        key = K_ZERO;
-      }
+  }
+  if (simplify && (modifiers & MOD_MASK_CTRL)
+      && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
+    key = CTRL_CHR(key);
+    modifiers &= ~MOD_MASK_CTRL;
+    if (key == 0) {  // <C-@> is <Nul>
+      key = K_ZERO;
+    }
+    if (did_simplify != NULL) {
+      *did_simplify = true;
     }
   }
 
@@ -853,34 +865,31 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
   return 0;         // Shouldn't get here
 }
 
-/// Replace any terminal code strings with the equivalent internal
-/// representation
+/// Replace any terminal code strings with the equivalent internal representation.
 ///
-/// Used for the "from" and "to" part of a mapping, and the "to" part of
-/// a menu command. Any strings like "<C-UP>" are also replaced, unless
-/// `special` is false. K_SPECIAL by itself is replaced by K_SPECIAL
-/// KS_SPECIAL KE_FILLER.
+/// Used for the "from" and "to" part of a mapping, and the "to" part of a menu command.
+/// Any strings like "<C-UP>" are also replaced, unless `special` is false.
+/// K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
+///
+/// When "flags" has REPTERM_FROM_PART, trailing <C-v> is included, otherwise it is removed (to make
+/// ":map xx ^V" map xx to nothing). When cpo_flags contains FLAG_CPO_BSLASH, a backslash can be
+/// used in place of <C-v>. All other <C-v> characters are removed.
 ///
 /// @param[in]  from  What characters to replace.
 /// @param[in]  from_len  Length of the "from" argument.
-/// @param[out]  bufp  Location where results were saved in case of success
-///                    (allocated). Will be set to NULL in case of failure.
-/// @param[in]  do_lt  If true, also translate <lt>.
-/// @param[in]  from_part  If true, trailing <C-v> is included, otherwise it is
-///                        removed (to make ":map xx ^V" map xx to nothing).
-///                        When cpo_flags contains #FLAG_CPO_BSLASH, a backslash
-///                        can be used in place of <C-v>. All other <C-v>
-///                        characters are removed.
-/// @param[in]  special    Replace keycodes, e.g. <CR> becomes a "\n" char.
-/// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see
-///                        #CPO_TO_CPO_FLAGS.
+/// @param[out]  bufp  Location where results were saved in case of success (allocated).
+///                    Will be set to NULL in case of failure.
+/// @param[in]  flags  REPTERM_FROM_PART    see above
+///                    REPTERM_DO_LT        also translate <lt>
+///                    REPTERM_NO_SPECIAL   do not accept <key> notation
+///                    REPTERM_NO_SIMPLIFY  do not simplify <C-H> into 0x08, etc.
+/// @param[out]  did_simplify  set when some <C-H> code was simplied, unless it is NULL.
+/// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see CPO_TO_CPO_FLAGS.
 ///
-/// @return Pointer to an allocated memory in case of success, "from" in case of
-///         failure. In case of success returned pointer is also saved to
-///         "bufp".
-char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bufp,
-                          const bool from_part, const bool do_lt, const bool special, int cpo_flags)
-  FUNC_ATTR_NONNULL_ALL
+/// @return  Pointer to an allocated memory, which is also saved to "bufp".
+char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_u **const bufp,
+                          const int flags, bool *const did_simplify, const int cpo_flags)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ssize_t i;
   size_t slen;
@@ -888,10 +897,10 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
   size_t dlen = 0;
   const char_u *src;
   const char_u *const end = from + from_len - 1;
-  int do_backslash;             // backslash is a special character
   char_u *result;          // buffer for resulting string
 
-  do_backslash = !(cpo_flags&FLAG_CPO_BSLASH);
+  const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
+  const bool do_special = !(flags & REPTERM_NO_SPECIAL);
 
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
@@ -901,7 +910,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
   src = from;
 
   // Check for #n at start only: function key n
-  if (from_part && from_len > 1 && src[0] == '#'
+  if ((flags & REPTERM_FROM_PART) && from_len > 1 && src[0] == '#'
       && ascii_isdigit(src[1])) {  // function key
     result[dlen++] = K_SPECIAL;
     result[dlen++] = 'k';
@@ -916,8 +925,8 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
   // Copy each byte from *from to result[dlen]
   while (src <= end) {
     // Check for special <> keycodes, like "<C-S-LeftMouse>"
-    if (special && (do_lt || ((end - src) >= 3
-                              && STRNCMP(src, "<lt>", 4) != 0))) {
+    if (do_special && ((flags & REPTERM_DO_LT) || ((end - src) >= 3
+                                                   && STRNCMP(src, "<lt>", 4) != 0))) {
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
@@ -936,15 +945,15 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
         }
       }
 
-      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true,
-                           false);
+      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true, false,
+                           (flags & REPTERM_NO_SIMPLIFY) == 0, did_simplify);
       if (slen) {
         dlen += slen;
         continue;
       }
     }
 
-    if (special) {
+    if (do_special) {
       char_u *p, *s, len;
 
       // Replace <Leader> by the value of "mapleader".
@@ -984,7 +993,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bu
     if (key == Ctrl_V || (do_backslash && key == '\\')) {
       src++;  // skip CTRL-V or backslash
       if (src > end) {
-        if (from_part) {
+        if (flags & REPTERM_FROM_PART) {
           result[dlen++] = key;
         }
         break;

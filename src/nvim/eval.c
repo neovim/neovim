@@ -4965,7 +4965,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
       // Special key, e.g.: "\<C-W>"
       case '<':
-        extra = trans_special((const char_u **)&p, STRLEN(p), name, true, true);
+        extra = trans_special((const char_u **)&p, STRLEN(p), name, true, true, true, NULL);
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {
