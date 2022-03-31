@@ -3151,6 +3151,34 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 ==============================================================================
 Autocmd Functions                                                *api-autocmd*
 
+nvim_clear_autocmd({*opts})                             *nvim_clear_autocmd()*
+                Clear all autocommands that match the corresponding {opts}. To
+                delete a particular autocmd, see |nvim_del_autocmd|.
+
+                Parameters: ~
+                    {opts}  Parameters
+                            • event: (string|table) Examples:
+                              • event: "pat1"
+                              • event: { "pat1" }
+                              • event: { "pat1", "pat2", "pat3" }
+
+                            • pattern: (string|table)
+                              • pattern or patterns to match exactly.
+                                • For example, if you have `*.py` as that
+                                  pattern for the autocmd, you must pass
+                                  `*.py` exactly to clear it. `test.py` will
+                                  not match the pattern.
+
+                              • defaults to clearing all patterns.
+                              • NOTE: Cannot be used with {buffer}
+
+                            • buffer: (bufnr)
+                              • clear only |autocmd-buflocal| autocommands.
+                              • NOTE: Cannot be used with {pattern}
+
+                            • group: (string|int) The augroup name or id.
+                              • NOTE: If not passed, will only delete autocmds not in any group.
+
 nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
                 Create or get an autocommand group |autocmd-groups|.
 

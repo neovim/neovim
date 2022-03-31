@@ -972,4 +972,95 @@ describe('autocmd api', function()
        eq(0, #meths.get_autocmds { event = 'BufReadPost' })
     end)
   end)
+
+  describe('nvim_clear_autocmd', function()
+    it('should clear based on event + pattern', function()
+      command('autocmd InsertEnter *.py  :echo "Python can be cool sometimes"')
+      command('autocmd InsertEnter *.txt :echo "Text Files Are Cool"')
+
+      local search = { event = "InsertEnter", pattern = "*.txt" }
+      local before_delete = meths.get_autocmds(search)
+      eq(1, #before_delete)
+
+      local before_delete_all = meths.get_autocmds { event = search.event }
+      eq(2, #before_delete_all)
+
+      meths.clear_autocmd(search)
+      local after_delete = meths.get_autocmds(search)
+      eq(0, #after_delete)
+
+      local after_delete_all = meths.get_autocmds { event = search.event }
+      eq(1, #after_delete_all)
+    end)
+
+    it('should clear based on event', function()
+      command('autocmd InsertEnter *.py  :echo "Python can be cool sometimes"')
+      command('autocmd InsertEnter *.txt :echo "Text Files Are Cool"')
+
+      local search = { event = "InsertEnter"}
+      local before_delete = meths.get_autocmds(search)
+      eq(2, #before_delete)
+
+      meths.clear_autocmd(search)
+      local after_delete = meths.get_autocmds(search)
+      eq(0, #after_delete)
+    end)
+
+    it('should clear based on pattern', function()
+      command('autocmd InsertEnter *.TestPat1 :echo "Enter 1"')
+      command('autocmd InsertLeave *.TestPat1 :echo "Leave 1"')
+      command('autocmd InsertEnter *.TestPat2 :echo "Enter 2"')
+      command('autocmd InsertLeave *.TestPat2 :echo "Leave 2"')
+
+      local search = { pattern = "*.TestPat1"}
+      local before_delete = meths.get_autocmds(search)
+      eq(2, #before_delete)
+      local before_delete_events = meths.get_autocmds { event = { "InsertEnter", "InsertLeave" } }
+      eq(4, #before_delete_events)
+
+      meths.clear_autocmd(search)
+      local after_delete = meths.get_autocmds(search)
+      eq(0, #after_delete)
+
+      local after_delete_events = meths.get_autocmds { event = { "InsertEnter", "InsertLeave" } }
+      eq(2, #after_delete_events)
+    end)
+
+    it('should allow clearing by buffer', function()
+      command('autocmd! InsertEnter')
+      command('autocmd InsertEnter <buffer> :echo "Enter Buffer"')
+      command('autocmd InsertEnter *.TestPat1 :echo "Enter Pattern"')
+
+      local search = { event = "InsertEnter" }
+      local before_delete = meths.get_autocmds(search)
+      eq(2, #before_delete)
+
+      meths.clear_autocmd { buffer = 0 }
+      local after_delete = meths.get_autocmds(search)
+      eq(1, #after_delete)
+      eq("*.TestPat1", after_delete[1].pattern)
+    end)
+
+    it('should allow clearing by buffer and group', function()
+      command('augroup TestNvimClearAutocmds')
+      command('  au!')
+      command('  autocmd InsertEnter <buffer> :echo "Enter Buffer"')
+      command('  autocmd InsertEnter *.TestPat1 :echo "Enter Pattern"')
+      command('augroup END')
+
+      local search = { event = "InsertEnter", group = "TestNvimClearAutocmds" }
+      local before_delete = meths.get_autocmds(search)
+      eq(2, #before_delete)
+
+      -- Doesn't clear without passing group.
+      meths.clear_autocmd { buffer = 0 }
+      local without_group = meths.get_autocmds(search)
+      eq(2, #without_group)
+
+      -- Doest clear with passing group.
+      meths.clear_autocmd { buffer = 0, group = search.group }
+      local with_group = meths.get_autocmds(search)
+      eq(1, #with_group)
+    end)
+  end)
 end)
