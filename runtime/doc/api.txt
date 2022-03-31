@@ -3151,7 +3151,7 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 ==============================================================================
 Autocmd Functions                                                *api-autocmd*
 
-nvim_clear_autocmd({*opts})                             *nvim_clear_autocmd()*
+nvim_clear_autocmds({*opts})                           *nvim_clear_autocmds()*
                 Clear all autocommands that match the corresponding {opts}. To
                 delete a particular autocmd, see |nvim_del_autocmd|.
 
@@ -3310,8 +3310,9 @@ nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
                 See also: ~
                     |nvim_create_autocmd()|
 
-nvim_exec_autocmd({event}, {*opts})                      *nvim_exec_autocmd()*
-                Execute an autocommand |autocmd-execute|.
+nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
+                Execute all autocommands for {event} that match the
+                corresponding {opts} |autocmd-execute|.
 
                 Parameters: ~
                     {event}  (String|Array) The event or events to execute
@@ -3333,7 +3334,7 @@ nvim_exec_autocmd({event}, {*opts})                      *nvim_exec_autocmd()*
                     |:doautocmd|
 
 nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
-                Get autocommands that match the requirements passed to {opts}.
+                Get all autocommands that match the corresponding {opts}.
 
                 These examples will get autocommands matching ALL the given
                 criteria: >

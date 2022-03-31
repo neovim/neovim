@@ -36,7 +36,7 @@
 // Used to delete autocmds from nvim_del_autocmd
 static int64_t next_autocmd_id = 1;
 
-/// Get autocommands that match the requirements passed to {opts}.
+/// Get all autocommands that match the corresponding {opts}.
 ///
 /// These examples will get autocommands matching ALL the given criteria:
 /// <pre>
@@ -562,7 +562,7 @@ void nvim_del_autocmd(Integer id)
 ///         - group: (string|int) The augroup name or id.
 ///             - NOTE: If not passed, will only delete autocmds *not* in any group.
 ///
-void nvim_clear_autocmd(Dict(clear_autocmd) *opts, Error *err)
+void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   // TODO(tjdevries): Future improvements:
@@ -697,7 +697,8 @@ void nvim_del_augroup_by_name(String name)
   augroup_del(name.data, false);
 }
 
-/// Execute an autocommand |autocmd-execute|.
+/// Execute all autocommands for {event} that match the corresponding
+///  {opts} |autocmd-execute|.
 /// @param event (String|Array) The event or events to execute
 /// @param opts Dictionary of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
@@ -709,7 +710,7 @@ void nvim_del_augroup_by_name(String name)
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands |<nomodeline>|.
 /// @see |:doautocmd|
-void nvim_exec_autocmd(Object event, Dict(exec_autocmd) *opts, Error *err)
+void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   int au_group = AUGROUP_ALL;
