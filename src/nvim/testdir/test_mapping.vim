@@ -429,6 +429,22 @@ func Test_error_in_map_expr()
   exe buf .. 'bwipe!'
 endfunc
 
+func Test_list_mappings()
+  inoremap <C-M> CtrlM
+  inoremap <A-S> AltS
+  inoremap <S-/> ShiftSlash
+  call assert_equal([
+	\ 'i  <S-/>       * ShiftSlash',
+	\ 'i  <M-S>       * AltS',
+	\ 'i  <C-M>       * CtrlM',
+	\], execute('imap')->trim()->split("\n"))
+  iunmap <C-M>
+  iunmap <A-S>
+  call assert_equal(['i  <S-/>       * ShiftSlash'], execute('imap')->trim()->split("\n"))
+  iunmap <S-/>
+  call assert_equal(['No mapping found'], execute('imap')->trim()->split("\n"))
+endfunc
+
 func Test_expr_map_gets_cursor()
   new
   call setline(1, ['one', 'some w!rd'])

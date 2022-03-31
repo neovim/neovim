@@ -3065,7 +3065,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
         }
         for (; mp != NULL && !got_int; mp = mp->m_next) {
           // check entries with the same mode
-          if ((mp->m_mode & mode) != 0) {
+          if (!mp->m_simplified && (mp->m_mode & mode) != 0) {
             if (!has_lhs) {  // show all entries
               showmap(mp, true);
               did_local = true;
@@ -3100,13 +3100,16 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
           mpp = &(map_table[hash]);
         }
         for (mp = *mpp; mp != NULL && !got_int; mp = *mpp) {
-          if (!(mp->m_mode & mode)) {         // skip entries with wrong mode
+          if ((mp->m_mode & mode) == 0) {
+            // skip entries with wrong mode
             mpp = &(mp->m_next);
             continue;
           }
           if (!has_lhs) {                      // show all entries
-            showmap(mp, map_table != maphash);
-            did_it = true;
+            if (!mp->m_simplified) {
+              showmap(mp, map_table != maphash);
+              did_it = true;
+            }
           } else {                          // do we have a match?
             if (round) {              // second round: Try unmap "rhs" string
               n = (int)STRLEN(mp->m_str);
@@ -3132,8 +3135,10 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                 mp->m_mode &= ~mode;
                 did_it = true;  // remember we did something
               } else if (!has_rhs) {  // show matching entry
-                showmap(mp, map_table != maphash);
-                did_it = true;
+                if (!mp->m_simplified) {
+                  showmap(mp, map_table != maphash);
+                  did_it = true;
+                }
               } else if (n != len) {  // new entry is ambiguous
                 mpp = &(mp->m_next);
                 continue;
