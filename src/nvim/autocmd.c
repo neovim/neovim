@@ -2350,17 +2350,20 @@ int autocmd_delete_event(int group, event_T event, char_u *pat)
 /// Deletes an autocmd by ID.
 /// Only autocmds created via the API have IDs associated with them. There
 /// is no way to delete a specific autocmd created via :autocmd
-void autocmd_delete_id(int64_t id)
+bool autocmd_delete_id(int64_t id)
 {
+  assert(id > 0);
   FOR_ALL_AUEVENTS(event) {
     FOR_ALL_AUPATS_IN_EVENT(event, ap) {
       for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
         if (ac->id == id) {
           aucmd_del(ac);
+          return true;
         }
       }
     }
   }
+  return false;
 }
 
 // ===========================================================================
