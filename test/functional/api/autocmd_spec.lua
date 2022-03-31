@@ -809,6 +809,14 @@ describe('autocmd api', function()
       eq(2, get_executed_count(), "No additional counts")
     end)
 
+    it('can delete non-existent groups with pcall', function()
+      eq(false, exec_lua[[return pcall(vim.api.nvim_del_augroup_by_name, 'noexist')]])
+      eq('Vim:E367: No such group: "noexist"', pcall_err(meths.del_augroup_by_name, 'noexist'))
+
+      eq(false, exec_lua[[return pcall(vim.api.nvim_del_augroup_by_id, -12342)]])
+      eq('Vim:E367: No such group: "--Deleted--"', pcall_err(meths.del_augroup_by_id, -12312))
+    end)
+
     it('groups work with once', function()
       local augroup = "TestGroup"
 

@@ -535,10 +535,16 @@ cleanup:
 /// NOTE: Only autocommands created via the API have an id.
 /// @param id Integer The id returned by nvim_create_autocmd
 /// @see |nvim_create_autocmd()|
-void nvim_del_autocmd(Integer id)
+void nvim_del_autocmd(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
-  autocmd_delete_id(id);
+  if (id <= 0) {
+    api_set_error(err, kErrorTypeException, "Invalid autocmd id");
+    return;
+  }
+  if (!autocmd_delete_id(id)) {
+    api_set_error(err, kErrorTypeException, "Failed to delete autocmd");
+  }
 }
 
 /// Clear all autocommands that match the corresponding {opts}. To delete
@@ -678,11 +684,15 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
 /// @param id Integer The id of the group.
 /// @see |nvim_del_augroup_by_name()|
 /// @see |nvim_create_augroup()|
-void nvim_del_augroup_by_id(Integer id)
+void nvim_del_augroup_by_id(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
-  char *name = augroup_name((int)id);
-  augroup_del(name, false);
+  TRY_WRAP({
+    try_start();
+    char *name = augroup_name((int)id);
+    augroup_del(name, false);
+    try_end(err);
+  });
 }
 
 /// Delete an autocommand group by name.
@@ -691,10 +701,14 @@ void nvim_del_augroup_by_id(Integer id)
 /// this group will also be deleted and cleared. This group will no longer exist.
 /// @param name String The name of the group.
 /// @see |autocommand-groups|
-void nvim_del_augroup_by_name(String name)
+void nvim_del_augroup_by_name(String name, Error *err)
   FUNC_API_SINCE(9)
 {
-  augroup_del(name.data, false);
+  TRY_WRAP({
+    try_start();
+    augroup_del(name.data, false);
+    try_end(err);
+  });
 }
 
 /// Execute an autocommand |autocmd-execute|.
