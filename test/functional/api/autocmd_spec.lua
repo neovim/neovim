@@ -154,6 +154,34 @@ describe('autocmd api', function()
         eq(1, #aus, aus)
       end)
     end)
+
+    it('removes an autocommand if the callback returns true', function()
+      meths.set_var("some_condition", false)
+
+      exec_lua [[
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "Test",
+        desc = "A test autocommand",
+        callback = function()
+          return vim.g.some_condition
+        end,
+      })
+      ]]
+
+      meths.exec_autocmd("User", {pattern = "Test"})
+      eq({{
+        buflocal = false,
+        command = 'A test autocommand',
+        desc = 'A test autocommand',
+        event = 'User',
+        id = 1,
+        once = false,
+        pattern = 'Test',
+      }}, meths.get_autocmds({event = "User", pattern = "Test"}))
+      meths.set_var("some_condition", true)
+      meths.exec_autocmd("User", {pattern = "Test"})
+      eq({}, meths.get_autocmds({event = "User", pattern = "Test"}))
+    end)
   end)
 
   describe('nvim_get_autocmds', function()
@@ -305,6 +333,33 @@ describe('autocmd api', function()
 
         local aus2 = meths.get_autocmds { group = auname, event = "InsertEnter" }
         eq(0, #aus2)
+      end)
+
+      it('should respect nested', function()
+        local bufs = exec_lua [[
+          local count = 0
+          vim.api.nvim_create_autocmd("BufNew", {
+            once = false,
+            nested = true,
+            callback = function()
+              count = count + 1
+              if count > 5 then
+                return true
+              end
+
+              vim.cmd(string.format("new README_%s.md", count))
+            end
+          })
+
+          vim.cmd "new First.md"
+
+          return vim.api.nvim_list_bufs()
+        ]]
+
+        -- 1 for the first buffer
+        -- 2 for First.md
+        -- 3-7 for the 5 we make in the autocmd
+        eq({1, 2, 3, 4, 5, 6, 7}, bufs)
       end)
     end)
 
@@ -462,7 +517,7 @@ describe('autocmd api', function()
     end)
   end)
 
-  describe('nvim_do_autocmd', function()
+  describe('nvim_exec_autocmd', function()
     it("can trigger builtin autocmds", function()
       meths.set_var("autocmd_executed", false)
 
@@ -472,7 +527,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("autocmd_executed"))
-      meths.do_autocmd("BufReadPost", {})
+      meths.exec_autocmd("BufReadPost", {})
       eq(true, meths.get_var("autocmd_executed"))
     end)
 
@@ -486,10 +541,10 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd("CursorHold", { buffer = 1 })
+      meths.exec_autocmd("CursorHold", { buffer = 1 })
       eq(-1, meths.get_var("buffer_executed"))
 
-      meths.do_autocmd("BufLeave", { buffer = 1 })
+      meths.exec_autocmd("BufLeave", { buffer = 1 })
       eq(1, meths.get_var("buffer_executed"))
     end)
 
@@ -503,7 +558,7 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd("CursorHold", { buffer = 1 })
+      meths.exec_autocmd("CursorHold", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
       meths.command('edit __init__.py')
@@ -511,7 +566,7 @@ describe('autocmd api', function()
     end)
 
     it('cannot pass buf and fname', function()
-      local ok = pcall(meths.do_autocmd, "BufReadPre", { pattern = "literally_cannot_error.rs", buffer = 1 })
+      local ok = pcall(meths.exec_autocmd, "BufReadPre", { pattern = "literally_cannot_error.rs", buffer = 1 })
       eq(false, ok)
     end)
 
@@ -529,16 +584,16 @@ describe('autocmd api', function()
       })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd("CursorHoldI", { buffer = 1 })
+      meths.exec_autocmd("CursorHoldI", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
-      meths.do_autocmd("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
+      meths.exec_autocmd("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
       eq('__init__.py', meths.get_var("filename_executed"))
 
       -- Reset filename
       meths.set_var("filename_executed", 'none')
 
-      meths.do_autocmd("CursorHoldI", { pattern = '__init__.py' })
+      meths.exec_autocmd("CursorHoldI", { pattern = '__init__.py' })
       eq('__init__.py', meths.get_var("filename_executed"))
     end)
 
@@ -550,9 +605,9 @@ describe('autocmd api', function()
         command = 'let g:matched = "matched"'
       })
 
-      meths.do_autocmd("User", { pattern = "OtherCommand" })
+      meths.exec_autocmd("User", { pattern = "OtherCommand" })
       eq('none', meths.get_var('matched'))
-      meths.do_autocmd("User", { pattern = "TestCommand" })
+      meths.exec_autocmd("User", { pattern = "TestCommand" })
       eq('matched', meths.get_var('matched'))
     end)
 
@@ -566,7 +621,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("group_executed"))
-      meths.do_autocmd("FileType", { group = auid })
+      meths.exec_autocmd("FileType", { group = auid })
       eq(true, meths.get_var("group_executed"))
     end)
 
@@ -581,7 +636,7 @@ describe('autocmd api', function()
       })
 
       eq(false, meths.get_var("group_executed"))
-      meths.do_autocmd("FileType", { group = auname })
+      meths.exec_autocmd("FileType", { group = auname })
       eq(true, meths.get_var("group_executed"))
     end)
   end)

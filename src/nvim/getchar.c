@@ -842,7 +842,10 @@ static void init_typebuf(void)
 void init_default_mappings(void)
 {
   add_map((char_u *)"Y y$", NORMAL, true);
-  add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>", NORMAL, true);
+
+  // Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>
+  // See https://github.com/neovim/neovim/issues/17473
+  add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", NORMAL, true);
   add_map((char_u *)"<C-U> <C-G>u<C-U>", INSERT, true);
   add_map((char_u *)"<C-W> <C-G>u<C-W>", INSERT, true);
 }
@@ -1578,6 +1581,14 @@ int vgetc(void)
         }
         no_mapping--;
         c = utf_ptr2char(buf);
+      }
+
+      if ((mod_mask & MOD_MASK_CTRL) && (c >= '?' && c <= '_')) {
+        c = Ctrl_chr(c);
+        mod_mask &= ~MOD_MASK_CTRL;
+        if (c == 0) {  // <C-@> is <Nul>
+          c = K_ZERO;
+        }
       }
 
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
@@ -3990,7 +4001,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
   char_u *res;
   char_u *p = NULL;
   char_u *expr = NULL;
-  char_u *save_cmd;
   pos_T save_cursor;
   int save_msg_col;
   int save_msg_row;
@@ -4001,8 +4011,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
     expr = vim_strsave(mp->m_str);
     vim_unescape_ks(expr);
   }
-
-  save_cmd = save_cmdline_alloc();
 
   // Forbid changing text or using ":normal" to avoid most of the bad side
   // effects.  Also restore the cursor position.
@@ -4033,8 +4041,6 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
   curwin->w_cursor = save_cursor;
   msg_col = save_msg_col;
   msg_row = save_msg_row;
-
-  restore_cmdline_alloc(save_cmd);
 
   if (p == NULL) {
     return NULL;

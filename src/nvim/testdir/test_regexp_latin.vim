@@ -787,11 +787,108 @@ func Test_regexp_error()
   set re&
 endfunc
 
+" Check patterns matching cursor position.
+func s:curpos_test2()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  s/\%.c.*//g
+  call setpos('.', [0, 3, 15, 0])
+  s/\%.l.*//g
+  call setpos('.', [0, 5, 3, 0])
+  s/\%.v.*/_/g
+  call assert_equal(['1',
+        \ '2 foobar ',
+        \ '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	_',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  call assert_fails('call search("\\%.1l")', 'E1204:')
+  call assert_fails('call search("\\%.1c")', 'E1204:')
+  call assert_fails('call search("\\%.1v")', 'E1204:')
+  bwipe!
+endfunc
+
+" Check patterns matching before or after cursor position.
+func s:curpos_test3()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.c//
+  call setpos('.', [0, 3, 10, 0])
+  :s/\%>.c.*$//
+  call setpos('.', [0, 5, 4, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.v/_/
+  call setpos('.', [0, 6, 4, 0])
+  :s/\%>.v.*$/_/
+  call assert_equal(['1',
+        \ ' eins zwei drei vier fünf sechse',
+        \ '3 foobar e',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '_foobar eins zwei drei vier fünf sechse',
+        \ '6	fo_',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  sil %d
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 4, 4, 0])
+  %s/\%<.l.*//
+  call setpos('.', [0, 5, 4, 0])
+  %s/\%>.l.*//
+  call assert_equal(['', '', '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '', ''],
+        \ getline(1, '$'))
+  bwipe!
+endfunc
+
+" Test that matching below, at or after the
+" cursor position work
+func Test_matching_pos()
+  for val in range(3)
+    exe "set re=" .. val
+    " Match at cursor position
+    call s:curpos_test2()
+    " Match before or after cursor position
+    call s:curpos_test3()
+  endfor
+  set re&
+endfunc
+
 func Test_using_mark_position()
   " this was using freed memory
+  " new engine
   new
   norm O0
   call assert_fails("s/\\%')", 'E486:')
+  bwipe!
+
+  " old engine
+  new
+  norm O0
+  call assert_fails("s/\\%#=1\\%')", 'E486:')
   bwipe!
 endfunc
 

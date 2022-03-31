@@ -90,7 +90,6 @@ typedef struct {
 #define BF_NEW_W        0x20    // Warned for BF_NEW and file created
 #define BF_READERR      0x40    // got errors while reading the file
 #define BF_DUMMY        0x80    // dummy buffer, only used internally
-#define BF_PRESERVED    0x100   // ":preserve" was used
 #define BF_SYN_SET      0x200   // 'syntax' option was set
 
 // Mask to check for flags that prevent normal writing
@@ -1212,6 +1211,8 @@ struct window_S {
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
 
+  linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
+
   // 'listchars' characters. Defaults set in set_chars_option().
   struct {
     int eol;
@@ -1232,7 +1233,13 @@ struct window_S {
   struct {
     int stl;
     int stlnc;
+    int horiz;
+    int horizup;
+    int horizdown;
     int vert;
+    int vertleft;
+    int vertright;
+    int verthoriz;
     int fold;
     int foldopen;                    ///< when fold is open
     int foldclosed;                  ///< when fold is closed
@@ -1278,7 +1285,8 @@ struct window_S {
   int w_status_height;              // number of status lines (0 or 1)
   int w_wincol;                     // Leftmost column of window in screen.
   int w_width;                      // Width of window, excluding separation.
-  int w_vsep_width;                 // Number of separator columns (0 or 1).
+  int w_hsep_height;                // Number of horizontal separator rows (0 or 1)
+  int w_vsep_width;                 // Number of vertical separator columns (0 or 1).
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
 
   // inner size of window, which can be overridden by external UI

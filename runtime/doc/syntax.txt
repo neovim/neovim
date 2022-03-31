@@ -5119,8 +5119,8 @@ TermCursor	cursor in a focused terminal
 TermCursorNC	cursor in an unfocused terminal
 							*hl-ErrorMsg*
 ErrorMsg	error messages on the command line
-							*hl-VertSplit*
-VertSplit	the column separating vertically split windows
+							*hl-WinSeparator*
+WinSeparator	separators between window splits
 							*hl-Folded*
 Folded		line used for closed folds
 							*hl-FoldColumn*
@@ -5226,7 +5226,8 @@ VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-Whitespace*
-Whitespace	"nbsp", "space", "tab" and "trail" in 'listchars'
+Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
+		in 'listchars'
 							*hl-WildMenu*
 WildMenu	current match in 'wildmenu' completion
 
@@ -5363,11 +5364,12 @@ WARNING: The longer the tags file, the slower this will be, and the more
 memory Vim will consume.
 
 Only highlighting typedefs, unions and structs can be done too.  For this you
-must use Exuberant ctags (found at http://ctags.sf.net).
+must use Universal Ctags (found at https://ctags.io) or Exuberant ctags (found
+at http://ctags.sf.net).
 
 Put these lines in your Makefile:
 
-# Make a highlight file for types.  Requires Exuberant ctags and awk
+# Make a highlight file for types.  Requires Universal/Exuberant ctags and awk
 types: types.vim
 types.vim: *.[ch]
 	ctags --c-kinds=gstu -o- *.[ch] |\

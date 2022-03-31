@@ -914,17 +914,24 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	becomes invalid.  Vim doesn't automatically update the matches.
 	Similar to moving the cursor for "\%#" |/\%#|.
 
-						*/\%l* */\%>l* */\%<l* *E951*
+					*/\%l* */\%>l* */\%<l* *E951* *E1204*
 \%23l	Matches in a specific line.
 \%<23l	Matches above a specific line (lower line number).
 \%>23l	Matches below a specific line (higher line number).
-	These three can be used to match specific lines in a buffer.  The "23"
+\%.l	Matches at the cursor line.
+\%<.l	Matches above the cursor line.
+\%>.l	Matches below the cursor line.
+	These six can be used to match specific lines in a buffer.  The "23"
 	can be any line number.  The first line is 1.
 	WARNING: When inserting or deleting lines Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
-	wrong.
+	wrong.  Also when referring to the cursor position (".") and
+	the cursor moves the display isn't updated for this change.  An update
+	is done when using the |CTRL-L| command (the whole screen is updated).
 	Example, to highlight the line where the cursor currently is: >
-		:exe '/\%' .. line(".") .. 'l.*'
+		:exe '/\%' .. line(".") .. 'l'
+<	Alternatively use: >
+		/\%.l
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 
@@ -932,15 +939,22 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \%23c	Matches in a specific column.
 \%<23c	Matches before a specific column.
 \%>23c	Matches after a specific column.
-	These three can be used to match specific columns in a buffer or
-	string.  The "23" can be any column number.  The first column is 1.
-	Actually, the column is the byte number (thus it's not exactly right
-	for multibyte characters).
+\%.c	Matches at the cursor column.
+\%<.c	Matches before the cursor column.
+\%>.c	Matches after the cursor column.
+	These six can be used to match specific columns in a buffer or string.
+	The "23" can be any column number.  The first column is 1.  Actually,
+	the column is the byte number (thus it's not exactly right for
+	multibyte characters).
 	WARNING: When inserting or deleting text Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
-	wrong.
+	wrong.  Also when referring to the cursor position (".") and
+	the cursor moves the display isn't updated for this change.  An update
+	is done when using the |CTRL-L| command (the whole screen is updated).
 	Example, to highlight the column where the cursor currently is: >
 		:exe '/\%' .. col(".") .. 'c'
+<	Alternatively use: >
+		/\%.c
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 	Example for matching a single byte in column 44: >
@@ -951,8 +965,11 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \%23v	Matches in a specific virtual column.
 \%<23v	Matches before a specific virtual column.
 \%>23v	Matches after a specific virtual column.
-	These three can be used to match specific virtual columns in a buffer
-	or string.  When not matching with a buffer in a window, the option
+\%.v	Matches at the current virtual column.
+\%<.v	Matches before the current virtual column.
+\%>.v	Matches after the current virtual column.
+	These six can be used to match specific virtual columns in a buffer or
+	string.  When not matching with a buffer in a window, the option
 	values of the current window are used (e.g., 'tabstop').
 	The "23" can be any column number.  The first column is 1.
 	Note that some virtual column positions will never match, because they
@@ -960,13 +977,18 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	one screen character.
 	WARNING: When inserting or deleting text Vim does not automatically
 	update highlighted matches.  This means Syntax highlighting quickly
-	becomes wrong.
+	becomes wrong.  Also when referring to the cursor position (".") and
+	the cursor moves the display isn't updated for this change.  An update
+	is done when using the |CTRL-L| command (the whole screen is updated).
 	Example, to highlight all the characters after virtual column 72: >
 		/\%>72v.*
 <	When 'hlsearch' is set and you move the cursor around and make changes
 	this will clearly show when the match is updated or not.
 	To match the text up to column 17: >
 		/^.*\%17v
+<	To match all characters after the current virtual column (where the
+	cursor is): >
+		/\%>.v.*
 <	Column 17 is not included, because this is a |/zero-width| match. To
 	include the column use: >
 		/^.*\%17v.

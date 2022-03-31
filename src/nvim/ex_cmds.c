@@ -38,6 +38,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
 #include "nvim/log.h"
@@ -225,9 +226,7 @@ void do_ascii(const exarg_T *const eap)
   msg((char *)IObuff);
 }
 
-/*
- * ":left", ":center" and ":right": align text.
- */
+/// ":left", ":center" and ":right": align text.
 void ex_align(exarg_T *eap)
 {
   pos_T save_curpos;
@@ -324,9 +323,7 @@ void ex_align(exarg_T *eap)
   beginline(BL_WHITE | BL_FIX);
 }
 
-/*
- * Get the length of the current line, excluding trailing white space.
- */
+/// @return  the length of the current line, excluding trailing white space.
 static int linelen(int *has_tab)
 {
   char_u *line;
@@ -452,7 +449,7 @@ static int sort_compare(const void *s1, const void *s2)
   return result;
 }
 
-// ":sort".
+/// ":sort".
 void ex_sort(exarg_T *eap)
 {
   regmatch_T regmatch;
@@ -723,9 +720,7 @@ sortend:
   }
 }
 
-/*
- * ":retab".
- */
+/// ":retab".
 void ex_retab(exarg_T *eap)
 {
   linenr_T lnum;
@@ -907,11 +902,9 @@ void ex_retab(exarg_T *eap)
   u_clearline();
 }
 
-/*
- * :move command - move lines line1-line2 to line dest
- *
- * return FAIL for failure, OK otherwise
- */
+/// :move command - move lines line1-line2 to line dest
+///
+/// @return  FAIL for failure, OK otherwise
 int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
   char_u *str;
@@ -1062,9 +1055,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   return OK;
 }
 
-/*
- * ":copy"
- */
+/// ":copy"
 void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 {
   linenr_T count;
@@ -1132,11 +1123,9 @@ void free_prev_shellcmd(void)
 
 #endif
 
-/*
- * Handle the ":!cmd" command.  Also for ":r !cmd" and ":w !cmd"
- * Bangs in the argument are replaced with the previously entered command.
- * Remember the argument.
- */
+/// Handle the ":!cmd" command.  Also for ":r !cmd" and ":w !cmd"
+/// Bangs in the argument are replaced with the previously entered command.
+/// Remember the argument.
 void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1684,9 +1673,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
   msg_prt_line(ml_get(lnum), list);
 }
 
-/*
- * Print a text line.  Also in silent mode ("ex -s").
- */
+/// Print a text line.  Also in silent mode ("ex -s").
 void print_line(linenr_T lnum, int use_number, int list)
 {
   int save_silent = silent_mode;
@@ -1754,9 +1741,7 @@ int rename_buffer(char_u *new_fname)
   return OK;
 }
 
-/*
- * ":file[!] [fname]".
- */
+/// ":file[!] [fname]".
 void ex_file(exarg_T *eap)
 {
   // ":0file" removes the file name.  Check for illegal uses ":3file",
@@ -1782,9 +1767,7 @@ void ex_file(exarg_T *eap)
   }
 }
 
-/*
- * ":update".
- */
+/// ":update".
 void ex_update(exarg_T *eap)
 {
   if (curbufIsChanged()) {
@@ -1792,9 +1775,7 @@ void ex_update(exarg_T *eap)
   }
 }
 
-/*
- * ":write" and ":saveas".
- */
+/// ":write" and ":saveas".
 void ex_write(exarg_T *eap)
 {
   if (eap->cmdidx == CMD_saveas) {
@@ -1810,14 +1791,12 @@ void ex_write(exarg_T *eap)
   }
 }
 
-/*
- * write current buffer to file 'eap->arg'
- * if 'eap->append' is TRUE, append to the file
- *
- * if *eap->arg == NUL write to current file
- *
- * return FAIL for failure, OK otherwise
- */
+/// write current buffer to file 'eap->arg'
+/// if 'eap->append' is TRUE, append to the file
+///
+/// if *eap->arg == NUL write to current file
+///
+/// @return  FAIL for failure, OK otherwise
 int do_write(exarg_T *eap)
 {
   int other;
@@ -2070,9 +2049,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
   return OK;
 }
 
-/*
- * Handle ":wnext", ":wNext" and ":wprevious" commands.
- */
+/// Handle ":wnext", ":wNext" and ":wprevious" commands.
 void ex_wnext(exarg_T *eap)
 {
   int i;
@@ -2089,9 +2066,7 @@ void ex_wnext(exarg_T *eap)
   }
 }
 
-/*
- * ":wall", ":wqall" and ":xall": Write all changed files (and exit).
- */
+/// ":wall", ":wqall" and ":xall": Write all changed files (and exit).
 void do_wqall(exarg_T *eap)
 {
   int error = 0;
@@ -2149,8 +2124,9 @@ void do_wqall(exarg_T *eap)
   }
 }
 
-// Check the 'write' option.
-// Return true and give a message when it's not st.
+/// Check the 'write' option.
+///
+/// @return  true and give a message when it's not st.
 bool not_writing(void)
 {
   if (p_write) {
@@ -2160,11 +2136,9 @@ bool not_writing(void)
   return true;
 }
 
-/*
- * Check if a buffer is read-only (either 'readonly' option is set or file is
- * read-only). Ask for overruling in a dialog. Return TRUE and give an error
- * message when the buffer is readonly.
- */
+/// Check if a buffer is read-only (either 'readonly' option is set or file is
+/// read-only). Ask for overruling in a dialog. Return TRUE and give an error
+/// message when the buffer is readonly.
 static int check_readonly(int *forceit, buf_T *buf)
 {
   // Handle a file being readonly when the 'readonly' option is set or when
@@ -2205,15 +2179,16 @@ static int check_readonly(int *forceit, buf_T *buf)
   return FALSE;
 }
 
-// Try to abandon the current file and edit a new or existing file.
-// "fnum" is the number of the file, if zero use "ffname_arg"/"sfname_arg".
-// "lnum" is the line number for the cursor in the new file (if non-zero).
-//
-// Return:
-// GETFILE_ERROR for "normal" error,
-// GETFILE_NOT_WRITTEN for "not written" error,
-// GETFILE_SAME_FILE for success
-// GETFILE_OPEN_OTHER for successfully opening another file.
+/// Try to abandon the current file and edit a new or existing file.
+///
+/// @param fnum  the number of the file, if zero use "ffname_arg"/"sfname_arg".
+/// @param lnum  the line number for the cursor in the new file (if non-zero).
+///
+/// @return:
+///           GETFILE_ERROR for "normal" error,
+///           GETFILE_NOT_WRITTEN for "not written" error,
+///           GETFILE_SAME_FILE for success
+///           GETFILE_OPEN_OTHER for successfully opening another file.
 int getfile(int fnum, char_u *ffname_arg, char_u *sfname_arg, int setpm, linenr_T lnum, int forceit)
 {
   char_u *ffname = ffname_arg;
@@ -2934,9 +2909,7 @@ static void delbuf_msg(char_u *name)
 
 static int append_indent = 0;       // autoindent for first line
 
-/*
- * ":insert" and ":append", also used by ":change"
- */
+/// ":insert" and ":append", also used by ":change"
 void ex_append(exarg_T *eap)
 {
   char_u *theline;
@@ -3078,9 +3051,7 @@ void ex_append(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-/*
- * ":change"
- */
+/// ":change"
 void ex_change(exarg_T *eap)
 {
   linenr_T lnum;
@@ -3247,9 +3218,9 @@ void ex_z(exarg_T *eap)
   ex_no_reprint = true;
 }
 
-// Check if the secure flag is set (.exrc or .vimrc in current directory).
-// If so, give an error message and return true.
-// Otherwise, return false.
+/// @return  true if the secure flag is set (.exrc or .vimrc in current directory)
+///          and also give an error message.
+///          Otherwise, return false.
 bool check_secure(void)
 {
   if (secure) {
@@ -4533,22 +4504,20 @@ static void global_exe_one(char_u *const cmd, const linenr_T lnum)
   }
 }
 
-/*
- * Execute a global command of the form:
- *
- * g/pattern/X : execute X on all lines where pattern matches
- * v/pattern/X : execute X on all lines where pattern does not match
- *
- * where 'X' is an EX command
- *
- * The command character (as well as the trailing slash) is optional, and
- * is assumed to be 'p' if missing.
- *
- * This is implemented in two passes: first we scan the file for the pattern and
- * set a mark for each line that (not) matches. Secondly we execute the command
- * for each line that has a mark. This is required because after deleting
- * lines we do not know where to search for the next match.
- */
+/// Execute a global command of the form:
+///
+/// g/pattern/X : execute X on all lines where pattern matches
+/// v/pattern/X : execute X on all lines where pattern does not match
+///
+/// where 'X' is an EX command
+///
+/// The command character (as well as the trailing slash) is optional, and
+/// is assumed to be 'p' if missing.
+///
+/// This is implemented in two passes: first we scan the file for the pattern and
+/// set a mark for each line that (not) matches. Secondly we execute the command
+/// for each line that has a mark. This is required because after deleting
+/// lines we do not know where to search for the next match.
 void ex_global(exarg_T *eap)
 {
   linenr_T lnum;                // line number according to old situation
@@ -4764,9 +4733,7 @@ bool prepare_tagpreview(bool undo_sync)
 }
 
 
-/*
- * ":help": open a read-only window on a help file
- */
+/// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)
 {
   char_u *arg;
@@ -4949,11 +4916,10 @@ erret:
 }
 
 
-/*
- * In an argument search for a language specifiers in the form "@xx".
- * Changes the "@" to NUL if found, and returns a pointer to "xx".
- * Returns NULL if not found.
- */
+/// In an argument search for a language specifiers in the form "@xx".
+/// Changes the "@" to NUL if found, and returns a pointer to "xx".
+///
+/// @return  NULL if not found.
 char_u *check_help_lang(char_u *arg)
 {
   int len = (int)STRLEN(arg);
@@ -5019,10 +4985,8 @@ int help_heuristic(char_u *matched_string, int offset, int wrong_case)
   return (int)(100 * num_letters + STRLEN(matched_string) + offset);
 }
 
-/*
- * Compare functions for qsort() below, that checks the help heuristics number
- * that has been put after the tagname by find_tags().
- */
+/// Compare functions for qsort() below, that checks the help heuristics number
+/// that has been put after the tagname by find_tags().
 static int help_compare(const void *s1, const void *s2)
 {
   char *p1;
@@ -5033,10 +4997,10 @@ static int help_compare(const void *s1, const void *s2)
   return strcmp(p1, p2);
 }
 
-// Find all help tags matching "arg", sort them and return in matches[], with
-// the number of matches in num_matches.
-// The matches will be sorted with a "best" match algorithm.
-// When "keep_lang" is true try keeping the language of the current buffer.
+/// Find all help tags matching "arg", sort them and return in matches[], with
+/// the number of matches in num_matches.
+/// The matches will be sorted with a "best" match algorithm.
+/// When "keep_lang" is true try keeping the language of the current buffer.
 int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool keep_lang)
 {
   int i;
@@ -5308,10 +5272,8 @@ static void prepare_help_buffer(void)
   set_buflisted(FALSE);
 }
 
-/*
- * After reading a help file: May cleanup a help buffer when syntax
- * highlighting is not used.
- */
+/// After reading a help file: May cleanup a help buffer when syntax
+/// highlighting is not used.
 void fix_help_buffer(void)
 {
   linenr_T lnum;
@@ -5507,17 +5469,13 @@ void fix_help_buffer(void)
   }
 }
 
-/*
- * ":exusage"
- */
+/// ":exusage"
 void ex_exusage(exarg_T *eap)
 {
   do_cmdline_cmd("help ex-cmd-index");
 }
 
-/*
- * ":viusage"
- */
+/// ":viusage"
 void ex_viusage(exarg_T *eap)
 {
   do_cmdline_cmd("help normal-index");
@@ -5826,9 +5784,7 @@ static void helptags_cb(char_u *fname, void *cookie)
   do_helptags(fname, *(bool *)cookie, true);
 }
 
-/*
- * ":helptags"
- */
+/// ":helptags"
 void ex_helptags(exarg_T *eap)
 {
   expand_T xpc;
@@ -5857,9 +5813,7 @@ void ex_helptags(exarg_T *eap)
   }
 }
 
-/*
- * ":helpclose": Close one help window
- */
+/// ":helpclose": Close one help window
 void ex_helpclose(exarg_T *eap)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
@@ -5873,7 +5827,7 @@ void ex_helpclose(exarg_T *eap)
 /// Tries to enter to an existing window of given buffer. If no existing buffer
 /// is found, creates a new split.
 ///
-/// Returns OK/FAIL.
+/// @return  OK/FAIL.
 int sub_preview_win(buf_T *preview_buf)
 {
   if (preview_buf != NULL) {
@@ -6115,9 +6069,11 @@ void ex_substitute(exarg_T *eap)
 
 /// Skip over the pattern argument of ":vimgrep /pat/[g][j]".
 /// Put the start of the pattern in "*s", unless "s" is NULL.
-/// If "flags" is not NULL put the flags in it: VGR_GLOBAL, VGR_NOJUMP.
-/// If "s" is not NULL terminate the pattern with a NUL.
-/// Return a pointer to the char just past the pattern plus flags.
+///
+/// @param flags  if not NULL, put the flags in it: VGR_GLOBAL, VGR_NOJUMP.
+/// @param s      if not NULL, terminate the pattern with a NUL.
+///
+/// @return  a pointer to the char just past the pattern plus flags.
 char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 {
   int c;

@@ -242,11 +242,9 @@ typedef enum {
 # include "memline.c.generated.h"
 #endif
 
-/*
- * Open a new memline for "buf".
- *
- * Return FAIL for failure, OK otherwise.
- */
+/// Open a new memline for "buf".
+///
+/// @return  FAIL for failure, OK otherwise.
 int ml_open(buf_T *buf)
 {
   bhdr_T *hp = NULL;
@@ -379,10 +377,8 @@ error:
   return FAIL;
 }
 
-/*
- * ml_setname() is called when the file name of "buf" has been changed.
- * It may rename the swap file.
- */
+/// ml_setname() is called when the file name of "buf" has been changed.
+/// It may rename the swap file.
 void ml_setname(buf_T *buf)
 {
   bool success = false;
@@ -458,11 +454,9 @@ void ml_setname(buf_T *buf)
   }
 }
 
-/*
- * Open a file for the memfile for all buffers that are not readonly or have
- * been modified.
- * Used when 'updatecount' changes from zero to non-zero.
- */
+/// Open a file for the memfile for all buffers that are not readonly or have
+/// been modified.
+/// Used when 'updatecount' changes from zero to non-zero.
 void ml_open_files(void)
 {
   FOR_ALL_BUFFERS(buf) {
@@ -472,11 +466,9 @@ void ml_open_files(void)
   }
 }
 
-/*
- * Open a swap file for an existing memfile, if there is no swap file yet.
- * If we are unable to find a file name, mf_fname will be NULL
- * and the memfile will be in memory only (no recovery possible).
- */
+/// Open a swap file for an existing memfile, if there is no swap file yet.
+/// If we are unable to find a file name, mf_fname will be NULL
+/// and the memfile will be in memory only (no recovery possible).
 void ml_open_file(buf_T *buf)
 {
   memfile_T *mfp;
@@ -563,10 +555,9 @@ void check_need_swap(bool newfile)
   msg_silent = old_msg_silent;
 }
 
-/*
- * Close memline for buffer 'buf'.
- * If 'del_file' is TRUE, delete the swap file
- */
+/// Close memline for buffer 'buf'.
+///
+/// @param del_file  if TRUE, delete the swap file
 void ml_close(buf_T *buf, int del_file)
 {
   if (buf->b_ml.ml_mfp == NULL) {               // not open
@@ -585,25 +576,21 @@ void ml_close(buf_T *buf, int del_file)
   buf->b_flags &= ~BF_RECOVERED;
 }
 
-/*
- * Close all existing memlines and memfiles.
- * Only used when exiting.
- * When 'del_file' is TRUE, delete the memfiles.
- * But don't delete files that were ":preserve"d when we are POSIX compatible.
- */
-void ml_close_all(int del_file)
+/// Close all existing memlines and memfiles.
+/// Only used when exiting.
+///
+/// @param del_file  if true, delete the memfiles.
+void ml_close_all(bool del_file)
 {
   FOR_ALL_BUFFERS(buf) {
-    ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0));
+    ml_close(buf, del_file);
   }
   spell_delete_wordlist();      // delete the internal wordlist
   vim_deltempdir();             // delete created temp directory
 }
 
-/*
- * Close all memfiles for not modified buffers.
- * Only use just before exiting!
- */
+/// Close all memfiles for not modified buffers.
+/// Only use just before exiting!
 void ml_close_notmod(void)
 {
   FOR_ALL_BUFFERS(buf) {
@@ -613,10 +600,8 @@ void ml_close_notmod(void)
   }
 }
 
-/*
- * Update the timestamp in the .swp file.
- * Used when the file has been written.
- */
+/// Update the timestamp in the .swp file.
+/// Used when the file has been written.
 void ml_timestamp(buf_T *buf)
 {
   ml_upd_block0(buf, UB_FNAME);
@@ -639,9 +624,7 @@ static bool ml_check_b0_strings(ZERO_BL *b0p)
           && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));  // -V512
 }
 
-/*
- * Update the timestamp or the B0_SAME_DIR flag of the .swp file.
- */
+/// Update the timestamp or the B0_SAME_DIR flag of the .swp file.
 static void ml_upd_block0(buf_T *buf, upd_block0_T what)
 {
   memfile_T *mfp;
@@ -665,11 +648,9 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
   mf_put(mfp, hp, true, false);
 }
 
-/*
- * Write file name and timestamp into block 0 of a swap file.
- * Also set buf->b_mtime.
- * Don't use NameBuff[]!!!
- */
+/// Write file name and timestamp into block 0 of a swap file.
+/// Also set buf->b_mtime.
+/// Don't use NameBuff[]!!!
 static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 {
   if (buf->b_ffname == NULL) {
@@ -721,12 +702,10 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
   add_b0_fenc(b0p, curbuf);
 }
 
-/*
- * Update the B0_SAME_DIR flag of the swap file.  It's set if the file and the
- * swapfile for "buf" are in the same directory.
- * This is fail safe: if we are not sure the directories are equal the flag is
- * not set.
- */
+/// Update the B0_SAME_DIR flag of the swap file.  It's set if the file and the
+/// swapfile for "buf" are in the same directory.
+/// This is fail safe: if we are not sure the directories are equal the flag is
+/// not set.
 static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 {
   if (same_directory(buf->b_ml.ml_mfp->mf_fname, buf->b_ffname)) {
@@ -736,9 +715,7 @@ static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
   }
 }
 
-/*
- * When there is room, add the 'fileencoding' to block zero.
- */
+/// When there is room, add the 'fileencoding' to block zero.
 static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
 {
   int n;
@@ -757,8 +734,9 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
 
 
 /// Try to recover curbuf from the .swp file.
-/// @param checkext If true, check the extension and detect whether it is a
-/// swap file.
+///
+/// @param checkext  if true, check the extension and detect whether it is a
+///                  swap file.
 void ml_recover(bool checkext)
 {
   buf_T *buf = NULL;
@@ -1465,10 +1443,8 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
   return file_count;
 }
 
-/*
- * Append the full path to name with path separators made into percent
- * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
- */
+/// Append the full path to name with path separators made into percent
+/// signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
 char *make_percent_swname(const char *dir, const char *name)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -1490,8 +1466,9 @@ char *make_percent_swname(const char *dir, const char *name)
 
 static bool process_still_running;
 
-/// Return information found in swapfile "fname" in dictionary "d".
 /// This is used by the swapinfo() function.
+///
+/// @return  information found in swapfile "fname" in dictionary "d".
 void get_b0_dict(const char *fname, dict_T *d)
 {
   int fd;
@@ -1528,7 +1505,8 @@ void get_b0_dict(const char *fname, dict_T *d)
 }
 
 /// Give information about an existing swap file.
-/// Returns timestamp (0 when unknown).
+///
+/// @return  timestamp (0 when unknown).
 static time_t swapfile_info(char_u *fname)
 {
   assert(fname != NULL);
@@ -1618,9 +1596,9 @@ static time_t swapfile_info(char_u *fname)
   return x;
 }
 
-/// Returns TRUE if the swap file looks OK and there are no changes, thus it
-/// can be safely deleted.
-static time_t swapfile_unchanged(char *fname)
+/// @return  true if the swap file looks OK and there are no changes, thus it
+///          can be safely deleted.
+static bool swapfile_unchanged(char *fname)
 {
   struct block0 b0;
   int ret = true;
@@ -1698,13 +1676,12 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   return num_names;
 }
 
-/*
- * sync all memlines
- *
- * If 'check_file' is TRUE, check if original file exists and was not changed.
- * If 'check_char' is TRUE, stop syncing when character becomes available, but
- * always sync at least one block.
- */
+/// sync all memlines
+///
+/// @param check_file  if TRUE, check if original file exists and was not changed.
+/// @param check_char  if TRUE, stop syncing when character becomes available, but
+///
+/// always sync at least one block.
 void ml_sync_all(int check_file, int check_char, bool do_fsync)
 {
   FOR_ALL_BUFFERS(buf) {
@@ -1740,16 +1717,14 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
   }
 }
 
-/*
- * sync one buffer, including negative blocks
- *
- * after this all the blocks are in the swap file
- *
- * Used for the :preserve command and when the original file has been
- * changed or deleted.
- *
- * when message is TRUE the success of preserving is reported
- */
+/// sync one buffer, including negative blocks
+///
+/// after this all the blocks are in the swap file
+///
+/// Used for the :preserve command and when the original file has been
+/// changed or deleted.
+///
+/// @param message  if TRUE, the success of preserving is reported.
 void ml_preserve(buf_T *buf, int message, bool do_fsync)
 {
   bhdr_T *hp;
@@ -1825,27 +1800,24 @@ theend:
  *  line2 = ml_get(2);  // line1 is now invalid!
  * Make a copy of the line if necessary.
  */
-/*
- * Return a pointer to a (read-only copy of a) line.
- *
- * On failure an error message is given and IObuff is returned (to avoid
- * having to check for error everywhere).
- */
+
+/// @return  a pointer to a (read-only copy of a) line.
+///
+/// On failure an error message is given and IObuff is returned (to avoid
+/// having to check for error everywhere).
 char_u *ml_get(linenr_T lnum)
 {
   return ml_get_buf(curbuf, lnum, false);
 }
 
-/*
- * Return pointer to position "pos".
- */
+/// @return  pointer to position "pos".
 char_u *ml_get_pos(const pos_T *pos)
   FUNC_ATTR_NONNULL_ALL
 {
   return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
-/// get codepoint at pos. pos must be either valid or have col set to MAXCOL!
+/// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -1856,9 +1828,9 @@ int gchar_pos(pos_T *pos)
   return utf_ptr2char(ml_get_pos(pos));
 }
 
-/// Return a pointer to a line in a specific buffer
-///
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)
+///
+/// @return  a pointer to a line in a specific buffer
 char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1931,10 +1903,8 @@ errorret:
   return buf->b_ml.ml_line_ptr;
 }
 
-/*
- * Check if a line that was just obtained by a call to ml_get
- * is in allocated memory.
- */
+/// Check if a line that was just obtained by a call to ml_get
+/// is in allocated memory.
 int ml_line_alloced(void)
 {
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
@@ -2491,17 +2461,18 @@ int ml_replace(linenr_T lnum, char_u *line, bool copy)
   return ml_replace_buf(curbuf, lnum, line, copy);
 }
 
-// Replace line "lnum", with buffering, in current buffer.
-//
-// If "copy" is true, make a copy of the line, otherwise the line has been
-// copied to allocated memory already.
-// If "copy" is false the "line" may be freed to add text properties!
-// Do not use it after calling ml_replace().
-//
-// Check: The caller of this function should probably also call
-// changed_lines(), unless update_screen(NOT_VALID) is used.
-//
-// return FAIL for failure, OK otherwise
+/// Replace line "lnum", with buffering, in current buffer.
+///
+/// @param copy  if true, make a copy of the line, otherwise the line has been
+///              copied to allocated memory already.
+///              if false, the "line" may be freed to add text properties!
+///
+/// Do not use it after calling ml_replace().
+///
+/// Check: The caller of this function should probably also call
+/// changed_lines(), unless update_screen(NOT_VALID) is used.
+///
+/// @return  FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
 {
   if (line == NULL) {           // just checking...
@@ -2544,7 +2515,8 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
 /// deleted_lines() after this.
 ///
 /// @param message  Show "--No lines in buffer--" message.
-/// @return FAIL for failure, OK otherwise
+///
+/// @return  FAIL for failure, OK otherwise
 int ml_delete(linenr_T lnum, bool message)
 {
   ml_flush_line(curbuf);
@@ -2701,9 +2673,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   return OK;
 }
 
-/*
- * set the B_MARKED flag for line 'lnum'
- */
+/// set the B_MARKED flag for line 'lnum'
 void ml_setmarked(linenr_T lnum)
 {
   bhdr_T *hp;
@@ -2730,9 +2700,7 @@ void ml_setmarked(linenr_T lnum)
   curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
 }
 
-/*
- * find the first line with its B_MARKED flag set
- */
+/// find the first line with its B_MARKED flag set
 linenr_T ml_firstmarked(void)
 {
   bhdr_T *hp;
@@ -2773,9 +2741,7 @@ linenr_T ml_firstmarked(void)
   return (linenr_T)0;
 }
 
-/*
- * clear all DB_MARKED flags
- */
+/// clear all DB_MARKED flags
 void ml_clearmarked(void)
 {
   bhdr_T *hp;
@@ -2824,9 +2790,7 @@ size_t ml_flush_deleted_bytes(buf_T *buf, size_t *codepoints, size_t *codeunits)
   return ret;
 }
 
-/*
- * flush ml_line if necessary
- */
+/// flush ml_line if necessary
 static void ml_flush_line(buf_T *buf)
 {
   bhdr_T *hp;
@@ -2923,9 +2887,7 @@ static void ml_flush_line(buf_T *buf)
   buf->b_ml.ml_line_offset = 0;
 }
 
-/*
- * create a new, empty, data block
- */
+/// create a new, empty, data block
 static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
 {
   assert(page_count >= 0);
@@ -2939,9 +2901,7 @@ static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
   return hp;
 }
 
-/*
- * create a new, empty, pointer block
- */
+/// create a new, empty, pointer block
 static bhdr_T *ml_new_ptr(memfile_T *mfp)
 {
   bhdr_T *hp = mf_new(mfp, false, 1);
@@ -2953,21 +2913,19 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   return hp;
 }
 
-/*
- * lookup line 'lnum' in a memline
- *
- *   action: if ML_DELETE or ML_INSERT the line count is updated while searching
- *           if ML_FLUSH only flush a locked block
- *           if ML_FIND just find the line
- *
- * If the block was found it is locked and put in ml_locked.
- * The stack is updated to lead to the locked block. The ip_high field in
- * the stack is updated to reflect the last line in the block AFTER the
- * insert or delete, also if the pointer block has not been updated yet. But
- * if ml_locked != NULL ml_locked_lineadd must be added to ip_high.
- *
- * return: NULL for failure, pointer to block header otherwise
- */
+/// lookup line 'lnum' in a memline
+///
+/// @param action: if ML_DELETE or ML_INSERT the line count is updated while searching
+///                if ML_FLUSH only flush a locked block
+///                if ML_FIND just find the line
+///
+/// If the block was found it is locked and put in ml_locked.
+/// The stack is updated to lead to the locked block. The ip_high field in
+/// the stack is updated to reflect the last line in the block AFTER the
+/// insert or delete, also if the pointer block has not been updated yet. But
+/// if ml_locked != NULL ml_locked_lineadd must be added to ip_high.
+///
+/// @return  NULL for failure, pointer to block header otherwise
 static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
 {
   DATA_BL *dp;
@@ -3148,11 +3106,9 @@ error_noblock:
   return NULL;
 }
 
-/*
- * add an entry to the info pointer stack
- *
- * return number of the new entry
- */
+/// add an entry to the info pointer stack
+///
+/// @return  number of the new entry
 static int ml_add_stack(buf_T *buf)
 {
   int top = buf->b_ml.ml_stack_top;
@@ -3170,16 +3126,14 @@ static int ml_add_stack(buf_T *buf)
   return top;
 }
 
-/*
- * Update the pointer blocks on the stack for inserted/deleted lines.
- * The stack itself is also updated.
- *
- * When an insert/delete line action fails, the line is not inserted/deleted,
- * but the pointer blocks have already been updated. That is fixed here by
- * walking through the stack.
- *
- * Count is the number of lines added, negative if lines have been deleted.
- */
+/// Update the pointer blocks on the stack for inserted/deleted lines.
+/// The stack itself is also updated.
+///
+/// When an insert/delete line action fails, the line is not inserted/deleted,
+/// but the pointer blocks have already been updated. That is fixed here by
+/// walking through the stack.
+///
+/// Count is the number of lines added, negative if lines have been deleted.
 static void ml_lineadd(buf_T *buf, int count)
 {
   int idx;
@@ -3206,13 +3160,13 @@ static void ml_lineadd(buf_T *buf, int count)
 }
 
 #if defined(HAVE_READLINK)
-/*
- * Resolve a symlink in the last component of a file name.
- * Note that f_resolve() does it for every part of the path, we don't do that
- * here.
- * If it worked returns OK and the resolved link in "buf[MAXPATHL]".
- * Otherwise returns FAIL.
- */
+
+/// Resolve a symlink in the last component of a file name.
+/// Note that f_resolve() does it for every part of the path, we don't do that
+/// here.
+///
+/// @return  OK if it worked and the resolved link in "buf[MAXPATHL]",
+///          FAIL otherwise
 int resolve_symlink(const char_u *fname, char_u *buf)
 {
   char_u tmp[MAXPATHL];
@@ -3276,10 +3230,9 @@ int resolve_symlink(const char_u *fname, char_u *buf)
 }
 #endif
 
-/*
- * Make swap file name out of the file name and a directory name.
- * Returns pointer to allocated memory or NULL.
- */
+/// Make swap file name out of the file name and a directory name.
+///
+/// @return  pointer to allocated memory or NULL.
 char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name)
 {
   char_u *r, *s;
@@ -3409,17 +3362,16 @@ static void attention_message(buf_T *buf, char_u *fname)
 }
 
 
-/*
- * Trigger the SwapExists autocommands.
- * Returns a value for equivalent to do_dialog() (see below):
- * 0: still need to ask for a choice
- * 1: open read-only
- * 2: edit anyway
- * 3: recover
- * 4: delete it
- * 5: quit
- * 6: abort
- */
+/// Trigger the SwapExists autocommands.
+///
+/// @return  a value for equivalent to do_dialog() (see below):
+///          0: still need to ask for a choice
+///          1: open read-only
+///          2: edit anyway
+///          3: recover
+///          4: delete it
+///          5: quit
+///          6: abort
 static int do_swapexists(buf_T *buf, char_u *fname)
 {
   set_vim_var_string(VV_SWAPNAME, (char *)fname, -1);
@@ -3813,10 +3765,8 @@ static bool fnamecmp_ino(char_u *fname_c, char_u *fname_s, long ino_block0)
   return true;
 }
 
-/*
- * Move a long integer into a four byte character array.
- * Used for machine independency in block zero.
- */
+/// Move a long integer into a four byte character array.
+/// Used for machine independency in block zero.
 static void long_to_char(long n, char_u *s)
 {
   s[0] = (char_u)(n & 0xff);
@@ -3843,12 +3793,10 @@ static long char_to_long(char_u *s)
   return retval;
 }
 
-/*
- * Set the flags in the first block of the swap file:
- * - file is modified or not: buf->b_changed
- * - 'fileformat'
- * - 'fileencoding'
- */
+/// Set the flags in the first block of the swap file:
+/// - file is modified or not: buf->b_changed
+/// - 'fileformat'
+/// - 'fileencoding'
 void ml_setflags(buf_T *buf)
 {
   bhdr_T *hp;
@@ -3874,13 +3822,13 @@ void ml_setflags(buf_T *buf)
 #define MLCS_MAXL 800   // max no of lines in chunk
 #define MLCS_MINL 400   // should be half of MLCS_MAXL
 
-/*
- * Keep information for finding byte offset of a line, updtype may be one of:
- * ML_CHNK_ADDLINE: Add len to parent chunk, possibly splitting it
- *         Careful: ML_CHNK_ADDLINE may cause ml_find_line() to be called.
- * ML_CHNK_DELLINE: Subtract len from parent chunk, possibly deleting it
- * ML_CHNK_UPDLINE: Add len to parent chunk, as a signed entity.
- */
+/// Keep information for finding byte offset of a line
+///
+/// @param updtype  may be one of:
+///                 ML_CHNK_ADDLINE: Add len to parent chunk, possibly splitting it
+///                         Careful: ML_CHNK_ADDLINE may cause ml_find_line() to be called.
+///                 ML_CHNK_DELLINE: Subtract len from parent chunk, possibly deleting it
+///                 ML_CHNK_UPDLINE: Add len to parent chunk, as a signed entity.
 static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 {
   static buf_T *ml_upd_lastbuf = NULL;
@@ -4083,7 +4031,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 ///             Should be NULL when getting offset of line
 /// @param no_ff ignore 'fileformat' option, always use one byte for NL.
 ///
-/// @return -1 if information is not available
+/// @return  -1 if information is not available
 long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
 {
   linenr_T curline;
@@ -4258,10 +4206,11 @@ void goto_byte(long cnt)
 }
 
 /// Increment the line pointer "lp" crossing line boundaries as necessary.
-/// Return 1 when going to the next line.
-/// Return 2 when moving forward onto a NUL at the end of the line).
-/// Return -1 when at the end of file.
-/// Return 0 otherwise.
+///
+/// @return   1 when going to the next line.
+///           2 when moving forward onto a NUL at the end of the line).
+///          -1 when at the end of file.
+///           0 otherwise.
 int inc(pos_T *lp)
 {
   // when searching position may be set to end of a line

@@ -73,10 +73,11 @@ exe 'nno <buffer> <silent> ]] /' . escape(s:section, '|') . '/<CR>:nohls<CR>'
 exe 'ono <buffer> <silent> [[ ?' . escape(s:section, '|') . '?<CR>:nohls<CR>'
 exe 'ono <buffer> <silent> ]] /' . escape(s:section, '|') . '/<CR>:nohls<CR>'
 
+setlocal suffixesadd=.php
 setlocal commentstring=/*%s*/
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal commentstring< include< omnifunc<" .
+let b:undo_ftplugin = "setlocal suffixesadd< commentstring< include< omnifunc<" .
 	    \	      " | unlet! b:browsefilter b:match_words | " .
 	    \	      s:undo_ftplugin
 

@@ -84,8 +84,6 @@ CONFIG = {
     'api': {
         'mode': 'c',
         'filename': 'api.txt',
-        # String used to find the start of the generated part of the doc.
-        'section_start_token': '*api-global*',
         # Section ordering.
         'section_order': [
             'vim.c',
@@ -98,8 +96,8 @@ CONFIG = {
             'autocmd.c',
             'ui.c',
         ],
-        # List of files/directories for doxygen to read, separated by blanks
-        'files': os.path.join(base_dir, 'src/nvim/api'),
+        # List of files/directories for doxygen to read, relative to `base_dir`
+        'files': ['src/nvim/api'],
         # file patterns used by doxygen
         'file_patterns': '*.h *.c',
         # Only function with this prefix are considered
@@ -122,7 +120,6 @@ CONFIG = {
     'lua': {
         'mode': 'lua',
         'filename': 'lua.txt',
-        'section_start_token': '*lua-vim*',
         'section_order': [
             '_editor.lua',
             'shared.lua',
@@ -131,14 +128,14 @@ CONFIG = {
             'filetype.lua',
             'keymap.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/_editor.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/ui.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/filetype.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/keymap.lua'),
-        ]),
+        'files': [
+            'runtime/lua/vim/_editor.lua',
+            'runtime/lua/vim/shared.lua',
+            'runtime/lua/vim/uri.lua',
+            'runtime/lua/vim/ui.lua',
+            'runtime/lua/vim/filetype.lua',
+            'runtime/lua/vim/keymap.lua',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {
@@ -171,7 +168,6 @@ CONFIG = {
     'lsp': {
         'mode': 'lua',
         'filename': 'lsp.txt',
-        'section_start_token': '*lsp-core*',
         'section_order': [
             'lsp.lua',
             'buf.lua',
@@ -185,10 +181,10 @@ CONFIG = {
             'sync.lua',
             'protocol.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/lsp'),
-            os.path.join(base_dir, 'runtime/lua/vim/lsp.lua'),
-        ]),
+        'files': [
+            'runtime/lua/vim/lsp',
+            'runtime/lua/vim/lsp.lua',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {'lsp.lua': 'lsp'},
@@ -214,11 +210,10 @@ CONFIG = {
     'diagnostic': {
         'mode': 'lua',
         'filename': 'diagnostic.txt',
-        'section_start_token': '*diagnostic-api*',
         'section_order': [
             'diagnostic.lua',
         ],
-        'files': os.path.join(base_dir, 'runtime/lua/vim/diagnostic.lua'),
+        'files': ['runtime/lua/vim/diagnostic.lua'],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {'diagnostic.lua': 'diagnostic'},
@@ -231,7 +226,6 @@ CONFIG = {
     'treesitter': {
         'mode': 'lua',
         'filename': 'treesitter.txt',
-        'section_start_token': '*lua-treesitter-core*',
         'section_order': [
             'treesitter.lua',
             'language.lua',
@@ -239,10 +233,10 @@ CONFIG = {
             'highlighter.lua',
             'languagetree.lua',
         ],
-        'files': ' '.join([
-            os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
-            os.path.join(base_dir, 'runtime/lua/vim/treesitter/'),
-        ]),
+        'files': [
+            'runtime/lua/vim/treesitter.lua',
+            'runtime/lua/vim/treesitter/',
+        ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
         'section_name': {},
@@ -349,14 +343,6 @@ def self_or_child(n):
     return n.childNodes[0]
 
 
-def clean_text(text):
-    """Cleans text.
-
-    Only cleans superfluous whitespace at the moment.
-    """
-    return ' '.join(text.split()).strip()
-
-
 def clean_lines(text):
     """Removes superfluous lines.
 
@@ -377,12 +363,12 @@ def get_text(n, preformatted=False):
     if n.nodeName == 'computeroutput':
         for node in n.childNodes:
             text += get_text(node)
-        return '`{}` '.format(text)
+        return '`{}`'.format(text)
     for node in n.childNodes:
         if node.nodeType == node.TEXT_NODE:
-            text += node.data if preformatted else clean_text(node.data)
+            text += node.data
         elif node.nodeType == node.ELEMENT_NODE:
-            text += ' ' + get_text(node, preformatted)
+            text += get_text(node, preformatted)
     return text
 
 
@@ -849,7 +835,9 @@ def extract_from_xml(filename, target, width):
             'seealso': [],
         }
         if fmt_vimhelp:
-            fn['desc_node'] = desc  # HACK :(
+            # HACK :(
+            fn['desc_node'] = desc
+            fn['brief_desc_node'] = brief_desc
 
         for m in paras:
             if 'text' in m:
@@ -897,6 +885,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
         # Generate Vim :help for parameters.
         if fn['desc_node']:
             doc = fmt_node_as_vimhelp(fn['desc_node'])
+        if not doc and fn['brief_desc_node']:
+            doc = fmt_node_as_vimhelp(fn['brief_desc_node'])
         if not doc:
             doc = 'TODO: Documentation'
 
@@ -1006,7 +996,8 @@ def main(config, args):
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             config.format(
-                input=CONFIG[target]['files'],
+                input=' '.join(
+                    [f'"{file}"' for file in CONFIG[target]['files']]),
                 output=output_dir,
                 filter=filter_cmd,
                 file_patterns=CONFIG[target]['file_patterns'])
@@ -1096,6 +1087,7 @@ def main(config, args):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
                     set(sections).difference(CONFIG[target]['section_order'])))
+        first_section_tag = sections[CONFIG[target]['section_order'][0]][1]
 
         docs = ''
 
@@ -1121,7 +1113,8 @@ def main(config, args):
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
                                 CONFIG[target]['filename'])
 
-        delete_lines_below(doc_file, CONFIG[target]['section_start_token'])
+        if os.path.exists(doc_file):
+            delete_lines_below(doc_file, first_section_tag)
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 

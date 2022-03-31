@@ -361,7 +361,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
       msg_end();
       msg_scroll = msg_save;
-      return FAIL;
+      return NOTDONE;
     }
   }
 
@@ -2033,9 +2033,7 @@ void prep_exarg(exarg_T *eap, const buf_T *buf)
   eap->forceit = FALSE;
 }
 
-/*
- * Set default or forced 'fileformat' and 'binary'.
- */
+/// Set default or forced 'fileformat' and 'binary'.
 void set_file_options(int set_options, exarg_T *eap)
 {
   // set default 'fileformat'
@@ -2056,9 +2054,7 @@ void set_file_options(int set_options, exarg_T *eap)
   }
 }
 
-/*
- * Set forced 'fileencoding'.
- */
+/// Set forced 'fileencoding'.
 void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
@@ -2068,12 +2064,12 @@ void set_forced_fenc(exarg_T *eap)
   }
 }
 
-// Find next fileencoding to use from 'fileencodings'.
-// "pp" points to fenc_next.  It's advanced to the next item.
-// When there are no more items, an empty string is returned and *pp is set to
-// NULL.
-// When *pp is not set to NULL, the result is in allocated memory and "alloced"
-// is set to true.
+/// Find next fileencoding to use from 'fileencodings'.
+/// "pp" points to fenc_next.  It's advanced to the next item.
+/// When there are no more items, an empty string is returned and *pp is set to
+/// NULL.
+/// When *pp is not set to NULL, the result is in allocated memory and "alloced"
+/// is set to true.
 static char_u *next_fenc(char_u **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
@@ -2149,10 +2145,8 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
 }
 
 
-/*
- * Read marks for the current buffer from the ShaDa file, when we support
- * buffer marks and the buffer has a name.
- */
+/// Read marks for the current buffer from the ShaDa file, when we support
+/// buffer marks and the buffer has a name.
 static void check_marks_read(void)
 {
   if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
@@ -3761,10 +3755,8 @@ nofail:
 #undef SET_ERRMSG_NUM
 }
 
-/*
- * Set the name of the current buffer.  Use when the buffer doesn't have a
- * name and a ":r" or ":w" command with a file name is used.
- */
+/// Set the name of the current buffer.  Use when the buffer doesn't have a
+/// name and a ":r" or ":w" command with a file name is used.
 static int set_rw_fname(char_u *fname, char_u *sfname)
 {
   buf_T *buf = curbuf;
@@ -3854,9 +3846,7 @@ static bool msg_add_fileformat(int eol_type)
   return false;
 }
 
-/*
- * Append line and character count to IObuff.
- */
+/// Append line and character count to IObuff.
 void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
   char_u *p;
@@ -3880,20 +3870,16 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
   }
 }
 
-/*
- * Append message for missing line separator to IObuff.
- */
+/// Append message for missing line separator to IObuff.
 static void msg_add_eol(void)
 {
   STRCAT(IObuff,
          shortmess(SHM_LAST) ? _("[noeol]") : _("[Incomplete last line]"));
 }
 
-/*
- * Check modification time of file, before writing to it.
- * The size isn't checked, because using a tool like "gzip" takes care of
- * using the same timestamp but can't set the size.
- */
+/// Check modification time of file, before writing to it.
+/// The size isn't checked, because using a tool like "gzip" takes care of
+/// using the same timestamp but can't set the size.
 static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
@@ -3925,12 +3911,10 @@ static bool time_differs(const FileInfo *file_info, long mtime, long mtime_ns) F
 #endif
 }
 
-/*
- * Call write() to write a number of bytes to the file.
- * Handles 'encoding' conversion.
- *
- * Return FAIL for failure, OK otherwise.
- */
+/// Call write() to write a number of bytes to the file.
+/// Handles 'encoding' conversion.
+///
+/// @return  FAIL for failure, OK otherwise.
 static int buf_write_bytes(struct bw_info *ip)
 {
   int wlen;
@@ -4258,12 +4242,11 @@ static int get_fio_flags(const char_u *name)
 }
 
 
-/*
- * Check for a Unicode BOM (Byte Order Mark) at the start of p[size].
- * "size" must be at least 2.
- * Return the name of the encoding and set "*lenp" to the length.
- * Returns NULL when no BOM found.
- */
+/// Check for a Unicode BOM (Byte Order Mark) at the start of p[size].
+/// "size" must be at least 2.
+///
+/// @return  the name of the encoding and set "*lenp" to the length or,
+///          NULL when no BOM found.
 static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
 {
   char *name = NULL;
@@ -4304,10 +4287,9 @@ static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
   return (char_u *)name;
 }
 
-/*
- * Generate a BOM in "buf[4]" for encoding "name".
- * Return the length of the BOM (zero when no BOM).
- */
+/// Generate a BOM in "buf[4]" for encoding "name".
+///
+/// @return  the length of the BOM (zero when no BOM).
 static int make_bom(char_u *buf, char_u *name)
 {
   int flags;
@@ -4332,10 +4314,12 @@ static int make_bom(char_u *buf, char_u *name)
 }
 
 /// Shorten filename of a buffer.
-/// When "force" is TRUE: Use full path from now on for files currently being
-/// edited, both for file name and swap file name.  Try to shorten the file
-/// names a bit, if safe to do so.
-/// When "force" is FALSE: Only try to shorten absolute file names.
+///
+/// @param force  when TRUE: Use full path from now on for files currently being
+///               edited, both for file name and swap file name.  Try to shorten the file
+///               names a bit, if safe to do so.
+///               when FALSE: Only try to shorten absolute file names.
+///
 /// For buffers that have buftype "nofile" or "scratch": never change the file
 /// name.
 void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
@@ -4513,7 +4497,8 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 }
 
 /// Read 2 bytes from "fd" and turn them into an int, MSB first.
-/// Returns -1 when encountering EOF.
+///
+/// @return  -1 when encountering EOF.
 int get2c(FILE *fd)
 {
   const int n = getc(fd);
@@ -4528,7 +4513,8 @@ int get2c(FILE *fd)
 }
 
 /// Read 3 bytes from "fd" and turn them into an int, MSB first.
-/// Returns -1 when encountering EOF.
+///
+/// @return  -1 when encountering EOF.
 int get3c(FILE *fd)
 {
   int n = getc(fd);
@@ -4548,7 +4534,8 @@ int get3c(FILE *fd)
 }
 
 /// Read 4 bytes from "fd" and turn them into an int, MSB first.
-/// Returns -1 when encountering EOF.
+///
+/// @return  -1 when encountering EOF.
 int get4c(FILE *fd)
 {
   // Use unsigned rather than int otherwise result is undefined
@@ -4579,7 +4566,8 @@ int get4c(FILE *fd)
 }
 
 /// Read 8 bytes from `fd` and turn them into a time_t, MSB first.
-/// Returns -1 when encountering EOF.
+///
+/// @return  -1 when encountering EOF.
 time_t get8ctime(FILE *fd)
 {
   time_t n = 0;
@@ -4595,7 +4583,8 @@ time_t get8ctime(FILE *fd)
 }
 
 /// Reads a string of length "cnt" from "fd" into allocated memory.
-/// @return pointer to the string or NULL when unable to read that many bytes.
+///
+/// @return  pointer to the string or NULL when unable to read that many bytes.
 char *read_string(FILE *fd, size_t cnt)
 {
   char *str = xmallocz(cnt);
@@ -4611,7 +4600,8 @@ char *read_string(FILE *fd, size_t cnt)
 }
 
 /// Writes a number to file "fd", most significant bit first, in "len" bytes.
-/// @returns false in case of an error.
+///
+/// @return  false in case of an error.
 bool put_bytes(FILE *fd, uintmax_t number, size_t len)
 {
   assert(len > 0);
@@ -4624,7 +4614,8 @@ bool put_bytes(FILE *fd, uintmax_t number, size_t len)
 }
 
 /// Writes time_t to file "fd" in 8 bytes.
-/// @returns FAIL when the write failed.
+///
+/// @return  FAIL when the write failed.
 int put_time(FILE *fd, time_t time_)
 {
   uint8_t buf[8];
@@ -4635,7 +4626,7 @@ int put_time(FILE *fd, time_t time_)
 /// os_rename() only works if both files are on the same file system, this
 /// function will (attempts to?) copy the file across if rename fails -- webb
 ///
-/// @return -1 for failure, 0 for success
+/// @return  -1 for failure, 0 for success
 int vim_rename(const char_u *from, const char_u *to)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -4860,11 +4851,10 @@ int check_timestamps(int focus)
   return didit;
 }
 
-/*
- * Move all the lines from buffer "frombuf" to buffer "tobuf".
- * Return OK or FAIL.  When FAIL "tobuf" is incomplete and/or "frombuf" is not
- * empty.
- */
+/// Move all the lines from buffer "frombuf" to buffer "tobuf".
+///
+/// @return  OK or FAIL.
+///          When FAIL "tobuf" is incomplete and/or "frombuf" is not empty.
 static int move_lines(buf_T *frombuf, buf_T *tobuf)
 {
   buf_T *tbuf = curbuf;
@@ -4903,9 +4893,10 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
 
 /// Check if buffer "buf" has been changed.
 /// Also check if the file for a new buffer unexpectedly appeared.
-/// return 1 if a changed buffer was found.
-/// return 2 if a message has been displayed.
-/// return 0 otherwise.
+///
+/// @return  1 if a changed buffer was found or,
+///          2 if a message has been displayed or,
+///          0 otherwise.
 int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -5280,10 +5271,8 @@ void buf_store_file_info(buf_T *buf, FileInfo *file_info)
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }
 
-/*
- * Adjust the line with missing eol, used for the next write.
- * Used for do_filter(), when the input lines for the filter are deleted.
- */
+/// Adjust the line with missing eol, used for the next write.
+/// Used for do_filter(), when the input lines for the filter are deleted.
 void write_lnum_adjust(linenr_T offset)
 {
   if (curbuf->b_no_eol_lnum != 0) {     // only if there is a missing eol
@@ -5355,8 +5344,10 @@ static void vim_maketempdir(void)
 }
 
 /// Delete "name" and everything in it, recursively.
+///
 /// @param name The path which should be deleted.
-/// @return 0 for success, -1 if some file was not deleted.
+///
+/// @return  0 for success, -1 if some file was not deleted.
 int delete_recursive(const char *name)
 {
   int result = 0;
@@ -5400,8 +5391,8 @@ void vim_deltempdir(void)
   }
 }
 
-/// Get the name of temp directory. This directory would be created on the first
-/// call to this function.
+/// @return  the name of temp directory. This directory would be created on the first
+///          call to this function.
 char_u *vim_gettempdir(void)
 {
   if (vim_tempdir == NULL) {
@@ -5435,8 +5426,8 @@ static bool vim_settempdir(char *tempdir)
 ///
 /// @note The temp file is NOT created.
 ///
-/// @return pointer to the temp file name or NULL if Neovim can't create
-///         temporary directory for its own temporary files.
+/// @return  pointer to the temp file name or NULL if Neovim can't create
+///          temporary directory for its own temporary files.
 char_u *vim_tempname(void)
 {
   // Temp filename counter.
@@ -5747,10 +5738,9 @@ char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allo
 }
 
 #if defined(EINTR)
-/*
- * Version of read() that retries when interrupted by EINTR (possibly
- * by a SIGWINCH).
- */
+
+/// Version of read() that retries when interrupted by EINTR (possibly
+/// by a SIGWINCH).
 long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
@@ -5764,10 +5754,8 @@ long read_eintr(int fd, void *buf, size_t bufsize)
   return ret;
 }
 
-/*
- * Version of write() that retries when interrupted by EINTR (possibly
- * by a SIGWINCH).
- */
+/// Version of write() that retries when interrupted by EINTR (possibly
+/// by a SIGWINCH).
 long write_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret = 0;

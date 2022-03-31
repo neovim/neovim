@@ -529,9 +529,7 @@ error_return:
   return NULL;
 }
 
-/*
- * Get the stopdir string.  Check that ';' is not escaped.
- */
+/// @return  the stopdir string.  Check that ';' is not escaped.
 char_u *vim_findfile_stopdir(char_u *buf)
 {
   char_u *r_ptr = buf;
@@ -554,9 +552,7 @@ char_u *vim_findfile_stopdir(char_u *buf)
   return r_ptr;
 }
 
-/*
- * Clean up the given search context. Can handle a NULL pointer.
- */
+/// Clean up the given search context. Can handle a NULL pointer.
 void vim_findfile_cleanup(void *ctx)
 {
   if (ctx == NULL) {
@@ -568,18 +564,19 @@ void vim_findfile_cleanup(void *ctx)
   xfree(ctx);
 }
 
-/*
- * Find a file in a search context.
- * The search context was created with vim_findfile_init() above.
- * Return a pointer to an allocated file name or NULL if nothing found.
- * To get all matching files call this function until you get NULL.
- *
- * If the passed search_context is NULL, NULL is returned.
- *
- * The search algorithm is depth first. To change this replace the
- * stack with a list (don't forget to leave partly searched directories on the
- * top of the list).
- */
+/// Find a file in a search context.
+/// The search context was created with vim_findfile_init() above.
+///
+/// To get all matching files call this function until you get NULL.
+///
+/// If the passed search_context is NULL, NULL is returned.
+///
+/// The search algorithm is depth first. To change this replace the
+/// stack with a list (don't forget to leave partly searched directories on the
+/// top of the list).
+///
+/// @return  a pointer to an allocated file name or,
+///          NULL if nothing found.
 char_u *vim_findfile(void *search_ctx_arg)
 {
   char_u *file_path;
@@ -999,10 +996,8 @@ fail:
   return NULL;
 }
 
-/*
- * Free the list of lists of visited files and directories
- * Can handle it if the passed search_context is NULL;
- */
+/// Free the list of lists of visited files and directories
+/// Can handle it if the passed search_context is NULL;
 void vim_findfile_free_visited(void *search_ctx_arg)
 {
   ff_search_ctx_T *search_ctx;
@@ -1044,10 +1039,8 @@ static void ff_free_visited_list(ff_visited_T *vl)
   vl = NULL;
 }
 
-/*
- * Returns the already visited list for the given filename. If none is found it
- * allocates a new one.
- */
+/// @return  the already visited list for the given filename. If none is found it
+///          allocates a new one.
 static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename,
                                                   ff_visited_list_hdr_T **list_headp)
 {
@@ -1094,13 +1087,13 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename,
   return retptr;
 }
 
-// Check if two wildcard paths are equal.
-// They are equal if:
-//  - both paths are NULL
-//  - they have the same length
-//  - char by char comparison is OK
-//  - the only differences are in the counters behind a '**', so
-//    '**\20' is equal to '**\24'
+/// Check if two wildcard paths are equal.
+/// They are equal if:
+///  - both paths are NULL
+///  - they have the same length
+///  - char by char comparison is OK
+///  - the only differences are in the counters behind a '**', so
+///    '**\20' is equal to '**\24'
 static bool ff_wc_equal(char_u *s1, char_u *s2)
 {
   int i, j;
@@ -1134,11 +1127,10 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
   return s1[i] == s2[j];
 }
 
-/*
- * maintains the list of already visited files and dirs
- * returns FAIL if the given file/dir is already in the list
- * returns OK if it is newly added
- */
+/// maintains the list of already visited files and dirs
+///
+/// @return  FAIL if the given file/dir is already in the list or,
+///          OK if it is newly added
 static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *wc_path)
 {
   ff_visited_T *vp;
@@ -1196,9 +1188,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   return OK;
 }
 
-/*
- * create stack element from given path pieces
- */
+/// create stack element from given path pieces
 static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, int level,
                                            int star_star_empty)
 {
@@ -1226,9 +1216,7 @@ static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, in
   return new;
 }
 
-/*
- * Push a dir on the directory stack.
- */
+/// Push a dir on the directory stack.
 static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr)
 {
   /* check for NULL pointer, not to return an error to the user, but
@@ -1239,10 +1227,9 @@ static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr)
   }
 }
 
-/*
- * Pop a dir from the directory stack.
- * Returns NULL if stack is empty.
- */
+/// Pop a dir from the directory stack.
+///
+/// @return  NULL if stack is empty.
 static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
 {
   ff_stack_T *sptr;
@@ -1255,9 +1242,7 @@ static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
   return sptr;
 }
 
-/*
- * free the given stack element
- */
+/// free the given stack element
 static void ff_free_stack_element(ff_stack_T *const stack_ptr)
 {
   if (stack_ptr == NULL) {
@@ -1275,9 +1260,7 @@ static void ff_free_stack_element(ff_stack_T *const stack_ptr)
   xfree(stack_ptr);
 }
 
-/*
- * Clear the search context, but NOT the visited list.
- */
+/// Clear the search context, but NOT the visited list.
 static void ff_clear(ff_search_ctx_T *search_ctx)
 {
   ff_stack_T *sptr;
@@ -1311,10 +1294,9 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
   search_ctx->ffsc_level = 0;
 }
 
-/*
- * check if the given path is in the stopdirs
- * returns TRUE if yes else FALSE
- */
+/// check if the given path is in the stopdirs
+///
+/// @return  TRUE if yes else FALSE
 static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
 {
   int i = 0;
@@ -1670,7 +1652,8 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
 
 /// Change to a file's directory.
 /// Caller must call shorten_fnames()!
-/// @return OK or FAIL
+///
+/// @return  OK or FAIL
 int vim_chdirfile(char_u *fname, CdCause cause)
 {
   char dir[MAXPATHL];

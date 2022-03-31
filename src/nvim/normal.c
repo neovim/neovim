@@ -1288,22 +1288,6 @@ static void normal_redraw(NormalState *s)
   update_topline(curwin);
   validate_cursor();
 
-  // If the cursor moves horizontally when 'concealcursor' is active, then the
-  // current line needs to be redrawn in order to calculate the correct
-  // cursor position.
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-  }
-
-  // Might need to update for 'cursorline'.
-  // When 'cursorlineopt' is "screenline" need to redraw always.
-  if (curwin->w_p_cul
-      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
-          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
-      && !char_avail()) {
-    redraw_later(curwin, VALID);
-  }
-
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {
@@ -5869,7 +5853,7 @@ static void nv_gomark(cmdarg_T *cap)
   }
 }
 
-// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
+/// Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
 static void nv_pcmark(cmdarg_T *cap)
 {
   pos_T *pos;
@@ -5878,7 +5862,9 @@ static void nv_pcmark(cmdarg_T *cap)
 
   if (!checkclearopq(cap->oap)) {
     if (cap->cmdchar == TAB && mod_mask == MOD_MASK_CTRL) {
-      goto_tabpage_lastused();
+      if (!goto_tabpage_lastused()) {
+        clearopbeep(cap->oap);
+      }
       return;
     }
     if (cap->cmdchar == 'g') {
@@ -6642,9 +6628,10 @@ static void nv_g_cmd(cmdarg_T *cap)
       goto_tabpage(-(int)cap->count1);
     }
     break;
+
   case TAB:
-    if (!checkclearop(oap)) {
-      goto_tabpage_lastused();
+    if (!checkclearop(oap) && !goto_tabpage_lastused()) {
+      clearopbeep(oap);
     }
     break;
 

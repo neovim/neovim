@@ -36,16 +36,42 @@
 // Used to delete autocmds from nvim_del_autocmd
 static int64_t next_autocmd_id = 1;
 
-/// Get autocmds that match the requirements passed to {opts}.
+/// Get autocommands that match the requirements passed to {opts}.
 ///
-/// @param opts Optional Parameters:
-///     - event : Name or list of name of events to match against
-///     - group (string|int): Name or id of group to match against
-///     - pattern: Pattern or list of patterns to match against. Cannot be used with {buffer}
-///     - buffer: Buffer number or list of buffer numbers for buffer local autocommands
-///               |autocmd-buflocal|. Cannot be used with {pattern}
+/// These examples will get autocommands matching ALL the given criteria:
+/// <pre>
+///   -- Matches all criteria
+///   autocommands = vim.api.nvim_get_autocmds({
+///     group = "MyGroup",
+///     event = {"BufEnter", "BufWinEnter"},
+///     pattern = {"*.c", "*.h"}
+///   })
 ///
-/// @return A list of autocmds that match
+///   -- All commands from one group
+///   autocommands = vim.api.nvim_get_autocmds({
+///     group = "MyGroup",
+///   })
+/// </pre>
+///
+/// NOTE: When multiple patterns or events are provided, it will find all the autocommands that
+/// match any combination of them.
+///
+/// @param opts Dictionary with at least one of the following:
+///             - group (string|integer): the autocommand group name or id to match against.
+///             - event (string|array): event or events to match against |autocmd-events|.
+///             - pattern (string|array): pattern or patterns to match against |autocmd-pattern|.
+/// @return Array of autocommands matching the criteria, with each item
+///         containing the following fields:
+///             - id (number): the autocommand id (only when defined with the API).
+///             - group (integer): the autocommand group id.
+///             - desc (string): the autocommand description.
+///             - event (string): the autocommand event.
+///             - command (string): the autocommand command.
+///             - once (boolean): whether the autocommand is only run once.
+///             - pattern (string): the autocommand pattern.
+///             If the autocommand is buffer local |autocmd-buffer-local|:
+///             - buflocal (boolean): true if the autocommand is buffer local.
+///             - buffer (number): the buffer number.
 Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
@@ -301,40 +327,66 @@ cleanup:
   return autocmd_list;
 }
 
-/// Create an autocmd.
+/// Create an |autocommand|
 ///
-/// @param event The event or events to register this autocmd
-///          Required keys:
-///              event: string | ArrayOf(string)
+/// The API allows for two (mutually exclusive) types of actions to be executed when the autocommand
+/// triggers: a callback function (Lua or Vimscript), or a command (like regular autocommands).
 ///
-///              Examples:
-///                 - event: "pat1,pat2,pat3",
-///                 - event: "pat1"
-///                 - event: { "pat1" }
-///                 - event: { "pat1", "pat2", "pat3" }
+/// Example using callback:
+/// <pre>
+///     -- Lua function
+///     local myluafun = function() print("This buffer enters") end
 ///
-/// @param opts Optional Parameters:
-///         - callback: (string|function)
-///             - (string): The name of the viml function to execute when triggering this autocmd
-///             - (function): The lua function to execute when triggering this autocmd
-///             - NOTE: Cannot be used with {command}
-///         - command: (string) command
-///             - vimscript command
-///             - NOTE: Cannot be used with {callback}
-///                  Eg. command = "let g:value_set = v:true"
-///         - pattern: (string|table)
-///             - pattern or patterns to match against
-///             - defaults to "*".
-///             - NOTE: Cannot be used with {buffer}
-///         - buffer: (bufnr)
-///             - create a |autocmd-buflocal| autocmd.
-///             - NOTE: Cannot be used with {pattern}
-///         - group: (string|int) The augroup name or id
-///         - once: (boolean) - See |autocmd-once|
-///         - nested: (boolean) - See |autocmd-nested|
-///         - desc: (string) - Description of the autocmd
+///     -- Vimscript function name (as a string)
+///     local myvimfun = "g:MyVimFunction"
 ///
-/// @returns opaque value to use with nvim_del_autocmd
+///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+///       pattern = {"*.c", "*.h"},
+///       callback = myluafun,  -- Or myvimfun
+///     })
+/// </pre>
+///
+/// Example using command:
+/// <pre>
+///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+///       pattern = {"*.c", "*.h"},
+///       command = "echo 'Entering a C or C++ file'",
+///     })
+/// </pre>
+///
+/// Example values for pattern:
+/// <pre>
+///   pattern = "*.py"
+///   pattern = { "*.py", "*.pyi" }
+/// </pre>
+///
+/// Examples values for event:
+/// <pre>
+///   "BufPreWrite"
+///   {"CursorHold", "BufPreWrite", "BufPostWrite"}
+/// </pre>
+///
+/// @param event (String|Array) The event or events to register this autocommand
+/// @param opts Dictionary of autocommand options:
+///             - group (string|integer) optional: the autocommand group name or
+///             id to match against.
+///             - pattern (string|array) optional: pattern or patterns to match
+///             against |autocmd-pattern|.
+///             - buffer (integer) optional: buffer number for buffer local autocommands
+///             |autocmd-buflocal|. Cannot be used with {pattern}.
+///             - desc (string) optional: description of the autocommand.
+///             - callback (function|string) optional: Lua function or Vim function (as string) to
+///             execute on event. Cannot be used with {command}
+///             - command (string) optional: Vim command to execute on event. Cannot be used with
+///             {callback}
+///             - once (boolean) optional: defaults to false. Run the autocommand
+///             only once |autocmd-once|.
+///             - nested (boolean) optional: defaults to false. Run nested
+///             autocommands |autocmd-nested|.
+///
+/// @return Integer id of the created autocommand.
+/// @see |autocommand|
+/// @see |nvim_del_autocmd()|
 Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autocmd) *opts,
                             Error *err)
   FUNC_API_SINCE(9)
@@ -552,33 +604,32 @@ cleanup:
   return autocmd_id;
 }
 
-/// Delete an autocmd by {id}. Autocmds only return IDs when created
-/// via the API. Will not error if called and no autocmds match
-/// the {id}.
+/// Delete an autocommand by id.
 ///
-/// @param id Integer The ID returned by nvim_create_autocmd
+/// NOTE: Only autocommands created via the API have an id.
+/// @param id Integer The id returned by nvim_create_autocmd
+/// @see |nvim_create_autocmd()|
 void nvim_del_autocmd(Integer id)
   FUNC_API_SINCE(9)
 {
   autocmd_delete_id(id);
 }
 
-/// Create or get an augroup.
+/// Create or get an autocommand group |autocmd-groups|.
 ///
-/// To get an existing augroup ID, do:
+/// To get an existing group id, do:
 /// <pre>
-///     local id = vim.api.nvim_create_augroup(name, {
+///     local id = vim.api.nvim_create_augroup("MyGroup", {
 ///         clear = false
 ///     })
 /// </pre>
 ///
-/// @param name String: The name of the augroup to create
-/// @param opts Parameters
-///                 - clear (bool): Whether to clear existing commands or not.
-///                                 Defaults to true.
-///                     See |autocmd-groups|
-///
-/// @returns opaque value to use with nvim_del_augroup_by_id
+/// @param name String: The name of the group
+/// @param opts Dictionary Parameters
+///                 - clear (bool) optional: defaults to true. Clear existing
+///                 commands if the group already exists |autocmd-groups|.
+/// @return Integer id of the created group.
+/// @see |autocmd-groups|
 Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augroup) *opts,
                             Error *err)
   FUNC_API_SINCE(9)
@@ -604,13 +655,15 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
   return augroup;
 }
 
-/// Delete an augroup by {id}. {id} can only be returned when augroup was
-/// created with |nvim_create_augroup|.
+/// Delete an autocommand group by id.
 ///
-/// NOTE: behavior differs from augroup-delete.
+/// To get a group id one can use |nvim_get_autocmds()|.
 ///
-/// When deleting an augroup, autocmds contained by this augroup will also be deleted and cleared.
-/// This augroup will no longer exist
+/// NOTE: behavior differs from |augroup-delete|. When deleting a group, autocommands contained in
+/// this group will also be deleted and cleared. This group will no longer exist.
+/// @param id Integer The id of the group.
+/// @see |nvim_del_augroup_by_name()|
+/// @see |nvim_create_augroup()|
 void nvim_del_augroup_by_id(Integer id)
   FUNC_API_SINCE(9)
 {
@@ -618,29 +671,31 @@ void nvim_del_augroup_by_id(Integer id)
   augroup_del(name, false);
 }
 
-/// Delete an augroup by {name}.
+/// Delete an autocommand group by name.
 ///
-/// NOTE: behavior differs from augroup-delete.
-///
-/// When deleting an augroup, autocmds contained by this augroup will also be deleted and cleared.
-/// This augroup will no longer exist
+/// NOTE: behavior differs from |augroup-delete|. When deleting a group, autocommands contained in
+/// this group will also be deleted and cleared. This group will no longer exist.
+/// @param name String The name of the group.
+/// @see |autocommand-groups|
 void nvim_del_augroup_by_name(String name)
   FUNC_API_SINCE(9)
 {
   augroup_del(name.data, false);
 }
 
-/// Do one autocmd.
-///
-/// @param event The event or events to execute
-/// @param opts Optional Parameters:
-///         - buffer (number) - buffer number
-///             - NOTE: Cannot be used with {pattern}
-///         - pattern (string|table) - optional, defaults to "*".
-///             - NOTE: Cannot be used with {buffer}
-///         - group (string|int) - autocmd group name or id
-///         - modeline (boolean) - Default true, see |<nomodeline>|
-void nvim_do_autocmd(Object event, Dict(do_autocmd) *opts, Error *err)
+/// Execute an autocommand |autocmd-execute|.
+/// @param event (String|Array) The event or events to execute
+/// @param opts Dictionary of autocommand options:
+///             - group (string|integer) optional: the autocommand group name or
+///             id to match against. |autocmd-groups|.
+///             - pattern (string|array) optional: defaults to "*" |autocmd-pattern|. Cannot be used
+///             with {buffer}.
+///             - buffer (integer) optional: buffer number |autocmd-buflocal|. Cannot be used with
+///             {pattern}.
+///             - modeline (bool) optional: defaults to true. Process the
+///             modeline after the autocommands |<nomodeline>|.
+/// @see |:doautocmd|
+void nvim_exec_autocmd(Object event, Dict(exec_autocmd) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   int au_group = AUGROUP_ALL;

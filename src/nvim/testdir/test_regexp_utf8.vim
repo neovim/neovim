@@ -1,21 +1,21 @@
 " Tests for regexp in utf8 encoding
 
 func s:equivalence_test()
-  let str = "AÀÁÂÃÄÅĀĂĄǍǞǠẢ BḂḆ CÇĆĈĊČ DĎĐḊḎḐ EÈÉÊËĒĔĖĘĚẺẼ FḞ GĜĞĠĢǤǦǴḠ HĤĦḢḦḨ IÌÍÎÏĨĪĬĮİǏỈ JĴ KĶǨḰḴ LĹĻĽĿŁḺ MḾṀ NÑŃŅŇṄṈ OÒÓÔÕÖØŌŎŐƠǑǪǬỎ PṔṖ Q RŔŖŘṘṞ SŚŜŞŠṠ TŢŤŦṪṮ UÙÚÛÜŨŪŬŮŰŲƯǓỦ VṼ WŴẀẂẄẆ XẊẌ YÝŶŸẎỲỶỸ ZŹŻŽƵẐẔ aàáâãäåāăąǎǟǡả bḃḇ cçćĉċč dďđḋḏḑ eèéêëēĕėęěẻẽ fḟ gĝğġģǥǧǵḡ hĥħḣḧḩẖ iìíîïĩīĭįǐỉ jĵǰ kķǩḱḵ lĺļľŀłḻ mḿṁ nñńņňŉṅṉ oòóôõöøōŏőơǒǫǭỏ pṕṗ q rŕŗřṙṟ sśŝşšṡ tţťŧṫṯẗ uùúûüũūŭůűųưǔủ vṽ wŵẁẃẅẇẘ xẋẍ yýÿŷẏẙỳỷỹ zźżžƶẑẕ"
+  let str = "AÀÁÂÃÄÅĀĂĄǍǞǠǺȂȦȺḀẠẢẤẦẨẪẬẮẰẲẴẶ BƁɃḂḄḆ CÇĆĈĊČƇȻḈꞒ DĎĐƊḊḌḎḐḒ EÈÉÊËĒĔĖĘĚȄȆȨɆḔḖḘḚḜẸẺẼẾỀỂỄỆ FƑḞꞘ GĜĞĠĢƓǤǦǴḠꞠ HĤĦȞḢḤḦḨḪⱧ IÌÍÎÏĨĪĬĮİƗǏȈȊḬḮỈỊ JĴɈ KĶƘǨḰḲḴⱩꝀ LĹĻĽĿŁȽḶḸḺḼⱠ MḾṀṂ NÑŃŅŇǸṄṆṈṊꞤ OÒÓÔÕÖØŌŎŐƟƠǑǪǬǾȌȎȪȬȮȰṌṎṐṒỌỎỐỒỔỖỘỚỜỞỠỢ PƤṔṖⱣ QɊ RŔŖŘȐȒɌṘṚṜṞⱤꞦ SŚŜŞŠȘṠṢṤṦṨⱾꞨ TŢŤŦƬƮȚȾṪṬṮṰ UÙÚÛÜŨŪŬŮŰƯǕǙǛǓǗȔȖɄṲṴṶṸṺỤỦỨỪỬỮỰ  VƲṼṾ WŴẀẂẄẆẈ XẊẌ YÝŶŸƳȲɎẎỲỴỶỸ ZŹŻŽƵẐẒẔⱫ aàáâãäåāăąǎǟǡǻȃȧᶏḁẚạảấầẩẫậắằẳẵặⱥ bƀɓᵬᶀḃḅḇ cçćĉċčƈȼḉꞓꞔ dďđɗᵭᶁᶑḋḍḏḑḓ eèéêëēĕėęěȅȇȩɇᶒḕḗḙḛḝẹẻẽếềểễệ fƒᵮᶂḟꞙ gĝğġģǥǧǵɠᶃḡꞡ hĥħȟḣḥḧḩḫẖⱨꞕ iìíîïĩīĭįǐȉȋɨᶖḭḯỉị jĵǰɉ kķƙǩᶄḱḳḵⱪꝁ lĺļľŀłƚḷḹḻḽⱡ mᵯḿṁṃ nñńņňŉǹᵰᶇṅṇṉṋꞥ oòóôõöøōŏőơǒǫǭǿȍȏȫȭȯȱɵṍṏṑṓọỏốồổỗộớờởỡợ pƥᵱᵽᶈṕṗ qɋʠ rŕŗřȑȓɍɽᵲᵳᶉṛṝṟꞧ sśŝşšșȿᵴᶊṡṣṥṧṩꞩ tţťŧƫƭțʈᵵṫṭṯṱẗⱦ uùúûüũūŭůűųǚǖưǔǘǜȕȗʉᵾᶙṳṵṷṹṻụủứừửữự vʋᶌṽṿ wŵẁẃẅẇẉẘ xẋẍ yýÿŷƴȳɏẏẙỳỵỷỹ zźżžƶᵶᶎẑẓẕⱬ"
   let groups = split(str)
   for group1 in groups
-    for c in split(group1, '\zs')
-      " next statement confirms that equivalence class matches every
-      " character in group
-      call assert_match('^[[=' . c . '=]]*$', group1)
-      for group2 in groups
-        if group2 != group1
-          " next statement converts that equivalence class doesn't match
-          " character in any other group
-          call assert_equal(-1, match(group2, '[[=' . c . '=]]'))
-        endif
+      for c in split(group1, '\zs')
+	" next statement confirms that equivalence class matches every
+	" character in group
+        call assert_match('^[[=' .. c .. '=]]*$', group1)
+        for group2 in groups
+          if group2 != group1
+	    " next statement converts that equivalence class doesn't match
+	    " character in any other group
+            call assert_equal(-1, match(group2, '[[=' .. c .. '=]]'), c)
+          endif
+        endfor
       endfor
-    endfor
   endfor
 endfunc
 
@@ -223,7 +223,7 @@ endfunc
 func Test_reversed_range()
   for re in range(0, 2)
     exe 'set re=' . re
-    call assert_fails('call match("abc def", "[c-a]")', 'E944:')
+    call assert_fails('call match("abc def", "[c-a]")', 'E944:', re)
   endfor
   set re=0
 endfunc

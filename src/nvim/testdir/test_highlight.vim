@@ -146,7 +146,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^  ^^^^^^^^^   no highlight
   "      ^             'Search' highlight
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   let attrs0 = ScreenAttrs(1, 15)[0]
   call assert_equal(repeat([attrs0[0]], 4), attrs0[0:3])
   call assert_equal(repeat([attrs0[0]], 9), attrs0[6:14])
@@ -160,7 +160,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^              underline
   "      ^             'Search' highlight with underline
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   "        ^^^^^^^^^   no highlight
 
   " underline
@@ -595,6 +595,31 @@ func Test_cursorline_with_visualmode()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_cursorline_with_visualmode')
+endfunc
+
+func Test_cursorcolumn_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcuc_timer')
+
+  let buf = RunVimInTerminal('-S Xcuc_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_timer')
 endfunc
 
 func Test_colorcolumn()

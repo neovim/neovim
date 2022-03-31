@@ -88,12 +88,14 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
+#include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -163,7 +165,6 @@ static bool resizing = false;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
-#define SEARCH_HL_PRIORITY 0
 
 static char *provider_err = NULL;
 
@@ -286,7 +287,8 @@ void update_curbuf(int type)
 void redraw_buf_status_later(buf_T *buf)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf && wp->w_status_height) {
+    if (wp->w_buffer == buf
+        && (wp->w_status_height || (wp == curwin && global_stl_height()))) {
       wp->w_redr_status = true;
       if (must_redraw < VALID) {
         must_redraw = VALID;
@@ -316,6 +318,7 @@ void redraw_win_signcol(win_T *wp)
 int update_screen(int type)
 {
   static bool did_intro = false;
+  bool is_stl_global = global_stl_height() > 0;
 
   // Don't do anything if the screen structures are (not yet) valid.
   // A VimResized autocmd can invoke redrawing in the middle of a resize,
@@ -398,9 +401,12 @@ int update_screen(int type)
           if (W_ENDROW(wp) > valid) {
             wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
           }
-          if (W_ENDROW(wp) + wp->w_status_height > valid) {
+          if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
             wp->w_redr_status = true;
           }
+        }
+        if (is_stl_global && Rows - p_ch - 1 > valid) {
+          curwin->w_redr_status = true;
         }
       }
       msg_grid_set_pos(Rows-p_ch, false);
@@ -423,12 +429,14 @@ int update_screen(int type)
             wp->w_redr_type = REDRAW_TOP;
           } else {
             wp->w_redr_type = NOT_VALID;
-            if (W_ENDROW(wp) + wp->w_status_height
-                <= msg_scrolled) {
-              wp->w_redr_status = TRUE;
+            if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height <= msg_scrolled) {
+              wp->w_redr_status = true;
             }
           }
         }
+      }
+      if (is_stl_global && Rows - p_ch - 1 <= msg_scrolled) {
+        curwin->w_redr_status = true;
       }
       redraw_cmdline = true;
       redraw_tabline = true;
@@ -659,15 +667,11 @@ void conceal_check_cursor_line(void)
 
 /// Whether cursorline is drawn in a special way
 ///
-/// If true, both old and new cursorline will need
-/// to be redrawn when moving cursor within windows.
-/// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
-///               caused by scrolling.
+/// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul
-         || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
+  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /*
@@ -740,8 +744,11 @@ static void win_update(win_T *wp, DecorProviders *providers)
     wp->w_lines_valid = 0;
   }
 
-  // Window is zero-height: nothing to draw.
+  // Window is zero-height: Only need to draw the separator
   if (wp->w_grid.Rows == 0) {
+    // draw the horizontal separator below this window
+    draw_hsep_win(wp);
+    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
@@ -749,14 +756,15 @@ static void win_update(win_T *wp, DecorProviders *providers)
   // Window is zero-width: Only need to draw the separator.
   if (wp->w_grid.Columns == 0) {
     // draw the vertical separator right of this window
-    draw_vsep_win(wp, 0);
+    draw_vsep_win(wp);
+    draw_sep_connectors_win(wp);
     wp->w_redr_type = 0;
     return;
   }
 
   redraw_win_signcol(wp);
 
-  init_search_hl(wp);
+  init_search_hl(wp, &search_hl);
 
   /* Force redraw when width of 'number' or 'relativenumber' column
    * changes. */
@@ -926,7 +934,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
     if (mod_top != 0
         && wp->w_topline == mod_top
         && (!wp->w_lines[0].wl_valid
-            || wp->w_topline <= wp->w_lines[0].wl_lnum)) {
+            || wp->w_topline == wp->w_lines[0].wl_lnum)) {
       // w_topline is the first changed line and window is not scrolled,
       // the scrolling from changed lines will be done further down.
     } else if (wp->w_lines[0].wl_valid
@@ -1311,6 +1319,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
 
+  bool cursorline_standout = win_cursorline_standout(wp);
+
   for (;;) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
@@ -1355,8 +1365,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
                             && buf->b_mod_xlines != 0)))))
-        || (wp->w_p_cul && (lnum == wp->w_cursor.lnum
-                            || lnum == wp->w_last_cursorline))) {
+        || (cursorline_standout && lnum == wp->w_cursor.lnum)
+        || lnum == wp->w_last_cursorline) {
       if (lnum == mod_top) {
         top_to_mod = false;
       }
@@ -1521,7 +1531,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // will draw "@  " lines below.
         row = wp->w_grid.Rows + 1;
       } else {
-        prepare_search_hl(wp, lnum);
+        prepare_search_hl(wp, &search_hl, lnum);
         // Let the syntax stuff know we skipped a few lines.
         if (syntax_last_parsed != 0 && syntax_last_parsed + 1 < lnum
             && syntax_present(wp)) {
@@ -1533,17 +1543,17 @@ static void win_update(win_T *wp, DecorProviders *providers)
                        foldinfo.fi_lines ? srow : wp->w_grid.Rows,
                        mod_top == 0, false, foldinfo, &line_providers);
 
-        wp->w_lines[idx].wl_folded = foldinfo.fi_lines != 0;
-        wp->w_lines[idx].wl_lastlnum = lnum;
-        did_update = DID_LINE;
-
-        if (foldinfo.fi_lines > 0) {
-          did_update = DID_FOLD;
+        if (foldinfo.fi_lines == 0) {
+          wp->w_lines[idx].wl_folded = false;
+          wp->w_lines[idx].wl_lastlnum = lnum;
+          did_update = DID_LINE;
+          syntax_last_parsed = lnum;
+        } else {
           foldinfo.fi_lines--;
+          wp->w_lines[idx].wl_folded = true;
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
+          did_update = DID_FOLD;
         }
-
-        syntax_last_parsed = lnum;
       }
 
       wp->w_lines[idx].wl_lnum = lnum;
@@ -1563,9 +1573,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
       idx++;
       lnum += foldinfo.fi_lines + 1;
     } else {
-      if (wp->w_p_rnu) {
-        // 'relativenumber' set: The text doesn't need to be drawn, but
-        // the number column nearly always does.
+      if (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum) {
+        // 'relativenumber' set and cursor moved vertically: The
+        // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = fold_info(wp, lnum);
         (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
                        info, &line_providers);
@@ -1589,6 +1599,11 @@ static void win_update(win_T *wp, DecorProviders *providers)
    * End of loop over all window lines.
    */
 
+  // Now that the window has been redrawn with the old and new cursor line,
+  // update w_last_cursorline.
+  wp->w_last_cursorline = cursorline_standout ? wp->w_cursor.lnum : 0;
+
+  wp->w_last_cursor_lnum_rnu = wp->w_p_rnu ? wp->w_cursor.lnum : 0;
 
   if (idx > wp->w_lines_valid) {
     wp->w_lines_valid = idx;
@@ -1664,7 +1679,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
   kvi_destroy(line_providers);
 
   if (wp->w_redr_type >= REDRAW_TOP) {
-    draw_vsep_win(wp, 0);
+    draw_vsep_win(wp);
+    draw_hsep_win(wp);
+    draw_sep_connectors_win(wp);
   }
   syn_set_timeout(NULL);
 
@@ -1948,6 +1965,27 @@ static inline void provider_err_virt_text(linenr_T lnum, char *err)
   decor_add_ephemeral(lnum-1, 0, lnum-1, 0, &err_decor);
 }
 
+static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len)
+{
+  long num;
+  char *fmt = "%*ld ";
+
+  if (wp->w_p_nu && !wp->w_p_rnu) {
+    // 'number' + 'norelativenumber'
+    num = (long)lnum;
+  } else {
+    // 'relativenumber', don't use negative numbers
+    num = labs((long)get_cursor_rel_lnum(wp, lnum));
+    if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
+      // 'number' + 'relativenumber'
+      num = lnum;
+      fmt = "%-*ld ";
+    }
+  }
+
+  snprintf((char *)buf, buf_len, fmt, number_width(wp), num);
+}
+
 /// Display line "lnum" of window 'wp' on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -2060,13 +2098,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int line_attr_save;
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   int line_attr_lowprio_save;
-  matchitem_T *cur;                     // points to the match list
-  match_T *shl;                     // points to search_hl or a match
-  bool shl_flag;                        // flag to indicate whether search_hl
-                                        // has been processed or not
-  bool prevcol_hl_flag;                 // flag to indicate whether prevcol
-                                        // equals startcol of search_hl or one
-                                        // of the matches
   int prev_c = 0;                       // previous Arabic character
   int prev_c1 = 0;                      // first composing char for prev_c
 
@@ -2132,7 +2163,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
     extra_check = wp->w_p_lbr;
-    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow) {
+    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow
+        && !has_fold && !end_fill) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
       save_did_emsg = did_emsg;
@@ -2351,8 +2383,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
       area_highlighting = true;
     }
-    // Update w_last_cursorline even if Visual mode is active.
-    wp->w_last_cursorline = wp->w_cursor.lnum;
   }
 
   memset(sattrs, 0, sizeof(sattrs));
@@ -2564,69 +2594,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
-  /*
-   * Handle highlighting the last used search pattern and matches.
-   * Do this for both search_hl and the match list.
-   */
-  cur = wp->w_match_head;
-  shl_flag = false;
-  while ((cur != NULL || !shl_flag) && !number_only
-         && !has_fold && !end_fill) {
-    if (!shl_flag) {
-      shl = &search_hl;
-      shl_flag = true;
-    } else {
-      shl = &cur->hl;  // -V595
-    }
-    shl->startcol = MAXCOL;
-    shl->endcol = MAXCOL;
-    shl->attr_cur = 0;
-    shl->is_addpos = false;
-    v = (ptr - line);
-    if (cur != NULL) {
-      cur->pos.cur = 0;
-    }
-    next_search_hl(wp, shl, lnum, (colnr_T)v,
-                   shl == &search_hl ? NULL : cur);
-    if (wp->w_s->b_syn_slow) {
-      has_syntax = false;
-    }
-
-    // Need to get the line again, a multi-line regexp may have made it
-    // invalid.
-    line = ml_get_buf(wp->w_buffer, lnum, false);
-    ptr = line + v;
-
-    if (shl->lnum != 0 && shl->lnum <= lnum) {
-      if (shl->lnum == lnum) {
-        shl->startcol = shl->rm.startpos[0].col;
-      } else {
-        shl->startcol = 0;
-      }
-      if (lnum == shl->lnum + shl->rm.endpos[0].lnum
-          - shl->rm.startpos[0].lnum) {
-        shl->endcol = shl->rm.endpos[0].col;
-      } else {
-        shl->endcol = MAXCOL;
-      }
-      // Highlight one character for an empty match.
-      if (shl->startcol == shl->endcol) {
-        if (line[shl->endcol] != NUL) {
-          shl->endcol += utfc_ptr2len(line + shl->endcol);
-        } else {
-          ++shl->endcol;
-        }
-      }
-      if ((long)shl->startcol < v) {   // match at leftcol
-        shl->attr_cur = shl->attr;
-        search_attr = shl->attr;
-        search_attr_from_match = shl != &search_hl;
-      }
-      area_highlighting = true;
-    }
-    if (shl != &search_hl && cur != NULL) {
-      cur = cur->next;
-    }
+  if (!number_only && !has_fold && !end_fill) {
+    v = ptr - line;
+    area_highlighting |= prepare_search_hl_line(wp, lnum, (colnr_T)v,
+                                                &line, &search_hl, &search_attr,
+                                                &search_attr_from_match);
+    ptr = line + v;  // "line" may have been updated
   }
 
   unsigned off = 0;  // Offset relative start of line
@@ -2650,6 +2623,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   // Repeat for the whole displayed line.
   for (;;) {
     int has_match_conc = 0;  ///< match wants to conceal
+    int decor_conceal = 0;
+
     bool did_decrement_ptr = false;
 
     // Skip this quickly when working on the text.
@@ -2702,8 +2677,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           get_sign_display_info(false, wp, lnum, sattrs, row,
                                 startrow, filler_lines, filler_todo,
                                 &c_extra, &c_final, extra, sizeof(extra),
-                                &p_extra, &n_extra,
-                                &char_attr, &draw_state, &sign_idx);
+                                &p_extra, &n_extra, &char_attr, sign_idx);
+          sign_idx++;
+          if (sign_idx < wp->w_scwidth) {
+            draw_state = WL_SIGN - 1;
+          } else {
+            sign_idx = 0;
+          }
         }
       }
 
@@ -2722,29 +2702,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo,
                                   &c_extra, &c_final, extra, sizeof(extra),
-                                  &p_extra, &n_extra,
-                                  &char_attr, &draw_state, &sign_idx);
+                                  &p_extra, &n_extra, &char_attr, sign_idx);
           } else {
+            // Draw the line number (empty space after wrapping).
             if (row == startrow + filler_lines) {
-              // Draw the line number (empty space after wrapping). */
-              long num;
-              char *fmt = "%*ld ";
-
-              if (wp->w_p_nu && !wp->w_p_rnu) {
-                // 'number' + 'norelativenumber'
-                num = (long)lnum;
-              } else {
-                // 'relativenumber', don't use negative numbers
-                num = labs((long)get_cursor_rel_lnum(wp, lnum));
-                if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
-                  // 'number' + 'relativenumber'
-                  num = lnum;
-                  fmt = "%-*ld ";
-                }
-              }
-
-              snprintf((char *)extra, sizeof(extra),
-                       fmt, number_width(wp), num);
+              get_line_number_str(wp, lnum, (char_u *)extra, sizeof(extra));
               if (wp->w_skipcol > 0) {
                 for (p_extra = extra; *p_extra == ' '; p_extra++) {
                   *p_extra = '-';
@@ -2762,41 +2724,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               }
               p_extra = extra;
               c_extra = NUL;
-              c_final = NUL;
             } else {
               c_extra = ' ';
-              c_final = NUL;
             }
+            c_final = NUL;
             n_extra = number_width(wp) + 1;
-            char_attr = win_hl_attr(wp, HLF_N);
-
-            if (wp->w_p_rnu && lnum < wp->w_cursor.lnum) {
-              // Use LineNrAbove
-              char_attr = win_hl_attr(wp, HLF_LNA);
-            }
-            if (wp->w_p_rnu && lnum > wp->w_cursor.lnum) {
-              // Use LineNrBelow
-              char_attr = win_hl_attr(wp, HLF_LNB);
-            }
-
-            sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
-            if (num_sattr != NULL) {
-              // :sign defined with "numhl" highlight.
-              char_attr = num_sattr->sat_numhl;
-            } else if (wp->w_p_cul
-                       && lnum == wp->w_cursor.lnum
-                       && (wp->w_p_culopt_flags & CULOPT_NBR)
-                       && (row == startrow + filler_lines
-                           || (row > startrow + filler_lines
-                               && wp->w_p_culopt_flags & CULOPT_LINE))) {
-              // When 'cursorline' is set highlight the line number of
-              // the current line differently.
-              // When 'cursorlineopt' has "screenline" only highlight
-              // the line number itself.
-              // TODO(vim): Can we use CursorLine instead of CursorLineNr
-              // when CursorLineNr isn't set?
-              char_attr = win_hl_attr(wp, HLF_CLN);
-            }
+            char_attr = get_line_number_attr(wp, lnum, row, startrow, filler_lines, sattrs);
           }
         }
       }
@@ -3021,115 +2954,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
 
       if (!n_extra) {
-        /*
-         * Check for start/end of search pattern match.
-         * After end, check for start/end of next match.
-         * When another match, have to check for start again.
-         * Watch out for matching an empty string!
-         * Do this for 'search_hl' and the match list (ordered by
-         * priority).
-         */
+        // Check for start/end of 'hlsearch' and other matches.
+        // After end, check for start/end of next match.
+        // When another match, have to check for start again.
         v = (ptr - line);
-        cur = wp->w_match_head;
-        shl_flag = false;
-        while (cur != NULL || !shl_flag) {
-          if (!shl_flag
-              && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
-            shl = &search_hl;
-            shl_flag = true;
-          } else {
-            shl = &cur->hl;
-          }
-          if (cur != NULL) {
-            cur->pos.cur = 0;
-          }
-          bool pos_inprogress = true;  // mark that a position match search is
-                                       // in progress
-          while (shl->rm.regprog != NULL
-                 || (cur != NULL && pos_inprogress)) {
-            if (shl->startcol != MAXCOL
-                && v >= (long)shl->startcol
-                && v < (long)shl->endcol) {
-              int tmp_col = v + utfc_ptr2len(ptr);
-
-              if (shl->endcol < tmp_col) {
-                shl->endcol = tmp_col;
-              }
-              shl->attr_cur = shl->attr;
-              // Match with the "Conceal" group results in hiding
-              // the match.
-              if (cur != NULL
-                  && shl != &search_hl
-                  && syn_name2id("Conceal") == cur->hlg_id) {
-                has_match_conc = v == (long)shl->startcol ? 2 : 1;
-                match_conc = cur->conceal_char;
-              } else {
-                has_match_conc = 0;
-              }
-            } else if (v == (long)shl->endcol) {
-              shl->attr_cur = 0;
-
-              next_search_hl(wp, shl, lnum, (colnr_T)v,
-                             shl == &search_hl ? NULL : cur);
-              pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
-
-              // Need to get the line again, a multi-line regexp
-              // may have made it invalid.
-              line = ml_get_buf(wp->w_buffer, lnum, false);
-              ptr = line + v;
-
-              if (shl->lnum == lnum) {
-                shl->startcol = shl->rm.startpos[0].col;
-                if (shl->rm.endpos[0].lnum == 0) {
-                  shl->endcol = shl->rm.endpos[0].col;
-                } else {
-                  shl->endcol = MAXCOL;
-                }
-
-                if (shl->startcol == shl->endcol) {
-                  // highlight empty match, try again after it
-                  shl->endcol += utfc_ptr2len(line + shl->endcol);
-                }
-
-                // Loop to check if the match starts at the
-                // current position
-                continue;
-              }
-            }
-            break;
-          }
-          if (shl != &search_hl && cur != NULL) {
-            cur = cur->next;
-          }
-        }
-
-        /* Use attributes from match with highest priority among
-         * 'search_hl' and the match list. */
-        search_attr_from_match = false;
-        search_attr = search_hl.attr_cur;
-        cur = wp->w_match_head;
-        shl_flag = false;
-        while (cur != NULL || !shl_flag) {
-          if (!shl_flag
-              && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
-            shl = &search_hl;
-            shl_flag = true;
-          } else {
-            shl = &cur->hl;
-          }
-          if (shl->attr_cur != 0) {
-            search_attr = shl->attr_cur;
-            search_attr_from_match = shl != &search_hl;
-          }
-          if (shl != &search_hl && cur != NULL) {
-            cur = cur->next;
-          }
-        }
-        // Only highlight one character after the last column.
-        if (*ptr == NUL
-            && (wp->w_p_list && lcs_eol_one == -1)) {
-          search_attr = 0;
-        }
+        search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &search_hl, &has_match_conc,
+                                       &match_conc, lcs_eol_one, &search_attr_from_match);
+        ptr = line + v;  // "line" may have been changed
 
         // Do not allow a conceal over EOL otherwise EOL will be missed
         // and bad things happen.
@@ -3390,6 +3221,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             did_emsg = save_did_emsg;
           }
 
+          if (wp->w_s->b_syn_slow) {
+            has_syntax = false;
+          }
+
           // Need to get the line again, a multi-line regexp may
           // have made it invalid.
           line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -3511,6 +3346,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             } else {
               char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
+          }
+
+          decor_conceal = decor_state.conceal;
+          if (decor_conceal && decor_state.conceal_char) {
+            decor_conceal = 2;  // really??
           }
         }
 
@@ -3815,19 +3655,25 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (wp->w_p_cole > 0
           && (wp != curwin || lnum != wp->w_cursor.lnum
               || conceal_cursor_line(wp))
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)
           && !(lnum_in_visual_area
                && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         char_attr = conceal_attr;
-        if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
+        if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1 || decor_conceal > 1)
             && (syn_get_sub_char() != NUL
                 || (has_match_conc && match_conc)
+                || (decor_conceal && decor_state.conceal_char)
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           // First time at this concealed item: display one
           // character.
           if (has_match_conc && match_conc) {
             c = match_conc;
+          } else if (decor_conceal && decor_state.conceal_char) {
+            c = decor_state.conceal_char;
+            if (decor_state.conceal_attr) {
+              char_attr = decor_state.conceal_attr;
+            }
           } else if (syn_get_sub_char() != NUL) {
             c = syn_get_sub_char();
           } else if (wp->w_p_lcs_chars.conceal != NUL) {
@@ -3932,30 +3778,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     // At end of the text line or just after the last character.
     if (c == NUL && eol_hl_off == 0) {
-      long prevcol = (ptr - line) - 1;
-
-      // we're not really at that column when skipping some text
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
-        prevcol++;
-      }
+      // flag to indicate whether prevcol equals startcol of search_hl or
+      // one of the matches
+      bool prevcol_hl_flag = get_prevcol_hl_flag(wp, &search_hl,
+                                                 (long)(ptr - line) - 1);
 
       // Invert at least one char, used for Visual and empty line or
       // highlight match at end of line. If it's beyond the last
       // char on the screen, just overwrite that one (tricky!)  Not
       // needed when a '$' was displayed for 'list'.
-      prevcol_hl_flag = false;
-      if (!search_hl.is_addpos && prevcol == (long)search_hl.startcol) {
-        prevcol_hl_flag = true;
-      } else {
-        cur = wp->w_match_head;
-        while (cur != NULL) {
-          if (!cur->hl.is_addpos && prevcol == (long)cur->hl.startcol) {
-            prevcol_hl_flag = true;
-            break;
-          }
-          cur = cur->next;
-        }
-      }
       if (wp->w_p_lcs_chars.eol == lcs_eol_one
           && ((area_attr != 0 && vcol == fromcol
                && (VIsual_mode != Ctrl_V
@@ -3986,25 +3817,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (area_attr == 0 && !has_fold) {
           // Use attributes from match with highest priority among
           // 'search_hl' and the match list.
-          char_attr = search_hl.attr;
-          cur = wp->w_match_head;
-          shl_flag = false;
-          while (cur != NULL || !shl_flag) {
-            if (!shl_flag
-                && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
-              shl = &search_hl;
-              shl_flag = true;
-            } else {
-              shl = &cur->hl;
-            }
-            if ((ptr - line) - 1 == (long)shl->startcol
-                && (shl == &search_hl || !shl->is_addpos)) {
-              char_attr = shl->attr;
-            }
-            if (shl != &search_hl && cur != NULL) {
-              cur = cur->next;
-            }
-          }
+          get_search_match_hl(wp, &search_hl, (long)(ptr - line), &char_attr);
         }
 
         int eol_attr = char_attr;
@@ -4518,6 +4331,9 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
         break;
       }
     }
+    if (!*s.p) {
+      continue;
+    }
     int attr;
     bool through = false;
     if (hl_mode == kHlModeCombine) {
@@ -4569,20 +4385,66 @@ static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
          && (wp->w_p_culopt_flags & CULOPT_NBR);
 }
 
+/// Return true if CursorLineNr highlight is to be used for the number column.
+///
+/// - 'cursorline' must be set
+/// - lnum must be the cursor line
+/// - 'cursorlineopt' has "number"
+/// - don't highlight filler lines (when in diff mode)
+/// - When line is wrapped and 'cursorlineopt' does not have "line", only highlight the line number
+///   itself on the first screenline of the wrapped line, otherwise highlight the number column of
+///   all screenlines of the wrapped line.
+static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
+{
+  return wp->w_p_cul
+         && lnum == wp->w_cursor.lnum
+         && (wp->w_p_culopt_flags & CULOPT_NBR)
+         && (row == startrow + filler_lines
+             || (row > startrow + filler_lines
+                 && (wp->w_p_culopt_flags & CULOPT_LINE)));
+}
+
+static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
+                                sign_attrs_T *sattrs)
+{
+  sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
+  if (num_sattr != NULL) {
+    // :sign defined with "numhl" highlight.
+    return num_sattr->sat_numhl;
+  }
+
+  if (wp->w_p_rnu) {
+    if (lnum < wp->w_cursor.lnum) {
+      // Use LineNrAbove
+      return win_hl_attr(wp, HLF_LNA);
+    }
+    if (lnum > wp->w_cursor.lnum) {
+      // Use LineNrBelow
+      return win_hl_attr(wp, HLF_LNB);
+    }
+  }
+
+  if (use_cursor_line_nr(wp, lnum, row, startrow, filler_lines)) {
+    // TODO(vim): Can we use CursorLine instead of CursorLineNr
+    // when CursorLineNr isn't set?
+    return win_hl_attr(wp, HLF_CLN);
+  }
+
+  return win_hl_attr(wp, HLF_N);
+}
+
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
 // If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
 //
 // @param count max number of signs
 // @param[out] n_extrap number of characters from pp_extra to display
-// @param[in, out] sign_idxp Index of the displayed sign
+// @param sign_idxp Index of the displayed sign
 static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
                                   int row, int startrow, int filler_lines, int filler_todo,
                                   int *c_extrap, int *c_finalp, char_u *extra, size_t extra_size,
-                                  char_u **pp_extra, int *n_extrap, int *char_attrp,
-                                  int *draw_statep, int *sign_idxp)
+                                  char_u **pp_extra, int *n_extrap, int *char_attrp, int sign_idx)
 {
-  int count = wp->w_scwidth;
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
   *c_finalp = NUL;
@@ -4598,7 +4460,7 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, *sign_idxp, count);
+    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, sign_idx, wp->w_scwidth);
     if (sattr != NULL) {
       *pp_extra = sattr->sat_text;
       if (*pp_extra != NULL) {
@@ -4640,13 +4502,6 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
         *char_attrp = sattr->sat_texthl;
       }
     }
-  }
-
-  (*sign_idxp)++;
-  if (*sign_idxp < count) {
-    *draw_statep = WL_SIGN - 1;
-  } else {
-    *sign_idxp = 0;
   }
 }
 
@@ -4863,10 +4718,15 @@ void rl_mirror(char_u *str)
  */
 void status_redraw_all(void)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height) {
-      wp->w_redr_status = true;
-      redraw_later(wp, VALID);
+  if (global_stl_height()) {
+    curwin->w_redr_status = true;
+    redraw_later(curwin, VALID);
+  } else {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_status_height) {
+        wp->w_redr_status = true;
+        redraw_later(wp, VALID);
+      }
     }
   }
 }
@@ -4880,10 +4740,15 @@ void status_redraw_curbuf(void)
 /// Marks all status lines of the specified buffer for redraw.
 void status_redraw_buf(buf_T *buf)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_status_height != 0 && wp->w_buffer == buf) {
-      wp->w_redr_status = true;
-      redraw_later(wp, VALID);
+  if (global_stl_height() != 0 && curwin->w_buffer == buf) {
+    curwin->w_redr_status = true;
+    redraw_later(curwin, VALID);
+  } else {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_status_height != 0 && wp->w_buffer == buf) {
+        wp->w_redr_status = true;
+        redraw_later(wp, VALID);
+      }
     }
   }
 }
@@ -4925,10 +4790,8 @@ void win_redraw_last_status(const frame_T *frp)
   }
 }
 
-/*
- * Draw the verticap separator right of window "wp" starting with line "row".
- */
-static void draw_vsep_win(win_T *wp, int row)
+/// Draw the vertical separator right of window "wp"
+static void draw_vsep_win(win_T *wp)
 {
   int hl;
   int c;
@@ -4936,15 +4799,97 @@ static void draw_vsep_win(win_T *wp, int row)
   if (wp->w_vsep_width) {
     // draw the vertical separator right of this window
     c = fillchar_vsep(wp, &hl);
-    grid_fill(&default_grid, wp->w_winrow + row, W_ENDROW(wp),
+    grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
               W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
   }
 }
 
+/// Draw the horizontal separator below window "wp"
+static void draw_hsep_win(win_T *wp)
+{
+  int hl;
+  int c;
 
-/*
- * Get the length of an item as it will be shown in the status line.
- */
+  if (wp->w_hsep_height) {
+    // draw the horizontal separator below this window
+    c = fillchar_hsep(wp, &hl);
+    grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
+              wp->w_wincol, W_ENDCOL(wp), c, c, hl);
+  }
+}
+
+/// Get the separator connector for specified window corner of window "wp"
+static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
+{
+  // It's impossible for windows to be connected neither vertically nor horizontally
+  // So if they're not vertically connected, assume they're horizontally connected
+  if (vsep_connected(wp, corner)) {
+    if (hsep_connected(wp, corner)) {
+      return wp->w_p_fcs_chars.verthoriz;
+    } else if (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT) {
+      return wp->w_p_fcs_chars.vertright;
+    } else {
+      return wp->w_p_fcs_chars.vertleft;
+    }
+  } else if (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT) {
+    return wp->w_p_fcs_chars.horizdown;
+  } else {
+    return wp->w_p_fcs_chars.horizup;
+  }
+}
+
+/// Draw seperator connecting characters on the corners of window "wp"
+static void draw_sep_connectors_win(win_T *wp)
+{
+  // Don't draw separator connectors unless global statusline is enabled and the window has
+  // either a horizontal or vertical separator
+  if (global_stl_height() == 0 || !(wp->w_hsep_height == 1 || wp->w_vsep_width == 1)) {
+    return;
+  }
+
+  int hl = win_hl_attr(wp, HLF_C);
+
+  // Determine which edges of the screen the window is located on so we can avoid drawing separators
+  // on corners contained in those edges
+  bool win_at_top;
+  bool win_at_bottom = wp->w_hsep_height == 0;
+  bool win_at_left;
+  bool win_at_right = wp->w_vsep_width == 0;
+  frame_T *frp;
+
+  for (frp = wp->w_frame; frp->fr_parent != NULL; frp = frp->fr_parent) {
+    if (frp->fr_parent->fr_layout == FR_COL && frp->fr_prev != NULL) {
+      break;
+    }
+  }
+  win_at_top = frp->fr_parent == NULL;
+  for (frp = wp->w_frame; frp->fr_parent != NULL; frp = frp->fr_parent) {
+    if (frp->fr_parent->fr_layout == FR_ROW && frp->fr_prev != NULL) {
+      break;
+    }
+  }
+  win_at_left = frp->fr_parent == NULL;
+
+  // Draw the appropriate separator connector in every corner where drawing them is necessary
+  if (!(win_at_top || win_at_left)) {
+    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_LEFT),
+                 wp->w_winrow - 1, wp->w_wincol - 1, hl);
+  }
+  if (!(win_at_top || win_at_right)) {
+    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_RIGHT),
+                 wp->w_winrow - 1, W_ENDCOL(wp), hl);
+  }
+  if (!(win_at_bottom || win_at_left)) {
+    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_LEFT),
+                 W_ENDROW(wp), wp->w_wincol - 1, hl);
+  }
+  if (!(win_at_bottom || win_at_right)) {
+    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_RIGHT),
+                 W_ENDROW(wp), W_ENDCOL(wp), hl);
+  }
+}
+
+/// Get the length of an item as it will be shown in the status line.
 static int status_match_len(expand_T *xp, char_u *s)
 {
   int len = 0;
@@ -5145,7 +5090,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
         // Create status line if needed by setting 'laststatus' to 2.
         // Set 'winminheight' to zero to avoid that the window is
         // resized.
-        if (lastwin->w_status_height == 0) {
+        if (lastwin->w_status_height == 0 && global_stl_height() == 0) {
           save_p_ls = p_ls;
           save_p_wmh = p_wmh;
           p_ls = 2;
@@ -5181,12 +5126,15 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
 static void win_redr_status(win_T *wp)
 {
   int row;
+  int col;
   char_u *p;
   int len;
   int fillchar;
   int attr;
+  int width;
   int this_ru_col;
-  static int busy = FALSE;
+  bool is_stl_global = global_stl_height() > 0;
+  static int busy = false;
 
   // May get here recursively when 'statusline' (indirectly)
   // invokes ":redrawstatus".  Simply ignore the call then.
@@ -5197,9 +5145,9 @@ static void win_redr_status(win_T *wp)
   }
   busy = true;
 
-  wp->w_redr_status = FALSE;
-  if (wp->w_status_height == 0) {
-    // no status line, can only be last window
+  wp->w_redr_status = false;
+  if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
+    // no status line, either global statusline is enabled or the window is a last window
     redraw_cmdline = true;
   } else if (!redrawing()) {
     // Don't redraw right now, do it later. Don't update status line when
@@ -5210,6 +5158,7 @@ static void win_redr_status(win_T *wp)
     redraw_custom_statusline(wp);
   } else {
     fillchar = fillchar_status(&attr, wp);
+    width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
     p = NameBuff;
@@ -5238,9 +5187,9 @@ static void win_redr_status(win_T *wp)
       // len += (int)STRLEN(p + len);  // dead assignment
     }
 
-    this_ru_col = ru_col - (Columns - wp->w_width);
-    if (this_ru_col < (wp->w_width + 1) / 2) {
-      this_ru_col = (wp->w_width + 1) / 2;
+    this_ru_col = ru_col - (Columns - width);
+    if (this_ru_col < (width + 1) / 2) {
+      this_ru_col = (width + 1) / 2;
     }
     if (this_ru_col <= 1) {
       p = (char_u *)"<";                // No room for file name!
@@ -5265,10 +5214,11 @@ static void win_redr_status(win_T *wp)
       }
     }
 
-    row = W_ENDROW(wp);
-    grid_puts(&default_grid, p, row, wp->w_wincol, attr);
-    grid_fill(&default_grid, row, row + 1, len + wp->w_wincol,
-              this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
+    row = is_stl_global ? (Rows - p_ch - 1) : W_ENDROW(wp);
+    col = is_stl_global ? 0 : wp->w_wincol;
+    grid_puts(&default_grid, p, row, col, attr);
+    grid_fill(&default_grid, row, row + 1, len + col,
+              this_ru_col + col, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, (char_u *)"<%s>", NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
@@ -5347,6 +5297,76 @@ bool stl_connected(win_T *wp)
   return false;
 }
 
+/// Check if horizontal separator of window "wp" at specified window corner is connected to the
+/// horizontal separator of another window
+/// Assumes global statusline is enabled
+static bool hsep_connected(win_T *wp, WindowCorner corner)
+{
+  bool before = (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT);
+  int sep_row = (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT)
+                ? wp->w_winrow - 1 : W_ENDROW(wp);
+  frame_T *fr = wp->w_frame;
+
+  while (fr->fr_parent != NULL) {
+    if (fr->fr_parent->fr_layout == FR_ROW && (before ? fr->fr_prev : fr->fr_next) != NULL) {
+      fr = before ? fr->fr_prev : fr->fr_next;
+      break;
+    }
+    fr = fr->fr_parent;
+  }
+  if (fr->fr_parent == NULL) {
+    return false;
+  }
+  while (fr->fr_layout != FR_LEAF) {
+    fr = fr->fr_child;
+    if (fr->fr_parent->fr_layout == FR_ROW && before) {
+      while (fr->fr_next != NULL) {
+        fr = fr->fr_next;
+      }
+    } else {
+      while (fr->fr_next != NULL && frame2win(fr)->w_winrow + fr->fr_height < sep_row) {
+        fr = fr->fr_next;
+      }
+    }
+  }
+
+  return (sep_row == fr->fr_win->w_winrow - 1 || sep_row == W_ENDROW(fr->fr_win));
+}
+
+/// Check if vertical separator of window "wp" at specified window corner is connected to the
+/// vertical separator of another window
+static bool vsep_connected(win_T *wp, WindowCorner corner)
+{
+  bool before = (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT);
+  int sep_col = (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT)
+                ? wp->w_wincol - 1 : W_ENDCOL(wp);
+  frame_T *fr = wp->w_frame;
+
+  while (fr->fr_parent != NULL) {
+    if (fr->fr_parent->fr_layout == FR_COL && (before ? fr->fr_prev : fr->fr_next) != NULL) {
+      fr = before ? fr->fr_prev : fr->fr_next;
+      break;
+    }
+    fr = fr->fr_parent;
+  }
+  if (fr->fr_parent == NULL) {
+    return false;
+  }
+  while (fr->fr_layout != FR_LEAF) {
+    fr = fr->fr_child;
+    if (fr->fr_parent->fr_layout == FR_COL && before) {
+      while (fr->fr_next != NULL) {
+        fr = fr->fr_next;
+      }
+    } else {
+      while (fr->fr_next != NULL && frame2win(fr)->w_wincol + fr->fr_width < sep_col) {
+        fr = fr->fr_next;
+      }
+    }
+  }
+
+  return (sep_col == fr->fr_win->w_wincol - 1 || sep_col == W_ENDCOL(fr->fr_win));
+}
 
 /// Get the value to show for the language mappings, active 'keymap'.
 ///
@@ -5413,6 +5433,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
   int use_sandbox = false;
   win_T *ewp;
   int p_crb_save;
+  bool is_stl_global = global_stl_height() > 0;
 
   ScreenGrid *grid = &default_grid;
 
@@ -5434,9 +5455,9 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
     maxwidth = Columns;
     use_sandbox = was_set_insecurely(wp, "tabline", 0);
   } else {
-    row = W_ENDROW(wp);
+    row = is_stl_global ? (Rows - p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
-    maxwidth = wp->w_width;
+    maxwidth = is_stl_global ? Columns : wp->w_width;
 
     if (draw_ruler) {
       stl = p_ruf;
@@ -5454,12 +5475,12 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
           stl = p_ruf;
         }
       }
-      col = ru_col - (Columns - wp->w_width);
-      if (col < (wp->w_width + 1) / 2) {
-        col = (wp->w_width + 1) / 2;
+      col = ru_col - (Columns - maxwidth);
+      if (col < (maxwidth + 1) / 2) {
+        col = (maxwidth + 1) / 2;
       }
-      maxwidth = wp->w_width - col;
-      if (!wp->w_status_height) {
+      maxwidth = maxwidth - col;
+      if (!wp->w_status_height && !is_stl_global) {
         grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
@@ -5477,7 +5498,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
       use_sandbox = was_set_insecurely(wp, "statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
-    col += wp->w_wincol;
+    col += is_stl_global ? 0 : wp->w_wincol;
   }
 
   if (maxwidth <= 0) {
@@ -5977,277 +5998,6 @@ static void end_search_hl(void)
     vim_regfree(search_hl.rm.regprog);
     search_hl.rm.regprog = NULL;
   }
-}
-
-
-/*
- * Init for calling prepare_search_hl().
- */
-static void init_search_hl(win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // Setup for match and 'hlsearch' highlighting.  Disable any previous
-  // match
-  matchitem_T *cur = wp->w_match_head;
-  while (cur != NULL) {
-    cur->hl.rm = cur->match;
-    if (cur->hlg_id == 0) {
-      cur->hl.attr = 0;
-    } else {
-      cur->hl.attr = syn_id2attr(cur->hlg_id);
-    }
-    cur->hl.buf = wp->w_buffer;
-    cur->hl.lnum = 0;
-    cur->hl.first_lnum = 0;
-    // Set the time limit to 'redrawtime'.
-    cur->hl.tm = profile_setlimit(p_rdt);
-    cur = cur->next;
-  }
-  search_hl.buf = wp->w_buffer;
-  search_hl.lnum = 0;
-  search_hl.first_lnum = 0;
-  search_hl.attr = win_hl_attr(wp, HLF_L);
-
-  // time limit is set at the toplevel, for all windows
-}
-
-/*
- * Advance to the match in window "wp" line "lnum" or past it.
- */
-static void prepare_search_hl(win_T *wp, linenr_T lnum)
-  FUNC_ATTR_NONNULL_ALL
-{
-  matchitem_T *cur;             // points to the match list
-  match_T *shl;             // points to search_hl or a match
-  bool shl_flag;                // flag to indicate whether search_hl
-                                // has been processed or not
-
-  // When using a multi-line pattern, start searching at the top
-  // of the window or just after a closed fold.
-  // Do this both for search_hl and the match list.
-  cur = wp->w_match_head;
-  shl_flag = false;
-  while (cur != NULL || shl_flag == false) {
-    if (shl_flag == false) {
-      shl = &search_hl;
-      shl_flag = true;
-    } else {
-      shl = &cur->hl;  // -V595
-    }
-    if (shl->rm.regprog != NULL
-        && shl->lnum == 0
-        && re_multiline(shl->rm.regprog)) {
-      if (shl->first_lnum == 0) {
-        for (shl->first_lnum = lnum;
-             shl->first_lnum > wp->w_topline;
-             shl->first_lnum--) {
-          if (hasFoldingWin(wp, shl->first_lnum - 1, NULL, NULL, true, NULL)) {
-            break;
-          }
-        }
-      }
-      if (cur != NULL) {
-        cur->pos.cur = 0;
-      }
-      bool pos_inprogress = true;  // mark that a position match search is
-                                   // in progress
-      int n = 0;
-      while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
-                                        || (cur != NULL && pos_inprogress))) {
-        next_search_hl(wp, shl, shl->first_lnum, (colnr_T)n,
-                       shl == &search_hl ? NULL : cur);
-        pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
-        if (shl->lnum != 0) {
-          shl->first_lnum = shl->lnum
-                            + shl->rm.endpos[0].lnum
-                            - shl->rm.startpos[0].lnum;
-          n = shl->rm.endpos[0].col;
-        } else {
-          ++shl->first_lnum;
-          n = 0;
-        }
-      }
-    }
-    if (shl != &search_hl && cur != NULL) {
-      cur = cur->next;
-    }
-  }
-}
-
-/// Search for a next 'hlsearch' or match.
-/// Uses shl->buf.
-/// Sets shl->lnum and shl->rm contents.
-/// Note: Assumes a previous match is always before "lnum", unless
-/// shl->lnum is zero.
-/// Careful: Any pointers for buffer lines will become invalid.
-///
-/// @param shl     points to search_hl or a match
-/// @param mincol  minimal column for a match
-/// @param cur     to retrieve match positions if any
-static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum, colnr_T mincol,
-                           matchitem_T *cur)
-  FUNC_ATTR_NONNULL_ARG(2)
-{
-  linenr_T l;
-  colnr_T matchcol;
-  long nmatched = 0;
-  int save_called_emsg = called_emsg;
-
-  // for :{range}s/pat only highlight inside the range
-  if (lnum < search_first_line || lnum > search_last_line) {
-    shl->lnum = 0;
-    return;
-  }
-
-  if (shl->lnum != 0) {
-    // Check for three situations:
-    // 1. If the "lnum" is below a previous match, start a new search.
-    // 2. If the previous match includes "mincol", use it.
-    // 3. Continue after the previous match.
-    l = shl->lnum + shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
-    if (lnum > l) {
-      shl->lnum = 0;
-    } else if (lnum < l || shl->rm.endpos[0].col > mincol) {
-      return;
-    }
-  }
-
-  /*
-   * Repeat searching for a match until one is found that includes "mincol"
-   * or none is found in this line.
-   */
-  called_emsg = FALSE;
-  for (;;) {
-    // Stop searching after passing the time limit.
-    if (profile_passed_limit(shl->tm)) {
-      shl->lnum = 0;                    // no match found in time
-      break;
-    }
-    // Three situations:
-    // 1. No useful previous match: search from start of line.
-    // 2. Not Vi compatible or empty match: continue at next character.
-    //    Break the loop if this is beyond the end of the line.
-    // 3. Vi compatible searching: continue at end of previous match.
-    if (shl->lnum == 0) {
-      matchcol = 0;
-    } else if (vim_strchr(p_cpo, CPO_SEARCH) == NULL
-               || (shl->rm.endpos[0].lnum == 0
-                   && shl->rm.endpos[0].col <= shl->rm.startpos[0].col)) {
-      char_u *ml;
-
-      matchcol = shl->rm.startpos[0].col;
-      ml = ml_get_buf(shl->buf, lnum, false) + matchcol;
-      if (*ml == NUL) {
-        ++matchcol;
-        shl->lnum = 0;
-        break;
-      }
-      matchcol += utfc_ptr2len(ml);
-    } else {
-      matchcol = shl->rm.endpos[0].col;
-    }
-
-    shl->lnum = lnum;
-    if (shl->rm.regprog != NULL) {
-      // Remember whether shl->rm is using a copy of the regprog in
-      // cur->match.
-      bool regprog_is_copy = (shl != &search_hl
-                              && cur != NULL
-                              && shl == &cur->hl
-                              && cur->match.regprog == cur->hl.rm.regprog);
-      int timed_out = false;
-
-      nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol,
-                                   &(shl->tm), &timed_out);
-      // Copy the regprog, in case it got freed and recompiled.
-      if (regprog_is_copy) {
-        cur->match.regprog = cur->hl.rm.regprog;
-      }
-      if (called_emsg || got_int || timed_out) {
-        // Error while handling regexp: stop using this regexp.
-        if (shl == &search_hl) {
-          // don't free regprog in the match list, it's a copy
-          vim_regfree(shl->rm.regprog);
-          set_no_hlsearch(true);
-        }
-        shl->rm.regprog = NULL;
-        shl->lnum = 0;
-        got_int = FALSE;  // avoid the "Type :quit to exit Vim" message
-        break;
-      }
-    } else if (cur != NULL) {
-      nmatched = next_search_hl_pos(shl, lnum, &(cur->pos), matchcol);
-    }
-    if (nmatched == 0) {
-      shl->lnum = 0;                    // no match found
-      break;
-    }
-    if (shl->rm.startpos[0].lnum > 0
-        || shl->rm.startpos[0].col >= mincol
-        || nmatched > 1
-        || shl->rm.endpos[0].col > mincol) {
-      shl->lnum += shl->rm.startpos[0].lnum;
-      break;                            // useful match found
-    }
-
-    // Restore called_emsg for assert_fails().
-    called_emsg = save_called_emsg;
-  }
-}
-
-/// @param shl       points to a match. Fill on match.
-/// @param posmatch  match positions
-/// @param mincol    minimal column for a match
-///
-/// @return one on match, otherwise return zero.
-static int next_search_hl_pos(match_T *shl, linenr_T lnum, posmatch_T *posmatch, colnr_T mincol)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int i;
-  int found = -1;
-
-  shl->lnum = 0;
-  for (i = posmatch->cur; i < MAXPOSMATCH; i++) {
-    llpos_T *pos = &posmatch->pos[i];
-
-    if (pos->lnum == 0) {
-      break;
-    }
-    if (pos->len == 0 && pos->col < mincol) {
-      continue;
-    }
-    if (pos->lnum == lnum) {
-      if (found >= 0) {
-        // if this match comes before the one at "found" then swap
-        // them
-        if (pos->col < posmatch->pos[found].col) {
-          llpos_T tmp = *pos;
-
-          *pos = posmatch->pos[found];
-          posmatch->pos[found] = tmp;
-        }
-      } else {
-        found = i;
-      }
-    }
-  }
-  posmatch->cur = 0;
-  if (found >= 0) {
-    colnr_T start = posmatch->pos[found].col == 0
-                    ? 0: posmatch->pos[found].col - 1;
-    colnr_T end = posmatch->pos[found].col == 0
-                  ? MAXCOL : start + posmatch->pos[found].len;
-
-    shl->lnum = lnum;
-    shl->rm.startpos[0].lnum = 0;
-    shl->rm.startpos[0].col = start;
-    shl->rm.endpos[0].lnum = 0;
-    shl->rm.endpos[0].col = end;
-    shl->is_addpos = true;
-    posmatch->cur = found + 1;
-    return 1;
-  }
-  return 0;
 }
 
 
@@ -7059,10 +6809,10 @@ int showmode(void)
     clear_showcmd();
   }
 
-  // If the last window has no status line, the ruler is after the mode
-  // message and must be redrawn
+  // If the last window has no status line and global statusline is disabled,
+  // the ruler is after the mode message and must be redrawn
   win_T *last = lastwin_nofloating();
-  if (redrawing() && last->w_status_height == 0) {
+  if (redrawing() && last->w_status_height == 0 && global_stl_height() == 0) {
     win_redr_ruler(last, true);
   }
   redraw_cmdline = false;
@@ -7377,14 +7127,20 @@ int fillchar_status(int *attr, win_T *wp)
   return '=';
 }
 
-/*
- * Get the character to use in a separator between vertically split windows.
- * Get its attributes in "*attr".
- */
+/// Get the character to use in a separator between vertically split windows.
+/// Get its attributes in "*attr".
 static int fillchar_vsep(win_T *wp, int *attr)
 {
   *attr = win_hl_attr(wp, HLF_C);
   return wp->w_p_fcs_chars.vert;
+}
+
+/// Get the character to use in a separator between horizontally split windows.
+/// Get its attributes in "*attr".
+static int fillchar_hsep(win_T *wp, int *attr)
+{
+  *attr = win_hl_attr(wp, HLF_C);
+  return wp->w_p_fcs_chars.horiz;
 }
 
 /*
@@ -7412,7 +7168,8 @@ void showruler(bool always)
   if (!always && !redrawing()) {
     return;
   }
-  if ((*p_stl != NUL || *curwin->w_p_stl != NUL) && curwin->w_status_height) {
+  if ((*p_stl != NUL || *curwin->w_p_stl != NUL)
+      && (curwin->w_status_height || global_stl_height())) {
     redraw_custom_statusline(curwin);
   } else {
     win_redr_ruler(curwin, always);
@@ -7431,6 +7188,7 @@ void showruler(bool always)
 
 static void win_redr_ruler(win_T *wp, bool always)
 {
+  bool is_stl_global = global_stl_height() > 0;
   static bool did_show_ext_ruler = false;
 
   // If 'ruler' off or redrawing disabled, don't do anything
@@ -7448,7 +7206,7 @@ static void win_redr_ruler(win_T *wp, bool always)
 
   // Don't draw the ruler while doing insert-completion, it might overwrite
   // the (long) mode message.
-  if (wp == lastwin && lastwin->w_status_height == 0) {
+  if (wp == lastwin && lastwin->w_status_height == 0 && !is_stl_global) {
     if (edit_submode != NULL) {
       return;
     }
@@ -7503,6 +7261,12 @@ static void win_redr_ruler(win_T *wp, bool always)
       off = wp->w_wincol;
       width = wp->w_width;
       part_of_status = true;
+    } else if (is_stl_global) {
+      row = Rows - p_ch - 1;
+      fillchar = fillchar_status(&attr, wp);
+      off = 0;
+      width = Columns;
+      part_of_status = true;
     } else {
       row = Rows - 1;
       fillchar = ' ';
@@ -7542,7 +7306,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     int i = (int)STRLEN(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
     int o = i + vim_strsize(buffer + i + 1);
-    if (wp->w_status_height == 0) {  // can't use last char of screen
+    if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
       o++;
     }
     int this_ru_col = ru_col - (Columns - width);
@@ -7854,4 +7618,3 @@ win_T *get_win_by_grid_handle(handle_T handle)
   }
   return NULL;
 }
-

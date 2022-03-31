@@ -237,7 +237,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
                  KILL_TIMEOUT_MS, 0);
 }
 
-// Frees process-owned resources.
+/// Frees process-owned resources.
 void process_free(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
   if (proc->argv != NULL) {

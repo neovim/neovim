@@ -64,7 +64,13 @@ typedef struct {
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
-    TYPVAL_ENCODE_CONV_NIL(tv); \
+    ufunc_T *fp = find_func(fun); \
+    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
+      LuaRef ref = api_new_luaref(((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+      kvi_push(edata->stack, LUAREF_OBJ(ref)); \
+    } else { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+    } \
     goto typval_encode_stop_converting_one_item; \
   } while (0)
 
@@ -231,14 +237,6 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 /// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
-  if (obj->v_type == VAR_FUNC) {
-    ufunc_T *fp = find_func(obj->vval.v_string);
-    assert(fp != NULL);
-    if (fp->uf_cb == nlua_CFunction_func_call) {
-      LuaRef ref = api_new_luaref(((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
-      return LUAREF_OBJ(ref);
-    }
-  }
   EncodedData edata;
   kvi_init(edata.stack);
   const int evo_ret = encode_vim_to_object(&edata, obj,

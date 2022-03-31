@@ -522,6 +522,7 @@ static bool input_ready(MultiQueue *events)
 
 // Exit because of an input read error.
 static void read_error_exit(void)
+  FUNC_ATTR_NORETURN
 {
   if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);

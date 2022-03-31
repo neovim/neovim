@@ -47,6 +47,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hardcopy.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
 #include "nvim/keymap.h"
 #include "nvim/macros.h"
@@ -2910,7 +2911,7 @@ ambw_end:
         || check_opt_strings(curbuf->b_p_bt, p_buftype_values, false) != OK) {
       errmsg = e_invarg;
     } else {
-      if (curwin->w_status_height) {
+      if (curwin->w_status_height || global_stl_height()) {
         curwin->w_redr_status = true;
         redraw_later(curwin, VALID);
       }
@@ -3553,16 +3554,22 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
   struct chars_tab *tab;
 
   struct chars_tab fcs_tab[] = {
-    { &wp->w_p_fcs_chars.stl,     "stl",      ' '  },
-    { &wp->w_p_fcs_chars.stlnc,   "stlnc",    ' '  },
-    { &wp->w_p_fcs_chars.vert,    "vert",     9474 },  // │
-    { &wp->w_p_fcs_chars.fold,    "fold",     183  },  // ·
-    { &wp->w_p_fcs_chars.foldopen,   "foldopen",  '-'  },
-    { &wp->w_p_fcs_chars.foldclosed, "foldclose", '+'  },
-    { &wp->w_p_fcs_chars.foldsep,    "foldsep",   9474 },  // │
-    { &wp->w_p_fcs_chars.diff,    "diff",     '-'  },
-    { &wp->w_p_fcs_chars.msgsep,  "msgsep",   ' '  },
-    { &wp->w_p_fcs_chars.eob,     "eob",      '~'  },
+    { &wp->w_p_fcs_chars.stl,        "stl",        ' '  },
+    { &wp->w_p_fcs_chars.stlnc,      "stlnc",      ' '  },
+    { &wp->w_p_fcs_chars.horiz,      "horiz",      9472 },  // ─
+    { &wp->w_p_fcs_chars.horizup,    "horizup",    9524 },  // ┴
+    { &wp->w_p_fcs_chars.horizdown,  "horizdown",  9516 },  // ┬
+    { &wp->w_p_fcs_chars.vert,       "vert",       9474 },  // │
+    { &wp->w_p_fcs_chars.vertleft,   "vertleft",   9508 },  // ┤
+    { &wp->w_p_fcs_chars.vertright,  "vertright",  9500 },  // ├
+    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz",  9532 },  // ┼
+    { &wp->w_p_fcs_chars.fold,       "fold",       183  },  // ·
+    { &wp->w_p_fcs_chars.foldopen,   "foldopen",   '-'  },
+    { &wp->w_p_fcs_chars.foldclosed, "foldclose",  '+'  },
+    { &wp->w_p_fcs_chars.foldsep,    "foldsep",    9474 },  // │
+    { &wp->w_p_fcs_chars.diff,       "diff",       '-'  },
+    { &wp->w_p_fcs_chars.msgsep,     "msgsep",     ' '  },
+    { &wp->w_p_fcs_chars.eob,        "eob",        '~'  },
   };
   struct chars_tab lcs_tab[] = {
     { &wp->w_p_lcs_chars.eol,     "eol",      NUL  },
@@ -3589,15 +3596,17 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
       varp = &p_fcs;
     }
     if (*p_ambw == 'd') {
-      // XXX: If ambiwidth=double then "|" and "·" take 2 columns, which is
-      // forbidden (TUI limitation?). Set old defaults.
-      fcs_tab[2].def = '|';
-      fcs_tab[6].def = '|';
-      fcs_tab[3].def = '-';
-    } else {
-      fcs_tab[2].def = 9474;  // │
-      fcs_tab[6].def = 9474;  // │
-      fcs_tab[3].def = 183;   // ·
+      // XXX: If ambiwidth=double then some characters take 2 columns,
+      // which is forbidden (TUI limitation?). Set old defaults.
+      fcs_tab[2].def  = '-';
+      fcs_tab[3].def  = '-';
+      fcs_tab[4].def  = '-';
+      fcs_tab[5].def  = '|';
+      fcs_tab[6].def  = '|';
+      fcs_tab[7].def  = '|';
+      fcs_tab[8].def  = '+';
+      fcs_tab[9].def  = '-';
+      fcs_tab[12].def = '|';
     }
   }
 
@@ -3845,7 +3854,7 @@ static bool parse_winhl_opt(win_T *wp)
     size_t nlen = (size_t)(colon-p);
     char *hi = colon+1;
     char *commap = xstrchrnul(hi, ',');
-    int len = (int)(commap-hi);
+    size_t len = (size_t)(commap-hi);
     int hl_id = len ? syn_check_group(hi, len) : -1;
 
     if (strncmp("Normal", p, nlen) == 0) {
@@ -3953,11 +3962,8 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   } else if ((int *)varp == &p_lnr) {
     // 'langnoremap' -> !'langremap'
     p_lrm = !p_lnr;
-  } else if ((int *)varp == &curwin->w_p_cul && !value && old_value) {
-    // 'cursorline'
-    reset_cursorline();
-    // 'undofile'
   } else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
+    // 'undofile'
     // Only take action when the option was set. When reset we do not
     // delete the undo file, the option may be set again without making
     // any changes in between.
@@ -4475,6 +4481,20 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     // 'winminwidth'
     win_setminwidth();
   } else if (pp == &p_ls) {
+    // When switching to global statusline, decrease topframe height
+    // Also clear the cmdline to remove the ruler if there is one
+    if (value == 3 && old_value != 3) {
+      frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
+      (void)win_comp_pos();
+      clear_cmdline = true;
+    }
+    // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
+    // in order to to re-add the space that was previously taken by the global statusline
+    if (old_value == 3 && value != 3) {
+      frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
+      (void)win_comp_pos();
+    }
+
     last_status(false);  // (re)set last window status line.
   } else if (pp == &p_stal) {
     // (re)set tab page line
@@ -5646,7 +5666,7 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
 
 void comp_col(void)
 {
-  int last_has_status = (p_ls == 2 || (p_ls == 1 && !ONE_WINDOW));
+  int last_has_status = (p_ls > 1 || (p_ls == 1 && !ONE_WINDOW));
 
   sc_col = 0;
   ru_col = 0;

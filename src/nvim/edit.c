@@ -26,6 +26,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/keymap.h"
@@ -1479,8 +1480,6 @@ bool edit(int cmdchar, bool startln, long count)
 /// @param ready  not busy with something
 static void ins_redraw(bool ready)
 {
-  bool conceal_cursor_moved = false;
-
   if (char_avail()) {
     return;
   }
@@ -1503,7 +1502,6 @@ static void ins_redraw(bool ready)
       update_curswant();
       ins_apply_autocmds(EVENT_CURSORMOVEDI);
     }
-    conceal_cursor_moved = true;
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
@@ -1557,11 +1555,6 @@ static void ins_redraw(bool ready)
       && !pum_visible()) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
     curbuf->b_changed_invalid = false;
-  }
-
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
-      && conceal_cursor_moved) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   pum_check_clear();
@@ -5116,10 +5109,10 @@ static int ins_complete(int c, bool enable_pum)
           || ctrl_x_mode == CTRL_X_PATH_PATTERNS
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (compl_startpos.lnum != curwin->w_cursor.lnum) {
-          /* line (probably) wrapped, set compl_startpos to the
-           * first non_blank in the line, if it is not a wordchar
-           * include it to get a better pattern, but then we don't
-           * want the "\\<" prefix, check it bellow */
+          // line (probably) wrapped, set compl_startpos to the
+          // first non_blank in the line, if it is not a wordchar
+          // include it to get a better pattern, but then we don't
+          // want the "\\<" prefix, check it below.
           compl_col = (colnr_T)getwhitecols(line);
           compl_startpos.col = compl_col;
           compl_startpos.lnum = curwin->w_cursor.lnum;

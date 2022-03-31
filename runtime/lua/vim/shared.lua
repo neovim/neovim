@@ -333,7 +333,7 @@ end
 
 --- Add the reverse lookup values to an existing table.
 --- For example:
---- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+--- ``tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }``
 --
 --Do note that it *modifies* the input.
 ---@param o table The table to add the reverse to.
@@ -345,6 +345,33 @@ function vim.tbl_add_reverse_lookup(o)
       error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
     end
     o[v] = k
+  end
+  return o
+end
+
+--- Index into a table (first argument) via string keys passed as subsequent arguments.
+--- Return `nil` if the key does not exist.
+--_
+--- Examples:
+--- <pre>
+---  vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
+---  vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+--- </pre>
+---
+---@param o Table to index
+---@param ... Optional strings (0 or more, variadic) via which to index the table
+---
+---@returns nested value indexed by key if it exists, else nil
+function vim.tbl_get(o, ...)
+  local keys = {...}
+  if #keys == 0 then
+    return
+  end
+  for _, k in ipairs(keys) do
+    o = o[k]
+    if o == nil then
+      return
+    end
   end
   return o
 end

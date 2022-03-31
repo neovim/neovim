@@ -2343,6 +2343,19 @@ func Test_throw_in_BufWritePre()
   au! throwing
 endfunc
 
+func Test_autocmd_in_try_block()
+  call mkdir('Xdir')
+  au BufEnter * let g:fname = expand('%')
+  try
+    edit Xdir/
+  endtry
+  call assert_match('Xdir', g:fname)
+
+  unlet g:fname
+  au! BufEnter
+  call delete('Xdir', 'rf')
+endfunc
+
 func Test_autocmd_CmdWinEnter()
   CheckRunVimInTerminal
   " There is not cmdwin switch, so
@@ -2597,5 +2610,22 @@ func Test_autocmd_closing_cmdwin()
   new
   only
 endfunc
+
+func Test_bufwipeout_changes_window()
+  " This should not crash, but we don't have any expectations about what
+  " happens, changing window in BufWipeout has unpredictable results.
+  tabedit
+  let g:window_id = win_getid()
+  topleft new
+  setlocal bufhidden=wipe
+  autocmd BufWipeout <buffer> call win_gotoid(g:window_id)
+  tabprevious
+  +tabclose
+
+  unlet g:window_id
+  au! BufWipeout
+  %bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

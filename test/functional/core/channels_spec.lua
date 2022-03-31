@@ -10,6 +10,8 @@ local nvim_prog = helpers.nvim_prog
 local is_os = helpers.is_os
 local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
+local assert_alive = helpers.assert_alive
+local pcall_err = helpers.pcall_err
 
 describe('channels', function()
   local init = [[
@@ -312,5 +314,24 @@ describe('channels', function()
 
     -- works correctly with no output
     eq({"notification", "exit", {id, 1, {''}}}, next_msg())
+  end)
+end)
+
+describe('loopback', function()
+  before_each(function()
+    clear()
+    command("let chan = sockconnect('pipe', v:servername, {'rpc': v:true})")
+  end)
+
+  it('does not crash when sending raw data', function()
+    eq("Vim(call):Can't send raw data to rpc channel",
+       pcall_err(command, "call chansend(chan, 'test')"))
+    assert_alive()
+  end)
+
+  it('are released when closed', function()
+    local chans = eval('len(nvim_list_chans())')
+    command('call chanclose(chan)')
+    eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 end)

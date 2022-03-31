@@ -29,12 +29,6 @@
 
 #define SYN_GROUP_STATIC(s) syn_check_group(S_LEN(s))
 
-typedef struct {
-  char *name;
-  RgbValue color;
-} color_name_table_T;
-extern color_name_table_T color_name_table[];
-
 /// Array of highlight definitions, used for unit testing
 extern const char *const highlight_init_cmdline[];
 

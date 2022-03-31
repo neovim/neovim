@@ -1672,7 +1672,7 @@ describe("folded lines", function()
       end
 
       -- relax the maximum fdc thus fdc should expand to
-      -- accomodate the current number of folds
+      -- accommodate the current number of folds
       command("set foldcolumn=auto:4")
       if multigrid then
         screen:expect([[

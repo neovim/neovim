@@ -323,7 +323,7 @@ describe('TUI', function()
     feed_data('just paste it™')
     feed_data('\027[201~')
     screen:expect{grid=[[
-      thisjust paste it™{1:3} is here                       |
+      thisjust paste it{1:™}3 is here                       |
                                                         |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -379,7 +379,7 @@ describe('TUI', function()
   end)
 
   it('paste: normal-mode (+CRLF #10872)', function()
-    feed_data(':set ruler')
+    feed_data(':set ruler | echo')
     wait_for_mode('c')
     feed_data('\n')
     wait_for_mode('n')
@@ -423,13 +423,13 @@ describe('TUI', function()
     expect_child_buf_lines(expected_crlf)
     feed_data('u')
     expect_child_buf_lines({''})
+    feed_data(':echo')
+    wait_for_mode('c')
+    feed_data('\n')
+    wait_for_mode('n')
     -- CRLF input
     feed_data('\027[200~'..table.concat(expected_lf,'\r\n')..'\027[201~')
-    screen:expect{
-      grid=expected_grid1:gsub(
-        ':set ruler *',
-        '3 fewer lines; before #1  0 seconds ago           '),
-      attr_ids=expected_attr}
+    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
     expect_child_buf_lines(expected_crlf)
   end)
 

@@ -286,9 +286,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       break;
     case LUA_TBOOLEAN:
       cur.tv->v_type = VAR_BOOL;
-      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1)
-                               ? kBoolVarTrue
-                               : kBoolVarFalse);
+      cur.tv->vval.v_bool = (lua_toboolean(lstate, -1) ? kBoolVarTrue : kBoolVarFalse);
       break;
     case LUA_TSTRING: {
       size_t len;
@@ -478,7 +476,12 @@ static bool typval_conv_special = false;
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
-    TYPVAL_ENCODE_CONV_NIL(tv); \
+    ufunc_T *fp = find_func(fun); \
+    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
+      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+    } else { \
+      TYPVAL_ENCODE_CONV_NIL(tv); \
+    } \
     goto typval_encode_stop_converting_one_item; \
   } while (0)
 
@@ -551,8 +554,8 @@ static bool typval_conv_special = false;
       const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
       if (mpval.type == conv_type) { \
         if (conv_type == kMPConvDict \
-              ? (void *)mpval.data.d.dict == (void *)(val) \
-              : (void *)mpval.data.l.list == (void *)(val)) { \
+            ? (void *)mpval.data.d.dict == (void *)(val) \
+            : (void *)mpval.data.l.list == (void *)(val)) { \
           lua_pushvalue(lstate, \
                         -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
           break; \
@@ -616,14 +619,6 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
   if (!lua_checkstack(lstate, initial_size + 2)) {
     semsg(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;
-  }
-  if (tv->v_type == VAR_FUNC) {
-    ufunc_T *fp = find_func(tv->vval.v_string);
-    assert(fp != NULL);
-    if (fp->uf_cb == nlua_CFunction_func_call) {
-      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref);
-      return true;
-    }
   }
   if (encode_vim_to_lua(lstate, tv, "nlua_push_typval argument") == FAIL) {
     return false;
@@ -1133,10 +1128,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
     case LUA_TSTRING: {
       size_t len;
       const char *s = lua_tolstring(lstate, -1, &len);
-      *cur.obj = STRING_OBJ(((String) {
-          .data = xmemdupz(s, len),
-          .size = len,
-        }));
+      *cur.obj = STRING_OBJ(((String) { .data = xmemdupz(s, len), .size = len }));
       break;
     }
     case LUA_TNUMBER: {
@@ -1154,11 +1146,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
       switch (table_props.type) {
       case kObjectTypeArray:
-        *cur.obj = ARRAY_OBJ(((Array) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = ARRAY_OBJ(((Array) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.maxidx != 0) {
           cur.obj->data.array.items =
             xcalloc(table_props.maxidx,
@@ -1169,11 +1157,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         }
         break;
       case kObjectTypeDictionary:
-        *cur.obj = DICTIONARY_OBJ(((Dictionary) {
-            .items = NULL,
-            .size = 0,
-            .capacity = 0,
-          }));
+        *cur.obj = DICTIONARY_OBJ(((Dictionary) { .items = NULL, .size = 0, .capacity = 0 }));
         if (table_props.string_keys_num != 0) {
           cur.obj->data.dictionary.items =
             xcalloc(table_props.string_keys_num,

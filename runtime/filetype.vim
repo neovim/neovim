@@ -664,7 +664,7 @@ au BufNewFile,BufRead *.fs			call dist#ft#FTfs()
 au BufNewFile,BufRead *.fsi,*.fsx		setf fsharp
 
 " GDB command files
-au BufNewFile,BufRead .gdbinit,gdbinit		setf gdb
+au BufNewFile,BufRead .gdbinit,gdbinit,.gdbearlyinit,gdbearlyinit,*.gdb		setf gdb
 
 " GDMO
 au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo

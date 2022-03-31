@@ -751,7 +751,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
 		insert.
 
-	When the value is empty, Vi compatible backspacing is used.
+	When the value is empty, Vi compatible backspacing is used, none of
+	the ways mentioned for the items above are possible.
 
 	For backwards compatibility with version 5.4 and earlier:
 	value	effect	~
@@ -2441,7 +2442,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
+	  horiz:c	'─' or '-'	horizontal separators |:split|
+	  horizup:c	'┴' or '-'	upwards facing horizontal separator
+	  horizdown:c	'┬' or '-'	downwards facing horizontal separator
 	  vert:c	'│' or '|'	vertical separators |:vsplit|
+	  vertleft:c	'┤' or '|'	left facing vertical separator
+	  vertright:c	'├' or '|'	right facing vertical separator
+	  verthoriz:c	'┼' or '+'	overlapping vertical and horizontal
+					separator
 	  fold:c	'·' or '-'	filling 'foldtext'
 	  foldopen:c	'-'		mark the beginning of a fold
 	  foldclose:c	'+'		show a closed fold
@@ -2454,8 +2462,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"stlnc" the space will be used when there is highlighting, '^' or '='
 	otherwise.
 
-	If 'ambiwidth' is "double" then "vert", "foldsep" and "fold" default to
-	single-byte alternatives.
+	Note that "horiz", "horizup", "horizdown", "vertleft", "vertright" and
+	"verthoriz" are only used when 'laststatus' is 3, since only vertical
+	window separators are used otherwise.
+
+	If 'ambiwidth' is "double" then "horiz", "horizup", "horizdown",
+	"vert", "vertleft", "vertright", "verthoriz", "foldsep" and "fold"
+	default to single-byte alternatives.
 
 	Example: >
 	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-
@@ -2469,7 +2482,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		highlight group ~
 	  stl:c		StatusLine		|hl-StatusLine|
 	  stlnc:c	StatusLineNC		|hl-StatusLineNC|
-	  vert:c	VertSplit		|hl-VertSplit|
+	  horiz:c	WinSeparator		|hl-WinSeparator|
+	  horizup:c	WinSeparator		|hl-WinSeparator|
+	  horizdown:c	WinSeparator		|hl-WinSeparator|
+	  vert:c	WinSeparator		|hl-WinSeparator|
+	  vertleft:c	WinSeparator		|hl-WinSeparator|
+	  vertright:c	WinSeparator		|hl-WinSeparator|
+	  verthoriz:c	WinSeparator		|hl-WinSeparator|
 	  fold:c	Folded			|hl-Folded|
 	  diff:c	DiffDelete		|hl-DiffDelete|
 	  eob:c		EndOfBuffer		|hl-EndOfBuffer|
@@ -3652,6 +3671,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		0: never
 		1: only if there are at least two windows
 		2: always
+		3: always and ONLY the last window
 	The screen looks nicer with a status line if you have several
 	windows, but it takes another screen line. |status-line|
 
@@ -5929,7 +5949,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	empty to avoid further errors.  Otherwise screen updating would loop.
 
 	Note that the only effect of 'ruler' when this option is set (and
-	'laststatus' is 2) is controlling the output of |CTRL-G|.
+	'laststatus' is 2 or 3) is controlling the output of |CTRL-G|.
 
 	field	    meaning ~
 	-	    Left justify the item.  The default is right justified
@@ -6313,9 +6333,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	linear search can be avoided when case is ignored.  Use a value of '2'
 	in the "!_TAG_FILE_SORTED" line for this.  A tag file can be case-fold
 	sorted with the -f switch to "sort" in most unices, as in the command:
-	"sort -f -o tags tags".  For "Exuberant ctags" version 5.x or higher
-	(at least 5.5) the --sort=foldcase switch can be used for this as
-	well.  Note that case must be folded to uppercase for this to work.
+	"sort -f -o tags tags".  For Universal ctags and Exuberant ctags
+	version 5.x or higher (at least 5.5) the --sort=foldcase switch can be
+	used for this as well.  Note that case must be folded to uppercase for
+	this to work.
 
 	By default, tag searches are case-sensitive.  Case is ignored when
 	'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is

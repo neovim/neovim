@@ -937,17 +937,18 @@ describe('CursorLine and CursorLineNr highlights', function()
       [2] = {foreground = Screen.colors.Yellow};
       [3] = {foreground = Screen.colors.Red, background = Screen.colors.Green};
       [4] = {foreground = Screen.colors.Green, background = Screen.colors.Red};
+      [5] = {bold = true},  -- ModeMsg
     })
     screen:attach()
 
-    feed_command('set wrap cursorline cursorlineopt=screenline')
-    feed_command('set showbreak=>>>')
-    feed_command('highlight clear NonText')
-    feed_command('highlight clear CursorLine')
-    feed_command('highlight NonText guifg=Yellow gui=NONE')
-    feed_command('highlight LineNr guifg=Red guibg=Green gui=NONE')
-    feed_command('highlight CursorLine guifg=Black guibg=White gui=NONE')
-    feed_command('highlight CursorLineNr guifg=Green guibg=Red gui=NONE')
+    command('set wrap cursorline cursorlineopt=screenline')
+    command('set showbreak=>>>')
+    command('highlight clear NonText')
+    command('highlight clear CursorLine')
+    command('highlight NonText guifg=Yellow gui=NONE')
+    command('highlight LineNr guifg=Red guibg=Green gui=NONE')
+    command('highlight CursorLine guifg=Black guibg=White gui=NONE')
+    command('highlight CursorLineNr guifg=Green guibg=Red gui=NONE')
 
     feed('30iø<esc>o<esc>30ia<esc>')
 
@@ -977,7 +978,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
 
     -- CursorLineNr should not apply to line number when 'cursorlineopt' does not contain "number"
-    feed_command('set relativenumber numberwidth=2')
+    command('set relativenumber numberwidth=2')
     screen:expect([[
       {3:0 }{1:øøøøøøøøøøøø^øøøøøø}|
       {3:  }{2:>>>}øøøøøøøøøøøø   |
@@ -987,7 +988,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
 
     -- CursorLineNr should apply to line number when 'cursorlineopt' contains "number"
-    feed_command('set cursorlineopt+=number')
+    command('set cursorlineopt+=number')
     screen:expect([[
       {4:0 }{1:øøøøøøøøøøøø^øøøøøø}|
       {3:  }{2:>>>}øøøøøøøøøøøø   |
@@ -1018,6 +1019,44 @@ describe('CursorLine and CursorLineNr highlights', function()
       {4:0 }aaaaaaaaaaaaaaaaaa|
       {3:  }{2:>>>}{1:aaaaaaaaa^aaa   }|
                           |
+    ]])
+
+    -- updated in Insert mode
+    feed('I')
+    screen:expect([[
+      {3:1 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {4:0 }{1:^aaaaaaaaaaaaaaaaaa}|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+      {5:-- INSERT --}        |
+    ]])
+
+    feed('<Esc>gg')
+    screen:expect([[
+      {4:0 }{1:^øøøøøøøøøøøøøøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+
+    command('inoremap <F2> <Cmd>call cursor(1, 1)<CR>')
+    feed('A')
+    screen:expect([[
+      {4:0 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}{1:øøøøøøøøøøøø^   }|
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+      {5:-- INSERT --}        |
+    ]])
+
+    feed('<F2>')
+    screen:expect([[
+      {4:0 }{1:^øøøøøøøøøøøøøøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+      {5:-- INSERT --}        |
     ]])
   end)
 
@@ -1079,6 +1118,46 @@ describe('CursorLine and CursorLineNr highlights', function()
       abc                                               |
       {10:-- VISUAL LINE --}                                 |
     ]])
+  end)
+
+  it('is updated if cursor is moved up from timer vim-patch:8.2.4591', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.Gray90},  -- CursorLine
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorline
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(2, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      aaaaa                                             |
+      bbbbb                                             |
+      ccccc                                             |
+      {1:^ddddd                                             }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      aaaaa                                             |
+      {1:^bbbbb                                             }|
+      ccccc                                             |
+      ddddd                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
   end)
 
   it('with split windows in diff mode', function()
@@ -1223,6 +1302,49 @@ describe('CursorLine and CursorLineNr highlights', function()
       {8:[No Name] [+]             }{3:[No Name] [+]           }|
                                                         |
     ]])
+  end)
+end)
+
+describe('CursorColumn highlight', function()
+  before_each(clear)
+  it('is updated if cursor is moved from timer', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.Gray90},  -- CursorColumn
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      aaaa{1:a}                                             |
+      bbbb{1:b}                                             |
+      cccc{1:c}                                             |
+      dddd^d                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      ^aaaaa                                             |
+      {1:b}bbbb                                             |
+      {1:c}cccc                                             |
+      {1:d}dddd                                             |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
   end)
 end)
 
@@ -1529,6 +1651,46 @@ describe("'number' and 'relativenumber' highlight", function()
       {3:  1 }8               |
                           |
     ]])
+  end)
+
+  it('relative number highlight is updated if cursor is moved from timer', function()
+    local screen = Screen.new(50, 8)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Brown},  -- LineNr
+      [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set relativenumber
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+    ]])
+    screen:expect({grid = [[
+      {1:  3 }aaaaa                                         |
+      {1:  2 }bbbbb                                         |
+      {1:  1 }ccccc                                         |
+      {1:  0 }^ddddd                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]], timeout = 100})
+    screen:expect({grid = [[
+      {1:  0 }^aaaaa                                         |
+      {1:  1 }bbbbb                                         |
+      {1:  2 }ccccc                                         |
+      {1:  3 }ddddd                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]})
   end)
 end)
 

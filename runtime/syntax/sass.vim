@@ -2,7 +2,7 @@
 " Language:	Sass
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Filenames:	*.sass
-" Last Change:	2019 Dec 05
+" Last Change:	2022 Mar 15
 
 if exists("b:current_syntax")
   finish
@@ -58,6 +58,7 @@ syn match sassAmpersand  "&"
 " TODO: Arithmetic (including strings and concatenation)
 
 syn region sassMediaQuery matchgroup=sassMedia start="@media" end="[{};]\@=\|$" contains=sassMediaOperators
+syn region sassKeyframe matchgroup=cssAtKeyword start=/@\(-[a-z]\+-\)\=keyframes\>/ end=";\|$" contains=cssVendor,cssComment nextgroup=cssDefinition
 syn keyword sassMediaOperators and not only contained
 syn region sassCharset start="@charset" end=";\|$" contains=scssComment,cssStringQ,cssStringQQ,cssURL,cssUnicodeEscape,cssMediaType
 syn region sassInclude start="@import" end=";\|$" contains=scssComment,cssStringQ,cssStringQQ,cssURL,cssUnicodeEscape,cssMediaType

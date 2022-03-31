@@ -2835,9 +2835,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     curr->y_size = j;
     xfree(reg->y_array);
   }
-  if (curwin->w_p_rnu) {
-    redraw_later(curwin, SOME_VALID);  // cursor moved to start
-  }
+
   if (message) {  // Display message about yank?
     if (yank_type == kMTCharWise && yanklines == 1) {
       yanklines = 0;
@@ -3895,7 +3893,7 @@ void ex_display(exarg_T *eap)
             msg_puts_attr("^J", attr);
             n -= 2;
           }
-          for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {
+          for (p = yb->y_array[j]; *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len(p);
             msg_outtrans_len(p, clen);
             p += clen - 1;

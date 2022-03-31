@@ -10,10 +10,10 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/extmark.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"
 #include "nvim/screen.h"
-#include "nvim/syntax.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/extmark.c.generated.h"
@@ -467,6 +467,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   as the mark and 'cursorline' is enabled.
 ///                   Note: ranges are unsupported and decorations are only
 ///                   applied to start_row
+///               - conceal: string which should be either empty or a single
+///                   character. Enable concealing similar to |:syn-conceal|.
+///                   When a character is supplied it is used as |:syn-cchar|.
+///                   "hl_group" is used as highlight for the cchar if provided,
+///                   otherwise it defaults to |hl-Conceal|.
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -561,6 +566,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
         goto error;
       }
     }
+  }
+
+  if (opts->conceal.type == kObjectTypeString) {
+    String c = opts->conceal.data.string;
+    decor.conceal = true;
+    if (c.size) {
+      decor.conceal_char = utf_ptr2char((const char_u *)c.data);
+    }
+  } else if (HAS_KEY(opts->conceal)) {
+    api_set_error(err, kErrorTypeValidation, "conceal is not a String");
+    goto error;
   }
 
   if (opts->virt_text.type == kObjectTypeArray) {
@@ -856,7 +872,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 
   int hl_id = 0;
   if (hl_group.size > 0) {
-    hl_id = syn_check_group(hl_group.data, (int)hl_group.size);
+    hl_id = syn_check_group(hl_group.data, hl_group.size);
   } else {
     return ns_id;
   }

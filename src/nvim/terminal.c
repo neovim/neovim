@@ -55,6 +55,7 @@
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/keymap.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
@@ -70,7 +71,6 @@
 #include "nvim/os/input.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
-#include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -317,10 +317,14 @@ void terminal_close(Terminal *term, int status)
       term->opts.close_cb(term->opts.data);
     }
   } else if (!only_destroy) {
-    // This was called by channel_process_exit_cb() not in process_teardown().
+    // Associated channel has been closed and the editor is not exiting.
     // Do not call the close callback now. Wait for the user to press a key.
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    if (((Channel *)term->opts.data)->streamtype == kChannelStreamInternal) {
+      snprintf(msg, sizeof msg, "\r\n[Terminal closed]");
+    } else {
+      snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
+    }
     terminal_receive(term, msg, strlen(msg));
   }
 
@@ -1284,7 +1288,7 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
-  // ignore left release action if it was not proccessed above
+  // ignore left release action if it was not processed above
   // to prevent leaving Terminal mode after entering to it using a mouse
   if (c == K_LEFTRELEASE && mouse_win->w_buffer->terminal == term) {
     return false;

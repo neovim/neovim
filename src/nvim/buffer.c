@@ -51,6 +51,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
@@ -589,6 +590,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   // Remove the buffer from the list.
   if (wipe_buf) {
+    // Do not wipe out the buffer if it is used in a window.
+    if (buf->b_nwindows > 0) {
+      return false;
+    }
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     } else {
@@ -1041,8 +1046,24 @@ static int empty_curbuf(int close_others, int forceit, int action)
   set_bufref(&bufref, buf);
 
   if (close_others) {
-    // Close any other windows on this buffer, then make it empty.
-    close_windows(buf, true);
+    bool can_close_all_others = true;
+    if (curwin->w_floating) {
+      // Closing all other windows with this buffer may leave only floating windows.
+      can_close_all_others = false;
+      for (win_T *wp = firstwin; !wp->w_floating; wp = wp->w_next) {
+        if (wp->w_buffer != curbuf) {
+          // Found another non-floating window with a different (probably unlisted) buffer.
+          // Closing all other windows with this buffer is fine in this case.
+          can_close_all_others = true;
+          break;
+        }
+      }
+    }
+    // If it is fine to close all other windows with this buffer, keep the current window and
+    // close any other windows with this buffer, then make it empty.
+    // Otherwise close_windows() will refuse to close the last non-floating window, so allow it
+    // to close the current window instead.
+    close_windows(buf, can_close_all_others);
   }
 
   setpcmark();
@@ -1223,11 +1244,12 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
 
     // If the deleted buffer is the current one, close the current window
-    // (unless it's the only window).  Repeat this so long as we end up in
-    // a window with this buffer.
+    // (unless it's the only non-floating window).
+    // When the autocommand window is involved win_close() may need to print an error message.
+    // Repeat this so long as we end up in a window with this buffer.
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
-           && (!ONE_WINDOW || first_tabpage->tp_next != NULL)) {
+           && (lastwin == aucmd_win || !last_window(curwin))) {
       if (win_close(curwin, false, false) == FAIL) {
         break;
       }
@@ -1266,8 +1288,10 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       while (jumpidx != curwin->w_jumplistidx) {
         buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
         if (buf != NULL) {
-          if (buf == curbuf || !buf->b_p_bl) {
-            buf = NULL;                 // skip current and unlisted bufs
+          // Skip current and unlisted bufs.  Also skip a quickfix
+          // buffer, it might be deleted soon.
+          if (buf == curbuf || !buf->b_p_bl || bt_quickfix(buf)) {
+            buf = NULL;
           } else if (buf->b_ml.ml_mfp == NULL) {
             // skip unloaded buf, but may keep it for later
             if (bp == NULL) {
@@ -1305,7 +1329,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
           continue;
         }
         // in non-help buffer, try to skip help buffers, and vv
-        if (buf->b_help == curbuf->b_help && buf->b_p_bl) {
+        if (buf->b_help == curbuf->b_help && buf->b_p_bl && !bt_quickfix(buf)) {
           if (buf->b_ml.ml_mfp != NULL) {           // found loaded buffer
             break;
           }
@@ -1325,7 +1349,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     if (buf == NULL) {          // No loaded buffer, find listed one
       FOR_ALL_BUFFERS(buf2) {
-        if (buf2->b_p_bl && buf2 != curbuf) {
+        if (buf2->b_p_bl && buf2 != curbuf && !bt_quickfix(buf2)) {
           buf = buf2;
           break;
         }
@@ -1336,6 +1360,9 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
         buf = curbuf->b_next;
       } else {
         buf = curbuf->b_prev;
+      }
+      if (bt_quickfix(buf)) {
+        buf = NULL;
       }
     }
   }
@@ -1468,8 +1495,15 @@ void set_curbuf(buf_T *buf, int action)
   // An autocommand may have deleted "buf", already entered it (e.g., when
   // it did ":bunload") or aborted the script processing!
   // If curwin->w_buffer is null, enter_buffer() will make it valid again
-  if ((buf_valid(buf) && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
-    enter_buffer(buf);
+  bool valid = buf_valid(buf);
+  if ((valid && buf != curbuf && !aborting()) || curwin->w_buffer == NULL) {
+    // If the buffer is not valid but curwin->w_buffer is NULL we must
+    // enter some buffer.  Using the last one is hopefully OK.
+    if (!valid) {
+      enter_buffer(lastbuf);
+    } else {
+      enter_buffer(buf);
+    }
     if (old_tw != curbuf->b_p_tw) {
       check_colorcolumn(curwin);
     }
@@ -4947,8 +4981,8 @@ void ex_buffer_all(exarg_T *eap)
       wpnext = wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
            || ((cmdmod.split & WSP_VERT)
-               ? wp->w_height + wp->w_status_height < Rows - p_ch
-               - tabline_height()
+               ? wp->w_height + wp->w_hsep_height + wp->w_status_height < Rows - p_ch
+               - tabline_height() - global_stl_height()
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
@@ -5333,16 +5367,12 @@ bool buf_hide(const buf_T *const buf)
 char_u *buf_spname(buf_T *buf)
 {
   if (bt_quickfix(buf)) {
-    win_T *win;
-    tabpage_T *tp;
-
-    // For location list window, w_llist_ref points to the location list.
-    // For quickfix window, w_llist_ref is NULL.
-    if (find_win_for_buf(buf, &win, &tp) && win->w_llist_ref != NULL) {
-      return (char_u *)_(msg_loclist);
-    } else {
+    // Differentiate between the quickfix and location list buffers using
+    // the buffer number stored in the global quickfix stack.
+    if (buf->b_fnum == qf_stack_get_bufnr()) {
       return (char_u *)_(msg_qflist);
     }
+    return (char_u *)_(msg_loclist);
   }
   // There is no _file_ when 'buftype' is "nofile", b_sfname
   // contains the name as specified by the user.
@@ -5485,6 +5515,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
       buf->b_signcols.max++;
     }
     buf->b_signcols.size++;
+    redraw_buf_later(buf, NOT_VALID);
     return;
   }
 
@@ -5505,6 +5536,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
     buf->b_signcols.size = linesum;
     buf->b_signcols.max = linesum;
     buf->b_signcols.sentinel = added->se_lnum;
+    redraw_buf_later(buf, NOT_VALID);
   }
 }
 

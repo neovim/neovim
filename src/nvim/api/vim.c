@@ -35,6 +35,7 @@
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
@@ -50,7 +51,6 @@
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
-#include "nvim/syntax.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -112,7 +112,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 Integer nvim_get_hl_id_by_name(String name)
   FUNC_API_SINCE(7)
 {
-  return syn_check_group(name.data, (int)name.size);
+  return syn_check_group(name.data, name.size);
 }
 
 Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
@@ -123,33 +123,31 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
   abort();
 }
 
-/// Set a highlight group.
+/// Sets a highlight group.
 ///
-/// Note: unlike the `:highlight` command which can update a highlight group,
+/// Note: Unlike the `:highlight` command which can update a highlight group,
 /// this function completely replaces the definition. For example:
-/// `nvim_set_hl(0, 'Visual', {})` will clear the highlight group 'Visual'.
+/// ``nvim_set_hl(0, 'Visual', {})`` will clear the highlight group 'Visual'.
 ///
-/// @param ns_id number of namespace for this highlight. Use value 0
-///              to set a highlight group in the global (`:highlight`)
-///              namespace.
-/// @param name highlight group name, like ErrorMsg
-/// @param val highlight definition map, like |nvim_get_hl_by_name|.
-///            in addition the following keys are also recognized:
-///              `default`: don't override existing definition,
-///                         like `hi default`
-///              `ctermfg`: sets foreground of cterm color
-///              `ctermbg`: sets background of cterm color
-///              `cterm`  : cterm attribute map. sets attributed for
-///                         cterm colors. similer to `hi cterm`
-///                         Note: by default cterm attributes are
-///                               same as attributes of gui color
+/// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
+///              Use 0 to set a highlight group globally |:highlight|.
+/// @param name  Highlight group name, e.g. "ErrorMsg"
+/// @param val   Highlight definition map, like |synIDattr()|. In
+///              addition, the following keys are recognized:
+///                - default: Don't override existing definition |:hi-default|
+///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
+///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
+///                - cterm: cterm attribute map, like
+///                  |highlight-args|.
+///                  Note: Attributes default to those set for `gui`
+///                        if not set.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
 void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
 {
-  int hl_id = syn_check_group(name.data, (int)name.size);
+  int hl_id = syn_check_group(name.data, name.size);
   int link_id = -1;
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
@@ -221,7 +219,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   bool execute = false;
   bool dangerous = false;
 
-  for (size_t i = 0; i < mode.size; ++i) {
+  for (size_t i = 0; i < mode.size; i++) {
     switch (mode.data[i]) {
     case 'n':
       remap = false; break;
@@ -1140,6 +1138,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
   chan->stream.internal.cb = cb;
+  chan->stream.internal.closed = false;
   topts.data = chan;
   // NB: overridden in terminal_check_size if a window is already
   // displaying the buffer
@@ -1329,7 +1328,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
-      assert(data.size <= INT_MAX);
+      assert(s.size <= INT_MAX);
       AppendToRedobuffLit((char_u *)s.data, (int)s.size);
       // readfile()-style: "\n" is indicated by presence of N+1 item.
       if (i + 1 < lines.size) {
@@ -1881,7 +1880,7 @@ static void write_msg(String message, bool to_err)
   } \
   line_buf[pos++] = message.data[i];
 
-  ++no_wait_return;
+  no_wait_return++;
   for (uint32_t i = 0; i < message.size; i++) {
     if (got_int) {
       break;
@@ -1892,7 +1891,7 @@ static void write_msg(String message, bool to_err)
       PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
   }
-  --no_wait_return;
+  no_wait_return--;
   msg_end();
 }
 
@@ -1997,9 +1996,8 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     DLOG("fallback to vim._os_proc_children()");
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
-    String s = cstr_to_string("return vim._os_proc_children(...)");
+    String s = STATIC_CSTR_AS_STRING("return vim._os_proc_children(...)");
     Object o = nlua_exec(s, a, err);
-    api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
       rvobj = o.data.array;
@@ -2331,7 +2329,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     maxwidth = (int)opts->maxwidth.data.integer;
   } else {
-    maxwidth = use_tabline ? Columns : wp->w_width;
+    maxwidth = (use_tabline || global_stl_height() > 0) ? Columns : wp->w_width;
   }
 
   char buf[MAXPATHL];

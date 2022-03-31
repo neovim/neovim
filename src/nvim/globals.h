@@ -342,6 +342,9 @@ EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
 
+// ID of the client channel. Used by ui client
+EXTERN uint64_t ui_client_channel_id INIT(= 0);
+
 EXTERN bool did_source_packages INIT(= false);
 
 // Scope information for the code that indirectly triggered the current
@@ -357,6 +360,11 @@ EXTERN int provider_call_nesting INIT(= 0);
 
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
+
+// Flags to indicate an additional string for highlight name completion.
+EXTERN int include_none INIT(= 0);     // when 1 include "None"
+EXTERN int include_default INIT(= 0);  // when 1 include "default"
+EXTERN int include_link INIT(= 0);     // when 2 include "link" and "clear"
 
 // When highlight_match is true, highlight a match, starting at the cursor
 // position.  Search_match_lines is the number of lines after the match (0 for
@@ -445,10 +453,11 @@ EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
 EXTERN frame_T *topframe;      // top of the window frame tree
 
 // Tab pages are alternative topframes.  "first_tabpage" points to the first
-// one in the list, "curtab" is the current one.
+// one in the list, "curtab" is the current one. "lastused_tabpage" is the
+// last used one.
 EXTERN tabpage_T *first_tabpage;
-EXTERN tabpage_T *lastused_tabpage;
 EXTERN tabpage_T *curtab;
+EXTERN tabpage_T *lastused_tabpage;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list

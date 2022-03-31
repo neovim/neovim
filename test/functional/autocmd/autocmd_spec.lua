@@ -398,6 +398,25 @@ describe('autocmd', function()
     ]])
   end)
 
+  describe('closing last non-floating window in tab from `aucmd_win`', function()
+    before_each(function()
+      command('edit Xa.txt')
+      command('tabnew Xb.txt')
+      command('autocmd BufAdd Xa.txt 1close')
+    end)
+
+    it('gives E814 when there are no other floating windows', function()
+      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+         pcall_err(command, 'doautoall BufAdd'))
+    end)
+
+    it('gives E814 when there are other floating windows', function()
+      meths.open_win(0, true, {width = 10, height = 10, relative = 'editor', row = 10, col = 10})
+      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+         pcall_err(command, 'doautoall BufAdd'))
+    end)
+  end)
+
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
     local screen = Screen.new(32, 3)
     screen:attach()

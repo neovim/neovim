@@ -5,10 +5,10 @@
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/move.h"
 #include "nvim/screen.h"
-#include "nvim/syntax.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -312,6 +312,10 @@ next_mark:
 
   int attr = 0;
   size_t j = 0;
+  bool conceal = 0;
+  int conceal_char = 0;
+  int conceal_attr = 0;
+
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
     bool active = false, keep = true;
@@ -336,6 +340,14 @@ next_mark:
     if (active && item.attr_id > 0) {
       attr = hl_combine_attr(attr, item.attr_id);
     }
+    if (active && item.decor.conceal) {
+      conceal = true;
+      if (item.start_row == state->row && item.start_col == col && item.decor.conceal_char) {
+        conceal_char = item.decor.conceal_char;
+        state->col_until = MIN(state->col_until, item.start_col);
+        conceal_attr = item.attr_id;
+      }
+    }
     if ((item.start_row == state->row && item.start_col <= col)
         && kv_size(item.decor.virt_text)
         && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
@@ -349,6 +361,9 @@ next_mark:
   }
   kv_size(state->active) = j;
   state->current = attr;
+  state->conceal = conceal;
+  state->conceal_char = conceal_char;
+  state->conceal_attr = conceal_attr;
   return attr;
 }
 

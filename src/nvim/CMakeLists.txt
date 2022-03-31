@@ -39,6 +39,7 @@ set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
 set(GENERATED_UI_EVENTS_BRIDGE ${GENERATED_DIR}/ui_events_bridge.generated.h)
+set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
 set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
@@ -181,12 +182,15 @@ foreach(sfile ${CONV_SOURCES})
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
-# xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
-list(APPEND CONV_SOURCES ${EXTERNAL_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+
+  # xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
+  set_source_files_properties(
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion")
+
   # gperf generates ANSI-C with incorrect linkage, ignore it.
   check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
   if(HAS_WSTATIC_IN_INLINE)
@@ -271,6 +275,7 @@ foreach(sfile ${NVIM_SOURCES}
               "${GENERATED_UI_EVENTS_REMOTE}"
               "${GENERATED_UI_EVENTS_BRIDGE}"
               "${GENERATED_KEYSETS}"
+              "${GENERATED_UI_EVENTS_CLIENT}"
               )
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
@@ -368,6 +373,7 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${GENERATED_UI_EVENTS_BRIDGE}
          ${GENERATED_UI_EVENTS_METADATA}
+         ${GENERATED_UI_EVENTS_CLIENT}
   COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
                      ${GENERATED_UI_EVENTS}
@@ -375,6 +381,7 @@ add_custom_command(
                      ${GENERATED_UI_EVENTS_REMOTE}
                      ${GENERATED_UI_EVENTS_BRIDGE}
                      ${GENERATED_UI_EVENTS_METADATA}
+                     ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${API_UI_EVENTS_GENERATOR}
     ${GENERATOR_C_GRAMMAR}

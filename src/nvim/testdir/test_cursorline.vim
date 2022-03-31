@@ -268,4 +268,51 @@ END
   call delete('Xtextfile')
 endfunc
 
+func Test_cursorline_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorline
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(2, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcul_timer')
+
+  let buf = RunVimInTerminal('-S Xcul_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorline_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcul_timer')
+endfunc
+
+func Test_cursorline_screenline_update()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, repeat('xyz ', 30))
+      set cursorline cursorlineopt=screenline
+      inoremap <F2> <Cmd>call cursor(1, 1)<CR>
+  END
+  call writefile(lines, 'Xcul_screenline')
+
+  let buf = RunVimInTerminal('-S Xcul_screenline', #{rows: 8})
+  call term_sendkeys(buf, "A")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_1', {})
+  call term_sendkeys(buf, "\<F2>")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xcul_screenline')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

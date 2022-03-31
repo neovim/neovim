@@ -86,7 +86,7 @@ static int openpty(int *amaster, int *aslave, char *name, struct termios *termp,
   ioctl(slave, I_PUSH, "ptem");
   // ldterm provides most of the termio terminal interface
   ioctl(slave, I_PUSH, "ldterm");
-  // ttcompat compatability with older terminal ioctls
+  // ttcompat compatibility with older terminal ioctls
   ioctl(slave, I_PUSH, "ttcompat");
 
   if (termp) {

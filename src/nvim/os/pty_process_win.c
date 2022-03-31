@@ -58,8 +58,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   if (os_has_conpty_working()) {
     if ((conpty_object =
-           os_conpty_init(&in_name, &out_name,
-                          ptyproc->width, ptyproc->height)) != NULL) {
+         os_conpty_init(&in_name, &out_name, ptyproc->width, ptyproc->height)) != NULL) {
       ptyproc->type = kConpty;
     }
   }
@@ -308,7 +307,7 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 /// Build the command line to pass to CreateProcessW.
 ///
 /// @param[in]  argv  Array with string arguments.
-/// @param[out]  cmd_line  Location where saved builded cmd line.
+/// @param[out]  cmd_line  Location where saved built cmd line.
 ///
 /// @returns zero on success, or error code of MultiByteToWideChar function.
 ///

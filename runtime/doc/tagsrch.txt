@@ -544,7 +544,8 @@ also works.  The <CR> and <NL> characters can never appear inside a line.
 
 The second format is new.  It includes additional information in optional
 fields at the end of each line.  It is backwards compatible with Vi.  It is
-only supported by new versions of ctags (such as Exuberant ctags).
+only supported by new versions of ctags (such as Universal ctags or Exuberant
+ctags).
 
 {tagname}	The identifier.  Normally the name of a function, but it can
 		be any identifier.  It cannot contain a <Tab>.
