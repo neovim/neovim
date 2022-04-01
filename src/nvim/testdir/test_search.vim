@@ -925,6 +925,26 @@ func Test_hlsearch_block_visual_match()
   call delete('Xhlsearch_block')
 endfunc
 
+func Test_hlsearch_and_visual()
+  CheckOption hlsearch
+  CheckScreendump
+
+  call writefile([
+	\ 'set hlsearch',
+        \ 'call setline(1, repeat(["xxx yyy zzz"], 3))',
+        \ 'hi Search cterm=bold',
+	\ '/yyy',
+	\ 'call cursor(1, 6)',
+	\ ], 'Xhlvisual_script')
+  let buf = RunVimInTerminal('-S Xhlvisual_script', {'rows': 6, 'cols': 40})
+  call term_sendkeys(buf, "vjj")
+  call VerifyScreenDump(buf, 'Test_hlsearch_visual_1', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xhlvisual_script')
+endfunc
+
 func Test_incsearch_substitute()
   CheckFunction test_override
   CheckOption incsearch
