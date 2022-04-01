@@ -1306,14 +1306,48 @@ describe('CursorLine and CursorLineNr highlights', function()
 end)
 
 describe('CursorColumn highlight', function()
-  before_each(clear)
-  it('is updated if cursor is moved from timer', function()
-    local screen = Screen.new(50, 8)
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 8)
     screen:set_default_attr_ids({
       [1] = {background = Screen.colors.Gray90},  -- CursorColumn
       [2] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+      [3] = {bold = true},  -- ModeMsg
     })
     screen:attach()
+  end)
+
+  it('is updated when pressing "i" on a TAB character', function()
+    exec([[
+      call setline(1, ['123456789', "a\tb"])
+      set cursorcolumn
+      call cursor(2, 2)
+    ]])
+    screen:expect([[
+      1234567{1:8}9                                         |
+      a      ^ b                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      1{1:2}3456789                                         |
+      a^       b                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {3:-- INSERT --}                                      |
+    ]])
+  end)
+
+  it('is updated if cursor is moved from timer', function()
     exec([[
       call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
       set cursorcolumn

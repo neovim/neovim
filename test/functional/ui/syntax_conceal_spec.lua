@@ -256,6 +256,40 @@ describe('Screen', function()
         ]])
       end)
     end) -- a region of text (implicit concealing)
+
+    it("cursor position is correct when entering Insert mode with cocu=ni #13916", function()
+      insert([[foobarfoobarfoobar]])
+      -- move to end of line
+      feed("$")
+      command("set concealcursor=ni")
+      command("syn match Foo /foobar/ conceal cchar=&")
+      screen:expect([[
+        {1:&&&}^                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      feed("i")
+      -- cursor should stay in place, not jump to column 16
+      screen:expect([[
+        {1:&&&}^                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+    end)
   end) -- match and conceal
 
   describe("let the conceal level be", function()
