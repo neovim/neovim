@@ -1532,8 +1532,11 @@ func Test_no_last_search_pattern()
 
   let @/ = ""
   set incsearch
-  " this was causing a crash
-  call feedkeys("//\x14", 'xt')
+  " these were causing a crash
+  call feedkeys("//\<C-G>", 'xt')
+  call feedkeys("//\<C-T>", 'xt')
+  call feedkeys("??\<C-G>", 'xt')
+  call feedkeys("??\<C-T>", 'xt')
 endfunc
 
 
