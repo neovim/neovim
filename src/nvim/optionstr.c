@@ -697,6 +697,10 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (briopt_check(curwin) == FAIL) {
       errmsg = e_invarg;
     }
+    // list setting requires a redraw
+    if (curwin->w_briopt_list) {
+      redraw_all_later(UPD_NOT_VALID);
+    }
   } else if (varp == &p_isi
              || varp == &(curbuf->b_p_isk)
              || varp == &p_isp
@@ -1599,6 +1603,12 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
 
   if (varp == &p_mouse) {
     setmouse();  // in case 'mouse' changed
+  }
+
+  // Changing Formatlistpattern when briopt includes the list setting:
+  // redraw
+  if ((varp == &p_flp || varp == &(curbuf->b_p_flp)) && curwin->w_briopt_list) {
+    redraw_all_later(UPD_NOT_VALID);
   }
 
   if (curwin->w_curswant != MAXCOL
