@@ -2353,17 +2353,20 @@ int autocmd_delete_event(int group, event_T event, char_u *pat)
 bool autocmd_delete_id(int64_t id)
 {
   assert(id > 0);
+  bool success = false;
+
+  // Note that since multiple AutoCmd objects can have the same ID, we need to do a full scan.
   FOR_ALL_AUEVENTS(event) {
     FOR_ALL_AUPATS_IN_EVENT(event, ap) {
       for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
         if (ac->id == id) {
           aucmd_del(ac);
-          return true;
+          success = true;
         }
       }
     }
   }
-  return false;
+  return success;
 }
 
 // ===========================================================================

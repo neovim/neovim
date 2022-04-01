@@ -35,8 +35,8 @@ local keymap = {}
 ---                            Can also be list of modes to create mapping on multiple modes.
 ---@param lhs string          Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
----                            If a Lua function and `opts.expr == true`, returning `nil` or `false`
----                            is equivalent to an empty string.
+---                            If a Lua function and `opts.expr == true`, returning `nil` is
+---                            equivalent to an empty string.
 --
 ---@param opts table A table of |:map-arguments| such as "silent". In addition to the options
 ---                  listed in |nvim_set_keymap()|, this table also accepts the following keys:
@@ -62,7 +62,7 @@ function keymap.set(mode, lhs, rhs, opts)
     local user_rhs = rhs
     rhs = function ()
       local res = user_rhs()
-      if not res then
+      if res == nil then
         -- TODO(lewis6991): Handle this in C?
         return ''
       elseif opts.replace_keycodes ~= false then

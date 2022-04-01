@@ -2025,7 +2025,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     {rhs}   string|function Right-hand side |{rhs}| of the
                             mapping. Can also be a Lua function. If a Lua
                             function and `opts.expr == true`, returning `nil`
-                            or `false` is equivalent to an empty string.
+                            is equivalent to an empty string.
                     {opts}  table A table of |:map-arguments| such as
                             "silent". In addition to the options listed in
                             |nvim_set_keymap()|, this table also accepts the
