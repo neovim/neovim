@@ -64,6 +64,7 @@
 #include "nvim/state.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/testing.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -446,90 +447,6 @@ static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     get_arglist_as_rettv(ARGLIST, ARGCOUNT, rettv);
   }
-}
-
-/// "assert_beeps(cmd [, error])" function
-static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_beeps(argvars, false);
-}
-
-/// "assert_nobeep(cmd [, error])" function
-static void f_assert_nobeep(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_beeps(argvars, true);
-}
-
-/// "assert_equal(expected, actual[, msg])" function
-static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_equal_common(argvars, ASSERT_EQUAL);
-}
-
-/// "assert_equalfile(fname-one, fname-two[, msg])" function
-static void f_assert_equalfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_equalfile(argvars);
-}
-
-/// "assert_notequal(expected, actual[, msg])" function
-static void f_assert_notequal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_equal_common(argvars, ASSERT_NOTEQUAL);
-}
-
-/// "assert_report(msg)
-static void f_assert_report(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  garray_T ga;
-
-  prepare_assert_error(&ga);
-  ga_concat(&ga, tv_get_string(&argvars[0]));
-  assert_error(&ga);
-  ga_clear(&ga);
-  rettv->vval.v_number = 1;
-}
-
-/// "assert_exception(string[, msg])" function
-static void f_assert_exception(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_exception(argvars);
-}
-
-/// "assert_fails(cmd [, error [, msg]])" function
-static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_fails(argvars);
-}
-
-// "assert_false(actual[, msg])" function
-static void f_assert_false(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_bool(argvars, false);
-}
-
-/// "assert_inrange(lower, upper[, msg])" function
-static void f_assert_inrange(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_inrange(argvars);
-}
-
-/// "assert_match(pattern, actual[, msg])" function
-static void f_assert_match(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_match_common(argvars, ASSERT_MATCH);
-}
-
-/// "assert_notmatch(pattern, actual[, msg])" function
-static void f_assert_notmatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_match_common(argvars, ASSERT_NOTMATCH);
-}
-
-/// "assert_true(actual[, msg])" function
-static void f_assert_true(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = assert_bool(argvars, true);
 }
 
 /// "atan2()" function
@@ -10894,24 +10811,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   channel_terminal_open(curbuf, chan);
   channel_create_event(chan, NULL);
-}
-
-/// "test_garbagecollect_now()" function
-static void f_test_garbagecollect_now(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  // This is dangerous, any Lists and Dicts used internally may be freed
-  // while still in use.
-  garbage_collect(true);
-}
-
-/// "test_write_list_log()" function
-static void f_test_write_list_log(typval_T *const argvars, typval_T *const rettv, FunPtr fptr)
-{
-  const char *const fname = tv_get_string_chk(&argvars[0]);
-  if (fname == NULL) {
-    return;
-  }
-  list_write_log(fname);
 }
 
 /// "timer_info([timer])" function
