@@ -930,7 +930,22 @@ func Test_no_extra_indent()
   \ "~                   ",
   \ ]
   let lines = s:screen_lines2(1, 4, 20)
-  " 3) add something in front, no additional indent
+  " 3) no local formatlist pattern,
+  " so use global one -> indent
+  let g_flp = &g:flp
+  let &g:formatlistpat='^\s*\d\+\.\s\+'
+  let &l:formatlistpat=''
+  let expect = [
+  \ "  1. word word word ",
+  \ "     word word word ",
+  \ "     word word      ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  call s:compare_lines(expect, lines)
+  let &g:flp = g_flp
+  let &l:formatlistpat='^\s*\d\+\.'
+  " 4) add something in front, no additional indent
   norm! gg0
   exe ":norm! 5iword \<esc>"
   redraw!
