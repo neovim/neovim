@@ -1527,4 +1527,14 @@ func Test_incsearch_highlighting_newline()
   bw
 endfunc
 
+func Test_no_last_search_pattern()
+  CheckOption incsearch
+
+  let @/ = ""
+  set incsearch
+  " this was causing a crash
+  call feedkeys("//\x14", 'xt')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
