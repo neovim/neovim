@@ -1486,7 +1486,7 @@ static void ins_redraw(bool ready)
 
   // Trigger CursorMoved if the cursor moved.  Not when the popup menu is
   // visible, the command might delete it.
-  if (ready && (has_event(EVENT_CURSORMOVEDI) || curwin->w_p_cole > 0)
+  if (ready && has_event(EVENT_CURSORMOVEDI)
       && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)
       && !pum_visible()) {
     // Need to update the screen first, to make sure syntax
@@ -1496,12 +1496,10 @@ static void ins_redraw(bool ready)
     if (syntax_present(curwin) && must_redraw) {
       update_screen(0);
     }
-    if (has_event(EVENT_CURSORMOVEDI)) {
-      // Make sure curswant is correct, an autocommand may call
-      // getcurpos()
-      update_curswant();
-      ins_apply_autocmds(EVENT_CURSORMOVEDI);
-    }
+    // Make sure curswant is correct, an autocommand may call
+    // getcurpos()
+    update_curswant();
+    ins_apply_autocmds(EVENT_CURSORMOVEDI);
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
