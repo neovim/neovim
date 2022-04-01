@@ -597,6 +597,28 @@ func Test_cursorline_with_visualmode()
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
 
+func Test_cursorcolumn_insert_on_tab()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['123456789', "a\tb"])
+    set cursorcolumn
+    call cursor(2, 2)
+  END
+  call writefile(lines, 'Xcuc_insert_on_tab')
+
+  let buf = RunVimInTerminal('-S Xcuc_insert_on_tab', #{rows: 8})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_1', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_insert_on_tab')
+endfunc
+
 func Test_cursorcolumn_callback()
   CheckScreendump
   CheckFeature timers

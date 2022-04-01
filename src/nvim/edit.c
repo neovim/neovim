@@ -390,9 +390,13 @@ static void insert_enter(InsertState *s)
   trigger_modechanged();
   stop_insert_mode = false;
 
-  // Need to recompute the cursor position, it might move when the cursor is
-  // on a TAB or special character.
-  curs_columns(curwin, true);
+  // Need to recompute the cursor position, it might move when the cursor
+  // is on a TAB or special character.
+  // ptr2cells() treats a TAB character as double-width.
+  if (ptr2cells(get_cursor_pos_ptr()) > 1) {
+    curwin->w_valid &= ~VALID_VIRTCOL;
+    curs_columns(curwin, true);
+  }
 
   // Enable langmap or IME, indicated by 'iminsert'.
   // Note that IME may enabled/disabled without us noticing here, thus the
