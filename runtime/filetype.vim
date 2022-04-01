@@ -568,6 +568,9 @@ au BufNewFile,BufRead *.edn
 " EditorConfig (close enough to dosini)
 au BufNewFile,BufRead .editorconfig		setf dosini
 
+" Elvish
+au BufNewFile,BufRead *.elv			setf elvish
+
 " Embedix Component Description
 au BufNewFile,BufRead *.ecd			setf ecd
 
