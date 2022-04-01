@@ -1527,4 +1527,31 @@ func Test_incsearch_highlighting_newline()
   bw
 endfunc
 
+func Test_no_last_search_pattern()
+  CheckOption incsearch
+
+  let @/ = ""
+  set incsearch
+  " these were causing a crash
+  call feedkeys("//\<C-G>", 'xt')
+  call feedkeys("//\<C-T>", 'xt')
+  call feedkeys("??\<C-G>", 'xt')
+  call feedkeys("??\<C-T>", 'xt')
+endfunc
+
+func Test_search_with_invalid_range()
+  new
+  let lines =<< trim END
+    /\%.v
+    5/
+    c
+  END
+  call writefile(lines, 'Xrangesearch')
+  source Xrangesearch
+
+  bwipe!
+  call delete('Xrangesearch')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
