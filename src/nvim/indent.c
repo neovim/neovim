@@ -789,16 +789,22 @@ int get_breakindent_win(win_T *wp, char_u *line)
   static long *prev_vts = NULL;  // Cached vartabs values.
   static int prev_list = 0;  // cached list value
   static int prev_listopt = 0;  // cached w_p_briopt_list value
+  static char *prev_flp = NULL;  // cached formatlistpat value
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner -
                          ((wp->w_p_nu || wp->w_p_rnu)
                           && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL) ? number_width(wp) + 1 : 0);
 
-  // used cached indent, unless line, 'tabstop' or briopt_list changed
+  // used cached indent, unless
+  // - line pointer changed
+  // - 'tabstop' changed
+  // - 'briopt_list changed' changed or
+  // - 'formatlistpattern' changed
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
       || prev_tick != buf_get_changedtick(wp->w_buffer)
       || prev_listopt != wp->w_briopt_list
+      || (prev_flp == NULL || (strcmp(prev_flp, get_flp_value(wp->w_buffer)) != 0))
       || prev_vts != wp->w_buffer->b_p_vts_array) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
@@ -809,11 +815,13 @@ int get_breakindent_win(win_T *wp, char_u *line)
                                       wp->w_buffer->b_p_vts_array,
                                       wp->w_p_list);
     prev_listopt = wp->w_briopt_list;
+    prev_list = 0;
+    xfree(prev_flp);
+    prev_flp = xstrdup(get_flp_value(wp->w_buffer));
     // add additional indent for numbered lists
     if (wp->w_briopt_list != 0) {
       regmatch_T regmatch = {
-        .regprog = vim_regcomp(curbuf->b_p_flp,
-                               RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
+        .regprog = vim_regcomp(prev_flp, RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
       };
       if (regmatch.regprog != NULL) {
         regmatch.rm_ic = false;

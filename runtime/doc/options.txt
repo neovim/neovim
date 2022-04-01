@@ -1053,6 +1053,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			    text should normally be narrower. This prevents
 			    text indented almost to the right window border
 			    occupying lot of vertical space when broken.
+			    (default: 20)
 		shift:{n}   After applying 'breakindent', the wrapped line's
 			    beginning will be shifted by the given number of
 			    characters.  It permits dynamic French paragraph

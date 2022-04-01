@@ -889,4 +889,61 @@ func Test_window_resize_with_linebreak()
   %bw!
 endfunc
 
+func Test_no_spurious_match()
+  let s:input = printf('- y %s y %s', repeat('x', 50), repeat('x', 50))
+  call s:test_windows('setl breakindent breakindentopt=list:-1 formatlistpat=^- hls')
+  let @/ = '\%>3v[y]'
+  redraw!
+  call searchcount().total->assert_equal(1)
+  " cleanup
+  set hls&vim
+  let s:input = "\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+  bwipeout!
+endfunc
+
+func Test_no_extra_indent()
+  call s:test_windows('setl breakindent breakindentopt=list:-1,min:10')
+  %d
+  let &l:formatlistpat='^\s*\d\+\.\s\+'
+  let text = 'word '
+  let len = text->strcharlen()
+  let line1 = text->repeat((winwidth(0) / len) * 2)
+  let line2 = repeat(' ', 2) .. '1. ' .. line1
+  call setline(1, [line2])
+  redraw!
+  " 1) matches formatlist pattern, so indent
+  let expect = [
+  \ "  1. word word word ",
+  \ "     word word word ",
+  \ "     word word      ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  call s:compare_lines(expect, lines)
+  " 2) change formatlist pattern
+  " -> indent adjusted
+  let &l:formatlistpat='^\s*\d\+\.'
+  let expect = [
+  \ "  1. word word word ",
+  \ "    word word word  ",
+  \ "    word word       ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 4, 20)
+  " 3) add something in front, no additional indent
+  norm! gg0
+  exe ":norm! 5iword \<esc>"
+  redraw!
+  let expect = [
+  \ "word word word word ",
+  \ "word   1. word word ",
+  \ "word word word word ",
+  \ "word word           ",
+  \ "~                   ",
+  \ ]
+  let lines = s:screen_lines2(1, 5, 20)
+  call s:compare_lines(expect, lines)
+  bwipeout!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
