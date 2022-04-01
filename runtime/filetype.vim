@@ -568,9 +568,6 @@ au BufNewFile,BufRead *.edn
 " EditorConfig (close enough to dosini)
 au BufNewFile,BufRead .editorconfig		setf dosini
 
-" Elvish
-au BufNewFile,BufRead *.elv			setf elvish
-
 " Embedix Component Description
 au BufNewFile,BufRead *.ecd			setf ecd
 
@@ -588,6 +585,9 @@ au BufNewFile,BufRead *.elm			setf elm
 
 " Elm Filter Rules file
 au BufNewFile,BufRead filter-rules		setf elmfilt
+
+" Elvish
+au BufNewFile,BufRead *.elv			setf elvish
 
 " ESMTP rc file
 au BufNewFile,BufRead *esmtprc			setf esmtprc
