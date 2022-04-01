@@ -1539,5 +1539,19 @@ func Test_no_last_search_pattern()
   call feedkeys("??\<C-T>", 'xt')
 endfunc
 
+func Test_search_with_invalid_range()
+  new
+  let lines =<< trim END
+    /\%.v
+    5/
+    c
+  END
+  call writefile(lines, 'Xrangesearch')
+  source Xrangesearch
+
+  bwipe!
+  call delete('Xrangesearch')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
