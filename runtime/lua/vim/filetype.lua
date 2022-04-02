@@ -177,6 +177,7 @@ local extension = {
   leex = "eelixir",
   exs = "elixir",
   elm = "elm",
+  elv = "elvish",
   epp = "epuppet",
   erl = "erlang",
   hrl = "erlang",
