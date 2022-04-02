@@ -602,6 +602,7 @@ Short explanation of each option:		*option-list*
 'allowrevins'	  'ari'     allow CTRL-_ in Insert and Command-line mode
 'ambiwidth'	  'ambw'    what to do with Unicode chars of ambiguous width
 'autochdir'	  'acd'     change directory to the file in the current window
+'autoshelldir'	  'asd'     change directory to the shell's current directory
 'arabic'	  'arab'    for Arabic as a default second language
 'arabicshape'	  'arshape' do shaping for Arabic characters
 'autoindent'	  'ai'	    take indent for new line from previous line

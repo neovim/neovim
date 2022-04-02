@@ -269,6 +269,8 @@ if exists("+autochdir")
   call append("$", "autochdir\tchange to directory of file in buffer")
   call <SID>BinOptionG("acd", &acd)
 endif
+call append("$", "autoshelldir\tchange to pwd of shell in terminal buffer")
+call <SID>BinOptionG("asd", &asd)
 call append("$", "wrapscan\tsearch commands wrap around the end of the buffer")
 call <SID>BinOptionG("ws", &ws)
 call append("$", "incsearch\tshow match for partly typed search command")
