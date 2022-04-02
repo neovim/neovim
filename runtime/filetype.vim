@@ -416,6 +416,9 @@ au BufNewFile,BufRead *.ex call dist#ft#ExCheck()
 au BufRead,BufNewFile mix.lock,*.exs setf elixir
 au BufRead,BufNewFile *.eex,*.leex setf eelixir
 
+" Elvish
+au BufRead,BufNewFile *.elv setf elvish
+
 " Euphoria 3 or 4
 au BufNewFile,BufRead *.eu,*.ew,*.exu,*.exw  call dist#ft#EuphoriaCheck()
 if has("fname_case")
