@@ -46,12 +46,14 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
@@ -152,6 +154,111 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
+/// URL decoding (also know as Percent-encoding).
+///
+/// Note this function currently is only used for decoding shell's
+/// OSC 7 escape sequence which we can assume all bytes are valid
+/// UTF-8 bytes. Thus we don't need to deal with invalid UTF-8
+/// encoding bytes like 0xfe, 0xff.
+static size_t url_decode(const char *src, const size_t len, char_u *dst)
+{
+  size_t i = 0, j = 0;
+
+  while (i < len) {
+    if (src[i] == '%' && i + 2 < len) {
+      dst[j] = (char_u)hexhex2nr((char_u *)&src[i + 1]);
+      j++;
+      i += 3;
+    } else {
+      dst[j] = (char_u)src[i];
+      i++;
+      j++;
+    }
+  }
+  dst[j] = '\0';
+  return j;
+}
+
+/// Sync terminal buffer's cwd with shell's pwd with the help of OSC 7.
+///
+/// The OSC 7 sequence has the format of
+/// "\033]7;file://HOSTNAME/CURRENT/DIR\033\\"
+static void sync_shell_dir(const char *command, size_t cmdlen, void *user)
+{
+  Terminal *term = (Terminal *)user;
+
+  size_t offset = strlen("file://");
+  const char *pos = command + offset;
+  char_u *new_dir;
+
+  // remove HOSTNAME to get PWD
+  while (offset < cmdlen && *pos != '/') {
+    offset += 1;
+    pos += 1;
+  }
+
+  // remove any number of superfluous slashes
+  while (offset < cmdlen && *(pos + 1) == *pos) {
+    offset += 1;
+    pos += 1;
+  }
+
+  if (offset >= cmdlen) {
+    semsg(_("E1179: Failed to extract PWD from %s, check your shell's config related to OSC 7"),
+          command);
+    return;
+  }
+
+  new_dir = xmalloc(cmdlen - offset);
+  url_decode(pos, cmdlen - offset - 2, new_dir);
+
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+
+  varnumber_T pid = tv_dict_get_number(buf->b_vars, "terminal_job_pid");
+  char *cmd = tv_dict_get_string(buf->b_vars, "terminal_job_cmd", true);
+
+  buf_name_for_term(NameBuff, sizeof(NameBuff), new_dir, pid, cmd);
+
+  String dir = cstr_to_string((char *)new_dir);
+  Error err = ERROR_INIT;
+  dict_set_var(curbuf->b_vars, STATIC_CSTR_AS_STRING("terminal_job_cwd"),
+               STRING_OBJ(dir), false, false, &err);
+  api_clear_error(&err);
+
+  xfree(buf->b_ffname);
+  buf->b_ffname = vim_strsave(NameBuff);
+
+  if (vim_chdirfile(curbuf->b_ffname, kCdCauseAuto) == OK) {
+    last_chdir_reason = "autoshelldir";
+    shorten_fnames(true);
+  }
+  api_free_string(dir);
+  xfree(cmd);
+  xfree(new_dir);
+}
+
+/// Called by libvterm when it cannot recognize an OSC sequence.
+/// We recognize a terminal API command.
+static int parse_osc(const char *command, size_t cmdlen, void *user)
+{
+  // We recognize only OSC 7 ; {command}
+  if (p_asd && atoi(command) == 7) {
+    sync_shell_dir(command + 2, cmdlen, user);
+    return 1;
+  }
+  return 0;
+}
+
+static VTermParserCallbacks vterm_fallbacks = {
+  .text = NULL,
+  .control = NULL,
+  .escape = NULL,
+  .csi = NULL,
+  .osc = parse_osc,
+  .dcs = NULL,
+  .resize = NULL,
+};
+
 static PMap(ptr_t) invalidated_terminals = MAP_INIT;
 
 void terminal_init(void)
@@ -200,6 +307,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   vterm_set_utf8(rv->vt, 1);
   // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
+  vterm_state_set_unrecognised_fallbacks(state, &vterm_fallbacks, rv);
   // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
   vterm_screen_enable_altscreen(rv->vts, true);

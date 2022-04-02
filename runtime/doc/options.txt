@@ -617,6 +617,22 @@ A jump table for the options with a short description can be found at |Q_op|.
 	or selected.
 	Note: When this option is on some plugins may not work.
 
+			*'autoshelldir'* *'asd'* *'noautoshelldir'* *'noasd'*
+'autoshelldir' 'asd'	boolean (default off)
+			global
+	When on, Vim will change the current working directory whenever you
+	change the directory of the shell running in a terminal window. You
+	need proper setting-up, so whenever the shell's pwd changes an OSC 7
+	escape sequence will be emitted. For example, with zsh, you can add
+	the following to your zshrc:
+		if [[ ! -v chpwd_functions ]]; then
+		    chpwd_functions=()
+		fi
+		function print_osc7 () {
+		    printf "\033]7;file://$HOST/$PWD\033\\"
+		}
+		chpwd_functions+=print_osc7
+
 				*'arabic'* *'arab'* *'noarabic'* *'noarab'*
 'arabic' 'arab'		boolean (default off)
 			local to window

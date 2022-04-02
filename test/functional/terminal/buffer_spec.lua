@@ -5,6 +5,7 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
+local funcs, meths = helpers.funcs, helpers.meths
 local write_file = helpers.write_file
 local command = helpers.command
 local exc_exec = helpers.exc_exec
@@ -297,6 +298,21 @@ describe(':terminal buffer', function()
     feed('<c-\\><c-n>')
     feed_command('put a')  -- register a is empty
     helpers.assert_alive()
+  end)
+
+  it('supports #OSC7', function()
+    command('set autoshelldir')
+    command('split')
+    command('enew')
+    local term = meths.open_term(0, {})
+    -- cwd will be inserted in a file URI, which cannot contain backslashes
+    local cwd = funcs.getcwd():gsub('\\', '/')
+    local parent = cwd:match('^(.+/)')
+    meths.chan_send(term, '\027]7;file://host' .. parent .. '\027\\')
+    -- expected is parent, without final separator
+    eq(parent:match("^(.+)/"), funcs.getcwd():gsub('\\', '/'))
+    -- parent might not contain a drive letter, but terminal_job_cwd has to
+    eq(parent:match("/.+/"), meths.buf_get_var(0, 'terminal_job_cwd'))
   end)
 end)
 

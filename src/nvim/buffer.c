@@ -2835,6 +2835,13 @@ void buf_name_changed(buf_T *buf)
   ml_timestamp(buf);            // reset timestamp
 }
 
+/// Generate a terminal buffer name of the form "term://$CWD//$PID:$CMD" in buf.
+void buf_name_for_term(char_u *buf, size_t size, const char_u *cwd, varnumber_T pid,
+                       const char *cmd)
+{
+  snprintf((char *)buf, size, "term://%s//%li:%s", cwd, (long int)pid, cmd);
+}
+
 /// Set alternate file name for current window
 ///
 /// Used by do_one_cmd(), do_write() and do_ecmd().
