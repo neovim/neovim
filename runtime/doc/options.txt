@@ -921,7 +921,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Note that environment variables are not expanded.  If you want to use
 	$HOME you must expand it explicitly, e.g.: >
-		:let backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
+		:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 
 <	Note that the default also makes sure that "crontab -e" works (when a
 	backup would be made by renaming the original file crontab won't see
