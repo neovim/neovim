@@ -2133,7 +2133,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor	horizontally, height of windows is not affected
 		both	width and height of windows is affected
 
-						*'emoji'* *'emo'*
+					*'emoji'* *'emo'* *'noemoji'* *'noemo'*
 'emoji' 'emo'	boolean (default: on)
 			global
 	When on all Unicode emoji characters are considered to be full width.
@@ -6429,7 +6429,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
 	For further details see |arabic.txt|.
 
-						*'termguicolors'* *'tgc'*
+			*'termguicolors'* *'tgc'* *'notermguicolors'* *'notgc'*
 'termguicolors' 'tgc'	boolean (default off)
 			global
 	Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|
