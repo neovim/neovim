@@ -169,11 +169,19 @@ function M.parse_query(lang, query)
     return cached
   else
     local self = setmetatable({}, Query)
-    self.query = vim._ts_parse_query(lang, query)
-    self.info = self.query:inspect()
-    self.captures = self.info.captures
-    query_cache[lang][query] = self
-    return self
+    print("OKAY")
+    local ok, content = pcall(vim._ts_parse_query, lang, query)
+
+    if ok then
+      self.query = content
+      self.info = self.query:inspect()
+      self.captures = self.info.captures
+      query_cache[lang][query] = self
+      return self
+    else
+      print(vim.inspect(content))
+      error()
+    end
   end
 end
 

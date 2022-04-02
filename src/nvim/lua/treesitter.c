@@ -1187,8 +1187,12 @@ int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, len, &error_offset, &error_type);
 
   if (!query) {
-    return luaL_error(L, "query: %s at position %d",
-                      query_err_string(error_type), (int)error_offset);
+    lua_createtable(L, 0, 2); // [ table ]
+    lua_pushstring(L, query_err_string(error_type)); // [ table, error ]
+    lua_setfield(L, -2, "desc"); // [ table ]
+    lua_pushinteger(L, error_offset); // [ table, int ]
+    lua_setfield(L, -2, "offset"); // [ table ]
+    return lua_error(L);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
