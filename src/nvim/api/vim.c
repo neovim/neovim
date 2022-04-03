@@ -1587,8 +1587,8 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 /// </pre>
 ///
 /// @param channel_id
-/// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
-///               or "!" for |:map!|, or empty string for |:map|.
+/// @param  mode  Map command prefix or "!" for |:map!|, or empty string for
+///               |:map|. See |map-overview| to see all possible prefixes.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map. Accepts all |:map-arguments|
