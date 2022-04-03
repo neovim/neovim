@@ -3690,7 +3690,7 @@ static void suggest_try_change(suginfo_T *su)
 
 // Check the maximum score, if we go over it we won't try this change.
 #define TRY_DEEPER(su, stack, depth, add) \
-  (stack[depth].ts_score + (add) < su->su_maxscore)
+  ((depth) < MAXWLEN && (stack)[depth].ts_score + (add) < (su)->su_maxscore)
 
 // Try finding suggestions by adding/removing/swapping letters.
 //
@@ -3794,6 +3794,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     }
   }
 
+  // The loop may take an indefinite amount of time. Break out after five
+  // sectonds. TODO(vim): add an option for the time limit.
+  proftime_T time_limit = profile_setlimit(5000);
+
   // Loop to find all suggestions.  At each round we either:
   // - For the current state try one operation, advance "ts_curi",
   //   increase "depth".
@@ -3824,7 +3828,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         // At end of a prefix or at start of prefixtree: check for
         // following word.
-        if (byts[arridx] == 0 || n == STATE_NOPREFIX) {
+        if (depth < MAXWLEN && (byts[arridx] == 0 || n == STATE_NOPREFIX)) {
           // Set su->su_badflags to the caps type at this position.
           // Use the caps type until here for the prefix itself.
           n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
@@ -4927,6 +4931,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (--breakcheckcount == 0) {
         os_breakcheck();
         breakcheckcount = 1000;
+        if (profile_passed_limit(time_limit)) {
+          got_int = true;
+        }
       }
     }
   }

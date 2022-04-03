@@ -681,6 +681,14 @@ func Test_spell_long_word()
   set nospell
 endfunc
 
+func Test_spellsuggest_too_deep()
+  " This was incrementing "depth" over MAXWLEN.
+  new
+  norm s000G00ý000000000000
+  sil norm ..vzG................vvzG0     v z=
+  bwipe!
+endfunc
+
 func LoadAffAndDic(aff_contents, dic_contents)
   throw 'skipped: Nvim does not support enc=latin1'
   set enc=latin1
