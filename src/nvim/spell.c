@@ -3690,7 +3690,7 @@ static void suggest_try_change(suginfo_T *su)
 
 // Check the maximum score, if we go over it we won't try this change.
 #define TRY_DEEPER(su, stack, depth, add) \
-  ((depth) < MAXWLEN && (stack)[depth].ts_score + (add) < (su)->su_maxscore)
+  ((depth) < MAXWLEN - 1 && (stack)[depth].ts_score + (add) < (su)->su_maxscore)
 
 // Try finding suggestions by adding/removing/swapping letters.
 //
@@ -3828,7 +3828,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         // At end of a prefix or at start of prefixtree: check for
         // following word.
-        if (depth < MAXWLEN && (byts[arridx] == 0 || n == STATE_NOPREFIX)) {
+        if (depth < MAXWLEN - 1 && (byts[arridx] == 0 || n == STATE_NOPREFIX)) {
           // Set su->su_badflags to the caps type at this position.
           // Use the caps type until here for the prefix itself.
           n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
