@@ -3867,6 +3867,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);
+                // When ":normal" runs out of characters we get
+                // an empty line.  Use "q" to get out of the
+                // loop.
+                if (ex_normal_busy && typed == NUL) {
+                  typed = 'q';
+                }
               }
             } else {
               char_u *orig_line = NULL;
