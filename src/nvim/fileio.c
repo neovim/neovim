@@ -22,6 +22,7 @@
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -5343,37 +5344,82 @@ static void vim_maketempdir(void)
   (void)umask(umask_save);
 }
 
+/// Core part of "readdir()" function.
+/// Retrieve the list of files/directories of "path" into "gap".
+///
+/// @return  OK for success, FAIL for failure.
+int readdir_core(garray_T *gap, const char *path, void *context, CheckItem checkitem)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  ga_init(gap, (int)sizeof(char *), 20);
+
+  Directory dir;
+  if (!os_scandir(&dir, path)) {
+    smsg(_(e_notopen), path);
+    return FAIL;
+  }
+
+  for (;;) {
+    const char *p = os_scandir_next(&dir);
+    if (p == NULL) {
+      break;
+    }
+
+    bool ignore = (p[0] == '.' && (p[1] == NUL || (p[1] == '.' && p[2] == NUL)));
+    if (!ignore && checkitem != NULL) {
+      varnumber_T r = checkitem(context, p);
+      if (r < 0) {
+        break;
+      }
+      if (r == 0) {
+        ignore = true;
+      }
+    }
+
+    if (!ignore) {
+      ga_grow(gap, 1);
+      ((char **)gap->ga_data)[gap->ga_len++] = xstrdup(p);
+    }
+  }
+
+  os_closedir(&dir);
+
+  if (gap->ga_len > 0) {
+    sort_strings((char_u **)gap->ga_data, gap->ga_len);
+  }
+
+  return OK;
+}
+
 /// Delete "name" and everything in it, recursively.
 ///
-/// @param name The path which should be deleted.
+/// @param name  The path which should be deleted.
 ///
 /// @return  0 for success, -1 if some file was not deleted.
 int delete_recursive(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int result = 0;
 
   if (os_isrealdir(name)) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);  // NOLINT
-
-    char_u **files;
-    int file_count;
-    char_u *exp = vim_strsave(NameBuff);
-    if (gen_expand_wildcards(1, &exp, &file_count, &files,
-                             EW_DIR | EW_FILE | EW_SILENT | EW_ALLLINKS
-                             | EW_DODOT | EW_EMPTYOK) == OK) {
-      for (int i = 0; i < file_count; i++) {
-        if (delete_recursive((const char *)files[i]) != 0) {
+    char *exp = xstrdup(name);
+    garray_T ga;
+    if (readdir_core(&ga, exp, NULL, NULL) == OK) {
+      for (int i = 0; i < ga.ga_len; i++) {
+        vim_snprintf((char *)NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
+        if (delete_recursive((const char *)NameBuff) != 0) {
           result = -1;
         }
       }
-      FreeWild(file_count, files);
+      ga_clear_strings(&ga);
     } else {
       result = -1;
     }
-
+    // Note: "name" value may be changed in delete_recursive().  Must use the saved value.
+    result = os_rmdir(exp) == 0 ? 0 : -1;
     xfree(exp);
-    os_rmdir(name);
   } else {
+    // Delete symlink only.
     result = os_remove(name) == 0 ? 0 : -1;
   }
 
