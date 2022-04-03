@@ -137,12 +137,6 @@ static inline const char *get_deleted_augroup(void) FUNC_ATTR_ALWAYS_INLINE
 // Show the autocommands for one AutoPat.
 static void aupat_show(AutoPat *ap)
 {
-  // Check for "got_int" (here and at various places below), which is set
-  // when "q" has been hit for the "--more--" prompt
-  if (got_int) {
-    return;
-  }
-
   // pattern has been removed
   if (ap->pat == NULL) {
     return;
@@ -198,6 +192,12 @@ static void au_show_for_event(int group, event_T event)
   FOR_ALL_AUPATS_IN_EVENT(event, ap) {
     if (group != AUGROUP_ALL && group != ap->group) {
       continue;
+    }
+
+    // Check for "got_int" (here and at various places below), which is set
+    // when "q" has been hit for the "--more--" prompt
+    if (got_int) {
+      return;
     }
 
     char *name = augroup_name(ap->group);
