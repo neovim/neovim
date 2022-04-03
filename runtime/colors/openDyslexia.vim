@@ -1,5 +1,5 @@
 " ********************************************************************************
-" Standard colors used in all ir_black themes:
+" Standard colors used in all themes:
 " Note, x:x:x are RGB values
 "
 "  normal: #f6f3e8
