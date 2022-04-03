@@ -661,7 +661,7 @@ struct file_buffer {
   // flags for use of ":lmap" and IM control
   long b_p_iminsert;            // input mode for insert
   long b_p_imsearch;            // input mode for search
-#define B_IMODE_USE_INSERT -1   //  Use b_p_iminsert value for search
+#define B_IMODE_USE_INSERT (-1)  //  Use b_p_iminsert value for search
 #define B_IMODE_NONE 0          //  Input via none
 #define B_IMODE_LMAP 1          //  Input via langmap
 #define B_IMODE_LAST 1
@@ -1420,7 +1420,7 @@ struct window_S {
   int w_briopt_list;                // additional indent for lists
 
   // transform a pointer to a "onebuf" option into a "allbuf" option
-#define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
+#define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
   long w_scbind_pos;
 

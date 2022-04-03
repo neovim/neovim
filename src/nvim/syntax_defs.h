@@ -7,7 +7,7 @@
 #define SST_MAX_ENTRIES 1000   // maximal size for state stack array
 #define SST_FIX_STATES  7      // size of sst_stack[].
 #define SST_DIST        16     // normal distance between entries
-#define SST_INVALID    (synstate_T *)-1        // invalid syn_state pointer
+#define SST_INVALID    ((synstate_T *)-1)      // invalid syn_state pointer
 
 typedef struct syn_state synstate_T;
 

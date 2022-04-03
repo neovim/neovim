@@ -1850,7 +1850,7 @@ static void spell_reload_one(char_u *fname, bool added_word)
 // In the postponed prefixes tree wn_flags is used to store the WFP_ flags,
 // but it must be negative to indicate the prefix tree to tree_add_word().
 // Use a negative number with the lower 8 bits zero.
-#define PFX_FLAGS       -256
+#define PFX_FLAGS       (-256)
 
 // flags for "condit" argument of store_aff_word()
 #define CONDIT_COMB     1       // affix must combine

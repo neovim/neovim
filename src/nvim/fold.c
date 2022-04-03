@@ -2753,7 +2753,7 @@ static void truncate_fold(win_T *const wp, fold_T *fp, linenr_T end)
 #define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
 #define VALID_FOLD(fp, gap) \
   ((gap)->ga_len > 0 && (fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
-#define FOLD_INDEX(fp, gap) ((size_t)(fp - ((fold_T *)(gap)->ga_data)))
+#define FOLD_INDEX(fp, gap) ((size_t)((fp) - ((fold_T *)(gap)->ga_data)))
 void foldMoveRange(win_T *const wp, garray_T *gap, const linenr_T line1, const linenr_T line2,
                    const linenr_T dest)
 {

@@ -4830,15 +4830,15 @@ typedef struct {
 /// bonus if the first letter is matched
 #define FIRST_LETTER_BONUS 15
 /// penalty applied for every letter in str before the first match
-#define LEADING_LETTER_PENALTY -5
+#define LEADING_LETTER_PENALTY (-5)
 /// maximum penalty for leading letters
-#define MAX_LEADING_LETTER_PENALTY -15
+#define MAX_LEADING_LETTER_PENALTY (-15)
 /// penalty for every letter that doesn't match
-#define UNMATCHED_LETTER_PENALTY -1
+#define UNMATCHED_LETTER_PENALTY (-1)
 /// penalty for gap in matching positions (-2 * k)
-#define GAP_PENALTY -2
+#define GAP_PENALTY (-2)
 /// Score for a string that doesn't fuzzy match the pattern
-#define SCORE_NONE -9999
+#define SCORE_NONE (-9999)
 
 #define FUZZY_MATCH_RECURSION_LIMIT 10
 

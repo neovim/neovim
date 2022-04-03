@@ -80,7 +80,7 @@
 #define FIO_ENDIAN_L   0x80    // little endian
 #define FIO_NOCONVERT  0x2000  // skip encoding conversion
 #define FIO_UCSBOM     0x4000  // check for BOM at start of file
-#define FIO_ALL        -1      // allow all formats
+#define FIO_ALL        (-1)    // allow all formats
 
 /* When converting, a read() or write() may leave some bytes to be converted
  * for the next call.  The value is guessed... */
