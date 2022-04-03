@@ -1843,6 +1843,16 @@ fun! Test_normal33_g_cmd2()
   bw!
 endfunc
 
+func Test_normal_ex_substitute()
+  " This was hanging on the substitute prompt.
+  new
+  call setline(1, 'a')
+  exe "normal! gggQs/a/b/c\<CR>"
+  call assert_equal('a', getline(1))
+  bwipe!
+endfunc
+
+" Test for g CTRL-G
 func Test_g_ctrl_g()
   new
 
