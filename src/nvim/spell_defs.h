@@ -93,9 +93,9 @@ typedef int salfirst_T;
 
 // Values for SP_*ERROR are negative, positive values are used by
 // read_cnt_string().
-#define SP_TRUNCERROR   -1      // spell file truncated error
-#define SP_FORMERROR    -2      // format error in spell file
-#define SP_OTHERERROR   -3      // other error while reading spell file
+#define SP_TRUNCERROR   (-1)    // spell file truncated error
+#define SP_FORMERROR    (-2)    // format error in spell file
+#define SP_OTHERERROR   (-3)    // other error while reading spell file
 
 // Structure used to store words and other info for one language, loaded from
 // a .spl file.

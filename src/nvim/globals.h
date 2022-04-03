@@ -430,7 +430,7 @@ EXTERN win_T *lastwin;               // last window
 EXTERN win_T *prevwin INIT(= NULL);  // previous window
 #define ONE_WINDOW (firstwin == lastwin)
 #define FOR_ALL_FRAMES(frp, first_frame) \
-  for (frp = first_frame; frp != NULL; frp = frp->fr_next)  // NOLINT
+  for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)  // NOLINT
 
 // When using this macro "break" only breaks out of the inner loop. Use "goto"
 // to break out of the tabpage loop.
@@ -461,7 +461,7 @@ EXTERN tabpage_T *lastused_tabpage;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list
-#define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+#define FOR_ALL_TABS(tp) for (tabpage_T *(tp) = first_tabpage; (tp) != NULL; (tp) = (tp)->tp_next)
 
 // All buffers are linked in a list. 'firstbuf' points to the first entry,
 // 'lastbuf' to the last entry and 'curbuf' to the currently active buffer.
@@ -477,7 +477,7 @@ EXTERN buf_T *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterate through all the signs placed in a buffer
 #define FOR_ALL_SIGNS_IN_BUF(buf, sign) \
-  for (sign = buf->b_signlist; sign != NULL; sign = sign->se_next)   // NOLINT
+  for ((sign) = (buf)->b_signlist; (sign) != NULL; (sign) = (sign)->se_next)   // NOLINT
 
 
 // List of files being edited (global argument list).  curwin->w_alist points
@@ -618,7 +618,7 @@ EXTERN int inhibit_delete_count INIT(= 0);
 #define DBCS_CHT       950     // taiwan
 #define DBCS_CHTU      9950    // euc-tw
 #define DBCS_2BYTE     1       // 2byte-
-#define DBCS_DEBUG     -1
+#define DBCS_DEBUG     (-1)
 
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);

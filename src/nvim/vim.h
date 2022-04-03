@@ -264,7 +264,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.
-#define PERROR(msg) (void)semsg("%s: %s", msg, strerror(errno))
+#define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 
@@ -319,7 +319,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #endif
 
 // Replacement for nchar used by nv_replace().
-#define REPLACE_CR_NCHAR    -1
-#define REPLACE_NL_NCHAR    -2
+#define REPLACE_CR_NCHAR    (-1)
+#define REPLACE_NL_NCHAR    (-2)
 
 #endif  // NVIM_VIM_H

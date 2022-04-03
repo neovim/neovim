@@ -57,7 +57,7 @@
 #define ENC_DFLT       "utf-8"
 
 // end-of-line style
-#define EOL_UNKNOWN     -1      // not defined yet
+#define EOL_UNKNOWN     (-1)    // not defined yet
 #define EOL_UNIX        0       // NL
 #define EOL_DOS         1       // CR NL
 #define EOL_MAC         2       // CR
@@ -899,7 +899,7 @@ enum {
 };
 
 // Value for b_p_ul indicating the global value must be used.
-#define NO_LOCAL_UNDOLEVEL -123456
+#define NO_LOCAL_UNDOLEVEL (-123456)
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
 
