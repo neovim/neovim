@@ -2330,8 +2330,6 @@ static int vgetorpeek(bool advance)
           // cmdline window.
           if (p_im && (State & INSERT)) {
             c = Ctrl_L;
-          } else if ((State & CMDLINE) && exmode_active) {
-            c = '\n';
           } else if ((State & CMDLINE) || (cmdwin_type > 0 && tc == ESC)) {
             c = Ctrl_C;
           } else {
