@@ -6550,7 +6550,7 @@ static inline uint32_t shuffle_xoshiro128starstar(uint32_t *const x, uint32_t *c
                                                   uint32_t *const z, uint32_t *const w)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
-#define ROTL(x, k) ((x << k) | (x >> (32 - k)))
+#define ROTL(x, k) (((x) << (k)) | ((x) >> (32 - (k))))
   const uint32_t result = ROTL(*y * 5, 7) * 9;
   const uint32_t t = *y << 9;
   *z ^= *x;

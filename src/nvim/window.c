@@ -59,7 +59,7 @@
 #endif
 
 
-#define NOWIN           (win_T *)-1     // non-existing window
+#define NOWIN           ((win_T *)-1)   // non-existing window
 
 #define ROWS_AVAIL (Rows - p_ch - tabline_height() - global_stl_height())
 

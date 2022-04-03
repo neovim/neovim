@@ -181,7 +181,7 @@ static char *(spo_name_tab[SPO_COUNT]) =
 
 #define SYN_ITEMS(buf)  ((synpat_T *)((buf)->b_syn_patterns.ga_data))
 
-#define NONE_IDX        -2      // value of sp_sync_idx for "NONE"
+#define NONE_IDX        (-2)    // value of sp_sync_idx for "NONE"
 
 /*
  * Flags for b_syn_sync_flags:
@@ -267,9 +267,9 @@ static int keepend_level = -1;
 static char msg_no_items[] = N_("No Syntax items defined for this buffer");
 
 // value of si_idx for keywords
-#define KEYWORD_IDX     -1
+#define KEYWORD_IDX     (-1)
 // valid of si_cont_list for containing all but contained groups
-#define ID_LIST_ALL     (int16_t *)-1
+#define ID_LIST_ALL     ((int16_t *)-1)
 
 static int next_seqnr = 1;              // value to use for si_seqnr
 

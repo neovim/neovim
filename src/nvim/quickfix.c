@@ -229,28 +229,28 @@ typedef struct vgr_args_S {
 static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 
 // Quickfix window check helper macro
-#define IS_QF_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref == NULL)
+#define IS_QF_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref == NULL)
 // Location list window check helper macro
-#define IS_LL_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
+#define IS_LL_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref != NULL)
 
 // Quickfix and location list stack check helper macros
-#define IS_QF_STACK(qi)       (qi->qfl_type == QFLT_QUICKFIX)
-#define IS_LL_STACK(qi)       (qi->qfl_type == QFLT_LOCATION)
-#define IS_QF_LIST(qfl)       (qfl->qfl_type == QFLT_QUICKFIX)
-#define IS_LL_LIST(qfl)       (qfl->qfl_type == QFLT_LOCATION)
+#define IS_QF_STACK(qi)       ((qi)->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_STACK(qi)       ((qi)->qfl_type == QFLT_LOCATION)
+#define IS_QF_LIST(qfl)       ((qfl)->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_LIST(qfl)       ((qfl)->qfl_type == QFLT_LOCATION)
 
 //
 // Return location list for window 'wp'
 // For location list window, return the referenced location list
 //
-#define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
+#define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? (wp)->w_llist_ref : (wp)->w_llist)
 
 // Macro to loop through all the items in a quickfix list
 // Quickfix item index starts from 1, so i below starts at 1
 #define FOR_ALL_QFL_ITEMS(qfl, qfp, i) \
-  for (i = 1, qfp = qfl->qf_start;  /* NOLINT(readability/braces) */ \
-       !got_int && i <= qfl->qf_count && qfp != NULL; \
-       i++, qfp = qfp->qf_next)
+  for ((i) = 1, (qfp) = (qfl)->qf_start;  /* NOLINT(readability/braces) */ \
+       !got_int && (i) <= (qfl)->qf_count && (qfp) != NULL; \
+       (i)++, (qfp) = (qfp)->qf_next)
 
 
 // Looking up a buffer can be slow if there are many.  Remember the last one

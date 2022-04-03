@@ -133,7 +133,7 @@
 #define ARRAY_LAST_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
 
 // Duplicated in os/win_defs.h to avoid include-order sensitivity.
-#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
+#define RGB_(r, g, b) (((r) << 16) | ((g) << 8) | (b))
 
 #define STR_(x) #x
 #define STR(x) STR_(x)

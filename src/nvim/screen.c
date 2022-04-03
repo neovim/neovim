@@ -2119,13 +2119,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   // draw_state: items that are drawn in sequence:
 #define WL_START        0               // nothing done yet
-#define WL_CMDLINE     WL_START + 1    // cmdline window column
-#define WL_FOLD        WL_CMDLINE + 1  // 'foldcolumn'
-#define WL_SIGN        WL_FOLD + 1     // column for signs
-#define WL_NR           WL_SIGN + 1     // line number
-#define WL_BRI         WL_NR + 1       // 'breakindent'
-#define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
-#define WL_LINE         WL_SBR + 1      // text in the line
+#define WL_CMDLINE      (WL_START + 1)    // cmdline window column
+#define WL_FOLD         (WL_CMDLINE + 1)  // 'foldcolumn'
+#define WL_SIGN         (WL_FOLD + 1)     // column for signs
+#define WL_NR           (WL_SIGN + 1)     // line number
+#define WL_BRI          (WL_NR + 1)       // 'breakindent'
+#define WL_SBR          (WL_BRI + 1)      // 'showbreak' or 'diff'
+#define WL_LINE         (WL_SBR + 1)      // text in the line
   int draw_state = WL_START;            // what to draw next
 
   int syntax_flags    = 0;

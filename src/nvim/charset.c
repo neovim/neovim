@@ -425,9 +425,9 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   int len = orglen;
 
 #define GA_CHAR(i) ((char_u *)ga.ga_data)[i]
-#define GA_PTR(i) ((char_u *)ga.ga_data + i)
+#define GA_PTR(i) ((char_u *)ga.ga_data + (i))
 #define STR_CHAR(i) (buf == NULL ? GA_CHAR(i) : buf[i])
-#define STR_PTR(i) (buf == NULL ? GA_PTR(i) : buf + i)
+#define STR_PTR(i) (buf == NULL ? GA_PTR(i) : buf + (i))
 
   // Copy "str" into "buf" or allocated memory, unmodified.
   if (buf == NULL) {
