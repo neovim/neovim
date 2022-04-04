@@ -1126,7 +1126,7 @@ In any of the above examples, to replicate the behavior |setlocal|, use
 
 |vim.opt| returns an Option object.
 
-For example: `local listchar_object = vim.opt.listchar`
+For example: `local listchar_object = vim.opt.listchars`
 
 An `Option` has the following methods:
 
