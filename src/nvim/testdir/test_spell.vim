@@ -407,7 +407,7 @@ func Test_zz_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  call assert_equal("kepereneven", 'kÃ³opÃ«rÃ¿nÃ´ven'->soundfold())
+  call assert_equal("kepereneven", 'kóopërÿnôven'->soundfold())
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 
@@ -588,7 +588,7 @@ func Test_zz_sal_and_addition()
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
   call assert_equal('kbltykk', soundfold('goobledygoook'))
-  call assert_equal('kprnfn', soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
+  call assert_equal('kprnfn', soundfold('kóopërÿnôven'))
   call assert_equal('*fls kswts tl', soundfold('oeverloos gezwets edale'))
 
   "also use an addition file
@@ -679,6 +679,14 @@ func Test_spell_long_word()
   redraw!
   bwipe!
   set nospell
+endfunc
+
+func Test_spellsuggest_too_deep()
+  " This was incrementing "depth" over MAXWLEN.
+  new
+  norm s000G00ý000000000000
+  sil norm ..vzG................vvzG0     v z=
+  bwipe!
 endfunc
 
 func LoadAffAndDic(aff_contents, dic_contents)
