@@ -87,6 +87,7 @@ Object ui_client_handle_redraw(uint64_t channel_id, Array args, Error *error)
 ///
 /// This is just a stub. the full version will handle input, resizing, etc
 void ui_client_execute(uint64_t chan)
+  FUNC_ATTR_NORETURN
 {
   while (true) {
     loop_poll_events(&main_loop, -1);
@@ -150,10 +151,8 @@ void ui_client_event_grid_line(Array args)
   Integer startcol = args.items[2].data.integer;
   Array cells = args.items[3].data.array;
 
-  Integer endcol, clearcol;
-  // TODO(hlpr98): Accomodate other LineFlags when included in grid_line
+  // TODO(hlpr98): Accommodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
-  endcol = startcol;
 
   size_t j = 0;
   int cur_attr = 0;
@@ -202,8 +201,8 @@ void ui_client_event_grid_line(Array args)
     }
   }
 
-  endcol = startcol + (int)j;
-  clearcol = endcol + clear_width;
+  Integer endcol = startcol + (int)j;
+  Integer clearcol = endcol + clear_width;
   clear_attr = cur_attr;
 
   ui_call_raw_line(grid, row, startcol, endcol, clearcol, clear_attr, lineflags,

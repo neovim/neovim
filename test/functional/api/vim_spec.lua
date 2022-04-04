@@ -6,6 +6,7 @@ local assert_alive = helpers.assert_alive
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
+local exec = helpers.exec
 local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
@@ -1271,6 +1272,17 @@ describe('API', function()
       eq('Key is locked: lua', pcall_err(meths.del_var, 'lua'))
       eq('Key is locked: lua', pcall_err(meths.set_var, 'lua', 1))
 
+      exec([[
+        function Test()
+        endfunction
+        function s:Test()
+        endfunction
+        let g:Unknown_func = function('Test')
+        let g:Unknown_script_func = function('s:Test')
+      ]])
+      eq(NIL, meths.get_var('Unknown_func'))
+      eq(NIL, meths.get_var('Unknown_script_func'))
+
       -- Check if autoload works properly
       local pathsep = helpers.get_pathsep()
       local xconfig = 'Xhome' .. pathsep .. 'Xconfig'
@@ -1576,6 +1588,18 @@ describe('API', function()
       command('set more')
       feed(':digraphs<cr>')
       eq({mode='rm', blocking=true}, nvim("get_mode"))
+    end)
+
+    it('after <Nop> mapping returns blocking=false #17257', function()
+      command('nnoremap <F2> <Nop>')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it('after empty string <expr> mapping returns blocking=false #17257', function()
+      command('nnoremap <expr> <F2> ""')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
   end)
 

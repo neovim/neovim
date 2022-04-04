@@ -1328,7 +1328,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
-      assert(data.size <= INT_MAX);
+      assert(s.size <= INT_MAX);
       AppendToRedobuffLit((char_u *)s.data, (int)s.size);
       // readfile()-style: "\n" is indicated by presence of N+1 item.
       if (i + 1 < lines.size) {

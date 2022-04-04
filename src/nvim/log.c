@@ -282,6 +282,7 @@ static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
 static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                              const char *func_name, int line_num, bool eol, const char *fmt,
                              va_list args)
+  FUNC_ATTR_PRINTF(7, 0)
 {
   static const char *log_levels[] = {
     [DEBUG_LOG_LEVEL]   = "DEBUG",

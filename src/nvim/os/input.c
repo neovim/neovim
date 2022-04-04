@@ -288,8 +288,13 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   static int orig_mouse_row = 0;
   static uint64_t orig_mouse_time = 0;  // time of previous mouse click
 
-  if (code == KE_LEFTRELEASE || code == KE_RIGHTRELEASE
-      || code == KE_MIDDLERELEASE) {
+  if (code == KE_LEFTRELEASE
+      || code == KE_RIGHTRELEASE
+      || code == KE_MIDDLERELEASE
+      || code == KE_MOUSEDOWN
+      || code == KE_MOUSEUP
+      || code == KE_MOUSELEFT
+      || code == KE_MOUSERIGHT) {
     return 0;
   }
   uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
@@ -522,6 +527,7 @@ static bool input_ready(MultiQueue *events)
 
 // Exit because of an input read error.
 static void read_error_exit(void)
+  FUNC_ATTR_NORETURN
 {
   if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);

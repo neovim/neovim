@@ -284,11 +284,35 @@ if(MSVC)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
+    -Wdouble-promotion
+    -Wmissing-noreturn
+    -Wmissing-format-attribute
     -Wmissing-prototypes)
 
   check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
   if(HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
     add_compile_options(-Wimplicit-fallthrough)
+  endif()
+
+  # Clang doesn't have -Wsuggest-attribute so check for each one.
+  check_c_compiler_flag(-Wsuggest-attribute=pure HAVE_WSUGGEST_ATTRIBUTE_PURE)
+  if(HAVE_WSUGGEST_ATTRIBUTE_PURE)
+    add_compile_options(-Wsuggest-attribute=pure)
+  endif()
+
+  check_c_compiler_flag(-Wsuggest-attribute=const HAVE_WSUGGEST_ATTRIBUTE_CONST)
+  if(HAVE_WSUGGEST_ATTRIBUTE_CONST)
+    add_compile_options(-Wsuggest-attribute=const)
+  endif()
+
+  check_c_compiler_flag(-Wsuggest-attribute=malloc HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
+  if(HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
+    add_compile_options(-Wsuggest-attribute=malloc)
+  endif()
+
+  check_c_compiler_flag(-Wsuggest-attribute=cold HAVE_WSUGGEST_ATTRIBUTE_COLD)
+  if(HAVE_WSUGGEST_ATTRIBUTE_COLD)
+    add_compile_options(-Wsuggest-attribute=cold)
   endif()
 
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang

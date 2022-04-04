@@ -108,7 +108,7 @@ command:
 					*:pre* *:preserve* *E313* *E314*
 :pre[serve]		Write all text for the current buffer into its swap
 			file.  The original file is no longer needed for
-			recovery.  This sets a flag in the current buffer.
+			recovery.
 
 A Vim swap file can be recognized by the first six characters: "b0VIM ".
 After that comes the version number, e.g., "3.0".

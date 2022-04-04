@@ -3,6 +3,8 @@
 
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/garray.h"
 #include "nvim/os/os.h"
 
 // Values for readfile() flags
@@ -16,6 +18,8 @@
 #define READ_NOWINENTER 0x80    // do not trigger BufWinEnter
 
 #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+
+typedef varnumber_T (*CheckItem)(void *expr, const char *name);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 // Events for autocommands

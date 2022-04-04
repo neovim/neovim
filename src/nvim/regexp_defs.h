@@ -34,7 +34,7 @@
 
 // In the NFA engine: how many states are allowed.
 #define NFA_MAX_STATES 100000
-#define NFA_TOO_EXPENSIVE -1
+#define NFA_TOO_EXPENSIVE (-1)
 
 // Which regexp engine to use? Needed for vim_regcomp().
 // Must match with 'regexpengine'.

@@ -751,7 +751,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
 		insert.
 
-	When the value is empty, Vi compatible backspacing is used.
+	When the value is empty, Vi compatible backspacing is used, none of
+	the ways mentioned for the items above are possible.
 
 	For backwards compatibility with version 5.4 and earlier:
 	value	effect	~
@@ -1029,7 +1030,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option lets you choose which characters might cause a line
 	break if 'linebreak' is on.  Only works for ASCII characters.
 
-						*'breakindent'* *'bri'*
+			*'breakindent'* *'bri'* *'nobreakindent'* *'nobri'*
 'breakindent' 'bri'	boolean (default off)
 			local to window
 	Every wrapped line will continue visually indented (same amount of
@@ -2132,7 +2133,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor	horizontally, height of windows is not affected
 		both	width and height of windows is affected
 
-						*'emoji'* *'emo'*
+					*'emoji'* *'emo'* *'noemoji'* *'noemo'*
 'emoji' 'emo'	boolean (default: on)
 			global
 	When on all Unicode emoji characters are considered to be full width.
@@ -2732,7 +2733,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
-						*'fsync'* *'fs'*
+					*'fsync'* *'fs'* *'nofsync'* *'nofs'*
 'fsync' 'fs'		boolean	(default off)
 			global
 	When on, the OS function fsync() will be called after saving a file
@@ -3670,8 +3671,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		0: never
 		1: only if there are at least two windows
 		2: always
-		3: have a global statusline at the bottom instead of one for
-		   each window
+		3: always and ONLY the last window
 	The screen looks nicer with a status line if you have several
 	windows, but it takes another screen line. |status-line|
 
@@ -6333,9 +6333,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	linear search can be avoided when case is ignored.  Use a value of '2'
 	in the "!_TAG_FILE_SORTED" line for this.  A tag file can be case-fold
 	sorted with the -f switch to "sort" in most unices, as in the command:
-	"sort -f -o tags tags".  For "Exuberant ctags" version 5.x or higher
-	(at least 5.5) the --sort=foldcase switch can be used for this as
-	well.  Note that case must be folded to uppercase for this to work.
+	"sort -f -o tags tags".  For Universal ctags and Exuberant ctags
+	version 5.x or higher (at least 5.5) the --sort=foldcase switch can be
+	used for this as well.  Note that case must be folded to uppercase for
+	this to work.
 
 	By default, tag searches are case-sensitive.  Case is ignored when
 	'ignorecase' is set and 'tagcase' is "followic", or when 'tagcase' is
@@ -6428,7 +6429,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
 	For further details see |arabic.txt|.
 
-						*'termguicolors'* *'tgc'*
+			*'termguicolors'* *'tgc'* *'notermguicolors'* *'notgc'*
 'termguicolors' 'tgc'	boolean (default off)
 			global
 	Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|

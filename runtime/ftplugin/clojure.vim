@@ -5,7 +5,7 @@
 "                     Meikel Brandmeyer <mb@kotka.de>
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)
-" Last Change:        2021-10-26
+" Last Change:        2022-03-24
 
 if exists("b:did_ftplugin")
 	finish
@@ -43,7 +43,7 @@ setlocal commentstring=;\ %s
 " specially and hence are not indented specially.
 "
 " -*- LISPWORDS -*-
-" Generated from https://github.com/clojure-vim/clojure.vim/blob/62b215f079ce0f3834fd295c7a7f6bd8cc54bcc3/clj/src/vim_clojure_static/generate.clj
+" Generated from https://github.com/clojure-vim/clojure.vim/blob/fd280e33e84c88e97860930557dba3ff80b1a82d/clj/src/vim_clojure_static/generate.clj
 setlocal lispwords=as->,binding,bound-fn,case,catch,cond->,cond->>,condp,def,definline,definterface,defmacro,defmethod,defmulti,defn,defn-,defonce,defprotocol,defrecord,defstruct,deftest,deftest-,deftype,doseq,dotimes,doto,extend,extend-protocol,extend-type,fn,for,if,if-let,if-not,if-some,let,letfn,locking,loop,ns,proxy,reify,set-test,testing,when,when-first,when-let,when-not,when-some,while,with-bindings,with-in-str,with-local-vars,with-open,with-precision,with-redefs,with-redefs-fn,with-test
 
 " Provide insert mode completions for special forms and clojure.core. As
@@ -66,10 +66,10 @@ endif
 
 " Filter files in the browse dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-	let b:browsefilter = "Clojure Source Files (*.clj)\t*.clj\n" .
-	                   \ "ClojureScript Source Files (*.cljs)\t*.cljs\n" .
-	                   \ "Java Source Files (*.java)\t*.java\n" .
-	                   \ "All Files (*.*)\t*.*\n"
+	let b:browsefilter = "All Files\t*\n" .
+				\ "Clojure Files\t*.clj;*.cljc;*.cljs;*.cljx\n" .
+				\ "EDN Files\t*.edn\n" .
+				\ "Java Files\t*.java\n"
 	let b:undo_ftplugin .= ' | unlet! b:browsefilter'
 endif
 

@@ -47,6 +47,7 @@ struct Decoration {
   bool virt_text_hide;
   bool hl_eol;
   bool virt_lines_above;
+  bool conceal;
   // TODO(bfredl): style, etc
   DecorPriority priority;
   int col;  // fixed col value, like win_col
@@ -56,9 +57,13 @@ struct Decoration {
   int number_hl_id;
   int line_hl_id;
   int cursorline_hl_id;
+  // TODO(bfredl): in principle this should be a schar_T, but we
+  // probably want some kind of glyph cache for that..
+  int conceal_char;
 };
-#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, \
-                          false, false, false, DECOR_PRIORITY_BASE, 0, 0, NULL, 0, 0, 0, 0 }
+#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
+                          kHlModeUnknown, false, false, false, false, DECOR_PRIORITY_BASE, \
+                          0, 0, NULL, 0, 0, 0, 0, 0 }
 
 typedef struct {
   int start_row;
@@ -80,6 +85,10 @@ typedef struct {
   int col_until;
   int current;
   int eol_col;
+
+  bool conceal;
+  int conceal_char;
+  int conceal_attr;
 } DecorState;
 
 EXTERN DecorState decor_state INIT(= { 0 });

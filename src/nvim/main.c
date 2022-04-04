@@ -20,6 +20,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -156,6 +157,7 @@ bool event_teardown(void)
 void early_init(mparm_T *paramp)
 {
   env_init();
+  cmdline_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
@@ -2099,6 +2101,7 @@ static bool file_owned(const char *fname)
 /// @param errstr  string containing an error message
 /// @param str     string to append to the primary error message, or NULL
 static void mainerr(const char *errstr, const char *str)
+  FUNC_ATTR_NORETURN
 {
   char *prgname = (char *)path_tail((char_u *)argv0);
 

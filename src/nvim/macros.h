@@ -103,7 +103,7 @@
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
 // multi-byte characters if needed. Only use with "p" > "s" !
 #define MB_PTR_BACK(s, p) \
-  (p -= utf_head_off((char_u *)s, (char_u *)p - 1) + 1)
+  (p -= utf_head_off((char_u *)(s), (char_u *)(p) - 1) + 1)
 
 // MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
 #define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), (b)))
@@ -133,7 +133,7 @@
 #define ARRAY_LAST_ENTRY(arr) (arr)[ARRAY_SIZE(arr) - 1]
 
 // Duplicated in os/win_defs.h to avoid include-order sensitivity.
-#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
+#define RGB_(r, g, b) (((r) << 16) | ((g) << 8) | (b))
 
 #define STR_(x) #x
 #define STR(x) STR_(x)

@@ -8,6 +8,7 @@ local command, feed_command = helpers.command, helpers.feed_command
 local eval = helpers.eval
 local eq = helpers.eq
 local neq = helpers.neq
+local expect = helpers.expect
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local meths = helpers.meths
@@ -16,6 +17,7 @@ local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
 local tbl_contains = global_helpers.tbl_contains
+local curbuf, curwin, curtab = helpers.curbuf, helpers.curwin, helpers.curtab
 
 describe('float window', function()
   before_each(function()
@@ -417,26 +419,285 @@ describe('float window', function()
     eq(winids, eval('winids'))
   end)
 
-  it('closed when the last non-float window is closed', function()
-    local tabpage = exec_lua([[
-      vim.cmd('edit ./src/nvim/main.c')
-      vim.cmd('tabedit %')
+  describe('with only one tabpage,', function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local old_buf, old_win
+    before_each(function()
+      insert('foo')
+      old_buf = curbuf().id
+      old_win = curwin().id
+    end)
+    describe('closing the last non-floating window gives E444', function()
+      before_each(function()
+        meths.open_win(old_buf, true, float_opts)
+      end)
+      it('if called from non-floating window', function()
+        meths.set_current_win(old_win)
+        eq('Vim:E444: Cannot close last window',
+           pcall_err(meths.win_close, old_win, false))
+      end)
+      it('if called from floating window', function()
+        eq('Vim:E444: Cannot close last window',
+           pcall_err(meths.win_close, old_win, false))
+      end)
+    end)
+    describe("deleting the last non-floating window's buffer", function()
+      describe('leaves one window with an empty buffer when there is only one buffer', function()
+        local same_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+        end)
+        after_each(function()
+          eq(old_win, curwin().id)
+          expect('')
+          eq(1, #meths.list_wins())
+        end)
+        it('if called from non-floating window', function()
+          meths.buf_delete(old_buf, {force = true})
+        end)
+        it('if called from floating window', function()
+          meths.set_current_win(same_buf_float)
+          command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
+          command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
+          meths.buf_delete(old_buf, {force = true})
+          eq(same_buf_float, eval('g:win_leave'))
+          eq(old_win, eval('g:win_enter'))
+        end)
+      end)
+      describe('closes other windows with that buffer when there are other buffers', function()
+        local same_buf_float, other_buf, other_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          other_buf = meths.create_buf(true, false).id
+          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          insert('bar')
+          meths.set_current_win(old_win)
+        end)
+        after_each(function()
+          eq(other_buf, curbuf().id)
+          expect('bar')
+          eq(2, #meths.list_wins())
+        end)
+        it('if called from non-floating window', function()
+          meths.buf_delete(old_buf, {force = true})
+          eq(old_win, curwin().id)
+        end)
+        it('if called from floating window with the same buffer', function()
+          meths.set_current_win(same_buf_float)
+          command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
+          command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
+          meths.buf_delete(old_buf, {force = true})
+          eq(same_buf_float, eval('g:win_leave'))
+          eq(old_win, eval('g:win_enter'))
+          eq(old_win, curwin().id)
+        end)
+        -- TODO: this case is too hard to deal with
+        pending('if called from floating window with another buffer', function()
+          meths.set_current_win(other_buf_float)
+          meths.buf_delete(old_buf, {force = true})
+        end)
+      end)
+      describe('creates an empty buffer when there is only one listed buffer', function()
+        local same_buf_float, unlisted_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          local unlisted_buf = meths.create_buf(true, false).id
+          unlisted_buf_float = meths.open_win(unlisted_buf, true, float_opts).id
+          insert('unlisted')
+          command('set nobuflisted')
+          meths.set_current_win(old_win)
+        end)
+        after_each(function()
+          expect('')
+          eq(2, #meths.list_wins())
+        end)
+        it('if called from non-floating window', function()
+          meths.buf_delete(old_buf, {force = true})
+          eq(old_win, curwin().id)
+        end)
+        it('if called from floating window with the same buffer', function()
+          meths.set_current_win(same_buf_float)
+          command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
+          command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
+          meths.buf_delete(old_buf, {force = true})
+          eq(same_buf_float, eval('g:win_leave'))
+          eq(old_win, eval('g:win_enter'))
+          eq(old_win, curwin().id)
+        end)
+        -- TODO: this case is too hard to deal with
+        pending('if called from floating window with an unlisted buffer', function()
+          meths.set_current_win(unlisted_buf_float)
+          meths.buf_delete(old_buf, {force = true})
+        end)
+      end)
+    end)
+    describe('with splits, deleting the last listed buffer creates an empty buffer', function()
+      describe('when a non-floating window has an unlisted buffer', function()
+        local same_buf_float
+        before_each(function()
+          command('botright vnew')
+          insert('unlisted')
+          command('set nobuflisted')
+          meths.set_current_win(old_win)
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+        end)
+        after_each(function()
+          expect('')
+          eq(2, #meths.list_wins())
+        end)
+        it('if called from non-floating window with the deleted buffer', function()
+          meths.buf_delete(old_buf, {force = true})
+          eq(old_win, curwin().id)
+        end)
+        it('if called from floating window with the deleted buffer', function()
+          meths.set_current_win(same_buf_float)
+          meths.buf_delete(old_buf, {force = true})
+          eq(same_buf_float, curwin().id)
+        end)
+      end)
+    end)
+  end)
 
-      local buf = vim.api.nvim_create_buf(false, true)
-      local win = vim.api.nvim_open_win(buf, false, {
-        relative = 'win',
-        row = 1,
-        col = 1,
-        width = 10,
-        height = 2
-      })
+  describe('with mulitple tabpages but only one listed buffer,', function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local unlisted_buf, old_buf, old_win
+    before_each(function()
+      insert('unlisted')
+      command('set nobuflisted')
+      unlisted_buf = curbuf().id
+      command('tabnew')
+      insert('foo')
+      old_buf = curbuf().id
+      old_win = curwin().id
+    end)
+    describe('without splits, deleting the last listed buffer creates an empty buffer', function()
+      local same_buf_float
+      before_each(function()
+        meths.set_current_win(old_win)
+        same_buf_float = meths.open_win(old_buf, false, float_opts).id
+      end)
+      after_each(function()
+        expect('')
+        eq(2, #meths.list_wins())
+        eq(2, #meths.list_tabpages())
+      end)
+      it('if called from non-floating window', function()
+        meths.buf_delete(old_buf, {force = true})
+        eq(old_win, curwin().id)
+      end)
+      it('if called from floating window with the same buffer', function()
+        meths.set_current_win(same_buf_float)
+        command('autocmd WinLeave * let g:win_leave = nvim_get_current_win()')
+        command('autocmd WinEnter * let g:win_enter = nvim_get_current_win()')
+        meths.buf_delete(old_buf, {force = true})
+        eq(same_buf_float, eval('g:win_leave'))
+        eq(old_win, eval('g:win_enter'))
+        eq(old_win, curwin().id)
+      end)
+    end)
+    describe('with splits, deleting the last listed buffer creates an empty buffer', function()
+      local same_buf_float
+      before_each(function()
+        command('botright vsplit')
+        meths.set_current_buf(unlisted_buf)
+        meths.set_current_win(old_win)
+        same_buf_float = meths.open_win(old_buf, false, float_opts).id
+      end)
+      after_each(function()
+        expect('')
+        eq(3, #meths.list_wins())
+        eq(2, #meths.list_tabpages())
+      end)
+      it('if called from non-floating window with the deleted buffer', function()
+        meths.buf_delete(old_buf, {force = true})
+        eq(old_win, curwin().id)
+      end)
+      it('if called from floating window with the deleted buffer', function()
+        meths.set_current_win(same_buf_float)
+        meths.buf_delete(old_buf, {force = true})
+        eq(same_buf_float, curwin().id)
+      end)
+    end)
+  end)
 
-      vim.cmd('quit')
-
-      return vim.api.nvim_get_current_tabpage()
-    ]])
-
-    eq(1, tabpage)
+  describe('with multiple tabpages and multiple listed buffers,', function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local old_tabpage, old_buf, old_win
+    before_each(function()
+      old_tabpage = curtab().id
+      insert('oldtab')
+      command('tabnew')
+      old_buf = curbuf().id
+      old_win = curwin().id
+    end)
+    describe('closing the last non-floating window', function()
+      describe('closes the tabpage when all floating windows are closeable', function()
+        local same_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+        end)
+        after_each(function()
+          eq(old_tabpage, curtab().id)
+          expect('oldtab')
+          eq(1, #meths.list_tabpages())
+        end)
+        it('if called from non-floating window', function()
+          meths.win_close(old_win, false)
+        end)
+        it('if called from floating window', function()
+          meths.set_current_win(same_buf_float)
+          meths.win_close(old_win, false)
+        end)
+      end)
+      describe('gives E5601 when there are non-closeable floating windows', function()
+        local other_buf_float
+        before_each(function()
+          command('set nohidden')
+          local other_buf = meths.create_buf(true, false).id
+          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          insert('foo')
+          meths.set_current_win(old_win)
+        end)
+        it('if called from non-floating window', function()
+          eq('Vim:E5601: Cannot close window, only floating window would remain',
+             pcall_err(meths.win_close, old_win, false))
+        end)
+        it('if called from floating window', function()
+          meths.set_current_win(other_buf_float)
+          eq('Vim:E5601: Cannot close window, only floating window would remain',
+             pcall_err(meths.win_close, old_win, false))
+        end)
+      end)
+    end)
+    describe("deleting the last non-floating window's buffer", function()
+      describe('closes the tabpage when all floating windows are closeable', function()
+        local same_buf_float, other_buf, other_buf_float
+        before_each(function()
+          same_buf_float = meths.open_win(old_buf, false, float_opts).id
+          other_buf = meths.create_buf(true, false).id
+          other_buf_float = meths.open_win(other_buf, true, float_opts).id
+          meths.set_current_win(old_win)
+        end)
+        after_each(function()
+          eq(old_tabpage, curtab().id)
+          expect('oldtab')
+          eq(1, #meths.list_tabpages())
+        end)
+        it('if called from non-floating window', function()
+          meths.buf_delete(old_buf, {force = false})
+        end)
+        it('if called from floating window with the same buffer', function()
+          meths.set_current_win(same_buf_float)
+          meths.buf_delete(old_buf, {force = false})
+        end)
+        -- TODO: this case is too hard to deal with
+        pending('if called from floating window with another buffer', function()
+          meths.set_current_win(other_buf_float)
+          meths.buf_delete(old_buf, {force = false})
+        end)
+      end)
+      -- TODO: what to do when there are non-closeable floating windows?
+    end)
   end)
 
   local function with_ext_multigrid(multigrid)
@@ -5596,10 +5857,11 @@ describe('float window', function()
             [2:----------------------------------------]|
             [2:----------------------------------------]|
             [2:----------------------------------------]|
-            {5:[No Name] [+]                           }|
+            [2:----------------------------------------]|
             [3:----------------------------------------]|
           ## grid 2
             x                                       |
+            {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
@@ -5619,7 +5881,7 @@ describe('float window', function()
             {0:~    }{1:^y                   }{0:               }|
             {0:~    }{2:~                   }{0:               }|
             {0:~                                       }|
-            {5:[No Name] [+]                           }|
+            {0:~                                       }|
             :quit                                   |
           ]])
         end

@@ -152,6 +152,7 @@ static char *signal_name(int signum)
 // NOTE: Avoid unsafe functions, such as allocating memory, they can result in
 // a deadlock.
 static void deadly_signal(int signum)
+  FUNC_ATTR_NORETURN
 {
   // Set the v:dying variable.
   set_vim_var_nr(VV_DYING, 1);

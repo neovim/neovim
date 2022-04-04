@@ -3,6 +3,7 @@ local clear, feed_command = helpers.clear, helpers.feed_command
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command
 local expect = helpers.expect
+local curbuf_contents = helpers.curbuf_contents
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
@@ -159,6 +160,50 @@ describe('input split utf sequences', function()
   end)
 end)
 
+describe('input pairs', function()
+  describe('<tab> / <c-i>', function()
+    it('ok', function()
+      feed('i<tab><c-i><esc>')
+      eq('\t\t', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <tab> TAB!')
+      command('inoremap <c-i> CTRL-I!')
+      feed('i<tab><c-i><esc>')
+      eq('TAB!CTRL-I!', curbuf_contents())
+    end)
+  end)
+
+  describe('<cr> / <c-m>', function()
+    it('ok', function()
+      feed('iunos<c-m>dos<cr>tres<esc>')
+      eq('unos\ndos\ntres', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <c-m> SNIPPET!')
+      command('inoremap <cr> , and then<cr>')
+      feed('iunos<c-m>dos<cr>tres<esc>')
+      eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+    end)
+  end)
+
+  describe('<esc> / <c-[>', function()
+    it('ok', function()
+      feed('2adouble<c-[>asingle<esc>')
+      eq('doubledoublesingle', curbuf_contents())
+    end)
+
+    it('can be mapped', function()
+      command('inoremap <c-[> HALLOJ!')
+      command('inoremap <esc> ,<esc>')
+      feed('2adubbel<c-[>upp<esc>')
+      eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+    end)
+  end)
+end)
+
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')
@@ -273,5 +318,49 @@ describe("event processing and input", function()
     eq({'notification', 'start', {}}, next_msg())
     feed '<f2>'
     eq({'notification', 'stop', {}}, next_msg())
+  end)
+end)
+
+describe('display is updated', function()
+  local screen
+  before_each(function()
+    screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+      [2] = {bold = true},  -- ModeMsg
+    })
+    screen:attach()
+  end)
+
+  it('in Insert mode after <Nop> mapping #17911', function()
+    command('imap <Plug>test <Nop>')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it('in Insert mode after empty string <expr> mapping #17911', function()
+    command('imap <expr> <Plug>test ""')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
   end)
 end)

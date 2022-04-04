@@ -89,9 +89,9 @@ file is opened and adds Ada related entries to the main and pop-up menu.
 								 *ft-ada-omni*
 
 The Ada omni-completions (|i_CTRL-X_CTRL-O|) uses tags database created either
-by "gnat xref -v" or the "exuberant Ctags (http://ctags.sourceforge.net).  The
-complete function will automatically detect which tool was used to create the
-tags file.
+by "gnat xref -v" or the "Universal Ctags" (https://ctags.io).  The complete
+function will automatically detect which tool was used to create the tags
+file.
 
 ------------------------------------------------------------------------------
 3.1 Omni Completion with "gnat xref" ~
@@ -125,18 +125,18 @@ NOTE: "gnat xref -v" is very tricky to use as it has almost no diagnostic
 3.2 Omni Completion with "ctags"~
 								   *ada-ctags*
 
-Exuberant Ctags uses its own multi-language code parser. The parser is quite
-fast, produces a lot of extra information (hence the name "Exuberant Ctags")
-and can run on files which currently do not compile.
+Universal/Exuberant Ctags use their own multi-language code parser.  The
+parser is quite fast, produces a lot of extra information and can run on files
+which currently do not compile.
 
-There are also lots of other Vim-tools which use exuberant Ctags.
+There are also lots of other Vim-tools which use Universal/Exuberant Ctags.
+Universal Ctags is preferred, Exuberant Ctags is no longer being developed.
 
-You will need to install a version of the Exuberant Ctags which has Ada
-support patched in. Such a version is available from the GNU Ada Project
-(http://gnuada.sourceforge.net).
+You will need to install Universal Ctags which is available from
+https://ctags.io
 
-The Ada parser for Exuberant Ctags is fairly new - don't expect complete
-support yet.
+The Ada parser for Universal/Exuberant Ctags is fairly new - don't expect
+complete support yet.
 
 ==============================================================================
 4. Compiler Support ~

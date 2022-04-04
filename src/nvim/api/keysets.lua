@@ -27,6 +27,7 @@ return {
     "number_hl_group";
     "line_hl_group";
     "cursorline_hl_group";
+    "conceal";
   };
   keymap = {
     "noremap";
@@ -122,17 +123,23 @@ return {
     "nocombine";
   };
   -- Autocmds
+  clear_autocmds = {
+    "buffer";
+    "event";
+    "group";
+    "pattern";
+  };
   create_autocmd = {
     "buffer";
     "callback";
     "command";
     "desc";
     "group";
-    "once";
     "nested";
+    "once";
     "pattern";
   };
-  do_autocmd = {
+  exec_autocmds = {
     "buffer";
     "group";
     "modeline";

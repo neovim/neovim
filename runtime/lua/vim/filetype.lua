@@ -21,7 +21,7 @@ end
 
 ---@private
 local function getline(bufnr, lnum)
-  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1]
+  return api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1] or ""
 end
 
 -- Filetypes based on file extension
@@ -177,6 +177,7 @@ local extension = {
   leex = "eelixir",
   exs = "elixir",
   elm = "elm",
+  elv = "elvish",
   epp = "epuppet",
   erl = "erlang",
   hrl = "erlang",
@@ -438,6 +439,8 @@ local extension = {
   opam = "opam",
   ["or"] = "openroad",
   ora = "ora",
+  org = "org",
+  org_archive = "org",
   pxsl = "papp",
   papp = "papp",
   pxml = "papp",
@@ -1424,6 +1427,8 @@ local pattern = {
       return "git"
     end
   end,
+  -- Neovim only
+  [".*/queries/.*%.scm"] = "query", -- tree-sitter queries
   -- END PATTERN
 }
 -- luacheck: pop

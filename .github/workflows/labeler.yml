@@ -30,6 +30,8 @@ jobs:
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
     - name: "Extract commit scope and add as label"
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+    - name: "Extract if the PR is a breaking change and add it as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
   request-reviewer:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false

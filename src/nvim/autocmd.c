@@ -2013,6 +2013,7 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
   }
 
   AutoCmd *ac = acp->nextcmd;
+  bool oneshot = ac->once;
 
   if (p_verbose >= 9) {
     verbose_enter_scroll();
@@ -2021,10 +2022,21 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
     verbose_leave_scroll();
   }
 
+  // Make sure to set autocmd_nested before executing
+  // lua code, so that it works properly
+  autocmd_nested = ac->nested;
+  current_sctx = ac->script_ctx;
+
   if (ac->exec.type == CALLABLE_CB) {
     typval_T argsin = TV_INITIAL_VALUE;
     typval_T rettv = TV_INITIAL_VALUE;
-    callback_call(&ac->exec.callable.cb, 0, &argsin, &rettv);
+    if (callback_call(&ac->exec.callable.cb, 0, &argsin, &rettv)) {
+      if (ac->exec.callable.cb.type == kCallbackLua) {
+        // If a Lua callback returns 'true' then the autocommand is removed
+        oneshot = true;
+      }
+    }
+
 
     // TODO(tjdevries):
     //
@@ -2042,11 +2054,9 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
   }
 
   // Remove one-shot ("once") autocmd in anticipation of its execution.
-  if (ac->once) {
+  if (oneshot) {
     aucmd_del(ac);
   }
-  autocmd_nested = ac->nested;
-  current_sctx = ac->script_ctx;
   if (ac->last) {
     acp->nextcmd = NULL;
   } else {
@@ -2340,17 +2350,23 @@ int autocmd_delete_event(int group, event_T event, char_u *pat)
 /// Deletes an autocmd by ID.
 /// Only autocmds created via the API have IDs associated with them. There
 /// is no way to delete a specific autocmd created via :autocmd
-void autocmd_delete_id(int64_t id)
+bool autocmd_delete_id(int64_t id)
 {
+  assert(id > 0);
+  bool success = false;
+
+  // Note that since multiple AutoCmd objects can have the same ID, we need to do a full scan.
   FOR_ALL_AUEVENTS(event) {
     FOR_ALL_AUPATS_IN_EVENT(event, ap) {
       for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
         if (ac->id == id) {
           aucmd_del(ac);
+          success = true;
         }
       }
     }
   }
+  return success;
 }
 
 // ===========================================================================

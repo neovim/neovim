@@ -98,10 +98,11 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
   return OK;
 }
 
-// Write commands to "fd" to recursively create windows for frame "fr",
-// horizontally and vertically split.
-// After the commands the last window in the frame is the current window.
-// Returns FAIL when writing the commands to "fd" fails.
+/// Write commands to "fd" to recursively create windows for frame "fr",
+/// horizontally and vertically split.
+/// After the commands the last window in the frame is the current window.
+///
+/// @return  FAIL when writing the commands to "fd" fails.
 static int ses_win_rec(FILE *fd, frame_T *fr)
 {
   frame_T *frc;
@@ -144,8 +145,9 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
   return OK;
 }
 
-// Skip frames that don't contain windows we want to save in the Session.
-// Returns NULL when there none.
+/// Skip frames that don't contain windows we want to save in the Session.
+///
+/// @return  NULL when there none.
 static frame_T *ses_skipframe(frame_T *fr)
 {
   frame_T *frc;
@@ -158,8 +160,8 @@ static frame_T *ses_skipframe(frame_T *fr)
   return frc;
 }
 
-// Return true if frame "fr" has a window somewhere that we want to save in
-// the Session.
+/// @return  true if frame "fr" has a window somewhere that we want to save in
+///          the Session.
 static bool ses_do_frame(const frame_T *fr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -176,7 +178,7 @@ static bool ses_do_frame(const frame_T *fr)
   return false;
 }
 
-/// Return non-zero if window "wp" is to be stored in the Session.
+/// @return  non-zero if window "wp" is to be stored in the Session.
 static int ses_do_win(win_T *wp)
 {
   if (wp->w_buffer->b_fname == NULL
@@ -229,7 +231,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
   return OK;
 }
 
-/// Gets the buffer name for `buf`.
+/// @return  the buffer name for `buf`.
 static char *ses_get_fname(buf_T *buf, unsigned *flagp)
 {
   // Use the short file name if the current directory is known at the time
@@ -249,7 +251,8 @@ static char *ses_get_fname(buf_T *buf, unsigned *flagp)
 
 /// Write a buffer name to the session file.
 /// Also ends the line, if "add_eol" is true.
-/// Returns FAIL if writing fails.
+///
+/// @return  FAIL if writing fails.
 static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
 {
   char *name = ses_get_fname(buf, flagp);
@@ -260,11 +263,11 @@ static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
   return OK;
 }
 
-// Escapes a filename for session writing.
-// Takes care of "slash" flag in 'sessionoptions' and escapes special
-// characters.
-//
-// Returns allocated string or NULL.
+/// Escapes a filename for session writing.
+/// Takes care of "slash" flag in 'sessionoptions' and escapes special
+/// characters.
+///
+/// @return  allocated string or NULL.
 static char *ses_escape_fname(char *name, unsigned *flagp)
 {
   char *p;
@@ -283,10 +286,11 @@ static char *ses_escape_fname(char *name, unsigned *flagp)
   return p;
 }
 
-// Write a file name to the session file.
-// Takes care of the "slash" option in 'sessionoptions' and escapes special
-// characters.
-// Returns FAIL if writing fails.
+/// Write a file name to the session file.
+/// Takes care of the "slash" option in 'sessionoptions' and escapes special
+/// characters.
+///
+/// @return  FAIL if writing fails.
 static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
 {
   char *p = ses_escape_fname((char *)name, flagp);
@@ -585,11 +589,17 @@ static int makeopens(FILE *fd, char_u *dirnow)
               "if expand('%') == '' && !&modified && line('$') <= 1"
               " && getline(1) == ''\n"
               "  let s:wipebuf = bufnr('%')\n"
-              "endif\n"
-              // Now save the current files, current buffer first.
-              "set shortmess=aoO\n") < 0) {
+              "endif\n") < 0) {
     return FAIL;
   }
+
+  // save 'shortmess' if not storing options
+  if ((ssop_flags & SSOP_OPTIONS) == 0) {
+    PUTLINE_FAIL("let s:shortmess_save = &shortmess");
+  }
+
+  // Now save the current files, current buffer first.
+  PUTLINE_FAIL("set shortmess=aoO");
 
   // Put all buffers into the buffer list.
   // Do it very early to preserve buffer order after loading session (which
@@ -838,15 +848,21 @@ static int makeopens(FILE *fd, char_u *dirnow)
     return FAIL;
   }
 
-  // Re-apply 'winheight', 'winwidth' and 'shortmess'.
-  if (fprintf(fd,
-              "set winheight=%" PRId64 " winwidth=%" PRId64
-              " shortmess=%s\n",
-              (int64_t)p_wh,
-              (int64_t)p_wiw,
-              p_shm) < 0) {
+  // Re-apply 'winheight' and 'winwidth'.
+  if (fprintf(fd, "set winheight=%" PRId64 " winwidth=%" PRId64 "\n",
+              (int64_t)p_wh, (int64_t)p_wiw) < 0) {
     return FAIL;
   }
+
+  // Restore 'shortmess'.
+  if (ssop_flags & SSOP_OPTIONS) {
+    if (fprintf(fd, "set shortmess=%s\n", p_shm) < 0) {
+      return FAIL;
+    }
+  } else {
+    PUTLINE_FAIL("let &shortmess = s:shortmess_save");
+  }
+
   if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
     // Restore 'winminheight' and 'winminwidth'.
     PUTLINE_FAIL("let &winminheight = s:save_winminheight");
@@ -1052,7 +1068,7 @@ void ex_mkrc(exarg_T *eap)
   xfree(viewFile);
 }
 
-/// Get the name of the view file for the current buffer.
+/// @return  the name of the view file for the current buffer.
 static char *get_view_file(int c)
 {
   if (curbuf->b_ffname == NULL) {
@@ -1100,7 +1116,7 @@ static char *get_view_file(int c)
   return retval;
 }
 
-// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
+/// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
 int put_eol(FILE *fd)
 {
   if (putc('\n', fd) < 0) {
@@ -1109,7 +1125,7 @@ int put_eol(FILE *fd)
   return OK;
 }
 
-// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
+/// TODO(justinmk): remove this, not needed after 5ba3cecb68cd.
 int put_line(FILE *fd, char *s)
 {
   if (fprintf(fd, "%s\n", s) < 0) {

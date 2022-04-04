@@ -35,6 +35,8 @@ local keymap = {}
 ---                            Can also be list of modes to create mapping on multiple modes.
 ---@param lhs string          Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
+---                            If a Lua function and `opts.expr == true`, returning `nil` is
+---                            equivalent to an empty string.
 --
 ---@param opts table A table of |:map-arguments| such as "silent". In addition to the options
 ---                  listed in |nvim_set_keymap()|, this table also accepts the following keys:
@@ -56,10 +58,18 @@ function keymap.set(mode, lhs, rhs, opts)
   local is_rhs_luaref = type(rhs) == "function"
   mode = type(mode) == 'string' and {mode} or mode
 
-  if is_rhs_luaref and opts.expr and opts.replace_keycodes ~= false then
+  if is_rhs_luaref and opts.expr then
     local user_rhs = rhs
     rhs = function ()
-      return vim.api.nvim_replace_termcodes(user_rhs(), true, true, true)
+      local res = user_rhs()
+      if res == nil then
+        -- TODO(lewis6991): Handle this in C?
+        return ''
+      elseif opts.replace_keycodes ~= false then
+        return vim.api.nvim_replace_termcodes(res, true, true, true)
+      else
+        return res
+      end
     end
   end
   -- clear replace_keycodes from opts table

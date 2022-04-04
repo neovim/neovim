@@ -142,6 +142,7 @@ endfunc
 func Test_FileChangedShell_edit_dialog()
   throw 'Skipped: requires a UI to be active'
   CheckNotGui
+  CheckUnix  " Using low level feedkeys() does not work on MS-Windows.
 
   new Xchanged_r
   call setline(1, 'reload this')

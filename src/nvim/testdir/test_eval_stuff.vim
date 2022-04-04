@@ -185,7 +185,7 @@ func Test_let_register()
   call Assert_reg('"', 'v', "abc", "['abc']", "abc", "['abc']")
   let @" = "abc\n"
   call Assert_reg('"', 'V', "abc\n", "['abc']", "abc\n", "['abc']")
-  let @" = "abc\<C-m>"
+  let @" = "abc\r"
   call Assert_reg('"', 'V', "abc\r\n", "['abc\r']", "abc\r\n", "['abc\r']")
   let @= = '"abc"'
   call Assert_reg('=', 'v', "abc", "['abc']", '"abc"', "['\"abc\"']")

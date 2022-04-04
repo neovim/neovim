@@ -95,33 +95,38 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-void reset_cursorline(void)
-{
-  curwin->w_last_cursorline = 0;
-}
-
-// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
+/// Also when concealing is on and 'concealcursor' is not active.
 void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if ((wp->w_p_rnu || win_cursorline_standout(wp))
-      && (wp->w_valid & VALID_CROW) == 0
-      && !pum_visible()) {
-    if (wp->w_p_rnu) {
-      // win_line() will redraw the number column only.
+  if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
+      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+    // win_line() will redraw the number column and cursorline only.
+    redraw_later(wp, VALID);
+  }
+}
+
+/// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
+/// contains "screenline".
+/// Also when concealing is on and 'concealcursor' is active.
+static void redraw_for_cursorcolumn(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
+    if (wp->w_p_cuc) {
+      // When 'cursorcolumn' is set need to redraw with SOME_VALID.
+      redraw_later(wp, SOME_VALID);
+    } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
+      // When 'cursorlineopt' contains "screenline" need to redraw with VALID.
       redraw_later(wp, VALID);
     }
-    if (win_cursorline_standout(wp)) {
-      if (wp->w_redr_type <= VALID && wp->w_last_cursorline != 0) {
-        // "w_last_cursorline" may be outdated, worst case we redraw
-        // too much.  This is optimized for moving the cursor around in
-        // the current window.
-        redrawWinline(wp, wp->w_last_cursorline);
-        redrawWinline(wp, wp->w_cursor.lnum);
-      } else {
-        redraw_later(wp, SOME_VALID);
-      }
-    }
+  }
+  // If the cursor moves horizontally when 'concealcursor' is active, then the
+  // current line needs to be redrawn in order to calculate the correct
+  // cursor position.
+  if ((wp->w_valid & VALID_VIRTCOL) == 0 && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+    redrawWinline(wp, wp->w_cursor.lnum);
   }
 }
 
@@ -641,11 +646,8 @@ void validate_virtcol_win(win_T *wp)
   check_cursor_moved(wp);
   if (!(wp->w_valid & VALID_VIRTCOL)) {
     getvvcol(wp, &wp->w_cursor, NULL, &(wp->w_virtcol), NULL);
+    redraw_for_cursorcolumn(wp);
     wp->w_valid |= VALID_VIRTCOL;
-    if (wp->w_p_cuc
-        && !pum_visible()) {
-      redraw_later(wp, SOME_VALID);
-    }
   }
 }
 
@@ -776,8 +778,13 @@ void curs_columns(win_T *wp, int may_scroll)
   int textwidth = wp->w_width_inner - extra;
   if (textwidth <= 0) {
     // No room for text, put cursor in last char of window.
+    // If not wrapping, the last non-empty line.
     wp->w_wcol = wp->w_width_inner - 1;
-    wp->w_wrow = wp->w_height_inner - 1;
+    if (wp->w_p_wrap) {
+      wp->w_wrow = wp->w_height_inner - 1;
+    } else {
+      wp->w_wrow = wp->w_height_inner - 1 - wp->w_empty_rows;
+    }
   } else if (wp->w_p_wrap
              && wp->w_width_inner != 0) {
     width = textwidth + win_col_off2(wp);
@@ -948,11 +955,7 @@ void curs_columns(win_T *wp, int may_scroll)
     redraw_later(wp, NOT_VALID);
   }
 
-  // Redraw when w_virtcol changes and 'cursorcolumn' is set
-  if (wp->w_p_cuc && (wp->w_valid & VALID_VIRTCOL) == 0
-      && !pum_visible()) {
-    redraw_later(wp, SOME_VALID);
-  }
+  redraw_for_cursorcolumn(curwin);
 
   // now w_leftcol is valid, avoid check_cursor_moved() thinking otherwise
   wp->w_valid_leftcol = wp->w_leftcol;

@@ -15,6 +15,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
@@ -54,6 +55,12 @@ getkey:
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
+      // Duplicate display updating logic in vgetorpeek()
+      if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
+          && must_redraw != 0 && !need_wait_return) {
+        update_screen(0);
+        setcursor();  // put cursor back where it belongs
+      }
       // Flush screen updates before blocking
       ui_flush();
       // Call `os_inchar` directly to block for events or user input without

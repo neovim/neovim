@@ -3860,13 +3860,22 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               prompt = xmallocz(ec + 1);
               memset(prompt, ' ', sc);
               memset(prompt + sc, '^', ec - sc + 1);
-              resp = (char_u *)getcmdline_prompt(NUL, prompt, 0, EXPAND_NOTHING,
+              resp = (char_u *)getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING,
                                                  NULL, CALLBACK_NONE);
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);
+              } else {
+                // getcmdline_prompt() returns NULL if there is no command line to return.
+                typed = NUL;
+              }
+              // When ":normal" runs out of characters we get
+              // an empty line.  Use "q" to get out of the
+              // loop.
+              if (ex_normal_busy && typed == NUL) {
+                typed = 'q';
               }
             } else {
               char_u *orig_line = NULL;

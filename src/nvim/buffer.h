@@ -23,7 +23,7 @@ enum getf_retvalues {
   GETFILE_ERROR       = 1,    // normal error
   GETFILE_NOT_WRITTEN = 2,    // "not written" error
   GETFILE_SAME_FILE   = 0,    // success, same file
-  GETFILE_OPEN_OTHER  = -1,   // success, opened another file
+  GETFILE_OPEN_OTHER  = (-1),  // success, opened another file
   GETFILE_UNUSED      = 8,
 };
 

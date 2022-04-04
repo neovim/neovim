@@ -65,6 +65,7 @@ describe('nvim_get_commands', function()
     local cmd3 = { addr=NIL,         bang=false, bar=true,  complete=NIL,      complete_arg=NIL,         count=NIL,  definition='call \128\253R3_ohyeah()',      name='Cmd3',    nargs='0', range=NIL,  register=false, keepscript=false, script_id=3, }
     local cmd4 = { addr=NIL,         bang=false, bar=false, complete=NIL,      complete_arg=NIL,         count=NIL,  definition='call \128\253R4_just_great()',  name='Cmd4',    nargs='0', range=NIL,  register=true,  keepscript=false, script_id=4, }
     source([[
+      let s:foo = 1
       command -complete=custom,ListUsers -nargs=+ Finger !finger <args>
     ]])
     eq({Finger=cmd1}, meths.get_commands({builtin=false}))
@@ -72,12 +73,18 @@ describe('nvim_get_commands', function()
     eq({Finger=cmd1, TestCmd=cmd0}, meths.get_commands({builtin=false}))
 
     source([[
+      function! s:foo() abort
+      endfunction
       command -bang -nargs=* Cmd2 call <SID>foo(<q-args>)
     ]])
     source([[
+      function! s:ohyeah() abort
+      endfunction
       command -bar -nargs=0 Cmd3 call <SID>ohyeah()
     ]])
     source([[
+      function! s:just_great() abort
+      endfunction
       command -register Cmd4 call <SID>just_great()
     ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?

@@ -59,6 +59,7 @@ endfunc
 func Test_sort_numbers()
   call assert_equal([3, 13, 28], sort([13, 28, 3], 'N'))
   call assert_equal(['3', '13', '28'], sort(['13', '28', '3'], 'N'))
+  call assert_equal([3997, 4996], sort([4996, 3997], 'Compare1'))
 endfunc
 
 func Test_sort_float()

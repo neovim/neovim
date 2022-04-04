@@ -1259,6 +1259,10 @@ vim.wo                                                  *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+                                             *vim.connection_failure_errmsg()*
+connection_failure_errmsg({consequence})
+                TODO: Documentation
+
 defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Defers calling `fn` until `timeout` ms passes.
 
@@ -1550,7 +1554,7 @@ startswith({s}, {prefix})                                   *vim.startswith()*
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
-                example: tbl_add_reverse_lookup { A = 1 } == { [1] = 'A , A = 1 }`
+                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 
                 Parameters: ~
                     {o}  table The table to add the reverse to.
@@ -1629,6 +1633,22 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
 
                 See also: ~
                     From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+
+tbl_get({o}, {...})                                            *vim.tbl_get()*
+                Index into a table (first argument) via string keys passed as
+                subsequent arguments. Return `nil` if the key does not exist. Examples: >
+
+                  vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
+                  vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+<
+
+                Parameters: ~
+                    {o}    Table to index
+                    {...}  Optional strings (0 or more, variadic) via which to
+                           index the table
+
+                Return: ~
+                    nested value indexed by key if it exists, else nil
 
 tbl_isempty({t})                                           *vim.tbl_isempty()*
                 Checks if a table is empty.
@@ -1990,7 +2010,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     vim.keymap.set('n', 'asdf', require('jkl').my_fun)
 <
 
-                the require('jkl )` gets evaluated during this call in order to access the
+                the `require('jkl')` gets evaluated during this call in order to access the
                 function. If you want to avoid this cost at startup you can
                 wrap it in a function, for example: >
 
@@ -2003,7 +2023,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                             create mapping on multiple modes.
                     {lhs}   string Left-hand side |{lhs}| of the mapping.
                     {rhs}   string|function Right-hand side |{rhs}| of the
-                            mapping. Can also be a Lua function.
+                            mapping. Can also be a Lua function. If a Lua
+                            function and `opts.expr == true`, returning `nil`
+                            is equivalent to an empty string.
                     {opts}  table A table of |:map-arguments| such as
                             "silent". In addition to the options listed in
                             |nvim_set_keymap()|, this table also accepts the

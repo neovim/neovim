@@ -5,7 +5,7 @@
 "                     Meikel Brandmeyer <mb@kotka.de>
 " URL:                https://github.com/clojure-vim/clojure.vim
 " License:            Vim (see :h license)
-" Last Change:        2021-10-26
+" Last Change:        2022-03-24
 
 if exists("b:did_indent")
 	finish

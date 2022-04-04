@@ -1850,7 +1850,7 @@ static void spell_reload_one(char_u *fname, bool added_word)
 // In the postponed prefixes tree wn_flags is used to store the WFP_ flags,
 // but it must be negative to indicate the prefix tree to tree_add_word().
 // Use a negative number with the lower 8 bits zero.
-#define PFX_FLAGS       -256
+#define PFX_FLAGS       (-256)
 
 // flags for "condit" argument of store_aff_word()
 #define CONDIT_COMB     1       // affix must combine
@@ -5580,6 +5580,9 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
         fpos_next = ftell(fd);
+        if (fpos_next < 0) {
+          break;  // should never happen
+        }
         if (STRNCMP(word, line, len) == 0
             && (line[len] == '/' || line[len] < ' ')) {
           // Found duplicate word.  Remove it by writing a '#' at

@@ -1233,12 +1233,9 @@ static void normal_check_window_scrolled(NormalState *s)
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
-  if (!finish_op && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
+  if (!finish_op && has_event(EVENT_CURSORMOVED)
       && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)) {
-    if (has_event(EVENT_CURSORMOVED)) {
-      apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
-    }
-
+    apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 }
@@ -1287,22 +1284,6 @@ static void normal_redraw(NormalState *s)
   // if lines don't wrap, and w_skipcol if lines wrap.
   update_topline(curwin);
   validate_cursor();
-
-  // If the cursor moves horizontally when 'concealcursor' is active, then the
-  // current line needs to be redrawn in order to calculate the correct
-  // cursor position.
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
-  }
-
-  // Might need to update for 'cursorline'.
-  // When 'cursorlineopt' is "screenline" need to redraw always.
-  if (curwin->w_p_cul
-      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
-          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
-      && !char_avail()) {
-    redraw_later(curwin, VALID);
-  }
 
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
@@ -2635,7 +2616,7 @@ void may_clear_cmdline(void)
 }
 
 // Routines for displaying a partly typed command
-#define SHOWCMD_BUFLEN SHOWCMD_COLS + 1 + 30
+#define SHOWCMD_BUFLEN (SHOWCMD_COLS + 1 + 30)
 static char_u showcmd_buf[SHOWCMD_BUFLEN];
 static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
 static bool showcmd_is_clear = true;

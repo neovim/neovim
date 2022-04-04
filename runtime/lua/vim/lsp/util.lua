@@ -360,7 +360,7 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr number Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32 defaults to encoding of first client of `bufnr`
+---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate {
@@ -1138,7 +1138,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     block = {nil, "```+([a-zA-Z0-9_]*)", "```+"},
     pre = {"", "<pre>", "</pre>"},
     code = {"", "<code>", "</code>"},
-    text = {"plaintex", "<text>", "</text>"},
+    text = {"text", "<text>", "</text>"},
   }
 
   local match_begin = function(line)
@@ -1894,16 +1894,16 @@ end
 function M.make_workspace_params(added, removed)
   return { event = { added = added; removed = removed; } }
 end
---- Returns visual width of tabstop.
+--- Returns indentation size.
 ---
----@see |softtabstop|
+---@see |shiftwidth|
 ---@param bufnr (optional, number): Buffer handle, defaults to current
----@returns (number) tabstop visual width
+---@returns (number) indentation size
 function M.get_effective_tabstop(bufnr)
   validate { bufnr = {bufnr, 'n', true} }
   local bo = bufnr and vim.bo[bufnr] or vim.bo
-  local sts = bo.softtabstop
-  return (sts > 0 and sts) or (sts < 0 and bo.shiftwidth) or bo.tabstop
+  local sw = bo.shiftwidth
+  return (sw == 0 and bo.tabstop) or sw
 end
 
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.

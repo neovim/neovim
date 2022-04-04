@@ -28,7 +28,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/fileio.h"
@@ -41,7 +40,6 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
-#include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
@@ -68,7 +66,6 @@ static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
 static char *e_nowhitespace
   = N_("E274: No white space allowed before parenthesis");
-static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static char *e_write2 = N_("E80: Error while writing: %s");
 static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
@@ -3272,7 +3269,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
 /// Does not use 'cpo' and always uses 'magic'.
 ///
 /// @return  TRUE if "pat" matches "text".
-static int pattern_match(char_u *pat, char_u *text, bool ic)
+int pattern_match(char_u *pat, char_u *text, bool ic)
 {
   int matches = 0;
   regmatch_T regmatch;
@@ -3977,18 +3974,11 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
           f1 = f1 * f2;
         } else if (op == '/') {
           // Division by zero triggers error from AddressSanitizer
-          f1 = (f2 == 0
-                ? (
+          f1 = (f2 == 0 ? (
 #ifdef NAN
-                   f1 == 0
-                    ? NAN
-                    :
+              f1 == 0 ? (float_T)NAN :
 #endif
-                   (f1 > 0
-                     ? INFINITY
-                     : -INFINITY)
-                   )
-                     : f1 / f2);
+              (f1 > 0 ? (float_T)INFINITY : (float_T)-INFINITY)) : f1 / f2);
         } else {
           emsg(_("E804: Cannot use '%' with Float"));
           return FAIL;
@@ -5843,15 +5833,15 @@ size_t string2float(const char *const text, float_T *const ret_value)
 
   // MS-Windows does not deal with "inf" and "nan" properly
   if (STRNICMP(text, "inf", 3) == 0) {
-    *ret_value = INFINITY;
+    *ret_value = (float_T)INFINITY;
     return 3;
   }
   if (STRNICMP(text, "-inf", 3) == 0) {
-    *ret_value = -INFINITY;
+    *ret_value = (float_T)-INFINITY;
     return 4;
   }
   if (STRNICMP(text, "nan", 3) == 0) {
-    *ret_value = NAN;
+    *ret_value = (float_T)NAN;
     return 3;
   }
   *ret_value = strtod(text, &s);
@@ -5913,144 +5903,6 @@ void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rettv)
   }
 }
 
-/// Prepare "gap" for an assert error and add the sourcing position.
-void prepare_assert_error(garray_T *gap)
-{
-  char buf[NUMBUFLEN];
-
-  ga_init(gap, 1, 100);
-  if (sourcing_name != NULL) {
-    ga_concat(gap, (char *)sourcing_name);
-    if (sourcing_lnum > 0) {
-      ga_concat(gap, " ");
-    }
-  }
-  if (sourcing_lnum > 0) {
-    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)sourcing_lnum);
-    ga_concat(gap, buf);
-  }
-  if (sourcing_name != NULL || sourcing_lnum > 0) {
-    ga_concat(gap, ": ");
-  }
-}
-
-/// Append "p[clen]" to "gap", escaping unprintable characters.
-/// Changes NL to \n, CR to \r, etc.
-static void ga_concat_esc(garray_T *gap, const char_u *p, int clen)
-  FUNC_ATTR_NONNULL_ALL
-{
-  char_u buf[NUMBUFLEN];
-
-  if (clen > 1) {
-    memmove(buf, p, clen);
-    buf[clen] = NUL;
-    ga_concat(gap, (char *)buf);
-  } else {
-    switch (*p) {
-    case BS:
-      ga_concat(gap, "\\b"); break;
-    case ESC:
-      ga_concat(gap, "\\e"); break;
-    case FF:
-      ga_concat(gap, "\\f"); break;
-    case NL:
-      ga_concat(gap, "\\n"); break;
-    case TAB:
-      ga_concat(gap, "\\t"); break;
-    case CAR:
-      ga_concat(gap, "\\r"); break;
-    case '\\':
-      ga_concat(gap, "\\\\"); break;
-    default:
-      if (*p < ' ') {
-        vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
-        ga_concat(gap, (char *)buf);
-      } else {
-        ga_append(gap, *p);
-      }
-      break;
-    }
-  }
-}
-
-/// Append "str" to "gap", escaping unprintable characters.
-/// Changes NL to \n, CR to \r, etc.
-static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  char_u buf[NUMBUFLEN];
-
-  if (str == NULL) {
-    ga_concat(gap, "NULL");
-    return;
-  }
-
-  for (const char_u *p = str; *p != NUL; p++) {
-    int same_len = 1;
-    const char_u *s = p;
-    const int c = mb_ptr2char_adv(&s);
-    const int clen = s - p;
-    while (*s != NUL && c == utf_ptr2char(s)) {
-      same_len++;
-      s += clen;
-    }
-    if (same_len > 20) {
-      ga_concat(gap, "\\[");
-      ga_concat_esc(gap, p, clen);
-      ga_concat(gap, " occurs ");
-      vim_snprintf((char *)buf, NUMBUFLEN, "%d", same_len);
-      ga_concat(gap, (char *)buf);
-      ga_concat(gap, " times]");
-      p = s - 1;
-    } else {
-      ga_concat_esc(gap, p, clen);
-    }
-  }
-}
-
-/// Fill "gap" with information about an assert error.
-void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_str, typval_T *exp_tv,
-                       typval_T *got_tv, assert_type_T atype)
-{
-  char_u *tofree;
-
-  if (opt_msg_tv->v_type != VAR_UNKNOWN) {
-    tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
-    ga_concat(gap, (char *)tofree);
-    xfree(tofree);
-    ga_concat(gap, ": ");
-  }
-
-  if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
-    ga_concat(gap, "Pattern ");
-  } else if (atype == ASSERT_NOTEQUAL) {
-    ga_concat(gap, "Expected not equal to ");
-  } else {
-    ga_concat(gap, "Expected ");
-  }
-
-  if (exp_str == NULL) {
-    tofree = (char_u *)encode_tv2string(exp_tv, NULL);
-    ga_concat_shorten_esc(gap, tofree);
-    xfree(tofree);
-  } else {
-    ga_concat_shorten_esc(gap, exp_str);
-  }
-
-  if (atype != ASSERT_NOTEQUAL) {
-    if (atype == ASSERT_MATCH) {
-      ga_concat(gap, " does not match ");
-    } else if (atype == ASSERT_NOTMATCH) {
-      ga_concat(gap, " does match ");
-    } else {
-      ga_concat(gap, " but got ");
-    }
-    tofree = (char_u *)encode_tv2string(got_tv, NULL);
-    ga_concat_shorten_esc(gap, tofree);
-    xfree(tofree);
-  }
-}
-
 /// Add an assert error to v:errors.
 void assert_error(garray_T *gap)
 {
@@ -6062,328 +5914,6 @@ void assert_error(garray_T *gap)
   }
   tv_list_append_string(vimvars[VV_ERRORS].vv_list,
                         (const char *)gap->ga_data, (ptrdiff_t)gap->ga_len);
-}
-
-int assert_equal_common(typval_T *argvars, assert_type_T atype)
-  FUNC_ATTR_NONNULL_ALL
-{
-  garray_T ga;
-
-  if (tv_equal(&argvars[0], &argvars[1], false, false)
-      != (atype == ASSERT_EQUAL)) {
-    prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[2], NULL,
-                      &argvars[0], &argvars[1], atype);
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  }
-  return 0;
-}
-
-int assert_equalfile(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
-{
-  char buf1[NUMBUFLEN];
-  char buf2[NUMBUFLEN];
-  const char *const fname1 = tv_get_string_buf_chk(&argvars[0], buf1);
-  const char *const fname2 = tv_get_string_buf_chk(&argvars[1], buf2);
-  garray_T ga;
-
-  if (fname1 == NULL || fname2 == NULL) {
-    return 0;
-  }
-
-  IObuff[0] = NUL;
-  FILE *const fd1 = os_fopen(fname1, READBIN);
-  char line1[200];
-  char line2[200];
-  ptrdiff_t lineidx = 0;
-  if (fd1 == NULL) {
-    snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname1);
-  } else {
-    FILE *const fd2 = os_fopen(fname2, READBIN);
-    if (fd2 == NULL) {
-      fclose(fd1);
-      snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
-    } else {
-      int64_t linecount = 1;
-      for (int64_t count = 0;; count++) {
-        const int c1 = fgetc(fd1);
-        const int c2 = fgetc(fd2);
-        if (c1 == EOF) {
-          if (c2 != EOF) {
-            STRCPY(IObuff, "first file is shorter");
-          }
-          break;
-        } else if (c2 == EOF) {
-          STRCPY(IObuff, "second file is shorter");
-          break;
-        } else {
-          line1[lineidx] = c1;
-          line2[lineidx] = c2;
-          lineidx++;
-          if (c1 != c2) {
-            snprintf((char *)IObuff, IOSIZE,
-                     "difference at byte %" PRId64 ", line %" PRId64,
-                     count, linecount);
-            break;
-          }
-        }
-        if (c1 == NL) {
-          linecount++;
-          lineidx = 0;
-        } else if (lineidx + 2 == (ptrdiff_t)sizeof(line1)) {
-          memmove(line1, line1 + 100, lineidx - 100);
-          memmove(line2, line2 + 100, lineidx - 100);
-          lineidx -= 100;
-        }
-      }
-      fclose(fd1);
-      fclose(fd2);
-    }
-  }
-  if (IObuff[0] != NUL) {
-    prepare_assert_error(&ga);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      char *const tofree = encode_tv2echo(&argvars[2], NULL);
-      ga_concat(&ga, tofree);
-      xfree(tofree);
-      ga_concat(&ga, ": ");
-    }
-    ga_concat(&ga, (char *)IObuff);
-    if (lineidx > 0) {
-      line1[lineidx] = NUL;
-      line2[lineidx] = NUL;
-      ga_concat(&ga, " after \"");
-      ga_concat(&ga, line1);
-      if (STRCMP(line1, line2) != 0) {
-        ga_concat(&ga, "\" vs \"");
-        ga_concat(&ga, line2);
-      }
-      ga_concat(&ga, "\"");
-    }
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  }
-  return 0;
-}
-
-int assert_inrange(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
-{
-  bool error = false;
-
-  if (argvars[0].v_type == VAR_FLOAT
-      || argvars[1].v_type == VAR_FLOAT
-      || argvars[2].v_type == VAR_FLOAT) {
-    const float_T flower = tv_get_float(&argvars[0]);
-    const float_T fupper = tv_get_float(&argvars[1]);
-    const float_T factual = tv_get_float(&argvars[2]);
-
-    if (factual < flower || factual > fupper) {
-      garray_T ga;
-      prepare_assert_error(&ga);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        char_u *const tofree = (char_u *)encode_tv2string(&argvars[3], NULL);
-        ga_concat(&ga, (char *)tofree);
-        xfree(tofree);
-      } else {
-        char msg[80];
-        vim_snprintf(msg, sizeof(msg), "Expected range %g - %g, but got %g",
-                     flower, fupper, factual);
-        ga_concat(&ga, msg);
-      }
-      assert_error(&ga);
-      ga_clear(&ga);
-      return 1;
-    }
-  } else {
-    const varnumber_T lower = tv_get_number_chk(&argvars[0], &error);
-    const varnumber_T upper = tv_get_number_chk(&argvars[1], &error);
-    const varnumber_T actual = tv_get_number_chk(&argvars[2], &error);
-
-    if (error) {
-      return 0;
-    }
-    if (actual < lower || actual > upper) {
-      garray_T ga;
-      prepare_assert_error(&ga);
-
-      char msg[55];
-      vim_snprintf(msg, sizeof(msg),
-                   "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
-                   lower, upper);  // -V576
-      fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
-                        ASSERT_INRANGE);
-      assert_error(&ga);
-      ga_clear(&ga);
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/// Common for assert_true() and assert_false().
-int assert_bool(typval_T *argvars, bool is_true)
-  FUNC_ATTR_NONNULL_ALL
-{
-  bool error = false;
-  garray_T ga;
-
-  if ((argvars[0].v_type != VAR_NUMBER
-       || (tv_get_number_chk(&argvars[0], &error) == 0) == is_true
-       || error)
-      && (argvars[0].v_type != VAR_BOOL
-          || (argvars[0].vval.v_bool
-              != (BoolVarValue)(is_true
-                                ? kBoolVarTrue
-                                : kBoolVarFalse)))) {
-    prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[1],
-                      (char_u *)(is_true ? "True" : "False"),
-                      NULL, &argvars[0], ASSERT_OTHER);
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  }
-  return 0;
-}
-
-int assert_exception(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
-{
-  garray_T ga;
-
-  const char *const error = tv_get_string_chk(&argvars[0]);
-  if (vimvars[VV_EXCEPTION].vv_str == NULL) {
-    prepare_assert_error(&ga);
-    ga_concat(&ga, "v:exception is not set");
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  } else if (error != NULL
-             && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
-    prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
-                      &vimvars[VV_EXCEPTION].vv_tv, ASSERT_OTHER);
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  }
-  return 0;
-}
-
-static void assert_append_cmd_or_arg(garray_T *gap, typval_T *argvars, const char *cmd)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
-    char *const tofree = encode_tv2echo(&argvars[2], NULL);
-    ga_concat(gap, tofree);
-    xfree(tofree);
-  } else {
-    ga_concat(gap, cmd);
-  }
-}
-
-int assert_beeps(typval_T *argvars, bool no_beep)
-  FUNC_ATTR_NONNULL_ALL
-{
-  const char *const cmd = tv_get_string_chk(&argvars[0]);
-  int ret = 0;
-
-  called_vim_beep = false;
-  suppress_errthrow = true;
-  emsg_silent = false;
-  do_cmdline_cmd(cmd);
-  if (no_beep ? called_vim_beep : !called_vim_beep) {
-    garray_T ga;
-    prepare_assert_error(&ga);
-    if (no_beep) {
-      ga_concat(&ga, "command did beep: ");
-    } else {
-      ga_concat(&ga, "command did not beep: ");
-    }
-    ga_concat(&ga, cmd);
-    assert_error(&ga);
-    ga_clear(&ga);
-    ret = 1;
-  }
-
-  suppress_errthrow = false;
-  emsg_on_display = false;
-  return ret;
-}
-
-int assert_fails(typval_T *argvars)
-  FUNC_ATTR_NONNULL_ALL
-{
-  const char *const cmd = tv_get_string_chk(&argvars[0]);
-  garray_T ga;
-  int ret = 0;
-  int save_trylevel = trylevel;
-
-  // trylevel must be zero for a ":throw" command to be considered failed
-  trylevel = 0;
-  called_emsg = false;
-  suppress_errthrow = true;
-  emsg_silent = true;
-
-  do_cmdline_cmd(cmd);
-  if (!called_emsg) {
-    prepare_assert_error(&ga);
-    ga_concat(&ga, "command did not fail: ");
-    assert_append_cmd_or_arg(&ga, argvars, cmd);
-    assert_error(&ga);
-    ga_clear(&ga);
-    ret = 1;
-  } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    char buf[NUMBUFLEN];
-    const char *const error = tv_get_string_buf_chk(&argvars[1], buf);
-
-    if (error == NULL
-        || strstr((char *)vimvars[VV_ERRMSG].vv_str, error) == NULL) {
-      prepare_assert_error(&ga);
-      fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
-                        &vimvars[VV_ERRMSG].vv_tv, ASSERT_OTHER);
-      ga_concat(&ga, ": ");
-      assert_append_cmd_or_arg(&ga, argvars, cmd);
-      assert_error(&ga);
-      ga_clear(&ga);
-      ret = 1;
-    }
-  }
-
-  trylevel = save_trylevel;
-  called_emsg = false;
-  suppress_errthrow = false;
-  emsg_silent = false;
-  emsg_on_display = false;
-  set_vim_var_string(VV_ERRMSG, NULL, 0);
-  return ret;
-}
-
-int assert_match_common(typval_T *argvars, assert_type_T atype)
-  FUNC_ATTR_NONNULL_ALL
-{
-  char buf1[NUMBUFLEN];
-  char buf2[NUMBUFLEN];
-  const char *const pat = tv_get_string_buf_chk(&argvars[0], buf1);
-  const char *const text = tv_get_string_buf_chk(&argvars[1], buf2);
-
-  if (pat == NULL || text == NULL) {
-    emsg(_(e_invarg));
-  } else if (pattern_match((char_u *)pat, (char_u *)text, false)
-             != (atype == ASSERT_MATCH)) {
-    garray_T ga;
-    prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], atype);
-    assert_error(&ga);
-    ga_clear(&ga);
-    return 1;
-  }
-  return 0;
 }
 
 /// Find a window: When using a Window ID in any tab page, when using a number
@@ -7323,30 +6853,6 @@ void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, long buf
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
-int matchadd_dict_arg(typval_T *tv, const char **conceal_char, win_T **win)
-{
-  dictitem_T *di;
-
-  if (tv->v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
-    return FAIL;
-  }
-
-  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("conceal"))) != NULL) {
-    *conceal_char = tv_get_string(&di->di_tv);
-  }
-
-  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
-    *win = find_win_by_nr_or_id(&di->di_tv);
-    if (*win == NULL) {
-      emsg(_(e_invalwindow));
-      return FAIL;
-    }
-  }
-
-  return OK;
-}
-
 void return_register(int regname, typval_T *rettv)
 {
   char_u buf[2] = { regname, 0 };
@@ -7730,6 +7236,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   partial_T *partial;
   char_u *name;
   Array args = ARRAY_DICT_INIT;
+  Object rv;
   switch (callback->type) {
   case kCallbackFuncref:
     name = callback->data.funcref;
@@ -7742,10 +7249,13 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     break;
 
   case kCallbackLua:
-    nlua_call_ref(callback->data.luaref, NULL, args, false, NULL);
-
-    return false;
-    break;
+    rv = nlua_call_ref(callback->data.luaref, NULL, args, true, NULL);
+    switch (rv.type) {
+    case kObjectTypeBoolean:
+      return rv.data.boolean;
+    default:
+      return false;
+    }
 
   case kCallbackNone:
     return false;
@@ -8693,6 +8203,12 @@ int eval_isnamec1(int c)
   return ASCII_ISALPHA(c) || c == '_';
 }
 
+/// Get typval_T v: variable value.
+typval_T *get_vim_var_tv(int idx)
+{
+  return &vimvars[idx].vv_tv;
+}
+
 /// Get number v: variable value.
 varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 {
@@ -9245,6 +8761,8 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 
 /// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
 ///
+/// Assigns SID if s: scope is accessed from Lua or anonymous Vimscript. #15994
+///
 /// @param[in]  name  Variable name, possibly with scope prefix.
 /// @param[in]  name_len  Variable name length.
 /// @param[out]  varname  Will be set to the start of the name without scope
@@ -9332,6 +8850,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
       }
     }
     if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
+      // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
       new_script_item(NULL, &current_sctx.sc_sid);
     }
     *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;

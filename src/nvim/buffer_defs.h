@@ -90,7 +90,6 @@ typedef struct {
 #define BF_NEW_W        0x20    // Warned for BF_NEW and file created
 #define BF_READERR      0x40    // got errors while reading the file
 #define BF_DUMMY        0x80    // dummy buffer, only used internally
-#define BF_PRESERVED    0x100   // ":preserve" was used
 #define BF_SYN_SET      0x200   // 'syntax' option was set
 
 // Mask to check for flags that prevent normal writing
@@ -662,7 +661,7 @@ struct file_buffer {
   // flags for use of ":lmap" and IM control
   long b_p_iminsert;            // input mode for insert
   long b_p_imsearch;            // input mode for search
-#define B_IMODE_USE_INSERT -1   //  Use b_p_iminsert value for search
+#define B_IMODE_USE_INSERT (-1)  //  Use b_p_iminsert value for search
 #define B_IMODE_NONE 0          //  Input via none
 #define B_IMODE_LMAP 1          //  Input via langmap
 #define B_IMODE_LAST 1
@@ -1212,6 +1211,8 @@ struct window_S {
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
 
+  linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
+
   // 'listchars' characters. Defaults set in set_chars_option().
   struct {
     int eol;
@@ -1419,7 +1420,7 @@ struct window_S {
   int w_briopt_list;                // additional indent for lists
 
   // transform a pointer to a "onebuf" option into a "allbuf" option
-#define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
+#define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
   long w_scbind_pos;
 

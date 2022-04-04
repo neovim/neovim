@@ -62,11 +62,11 @@
 // Disadvantage: When "the" is typed as "hte" it sounds quite different ("@"
 // vs "ht") and goes down in the list.
 // Used when 'spellsuggest' is set to "best".
-#define RESCORE(word_score, sound_score) ((3 * word_score + sound_score) / 4)
+#define RESCORE(word_score, sound_score) ((3 * (word_score) + (sound_score)) / 4)
 
 // Do the opposite: based on a maximum end score and a known sound score,
 // compute the maximum word score that can be used.
-#define MAXSCORE(word_score, sound_score) ((4 * word_score - sound_score) / 3)
+#define MAXSCORE(word_score, sound_score) ((4 * (word_score) - (sound_score)) / 3)
 
 #include <assert.h>
 #include <inttypes.h>
@@ -122,7 +122,7 @@
 #define WF_CAPMASK (WF_ONECAP | WF_ALLCAP | WF_KEEPCAP | WF_FIXCAP)
 
 // Result values.  Lower number is accepted over higher one.
-#define SP_BANNED       -1
+#define SP_BANNED       (-1)
 #define SP_RARE         0
 #define SP_OK           1
 #define SP_LOCAL        2
@@ -176,7 +176,7 @@ typedef struct {
 #define SUG(ga, i) (((suggest_T *)(ga).ga_data)[i])
 
 // True if a word appears in the list of banned words.
-#define WAS_BANNED(su, word) (!HASHITEM_EMPTY(hash_find(&su->su_banned, word)))
+#define WAS_BANNED(su, word) (!HASHITEM_EMPTY(hash_find(&(su)->su_banned, word)))
 
 // Number of suggestions kept when cleaning up.  We need to keep more than
 // what is displayed, because when rescore_suggestions() is called the score
@@ -225,7 +225,7 @@ typedef struct {
 #define SCORE_SFMAX2    300     // maximum score for second try
 #define SCORE_SFMAX3    400     // maximum score for third try
 
-#define SCORE_BIG       SCORE_INS * 3   // big difference
+#define SCORE_BIG       (SCORE_INS * 3)  // big difference
 #define SCORE_MAXMAX    999999          // accept any score
 #define SCORE_LIMITMAX  350             // for spell_edit_score_limit()
 
@@ -3690,7 +3690,7 @@ static void suggest_try_change(suginfo_T *su)
 
 // Check the maximum score, if we go over it we won't try this change.
 #define TRY_DEEPER(su, stack, depth, add) \
-  (stack[depth].ts_score + (add) < su->su_maxscore)
+  ((depth) < MAXWLEN - 1 && (stack)[depth].ts_score + (add) < (su)->su_maxscore)
 
 // Try finding suggestions by adding/removing/swapping letters.
 //
@@ -3794,6 +3794,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     }
   }
 
+  // The loop may take an indefinite amount of time. Break out after five
+  // sectonds. TODO(vim): add an option for the time limit.
+  proftime_T time_limit = profile_setlimit(5000);
+
   // Loop to find all suggestions.  At each round we either:
   // - For the current state try one operation, advance "ts_curi",
   //   increase "depth".
@@ -3824,7 +3828,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         // At end of a prefix or at start of prefixtree: check for
         // following word.
-        if (byts[arridx] == 0 || n == STATE_NOPREFIX) {
+        if (depth < MAXWLEN - 1 && (byts[arridx] == 0 || n == STATE_NOPREFIX)) {
           // Set su->su_badflags to the caps type at this position.
           // Use the caps type until here for the prefix itself.
           n = nofold_len(fword, sp->ts_fidx, su->su_badptr);
@@ -4927,6 +4931,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (--breakcheckcount == 0) {
         os_breakcheck();
         breakcheckcount = 1000;
+        if (profile_passed_limit(time_limit)) {
+          got_int = true;
+        }
       }
     }
   }
@@ -5284,7 +5291,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
 }
 
 static sftword_T dumsft;
-#define HIKEY2SFT(p)  ((sftword_T *)(p - (dumsft.sft_word - (char_u *)&dumsft)))
+#define HIKEY2SFT(p)  ((sftword_T *)((p) - (dumsft.sft_word - (char_u *)&dumsft)))
 #define HI2SFT(hi)     HIKEY2SFT((hi)->hi_key)
 
 // Prepare for calling suggest_try_soundalike().

@@ -3,16 +3,16 @@
 
 // highlight_group.c: code for managing highlight groups
 
+#include <stdbool.h>
 #include "nvim/autocmd.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/garray.h"
+#include "nvim/fold.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
-#include "nvim/map.h"
+#include "nvim/match.h"
 #include "nvim/option.h"
 #include "nvim/runtime.h"
 #include "nvim/screen.h"

@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command, feed = helpers.clear, helpers.command, helpers.feed
+local eq, funcs, meths = helpers.eq, helpers.funcs, helpers.meths
 
 describe('global statusline', function()
   local screen
@@ -229,5 +230,31 @@ describe('global statusline', function()
       [2] = {foreground = Screen.colors.Blue, bold = true};
       [3] = {reverse = true, bold = true};
     }}
+  end)
+
+  it('win_move_statusline() can reduce cmdheight to 1', function()
+    eq(1, meths.get_option('cmdheight'))
+    funcs.win_move_statusline(0, -1)
+    eq(2, meths.get_option('cmdheight'))
+    funcs.win_move_statusline(0, -1)
+    eq(3, meths.get_option('cmdheight'))
+    funcs.win_move_statusline(0, 1)
+    eq(2, meths.get_option('cmdheight'))
+    funcs.win_move_statusline(0, 1)
+    eq(1, meths.get_option('cmdheight'))
+  end)
+
+  it('mouse dragging can reduce cmdheight to 1', function()
+    command('set mouse=a')
+    meths.input_mouse('left', 'press', '', 0, 14, 10)
+    eq(1, meths.get_option('cmdheight'))
+    meths.input_mouse('left', 'drag', '', 0, 13, 10)
+    eq(2, meths.get_option('cmdheight'))
+    meths.input_mouse('left', 'drag', '', 0, 12, 10)
+    eq(3, meths.get_option('cmdheight'))
+    meths.input_mouse('left', 'drag', '', 0, 13, 10)
+    eq(2, meths.get_option('cmdheight'))
+    meths.input_mouse('left', 'drag', '', 0, 14, 10)
+    eq(1, meths.get_option('cmdheight'))
   end)
 end)

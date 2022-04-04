@@ -44,6 +44,7 @@
 #include "nvim/keymap.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/match.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -4026,8 +4027,9 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
 
         // When '/' or '?' follows another address, start from
         // there.
-        if (lnum != MAXLNUM) {
-          curwin->w_cursor.lnum = lnum;
+        if (lnum > 0 && lnum != MAXLNUM) {
+          curwin->w_cursor.lnum
+            = lnum > curbuf->b_ml.ml_line_count ? curbuf->b_ml.ml_line_count : lnum;
         }
 
         // Start a forward search at the end of the line (unless
@@ -6628,6 +6630,7 @@ static void ex_quit(exarg_T *eap)
 
 /// ":cquit".
 static void ex_cquit(exarg_T *eap)
+  FUNC_ATTR_NORETURN
 {
   // this does not always pass on the exit code to the Manx compiler. why?
   getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
@@ -6837,7 +6840,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 
     // Autocommands may delete the tab page under our fingers and we may
     // fail to close a window with a modified buffer.
-    if (!valid_tabpage(tp) || tp->tp_firstwin == wp) {
+    if (!valid_tabpage(tp) || tp->tp_lastwin == wp) {
       break;
     }
   }
@@ -7154,7 +7157,6 @@ void alist_slash_adjust(void)
 /// ":preserve".
 static void ex_preserve(exarg_T *eap)
 {
-  curbuf->b_flags |= BF_PRESERVED;
   ml_preserve(curbuf, true, true);
 }
 
@@ -9539,70 +9541,6 @@ static void ex_nohlsearch(exarg_T *eap)
 {
   set_no_hlsearch(true);
   redraw_all_later(SOME_VALID);
-}
-
-/// ":[N]match {group} {pattern}"
-/// Sets nextcmd to the start of the next command, if any.  Also called when
-/// skipping commands to find the next command.
-static void ex_match(exarg_T *eap)
-{
-  char_u *p;
-  char_u *g = NULL;
-  char_u *end;
-  int c;
-  int id;
-
-  if (eap->line2 <= 3) {
-    id = eap->line2;
-  } else {
-    emsg(e_invcmd);
-    return;
-  }
-
-  // First clear any old pattern.
-  if (!eap->skip) {
-    match_delete(curwin, id, false);
-  }
-
-  if (ends_excmd(*eap->arg)) {
-    end = eap->arg;
-  } else if ((STRNICMP(eap->arg, "none", 4) == 0
-              && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
-    end = eap->arg + 4;
-  } else {
-    p = skiptowhite(eap->arg);
-    if (!eap->skip) {
-      g = vim_strnsave(eap->arg, p - eap->arg);
-    }
-    p = skipwhite(p);
-    if (*p == NUL) {
-      // There must be two arguments.
-      xfree(g);
-      semsg(_(e_invarg2), eap->arg);
-      return;
-    }
-    end = skip_regexp(p + 1, *p, true, NULL);
-    if (!eap->skip) {
-      if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
-        xfree(g);
-        eap->errmsg = e_trailing;
-        return;
-      }
-      if (*end != *p) {
-        xfree(g);
-        semsg(_(e_invarg2), p);
-        return;
-      }
-
-      c = *end;
-      *end = NUL;
-      match_add(curwin, (const char *)g, (const char *)p + 1, 10, id,
-                NULL, NULL);
-      xfree(g);
-      *end = c;
-    }
-  }
-  eap->nextcmd = find_nextcmd(end);
 }
 
 static void ex_fold(exarg_T *eap)

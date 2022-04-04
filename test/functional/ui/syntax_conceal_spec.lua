@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local eq = helpers.eq
 local insert = helpers.insert
+local poke_eventloop = helpers.poke_eventloop
 
 describe('Screen', function()
   local screen
@@ -255,6 +256,40 @@ describe('Screen', function()
         ]])
       end)
     end) -- a region of text (implicit concealing)
+
+    it("cursor position is correct when entering Insert mode with cocu=ni #13916", function()
+      insert([[foobarfoobarfoobar]])
+      -- move to end of line
+      feed("$")
+      command("set concealcursor=ni")
+      command("syn match Foo /foobar/ conceal cchar=&")
+      screen:expect([[
+        {1:&&&}^                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      feed("i")
+      -- cursor should stay in place, not jump to column 16
+      screen:expect([[
+        {1:&&&}^                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {4:-- INSERT --}                                         |
+      ]])
+    end)
   end) -- match and conceal
 
   describe("let the conceal level be", function()
@@ -911,7 +946,57 @@ describe('Screen', function()
       {0:~                                                    }|
                                                            |
     ]]}
-    eq(grid_lines, {{2, 0, {{'c', 0, 3}}}})
+    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
+  end)
+
+  it('K_EVENT should not cause extra redraws with concealcursor #13196', function()
+    command('set conceallevel=1')
+    command('set concealcursor=nv')
+    command('set redrawdebug+=nodelta')
+
+    insert([[
+    aaa
+    bbb
+    ccc
+    ]])
+    screen:expect{grid=[[
+      aaa                                                  |
+      bbb                                                  |
+      ccc                                                  |
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+
+    -- XXX: hack to get notifications, and check only a single line is
+    --      updated.  Could use next_msg() also.
+    local orig_handle_grid_line = screen._handle_grid_line
+    local grid_lines = {}
+    function screen._handle_grid_line(self, grid, row, col, items)
+      table.insert(grid_lines, {row, col, items})
+      orig_handle_grid_line(self, grid, row, col, items)
+    end
+    feed('k')
+    screen:expect{grid=[[
+      aaa                                                  |
+      bbb                                                  |
+      ^ccc                                                  |
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
+    poke_eventloop()  -- causes K_EVENT key
+    screen:expect_unchanged()
+    eq({{2, 0, {{'c', 0, 3}}}}, grid_lines)
   end)
 
   -- Copy of Test_cursor_column_in_concealed_line_after_window_scroll in

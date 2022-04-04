@@ -1777,7 +1777,7 @@ int path_with_url(const char *fname)
   }
 
   // check body: alpha or dash
-  for (p = fname; (isalpha(*p) || (*p == '-')); p++) {}
+  for (p = fname + 1; (isalpha(*p) || (*p == '-')); p++) {}
 
   // check last char is not a dash
   if (p[-1] == '-') {

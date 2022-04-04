@@ -259,9 +259,9 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///   local pos = a.nvim_win_get_cursor(0)
 ///   local ns  = a.nvim_create_namespace('my-plugin')
 ///   -- Create new extmark at line 1, column 1.
-///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
 ///   -- Create new extmark at line 3, column 1.
-///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, {})
 ///   -- Get extmarks only from line 3.
 ///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
 ///   -- Get all marks in this buffer + namespace.
@@ -467,6 +467,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   as the mark and 'cursorline' is enabled.
 ///                   Note: ranges are unsupported and decorations are only
 ///                   applied to start_row
+///               - conceal: string which should be either empty or a single
+///                   character. Enable concealing similar to |:syn-conceal|.
+///                   When a character is supplied it is used as |:syn-cchar|.
+///                   "hl_group" is used as highlight for the cchar if provided,
+///                   otherwise it defaults to |hl-Conceal|.
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -561,6 +566,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
         goto error;
       }
     }
+  }
+
+  if (opts->conceal.type == kObjectTypeString) {
+    String c = opts->conceal.data.string;
+    decor.conceal = true;
+    if (c.size) {
+      decor.conceal_char = utf_ptr2char((const char_u *)c.data);
+    }
+  } else if (HAS_KEY(opts->conceal)) {
+    api_set_error(err, kErrorTypeValidation, "conceal is not a String");
+    goto error;
   }
 
   if (opts->virt_text.type == kObjectTypeArray) {

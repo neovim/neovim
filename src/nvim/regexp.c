@@ -107,8 +107,10 @@ static char_u e_unmatchedpar[] = N_("E55: Unmatched %s)");
 static char_u e_z_not_allowed[] = N_("E66: \\z( not allowed here");
 static char_u e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
 static char_u e_missing_sb[] = N_("E69: Missing ] after %s%%[");
-static char_u e_empty_sb[]  = N_("E70: Empty %s%%[]");
-static char_u e_recursive[]  = N_("E956: Cannot use pattern recursively");
+static char_u e_empty_sb[] = N_("E70: Empty %s%%[]");
+static char_u e_recursive[] = N_("E956: Cannot use pattern recursively");
+static char_u e_regexp_number_after_dot_pos_search[]
+  = N_("E1204: No Number allowed after .: '\\%%%c'");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1
@@ -277,15 +279,15 @@ static void init_class_tab(void)
   done = true;
 }
 
-# define ri_digit(c)    (c < 0x100 && (class_tab[c] & RI_DIGIT))
-# define ri_hex(c)      (c < 0x100 && (class_tab[c] & RI_HEX))
-# define ri_octal(c)    (c < 0x100 && (class_tab[c] & RI_OCTAL))
-# define ri_word(c)     (c < 0x100 && (class_tab[c] & RI_WORD))
-# define ri_head(c)     (c < 0x100 && (class_tab[c] & RI_HEAD))
-# define ri_alpha(c)    (c < 0x100 && (class_tab[c] & RI_ALPHA))
-# define ri_lower(c)    (c < 0x100 && (class_tab[c] & RI_LOWER))
-# define ri_upper(c)    (c < 0x100 && (class_tab[c] & RI_UPPER))
-# define ri_white(c)    (c < 0x100 && (class_tab[c] & RI_WHITE))
+# define ri_digit(c)    ((c) < 0x100 && (class_tab[c] & RI_DIGIT))
+# define ri_hex(c)      ((c) < 0x100 && (class_tab[c] & RI_HEX))
+# define ri_octal(c)    ((c) < 0x100 && (class_tab[c] & RI_OCTAL))
+# define ri_word(c)     ((c) < 0x100 && (class_tab[c] & RI_WORD))
+# define ri_head(c)     ((c) < 0x100 && (class_tab[c] & RI_HEAD))
+# define ri_alpha(c)    ((c) < 0x100 && (class_tab[c] & RI_ALPHA))
+# define ri_lower(c)    ((c) < 0x100 && (class_tab[c] & RI_LOWER))
+# define ri_upper(c)    ((c) < 0x100 && (class_tab[c] & RI_UPPER))
+# define ri_white(c)    ((c) < 0x100 && (class_tab[c] & RI_WHITE))
 
 // flags for regflags
 #define RF_ICASE    1   // ignore case

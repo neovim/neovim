@@ -21,7 +21,6 @@ local map = global_helpers.tbl_map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
-local write_file = global_helpers.write_file
 local fail = global_helpers.fail
 
 local module = {
@@ -54,7 +53,6 @@ if module.nvim_dir == module.nvim_prog then
   module.nvim_dir = "."
 end
 
-local tmpname = global_helpers.tmpname
 local iswin = global_helpers.iswin
 local prepend_argv
 
@@ -494,24 +492,9 @@ function module.feed_command(...)
   end
 end
 
-local sourced_fnames = {}
+-- @deprecated use nvim_exec()
 function module.source(code)
-  local fname = tmpname()
-  write_file(fname, code)
-  module.command('source '..fname)
-  -- DO NOT REMOVE FILE HERE.
-  -- do_source() has a habit of checking whether files are “same” by using inode
-  -- and device IDs. If you run two source() calls in quick succession there is
-  -- a good chance that underlying filesystem will reuse the inode, making files
-  -- appear as “symlinks” to do_source when it checks FileIDs. With current
-  -- setup linux machines (both QB, travis and mine(ZyX-I) with XFS) do reuse
-  -- inodes, Mac OS machines (again, both QB and travis) do not.
-  --
-  -- Files appearing as “symlinks” mean that both the first and the second
-  -- source() calls will use same SID, which may fail some tests which check for
-  -- exact numbers after `<SNR>` in e.g. function names.
-  sourced_fnames[#sourced_fnames + 1] = fname
-  return fname
+  module.exec(dedent(code))
 end
 
 function module.has_powershell()
@@ -525,7 +508,7 @@ function module.set_shell_powershell()
   local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'
-  module.source([[
+  module.exec([[
     let &shell = ']]..shell..[['
     set shellquote= shellxquote=
     let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
@@ -887,9 +870,6 @@ module = global_helpers.tbl_extend('error', module, global_helpers)
 return function(after_each)
   if after_each then
     after_each(function()
-      for _, fname in ipairs(sourced_fnames) do
-        os.remove(fname)
-      end
       check_logs()
       check_cores('build/bin/nvim')
       if session then

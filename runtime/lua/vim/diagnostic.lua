@@ -1224,6 +1224,18 @@ function M.open_float(opts, ...)
 
   opts = opts or {}
   bufnr = get_bufnr(bufnr or opts.bufnr)
+
+  do
+    -- Resolve options with user settings from vim.diagnostic.config
+    -- Unlike the other decoration functions (e.g. set_virtual_text, set_signs, etc.) `open_float`
+    -- does not have a dedicated table for configuration options; instead, the options are mixed in
+    -- with its `opts` table which also includes "keyword" parameters. So we create a dedicated
+    -- options table that inherits missing keys from the global configuration before resolving.
+    local t = global_diagnostic_options.float
+    local float_opts = vim.tbl_extend("keep", opts, type(t) == "table" and t or {})
+    opts = get_resolved_options({ float = float_opts }, nil, bufnr).float
+  end
+
   local scope = ({l = "line", c = "cursor", b = "buffer"})[opts.scope] or opts.scope or "line"
   local lnum, col
   if scope == "line" or scope == "cursor" then
@@ -1240,17 +1252,6 @@ function M.open_float(opts, ...)
     end
   elseif scope ~= "buffer" then
     error("Invalid value for option 'scope'")
-  end
-
-  do
-    -- Resolve options with user settings from vim.diagnostic.config
-    -- Unlike the other decoration functions (e.g. set_virtual_text, set_signs, etc.) `open_float`
-    -- does not have a dedicated table for configuration options; instead, the options are mixed in
-    -- with its `opts` table which also includes "keyword" parameters. So we create a dedicated
-    -- options table that inherits missing keys from the global configuration before resolving.
-    local t = global_diagnostic_options.float
-    local float_opts = vim.tbl_extend("keep", opts, type(t) == "table" and t or {})
-    opts = get_resolved_options({ float = float_opts }, nil, bufnr).float
   end
 
   local diagnostics = get_diagnostics(bufnr, opts, true)
