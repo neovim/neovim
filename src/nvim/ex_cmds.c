@@ -3627,13 +3627,20 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
   sub_firstline = NULL;
 
-  // ~ in the substitute pattern is replaced with the old pattern.
-  // We do it here once to avoid it to be replaced over and over again.
-  // But don't do it when it starts with "\=", then it's an expression.
   assert(sub != NULL);
 
   bool sub_needs_free = false;
-  if (!(sub[0] == '\\' && sub[1] == '=')) {
+  char_u *sub_copy = NULL;
+
+  // If the substitute pattern starts with "\=" then it's an expression.
+  // Make a copy, a recursive function may free it.
+  // Otherwise, '~' in the substitute pattern is replaced with the old
+  // pattern.  We do it here once to avoid it to be replaced over and over
+  // again.
+  if (sub[0] == '\\' && sub[1] == '=') {
+    sub = vim_strsave(sub);
+    sub_copy = sub;
+  } else {
     char_u *source = sub;
     sub = regtilde(sub, p_magic);
     // When previewing, the new pattern allocated by regtilde() needs to be freed
@@ -4412,6 +4419,7 @@ skip:
   }
 
   vim_regfree(regmatch.regprog);
+  xfree(sub_copy);
 
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
