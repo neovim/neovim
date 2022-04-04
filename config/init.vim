@@ -3,5 +3,5 @@ set runtimepath^=~/.vim runtimepath+=~/.vim/after
     source ~/.vimrc
 
 syntax on
-
+set termguicolors
 set colorscheme="openDyslexia"

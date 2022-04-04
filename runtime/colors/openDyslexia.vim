@@ -47,8 +47,11 @@
 " Cyan      #C6C5FE     #DFDFFE
 " White     #EEEEEE     #FFFFFF
 
+" possible colors: black, darkred, darkgreen, brown, darkblue, darkmagenta, darkcyan, darkgray, red, green, yellow, blue, magenta, cyan, white, grey, lightred, lightgreen, lightyellow, lightblue, lightmagenta, lightcyan, lightgray
+
+
 " ********************************************************************************
-set background=dark
+set background=light
 hi clear
 
 if exists("syntax_on")
@@ -96,13 +99,13 @@ if version >= 700 " Vim 7.x specific colors
 endif
 
 " Syntax highlighting
-hi Comment          guifg=#7C7C7C     guibg=NONE        gui=NONE      ctermfg=darkgray    ctermbg=NONE        cterm=NONE
+hi Comment          guifg=#7C7C7C     guibg=NONE        gui=NONE      ctermfg=grey    ctermbg=NONE        cterm=NONE
 hi String           guifg=#A8FF60     guibg=NONE        gui=NONE      ctermfg=green       ctermbg=NONE        cterm=NONE
 hi Number           guifg=#FF73FD     guibg=NONE        gui=NONE      ctermfg=magenta     ctermbg=NONE        cterm=NONE
 
-hi Keyword          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=blue        ctermbg=NONE        cterm=NONE
-hi PreProc          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=blue        ctermbg=NONE        cterm=NONE
-hi Conditional      guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=blue        ctermbg=NONE        cterm=NONE 
+hi Keyword          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=lightgrey        ctermbg=NONE        cterm=NONE
+hi PreProc          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=darkcyan        ctermbg=NONE        cterm=NONE
+hi Conditional      guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=darkmagenta        ctermbg=NONE        cterm=NONE 
 
 hi Todo             guifg=#8f8f8f     guibg=NONE        gui=NONE      ctermfg=red         ctermbg=NONE        cterm=NONE
 hi Constant         guifg=#99CC99     guibg=NONE        gui=NONE      ctermfg=cyan        ctermbg=NONE        cterm=NONE
@@ -110,7 +113,7 @@ hi Constant         guifg=#99CC99     guibg=NONE        gui=NONE      ctermfg=cy
 hi Identifier       guifg=#C6C5FE     guibg=NONE        gui=NONE      ctermfg=cyan        ctermbg=NONE        cterm=NONE
 hi Function         guifg=#FFD2A7     guibg=NONE        gui=NONE      ctermfg=brown       ctermbg=NONE        cterm=NONE
 hi Type             guifg=#FFFFB6     guibg=NONE        gui=NONE      ctermfg=yellow      ctermbg=NONE        cterm=NONE
-hi Statement        guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=lightblue   ctermbg=NONE        cterm=NONE
+hi Statement        guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=lightred    ctermbg=NONE        cterm=NONE
 
 hi Special          guifg=#E18964     guibg=NONE        gui=NONE      ctermfg=white       ctermbg=NONE        cterm=NONE
 hi Delimiter        guifg=#00A0A0     guibg=NONE        gui=NONE      ctermfg=cyan        ctermbg=NONE        cterm=NONE
@@ -119,9 +122,8 @@ hi Operator         guifg=white       guibg=NONE        gui=NONE      ctermfg=wh
 hi link Character       Constant
 hi link Boolean         Constant
 hi link Float           Number
-hi link Repeat          Statement
 hi link Label           Statement
-hi link Exception       Statement
+hi link Repeat          Statement
 hi link Include         PreProc
 hi link Define          PreProc
 hi link Macro           PreProc
