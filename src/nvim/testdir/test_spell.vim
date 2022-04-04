@@ -407,7 +407,7 @@ func Test_zz_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  call assert_equal("kepereneven", 'kÃ³opÃ«rÃ¿nÃ´ven'->soundfold())
+  call assert_equal("kepereneven", 'kóopërÿnôven'->soundfold())
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 
@@ -588,7 +588,7 @@ func Test_zz_sal_and_addition()
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
   call assert_equal('kbltykk', soundfold('goobledygoook'))
-  call assert_equal('kprnfn', soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
+  call assert_equal('kprnfn', soundfold('kóopërÿnôven'))
   call assert_equal('*fls kswts tl', soundfold('oeverloos gezwets edale'))
 
   "also use an addition file
