@@ -3642,7 +3642,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     sub_copy = sub;
   } else {
     char_u *source = sub;
-    sub = regtilde(sub, p_magic);
+    sub = regtilde(sub, p_magic, preview);
     // When previewing, the new pattern allocated by regtilde() needs to be freed
     // in this function because it will not be used or freed by regtilde() later.
     sub_needs_free = preview && sub != source;
@@ -4420,6 +4420,9 @@ skip:
 
   vim_regfree(regmatch.regprog);
   xfree(sub_copy);
+  if (sub_needs_free) {
+    xfree(sub);
+  }
 
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
@@ -4451,10 +4454,6 @@ skip:
   }
 
   kv_destroy(preview_lines.subresults);
-
-  if (sub_needs_free) {
-    xfree(sub);
-  }
 
   return preview_buf;
 #undef ADJUST_SUB_FIRSTLNUM
