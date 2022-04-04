@@ -1531,7 +1531,7 @@ static fptr_T do_Lower(int *d, int c)
  *
  * The tildes are parsed once before the first call to vim_regsub().
  */
-char_u *regtilde(char_u *source, int magic)
+char_u *regtilde(char_u *source, int magic, bool preview)
 {
   char_u      *newsub = source;
   char_u      *tmpsub;
@@ -1576,7 +1576,7 @@ char_u *regtilde(char_u *source, int magic)
   }
 
   // Only change reg_prev_sub when not previewing.
-  if (!(State & CMDPREVIEW)) {
+  if (!preview) {
     xfree(reg_prev_sub);
     if (newsub != source) {             // newsub was allocated, just keep it
       reg_prev_sub = newsub;
