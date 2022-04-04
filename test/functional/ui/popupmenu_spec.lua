@@ -2321,47 +2321,6 @@ describe('builtin popupmenu', function()
     assert_alive()
   end)
 
-  it('is closed by :stopinsert from timer #12976', function()
-    screen:try_resize(32,14)
-    command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
-    feed('Gah<c-x><c-n>')
-    screen:expect([[
-      hello                           |
-      hullo                           |
-      heeee                           |
-      hello^                           |
-      {s:hello          }{1:                 }|
-      {n:hullo          }{1:                 }|
-      {n:heeee          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- }{5:match 1 of 3}                 |
-    ]])
-    command([[call timer_start(100, { -> execute('stopinsert') })]])
-    helpers.sleep(200)
-    feed('k')  -- cursor should move up in Normal mode
-    screen:expect([[
-      hello                           |
-      hullo                           |
-      heee^e                           |
-      hello                           |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-                                      |
-    ]])
-  end)
-
   it('truncates double-width character correctly when there is no scrollbar', function()
     screen:try_resize(32,8)
     command('set completeopt+=menuone,noselect')
