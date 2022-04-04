@@ -104,7 +104,7 @@ hi String           guifg=#A8FF60     guibg=NONE        gui=NONE      ctermfg=gr
 hi Number           guifg=#FF73FD     guibg=NONE        gui=NONE      ctermfg=magenta     ctermbg=NONE        cterm=NONE
 
 hi Keyword          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=lightgrey        ctermbg=NONE        cterm=NONE
-hi PreProc          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=darkcyan        ctermbg=NONE        cterm=NONE
+hi PreProc          guifg=#96CBFE     guibg=NONE        gui=NONE      ctermfg=blue        ctermbg=NONE        cterm=NONE
 hi Conditional      guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=darkmagenta        ctermbg=NONE        cterm=NONE 
 
 hi Todo             guifg=#8f8f8f     guibg=NONE        gui=NONE      ctermfg=red         ctermbg=NONE        cterm=NONE
@@ -112,8 +112,8 @@ hi Constant         guifg=#99CC99     guibg=NONE        gui=NONE      ctermfg=cy
 
 hi Identifier       guifg=#C6C5FE     guibg=NONE        gui=NONE      ctermfg=cyan        ctermbg=NONE        cterm=NONE
 hi Function         guifg=#FFD2A7     guibg=NONE        gui=NONE      ctermfg=brown       ctermbg=NONE        cterm=NONE
-hi Type             guifg=#FFFFB6     guibg=NONE        gui=NONE      ctermfg=yellow      ctermbg=NONE        cterm=NONE
-hi Statement        guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=lightred    ctermbg=NONE        cterm=NONE
+hi Type             guifg=#FFFFB6     guibg=NONE        gui=NONE      ctermfg=lightblue      ctermbg=NONE        cterm=NONE
+hi Statement        guifg=#6699CC     guibg=NONE        gui=NONE      ctermfg=darkgreen    ctermbg=NONE        cterm=NONE
 
 hi Special          guifg=#E18964     guibg=NONE        gui=NONE      ctermfg=white       ctermbg=NONE        cterm=NONE
 hi Delimiter        guifg=#00A0A0     guibg=NONE        gui=NONE      ctermfg=cyan        ctermbg=NONE        cterm=NONE
