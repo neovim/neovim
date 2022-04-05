@@ -1662,6 +1662,15 @@ func Test_delete_rf()
   call assert_equal(0, delete('Xdir', 'rf'))
   call assert_false(filereadable('Xdir/foo.txt'))
   call assert_false(filereadable('Xdir/[a-1]/foo.txt'))
+
+  if has('unix')
+    call mkdir('Xdir/Xdir2', 'p')
+    silent !chmod 555 Xdir
+    call assert_equal(-1, delete('Xdir/Xdir2', 'rf'))
+    call assert_equal(-1, delete('Xdir', 'rf'))
+    silent !chmod 755 Xdir
+    call assert_equal(0, delete('Xdir', 'rf'))
+  endif
 endfunc
 
 func Test_call()

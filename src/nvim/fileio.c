@@ -5408,15 +5408,18 @@ int delete_recursive(const char *name)
       for (int i = 0; i < ga.ga_len; i++) {
         vim_snprintf((char *)NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
         if (delete_recursive((const char *)NameBuff) != 0) {
+          // Remember the failure but continue deleting any further
+          // entries.
           result = -1;
         }
       }
       ga_clear_strings(&ga);
+      if (os_rmdir(exp) != 0) {
+        result = -1;
+      }
     } else {
       result = -1;
     }
-    // Note: "name" value may be changed in delete_recursive().  Must use the saved value.
-    result = os_rmdir(exp) == 0 ? 0 : -1;
     xfree(exp);
   } else {
     // Delete symlink only.
