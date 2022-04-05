@@ -41,6 +41,8 @@ There are several ways to create a terminal buffer:
 When the terminal starts, the buffer contents are updated and the buffer is
 named in the form of `term://{cwd}//{pid}:{cmd}`. This naming scheme is used
 by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
+Additionally, starting the terminal in a buffer will set 'buflisted' = 1,
+regardless of the value of 'buflisted' or 'nobuflisted' when it was executed.
 
 ==============================================================================
 Input						*terminal-input*
