@@ -4313,18 +4313,22 @@ skip:
 
 #define PUSH_PREVIEW_LINES() \
   do { \
-    linenr_T match_lines = current_match.end.lnum \
-                           - current_match.start.lnum +1; \
-    if (preview_lines.subresults.size > 0) { \
-      linenr_T last = kv_last(preview_lines.subresults).end.lnum; \
-      if (last == current_match.start.lnum) { \
-        preview_lines.lines_needed += match_lines - 1; \
+    if (preview) { \
+      linenr_T match_lines = current_match.end.lnum \
+                             - current_match.start.lnum +1; \
+      if (preview_lines.subresults.size > 0) { \
+        linenr_T last = kv_last(preview_lines.subresults).end.lnum; \
+        if (last == current_match.start.lnum) { \
+          preview_lines.lines_needed += match_lines - 1; \
+        } else { \
+          preview_lines.lines_needed += match_lines; \
+        } \
+      } else { \
+        preview_lines.lines_needed += match_lines; \
       } \
-    } else { \
-      preview_lines.lines_needed += match_lines; \
+      kv_push(preview_lines.subresults, current_match); \
     } \
-    kv_push(preview_lines.subresults, current_match); \
-  } while (0)
+    } while (0)
 
             // Push the match to preview_lines.
             PUSH_PREVIEW_LINES();
