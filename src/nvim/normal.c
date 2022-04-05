@@ -1517,9 +1517,12 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   for (;;) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
     if (is_drag) {
-      /* If the next character is the same mouse event then use that
-       * one. Speeds up dragging the status line. */
-      if (vpeekc() != NUL) {
+      // If the next character is the same mouse event then use that
+      // one. Speeds up dragging the status line.
+      // Note: Since characters added to the stuff buffer in the code
+      // below need to come before the next character, do not do this
+      // when the current character was stuffed.
+      if (!KeyStuffed && vpeekc() != NUL) {
         int nc;
         int save_mouse_grid = mouse_grid;
         int save_mouse_row = mouse_row;
