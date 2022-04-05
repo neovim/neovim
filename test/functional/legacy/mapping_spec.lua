@@ -3,6 +3,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect, poke_eventloop = helpers.feed_command, helpers.expect, helpers.poke_eventloop
+local command, eq, eval, meths = helpers.command, helpers.eq, helpers.eval, helpers.meths
+local sleep = helpers.sleep
 
 describe('mapping', function()
   before_each(clear)
@@ -125,5 +127,29 @@ describe('mapping', function()
       Test3: text with a (parenthesis here
       new line here
       ]])
+  end)
+
+  it('<LeftDrag> mapping in Insert mode works correctly vim-patch:8.2.4692', function()
+    command('set mouse=a')
+
+    command([[inoremap <LeftDrag> <LeftDrag><Cmd>let g:dragged = 1<CR>]])
+    feed('i')
+    sleep(10)
+    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    sleep(10)
+    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    sleep(10)
+    eq(1, eval('g:dragged'))
+    eq('v', eval('mode()'))
+    feed([[<C-\><C-N>]])
+
+    command([[inoremap <LeftDrag> <LeftDrag><C-\><C-N>]])
+    feed('i')
+    sleep(10)
+    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    sleep(10)
+    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    sleep(10)
+    eq('n', eval('mode()'))
   end)
 end)
