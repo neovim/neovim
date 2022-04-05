@@ -2504,7 +2504,8 @@ long vim_regexec_multi(
     char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
 
     p_re = BACKTRACKING_ENGINE;
-    vim_regfree(rmp->regprog);
+    regprog_T *prev_prog = rmp->regprog;
+
     report_re_switch(pat);
     // checking for \z misuse was already done when compiling for NFA,
     // allow all here
@@ -2512,7 +2513,13 @@ long vim_regexec_multi(
     rmp->regprog = vim_regcomp(pat, re_flags);
     reg_do_extmatch = 0;
 
-    if (rmp->regprog != NULL) {
+    if (rmp->regprog == NULL) {
+      // Somehow compiling the pattern failed now, put back the
+      // previous one to avoid "regprog" becoming NULL.
+      rmp->regprog = prev_prog;
+    } else {
+      vim_regfree(prev_prog);
+
       rmp->regprog->re_in_use = true;
       result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
                                                    tm, timed_out);
