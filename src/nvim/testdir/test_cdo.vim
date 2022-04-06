@@ -1,30 +1,29 @@
 " Tests for the :cdo, :cfdo, :ldo and :lfdo commands
 
-if !has('quickfix')
-  throw 'Skipped: quickfix feature missing'
-endif
+source check.vim
+CheckFeature quickfix
 
 " Create the files used by the tests
-function SetUp()
+func SetUp()
   call writefile(["Line1", "Line2", "Line3"], 'Xtestfile1')
   call writefile(["Line1", "Line2", "Line3"], 'Xtestfile2')
   call writefile(["Line1", "Line2", "Line3"], 'Xtestfile3')
-endfunction
+endfunc
 
 " Remove the files used by the tests
-function TearDown()
+func TearDown()
   call delete('Xtestfile1')
   call delete('Xtestfile2')
   call delete('Xtestfile3')
-endfunction
+endfunc
 
 " Returns the current line in '<filename> <linenum>L <column>C' format
-function GetRuler()
+func GetRuler()
   return expand('%') . ' ' . line('.') . 'L' . ' ' . col('.') . 'C'
-endfunction
+endfunc
 
 " Tests for the :cdo and :ldo commands
-function XdoTests(cchar)
+func XdoTests(cchar)
   enew
 
   " Shortcuts for calling the cdo and ldo commands
@@ -133,10 +132,10 @@ function XdoTests(cchar)
   exe XdoCmd
   call assert_equal(['Xtestfile3 3L 1C'], l)
 
-endfunction
+endfunc
 
 " Tests for the :cfdo and :lfdo commands
-function XfdoTests(cchar)
+func XfdoTests(cchar)
   enew
 
   " Shortcuts for calling the cfdo and lfdo commands
@@ -190,16 +189,28 @@ function XfdoTests(cchar)
   exe XfdoCmd
   call assert_equal(['Xtestfile2 2L 5C'], l)
 
-endfunction
+endfunc
 
 " Tests for cdo and cfdo
-function Test_cdo()
+func Test_cdo()
   call XdoTests('c')
   call XfdoTests('c')
-endfunction
+endfunc
 
 " Tests for ldo and lfdo
-function Test_ldo()
+func Test_ldo()
   call XdoTests('l')
   call XfdoTests('l')
-endfunction
+endfunc
+
+" Test for making 'shm' doesn't interfere with the output.
+func Test_cdo_print()
+  enew | only!
+  cgetexpr ["Xtestfile1:1:Line1", "Xtestfile2:1:Line1", "Xtestfile3:1:Line1"]
+  cdo print
+  call assert_equal('Line1', Screenline(&lines))
+  call assert_equal('Line1', Screenline(&lines - 3))
+  call assert_equal('Line1', Screenline(&lines - 6))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

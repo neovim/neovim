@@ -1470,7 +1470,13 @@ void ex_listdo(exarg_T *eap)
 
         size_t qf_idx = qf_get_cur_idx(eap);
 
+        // Clear 'shm' to avoid that the file message overwrites
+        // any output from the command.
+        p_shm_save = vim_strsave(p_shm);
+        set_option_value("shm", 0L, "", 0);
         ex_cnext(eap);
+        set_option_value("shm", 0L, (char *)p_shm_save, 0);
+        xfree(p_shm_save);
 
         // If jumping to the next quickfix entry fails, quit here.
         if (qf_get_cur_idx(eap) == qf_idx) {
