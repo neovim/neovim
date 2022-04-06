@@ -290,6 +290,7 @@ let s:filename_checks = {
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
     \ 'kotlin': ['file.kt', 'file.ktm', 'file.kts'],
+    \ 'krl': ['file.sub', 'file.Sub', 'file.SUB'],
     \ 'kscript': ['file.ks'],
     \ 'kwt': ['file.k'],
     \ 'lace': ['file.ace', 'file.ACE'],
@@ -842,6 +843,30 @@ func Test_d_file()
   filetype off
 endfunc
 
+func Test_dat_file()
+  filetype on
+
+  call writefile(['&ACCESS'], 'datfile.dat')
+  split datfile.dat
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('datfile.dat')
+
+  call writefile(['  DEFDAT datfile'], 'datfile.Dat')
+  split datfile.Dat
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('datfile.Dat')
+
+  call writefile(['', 'defdat  datfile'], 'datfile.DAT')
+  split datfile.DAT
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('datfile.DAT')
+
+  filetype off
+endfunc
+
 func Test_dep3patch_file()
   filetype on
 
@@ -1281,6 +1306,30 @@ func Test_pp_file()
   bwipe!
 
   call delete('Xfile.pp')
+  filetype off
+endfunc
+
+func Test_src_file()
+  filetype on
+
+  call writefile(['&ACCESS'], 'srcfile.src')
+  split srcfile.src
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('srcfile.src')
+
+  call writefile(['  DEF srcfile()'], 'srcfile.Src')
+  split srcfile.Src
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('srcfile.Src')
+
+  call writefile(['', 'global  def  srcfile()'], 'srcfile.SRC')
+  split srcfile.SRC
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('srcfile.SRC')
+
   filetype off
 endfunc
 
