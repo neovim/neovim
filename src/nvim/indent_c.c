@@ -513,23 +513,28 @@ static int cin_isdefault(const char_u *s)
 }
 
 /*
- * Recognize a "public/private/protected" scope declaration label.
+ * Recognize a scope declaration label set in 'cinscopedecls'.
  */
 bool cin_isscopedecl(const char_u *s)
 {
-  int i;
-
   s = cin_skipcomment(s);
-  if (STRNCMP(s, "public", 6) == 0) {
-    i = 6;
-  } else if (STRNCMP(s, "protected", 9) == 0) {
-    i = 9;
-  } else if (STRNCMP(s, "private", 7) == 0) {
-    i = 7;
-  } else {
-    return false;
+
+  const size_t cinsd_len = STRLEN(curbuf->b_p_cinsd) + 1;
+  char_u *cinsd_buf = xmalloc(cinsd_len);
+
+  for (char_u *cinsd = curbuf->b_p_cinsd; *cinsd; ) {
+    const size_t len = copy_option_part(&cinsd, cinsd_buf, cinsd_len, ",");
+    if (STRNCMP(s, cinsd_buf, len) == 0) {
+      const char_u *skip = cin_skipcomment(s + len);
+      if (*skip == ':' && skip[1] != ':') {
+        return true;
+      }
+    }
   }
-  return *(s = cin_skipcomment(s + i)) == ':' && s[1] != ':';
+
+  xfree(cinsd_buf);
+
+  return false;
 }
 
 // Maximum number of lines to search back for a "namespace" line.

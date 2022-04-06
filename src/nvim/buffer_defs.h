@@ -696,6 +696,7 @@ struct file_buffer {
   char_u *b_p_cino;             ///< 'cinoptions'
   char_u *b_p_cink;             ///< 'cinkeys'
   char_u *b_p_cinw;             ///< 'cinwords'
+  char_u *b_p_cinsd;            ///< 'cinscopedecls'
   char_u *b_p_com;              ///< 'comments'
   char_u *b_p_cms;              ///< 'commentstring'
   char_u *b_p_cpt;              ///< 'complete'
