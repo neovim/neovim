@@ -1452,6 +1452,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   // Keep same changelist position in new window.
   wp->w_changelistidx = oldwin->w_changelistidx;
 
+  // Trigger Scroll if the viewport changed.
+  if (oldwin == curwin && has_event(EVENT_WINSCROLLED) && win_did_scroll()) {
+    do_autocmd_winscrolled();
+  }
+
   // make the new window the current window
   win_enter_ext(wp, WEE_TRIGGER_NEW_AUTOCMDS | WEE_TRIGGER_ENTER_AUTOCMDS
                 | WEE_TRIGGER_LEAVE_AUTOCMDS);
@@ -4778,6 +4783,10 @@ static void win_enter_ext(win_T *const wp, const int flags)
     }
     apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
     curwin->w_last_cursormoved = curwin->w_cursor;
+    curwin->w_last_topline = curwin->w_topline;
+    curwin->w_last_leftcol = curwin->w_leftcol;
+    curwin->w_last_width = curwin->w_width;
+    curwin->w_last_height = curwin->w_height;
   }
 
   maketitle();
@@ -5240,9 +5249,9 @@ void shell_new_columns(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/// Check if "wp" has scrolled since last time it was checked
+/// Check if "curwin" has scrolled since last time it was checked
 /// @param wp the window to check
-bool win_did_scroll(win_T *wp)
+bool win_did_scroll(void)
 {
   return (curwin->w_last_topline != curwin->w_topline
           || curwin->w_last_leftcol != curwin->w_leftcol
@@ -5251,14 +5260,14 @@ bool win_did_scroll(win_T *wp)
 }
 
 /// Trigger WinScrolled autocmd
-void do_autocmd_winscrolled(win_T *wp)
+void do_autocmd_winscrolled(void)
 {
   apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, curbuf);
 
-  wp->w_last_topline = wp->w_topline;
-  wp->w_last_leftcol = wp->w_leftcol;
-  wp->w_last_width = wp->w_width;
-  wp->w_last_height = wp->w_height;
+  curwin->w_last_topline = curwin->w_topline;
+  curwin->w_last_leftcol = curwin->w_leftcol;
+  curwin->w_last_width = curwin->w_width;
+  curwin->w_last_height = curwin->w_height;
 }
 
 /*

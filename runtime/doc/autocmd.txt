@@ -1086,7 +1086,7 @@ WinNew				When a new window was created.  Not done for
 				Before WinEnter.
 							*WinScrolled*
 WinScrolled			After scrolling the viewport of the current
-				window.
+				window. Only triggerd in Normal mode.
 
 
 ==============================================================================

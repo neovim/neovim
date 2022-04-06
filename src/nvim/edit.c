@@ -1547,8 +1547,8 @@ static void ins_redraw(bool ready)
 
   // Trigger Scroll if viewport changed.
   if (ready && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
+      && win_did_scroll()) {
+    do_autocmd_winscrolled();
   }
 
   // Trigger BufModified if b_changed_invalid is set.

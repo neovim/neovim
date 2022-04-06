@@ -1052,6 +1052,15 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
       curwin->w_last_cursormoved = curwin->w_cursor;
     }
 
+    // If the event is WinScrolled, update the last window viewport
+    // to avoid immediately triggering the autocommand
+    if (event == EVENT_WINSCROLLED && !has_event(EVENT_WINSCROLLED)) {
+      curwin->w_last_topline = curwin->w_topline;
+      curwin->w_last_leftcol = curwin->w_leftcol;
+      curwin->w_last_width = curwin->w_width;
+      curwin->w_last_height = curwin->w_height;
+    }
+
     ap->cmds = NULL;
     *prev_ap = ap;
     last_autopat[(int)event] = ap;

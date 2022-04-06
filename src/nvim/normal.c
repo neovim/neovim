@@ -1225,8 +1225,8 @@ static void normal_check_window_scrolled(NormalState *s)
 {
   // Trigger Scroll if the viewport changed.
   if (!finish_op && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
+      && win_did_scroll()) {
+    do_autocmd_winscrolled();
   }
 }
 
@@ -1356,6 +1356,7 @@ static int normal_check(VimState *state)
     // Need to make sure w_topline and w_leftcol are correct before
     // normal_check_window_scrolled() is called.
     update_topline(curwin);
+    validate_cursor();
 
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
