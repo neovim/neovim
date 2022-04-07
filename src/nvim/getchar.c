@@ -2074,7 +2074,7 @@ void vungetc(int c)
 
 /// When peeking and not getting a character, reg_executing cannot be cleared
 /// yet, so set a flag to clear it later.
-static void check_end_reg_executing(bool advance)
+void check_end_reg_executing(bool advance)
 {
   if (reg_executing != 0 && (typebuf.tb_maplen == 0 || pending_end_reg_executing)) {
     if (advance) {

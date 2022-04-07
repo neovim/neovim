@@ -40,7 +40,7 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
-    // Expand mappings first by calling vpeekc() directly.
+    // Apply mappings first by calling vpeekc() directly.
     // - If vpeekc() returns non-NUL, there is a character already available for processing, so
     //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
     // - If vpeekc() returns NUL, vgetc() will block, and there are three cases:
@@ -76,6 +76,9 @@ getkey:
     }
 
     if (key == K_EVENT) {
+      // An event handler may use the value of reg_executing.
+      // Clear it if it should be cleared when getting the next character.
+      check_end_reg_executing(true);
       may_sync_undo();
     }
 

@@ -6,6 +6,7 @@ local feed = helpers.feed
 local clear = helpers.clear
 local expect = helpers.expect
 local command = helpers.command
+local funcs = helpers.funcs
 local meths = helpers.meths
 local insert = helpers.insert
 local curbufmeths = helpers.curbufmeths
@@ -52,6 +53,19 @@ end)
 describe('immediately after a macro has finished executing,', function()
   before_each(function()
     command([[let @a = 'gg0']])
+  end)
+
+  describe('reg_executing() from RPC returns an empty string', function()
+    it('if the macro does not end with a <Nop> mapping', function()
+      feed('@a')
+      eq('', funcs.reg_executing())
+    end)
+
+    it('if the macro ends with a <Nop> mapping', function()
+      command('nnoremap 0 <Nop>')
+      feed('@a')
+      eq('', funcs.reg_executing())
+    end)
   end)
 
   describe('characters from a mapping are not treated as a part of the macro #18015', function()
