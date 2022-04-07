@@ -174,7 +174,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   if (ml_open(curbuf) == FAIL) {
     // There MUST be a memfile, otherwise we can't do anything
     // If we can't create one for the current buffer, take another buffer
-    close_buffer(NULL, curbuf, 0, false);
+    close_buffer(NULL, curbuf, 0, false, false);
 
     curbuf = NULL;
     FOR_ALL_BUFFERS(buf) {
@@ -402,8 +402,10 @@ bool buf_valid(buf_T *buf)
 ///               there to be only one window with this buffer. e.g. when
 ///               ":quit" is supposed to close the window but autocommands
 ///               close all other windows.
+/// @param ignore_abort
+///               If true, don't abort even when aborting() returns true.
 /// @return  true when we got to the end and b_nwindows was decremented.
-bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
+bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool ignore_abort)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
@@ -494,7 +496,8 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
         return false;
       }
     }
-    if (aborting()) {       // autocmds may abort script processing
+    // autocmds may abort script processing
+    if (!ignore_abort && aborting()) {
       return false;
     }
   }
@@ -552,14 +555,16 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   buf->b_nwindows = nwindows;
 
-  buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
+  buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
+                    + (wipe_buf ? BFA_WIPE : 0)
+                    + (ignore_abort ? BFA_IGNORE_ABORT : 0)));
 
   if (!bufref_valid(&bufref)) {
     // Autocommands may have deleted the buffer.
     return false;
   }
-  if (aborting()) {
-    // Autocmds may abort script processing.
+  // autocmds may abort script processing.
+  if (!ignore_abort && aborting()) {
     return false;
   }
 
@@ -660,9 +665,10 @@ void buf_clear(void)
 /// buf_freeall() - free all things allocated for a buffer that are related to
 /// the file.  Careful: get here with "curwin" NULL when exiting.
 ///
-/// @param flags BFA_DEL buffer is going to be deleted
-///              BFA_WIPE buffer is going to be wiped out
-///              BFA_KEEP_UNDO  do not free undo information
+/// @param flags BFA_DEL           buffer is going to be deleted
+///              BFA_WIPE          buffer is going to be wiped out
+///              BFA_KEEP_UNDO     do not free undo information
+///              BFA_IGNORE_ABORT  don't abort even when aborting() returns true
 void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
@@ -706,7 +712,8 @@ void buf_freeall(buf_T *buf, int flags)
     goto_tabpage_win(the_curtab, the_curwin);
     unblock_autocmds();
   }
-  if (aborting()) {  // autocmds may abort script processing
+  // autocmds may abort script processing
+  if ((flags & BFA_IGNORE_ABORT) == 0 && aborting()) {
     return;
   }
 
@@ -877,7 +884,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
     // open a new, empty buffer.
     swap_exists_action = SEA_NONE;      // don't want it again
     swap_exists_did_quit = true;
-    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
+    close_buffer(curwin, curbuf, DOBUF_UNLOAD, false, false);
     if (old_curbuf == NULL
         || !bufref_valid(old_curbuf)
         || old_curbuf->br_buf == curbuf) {
@@ -1074,7 +1081,7 @@ static int empty_curbuf(int close_others, int forceit, int action)
   // the old one.  But do_ecmd() may have done that already, check
   // if the buffer still exists.
   if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows == 0) {
-    close_buffer(NULL, buf, action, false);
+    close_buffer(NULL, buf, action, false, false);
   }
 
   if (!close_others) {
@@ -1259,7 +1266,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (buf != curbuf) {
       close_windows(buf, false);
       if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
-        close_buffer(NULL, buf, action, false);
+        close_buffer(NULL, buf, action, false, false);
       }
       return OK;
     }
@@ -1485,7 +1492,7 @@ void set_curbuf(buf_T *buf, int action)
                    ? action
                    : (action == DOBUF_GOTO && !buf_hide(prevbuf)
                       && !bufIsChanged(prevbuf)) ? DOBUF_UNLOAD : 0,
-                   false);
+                   false, false);
       if (curwin != previouswin && win_valid(previouswin)) {
         // autocommands changed curwin, Grr!
         curwin = previouswin;
@@ -2805,7 +2812,7 @@ int setfname(buf_T *buf, char_u *ffname_arg, char_u *sfname_arg, bool message)
         return FAIL;
       }
       // delete from the list
-      close_buffer(NULL, obuf, DOBUF_WIPE, false);
+      close_buffer(NULL, obuf, DOBUF_WIPE, false, false);
     }
     sfname = vim_strsave(sfname);
 #ifdef USE_FNAME_CASE
@@ -5650,7 +5657,7 @@ void wipe_buffer(buf_T *buf, bool aucmd)
     // Don't trigger BufDelete autocommands here.
     block_autocmds();
   }
-  close_buffer(NULL, buf, DOBUF_WIPE, false);
+  close_buffer(NULL, buf, DOBUF_WIPE, false, true);
   if (!aucmd) {
     unblock_autocmds();
   }

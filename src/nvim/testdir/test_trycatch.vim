@@ -1972,6 +1972,29 @@ func Test_builtin_func_error()
   call assert_equal('jlmnpqrtueghivyzACD', g:Xpath)
 endfunc
 
-" Modelines								    {{{1
+func Test_reload_in_try_catch()
+  call writefile(['x'], 'Xreload')
+  set autoread
+  edit Xreload
+  tabnew
+  call writefile(['xx'], 'Xreload')
+  augroup ReLoad
+    au FileReadPost Xreload let x = doesnotexist
+    au BufReadPost Xreload let x = doesnotexist
+  augroup END
+  try
+    edit Xreload
+  catch
+  endtry
+  tabnew
+
+  tabclose
+  tabclose
+  autocmd! ReLoad
+  set noautoread
+  bwipe! Xreload
+  call delete('Xreload')
+endfunc
+
+" Modeline								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
-"-------------------------------------------------------------------------------

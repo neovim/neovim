@@ -691,7 +691,7 @@ void free_all_mem(void)
     bufref_T bufref;
     set_bufref(&bufref, buf);
     nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, false);
+    close_buffer(NULL, buf, DOBUF_WIPE, false, false);
     // Didn't work, try next one.
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
