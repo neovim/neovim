@@ -135,7 +135,7 @@ static inline const char *get_deleted_augroup(void) FUNC_ATTR_ALWAYS_INLINE
 }
 
 // Show the autocommands for one AutoPat.
-static void aupat_show(AutoPat *ap)
+static void aupat_show(AutoPat *ap, event_T event, int previous_group)
 {
   // Check for "got_int" (here and at various places below), which is set
   // when "q" has been hit for the "--more--" prompt
@@ -146,6 +146,31 @@ static void aupat_show(AutoPat *ap)
   // pattern has been removed
   if (ap->pat == NULL) {
     return;
+  }
+
+  char *name = augroup_name(ap->group);
+
+  msg_putchar('\n');
+  if (got_int) {
+    return;
+  }
+  // When switching groups, we need to show the new group information.
+  if (ap->group != previous_group) {
+    // show the group name, if it's not the default group
+    if (ap->group != AUGROUP_DEFAULT) {
+      if (name == NULL) {
+        msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
+      } else {
+        msg_puts_attr(name, HL_ATTR(HLF_T));
+      }
+      msg_puts("  ");
+    }
+    // show the event name
+    msg_puts_attr(event_nr2name(event), HL_ATTR(HLF_T));
+    msg_putchar('\n');
+    if (got_int) {
+      return;
+    }
   }
 
   msg_col = 4;
@@ -180,53 +205,69 @@ static void aupat_show(AutoPat *ap)
   }
 }
 
-static void au_show_for_all_events(int group)
+static void au_show_for_all_events(int group, char_u *pat)
 {
   FOR_ALL_AUEVENTS(event) {
-    au_show_for_event(group, event);
+    au_show_for_event(group, event, pat);
   }
 }
 
-static void au_show_for_event(int group, event_T event)
+static void au_show_for_event(int group, event_T event, char_u *pat)
 {
   // Return early if there are no autocmds for this event
   if (au_event_is_empty(event)) {
     return;
   }
 
+  // always need to show group information before the first pattern for the event
   int previous_group = AUGROUP_ERROR;
-  FOR_ALL_AUPATS_IN_EVENT(event, ap) {
-    if (group != AUGROUP_ALL && group != ap->group) {
-      continue;
-    }
 
-    char *name = augroup_name(ap->group);
-
-    msg_putchar('\n');
-    // When switching groups, we need to show the new group information.
-    if (ap->group != previous_group) {
-      // show the group name, if it's not the default group
-      if (ap->group != AUGROUP_DEFAULT) {
-        if (name == NULL) {
-          msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
-        } else {
-          msg_puts_attr(name, HL_ATTR(HLF_T));
-        }
-        msg_puts("  ");
+  if (*pat == NUL) {
+    FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+      if (group == AUGROUP_ALL || ap->group == group) {
+        aupat_show(ap, event, previous_group);
+        previous_group = ap->group;
       }
+    }
+    return;
+  }
 
-      // show the event name
-      msg_puts_attr(event_nr2name(event), HL_ATTR(HLF_T));
-      msg_putchar('\n');
+  char_u buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
+  // Loop through all the specified patterns.
+  int patlen = (int)aucmd_pattern_length(pat);
+  while (patlen) {
+    // detect special <buffer[=X]> buffer-local patterns
+    if (aupat_is_buflocal(pat, patlen)) {
+      // normalize pat into standard "<buffer>#N" form
+      aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, aupat_get_buflocal_nr(pat, patlen));
+      pat = buflocal_pat;
+      patlen = (int)STRLEN(buflocal_pat);
     }
 
-    if (got_int) {
-      return;
+    assert(*pat != NUL);
+
+    // Find AutoPat entries with this pattern.
+    // always goes at or after the last one, so start at the end.
+    FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+      if (ap->pat != NULL) {
+        // Accept a pattern when:
+        // - a group was specified and it's that group
+        // - the length of the pattern matches
+        // - the pattern matches.
+        // For <buffer[=X]>, this condition works because we normalize
+        // all buffer-local patterns.
+        if ((group == AUGROUP_ALL || ap->group == group)
+            && ap->patlen == patlen
+            && STRNCMP(pat, ap->pat, patlen) == 0) {
+          // Show autocmd's for this autopat, or buflocals <buffer=X>
+          aupat_show(ap, event, previous_group);
+          previous_group = ap->group;
+        }
+      }
     }
 
-    aupat_show(ap);
-
-    previous_group = ap->group;
+    pat = aucmd_next_pattern(pat, (size_t)patlen);
+    patlen = (int)aucmd_pattern_length(pat);
   }
 }
 
@@ -805,11 +846,11 @@ void do_autocmd(char_u *arg_in, int forceit)
     msg_puts_title(_("\n--- Autocommands ---"));
 
     if (*arg == '*' || *arg == '|' || *arg == NUL) {
-      au_show_for_all_events(group);
+      au_show_for_all_events(group, pat);
     } else {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
-      au_show_for_event(group, event);
+      au_show_for_event(group, event, pat);
     }
   } else {
     if (*arg == '*' || *arg == NUL || *arg == '|') {
@@ -900,7 +941,6 @@ int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, char_u *
       assert(*pat != NUL);
 
       // Find AutoPat entries with this pattern.
-      // always goes at or after the last one, so start at the end.
       prev_ap = &first_autopat[(int)event];
       while ((ap = *prev_ap) != NULL) {
         if (ap->pat != NULL) {
@@ -980,6 +1020,7 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
     patlen = (int)STRLEN(buflocal_pat);
   }
 
+  // always goes at or after the last one, so start at the end.
   if (last_autopat[(int)event] != NULL) {
     prev_ap = &last_autopat[(int)event];
   } else {
