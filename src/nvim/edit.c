@@ -1393,6 +1393,7 @@ static void insert_do_complete(InsertState *s)
     compl_cont_status = 0;
   }
   compl_busy = false;
+  can_si = true;  // allow smartindenting
 }
 
 static void insert_do_cindent(InsertState *s)

@@ -707,4 +707,23 @@ func Test_z1_complete_no_history()
   close!
 endfunc
 
+func FooBarComplete(findstart, base)
+  if a:findstart
+    return col('.') - 1
+  else
+    return ["Foo", "Bar", "}"]
+  endif
+endfunc
+
+func Test_complete_smartindent()
+  new
+  setlocal smartindent completefunc=FooBarComplete
+
+  exe "norm! o{\<cr>\<c-x>\<c-u>\<c-p>}\<cr>\<esc>"
+  let result = getline(1,'$')
+  call assert_equal(['', '{','}',''], result)
+  bw!
+  delfunction! FooBarComplete
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
