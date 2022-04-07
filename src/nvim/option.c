@@ -133,6 +133,7 @@ static int p_cin;
 static char_u *p_cink;
 static char_u *p_cino;
 static char_u *p_cinw;
+static char_u *p_cinsd;
 static char_u *p_com;
 static char_u *p_cms;
 static char_u *p_cpt;
@@ -2060,6 +2061,7 @@ void check_buf_options(buf_T *buf)
   parse_cino(buf);
   check_string_option(&buf->b_p_ft);
   check_string_option(&buf->b_p_cinw);
+  check_string_option(&buf->b_p_cinsd);
   check_string_option(&buf->b_p_cpt);
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
@@ -6058,6 +6060,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_cink);
   case PV_CINO:
     return (char_u *)&(curbuf->b_p_cino);
+  case PV_CINSD:
+    return (char_u *)&(curbuf->b_p_cinsd);
   case PV_CINW:
     return (char_u *)&(curbuf->b_p_cinw);
   case PV_COM:
@@ -6505,6 +6509,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_CINK);
       buf->b_p_cino = vim_strsave(p_cino);
       COPY_OPT_SCTX(buf, BV_CINO);
+      buf->b_p_cinsd = vim_strsave(p_cinsd);
+      COPY_OPT_SCTX(buf, BV_CINSD);
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;
