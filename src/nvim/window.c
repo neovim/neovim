@@ -2885,7 +2885,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   if (win->w_buffer != NULL) {
     // Close the link to the buffer.
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, false);
+    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
   }
 
   // Careful: Autocommands may have closed the tab page or made it the
