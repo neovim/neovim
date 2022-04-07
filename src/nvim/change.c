@@ -286,9 +286,11 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         set_topline(wp, wp->w_topline);
       }
 
-      // Relative numbering may require updating more.
+      // If lines have been added or removed, relative numbering always
+      // requires a redraw.
       if (wp->w_p_rnu && xtra != 0) {
-        redraw_later(wp, SOME_VALID);
+        wp->w_last_cursor_lnum_rnu = 0;
+        redraw_later(wp, VALID);
       }
 
       // Cursor line highlighting probably need to be updated with

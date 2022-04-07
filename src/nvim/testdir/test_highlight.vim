@@ -615,6 +615,14 @@ func Test_cursorcolumn_insert_on_tab()
   call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
 
+  call term_sendkeys(buf, "\<C-O>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_3', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
   call StopVimInTerminal(buf)
   call delete('Xcuc_insert_on_tab')
 endfunc
