@@ -102,15 +102,43 @@ M['window/showMessageRequest'] = function(_, result)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
-M['client/registerCapability'] = function(_, _, ctx)
+M['client/registerCapability'] = function(_, result, ctx)
   local client_id = ctx.client_id
   local warning_tpl = 'The language server %s triggers a registerCapability '
-    .. 'handler despite dynamicRegistration set to false. '
+    .. 'handler for %s despite dynamicRegistration set to false. '
     .. 'Report upstream, this warning is harmless'
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
-  local warning = string.format(warning_tpl, client_name)
-  log.warn(warning)
+  for _, registration in ipairs(result.registrations) do
+    if registration.method == 'workspace/didChangeConfiguration' then
+      -- This capability does not match directly to a server capability in the spec:
+      -- if server_capabilities.workspace.changeConfiguration is set the feature is
+      -- registered (i.e. enabled), and if it is nil the feature is disabled.
+      local ws = vim.tbl_get(client.server_capabilities, 'workspace')
+      ws.changeConfiguration = {
+        registration_id = registration.id, -- Stored so server can unregister
+      }
+    else
+      local warning = string.format(warning_tpl, client_name, registration.method)
+      log.warn(warning)
+    end
+  end
+  return vim.NIL
+end
+
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
+M['client/unregisterCapability'] = function(_, result, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  for _, unregistration in ipairs(result.unregistrations) do
+    -- This is the only method currently supporting dynamic registration,
+    -- all other unregistrations are silently ignored.
+    if unregistration.method == 'workspace/didChangeConfiguration' then
+      local ws = vim.tbl_get(client.server_capabilities, 'workspace')
+      if ws and ws.changeConfiguration and ws.changeConfiguration.registration_id == unregistration.id then
+        ws.changeConfiguration = nil
+      end
+    end
+  end
   return vim.NIL
 end
 
