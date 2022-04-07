@@ -1345,6 +1345,28 @@ describe('CursorColumn highlight', function()
       {2:~                                                 }|
       {3:-- INSERT --}                                      |
     ]])
+    feed('<C-O>')
+    screen:expect([[
+      1234567{1:8}9                                         |
+      a      ^ b                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {3:-- (insert) --}                                    |
+    ]])
+    feed('i')
+    screen:expect([[
+      1{1:2}3456789                                         |
+      a^       b                                         |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {3:-- INSERT --}                                      |
+    ]])
   end)
 
   it('is updated if cursor is moved from timer', function()
