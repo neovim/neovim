@@ -2563,7 +2563,7 @@ static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
     win->w_closing = true;
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, abort_if_last, false);
+    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, abort_if_last, true);
     if (win_valid_any_tab(win)) {
       win->w_closing = false;
     }
