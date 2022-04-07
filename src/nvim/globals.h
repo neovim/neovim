@@ -643,6 +643,8 @@ EXTERN bool ex_no_reprint INIT(=false);   // No need to print after z or p.
 
 EXTERN int reg_recording INIT(= 0);     // register for recording  or zero
 EXTERN int reg_executing INIT(= 0);     // register being executed or zero
+// Flag set when peeking a character and found the end of executed register
+EXTERN bool pending_end_reg_executing INIT(= false);
 EXTERN int reg_recorded INIT(= 0);      // last recorded register or zero
 
 EXTERN int no_mapping INIT(= false);    // currently no mapping allowed
