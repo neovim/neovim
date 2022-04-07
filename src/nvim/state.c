@@ -40,7 +40,12 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
-    // Expand mappings first by calling vpeekc() directly.
+    // vpeekc() may apply non-empty mappings and prevent reg_executing from being cleared, so check
+    // if it should be cleared here.
+    if (typebuf_typed()) {
+      reg_executing = 0;
+    }
+    // Apply mappings first by calling vpeekc() directly.
     // - If vpeekc() returns non-NUL, there is a character already available for processing, so
     //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
     // - If vpeekc() returns NUL, vgetc() will block, and there are three cases:
@@ -76,6 +81,11 @@ getkey:
     }
 
     if (key == K_EVENT) {
+      // vpeekc() may have applied empty mappings and cleared non-typed keys, and an event handler
+      // may use the value of reg_executing, so check again here.
+      if (typebuf_typed()) {
+        reg_executing = 0;
+      }
       may_sync_undo();
     }
 

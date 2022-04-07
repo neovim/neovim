@@ -6,11 +6,14 @@ local feed = helpers.feed
 local clear = helpers.clear
 local expect = helpers.expect
 local command = helpers.command
+local funcs = helpers.funcs
+local meths = helpers.meths
 local insert = helpers.insert
 local curbufmeths = helpers.curbufmeths
 
+before_each(clear)
+
 describe('macros', function()
-  before_each(clear)
   it('can be recorded and replayed', function()
     feed('qiahello<esc>q')
     expect('hello')
@@ -47,9 +50,32 @@ hello]]
   end)
 end)
 
-describe('reg_recorded()', function()
-  before_each(clear)
+describe('immediately after a macro has finished executing,', function()
+  before_each(function()
+    command([[let @a = 'gg0']])
+  end)
 
+  it('reg_executing() from RPC returns an empty string', function()
+    feed('@a')
+    eq('', funcs.reg_executing())
+  end)
+
+  it('reg_executing() from RPC returns an empty string if macro ends with empty mapping', function()
+    command('nnoremap gg0 <Nop>')
+    feed('@a')
+    eq('', funcs.reg_executing())
+  end)
+
+  it('characters from a mapping are not treated as a part of the macro #18015', function()
+    command('nnoremap s qa')
+    feed('@asq')  -- "q" from "s" mapping should start recording a macro instead of being no-op
+    eq({mode = 'n', blocking = false}, meths.get_mode())
+    expect('')
+    eq('', eval('@a'))
+  end)
+end)
+
+describe('reg_recorded()', function()
   it('returns the correct value', function()
     feed [[qqyyq]]
     eq('q', eval('reg_recorded()'))
