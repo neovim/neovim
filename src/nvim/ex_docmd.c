@@ -1248,6 +1248,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   const int save_msg_scroll = msg_scroll;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
+  const bool save_pending_end_reg_executing = pending_end_reg_executing;
   char_u *cmd;
 
   memset(&ea, 0, sizeof(ea));
@@ -2018,6 +2019,7 @@ doend:
   undo_cmdmod(&ea, save_msg_scroll);
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
+  pending_end_reg_executing = save_pending_end_reg_executing;
 
   if (ea.did_sandbox) {
     sandbox--;
@@ -8529,6 +8531,7 @@ bool save_current_state(save_state_T *sst)
   sst->save_finish_op = finish_op;
   sst->save_opcount = opcount;
   sst->save_reg_executing = reg_executing;
+  sst->save_pending_end_reg_executing = pending_end_reg_executing;
 
   msg_scroll = false;   // no msg scrolling in Normal mode
   restart_edit = 0;     // don't go to Insert mode
@@ -8559,6 +8562,7 @@ void restore_current_state(save_state_T *sst)
   finish_op = sst->save_finish_op;
   opcount = sst->save_opcount;
   reg_executing = sst->save_reg_executing;
+  pending_end_reg_executing = sst->save_pending_end_reg_executing;
 
   // don't reset msg_didout now
   msg_didout |= sst->save_msg_didout;

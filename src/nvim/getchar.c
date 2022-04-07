@@ -2060,7 +2060,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 }
 
 /// unget one character (can only be done once!)
-/// If the character was stuffed, vgetc() will get it next time it was called.
+/// If the character was stuffed, vgetc() will get it next time it is called.
 /// Otherwise vgetc() will only get it when the stuff buffer is empty.
 void vungetc(int c)
 {
@@ -2070,6 +2070,20 @@ void vungetc(int c)
   old_mouse_row = mouse_row;
   old_mouse_col = mouse_col;
   old_KeyStuffed = KeyStuffed;
+}
+
+/// When peeking and not getting a character, reg_executing cannot be cleared
+/// yet, so set a flag to clear it later.
+void check_end_reg_executing(bool advance)
+{
+  if (reg_executing != 0 && (typebuf.tb_maplen == 0 || pending_end_reg_executing)) {
+    if (advance) {
+      reg_executing = 0;
+      pending_end_reg_executing = false;
+    } else {
+      pending_end_reg_executing = true;
+    }
+  }
 }
 
 /// Gets a byte:
@@ -2126,9 +2140,7 @@ static int vgetorpeek(bool advance)
 
   init_typebuf();
   start_stuff();
-  if (advance && typebuf.tb_maplen == 0) {
-    reg_executing = 0;
-  }
+  check_end_reg_executing(advance);
   do {
     // get a character: 1. from the stuffbuffer
     if (typeahead_char != 0) {
@@ -2155,6 +2167,7 @@ static int vgetorpeek(bool advance)
       // If a mapped key sequence is found we go back to the start to
       // try re-mapping.
       for (;;) {
+        check_end_reg_executing(advance);
         // os_breakcheck() is slow, don't use it too often when
         // inside a mapping.  But call it each time for typed
         // characters.
