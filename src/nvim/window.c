@@ -2541,6 +2541,41 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   return true;
 }
 
+/// Close the buffer of "win" and unload it if "free_buf" is true.
+/// "abort_if_last" is passed to close_buffer(): abort closing if all other
+/// windows are closed.
+static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
+{
+  // Free independent synblock before the buffer is freed.
+  if (win->w_buffer != NULL) {
+    reset_synblock(win);
+  }
+
+  // When a quickfix/location list window is closed and the buffer is
+  // displayed in only one window, then unlist the buffer.
+  if (win->w_buffer != NULL && bt_quickfix(win->w_buffer)
+      && win->w_buffer->b_nwindows == 1) {
+    win->w_buffer->b_p_bl = false;
+  }
+
+  // Close the link to the buffer.
+  if (win->w_buffer != NULL) {
+    bufref_T bufref;
+    set_bufref(&bufref, curbuf);
+    win->w_closing = true;
+    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, abort_if_last);
+    if (win_valid_any_tab(win)) {
+      win->w_closing = false;
+    }
+
+    // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
+    // "wipe".
+    if (!bufref_valid(&bufref)) {
+      curbuf = firstbuf;
+    }
+  }
+}
+
 // Close window "win".  Only works for the current tab page.
 // If "free_buf" is true related buffer may be unloaded.
 //
@@ -2679,36 +2714,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     return OK;
   }
 
-  // Free independent synblock before the buffer is freed.
-  if (win->w_buffer != NULL) {
-    reset_synblock(win);
-  }
-
-  // When a quickfix/location list window is closed and the buffer is
-  // displayed in only one window, then unlist the buffer.
-  if (win->w_buffer != NULL && bt_quickfix(win->w_buffer)
-      && win->w_buffer->b_nwindows == 1) {
-    win->w_buffer->b_p_bl = false;
-  }
-
-  /*
-   * Close the link to the buffer.
-   */
-  if (win->w_buffer != NULL) {
-    bufref_T bufref;
-    set_bufref(&bufref, curbuf);
-    win->w_closing = true;
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, true);
-    if (win_valid_any_tab(win)) {
-      win->w_closing = false;
-    }
-
-    // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
-    // "wipe".
-    if (!bufref_valid(&bufref)) {
-      curbuf = firstbuf;
-    }
-  }
+  win_close_buffer(win, free_buf, true);
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
       && (last_window(win) || curtab != prev_curtab
