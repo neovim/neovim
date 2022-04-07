@@ -76,6 +76,12 @@ These "bundled" dependencies can be updated by bumping their versions in `third-
   - [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
   - [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 
+`scripts/bump-dep.sh` is a script that can automate this process for `LuaJIT`, `Luv`, `libuv` & `tree-sitter`. See usage guide:
+  - Run `./scripts/bump-deps.sh --dep Luv --version 1.43.0-0` to update a dependency.
+  See `./scripts/bump-deps.sh -h` for more detailed usage
+  - Run `./scripts/bump-deps.sh --pr` to create a pr
+  To generate the default PR title and body, the script uses the most recent commit (not in `master`) with prefix `build(deps): `
+
 These dependencies are "vendored" (inlined), we need to update the sources manually:
   - [libmpack](https://github.com/libmpack/libmpack)
   - [xdiff](https://github.com/git/git/tree/master/xdiff)
