@@ -395,7 +395,7 @@ let s:filename_checks = {
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf'],
-    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp'],
+    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt'],
     \ 'lpc': ['file.lpc', 'file.ulpc'],
     \ 'pike': ['file.pike', 'file.pmod'],
     \ 'cmod': ['file.cmod'],

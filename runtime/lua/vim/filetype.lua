@@ -457,6 +457,7 @@ local extension = {
   al = "perl",
   ctp = "php",
   php = "php",
+  phpt = "php",
   phtml = "php",
   pike = "pike",
   pmod = "pike",
