@@ -1427,6 +1427,9 @@ local pattern = {
       return "git"
     end
   end,
+  [".*%.[Dd][Aa][Tt]"] = function() vim.fn["dist#ft#FTdat"]() end,
+  [".*%.[Ss][Rr][Cc]"] = function() vim.fn["dist#ft#FTsrc"]() end,
+  [".*%.[Ss][Uu][Bb]"] = "krl",
   -- Neovim only
   [".*/queries/.*%.scm"] = "query", -- tree-sitter queries
   -- END PATTERN

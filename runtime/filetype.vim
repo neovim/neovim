@@ -947,6 +947,11 @@ au BufNewFile,BufRead *.jl			setf julia
 " Kixtart
 au BufNewFile,BufRead *.kix			setf kix
 
+" Kuka Robot Language
+au BufNewFile,BufRead *.src\c			call dist#ft#FTsrc()
+au BufNewFile,BufRead *.dat\c			call dist#ft#FTdat()
+au BufNewFile,BufRead *.sub\c			setf krl
+
 " Kimwitu[++]
 au BufNewFile,BufRead *.k			setf kwt
 
