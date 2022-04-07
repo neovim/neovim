@@ -1104,6 +1104,7 @@ local filename = {
   ["/etc/udev/udev.conf"] = "udevconf",
   ["/etc/updatedb.conf"] = "updatedb",
   ["fdrupstream.log"] = "upstreamlog",
+  ["Vagrantfile"] = "ruby",
   vgrindefs = "vgrindefs",
   [".exrc"] = "vim",
   ["_exrc"] = "vim",
