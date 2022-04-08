@@ -2875,7 +2875,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
   }
 
-  if (p_im) {
+  if (p_im && (State & INSERT) == 0) {
     need_start_insertmode = true;
   }
 
