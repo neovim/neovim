@@ -743,11 +743,16 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     for (char_u *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
       if (diff_flags & DIFF_ICASE) {
+        int c;
         char_u cbuf[MB_MAXBYTES + 1];
 
-        // xdiff doesn't support ignoring case, fold-case the text.
-        int c = utf_ptr2char(s);
-        c = utf_fold(c);
+        if (*s == NL) {
+          c = NUL;
+        } else {
+          // xdiff doesn't support ignoring case, fold-case the text.
+          c = utf_ptr2char(s);
+          c = utf_fold(c);
+        }
         const int orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
@@ -759,7 +764,8 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
         s += orig_len;
         len += orig_len;
       } else {
-        ptr[len++] = *s++;
+        ptr[len++] = *s == NL ? NUL : *s;
+        s++;
       }
     }
     ptr[len++] = NL;
