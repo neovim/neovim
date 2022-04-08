@@ -6,6 +6,8 @@ local expect = helpers.expect
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local meths = helpers.meths
+local poke_eventloop = helpers.poke_eventloop
 
 describe('insert-mode', function()
   before_each(function()
@@ -126,6 +128,28 @@ describe('insert-mode', function()
       expect('<M-x><D-x><M-X><D-X>')
       feed('cc<C-V><M-1><C-V><D-2><C-V><M-7><C-V><D-8><Esc>')
       expect('<M-1><D-2><M-7><D-8>')
+    end)
+  end)
+
+  describe([[With 'insertmode', Insert mode is not re-entered immediately after <C-L>]], function()
+    before_each(function()
+      command('set insertmode')
+      poke_eventloop()
+      eq({mode = 'i', blocking = false}, meths.get_mode())
+    end)
+
+    it('after calling :edit from <Cmd> mapping', function()
+      command('inoremap <C-B> <Cmd>edit Xfoo<CR>')
+      feed('<C-B><C-L>')
+      poke_eventloop()
+      eq({mode = 'n', blocking = false}, meths.get_mode())
+    end)
+
+    it('after calling :edit from RPC #16823', function()
+      command('edit Xfoo')
+      feed('<C-L>')
+      poke_eventloop()
+      eq({mode = 'n', blocking = false}, meths.get_mode())
     end)
   end)
 end)
