@@ -1015,27 +1015,27 @@ retry:
                 }
                 read_buf_col += n;
                 break;
-              } else {
-                // Append whole line and new-line.  Change NL
-                // to NUL to reverse the effect done below.
-                for (ni = 0; ni < n; ni++) {
-                  if (p[ni] == NL) {
-                    ptr[tlen++] = NUL;
-                  } else {
-                    ptr[tlen++] = p[ni];
-                  }
+              }
+
+              // Append whole line and new-line.  Change NL
+              // to NUL to reverse the effect done below.
+              for (ni = 0; ni < n; ni++) {
+                if (p[ni] == NL) {
+                  ptr[tlen++] = NUL;
+                } else {
+                  ptr[tlen++] = p[ni];
                 }
-                ptr[tlen++] = NL;
-                read_buf_col = 0;
-                if (++read_buf_lnum > from) {
-                  // When the last line didn't have an
-                  // end-of-line don't add it now either.
-                  if (!curbuf->b_p_eol) {
-                    --tlen;
-                  }
-                  size = tlen;
-                  break;
+              }
+              ptr[tlen++] = NL;
+              read_buf_col = 0;
+              if (++read_buf_lnum > from) {
+                // When the last line didn't have an
+                // end-of-line don't add it now either.
+                if (!curbuf->b_p_eol) {
+                  tlen--;
                 }
+                size = tlen;
+                break;
               }
             }
           }

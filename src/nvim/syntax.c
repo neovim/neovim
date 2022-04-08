@@ -2289,55 +2289,52 @@ static void check_state_ends(void)
         next_match_idx = 0;
         next_match_col = MAXCOL;
         break;
-      } else {
-        // handle next_list, unless at end of line and no "skipnl" or
-        // "skipempty"
-        current_next_list = cur_si->si_next_list;
-        current_next_flags = cur_si->si_flags;
-        if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))
-            && syn_getcurline()[current_col] == NUL) {
-          current_next_list = NULL;
-        }
+      }
 
-        // When the ended item has "extend", another item with
-        // "keepend" now needs to check for its end.
-        had_extend = (cur_si->si_flags & HL_EXTEND);
+      // handle next_list, unless at end of line and no "skipnl" or
+      // "skipempty"
+      current_next_list = cur_si->si_next_list;
+      current_next_flags = cur_si->si_flags;
+      if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))
+          && syn_getcurline()[current_col] == NUL) {
+        current_next_list = NULL;
+      }
 
-        pop_current_state();
+      // When the ended item has "extend", another item with
+      // "keepend" now needs to check for its end.
+      had_extend = (cur_si->si_flags & HL_EXTEND);
 
+      pop_current_state();
+
+      if (GA_EMPTY(&current_state)) {
+        break;
+      }
+
+      if (had_extend && keepend_level >= 0) {
+        syn_update_ends(false);
         if (GA_EMPTY(&current_state)) {
           break;
         }
+      }
 
-        if (had_extend && keepend_level >= 0) {
-          syn_update_ends(false);
-          if (GA_EMPTY(&current_state)) {
-            break;
-          }
-        }
+      cur_si = &CUR_STATE(current_state.ga_len - 1);
 
-        cur_si = &CUR_STATE(current_state.ga_len - 1);
-
-        /*
-         * Only for a region the search for the end continues after
-         * the end of the contained item.  If the contained match
-         * included the end-of-line, break here, the region continues.
-         * Don't do this when:
-         * - "keepend" is used for the contained item
-         * - not at the end of the line (could be end="x$"me=e-1).
-         * - "excludenl" is used (HL_HAS_EOL won't be set)
-         */
-        if (cur_si->si_idx >= 0
-            && SYN_ITEMS(syn_block)[cur_si->si_idx].sp_type
-            == SPTYPE_START
-            && !(cur_si->si_flags & (HL_MATCH | HL_KEEPEND))) {
-          update_si_end(cur_si, (int)current_col, true);
-          check_keepend();
-          if ((current_next_flags & HL_HAS_EOL)
-              && keepend_level < 0
-              && syn_getcurline()[current_col] == NUL) {
-            break;
-          }
+      // Only for a region the search for the end continues after
+      // the end of the contained item.  If the contained match
+      // included the end-of-line, break here, the region continues.
+      // Don't do this when:
+      // - "keepend" is used for the contained item
+      // - not at the end of the line (could be end="x$"me=e-1).
+      // - "excludenl" is used (HL_HAS_EOL won't be set)
+      if (cur_si->si_idx >= 0
+          && SYN_ITEMS(syn_block)[cur_si->si_idx].sp_type == SPTYPE_START
+          && !(cur_si->si_flags & (HL_MATCH | HL_KEEPEND))) {
+        update_si_end(cur_si, (int)current_col, true);
+        check_keepend();
+        if ((current_next_flags & HL_HAS_EOL)
+            && keepend_level < 0
+            && syn_getcurline()[current_col] == NUL) {
+          break;
         }
       }
     } else {
