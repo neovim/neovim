@@ -520,19 +520,22 @@ bool cin_isscopedecl(const char_u *p)
   const size_t cinsd_len = STRLEN(curbuf->b_p_cinsd) + 1;
   char_u *cinsd_buf = xmalloc(cinsd_len);
 
+  bool found = false;
+
   for (char_u *cinsd = curbuf->b_p_cinsd; *cinsd; ) {
     const size_t len = copy_option_part(&cinsd, cinsd_buf, cinsd_len, ",");
     if (STRNCMP(s, cinsd_buf, len) == 0) {
       const char_u *skip = cin_skipcomment(s + len);
       if (*skip == ':' && skip[1] != ':') {
-        return true;
+        found = true;
+        break;
       }
     }
   }
 
   xfree(cinsd_buf);
 
-  return false;
+  return found;
 }
 
 // Maximum number of lines to search back for a "namespace" line.
