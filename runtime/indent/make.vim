@@ -2,7 +2,7 @@
 " Language:		Makefile
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Last Change:		24 Sep 2021
+" Last Change:		2022 Apr 06
 
 if exists("b:did_indent")
   finish
@@ -13,7 +13,7 @@ setlocal indentexpr=GetMakeIndent()
 setlocal indentkeys=!^F,o,O,<:>,=else,=endif
 setlocal nosmartindent
 
-let b:undo_indent = "setl ai< inde< indk<"
+let b:undo_indent = "setl inde< indk< si<"
 
 if exists("*GetMakeIndent")
   finish

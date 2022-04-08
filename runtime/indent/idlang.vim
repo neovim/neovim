@@ -2,7 +2,7 @@
 " Language:	IDL (ft=idlang)
 " Maintainer:	Aleksandar Jelenak <ajelenak AT yahoo.com> (Invalid email address)
 " 		Doug Kearns <dougkearns@gmail.com>
-" Last change:	2017 Jun 13
+" Last change:	2022 Apr 06
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -13,6 +13,8 @@ let b:did_indent = 1
 setlocal indentkeys=o,O,0=endif,0=ENDIF,0=endelse,0=ENDELSE,0=endwhile,0=ENDWHILE,0=endfor,0=ENDFOR,0=endrep,0=ENDREP
 
 setlocal indentexpr=GetIdlangIndent(v:lnum)
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*GetIdlangIndent")

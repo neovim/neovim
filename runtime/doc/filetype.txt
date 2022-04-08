@@ -140,6 +140,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.asm		g:asmsyntax	|ft-asm-syntax|
 	*.asp		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
 	*.bas		g:filetype_bas	|ft-basic-syntax|
+	*.dat		g:filetype_dat
 	*.frm		g:filetype_frm	|ft-form-syntax|
 	*.fs		g:filetype_fs	|ft-forth-syntax|
 	*.i		g:filetype_i	|ft-progress-syntax|
@@ -149,9 +150,14 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.pl		g:filetype_pl
 	*.pp		g:filetype_pp	|ft-pascal-syntax|
 	*.prg		g:filetype_prg
+	*.src		g:filetype_src
 	*.sh		g:bash_is_sh	|ft-sh-syntax|
 	*.tex		g:tex_flavor	|ft-tex-plugin|
 	*.w		g:filetype_w	|ft-cweb-syntax|
+
+For a few filetypes the global variable is used only when the filetype could
+not be detected:
+	*.r		g:filetype_r	|ft-rexx-syntax|
 
 							*filetype-ignore*
 To avoid that certain files are being inspected, the g:ft_ignore_pat variable

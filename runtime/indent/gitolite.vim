@@ -4,7 +4,7 @@
 "	(https://raw.githubusercontent.com/sitaramc/gitolite/master/contrib/vim/indent/gitolite.vim)
 " Maintainer:	Sitaram Chamarty <sitaramc@gmail.com>
 " (former Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>)
-" Last Change:	2017 Oct 05
+" Last Change:	2022 Apr 06
 
 if exists("b:did_indent")
   finish
@@ -14,6 +14,8 @@ let b:did_indent = 1
 setlocal autoindent
 setlocal indentexpr=GetGitoliteIndent()
 setlocal indentkeys=o,O,*<Return>,!^F,=repo,\",=
+
+let b:undo_indent = "setl ai< inde< indk<"
 
 " Only define the function once.
 if exists("*GetGitoliteIndent")
