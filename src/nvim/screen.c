@@ -1647,8 +1647,12 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
       // Last line isn't finished: Display "@@@" at the end.
+
+      // Show only "@" or "@@" if there isn't enough room to show "@@@".
+      int start_col = MAX(0, wp->w_grid.Columns - 3);
+
       grid_fill(&wp->w_grid, wp->w_grid.Rows - 1, wp->w_grid.Rows,
-                wp->w_grid.Columns - 3, wp->w_grid.Columns, '@', '@', at_attr);
+                start_col, wp->w_grid.Columns, '@', '@', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -6007,6 +6011,8 @@ static void end_search_hl(void)
 void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
                int c2, int attr)
 {
+  assert(start_col >= 0);
+
   schar_T sc;
 
   int row_off = 0, col_off = 0;
