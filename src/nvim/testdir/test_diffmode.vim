@@ -1295,4 +1295,41 @@ func Test_diff_filler_cursorcolumn()
 endfunc
 
 
+func Test_diff_binary()
+  CheckScreendump
+
+  let content =<< trim END
+    call setline(1, ['a', 'b', "c\n", 'd', 'e', 'f', 'g'])
+    vnew
+    call setline(1, ['A', 'b', 'c', 'd', 'E', 'f', 'g'])
+    windo diffthis
+    wincmd p
+    norm! gg0
+    redraw!
+  END
+  call writefile(content, 'Xtest_diff_bin')
+  let buf = RunVimInTerminal('-S Xtest_diff_bin', {})
+
+  " Test using internal diff
+  call VerifyScreenDump(buf, 'Test_diff_bin_01', {})
+
+  " Test using internal diff and case folding
+  call term_sendkeys(buf, ":set diffopt+=icase\<cr>")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_bin_02', {})
+  " Test using external diff
+  call term_sendkeys(buf, ":set diffopt=filler\<cr>")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_bin_03', {})
+  " Test using external diff and case folding
+  call term_sendkeys(buf, ":set diffopt=filler,icase\<cr>")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_bin_04', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_bin')
+  set diffopt&vim
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
