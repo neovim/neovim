@@ -3066,7 +3066,7 @@ void spell_suggest(int count)
     ml_replace(curwin->w_cursor.lnum, p, false);
     curwin->w_cursor.col = c;
 
-    changed_bytes(curwin->w_cursor.lnum, c);
+    inserted_bytes(curwin->w_cursor.lnum, c, stp->st_orglen, stp->st_wordlen);
   } else {
     curwin->w_cursor = prev_cursor;
   }

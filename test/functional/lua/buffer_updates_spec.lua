@@ -1104,6 +1104,15 @@ describe('lua: nvim_buf_attach on_bytes', function()
       check_events { }
     end)
 
+    it("works with accepting spell suggestions", function()
+      local check_events = setup_eventcheck(verify, {"hallo"})
+
+      feed("gg0z=4<cr><cr>") -- accepts 'Hello'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 2, 2, 0, 2, 2 };
+      }
+    end)
+
     local function test_lockmarks(mode)
       local description = (mode ~= "") and mode or "(baseline)"
       it("test_lockmarks " .. description .. " %delete _", function()
