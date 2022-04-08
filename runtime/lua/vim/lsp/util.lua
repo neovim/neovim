@@ -302,7 +302,6 @@ end
 function M.get_progress_messages()
 
   local new_messages = {}
-  local msg_remove = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
@@ -324,29 +323,6 @@ function M.get_progress_messages()
           table.insert(progress_remove, {client = client, token = token})
         end
       end
-
-      for i, msg in ipairs(data.messages) do
-        if msg.show_once then
-          msg.shown = msg.shown + 1
-          if msg.shown > 1 then
-            table.insert(msg_remove, {client = client, idx = i})
-          end
-        end
-
-        table.insert(new_messages, {name = data.name, content = msg.content})
-      end
-
-      if next(data.status) ~= nil then
-        table.insert(new_messages, {
-          name = data.name,
-          content = data.status.content,
-          uri = data.status.uri,
-          status = true
-        })
-      end
-    for _, item in ipairs(msg_remove) do
-      table.remove(client.messages, item.idx)
-    end
 
   end
 
