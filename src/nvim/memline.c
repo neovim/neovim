@@ -2327,95 +2327,88 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
          * We are finished, break the loop here.
          */
         break;
-      } else {                        // pointer block full
-        /*
-         * split the pointer block
-         * allocate a new pointer block
-         * move some of the pointer into the new block
-         * prepare for updating the parent block
-         */
-        for (;;) {             // do this twice when splitting block 1
-          hp_new = ml_new_ptr(mfp);
-          if (hp_new == NULL) {             // TODO: try to fix tree
-            return FAIL;
-          }
-          pp_new = hp_new->bh_data;
-
-          if (hp->bh_bnum != 1) {
-            break;
-          }
-
-          /*
-           * if block 1 becomes full the tree is given an extra level
-           * The pointers from block 1 are moved into the new block.
-           * block 1 is updated to point to the new block
-           * then continue to split the new block
-           */
-          memmove(pp_new, pp, (size_t)page_size);
-          pp->pb_count = 1;
-          pp->pb_pointer[0].pe_bnum = hp_new->bh_bnum;
-          pp->pb_pointer[0].pe_line_count = buf->b_ml.ml_line_count;
-          pp->pb_pointer[0].pe_old_lnum = 1;
-          pp->pb_pointer[0].pe_page_count = 1;
-          mf_put(mfp, hp, true, false);             // release block 1
-          hp = hp_new;                          // new block is to be split
-          pp = pp_new;
-          CHECK(stack_idx != 0, _("stack_idx should be 0"));
-          ip->ip_index = 0;
-          ++stack_idx;                  // do block 1 again later
-        }
-        /*
-         * move the pointers after the current one to the new block
-         * If there are none, the new entry will be in the new block.
-         */
-        total_moved = pp->pb_count - pb_idx - 1;
-        if (total_moved) {
-          memmove(&pp_new->pb_pointer[0],
-                  &pp->pb_pointer[pb_idx + 1],
-                  (size_t)(total_moved) * sizeof(PTR_EN));
-          pp_new->pb_count = total_moved;
-          pp->pb_count -= total_moved - 1;
-          pp->pb_pointer[pb_idx + 1].pe_bnum = bnum_right;
-          pp->pb_pointer[pb_idx + 1].pe_line_count = line_count_right;
-          pp->pb_pointer[pb_idx + 1].pe_page_count = page_count_right;
-          if (lnum_right) {
-            pp->pb_pointer[pb_idx + 1].pe_old_lnum = lnum_right;
-          }
-        } else {
-          pp_new->pb_count = 1;
-          pp_new->pb_pointer[0].pe_bnum = bnum_right;
-          pp_new->pb_pointer[0].pe_line_count = line_count_right;
-          pp_new->pb_pointer[0].pe_page_count = page_count_right;
-          pp_new->pb_pointer[0].pe_old_lnum = lnum_right;
-        }
-        pp->pb_pointer[pb_idx].pe_bnum = bnum_left;
-        pp->pb_pointer[pb_idx].pe_line_count = line_count_left;
-        pp->pb_pointer[pb_idx].pe_page_count = page_count_left;
-        if (lnum_left) {
-          pp->pb_pointer[pb_idx].pe_old_lnum = lnum_left;
-        }
-        lnum_left = 0;
-        lnum_right = 0;
-
-        /*
-         * recompute line counts
-         */
-        line_count_right = 0;
-        for (i = 0; i < (int)pp_new->pb_count; ++i) {
-          line_count_right += pp_new->pb_pointer[i].pe_line_count;
-        }
-        line_count_left = 0;
-        for (i = 0; i < (int)pp->pb_count; ++i) {
-          line_count_left += pp->pb_pointer[i].pe_line_count;
-        }
-
-        bnum_left = hp->bh_bnum;
-        bnum_right = hp_new->bh_bnum;
-        page_count_left = 1;
-        page_count_right = 1;
-        mf_put(mfp, hp, true, false);
-        mf_put(mfp, hp_new, true, false);
       }
+      // pointer block full
+      //
+      // split the pointer block
+      // allocate a new pointer block
+      // move some of the pointer into the new block
+      // prepare for updating the parent block
+      for (;;) {             // do this twice when splitting block 1
+        hp_new = ml_new_ptr(mfp);
+        if (hp_new == NULL) {             // TODO(vim): try to fix tree
+          return FAIL;
+        }
+        pp_new = hp_new->bh_data;
+
+        if (hp->bh_bnum != 1) {
+          break;
+        }
+
+        // if block 1 becomes full the tree is given an extra level
+        // The pointers from block 1 are moved into the new block.
+        // block 1 is updated to point to the new block
+        // then continue to split the new block
+        memmove(pp_new, pp, (size_t)page_size);
+        pp->pb_count = 1;
+        pp->pb_pointer[0].pe_bnum = hp_new->bh_bnum;
+        pp->pb_pointer[0].pe_line_count = buf->b_ml.ml_line_count;
+        pp->pb_pointer[0].pe_old_lnum = 1;
+        pp->pb_pointer[0].pe_page_count = 1;
+        mf_put(mfp, hp, true, false);             // release block 1
+        hp = hp_new;                          // new block is to be split
+        pp = pp_new;
+        CHECK(stack_idx != 0, _("stack_idx should be 0"));
+        ip->ip_index = 0;
+        stack_idx++;                  // do block 1 again later
+      }
+      // move the pointers after the current one to the new block
+      // If there are none, the new entry will be in the new block.
+      total_moved = pp->pb_count - pb_idx - 1;
+      if (total_moved) {
+        memmove(&pp_new->pb_pointer[0],
+                &pp->pb_pointer[pb_idx + 1],
+                (size_t)(total_moved) * sizeof(PTR_EN));
+        pp_new->pb_count = total_moved;
+        pp->pb_count -= total_moved - 1;
+        pp->pb_pointer[pb_idx + 1].pe_bnum = bnum_right;
+        pp->pb_pointer[pb_idx + 1].pe_line_count = line_count_right;
+        pp->pb_pointer[pb_idx + 1].pe_page_count = page_count_right;
+        if (lnum_right) {
+          pp->pb_pointer[pb_idx + 1].pe_old_lnum = lnum_right;
+        }
+      } else {
+        pp_new->pb_count = 1;
+        pp_new->pb_pointer[0].pe_bnum = bnum_right;
+        pp_new->pb_pointer[0].pe_line_count = line_count_right;
+        pp_new->pb_pointer[0].pe_page_count = page_count_right;
+        pp_new->pb_pointer[0].pe_old_lnum = lnum_right;
+      }
+      pp->pb_pointer[pb_idx].pe_bnum = bnum_left;
+      pp->pb_pointer[pb_idx].pe_line_count = line_count_left;
+      pp->pb_pointer[pb_idx].pe_page_count = page_count_left;
+      if (lnum_left) {
+        pp->pb_pointer[pb_idx].pe_old_lnum = lnum_left;
+      }
+      lnum_left = 0;
+      lnum_right = 0;
+
+      // recompute line counts
+      line_count_right = 0;
+      for (i = 0; i < (int)pp_new->pb_count; i++) {
+        line_count_right += pp_new->pb_pointer[i].pe_line_count;
+      }
+      line_count_left = 0;
+      for (i = 0; i < (int)pp->pb_count; i++) {
+        line_count_left += pp->pb_pointer[i].pe_line_count;
+      }
+
+      bnum_left = hp->bh_bnum;
+      bnum_right = hp_new->bh_bnum;
+      page_count_left = 1;
+      page_count_right = 1;
+      mf_put(mfp, hp, true, false);
+      mf_put(mfp, hp_new, true, false);
     }
 
     /*
