@@ -24,6 +24,7 @@
 " 29-04-2002 Fixed problems in function headers and max line width
 "	     Added support for two-line if's without curly braces
 " Fixed hang: 2011 Aug 31
+" 2022 April: b:undo_indent added by Doug Kearns
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -35,6 +36,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetAwkIndent()
 " Mmm, copied from the tcl indent program. Is this okay?
 setlocal indentkeys-=:,0#
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*GetAwkIndent")

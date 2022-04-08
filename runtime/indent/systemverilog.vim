@@ -2,6 +2,7 @@
 " Language:    SystemVerilog
 " Maintainer:  kocha <kocha.lsifrontend@gmail.com>
 " Last Change: 05-Feb-2017 by Bilal Wasim
+"		2022 April: b:undo_indent added by Doug Kearns
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -15,6 +16,8 @@ setlocal indentkeys+==endmodule,=endfunction,=endtask,=endspecify
 setlocal indentkeys+==endclass,=endpackage,=endsequence,=endclocking
 setlocal indentkeys+==endinterface,=endgroup,=endprogram,=endproperty,=endchecker
 setlocal indentkeys+==`else,=`endif
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*SystemVerilogIndent")

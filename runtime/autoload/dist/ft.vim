@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Mar 05
+" Last Change:	2022 Apr 06
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.

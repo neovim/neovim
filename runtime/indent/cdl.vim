@@ -1,7 +1,7 @@
 " Description:	Comshare Dimension Definition Language (CDL)
 " Maintainer:	Raul Segura Acevedo <raulseguraaceved@netscape.net> (Invalid email address)
 " 		Doug Kearns <dougkearns@gmail.com>
-" Last Change:	Fri Nov 30 13:35:48  2001 CST
+" Last Change:	2022 Apr 06
 
 if exists("b:did_indent")
     "finish
@@ -11,6 +11,8 @@ let b:did_indent = 1
 setlocal indentexpr=CdlGetIndent(v:lnum)
 setlocal indentkeys&
 setlocal indentkeys+==~else,=~endif,=~then,;,),=
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*CdlGetIndent")
