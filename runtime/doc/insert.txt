@@ -258,7 +258,7 @@ CTRL-]		Trigger abbreviation, without inserting a character.
 
 						*i_backspacing*
 The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
-(unless 'revins' is set).  This is a comma separated list of items:
+(unless 'revins' is set).  This is a comma-separated list of items:
 
 item	    action ~
 indent	    allow backspacing over autoindent

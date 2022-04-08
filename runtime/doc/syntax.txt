@@ -4830,6 +4830,7 @@ in their own color.
 :hi[ghlight] {group-name}
 			List one highlight group.
 
+						*highlight-clear* *:hi-clear*
 :hi[ghlight] clear	Reset all highlighting to the defaults.  Removes all
 			highlighting for groups added by the user!
 			Uses the current value of 'background' to decide which
@@ -4889,7 +4890,7 @@ the same syntax file on all UIs.
 					*inverse* *italic* *standout*
 					*nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
-	attr-list is a comma separated list (without spaces) of the
+	attr-list is a comma-separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
