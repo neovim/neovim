@@ -2005,6 +2005,50 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
   }
 }
 
+static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
+{
+  bool ret = false;
+  Callback callback = ac->exec.callable.cb;
+  if (callback.type == kCallbackLua) {
+    Dictionary data = ARRAY_DICT_INIT;
+    PUT(data, "id", INTEGER_OBJ(ac->id));
+    PUT(data, "event", CSTR_TO_OBJ(event_nr2name(apc->event)));
+    PUT(data, "match", CSTR_TO_OBJ((char *)autocmd_match));
+    PUT(data, "file", CSTR_TO_OBJ((char *)autocmd_fname));
+    PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+
+    int group = apc->curpat->group;
+    switch (group) {
+    case AUGROUP_ERROR:
+      abort();  // unreachable
+    case AUGROUP_DEFAULT:
+    case AUGROUP_ALL:
+    case AUGROUP_DELETED:
+      // omit group in these cases
+      break;
+    default:
+      PUT(data, "group", INTEGER_OBJ(group));
+      break;
+    }
+
+    FIXED_TEMP_ARRAY(args, 1);
+    args.items[0] = DICTIONARY_OBJ(data);
+
+    Object result = nlua_call_ref(callback.data.luaref, NULL, args, true, NULL);
+    if (result.type == kObjectTypeBoolean) {
+      ret = result.data.boolean;
+    }
+    api_free_dictionary(data);
+    api_free_object(result);
+  } else {
+    typval_T argsin = TV_INITIAL_VALUE;
+    typval_T rettv = TV_INITIAL_VALUE;
+    callback_call(&callback, 0, &argsin, &rettv);
+  }
+
+  return ret;
+}
+
 /// Get next autocommand command.
 /// Called by do_cmdline() to get the next line for ":if".
 /// @return allocated string, or NULL for end of autocommands.
@@ -2069,15 +2113,10 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
   current_sctx = ac->script_ctx;
 
   if (ac->exec.type == CALLABLE_CB) {
-    typval_T argsin = TV_INITIAL_VALUE;
-    typval_T rettv = TV_INITIAL_VALUE;
-    if (callback_call(&ac->exec.callable.cb, 0, &argsin, &rettv)) {
-      if (ac->exec.callable.cb.type == kCallbackLua) {
-        // If a Lua callback returns 'true' then the autocommand is removed
-        oneshot = true;
-      }
+    if (call_autocmd_callback(ac, acp)) {
+      // If an autocommand callback returns true, delete the autocommand
+      oneshot = true;
     }
-
 
     // TODO(tjdevries):
     //

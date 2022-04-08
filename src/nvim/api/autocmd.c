@@ -366,7 +366,7 @@ cleanup:
 ///   {"CursorHold", "BufPreWrite", "BufPostWrite"}
 /// </pre>
 ///
-/// @param event (String|Array) The event or events to register this autocommand
+/// @param event (string|array) The event or events to register this autocommand
 /// @param opts Dictionary of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
 ///             id to match against.
@@ -375,8 +375,18 @@ cleanup:
 ///             - buffer (integer) optional: buffer number for buffer local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}.
 ///             - desc (string) optional: description of the autocommand.
-///             - callback (function|string) optional: Lua function or Vim function (as string) to
-///             execute on event. Cannot be used with {command}
+///             - callback (function|string) optional: if a string, the name of a Vimscript function
+///             to call when this autocommand is triggered. Otherwise, a Lua function which is
+///             called when this autocommand is triggered. Cannot be used with {command}. Lua
+///             callbacks can return true to delete the autocommand; in addition, they accept a
+///             single table argument with the following keys:
+///                 - id: (number) the autocommand id
+///                 - event: (string) the name of the event that triggered the autocommand
+///                 |autocmd-events|
+///                 - group: (number|nil) the autocommand group id, if it exists
+///                 - match: (string) the expanded value of |<amatch>|
+///                 - buf: (number) the expanded value of |<abuf>|
+///                 - file: (string) the expanded value of |<afile>|
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
 ///             - once (boolean) optional: defaults to false. Run the autocommand

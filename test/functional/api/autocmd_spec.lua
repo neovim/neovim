@@ -182,6 +182,54 @@ describe('autocmd api', function()
       meths.exec_autocmds("User", {pattern = "Test"})
       eq({}, meths.get_autocmds({event = "User", pattern = "Test"}))
     end)
+
+    it('receives an args table', function()
+      local res = exec_lua [[
+        local group_id = vim.api.nvim_create_augroup("TestGroup", {})
+        local autocmd_id = vim.api.nvim_create_autocmd("User", {
+          group = "TestGroup",
+          pattern = "Te*",
+          callback = function(args)
+            vim.g.autocmd_args = args
+          end,
+        })
+
+        return {group_id, autocmd_id}
+      ]]
+
+      meths.exec_autocmds("User", {pattern = "Test pattern"})
+      eq({
+        id = res[2],
+        group = res[1],
+        event = "User",
+        match = "Test pattern",
+        file = "Test pattern",
+        buf = 1,
+      }, meths.get_var("autocmd_args"))
+
+      -- Test without a group
+      res = exec_lua [[
+        local autocmd_id = vim.api.nvim_create_autocmd("User", {
+          pattern = "*",
+          callback = function(args)
+            vim.g.autocmd_args = args
+          end,
+        })
+
+        return {autocmd_id}
+      ]]
+
+      meths.exec_autocmds("User", {pattern = "some_pat"})
+      eq({
+        id = res[1],
+        group = nil,
+        event = "User",
+        match = "some_pat",
+        file = "some_pat",
+        buf = 1,
+      }, meths.get_var("autocmd_args"))
+
+    end)
   end)
 
   describe('nvim_get_autocmds', function()
