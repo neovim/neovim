@@ -196,7 +196,7 @@ position in the sequence.
 
 List creation ~
 							*E696* *E697*
-A List is created with a comma separated list of items in square brackets.
+A List is created with a comma-separated list of items in square brackets.
 Examples: >
 	:let mylist = [1, two, 3, "four"]
 	:let emptylist = []
@@ -446,7 +446,7 @@ ordering.
 
 Dictionary creation ~
 						*E720* *E721* *E722* *E723*
-A Dictionary is created with a comma separated list of entries in curly
+A Dictionary is created with a comma-separated list of entries in curly
 braces.  Each entry has a key and a value, separated by a colon.  Each key can
 only appear once.  Examples: >
 	:let mydict = {1: 'one', 2: 'two', 3: 'three'}
