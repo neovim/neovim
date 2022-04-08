@@ -299,6 +299,40 @@ func Test_WinClosed()
   unlet g:triggered
 endfunc
 
+func Test_WinClosed_throws()
+  vnew
+  let bnr = bufnr()
+  call assert_equal(1, bufloaded(bnr))
+  augroup test-WinClosed
+    autocmd WinClosed * throw 'foo'
+  augroup END
+  try
+    close
+  catch /.*/
+  endtry
+  call assert_equal(0, bufloaded(bnr))
+
+  autocmd! test-WinClosed
+  augroup! test-WinClosed
+endfunc
+
+func Test_WinClosed_throws_with_tabs()
+  tabnew
+  let bnr = bufnr()
+  call assert_equal(1, bufloaded(bnr))
+  augroup test-WinClosed
+    autocmd WinClosed * throw 'foo'
+  augroup END
+  try
+    close
+  catch /.*/
+  endtry
+  call assert_equal(0, bufloaded(bnr))
+
+  autocmd! test-WinClosed
+  augroup! test-WinClosed
+endfunc
+
 func s:AddAnAutocmd()
   augroup vimBarTest
     au BufReadCmd * echo 'hello'
