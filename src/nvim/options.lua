@@ -351,6 +351,15 @@ return {
       defaults={if_true="if,else,while,do,for,switch"}
     },
     {
+      full_name='cinscopedecls', abbreviation='cinsd',
+      short_desc=N_("words that are recognized by 'cino-g'"),
+      type='string', list='onecomma', scope={'buffer'},
+      deny_duplicates=true,
+      alloced=true,
+      varname='p_cinsd',
+      defaults={if_true="public,protected,private"}
+    },
+    {
       full_name='clipboard', abbreviation='cb',
       short_desc=N_("use the clipboard as the unnamed register"),
       type='string', list='onecomma', scope={'global'},
