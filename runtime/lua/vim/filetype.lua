@@ -1061,6 +1061,7 @@ local filename = {
   Puppetfile = "ruby",
   [".irbrc"] = "ruby",
   irbrc = "ruby",
+  Vagrantfile = "ruby",
   ["smb.conf"] = "samba",
   screenrc = "screen",
   [".screenrc"] = "screen",
