@@ -99,7 +99,7 @@ let s:filename_checks = {
     \ 'cdrtoc': ['file.toc'],
     \ 'cf': ['file.cfm', 'file.cfi', 'file.cfc'],
     \ 'cfengine': ['cfengine.conf'],
-    \ 'cfg': ['file.cfg', 'file.hgrc', 'filehgrc', 'hgrc', 'some-hgrc'],
+    \ 'cfg': ['file.hgrc', 'filehgrc', 'hgrc', 'some-hgrc'],
     \ 'ch': ['file.chf'],
     \ 'chaiscript': ['file.chai'],
     \ 'chaskell': ['file.chs'],
@@ -150,7 +150,7 @@ let s:filename_checks = {
     \ 'dircolors': ['.dir_colors', '.dircolors', '/etc/DIR_COLORS', 'any/etc/DIR_COLORS'],
     \ 'dnsmasq': ['/etc/dnsmasq.conf', '/etc/dnsmasq.d/file', 'any/etc/dnsmasq.conf', 'any/etc/dnsmasq.d/file'],
     \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile', 'Dockerfile.debian', 'Containerfile.something'],
-    \ 'dosbatch': ['file.bat', 'file.sys'],
+    \ 'dosbatch': ['file.bat'],
     \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/pacman.conf', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
@@ -615,7 +615,7 @@ let s:filename_checks = {
     \ }
 
 let s:filename_case_checks = {
-    \ 'modula2': ['file.DEF', 'file.MOD'],
+    \ 'modula2': ['file.DEF'],
     \ 'bzl': ['file.BUILD', 'BUILD'],
     \ }
 
@@ -804,6 +804,36 @@ func Test_bas_file()
   bwipe!
 
   call delete('Xfile.bas')
+  filetype off
+endfunc
+
+" Test dist#ft#FTcfg()
+func Test_cfg_file()
+  filetype on
+
+  " *.cfg defaults to cfg
+  call writefile(['looks like cfg'], 'cfgfile.cfg')
+  split cfgfile.cfg
+  call assert_equal('cfg', &filetype)
+
+  let g:filetype_cfg = 'other'
+  edit
+  call assert_equal('other', &filetype)
+  bwipe!
+  unlet g:filetype_cfg
+
+  " RAPID cfg
+  let ext = 'cfg'
+  for i in ['EIO', 'MMC', 'MOC', 'PROC', 'SIO', 'SYS']
+    call writefile([i .. ':CFG'], 'cfgfile.' .. ext)
+    execute "split cfgfile." .. ext
+    call assert_equal('rapid', &filetype)
+    bwipe!
+    call delete('cfgfile.' .. ext)
+    " check different case of file extension
+    let ext = substitute(ext, '\(\l\)', '\u\1', '')
+  endfor
+
   filetype off
 endfunc
 
@@ -1241,6 +1271,81 @@ func Test_m_file()
   filetype off
 endfunc
 
+func Test_mod_file()
+  filetype on
+
+  " *.mod defaults to Modsim III
+  call writefile(['locks like Modsim III'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('modsim3', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_mod
+  let g:filetype_mod = 'lprolog'
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  unlet g:filetype_mod
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('modfile.mod')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .mod extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'modfile.Mod')
+  split modfile.Mod
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('modfile.Mod')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('rapid', &filetype)
+  bwipe!
+
+  " Modula-2 MODULE not start of line
+  call writefile(['IMPLEMENTATION MODULE Module2Mod;'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('modula2', &filetype)
+  bwipe!
+
+  " Modula-2 with comment and empty lines prior MODULE
+  call writefile(['', '(* with',  ' comment *)', '', 'MODULE Module2Mod;'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('modula2', &filetype)
+  bwipe!
+  call delete('modfile.MOD')
+
+  " LambdaProlog module
+  call writefile(['module lpromod.'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  " LambdaProlog with comment and empty lines prior module
+  call writefile(['', '% with',  '% comment', '', 'module lpromod.'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+  call delete('modfile.mod')
+
+  " go.mod
+  call writefile(['module example.com/M'], 'go.mod')
+  split go.mod
+  call assert_equal('gomod', &filetype)
+  bwipe!
+  call delete('go.mod')
+
+  filetype off
+endfunc
+
 func Test_patch_file()
   filetype on
 
@@ -1309,6 +1414,50 @@ func Test_pp_file()
   filetype off
 endfunc
 
+" Test dist#ft#FTprg()
+func Test_prg_file()
+  filetype on
+
+  " *.prg defaults to clipper
+  call writefile(['looks like clipper'], 'prgfile.prg')
+  split prgfile.prg
+  call assert_equal('clipper', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_prg
+  let g:filetype_prg = 'eviews'
+  split prgfile.prg
+  call assert_equal('eviews', &filetype)
+  unlet g:filetype_prg
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'prgfile.prg')
+  split prgfile.prg
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.prg')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .prg extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'prgfile.Prg')
+  split prgfile.Prg
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.Prg')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'prgfile.PRG')
+  split prgfile.PRG
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.PRG')
+
+  filetype off
+endfunc
+
 func Test_src_file()
   filetype on
 
@@ -1329,6 +1478,42 @@ func Test_src_file()
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('srcfile.SRC')
+
+  filetype off
+endfunc
+
+func Test_sys_file()
+  filetype on
+
+  " *.sys defaults to Batch file for MSDOS
+  call writefile(['looks like dos batch'], 'sysfile.sys')
+  split sysfile.sys
+  call assert_equal('bat', &filetype)
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'sysfile.sys')
+  split sysfile.sys
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.sys')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .sys extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'sysfile.Sys')
+  split sysfile.Sys
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.Sys')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'sysfile.SYS')
+  split sysfile.SYS
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.SYS')
 
   filetype off
 endfunc
