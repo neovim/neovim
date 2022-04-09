@@ -112,6 +112,25 @@ func dist#ft#BindzoneCheck(default)
   endif
 endfunc
 
+" Returns true if file content looks like RAPID
+func IsRapid(sChkExt = "")
+  if a:sChkExt == "cfg"
+    return getline(1) =~? '\v^%(EIO|MMC|MOC|PROC|SIO|SYS):CFG'
+  endif
+  " called from FTmod, FTprg or FTsys
+  return getline(nextnonblank(1)) =~? '\v^\s*%(\%{3}|module\s+\k+\s*%(\(|$))'
+endfunc
+
+func dist#ft#FTcfg()
+  if exists("g:filetype_cfg")
+    exe "setf " .. g:filetype_cfg
+  elseif IsRapid("cfg")
+    setf rapid
+  else
+    setf cfg
+  endif
+endfunc
+
 func dist#ft#FTlpc()
   if exists("g:lpc_syntax_for_c")
     let lnum = 1
@@ -173,7 +192,7 @@ endfunc
 
 func dist#ft#FTent()
   " This function checks for valid cl syntax in the first five lines.
-  " Look for either an opening comment, '#', or a block start, '{".
+  " Look for either an opening comment, '#', or a block start, '{'.
   " If not found, assume SGML.
   let lnum = 1
   while lnum < 6
@@ -415,6 +434,36 @@ func dist#ft#FTmm()
   setf nroff
 endfunc
 
+" Returns true if file content looks like LambdaProlog
+func IsLProlog()
+  " skip apparent comments and blank lines, what looks like 
+  " LambdaProlog comment may be RAPID header
+  let l = nextnonblank(1)
+  while l > 0 && l < line('$') && getline(l) =~ '^\s*%' " LambdaProlog comment
+    let l = nextnonblank(l + 1)
+  endwhile
+  " this pattern must not catch a go.mod file
+  return getline(l) =~ '\<module\s\+\w\+\s*\.\s*\(%\|$\)'
+endfunc
+
+" Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
+func dist#ft#FTmod()
+  if exists("g:filetype_mod")
+    exe "setf " .. g:filetype_mod
+  elseif IsLProlog()
+    setf lprolog
+  elseif getline(nextnonblank(1)) =~ '\%(\<MODULE\s\+\w\+\s*;\|^\s*(\*\)'
+    setf modula2
+  elseif IsRapid()
+    setf rapid
+  elseif expand("<afile>") =~ '\<go.mod$'
+    setf gomod
+  else
+    " Nothing recognized, assume modsim3
+    setf modsim3
+  endif
+endfunc
+
 func dist#ft#FTpl()
   if exists("g:filetype_pl")
     exe "setf " . g:filetype_pl
@@ -528,6 +577,18 @@ func dist#ft#FTpp()
     else
       setf puppet
     endif
+  endif
+endfunc
+
+" Determine if *.prg is ABB RAPID. Can also be Clipper, FoxPro or eviews
+func dist#ft#FTprg()
+  if exists("g:filetype_prg")
+    exe "setf " .. g:filetype_prg
+  elseif IsRapid()
+    setf rapid
+  else
+    " Nothing recognized, assume Clipper
+    setf clipper
   endif
 endfunc
 
@@ -737,6 +798,14 @@ func dist#ft#FTperl()
     return 1
   endif
   return 0
+endfunc
+
+func dist#ft#FTsys()
+  if IsRapid()
+    setf rapid
+  else
+    setf bat
+  endif
 endfunc
 
 " Choose context, plaintex, or tex (LaTeX) based on these rules:

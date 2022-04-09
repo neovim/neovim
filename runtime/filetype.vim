@@ -201,11 +201,13 @@ au BufNewFile,BufRead *.iba,*.ibi		setf ibasic
 " FreeBasic file (similar to QBasic)
 au BufNewFile,BufRead *.fb			setf freebasic
 
-" Batch file for MSDOS.
-au BufNewFile,BufRead *.bat,*.sys		setf dosbatch
+" Batch file for MSDOS. See dist#ft#FTsys for *.sys
+au BufNewFile,BufRead *.bat 			setf dosbatch
 " *.cmd is close to a Batch file, but on OS/2 Rexx files also use *.cmd.
 au BufNewFile,BufRead *.cmd
 	\ if getline(1) =~ '^/\*' | setf rexx | else | setf dosbatch | endif
+" ABB RAPID or Batch file for MSDOS.
+au BufNewFile,BufRead *.sys\c 			call dist#ft#FTsys()
 
 " Batch file for 4DOS
 au BufNewFile,BufRead *.btm			call dist#ft#FTbtm()
@@ -356,13 +358,8 @@ au BufNewFile,BufRead *.eni			setf cl
 " Clever or dtd
 au BufNewFile,BufRead *.ent			call dist#ft#FTent()
 
-" Clipper (or FoxPro; could also be eviews)
-au BufNewFile,BufRead *.prg
-	\ if exists("g:filetype_prg") |
-	\   exe "setf " . g:filetype_prg |
-	\ else |
-	\   setf clipper |
-	\ endif
+" Clipper, FoxPro, ABB RAPID or eviews
+au BufNewFile,BufRead *.prg\c			call dist#ft#FTprg()
 
 " Clojure
 au BufNewFile,BufRead *.clj,*.cljs,*.cljx,*.cljc		setf clojure
@@ -440,7 +437,7 @@ au BufNewFile,BufRead *quake[1-3]/*.cfg			setf quake
 au BufNewFile,BufRead *.qc			setf c
 
 " Configure files
-au BufNewFile,BufRead *.cfg			setf cfg
+au BufNewFile,BufRead *.cfg\c			call dist#ft#FTcfg()
 
 " Cucumber
 au BufNewFile,BufRead *.feature			setf cucumber
@@ -976,7 +973,7 @@ au BufNewFile,BufRead *.latte,*.lte		setf latte
 " Limits
 au BufNewFile,BufRead */etc/limits,*/etc/*limits.conf,*/etc/*limits.d/*.conf	setf limits
 
-" LambdaProlog (*.mod too, see Modsim)
+" LambdaProlog (see dist#ft#FTmod for *.mod)
 au BufNewFile,BufRead *.sig			setf lprolog
 
 " LDAP LDIF
@@ -1139,18 +1136,11 @@ au BufNewFile,BufRead *.mms			call dist#ft#FTmms()
 " Symbian meta-makefile definition (MMP)
 au BufNewFile,BufRead *.mmp			setf mmp
 
-" Modsim III (or LambdaProlog)
-au BufNewFile,BufRead *.mod
-	\ if expand("<afile>") =~ '\<go.mod$' |
-	\   setf gomod |
-	\ elseif getline(1) =~ '\<module\>' |
-	\   setf lprolog |
-	\ else |
-	\   setf modsim3 |
-	\ endif
+" ABB Rapid, Modula-2, Modsim III or LambdaProlog
+au BufNewFile,BufRead *.mod\c 			call dist#ft#FTmod()
 
-" Modula-2  (.md removed in favor of Markdown)
-au BufNewFile,BufRead *.m2,*.DEF,*.MOD,*.mi	setf modula2
+" Modula-2  (.md removed in favor of Markdown, see dist#ft#FTmod for *.MOD)
+au BufNewFile,BufRead *.m2,*.DEF,*.mi		setf modula2
 
 " Modula-3 (.m3, .i3, .mg, .ig)
 au BufNewFile,BufRead *.[mi][3g]		setf modula3
