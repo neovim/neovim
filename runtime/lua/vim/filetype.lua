@@ -96,6 +96,7 @@ local extension = {
   clj = "clojure",
   cljc = "clojure",
   cljs = "clojure",
+  cook = "cook",
   cmake = "cmake",
   cmod = "cmod",
   lib = "cobol",
