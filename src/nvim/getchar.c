@@ -1469,8 +1469,14 @@ int vgetc(void)
     mouse_row = old_mouse_row;
     mouse_col = old_mouse_col;
   } else {
+    // number of characters recorded from the last vgetc() call
+    static size_t last_vgetc_recorded_len = 0;
+
     mod_mask = 0;
-    last_recorded_len = 0;
+
+    // last_recorded_len can be larger than last_vgetc_recorded_len
+    // if peeking records more
+    last_recorded_len -= last_vgetc_recorded_len;
 
     for (;;) {                 // this is done twice if there are modifiers
       bool did_inc = false;
@@ -1621,6 +1627,8 @@ int vgetc(void)
 
       break;
     }
+
+    last_vgetc_recorded_len = last_recorded_len;
   }
 
   /*
