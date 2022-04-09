@@ -2,23 +2,21 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
-local poke_eventloop = helpers.poke_eventloop
 local exec = helpers.exec
 local feed = helpers.feed
-local feed_command = helpers.feed_command
+local command = helpers.command
 
 describe('display', function()
   before_each(clear)
 
-  it('scroll when modified at topline', function()
+  it('scroll when modified at topline vim-patch:8.2.1488', function()
     local screen = Screen.new(20, 4)
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {bold = true},
     })
 
-    feed_command([[call setline(1, repeat('a', 21))]])
-    poke_eventloop()
+    command([[call setline(1, repeat('a', 21))]])
     feed('O')
     screen:expect([[
       ^                    |
@@ -28,7 +26,7 @@ describe('display', function()
     ]])
   end)
 
-  it('scrolling when modified at topline in Visual mode', function()
+  it('scrolling when modified at topline in Visual mode vim-patch:8.2.4626', function()
     local screen = Screen.new(60, 8)
     screen:attach()
     screen:set_default_attr_ids({
@@ -57,5 +55,49 @@ describe('display', function()
       {1:-- VISUAL LINE --}                                           |
     ]])
   end)
-end)
 
+  it('@@@ in the last line shows correctly in a narrow window vim-patch:8.2.4718', function()
+    local screen = Screen.new(60, 10)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [2] = {bold = true, reverse = true},  -- StatusLine
+      [3] = {reverse = true},  -- VertSplit, StatusLineNC
+    })
+    screen:attach()
+    exec([[
+      call setline(1, ['aaa', 'b'->repeat(100)])
+      set display=truncate
+      vsplit
+      100wincmd <
+    ]])
+    screen:expect([[
+      ^a{3:│}aaa                                                       |
+      a{3:│}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      a{3:│}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
+      b{3:│}{1:~                                                         }|
+      b{3:│}{1:~                                                         }|
+      b{3:│}{1:~                                                         }|
+      b{3:│}{1:~                                                         }|
+      {1:@}{3:│}{1:~                                                         }|
+      {2:< }{3:[No Name] [+]                                             }|
+                                                                  |
+    ]])
+    command('set display=lastline')
+    screen:expect_unchanged()
+    command('100wincmd >')
+    screen:expect([[
+      ^aaa                                                       {3:│}a|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb{3:│}a|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                {3:│}a|
+      {1:~                                                         }{3:│}b|
+      {1:~                                                         }{3:│}b|
+      {1:~                                                         }{3:│}b|
+      {1:~                                                         }{3:│}b|
+      {1:~                                                         }{3:│}{1:@}|
+      {2:[No Name] [+]                                              }{3:<}|
+                                                                  |
+    ]])
+    command('set display=truncate')
+    screen:expect_unchanged()
+  end)
+end)
