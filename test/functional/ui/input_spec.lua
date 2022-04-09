@@ -7,6 +7,7 @@ local curbuf_contents = helpers.curbuf_contents
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
+local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -202,6 +203,13 @@ describe('input pairs', function()
       eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
     end)
   end)
+end)
+
+it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
+  command('split aaa')
+  command('edit bbb')
+  feed('<C-6>')
+  eq('aaa', funcs.bufname())
 end)
 
 describe('input non-printable chars', function()
