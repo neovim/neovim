@@ -390,6 +390,9 @@ au BufNewFile,BufRead *.cfm,*.cfi,*.cfc		setf cf
 " Configure scripts
 au BufNewFile,BufRead configure.in,configure.ac setf config
 
+" Cooklang
+au BufNewFile,BufRead *.cook			setf cook
+
 " CUDA Compute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
