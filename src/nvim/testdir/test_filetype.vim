@@ -875,21 +875,31 @@ endfunc
 func Test_dat_file()
   filetype on
 
+  " KRL header start with "&WORD", but is not always present.
   call writefile(['&ACCESS'], 'datfile.dat')
   split datfile.dat
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('datfile.dat')
 
+  " KRL defdat with leading spaces, for KRL file extension is not case
+  " sensitive.
   call writefile(['  DEFDAT datfile'], 'datfile.Dat')
   split datfile.Dat
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('datfile.Dat')
 
-  call writefile(['', 'defdat  datfile'], 'datfile.DAT')
+  " KRL defdat with embedded spaces, file starts with empty line(s).
+  call writefile(['', 'defdat  datfile  public'], 'datfile.DAT')
   split datfile.DAT
   call assert_equal('krl', &filetype)
+  bwipe!
+
+  " User may overrule file inspection
+  let g:filetype_dat = 'dat'
+  split datfile.DAT
+  call assert_equal('dat', &filetype)
   bwipe!
   call delete('datfile.DAT')
 
@@ -1460,21 +1470,30 @@ endfunc
 func Test_src_file()
   filetype on
 
+  " KRL header start with "&WORD", but is not always present.
   call writefile(['&ACCESS'], 'srcfile.src')
   split srcfile.src
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('srcfile.src')
 
+  " KRL def with leading spaces, for KRL file extension is not case sensitive.
   call writefile(['  DEF srcfile()'], 'srcfile.Src')
   split srcfile.Src
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('srcfile.Src')
 
+  " KRL global def with embedded spaces, file starts with empty line(s).
   call writefile(['', 'global  def  srcfile()'], 'srcfile.SRC')
   split srcfile.SRC
   call assert_equal('krl', &filetype)
+  bwipe!
+
+  " User may overrule file inspection
+  let g:filetype_src = 'src'
+  split srcfile.SRC
+  call assert_equal('src', &filetype)
   bwipe!
   call delete('srcfile.SRC')
 
