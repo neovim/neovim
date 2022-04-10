@@ -412,9 +412,9 @@ au BufNewFile,BufRead *Eterm/*.cfg		setf eterm
 " Elixir or Euphoria
 au BufNewFile,BufRead *.ex call dist#ft#ExCheck()
 
-" Elixir
+" Elixir, also used for HEEx and Surface
 au BufRead,BufNewFile mix.lock,*.exs setf elixir
-au BufRead,BufNewFile *.eex,*.leex setf eelixir
+au BufRead,BufNewFile *.eex,*.heex,*.leex,*.sface setf eelixir
 
 " Elvish
 au BufRead,BufNewFile *.elv setf elvish
@@ -792,9 +792,6 @@ au BufRead,BufNewFile *.hcl			setf hcl
 
 " Hercules
 au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
-
-" HEEx
-au BufRead,BufNewFile *.heex			setf heex
 
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
@@ -1900,9 +1897,6 @@ au BufNewFile,BufRead */etc/sudoers,sudoers.tmp	setf sudoers
 
 " SVG (Scalable Vector Graphics)
 au BufNewFile,BufRead *.svg			setf svg
-
-" Surface
-au BufRead,BufNewFile *.sface			setf surface
 
 " Tads (or Nroff or Perl test file)
 au BufNewFile,BufRead *.t
