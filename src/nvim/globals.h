@@ -680,11 +680,8 @@ EXTERN bool cmd_silent INIT(= false);    // don't echo the command line
 #define SEA_QUIT        2       // quit editing the file
 #define SEA_RECOVER     3       // recover the file
 
-EXTERN int swap_exists_action INIT(= SEA_NONE);
-// For dialog when swap file already
-// exists.
-EXTERN bool swap_exists_did_quit INIT(= false);
-// Selected "quit" at the dialog.
+EXTERN int swap_exists_action INIT(= SEA_NONE);  ///< For dialog when swap file already exists.
+EXTERN bool swap_exists_did_quit INIT(= false);  ///< Selected "quit" at the dialog.
 
 EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
 EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
@@ -737,15 +734,11 @@ EXTERN reg_extmatch_T *re_extmatch_in INIT(= NULL);
 // Set by vim_regexec() to store \z\(...\) matches
 EXTERN reg_extmatch_T *re_extmatch_out INIT(= NULL);
 
-EXTERN bool did_outofmem_msg INIT(= false);
-// set after out of memory msg
-EXTERN bool did_swapwrite_msg INIT(= false);
-// set after swap write error msg
-EXTERN int global_busy INIT(= 0);           // set when :global is executing
-EXTERN bool listcmd_busy INIT(= false);     // set when :argdo, :windo or
-                                            // :bufdo is executing
-EXTERN bool need_start_insertmode INIT(= false);
-// start insert mode soon
+EXTERN bool did_outofmem_msg INIT(= false);  ///< set after out of memory msg
+EXTERN bool did_swapwrite_msg INIT(= false);  ///< set after swap write error msg
+EXTERN int global_busy INIT(= 0);           ///< set when :global is executing
+EXTERN bool listcmd_busy INIT(= false);     ///< set when :argdo, :windo or :bufdo is executing
+EXTERN bool need_start_insertmode INIT(= false);  ///< start insert mode soon
 
 #define MODE_MAX_LENGTH 4       // max mode length returned in get_mode()
                                 // including the final NUL character
@@ -770,8 +763,7 @@ EXTERN bool g_tag_at_cursor INIT(= false);  // whether the tag command comes
 
 EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
-EXTERN char_u *escape_chars INIT(= (char_u *)" \t\\\"|");
-// need backslash in cmd line
+EXTERN char_u *escape_chars INIT(= (char_u *)" \t\\\"|");  // need backslash in cmd line
 
 EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
 
