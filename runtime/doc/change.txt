@@ -42,8 +42,6 @@ For inserting text see |insert.txt|.
 			of the line and [count]-1 more lines [into register
 			x]; synonym for "d$".
 			(not |linewise|)
-			When the '#' flag is in 'cpoptions' the count is
-			ignored.
 
 {Visual}["x]x	or					*v_x* *v_d* *v_<Del>*
 {Visual}["x]d   or
