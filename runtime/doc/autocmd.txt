@@ -870,7 +870,7 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 							*Signal*
 Signal				After Nvim receives a signal. The pattern is
 				matched against the signal name. Only
-				"SIGUSR1" is supported.  Example: >
+				"SIGUSR1" and "SIGWINCH" are supported.  Example: >
 				    autocmd Signal SIGUSR1 call some#func()
 <							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
