@@ -156,102 +156,105 @@ int get_real_state(void)
   return State;
 }
 
-/// @returns[allocated] mode string
-char *get_mode(void)
+/// Returns the current mode as a string in "buf[MODE_MAX_LENGTH]", NUL
+/// terminated.
+/// The first character represents the major mode, the following ones the minor
+/// ones.
+void get_mode(char *buf)
 {
-  char *buf = xcalloc(MODE_MAX_LENGTH, sizeof(char));
+  int i = 0;
 
   if (VIsual_active) {
     if (VIsual_select) {
-      buf[0] = (char)(VIsual_mode + 's' - 'v');
+      buf[i++] = (char)(VIsual_mode + 's' - 'v');
     } else {
-      buf[0] = (char)VIsual_mode;
+      buf[i++] = (char)VIsual_mode;
       if (restart_VIsual_select) {
-        buf[1] = 's';
+        buf[i++] = 's';
       }
     }
   } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
              || State == CONFIRM) {
-    buf[0] = 'r';
+    buf[i++] = 'r';
     if (State == ASKMORE) {
-      buf[1] = 'm';
+      buf[i++] = 'm';
     } else if (State == CONFIRM) {
-      buf[1] = '?';
+      buf[i++] = '?';
     }
   } else if (State == EXTERNCMD) {
-    buf[0] = '!';
+    buf[i++] = '!';
   } else if (State & INSERT) {
     if (State & VREPLACE_FLAG) {
-      buf[0] = 'R';
-      buf[1] = 'v';
+      buf[i++] = 'R';
+      buf[i++] = 'v';
       if (ins_compl_active()) {
-        buf[2] = 'c';
+        buf[i++] = 'c';
       } else if (ctrl_x_mode_not_defined_yet()) {
-        buf[2] = 'x';
+        buf[i++] = 'x';
       }
     } else {
       if (State & REPLACE_FLAG) {
-        buf[0] = 'R';
+        buf[i++] = 'R';
       } else {
-        buf[0] = 'i';
+        buf[i++] = 'i';
       }
       if (ins_compl_active()) {
-        buf[1] = 'c';
+        buf[i++] = 'c';
       } else if (ctrl_x_mode_not_defined_yet()) {
-        buf[1] = 'x';
+        buf[i++] = 'x';
       }
     }
   } else if ((State & CMDLINE) || exmode_active) {
-    buf[0] = 'c';
+    buf[i++] = 'c';
     if (exmode_active) {
-      buf[1] = 'v';
+      buf[i++] = 'v';
     }
   } else if (State & TERM_FOCUS) {
-    buf[0] = 't';
+    buf[i++] = 't';
   } else {
-    buf[0] = 'n';
+    buf[i++] = 'n';
     if (finish_op) {
-      buf[1] = 'o';
+      buf[i++] = 'o';
       // to be able to detect force-linewise/blockwise/charwise operations
-      buf[2] = (char)motion_force;
+      buf[i++] = (char)motion_force;
     } else if (restart_edit == 'I' || restart_edit == 'R'
                || restart_edit == 'V') {
-      buf[1] = 'i';
-      buf[2] = (char)restart_edit;
+      buf[i++] = 'i';
+      buf[i++] = (char)restart_edit;
     } else if (curbuf->terminal) {
-      buf[1] = 't';
+      buf[i++] = 't';
     }
   }
 
-  return buf;
+  buf[i] = NUL;
 }
 
-/// Fires a ModeChanged autocmd.
-void trigger_modechanged(void)
+/// Fires a ModeChanged autocmd if appropriate.
+void may_trigger_modechanged(void)
 {
   if (!has_event(EVENT_MODECHANGED)) {
     return;
   }
 
-  char *mode = get_mode();
-  if (STRCMP(mode, last_mode) == 0) {
-    xfree(mode);
+  char curr_mode[MODE_MAX_LENGTH];
+  char_u pattern_buf[2 * MODE_MAX_LENGTH];
+
+  get_mode(curr_mode);
+  if (STRCMP(curr_mode, last_mode) == 0) {
     return;
   }
 
   save_v_event_T save_v_event;
   dict_T *v_event = get_v_event(&save_v_event);
-  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
+  tv_dict_add_str(v_event, S_LEN("new_mode"), curr_mode);
   tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+  tv_dict_set_keys_readonly(v_event);
 
-  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
-  char_u *pat = concat_str(pat_pre, (char_u *)mode);
-  xfree(pat_pre);
+  // concatenate modes in format "old_mode:new_mode"
+  vim_snprintf((char *)pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
 
-  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
-  xfree(last_mode);
-  last_mode = mode;
+  apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf);
+  STRCPY(last_mode, curr_mode);
 
-  xfree(pat);
   restore_v_event(v_event, &save_v_event);
 }

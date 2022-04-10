@@ -2661,5 +2661,23 @@ func Test_bufwipeout_changes_window()
   %bwipe!
 endfunc
 
+func Test_v_event_readonly()
+  autocmd CompleteChanged * let v:event.width = 0
+  call assert_fails("normal! i\<C-X>\<C-V>", 'E46:')
+  au! CompleteChanged
+
+  autocmd DirChangedPre * let v:event.directory = ''
+  call assert_fails('cd .', 'E46:')
+  au! DirChangedPre
+
+  autocmd ModeChanged * let v:event.new_mode = ''
+  call assert_fails('normal! cc', 'E46:')
+  au! ModeChanged
+
+  autocmd TextYankPost * let v:event.operator = ''
+  call assert_fails('normal! yy', 'E46:')
+  au! TextYankPost
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

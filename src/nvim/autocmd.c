@@ -1083,8 +1083,7 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
 
     // need to initialize last_mode for the first ModeChanged autocmd
     if (event == EVENT_MODECHANGED && !has_event(EVENT_MODECHANGED)) {
-      xfree(last_mode);
-      last_mode = get_mode();
+      get_mode(last_mode);
     }
 
     // If the event is CursorMoved, update the last cursor position

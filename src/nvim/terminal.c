@@ -422,7 +422,7 @@ void terminal_enter(void)
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   ui_busy_start();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;

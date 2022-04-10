@@ -1549,10 +1549,11 @@ Dictionary nvim_get_mode(void)
   FUNC_API_SINCE(2) FUNC_API_FAST
 {
   Dictionary rv = ARRAY_DICT_INIT;
-  char *modestr = get_mode();
+  char modestr[MODE_MAX_LENGTH];
+  get_mode(modestr);
   bool blocked = input_blocking();
 
-  PUT(rv, "mode", STRING_OBJ(cstr_as_string(modestr)));
+  PUT(rv, "mode", STRING_OBJ(cstr_to_string(modestr)));
   PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
 
   return rv;
