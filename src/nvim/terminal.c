@@ -336,6 +336,7 @@ void terminal_close(Terminal *term, int status)
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
     tv_dict_add_nr(dict, S_LEN("status"), status);
+    tv_dict_set_keys_readonly(dict);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
     restore_v_event(dict, &save_v_event);
   }

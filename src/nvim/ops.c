@@ -944,6 +944,7 @@ int do_record(int c)
     buf[0] = (char)regname;
     buf[1] = NUL;
     (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
+    tv_dict_set_keys_readonly(dict);
 
     // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
