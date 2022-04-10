@@ -1,0 +1,16 @@
+<CPackWiXPatch>
+    <!--  Fragment ID is from: <your build dir>/_CPack_Packages/win64/WIX/files.wxs -->
+    <CPackWiXFragment Id="CM_CP_bin.nvim.exe">
+      <!-- Note: if we were to specify Value='[INSTALL_ROOT]\bin' - with a backslash, the installer will still
+      use a forward slash in the path. -->
+      <Environment
+        Id='UpdatePath'
+        Name='PATH'
+        Action='set'
+        Permanent='no'
+        System='yes'
+        Part='last'
+        Value='[INSTALL_ROOT]/bin'
+      />
+    </CPackWiXFragment>
+</CPackWiXPatch>
