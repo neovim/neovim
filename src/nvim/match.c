@@ -287,6 +287,7 @@ void clear_matches(win_T *wp)
 /// Get match from ID 'id' in window 'wp'.
 /// Return NULL if match not found.
 matchitem_T *get_match(win_T *wp, int id)
+  FUNC_ATTR_PURE
 {
   matchitem_T *cur = wp->w_match_head;
 
@@ -781,6 +782,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
 }
 
 bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
+  FUNC_ATTR_PURE
 {
   long prevcol = curcol;
   matchitem_T *cur;                      // points to the match list

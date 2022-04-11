@@ -499,6 +499,7 @@ static void prt_line_number(prt_settings_T *const psettings, const int page_line
  * Get the currently effective header height.
  */
 int prt_header_height(void)
+  FUNC_ATTR_PURE
 {
   if (printer_opts[OPT_PRINT_HEADERHEIGHT].present) {
     return printer_opts[OPT_PRINT_HEADERHEIGHT].number;
@@ -510,6 +511,7 @@ int prt_header_height(void)
  * Return TRUE if using a line number for printing.
  */
 int prt_use_number(void)
+  FUNC_ATTR_PURE
 {
   return printer_opts[OPT_PRINT_NUMBER].present
          && TOLOWER_ASC(printer_opts[OPT_PRINT_NUMBER].string[0]) == 'y';
@@ -520,6 +522,7 @@ int prt_use_number(void)
  * Returns PRT_UNIT_NONE if not recognized.
  */
 int prt_get_unit(int idx)
+  FUNC_ATTR_PURE
 {
   int u = PRT_UNIT_NONE;
   int i;

@@ -136,6 +136,7 @@ static char opchars[][3] =
 };
 
 yankreg_T *get_y_previous(void)
+  FUNC_ATTR_PURE
 {
   return y_previous;
 }
@@ -186,12 +187,14 @@ int get_op_type(int char1, int char2)
  * Return TRUE if operator "op" always works on whole lines.
  */
 int op_on_lines(int op)
+  FUNC_ATTR_PURE
 {
   return opchars[op][2] & OPF_LINES;
 }
 
 // Return TRUE if operator "op" changes text.
 int op_is_change(int op)
+  FUNC_ATTR_PURE
 {
   return opchars[op][2] & OPF_CHANGE;
 }
@@ -201,6 +204,7 @@ int op_is_change(int op)
  * Returns 'g' or 'z' if there is another command character.
  */
 int get_op_char(int optype)
+  FUNC_ATTR_PURE
 {
   return opchars[optype][0];
 }
@@ -209,6 +213,7 @@ int get_op_char(int optype)
  * Get second operator command character.
  */
 int get_extra_op_char(int optype)
+  FUNC_ATTR_PURE
 {
   return opchars[optype][1];
 }
@@ -798,6 +803,7 @@ char_u *get_expr_line_src(void)
 /// @param regname name of register
 /// @param writing allow only writable registers
 bool valid_yank_reg(int regname, bool writing)
+  FUNC_ATTR_PURE
 {
   if ((regname > 0 && ASCII_ISALNUM(regname))
       || (!writing && vim_strchr((char_u *)"/.%:=", regname) != NULL)
@@ -3815,6 +3821,7 @@ int get_register_name(int num)
 
 /// @return the index of the register "" points to.
 int get_unname_register(void)
+  FUNC_ATTR_PURE
 {
   return y_previous == NULL ? -1 : (int)(y_previous - &y_regs[0]);
 }
@@ -7325,7 +7332,7 @@ const void *op_reg_iter(const void *const iter, const yankreg_T *const regs, cha
 
 /// Get a number of non-empty registers
 size_t op_reg_amount(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   size_t ret = 0;
   for (size_t i = 0; i < NUM_SAVED_REGISTERS; i++) {

@@ -477,6 +477,7 @@ static bool msgpack_rpc_is_notification(msgpack_object *req)
 }
 
 msgpack_object *msgpack_rpc_method(msgpack_object *req)
+  FUNC_ATTR_PURE
 {
   msgpack_object *obj = req->via.array.ptr
                         + (msgpack_rpc_is_notification(req) ? 1 : 2);
@@ -485,6 +486,7 @@ msgpack_object *msgpack_rpc_method(msgpack_object *req)
 }
 
 msgpack_object *msgpack_rpc_args(msgpack_object *req)
+  FUNC_ATTR_PURE
 {
   msgpack_object *obj = req->via.array.ptr
                         + (msgpack_rpc_is_notification(req) ? 2 : 3);

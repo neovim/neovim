@@ -873,12 +873,14 @@ void pum_clear(void)
 
 /// @return true if the popup menu is displayed.
 bool pum_visible(void)
+  FUNC_ATTR_PURE
 {
   return pum_is_visible;
 }
 
 /// @return true if the popup menu is displayed and drawn on the grid.
 bool pum_drawn(void)
+  FUNC_ATTR_PURE
 {
   return pum_visible() && !pum_external;
 }
@@ -899,6 +901,7 @@ void pum_recompose(void)
 /// @return the height of the popup menu, the number of entries visible.
 /// Only valid when pum_visible() returns TRUE!
 int pum_get_height(void)
+  FUNC_ATTR_PURE
 {
   if (pum_external) {
     int ui_pum_height = ui_pum_get_height();

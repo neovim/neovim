@@ -68,6 +68,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
 }
 
 bool win_may_fill(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_blocks;
 }

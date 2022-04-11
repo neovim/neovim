@@ -795,6 +795,7 @@ void marktree_itr_rewind(MarkTree *b, MarkTreeIter *itr)
 }
 
 bool marktree_itr_node_done(MarkTreeIter *itr)
+  FUNC_ATTR_PURE
 {
   return !itr->node || itr->i == itr->node->n - 1;
 }
@@ -1117,6 +1118,7 @@ void marktree_put_test(MarkTree *b, uint32_t id, int row, int col, bool right_gr
 
 // for unit test
 bool mt_right_test(mtkey_t key)
+  FUNC_ATTR_PURE
 {
   return mt_right(key);
 }

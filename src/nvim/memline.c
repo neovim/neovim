@@ -1904,6 +1904,7 @@ errorret:
 /// Check if a line that was just obtained by a call to ml_get
 /// is in allocated memory.
 int ml_line_alloced(void)
+  FUNC_ATTR_PURE
 {
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
 }

@@ -125,6 +125,7 @@ void state_handle_k_event(void)
 
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
+  FUNC_ATTR_PURE
 {
   unsigned int cur_ve_flags = get_ve_flags();
 
@@ -143,6 +144,7 @@ bool virtual_active(void)
 /// equal to MODE_NORMAL State with a condition.  This function returns the real
 /// State.
 int get_real_state(void)
+  FUNC_ATTR_PURE
 {
   if (State & MODE_NORMAL) {
     if (VIsual_active) {

@@ -113,6 +113,7 @@ void ui_comp_detach(UI *ui)
 }
 
 bool ui_comp_should_draw(void)
+  FUNC_ATTR_PURE
 {
   return composed_uis != 0 && valid_screen;
 }
@@ -288,6 +289,7 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle, Integer r, Int
 }
 
 ScreenGrid *ui_comp_mouse_focus(int row, int col)
+  FUNC_ATTR_PURE
 {
   for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
     ScreenGrid *grid = kv_A(layers, i);

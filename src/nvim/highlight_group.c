@@ -455,18 +455,21 @@ const char *const highlight_init_cmdline[] = {
 
 /// Returns the number of highlight groups.
 int highlight_num_groups(void)
+  FUNC_ATTR_PURE
 {
   return highlight_ga.ga_len;
 }
 
 /// Returns the name of a highlight group.
 char_u *highlight_group_name(int id)
+  FUNC_ATTR_PURE
 {
   return HL_TABLE()[id].sg_name;
 }
 
 /// Returns the ID of the link to a highlight group.
 int highlight_link_id(int id)
+  FUNC_ATTR_PURE
 {
   return HL_TABLE()[id].sg_link;
 }
@@ -1702,6 +1705,7 @@ int highlight_exists(const char *name)
 /// Return the name of highlight group "id".
 /// When not a valid ID return an empty string.
 char_u *syn_id2name(int id)
+  FUNC_ATTR_PURE
 {
   if (id <= 0 || id > highlight_ga.ga_len) {
     return (char_u *)"";
@@ -2031,7 +2035,7 @@ static void highlight_list_two(int cnt, int attr)
 
 /// Function given to ExpandGeneric() to obtain the list of group names.
 const char *get_highlight_name(expand_T *const xp, int idx)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   return get_highlight_name_ext(xp, idx, true);
 }
@@ -2040,7 +2044,7 @@ const char *get_highlight_name(expand_T *const xp, int idx)
 ///
 /// @param skip_cleared  if true don't return a cleared entry.
 const char *get_highlight_name_ext(expand_T *xp, int idx, bool skip_cleared)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (idx < 0) {
     return NULL;

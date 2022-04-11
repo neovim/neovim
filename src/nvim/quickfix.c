@@ -1703,6 +1703,7 @@ static void locstack_queue_delreq(qf_info_T *qi)
 
 /// Return the global quickfix stack window buffer number.
 int qf_stack_get_bufnr(void)
+  FUNC_ATTR_PURE
 {
   return ql_info.qf_bufnr;
 }
@@ -3820,6 +3821,7 @@ void ex_cbottom(exarg_T *eap)
 // Return the number of the current entry (line number in the quickfix
 // window).
 linenr_T qf_current_entry(win_T *wp)
+  FUNC_ATTR_PURE
 {
   qf_info_T *qi = &ql_info;
 
@@ -4297,6 +4299,7 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
 
 // Return TRUE when using ":vimgrep" for ":grep".
 int grep_internal(cmdidx_T cmdidx)
+  FUNC_ATTR_PURE
 {
   return (cmdidx == CMD_grep
           || cmdidx == CMD_lgrep
@@ -5999,6 +6002,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
 
 /// Return the quickfix/location list window identifier in the current tabpage.
 static int qf_winid(qf_info_T *qi)
+  FUNC_ATTR_PURE
 {
   // The quickfix window can be opened even if the quickfix list is not set
   // using ":copen". This is not true for location lists.

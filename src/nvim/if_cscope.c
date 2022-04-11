@@ -333,6 +333,7 @@ void cs_print_tags(void)
  *              Note: All string comparisons are case sensitive!
  */
 bool cs_connection(int num, char_u *dbpath, char_u *ppath)
+  FUNC_ATTR_PURE
 {
   if (num < 0 || num > 4 || (num > 0 && !dbpath)) {
     return false;
@@ -522,6 +523,7 @@ add_err:
 
 
 static bool cs_check_for_connections(void)
+  FUNC_ATTR_PURE
 {
   return cs_cnt_connections() > 0;
 }
@@ -533,6 +535,7 @@ static int cs_check_for_tags(void)
 
 /// Count the number of cscope connections.
 static size_t cs_cnt_connections(void)
+  FUNC_ATTR_PURE
 {
   size_t cnt = 0;
 

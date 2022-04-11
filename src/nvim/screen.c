@@ -632,7 +632,7 @@ int update_screen(int type)
 // Return true if the cursor line in window "wp" may be concealed, according
 // to the 'concealcursor' option.
 bool conceal_cursor_line(const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   int c;
 
@@ -671,7 +671,7 @@ void conceal_check_cursor_line(void)
 ///
 /// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
 bool win_cursorline_standout(const win_T *wp)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
@@ -4635,6 +4635,7 @@ static void draw_hsep_win(win_T *wp)
 
 /// Get the separator connector for specified window corner of window "wp"
 static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
+  FUNC_ATTR_PURE
 {
   // It's impossible for windows to be connected neither vertically nor horizontally
   // So if they're not vertically connected, assume they're horizontally connected
@@ -5093,6 +5094,7 @@ static void redraw_custom_statusline(win_T *wp)
 /// @return  true if the status line of window "wp" is connected to the status
 /// line of the window right of it.  If not, then it's a vertical separator.
 bool stl_connected(win_T *wp)
+  FUNC_ATTR_PURE
 {
   frame_T *fr;
 
@@ -5116,6 +5118,7 @@ bool stl_connected(win_T *wp)
 /// horizontal separator of another window
 /// Assumes global statusline is enabled
 static bool hsep_connected(win_T *wp, WindowCorner corner)
+  FUNC_ATTR_PURE
 {
   bool before = (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT);
   int sep_row = (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT)
@@ -5151,6 +5154,7 @@ static bool hsep_connected(win_T *wp, WindowCorner corner)
 /// Check if vertical separator of window "wp" at specified window corner is connected to the
 /// vertical separator of another window
 static bool vsep_connected(win_T *wp, WindowCorner corner)
+  FUNC_ATTR_PURE
 {
   bool before = (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT);
   int sep_col = (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT)
@@ -6907,6 +6911,7 @@ void win_new_shellsize(void)
 }
 
 win_T *get_win_by_grid_handle(handle_T handle)
+  FUNC_ATTR_PURE
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_grid_alloc.handle == handle) {

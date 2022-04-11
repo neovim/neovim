@@ -200,6 +200,7 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
  * Get search pattern used by search_regcomp().
  */
 char_u *get_search_pat(void)
+  FUNC_ATTR_PURE
 {
   return mr_pattern;
 }
@@ -354,6 +355,7 @@ void restore_last_search_pattern(void)
 }
 
 char_u *last_search_pattern(void)
+  FUNC_ATTR_PURE
 {
   return spats[RE_SEARCH].pat;
 }
@@ -383,7 +385,7 @@ int ignorecase_opt(char_u *pat, int ic_in, int scs)
 
 /// Returns true if pattern `pat` has an uppercase character.
 bool pat_has_uppercase(char_u *pat)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   char_u *p = pat;
 
@@ -421,11 +423,13 @@ const char *last_csearch(void)
 }
 
 int last_csearch_forward(void)
+  FUNC_ATTR_PURE
 {
   return lastcdir == FORWARD;
 }
 
 int last_csearch_until(void)
+  FUNC_ATTR_PURE
 {
   return last_t_cmd == TRUE;
 }
@@ -452,6 +456,7 @@ void set_csearch_until(int t_cmd)
 }
 
 char_u *last_search_pat(void)
+  FUNC_ATTR_PURE
 {
   return spats[last_idx].pat;
 }
@@ -2664,6 +2669,7 @@ bool findpar(bool *pincl, int dir, long count, int what, int both)
  * check if the string 's' is a nroff macro that is in option 'opt'
  */
 static int inmacro(char_u *opt, char_u *s)
+  FUNC_ATTR_PURE
 {
   char_u *macro;
 
@@ -3960,6 +3966,7 @@ extend:
 ///
 /// @return        column number of "quotechar" or -1 when not found.
 static int find_next_quote(char_u *line, int col, int quotechar, char_u *escape)
+  FUNC_ATTR_PURE
 {
   int c;
 
@@ -3988,6 +3995,7 @@ static int find_next_quote(char_u *line, int col, int quotechar, char_u *escape)
 ///
 /// @return        the found column or zero.
 static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *escape)
+  FUNC_ATTR_PURE
 {
   int n;
 
@@ -6028,6 +6036,7 @@ void set_last_used_pattern(const bool is_substitute_pattern)
 
 /// Returns true if search pattern was the last used one
 bool search_was_last_used(void)
+  FUNC_ATTR_PURE
 {
   return last_idx == 0;
 }

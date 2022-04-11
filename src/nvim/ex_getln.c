@@ -2493,6 +2493,7 @@ char *getcmdline_prompt(const char firstc, const char *const prompt, const int a
  * another window or buffer.  Used when editing the command line etc.
  */
 int text_locked(void)
+  FUNC_ATTR_PURE
 {
   if (cmdwin_type != 0) {
     return TRUE;
@@ -2510,6 +2511,7 @@ void text_locked_msg(void)
 }
 
 char *get_text_locked_msg(void)
+  FUNC_ATTR_PURE
 {
   if (cmdwin_type != 0) {
     return e_cmdwin;
@@ -4480,6 +4482,7 @@ char_u *sm_gettail(char_u *s, bool eager)
  * returned.
  */
 static int expand_showtail(expand_T *xp)
+  FUNC_ATTR_PURE
 {
   char_u *s;
   char_u *end;
@@ -5925,6 +5928,7 @@ void add_to_history(int histype, char_u *new_entry, int in_map, int sep)
  * "histype" may be one of the HIST_ values.
  */
 int get_history_idx(int histype)
+  FUNC_ATTR_PURE
 {
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT
       || hisidx[histype] < 0) {
@@ -5994,6 +5998,7 @@ char_u *get_cmdline_str(void)
  * Returns -1 when something is wrong.
  */
 int get_cmdline_pos(void)
+  FUNC_ATTR_PURE
 {
   struct cmdline_info *p = get_ccline_ptr();
 
@@ -6044,6 +6049,7 @@ int set_cmdline_pos(int pos)
  * Returns NUL when something is wrong.
  */
 int get_cmdline_type(void)
+  FUNC_ATTR_PURE
 {
   struct cmdline_info *p = get_ccline_ptr();
 
@@ -6063,6 +6069,7 @@ int get_cmdline_type(void)
  * "histype" may be one of the HIST_ values.
  */
 static int calc_hist_idx(int histype, int num)
+  FUNC_ATTR_PURE
 {
   int i;
   histentry_T *hist;
@@ -6104,6 +6111,7 @@ static int calc_hist_idx(int histype, int num)
  * "histype" may be one of the HIST_ values.
  */
 char_u *get_history_entry(int histype, int idx)
+  FUNC_ATTR_PURE
 {
   idx = calc_hist_idx(histype, idx);
   if (idx >= 0) {

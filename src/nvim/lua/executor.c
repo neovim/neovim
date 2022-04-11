@@ -478,6 +478,7 @@ LuaRef nlua_get_empty_dict_ref(lua_State *lstate)
 }
 
 int nlua_get_global_ref_count(void)
+  FUNC_ATTR_PURE
 {
   return nlua_global_refs->ref_count;
 }
@@ -1389,6 +1390,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
 /// check if the current execution context is safe for calling deferred API
 /// methods. Luv callbacks are unsafe as they are called inside the uv loop.
 bool nlua_is_deferred_safe(void)
+  FUNC_ATTR_PURE
 {
   return in_fast_callback == 0;
 }
@@ -1694,6 +1696,7 @@ void nlua_CFunction_func_free(void *state)
 }
 
 bool nlua_is_table_from_lua(typval_T *const arg)
+  FUNC_ATTR_PURE
 {
   if (arg->v_type == VAR_DICT) {
     return arg->vval.v_dict->lua_table_ref != LUA_NOREF;

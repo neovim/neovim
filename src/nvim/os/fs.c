@@ -1086,7 +1086,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 ///
 /// @return `true` if the two FileInfos represent the same file.
 bool os_fileinfo_id_equal(const FileInfo *file_info_1, const FileInfo *file_info_2)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
@@ -1109,7 +1109,7 @@ void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
 /// @param file_info Pointer to the `FileInfo`
 /// @return the inode number
 uint64_t os_fileinfo_inode(const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_ino;
 }
@@ -1118,7 +1118,7 @@ uint64_t os_fileinfo_inode(const FileInfo *file_info)
 ///
 /// @return filesize in bytes.
 uint64_t os_fileinfo_size(const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_size;
 }
@@ -1127,7 +1127,7 @@ uint64_t os_fileinfo_size(const FileInfo *file_info)
 ///
 /// @return number of hardlinks.
 uint64_t os_fileinfo_hardlinks(const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_nlink;
 }
@@ -1136,7 +1136,7 @@ uint64_t os_fileinfo_hardlinks(const FileInfo *file_info)
 ///
 /// @return blocksize in bytes.
 uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_blksize;
 }
@@ -1164,7 +1164,7 @@ bool os_fileid(const char *path, FileID *file_id)
 /// @param file_id_2 Pointer to second `FileID`
 /// @return `true` if the two `FileID`s represent te same file.
 bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_id_1->inode == file_id_2->inode
          && file_id_1->device_id == file_id_2->device_id;
@@ -1176,7 +1176,7 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
 bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return file_id->inode == file_info->stat.st_ino
          && file_id->device_id == file_info->stat.st_dev;

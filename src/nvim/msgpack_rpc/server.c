@@ -105,6 +105,7 @@ char *server_address_new(void)
 /// Check if this instance owns a pipe address.
 /// The argument must already be resolved to an absolute path!
 bool server_owns_pipe_address(const char *path)
+  FUNC_ATTR_PURE
 {
   for (int i = 0; i < watchers.ga_len; i++) {
     if (!strcmp(path, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {

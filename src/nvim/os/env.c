@@ -185,6 +185,7 @@ int os_unsetenv(const char *name)
 
 /// Returns number of variables in the current environment variables block
 size_t os_get_fullenv_size(void)
+  FUNC_ATTR_PURE
 {
   size_t len = 0;
 #ifdef _WIN32

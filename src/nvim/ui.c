@@ -145,6 +145,7 @@ void ui_builtin_start(void)
 }
 
 bool ui_rgb_attached(void)
+  FUNC_ATTR_PURE
 {
   if (!headless_mode && p_tgc) {
     return true;
@@ -159,6 +160,7 @@ bool ui_rgb_attached(void)
 
 /// Returns true if any UI requested `override=true`.
 bool ui_override(void)
+  FUNC_ATTR_PURE
 {
   for (size_t i = 1; i < ui_count; i++) {
     if (uis[i]->override) {
@@ -169,6 +171,7 @@ bool ui_override(void)
 }
 
 bool ui_active(void)
+  FUNC_ATTR_PURE
 {
   return ui_count > 1;
 }
@@ -252,6 +255,7 @@ void ui_refresh(void)
 }
 
 int ui_pum_get_height(void)
+  FUNC_ATTR_PURE
 {
   int pum_height = 0;
   for (size_t i = 1; i < ui_count; i++) {
@@ -494,11 +498,13 @@ void ui_mode_info_set(void)
 }
 
 int ui_current_row(void)
+  FUNC_ATTR_PURE
 {
   return cursor_row;
 }
 
 int ui_current_col(void)
+  FUNC_ATTR_PURE
 {
   return cursor_col;
 }
@@ -606,6 +612,7 @@ void ui_cursor_shape(void)
 
 /// Returns true if the given UI extension is enabled.
 bool ui_has(UIExtension ext)
+  FUNC_ATTR_PURE
 {
   return ui_ext[ext];
 }

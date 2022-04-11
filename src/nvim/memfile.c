@@ -454,6 +454,7 @@ static void mf_rem_hash(memfile_T *mfp, bhdr_T *hp)
 
 /// Lookup block with number "nr" in memfile's hash list.
 static bhdr_T *mf_find_hash(memfile_T *mfp, blocknr_T nr)
+  FUNC_ATTR_PURE
 {
   return (bhdr_T *)mf_hash_find(&mfp->mf_hash, nr);
 }
@@ -770,6 +771,7 @@ void mf_fullname(memfile_T *mfp)
 
 /// Return true if there are any translations pending for memfile.
 bool mf_need_trans(memfile_T *mfp)
+  FUNC_ATTR_PURE
 {
   return mfp->mf_fname != NULL && mfp->mf_neg_count > 0;
 }
@@ -854,6 +856,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
 ///
 /// @return  A pointer to a mf_hashitem_T or NULL if the item was not found.
 static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
+  FUNC_ATTR_PURE
 {
   mf_hashitem_T *mhi = mht->mht_buckets[(size_t)key & mht->mht_mask];
   while (mhi != NULL && mhi->mhi_key != key) {

@@ -449,6 +449,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
 ///
 /// @return  pointer to pos_T of the next mark or NULL if no mark is found.
 pos_T *getnextmark(pos_T *startpos, int dir, int begin_line)
+  FUNC_ATTR_PURE
 {
   int i;
   pos_T *result = NULL;
@@ -1647,6 +1648,7 @@ void get_buf_local_marks(const buf_T *buf, list_T *l)
 /// @param[in]  Name of named mark
 /// @param[out] Global/file mark
 xfmark_T get_global_mark(char name)
+  FUNC_ATTR_PURE
 {
   return namedfm[mark_global_index(name)];
 }

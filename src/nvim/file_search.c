@@ -1095,6 +1095,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename,
 ///  - the only differences are in the counters behind a '**', so
 ///    '**\20' is equal to '**\24'
 static bool ff_wc_equal(char_u *s1, char_u *s2)
+  FUNC_ATTR_PURE
 {
   int i, j;
   int c1 = NUL;

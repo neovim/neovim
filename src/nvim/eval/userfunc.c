@@ -547,6 +547,7 @@ static char_u *fname_trans_sid(const char_u *const name, char_u *const fname_buf
 ///
 /// @return  NULL for unknown function.
 ufunc_T *find_func(const char_u *name)
+  FUNC_ATTR_PURE
 {
   hashitem_T *hi;
 
@@ -1248,6 +1249,7 @@ void restore_funccal(void)
 }
 
 funccall_T *get_current_funccal(void)
+  FUNC_ATTR_PURE
 {
   return current_funccal;
 }
@@ -2607,6 +2609,7 @@ int eval_fname_script(const char *const p)
 }
 
 bool translated_function_exists(const char *name)
+  FUNC_ATTR_PURE
 {
   if (builtin_function(name, -1)) {
     return find_internal_func((char *)name) != NULL;
@@ -3190,6 +3193,7 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 /// @return  TRUE if the currently active function should be ended, because a
 ///          return was encountered or an error occurred.  Used inside a ":while".
 int func_has_ended(void *cookie)
+  FUNC_ATTR_PURE
 {
   funccall_T *fcp = (funccall_T *)cookie;
 
@@ -3201,6 +3205,7 @@ int func_has_ended(void *cookie)
 
 /// @return  TRUE if cookie indicates a function which "abort"s on errors.
 int func_has_abort(void *cookie)
+  FUNC_ATTR_PURE
 {
   return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
 }
@@ -3268,6 +3273,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
 
 /// @return  the name of the executed function.
 char_u *func_name(void *cookie)
+  FUNC_ATTR_PURE
 {
   return ((funccall_T *)cookie)->func->uf_name;
 }
@@ -3286,12 +3292,14 @@ int *func_dbg_tick(void *cookie)
 
 /// @return  the nesting level for a funccall cookie.
 int func_level(void *cookie)
+  FUNC_ATTR_PURE
 {
   return ((funccall_T *)cookie)->level;
 }
 
 /// @return  TRUE when a function was ended by a ":return" command.
 int current_func_returned(void)
+  FUNC_ATTR_PURE
 {
   return current_funccal->returned;
 }
@@ -3372,6 +3380,7 @@ hashtab_T *get_funccal_args_ht(void)
 /// @return  the a: scope variable or
 ///          NULL if there is no current funccal.
 dictitem_T *get_funccal_args_var(void)
+  FUNC_ATTR_PURE
 {
   if (current_funccal == NULL) {
     return NULL;
@@ -3391,6 +3400,7 @@ void list_func_vars(int *first)
 /// @return  if "ht" is the hashtable for local variables in the current
 ///          funccal, return the dict that contains it. Otherwise return NULL.
 dict_T *get_current_funccal_dict(hashtab_T *ht)
+  FUNC_ATTR_PURE
 {
   if (current_funccal != NULL && ht == &current_funccal->l_vars.dv_hashtab) {
     return &current_funccal->l_vars;

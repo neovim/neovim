@@ -717,7 +717,7 @@ static void set_string_default(const char *name, char *val, bool allocated)
 // For an option value that contains comma separated items, find "newval" in
 // "origval".  Return NULL if not found.
 static char_u *find_dup_item(char_u *origval, const char_u *newval, uint32_t flags)
-  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PURE
 {
   int bs = 0;
 
@@ -1907,6 +1907,7 @@ int get_shada_parameter(int type)
 /// '/') in the 'shada' option and return a pointer to the string after it.
 /// Return NULL if the parameter is not specified in the string.
 char_u *find_shada_parameter(int type)
+  FUNC_ATTR_PURE
 {
   char_u *p;
 
@@ -6221,6 +6222,7 @@ static char_u *get_varp(vimoption_T *p)
 
 /// Get the value of 'equalprg', either the buffer-local one or the global one.
 char_u *get_equalprg(void)
+  FUNC_ATTR_PURE
 {
   if (*curbuf->b_p_ep == NUL) {
     return p_ep;
@@ -7095,6 +7097,7 @@ static void langmap_set_entry(int from, int to)
 
 /// Apply 'langmap' to multi-byte character "c" and return the result.
 int langmap_adjust_mb(int c)
+  FUNC_ATTR_PURE
 {
   langmap_entry_T *entries = (langmap_entry_T *)(langmap_mapga.ga_data);
   int a = 0;
@@ -7221,6 +7224,7 @@ bool has_format_option(int x)
 /// @returns true if "x" is present in 'shortmess' option, or
 /// 'shortmess' contains 'a' and "x" is present in SHM_ALL_ABBREVIATIONS.
 bool shortmess(int x)
+  FUNC_ATTR_PURE
 {
   return (p_shm != NULL
           && (vim_strchr(p_shm, x) != NULL
@@ -7573,6 +7577,7 @@ static int check_opt_wim(void)
 /// Check if backspacing over something is allowed.
 /// @param  what  BS_INDENT, BS_EOL, BS_START, or BS_NOSTOP
 bool can_bs(int what)
+  FUNC_ATTR_PURE
 {
   if (what == BS_START && bt_prompt(curbuf)) {
     return false;
@@ -7715,6 +7720,7 @@ bool tabstop_set(char_u *var, long **array)
 // If "vts" is set then the tab widths are taken from that array,
 // otherwise the value of ts is used.
 int tabstop_padding(colnr_T col, long ts_arg, long *vts)
+  FUNC_ATTR_PURE
 {
   long ts = ts_arg == 0 ? 8 : ts_arg;
   colnr_T tabcol = 0;
@@ -7743,6 +7749,7 @@ int tabstop_padding(colnr_T col, long ts_arg, long *vts)
 
 // Find the size of the tab that covers a particular column.
 int tabstop_at(colnr_T col, long ts, long *vts)
+  FUNC_ATTR_PURE
 {
   colnr_T tabcol = 0;
   int t;
@@ -7769,6 +7776,7 @@ int tabstop_at(colnr_T col, long ts, long *vts)
 
 // Find the column on which a tab starts.
 colnr_T tabstop_start(colnr_T col, long ts, long *vts)
+  FUNC_ATTR_PURE
 {
   colnr_T tabcol = 0;
   int t;
@@ -7856,6 +7864,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, long *vts, 
 
 // See if two tabstop arrays contain the same values.
 bool tabstop_eq(long *ts1, long *ts2)
+  FUNC_ATTR_PURE
 {
   int t;
 
@@ -7898,12 +7907,14 @@ int *tabstop_copy(long *oldts)
 
 // Return a count of the number of tabstops.
 int tabstop_count(long *ts)
+  FUNC_ATTR_PURE
 {
   return ts != NULL ? (int)ts[0] : 0;
 }
 
 // Return the first tabstop, or 8 if there are no tabstops defined.
 int tabstop_first(long *ts)
+  FUNC_ATTR_PURE
 {
   return ts != NULL ? (int)ts[1] : 8;
 }
@@ -7911,6 +7922,7 @@ int tabstop_first(long *ts)
 /// Return the effective shiftwidth value for current buffer, using the
 /// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   long result = get_sw_value_col(buf, 0);
   assert(result >= 0 && result <= INT_MAX);
@@ -7940,6 +7952,7 @@ long get_sw_value_pos(buf_T *buf, pos_T *pos)
 
 // Idem, using virtual column "col".
 long get_sw_value_col(buf_T *buf, colnr_T col)
+  FUNC_ATTR_PURE
 {
   return buf->b_p_sw ? buf->b_p_sw
                      : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
@@ -7948,6 +7961,7 @@ long get_sw_value_col(buf_T *buf, colnr_T col)
 /// Return the effective softtabstop value for the current buffer,
 /// using the shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
+  FUNC_ATTR_PURE
 {
   long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
   assert(result >= 0 && result <= INT_MAX);
@@ -8000,12 +8014,14 @@ static bool briopt_check(win_T *wp)
 ///
 /// @param buf The buffer.
 unsigned int get_bkc_value(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
 
 /// Get the local or global value of the 'virtualedit' flags.
 unsigned int get_ve_flags(void)
+  FUNC_ATTR_PURE
 {
   return (curwin->w_ve_flags ? curwin->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
 }
@@ -8015,7 +8031,7 @@ unsigned int get_ve_flags(void)
 /// @param win  If not NULL, the window to get the local option from; global
 ///             otherwise.
 char_u *get_showbreak_value(win_T *const win)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
     return p_sbr;
@@ -8046,7 +8062,7 @@ int get_fileformat(const buf_T *buf)
 ///
 /// @param eap  can be NULL!
 int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_PURE
 {
   int c;
 
@@ -8070,6 +8086,7 @@ int get_fileformat_force(const buf_T *buf, const exarg_T *eap)
 
 /// Return the default fileformat from 'fileformats'.
 int default_fileformat(void)
+  FUNC_ATTR_PURE
 {
   switch (*p_ffs) {
   case 'm':
@@ -8119,6 +8136,7 @@ void set_fileformat(int eol_style, int opt_flags)
 
 /// Skip to next part of an option argument: skip space and comma
 char_u *skip_to_option_part(const char_u *p)
+  FUNC_ATTR_PURE
 {
   if (*p == ',') {
     p++;
@@ -8169,12 +8187,14 @@ size_t copy_option_part(char_u **option, char_u *buf, size_t maxlen, char *sep_c
 
 /// Return true when 'shell' has "csh" in the tail.
 int csh_like_shell(void)
+  FUNC_ATTR_PURE
 {
   return strstr(path_tail((char *)p_sh), "csh") != NULL;
 }
 
 /// Return true when 'shell' has "fish" in the tail.
 bool fish_like_shell(void)
+  FUNC_ATTR_PURE
 {
   return strstr(path_tail((char *)p_sh), "fish") != NULL;
 }
@@ -8267,6 +8287,7 @@ dict_T *get_winbuf_options(const int bufopt)
 /// Return the effective 'scrolloff' value for the current window, using the
 /// global value when appropriate.
 long get_scrolloff_value(win_T *wp)
+  FUNC_ATTR_PURE
 {
   // Disallow scrolloff in terminal-mode. #11915
   if (State & MODE_TERMINAL) {
@@ -8278,6 +8299,7 @@ long get_scrolloff_value(win_T *wp)
 /// Return the effective 'sidescrolloff' value for the current window, using the
 /// global value when appropriate.
 long get_sidescrolloff_value(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_siso < 0 ? p_siso : wp->w_p_siso;
 }

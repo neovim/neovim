@@ -86,6 +86,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
 hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
+  FUNC_ATTR_PURE
 {
   return hash_lookup(ht, (const char *)key, STRLEN(key), hash_hash(key));
 }
@@ -103,6 +104,7 @@ hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
 ///         @warning Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
 hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key, const size_t len)
+  FUNC_ATTR_PURE
 {
   return hash_lookup(ht, key, len, hash_hash_len(key, len));
 }
@@ -120,6 +122,7 @@ hashitem_T *hash_find_len(const hashtab_T *const ht, const char *const key, cons
 ///                  is changed in any way.
 hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const size_t key_len,
                         const hash_T hash)
+  FUNC_ATTR_PURE
 {
 #ifdef HT_DEBUG
   hash_count_lookup++;
@@ -394,6 +397,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 /// when exiting. Try that with the current hash algorithm and yours. The
 /// lower the percentage the better.
 hash_T hash_hash(const char_u *key)
+  FUNC_ATTR_PURE
 {
   hash_T hash = *key;
 

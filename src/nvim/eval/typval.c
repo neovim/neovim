@@ -1112,7 +1112,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
 ///
 /// @return True if they are equal, false otherwise.
 bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (cb1->type != cb2->type) {
     return false;
@@ -2152,7 +2152,7 @@ void tv_blob_unref(blob_T *const b)
 ///
 /// @return true if blobs are equal, false otherwise.
 bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const int len1 = tv_blob_len(b1);
   const int len2 = tv_blob_len(b2);

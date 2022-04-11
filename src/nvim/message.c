@@ -153,6 +153,7 @@ void msg_grid_set_pos(int row, bool scrolled)
 }
 
 bool msg_use_grid(void)
+  FUNC_ATTR_PURE
 {
   return default_grid.chars && msg_use_msgsep()
          && !ui_has(kUIMessages);
@@ -597,6 +598,7 @@ void msg_source(int attr)
 ///            If "msg" is in 'debug': do error message but without side effects.
 ///            If "emsg_skip" is set: never do error messages.
 int emsg_not_now(void)
+  FUNC_ATTR_PURE
 {
   if ((emsg_off > 0 && vim_strchr(p_debug, 'm') == NULL
        && vim_strchr(p_debug, 't') == NULL)
@@ -2295,11 +2297,13 @@ bool message_filtered(char_u *msg)
 
 /// including horizontal separator
 int msg_scrollsize(void)
+  FUNC_ATTR_PURE
 {
   return msg_scrolled + p_ch + 1;
 }
 
 bool msg_use_msgsep(void)
+  FUNC_ATTR_PURE
 {
   // the full-screen scroll behavior doesn't really make sense with
   // 'ext_multigrid'
@@ -2307,6 +2311,7 @@ bool msg_use_msgsep(void)
 }
 
 bool msg_do_throttle(void)
+  FUNC_ATTR_PURE
 {
   return msg_use_grid() && !(rdb_flags & RDB_NOTHROTTLE);
 }
@@ -2554,6 +2559,7 @@ void show_sb_text(void)
 
 /// Move to the start of screen line in already displayed text.
 static msgchunk_T *msg_sb_start(msgchunk_T *mps)
+  FUNC_ATTR_PURE
 {
   msgchunk_T *mp = mps;
 
@@ -2621,6 +2627,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
 ///          - "batch mode" ("silent mode", -es/-Es)
 ///          - no UI and not embedded
 int msg_use_printf(void)
+  FUNC_ATTR_PURE
 {
   return !embedded_mode && !ui_active();
 }
@@ -3153,6 +3160,7 @@ void msg_ext_check_clear(void)
 }
 
 bool msg_ext_is_visible(void)
+  FUNC_ATTR_PURE
 {
   return ui_has(kUIMessages) && msg_ext_visible > 0;
 }
@@ -3252,6 +3260,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
 }
 
 int redirecting(void)
+  FUNC_ATTR_PURE
 {
   return redir_fd != NULL || *p_vfile != NUL
          || redir_reg || redir_vname || capture_ga != NULL;

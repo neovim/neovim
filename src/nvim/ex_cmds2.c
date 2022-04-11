@@ -2629,6 +2629,7 @@ void do_finish(exarg_T *eap, int reanimate)
 ///          message for missing ":endif".
 ///          false when not sourcing a file.
 bool source_finished(LineGetter fgetline, void *cookie)
+  FUNC_ATTR_PURE
 {
   return getline_equal(fgetline, cookie, getsourceline)
          && ((struct source_cookie *)getline_cookie(fgetline, cookie))->finished;

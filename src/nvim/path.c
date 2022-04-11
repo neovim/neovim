@@ -121,6 +121,7 @@ char *path_tail(const char *fname)
 ///   - `fname` if it contains no path separator.
 ///   - Never NULL.
 char_u *path_tail_with_sep(char_u *fname)
+  FUNC_ATTR_PURE
 {
   assert(fname != NULL);
 
@@ -168,6 +169,7 @@ const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
 /// @return Pointer to first found path separator + 1.
 /// An empty string, if `fname` doesn't contain a path separator,
 const char *path_next_component(const char *fname)
+  FUNC_ATTR_PURE
 {
   assert(fname != NULL);
   while (*fname != NUL && !vim_ispathsep(*fname)) {
@@ -199,6 +201,7 @@ int path_head_length(void)
 ///   - True if path begins with a path head
 ///   - False otherwise
 bool is_path_head(const char_u *path)
+  FUNC_ATTR_PURE
 {
 #ifdef WIN32
   return isalpha(path[0]) && path[1] == ':';
@@ -211,6 +214,7 @@ bool is_path_head(const char_u *path)
 /// Unix: after "/"; Win: after "c:\"
 /// If there is no head, path is returned.
 char_u *get_past_head(const char_u *path)
+  FUNC_ATTR_PURE
 {
   const char_u *retval = path;
 
@@ -511,7 +515,7 @@ char *save_abs_path(const char *name)
 /// @returns Unix: True if it contains one of "?[{`'$".
 /// @returns Windows: True if it contains one of "*?$[".
 bool path_has_wildcard(const char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   for (; *p; MB_PTR_ADV(p)) {
 #if defined(UNIX)
@@ -537,6 +541,7 @@ bool path_has_wildcard(const char_u *p)
  * Unix style wildcard expansion code.
  */
 static int pstrcmp(const void *a, const void *b)
+  FUNC_ATTR_PURE
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
 }
@@ -546,7 +551,7 @@ static int pstrcmp(const void *a, const void *b)
 /// @returns Unix: True if it contains one of *?[{.
 /// @returns Windows: True if it contains one of *?[.
 bool path_has_exp_wildcard(const char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   for (; *p != NUL; MB_PTR_ADV(p)) {
 #if defined(UNIX)
@@ -892,6 +897,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
  * returns:              ^this
  */
 static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
+  FUNC_ATTR_PURE
 {
   int maxlen = 0;
   char_u **path_part = (char_u **)gap->ga_data;
@@ -1149,6 +1155,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
  * Allowing for escaping.
  */
 static bool has_env_var(char_u *p)
+  FUNC_ATTR_PURE
 {
   for (; *p; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
@@ -1165,6 +1172,7 @@ static bool has_env_var(char_u *p)
 // Return TRUE if "p" contains a special wildcard character, one that Vim
 // cannot expand, requires using a shell.
 static bool has_special_wildchar(char_u *p)
+  FUNC_ATTR_PURE
 {
   for (; *p; MB_PTR_ADV(p)) {
     // Disallow line break characters.
@@ -1750,6 +1758,7 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
 // Also check for ":\\", which MS Internet Explorer accepts, return
 // URL_BACKSLASH.
 int path_is_url(const char *p)
+  FUNC_ATTR_PURE
 {
   if (strncmp(p, "://", 3) == 0) {
     return URL_SLASH;
@@ -1764,6 +1773,7 @@ int path_is_url(const char *p)
 /// @param  fname         is the filename to test
 /// @return URL_SLASH for "name://", URL_BACKSLASH for "name:\\", zero otherwise.
 int path_with_url(const char *fname)
+  FUNC_ATTR_PURE
 {
   const char *p;
 
@@ -1789,6 +1799,7 @@ int path_with_url(const char *fname)
 }
 
 bool path_with_extension(const char *path, const char *extension)
+  FUNC_ATTR_PURE
 {
   const char *last_dot = strrchr(path, '.');
   if (!last_dot) {
@@ -1801,6 +1812,7 @@ bool path_with_extension(const char *path, const char *extension)
  * Return TRUE if "name" is a full (absolute) path name or URL.
  */
 bool vim_isAbsName(char_u *name)
+  FUNC_ATTR_PURE
 {
   return path_with_url((char *)name) != 0 || path_is_absolute(name);
 }
@@ -1942,6 +1954,7 @@ void path_fix_case(char_u *name)
  * "b" must point to the start of the file name
  */
 int after_pathsep(const char *b, const char *p)
+  FUNC_ATTR_PURE
 {
   return p > b && vim_ispathsep(p[-1])
          && utf_head_off((char_u *)b, (char_u *)p - 1) == 0;
@@ -1975,6 +1988,7 @@ bool same_directory(char_u *f1, char_u *f2)
  * Return value like strcmp(p, q), but consider path separators.
  */
 int pathcmp(const char *p, const char *q, int maxlen)
+  FUNC_ATTR_PURE
 {
   int i, j;
   int c1, c2;
@@ -2075,6 +2089,7 @@ char_u *path_try_shorten_fname(char_u *full_path)
 ///   - Pointer into `full_path` if shortened.
 ///   - NULL if no shorter name is possible.
 char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
+  FUNC_ATTR_PURE
 {
   if (full_path == NULL) {
     return NULL;
@@ -2399,6 +2414,7 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
 ///
 /// @return `TRUE` if "fname" is absolute.
 int path_is_absolute(const char_u *fname)
+  FUNC_ATTR_PURE
 {
 #ifdef WIN32
   if (*fname == NUL) {

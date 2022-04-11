@@ -54,6 +54,7 @@ void input_global_fd_init(int fd)
 
 /// Global TTY (or pipe for "-es") input stream, before UI starts.
 int input_global_fd(void)
+  FUNC_ATTR_PURE
 {
   return global_fd;
 }
@@ -427,6 +428,7 @@ size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int co
 
 /// @return true if the main loop is blocked and waiting for input.
 bool input_blocking(void)
+  FUNC_ATTR_PURE
 {
   return blocking;
 }
@@ -470,6 +472,7 @@ void input_done(void)
 }
 
 bool input_available(void)
+  FUNC_ATTR_PURE
 {
   return rbuffer_size(input_buffer) != 0;
 }

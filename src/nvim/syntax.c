@@ -1196,6 +1196,7 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
  * Returns NULL when there is no entry or the first entry is after "lnum".
  */
 static synstate_T *syn_stack_find_entry(linenr_T lnum)
+  FUNC_ATTR_PURE
 {
   synstate_T *p, *prev;
 
@@ -5687,6 +5688,7 @@ void ex_ownsyntax(exarg_T *eap)
 }
 
 bool syntax_present(win_T *win)
+  FUNC_ATTR_PURE
 {
   return win->w_s->b_syn_patterns.ga_len != 0
          || win->w_s->b_syn_clusters.ga_len != 0
@@ -5845,6 +5847,7 @@ int syn_get_concealed_id(win_T *wp, linenr_T lnum, colnr_T col)
  * Return conceal substitution character
  */
 int syn_get_sub_char(void)
+  FUNC_ATTR_PURE
 {
   return current_sub_char;
 }

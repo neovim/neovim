@@ -166,6 +166,7 @@ void multiqueue_purge_events(MultiQueue *this)
 }
 
 bool multiqueue_empty(MultiQueue *this)
+  FUNC_ATTR_PURE
 {
   assert(this);
   return QUEUE_EMPTY(&this->headtail);
@@ -179,6 +180,7 @@ void multiqueue_replace_parent(MultiQueue *this, MultiQueue *new_parent)
 
 /// Gets the count of all events currently in the queue.
 size_t multiqueue_size(MultiQueue *this)
+  FUNC_ATTR_PURE
 {
   return this->size;
 }

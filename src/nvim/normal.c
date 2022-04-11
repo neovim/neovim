@@ -384,6 +384,7 @@ void init_normal_cmds(void)
 ///
 /// @return  -1 for invalid command.
 static int find_command(int cmdchar)
+  FUNC_ATTR_PURE
 {
   int i;
   int idx;

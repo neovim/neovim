@@ -37,17 +37,20 @@ void rbuffer_free(RBuffer *buf)
   xfree(buf);
 }
 
-size_t rbuffer_size(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_size(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   return buf->size;
 }
 
-size_t rbuffer_capacity(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_capacity(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   return (size_t)(buf->end_ptr - buf->start_ptr);
 }
 
-size_t rbuffer_space(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_space(RBuffer *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   return rbuffer_capacity(buf) - buf->size;
 }
@@ -197,7 +200,7 @@ size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
 }
 
 char *rbuffer_get(RBuffer *buf, size_t index)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_PURE
 {
   assert(index < buf->size);
   char *rptr = buf->read_ptr + index;

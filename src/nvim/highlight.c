@@ -697,6 +697,7 @@ static int hl_cterm2rgb_color(int nr)
 
 /// Get highlight attributes for a attribute code
 HlAttrs syn_attr2entry(int attr)
+  FUNC_ATTR_PURE
 {
   if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
     // invalid attribute code, or the tables were cleared

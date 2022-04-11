@@ -1169,6 +1169,7 @@ static size_t tokenize(const char_u *const str, char **const argv)
 /// @param str A pointer to the first character of the word
 /// @return The offset from `str` at which the word ends.
 static size_t word_length(const char_u *str)
+  FUNC_ATTR_PURE
 {
   const char_u *p = str;
   bool inquote = false;

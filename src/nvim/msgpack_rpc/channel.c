@@ -683,6 +683,7 @@ Dictionary rpc_client_info(Channel *chan)
 }
 
 const char *rpc_client_name(Channel *chan)
+  FUNC_ATTR_PURE
 {
   if (!chan->is_rpc) {
     return NULL;

@@ -792,11 +792,13 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
 }
 
 Buffer terminal_buf(const Terminal *term)
+  FUNC_ATTR_PURE
 {
   return term->buf_handle;
 }
 
 bool terminal_running(const Terminal *term)
+  FUNC_ATTR_PURE
 {
   return !term->closed;
 }

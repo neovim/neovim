@@ -535,6 +535,7 @@ int utf_ptr2cells(const char *p)
 /// Like utf_ptr2cells(), but limit string length to "size".
 /// For an empty string or truncated character returns 1.
 int utf_ptr2cells_len(const char_u *p, int size)
+  FUNC_ATTR_PURE
 {
   int c;
 
@@ -731,6 +732,7 @@ int mb_cptr2char_adv(const char_u **pp)
  * behaves like a composing character.
  */
 bool utf_composinglike(const char_u *p1, const char_u *p2)
+  FUNC_ATTR_PURE
 {
   int c2;
 
@@ -866,6 +868,7 @@ int utf_byte2len(int b)
  * Never returns zero.
  */
 int utf_ptr2len_len(const char_u *p, int size)
+  FUNC_ATTR_PURE
 {
   int len;
   int i;
@@ -933,6 +936,7 @@ int utfc_ptr2len(const char *const p_in)
  * Returns 1 for an illegal char or an incomplete byte sequence.
  */
 int utfc_ptr2len_len(const char_u *p, int size)
+  FUNC_ATTR_PURE
 {
   int len;
   int prevlen;
@@ -1051,6 +1055,7 @@ int utf_char2bytes(const int c, char *const buf)
  * Based on code from Markus Kuhn.
  */
 bool utf_iscomposing(int c)
+  FUNC_ATTR_PURE
 {
   return intable(combining, ARRAY_SIZE(combining), c);
 }
@@ -1060,6 +1065,7 @@ bool utf_iscomposing(int c)
  * Only for characters of 0x100 and above!
  */
 bool utf_printable(int c)
+  FUNC_ATTR_PURE
 {
 #ifdef USE_WCHAR_FUNCTIONS
   /*
@@ -1087,6 +1093,7 @@ bool utf_printable(int c)
  * 2 or bigger: some class of word character.
  */
 int utf_class(const int c)
+  FUNC_ATTR_PURE
 {
   return utf_class_tab(c, curbuf->b_chartab);
 }
@@ -1209,6 +1216,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 }
 
 bool utf_ambiguous_width(int c)
+  FUNC_ATTR_PURE
 {
   return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
                        || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
@@ -1220,6 +1228,7 @@ bool utf_ambiguous_width(int c)
  * the given conversion "table".  Uses binary search on "table".
  */
 static int utf_convert(int a, const convertStruct *const table, size_t n_items)
+  FUNC_ATTR_PURE
 {
   size_t start, mid, end;   // indices into table
 
@@ -1249,6 +1258,7 @@ static int utf_convert(int a, const convertStruct *const table, size_t n_items)
  * simple case folding.
  */
 int utf_fold(int a)
+  FUNC_ATTR_PURE
 {
   if (a < 0x80) {
     // be fast for ASCII
@@ -1265,6 +1275,7 @@ int utf_fold(int a)
 /// Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
 /// simple case folding.
 int mb_toupper(int a)
+  FUNC_ATTR_PURE
 {
   // If 'casemap' contains "keepascii" use ASCII style toupper().
   if (a < 128 && (cmp_flags & CMP_KEEPASCII)) {
@@ -1288,6 +1299,7 @@ int mb_toupper(int a)
 }
 
 bool mb_islower(int a)
+  FUNC_ATTR_PURE
 {
   // German sharp s is lower case but has no upper case equivalent.
   return (mb_toupper(a) != a) || a == 0xdf;
@@ -1296,6 +1308,7 @@ bool mb_islower(int a)
 /// Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
 /// simple case folding.
 int mb_tolower(int a)
+  FUNC_ATTR_PURE
 {
   // If 'casemap' contains "keepascii" use ASCII style tolower().
   if (a < 128 && (cmp_flags & CMP_KEEPASCII)) {
@@ -1319,12 +1332,13 @@ int mb_tolower(int a)
 }
 
 bool mb_isupper(int a)
+  FUNC_ATTR_PURE
 {
   return mb_tolower(a) != a;
 }
 
 bool mb_isalpha(int a)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   return mb_islower(a) || mb_isupper(a);
 }
@@ -1524,7 +1538,7 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunit
 }
 
 ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool use_utf16_units)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   size_t count = 0;
   size_t clen, i;
@@ -1626,6 +1640,7 @@ void show_utf8(void)
 /// If "p" points to the NUL at the end of the string return 0.
 /// Returns 0 when already at the first byte of a character.
 int utf_head_off(const char_u *base, const char_u *p)
+  FUNC_ATTR_PURE
 {
   int c;
   int len;
@@ -1837,6 +1852,7 @@ void mb_copy_char(const char_u **const fp, char_u **const tp)
 /// at the start of a character 0 is returned, otherwise the offset to the next
 /// character.  Can start anywhere in a stream of bytes.
 int mb_off_next(const char_u *base, const char_u *p)
+  FUNC_ATTR_PURE
 {
   int i;
   int j;
@@ -1865,6 +1881,7 @@ int mb_off_next(const char_u *base, const char_u *p)
 /// into.  Can start anywhere in a stream of bytes.
 /// Composing characters are not included.
 int mb_tail_off(const char_u *base, const char_u *p)
+  FUNC_ATTR_PURE
 {
   int i;
   int j;
@@ -1899,6 +1916,7 @@ int mb_tail_off(const char_u *base, const char_u *p)
 //
 /// @return 0 if invalid sequence, else offset to previous codepoint
 int mb_head_off(const char_u *base, const char_u *p)
+  FUNC_ATTR_PURE
 {
   int i;
   int j;
@@ -2066,6 +2084,7 @@ void mb_check_adjust_col(void *win_)
 ///
 /// @return      a pointer to the character before "*p", if there is one.
 char_u *mb_prevptr(char_u *line, char_u *p)
+  FUNC_ATTR_PURE
 {
   if (p > line) {
     MB_PTR_BACK(line, p);
@@ -2076,6 +2095,7 @@ char_u *mb_prevptr(char_u *line, char_u *p)
 /// Return the character length of "str".  Each multi-byte character (with
 /// following composing characters) counts as one.
 int mb_charlen(const char_u *str)
+  FUNC_ATTR_PURE
 {
   const char_u *p = str;
   int count;
@@ -2093,6 +2113,7 @@ int mb_charlen(const char_u *str)
 
 /// Like mb_charlen() but for a string with specified length.
 int mb_charlen_len(const char_u *str, int len)
+  FUNC_ATTR_PURE
 {
   const char_u *p = str;
   int count;
@@ -2156,6 +2177,7 @@ const char *mb_unescape(const char **const pp)
  * Skip the Vim specific head of a 'encoding' name.
  */
 char_u *enc_skip(char_u *p)
+  FUNC_ATTR_PURE
 {
   if (STRNCMP(p, "2byte-", 6) == 0) {
     return p + 6;

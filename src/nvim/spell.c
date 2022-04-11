@@ -1135,6 +1135,7 @@ static bool can_be_compound(trystate_T *sp, slang_T *slang, char_u *compflags, i
 // collected so far can't possibly match any compound rule.
 // Caller must check that slang->sl_comprules is not NULL.
 static bool match_compoundrule(slang_T *slang, char_u *compflags)
+  FUNC_ATTR_PURE
 {
   char_u *p;
   int i;
@@ -1714,6 +1715,7 @@ static void spell_load_lang(char_u *lang)
 // Return the encoding used for spell checking: Use 'encoding', except that we
 // use "latin1" for "latin9".  And limit to 60 characters (just in case).
 char_u *spell_enc(void)
+  FUNC_ATTR_PURE
 {
   if (STRLEN(p_enc) < 60 && STRCMP(p_enc, "iso-8859-15") != 0) {
     return p_enc;
@@ -1941,6 +1943,7 @@ static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool spl
 // Returns true if byte "n" appears in "str".
 // Like strchr() but independent of locale.
 bool byte_in_str(char_u *str, int n)
+  FUNC_ATTR_PURE
 {
   char_u *p;
 
@@ -1989,7 +1992,7 @@ int init_syl_tab(slang_T *slang)
 // When "word" contains spaces the syllables after the last space are counted.
 // Returns zero if syllables are not defines.
 static int count_syllables(slang_T *slang, const char_u *word)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   int cnt = 0;
   bool skip = false;
@@ -2701,6 +2704,7 @@ static bool spell_iswordp(const char_u *p, const win_T *wp)
 // Returns true if "p" points to a word character.
 // Unlike spell_iswordp() this doesn't check for "midword" characters.
 bool spell_iswordp_nmw(const char_u *p, win_T *wp)
+  FUNC_ATTR_PURE
 {
   int c = utf_ptr2char((char *)p);
   if (c > 255) {
@@ -5559,6 +5563,7 @@ badword:
 
 // Find word "word" in fold-case tree for "slang" and return the word number.
 static int soundfold_find(slang_T *slang, char_u *word)
+  FUNC_ATTR_PURE
 {
   idx_T arridx = 0;
   int len;
@@ -6355,6 +6360,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
 /// @param goodstart  sound-folded good word
 /// @param badstart  sound-folded bad word
 static int soundalike_score(char_u *goodstart, char_u *badstart)
+  FUNC_ATTR_PURE
 {
   char_u *goodsound = goodstart;
   char_u *badsound = badstart;
@@ -7267,6 +7273,7 @@ static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Directi
 // Move "p" to the end of word "start".
 // Uses the spell-checking word characters.
 char_u *spell_to_word_end(char_u *start, win_T *win)
+  FUNC_ATTR_PURE
 {
   char_u *p = start;
 

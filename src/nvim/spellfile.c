@@ -4320,6 +4320,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
 
 // Returns true when two nodes have identical siblings and children.
 static bool node_equal(wordnode_T *n1, wordnode_T *n2)
+  FUNC_ATTR_PURE
 {
   wordnode_T *p1;
   wordnode_T *p2;

@@ -993,6 +993,7 @@ static void store_loop_line(garray_T *gap, char *line)
 ///
 /// @param cookie  argument for fgetline()
 int getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
+  FUNC_ATTR_PURE
 {
   LineGetter gp;
   struct loop_cookie *cp;
@@ -1014,6 +1015,7 @@ int getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
 ///
 /// @param cookie  argument for fgetline()
 void *getline_cookie(LineGetter fgetline, void *cookie)
+  FUNC_ATTR_PURE
 {
   LineGetter gp;
   struct loop_cookie *cp;
@@ -5438,6 +5440,7 @@ int ends_excmd(int c) FUNC_ATTR_CONST
 /// @return  the next command, after the first '|' or '\n' or,
 ///          NULL if not found.
 char_u *find_nextcmd(const char_u *p)
+  FUNC_ATTR_PURE
 {
   while (*p != '|' && *p != '\n') {
     if (*p == NUL) {
@@ -5452,6 +5455,7 @@ char_u *find_nextcmd(const char_u *p)
 ///
 /// @return  NULL if it isn't, the following character if it is.
 char_u *check_nextcmd(char_u *p)
+  FUNC_ATTR_PURE
 {
   char *s = skipwhite((char *)p);
 
@@ -5511,6 +5515,7 @@ char *get_command_name(expand_T *xp, int idx)
 /// If the given {name} is valid, then a pointer to the end of the valid name is returned.
 /// Otherwise, returns NULL.
 char *uc_validate_name(char *name)
+  FUNC_ATTR_PURE
 {
   if (ASCII_ISALPHA(*name)) {
     while (ASCII_ISALNUM(*name)) {
@@ -6905,6 +6910,7 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
 }
 
 int cmdcomplete_str_to_type(const char *complete_str)
+  FUNC_ATTR_PURE
 {
   for (int i = 0; i < (int)(ARRAY_SIZE(command_complete)); i++) {
     char *cmd_compl = get_command_complete(i);

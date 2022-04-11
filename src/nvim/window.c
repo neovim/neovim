@@ -109,7 +109,7 @@ static void log_frame_layout(frame_T *frame)
 /// @return the current window, unless in the cmdline window and "prevwin" is
 /// set, then return "prevwin".
 win_T *prevwin_curwin(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In cmdwin, the alternative buffer should be used.
   return is_in_cmdwin() && prevwin != NULL ? prevwin : curwin;
@@ -1665,6 +1665,7 @@ bool win_valid_any_tab(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
  * Return the number of windows.
  */
 int win_count(void)
+  FUNC_ATTR_PURE
 {
   int count = 0;
 
@@ -3251,6 +3252,7 @@ win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
 /// @return a pointer to the frame that will receive the empty screen space that
 /// is left over after "win" is closed.
 static frame_T *win_altframe(win_T *win, tabpage_T *tp)
+  FUNC_ATTR_PURE
 {
   frame_T *frp;
 
@@ -3305,6 +3307,7 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
  * Return the tabpage that will be used if the current one is closed.
  */
 static tabpage_T *alt_tabpage(void)
+  FUNC_ATTR_PURE
 {
   tabpage_T *tp;
 
@@ -3322,6 +3325,7 @@ static tabpage_T *alt_tabpage(void)
  * Find the left-upper window in frame "frp".
  */
 win_T *frame2win(frame_T *frp)
+  FUNC_ATTR_PURE
 {
   while (frp->fr_win == NULL) {
     frp = frp->fr_child;
@@ -3740,6 +3744,7 @@ static void frame_fix_height(win_T *wp)
  * window.
  */
 static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
+  FUNC_ATTR_PURE
 {
   frame_T *frp;
   int m;
@@ -3786,6 +3791,7 @@ static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
 ///
 /// @param next_curwin  use p_wh and p_wiw for next_curwin
 static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
+  FUNC_ATTR_PURE
 {
   frame_T *frp;
   int m, n;
@@ -4173,6 +4179,7 @@ bool valid_tabpage(tabpage_T *tpc) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
 /// Returns true when `tpc` is valid and at least one window is valid.
 int valid_tabpage_win(tabpage_T *tpc)
+  FUNC_ATTR_PURE
 {
   FOR_ALL_TABS(tp) {
     if (tp == tpc) {
@@ -4214,6 +4221,7 @@ void close_tabpage(tabpage_T *tab)
  * Find tab page "n" (first one is 1).  Returns NULL when not found.
  */
 tabpage_T *find_tabpage(int n)
+  FUNC_ATTR_PURE
 {
   tabpage_T *tp;
   int i = 1;
@@ -4229,6 +4237,7 @@ tabpage_T *find_tabpage(int n)
  * When not found returns number of tab pages plus one.
  */
 int tabpage_index(tabpage_T *ftp)
+  FUNC_ATTR_PURE
 {
   int i = 1;
   tabpage_T *tp;
@@ -4580,6 +4589,7 @@ void win_goto(win_T *wp)
  * Find the tabpage for window "win".
  */
 tabpage_T *win_find_tabpage(win_T *win)
+  FUNC_ATTR_PURE
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp == win) {
@@ -4599,6 +4609,7 @@ tabpage_T *win_find_tabpage(win_T *win)
 ///
 /// @return       found window
 win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
+  FUNC_ATTR_PURE
 {
   frame_T *fr;
   frame_T *nfr;
@@ -4682,6 +4693,7 @@ static void win_goto_ver(bool up, long count)
 ///
 /// @return      found window
 win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
+  FUNC_ATTR_PURE
 {
   frame_T *fr;
   frame_T *nfr;
@@ -6664,6 +6676,7 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
 
 /// Return the number of lines used by the tab page line.
 int tabline_height(void)
+  FUNC_ATTR_PURE
 {
   if (ui_has(kUITabline)) {
     return 0;
@@ -6680,6 +6693,7 @@ int tabline_height(void)
 
 /// Return the number of lines used by the global statusline
 int global_stl_height(void)
+  FUNC_ATTR_PURE
 {
   return (p_ls == 3) ? STATUS_HEIGHT : 0;
 }
@@ -6687,6 +6701,7 @@ int global_stl_height(void)
 /// Return the minimal number of rows that is needed on the screen to display
 /// the current number of windows.
 int min_rows(void)
+  FUNC_ATTR_PURE
 {
   if (firstwin == NULL) {       // not initialized yet
     return MIN_LINES;
@@ -6879,6 +6894,7 @@ void restore_snapshot(int idx, int close_curwin)
 /// Check if frames "sn" and "fr" have the same layout, same following frames
 /// and same children.  And the window pointer is valid.
 static int check_snapshot_rec(frame_T *sn, frame_T *fr)
+  FUNC_ATTR_PURE
 {
   if (sn->fr_layout != fr->fr_layout
       || (sn->fr_next == NULL) != (fr->fr_next == NULL)
@@ -7159,6 +7175,7 @@ void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
 }
 
 win_T *win_id2wp(int id)
+  FUNC_ATTR_PURE
 {
   return win_id2wp_tp(id, NULL);
 }
@@ -7256,6 +7273,7 @@ void win_ui_flush(void)
 }
 
 win_T *lastwin_nofloating(void)
+  FUNC_ATTR_PURE
 {
   win_T *res = lastwin;
   while (res->w_floating) {

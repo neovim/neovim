@@ -21,6 +21,7 @@
 #endif
 
 bool terminfo_is_term_family(const char *term, const char *family)
+  FUNC_ATTR_PURE
 {
   if (!term) {
     return false;

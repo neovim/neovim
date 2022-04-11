@@ -2517,6 +2517,7 @@ static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
  * Return FALSE if it is not a static tag.
  */
 static bool test_for_static(tagptrs_T *tagp)
+  FUNC_ATTR_PURE
 {
   char_u *p;
 

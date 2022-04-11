@@ -132,6 +132,7 @@ void copyFoldingState(win_T *wp_from, win_T *wp_to)
 // hasAnyFolding() {{{2
 /// @return  TRUE if there may be folded lines in the current window.
 int hasAnyFolding(win_T *win)
+  FUNC_ATTR_PURE
 {
   // very simple now, but can become more complex later
   return !win->w_buffer->terminal && win->w_p_fen
@@ -313,6 +314,7 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
 // foldmethodIsManual() {{{2
 /// @return  TRUE if 'foldmethod' is "manual"
 int foldmethodIsManual(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[3] == 'u';
 }
@@ -320,6 +322,7 @@ int foldmethodIsManual(win_T *wp)
 // foldmethodIsIndent() {{{2
 /// @return  TRUE if 'foldmethod' is "indent"
 int foldmethodIsIndent(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[0] == 'i';
 }
@@ -327,6 +330,7 @@ int foldmethodIsIndent(win_T *wp)
 // foldmethodIsExpr() {{{2
 /// @return  TRUE if 'foldmethod' is "expr"
 int foldmethodIsExpr(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[1] == 'x';
 }
@@ -334,6 +338,7 @@ int foldmethodIsExpr(win_T *wp)
 // foldmethodIsMarker() {{{2
 /// @return  TRUE if 'foldmethod' is "marker"
 int foldmethodIsMarker(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[2] == 'r';
 }
@@ -341,6 +346,7 @@ int foldmethodIsMarker(win_T *wp)
 // foldmethodIsSyntax() {{{2
 /// @return  TRUE if 'foldmethod' is "syntax"
 int foldmethodIsSyntax(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[0] == 's';
 }
@@ -348,6 +354,7 @@ int foldmethodIsSyntax(win_T *wp)
 // foldmethodIsDiff() {{{2
 /// @return  TRUE if 'foldmethod' is "diff"
 int foldmethodIsDiff(win_T *wp)
+  FUNC_ATTR_PURE
 {
   return wp->w_p_fdm[0] == 'd';
 }
@@ -970,6 +977,7 @@ void foldInitWin(win_T *new_win)
 ///
 /// @return  index of entry or -1 if not found.
 int find_wl_entry(win_T *win, linenr_T lnum)
+  FUNC_ATTR_PURE
 {
   int i;
 
@@ -1491,6 +1499,7 @@ int getDeepestNesting(win_T *wp)
 }
 
 static int getDeepestNestingRecurse(garray_T *gap)
+  FUNC_ATTR_PURE
 {
   int level;
   int maxlevel = 0;
