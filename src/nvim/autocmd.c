@@ -379,6 +379,7 @@ static void au_cleanup(void)
 
 // Get the first AutoPat for a particular event.
 AutoPat *au_get_autopat_for_event(event_T event)
+  FUNC_ATTR_PURE
 {
   return first_autopat[(int)event];
 }
@@ -1143,6 +1144,7 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
 }
 
 size_t aucmd_pattern_length(char_u *pat)
+  FUNC_ATTR_PURE
 {
   if (*pat == NUL) {
     return 0;
@@ -1175,6 +1177,7 @@ size_t aucmd_pattern_length(char_u *pat)
 }
 
 char_u *aucmd_next_pattern(char_u *pat, size_t patlen)
+  FUNC_ATTR_PURE
 {
   pat = pat + patlen;
   if (*pat == ',') {
@@ -2383,6 +2386,7 @@ theend:
 
 // Checks if a pattern is buflocal
 bool aupat_is_buflocal(char_u *pat, int patlen)
+  FUNC_ATTR_PURE
 {
   return patlen >= 8
          && STRNCMP(pat, "<buffer", 7) == 0
@@ -2492,6 +2496,7 @@ char *aucmd_exec_default_desc(AucmdExecutable acc)
 }
 
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2542,6 +2547,7 @@ AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
 }
 
 bool aucmd_exec_is_deleted(AucmdExecutable acc)
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2556,6 +2562,7 @@ bool aucmd_exec_is_deleted(AucmdExecutable acc)
 }
 
 bool au_event_is_empty(event_T event)
+  FUNC_ATTR_PURE
 {
   return first_autopat[event] == NULL;
 }

@@ -33,6 +33,7 @@ void ctx_free_all(void)
 
 /// Returns the size of the context stack.
 size_t ctx_size(void)
+  FUNC_ATTR_PURE
 {
   return kv_size(ctx_stack);
 }
@@ -40,6 +41,7 @@ size_t ctx_size(void)
 /// Returns pointer to Context object with given zero-based index from the top
 /// of context stack or NULL if index is out of bounds.
 Context *ctx_get(size_t index)
+  FUNC_ATTR_PURE
 {
   if (index < kv_size(ctx_stack)) {
     return &kv_Z(ctx_stack, index);

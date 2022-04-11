@@ -277,6 +277,7 @@ char *parse_shape_opt(int what)
 ///
 /// @param exclusive If 'selection' option is "exclusive".
 bool cursor_is_block_during_visual(bool exclusive)
+  FUNC_ATTR_PURE
 {
   int mode_idx = exclusive ? SHAPE_IDX_VE : SHAPE_IDX_V;
   return (SHAPE_BLOCK == shape_table[mode_idx].shape
@@ -300,6 +301,7 @@ int cursor_mode_str2int(const char *mode)
 
 /// Check if a syntax id is used as a cursor style.
 bool cursor_mode_uses_syn_id(int syn_id)
+  FUNC_ATTR_PURE
 {
   if (*p_guicursor == NUL) {
     return false;
@@ -316,6 +318,7 @@ bool cursor_mode_uses_syn_id(int syn_id)
 
 /// Return the index into shape_table[] for the current mode.
 int cursor_get_mode_idx(void)
+  FUNC_ATTR_PURE
 {
   if (State == SHOWMATCH) {
     return SHAPE_IDX_SM;
