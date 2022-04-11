@@ -5090,6 +5090,9 @@ ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
+							*hl-CurSearch*
+CurSearch	used for highlighting a search pattern under the cursor
+		(see 'hlsearch')
 							*hl-Cursor*
 Cursor		character under the cursor
 lCursor		the character under the cursor when |language-mapping|

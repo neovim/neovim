@@ -4,6 +4,7 @@
 // match.c: functions for highlighting matches
 
 #include <stdbool.h>
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"
 #include "nvim/highlight_group.h"
@@ -667,7 +668,16 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
         if (shl->endcol < next_col) {
           shl->endcol = next_col;
         }
-        shl->attr_cur = shl->attr;
+        // Use "CurSearch" highlight for current search match
+        if (shl == search_hl
+            && (HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC])
+            && wp->w_cursor.lnum == lnum
+            && wp->w_cursor.col >= shl->startcol
+            && wp->w_cursor.col < shl->endcol) {
+          shl->attr_cur = win_hl_attr(wp, HLF_LC) ? win_hl_attr(wp, HLF_LC) : HL_ATTR(HLF_LC);
+        } else {
+          shl->attr_cur = shl->attr;
+        }
         // Match with the "Conceal" group results in hiding
         // the match.
         if (cur != NULL

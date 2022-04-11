@@ -3176,8 +3176,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'hlsearch' 'hls'	boolean	(default on)
 			global
 	When there is a previous search pattern, highlight all its matches.
-	The |hl-Search| highlight group determines the highlighting. Note that
-	only the matching text is highlighted, any offsets are not applied.
+	The |hl-Search| highlight group determines the highlighting for all
+	matches not under the cursor while the |hl-CurSearch| highlight group
+	(if defined) determines the highlighting for the match under the
+	cursor. If |hl-CurSearch| is not defined, then |hl-Search| is used for
+	both. Note that only the matching text is highlighted, any offsets
+	are not applied.
 	See also: 'incsearch' and |:match|.
 	When you get bored looking at the highlighted matches, you can turn it
 	off with |:nohlsearch|.  This does not change the option value, as

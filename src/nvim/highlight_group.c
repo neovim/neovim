@@ -1927,7 +1927,7 @@ void highlight_changed(void)
     }
 
     highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
-                                         hlf == HLF_INACTIVE);
+                                         (hlf == HLF_INACTIVE || hlf == HLF_LC));
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {
