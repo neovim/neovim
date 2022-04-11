@@ -1719,9 +1719,9 @@ function lsp.formatexpr(opts)
     local client_results = vim.lsp.buf_request_sync(0, "textDocument/rangeFormatting", params, timeout_ms)
 
     -- Apply the text edits from one and only one of the clients.
-    for _, response in pairs(client_results) do
+    for client_id, response in pairs(client_results) do
       if response.result then
-        vim.lsp.util.apply_text_edits(response.result, 0)
+        vim.lsp.util.apply_text_edits(response.result, 0, vim.lsp.get_client_by_id(client_id).offset_encoding)
         return 0
       end
     end
