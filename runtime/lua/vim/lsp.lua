@@ -713,7 +713,20 @@ end
 --- invoked before the LSP "initialize" phase, where `params` contains the
 --- parameters being sent to the server and `config` is the config that was
 --- passed to |vim.lsp.start_client()|. You can use this to modify parameters before
---- they are sent.
+--- they are sent. `before_init` is run inside of a coroutine, so you may yield to
+--- the main loop and do work asynchronously.
+--- Example:
+--- <pre>
+--- before_init = function(initialize_params, config)
+---   local this_coro = coroutine.running()
+---   vim.fn.jobstart("long_running_cmd", {
+---     on_exit = function(job_id, exit_code, event_type)
+---       coroutine.resume(this_coro)
+---     end
+---   })
+---   coroutine.yield()
+--- end
+--- </pre>
 ---
 ---@param on_init Callback (client, initialize_result) invoked after LSP
 --- "initialize", where `result` is a table of `capabilities` and anything else
@@ -946,53 +959,61 @@ function lsp.start_client(config)
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off';
     }
-    if config.before_init then
-      -- TODO(ashkan) handle errors here.
-      pcall(config.before_init, initialize_params, config)
-    end
-    local _ = log.trace() and log.trace(log_prefix, "initialize_params", initialize_params)
-    rpc.request('initialize', initialize_params, function(init_err, result)
-      assert(not init_err, tostring(init_err))
-      assert(result, "server sent empty result")
-      rpc.notify('initialized', vim.empty_dict())
-      client.initialized = true
-      uninitialized_clients[client_id] = nil
-      client.workspace_folders = workspace_folders
-      -- TODO(mjlbach): Backwards compatibility, to be removed in 0.7
-      client.workspaceFolders = client.workspace_folders
-      client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
-      -- These are the cleaned up capabilities we use for dynamically deciding
-      -- when to send certain events to clients.
-      client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
-      client.supports_method = function(method)
-        local required_capability = lsp._request_name_to_capability[method]
-        -- if we don't know about the method, assume that the client supports it.
-        if not required_capability then
-          return true
-        end
 
-        return client.resolved_capabilities[required_capability]
-      end
-      if config.on_init then
-        local status, err = pcall(config.on_init, client, result)
-        if not status then
-          pcall(handlers.on_error, lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
-        end
-      end
-      local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
-      local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
+    local init_coro = coroutine.create(function()
+      if config.before_init then
+        local status, err = pcall(config.before_init, initialize_params, config)
 
-      -- Only assign after initialized.
-      active_clients[client_id] = client
-      -- If we had been registered before we start, then send didOpen This can
-      -- happen if we attach to buffers before initialize finishes or if
-      -- someone restarts a client.
-      for bufnr, client_ids in pairs(all_buffer_active_clients) do
-        if client_ids[client_id] then
-          client._on_attach(bufnr)
-        end
+        -- If before_init fails, assume we'll fail to initialize the server as well
+        -- so fail identically to if initialized had failed.
+        assert(status, tostring(err))
       end
+      local _ = log.trace() and log.trace(log_prefix, "initialize_params", initialize_params)
+      rpc.request('initialize', initialize_params, function(init_err, result)
+        assert(not init_err, tostring(init_err))
+        assert(result, "server sent empty result")
+        rpc.notify('initialized', vim.empty_dict())
+        client.initialized = true
+        uninitialized_clients[client_id] = nil
+        client.workspace_folders = workspace_folders
+        -- TODO(mjlbach): Backwards compatibility, to be removed in 0.7
+        client.workspaceFolders = client.workspace_folders
+        client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
+        -- These are the cleaned up capabilities we use for dynamically deciding
+        -- when to send certain events to clients.
+        client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+        client.supports_method = function(method)
+          local required_capability = lsp._request_name_to_capability[method]
+          -- if we don't know about the method, assume that the client supports it.
+          if not required_capability then
+            return true
+          end
+
+          return client.resolved_capabilities[required_capability]
+        end
+        if config.on_init then
+          local status, err = pcall(config.on_init, client, result)
+          if not status then
+            pcall(handlers.on_error, lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
+          end
+        end
+        local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
+        local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
+
+        -- Only assign after initialized.
+        active_clients[client_id] = client
+        -- If we had been registered before we start, then send didOpen This can
+        -- happen if we attach to buffers before initialize finishes or if
+        -- someone restarts a client.
+        for bufnr, client_ids in pairs(all_buffer_active_clients) do
+          if client_ids[client_id] then
+            client._on_attach(bufnr)
+          end
+        end
+      end)
     end)
+
+    coroutine.resume(init_coro)
   end
 
   ---@private
