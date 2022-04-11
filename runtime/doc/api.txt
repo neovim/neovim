@@ -627,62 +627,6 @@ nvim__stats()                                                  *nvim__stats()*
                 Return: ~
                     Map of various internal stats.
 
-                                                     *nvim_add_user_command()*
-nvim_add_user_command({name}, {command}, {*opts})
-                Create a new user command |user-commands|
-
-                {name} is the name of the new command. The name must begin
-                with an uppercase letter.
-
-                {command} is the replacement text or Lua function to execute.
-
-                Example: >
-                   :call nvim_add_user_command('SayHello', 'echo "Hello world!"', {})
-                   :SayHello
-                   Hello world!
-<
-
-                Parameters: ~
-                    {name}     Name of the new user command. Must begin with
-                               an uppercase letter.
-                    {command}  Replacement command to execute when this user
-                               command is executed. When called from Lua, the
-                               command can also be a Lua function. The
-                               function is called with a single table argument
-                               that contains the following keys:
-                               • args: (string) The args passed to the
-                                 command, if any |<args>|
-                               • fargs: (table) The args split by unescaped
-                                 whitespace (when more than one argument is
-                                 allowed), if any |<f-args>|
-                               • bang: (boolean) "true" if the command was
-                                 executed with a ! modifier |<bang>|
-                               • line1: (number) The starting line of the
-                                 command range |<line1>|
-                               • line2: (number) The final line of the command
-                                 range |<line2>|
-                               • range: (number) The number of items in the
-                                 command range: 0, 1, or 2 |<range>|
-                               • count: (number) Any count supplied |<count>|
-                               • reg: (string) The optional register, if
-                                 specified |<reg>|
-                               • mods: (string) Command modifiers, if any
-                                 |<mods>|
-                    {opts}     Optional command attributes. See
-                               |command-attributes| for more details. To use
-                               boolean attributes (such as |:command-bang| or
-                               |:command-bar|) set the value to "true". In
-                               addition to the string options listed in
-                               |:command-complete|, the "complete" key also
-                               accepts a Lua function which works like the
-                               "customlist" completion mode
-                               |:command-completion-customlist|. Additional
-                               parameters:
-                               • desc: (string) Used for listing the command
-                                 when a Lua function is used for {command}.
-                               • force: (boolean, default true) Override any
-                                 previous definition.
-
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
 
@@ -739,6 +683,62 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
 
                 See also: ~
                     buf_open_scratch
+
+                                                  *nvim_create_user_command()*
+nvim_create_user_command({name}, {command}, {*opts})
+                Create a new user command |user-commands|
+
+                {name} is the name of the new command. The name must begin
+                with an uppercase letter.
+
+                {command} is the replacement text or Lua function to execute.
+
+                Example: >
+                   :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
+                   :SayHello
+                   Hello world!
+<
+
+                Parameters: ~
+                    {name}     Name of the new user command. Must begin with
+                               an uppercase letter.
+                    {command}  Replacement command to execute when this user
+                               command is executed. When called from Lua, the
+                               command can also be a Lua function. The
+                               function is called with a single table argument
+                               that contains the following keys:
+                               • args: (string) The args passed to the
+                                 command, if any |<args>|
+                               • fargs: (table) The args split by unescaped
+                                 whitespace (when more than one argument is
+                                 allowed), if any |<f-args>|
+                               • bang: (boolean) "true" if the command was
+                                 executed with a ! modifier |<bang>|
+                               • line1: (number) The starting line of the
+                                 command range |<line1>|
+                               • line2: (number) The final line of the command
+                                 range |<line2>|
+                               • range: (number) The number of items in the
+                                 command range: 0, 1, or 2 |<range>|
+                               • count: (number) Any count supplied |<count>|
+                               • reg: (string) The optional register, if
+                                 specified |<reg>|
+                               • mods: (string) Command modifiers, if any
+                                 |<mods>|
+                    {opts}     Optional command attributes. See
+                               |command-attributes| for more details. To use
+                               boolean attributes (such as |:command-bang| or
+                               |:command-bar|) set the value to "true". In
+                               addition to the string options listed in
+                               |:command-complete|, the "complete" key also
+                               accepts a Lua function which works like the
+                               "customlist" completion mode
+                               |:command-completion-customlist|. Additional
+                               parameters:
+                               • desc: (string) Used for listing the command
+                                 when a Lua function is used for {command}.
+                               • force: (boolean, default true) Override any
+                                 previous definition.
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
@@ -1864,16 +1864,6 @@ nvim__buf_redraw_range({buffer}, {first}, {last})
 nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
-                                                 *nvim_buf_add_user_command()*
-nvim_buf_add_user_command({buffer}, {name}, {command}, {*opts})
-                Create a new user command |user-commands| in the given buffer.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer.
-
-                See also: ~
-                    nvim_add_user_command
-
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activates buffer-update events on a channel, or as Lua
                 callbacks.
@@ -1983,6 +1973,16 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                     Return value of function. NB: will deepcopy lua values
                     currently, use upvalues to send lua references in and out.
 
+                                              *nvim_buf_create_user_command()*
+nvim_buf_create_user_command({buffer}, {name}, {command}, {*opts})
+                Create a new user command |user-commands| in the given buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer.
+
+                See also: ~
+                    nvim_create_user_command
+
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
                 Unmaps a buffer-local |mapping| for the given mode.
 
@@ -2015,7 +2015,7 @@ nvim_buf_del_user_command({buffer}, {name})
                 Delete a buffer-local user-defined command.
 
                 Only commands created with |:command-buffer| or
-                |nvim_buf_add_user_command()| can be deleted with this
+                |nvim_buf_create_user_command()| can be deleted with this
                 function.
 
                 Parameters: ~
