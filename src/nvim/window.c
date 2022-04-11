@@ -2851,7 +2851,7 @@ static void do_autocmd_winclosed(win_T *win)
   }
   recursive = true;
   char_u winid[NUMBUFLEN];
-  vim_snprintf((char *)winid, sizeof(winid), "%i", win->handle);
+  vim_snprintf((char *)winid, sizeof(winid), "%d", win->handle);
   apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
   recursive = false;
 }
@@ -5246,25 +5246,31 @@ void shell_new_columns(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/// Check if "wp" has scrolled since last time it was checked
-/// @param wp the window to check
-bool win_did_scroll(win_T *wp)
+/// Trigger WinScrolled autocmd if window has scrolled.
+void may_trigger_winscrolled(win_T *wp)
 {
-  return (curwin->w_last_topline != curwin->w_topline
-          || curwin->w_last_leftcol != curwin->w_leftcol
-          || curwin->w_last_width != curwin->w_width
-          || curwin->w_last_height != curwin->w_height);
-}
+  static bool recursive = false;
 
-/// Trigger WinScrolled autocmd
-void do_autocmd_winscrolled(win_T *wp)
-{
-  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, curbuf);
+  if (recursive || !has_event(EVENT_WINSCROLLED)) {
+    return;
+  }
 
-  wp->w_last_topline = wp->w_topline;
-  wp->w_last_leftcol = wp->w_leftcol;
-  wp->w_last_width = wp->w_width;
-  wp->w_last_height = wp->w_height;
+  if (wp->w_last_topline != wp->w_topline
+      || wp->w_last_leftcol != wp->w_leftcol
+      || wp->w_last_width != wp->w_width
+      || wp->w_last_height != wp->w_height) {
+    char_u winid[NUMBUFLEN];
+    vim_snprintf((char *)winid, sizeof(winid), "%d", wp->handle);
+
+    recursive = true;
+    apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
+    recursive = false;
+
+    wp->w_last_topline = wp->w_topline;
+    wp->w_last_leftcol = wp->w_leftcol;
+    wp->w_last_width = wp->w_width;
+    wp->w_last_height = wp->w_height;
+  }
 }
 
 /*
