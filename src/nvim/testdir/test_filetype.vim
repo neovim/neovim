@@ -166,7 +166,7 @@ let s:filename_checks = {
     \ 'edif': ['file.edf', 'file.edif', 'file.edo'],
     \ 'elinks': ['elinks.conf'],
     \ 'elixir': ['file.ex', 'file.exs', 'mix.lock'],
-    \ 'eelixir': ['file.eex', 'file.heex', 'file.leex', 'file.sface'],
+    \ 'eelixir': ['file.eex', 'file.leex'],
     \ 'elm': ['file.elm'],
     \ 'elmfilt': ['filter-rules'],
     \ 'elvish': ['file.elv'],
@@ -237,6 +237,7 @@ let s:filename_checks = {
     \ 'hb': ['file.hb'],
     \ 'hcl': ['file.hcl'],
     \ 'hercules': ['file.vc', 'file.ev', 'file.sum', 'file.errsum'],
+    \ 'heex': ['file.heex'],
     \ 'hex': ['file.hex', 'file.h32'],
     \ 'hgcommit': ['hg-editor-file.txt'],
     \ 'hjson': ['file.hjson'],
@@ -515,6 +516,7 @@ let s:filename_checks = {
     \ 'stata': ['file.ado', 'file.do', 'file.imata', 'file.mata'],
     \ 'stp': ['file.stp'],
     \ 'sudoers': ['any/etc/sudoers', 'sudoers.tmp', '/etc/sudoers', 'any/etc/sudoers.d/file'],
+    \ 'surface': ['file.sface'],
     \ 'svg': ['file.svg'],
     \ 'svn': ['svn-commitfile.tmp', 'svn-commit-file.tmp', 'svn-commit.tmp'],
     \ 'swift': ['file.swift'],
@@ -892,6 +894,7 @@ func Test_dat_file()
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('datfile.DAT')
+  unlet g:filetype_dat
 
   filetype off
 endfunc
@@ -1477,6 +1480,7 @@ func Test_src_file()
   call assert_equal('krl', &filetype)
   bwipe!
   call delete('srcfile.SRC')
+  unlet g:filetype_src
 
   filetype off
 endfunc
