@@ -1721,7 +1721,7 @@ function lsp.formatexpr(opts)
     -- Apply the text edits from one and only one of the clients.
     for client_id, response in pairs(client_results) do
       if response.result then
-        vim.lsp.util.apply_text_edits(response.result, vim.lsp.get_client_by_id(client_id).offset_encoding)
+        vim.lsp.util.apply_text_edits(response.result, 0, vim.lsp.get_client_by_id(client_id).offset_encoding)
         return 0
       end
     end
