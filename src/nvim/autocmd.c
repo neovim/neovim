@@ -1092,6 +1092,15 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
       curwin->w_last_cursormoved = curwin->w_cursor;
     }
 
+    // Initialize the fields checked by the WinScrolled trigger to
+    // stop it from firing right after the first autocmd is defined.
+    if (event == EVENT_WINSCROLLED && !has_event(EVENT_WINSCROLLED)) {
+      curwin->w_last_topline = curwin->w_topline;
+      curwin->w_last_leftcol = curwin->w_leftcol;
+      curwin->w_last_width = curwin->w_width;
+      curwin->w_last_height = curwin->w_height;
+    }
+
     ap->cmds = NULL;
     *prev_ap = ap;
     last_autopat[(int)event] = ap;
@@ -1718,7 +1727,7 @@ bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io, bool f
         || event == EVENT_REMOTEREPLY || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX || event == EVENT_SIGNAL
         || event == EVENT_TABCLOSED || event == EVENT_USER
-        || event == EVENT_WINCLOSED) {
+        || event == EVENT_WINCLOSED || event == EVENT_WINSCROLLED) {
       fname = vim_strsave(fname);
     } else {
       fname = (char_u *)FullName_save((char *)fname, false);

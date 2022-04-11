@@ -1269,12 +1269,11 @@ struct window_S {
   colnr_T w_skipcol;                // starting column when a single line
                                     // doesn't fit in the window
 
-  // "w_last_topline" and "w_last_leftcol" are used to determine if
-  // a Scroll autocommand should be emitted.
-  linenr_T w_last_topline;          ///< last known value for topline
-  colnr_T w_last_leftcol;          ///< last known value for leftcol
-  int w_last_width;                 ///< last known value for width
-  int w_last_height;                ///< last known value for height
+  // four fields that are only used when there is a WinScrolled autocommand
+  linenr_T w_last_topline;          ///< last known value for w_topline
+  colnr_T w_last_leftcol;           ///< last known value for w_leftcol
+  int w_last_width;                 ///< last known value for w_width
+  int w_last_height;                ///< last known value for w_height
 
   //
   // Layout of the window in the screen.
