@@ -129,6 +129,7 @@ int should_abort(int retcode)
 /// to find finally clauses to be executed, and that some errors in skipped
 /// commands are still reported.
 int aborted_in_try(void)
+  FUNC_ATTR_PURE
 {
   // This function is only called after an error.  In this case, "force_abort"
   // determines whether searching for finally clauses is necessary.
