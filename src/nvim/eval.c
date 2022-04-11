@@ -7739,7 +7739,6 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   static pos_T pos;
-  pos_T *pp;
 
   // Argument can be [lnum, col, coladd].
   if (tv->v_type == VAR_LIST) {
@@ -7799,33 +7798,31 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
   if (name == NULL) {
     return NULL;
   }
-  if (name[0] == '.') {  // Cursor.
+
+  pos.lnum = 0;
+  if (name[0] == '.') {
+    // cursor
     pos = curwin->w_cursor;
-    if (charcol) {
-      pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col);
-    }
-    return &pos;
-  }
-  if (name[0] == 'v' && name[1] == NUL) {  // Visual start.
+  } else if (name[0] == 'v' && name[1] == NUL) {
+    // Visual start
     if (VIsual_active) {
       pos = VIsual;
     } else {
       pos = curwin->w_cursor;
     }
+  } else if (name[0] == '\'') {
+    // mark
+    const pos_T *const pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
+    if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0) {
+      return NULL;
+    }
+    pos = *pp;
+  }
+  if (pos.lnum != 0) {
     if (charcol) {
       pos.col = buf_byteidx_to_charidx(curbuf, pos.lnum, pos.col);
     }
     return &pos;
-  }
-  if (name[0] == '\'') {  // Mark.
-    pp = getmark_buf_fnum(curbuf, (uint8_t)name[1], false, ret_fnum);
-    if (pp == NULL || pp == (pos_T *)-1 || pp->lnum <= 0) {
-      return NULL;
-    }
-    if (charcol) {
-      pp->col = buf_byteidx_to_charidx(curbuf, pp->lnum, pp->col);
-    }
-    return pp;
   }
 
   pos.coladd = 0;
