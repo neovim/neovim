@@ -2859,8 +2859,7 @@ nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
                     {pos}     (row, col) tuple representing the new position
 
 nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
-                Sets the window height. This will only succeed if the screen
-                is split horizontally.
+                Sets the window height.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
