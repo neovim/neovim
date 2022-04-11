@@ -2408,7 +2408,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///
 /// Example:
 /// <pre>
-///    :call nvim_add_user_command('SayHello', 'echo "Hello world!"', {})
+///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
 ///    :SayHello
 ///    Hello world!
 /// </pre>
@@ -2436,10 +2436,10 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                                  {command}.
 ///                 - force: (boolean, default true) Override any previous definition.
 /// @param[out] err Error details, if any.
-void nvim_add_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
+void nvim_create_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  add_user_command(name, command, opts, 0, err);
+  create_user_command(name, command, opts, 0, err);
 }
 
 /// Delete a user-defined command.
