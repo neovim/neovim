@@ -5246,8 +5246,8 @@ void shell_new_columns(void)
   win_reconfig_floats();  // The size of floats might change
 }
 
-/// Trigger WinScrolled autocmd if window has scrolled.
-void may_trigger_winscrolled(win_T *wp)
+/// Trigger WinScrolled for "curwin" if needed.
+void may_trigger_winscrolled(void)
 {
   static bool recursive = false;
 
@@ -5255,6 +5255,7 @@ void may_trigger_winscrolled(win_T *wp)
     return;
   }
 
+  win_T *wp = curwin;
   if (wp->w_last_topline != wp->w_topline
       || wp->w_last_leftcol != wp->w_leftcol
       || wp->w_last_width != wp->w_width
@@ -5266,10 +5267,13 @@ void may_trigger_winscrolled(win_T *wp)
     apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
     recursive = false;
 
-    wp->w_last_topline = wp->w_topline;
-    wp->w_last_leftcol = wp->w_leftcol;
-    wp->w_last_width = wp->w_width;
-    wp->w_last_height = wp->w_height;
+    // an autocmd may close the window, "wp" may be invalid now
+    if (win_valid_any_tab(wp)) {
+      wp->w_last_topline = wp->w_topline;
+      wp->w_last_leftcol = wp->w_leftcol;
+      wp->w_last_width = wp->w_width;
+      wp->w_last_height = wp->w_height;
+    }
   }
 }
 

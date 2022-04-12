@@ -1225,7 +1225,7 @@ static void normal_check_window_scrolled(NormalState *s)
 {
   if (!finish_op) {
     // Trigger Scroll if the viewport changed.
-    may_trigger_winscrolled(curwin);
+    may_trigger_winscrolled();
   }
 }
 
