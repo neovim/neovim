@@ -1482,17 +1482,16 @@ int do_digraph(int c)
 char_u *get_digraph_for_char(int val_arg)
 {
   const int val = val_arg;
-  digr_T *dp;
+  const digr_T *dp;
   static char_u r[3];
 
   for (int use_defaults = 0; use_defaults <= 1; use_defaults++) {
     if (use_defaults == 0) {
-      dp = (digr_T *)user_digraphs.ga_data;
+      dp = (const digr_T *)user_digraphs.ga_data;
     } else {
       dp = digraphdefault;
     }
-    for (int i = 0;
-         use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
+    for (int i = 0; use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
       if (dp->result == val) {
         r[0] = dp->char1;
         r[1] = dp->char2;
@@ -1560,7 +1559,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
   }
 
   // Search user digraphs first.
-  digr_T *dp = (digr_T *)user_digraphs.ga_data;
+  const digr_T *dp = (const digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len; i++) {
     if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
       retval = dp->result;
@@ -1699,7 +1698,7 @@ void listdigraphs(bool use_headers)
 
   msg_putchar('\n');
 
-  digr_T *dp = digraphdefault;
+  const digr_T *dp = digraphdefault;
 
   for (int i = 0; dp->char1 != NUL && !got_int; i++) {
     digr_T tmp;
@@ -1709,15 +1708,14 @@ void listdigraphs(bool use_headers)
     tmp.char2 = dp->char2;
     tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
 
-    if ((tmp.result != 0)
-        && (tmp.result != tmp.char2)) {
+    if (tmp.result != 0 && tmp.result != tmp.char2) {
       printdigraph(&tmp, use_headers ? &previous : NULL);
     }
     dp++;
     fast_breakcheck();
   }
 
-  dp = (digr_T *)user_digraphs.ga_data;
+  dp = (const digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
     if (previous >= 0 && use_headers) {
       digraph_header(_("Custom"));
@@ -1729,7 +1727,7 @@ void listdigraphs(bool use_headers)
   }
 }
 
-static void digraph_getlist_appendpair(digr_T *dp, list_T *l)
+static void digraph_getlist_appendpair(const digr_T *dp, list_T *l)
 {
   list_T *l2 = tv_list_alloc(2);
   tv_list_append_list(l, l2);
@@ -1750,7 +1748,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
 {
   tv_list_alloc_ret(rettv, (int)sizeof(digraphdefault) + user_digraphs.ga_len);
 
-  digr_T *dp;
+  const digr_T *dp;
 
   if (list_all) {
     dp = digraphdefault;
@@ -1766,7 +1764,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
     }
   }
 
-  dp = (digr_T *)user_digraphs.ga_data;
+  dp = (const digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
     digraph_getlist_appendpair(dp, rettv->vval.v_list);
     dp++;
@@ -1865,7 +1863,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
 
 /// Get the two digraph characters from a typval.
 /// @return OK or FAIL.
-static int get_digraph_chars(typval_T *arg, int *char1, int *char2)
+static int get_digraph_chars(const typval_T *arg, int *char1, int *char2)
 {
   char buf_chars[NUMBUFLEN];
   const char *chars = tv_get_string_buf_chk(arg, buf_chars);
@@ -1889,7 +1887,7 @@ static int get_digraph_chars(typval_T *arg, int *char1, int *char2)
   return FAIL;
 }
 
-static bool digraph_set_common(typval_T *argchars, typval_T *argdigraph)
+static bool digraph_set_common(const typval_T *argchars, const typval_T *argdigraph)
 {
   int char1, char2;
   if (get_digraph_chars(argchars, &char1, &char2) == FAIL) {
