@@ -960,6 +960,10 @@ Window size and position:			*window-size-functions*
 	winrestview()		restore saved view of current window
 
 Mappings:				    *mapping-functions*
+	digraph_get()		get |digraph|
+	digraph_getlist()	get all |digraph|s
+	digraph_set()		register |digraph|
+	digraph_setlist()	register multiple |digraph|s
 	hasmapto()		check if a mapping exists
 	mapcheck()		check if a matching mapping exists
 	maparg()		get rhs of a mapping

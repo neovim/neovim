@@ -9260,7 +9260,7 @@ static int ins_digraph(void)
     }
     if (cc != ESC) {
       AppendToRedobuff(CTRL_V_STR);
-      c = getdigraph(c, cc, true);
+      c = digraph_get(c, cc, true);
       clear_showcmd();
       return c;
     }

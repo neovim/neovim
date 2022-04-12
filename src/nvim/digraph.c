@@ -12,6 +12,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/digraph.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -34,6 +35,12 @@ typedef struct digraph {
   result_T result;
 } digr_T;
 
+static char e_digraph_must_be_just_two_characters_str[]
+    = N_("E1214: Digraph must be just two characters: %s");
+static char e_digraph_argument_must_be_one_character_str[]
+    = N_("E1215: Digraph must be one character: %s");
+static char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
+    = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "digraph.c.generated.h"
@@ -1458,7 +1465,7 @@ int do_digraph(int c)
     backspaced = -1;
   } else if (p_dg) {
     if (backspaced >= 0) {
-      c = getdigraph(backspaced, c, false);
+      c = digraph_get(backspaced, c, false);
     }
     backspaced = -1;
 
@@ -1475,17 +1482,16 @@ int do_digraph(int c)
 char_u *get_digraph_for_char(int val_arg)
 {
   const int val = val_arg;
-  digr_T *dp;
+  const digr_T *dp;
   static char_u r[3];
 
   for (int use_defaults = 0; use_defaults <= 1; use_defaults++) {
     if (use_defaults == 0) {
-      dp = (digr_T *)user_digraphs.ga_data;
+      dp = (const digr_T *)user_digraphs.ga_data;
     } else {
       dp = digraphdefault;
     }
-    for (int i = 0;
-         use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
+    for (int i = 0; use_defaults ? dp->char1 != NUL : i < user_digraphs.ga_len; i++) {
       if (dp->result == val) {
         r[0] = dp->char1;
         r[1] = dp->char2;
@@ -1530,7 +1536,7 @@ int get_digraph(bool cmdline)
 
     if (cc != ESC) {
       // ESC cancels CTRL-K
-      return getdigraph(c, cc, true);
+      return digraph_get(c, cc, true);
     }
   }
   return NUL;
@@ -1553,7 +1559,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
   }
 
   // Search user digraphs first.
-  digr_T *dp = (digr_T *)user_digraphs.ga_data;
+  const digr_T *dp = (const digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len; i++) {
     if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
       retval = dp->result;
@@ -1594,7 +1600,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
 /// @param meta_char
 ///
 /// @return The digraph.
-int getdigraph(int char1, int char2, bool meta_char)
+int digraph_get(int char1, int char2, bool meta_char)
 {
   int retval;
 
@@ -1605,6 +1611,44 @@ int getdigraph(int char1, int char2, bool meta_char)
     return char2;
   }
   return retval;
+}
+
+/// Add a digraph to the digraph table.
+static void registerdigraph(int char1, int char2, int n)
+{
+  // If the digraph already exists, replace "result".
+  digr_T *dp = (digr_T *)user_digraphs.ga_data;
+  for (int i = 0; i < user_digraphs.ga_len; i++) {
+    if ((int)dp->char1 == char1 && (int)dp->char2 == char2) {
+      dp->result = n;
+      return;
+    }
+    dp++;
+  }
+
+  // Add a new digraph to the table.
+  dp = GA_APPEND_VIA_PTR(digr_T, &user_digraphs);
+  dp->char1 = (char_u)char1;
+  dp->char2 = (char_u)char2;
+  dp->result = n;
+}
+
+/// Check the characters are valid for a digraph.
+/// If they are valid, returns true; otherwise, give an error message and
+/// returns false.
+bool check_digraph_chars_valid(int char1, int char2)
+{
+  if (char2 == 0) {
+    char_u msg[MB_MAXBYTES + 1];
+    msg[utf_char2bytes(char1, msg)] = NUL;
+    semsg(_(e_digraph_must_be_just_two_characters_str), msg);
+    return false;
+  }
+  if (char1 == ESC || char2 == ESC) {
+    emsg(_("E104: Escape not allowed in digraph"));
+    return false;
+  }
+  return true;
 }
 
 /// Add the digraphs in the argument to the digraph table.
@@ -1622,15 +1666,10 @@ void putdigraph(char_u *str)
     char_u char1 = *str++;
     char_u char2 = *str++;
 
-    if (char2 == 0) {
-      emsg(_(e_invarg));
+    if (!check_digraph_chars_valid(char1, char2)) {
       return;
     }
 
-    if ((char1 == ESC) || (char2 == ESC)) {
-      emsg(_("E104: Escape not allowed in digraph"));
-      return;
-    }
     str = skipwhite(str);
 
     if (!ascii_isdigit(*str)) {
@@ -1639,25 +1678,7 @@ void putdigraph(char_u *str)
     }
     int n = getdigits_int(&str, true, 0);
 
-    // If the digraph already exists, replace the result.
-    digr_T *dp = (digr_T *)user_digraphs.ga_data;
-
-    int i;
-    for (i = 0; i < user_digraphs.ga_len; i++) {
-      if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
-        dp->result = n;
-        break;
-      }
-      dp++;
-    }
-
-    // Add a new digraph to the table.
-    if (i == user_digraphs.ga_len) {
-      dp = GA_APPEND_VIA_PTR(digr_T, &user_digraphs);
-      dp->char1 = char1;
-      dp->char2 = char2;
-      dp->result = n;
-    }
+    registerdigraph(char1, char2, n);
   }
 }
 
@@ -1677,7 +1698,7 @@ void listdigraphs(bool use_headers)
 
   msg_putchar('\n');
 
-  digr_T *dp = digraphdefault;
+  const digr_T *dp = digraphdefault;
 
   for (int i = 0; dp->char1 != NUL && !got_int; i++) {
     digr_T tmp;
@@ -1687,15 +1708,14 @@ void listdigraphs(bool use_headers)
     tmp.char2 = dp->char2;
     tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
 
-    if ((tmp.result != 0)
-        && (tmp.result != tmp.char2)) {
+    if (tmp.result != 0 && tmp.result != tmp.char2) {
       printdigraph(&tmp, use_headers ? &previous : NULL);
     }
     dp++;
     fast_breakcheck();
   }
 
-  dp = (digr_T *)user_digraphs.ga_data;
+  dp = (const digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
     if (previous >= 0 && use_headers) {
       digraph_header(_("Custom"));
@@ -1703,6 +1723,50 @@ void listdigraphs(bool use_headers)
     previous = -1;
     printdigraph(dp, NULL);
     fast_breakcheck();
+    dp++;
+  }
+}
+
+static void digraph_getlist_appendpair(const digr_T *dp, list_T *l)
+{
+  list_T *l2 = tv_list_alloc(2);
+  tv_list_append_list(l, l2);
+
+  char_u buf[30];
+  buf[0] = dp->char1;
+  buf[1] = dp->char2;
+  buf[2] = NUL;
+  tv_list_append_string(l2, (char *)buf, -1);
+
+  char_u *p = buf;
+  p += utf_char2bytes(dp->result, p);
+  *p = NUL;
+  tv_list_append_string(l2, (char *)buf, -1);
+}
+
+void digraph_getlist_common(bool list_all, typval_T *rettv)
+{
+  tv_list_alloc_ret(rettv, (int)sizeof(digraphdefault) + user_digraphs.ga_len);
+
+  const digr_T *dp;
+
+  if (list_all) {
+    dp = digraphdefault;
+    for (int i = 0; dp->char1 != NUL && !got_int; i++) {
+      digr_T tmp;
+      tmp.char1 = dp->char1;
+      tmp.char2 = dp->char2;
+      tmp.result = getexactdigraph(tmp.char1, tmp.char2, false);
+      if (tmp.result != 0 && tmp.result != tmp.char2) {
+        digraph_getlist_appendpair(&tmp, rettv->vval.v_list);
+      }
+      dp++;
+    }
+  }
+
+  dp = (const digr_T *)user_digraphs.ga_data;
+  for (int i = 0; i < user_digraphs.ga_len && !got_int; i++) {
+    digraph_getlist_appendpair(dp, rettv->vval.v_list);
     dp++;
   }
 }
@@ -1795,6 +1859,147 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
     msg_outtrans(buf);
   }
+}
+
+/// Get the two digraph characters from a typval.
+/// @return OK or FAIL.
+static int get_digraph_chars(const typval_T *arg, int *char1, int *char2)
+{
+  char buf_chars[NUMBUFLEN];
+  const char *chars = tv_get_string_buf_chk(arg, buf_chars);
+  const char_u *p = (const char_u *)chars;
+
+  if (p != NULL) {
+    if (*p != NUL) {
+      *char1 = mb_cptr2char_adv(&p);
+      if (*p != NUL) {
+        *char2 = mb_cptr2char_adv(&p);
+        if (*p == NUL) {
+          if (check_digraph_chars_valid(*char1, *char2)) {
+            return OK;
+          }
+          return FAIL;
+        }
+      }
+    }
+  }
+  semsg(_(e_digraph_must_be_just_two_characters_str), chars);
+  return FAIL;
+}
+
+static bool digraph_set_common(const typval_T *argchars, const typval_T *argdigraph)
+{
+  int char1, char2;
+  if (get_digraph_chars(argchars, &char1, &char2) == FAIL) {
+    return false;
+  }
+
+  char buf_digraph[NUMBUFLEN];
+  const char *digraph = tv_get_string_buf_chk(argdigraph, buf_digraph);
+  if (digraph == NULL) {
+    return false;
+  }
+  const char_u *p = (const char_u *)digraph;
+  int n = mb_cptr2char_adv(&p);
+  if (*p != NUL) {
+    semsg(_(e_digraph_argument_must_be_one_character_str), digraph);
+    return false;
+  }
+
+  registerdigraph(char1, char2, n);
+  return true;
+}
+
+/// "digraph_get()" function
+void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;  // Return empty string for failure
+  const char *digraphs = tv_get_string_chk(&argvars[0]);
+
+  if (digraphs == NULL) {
+    return;
+  }
+  if (STRLEN(digraphs) != 2) {
+    semsg(_(e_digraph_must_be_just_two_characters_str), digraphs);
+    return;
+  }
+  int code = digraph_get(digraphs[0], digraphs[1], false);
+
+  char_u buf[NUMBUFLEN];
+  buf[utf_char2bytes(code, buf)] = NUL;
+  rettv->vval.v_string = vim_strsave(buf);
+}
+
+/// "digraph_getlist()" function
+void f_digraph_getlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  bool flag_list_all;
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    flag_list_all = false;
+  } else {
+    bool error = false;
+    varnumber_T flag = tv_get_number_chk(&argvars[0], &error);
+    if (error) {
+      return;
+    }
+    flag_list_all = flag != 0;
+  }
+
+  digraph_getlist_common(flag_list_all, rettv);
+}
+
+/// "digraph_set()" function
+void f_digraph_set(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_BOOL;
+  rettv->vval.v_bool = kBoolVarFalse;
+
+  if (!digraph_set_common(&argvars[0], &argvars[1])) {
+    return;
+  }
+
+  rettv->vval.v_bool = kBoolVarTrue;
+}
+
+/// "digraph_setlist()" function
+void f_digraph_setlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_BOOL;
+  rettv->vval.v_bool = kBoolVarFalse;
+
+  if (argvars[0].v_type != VAR_LIST) {
+    emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
+    return;
+  }
+
+  list_T *pl = argvars[0].vval.v_list;
+  if (pl == NULL) {
+    // Empty list always results in success.
+    rettv->vval.v_bool = kBoolVarTrue;
+    return;
+  }
+
+  TV_LIST_ITER_CONST(pl, pli, {
+    if (TV_LIST_ITEM_TV(pli)->v_type != VAR_LIST) {
+      emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
+      return;
+    }
+
+    list_T *l = TV_LIST_ITEM_TV(pli)->vval.v_list;
+    if (l == NULL || tv_list_len(l) != 2) {
+      emsg(_(e_digraph_setlist_argument_must_be_list_of_lists_with_two_items));
+      return;
+    }
+
+    if (!digraph_set_common(TV_LIST_ITEM_TV(tv_list_first(l)),
+                            TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))))) {
+      return;
+    }
+  });
+
+  rettv->vval.v_bool = kBoolVarTrue;
 }
 
 /// structure used for b_kmap_ga.ga_data
