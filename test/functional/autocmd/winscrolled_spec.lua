@@ -6,12 +6,14 @@ local eval = helpers.eval
 local command = helpers.command
 local feed = helpers.feed
 local meths = helpers.meths
+local assert_alive = helpers.assert_alive
+
+before_each(clear)
 
 describe('WinScrolled', function()
   local win_id
 
   before_each(function()
-    clear()
     win_id = meths.get_current_win().id
     command(string.format('autocmd WinScrolled %d let g:matched = v:true', win_id))
     command('let g:scrolled = 0')
@@ -71,4 +73,13 @@ describe('WinScrolled', function()
     feed('A<CR><Esc>')
     eq(1, eval('g:scrolled'))
   end)
+end)
+
+it('closing window in WinScrolled does not cause use-after-free #13265', function()
+  local lines = {'aaa', 'bbb'}
+  meths.buf_set_lines(0, 0, -1, true, lines)
+  command('vsplit')
+  command('autocmd WinScrolled * close')
+  feed('<C-E>')
+  assert_alive()
 end)
