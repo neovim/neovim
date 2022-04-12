@@ -29,6 +29,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
@@ -2450,4 +2451,34 @@ void nvim_del_user_command(String name, Error *err)
   FUNC_API_SINCE(9)
 {
   nvim_buf_del_user_command(-1, name, err);
+}
+
+/// Get the command line text.
+///
+/// @param[out] err Error details, if any.
+/// @return Command line text.
+String nvim_get_cmdline(Error *err)
+    FUNC_API_SINCE(9)
+{
+    String res = STRING_INIT;
+
+    char *cmdline;
+    if (!(cmdline = (char *)get_cmdline_str())) {
+        api_set_error(err, kErrorTypeException, "Can't get command line when not active or entering a password");
+        return res;
+    }
+
+    return cstr_to_string(cmdline);
+}
+
+/// Set the command line text to the given string.
+///
+/// @param  cmdline New command line text.
+/// @param[out] err Error details, if any.
+void nvim_set_cmdline(String cmdline, Error *err)
+    FUNC_API_SINCE(9)
+{
+    if (set_cmdline_str(cmdline.data, cmdline.size) != 0) {
+        api_set_error(err, kErrorTypeException, "Can't set command line when not active or entering a password");
+    }
 }

@@ -936,6 +936,12 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                       other end of the RPC channel), if provided by it via
                       |nvim_set_client_info()|.
 
+nvim_get_cmdline()                                        *nvim_get_cmdline()*
+                Get the command line text.
+
+                Return: ~
+                    Command line text.
+
 nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
                 Returns the 24-bit RGB value of a |nvim_get_color_map()| color
                 name or "#rrggbb" hexadecimal string.
@@ -1502,6 +1508,12 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                                   • "logo": URI or path to image, preferably
                                     small logo or icon. .png or .svg format is
                                     preferred.
+
+nvim_set_cmdline({cmdline})                               *nvim_set_cmdline()*
+                Set the command line text to the given string.
+
+                Parameters: ~
+                    {cmdline}  New command line text.
 
 nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
                 Sets the current buffer.
