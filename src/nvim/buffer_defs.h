@@ -178,7 +178,7 @@ typedef struct {
 #define w_p_fdi w_onebuf_opt.wo_fdi    // 'foldignore'
   long wo_fdl;
 #define w_p_fdl w_onebuf_opt.wo_fdl    // 'foldlevel'
-  int wo_fdl_save;
+  long wo_fdl_save;
   // 'foldlevel' state saved for diff mode
 #define w_p_fdl_save w_onebuf_opt.wo_fdl_save
   char_u *wo_fdm;
