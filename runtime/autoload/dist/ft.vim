@@ -823,7 +823,9 @@ func dist#ft#FTperl()
 endfunc
 
 func dist#ft#FTsys()
-  if IsRapid()
+  if exists("g:filetype_sys")
+    exe "setf " .. g:filetype_sys
+  elseif IsRapid()
     setf rapid
   else
     setf bat

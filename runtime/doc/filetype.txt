@@ -153,6 +153,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.pp		g:filetype_pp	|ft-pascal-syntax|
 	*.prg		g:filetype_prg
 	*.src		g:filetype_src
+	*.sys		g:filetype_sys
 	*.sh		g:bash_is_sh	|ft-sh-syntax|
 	*.tex		g:tex_flavor	|ft-tex-plugin|
 	*.w		g:filetype_w	|ft-cweb-syntax|
