@@ -1083,7 +1083,7 @@ void ex_endwhile(exarg_T *eap)
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = err;
   } else {
-    fl =  cstack->cs_flags[cstack->cs_idx];
+    fl = cstack->cs_flags[cstack->cs_idx];
     if (!(fl & csf)) {
       // If we are in a ":while" or ":for" but used the wrong endloop
       // command, do not rewind to the next enclosing ":for"/":while".
@@ -1575,6 +1575,7 @@ void ex_endtry(exarg_T *eap)
 
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
+
       // Find the matching ":try" and report what's missing.
       idx = cstack->cs_idx;
       do {
@@ -1594,6 +1595,9 @@ void ex_endtry(exarg_T *eap)
       if (current_exception) {
         discard_current_exception();
       }
+
+      // report eap->errmsg, also when there already was an error
+      did_emsg = false;
     } else {
       idx = cstack->cs_idx;
 
@@ -1664,8 +1668,10 @@ void ex_endtry(exarg_T *eap)
      */
     (void)cleanup_conditionals(cstack, CSF_TRY | CSF_SILENT, TRUE);
 
-    --cstack->cs_idx;
-    --cstack->cs_trylevel;
+    if (cstack->cs_idx >= 0 && (cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
+      cstack->cs_idx--;
+    }
+    cstack->cs_trylevel--;
 
     if (!skip) {
       report_resume_pending(pending,
@@ -1913,7 +1919,7 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 
         default:
           if (cstack->cs_flags[idx] & CSF_FINALLY) {
-            if (cstack->cs_pending[idx] & CSTP_THROW) {
+            if ((cstack->cs_pending[idx] & CSTP_THROW) && cstack->cs_exception[idx] != NULL) {
               // Cancel the pending exception.  This is in the
               // finally clause, so that the stack of the
               // caught exceptions is not involved.
@@ -1934,8 +1940,9 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
        */
       if (!(cstack->cs_flags[idx] & CSF_FINALLY)) {
         if ((cstack->cs_flags[idx] & CSF_ACTIVE)
-            && (cstack->cs_flags[idx] & CSF_CAUGHT)) {
+            && (cstack->cs_flags[idx] & CSF_CAUGHT) && !(cstack->cs_flags[idx] & CSF_FINISHED)) {
           finish_exception((except_T *)cstack->cs_exception[idx]);
+          cstack->cs_flags[idx] |= CSF_FINISHED;
         }
         // Stop at this try conditional - except the try block never
         // got active (because of an inactive surrounding conditional
