@@ -202,12 +202,12 @@ au BufNewFile,BufRead *.iba,*.ibi		setf ibasic
 au BufNewFile,BufRead *.fb			setf freebasic
 
 " Batch file for MSDOS. See dist#ft#FTsys for *.sys
-au BufNewFile,BufRead *.bat 			setf dosbatch
+au BufNewFile,BufRead *.bat			setf dosbatch
 " *.cmd is close to a Batch file, but on OS/2 Rexx files also use *.cmd.
 au BufNewFile,BufRead *.cmd
 	\ if getline(1) =~ '^/\*' | setf rexx | else | setf dosbatch | endif
 " ABB RAPID or Batch file for MSDOS.
-au BufNewFile,BufRead *.sys\c 			call dist#ft#FTsys()
+au BufNewFile,BufRead *.sys\c			call dist#ft#FTsys()
 
 " Batch file for 4DOS
 au BufNewFile,BufRead *.btm			call dist#ft#FTbtm()
@@ -1140,7 +1140,7 @@ au BufNewFile,BufRead *.mms			call dist#ft#FTmms()
 au BufNewFile,BufRead *.mmp			setf mmp
 
 " ABB Rapid, Modula-2, Modsim III or LambdaProlog
-au BufNewFile,BufRead *.mod\c 			call dist#ft#FTmod()
+au BufNewFile,BufRead *.mod\c			call dist#ft#FTmod()
 
 " Modula-2  (.md removed in favor of Markdown, see dist#ft#FTmod for *.MOD)
 au BufNewFile,BufRead *.m2,*.DEF,*.mi		setf modula2
@@ -1630,16 +1630,22 @@ au BufNewFile,BufRead *.sass			setf sass
 au BufNewFile,BufRead *.sa			setf sather
 
 " Scala
-au BufNewFile,BufRead *.scala,*.sc		setf scala
+au BufNewFile,BufRead *.scala			setf scala
 
 " SBT - Scala Build Tool
 au BufNewFile,BufRead *.sbt			setf sbt
 
+" SuperCollider
+au BufNewFile,BufRead *.sc			call dist#ft#FTsc()
+
+au BufNewFile,BufRead *.quark			setf supercollider
+
+" scdoc
+au BufNewFile,BufRead *.scd			call dist#ft#FTscd()
+
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
-" scdoc
-au BufNewFile,BufRead *.scd			setf scdoc
 
 " SCSS
 au BufNewFile,BufRead *.scss			setf scss
