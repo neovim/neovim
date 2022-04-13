@@ -114,8 +114,8 @@ describe('nvim_create_user_command', function()
     ]]
 
     eq({
-      args = [[hello my\ friend how\ are\ you?]],
-      fargs = {[[hello]], [[my\ friend]], [[how\ are\ you?]]},
+      args = [[this is    a\ test]],
+      fargs = {"this", "is", "a test"},
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -124,12 +124,42 @@ describe('nvim_create_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command([[CommandWithLuaCallback hello my\ friend how\ are\ you?]])
+      vim.api.nvim_command([[CommandWithLuaCallback this is    a\ test]])
       return result
     ]=])
 
     eq({
-      args = 'h\tey',
+      args = [[this   includes\ a backslash: \\]],
+      fargs = {"this", "includes a", "backslash:", "\\"},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [=[
+      vim.api.nvim_command([[CommandWithLuaCallback this   includes\ a backslash: \\]])
+      return result
+    ]=])
+
+    eq({
+      args = "a\\b",
+      fargs = {"a\\b"},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [=[
+      vim.api.nvim_command('CommandWithLuaCallback a\\b')
+      return result
+    ]=])
+
+    eq({
+      args = 'h\tey ',
       fargs = {[[h]], [[ey]]},
       bang = true,
       line1 = 10,
@@ -139,7 +169,7 @@ describe('nvim_create_user_command', function()
       count = 10,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey')
+      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey ')
       return result
     ]=])
 
@@ -160,7 +190,7 @@ describe('nvim_create_user_command', function()
 
     eq({
       args = "",
-      fargs = {""},  -- fargs works without args
+      fargs = {},  -- fargs works without args
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -186,8 +216,8 @@ describe('nvim_create_user_command', function()
     ]]
 
     eq({
-      args = "hello I'm one argmuent",
-      fargs = {"hello I'm one argmuent"},  -- Doesn't split args
+      args = "hello I'm one argument",
+      fargs = {"hello I'm one argument"},  -- Doesn't split args
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -196,7 +226,7 @@ describe('nvim_create_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [[
-      vim.api.nvim_command('CommandWithOneArg hello I\'m one argmuent')
+      vim.api.nvim_command('CommandWithOneArg hello I\'m one argument')
       return result
     ]])
 
