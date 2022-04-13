@@ -1474,7 +1474,7 @@ endfunc
 func Test_sc_file()
   filetype on
 
-  " SC file mehtods are defined 'Class : Method'
+  " SC file methods are defined 'Class : Method'
   call writefile(['SCNvimDocRenderer : SCDocHTMLRenderer {'], 'srcfile.sc')
   split srcfile.sc
   call assert_equal('supercollider', &filetype)
@@ -1559,6 +1559,13 @@ func Test_sys_file()
   call writefile(['looks like dos batch'], 'sysfile.sys')
   split sysfile.sys
   call assert_equal('bat', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_sys
+  let g:filetype_sys = 'sys'
+  split sysfile.sys
+  call assert_equal('sys', &filetype)
+  unlet g:filetype_sys
   bwipe!
 
   " RAPID header start with a line containing only "%%%", 
