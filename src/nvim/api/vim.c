@@ -2458,17 +2458,18 @@ void nvim_del_user_command(String name, Error *err)
 /// @param[out] err Error details, if any.
 /// @return Command line text.
 String nvim_get_cmdline(Error *err)
-    FUNC_API_SINCE(9)
+  FUNC_API_SINCE(9)
 {
-    String res = STRING_INIT;
+  String res = STRING_INIT;
 
-    char *cmdline;
-    if (!(cmdline = (char *)get_cmdline_str())) {
-        api_set_error(err, kErrorTypeException, "Can't get command line when not active or entering a password");
-        return res;
-    }
+  char *cmdline;
+  if (!(cmdline = (char *)get_cmdline_str())) {
+    api_set_error(err, kErrorTypeException,
+                  "Can't get command line when not active or entering a password");
+    return res;
+  }
 
-    return cstr_to_string(cmdline);
+  return cstr_to_string(cmdline);
 }
 
 /// Set the command line text to the given string.
@@ -2476,9 +2477,10 @@ String nvim_get_cmdline(Error *err)
 /// @param  cmdline New command line text.
 /// @param[out] err Error details, if any.
 void nvim_set_cmdline(String cmdline, Error *err)
-    FUNC_API_SINCE(9)
+  FUNC_API_SINCE(9)
 {
-    if (set_cmdline_str(cmdline.data, cmdline.size) != 0) {
-        api_set_error(err, kErrorTypeException, "Can't set command line when not active or entering a password");
-    }
+  if (set_cmdline_str(cmdline.data, cmdline.size) != 0) {
+    api_set_error(err, kErrorTypeException,
+                  "Can't set command line when not active or entering a password");
+  }
 }

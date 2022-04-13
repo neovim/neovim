@@ -5962,20 +5962,20 @@ char_u *get_cmdline_str(void)
 // Returns -1 when something is wrong.
 int set_cmdline_str(char *content, size_t len)
 {
-    if (cmdline_star > 0) {
-        return -1;
-    }
+  if (cmdline_star > 0) {
+    return -1;
+  }
 
-    struct cmdline_info *p = get_ccline_ptr();
+  struct cmdline_info *p = get_ccline_ptr();
 
-    if (p == NULL) {
-        return -1;
-    }
+  if (p == NULL) {
+    return -1;
+  }
 
-    cmdline_del(0);
-    put_on_cmdline((char_u *)content, (int)len, true);
+  cmdline_del(0);
+  put_on_cmdline((char_u *)content, (int)len, true);
 
-    return 0;
+  return 0;
 }
 
 /*
