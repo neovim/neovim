@@ -2182,7 +2182,7 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     const char *const strmodes = tv_get_string(&argvars[1]);
     modes = get_menu_cmd_modes(strmodes, false, NULL, NULL);
   }
-  menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
+  menu_get((char *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
 }
 
 /// "expandcmd()" function
@@ -3256,7 +3256,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (xpc.xp_context == EXPAND_MENUS) {
-    set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
+    set_context_in_menu_cmd(&xpc, "menu", (char *)xpc.xp_pattern, false);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
