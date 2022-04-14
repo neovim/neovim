@@ -16,6 +16,7 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/memline.h"
 #include "tree_sitter/api.h"
@@ -104,6 +105,7 @@ static struct luaL_Reg treecursor_meta[] = {
   { NULL, NULL }
 };
 
+static kvec_t(TSQueryCursor *) cursors = KV_INITIAL_VALUE;
 static PMap(cstr_t) langs = MAP_INIT;
 
 static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
@@ -1116,9 +1118,13 @@ static int node_rawquery(lua_State *L)
     return 0;
   }
   TSQuery *query = query_check(L, 2);
-  // TODO(bfredl): these are expensive allegedly,
-  // use a reuse list later on?
-  TSQueryCursor *cursor = ts_query_cursor_new();
+
+  TSQueryCursor *cursor;
+  if (kv_size(cursors) > 0) {
+    cursor = kv_pop(cursors);
+  } else {
+    cursor = ts_query_cursor_new();
+  }
   // TODO(clason): API introduced after tree-sitter release 0.19.5
   // remove guard when minimum ts version is bumped to 0.19.6+
 #ifdef NVIM_TS_HAS_SET_MATCH_LIMIT
@@ -1161,7 +1167,8 @@ static int node_rawquery(lua_State *L)
 static int querycursor_gc(lua_State *L)
 {
   TSLua_cursor *ud = luaL_checkudata(L, 1, TS_META_QUERYCURSOR);
-  ts_query_cursor_delete(ud->cursor);
+  kv_push(cursors, ud->cursor);
+  ud->cursor = NULL;
   return 0;
 }
 
