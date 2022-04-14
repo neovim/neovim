@@ -2469,7 +2469,7 @@ String nvim_get_cmdline(Error *err)
     return res;
   }
 
-  return cstr_to_string(cmdline);
+  return cstr_as_string(cmdline);
 }
 
 /// Set the command line text to the given string.
