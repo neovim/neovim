@@ -174,9 +174,6 @@ function TSHighlighter.new(tree, opts)
   self.edit_count = 0
   self.redraw_count = 0
   self.line_count = {}
-  -- A map of highlight states.
-  -- This state is kept during rendering across each line update.
-  self._highlight_states = {}
   self._queries = {}
 
   -- Queries for a specific language can be overridden by a custom
@@ -212,23 +209,6 @@ function TSHighlighter:destroy()
 end
 
 ---@private
-function TSHighlighter:get_highlight_state(tstree)
-  if not self._highlight_states[tstree] then
-    self._highlight_states[tstree] = {
-      next_row = 0,
-      iter = nil,
-    }
-  end
-
-  return self._highlight_states[tstree]
-end
-
----@private
-function TSHighlighter:reset_highlight_state()
-  self._highlight_states = {}
-end
-
----@private
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
   a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
 end
@@ -257,7 +237,10 @@ function TSHighlighter:get_query(lang)
 end
 
 ---@private
-local function on_line_impl(self, buf, line)
+function TSHighlighter._on_line(_, _win, buf, line, _)
+  local self = TSHighlighter.active[buf]
+  if not self then return end
+
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
@@ -271,7 +254,6 @@ local function on_line_impl(self, buf, line)
       return
     end
 
-    local state = self:get_highlight_state(tstree)
     local highlighter_query = self:get_query(tree:lang())
 
     -- Some injected languages may not have highlight queries.
@@ -279,12 +261,8 @@ local function on_line_impl(self, buf, line)
       return
     end
 
-    if state.iter == nil then
-      state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
-    end
-
-    while line >= state.next_row do
-      local capture, node, metadata = state.iter()
+    for capture, node, metadata in
+      highlighter_query:query():iter_captures(root_node, self.bufnr, line, line + 1) do
 
       if capture == nil then
         break
@@ -303,21 +281,8 @@ local function on_line_impl(self, buf, line)
           conceal = metadata.conceal,
         })
       end
-      if start_row > line then
-        state.next_row = start_row
-      end
     end
   end, true)
-end
-
----@private
-function TSHighlighter._on_line(_, _win, buf, line, _)
-  local self = TSHighlighter.active[buf]
-  if not self then
-    return
-  end
-
-  on_line_impl(self, buf, line)
 end
 
 ---@private
@@ -335,7 +300,6 @@ function TSHighlighter._on_win(_, _win, buf, _topline)
     return false
   end
 
-  self:reset_highlight_state()
   self.redraw_count = self.redraw_count + 1
   return true
 end
