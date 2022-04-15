@@ -1275,7 +1275,7 @@ static char *popup_mode_name(char *name, int idx)
   size_t len = STRLEN(name);
   assert(len >= 4);
 
-  char *p = (char *)vim_strnsave((char_u *)name, len + 1);
+  char *p = xstrnsave(name, len + 1);
   memmove(p + 6, p + 5, len - 4);
   p[5] = menu_mode_chars[idx];
 
@@ -1308,7 +1308,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
       *actext = xstrdup(p + 1);
     }
     assert(p >= str);
-    text = (char *)vim_strnsave((char_u *)str, (size_t)(p - str));
+    text = xstrnsave(str, (size_t)(p - str));
   } else {
     text = xstrdup(str);
   }
@@ -1560,7 +1560,7 @@ void ex_menutranslate(exarg_T *eap)
       from = xstrdup(from);
       from_noamp = menu_text(from, NULL, NULL);
       assert(arg >= to);
-      to = (char *)vim_strnsave((char_u *)to, (size_t)(arg - to));
+      to = xstrnsave(to, (size_t)(arg - to));
       menu_translate_tab_and_shift(from);
       menu_translate_tab_and_shift(to);
       menu_unescape_name(from);

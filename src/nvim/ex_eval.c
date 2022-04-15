@@ -388,12 +388,12 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = STRLEN(cmdname);
-      ret = (char *)vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
+      ret = xstrnsave("Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = (char *)vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
+      ret = xstrnsave("Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 
