@@ -1952,7 +1952,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('wildoptions=pum with scrolled mesages ', function()
+  it('wildoptions=pum with scrolled messages ', function()
     screen:try_resize(40,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -2191,7 +2191,7 @@ describe('builtin popupmenu', function()
       {20:-- Keyword Local completion (^N^P) }{21:match 1 of 65}            |
     ]])
 
-    -- can disable blending for indiviual attribute. For instance current
+    -- can disable blending for individual attribute. For instance current
     -- selected item. (also tests that `hi Pmenu*` take immediate effect)
     command('hi PMenuSel blend=0')
     screen:expect([[

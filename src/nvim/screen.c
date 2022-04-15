@@ -4840,7 +4840,7 @@ static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
   }
 }
 
-/// Draw seperator connecting characters on the corners of window "wp"
+/// Draw separator connecting characters on the corners of window "wp"
 static void draw_sep_connectors_win(win_T *wp)
 {
   // Don't draw separator connectors unless global statusline is enabled and the window has

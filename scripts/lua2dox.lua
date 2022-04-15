@@ -295,7 +295,7 @@ function TStream_Write.writelnTail(this,Line)
   table.insert(this.tailLine,Line)
 end
 
---! \brief outout tail lines
+--! \brief output tail lines
 function TStream_Write.write_tailLines(this)
   for _,line in ipairs(this.tailLine) do
     TCore_IO_writeln(line)

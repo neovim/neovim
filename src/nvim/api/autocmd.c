@@ -360,10 +360,10 @@ cleanup:
 ///   pattern = { "*.py", "*.pyi" }
 /// </pre>
 ///
-/// Examples values for event:
+/// Example values for event:
 /// <pre>
-///   "BufPreWrite"
-///   {"CursorHold", "BufPreWrite", "BufPostWrite"}
+///   "BufWritePre"
+///   {"CursorHold", "BufWritePre", "BufWritePost"}
 /// </pre>
 ///
 /// @param event (string|array) The event or events to register this autocommand

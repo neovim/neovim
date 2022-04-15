@@ -471,7 +471,7 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
-    -- check hilights work also in folds
+    -- check highlights work also in folds
     feed("zf4j")
     command("%foldopen")
     screen:expect([[

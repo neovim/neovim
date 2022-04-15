@@ -139,8 +139,7 @@ Integer nvim_win_get_height(Window window, Error *err)
   return win->w_height;
 }
 
-/// Sets the window height. This will only succeed if the screen is split
-/// horizontally.
+/// Sets the window height.
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param height   Height as a count of rows

@@ -1013,7 +1013,7 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
   end)
 
   it('redraws NOT_VALID correctly after message', function()
-    -- edge case: only one window was set NOT_VALID. Orginal report
+    -- edge case: only one window was set NOT_VALID. Original report
     -- used :make, but fake it using one command to set the current
     -- window NOT_VALID and another to show a long message.
     command("set more")
@@ -1227,7 +1227,7 @@ describe('ui/msg_puts_printf', function()
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
       elseif helpers.isCI() then
-        -- Fails non--Windows CI. Message catalog direcotry issue?
+        -- Fails non--Windows CI. Message catalog directory issue?
         pending('fails on unix CI', function() end)
         return
       end
