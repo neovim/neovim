@@ -4328,7 +4328,7 @@ skip:
       } \
       kv_push(preview_lines.subresults, current_match); \
     } \
-    } while (0)
+  } while (0)
 
             // Push the match to preview_lines.
             PUSH_PREVIEW_LINES();
@@ -4593,9 +4593,7 @@ void ex_global(exarg_T *eap)
     return;
   } else {
     delim = *cmd;               // get the delimiter
-    if (delim) {
-      ++cmd;                    // skip delimiter if there is one
-    }
+    cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
     cmd = skip_regexp(cmd, delim, p_magic, &eap->arg);
     if (cmd[0] == delim) {                  // end delimiter found

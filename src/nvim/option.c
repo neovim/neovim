@@ -2661,9 +2661,7 @@ ambw_end:
       int x2 = -1;
       int x3 = -1;
 
-      if (*p != NUL) {
-        p += utfc_ptr2len(p);
-      }
+      p += utfc_ptr2len(p);
       if (*p != NUL) {
         x2 = *p++;
       }
