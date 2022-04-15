@@ -335,6 +335,9 @@ static char_u SHM_ALL[] = {
   0,
 };
 
+static char e_unclosed_expression_sequence[] = N_("E540: Unclosed expression sequence");
+static char e_unbalanced_groups[] = N_("E542: unbalanced groups");
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
@@ -2918,8 +2921,8 @@ ambw_end:
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();
     }
-  } else if (gvarp == &p_stl || varp == &p_ruf) {
-    // 'statusline' or 'rulerformat'
+  } else if (gvarp == &p_stl || varp == &p_tal || varp == &p_ruf) {
+    // 'statusline', 'tabline' or 'rulerformat'
     int wid;
 
     if (varp == &p_ruf) {       // reset ru_wid first
@@ -2938,7 +2941,7 @@ ambw_end:
         errmsg = check_stl_option(p_ruf);
       }
     } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
-      // check 'statusline' only if it doesn't start with "%!"
+      // check 'statusline' or 'tabline' only if it doesn't start with "%!"
       errmsg = check_stl_option(s);
     }
     if (varp == &p_ruf && errmsg == NULL) {
@@ -3724,7 +3727,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 }
 
 /// Check validity of options with the 'statusline' format.
-/// Return error message or NULL.
+/// Return an untranslated error message or NULL.
 char *check_stl_option(char_u *s)
 {
   int groupdepth = 0;
@@ -3773,18 +3776,22 @@ char *check_stl_option(char_u *s)
       return illegal_char(errbuf, sizeof(errbuf), *s);
     }
     if (*s == '{') {
-      int reevaluate = (*s == '%');
-      s++;
+      bool reevaluate = (*++s == '%');
+
+      if (reevaluate && *++s == '}') {
+        // "}" is not allowed immediately after "%{%"
+        return illegal_char(errbuf, sizeof(errbuf), '}');
+      }
       while ((*s != '}' || (reevaluate && s[-1] != '%')) && *s) {
         s++;
       }
       if (*s != '}') {
-        return N_("E540: Unclosed expression sequence");
+        return e_unclosed_expression_sequence;
       }
     }
   }
   if (groupdepth != 0) {
-    return N_("E542: unbalanced groups");
+    return e_unbalanced_groups;
   }
   return NULL;
 }
