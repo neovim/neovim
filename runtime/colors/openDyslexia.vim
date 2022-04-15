@@ -1,5 +1,5 @@
 " Colorscheme for vim/nvim 
-" Provides easier readabillity for dyslexia
+" Provides easier readabillity with high-contrast colors
 " Languages supported:
 " Java, JavaScript, shell, Python, C, C++, C#, Ruby, Go, PHP, vim script, 
 " Matlab, Rust, YAML, CSS, HTML, and others that have these general syntax rules
