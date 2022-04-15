@@ -261,6 +261,8 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
       return
     end
 
+    local synmaxcol = vim.api.nvim_buf_get_option(self.bufnr, 'synmaxcol')
+
     for capture, node, metadata in
       highlighter_query:query():iter_captures(root_node, self.bufnr, line, line + 1) do
 
@@ -269,6 +271,10 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
       end
 
       local start_row, start_col, end_row, end_col = node:range()
+      if start_col > synmaxcol then
+        break
+      end
+
       local hl = highlighter_query.hl_cache[capture]
 
       if hl and end_row >= line then
