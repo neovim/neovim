@@ -5803,7 +5803,7 @@ int syn_get_id(win_T *wp, long lnum, colnr_T col, int trans, bool *spellp, int k
 {
   // When the position is not after the current position and in the same
   // line of the same buffer, need to restart parsing.
-  if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
+  if (wp != syn_win || wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
     syntax_start(wp, lnum);
   } else if (col > current_col) {
     // next_match may not be correct when moving around, e.g. with the
