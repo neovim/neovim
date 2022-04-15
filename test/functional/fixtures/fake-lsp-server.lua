@@ -119,8 +119,10 @@ function tests.check_workspace_configuration()
       notify('workspace/configuration', { items = {
               { section = "testSetting1" };
               { section = "testSetting2" };
+              { section = "test.Setting3" };
+              { section = "test.Setting4" };
           } })
-      expect_notification('workspace/configuration', { true; vim.NIL})
+      expect_notification('workspace/configuration', { true; false; 'nested'; vim.NIL})
       notify('shutdown')
     end;
   }
