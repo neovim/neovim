@@ -39,6 +39,7 @@
 
 "documentation":
   - all: ["runtime/doc/*"]
+  - any: ["**/*.md"]
 
 "clipboard":
   - runtime/autoload/provider/clipboard.vim
