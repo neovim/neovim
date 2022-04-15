@@ -715,7 +715,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
         int c = (int)STRLEN(var);
         // if var[] ends in a path separator and tail[] starts
         // with it, skip a character
-        if (*var != NUL && after_pathsep((char *)dst, (char *)dst + c)
+        if (after_pathsep((char *)dst, (char *)dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
