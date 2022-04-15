@@ -1118,7 +1118,7 @@ retry:
                   && tmpname == NULL
                   && (*fenc == 'u' || *fenc == NUL)))) {
         char_u *ccname;
-        int blen;
+        int blen = 0;
 
         // no BOM detection in a short file or in binary mode
         if (size < 2 || curbuf->b_p_bin) {
