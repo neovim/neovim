@@ -1,9 +1,9 @@
-" Uncomment the following lines and correct them to your OS
 "
-" set runtimepath^=~/.vim runtimepath+=~/.vim/after
-"    let &packpath = &runtimepath
-"    source ~/.vimrc
+set runtimepath^=~/.vim runtimepath+=~/.vim/after
+    let &packpath = &runtimepath
+    source ~/.vimrc
 
+" Uncomment the following lines and add them to the .vimrc file on your home dir
 " syntax on
 " set colorscheme="openDyslexia"                                                                                                                                                                                   
 " highlight Normal ctermfg=white ctermbg=16                                                                                                                                                                                                                                                                                                                                
