@@ -1775,19 +1775,6 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
   clear_wininfo(buf);
   buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
-  if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
-    if (buf->b_sfname != buf->b_ffname) {
-      XFREE_CLEAR(buf->b_sfname);
-    } else {
-      buf->b_sfname = NULL;
-    }
-    XFREE_CLEAR(buf->b_ffname);
-    if (buf != curbuf) {
-      free_buffer(buf);
-    }
-    return NULL;
-  }
-
   if (buf == curbuf) {
     // free all things allocated for this buffer
     buf_freeall(buf, 0);
