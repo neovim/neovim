@@ -704,6 +704,7 @@ EXTERN int RedrawingDisabled INIT(= 0);
 
 EXTERN int readonlymode INIT(= false);      // Set to true for "view"
 EXTERN int recoverymode INIT(= false);      // Set to true for "-r" option
+EXTERN int stdin_filedesc INIT(= -1);       // stdin filedesc set by embedder
 
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
@@ -847,6 +848,9 @@ EXTERN linenr_T printer_page_num;
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
 
+EXTERN bool implicit_readstdin INIT(= false);     // Used in embed job created
+                                                  // by TUI process only in
+                                                  // builtin tui
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character

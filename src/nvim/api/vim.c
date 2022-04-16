@@ -2661,3 +2661,35 @@ end:
   xfree(cmdline);
   return result;
 }
+
+/// Invokes the nvim server to read from stdin when it is not a tty
+///
+/// It enables functionalities like:
+/// - echo "1f u c4n r34d th1s u r34lly n33d t0 g37 r357"| nvim -
+/// - cat path/to/a/file | nvim -
+/// It has to be called before |nvim_ui_attach()| is called in order
+/// to ensure proper functioning.
+///
+/// @param channel_id: The channel id of the GUI-client
+/// @param filedesc: The file descriptor of the GUI-client process' stdin
+/// @param implicit: Tells if read_stdin call is implicit.
+///                  i.e for cases like `echo xxx | nvim`
+/// @param[out] err Error details, if any
+void nvim_read_stdin(uint64_t channel_id, Integer filedesc, Error *err)
+FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (starting != NO_SCREEN) {
+    api_set_error(err, kErrorTypeValidation,
+                  "nvim_read_stdin must be called before nvim_ui_attach");
+    return;
+  }
+  if (filedesc < 0) {
+    api_set_error(err, kErrorTypeValidation,
+                  "file descriptor must be non-negative");
+    return;
+  }
+
+  stdin_filedesc = (int)filedesc;
+  implicit_readstdin = implicit;
+  return;
+}
