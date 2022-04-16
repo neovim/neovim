@@ -23,10 +23,10 @@ syn case ignore
 
 syn keyword vbConditional If Then ElseIf Else Select Case
 
-syn keyword vbOperator AddressOf And ByRef ByVal Eqv Imp In
-syn keyword vbOperator Is Like Mod Not Or To Xor
+syn keyword vbOperator And AndAlso ByRef ByVal Eqv Imp In Is Like Mod Not
+syn keyword vbOperator Or OrElse To Xor
 
-syn match vbOperator "[()+.,\-/*=&]"
+syn match vbOperator "[()+.,\-/*=&^]"
 syn match vbOperator "[<>]=\="
 syn match vbOperator "<>"
 syn match vbOperator "\s\+_$"
@@ -110,30 +110,28 @@ syn keyword vbEvents VisibleRecordChanged WillAssociate WillChangeData
 syn keyword vbEvents WillDissociate WillExecute WillUpdateRows
 syn keyword vbEvents WriteProperties
 
-
-syn keyword vbFunction Abs Array Asc AscB AscW Atn Avg BOF CBool CByte
-syn keyword vbFunction CCur CDate CDbl CInt CLng CSng CStr CVDate CVErr
-syn keyword vbFunction CVar CallByName Cdec Choose Chr ChrB ChrW Command
-syn keyword vbFunction Cos Count CreateObject CurDir DDB Date DateAdd
-syn keyword vbFunction DateDiff DatePart DateSerial DateValue Day Dir
-syn keyword vbFunction DoEvents EOF Environ Error Exp FV FileAttr
-syn keyword vbFunction FileDateTime FileLen FilterFix Fix Format
-syn keyword vbFunction FormatCurrency FormatDateTime FormatNumber
-syn keyword vbFunction FormatPercent FreeFile GetAllStrings GetAttr
-syn keyword vbFunction GetAutoServerSettings GetObject GetSetting Hex
-syn keyword vbFunction Hour IIf IMEStatus IPmt InStr Input InputB
+syn keyword vbFunction Abs AddressOf Array Asc AscB AscW Atn Avg BOF CBool
+syn keyword vbFunction CByte CChar CCur CDate CDbl CInt CLng CObj CSByte
+syn keyword vbFunction CShort CSng CStr CType CUInt CULng CUShort CVDate CVErr
+syn keyword vbFunction CVar CallByName Cdec Choose Chr ChrB ChrW Command Cos
+syn keyword vbFunction Count CreateObject CurDir DDB Date DateAdd DateDiff
+syn keyword vbFunction DatePart DateSerial DateValue Day Dir DoEvents EOF
+syn keyword vbFunction Environ Error Exp FV FileAttr FileDateTime FileLen
+syn keyword vbFunction FilterFix Fix Format FormatCurrency FormatDateTime
+syn keyword vbFunction FormatNumber FormatPercent FreeFile GetAllStrings
+syn keyword vbFunction GetAttr GetAutoServerSettings GetObject GetSetting
+syn keyword vbFunction GetType Hex Hour IIf IMEStatus IPmt InStr Input InputB
 syn keyword vbFunction InputBox InstrB Int IsArray IsDate IsEmpty IsError
-syn keyword vbFunction IsMissing IsNull IsNumeric IsObject Join LBound
-syn keyword vbFunction LCase LOF LTrim Left LeftB Len LenB LoadPicture
-syn keyword vbFunction LoadResData LoadResPicture LoadResString Loc Log
-syn keyword vbFunction MIRR Max Mid MidB Min Minute Month MonthName
-syn keyword vbFunction MsgBox NPV NPer Now Oct PPmt PV Partition Pmt
-syn keyword vbFunction QBColor RGB RTrim Rate Replace Right RightB Rnd
-syn keyword vbFunction Round SLN SYD Second Seek Sgn Shell Sin Space Spc
-syn keyword vbFunction Split Sqr StDev StDevP Str StrComp StrConv
-syn keyword vbFunction StrReverse String Sum Switch Tab Tan Time
-syn keyword vbFunction TimeSerial TimeValue Timer Trim TypeName UBound
-syn keyword vbFunction UCase Val Var VarP VarType Weekday WeekdayName
+syn keyword vbFunction IsMissing IsNothing IsNull IsNumeric IsObject Join
+syn keyword vbFunction LBound LCase LOF LTrim Left LeftB Len LenB LoadPicture
+syn keyword vbFunction LoadResData LoadResPicture LoadResString Loc Log MIRR
+syn keyword vbFunction Max Mid MidB Min Minute Month MonthName MsgBox NPV NPer
+syn keyword vbFunction NameOf Now Oct PPmt PV Partition Pmt QBColor RGB RTrim
+syn keyword vbFunction Rate Replace Right RightB Rnd Round SLN SYD Second Seek
+syn keyword vbFunction Sgn Shell Sin Space Spc Split Sqr StDev StDevP Str
+syn keyword vbFunction StrComp StrConv StrReverse String Sum Switch Tab Tan
+syn keyword vbFunction Time TimeSerial TimeValue Timer Trim TryCast TypeName
+syn keyword vbFunction UBound UCase Val Var VarP VarType Weekday WeekdayName
 syn keyword vbFunction Year
 
 syn keyword vbMethods AboutBox Accept Activate Add AddCustom AddFile
@@ -213,29 +211,47 @@ syn keyword vbMethods WhatsThisMode Write WriteBlankLines WriteLine
 syn keyword vbMethods WriteProperty WriteTemplate ZOrder
 syn keyword vbMethods rdoCreateEnvironment rdoRegisterDataSource
 
-syn keyword vbStatement Alias AppActivate As Base Beep Begin Call ChDir
-syn keyword vbStatement ChDrive Close Const Date Declare DefBool DefByte
-syn keyword vbStatement DefCur DefDate DefDbl DefDec DefInt DefLng DefObj
-syn keyword vbStatement DefSng DefStr DefVar Deftype DeleteSetting Dim Do
-syn keyword vbStatement Each ElseIf End Enum Erase Error Event Exit
-syn keyword vbStatement Explicit FileCopy For ForEach Function Get GoSub
-syn keyword vbStatement GoTo Gosub Implements Kill LSet Let Lib LineInput
-syn keyword vbStatement Load Lock Loop Mid MkDir Name Next On OnError Open
-syn keyword vbStatement Option Preserve Private Property Public Put RSet
-syn keyword vbStatement RaiseEvent Randomize ReDim Redim Reset Resume
-syn keyword vbStatement Return RmDir SavePicture SaveSetting Seek SendKeys
-syn keyword vbStatement Sendkeys Set SetAttr Static Step Stop Sub Time
-syn keyword vbStatement Type Unload Unlock Until Wend While Width With
-syn keyword vbStatement Write
+syn keyword vbStatement Alias AppActivate As Base Beep Begin Call ChDir ChDrive
+syn keyword vbStatement Close Const Date Declare DefBool DefByte DefCur DefDate
+syn keyword vbStatement DefDbl DefDec DefInt DefLng DefObj DefSng DefStr DefVar
+syn keyword vbStatement Deftype DeleteSetting Dim Do Each ElseIf End Enum Erase
+syn keyword vbStatement Error Event Exit Explicit FileCopy For ForEach Function
+syn keyword vbStatement Get GoSub GoTo Gosub Implements Kill LSet Let Lib
+syn keyword vbStatement LineInput Load Lock Loop Mid MkDir Name Next On OnError
+syn keyword vbStatement Open Option Preserve Private Property Public Put RSet
+syn keyword vbStatement RaiseEvent Randomize ReDim Redim Reset Resume Return
+syn keyword vbStatement RmDir SavePicture SaveSetting Seek SendKeys Sendkeys
+syn keyword vbStatement Set SetAttr Static Step Stop Sub Time Type Unload
+syn keyword vbStatement Unlock Until Using Wend While Width With Write
 
-syn keyword vbKeyword As Binary ByRef ByVal Date Empty Error Friend Get
-syn keyword vbKeyword Input Is Len Lock Me Mid New Nothing Null On
-syn keyword vbKeyword Option Optional ParamArray Print Private Property
-syn keyword vbKeyword Public PublicNotCreateable OnNewProcessSingleUse
-syn keyword vbKeyword InSameProcessMultiUse GlobalMultiUse Resume Seek
-syn keyword vbKeyword Set Static Step String Time WithEvents
+syn keyword vbStorage Class Module Implements Inherits Namespace
 
-syn keyword vbTodo contained    TODO
+syn keyword vbKeyword As Async Await Binary ByRef ByVal Date Default Empty
+syn keyword vbKeyword Error Friend Get Global GlobalMultiUse Handles In
+syn keyword vbKeyword InSameProcessMultiUse Input Interface Is IsFalse IsTrue
+syn keyword vbKeyword Iterator Key Len Lock Me Mid MustInherit MustOverride
+syn keyword vbKeyword My MyBase MyClass Narrowing New NotInheritable
+syn keyword vbKeyword NotOverridable Nothing Null Of On OnNewProcessSingleUse
+syn keyword vbKeyword Operator Option Optional Out Overloads Overridable
+syn keyword vbKeyword Overrides ParamArray Partial Print Private Property
+syn keyword vbKeyword Protected Public PublicNotCreateable ReadOnly Resume Seek
+syn keyword vbKeyword Set Shadows Shared Static Step String Time Widening
+syn keyword vbKeyword WithEvents WriteOnly Yield
+
+syn keyword vbImport Imports
+
+syn keyword vbException Catch Finally Throw Try When
+syn keyword vbExceptions AccessViolationException AggregateException AppDomainUnloadedException
+syn keyword vbExceptions ApplicationException ArgumentException ArithmeticException ArrayTypeMismatchException
+syn keyword vbExceptions BadImageFormatException CannotUnloadAppDomainException ContextMarshalException
+syn keyword vbExceptions DataMisalignedException Exception ExecutionEngineException FormatException
+syn keyword vbExceptions IndexOutOfRangeException InsufficientExecutionStackException InvalidCastException
+syn keyword vbExceptions InvalidOperationException InvalidProgramException InvalidTimeZoneException
+syn keyword vbExceptions MemberAccessException MulticastNotSupportedException NotImplementedException
+syn keyword vbExceptions NotSupportedException NullReferenceException OperationCanceledException OutOfMemoryException
+syn keyword vbExceptions RankException StackOverflowException SystemException TimeoutException
+syn keyword vbExceptions TimeZoneNotFoundException TypeInitializationException TypeLoadException TypeUnloadedException
+syn keyword vbExceptions UnauthorizedAccessException
 
 "Datatypes
 syn keyword vbTypes Boolean Byte Currency Date Decimal Double Empty
@@ -321,19 +337,45 @@ syn match vbNumber "\<\d\+\>"
 syn match vbNumber "\<\d\+\.\d*\>"
 "floating point number, starting with a dot
 syn match vbNumber "\.\d\+\>"
-"syn match  vbNumber            "{[[:xdigit:]-]\+}\|&[hH][[:xdigit:]]\+&"
-"syn match  vbNumber            ":[[:xdigit:]]\+"
-"syn match  vbNumber            "[-+]\=\<\d\+\>"
-syn match  vbFloat              "[-+]\=\<\d\+[eE][\-+]\=\d\+"
-syn match  vbFloat              "[-+]\=\<\d\+\.\d*\([eE][\-+]\=\d\+\)\="
-syn match  vbFloat              "[-+]\=\<\.\d\+\([eE][\-+]\=\d\+\)\="
+syn match vbNumber "&[hH][A-Fa-f0-9_]\+"
+syn match vbNumber "&[bB][01_]\+"
+syn match vbNumber "&[oO][0-7_]\+"
+syn match  vbFloat "[-+]\=\<\d\+[eE][\-+]\=\d\+"
+syn match  vbFloat "[-+]\=\<\d\+\.\d*\([eE][\-+]\=\d\+\)\="
+syn match  vbFloat "[-+]\=\<\.\d\+\([eE][\-+]\=\d\+\)\="
+
+syn keyword vbTodo contained TODO FIXME XXX NOTE HACK TBD
+syn match   vbComment "'.*$" contains=@vbCommentHook,vbTodo,@Spell
+syn match   vbComment "REM.*$" contains=@vbCommentHook,vbTodo,@Spell
+
+" xml markup inside triple quote (''') comments, stolen from cs.vim
+syn cluster xmlRegionHook add=vbXmlCommentLeader
+syn cluster xmlCdataHook add=vbXmlCommentLeader
+syn cluster xmlStartTagHook add=vbXmlCommentLeader
+syn keyword vbXmlTag contained Libraries Packages Types Excluded ExcludedTypeName ExcludedLibraryName
+syn keyword vbXmlTag contained ExcludedBucketName TypeExcluded Type TypeKind TypeSignature AssemblyInfo
+syn keyword vbXmlTag contained AssemblyName AssemblyPublicKey AssemblyVersion AssemblyCulture Base
+syn keyword vbXmlTag contained BaseTypeName Interfaces Interface InterfaceName Attributes Attribute
+syn keyword vbXmlTag contained AttributeName Members Member MemberSignature MemberType MemberValue
+syn keyword vbXmlTag contained ReturnValue ReturnType Parameters Parameter MemberOfPackage
+syn keyword vbXmlTag contained ThreadingSafetyStatement Docs devdoc example overload remarks returns summary
+syn keyword vbXmlTag contained threadsafe value internalonly nodoc exception param permission platnote
+syn keyword vbXmlTag contained seealso b c i pre sub sup block code note paramref see subscript superscript
+syn keyword vbXmlTag contained list listheader item term description altcompliant altmember
+
+syn cluster xmlTagHook add=vbXmlTag
+
+syn match   vbXmlCommentLeader "'''" contained
+syn match   vbXmlComment       "'''.*$" contains=vbXmlCommentLeader,@vbXml,@Spell keepend
+syn include @vbXml syntax/xml.vim
+hi def link xmlRegion Comment
+
+syn spell default
 
 " String and Character constants
-syn region  vbString		start=+"+  end=+"\|$+
-syn region  vbComment		start="\(^\|\s\)REM\s" end="$" contains=vbTodo
-syn region  vbComment		start="\(^\|\s\)\'"   end="$" contains=vbTodo
-syn match   vbLineLabel		"^\h\w\+:"
-syn match   vbLineNumber	"^\d\+\(:\|\s\|$\)"
+syn region  vbString        start=+"+  end=+"+
+syn match   vbLineLabel     "^\h\w\+:"
+syn match   vbLineNumber    "^\d\+\(:\|\s\|$\)"
 syn match   vbTypeSpecifier  "\<\a\w*[@\$%&!#]"ms=s+1
 syn match   vbTypeSpecifier  "#[a-zA-Z0-9]"me=e-1
 " Conditional Compilation
@@ -343,6 +385,8 @@ syn region vbPreProc matchgroup=PreProc start="^#elseif\>" end="\<then\>" transp
 syn match  vbPreProc "^#else\>"
 syn match  vbPreProc "^#end\s*if\>"
 
+syn match vbAttribute "<\s*\(\(Assembly\|Module\): \)\?[A-Za-z0-9.]\+\((.*)\)\?\s*>"
+
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
@@ -350,6 +394,9 @@ hi def link vbBoolean           Boolean
 hi def link vbLineNumber        Comment
 hi def link vbLineLabel         Comment
 hi def link vbComment           Comment
+hi def link vbXmlCommentLeader  Comment
+hi def link vbXmlComment        Comment
+hi def link vbXmlTag            Statement
 hi def link vbConditional       Conditional
 hi def link vbConst             Constant
 hi def link vbDefine            Constant
@@ -369,6 +416,11 @@ hi def link vbTodo              Todo
 hi def link vbTypes             Type
 hi def link vbTypeSpecifier     Type
 hi def link vbPreProc           PreProc
+hi def link vbStorage           Structure
+hi def link vbImport            Include
+hi def link vbException         Exception
+hi def link vbExceptions        Structure
+hi def link vbAttribute         Function
 
 let b:current_syntax = "vb"
 
