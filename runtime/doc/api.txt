@@ -681,9 +681,6 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 Return: ~
                     Buffer handle, or 0 on error
 
-                See also: ~
-                    buf_open_scratch
-
                                                   *nvim_create_user_command()*
 nvim_create_user_command({name}, {command}, {*opts})
                 Create a new user command |user-commands|
