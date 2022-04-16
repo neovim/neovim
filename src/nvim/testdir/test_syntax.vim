@@ -794,5 +794,18 @@ func Test_syn_include_contains_TOP()
   bw!
 endfunc
 
+" This was using freed memory
+func Test_WinEnter_synstack_synID()
+  autocmd WinEnter * call synstack(line("."), col("."))
+  autocmd WinEnter * call synID(line('.'), col('.') - 1, 1)
+  call setline(1, 'aaaaa')
+  normal! $
+  new
+  close
+
+  au! WinEnter
+  bw!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
