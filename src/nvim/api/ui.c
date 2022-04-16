@@ -14,6 +14,7 @@
 #include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/ui.h"
@@ -252,6 +253,33 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     if (!init && !ui->ui_ext[kUILinegrid]) {
       ui_refresh();
     }
+    return;
+  }
+
+  if (strequal(name.data, "term_name")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
+      return;
+    }
+    set_tty_option("term", xstrdup(value.data.string.data));
+    return;
+  }
+
+  if (strequal(name.data, "term_colors")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
+      return;
+    }
+    t_colors = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_background")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
+      return;
+    }
+    set_tty_background(value.data.string.data);
     return;
   }
 
