@@ -3354,6 +3354,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           if (decor_conceal && decor_state.conceal_char) {
             decor_conceal = 2;  // really??
           }
+
+          if (decor_state.uri) {
+            // ?????
+            // Need to get the uri into HlAttrs somehow so that it can be accessed by
+            // update_attrs in tui.c
+            syn_attr2entry(attr);
+          }
         }
 
         // Found last space before word: check for line break.

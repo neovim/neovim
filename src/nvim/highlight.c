@@ -807,6 +807,12 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
+  if (ae.uri) {
+    Dictionary metadata = ARRAY_DICT_INIT;
+    PUT(metadata, "uri", CSTR_TO_OBJ(ae.uri));
+    PUT(hl, "metadata", DICTIONARY_OBJ(metadata));
+  }
+
   return hl;
 }
 

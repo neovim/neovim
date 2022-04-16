@@ -60,10 +60,11 @@ struct Decoration {
   // TODO(bfredl): in principle this should be a schar_T, but we
   // probably want some kind of glyph cache for that..
   int conceal_char;
+  char *uri;
 };
 #define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
                           kHlModeUnknown, false, false, false, false, DECOR_PRIORITY_BASE, \
-                          0, 0, NULL, 0, 0, 0, 0, 0 }
+                          0, 0, NULL, 0, 0, 0, 0, 0, NULL }
 
 typedef struct {
   int start_row;
@@ -89,6 +90,7 @@ typedef struct {
   bool conceal;
   int conceal_char;
   int conceal_attr;
+  char *uri;
 } DecorState;
 
 EXTERN DecorState decor_state INIT(= { 0 });

@@ -68,6 +68,10 @@ struct ui_t {
   void (*inspect)(UI *ui, Dictionary *info);
 };
 
+struct UiMetadata {
+  char *uri;
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
 

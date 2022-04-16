@@ -69,7 +69,8 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
   if (decor) {
     if (kv_size(decor->virt_text)
         || kv_size(decor->virt_lines)
-        || decor_has_sign(decor)) {
+        || decor_has_sign(decor)
+        || decor->uri) {
       decor_full = true;
       decor = xmemdup(decor, sizeof *decor);
     }
@@ -146,6 +147,9 @@ revised:
     }
     if (decor_has_sign(decor)) {
       buf->b_signs++;
+    }
+    if (decor->uri) {
+      buf->b_uris++;
     }
     if (decor->sign_text) {
       // TODO(lewis6991): smarter invalidation

@@ -67,6 +67,15 @@
 # define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
 #endif
 
+#ifdef NVIM_UNIBI_HAS_VAR_FROM
+# define UNIBI_SET_STR_VAR(var, num) \
+  do { \
+    (var) = unibi_var_from_str((num)); \
+  } while (0)
+#else
+# define UNIBI_SET_STR_VAR(var, num) (var).p = (num);
+#endif
+
 typedef struct {
   int top, bot, left, right;
 } Rect;
@@ -132,6 +141,7 @@ typedef struct {
     int set_underline_style;
     int set_underline_color;
     int enable_extended_keys, disable_extended_keys;
+    int set_hyperlink;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -577,6 +587,14 @@ static void update_attrs(UI *ui, int attr_id)
     undercurl = false;
     underdot = false;
     underdash = false;
+  }
+
+  // Insert URI with OSC 8 first before any of the SGR sequences
+  if (data->unibi_ext.set_hyperlink != -1) {
+    if (attrs.uri) {
+      UNIBI_SET_STR_VAR(data->params[0], attrs.uri);
+      unibi_out_ext(ui, data->unibi_ext.set_hyperlink);
+    }
   }
 
   bool has_any_underline = undercurl || underline
@@ -1951,6 +1969,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                || terminfo_is_term_family(term, "iTerm2.app");
   bool alacritty = terminfo_is_term_family(term, "alacritty");
   bool kitty = terminfo_is_term_family(term, "xterm-kitty");
+  bool wezterm = terminfo_is_term_family(term, "wezterm");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
@@ -2082,6 +2101,11 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                                                                   "\x1b[>4;2m");
     data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
                                                                    "\x1b[>4;0m");
+  }
+
+  if (iterm || wezterm) {
+    data->unibi_ext.set_hyperlink = (int)unibi_add_ext_str(ut, "ext.set_hyperlink",
+                                                           "\x1b]8;;%p1%s\x1b\\");
   }
 }
 

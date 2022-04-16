@@ -659,6 +659,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
+  if (opts->uri.type == kObjectTypeString) {
+    decor.uri = opts->uri.data.string.data;
+  } else if (HAS_KEY(opts->uri)) {
+    api_set_error(err, kErrorTypeValidation, "uri is not a String");
+    goto error;
+  }
 
   OPTION_TO_BOOL(decor.virt_lines_above, virt_lines_above, false);
 

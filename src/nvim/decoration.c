@@ -315,6 +315,7 @@ next_mark:
   bool conceal = 0;
   int conceal_char = 0;
   int conceal_attr = 0;
+  char *uri = NULL;
 
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
@@ -348,6 +349,13 @@ next_mark:
         conceal_attr = item.attr_id;
       }
     }
+    if (active && item.decor.uri) {
+      if (item.start_row == state->row && item.start_col == col) {
+        uri = item.decor.uri;
+      } else if (item.end_row == state->row && item.end_col == col) {
+        uri = "";
+      }
+    }
     if ((item.start_row == state->row && item.start_col <= col)
         && kv_size(item.decor.virt_text)
         && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
@@ -364,6 +372,7 @@ next_mark:
   state->conceal = conceal;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
+  state->uri = uri;
   return attr;
 }
 

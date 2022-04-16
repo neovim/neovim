@@ -37,6 +37,8 @@ typedef struct attr_entry {
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
   int hl_blend;
+  char *uri;
+  bool uri_end;
 } HlAttrs;
 
 #define HLATTRS_INIT (HlAttrs) { \
@@ -48,6 +50,7 @@ typedef struct attr_entry {
   .cterm_fg_color = 0, \
   .cterm_bg_color = 0, \
   .hl_blend = -1, \
+  .uri = NULL, \
 }
 
 /// Values for index in highlight_attr[].

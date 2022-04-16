@@ -34,4 +34,6 @@ typedef enum {
 
 typedef struct Decoration Decoration;
 
+typedef struct UiMetadata UiMetadata;
+
 #endif  // NVIM_TYPES_H
