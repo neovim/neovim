@@ -113,7 +113,7 @@ let s:filename_checks = {
     \ 'cobol': ['file.cbl', 'file.cob', 'file.lib'],
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
-    \ 'conf': ['auto.master'],
+    \ 'conf': ['/etc/pacman.conf', 'any/etc/pacman.conf', 'auto.master'],
     \ 'config': ['configure.in', 'configure.ac', '/etc/hostname.file'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
     \ 'cook': ['file.cook'],
@@ -152,7 +152,7 @@ let s:filename_checks = {
     \ 'dnsmasq': ['/etc/dnsmasq.conf', '/etc/dnsmasq.d/file', 'any/etc/dnsmasq.conf', 'any/etc/dnsmasq.d/file'],
     \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile', 'Dockerfile.debian', 'Containerfile.something'],
     \ 'dosbatch': ['file.bat'],
-    \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/pacman.conf', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
+    \ 'dosini': ['.editorconfig', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
@@ -1172,12 +1172,12 @@ func Test_hook_file()
 
   call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook')
   split Xfile.hook
-  call assert_equal('dosini', &filetype)
+  call assert_equal('conf', &filetype)
   bwipe!
 
   call writefile(['not pacman'], 'Xfile.hook')
   split Xfile.hook
-  call assert_notequal('dosini', &filetype)
+  call assert_notequal('conf', &filetype)
   bwipe!
 
   call delete('Xfile.hook')
