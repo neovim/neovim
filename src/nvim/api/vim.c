@@ -2453,12 +2453,12 @@ void nvim_del_user_command(String name, Error *err)
   nvim_buf_del_user_command(-1, name, err);
 }
 
-/// Get the command line text.
+/// Get the command line text (same as `getcmdline()`).
 ///
 /// @param[out] err Error details, if any.
 /// @return Command line text.
 String nvim_get_cmdline(Error *err)
-  FUNC_API_SINCE(9)
+  FUNC_API_SINCE(10)
 {
   String res = STRING_INIT;
 
@@ -2477,7 +2477,7 @@ String nvim_get_cmdline(Error *err)
 /// @param  cmdline New command line text.
 /// @param[out] err Error details, if any.
 void nvim_set_cmdline(String cmdline, Error *err)
-  FUNC_API_SINCE(9)
+  FUNC_API_SINCE(10)
 {
   if (set_cmdline_str(cmdline.data, cmdline.size) != 0) {
     api_set_error(err, kErrorTypeException,
