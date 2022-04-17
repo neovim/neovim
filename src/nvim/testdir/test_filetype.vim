@@ -383,6 +383,7 @@ let s:filename_checks = {
     \ 'omnimark': ['file.xom', 'file.xin'],
     \ 'opam': ['opam', 'file.opam', 'file.opam.template'],
     \ 'openroad': ['file.or'],
+    \ 'openscad': ['file.scad'],
     \ 'ora': ['file.ora'],
     \ 'org': ['file.org', 'file.org_archive'],
     \ 'pamconf': ['/etc/pam.conf', '/etc/pam.d/file', 'any/etc/pam.conf', 'any/etc/pam.d/file'],

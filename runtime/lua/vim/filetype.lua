@@ -436,6 +436,7 @@ local extension = {
   xin = "omnimark",
   opam = "opam",
   ["or"] = "openroad",
+  scad = "openscad",
   ora = "ora",
   org = "org",
   org_archive = "org",
