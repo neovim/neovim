@@ -103,6 +103,11 @@ local extension = {
   cbl = "cobol",
   atg = "coco",
   recipe = "conaryrecipe",
+  hook = function(path, bufnr)
+    if getline(bufnr, 1) == '[Trigger]' then
+      return "conf"
+    end
+  end,
   mklx = "context",
   mkiv = "context",
   mkii = "context",
@@ -903,7 +908,7 @@ local filename = {
   Dockerfile = "dockerfile",
   npmrc = "dosini",
   ["/etc/yum.conf"] = "dosini",
-  ["/etc/pacman.conf"] = "dosini",
+  ["/etc/pacman.conf"] = "conf",
   [".npmrc"] = "dosini",
   [".editorconfig"] = "dosini",
   dune = "dune",
@@ -1182,7 +1187,7 @@ local pattern = {
   [".*/etc/DIR_COLORS"] = "dircolors",
   [".*/etc/dnsmasq%.conf"] = "dnsmasq",
   ["php%.ini%-.*"] = "dosini",
-  [".*/etc/pacman%.conf"] = "dosini",
+  [".*/etc/pacman%.conf"] = "conf",
   [".*/etc/yum%.conf"] = "dosini",
   [".*lvs"] = "dracula",
   [".*lpe"] = "dracula",
