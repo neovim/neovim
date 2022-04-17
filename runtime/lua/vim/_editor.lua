@@ -174,11 +174,11 @@ do
     if vim.fn.getcmdtype() ~= '' then  -- cmdline-mode: paste only 1 line.
       if not got_line1 then
         got_line1 = (#lines > 1)
-        vim.api.nvim_set_option('paste', true)  -- For nvim_input().
-        -- Escape "<" and control characters
-        local line1 = lines[1]:gsub('<', '<lt>'):gsub('(%c)', '\022%1')
-        vim.api.nvim_input(line1)
-        vim.api.nvim_set_option('paste', false)
+        -- Escape control characters
+        local line1 = lines[1]:gsub('(%c)', '\022%1')
+        -- nvim_input() is affected by mappings,
+        -- so use nvim_feedkeys() with "n" flag to ignore mappings.
+        vim.api.nvim_feedkeys(line1, 'n', true)
       end
       return true
     end
