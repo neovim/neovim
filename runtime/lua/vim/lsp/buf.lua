@@ -265,7 +265,7 @@ function M.rename(new_name)
   }
 
   ---@private
-  local function on_confirm(input)
+  local function request_rename(input)
     if not (input and #input > 0) then return end
     local params = util.make_position_params()
     params.newName = input
@@ -280,14 +280,14 @@ function M.rename(new_name)
     end
     if result and result.placeholder then
       opts.default = result.placeholder
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
+      if not new_name then npcall(vim.ui.input, opts, request_rename) end
     elseif result and result.start and result['end'] and
       result.start.line == result['end'].line then
       local line = vfn.getline(result.start.line+1)
       local start_char = result.start.character+1
       local end_char = result['end'].character
       opts.default = string.sub(line, start_char, end_char)
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
+      if not new_name then npcall(vim.ui.input, opts, request_rename) end
     else
       -- fallback to guessing symbol using <cword>
       --
@@ -296,11 +296,23 @@ function M.rename(new_name)
       --
       -- see https://microsoft.github.io/language-server-protocol/specification#textDocument_prepareRename
       opts.default = vfn.expand('<cword>')
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
+      if not new_name then npcall(vim.ui.input, opts, request_rename) end
     end
-    if new_name then on_confirm(new_name) end
+    if new_name then request_rename(new_name) end
   end
-  request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
+
+  -- Only send prepareRename request if all servers attached to the buffer support it
+  local supports_prepare_rename = true
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
+    supports_prepare_rename = client.supports_method('textDocument/prepareRename')
+  end
+
+  if supports_prepare_rename then
+    request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
+  else
+    new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
+    request_rename(new_name)
+  end
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
