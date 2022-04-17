@@ -937,7 +937,7 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                       |nvim_set_client_info()|.
 
 nvim_get_cmdline()                                        *nvim_get_cmdline()*
-                Get the command line text.
+                Get the command line text (same as `getcmdline()`).
 
                 Return: ~
                     Command line text.
