@@ -1806,6 +1806,10 @@ au BufNewFile,BufRead *.sno,*.spt		setf snobol4
 " SNMP MIB files
 au BufNewFile,BufRead *.mib,*.my		setf mib
 
+" Maxima files, upstraem list:
+" https://maxima.sourceforge.io/docs/manual/maxima_71.html#file_005ftype_005fmaxima
+au BufNewFile,BufRead *.mc,*.demo,*.demo,*.dem,*.dm1,*.dm2,*.dm3,*.dmt,*.wxm		setf maxima
+
 " Snort Configuration
 au BufNewFile,BufRead *.hog,snort.conf,vision.conf	setf hog
 au BufNewFile,BufRead *.rules			call dist#ft#FTRules()
