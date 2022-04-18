@@ -3,8 +3,6 @@
 
 // fileio.c: read from and write to a file
 
-// uncrustify:off
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -4912,11 +4910,15 @@ int buf_check_timestamp(buf_T *buf)
   char *mesg = NULL;
   char *mesg2 = "";
   bool helpmesg = false;
+
+  // uncrustify:off
   enum {
     RELOAD_NONE,
     RELOAD_NORMAL,
     RELOAD_DETECT
   } reload = RELOAD_NONE;
+  // uncrustify:on
+
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;

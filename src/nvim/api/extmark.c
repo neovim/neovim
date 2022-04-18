@@ -546,6 +546,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
+  // uncrustify:off
+
   struct {
     const char *name;
     Object *opt;
@@ -558,6 +560,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     { "cursorline_hl_group", &opts->cursorline_hl_group, &decor.cursorline_hl_id },
     { NULL, NULL, NULL },
   };
+
+  // uncrustify:on
 
   for (int j = 0; hls[j].name && hls[j].dest; j++) {
     if (HAS_KEY(*hls[j].opt)) {

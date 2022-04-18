@@ -1,5 +1,3 @@
-// uncrustify:off
-
 #ifndef NVIM_ASSERT_H
 #define NVIM_ASSERT_H
 
@@ -110,6 +108,8 @@
 # define STATIC_ASSERT_STATEMENT STATIC_ASSERT_EXPR
 #endif
 
+// uncrustify:off
+
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 // These can't be used after statements in c89.
@@ -124,6 +124,8 @@
 # define STATIC_ASSERT_EXPR(e, m) \
   ((enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)), }) 0)
 #endif
+
+// uncrustify:on
 
 /// @def STRICT_ADD
 /// @brief Adds (a + b) and stores result in `c`.  Aborts on overflow.

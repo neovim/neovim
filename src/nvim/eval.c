@@ -3972,12 +3972,16 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
         if (op == '*') {
           f1 = f1 * f2;
         } else if (op == '/') {
+          // uncrustify:off
+
           // Division by zero triggers error from AddressSanitizer
           f1 = (f2 == 0 ? (
 #ifdef NAN
               f1 == 0 ? (float_T)NAN :
 #endif
               (f1 > 0 ? (float_T)INFINITY : (float_T)-INFINITY)) : f1 / f2);
+
+          // uncrustify:on
         } else {
           emsg(_("E804: Cannot use '%' with Float"));
           return FAIL;

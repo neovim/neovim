@@ -4317,6 +4317,8 @@ skip:
               lnum -= regmatch.startpos[0].lnum;
             }
 
+            // uncrustify:off
+
 #define PUSH_PREVIEW_LINES() \
   do { \
     if (preview) { \
@@ -4335,6 +4337,8 @@ skip:
       kv_push(preview_lines.subresults, current_match); \
     } \
   } while (0)
+
+            // uncrustify:on
 
             // Push the match to preview_lines.
             PUSH_PREVIEW_LINES();
