@@ -76,6 +76,7 @@
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
@@ -8231,10 +8232,39 @@ static void ex_bang(exarg_T *eap)
 /// ":undo".
 static void ex_undo(exarg_T *eap)
 {
-  if (eap->addr_count == 1) {       // :undo 123
-    undo_time(eap->line2, false, false, true);
-  } else {
-    u_undo(1);
+  if (eap->addr_count != 1) {
+    if (eap->forceit) {
+      u_undo_and_forget(1);         // :undo!
+    } else {
+      u_undo(1);                    // :undo
+    }
+    return;
+  }
+
+  long step = eap->line2;
+
+  if (eap->forceit) {             // undo! 123
+    // change number for "undo!" must be lesser than current change number
+    if (step >= curbuf->b_u_seq_cur) {
+      emsg(_(e_undobang_cannot_redo_or_move_branch));
+      return;
+    }
+    // ensure that target change number is in same branch
+    // while also counting the amount of undoes it'd take to reach target
+    u_header_T *uhp;
+    int count = 0;
+
+    for (uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
+         uhp != NULL && uhp->uh_seq > step;
+         uhp = uhp->uh_next.ptr, ++count) {
+    }
+    if (step != 0 && (uhp == NULL || uhp->uh_seq < step)) {
+      emsg(_(e_undobang_cannot_redo_or_move_branch));
+      return;
+    }
+    u_undo_and_forget(count);
+  } else {                        // :undo 123
+    undo_time(step, false, false, true);
   }
 }
 
