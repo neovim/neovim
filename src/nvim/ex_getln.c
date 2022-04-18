@@ -2604,6 +2604,7 @@ char_u *getexline(int c, void *cookie, int indent, bool do_concat)
 }
 
 bool cmdline_overstrike(void)
+  FUNC_ATTR_PURE
 {
   return ccline.overstrike;
 }
@@ -2611,6 +2612,7 @@ bool cmdline_overstrike(void)
 
 /// Return true if the cursor is at the end of the cmdline.
 bool cmdline_at_end(void)
+  FUNC_ATTR_PURE
 {
   return (ccline.cmdpos >= ccline.cmdlen);
 }

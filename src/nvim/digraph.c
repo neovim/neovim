@@ -1551,6 +1551,7 @@ int get_digraph(bool cmdline)
 /// @return If no match, return "char2". If "meta_char" is true and "char1"
 //          is a space, return "char2" | 0x80.
 static int getexactdigraph(int char1, int char2, bool meta_char)
+  FUNC_ATTR_PURE
 {
   int retval = 0;
 
@@ -1601,6 +1602,7 @@ static int getexactdigraph(int char1, int char2, bool meta_char)
 ///
 /// @return The digraph.
 int digraph_get(int char1, int char2, bool meta_char)
+  FUNC_ATTR_PURE
 {
   int retval;
 

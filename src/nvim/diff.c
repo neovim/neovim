@@ -883,6 +883,7 @@ theend:
 /// diff will be used anyway.
 ///
 int diff_internal(void)
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
@@ -2250,6 +2251,7 @@ bool diffopt_horizontal(void)
 
 // Return true if 'diffopt' contains "hiddenoff".
 bool diffopt_hiddenoff(void)
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_HIDDEN_OFF) != 0;
 }
