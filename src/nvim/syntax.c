@@ -5802,8 +5802,8 @@ char_u *get_syntax_name(expand_T *xp, int idx)
 int syn_get_id(win_T *wp, long lnum, colnr_T col, int trans, bool *spellp, int keep_state)
 {
   // When the position is not after the current position and in the same
-  // line of the same buffer, need to restart parsing.
-  if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
+  // line of the same window with the same buffer, need to restart parsing.
+  if (wp != syn_win || wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
     syntax_start(wp, lnum);
   } else if (col > current_col) {
     // next_match may not be correct when moving around, e.g. with the

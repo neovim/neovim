@@ -109,4 +109,17 @@ describe('quickfix', function()
     ]])
     eq({0, 6, 1, 0, 1}, funcs.getcurpos())
   end)
+
+  it('BufAdd does not cause E16 when reusing quickfix buffer #18135', function()
+    local file = file_base .. '_reuse_qfbuf_BufAdd'
+    write_file(file, ('\n'):rep(100) .. 'foo')
+    source([[
+      set grepprg=internal
+      autocmd BufAdd * call and(0, 0)
+      autocmd QuickFixCmdPost grep ++nested cclose | cwindow
+    ]])
+    command('grep foo ' .. file)
+    command('grep foo ' .. file)
+    os.remove(file)
+  end)
 end)
