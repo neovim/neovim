@@ -1913,6 +1913,48 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                  1-based index of `item` within `items`. `nil`
                                  if the user aborted the dialog.
 
+select_many({items}, {opts}, {on_choices})              *vim.ui.select_many()*
+                Prompts the user to pick one or multiple items from a
+                collection of entries
+
+                Example: >
+
+                 vim.ui.select_many({ 'cheese', 'pepperoni', 'anchovies' }, {
+                     prompt = 'Select your toppings:',
+                     format_item = function(item)
+                         return "some " .. item
+                     end,
+                 }, function(choices)
+                     if choices then
+                         for _, item in ipairs(choices) do
+                             -- add topping to pizza or whatever
+                         end
+                     end
+                 end)
+<
+
+                Parameters: ~
+                    {items}       table Arbitrary items
+                    {opts}        table Additional options
+                                  • prompt (string|nil) Text of the prompt.
+                                    Defaults to `Select from list or press
+                                    return to confirm:`
+                                  • format_item (function item -> text)
+                                    Function to format an individual item from
+                                    `items`. Defaults to `tostring`.
+                                  • kind (string|nil) Arbitrary hint string
+                                    indicating the item shape. Plugins
+                                    reimplementing `vim.ui.select_many` may
+                                    wish to use this to infer the structure or
+                                    semantics of `items`, or the context in
+                                    which select_many() was called.
+                    {on_choices}  function ((chosen_items|nil, indexes|nil) ->
+                                  ()) Called once the user made a choice.
+                                  `indexes` is a list of 1-based indexes of
+                                  `chosen_items` within `items`. `nil` if the
+                                  user aborted the dialog without selecting
+                                  any items.
+
 
 ==============================================================================
 Lua module: filetype                                            *lua-filetype*

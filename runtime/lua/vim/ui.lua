@@ -55,6 +55,90 @@ function M.select(items, opts, on_choice)
   end
 end
 
+--- Prompts the user to pick one or multiple items from a collection of entries
+---
+---@param items table Arbitrary items
+---@param opts table Additional options
+---     - prompt (string|nil)
+---               Text of the prompt. Defaults to `Select from list or press return to confirm: `
+---     - format_item (function item -> text)
+---               Function to format an
+---               individual item from `items`. Defaults to `tostring`.
+---     - kind (string|nil)
+---               Arbitrary hint string indicating the item shape.
+---               Plugins reimplementing `vim.ui.select_many` may wish to
+---               use this to infer the structure or semantics of
+---               `items`, or the context in which select_many() was called.
+---@param on_choices function ((chosen_items|nil, indexes|nil) -> ())
+---               Called once the user made a choice.
+---               `indexes` is a list of 1-based indexes of `chosen_items` within `items`.
+---               `nil` if the user aborted the dialog without selecting any items.
+---
+---
+--- Example:
+--- <pre>
+--- vim.ui.select_many({ 'cheese', 'pepperoni', 'anchovies' }, {
+---     prompt = 'Select your toppings:',
+---     format_item = function(item)
+---         return "some " .. item
+---     end,
+--- }, function(choices)
+---     if choices then
+---         for _, item in ipairs(choices) do
+---             -- add topping to pizza or whatever
+---         end
+---     end
+--- end)
+--- </pre>
+function M.select_many(items, opts, on_choices)
+  vim.validate {
+    items = { items, 'table', false },
+    on_choices = { on_choices, 'function', false },
+  }
+  opts = opts or {}
+  local selected = {}
+  local selected_indexes = {}
+  local choices = {opts.prompt or 'Select from list or press return to confirm: '}
+  local format_item = opts.format_item or tostring
+  for i, item in pairs(items) do
+    table.insert(choices, string.format('%d: %s', i, format_item(item)))
+  end
+  while true do
+    local chosen = vim.fn.inputlist(choices)
+    if chosen == 0 then
+      break
+    else
+      if vim.tbl_contains(selected, items[chosen]) then
+        selected[chosen] = nil
+        selected_indexes[chosen] = nil
+
+        choices[chosen+1] = choices[chosen+1]:sub(3, #choices[chosen+1])
+      else
+        selected[chosen] = items[chosen]
+        selected_indexes[chosen] = chosen
+        choices[chosen+1] = '* ' .. choices[chosen+1]
+      end
+      vim.cmd('redraw')
+    end
+  end
+  if #selected > 0 then
+    -- Reconstruct tables with table.insert to ensure a list-like table,
+    -- e.g. selected could end up like { [1] = 'choice 1', [3] = 'choice 3' }
+    -- and this fixes that.
+    --
+    -- TODO(smolck): There's probably a better way to do this?
+    local s2 = {}
+    local s2_indexes = {}
+    for i, item in pairs(selected) do
+      table.insert(s2, item)
+      table.insert(s2_indexes, selected_indexes[i])
+    end
+    on_choices(s2, s2_indexes)
+  else
+    on_choices(nil, nil)
+  end
+end
+
 --- Prompts the user for input
 ---
 ---@param opts table Additional options. See |input()|
