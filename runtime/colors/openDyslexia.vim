@@ -105,7 +105,15 @@ hi link goDeclType		Type
 hi link goBuiltins		Constant
 hi link goDirective		Constant
 
-hi link rustCommentLine		Comment
+hi link rustCommentLine		        Comment
+hi link rustCommentLineDoc        Comment
+hi link rustCommentLineDocLeader  Comment
+hi link rustCommentLineDocError   Comment
+hi link rustCommentBlock          Comment
+hi link rustCommentBlockDoc       Comment
+hi link rustCommentBlockDocStar   Comment
+hi link rustCommentBlockDocError  Comment
+hi link rustCommentDocCodeFence   Comment
 
 " * ruby Syntax *
 hi rubyClass 	   		ctermfg=197 	ctermbg=NONE	 cterm=NONE 	guifg=#ff005f 	guibg=NONE 	gui=NONE
@@ -172,16 +180,6 @@ hi cssClassName 		ctermfg=148 	ctermbg=NONE	 cterm=NONE 	guifg=#afd700 	guibg=NO
 hi cssValueLength 		ctermfg=141 	ctermbg=NONE	 cterm=NONE 	guifg=#af87ff 	guibg=NONE 	gui=NONE
 hi cssCommonAttr 		ctermfg=81 	ctermbg=NONE	 cterm=NONE 	guifg=#5fd7ff 	guibg=NONE 	gui=NONE
 hi cssBraces 			ctermfg=NONE 	ctermbg=NONE	 cterm=NONE 	guifg=NONE 	guibg=NONE 	gui=NONE
-
-" * rust syntax *
-hi  rustCommentLineDoc 		ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentLineDocLeader	ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentLineDocError	ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentBlock		ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentBlockDoc		ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentBlockDocStar	ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentBlockDocError 	ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
-hi rustCommentDocCodeFence	ctermfg=102      ctermbg=NONE     cterm=NONE     guifg=#878787   guibg=NONE      gui=NONE
 
 " * go syntax "
 hi goFunction			ctermfg=42      ctermbg=NONE     cterm=NONE     guifg=#00d787   guibg=NONE      gui=NONE
