@@ -277,24 +277,6 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
-  it('preserves NULs', function()
-    -- Make a file with NULs in it.
-    local filename = helpers.tmpname()
-    write_file(filename, "abc\0def\n")
-
-    nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
-    eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
-    eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, 0}}, next_msg())
-    os.remove(filename)
-
-    -- jobsend() preserves NULs.
-    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    nvim('command', [[call jobsend(j, ["123\n456",""])]])
-    eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
-    nvim('command', "call jobstop(j)")
-  end)
-
   it("will not buffer data if it doesn't end in newlines", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
@@ -588,47 +570,6 @@ describe('jobs', function()
       end
     end
     eq(expected, received)
-  end)
-
-  it('jobstart() works with partial functions', function()
-    source([[
-    function PrintArgs(a1, a2, id, data, event)
-      " Windows: remove ^M
-      let normalized = map(a:data, 'substitute(v:val, "\r", "", "g")')
-      call rpcnotify(g:channel, '1', a:a1,  a:a2, normalized, a:event)
-    endfunction
-    let Callback = function('PrintArgs', ["foo", "bar"])
-    let g:job_opts = {'on_stdout': Callback}
-    call jobstart('echo some text', g:job_opts)
-    ]])
-    expect_msg_seq(
-      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
-      },
-      -- Alternative sequence:
-      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
-        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
-      }
-    )
-  end)
-
-  it('jobstart() works with closures', function()
-    source([[
-      fun! MkFun()
-          let a1 = 'foo'
-          let a2 = 'bar'
-          return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
-      endfun
-      let g:job_opts = {'on_stdout': MkFun()}
-      call jobstart('echo some text', g:job_opts)
-    ]])
-    expect_msg_seq(
-      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
-      },
-      -- Alternative sequence:
-      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
-        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
-      }
-    )
   end)
 
   it('jobstart() works when closure passed directly to `jobstart`', function()
@@ -1051,6 +992,152 @@ describe('jobs', function()
       eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
       command('call jobstop(' .. other_jobid .. ')')
     end)
+  end)
+end)
+
+describe('jobs', function()
+  local channel
+
+  before_each(function()
+    clear()
+
+    channel = nvim('get_api_info')[1]
+    nvim('set_var', 'channel', channel)
+    source([[
+    function! Normalize(data) abort
+      " Windows: remove ^M and term escape sequences
+      return type([]) == type(a:data)
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        \ : a:data
+    endfunction
+    function! OnEvent(id, data, event) dict
+      let userdata = get(self, 'user')
+      let data     = Normalize(a:data)
+      call rpcnotify(g:channel, a:event, userdata, data)
+    endfunction
+    let g:job_opts = {
+    \ 'on_stdout': function('OnEvent'),
+    \ 'on_exit': function('OnEvent'),
+    \ 'user': 0
+    \ }
+    ]])
+  end)
+
+  it('preserves NULs', function()
+    -- Make a file with NULs in it.
+    local filename = helpers.tmpname()
+    write_file(filename, "abc\0def\n")
+
+    nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
+    eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
+    eq({'notification', 'exit', {0, 0}}, next_msg())
+    os.remove(filename)
+
+    -- jobsend() preserves NULs.
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    nvim('command', [[call jobsend(j, ["123\n456",""])]])
+    eq({'notification', 'stdout', {0, {'123\n456', ''}}}, next_msg())
+    nvim('command', "call jobstop(j)")
+  end)
+end)
+
+describe('jobs', function()
+  local channel
+
+  before_each(function()
+    clear()
+
+    channel = nvim('get_api_info')[1]
+    nvim('set_var', 'channel', channel)
+    source([[
+    function! Normalize(data) abort
+      " Windows: remove ^M and term escape sequences
+      return type([]) == type(a:data)
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        \ : a:data
+    endfunction
+    function! OnEvent(id, data, event) dict
+      let userdata = get(self, 'user')
+      let data     = Normalize(a:data)
+      call rpcnotify(g:channel, a:event, userdata, data)
+    endfunction
+    let g:job_opts = {
+    \ 'on_stdout': function('OnEvent'),
+    \ 'on_exit': function('OnEvent'),
+    \ 'user': 0
+    \ }
+    ]])
+  end)
+
+  it('jobstart() works with partial functions', function()
+    source([[
+    function PrintArgs(a1, a2, id, data, event)
+      " Windows: remove ^M
+      let normalized = map(a:data, 'substitute(v:val, "\r", "", "g")')
+      call rpcnotify(g:channel, '1', a:a1,  a:a2, normalized, a:event)
+    endfunction
+    let Callback = function('PrintArgs', ["foo", "bar"])
+    let g:job_opts = {'on_stdout': Callback}
+    call jobstart('echo some text', g:job_opts)
+    ]])
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      }
+    )
+  end)
+end)
+
+describe('jobs', function()
+  local channel
+
+  before_each(function()
+    clear()
+
+    channel = nvim('get_api_info')[1]
+    nvim('set_var', 'channel', channel)
+    source([[
+    function! Normalize(data) abort
+      " Windows: remove ^M and term escape sequences
+      return type([]) == type(a:data)
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
+        \ : a:data
+    endfunction
+    function! OnEvent(id, data, event) dict
+      let userdata = get(self, 'user')
+      let data     = Normalize(a:data)
+      call rpcnotify(g:channel, a:event, userdata, data)
+    endfunction
+    let g:job_opts = {
+    \ 'on_stdout': function('OnEvent'),
+    \ 'on_exit': function('OnEvent'),
+    \ 'user': 0
+    \ }
+    ]])
+  end)
+
+  it('jobstart() works with closures', function()
+    source([[
+      fun! MkFun()
+          let a1 = 'foo'
+          let a2 = 'bar'
+          return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
+      endfun
+      let g:job_opts = {'on_stdout': MkFun()}
+      call jobstart('echo some text', g:job_opts)
+    ]])
+    expect_msg_seq(
+      { {'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}},
+      },
+      -- Alternative sequence:
+      { {'notification', '1', {'foo', 'bar', {'some text'}, 'stdout'}},
+        {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
+      }
+    )
   end)
 end)
 
