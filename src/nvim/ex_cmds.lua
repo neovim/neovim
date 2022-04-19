@@ -2947,7 +2947,7 @@ module.cmds = {
   },
   {
     command='undo',
-    flags=bit.bor(RANGE, COUNT, ZEROR, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, RANGE, COUNT, ZEROR, TRLBAR, CMDWIN),
     addr_type='ADDR_OTHER',
     func='ex_undo',
   },
