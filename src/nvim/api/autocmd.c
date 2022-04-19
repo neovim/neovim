@@ -346,8 +346,8 @@ cleanup:
 ///     })
 /// </pre>
 ///
-/// Lua functions receive a table with information about the autocmd event as argument, if you're
-/// using a function which already takes another optional parameter, you have to wrap the function
+/// Lua functions receive a table with information about the autocmd event as an argument. To use
+/// a function which itself accepts another (optional) parameter, wrap the function
 /// in a lambda:
 ///
 /// <pre>

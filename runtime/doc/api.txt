@@ -3222,9 +3222,9 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
 <
 
                 Lua functions receive a table with information about the
-                autocmd event as argument, if you're using a function which
-                already takes another optional parameter, you have to wrap the
-                function in a lambda:
+                autocmd event as an argument. To use a function which itself
+                accepts another (optional) parameter, wrap the function in a
+                lambda:
 >
     -- Lua function with an optional parameter.
     -- The autocmd callback would pass a table as argument but this
