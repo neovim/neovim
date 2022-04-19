@@ -55,15 +55,14 @@ function M.select(items, opts, on_choice)
   end
 end
 
---- Prompts the user to pick one or multiple items from a collection of entries
+--- Prompts the user to select one or more items from a collection of entries
 ---
 ---@param items table Arbitrary items
 ---@param opts table Additional options
 ---     - prompt (string|nil)
----               Text of the prompt. Defaults to `Select from list or press return to confirm: `
+---               Text of the prompt. Defaults to `Select from list or <Enter> to confirm: `
 ---     - format_item (function item -> text)
----               Function to format an
----               individual item from `items`. Defaults to `tostring`.
+---               Function to format an individual item from `items`. Defaults to `tostring`.
 ---     - kind (string|nil)
 ---               Arbitrary hint string indicating the item shape.
 ---               Plugins reimplementing `vim.ui.select_many` may wish to
@@ -77,16 +76,11 @@ end
 ---
 --- Example:
 --- <pre>
---- vim.ui.select_many({ 'cheese', 'pepperoni', 'anchovies' }, {
----     prompt = 'Select your toppings:',
----     format_item = function(item)
----         return "some " .. item
----     end,
+--- vim.ui.select_many({ 'menu', 'menuone', 'longest', 'preview', 'noinsert', 'noselect' }, {
+---     prompt = "Select values for 'completeopt':",
 --- }, function(choices)
----     if choices then
----         for _, item in ipairs(choices) do
----             -- add topping to pizza or whatever
----         end
+---     if choices and #choices > 0 then
+---         vim.opt.completeopt = choices
 ---     end
 --- end)
 --- </pre>
@@ -98,7 +92,7 @@ function M.select_many(items, opts, on_choices)
   opts = opts or {}
   local selected = {}
   local selected_indexes = {}
-  local choices = {opts.prompt or 'Select from list or press return to confirm: '}
+  local choices = {opts.prompt or 'Select from list or <Enter> to confirm: '}
   local format_item = opts.format_item or tostring
   for i, item in pairs(items) do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))

@@ -1914,21 +1914,16 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                  if the user aborted the dialog.
 
 select_many({items}, {opts}, {on_choices})              *vim.ui.select_many()*
-                Prompts the user to pick one or multiple items from a
-                collection of entries
+                Prompts the user to select one or more items from a collection
+                of entries
 
                 Example: >
 
-                 vim.ui.select_many({ 'cheese', 'pepperoni', 'anchovies' }, {
-                     prompt = 'Select your toppings:',
-                     format_item = function(item)
-                         return "some " .. item
-                     end,
+                 vim.ui.select_many({ 'menu', 'menuone', 'longest', 'preview', 'noinsert', 'noselect' }, {
+                     prompt = "Select values for 'completeopt':",
                  }, function(choices)
-                     if choices then
-                         for _, item in ipairs(choices) do
-                             -- add topping to pizza or whatever
-                         end
+                     if choices and #choices > 0 then
+                         vim.opt.completeopt = choices
                      end
                  end)
 <
@@ -1937,8 +1932,8 @@ select_many({items}, {opts}, {on_choices})              *vim.ui.select_many()*
                     {items}       table Arbitrary items
                     {opts}        table Additional options
                                   • prompt (string|nil) Text of the prompt.
-                                    Defaults to `Select from list or press
-                                    return to confirm:`
+                                    Defaults to `Select from list or <Enter>
+                                    to confirm:`
                                   • format_item (function item -> text)
                                     Function to format an individual item from
                                     `items`. Defaults to `tostring`.
