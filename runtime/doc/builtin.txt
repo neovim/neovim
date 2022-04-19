@@ -1809,7 +1809,7 @@ execute({command} [, {silent}])				*execute()*
 		`:redir`, error messages are dropped.
 
 		To get a list of lines use |split()| on the result: >
-			split(execute('args'), "\n")
+			execute('args')->split("\n")
 
 <		This function is not available in the |sandbox|.
 		Note: If nested, an outer execute() will not observe output of

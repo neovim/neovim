@@ -583,7 +583,7 @@ attack or other people reading your file).  When Vim exits the directory and
 all files in it are deleted.  When Vim has the setuid bit set this may cause
 problems, the temp file is owned by the setuid user but the filter command
 probably runs as the original user.
-Directory for temporary files is created in the first suitable directory of:
+Directory for temporary files is created in the first possible directory of:
 	Unix:    $TMPDIR, /tmp, current-dir, $HOME.
 	Windows: $TMPDIR, $TMP, $TEMP, $USERPROFILE, current-dir.
 

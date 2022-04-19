@@ -1,0 +1,148 @@
+; vim: set ft=krl :
+
+; START_INDENT
+
+def One()
+int i
+If i==1 then
+While i>=1
+For i=1 to 5 step 2
+Loop
+i = i+1
+EndLoop
+EndFor
+EndWhile
+Else
+Repeat
+Switch i
+Case 1
+Skip 123
+i = i+1
+EndSkip 123
+Spline with $acc=100, $vel.cp=3
+slin {x 100}
+scirc {x 110, y 110}, {x 120, y 90}
+slin {x 200} c_dis
+Time_Block Start
+slin {x 300} c_dis
+Time_Block Part = 22.2
+slin {y 400} c_dis
+Time_Block Part = 33.3
+Time_Block End = 10
+slin {y 200} c_dis
+Const_Vel Start +100 OnStart
+slin {y 300} c_dis
+slin {x 100}
+Const_Vel End -5.5
+slin {y 200} c_dis
+EndSpline
+Case 2,3
+PTP_Spline with $acc=100, $vel.ptp=100
+sptp {a1 0} c_ptp
+sptp {a1 90}
+EndSpline c_spl
+Default
+i = i+1
+EndSwitch
+Continue
+Until False
+EndIf
+end
+
+DEF Two()
+int i
+END
+
+global def Three()
+int i
+end
+
+GLOBAL DEF Four()
+int i
+END
+
+Global Def Five()
+int i
+End
+
+deffct bool fOne()
+int i
+endfct
+
+DEFFCT bool fTwo()
+int i
+ENDFCT
+
+global deffct bool fThree()
+int i
+endfct
+
+GLOBAL DEFFCT bool fFour()
+int i
+ENDFCT
+
+Global DefFct bool fFive()
+int i
+EndFct
+
+DefDat datfile()
+global int i=1
+; don't indent column 1 comments unless g:krlCommentIndent is set
+;  global int o=2
+EndDat
+
+; END_INDENT
+
+; START_INDENT
+; INDENT_EXE let g:krlSpaceIndent = 0
+; INDENT_EXE set shiftwidth=4
+
+def bla()
+int i
+end
+
+; END_INDENT
+
+; START_INDENT
+; INDENT_EXE let g:krlCommentIndent = 1
+def bla()
+; indent this first column comment because of g:krlCommentIndent=1
+end
+; END_INDENT
+
+; START_INDENT
+; INDENT_EXE let g:krlIndentBetweenDef = 0
+def bla()
+int i ; don't indent this line because of g:krlIndentBetweenDef=0
+end
+; END_INDENT
+
+; START_INDENT
+; INDENT_AT  this-line
+def Some()
+int f
+if true then
+f = 1 ; this-line
+endif
+end
+; END_INDENT
+
+; START_INDENT
+; INDENT_NEXT  next-line
+def Some()
+  int i
+     ; next-line
+i = 1 ; should get indent of line 'int i' above
+end
+; END_INDENT
+
+; START_INDENT
+; INDENT_PREV  prev-line
+def Some()
+int f
+if true then
+f = 1
+; prev-line
+endif
+end
+; END_INDENT
