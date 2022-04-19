@@ -4302,7 +4302,7 @@ parentheses can be cut out from |v:exception| with the ":substitute" command.
 	:
 	:try
 	:
-	:  " something with arithmetics and I/O
+	:  " something with arithmetic and I/O
 	:
 	:catch /^EXCEPT:MATHERR:RANGE/
 	:  let function = substitute(v:exception, '.*(\(\a\+\)).*', '\1', "")
