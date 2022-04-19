@@ -13,6 +13,11 @@ if exists("syntax_on")
 	syntax reset	
 endif
 
+" options to choose font, if neither is selected, gui font goes to vim default
+"set guifont=OpenDyslexic
+"set guifont=Verdana
+
+
 let colors_name = "openDyslexia"
 
 " General colors
