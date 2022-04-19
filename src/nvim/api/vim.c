@@ -1601,12 +1601,13 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 ///               or "!" for |:map!|, or empty string for |:map|.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  Optional parameters map. Accepts all |:map-arguments|
-///               as keys excluding |<buffer>| but including |noremap| and "desc".
-///               "desc" can be used to give a description to keymap.
-///               When called from Lua, also accepts a "callback" key that takes
-///               a Lua function to call when the mapping is executed.
-///               Values are Booleans. Unknown key is an error.
+/// @param  opts  Optional parameters map: keys are |:map-arguments|, values
+///               are booleans (default false). Accepts all |:map-arguments| as
+///               keys excluding |<buffer>| but including |noremap| and "desc".
+///               Unknown key is an error. "desc" can be used to give a
+///               description to the mapping. When called from Lua, also accepts a
+///               "callback" key that takes a Lua function to call when the
+///               mapping is executed.
 /// @param[out]   err   Error details, if any.
 void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, Dict(keymap) *opts,
                      Error *err)
