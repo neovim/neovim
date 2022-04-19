@@ -1469,8 +1469,14 @@ int vgetc(void)
     mouse_row = old_mouse_row;
     mouse_col = old_mouse_col;
   } else {
+    // number of characters recorded from the last vgetc() call
+    static size_t last_vgetc_recorded_len = 0;
+
     mod_mask = 0;
-    last_recorded_len = 0;
+
+    // last_recorded_len can be larger than last_vgetc_recorded_len
+    // if peeking records more
+    last_recorded_len -= last_vgetc_recorded_len;
 
     for (;;) {                 // this is done twice if there are modifiers
       bool did_inc = false;
@@ -1590,11 +1596,19 @@ int vgetc(void)
         c = utf_ptr2char(buf);
       }
 
-      if ((mod_mask & MOD_MASK_CTRL) && (c >= '?' && c <= '_')) {
-        c = Ctrl_chr(c);
-        mod_mask &= ~MOD_MASK_CTRL;
-        if (c == 0) {  // <C-@> is <Nul>
-          c = K_ZERO;
+      // A modifier was not used for a mapping, apply it to ASCII
+      // keys.  Shift would already have been applied.
+      if (mod_mask & MOD_MASK_CTRL) {
+        if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
+          c &= 0x1f;
+          mod_mask &= ~MOD_MASK_CTRL;
+          if (c == 0) {
+            c = K_ZERO;
+          }
+        } else if (c == '6') {
+          // CTRL-6 is equivalent to CTRL-^
+          c = 0x1e;
+          mod_mask &= ~MOD_MASK_CTRL;
         }
       }
 
@@ -1613,6 +1627,8 @@ int vgetc(void)
 
       break;
     }
+
+    last_vgetc_recorded_len = last_recorded_len;
   }
 
   /*

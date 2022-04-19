@@ -921,7 +921,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Note that environment variables are not expanded.  If you want to use
 	$HOME you must expand it explicitly, e.g.: >
-		:let backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
+		:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 
 <	Note that the default also makes sure that "crontab -e" works (when a
 	backup would be made by renaming the original file crontab won't see
@@ -1288,7 +1288,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	matter, include the keyword both the uppercase and lowercase:
 	"if,If,IF".
 
-						*'clipboard'* *'cb'*
+						*'cinscopedecls'* *'cinsd'*
+'cinscopedecls' 'cinsd'	string	(default "public,protected,private")
+			local to buffer
+			{not available when compiled without the |+cindent|
+			feature}
+	Keywords that are interpreted as a C++ scope declaration by |cino-g|.
+	Useful e.g. for working with the Qt framework that defines additional
+	scope declarations "signals", "public slots" and "private slots": >
+		set cinscopedecls+=signals,public\ slots,private\ slots
+
+<						*'clipboard'* *'cb'*
 'clipboard' 'cb'	string	(default "")
 			global
 	This option is a list of comma-separated names.
@@ -3166,8 +3176,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'hlsearch' 'hls'	boolean	(default on)
 			global
 	When there is a previous search pattern, highlight all its matches.
-	The |hl-Search| highlight group determines the highlighting. Note that
-	only the matching text is highlighted, any offsets are not applied.
+	The |hl-Search| highlight group determines the highlighting for all
+	matches not under the cursor while the |hl-CurSearch| highlight group
+	(if defined) determines the highlighting for the match under the
+	cursor. If |hl-CurSearch| is not defined, then |hl-Search| is used for
+	both. Note that only the matching text is highlighted, any offsets
+	are not applied.
 	See also: 'incsearch' and |:match|.
 	When you get bored looking at the highlighted matches, you can turn it
 	off with |:nohlsearch|.  This does not change the option value, as

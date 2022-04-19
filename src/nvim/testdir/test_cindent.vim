@@ -5311,6 +5311,49 @@ func Test_cindent_case()
   bwipe!
 endfunc
 
+func Test_cindent_scopedecls()
+  new
+  setl cindent ts=4 sw=4
+  setl cino=g0
+  setl cinsd+=public\ slots,signals
+
+  let code =<< trim [CODE]
+  class Foo
+  {
+  public:
+  virtual void foo() = 0;
+  public slots:
+  void onBar();
+  signals:
+  void baz();
+  private:
+  int x;
+  };
+  [CODE]
+
+  call append(0, code)
+  normal gg
+  normal ]]=][
+
+  let expected =<< trim [CODE]
+  class Foo
+  {
+  public:
+	virtual void foo() = 0;
+  public slots:
+	void onBar();
+  signals:
+	void baz();
+  private:
+	int x;
+  };
+
+  [CODE]
+
+  call assert_equal(expected, getline(1, '$'))
+  enew! | close
+endfunc
+
 func Test_cindent_pragma()
   new
   setl cindent ts=4 sw=4

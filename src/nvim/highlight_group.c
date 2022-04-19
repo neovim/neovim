@@ -446,7 +446,7 @@ const char *const highlight_init_cmdline[] = {
 
   "default link NvimInvalidSpacing ErrorMsg",
 
-  // Not actually invalid, but we highlight user that he is doing something
+  // Not actually invalid, but we show the user that they are doing something
   // wrong.
   "default link NvimDoubleQuotedUnknownEscape NvimInvalidValue",
   NULL,
@@ -1927,7 +1927,7 @@ void highlight_changed(void)
     }
 
     highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
-                                         hlf == HLF_INACTIVE);
+                                         (hlf == HLF_INACTIVE || hlf == HLF_LC));
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {

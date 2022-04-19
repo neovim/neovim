@@ -311,8 +311,7 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
-  // Enable extended keys (also known as 'modifyOtherKeys' or CSI u). On terminals that don't
-  // support this, this sequence is ignored.
+  // Enable extended keys (also known as 'modifyOtherKeys' or CSI u)
   unibi_out_ext(ui, data->unibi_ext.enable_extended_keys);
 
   int ret;
@@ -2075,13 +2074,15 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                                                                  "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
   }
 
-  if (!kitty) {
-    // Kitty does not support these sequences; it only supports it's own CSI > 1 u which enables the
-    // Kitty keyboard protocol
-    data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
-                                                                  "\x1b[>4;2m");
-    data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
-                                                                   "\x1b[>4;0m");
+  data->unibi_ext.enable_extended_keys = unibi_find_ext_str(ut, "Eneks");
+  data->unibi_ext.disable_extended_keys = unibi_find_ext_str(ut, "Dseks");
+  if (data->unibi_ext.enable_extended_keys == -1) {
+    if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
+      data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
+                                                                    "\x1b[>4;2m");
+      data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
+                                                                     "\x1b[>4m");
+    }
   }
 }
 

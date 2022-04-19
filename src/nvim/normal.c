@@ -481,7 +481,7 @@ static void normal_prepare(NormalState *s)
   if (finish_op != c) {
     ui_cursor_shape();  // may show different cursor shape
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   // When not finishing an operator and no register name typed, reset the count.
   if (!finish_op && !s->oa.regname) {
@@ -920,7 +920,7 @@ normal_end:
   // Reset finish_op, in case it was set
   s->c = finish_op;
   finish_op = false;
-  trigger_modechanged();
+  may_trigger_modechanged();
   // Redraw the cursor with another shape, if we were in Operator-pending
   // mode or did a replace command.
   if (s->c || s->ca.cmdchar == 'r') {
@@ -959,7 +959,7 @@ normal_end:
     if (restart_VIsual_select == 1) {
       VIsual_select = true;
       VIsual_select_reg = 0;
-      trigger_modechanged();
+      may_trigger_modechanged();
       showmode();
       restart_VIsual_select = 0;
     }
@@ -1223,10 +1223,9 @@ static void normal_check_interrupt(NormalState *s)
 
 static void normal_check_window_scrolled(NormalState *s)
 {
-  // Trigger Scroll if the viewport changed.
-  if (!finish_op && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
+  if (!finish_op) {
+    // Trigger Scroll if the viewport changed.
+    may_trigger_winscrolled();
   }
 }
 
@@ -1353,9 +1352,10 @@ static int normal_check(VimState *state)
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
   } else if (do_redraw || stuff_empty()) {
-    // Need to make sure w_topline and w_leftcol are correct before
-    // normal_check_window_scrolled() is called.
+    // Ensure curwin->w_topline and curwin->w_leftcol are up to date
+    // before triggering a WinScrolled autocommand.
     update_topline(curwin);
+    validate_cursor();
 
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
@@ -2299,7 +2299,7 @@ void end_visual_mode(void)
   may_clear_cmdline();
 
   adjust_cursor_eol();
-  trigger_modechanged();
+  may_trigger_modechanged();
 }
 
 /*
@@ -4113,7 +4113,7 @@ static void nv_ctrlg(cmdarg_T *cap)
 {
   if (VIsual_active) {  // toggle Selection/Visual mode
     VIsual_select = !VIsual_select;
-    trigger_modechanged();
+    may_trigger_modechanged();
     showmode();
   } else if (!checkclearop(cap->oap)) {
     // print full name if count given or :cd used
@@ -4157,7 +4157,7 @@ static void nv_ctrlo(cmdarg_T *cap)
 {
   if (VIsual_active && VIsual_select) {
     VIsual_select = false;
-    trigger_modechanged();
+    may_trigger_modechanged();
     showmode();
     restart_VIsual_select = 2;          // restart Select mode later
   } else {
@@ -4533,7 +4533,7 @@ static void nv_scroll(cmdarg_T *cap)
       validate_botline(curwin);  // make sure w_empty_rows is valid
       half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
-        // Count half he number of filler lines to be "below this
+        // Count half the number of filler lines to be "below this
         // line" and half to be "above the next line".
         if (n > 0 && used + win_get_fill(curwin, curwin->w_topline + n) / 2 >= half) {
           n--;
@@ -5945,7 +5945,7 @@ static void nv_visual(cmdarg_T *cap)
                                               //           or char/line mode
       VIsual_mode = cap->cmdchar;
       showmode();
-      trigger_modechanged();
+      may_trigger_modechanged();
     }
     redraw_curbuf_later(INVERTED);          // update the inversion
   } else {                // start Visual mode
@@ -6056,7 +6056,7 @@ static void n_start_visual_mode(int c)
 
   foldAdjustVisual();
 
-  trigger_modechanged();
+  may_trigger_modechanged();
   setmouse();
   // Check for redraw after changing the state.
   conceal_check_cursor_line();

@@ -7,7 +7,9 @@ local nvim_dir = helpers.nvim_dir
 local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
-  nvim('set_var', 'term_data', data)
+  -- A string containing NUL bytes is not converted to a Blob when
+  -- calling nvim_set_var() API, so convert it using Lua instead.
+  nvim('exec_lua', 'vim.g.term_data = ...', {data})
   nvim('command', 'call jobsend(b:terminal_job_id, term_data)')
 end
 

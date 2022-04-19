@@ -140,12 +140,12 @@ func Test_getcharpos()
   call assert_fails('call getcharpos({})', 'E731:')
   call assert_equal([0, 0, 0, 0], getcharpos(0))
   new
-  call setline(1, ['', "01\tà4è678", 'Ⅵ', '012345678'])
+  call setline(1, ['', "01\tà4è678", 'Ⅵ', '012345678', ' │  x'])
 
   " Test for '.' and '$'
   normal 1G
   call assert_equal([0, 1, 1, 0], getcharpos('.'))
-  call assert_equal([0, 4, 1, 0], getcharpos('$'))
+  call assert_equal([0, 5, 1, 0], getcharpos('$'))
   normal 2G6l
   call assert_equal([0, 2, 7, 0], getcharpos('.'))
   normal 3G$
@@ -158,6 +158,12 @@ func Test_getcharpos()
   call assert_equal([0, 2, 8, 0], getcharpos("'m"))
   delmarks m
   call assert_equal([0, 0, 0, 0], getcharpos("'m"))
+
+  " Check mark does not move
+  normal 5Gfxma
+  call assert_equal([0, 5, 5, 0], getcharpos("'a"))
+  call assert_equal([0, 5, 5, 0], getcharpos("'a"))
+  call assert_equal([0, 5, 5, 0], getcharpos("'a"))
 
   " Test for the visual start column
   vnoremap <expr> <F3> SaveVisualStartCharPos()

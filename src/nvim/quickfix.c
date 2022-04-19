@@ -103,7 +103,7 @@ typedef struct qf_list_S {
   char_u *qf_title;        ///< title derived from the command that created
                            ///< the error list or set by setqflist
   typval_T *qf_ctx;          ///< context set by setqflist/setloclist
-  Callback qftf_cb;            ///< 'quickfixtextfunc' callback function
+  Callback qf_qftf_cb;            ///< 'quickfixtextfunc' callback function
 
   struct dir_stack_T *qf_dir_stack;
   char_u *qf_directory;
@@ -2040,7 +2040,7 @@ static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl)
   } else {
     to_qfl->qf_ctx = NULL;
   }
-  callback_copy(&to_qfl->qftf_cb, &from_qfl->qftf_cb);
+  callback_copy(&to_qfl->qf_qftf_cb, &from_qfl->qf_qftf_cb);
 
   if (from_qfl->qf_count) {
     if (copy_loclist_entries(from_qfl, to_qfl) == FAIL) {
@@ -3448,7 +3448,7 @@ static void qf_free(qf_list_T *qfl)
   XFREE_CLEAR(qfl->qf_title);
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
-  callback_free(&qfl->qftf_cb);
+  callback_free(&qfl->qf_qftf_cb);
   qfl->qf_id = 0;
   qfl->qf_changedtick = 0L;
 }
@@ -4109,10 +4109,10 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get
   // the text to display. Use the local value of 'quickfixtextfunc' if it is
   // set.
-  if (qfl->qftf_cb.type != kCallbackNone) {
-    cb = &qfl->qftf_cb;
+  if (qfl->qf_qftf_cb.type != kCallbackNone) {
+    cb = &qfl->qf_qftf_cb;
   }
-  if (cb != NULL && cb->type != kCallbackNone) {
+  if (cb->type != kCallbackNone) {
     typval_T args[1];
     typval_T rettv;
 
@@ -6258,10 +6258,10 @@ static int qf_getprop_qftf(qf_list_T *qfl, dict_T *retdict)
 {
   int status;
 
-  if (qfl->qftf_cb.type != kCallbackNone) {
+  if (qfl->qf_qftf_cb.type != kCallbackNone) {
     typval_T tv;
 
-    callback_put(&qfl->qftf_cb, &tv);
+    callback_put(&qfl->qf_qftf_cb, &tv);
     status = tv_dict_add_tv(retdict, S_LEN("quickfixtextfunc"), &tv);
     tv_clear(&tv);
   } else {
@@ -6361,9 +6361,9 @@ static int qf_setprop_qftf(qf_list_T *qfl, dictitem_T *di)
 {
   Callback cb;
 
-  callback_free(&qfl->qftf_cb);
+  callback_free(&qfl->qf_qftf_cb);
   if (callback_from_typval(&cb, &di->di_tv)) {
-    qfl->qftf_cb = cb;
+    qfl->qf_qftf_cb = cb;
   }
   return OK;
 }

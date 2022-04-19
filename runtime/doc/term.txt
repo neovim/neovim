@@ -108,6 +108,15 @@ and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
 it will make use of this ability to speed up scrolling that is not the full
 width of the terminal.
 
+							*tui-input*
+Nvim uses libtermkey to convert terminal escape sequences to key codes.
+|terminfo| is used first, and CSI sequences not in |terminfo| (including
+extended keys a.k.a. modifyOtherKeys or `CSI u`) can also be parsed.
+For example, when running Nvim in tmux, this makes Nvim leave Insert mode and
+go to the window below: >
+  tmux send-keys 'Escape' [ 2 7 u 'C-W' j
+Where `'Escape' [ 2 7 u` is an unambiguous `CSI u` sequence for the <Esc> key.
+
 							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
 including "linux" (whose virtual terminals have had 256-colour support since

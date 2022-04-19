@@ -2,9 +2,18 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
+local eval = helpers.eval
 local expect = helpers.expect
+local eq = helpers.eq
 local feed = helpers.feed
+local feed_command = helpers.feed_command
 local insert = helpers.insert
+local funcs = helpers.funcs
+
+local function lastmessage()
+  local messages = funcs.split(funcs.execute('messages'), '\n')
+  return messages[#messages]
+end
 
 describe('u CTRL-R g- g+', function()
   before_each(clear)
@@ -57,5 +66,63 @@ describe('u CTRL-R g- g+', function()
   it('can find the previous sequence after undoing to a branch', function()
     undo_and_redo(4, 'u', '<C-r>', '1')
     undo_and_redo(4, 'g-', 'g+', '1')
+  end)
+end)
+
+describe(':undo! command', function()
+  before_each(function()
+    clear()
+    feed('i1 little bug in the code<Esc>')
+    feed('o1 little bug in the code<Esc>')
+    feed('oTake 1 down, patch it around<Esc>')
+    feed('o99 little bugs in the code<Esc>')
+  end)
+  it('works', function()
+    feed_command('undo!')
+    expect([[
+      1 little bug in the code
+      1 little bug in the code
+      Take 1 down, patch it around]])
+    feed('<C-r>')
+    eq('Already at newest change', lastmessage())
+  end)
+  it('works with arguments', function()
+    feed_command('undo! 2')
+    expect([[
+      1 little bug in the code
+      1 little bug in the code]])
+    feed('<C-r>')
+    eq('Already at newest change', lastmessage())
+  end)
+  it('correctly sets alternative redo', function()
+    feed('uo101 little bugs in the code<Esc>')
+    feed_command('undo!')
+    feed('<C-r>')
+    expect([[
+      1 little bug in the code
+      1 little bug in the code
+      Take 1 down, patch it around
+      99 little bugs in the code]])
+
+    feed('uuoTake 2 down, patch them around<Esc>')
+    feed('o101 little bugs in the code<Esc>')
+    feed_command('undo! 2')
+    feed('<C-r><C-r>')
+    expect([[
+      1 little bug in the code
+      1 little bug in the code
+      Take 1 down, patch it around
+      99 little bugs in the code]])
+  end)
+  it('fails when attempting to redo or move to different undo branch', function()
+    feed_command('undo! 4')
+    eq('E5767: Cannot use :undo! to redo or move to a different undo branch', eval('v:errmsg'))
+    feed('u')
+    feed_command('undo! 4')
+    eq('E5767: Cannot use :undo! to redo or move to a different undo branch', eval('v:errmsg'))
+    feed('o101 little bugs in the code<Esc>')
+    feed('o101 little bugs in the code<Esc>')
+    feed_command('undo! 4')
+    eq('E5767: Cannot use :undo! to redo or move to a different undo branch', eval('v:errmsg'))
   end)
 end)

@@ -32,7 +32,7 @@ describe('autocmd TermClose', function()
     retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
   end)
 
-  pending('kills job trapping SIGTERM', function()
+  it('kills job trapping SIGTERM', function()
     if iswin() then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')
@@ -52,7 +52,7 @@ describe('autocmd TermClose', function()
     ok(duration <= 4000)  -- Epsilon for slow CI
   end)
 
-  pending('kills PTY job trapping SIGHUP and SIGTERM', function()
+  it('kills PTY job trapping SIGHUP and SIGTERM', function()
     if iswin() then return end
     nvim('set_option', 'shell', 'sh')
     nvim('set_option', 'shellcmdflag', '-c')

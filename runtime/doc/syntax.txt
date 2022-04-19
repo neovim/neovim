@@ -188,7 +188,7 @@ A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
-an error when using other characters.  The maxium length of a group name is
+an error when using other characters.  The maximum length of a group name is
 about 200 bytes.  *E1249*
 
 To be able to allow each user to pick their favorite set of colors, there must
@@ -5090,6 +5090,9 @@ ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
+							*hl-CurSearch*
+CurSearch	used for highlighting a search pattern under the cursor
+		(see 'hlsearch')
 							*hl-Cursor*
 Cursor		character under the cursor
 lCursor		the character under the cursor when |language-mapping|

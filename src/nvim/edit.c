@@ -387,7 +387,7 @@ static void insert_enter(InsertState *s)
     State = INSERT;
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
   stop_insert_mode = false;
 
   // need to position cursor again when on a TAB
@@ -1543,10 +1543,9 @@ static void ins_redraw(bool ready)
     }
   }
 
-  // Trigger Scroll if viewport changed.
-  if (ready && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
+  if (ready) {
+    // Trigger Scroll if viewport changed.
+    may_trigger_winscrolled();
   }
 
   // Trigger BufModified if b_changed_invalid is set.
@@ -2097,7 +2096,7 @@ static void ins_ctrl_x(void)
     ctrl_x_mode = CTRL_X_CMDLINE_CTRL_X;
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
 }
 
 // Whether other than default completion has been selected.
@@ -2710,7 +2709,7 @@ void set_completion(colnr_T startcol, list_T *list)
     show_pum(save_w_wrow, save_w_leftcol);
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
   ui_flush();
 }
 
@@ -3890,7 +3889,7 @@ static bool ins_compl_prep(int c)
     ins_apply_autocmds(EVENT_COMPLETEDONE);
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   /* reset continue_* if we left expansion-mode, if we stay they'll be
    * (re)set properly in ins_complete() */
@@ -4641,7 +4640,7 @@ static int ins_compl_get_exp(pos_T *ini)
       compl_curr_match = compl_old_match;
     }
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   return i;
 }
@@ -8051,7 +8050,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
 
 
   State = NORMAL;
-  trigger_modechanged();
+  may_trigger_modechanged();
   // need to position cursor again when on a TAB
   if (gchar_cursor() == TAB) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
@@ -8155,7 +8154,7 @@ static void ins_insert(int replaceState)
   } else {
     State = replaceState | (State & LANGMAP);
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
   AppendCharToRedobuff(K_INS);
   showmode();
   ui_cursor_shape();            // may show different cursor shape
@@ -9261,7 +9260,7 @@ static int ins_digraph(void)
     }
     if (cc != ESC) {
       AppendToRedobuff(CTRL_V_STR);
-      c = getdigraph(c, cc, true);
+      c = digraph_get(c, cc, true);
       clear_showcmd();
       return c;
     }

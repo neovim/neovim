@@ -22,6 +22,14 @@ u			Undo [count] changes.
 :u[ndo] {N}		Jump to after change number {N}.  See |undo-branches|
 			for the meaning of {N}.
 
+:u[ndo]!		Undo one change and remove it from undo history.
+								*E5767*
+:u[ndo]! {N}		Like ":u[ndo] {N}", but forget all changes in the
+			current undo branch up until {N}. You may only use
+			":undo! {N}" to move backwards in the same undo
+			branch, not to redo or switch to a different undo
+			branch.
+
 							*CTRL-R*
 CTRL-R			Redo [count] changes which were undone.
 

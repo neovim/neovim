@@ -133,6 +133,7 @@ static int p_cin;
 static char_u *p_cink;
 static char_u *p_cino;
 static char_u *p_cinw;
+static char_u *p_cinsd;
 static char_u *p_com;
 static char_u *p_cms;
 static char_u *p_cpt;
@@ -333,6 +334,9 @@ static char_u SHM_ALL[] = {
   SHM_RECORDING, SHM_FILEINFO, SHM_SEARCHCOUNT,
   0,
 };
+
+static char e_unclosed_expression_sequence[] = N_("E540: Unclosed expression sequence");
+static char e_unbalanced_groups[] = N_("E542: unbalanced groups");
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -2060,6 +2064,7 @@ void check_buf_options(buf_T *buf)
   parse_cino(buf);
   check_string_option(&buf->b_p_ft);
   check_string_option(&buf->b_p_cinw);
+  check_string_option(&buf->b_p_cinsd);
   check_string_option(&buf->b_p_cpt);
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
@@ -2659,9 +2664,7 @@ ambw_end:
       int x2 = -1;
       int x3 = -1;
 
-      if (*p != NUL) {
-        p += utfc_ptr2len(p);
-      }
+      p += utfc_ptr2len(p);
       if (*p != NUL) {
         x2 = *p++;
       }
@@ -2918,8 +2921,8 @@ ambw_end:
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();
     }
-  } else if (gvarp == &p_stl || varp == &p_ruf) {
-    // 'statusline' or 'rulerformat'
+  } else if (gvarp == &p_stl || varp == &p_tal || varp == &p_ruf) {
+    // 'statusline', 'tabline' or 'rulerformat'
     int wid;
 
     if (varp == &p_ruf) {       // reset ru_wid first
@@ -2938,7 +2941,7 @@ ambw_end:
         errmsg = check_stl_option(p_ruf);
       }
     } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
-      // check 'statusline' only if it doesn't start with "%!"
+      // check 'statusline' or 'tabline' only if it doesn't start with "%!"
       errmsg = check_stl_option(s);
     }
     if (varp == &p_ruf && errmsg == NULL) {
@@ -3724,7 +3727,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 }
 
 /// Check validity of options with the 'statusline' format.
-/// Return error message or NULL.
+/// Return an untranslated error message or NULL.
 char *check_stl_option(char_u *s)
 {
   int groupdepth = 0;
@@ -3773,18 +3776,22 @@ char *check_stl_option(char_u *s)
       return illegal_char(errbuf, sizeof(errbuf), *s);
     }
     if (*s == '{') {
-      int reevaluate = (*s == '%');
-      s++;
+      bool reevaluate = (*++s == '%');
+
+      if (reevaluate && *++s == '}') {
+        // "}" is not allowed immediately after "%{%"
+        return illegal_char(errbuf, sizeof(errbuf), '}');
+      }
       while ((*s != '}' || (reevaluate && s[-1] != '%')) && *s) {
         s++;
       }
       if (*s != '}') {
-        return N_("E540: Unclosed expression sequence");
+        return e_unclosed_expression_sequence;
       }
     }
   }
   if (groupdepth != 0) {
-    return N_("E542: unbalanced groups");
+    return e_unbalanced_groups;
   }
   return NULL;
 }
@@ -6058,6 +6065,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_cink);
   case PV_CINO:
     return (char_u *)&(curbuf->b_p_cino);
+  case PV_CINSD:
+    return (char_u *)&(curbuf->b_p_cinsd);
   case PV_CINW:
     return (char_u *)&(curbuf->b_p_cinw);
   case PV_COM:
@@ -6505,6 +6514,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_CINK);
       buf->b_p_cino = vim_strsave(p_cino);
       COPY_OPT_SCTX(buf, BV_CINO);
+      buf->b_p_cinsd = vim_strsave(p_cinsd);
+      COPY_OPT_SCTX(buf, BV_CINSD);
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;

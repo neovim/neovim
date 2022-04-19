@@ -15,6 +15,7 @@
 #include "nvim/charset.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
+#include "nvim/digraph.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -6094,15 +6095,17 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "mode()" function
 static void f_mode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char *mode = get_mode();
+  char buf[MODE_MAX_LENGTH];
+
+  get_mode(buf);
 
   // Clear out the minor mode when the argument is not a non-zero number or
   // non-empty string.
   if (!non_zero_arg(&argvars[0])) {
-    mode[1] = NUL;
+    buf[1] = NUL;
   }
 
-  rettv->vval.v_string = (char_u *)mode;
+  rettv->vval.v_string = vim_strsave((char_u *)buf);
   rettv->v_type = VAR_STRING;
 }
 

@@ -773,6 +773,7 @@ enum {
   BV_CINK,
   BV_CINO,
   BV_CINW,
+  BV_CINSD,
   BV_CM,
   BV_CMS,
   BV_COM,

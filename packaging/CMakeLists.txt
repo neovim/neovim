@@ -23,7 +23,7 @@ set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
 
 if(WIN32)
   set(CPACK_PACKAGE_FILE_NAME "nvim-win64")
-  set(CPACK_GENERATOR ZIP WIX NSIS)
+  set(CPACK_GENERATOR ZIP WIX)
 
   # WIX
   # CPACK_WIX_UPGRADE_GUID should be set, but should never change.
@@ -32,31 +32,17 @@ if(WIN32)
   # The following guid is just a randomly generated guid that's been pasted here.
   # It has no special meaning other than to supply it to WIX.
   set(CPACK_WIX_UPGRADE_GUID "207A1A70-7B0C-418A-A153-CA6883E38F4D")
-  set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/logo.ico)
+  set(CPACK_WIX_PRODUCT_ICON ${CMAKE_CURRENT_LIST_DIR}/neovim.ico)
 
-  # NSIS
-  # install icon
-  set(CPACK_NSIS_MUI_ICON ${CMAKE_CURRENT_LIST_DIR}/logo.ico)
-
-  # uninstall icon
-  set(CPACK_NSIS_MUI_UNIICON ${CMAKE_CURRENT_LIST_DIR}/logo.ico)
-
-  # icon that appears when you search in Add/Remove programs
-  set(CPACK_NSIS_INSTALLED_ICON_NAME ${CMAKE_CURRENT_LIST_DIR}/logo.ico)
-
-  # name that appears in the list in Add/Remove programs
-  set(CPACK_NSIS_DISPLAY_NAME "Neovim")
-
-  # name used in various installer UI locations, such as the title
-  set(CPACK_NSIS_PACKAGE_NAME "Neovim")
-
-  # Allow the user to modify their path to include neovim during
-  # the installation process.
-  set(CPACK_NSIS_MODIFY_PATH TRUE)
+  # We use a wix patch to add further options to the installer. At present, it's just to add neovim to the path
+  # on installation, however, it can be extended.
+  # See: https://cmake.org/cmake/help/v3.7/module/CPackWIX.html#variable:CPACK_WIX_PATCH_FILE
+  list(APPEND CPACK_WIX_EXTENSIONS WixUtilExtension)
+  list(APPEND CPACK_WIX_PATCH_FILE ${CMAKE_CURRENT_LIST_DIR}/WixPatch.xml)
 elseif(APPLE)
   set(CPACK_PACKAGE_FILE_NAME "nvim-macos")
   set(CPACK_GENERATOR TGZ)
-  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/logo.icns)
+  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_LIST_DIR}/neovim.icns)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CPACK_PACKAGE_FILE_NAME "nvim-linux64")
   set(CPACK_GENERATOR TGZ DEB)

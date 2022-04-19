@@ -31,7 +31,7 @@ vim.api.nvim_exec("augroup test_group\
                   ", false)
 
 vim.api.nvim_command("command Bdelete :bd")
-vim.api.nvim_add_user_command("TestCommand", ":echo 'Hello'", {})
+vim.api.nvim_create_user_command("TestCommand", ":echo 'Hello'", {})
 
 vim.api.nvim_exec ("\
 function Close_Window() abort\
@@ -114,7 +114,7 @@ test_group  FileType
        script_location), result)
   end)
 
-  it('"Last set" for command defined by nvim_add_user_command', function()
+  it('"Last set" for command defined by nvim_create_user_command', function()
     local result = exec_capture(':verbose command TestCommand')
     eq(string.format([[
     Name              Args Address Complete    Definition

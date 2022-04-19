@@ -68,7 +68,7 @@ Configure the sanitizer(s) via these environment variables:
     export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
     # Show backtraces in the logs.
     export UBSAN_OPTIONS=print_stacktrace=1
-    export MSAN_OPTIONS="log_path=${HOME}/logs/tsan"
+    export MSAN_OPTIONS="log_path=${HOME}/logs/msan"
     export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
 
 Logs will be written to `${HOME}/logs/*san.PID` then.

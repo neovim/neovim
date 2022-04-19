@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Apr 07
+" Last Change:	2022 Apr 13
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -201,11 +201,13 @@ au BufNewFile,BufRead *.iba,*.ibi		setf ibasic
 " FreeBasic file (similar to QBasic)
 au BufNewFile,BufRead *.fb			setf freebasic
 
-" Batch file for MSDOS.
-au BufNewFile,BufRead *.bat,*.sys		setf dosbatch
+" Batch file for MSDOS. See dist#ft#FTsys for *.sys
+au BufNewFile,BufRead *.bat			setf dosbatch
 " *.cmd is close to a Batch file, but on OS/2 Rexx files also use *.cmd.
 au BufNewFile,BufRead *.cmd
 	\ if getline(1) =~ '^/\*' | setf rexx | else | setf dosbatch | endif
+" ABB RAPID or Batch file for MSDOS.
+au BufNewFile,BufRead *.sys\c			call dist#ft#FTsys()
 
 " Batch file for 4DOS
 au BufNewFile,BufRead *.btm			call dist#ft#FTbtm()
@@ -356,13 +358,8 @@ au BufNewFile,BufRead *.eni			setf cl
 " Clever or dtd
 au BufNewFile,BufRead *.ent			call dist#ft#FTent()
 
-" Clipper (or FoxPro; could also be eviews)
-au BufNewFile,BufRead *.prg
-	\ if exists("g:filetype_prg") |
-	\   exe "setf " . g:filetype_prg |
-	\ else |
-	\   setf clipper |
-	\ endif
+" Clipper, FoxPro, ABB RAPID or eviews
+au BufNewFile,BufRead *.prg\c			call dist#ft#FTprg()
 
 " Clojure
 au BufNewFile,BufRead *.clj,*.cljs,*.cljx,*.cljc		setf clojure
@@ -392,6 +389,9 @@ au BufNewFile,BufRead *.cfm,*.cfi,*.cfc		setf cf
 
 " Configure scripts
 au BufNewFile,BufRead configure.in,configure.ac setf config
+
+" Cooklang
+au BufNewFile,BufRead *.cook			setf cook
 
 " CUDA Compute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
@@ -440,7 +440,7 @@ au BufNewFile,BufRead *quake[1-3]/*.cfg			setf quake
 au BufNewFile,BufRead *.qc			setf c
 
 " Configure files
-au BufNewFile,BufRead *.cfg			setf cfg
+au BufNewFile,BufRead *.cfg\c			call dist#ft#FTcfg()
 
 " Cucumber
 au BufNewFile,BufRead *.feature			setf cucumber
@@ -976,7 +976,7 @@ au BufNewFile,BufRead *.latte,*.lte		setf latte
 " Limits
 au BufNewFile,BufRead */etc/limits,*/etc/*limits.conf,*/etc/*limits.d/*.conf	setf limits
 
-" LambdaProlog (*.mod too, see Modsim)
+" LambdaProlog (see dist#ft#FTmod for *.mod)
 au BufNewFile,BufRead *.sig			setf lprolog
 
 " LDAP LDIF
@@ -1139,18 +1139,11 @@ au BufNewFile,BufRead *.mms			call dist#ft#FTmms()
 " Symbian meta-makefile definition (MMP)
 au BufNewFile,BufRead *.mmp			setf mmp
 
-" Modsim III (or LambdaProlog)
-au BufNewFile,BufRead *.mod
-	\ if expand("<afile>") =~ '\<go.mod$' |
-	\   setf gomod |
-	\ elseif getline(1) =~ '\<module\>' |
-	\   setf lprolog |
-	\ else |
-	\   setf modsim3 |
-	\ endif
+" ABB Rapid, Modula-2, Modsim III or LambdaProlog
+au BufNewFile,BufRead *.mod\c			call dist#ft#FTmod()
 
-" Modula-2  (.md removed in favor of Markdown)
-au BufNewFile,BufRead *.m2,*.DEF,*.MOD,*.mi	setf modula2
+" Modula-2  (.md removed in favor of Markdown, see dist#ft#FTmod for *.MOD)
+au BufNewFile,BufRead *.m2,*.DEF,*.mi		setf modula2
 
 " Modula-3 (.m3, .i3, .mg, .ig)
 au BufNewFile,BufRead *.[mi][3g]		setf modula3
@@ -1278,6 +1271,9 @@ au BufNewFile,BufRead *.or			setf openroad
 " OPL
 au BufNewFile,BufRead *.[Oo][Pp][Ll]		setf opl
 
+" OpenSCAD
+au BufNewFile,BufRead *.scad		setf openscad		
+
 " Oracle config file
 au BufNewFile,BufRead *.ora			setf ora
 
@@ -1287,13 +1283,13 @@ au BufNewFile,BufRead *.org,*.org_archive	setf org
 " Packet filter conf
 au BufNewFile,BufRead pf.conf			setf pf
 
-" Pacman Config (close enough to dosini)
-au BufNewFile,BufRead */etc/pacman.conf		setf dosini
+" Pacman config
+au BufNewFile,BufRead */etc/pacman.conf		setf conf
 
 " Pacman hooks
 au BufNewFile,BufRead *.hook
 	\ if getline(1) == '[Trigger]' |
-	\   setf dosini |
+	\   setf conf |
 	\ endif
 
 " Pam conf
@@ -1637,16 +1633,22 @@ au BufNewFile,BufRead *.sass			setf sass
 au BufNewFile,BufRead *.sa			setf sather
 
 " Scala
-au BufNewFile,BufRead *.scala,*.sc		setf scala
+au BufNewFile,BufRead *.scala			setf scala
 
 " SBT - Scala Build Tool
 au BufNewFile,BufRead *.sbt			setf sbt
 
+" SuperCollider
+au BufNewFile,BufRead *.sc			call dist#ft#FTsc()
+
+au BufNewFile,BufRead *.quark			setf supercollider
+
+" scdoc
+au BufNewFile,BufRead *.scd			call dist#ft#FTscd()
+
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
-" scdoc
-au BufNewFile,BufRead *.scd			setf scdoc
 
 " SCSS
 au BufNewFile,BufRead *.scss			setf scss
@@ -2048,6 +2050,9 @@ au BufNewFile,BufRead *.vala			setf vala
 
 " Vera
 au BufNewFile,BufRead *.vr,*.vri,*.vrh		setf vera
+
+" Vagrant (uses Ruby syntax)
+au BufNewFile,BufRead Vagrantfile		setf ruby
 
 " Verilog HDL
 au BufNewFile,BufRead *.v			setf verilog

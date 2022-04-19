@@ -16,15 +16,6 @@ ${NVIM_VERSION}
 
 1. Download **nvim-win64.msi**
 2. Run the MSI
-3. Add the Neovim location to your path.
-   - Default location is `C:\Program Files\Neovim`
-4. Search and run `nvim-qt.exe` or run `nvim.exe` on your CLI of choice.
-
-#### NSIS
-
-1. Download **nvim-win64.exe**
-2. Run the installer.
-   - Ensure that the option to add the installation location to your path is checked if it's your first installation.
 3. Search and run `nvim-qt.exe` or run `nvim.exe` on your CLI of choice.
 
 ### macOS
@@ -70,5 +61,4 @@ ${SHA_APP_IMAGE_ZSYNC}
 ${SHA_MACOS}
 ${SHA_WIN_64_ZIP}
 ${SHA_WIN_64_MSI}
-${SHA_WIN_64_EXE}
 ```

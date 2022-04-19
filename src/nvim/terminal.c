@@ -336,6 +336,7 @@ void terminal_close(Terminal *term, int status)
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
     tv_dict_add_nr(dict, S_LEN("status"), status);
+    tv_dict_set_keys_readonly(dict);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
     restore_v_event(dict, &save_v_event);
   }
@@ -422,7 +423,7 @@ void terminal_enter(void)
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   ui_busy_start();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;
@@ -1205,6 +1206,58 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     return VTERM_KEY_FUNCTION(36);
   case K_F37:
     return VTERM_KEY_FUNCTION(37);
+  case K_F38:
+    return VTERM_KEY_FUNCTION(38);
+  case K_F39:
+    return VTERM_KEY_FUNCTION(39);
+  case K_F40:
+    return VTERM_KEY_FUNCTION(40);
+  case K_F41:
+    return VTERM_KEY_FUNCTION(41);
+  case K_F42:
+    return VTERM_KEY_FUNCTION(42);
+  case K_F43:
+    return VTERM_KEY_FUNCTION(43);
+  case K_F44:
+    return VTERM_KEY_FUNCTION(44);
+  case K_F45:
+    return VTERM_KEY_FUNCTION(45);
+  case K_F46:
+    return VTERM_KEY_FUNCTION(46);
+  case K_F47:
+    return VTERM_KEY_FUNCTION(47);
+  case K_F48:
+    return VTERM_KEY_FUNCTION(48);
+  case K_F49:
+    return VTERM_KEY_FUNCTION(49);
+  case K_F50:
+    return VTERM_KEY_FUNCTION(50);
+  case K_F51:
+    return VTERM_KEY_FUNCTION(51);
+  case K_F52:
+    return VTERM_KEY_FUNCTION(52);
+  case K_F53:
+    return VTERM_KEY_FUNCTION(53);
+  case K_F54:
+    return VTERM_KEY_FUNCTION(54);
+  case K_F55:
+    return VTERM_KEY_FUNCTION(55);
+  case K_F56:
+    return VTERM_KEY_FUNCTION(56);
+  case K_F57:
+    return VTERM_KEY_FUNCTION(57);
+  case K_F58:
+    return VTERM_KEY_FUNCTION(58);
+  case K_F59:
+    return VTERM_KEY_FUNCTION(59);
+  case K_F60:
+    return VTERM_KEY_FUNCTION(60);
+  case K_F61:
+    return VTERM_KEY_FUNCTION(61);
+  case K_F62:
+    return VTERM_KEY_FUNCTION(62);
+  case K_F63:
+    return VTERM_KEY_FUNCTION(63);
 
   default:
     return VTERM_KEY_NONE;

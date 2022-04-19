@@ -7,6 +7,7 @@ local curbuf_contents = helpers.curbuf_contents
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
+local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -51,6 +52,8 @@ describe('mappings', function()
     add_mapping('<kenter>','<kenter>')
     add_mapping('<kcomma>','<kcomma>')
     add_mapping('<kequal>','<kequal>')
+    add_mapping('<f38>','<f38>')
+    add_mapping('<f63>','<f63>')
   end)
 
   it('ok', function()
@@ -107,6 +110,8 @@ describe('mappings', function()
     check_mapping('<KPComma>','<kcomma>')
     check_mapping('<kequal>','<kequal>')
     check_mapping('<KPEquals>','<kequal>')
+    check_mapping('<f38>','<f38>')
+    check_mapping('<f63>','<f63>')
   end)
 
   it('support meta + multibyte char mapping', function()
@@ -202,6 +207,13 @@ describe('input pairs', function()
       eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
     end)
   end)
+end)
+
+it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
+  command('split aaa')
+  command('edit bbb')
+  feed('<C-6>')
+  eq('aaa', funcs.bufname())
 end)
 
 describe('input non-printable chars', function()

@@ -379,6 +379,7 @@ static void au_cleanup(void)
 
 // Get the first AutoPat for a particular event.
 AutoPat *au_get_autopat_for_event(event_T event)
+  FUNC_ATTR_PURE
 {
   return first_autopat[(int)event];
 }
@@ -1083,14 +1084,22 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
 
     // need to initialize last_mode for the first ModeChanged autocmd
     if (event == EVENT_MODECHANGED && !has_event(EVENT_MODECHANGED)) {
-      xfree(last_mode);
-      last_mode = get_mode();
+      get_mode(last_mode);
     }
 
     // If the event is CursorMoved, update the last cursor position
     // position to avoid immediately triggering the autocommand
     if (event == EVENT_CURSORMOVED && !has_event(EVENT_CURSORMOVED)) {
       curwin->w_last_cursormoved = curwin->w_cursor;
+    }
+
+    // Initialize the fields checked by the WinScrolled trigger to
+    // stop it from firing right after the first autocmd is defined.
+    if (event == EVENT_WINSCROLLED && !has_event(EVENT_WINSCROLLED)) {
+      curwin->w_last_topline = curwin->w_topline;
+      curwin->w_last_leftcol = curwin->w_leftcol;
+      curwin->w_last_width = curwin->w_width;
+      curwin->w_last_height = curwin->w_height;
     }
 
     ap->cmds = NULL;
@@ -1135,6 +1144,7 @@ int autocmd_register(int64_t id, event_T event, char_u *pat, int patlen, int gro
 }
 
 size_t aucmd_pattern_length(char_u *pat)
+  FUNC_ATTR_PURE
 {
   if (*pat == NUL) {
     return 0;
@@ -1167,6 +1177,7 @@ size_t aucmd_pattern_length(char_u *pat)
 }
 
 char_u *aucmd_next_pattern(char_u *pat, size_t patlen)
+  FUNC_ATTR_PURE
 {
   pat = pat + patlen;
   if (*pat == ',') {
@@ -1719,7 +1730,7 @@ bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io, bool f
         || event == EVENT_REMOTEREPLY || event == EVENT_SPELLFILEMISSING
         || event == EVENT_SYNTAX || event == EVENT_SIGNAL
         || event == EVENT_TABCLOSED || event == EVENT_USER
-        || event == EVENT_WINCLOSED) {
+        || event == EVENT_WINCLOSED || event == EVENT_WINSCROLLED) {
       fname = vim_strsave(fname);
     } else {
       fname = (char_u *)FullName_save((char *)fname, false);
@@ -2375,6 +2386,7 @@ theend:
 
 // Checks if a pattern is buflocal
 bool aupat_is_buflocal(char_u *pat, int patlen)
+  FUNC_ATTR_PURE
 {
   return patlen >= 8
          && STRNCMP(pat, "<buffer", 7) == 0
@@ -2484,6 +2496,7 @@ char *aucmd_exec_default_desc(AucmdExecutable acc)
 }
 
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2534,6 +2547,7 @@ AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
 }
 
 bool aucmd_exec_is_deleted(AucmdExecutable acc)
+  FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
@@ -2548,6 +2562,7 @@ bool aucmd_exec_is_deleted(AucmdExecutable acc)
 }
 
 bool au_event_is_empty(event_T event)
+  FUNC_ATTR_PURE
 {
   return first_autopat[event] == NULL;
 }

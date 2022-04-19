@@ -21,18 +21,43 @@ Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 which can be used from Lua code. A good overview of using Lua in neovim is
 given by https://github.com/nanotee/nvim-lua-guide.
 
-Module conflicts are resolved by "last wins".  For example if both of these
-are on 'runtimepath':
-    runtime/lua/foo.lua
-    ~/.config/nvim/lua/foo.lua
-then `require('foo')` loads "~/.config/nvim/lua/foo.lua", and
-"runtime/lua/foo.lua" is not used.  See |lua-require| to understand how Nvim
-finds and loads Lua modules.  The conventions are similar to those of
-Vimscript |plugin|s, with some extra features.  See |lua-require-example| for
-a walkthrough.
+The |:source| and |:runtime| commands can run Lua scripts as well as Vim
+scripts.  Lua modules can be loaded with `require('name')`, which
+conventionally returns a table but can return any value.
+
+See |lua-require| for details on how Nvim finds and loads Lua modules.
+See |lua-require-example| for an example of how to write and use a module.
 
 ==============================================================================
 IMPORTING LUA MODULES                                   *lua-require*
+
+Modules are searched for under the directories specified in 'runtimepath', in
+the order they appear.  Any `.` in the module name is treated as a directory
+separator when searching.  For a module `foo.bar`, each directory is searched
+for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`.  If no files are found,
+the directories are searched again for a shared library with a name matching
+`lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`)
+derived from the initial value of `package.cpath`.  If still no files are
+found, Nvim falls back to Lua's default search mechanism.  The first script
+found is run and `require()` returns the value returned by the script if any,
+else `true`.
+
+The return value is cached after the first call to `require()` for each
+module, with subsequent calls returning the cached value without searching for
+or executing any script.  For further details on `require()`, see the Lua
+documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
+
+For example, if 'runtimepath' is `foo,bar` and `package.cpath` was
+`./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
+and loads the first module found:
+    foo/lua/mod.lua
+    foo/lua/mod/init.lua
+    bar/lua/mod.lua
+    bar/lua/mod/init.lua
+    foo/lua/mod.so
+    foo/lua/mod.dll
+    bar/lua/mod.so
+    bar/lua/mod.dll
 
                                                         *lua-package-path*
 Nvim automatically adjusts `package.path` and `package.cpath` according to
@@ -1126,7 +1151,7 @@ In any of the above examples, to replicate the behavior |setlocal|, use
 
 |vim.opt| returns an Option object.
 
-For example: `local listchar_object = vim.opt.listchar`
+For example: `local listchar_object = vim.opt.listchars`
 
 An `Option` has the following methods:
 
@@ -1885,7 +1910,7 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                    which select() was called.
                     {on_choice}  function ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
-                                 1-based index of `item` within `item`. `nil`
+                                 1-based index of `item` within `items`. `nil`
                                  if the user aborted the dialog.
 
 

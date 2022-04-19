@@ -1639,16 +1639,18 @@ static void win_update(win_T *wp, DecorProviders *providers)
       int scr_row = wp->w_grid.Rows - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, (char_u *)"@@", 2, scr_row, 0, at_attr);
+      grid_puts_len(&wp->w_grid, (char_u *)"@@", MIN(wp->w_grid.Columns, 2), scr_row, 0, at_attr);
 
       grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.Columns,
                 '@', ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
+      int start_col = wp->w_grid.Columns - 3;
+
       // Last line isn't finished: Display "@@@" at the end.
       grid_fill(&wp->w_grid, wp->w_grid.Rows - 1, wp->w_grid.Rows,
-                wp->w_grid.Columns - 3, wp->w_grid.Columns, '@', '@', at_attr);
+                MAX(start_col, 0), wp->w_grid.Columns, '@', '@', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -4838,7 +4840,7 @@ static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
   }
 }
 
-/// Draw seperator connecting characters on the corners of window "wp"
+/// Draw separator connecting characters on the corners of window "wp"
 static void draw_sep_connectors_win(win_T *wp)
 {
   // Don't draw separator connectors unless global statusline is enabled and the window has
@@ -5171,19 +5173,19 @@ static void win_redr_status(win_T *wp)
       *(p + len++) = ' ';
     }
     if (bt_help(wp->w_buffer)) {
-      STRCPY(p + len, _("[Help]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[Help]"));
       len += (int)STRLEN(p + len);
     }
     if (wp->w_p_pvw) {
-      STRCPY(p + len, _("[Preview]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[Preview]"));
       len += (int)STRLEN(p + len);
     }
     if (bufIsChanged(wp->w_buffer)) {
-      STRCPY(p + len, "[+]");
-      len += 3;
+      snprintf((char *)p + len, MAXPATHL - len, "%s", "[+]");
+      len += (int)STRLEN(p + len);
     }
     if (wp->w_buffer->b_p_ro) {
-      STRCPY(p + len, _("[RO]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[RO]"));
       // len += (int)STRLEN(p + len);  // dead assignment
     }
 
@@ -6001,9 +6003,9 @@ static void end_search_hl(void)
 }
 
 
-/// Fill the grid from 'start_row' to 'end_row', from 'start_col' to 'end_col'
-/// with character 'c1' in first column followed by 'c2' in the other columns.
-/// Use attributes 'attr'.
+/// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
+/// to "end_col" (exclusive) with character "c1" in first column followed by
+/// "c2" in the other columns.  Use attributes "attr".
 void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
                int c2, int attr)
 {

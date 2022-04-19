@@ -214,12 +214,44 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets ESC+key as ALT chord', function()
+  it('interprets ESC+key as ALT chord in i_CTRL-V', function()
     -- Vim represents ALT/META by setting the "high bit" of the modified key:
     -- ALT+j inserts "ê". Nvim does not (#3982).
     feed_data('i\022\027j')
     screen:expect([[
       <M-j>{1: }                                            |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('interprets <Esc>[27u as <Esc>', function()
+    feed_command('nnoremap <M-;> <Nop>')
+    feed_command('nnoremap <Esc> AESC<Esc>')
+    feed_command('nnoremap ; Asemicolon<Esc>')
+    feed_data('\027[27u;')
+    screen:expect([[
+      ESCsemicolo{1:n}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- <Esc>; should be recognized as <M-;> when <M-;> is mapped
+    feed_data('\027;')
+    screen:expect_unchanged()
+  end)
+
+  it('interprets <Esc><Nul> as <M-C-Space> #17198', function()
+    feed_data('i\022\027\000')
+    screen:expect([[
+      <M-C-Space>{1: }                                      |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
@@ -271,7 +303,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[201~')  -- End paste.
-    feed_data('\027\000')   -- ESC: go to Normal mode.
+    feed_data('\027[27u')   -- ESC: go to Normal mode.
     wait_for_mode('n')
     screen:expect([[
       "pasted from termina{1:l}"                            |
@@ -453,7 +485,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Dot-repeat/redo.
-    feed_data('\027\000')
+    feed_data('\027[27u')
     wait_for_mode('n')
     feed_data('.')
     screen:expect{grid=[[
@@ -499,7 +531,7 @@ describe('TUI', function()
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
     -- Prepare something for dot-repeat/redo.
-    feed_data('ifoo\n\027\000')
+    feed_data('ifoo\n\027[27u')
     wait_for_mode('n')
     screen:expect{grid=[[
       foo                                               |
@@ -541,7 +573,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Editor should still work after failed/drained paste.
-    feed_data('ityped input...\027\000')
+    feed_data('ityped input...\027[27u')
     screen:expect{grid=[[
       foo                                               |
       foo                                               |
@@ -575,7 +607,7 @@ describe('TUI', function()
       vim.paste = function(lines, phase) return false end
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
-    feed_data('ifoo\n\027\000')
+    feed_data('ifoo\n\027[27u')
     expect_child_buf_lines({'foo',''})
   end)
 
@@ -669,7 +701,7 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_data('\027\000')  -- ESC: go to Normal mode.
+    feed_data('\027[27u')  -- ESC: go to Normal mode.
     wait_for_mode('n')
     -- Dot-repeat/redo.
     feed_data('.')

@@ -64,3 +64,44 @@ func Test_getjumplist()
 
   call delete("Xtest")
 endfunc
+
+func Test_jumplist_invalid()
+  new
+  clearjumps
+  " put some randome text
+  put ='a'
+  let prev = bufnr('%')
+  setl nomodified bufhidden=wipe
+  e XXJumpListBuffer
+  let bnr = bufnr('%')
+  " 1) empty jumplist
+  let expected = [[
+   \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0}], 1]
+  call assert_equal(expected, getjumplist())
+  let jumps = execute(':jumps')
+  call assert_equal('>', jumps[-1:])
+  " now jump back
+  exe ":norm! \<c-o>"
+  let expected = [[
+    \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0},
+    \ {'lnum': 1, 'bufnr': bnr,  'col': 0, 'coladd': 0}], 0]
+  call assert_equal(expected, getjumplist())
+  let jumps = execute(':jumps')
+  call assert_match('>  0     2    0 -invalid-', jumps)
+endfunc
+
+" Test for '' mark in an empty buffer
+
+func Test_empty_buffer()
+  new
+  insert
+a
+b
+c
+d
+.
+  call assert_equal(1, line("''"))
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

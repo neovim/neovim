@@ -544,7 +544,7 @@ function Screen:_wait(check, flags)
   elseif not checked then
     err = check()
     if not err and flags.unchanged then
-      -- expecting NO screen change: use a shorter timout
+      -- expecting NO screen change: use a shorter timeout
       success_seen = true
     end
   end

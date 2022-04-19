@@ -412,7 +412,8 @@ does apply like to other wildcards.
 Environment variables in the expression are expanded when evaluating the
 expression, thus this works: >
 	:e `=$HOME .. '/.vimrc'`
-This does not work, $HOME is inside a string and used literally: >
+This uses $HOME inside a string and it will be used literally, most likely not
+what you intended: >
 	:e `='$HOME' .. '/.vimrc'`
 
 If the expression returns a string then names are to be separated with line
@@ -1494,7 +1495,7 @@ session or with another command (e.g., a filter command).  Then you will know
 which version of the file you want to keep.
 
 The accuracy of the time check depends on the filesystem.  On Unix it is
-usually sub-second.  With old file sytems and on MS-Windows it is normally one
+usually sub-second.  With old file systems and on MS-Windows it is normally one
 second.  Use `has('nanotime')` to check if sub-second time stamp checks are
 available.
 

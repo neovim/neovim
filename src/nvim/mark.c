@@ -844,6 +844,11 @@ void ex_jumps(exarg_T *eap)
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
+      // Make sure to output the current indicator, even when on an wiped
+      // out buffer.  ":filter" may still skip it.
+      if (name == NULL && i == curwin->w_jumplistidx) {
+        name = vim_strsave((char_u *)"-invalid-");
+      }
       // apply :filter /pat/ or file name not available
       if (name == NULL || message_filtered(name)) {
         xfree(name);

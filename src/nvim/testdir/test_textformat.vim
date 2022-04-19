@@ -278,12 +278,25 @@ func Test_format_c_comment()
                       //
   END
   call assert_equal(expected, getline(1, '$'))
+
+  " using 'indentexpr' instead of 'cindent' does not repeat a comment
+  setl nocindent indentexpr=2
+  3delete
+  normal 2Gox
+  let expected =<< trim END
+      nop;
+      val = val;      // This is a comment
+        x
+  END
+  call assert_equal(expected, getline(1, '$'))
+  setl cindent indentexpr=
+  3delete
+
   normal 2GO
   let expected =<< trim END
       nop;
 
       val = val;      // This is a comment
-                      //
   END
   call assert_equal(expected, getline(1, '$'))
 
