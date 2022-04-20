@@ -4921,6 +4921,23 @@ bool set_tty_option(const char *name, char *value)
   return false;
 }
 
+void set_tty_background(const char *value)
+{
+  if (option_was_set("bg") || strequal((char *)p_bg, value)) {
+    // background is already set... ignore
+    return;
+  }
+  if (starting) {
+    // Wait until after startup, so OptionSet is triggered.
+    do_cmdline_cmd((value[0] == 'l')
+                   ? "autocmd VimEnter * ++once ++nested set bg=light"
+                   : "autocmd VimEnter * ++once ++nested set bg=dark");
+  } else {
+    set_option_value("bg", 0L, value, 0);
+    reset_option_was_set("bg");
+  }
+}
+
 /// Find index for an option
 ///
 /// @param[in]  arg  Option name.

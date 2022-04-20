@@ -442,18 +442,7 @@ static HandleState handle_bracketed_paste(TermInput *input)
 static void set_bg_deferred(void **argv)
 {
   char *bgvalue = argv[0];
-  if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
-    // Value differs, apply it.
-    if (starting) {
-      // Wait until after startup, so OptionSet is triggered.
-      do_cmdline_cmd((bgvalue[0] == 'l')
-                     ? "autocmd VimEnter * ++once ++nested set bg=light"
-                     : "autocmd VimEnter * ++once ++nested set bg=dark");
-    } else {
-      set_option_value("bg", 0L, bgvalue, 0);
-      reset_option_was_set("bg");
-    }
-  }
+  set_tty_background(bgvalue);
 }
 
 // During startup, tui.c requests the background color (see `ext.get_bg`).
