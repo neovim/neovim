@@ -346,6 +346,22 @@ cleanup:
 ///     })
 /// </pre>
 ///
+/// Lua functions receive a table with information about the autocmd event as an argument. To use
+/// a function which itself accepts another (optional) parameter, wrap the function
+/// in a lambda:
+///
+/// <pre>
+///     -- Lua function with an optional parameter.
+///     -- The autocmd callback would pass a table as argument but this
+///     -- function expects number|nil
+///     local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
+///
+///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+///       pattern = {"*.c", "*.h"},
+///       callback = function() myluafun() end,
+///     })
+/// </pre>
+///
 /// Example using command:
 /// <pre>
 ///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
