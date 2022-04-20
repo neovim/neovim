@@ -2695,9 +2695,9 @@ func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy
   au BufNew,BufWinLeave * ball
-  call assert_fails('n xxx', 'E143:')
+  n xxx
 
-  bwipe %
+  %bwipe
   au! BufNew
   au! BufWinLeave
 endfunc
@@ -2711,6 +2711,23 @@ func Test_autocmd_quit_psearch()
   ps /
 
   augroup aucmd_win_test
+    au!
+  augroup END
+endfunc
+
+" Fuzzer found some strange combination that caused a crash.
+func Test_autocmd_normal_mess()
+  augroup aucmd_normal_test
+    au BufLeave,BufWinLeave,BufHidden,BufUnload,BufDelete,BufWipeout * norm 7q/qc
+  augroup END
+  " Nvim has removed :open
+  " o4
+  e4
+  silent! H
+  e xx
+  normal G
+
+  augroup aucmd_normal_test
     au!
   augroup END
 endfunc
