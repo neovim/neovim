@@ -636,7 +636,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
  */
 void op_reindent(oparg_T *oap, Indenter how)
 {
-  long i;
+  long i = 0;
   char_u *l;
   int amount;
   linenr_T first_changed = 0;
