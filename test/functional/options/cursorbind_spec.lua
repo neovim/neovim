@@ -74,5 +74,18 @@ describe("'cursorbind'", function()
       {3:[No Name] [+]        }{2:[No Name] [+]                          }|
                                                                   |
     ]])
+    command('windo :set nocursorline nocursorcolumn')
+    feed('0')
+    feed('40l')
+    screen:expect([[
+      kk ll mm nn oo pp qq{3:│} bb cc dd ee ff gg hh ii jj kk ll mm n^n|
+                          {3:│}                                       |
+                          {3:│}                                       |
+                          {3:│}                                       |
+                          {3:│}                                       |
+      {1:~                   }{3:│}{1:~                                      }|
+      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+                                                                  |
+    ]])
   end)
 end)

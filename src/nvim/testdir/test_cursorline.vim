@@ -318,7 +318,7 @@ func Test_cursorline_cursorbind_horizontal_scroll()
   CheckScreendump
 
   let lines =<< trim END
-      call setline(1, 'aa bb cc dd ee ff gg hh ii jj kk ll mm' .. 
+      call setline(1, 'aa bb cc dd ee ff gg hh ii jj kk ll mm' ..
       \ ' nn oo pp qq rr ss tt uu vv ww xx yy zz')
       set nowrap
       " The following makes the cursor apparent on the screen dump
@@ -341,6 +341,10 @@ func Test_cursorline_cursorbind_horizontal_scroll()
   call VerifyScreenDump(buf, 'Test_hor_scroll_3', {})
   call term_sendkeys(buf, "10l")
   call VerifyScreenDump(buf, 'Test_hor_scroll_4', {})
+  call term_sendkeys(buf, ":windo :set nocursorline nocursorcolumn\<cr>")
+  call term_sendkeys(buf, "0")
+  call term_sendkeys(buf, "40l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_5', {})
 
   call StopVimInTerminal(buf)
   call delete('Xhor_scroll')
