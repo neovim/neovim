@@ -2279,9 +2279,7 @@ void do_check_cursorbind(void)
         int restart_edit_save = restart_edit;
         restart_edit = true;
         check_cursor();
-        if (win_cursorline_standout(curwin) || curwin->w_p_cuc) {
-          validate_cursor();
-        }
+        validate_cursor();
         restart_edit = restart_edit_save;
       }
       // Correct cursor for multi-byte character.
