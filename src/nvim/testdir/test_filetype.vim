@@ -337,7 +337,7 @@ let s:filename_checks = {
     \ 'markdown': ['file.markdown', 'file.mdown', 'file.mkd', 'file.mkdn', 'file.mdwn', 'file.md'],
     \ 'mason': ['file.mason', 'file.mhtml', 'file.comp'],
     \ 'master': ['file.mas', 'file.master'],
-    \ 'maxima': ['file.mc', 'file.demo', 'file.dem', 'file.dmt', 'file.dm1', 'file.dm2', 'file.dm3',
+    \ 'maxima': ['file.demo', 'file.dmt', 'file.dm1', 'file.dm2', 'file.dm3',
     \            'file.wxm', 'maxima-init.mac'],
     \ 'mel': ['file.mel'],
     \ 'meson': ['meson.build', 'meson_options.txt'],
