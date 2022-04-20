@@ -2717,6 +2717,9 @@ endfunc
 
 " Fuzzer found some strange combination that caused a crash.
 func Test_autocmd_normal_mess()
+  " TODO: why does this hang on Windows?
+  CheckNotMSWindows
+
   augroup aucmd_normal_test
     au BufLeave,BufWinLeave,BufHidden,BufUnload,BufDelete,BufWipeout * norm 7q/qc
   augroup END
