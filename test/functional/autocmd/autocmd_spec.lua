@@ -548,18 +548,6 @@ describe('autocmd', function()
       neq({}, meths.get_autocmds { group = "filetypedetect" })
     end)
 
-    it('should not access freed mem', function()
-      source [[
-        au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
-        arg 0
-        argadd
-        all
-        all
-        au!
-        bwipe xxx
-      ]]
-    end)
-
     it('should allow comma-separated patterns', function()
       source [[
         augroup TestingPatterns
