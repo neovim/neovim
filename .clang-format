@@ -38,3 +38,20 @@ BraceWrapping:
 PointerAlignment: Right
 SortIncludes: false
 Cpp11BracedListStyle: false
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+ForEachMacros:
+  - FOR_ALL_AUEVENTS
+  - FOR_ALL_AUPATS_IN_EVENT
+  - FOR_ALL_BUFFERS
+  - FOR_ALL_BUFFERS_BACKWARDS
+  - FOR_ALL_FRAMES
+  - FOR_ALL_QFL_ITEMS
+  - FOR_ALL_SIGNS_IN_BUF
+  - FOR_ALL_TABS
+  - FOR_ALL_TAB_WINDOWS
+  - FOR_ALL_WINDOWS_IN_TAB
+  - RBUFFER_EACH
+  - RBUFFER_EACH_REVERSE
+  - RBUFFER_UNTIL_EMPTY
+  - RBUFFER_UNTIL_FULL
+  - kl_iter
