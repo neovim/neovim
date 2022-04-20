@@ -649,38 +649,41 @@ void op_reindent(oparg_T *oap, Indenter how)
     return;
   }
 
-  for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
-    /* it's a slow thing to do, so give feedback so there's no worry that
-     * the computer's just hung. */
+  // Save for undo.  Do this once for all lines, much faster than doing this
+  // for each line separately, especially when undoing.
+  if (u_savecommon(curbuf, start_lnum - 1, start_lnum + oap->line_count,
+                   start_lnum + oap->line_count, false) == OK) {
+    for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
+      // it's a slow thing to do, so give feedback so there's no worry
+      // that the computer's just hung.
 
-    if (i > 1
-        && (i % 50 == 0 || i == oap->line_count - 1)
-        && oap->line_count > p_report) {
-      smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
-    }
-
-    /*
-     * Be vi-compatible: For lisp indenting the first line is not
-     * indented, unless there is only one line.
-     */
-    if (i != oap->line_count - 1 || oap->line_count == 1
-        || how != get_lisp_indent) {
-      l = skipwhite(get_cursor_line_ptr());
-      if (*l == NUL) {                      // empty or blank line
-        amount = 0;
-      } else {
-        amount = how();                     // get the indent for this line
+      if (i > 1
+          && (i % 50 == 0 || i == oap->line_count - 1)
+          && oap->line_count > p_report) {
+        smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
       }
-      if (amount >= 0 && set_indent(amount, SIN_UNDO)) {
-        // did change the indent, call changed_lines() later
-        if (first_changed == 0) {
-          first_changed = curwin->w_cursor.lnum;
+
+      // Be vi-compatible: For lisp indenting the first line is not
+      // indented, unless there is only one line.
+      if (i != oap->line_count - 1 || oap->line_count == 1
+          || how != get_lisp_indent) {
+        l = skipwhite(get_cursor_line_ptr());
+        if (*l == NUL) {                      // empty or blank line
+          amount = 0;
+        } else {
+          amount = how();                     // get the indent for this line
         }
-        last_changed = curwin->w_cursor.lnum;
+        if (amount >= 0 && set_indent(amount, 0)) {
+          // did change the indent, call changed_lines() later
+          if (first_changed == 0) {
+            first_changed = curwin->w_cursor.lnum;
+          }
+          last_changed = curwin->w_cursor.lnum;
+        }
       }
+      curwin->w_cursor.lnum++;
+      curwin->w_cursor.col = 0;      // make sure it's valid
     }
-    ++curwin->w_cursor.lnum;
-    curwin->w_cursor.col = 0;      // make sure it's valid
   }
 
   // put cursor on first non-blank of indented line

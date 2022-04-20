@@ -59,6 +59,29 @@ func Test_reindent()
   close!
 endfunc
 
+" Test indent operator creating one undo entry
+func Test_indent_operator_undo()
+  enew
+  call setline(1, range(12)->map('"\t" .. v:val'))
+  func FoldExpr()
+    let g:foldcount += 1
+    return '='
+  endfunc
+  set foldmethod=expr foldexpr=FoldExpr()
+  let g:foldcount = 0
+  redraw
+  call assert_equal(12, g:foldcount)
+  normal gg=G
+  call assert_equal(24, g:foldcount)
+  undo
+  call assert_equal(38, g:foldcount)
+
+  bwipe!
+  set foldmethod& foldexpr=
+  delfunc FoldExpr
+  unlet g:foldcount
+endfunc
+
 " Test for shifting a line with a preprocessor directive ('#')
 func Test_preproc_indent()
   new
