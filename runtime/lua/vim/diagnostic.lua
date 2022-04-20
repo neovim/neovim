@@ -668,14 +668,10 @@ function M.set(namespace, bufnr, diagnostics, opts)
     M.show(namespace, bufnr, nil, opts)
   end
 
-  vim.api.nvim_buf_call(bufnr, function()
-    vim.api.nvim_command(
-      string.format(
-        "doautocmd <nomodeline> DiagnosticChanged %s",
-        vim.fn.fnameescape(vim.api.nvim_buf_get_name(bufnr))
-      )
-    )
-  end)
+  vim.api.nvim_exec_autocmds("DiagnosticChanged", {
+    modeline = false,
+    buffer = bufnr,
+  })
 end
 
 --- Get namespace metadata.
@@ -1382,14 +1378,10 @@ function M.reset(namespace, bufnr)
       M.hide(iter_namespace, iter_bufnr)
     end
 
-    vim.api.nvim_buf_call(iter_bufnr, function()
-      vim.api.nvim_command(
-        string.format(
-          "doautocmd <nomodeline> DiagnosticChanged %s",
-          vim.fn.fnameescape(vim.api.nvim_buf_get_name(iter_bufnr))
-        )
-      )
-    end)
+    vim.api.nvim_exec_autocmds("DiagnosticChanged", {
+      modeline = false,
+      buffer = iter_bufnr,
+    })
   end
 end
 
