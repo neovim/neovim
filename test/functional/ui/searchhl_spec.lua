@@ -109,54 +109,108 @@ describe('search highlighting', function()
     ]])
   end)
 
-  it('works for match under cursor', function()
-    screen:set_default_attr_ids({
-        [1] = {background = Screen.colors.Yellow},
-        [2] = {foreground = Screen.colors.Gray100, background = Screen.colors.Gray0},
-        [3] = {foreground = Screen.colors.Red},
-    })
+  describe('CurSearch highlight', function()
+    before_each(function()
+      screen:set_default_attr_ids({
+        [1] = {background = Screen.colors.Yellow},  -- Search
+        [2] = {foreground = Screen.colors.White, background = Screen.colors.Black},  -- CurSearch
+        [3] = {foreground = Screen.colors.Red},  -- WarningMsg
+      })
+      command('highlight CurSearch guibg=Black guifg=White')
+    end)
 
-    command('highlight CurSearch guibg=Black guifg=White')
-    insert([[
-      There is no way that a bee should be
-      able to fly. Its wings are too small
-      to get its fat little body off the
-      ground. The bee, of course, flies
-      anyway because bees don't care what
-      humans think is impossible.]])
+    it('works for match under cursor', function()
+      insert([[
+        There is no way that a bee should be
+        able to fly. Its wings are too small
+        to get its fat little body off the
+        ground. The bee, of course, flies
+        anyway because bees don't care what
+        humans think is impossible.]])
 
-    feed('/bee<CR>')
-    screen:expect{grid=[[
-      There is no way that a {2:^bee} should be    |
-      able to fly. Its wings are too small    |
-      to get its fat little body off the      |
-      ground. The {1:bee}, of course, flies       |
-      anyway because {1:bee}s don't care what     |
-      humans think is impossible.             |
-      {3:search hit BOTTOM, continuing at TOP}    |
-    ]]}
+      feed('/bee<CR>')
+      screen:expect{grid=[[
+        There is no way that a {2:^bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {1:bee}, of course, flies       |
+        anyway because {1:bee}s don't care what     |
+        humans think is impossible.             |
+        {3:search hit BOTTOM, continuing at TOP}    |
+      ]]}
 
-    feed('nn')
-    screen:expect{grid=[[
-      There is no way that a {1:bee} should be    |
-      able to fly. Its wings are too small    |
-      to get its fat little body off the      |
-      ground. The {1:bee}, of course, flies       |
-      anyway because {2:^bee}s don't care what     |
-      humans think is impossible.             |
-      /bee                                    |
-    ]]}
+      feed('nn')
+      screen:expect{grid=[[
+        There is no way that a {1:bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {1:bee}, of course, flies       |
+        anyway because {2:^bee}s don't care what     |
+        humans think is impossible.             |
+        /bee                                    |
+      ]]}
 
-    feed('N')
-    screen:expect{grid=[[
-      There is no way that a {1:bee} should be    |
-      able to fly. Its wings are too small    |
-      to get its fat little body off the      |
-      ground. The {2:^bee}, of course, flies       |
-      anyway because {1:bee}s don't care what     |
-      humans think is impossible.             |
-      ?bee                                    |
-    ]]}
+      feed('N')
+      screen:expect{grid=[[
+        There is no way that a {1:bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {2:^bee}, of course, flies       |
+        anyway because {1:bee}s don't care what     |
+        humans think is impossible.             |
+        ?bee                                    |
+      ]]}
+    end)
+
+    it('works for multiline match', function()
+      insert([[
+        one
+        foo
+        bar
+        baz
+        foo
+        bar]])
+        feed('gg/foo<CR>')
+        screen:expect([[
+          one                                     |
+          {2:^foo}                                     |
+          bar                                     |
+          baz                                     |
+          {1:foo}                                     |
+          bar                                     |
+          /foo                                    |
+        ]])
+        feed('n')
+        screen:expect([[
+          one                                     |
+          {1:foo}                                     |
+          bar                                     |
+          baz                                     |
+          {2:^foo}                                     |
+          bar                                     |
+          /foo                                    |
+        ]])
+        feed('?<CR>')
+        screen:expect([[
+          one                                     |
+          {2:^foo}                                     |
+          bar                                     |
+          baz                                     |
+          {1:foo}                                     |
+          bar                                     |
+          ?foo                                    |
+        ]])
+        feed('gg/foo\\nbar<CR>')
+        screen:expect([[
+          one                                     |
+          {2:^foo}                                     |
+          {1:bar}                                     |
+          baz                                     |
+          {1:foo}                                     |
+          {1:bar}                                     |
+          /foo\nbar                               |
+        ]])
+    end)
   end)
 
   it('highlights after EOL', function()

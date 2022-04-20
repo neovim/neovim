@@ -582,6 +582,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
     }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
+    shl->lines = 0;
     shl->attr_cur = 0;
     shl->is_addpos = false;
     if (cur != NULL) {
@@ -605,6 +606,11 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
         shl->endcol = shl->rm.endpos[0].col;
       } else {
         shl->endcol = MAXCOL;
+      }
+      if (shl->rm.endpos[0].lnum != shl->rm.startpos[0].lnum) {
+        shl->lines = shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
+      } else {
+        shl->lines = 1;
       }
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
@@ -668,10 +674,12 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
         if (shl->endcol < next_col) {
           shl->endcol = next_col;
         }
-        // Use "CurSearch" highlight for current search match
+        // Highlight the match were the cursor is using the CurSearch
+        // group.
         if (shl == search_hl
             && (HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC])
             && wp->w_cursor.lnum == lnum
+            && wp->w_cursor.lnum < shl->lnum + shl->lines
             && wp->w_cursor.col >= shl->startcol
             && wp->w_cursor.col < shl->endcol) {
           shl->attr_cur = win_hl_attr(wp, HLF_LC) ? win_hl_attr(wp, HLF_LC) : HL_ATTR(HLF_LC);
