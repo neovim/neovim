@@ -71,7 +71,7 @@ typedef struct {
   int top, bot, left, right;
 } Rect;
 
-typedef struct {
+struct TUIData {
   UIBridgeData *bridge;
   Loop *loop;
   unibi_var_t params[9];
@@ -132,9 +132,10 @@ typedef struct {
     int set_underline_style;
     int set_underline_color;
     int enable_extended_keys, disable_extended_keys;
+    int get_extkeys;
   } unibi_ext;
   char *space_buf;
-} TUIData;
+};
 
 static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
@@ -177,6 +178,32 @@ UI *tui_start(void)
   ui->ui_ext[kUITermColors] = true;
 
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
+}
+
+void tui_enable_extkeys(TUIData *data)
+{
+  TermInput input = data->input;
+  unibi_term *ut = data->ut;
+  UI *ui = data->bridge->ui;
+
+  switch (input.extkeys_type) {
+  case kExtkeysCSIu:
+    data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
+                                                                  "\x1b[>1u");
+    data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
+                                                                   "\x1b[<1u");
+    break;
+  case kExtkeysXterm:
+    data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
+                                                                  "\x1b[>4;2m");
+    data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
+                                                                   "\x1b[>4;0m");
+    break;
+  default:
+    break;
+  }
+
+  unibi_out_ext(ui, data->unibi_ext.enable_extended_keys);
 }
 
 static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index, char *buf, size_t len)
@@ -228,8 +255,10 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.set_underline_color = -1;
   data->unibi_ext.enable_extended_keys = -1;
   data->unibi_ext.disable_extended_keys = -1;
+  data->unibi_ext.get_extkeys = -1;
   data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
+  data->input.tui_data = data;
 
   const char *term = os_getenv("TERM");
 #ifdef WIN32
@@ -311,8 +340,9 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
-  // Enable extended keys (also known as 'modifyOtherKeys' or CSI u)
-  unibi_out_ext(ui, data->unibi_ext.enable_extended_keys);
+  // Query the terminal to see if it supports CSI u
+  data->input.waiting_for_csiu_response = 5;
+  unibi_out_ext(ui, data->unibi_ext.get_extkeys);
 
   int ret;
   uv_loop_init(&data->write_loop);
@@ -1810,6 +1840,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
   data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
                                                   "\x1b]11;?\x07");
 
+  // Query the terminal to see if it supports CSI u key encoding by writing CSI
+  // ? u followed by a request for the primary device attributes (CSI c)
+  // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/#detection-of-support-for-this-protocol
+  data->unibi_ext.get_extkeys = (int)unibi_add_ext_str(ut, "ext.get_extkeys",
+                                                       "\x1b[?u\x1b[c");
+
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
@@ -2074,15 +2110,9 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                                                                  "\x1b[58:2::%p1%d:%p2%d:%p3%dm");
   }
 
-  data->unibi_ext.enable_extended_keys = unibi_find_ext_str(ut, "Eneks");
-  data->unibi_ext.disable_extended_keys = unibi_find_ext_str(ut, "Dseks");
-  if (data->unibi_ext.enable_extended_keys == -1) {
-    if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
-      data->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
-                                                                    "\x1b[>4;2m");
-      data->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
-                                                                     "\x1b[>4m");
-    }
+  if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
+    // Fallback to Xterm's modifyOtherKeys if terminal does not support CSI u
+    data->input.extkeys_type = kExtkeysXterm;
   }
 }
 
