@@ -1018,6 +1018,7 @@ typedef struct {
                         // match (may continue in next line)
   buf_T *buf;     // the buffer to search for a match
   linenr_T lnum;        // the line to search for a match
+  linenr_T lines;       // number of lines starting from lnum
   int attr;             // attributes to be used for a match
   int attr_cur;         // attributes currently active in win_line()
   linenr_T first_lnum;  // first lnum to search for multi-line pat
