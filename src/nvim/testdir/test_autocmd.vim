@@ -2741,6 +2741,19 @@ func Test_autocmd_closing_cmdwin()
   only
 endfunc
 
+func Test_autocmd_vimgrep()
+  augroup aucmd_vimgrep
+    au QuickfixCmdPre,BufNew,BufDelete,BufReadCmd * sb
+    au QuickfixCmdPre,BufNew,BufDelete,BufReadCmd * q9 
+  augroup END
+  " TODO: if this is executed directly valgrind reports errors
+  call assert_fails('lv?a?', 'E926:')
+
+  augroup aucmd_vimgrep
+    au!
+  augroup END
+endfunc
+
 func Test_bufwipeout_changes_window()
   " This should not crash, but we don't have any expectations about what
   " happens, changing window in BufWipeout has unpredictable results.

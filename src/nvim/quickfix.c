@@ -2313,7 +2313,10 @@ static bool qflist_valid(win_T *wp, unsigned int qf_id)
   qf_info_T *qi = &ql_info;
 
   if (wp) {
-    qi = GET_LOC_LIST(wp);
+    if (!win_valid(wp)) {
+      return false;
+    }
+    qi = GET_LOC_LIST(wp);  // Location list
     if (!qi) {
       return false;
     }
