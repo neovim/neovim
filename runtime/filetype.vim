@@ -151,14 +151,21 @@ au BufNewFile,BufRead *.asp
 	\   setf aspvbs |
 	\ endif
 
-" Grub (must be before catch *.lst)
+" Grub (must be before pattern *.lst)
 au BufNewFile,BufRead */boot/grub/menu.lst,*/boot/grub/grub.conf,*/etc/grub.conf setf grub
+
+" Maxima, see:
+" https://maxima.sourceforge.io/docs/manual/maxima_71.html#file_005ftype_005fmaxima
+" Must be before the pattern *.mac.
+" *.dem omitted - also used by gnuplot demos
+" *.mc omitted - used by dist#ft#McSetf()
+au BufNewFile,BufRead *.demo,*.dm{1,2,3,t},*.wxm,maxima-init.mac setf maxima
 
 " Assembly (all kinds)
 " *.lst is not pure assembly, it has two extra columns (address, byte codes)
 au BufNewFile,BufRead *.asm,*.[sS],*.[aA],*.mac,*.lst	call dist#ft#FTasm()
 
-" Macro (VAX)
+" Assembly - Macro (VAX)
 au BufNewFile,BufRead *.mar			setf vmasm
 
 " Atlas
@@ -1674,7 +1681,8 @@ au BufNewFile,BufRead *.siv,*.sieve		setf sieve
 " Sendmail
 au BufNewFile,BufRead sendmail.cf		setf sm
 
-" Sendmail .mc files are actually m4.  Could also be MS Message text file.
+" Sendmail .mc files are actually m4.  Could also be MS Message text file or
+" Maxima.
 au BufNewFile,BufRead *.mc			call dist#ft#McSetf()
 
 " Services
