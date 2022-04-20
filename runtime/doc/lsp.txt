@@ -814,7 +814,7 @@ start_client({config})                                *vim.lsp.start_client()*
                                          language server if requested via
                                          `workspace/configuration`. Keys are
                                          case-sensitive.
-                    {commands}           table Table that maps string of
+                    {commands}           Table that maps string of
                                          clientside commands to user-defined
                                          functions. Commands passed to
                                          start_client take precedence over the
@@ -1961,7 +1961,7 @@ resolve_capabilities({server_capabilities})
                 capabilities.
 
                 Parameters: ~
-                    {server_capabilities}  table Table of capabilities
+                    {server_capabilities}  Table of capabilities
                                            supported by the server
 
                 Return: ~
