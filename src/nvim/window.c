@@ -72,6 +72,9 @@ typedef enum {
   WEE_TRIGGER_LEAVE_AUTOCMDS = 0x10,
 } wee_flags_T;
 
+static char e_cannot_split_window_when_closing_buffer[]
+  = N_("E1159: Cannot split a window when closing the buffer");
+
 static char *m_onlyone = N_("Already only one window");
 
 /// When non-zero splitting a window is forbidden.  Used to avoid that nasty
@@ -946,6 +949,10 @@ static int check_split_disallowed(void)
     emsg(_("E242: Can't split a window while closing another"));
     return FAIL;
   }
+  if (curwin->w_buffer->b_locked_split) {
+    emsg(_(e_cannot_split_window_when_closing_buffer));
+    return FAIL;
+  }
   return OK;
 }
 
@@ -966,6 +973,10 @@ static int check_split_disallowed(void)
  */
 int win_split(int size, int flags)
 {
+  if (check_split_disallowed() == FAIL) {
+    return FAIL;
+  }
+
   // When the ":tab" modifier was used open a new tab page instead.
   if (may_open_tabpage() == OK) {
     return OK;
@@ -975,9 +986,6 @@ int win_split(int size, int flags)
   flags |= cmdmod.split;
   if ((flags & WSP_TOP) && (flags & WSP_BOT)) {
     emsg(_("E442: Can't split topleft and botright at the same time"));
-    return FAIL;
-  }
-  if (check_split_disallowed() == FAIL) {
     return FAIL;
   }
 
