@@ -760,6 +760,8 @@ nvim_create_user_command({name}, {command}, {*opts})
                                  when a Lua function is used for {command}.
                                • force: (boolean, default true) Override any
                                  previous definition.
+                               • preview: (function) Preview callback for
+                                 'inccommand' |:command-preview|
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.

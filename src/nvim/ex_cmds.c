@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "nvim/api/buffer.h"
-#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -110,8 +109,6 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
 #endif
-
-static int preview_bufnr = 0;
 
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
@@ -1013,7 +1010,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   disable_fold_update--;
 
   // send update regarding the new lines that were added
-  buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  buf_updates_send_changes(curbuf, dest + 1, num_lines, 0);
 
   /*
    * Now we delete the original text -- webb
@@ -1055,7 +1052,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
 
   // send nvim_buf_lines_event regarding lines that were deleted
-  buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
+  buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines);
 
   return OK;
 }
@@ -3438,8 +3435,8 @@ static int check_regexp_delim(int c)
 /// The usual escapes are supported as described in the regexp docs.
 ///
 /// @param do_buf_event If `true`, send buffer updates.
-/// @return buffer used for 'inccommand' preview
-static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle_T bufnr)
+/// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
+static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
   long i = 0;
   regmmatch_T regmatch;
@@ -3467,14 +3464,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   char *sub_firstline;    // allocated copy of first sub line
   bool endcolumn = false;   // cursor in last column when done
   PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
-  static int pre_src_id = 0;  // Source id for the preview highlight
   static int pre_hl_id = 0;
-  buf_T *orig_buf = curbuf;  // save to reset highlighting
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
   int save_ma = 0;
-  int save_b_changed = curbuf->b_changed;
-  bool preview = (State & MODE_CMDPREVIEW);
 
   bool did_save = false;
 
@@ -3494,7 +3487,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       && vim_strchr("0123456789cegriIp|\"", *cmd) == NULL) {
     // don't accept alphanumeric for separator
     if (check_regexp_delim(*cmd) == FAIL) {
-      return NULL;
+      return 0;
     }
 
     // undocumented vi feature:
@@ -3504,7 +3497,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       cmd++;
       if (vim_strchr("/?&", *cmd) == NULL) {
         emsg(_(e_backslash));
-        return NULL;
+        return 0;
       }
       if (*cmd != '&') {
         which_pat = RE_SEARCH;              // use last '/' pattern
@@ -3540,7 +3533,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       MB_PTR_ADV(cmd);
     }
 
-    if (!eap->skip && !preview) {
+    if (!eap->skip && !cmdpreview) {
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup(sub),
         .timestamp = os_time(),
@@ -3550,7 +3543,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   } else if (!eap->skip) {    // use previous pattern and substitution
     if (old_sub.sub == NULL) {      // there is no previous command
       emsg(_(e_nopresub));
-      return NULL;
+      return 0;
     }
     pat = NULL;                 // search_regcomp() will use previous pattern
     sub = old_sub.sub;
@@ -3560,8 +3553,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !preview)) {
-    return NULL;
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !cmdpreview)) {
+    return 0;
   }
 
   cmd = sub_parse_flags(cmd, &subflags, &which_pat);
@@ -3575,7 +3568,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     i = getdigits_long((char_u **)&cmd, true, 0);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       emsg(_(e_zerocount));
-      return NULL;
+      return 0;
     }
     eap->line1 = eap->line2;
     eap->line2 += i - 1;
@@ -3592,26 +3585,26 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     eap->nextcmd = (char *)check_nextcmd((char_u *)cmd);
     if (eap->nextcmd == NULL) {
       emsg(_(e_trailing));
-      return NULL;
+      return 0;
     }
   }
 
   if (eap->skip) {          // not executing commands, only parsing
-    return NULL;
+    return 0;
   }
 
   if (!subflags.do_count && !MODIFIABLE(curbuf)) {
     // Substitution is not allowed in non-'modifiable' buffer
     emsg(_(e_modifiable));
-    return NULL;
+    return 0;
   }
 
-  if (search_regcomp((char_u *)pat, RE_SUBST, which_pat, (preview ? 0 : SEARCH_HIS),
+  if (search_regcomp((char_u *)pat, RE_SUBST, which_pat, (cmdpreview ? 0 : SEARCH_HIS),
                      &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
-    return NULL;
+    return 0;
   }
 
   // the 'i' or 'I' flag overrules 'ignorecase' and 'smartcase'
@@ -3638,10 +3631,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     sub_copy = sub;
   } else {
     char *source = sub;
-    sub = (char *)regtilde((char_u *)sub, p_magic, preview);
+    sub = (char *)regtilde((char_u *)sub, p_magic, cmdpreview);
     // When previewing, the new pattern allocated by regtilde() needs to be freed
     // in this function because it will not be used or freed by regtilde() later.
-    sub_needs_free = preview && sub != source;
+    sub_needs_free = cmdpreview && sub != source;
   }
 
   // Check for a match on each line.
@@ -3650,7 +3643,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
-       && (!preview || preview_lines.lines_needed <= (linenr_T)p_cwh
+       && (!cmdpreview || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
@@ -3817,7 +3810,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           }
         }
 
-        if (subflags.do_ask && !preview) {
+        if (subflags.do_ask && !cmdpreview) {
           int typed = 0;
 
           // change State to MODE_CONFIRM, so that the mouse works
@@ -4049,7 +4042,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
         // Save the line numbers for the preview buffer
         // NOTE: If the pattern matches a final newline, the next line will
         // be shown also, but should not be highlighted. Intentional for now.
-        if (preview && !has_second_delim) {
+        if (cmdpreview && !has_second_delim) {
           current_match.start.col = regmatch.startpos[0].col;
           if (current_match.end.lnum == 0) {
             current_match.end.lnum = sub_firstlnum + nmatch - 1;
@@ -4064,7 +4057,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
-        if (!preview || has_second_delim) {
+        if (!cmdpreview || has_second_delim) {
           long lnum_start = lnum;  // save the start lnum
           save_ma = curbuf->b_p_ma;
           if (subflags.do_count) {
@@ -4310,7 +4303,7 @@ skip:
 
 #define PUSH_PREVIEW_LINES() \
   do { \
-    if (preview) { \
+    if (cmdpreview) { \
       linenr_T match_lines = current_match.end.lnum \
                              - current_match.start.lnum +1; \
       if (preview_lines.subresults.size > 0) { \
@@ -4366,8 +4359,7 @@ skip:
 
     int64_t num_added = last_line - first_line;
     int64_t num_removed = num_added - i;
-    buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
-                             do_buf_event);
+    buf_updates_send_changes(curbuf, first_line, num_added, num_removed);
   }
 
   xfree(sub_firstline);   // may have to free allocated copy of the line
@@ -4394,7 +4386,7 @@ skip:
           beginline(BL_WHITE | BL_FIX);
         }
       }
-      if (!preview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
+      if (!cmdpreview && !do_sub_msg(subflags.do_count) && subflags.do_ask) {
         msg("");
       }
     } else {
@@ -4431,34 +4423,23 @@ skip:
   subflags.do_all = save_do_all;
   subflags.do_ask = save_do_ask;
 
+  int retv = 0;
+
   // Show 'inccommand' preview if there are matched lines.
-  buf_T *preview_buf = NULL;
-  size_t subsize = preview_lines.subresults.size;
-  if (preview && !aborting()) {
+  if (cmdpreview && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct("icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
     } else if (*p_icm != NUL && pat != NULL) {
-      if (pre_src_id == 0) {
-        // Get a unique new src_id, saved in a static
-        pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
-      }
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group(S_LEN("Substitute"));
       }
-      curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-      preview_buf = show_sub(eap, old_cursor, &preview_lines,
-                             pre_hl_id, pre_src_id, bufnr);
-      if (subsize > 0) {
-        extmark_clear(orig_buf, pre_src_id, eap->line1 - 1, 0,
-                      kv_last(preview_lines.subresults).end.lnum - 1, MAXCOL);
-      }
+      retv = show_sub(eap, old_cursor, &preview_lines, pre_hl_id, cmdpreview_ns, cmdpreview_bufnr);
     }
   }
 
   kv_destroy(preview_lines.subresults);
-
-  return preview_buf;
+  return retv;
 #undef ADJUST_SUB_FIRSTLNUM
 #undef PUSH_PREVIEW_LINES
 }
@@ -5854,52 +5835,26 @@ void ex_helpclose(exarg_T *eap)
   }
 }
 
-/// Tries to enter to an existing window of given buffer. If no existing buffer
-/// is found, creates a new split.
-///
-/// @return  OK/FAIL.
-int sub_preview_win(buf_T *preview_buf)
-{
-  if (preview_buf != NULL) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer == preview_buf) {
-        win_enter(wp, false);
-
-        return OK;
-      }
-    }
-  }
-  return win_split((int)p_cwh, WSP_BOT);
-}
-
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
-static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, int hl_id,
-                       int src_id, handle_T bufnr)
+///
+/// @return 1 if preview window isn't needed, 2 if preview window is needed.
+static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, int hl_id,
+                    long cmdpreview_ns, handle_T cmdpreview_bufnr)
   FUNC_ATTR_NONNULL_ALL
 {
-  win_T *save_curwin = curwin;
-  cmdmod_T save_cmdmod = cmdmod;
   char *save_shm_p = (char *)vim_strsave(p_shm);
   PreviewLines lines = *preview_lines;
   buf_T *orig_buf = curbuf;
-
   // We keep a special-purpose buffer around, but don't assume it exists.
-  buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
-  cmdmod.split = 0;               // disable :leftabove/botright modifiers
-  cmdmod.tab = 0;                 // disable :tab modifier
-  cmdmod.noswapfile = true;       // disable swap for preview buffer
+  buf_T *cmdpreview_buf = NULL;
+
   // disable file info message
   set_string_option_direct("shm", -1, (char_u *)"F", OPT_FREE,
                            SID_NONE);
 
-  bool outside_curline = (eap->line1 != old_cusr.lnum
-                          || eap->line2 != old_cusr.lnum);
-  bool preview = outside_curline && (*p_icm != 'n');
-  if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
-    preview = false;
-    preview_buf = NULL;
-  }
+  // Update the topline to ensure that main window is on the correct line
+  update_topline(curwin);
 
   // Place cursor on nearest matching line, to undo do_sub() cursor placement.
   for (size_t i = 0; i < lines.subresults.size; i++) {
@@ -5914,27 +5869,17 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines
   // Width of the "| lnum|..." column which displays the line numbers.
   linenr_T highest_num_line = 0;
   int col_width = 0;
+  // Use preview window only when inccommand=split and range is not just the current line
+  bool preview = (*p_icm != 'n') && (eap->line1 != old_cusr.lnum || eap->line2 != old_cusr.lnum);
 
-  if (preview && sub_preview_win(preview_buf) != FAIL) {
-    buf_open_scratch(preview_buf ? bufnr : 0, "[Preview]");
-    buf_clear();
-    preview_buf = curbuf;
-    curbuf->b_p_bl = false;
-    curbuf->b_p_ma = true;
-    curbuf->b_p_ul = -1;
-    curbuf->b_p_tw = 0;         // Reset 'textwidth' (was set by ftplugin)
-    curwin->w_p_cul = false;
-    curwin->w_p_cuc = false;
-    curwin->w_p_spell = false;
-    curwin->w_p_fen = false;
+  if (preview) {
+    cmdpreview_buf = buflist_findnr(cmdpreview_bufnr);
+    assert(cmdpreview_buf != NULL);
 
     if (lines.subresults.size > 0) {
       highest_num_line = kv_last(lines.subresults).end.lnum;
       col_width = log10(highest_num_line) + 1 + 3;
     }
-  } else {
-    // Failed to split the window, don't show 'inccommand' preview.
-    preview_buf = NULL;
   }
 
   char *str = NULL;  // construct the line to show in here
@@ -5944,10 +5889,13 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines
   linenr_T linenr_origbuf = 0;  // last line added to original buffer
   linenr_T next_linenr = 0;     // next line to show for the match
 
+  // Temporarily switch to preview buffer
+  aco_save_T aco;
+
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
-    if (preview_buf) {
+    if (cmdpreview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
 
@@ -5986,115 +5934,50 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines
         // Put "|lnum| line" into `str` and append it to the preview buffer.
         snprintf(str, line_size, "|%*ld| %s", col_width - 3,
                  next_linenr, line);
+        // Temporarily switch to preview buffer
+        aucmd_prepbuf(&aco, cmdpreview_buf);
         if (linenr_preview == 0) {
           ml_replace(1, str, true);
         } else {
           ml_append(linenr_preview, str, (colnr_T)line_size, false);
         }
+        aucmd_restbuf(&aco);
         linenr_preview += 1;
       }
       linenr_origbuf = match.end.lnum;
 
-      bufhl_add_hl_pos_offset(preview_buf, src_id, hl_id, p_start,
-                              p_end, col_width);
+      bufhl_add_hl_pos_offset(cmdpreview_buf, cmdpreview_ns, hl_id, p_start, p_end, col_width);
     }
-    bufhl_add_hl_pos_offset(orig_buf, src_id, hl_id, match.start,
-                            match.end, 0);
+    bufhl_add_hl_pos_offset(orig_buf, cmdpreview_ns, hl_id, match.start, match.end, 0);
   }
+
   xfree(str);
-
-  redraw_later(curwin, SOME_VALID);
-  win_enter(save_curwin, false);  // Return to original window
-  update_topline(curwin);
-
-  // Update screen now.
-  int save_rd = RedrawingDisabled;
-  RedrawingDisabled = 0;
-  update_screen(SOME_VALID);
-  RedrawingDisabled = save_rd;
 
   set_string_option_direct("shm", -1, (char_u *)save_shm_p, OPT_FREE, SID_NONE);
   xfree(save_shm_p);
 
-  cmdmod = save_cmdmod;
-
-  return preview_buf;
+  return preview ? 2 : 1;
 }
 
-/// Closes any open windows for inccommand preview buffer.
-void close_preview_windows(void)
-{
-  block_autocmds();
-  buf_T *buf = preview_bufnr ? buflist_findnr(preview_bufnr) : NULL;
-  if (buf != NULL) {
-    close_windows(buf, false);
-  }
-  unblock_autocmds();
-}
-
-/// :substitute command
-///
-/// If 'inccommand' is empty: calls do_sub().
-/// If 'inccommand' is set: shows a "live" preview then removes the changes.
-/// from undo history.
+/// :substitute command.
 void ex_substitute(exarg_T *eap)
 {
-  bool preview = (State & MODE_CMDPREVIEW);
-  if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
-    close_preview_windows();
-    (void)do_sub(eap, profile_zero(), true, preview_bufnr);
+  (void)do_sub(eap, profile_zero(), 0, 0);
+  return;
+}
 
-    return;
+/// :substitute command preview callback.
+int ex_substitute_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+{
+  // Only preview once the pattern delimiter has been typed
+  if (*eap->arg && !ASCII_ISALNUM(*eap->arg)) {
+    char *save_eap = eap->arg;
+    int retv = do_sub(eap, profile_setlimit(p_rdt), cmdpreview_ns, cmdpreview_bufnr);
+    eap->arg = save_eap;
+    return retv;
   }
 
-  block_autocmds();           // Disable events during command preview.
-
-  char *save_eap = eap->arg;
-  garray_T save_view;
-  win_size_save(&save_view);  // Save current window sizes.
-  save_search_patterns();
-  int save_changedtick = buf_get_changedtick(curbuf);
-  time_t save_b_u_time_cur = curbuf->b_u_time_cur;
-  u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
-  long save_b_p_ul = curbuf->b_p_ul;
-  int save_w_p_cul = curwin->w_p_cul;
-  int save_w_p_cuc = curwin->w_p_cuc;
-
-  curbuf->b_p_ul = LONG_MAX;  // make sure we can undo all changes
-  curwin->w_p_cul = false;    // Disable 'cursorline'
-  curwin->w_p_cuc = false;    // Disable 'cursorcolumn'
-
-  // Don't show search highlighting during live substitution
-  bool save_hls = p_hls;
-  p_hls = false;
-  buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt), false,
-                              preview_bufnr);
-  p_hls = save_hls;
-
-  if (preview_buf != NULL) {
-    preview_bufnr = preview_buf->handle;
-  }
-
-  if (save_changedtick != buf_get_changedtick(curbuf)) {
-    // Undo invisibly. This also moves the cursor!
-    if (!u_undo_and_forget(1)) {
-      abort();
-    }
-    // Restore newhead. It is meaningless when curhead is valid, but we must
-    // restore it so that undotree() is identical before/after the preview.
-    curbuf->b_u_newhead = save_b_u_newhead;
-    curbuf->b_u_time_cur = save_b_u_time_cur;
-    buf_set_changedtick(curbuf, save_changedtick);
-  }
-
-  curbuf->b_p_ul = save_b_p_ul;
-  curwin->w_p_cul = save_w_p_cul;   // Restore 'cursorline'
-  curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'
-  eap->arg = save_eap;
-  restore_search_patterns();
-  win_size_restore(&save_view);
-  ga_clear(&save_view);
-  unblock_autocmds();
+  return 0;
 }
 
 /// Skip over the pattern argument of ":vimgrep /pat/[g][j]".

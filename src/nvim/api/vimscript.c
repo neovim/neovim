@@ -1311,7 +1311,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     WITH_SCRIPT_CONTEXT(channel_id, {
-      execute_cmd(&ea, &cmdinfo);
+      execute_cmd(&ea, &cmdinfo, false);
     });
 
     if (output) {

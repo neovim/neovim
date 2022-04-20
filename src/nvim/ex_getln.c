@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
@@ -69,6 +71,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
@@ -250,6 +253,9 @@ static CheckhealthComp healthchecks = { GA_INIT(sizeof(char_u *), 10), 0 };
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
 #endif
+
+static handle_T cmdpreview_bufnr = 0;
+static long cmdpreview_ns = 0;
 
 static int cmd_hkmap = 0;  // Hebrew mapping during command line
 
@@ -740,6 +746,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   static int cmdline_level = 0;
   cmdline_level++;
 
+  bool save_cmdpreview = cmdpreview;
+  cmdpreview = false;
   CommandLineState state = {
     .firstc = firstc,
     .count = count,
@@ -951,11 +959,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
 
-  if (s->gotesc) {
-    // There might be a preview window open for inccommand. Close it.
-    close_preview_windows();
-  }
-
   finish_incsearch_highlighting(s->gotesc, &s->is_state, false);
 
   if (ccline.cmdbuff != NULL) {
@@ -998,6 +1001,10 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE,
                            SID_NONE);
   State = s->save_State;
+  if (cmdpreview != save_cmdpreview) {
+    cmdpreview = save_cmdpreview;  // restore preview state
+    redraw_all_later(SOME_VALID);
+  }
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
   sb_text_end_cmdline();
@@ -2306,6 +2313,267 @@ static int empty_pattern(char_u *p)
   return n == 0 || (n >= 2 && p[n - 2] == '\\' && p[n - 1] == '|');
 }
 
+handle_T cmdpreview_get_bufnr(void)
+{
+  return cmdpreview_bufnr;
+}
+
+long cmdpreview_get_ns(void)
+{
+  return cmdpreview_ns;
+}
+
+/// Sets up command preview buffer.
+///
+/// @return Pointer to command preview buffer if succeeded, NULL if failed.
+static buf_T *cmdpreview_open_buf(void)
+{
+  buf_T *cmdpreview_buf = cmdpreview_bufnr ? buflist_findnr(cmdpreview_bufnr) : NULL;
+
+  // If preview buffer doesn't exist, open one.
+  if (cmdpreview_buf == NULL) {
+    Error err = ERROR_INIT;
+    handle_T bufnr = nvim_create_buf(false, true, &err);
+
+    if (ERROR_SET(&err)) {
+      return NULL;
+    }
+
+    cmdpreview_buf = buflist_findnr(bufnr);
+  }
+
+  // Preview buffer cannot preview itself!
+  if (cmdpreview_buf == curbuf) {
+    return NULL;
+  }
+
+  // Rename preview buffer.
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, cmdpreview_buf);
+  int retv = rename_buffer("[Preview]");
+  aucmd_restbuf(&aco);
+
+  if (retv == FAIL) {
+    return NULL;
+  }
+
+  // Temporarily switch to preview buffer to set it up for previewing.
+  aucmd_prepbuf(&aco, cmdpreview_buf);
+  buf_clear();
+  curbuf->b_p_ma = true;
+  curbuf->b_p_ul = -1;
+  curbuf->b_p_tw = 0;  // Reset 'textwidth' (was set by ftplugin)
+  aucmd_restbuf(&aco);
+  cmdpreview_bufnr = cmdpreview_buf->handle;
+
+  return cmdpreview_buf;
+}
+
+/// Open command preview window if it's not already open.
+/// Returns to original window after opening command preview window.
+///
+/// @param cmdpreview_buf Pointer to command preview buffer
+///
+/// @return Pointer to command preview window if succeeded, NULL if failed.
+static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
+{
+  win_T *save_curwin = curwin;
+  bool win_found = false;
+
+  // Try to find an existing preview window.
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == cmdpreview_buf) {
+      win_enter(wp, false);
+      win_found = true;
+      break;
+    }
+  }
+
+  // If an existing window is not found, create one.
+  if (!win_found && win_split((int)p_cwh, WSP_BOT) == FAIL) {
+    return NULL;
+  }
+
+  win_T *preview_win = curwin;
+  Error err = ERROR_INIT;
+
+  // Switch to preview buffer
+  try_start();
+  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, cmdpreview_buf->handle, 0);
+  if (try_end(&err) || result == FAIL) {
+    api_clear_error(&err);
+    return NULL;
+  }
+
+  curwin->w_p_cul = false;
+  curwin->w_p_cuc = false;
+  curwin->w_p_spell = false;
+  curwin->w_p_fen = false;
+
+  win_enter(save_curwin, false);
+  return preview_win;
+}
+
+/// Closes any open command preview windows.
+static void cmdpreview_close_win(void)
+{
+  buf_T *buf = cmdpreview_bufnr ? buflist_findnr(cmdpreview_bufnr) : NULL;
+  if (buf != NULL) {
+    close_windows(buf, false);
+  }
+}
+
+/// Show 'inccommand' preview. It works like this:
+///    1. Store current undo information so we can revert to current state later.
+///    2. Execute the preview callback with the parsed command, preview buffer number and preview
+///       namespace number as arguments. The preview callback sets the highlight and does the
+///       changes required for the preview if needed.
+///    3. Preview callback returns 0, 1 or 2. 0 means no preview is shown. 1 means preview is shown
+///       but preview window doesn't need to be opened. 2 means preview is shown and preview window
+///       needs to be opened if inccommand=split.
+///    4. Use the return value of the preview callback to determine whether to
+///       open the preview window or not and open preview window if needed.
+///    5. If the return value of the preview callback is not 0, update the screen while the effects
+///       of the preview are still in place.
+///    6. Revert all changes made by the preview callback.
+static void cmdpreview_show(CommandLineState *s)
+{
+  // Parse the command line and return if it fails.
+  exarg_T ea;
+  CmdParseInfo cmdinfo;
+  // Copy the command line so we can modify it.
+  char *cmdline = xstrdup((char *)ccline.cmdbuff);
+  char *errormsg = NULL;
+
+  parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg);
+  if (errormsg != NULL) {
+    goto end;
+  }
+
+  // Swap invalid command range if needed
+  if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
+    linenr_T lnum = ea.line1;
+    ea.line1 = ea.line2;
+    ea.line2 = lnum;
+  }
+
+  time_t save_b_u_time_cur = curbuf->b_u_time_cur;
+  long save_b_u_seq_cur = curbuf->b_u_seq_cur;
+  u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
+  long save_b_p_ul = curbuf->b_p_ul;
+  int save_b_changed = curbuf->b_changed;
+  int save_w_p_cul = curwin->w_p_cul;
+  int save_w_p_cuc = curwin->w_p_cuc;
+  bool save_hls = p_hls;
+  varnumber_T save_changedtick = buf_get_changedtick(curbuf);
+  buf_T *cmdpreview_buf;
+  win_T *cmdpreview_win;
+  cmdmod_T save_cmdmod = cmdmod;
+
+  cmdpreview = true;
+  emsg_silent++;                 // Block error reporting as the command may be incomplete
+  msg_silent++;                  // Block messages, namely ones that prompt
+  block_autocmds();              // Block events
+  garray_T save_view;
+  win_size_save(&save_view);     // Save current window sizes
+  save_search_patterns();        // Save search patterns
+  curbuf->b_p_ul = LONG_MAX;     // Make sure we can undo all changes
+  curwin->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
+  curwin->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
+  p_hls = false;                 // Don't show search highlighting during live substitution
+  cmdmod.split = 0;              // Disable :leftabove/botright modifiers
+  cmdmod.tab = 0;                // Disable :tab modifier
+  cmdmod.noswapfile = true;      // Disable swap for preview buffer
+
+  // Open preview buffer if inccommand=split.
+  if (*p_icm == 'n') {
+    cmdpreview_bufnr = 0;
+  } else if ((cmdpreview_buf = cmdpreview_open_buf()) == NULL) {
+    abort();
+  }
+
+  // Setup preview namespace if it's not already set.
+  if (!cmdpreview_ns) {
+    cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
+  }
+
+  // Execute the preview callback and use its return value to determine whether to show preview or
+  // open the preview window. The preview callback also handles doing the changes and highlights for
+  // the preview.
+  Error err = ERROR_INIT;
+  try_start();
+  int cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
+  if (try_end(&err)) {
+    api_clear_error(&err);
+    cmdpreview_type = 0;
+  }
+
+  // If inccommand=split and preview callback returns 2, open preview window.
+  if (*p_icm != 'n' && cmdpreview_type == 2
+      && (cmdpreview_win = cmdpreview_open_win(cmdpreview_buf)) == NULL) {
+    abort();
+  }
+
+  // If preview callback is nonzero, update screen now.
+  if (cmdpreview_type != 0) {
+    int save_rd = RedrawingDisabled;
+    RedrawingDisabled = 0;
+    update_screen(SOME_VALID);
+    RedrawingDisabled = save_rd;
+  }
+
+  // Close preview window if it's open.
+  if (*p_icm != 'n' && cmdpreview_type == 2 && cmdpreview_win != NULL) {
+    cmdpreview_close_win();
+  }
+  // Clear preview highlights.
+  extmark_clear(curbuf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+
+  curbuf->b_changed = save_b_changed;  // Preserve 'modified' during preview
+
+  if (curbuf->b_u_seq_cur != save_b_u_seq_cur) {
+    // Undo invisibly. This also moves the cursor!
+    while (curbuf->b_u_seq_cur != save_b_u_seq_cur) {
+      if (!u_undo_and_forget(1)) {
+        abort();
+      }
+    }
+    // Restore newhead. It is meaningless when curhead is valid, but we must
+    // restore it so that undotree() is identical before/after the preview.
+    curbuf->b_u_newhead = save_b_u_newhead;
+    curbuf->b_u_time_cur = save_b_u_time_cur;
+  }
+  if (save_changedtick != buf_get_changedtick(curbuf)) {
+    buf_set_changedtick(curbuf, save_changedtick);
+  }
+
+  cmdmod = save_cmdmod;                // Restore cmdmod
+  p_hls = save_hls;                    // Restore 'hlsearch'
+  curwin->w_p_cul = save_w_p_cul;      // Restore 'cursorline'
+  curwin->w_p_cuc = save_w_p_cuc;      // Restore 'cursorcolumn'
+  curbuf->b_p_ul = save_b_p_ul;        // Restore 'undolevels'
+  restore_search_patterns();           // Restore search patterns
+  win_size_restore(&save_view);        // Restore window sizes
+  ga_clear(&save_view);
+  unblock_autocmds();                  // Unblock events
+  msg_silent--;                        // Unblock messages
+  emsg_silent--;                       // Unblock error reporting
+
+  // Restore the window "view".
+  curwin->w_cursor   = s->is_state.save_cursor;
+  restore_viewstate(&s->is_state.old_viewstate);
+  update_topline(curwin);
+
+  redrawcmdline();
+
+  // If preview callback returned 0, update screen to clear remnants of an earlier preview.
+  if (cmdpreview_type == 0) {
+    update_screen(SOME_VALID);
+  }
+end:
+  xfree(cmdline);
+}
+
 static int command_line_changed(CommandLineState *s)
 {
   // Trigger CmdlineChanged autocommands.
@@ -2345,27 +2613,9 @@ static int command_line_changed(CommandLineState *s)
       && cmdline_star == 0   // not typing a password
       && cmd_can_preview((char *)ccline.cmdbuff)
       && !vpeekc_any()) {
-    // Show 'inccommand' preview. It works like this:
-    //    1. Do the command.
-    //    2. Command implementation detects MODE_CMDPREVIEW state, then:
-    //       - Update the screen while the effects are in place.
-    //       - Immediately undo the effects.
-    State |= MODE_CMDPREVIEW;
-    emsg_silent++;  // Block error reporting as the command may be incomplete
-    msg_silent++;   // Block messages, namely ones that prompt
-    do_cmdline((char *)ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT|DOCMD_PREVIEW);
-    msg_silent--;   // Unblock messages
-    emsg_silent--;  // Unblock error reporting
-
-    // Restore the window "view".
-    curwin->w_cursor   = s->is_state.save_cursor;
-    restore_viewstate(&s->is_state.old_viewstate);
-    update_topline(curwin);
-
-    redrawcmdline();
-  } else if (State & MODE_CMDPREVIEW) {
-    State = (State & ~MODE_CMDPREVIEW);
-    close_preview_windows();
+    cmdpreview_show(s);
+  } else if (cmdpreview) {
+    cmdpreview = false;
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
     if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {

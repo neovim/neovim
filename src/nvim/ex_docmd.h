@@ -12,7 +12,6 @@
 #define DOCMD_KEYTYPED  0x08      // don't reset KeyTyped
 #define DOCMD_EXCRESET  0x10      // reset exception environment (for debugging
 #define DOCMD_KEEPLINE  0x20      // keep typed line for repeating with "."
-#define DOCMD_PREVIEW   0x40      // during 'inccommand' preview
 
 // defines for eval_vars()
 #define VALID_PATH              1
@@ -42,6 +41,7 @@ typedef struct ucmd {
   sctx_T uc_script_ctx;         // SCTX where the command was defined
   char_u *uc_compl_arg;         // completion argument if any
   LuaRef uc_compl_luaref;       // Reference to Lua completion function
+  LuaRef uc_preview_luaref;     // Reference to Lua preview function
   LuaRef uc_luaref;             // Reference to Lua function
 } ucmd_T;
 

@@ -351,7 +351,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0L);
   // notify any channels that are watching
-  buf_updates_send_changes(curbuf, lnum, 1, 1, true);
+  buf_updates_send_changes(curbuf, lnum, 1, 1);
 
   // Diff highlighting in other diff windows may need to be updated too.
   if (curwin->w_p_diff) {
@@ -501,7 +501,7 @@ void changed_lines(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra, bool d
   if (do_buf_event) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
-    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
+    buf_updates_send_changes(curbuf, lnum, num_added, num_removed);
   }
 }
 

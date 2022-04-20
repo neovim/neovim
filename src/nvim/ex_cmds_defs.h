@@ -63,6 +63,7 @@
 #define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000  // allow flags after count in argument
 #define EX_KEEPSCRIPT  0x4000000  // keep sctx of where command was invoked
+#define EX_PREVIEW     0x8000000  // allow incremental command preview
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed
@@ -91,6 +92,7 @@ typedef struct exarg exarg_T;
 #define BAD_DROP        (-2)    // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
+typedef int (*ex_preview_func_T)(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr);
 
 // NOTE: These possible could be removed and changed so that
 // Callback could take a "command" style string, and simply
@@ -125,10 +127,11 @@ typedef char *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {
-  char *cmd_name;    ///< Name of the command.
-  ex_func_T cmd_func;  ///< Function with implementation of this command.
-  uint32_t cmd_argt;     ///< Relevant flags from the declared above.
-  cmd_addr_T cmd_addr_type;  ///< Flag for address type
+  char *cmd_name;                         ///< Name of the command.
+  ex_func_T cmd_func;                     ///< Function with implementation of this command.
+  ex_preview_func_T cmd_preview_func;     ///< Preview callback function of this command.
+  uint32_t cmd_argt;                      ///< Relevant flags from the declared above.
+  cmd_addr_T cmd_addr_type;               ///< Flag for address type.
 } CommandDefinition;
 
 // A list used for saving values of "emsg_silent".  Used by ex_try() to save the

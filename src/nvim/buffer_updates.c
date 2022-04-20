@@ -187,7 +187,7 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
 }
 
 void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
-                              int64_t num_removed, bool send_tick)
+                              int64_t num_removed)
 {
   size_t deleted_codepoints, deleted_codeunits;
   size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints,
@@ -196,6 +196,9 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   if (!buf_updates_active(buf)) {
     return;
   }
+
+  // Don't send b:changedtick during 'inccommand' preview if "buf" is the current buffer.
+  bool send_tick = !(cmdpreview && buf == curbuf);
 
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
@@ -253,7 +256,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF && (cb.preview || !(State & MODE_CMDPREVIEW))) {
+    if (cb.on_lines != LUA_NOREF && (cb.preview || !cmdpreview)) {
       Array args = ARRAY_DICT_INIT;
       Object items[8];
       args.size = 6;  // may be increased to 8 below
@@ -312,7 +315,7 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_bytes != LUA_NOREF && (cb.preview || !(State & MODE_CMDPREVIEW))) {
+    if (cb.on_bytes != LUA_NOREF && (cb.preview || !cmdpreview)) {
       FIXED_TEMP_ARRAY(args, 11);
 
       // the first argument is always the buffer handle

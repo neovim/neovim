@@ -53,6 +53,7 @@ return {
     "force";
     "keepscript";
     "nargs";
+    "preview";
     "range";
     "register";
   };

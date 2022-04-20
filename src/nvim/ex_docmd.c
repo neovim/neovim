@@ -294,7 +294,6 @@ int do_cmdline_cmd(const char *cmd)
 ///   DOCMD_KEYTYPED - Don't reset KeyTyped.
 ///   DOCMD_EXCRESET - Reset the exception environment (used for debugging).
 ///   DOCMD_KEEPLINE - Store first typed line (for repeating with ".").
-///   DOCMD_PREVIEW  - During 'inccommand' preview.
 ///
 /// @param cookie  argument for fgetline()
 ///
@@ -592,11 +591,6 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     recursive++;
     next_cmdline = do_one_cmd(&cmdline_copy, flags, &cstack, cmd_getline, cmd_cookie);
     recursive--;
-
-    // Ignore trailing '|'-separated commands in preview-mode ('inccommand').
-    if ((State & MODE_CMDPREVIEW) && (flags & DOCMD_PREVIEW)) {
-      next_cmdline = NULL;
-    }
 
     if (cmd_cookie == (void *)&cmd_loop_cookie) {
       // Use "current_line" from "cmd_loop_cookie", it may have been
@@ -1578,9 +1572,11 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 ///
 /// @param eap Ex-command arguments
 /// @param cmdinfo Command parse information
-void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
+/// @param preview Execute command preview callback instead of actual command
+int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 {
   char *errormsg = NULL;
+  int retv = 0;
 
 #define ERROR(msg) \
   do { \
@@ -1698,11 +1694,17 @@ void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
   // Execute the command
   if (IS_USER_CMDIDX(eap->cmdidx)) {
     // Execute a user-defined command.
-    do_ucmd(eap);
+    retv = do_ucmd(eap, preview);
   } else {
-    // Call the function to execute the command.
+    // Call the function to execute the command or the preview callback.
     eap->errmsg = NULL;
-    (cmdnames[eap->cmdidx].cmd_func)(eap);
+
+    if (preview) {
+      retv = (cmdnames[eap->cmdidx].cmd_preview_func)(eap, cmdpreview_get_ns(),
+                                                      cmdpreview_get_bufnr());
+    } else {
+      (cmdnames[eap->cmdidx].cmd_func)(eap);
+    }
     if (eap->errmsg != NULL) {
       errormsg = _(eap->errmsg);
     }
@@ -1718,6 +1720,7 @@ end:
   if (eap->did_sandbox) {
     sandbox--;
   }
+  return retv;
 #undef ERROR
 }
 
@@ -2350,7 +2353,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     /*
      * Execute a user-defined command.
      */
-    do_ucmd(&ea);
+    do_ucmd(&ea, false);
   } else {
     /*
      * Call the function to execute the command.
@@ -5541,8 +5544,8 @@ char *uc_validate_name(char *name)
 ///
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long def, int flags,
-                   int compl, char *compl_arg, LuaRef compl_luaref, cmd_addr_T addr_type,
-                   LuaRef luaref, bool force)
+                   int compl, char *compl_arg, LuaRef compl_luaref, LuaRef preview_luaref,
+                   cmd_addr_T addr_type, LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -5597,6 +5600,7 @@ int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long d
       XFREE_CLEAR(cmd->uc_compl_arg);
       NLUA_CLEAR_REF(cmd->uc_luaref);
       NLUA_CLEAR_REF(cmd->uc_compl_luaref);
+      NLUA_CLEAR_REF(cmd->uc_preview_luaref);
       break;
     }
 
@@ -5629,6 +5633,7 @@ int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long d
   nlua_set_sctx(&cmd->uc_script_ctx);
   cmd->uc_compl_arg = (char_u *)compl_arg;
   cmd->uc_compl_luaref = compl_luaref;
+  cmd->uc_preview_luaref = preview_luaref;
   cmd->uc_addr_type = addr_type;
   cmd->uc_luaref = luaref;
 
@@ -5639,6 +5644,7 @@ fail:
   xfree(compl_arg);
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+  NLUA_CLEAR_REF(preview_luaref);
   return FAIL;
 }
 
@@ -6071,8 +6077,7 @@ static void ex_command(exarg_T *eap)
   } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
     emsg(_(e_complete_used_without_nargs));
   } else {
-    uc_add_command(name, name_len, p, argt, def, flags, compl,
-                   compl_arg, LUA_NOREF,
+    uc_add_command(name, name_len, p, argt, def, flags, compl, compl_arg, LUA_NOREF, LUA_NOREF,
                    addr_type_arg, LUA_NOREF, eap->forceit);
   }
 }
@@ -6092,6 +6097,7 @@ void free_ucmd(ucmd_T *cmd)
   xfree(cmd->uc_compl_arg);
   NLUA_CLEAR_REF(cmd->uc_compl_luaref);
   NLUA_CLEAR_REF(cmd->uc_luaref);
+  NLUA_CLEAR_REF(cmd->uc_preview_luaref);
 }
 
 /// Clear all user commands for "gap".
@@ -6622,7 +6628,7 @@ size_t uc_mods(char *buf)
   return result;
 }
 
-static void do_ucmd(exarg_T *eap)
+static int do_ucmd(exarg_T *eap, bool preview)
 {
   char *buf;
   char *p;
@@ -6643,9 +6649,14 @@ static void do_ucmd(exarg_T *eap)
     cmd = USER_CMD_GA(&curbuf->b_ucmds, eap->useridx);
   }
 
+  if (preview) {
+    assert(cmd->uc_preview_luaref > 0);
+    return nlua_do_ucmd(cmd, eap, true);
+  }
+
   if (cmd->uc_luaref > 0) {
-    nlua_do_ucmd(cmd, eap);
-    return;
+    nlua_do_ucmd(cmd, eap, false);
+    return 0;
   }
 
   /*
@@ -6740,6 +6751,8 @@ static void do_ucmd(exarg_T *eap)
   }
   xfree(buf);
   xfree(split_buf);
+
+  return 0;
 }
 
 static char *expand_user_command_name(int idx)
@@ -6796,7 +6809,8 @@ char *get_user_cmd_flags(expand_T *xp, int idx)
 {
   static char *user_cmd_flags[] = { "addr",   "bang",     "bar",
                                     "buffer", "complete", "count",
-                                    "nargs",  "range",    "register", "keepscript" };
+                                    "nargs",  "range",    "register",
+                                    "keepscript" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_flags)) {
     return NULL;
@@ -8568,6 +8582,18 @@ static void ex_submagic(exarg_T *eap)
   p_magic = magic_save;
 }
 
+/// ":smagic" and ":snomagic" preview callback.
+static int ex_submagic_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+{
+  int magic_save = p_magic;
+
+  p_magic = (eap->cmdidx == CMD_smagic);
+  int retv = ex_substitute_preview(eap, cmdpreview_ns, cmdpreview_bufnr);
+  p_magic = magic_save;
+
+  return retv;
+}
+
 /// ":join".
 static void ex_join(exarg_T *eap)
 {
@@ -8809,7 +8835,7 @@ static void ex_redir(exarg_T *eap)
 /// ":redraw": force redraw
 static void ex_redraw(exarg_T *eap)
 {
-  if (State & MODE_CMDPREVIEW) {
+  if (cmdpreview) {
     return;  // Ignore :redraw during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
@@ -8843,7 +8869,7 @@ static void ex_redraw(exarg_T *eap)
 /// ":redrawstatus": force redraw of status line(s) and window bar(s)
 static void ex_redrawstatus(exarg_T *eap)
 {
-  if (State & MODE_CMDPREVIEW) {
+  if (cmdpreview) {
     return;  // Ignore :redrawstatus during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
@@ -10107,22 +10133,16 @@ bool cmd_can_preview(char *cmd)
   if (*ea.cmd == '*') {
     ea.cmd = skipwhite(ea.cmd + 1);
   }
-  char *end = find_ex_command(&ea, NULL);
+  find_ex_command(&ea, NULL);
 
-  switch (ea.cmdidx) {
-  case CMD_substitute:
-  case CMD_smagic:
-  case CMD_snomagic:
-    // Only preview once the pattern delimiter has been typed
-    if (*end && !ASCII_ISALNUM(*end)) {
-      return true;
-    }
-    break;
-  default:
-    break;
+  if (ea.cmdidx == CMD_SIZE) {
+    return false;
+  } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    // find_ex_command sets the flags for user commands automatically
+    ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
   }
 
-  return false;
+  return (ea.argt & EX_PREVIEW);
 }
 
 /// Gets a map of maps describing user-commands defined for buffer `buf` or
@@ -10149,6 +10169,7 @@ Dictionary commands_array(buf_T *buf)
     PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
     PUT(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_REGSTR)));
     PUT(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
+    PUT(d, "preview", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_PREVIEW)));
 
     switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
     case 0:

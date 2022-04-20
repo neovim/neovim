@@ -4,28 +4,29 @@ local module = {}
 
 -- Description of the values below is contained in ex_cmds_defs.h file.
 -- "EX_" prefix is omitted.
-local RANGE      =    0x001
-local BANG       =    0x002
-local EXTRA      =    0x004
-local XFILE      =    0x008
-local NOSPC      =    0x010
-local DFLALL     =    0x020
-local WHOLEFOLD  =    0x040
-local NEEDARG    =    0x080
-local TRLBAR     =    0x100
-local REGSTR     =    0x200
-local COUNT      =    0x400
-local NOTRLCOM   =    0x800
-local ZEROR      =   0x1000
-local CTRLV      =   0x2000
-local CMDARG     =   0x4000
-local BUFNAME    =   0x8000
-local BUFUNL     =  0x10000
-local ARGOPT     =  0x20000
-local SBOXOK     =  0x40000
-local CMDWIN     =  0x80000
-local MODIFY     = 0x100000
-local FLAGS      = 0x200000
+local RANGE      =     0x001
+local BANG       =     0x002
+local EXTRA      =     0x004
+local XFILE      =     0x008
+local NOSPC      =     0x010
+local DFLALL     =     0x020
+local WHOLEFOLD  =     0x040
+local NEEDARG    =     0x080
+local TRLBAR     =     0x100
+local REGSTR     =     0x200
+local COUNT      =     0x400
+local NOTRLCOM   =     0x800
+local ZEROR      =    0x1000
+local CTRLV      =    0x2000
+local CMDARG     =    0x4000
+local BUFNAME    =    0x8000
+local BUFUNL     =   0x10000
+local ARGOPT     =   0x20000
+local SBOXOK     =   0x40000
+local CMDWIN     =   0x80000
+local MODIFY     =  0x100000
+local FLAGS      =  0x200000
+local PREVIEW    = 0x8000000
 local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
@@ -33,6 +34,7 @@ local FILE1      = bit.bor(FILES, NOSPC)
 module.flags = {
   RANGE = RANGE,
   DFLALL = DFLALL,
+  PREVIEW = PREVIEW
 }
 
 -- The following table is described in ex_cmds_defs.h file.
@@ -2305,9 +2307,10 @@ module.cmds = {
   },
   {
     command='substitute',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN),
+    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, PREVIEW),
     addr_type='ADDR_LINES',
     func='ex_substitute',
+    preview_func='ex_substitute_preview',
   },
   {
     command='sNext',
@@ -2479,9 +2482,10 @@ module.cmds = {
   },
   {
     command='smagic',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN),
+    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, PREVIEW),
     addr_type='ADDR_LINES',
     func='ex_submagic',
+    preview_func='ex_submagic_preview',
   },
   {
     command='smap',
@@ -2509,9 +2513,10 @@ module.cmds = {
   },
   {
     command='snomagic',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN),
+    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, PREVIEW),
     addr_type='ADDR_LINES',
     func='ex_submagic',
+    preview_func='ex_submagic_preview',
   },
   {
     command='snoremap',

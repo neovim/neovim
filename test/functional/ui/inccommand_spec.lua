@@ -255,42 +255,6 @@ describe(":substitute, 'inccommand' preserves", function()
     end)
   end
 
-  for _, case in pairs{"", "split", "nosplit"} do
-    it("visual selection for non-previewable command (inccommand="..case..") #5888", function()
-      local screen = Screen.new(30,10)
-      common_setup(screen, case, default_text)
-      feed('1G2V')
-
-      feed(':s')
-      screen:expect([[
-        {vis:Inc substitution on}           |
-        t{vis:wo lines}                     |
-                                      |
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        :'<,'>s^                       |
-      ]])
-
-      feed('o')
-      screen:expect([[
-        {vis:Inc substitution on}           |
-        t{vis:wo lines}                     |
-                                      |
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        {15:~                             }|
-        :'<,'>so^                      |
-      ]])
-    end)
-  end
-
   for _, case in ipairs({'', 'split', 'nosplit'}) do
     it('previous substitute string ~ (inccommand='..case..') #12109', function()
       local screen = Screen.new(30,10)
