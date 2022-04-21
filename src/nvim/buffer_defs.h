@@ -1027,6 +1027,7 @@ typedef struct {
   colnr_T startcol;     // in win_line() points to char where HL starts
   colnr_T endcol;       // in win_line() points to char where HL ends
   bool is_addpos;       // position specified directly by matchaddpos()
+  bool has_cursor;      // true if the cursor is inside the match, used for CurSearch
   proftime_T tm;        // for a time limit
 } match_T;
 

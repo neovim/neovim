@@ -968,7 +968,17 @@ func Test_hlsearch_cursearch()
   call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_3', {})
 
   call term_sendkeys(buf, "gg/foo\\nbar\<CR>")
-  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line', {})
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_1', {})
+
+  call term_sendkeys(buf, ":call setline(1, ['---', 'abcdefg', 'hijkl', '---', 'abcdefg', 'hijkl'])\<CR>")
+  call term_sendkeys(buf, "gg/efg\\nhij\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_2', {})
+  call term_sendkeys(buf, "h\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_3', {})
+  call term_sendkeys(buf, "j\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_4', {})
+  call term_sendkeys(buf, "h\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_5', {})
 
   call StopVimInTerminal(buf)
   call delete('Xhlsearch_cursearch')
