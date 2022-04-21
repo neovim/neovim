@@ -288,6 +288,23 @@ function Inspector:putTable(t)
   end
 end
 
+function Inspector:putFunction(f)
+  local info = debug.getinfo(f, 'S')
+  local source, line = info.source, info.linedefined
+
+  local contents = {'<function ', self:getId(f)}
+  if vim.startswith(source, '@') or vim.startswith(source, '=') then
+    source = source:sub(2)
+  end
+  vim.list_extend(contents, {': ', source})
+  if line >= 0 then
+    vim.list_extend(contents, {':', line})
+  end
+  contents[#contents+1] = '>'
+
+  self:puts(unpack(contents))
+end
+
 function Inspector:putValue(v)
   local tv = type(v)
 
@@ -298,6 +315,8 @@ function Inspector:putValue(v)
     self:puts(tostring(v))
   elseif tv == 'table' then
     self:putTable(v)
+  elseif tv == 'function' then
+    self:putFunction(v)
   else
     self:puts('<', tv, ' ', self:getId(v), '>')
   end
