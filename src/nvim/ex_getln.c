@@ -6374,6 +6374,7 @@ static int open_cmdwin(void)
   // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
+    ga_clear(&winsizes);
     return K_IGNORE;
   }
   cmdwin_type = get_cmdline_type();
