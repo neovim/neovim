@@ -513,14 +513,15 @@ func Test_window_colon_command()
 endfunc
 
 func Test_access_freed_mem()
+  call assert_equal(&columns, winwidth(0))
   " This was accessing freed memory (but with what events?)
   au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
   arg 0
   argadd
-  all
-  all
+  call assert_fails("all", "E242:")
   au!
   bwipe xxx
+  call assert_equal(&columns, winwidth(0))
 endfunc
 
 func Test_visual_cleared_after_window_split()

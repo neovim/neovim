@@ -2695,9 +2695,9 @@ func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy
   au BufNew,BufWinLeave * ball
-  call assert_fails('n xxx', 'E143:')
+  n xxx
 
-  bwipe %
+  %bwipe
   au! BufNew
   au! BufWinLeave
 endfunc
@@ -2713,15 +2713,54 @@ func Test_autocmd_quit_psearch()
   augroup aucmd_win_test
     au!
   augroup END
+  new
+  pclose
+endfunc
+
+" Fuzzer found some strange combination that caused a crash.
+func Test_autocmd_normal_mess()
+  " For unknown reason this hangs on MS-Windows
+  CheckNotMSWindows
+
+  augroup aucmd_normal_test
+    au BufLeave,BufWinLeave,BufHidden,BufUnload,BufDelete,BufWipeout * norm 7q/qc
+  augroup END
+  " Nvim has removed :open
+  " call assert_fails('o4', 'E1159')
+  call assert_fails('e4', 'E1159')
+  silent! H
+  call assert_fails('e xx', 'E1159')
+  normal G
+
+  augroup aucmd_normal_test
+    au!
+  augroup END
 endfunc
 
 func Test_autocmd_closing_cmdwin()
+  " For unknown reason this hangs on MS-Windows
+  CheckNotMSWindows
+
   au BufWinLeave * nested q
   call assert_fails("norm 7q?\n", 'E855:')
 
   au! BufWinLeave
   new
   only
+endfunc
+
+func Test_autocmd_vimgrep()
+  augroup aucmd_vimgrep
+    au QuickfixCmdPre,BufNew,BufReadCmd * sb
+    " Nvim makes aucmd_win the last window
+    " au QuickfixCmdPre,BufNew,BufReadCmd * q9
+    au QuickfixCmdPre,BufNew,BufReadCmd * exe 'q' .. (winnr('$') - (win_gettype(winnr('$')) == 'autocmd'))
+  augroup END
+  call assert_fails('lv ?a? foo', 'E926:')
+
+  augroup aucmd_vimgrep
+    au!
+  augroup END
 endfunc
 
 func Test_bufwipeout_changes_window()
@@ -2758,5 +2797,23 @@ func Test_v_event_readonly()
   au! TextYankPost
 endfunc
 
+
+func Test_noname_autocmd()
+  augroup test_noname_autocmd_group
+    autocmd!
+    autocmd BufEnter * call add(s:li, ["BufEnter", expand("<afile>")])
+    autocmd BufDelete * call add(s:li, ["BufDelete", expand("<afile>")])
+    autocmd BufLeave * call add(s:li, ["BufLeave", expand("<afile>")])
+    autocmd BufUnload * call add(s:li, ["BufUnload", expand("<afile>")])
+    autocmd BufWipeout * call add(s:li, ["BufWipeout", expand("<afile>")])
+  augroup END
+
+  let s:li = []
+  edit foo
+  call assert_equal([['BufUnload', ''], ['BufDelete', ''], ['BufWipeout', ''], ['BufEnter', 'foo']], s:li)
+
+  au! test_noname_autocmd_group
+  augroup! test_noname_autocmd_group
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

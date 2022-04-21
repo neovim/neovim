@@ -72,7 +72,39 @@ typedef enum {
   WEE_TRIGGER_LEAVE_AUTOCMDS = 0x10,
 } wee_flags_T;
 
+static char e_cannot_split_window_when_closing_buffer[]
+  = N_("E1159: Cannot split a window when closing the buffer");
+
 static char *m_onlyone = N_("Already only one window");
+
+/// When non-zero splitting a window is forbidden.  Used to avoid that nasty
+/// autocommands mess up the window structure.
+static int split_disallowed = 0;
+
+// #define WIN_DEBUG
+#ifdef WIN_DEBUG
+/// Call this method to log the current window layout.
+static void log_frame_layout(frame_T *frame)
+{
+  DLOG("layout %s, wi: %d, he: %d, wwi: %d, whe: %d, id: %d",
+       frame->fr_layout == FR_LEAF ? "LEAF" : frame->fr_layout == FR_ROW ? "ROW" : "COL",
+       frame->fr_width,
+       frame->fr_height,
+       frame->fr_win == NULL ? -1 : frame->fr_win->w_width,
+       frame->fr_win == NULL ? -1 : frame->fr_win->w_height,
+       frame->fr_win == NULL ? -1 : frame->fr_win->w_id);
+  if (frame->fr_child != NULL) {
+    DLOG("children");
+    log_frame_layout(frame->fr_child);
+    if (frame->fr_next != NULL) {
+      DLOG("END of children");
+    }
+  }
+  if (frame->fr_next != NULL) {
+    log_frame_layout(frame->fr_next);
+  }
+}
+#endif
 
 /// @return the current window, unless in the cmdline window and "prevwin" is
 /// set, then return "prevwin".
@@ -909,6 +941,21 @@ void ui_ext_win_viewport(win_T *wp)
   }
 }
 
+/// If "split_disallowed" is set given an error and return FAIL.
+/// Otherwise return OK.
+static int check_split_disallowed(void)
+{
+  if (split_disallowed > 0) {
+    emsg(_("E242: Can't split a window while closing another"));
+    return FAIL;
+  }
+  if (curwin->w_buffer->b_locked_split) {
+    emsg(_(e_cannot_split_window_when_closing_buffer));
+    return FAIL;
+  }
+  return OK;
+}
+
 /*
  * split the current window, implements CTRL-W s and :split
  *
@@ -926,6 +973,10 @@ void ui_ext_win_viewport(win_T *wp)
  */
 int win_split(int size, int flags)
 {
+  if (check_split_disallowed() == FAIL) {
+    return FAIL;
+  }
+
   // When the ":tab" modifier was used open a new tab page instead.
   if (may_open_tabpage() == OK) {
     return OK;
@@ -1886,6 +1937,9 @@ static void win_totop(int size, int flags)
   if (curwin == aucmd_win) {
     return;
   }
+  if (check_split_disallowed() == FAIL) {
+    return;
+  }
 
   if (curwin->w_floating) {
     ui_comp_remove_grid(&curwin->w_grid_alloc);
@@ -1929,6 +1983,11 @@ void win_move_after(win_T *win1, win_T *win2)
 
   // check if there is something to do
   if (win2->w_next != win1) {
+    if (win1->w_frame->fr_parent != win2->w_frame->fr_parent) {
+      iemsg("INTERNAL: trying to move a window into another frame");
+      return;
+    }
+
     // may need move the status line, horizontal or vertical separator of the last window
     if (win1 == lastwin) {
       height = win1->w_prev->w_status_height;
@@ -2742,6 +2801,10 @@ int win_close(win_T *win, bool free_buf, bool force)
     return FAIL;
   }
 
+  // Now we are really going to close the window.  Disallow any autocommand
+  // to split a window to avoid trouble.
+  split_disallowed++;
+
   // let terminal buffers know that this window dimensions may be ignored
   win->w_closing = true;
 
@@ -2808,6 +2871,8 @@ int win_close(win_T *win, bool free_buf, bool force)
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     }
   }
+
+  split_disallowed--;
 
   /*
    * If last window has a status line now and we don't want one,

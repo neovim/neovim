@@ -2497,16 +2497,19 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       if (buf->b_fname != NULL) {
         new_name = vim_strsave(buf->b_fname);
       }
+      const bufref_T save_au_new_curbuf = au_new_curbuf;
       set_bufref(&au_new_curbuf, buf);
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       cmdwin_type = save_cmdwin_type;
       if (!bufref_valid(&au_new_curbuf)) {
         // New buffer has been deleted.
         delbuf_msg(new_name);  // Frees new_name.
+        au_new_curbuf = save_au_new_curbuf;
         goto theend;
       }
       if (aborting()) {             // autocmds may abort script processing
         xfree(new_name);
+        au_new_curbuf = save_au_new_curbuf;
         goto theend;
       }
       if (buf == curbuf) {  // already in new buffer
@@ -2540,12 +2543,14 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
         // autocmds may abort script processing
         if (aborting() && curwin->w_buffer != NULL) {
           xfree(new_name);
+          au_new_curbuf = save_au_new_curbuf;
           goto theend;
         }
         // Be careful again, like above.
         if (!bufref_valid(&au_new_curbuf)) {
           // New buffer has been deleted.
           delbuf_msg(new_name);  // Frees new_name.
+          au_new_curbuf = save_au_new_curbuf;
           goto theend;
         }
         if (buf == curbuf) {  // already in new buffer
@@ -2585,8 +2590,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
         did_get_winopts = true;
       }
       xfree(new_name);
-      au_new_curbuf.br_buf = NULL;
-      au_new_curbuf.br_buf_free_count = 0;
+      au_new_curbuf = save_au_new_curbuf;
     }
 
     curwin->w_pcmark.lnum = 1;
