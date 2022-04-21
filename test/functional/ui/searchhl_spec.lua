@@ -163,53 +163,68 @@ describe('search highlighting', function()
     end)
 
     it('works for multiline match', function()
-      insert([[
-        one
-        foo
-        bar
-        baz
-        foo
-        bar]])
-        feed('gg/foo<CR>')
-        screen:expect([[
-          one                                     |
-          {2:^foo}                                     |
-          bar                                     |
-          baz                                     |
-          {1:foo}                                     |
-          bar                                     |
-          /foo                                    |
-        ]])
-        feed('n')
-        screen:expect([[
-          one                                     |
-          {1:foo}                                     |
-          bar                                     |
-          baz                                     |
-          {2:^foo}                                     |
-          bar                                     |
-          /foo                                    |
-        ]])
-        feed('?<CR>')
-        screen:expect([[
-          one                                     |
-          {2:^foo}                                     |
-          bar                                     |
-          baz                                     |
-          {1:foo}                                     |
-          bar                                     |
-          ?foo                                    |
-        ]])
-        feed('gg/foo\\nbar<CR>')
-        screen:expect([[
-          one                                     |
-          {2:^foo}                                     |
-          {1:bar}                                     |
-          baz                                     |
-          {1:foo}                                     |
-          {1:bar}                                     |
-          /foo\nbar                               |
-        ]])
+      command([[call setline(1, ['one', 'foo', 'bar', 'baz', 'foo', 'bar'])]])
+      feed('gg/foo<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo}                                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {2:^foo}                                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('?<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo}                                     |
+        bar                                     |
+        ?foo                                    |
+      ]])
+      feed('gg/foo\\nbar<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        {2:bar}                                     |
+        baz                                     |
+        {1:foo}                                     |
+        {1:bar}                                     |
+        /foo\nbar                               |
+      ]])
+      command([[call setline(1, ['---', 'abcdefg', 'hijkl', '---', 'abcdefg', 'hijkl'])]])
+      feed('gg/efg\\nhij<CR>')
+      screen:expect([[
+        ---                                     |
+        abcd{2:^efg}                                 |
+        {2:hij}kl                                   |
+        ---                                     |
+        abcd{1:efg}                                 |
+        {1:hij}kl                                   |
+        /efg\nhij                               |
+      ]])
+      feed('n')
+      screen:expect([[
+        ---                                     |
+        abcd{1:efg}                                 |
+        {1:hij}kl                                   |
+        ---                                     |
+        abcd{2:^efg}                                 |
+        {2:hij}kl                                   |
+        /efg\nhij                               |
+      ]])
     end)
   end)
 
