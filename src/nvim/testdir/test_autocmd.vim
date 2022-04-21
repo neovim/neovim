@@ -2713,6 +2713,8 @@ func Test_autocmd_quit_psearch()
   augroup aucmd_win_test
     au!
   augroup END
+  new
+  pclose
 endfunc
 
 " Fuzzer found some strange combination that caused a crash.
@@ -2748,12 +2750,12 @@ func Test_autocmd_closing_cmdwin()
 endfunc
 
 func Test_autocmd_vimgrep()
-  %bwipe!
   augroup aucmd_vimgrep
     au QuickfixCmdPre,BufNew,BufReadCmd * sb
-    au QuickfixCmdPre,BufNew,BufReadCmd * q9 
+    " Nvim makes aucmd_win the last window
+    " au QuickfixCmdPre,BufNew,BufReadCmd * q9
+    au QuickfixCmdPre,BufNew,BufReadCmd * exe 'q' .. (winnr('$') - (win_gettype(winnr('$')) == 'autocmd'))
   augroup END
-  %bwipe!
   call assert_fails('lv ?a? foo', 'E926:')
 
   augroup aucmd_vimgrep
