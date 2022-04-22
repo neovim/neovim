@@ -645,6 +645,7 @@ function protocol.make_client_capabilities()
             end)();
           };
         };
+        isPreferredSupport = true;
         dataSupport = true;
         resolveSupport = {
           properties = { 'edit', }

@@ -673,6 +673,36 @@ function tests.code_action_with_resolve()
   }
 end
 
+function tests.code_action_filter()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = false
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      local action = {
+        title = 'Action 1',
+        command = 'command'
+      }
+      local preferred_action = {
+        title = 'Action 2',
+        isPreferred = true,
+        command = 'preferred_command',
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { action, preferred_action, }
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.clientside_commands()
   skeleton {
     on_init = function()

@@ -969,18 +969,28 @@ add_workspace_folder({workspace_folder})
 clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
 
-code_action({context})                             *vim.lsp.buf.code_action()*
+code_action({options})                             *vim.lsp.buf.code_action()*
                 Selects a code action available at the current cursor
                 position.
 
                 Parameters: ~
-                    {context}  table|nil `CodeActionContext` of the LSP specification:
-                               • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not
-                                 provided.
-                               • only: (string|nil) LSP `CodeActionKind` used
-                                 to filter the code actions. Most language
-                                 servers support values like `refactor` or
-                                 `quickfix`.
+                    {options}  table|nil Optional table which holds the
+                               following optional fields:
+                               • context (table|nil): Corresponds to `CodeActionContext` of the LSP specification:
+                                 • diagnostics (table|nil): LSP`Diagnostic[]` . Inferred from the current position if not
+                                   provided.
+                                 • only (string|nil): LSP `CodeActionKind`
+                                   used to filter the code actions. Most
+                                   language servers support values like
+                                   `refactor` or `quickfix`.
+
+                               • filter (function|nil): Predicate function
+                                 taking an `CodeAction` and returning a
+                                 boolean.
+                               • apply (boolean|nil): When set to `true`, and
+                                 there is just one remaining action (after
+                                 filtering), the action is applied without
+                                 user query.
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
