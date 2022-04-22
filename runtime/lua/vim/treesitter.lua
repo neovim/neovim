@@ -118,4 +118,27 @@ function M.get_string_parser(str, lang, opts)
   return LanguageTree.new(str, lang, opts)
 end
 
+--- Determines whether a node is the ancestor of another
+---
+---@param dest table the possible ancestor
+---@param source table the possible descendant node
+---
+---@returns (boolean) True if dest is an ancestor of source
+function M.is_ancestor(dest, source)
+  if not (dest and source) then
+    return false
+  end
+
+  local current = source
+  while current ~= nil do
+    if current == dest then
+      return true
+    end
+
+    current = current:parent()
+  end
+
+  return false
+end
+
 return M
