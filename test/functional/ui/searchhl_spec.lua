@@ -163,14 +163,14 @@ describe('search highlighting', function()
     end)
 
     it('works for multiline match', function()
-      command([[call setline(1, ['one', 'foo', 'bar', 'baz', 'foo', 'bar'])]])
+      command([[call setline(1, ['one', 'foo', 'bar', 'baz', 'foo the foo and foo', 'bar'])]])
       feed('gg/foo<CR>')
       screen:expect([[
         one                                     |
         {2:^foo}                                     |
         bar                                     |
         baz                                     |
-        {1:foo}                                     |
+        {1:foo} the {1:foo} and {1:foo}                     |
         bar                                     |
         /foo                                    |
       ]])
@@ -180,11 +180,32 @@ describe('search highlighting', function()
         {1:foo}                                     |
         bar                                     |
         baz                                     |
-        {2:^foo}                                     |
+        {2:^foo} the {1:foo} and {1:foo}                     |
         bar                                     |
         /foo                                    |
       ]])
-      feed('?<CR>')
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo} the {2:^foo} and {1:foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo} the {1:foo} and {2:^foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      command([[call setline(5, 'foo')]])
+      feed('0?<CR>')
       screen:expect([[
         one                                     |
         {2:^foo}                                     |
