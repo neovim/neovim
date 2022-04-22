@@ -983,6 +983,77 @@ function M.y(bufnr)
   return 'yacc'
 end
 
+function M.decl(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 3)) do
+    if line:lower():find('^<!sgml') then
+      return 'sgmldecl'
+    end
+  end
+end
+
+function M.sgml(bufnr)
+  local lines = table.concat(getlines(bufnr, 1, 5))
+  if lines:find('linuxdoc') then
+    return 'smgllnx'
+  elseif lines:find('<!DOCTYPE.*DocBook') then
+    vim.b[bufnr].docbk_type = 'sgml'
+    vim.b[bufnr].docbk_ver = 4
+    return 'docbk'
+  else
+    return 'sgml'
+  end
+end
+
+function M.web(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 5)) do
+    if line:find('^%%') then
+      return 'web'
+    end
+  end
+  return 'winbatch'
+end
+
+function M.rul(bufnr)
+  if table.concat(getlines(bufnr, 1, 6)):lower():find('installshield') then
+    return 'ishd'
+  end
+  return 'diva'
+end
+
+function M.asp(bufnr)
+  if vim.g.filetype_asp then
+    return vim.g.filetype_asp
+  elseif table.concat(getlines(bufnr, 1, 3)):lower():find('perlscript') then
+    return 'aspperl'
+  else
+    return 'aspvbs'
+  end
+end
+
+function M.edn(bufnr)
+  local line = getlines(bufnr, 1)
+  if matchregex(line, [[\c^\s*(\s*edif\>]]) then
+    return 'edif'
+  else
+    return 'clojure'
+  end
+end
+
+function M.smi(bufnr)
+  local line = getlines(bufnr, 1)
+  if matchregex(line, [[\c\<smil\>]]) then
+    return 'smil'
+  else
+    return 'mib'
+  end
+end
+
+function M.hw(bufnr)
+  if getlines(bufnr, 1):lower():find('<%?php') then
+    return 'php'
+  end
+  return 'virata'
+end
 -- luacheck: pop
 -- luacheck: pop
 

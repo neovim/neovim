@@ -23,12 +23,15 @@ local function starsetf(ft)
 end
 
 ---@private
-local function getline(bufnr, lnum)
-  return api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1] or ''
+local function getline(bufnr, start_lnum, end_lnum)
+  end_lnum = end_lnum or start_lnum
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  return table.concat(lines) or ''
 end
 
 -- Filetypes based on file extension
 -- luacheck: push no unused args
+---@diagnostic disable: unused-local
 local extension = {
   -- BEGIN EXTENSION
   ['8th'] = '8th',
@@ -52,8 +55,17 @@ local extension = {
   art = 'art',
   asciidoc = 'asciidoc',
   adoc = 'asciidoc',
+  asa = function(path, bufnr)
+    if vim.g.filetype_asa then
+      return vim.g.filetype_asa
+    end
+    return 'aspvbs'
+  end,
   ['asn1'] = 'asn',
   asn = 'asn',
+  asp = function(path, bufnr)
+    return require('vim.filetype.detect').asp(bufnr)
+  end,
   atl = 'atlas',
   as = 'atlas',
   ahk = 'autohotkey',
@@ -92,7 +104,6 @@ local extension = {
   cho = 'chordpro',
   chordpro = 'chordpro',
   eni = 'cl',
-  dcl = 'clean',
   icl = 'clean',
   cljx = 'clojure',
   clj = 'clojure',
@@ -129,7 +140,7 @@ local extension = {
   hxx = 'cpp',
   hpp = 'cpp',
   cpp = function(path, bufnr)
-    if vim.g.cynlib_syntax_for_cc then
+    if vim.g.cynlib_syntax_for_cpp then
       return 'cynlib'
     end
     return 'cpp'
@@ -688,6 +699,16 @@ local extension = {
   bbl = 'tex',
   latex = 'tex',
   sty = 'tex',
+  cls = function(path, bufnr)
+    local line = getline(bufnr, 1)
+    if line:find('^%%') then
+      return 'tex'
+    elseif line:find('^#') and line:lower():find('rexx') then
+      return 'rexx'
+    else
+      return 'st'
+    end
+  end,
   texi = 'texinfo',
   txi = 'texinfo',
   texinfo = 'texinfo',
@@ -766,6 +787,12 @@ local extension = {
   csproj = 'xml',
   wpl = 'xml',
   xmi = 'xml',
+  xpm = function(path, bufnr)
+    if getline(bufnr, 1):find('XPM2') then
+      return 'xpm2'
+    end
+    return 'xpm'
+  end,
   ['xpm2'] = 'xpm2',
   xqy = 'xquery',
   xqm = 'xquery',
@@ -1007,6 +1034,145 @@ local extension = {
     --helpfiles match *.txt, but should have a modeline as last line
     if not getline(bufnr, -1):match('vim:.*ft=help') then
       return 'text'
+    end
+  end,
+  cmd = function(path, bufnr)
+    if getline(bufnr, 1):find('^/%*') then
+      return 'rexx'
+    end
+    return 'dosbatch'
+  end,
+  rul = function(path, bufnr)
+    return require('vim.filetype.detect').rul(bufnr)
+  end,
+  cpy = function(path, bufnr)
+    if getline(bufnr, 1):find('^##') then
+      return 'python'
+    end
+    return 'cobol'
+  end,
+  dsl = function(path, bufnr)
+    if getline(bufnr, 1):find('^%s*<!') then
+      return 'dsl'
+    end
+    return 'structurizr'
+  end,
+  edf = 'edif',
+  edfi = 'edif',
+  edo = 'edif',
+  edn = function(path, bufnr)
+    return require('vim.filetype.detect').edn(bufnr)
+  end,
+  smil = function(path, bufnr)
+    if getline(bufnr, 1):find('<%?%s*xml.*%?>') then
+      return 'xml'
+    end
+    return 'smil'
+  end,
+  smi = function(path, bufnr)
+    return require('vim.filetype.detect').smi(bufnr)
+  end,
+  install = function(path, bufnr)
+    if getline(bufnr, 1):lower():find('<%?php') then
+      return 'php'
+    end
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  pm = function(path, bufnr)
+    local line = getline(bufnr, 1)
+    if line:find('XPM2') then
+      return 'xpm2'
+    elseif line:find('XPM') then
+      return 'xpm'
+    else
+      return 'perl'
+    end
+  end,
+  me = function(path, bufnr)
+    local filename = vim.fn.fnamemodify(path, ':t'):lower()
+    if filename ~= 'read.me' and filename ~= 'click.me' then
+      return 'nroff'
+    end
+  end,
+  reg = function(path, bufnr)
+    local line = getline(bufnr, 1):lower()
+    if line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$') then
+      return 'registry'
+    end
+  end,
+  decl = function(path, bufnr)
+    return require('vim.filetype.detect').decl(bufnr)
+  end,
+  dec = function(path, bufnr)
+    return require('vim.filetype.detect').decl(bufnr)
+  end,
+  dcl = function(path, bufnr)
+    local decl = require('vim.filetype.detect').decl(bufnr)
+    if decl then
+      return decl
+    end
+    return 'clean'
+  end,
+  web = function(path, bufnr)
+    return require('vim.filetype.detect').web(bufnr)
+  end,
+  ttl = function(path, bufnr)
+    local line = getline(bufnr, 1):lower()
+    if line:find('^@?prefix') or line:find('^@?base') then
+      return 'turtle'
+    end
+    return 'teraterm'
+  end,
+  am = function(path, bufnr)
+    if not path:lower():find('makefile%.am$') then
+      return 'elf'
+    end
+  end,
+  ['m4'] = function(path, bufnr)
+    local path_lower = path:lower()
+    if not path_lower:find('html%.m4$') and not path_lower:find('fvwm2rc') then
+      return 'm4'
+    end
+  end,
+  hw = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
+  module = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
+  pkg = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
+  ms = function(path, bufnr)
+    if not require('vim.filetype.detect').nroff(bufnr) then
+      return 'xmath'
+    end
+  end,
+  t = function(path, bufnr)
+    if not require('vim.filetype.detect').nroff(bufnr) and not require('vim.filetype.detect').perl(path, bufnr) then
+      return 'tads'
+    end
+  end,
+  class = function(path, bufnr)
+    -- Check if not a Java class (starts with '\xca\xfe\xba\xbe')
+    if not getline(bufnr, 1):find('^\202\254\186\190') then
+      return 'stata'
+    end
+  end,
+  sgml = function(path, bufnr)
+    return require('vim.filetype.detect').sgml(bufnr)
+  end,
+  sgm = function(path, bufnr)
+    return require('vim.filetype.detect').sgml(bufnr)
+  end,
+  rc = function(path, bufnr)
+    if not path:find('/etc/Muttrc%.d/') then
+      return 'rc'
+    end
+  end,
+  rch = function(path, bufnr)
+    if not path:find('/etc/Muttrc%.d/') then
+      return 'rc'
     end
   end,
   -- END EXTENSION
@@ -1421,6 +1587,7 @@ local pattern = {
   ['.*/boot/grub/grub%.conf'] = 'grub',
   ['.*/boot/grub/menu%.lst'] = 'grub',
   ['.*/etc/grub%.conf'] = 'grub',
+  [vim.env.VIMRUNTIME .. '/doc/.*%.txt'] = 'help',
   ['hg%-editor%-.*%.txt'] = 'hgcommit',
   ['.*/etc/host%.conf'] = 'hostconf',
   ['.*/etc/hosts%.deny'] = 'hostsaccess',
@@ -1475,6 +1642,7 @@ local pattern = {
   ['.*/etc/passwd'] = 'passwd',
   ['.*/etc/passwd%.edit'] = 'passwd',
   ['.*/etc/shadow-'] = 'passwd',
+  ['.*%.php%d'] = 'php',
   ['.*/%.pinforc'] = 'pinfo',
   ['.*/etc/pinforc'] = 'pinfo',
   ['.*/etc/protocols'] = 'protocols',
@@ -1707,6 +1875,8 @@ local pattern = {
   ['.*%.[Ss][Yy][Ss]'] = function(path, bufnr)
     return require('vim.filetype.detect').sys(bufnr)
   end,
+  ['%.?gitolite%.rc'] = 'perl',
+  ['example%.gitolite%.rc'] = 'perl',
   -- Neovim only
   ['.*/queries/.*%.scm'] = 'query', -- tree-sitter queries
   -- END PATTERN
