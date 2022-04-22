@@ -130,7 +130,6 @@ function keymap.del(modes, lhs, opts)
   local buffer = false
   if opts.buffer ~= nil then
     buffer = opts.buffer == true and 0 or opts.buffer
-    opts.buffer = nil
   end
 
   if buffer == false then
