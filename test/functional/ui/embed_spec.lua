@@ -1,3 +1,5 @@
+local uv = require'luv'
+
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
@@ -98,3 +100,49 @@ end
 
 describe('--embed UI on startup (ext_linegrid=true)', function() test_embed(true) end)
 describe('--embed UI on startup (ext_linegrid=false)', function() test_embed(false) end)
+
+describe('--embed UI', function()
+  it('can pass stdin', function()
+    local pipe = assert(uv.pipe())
+
+    local writer = assert(uv.new_pipe(false))
+    writer:open(pipe.write)
+
+    clear {args_rm={'--headless'}, io_extra=pipe.read}
+
+    -- attach immediately after startup, for early UI
+    local screen = Screen.new(40, 8)
+    screen:attach {stdin_fd=3}
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Blue1};
+      [2] = {bold = true};
+    }
+
+    writer:write "hello nvim\nfrom external input\n"
+    writer:shutdown(function() writer:close() end)
+
+    screen:expect{grid=[[
+      ^hello nvim                              |
+      from external input                     |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+
+    -- stdin (rpc input) still works
+    feed 'o'
+    screen:expect{grid=[[
+      hello nvim                              |
+      ^                                        |
+      from external input                     |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:-- INSERT --}                            |
+    ]]}
+  end)
+end)

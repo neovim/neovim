@@ -176,7 +176,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_skip,
              linenr_T lines_to_read, exarg_T *eap, int flags, bool silent)
 {
-  int fd = 0;
+  int fd = stdin_fd >= 0 ? stdin_fd : 0;
   int newfile = (flags & READ_NEW);
   int check_readonly;
   int filtering = (flags & READ_FILTER);
@@ -1722,17 +1722,19 @@ failed:
   xfree(buffer);
 
   if (read_stdin) {
-    close(0);
+    close(fd);
+    if (stdin_fd < 0) {
 #ifndef WIN32
-    // On Unix, use stderr for stdin, makes shell commands work.
-    vim_ignored = dup(2);
+      // On Unix, use stderr for stdin, makes shell commands work.
+      vim_ignored = dup(2);
 #else
-    // On Windows, use the console input handle for stdin.
-    HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
-                              FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
-                              OPEN_EXISTING, 0, (HANDLE)NULL);
-    vim_ignored = _open_osfhandle(conin, _O_RDONLY);
+      // On Windows, use the console input handle for stdin.
+      HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                                FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                                OPEN_EXISTING, 0, (HANDLE)NULL);
+      vim_ignored = _open_osfhandle(conin, _O_RDONLY);
 #endif
+    }
   }
 
   if (tmpname != NULL) {

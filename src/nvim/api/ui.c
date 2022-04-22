@@ -283,6 +283,22 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     return;
   }
 
+  if (strequal(name.data, "stdin_fd")) {
+    if (value.type != kObjectTypeInteger || value.data.integer < 0) {
+      api_set_error(error, kErrorTypeValidation, "stdin_fd must be a non-negative Integer");
+      return;
+    }
+
+    if (starting != NO_SCREEN) {
+      api_set_error(error, kErrorTypeValidation,
+                    "stdin_fd can only be used with first attached ui");
+      return;
+    }
+
+    stdin_fd = (int)value.data.integer;
+    return;
+  }
+
   // LEGACY: Deprecated option, use `ext_cmdline` instead.
   bool is_popupmenu = strequal(name.data, "popupmenu_external");
 
