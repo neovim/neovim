@@ -461,6 +461,8 @@ describe('msgpackparse() function', function()
   end)
 
   it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
+    print(eval( "string(msgpackparse(systemlist('" ..helpers.nvim_prog.." --api-info'))[0])"))
+    io.stdout:flush()
     local cmd = "sort(keys(msgpackparse(systemlist('"
       ..helpers.nvim_prog.." --api-info'))[0]))"
     eval(cmd)
