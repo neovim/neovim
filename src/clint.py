@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# vim: set fileencoding=utf-8
+#!/usr/bin/env python3
 #
 # Copyright (c) 2009 Google Inc. All rights reserved.
 #
@@ -41,10 +40,6 @@ We do a small hack, which is to ignore //'s with "'s after them on the
 same line, but it is far from perfect (in either direction).
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import codecs
 import copy
@@ -267,7 +262,7 @@ _line_length = 100
 
 # The allowed extensions for file names
 # This is set by --extensions flag.
-_valid_extensions = set(['c', 'h'])
+_valid_extensions = {'c', 'h'}
 
 _RE_COMMENTLINE = re.compile(r'^\s*//')
 
@@ -459,7 +454,7 @@ class _IncludeState(dict):  # lgtm [py/missing-equals]
         return ''
 
 
-class _CppLintState(object):
+class _CppLintState:
 
     """Maintains module-wide state.."""
 
@@ -554,7 +549,7 @@ class _CppLintState(object):
                     fname, lines, category = json.loads(line)
                     lines = tuple(lines)
                     self.suppressed_errors[fname][lines].add(category)
-        except IOError:
+        except OSError:
             pass
 
     def RecordErrorsTo(self, fname):
@@ -620,7 +615,7 @@ def _SetFilters(filters):
     _cpplint_state.SetFilters(filters)
 
 
-class _FunctionState(object):
+class _FunctionState:
 
     """Tracks current function name and the number of lines in its body."""
 
@@ -899,7 +894,7 @@ def CleanseComments(line):
     return _RE_PATTERN_CLEANSE_LINE_C_COMMENTS.sub('', line)
 
 
-class CleansedLines(object):
+class CleansedLines:
 
     """Holds 5 copies of all lines with different preprocessing applied to them.
 
@@ -973,7 +968,7 @@ BRACES = {
 }
 
 
-CLOSING_BRACES = dict(((v, k) for k, v in BRACES.items()))
+CLOSING_BRACES = {v: k for k, v in BRACES.items()}
 
 
 def GetExprBracesPosition(clean_lines, linenum, pos):
@@ -1196,9 +1191,9 @@ def CheckForHeaderGuard(filename, lines, error):
       lines: An array of strings, each representing a line of the file.
       error: The function to call with any errors found.
     """
-    if filename.endswith('.c.h') or FileInfo(filename).RelativePath() in set((
+    if filename.endswith('.c.h') or FileInfo(filename).RelativePath() in {
         'func_attr.h',
-    )):
+    }:
         return
 
     cppvar = GetHeaderGuardCPPVariable(filename)
@@ -1282,7 +1277,7 @@ def CheckForBadCharacters(filename, lines, error):
       error: The function to call with any errors found.
     """
     for linenum, line in enumerate(lines):
-        if u'\ufffd' in line:
+        if '\ufffd' in line:
             error(filename, linenum, 'readability/utf8', 5,
                   'Line contains invalid UTF-8'
                   ' (or Unicode replacement character).')
@@ -1491,7 +1486,7 @@ _RE_PATTERN_INVALID_INCREMENT = re.compile(
     r'^\s*\*\w+(\+\+|--);')
 
 
-class _BlockInfo(object):
+class _BlockInfo:
 
     """Stores information about a generic block of code."""
 
@@ -1501,7 +1496,7 @@ class _BlockInfo(object):
         self.inline_asm = _NO_ASM
 
 
-class _PreprocessorInfo(object):
+class _PreprocessorInfo:
 
     """Stores checkpoints of nesting stacks when #if/#else is seen."""
 
@@ -1516,7 +1511,7 @@ class _PreprocessorInfo(object):
         self.seen_else = False
 
 
-class _NestingState(object):
+class _NestingState:
 
     """Holds states related to parsing braces."""
 
@@ -2439,7 +2434,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     CheckSpacingForFunctionCall(filename, line, linenum, error)
 
     # Check whether everything inside expressions is aligned correctly
-    if any((line.find(k) >= 0 for k in BRACES if k != '{')):
+    if any(line.find(k) >= 0 for k in BRACES if k != '{'):
         CheckExpressionAlignment(filename, clean_lines, linenum, error)
 
     # Except after an opening paren, or after another opening brace (in case of
@@ -2656,7 +2651,7 @@ def CheckBraces(filename, clean_lines, linenum, error):
                     clean_lines, linenum, pos)
                 if endline[endpos:].find('{') == -1:
                     error(filename, linenum, 'readability/braces', 5,
-                          '{0} should always use braces'.format(blockstart))
+                          '{} should always use braces'.format(blockstart))
 
     # If braces come on one side of an else, they should be on both.
     # However, we have to worry about "else if" that spans multiple lines!
@@ -2940,7 +2935,7 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
             not Match(r'^\s*//.*http(s?)://\S*$', line) and
             not Match(r'^// \$Id:.*#[0-9]+ \$$', line)):
         line_width = GetLineWidth(line)
-        extended_length = int((_line_length * 1.25))
+        extended_length = int(_line_length * 1.25)
         if line_width > extended_length:
             error(filename, linenum, 'whitespace/line_length', 4,
                   'Lines should very rarely be longer than %i characters' %
@@ -3274,7 +3269,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if match:
         token = match.group(1)
         error(filename, linenum, 'readability/bool', 4,
-              'Use %s instead of %s.' % (token.lower(), token))
+              'Use {} instead of {}.'.format(token.lower(), token))
 
     # Detect MAYBE
     match = Search(r'\b(MAYBE)\b', line)
@@ -3451,7 +3446,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
                 lines[linenum] = lines[linenum].rstrip('\r')
                 carriage_return_found = True
 
-    except IOError:
+    except OSError:
         sys.stderr.write(
             "Skipping input '%s': Can't open for reading\n" % filename)
         return
