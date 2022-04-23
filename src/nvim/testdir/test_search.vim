@@ -951,7 +951,7 @@ func Test_hlsearch_cursearch()
 
   let lines =<< trim END
     set hlsearch scrolloff=0
-    call setline(1, ['one', 'foo', 'bar', 'baz', 'foo', 'bar'])
+    call setline(1, ['one', 'foo', 'bar', 'baz', 'foo the foo and foo', 'bar'])
     hi Search ctermbg=yellow
     hi CurSearch ctermbg=blue
   END
@@ -964,7 +964,14 @@ func Test_hlsearch_cursearch()
   call term_sendkeys(buf, "n")
   call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2', {})
 
-  call term_sendkeys(buf, "?\<CR>")
+  call term_sendkeys(buf, "n")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2a', {})
+
+  call term_sendkeys(buf, "n")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2b', {})
+
+  call term_sendkeys(buf, ":call setline(5, 'foo')\<CR>")
+  call term_sendkeys(buf, "0?\<CR>")
   call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_3', {})
 
   call term_sendkeys(buf, "gg/foo\\nbar\<CR>")
