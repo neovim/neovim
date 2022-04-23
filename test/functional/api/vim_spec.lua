@@ -3098,4 +3098,296 @@ describe('API', function()
       end)
     end)
   end)
+  describe('nvim_parse_cmd', function()
+    it('works', function()
+      eq({
+        cmd = 'echo',
+        args = { 'foo' },
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        addr = 'none',
+        magic = {
+            file = false,
+            bar = false
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('echo foo', {}))
+    end)
+    it('works with ranges', function()
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        line1 = 4,
+        line2 = 6,
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = false
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('4,6s/math.random/math.max/', {}))
+    end)
+    it('works with bang', function()
+      eq({
+        cmd = 'write',
+        args = {},
+        bang = true,
+        line1 = 1,
+        line2 = 1,
+        addr = 'line',
+        magic = {
+            file = true,
+            bar = true
+        },
+        nargs = '?',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        },
+      }, meths.parse_cmd('w!', {}))
+    end)
+    it('works with modifiers', function()
+      eq({
+        cmd = 'split',
+        args = { 'foo.txt' },
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        addr = '?',
+        magic = {
+            file = true,
+            bar = true
+        },
+        nargs = '?',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = true,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = true,
+          vertical = false,
+          split = "topleft",
+          tab = 2,
+          verbose = 15
+        },
+      }, meths.parse_cmd('15verbose silent! aboveleft topleft tab split foo.txt', {}))
+    end)
+    it('works with user commands', function()
+      command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
+      eq({
+        cmd = 'MyCommand',
+        args = { 'test', 'it' },
+        bang = true,
+        line1 = 4,
+        line2 = 6,
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = false
+        },
+        nargs = '+',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('4,6MyCommand! test it', {}))
+    end)
+    it('works for commands separated by bar', function()
+      eq({
+        cmd = 'argadd',
+        args = { 'a.txt' },
+        bang = false,
+        line1 = 0,
+        line2 = 0,
+        addr = 'arg',
+        magic = {
+            file = true,
+            bar = true
+        },
+        nargs = '*',
+        nextcmd = 'argadd b.txt',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('argadd a.txt | argadd b.txt', {}))
+    end)
+    it('works for nargs=1', function()
+      command('command -nargs=1 MyCommand echo <q-args>')
+      eq({
+        cmd = 'MyCommand',
+        args = { 'test it' },
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        addr = 'none',
+        magic = {
+            file = false,
+            bar = false
+        },
+        nargs = '1',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('MyCommand test it', {}))
+    end)
+    it('sets correct default range', function()
+      command('command -range=% -addr=buffers MyCommand echo foo')
+      command('new')
+      eq({
+        cmd = 'MyCommand',
+        args = {},
+        bang = false,
+        line1 = 1,
+        line2 = 2,
+        addr = 'buf',
+        magic = {
+            file = false,
+            bar = false
+        },
+        nargs = '0',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = 0
+        }
+      }, meths.parse_cmd('MyCommand', {}))
+    end)
+    it('errors for invalid command', function()
+      eq('Error while parsing command line', pcall_err(meths.parse_cmd, 'Fubar', {}))
+      command('command! Fubar echo foo')
+      eq('Error while parsing command line', pcall_err(meths.parse_cmd, 'Fubar!', {}))
+      eq('Error while parsing command line', pcall_err(meths.parse_cmd, '4,6Fubar', {}))
+    end)
+  end)
 end)
