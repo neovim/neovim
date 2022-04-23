@@ -17,10 +17,14 @@ vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
 })
 
 -- These *must* be sourced after the autocommand above is created
-vim.cmd [[
-runtime! ftdetect/*.vim
-runtime! ftdetect/*.lua
-]]
+if not vim.g.did_load_ftdetect then
+  vim.cmd [[
+  augroup filetypedetect
+  runtime! ftdetect/*.vim
+  runtime! ftdetect/*.lua
+  augroup END
+  ]]
+end
 
 -- Set a marker so that the ftdetect scripts are not sourced a second time by filetype.vim
 vim.g.did_load_ftdetect = 1
