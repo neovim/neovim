@@ -564,10 +564,10 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
 /// position.
 static void check_cur_search_hl(win_T *wp, match_T *shl)
 {
-  long linecount = shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
+  linenr_T linecount = shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
 
   if (wp->w_cursor.lnum >= shl->lnum
-      && wp->w_cursor.lnum <= shl->lnum + shl->rm.endpos[0].lnum
+      && wp->w_cursor.lnum <= shl->lnum + linecount
       && (wp->w_cursor.lnum > shl->lnum || wp->w_cursor.col >= shl->rm.startpos[0].col)
       && (wp->w_cursor.lnum < shl->lnum + linecount || wp->w_cursor.col < shl->rm.endpos[0].col)) {
     shl->has_cursor = true;
@@ -599,7 +599,6 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
     }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
-    shl->lines = 0;
     shl->attr_cur = 0;
     shl->is_addpos = false;
     shl->has_cursor = false;
@@ -624,10 +623,6 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
         shl->endcol = shl->rm.endpos[0].col;
       } else {
         shl->endcol = MAXCOL;
-      }
-      shl->lines = shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
-      if (shl->lines == 0) {
-        shl->lines = 1;
       }
 
       // check if the cursor is in the match before changing the columns
