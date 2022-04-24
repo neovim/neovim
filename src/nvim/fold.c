@@ -1058,7 +1058,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
 
 // foldFind() {{{2
 /// Search for line "lnum" in folds of growarray "gap".
-/// Set *fpp to the fold struct for the fold that contains "lnum" or
+/// Set "*fpp" to the fold struct for the fold that contains "lnum" or
 /// the first fold below it (careful: it can be beyond the end of the array!).
 ///
 /// @return  false when there is no fold that contains "lnum".
@@ -2615,7 +2615,8 @@ static void foldSplit(buf_T *buf, garray_T *const gap, const int i, const linenr
   // any between top and bot, they have been removed by the caller.
   garray_T *const gap1 = &fp->fd_nested;
   garray_T *const gap2 = &fp[1].fd_nested;
-  if (foldFind(gap1, bot + 1 - fp->fd_top, &fp2)) {
+  (void)foldFind(gap1, bot + 1 - fp->fd_top, &fp2);
+  if (fp2 != NULL) {
     const int len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
     if (len > 0) {
       ga_grow(gap2, len);
