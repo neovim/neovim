@@ -39,6 +39,11 @@ struct map_arguments {
   bool script;
   bool silent;
   bool unique;
+  bool is_abbrev;
+  bool has_lhs;
+  bool has_rhs;
+
+  int modes;
 
   /// The {lhs} of the mapping.
   ///
@@ -58,8 +63,51 @@ struct map_arguments {
   char *desc;  /// map description
 };
 typedef struct map_arguments MapArguments;
-#define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, \
-                             { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
+#define MAP_ARGUMENTS_INIT {  \
+  .buffer =       false,      \
+  .expr =         false,      \
+  .noremap =      false,      \
+  .nowait =       false,      \
+  .script =       false,      \
+  .silent =       false,      \
+  .unique =       false,      \
+  .is_abbrev =    false,      \
+  .has_lhs =      false,      \
+  .has_rhs =      false,      \
+  .modes =        0,          \
+  .lhs =          { 0 },      \
+  .lhs_len =      0,          \
+  .rhs =          NULL,       \
+  .rhs_len =      0,          \
+  .rhs_lua =      LUA_NOREF,  \
+  .rhs_is_noop =  false,      \
+  .orig_rhs =     NULL,       \
+  .orig_rhs_len = 0,          \
+  .desc =         NULL,       \
+}
+
+// legacy argument type for the legacy function do_map():
+typedef enum map_type {
+  MapType_map = 0,     // |:map|
+  MapType_unmap = 1,   // |:unmap|
+  MapType_noremap = 2, // |:noremap|
+} MapType;
+
+/// Possible result codes from do_map():
+typedef enum do_map_result {
+  DoMap_unknown_error        = -1,
+  DoMap_success              =  0,
+  DoMap_invalid_arguments    =  1,
+  DoMap_no_match             =  2,
+  DoMap_entry_is_not_unique  =  5,
+} DoMapResult;
+
+typedef enum StringCompare {
+  StringCompare_unequal,     // The strings do not match.
+  StringCompare_exact_match, // The strings match exactly.
+  StringCompare_lhs_matches_initial_chars_of_rhs,  // e.g. foo vs foobar
+  StringCompare_rhs_matches_initial_chars_of_lhs,  // e.g. foobar vs foo
+} StringCompare;
 
 #define KEYLEN_PART_KEY (-1)  // keylen value for incomplete key-code
 #define KEYLEN_PART_MAP (-2)  // keylen value for incomplete mapping

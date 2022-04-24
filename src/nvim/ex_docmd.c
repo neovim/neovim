@@ -7994,15 +7994,24 @@ static void do_exmap(exarg_T *eap, int isabbrev)
 
   cmdp = eap->cmd;
   mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
+  MapType map_type = MapType_map;
+  if (*cmdp == 'u') {
+    map_type = MapType_unmap;
+  } else if (*cmdp == 'n') {
+    map_type = MapType_noremap;
+  }
 
-  switch (do_map((*cmdp == 'n') ? 2 : (*cmdp == 'u'),
-                 eap->arg, mode, isabbrev)) {
-  case 1:
-    emsg(_(e_invarg));
-    break;
-  case 2:
-    emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
-    break;
+  DoMapResult result = do_map(map_type, eap->arg, mode, isabbrev);
+  switch (result) {
+    case DoMap_success:
+      break;
+    case DoMap_invalid_arguments:
+      emsg(_(e_invarg));
+      break;
+    case DoMap_no_match:
+      emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
+      break;
+    default: assert(0 && "unreachable");
   }
 }
 
