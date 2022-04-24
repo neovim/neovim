@@ -2222,7 +2222,6 @@ static regengine_T bt_regengine =
   bt_regfree,
   bt_regexec_nl,
   bt_regexec_multi,
-  (char_u *)""
 };
 
 static regengine_T nfa_regengine =
@@ -2231,7 +2230,6 @@ static regengine_T nfa_regengine =
   nfa_regfree,
   nfa_regexec_nl,
   nfa_regexec_multi,
-  (char_u *)""
 };
 
 // Which regexp engine to use? Needed for vim_regcomp().
