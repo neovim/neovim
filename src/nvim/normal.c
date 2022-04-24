@@ -5740,10 +5740,10 @@ void start_selection(void)
 }
 
 /// Start Select mode, if "c" is in 'selectmode' and not in a mapping or menu.
+/// When "c" is 'o' (checking for "mouse") then also when mapped.
 void may_start_select(int c)
 {
-  VIsual_select = (stuff_empty() && typebuf_typed()
-                   && (vim_strchr(p_slm, c) != NULL));
+  VIsual_select = (c == 'o' || (stuff_empty() && typebuf_typed())) && vim_strchr(p_slm, c) != NULL;
 }
 
 /// Start Visual mode "c".
