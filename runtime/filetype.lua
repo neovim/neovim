@@ -11,9 +11,9 @@ vim.api.nvim_create_augroup("filetypedetect", {clear = false})
 
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
   group = "filetypedetect",
-  callback = function()
-    vim.filetype.match(vim.fn.expand("<afile>"))
-  end,
+  callback = function(args)
+    vim.api.nvim_buf_set_option(args.buf, "filetype", vim.filetype.match(args.file))
+  end
 })
 
 -- These *must* be sourced after the autocommand above is created

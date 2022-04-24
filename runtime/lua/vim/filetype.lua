@@ -851,7 +851,7 @@ local extension = {
   stm = function() vim.fn["dist#ft#FThtml"]() end,
   tcsh = function() vim.fn["dist#ft#SetFileTypeShell"]("tcsh") end,
   tex = function() vim.fn["dist#ft#FTtex"]() end,
-  tf = function() vim.fn["dist#ft#FTtf"]() end,
+  tf = function(path, bufnr) return require("vim.filetype.detect").tf(path, bufnr) end,
   w = function() vim.fn["dist#ft#FTprogress_cweb"]() end,
   xml = function() vim.fn["dist#ft#FTxml"]() end,
   y = function() vim.fn["dist#ft#FTy"]() end,
@@ -1562,11 +1562,6 @@ local function dispatch(ft, path, bufnr, ...)
     ft = ft(path, bufnr, ...)
   end
 
-  if type(ft) == "string" then
-    api.nvim_buf_set_option(bufnr, "filetype", ft)
-    return true
-  end
-
   -- Any non-falsey value (that is, anything other than 'nil' or 'false') will
   -- end filetype matching. This is useful for e.g. the dist#ft functions that
   -- return 0, but set the buffer's filetype themselves
@@ -1603,14 +1598,16 @@ function M.match(name, bufnr)
 
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ":p"))
-  if dispatch(filename[path], path, bufnr) then
-    return
+  local ft = dispatch(filename[path], path, bufnr)
+  if ft then
+    return ft
   end
 
   -- Next check against just the file name
   local tail = vim.fn.fnamemodify(name, ":t")
-  if dispatch(filename[tail], path, bufnr) then
-    return
+  ft = dispatch(filename[tail], path, bufnr)
+  if ft then
+    return ft
   end
 
   -- Next, check the file path against available patterns with non-negative priority
@@ -1623,19 +1620,21 @@ function M.match(name, bufnr)
       break
     end
 
-    local ft = v[k][1]
+    ft = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      if dispatch(ft, path, bufnr, matches) then
-        return
+      ft = dispatch(ft, path, bufnr, matches)
+      if ft then
+        return ft
       end
     end
   end
 
   -- Next, check file extension
   local ext = vim.fn.fnamemodify(name, ":e")
-  if dispatch(extension[ext], path, bufnr) then
-    return
+  ft = dispatch(extension[ext], path, bufnr)
+  if ft then
+    return ft
   end
 
   -- Finally, check patterns with negative priority
@@ -1643,11 +1642,12 @@ function M.match(name, bufnr)
     local v = pattern_sorted[i]
     local k = next(v)
 
-    local ft = v[k][1]
+    ft = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      if dispatch(ft, path, bufnr, matches) then
-        return
+      ft = dispatch(ft, path, bufnr, matches)
+      if ft then
+        return ft
       end
     end
   end
