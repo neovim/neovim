@@ -538,9 +538,9 @@ nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
                     {fast}
 
                 Parameters: ~
-                    {pat}      pattern of files to search for
-                    {all}      whether to return all matches or only the first
-                    {options}  is_lua: only search lua subdirs
+                    {pat}   pattern of files to search for
+                    {all}   whether to return all matches or only the first
+                    {opts}  is_lua: only search lua subdirs
 
                 Return: ~
                     list of absolute paths to the found files
@@ -2325,12 +2325,12 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 only.
 
                 Parameters: ~
-                    {buffer}        Buffer handle, or 0 for current buffer
-                    {start_row}     First line index
-                    {start_column}  First column
-                    {end_row}       Last line index
-                    {end_column}    Last column
-                    {replacement}   Array of lines to use as replacement
+                    {buffer}       Buffer handle, or 0 for current buffer
+                    {start_row}    First line index
+                    {start_col}    First column
+                    {end_row}      Last line index
+                    {end_col}      Last column
+                    {replacement}  Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable

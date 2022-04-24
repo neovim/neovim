@@ -529,9 +529,9 @@ end:
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_column     First column
+/// @param start_col        First column
 /// @param end_row          Last line index
-/// @param end_column       Last column
+/// @param end_col          Last column
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
