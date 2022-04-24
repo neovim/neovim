@@ -1362,13 +1362,11 @@ intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 int getdigits_int(char_u **pp, bool strict, int def)
 {
   intmax_t number = getdigits(pp, strict, def);
-#if SIZEOF_INTMAX_T > SIZEOF_INT
   if (strict) {
     assert(number >= INT_MIN && number <= INT_MAX);
   } else if (!(number >= INT_MIN && number <= INT_MAX)) {
     return def;
   }
-#endif
   return (int)number;
 }
 
@@ -1378,13 +1376,11 @@ int getdigits_int(char_u **pp, bool strict, int def)
 long getdigits_long(char_u **pp, bool strict, long def)
 {
   intmax_t number = getdigits(pp, strict, def);
-#if SIZEOF_INTMAX_T > SIZEOF_LONG
   if (strict) {
     assert(number >= LONG_MIN && number <= LONG_MAX);
   } else if (!(number >= LONG_MIN && number <= LONG_MAX)) {
     return def;
   }
-#endif
   return (long)number;
 }
 
