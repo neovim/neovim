@@ -377,9 +377,6 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
     fclose(fd);
     return FAIL;
   }
-#if SIZEOF_LONG_LONG > SIZEOF_SIZE_T
-  assert(templen <= (long long)SIZE_MAX);  // NOLINT(runtime/int)
-#endif
   len = (size_t)templen;
   fseek(fd, 0L, SEEK_SET);
   buffer = xmalloc(len + 1);

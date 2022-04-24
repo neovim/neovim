@@ -7,8 +7,6 @@ include(CheckCSourceCompiles)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
-check_type_size("size_t" SIZEOF_SIZE_T)
-check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void *" SIZEOF_VOID_PTR)
 
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
