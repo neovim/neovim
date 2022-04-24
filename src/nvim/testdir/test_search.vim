@@ -946,6 +946,51 @@ func Test_incsearch_substitute()
   call Incsearch_cleanup()
 endfunc
 
+func Test_hlsearch_cursearch()
+  CheckScreendump
+
+  let lines =<< trim END
+    set hlsearch scrolloff=0
+    call setline(1, ['one', 'foo', 'bar', 'baz', 'foo the foo and foo', 'bar'])
+    hi Search ctermbg=yellow
+    hi CurSearch ctermbg=blue
+  END
+  call writefile(lines, 'Xhlsearch_cursearch')
+  let buf = RunVimInTerminal('-S Xhlsearch_cursearch', {'rows': 9, 'cols': 60})
+
+  call term_sendkeys(buf, "gg/foo\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_1', {})
+
+  call term_sendkeys(buf, "n")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2', {})
+
+  call term_sendkeys(buf, "n")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2a', {})
+
+  call term_sendkeys(buf, "n")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_2b', {})
+
+  call term_sendkeys(buf, ":call setline(5, 'foo')\<CR>")
+  call term_sendkeys(buf, "0?\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_single_line_3', {})
+
+  call term_sendkeys(buf, "gg/foo\\nbar\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_1', {})
+
+  call term_sendkeys(buf, ":call setline(1, ['---', 'abcdefg', 'hijkl', '---', 'abcdefg', 'hijkl'])\<CR>")
+  call term_sendkeys(buf, "gg/efg\\nhij\<CR>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_2', {})
+  call term_sendkeys(buf, "h\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_3', {})
+  call term_sendkeys(buf, "j\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_4', {})
+  call term_sendkeys(buf, "h\<C-L>")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_5', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xhlsearch_cursearch')
+endfunc
+
 " Similar to Test_incsearch_substitute() but with a screendump halfway.
 func Test_incsearch_substitute_dump()
   CheckOption incsearch

@@ -538,9 +538,9 @@ nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
                     {fast}
 
                 Parameters: ~
-                    {pat}      pattern of files to search for
-                    {all}      whether to return all matches or only the first
-                    {options}  is_lua: only search lua subdirs
+                    {pat}   pattern of files to search for
+                    {all}   whether to return all matches or only the first
+                    {opts}  is_lua: only search lua subdirs
 
                 Return: ~
                     list of absolute paths to the found files
@@ -2325,12 +2325,12 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 only.
 
                 Parameters: ~
-                    {buffer}        Buffer handle, or 0 for current buffer
-                    {start_row}     First line index
-                    {start_column}  First column
-                    {end_row}       Last line index
-                    {end_column}    Last column
-                    {replacement}   Array of lines to use as replacement
+                    {buffer}       Buffer handle, or 0 for current buffer
+                    {start_row}    First line index
+                    {start_col}    First column
+                    {end_row}      Last line index
+                    {end_col}      Last column
+                    {replacement}  Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
@@ -3219,6 +3219,22 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                       pattern = {"*.c", "*.h"},
                       callback = myluafun,  -- Or myvimfun
                     })
+<
+
+                Lua functions receive a table with information about the
+                autocmd event as an argument. To use a function which itself
+                accepts another (optional) parameter, wrap the function in a
+                lambda:
+>
+    -- Lua function with an optional parameter.
+    -- The autocmd callback would pass a table as argument but this
+    -- function expects number|nil
+    local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
+
+    vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+      pattern = {"*.c", "*.h"},
+      callback = function() myluafun() end,
+    })
 <
 
                 Example using command: >

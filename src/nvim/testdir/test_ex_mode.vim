@@ -51,6 +51,13 @@ func Test_ex_mode()
     call assert_equal(['  foo', '    foo'],       Ex("    foo\<C-d>"), e)
     call assert_equal(['foo', '    foo0'],        Ex("    foo0\<C-d>"), e)
     call assert_equal(['foo', '    foo^'],        Ex("    foo^\<C-d>"), e)
+    call assert_equal(['foo', 'foo'],
+          \ Ex("\<BS>\<C-H>\<Del>\<kDel>foo"), e)
+    " default wildchar <Tab> interferes with this test
+    set wildchar=<c-e>
+    call assert_equal(["a\tb", "a\tb"],           Ex("a\t\t\<C-H>b"), e)
+    call assert_equal(["\t  mn", "\tm\<C-T>n"],        Ex("\tm\<C-T>n"), e)
+    set wildchar&
   endfor
 
   set sw&

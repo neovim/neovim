@@ -38,4 +38,27 @@ func Test_smartindent_has_no_effect()
   bwipe!
 endfunc
 
+" Test for inserting '{' and '} with smartindent
+func Test_smartindent_braces()
+  new
+  set smartindent shiftwidth=4
+  call setline(1, ['    if (a)', "\tif (b)", "\t    return 1"])
+  normal 2ggO{
+  normal 3ggA {
+  normal 4ggo}
+  normal o}
+  normal 4ggO#define FOO 1
+  call assert_equal([
+        \ '    if (a)',
+        \ '    {',
+        \ "\tif (b) {",
+        \ '#define FOO 1',
+        \ "\t    return 1",
+        \ "\t}",
+        \ '    }'
+        \ ], getline(1, '$'))
+  set si& sw& ai&
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

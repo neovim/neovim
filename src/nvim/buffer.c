@@ -466,6 +466,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // When the buffer is no longer in a window, trigger BufWinLeave
   if (buf->b_nwindows == 1) {
     buf->b_locked++;
+    buf->b_locked_split++;
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
                        buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
@@ -473,6 +474,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
       return false;
     }
     buf->b_locked--;
+    buf->b_locked_split--;
     if (abort_if_last && last_nonfloat(win)) {
       // Autocommands made this the only window.
       emsg(_(e_auabort));
@@ -483,6 +485,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     // BufHidden
     if (!unload_buf) {
       buf->b_locked++;
+      buf->b_locked_split++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
                          buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
@@ -490,6 +493,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
         return false;
       }
       buf->b_locked--;
+      buf->b_locked_split--;
       if (abort_if_last && last_nonfloat(win)) {
         // Autocommands made this the only window.
         emsg(_(e_auabort));
@@ -678,6 +682,7 @@ void buf_freeall(buf_T *buf, int flags)
 
   // Make sure the buffer isn't closed by autocommands.
   buf->b_locked++;
+  buf->b_locked_split++;
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
@@ -703,6 +708,7 @@ void buf_freeall(buf_T *buf, int flags)
     return;
   }
   buf->b_locked--;
+  buf->b_locked_split--;
 
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
@@ -1466,8 +1472,8 @@ void set_curbuf(buf_T *buf, int action)
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
 
-  // Autocommands may delete the current buffer and/or the buffer we want to go
-  // to.  In those cases don't close the buffer.
+  // Autocommands may delete the current buffer and/or the buffer we want to
+  // go to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
       || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
           && !aborting())) {
@@ -1742,20 +1748,13 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
     buf = curbuf;
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
-    if (curbuf->b_p_bl) {
-      apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
-    }
-    if (buf == curbuf) {
-      apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
+    buf_freeall(buf, BFA_WIPE | BFA_DEL);
+    if (buf != curbuf) {  // autocommands deleted the buffer!
+      return NULL;
     }
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
-    }
-    if (buf == curbuf) {
-      // Make sure 'bufhidden' and 'buftype' are empty
-      clear_string_option(&buf->b_p_bh);
-      clear_string_option(&buf->b_p_bt);
     }
   }
   if (buf != curbuf || curbuf == NULL) {
@@ -1776,14 +1775,6 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
   buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
   if (buf == curbuf) {
-    // free all things allocated for this buffer
-    buf_freeall(buf, 0);
-    if (buf != curbuf) {         // autocommands deleted the buffer!
-      return NULL;
-    }
-    if (aborting()) {           // autocmds may abort script processing
-      return NULL;
-    }
     free_buffer_stuff(buf, kBffInitChangedtick);  // delete local vars et al.
 
     // Init the options.
@@ -4855,6 +4846,10 @@ void do_arg_all(int count, int forceit, int keep_tabs)
             if (keep_tabs) {
               new_curwin = wp;
               new_curtab = curtab;
+            } else if (wp->w_frame->fr_parent != curwin->w_frame->fr_parent) {
+              emsg(_("E249: window layout changed unexpectedly"));
+              i = count;
+              break;
             } else {
               win_move_after(wp, curwin);
             }

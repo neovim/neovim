@@ -314,5 +314,41 @@ func Test_cursorline_screenline_update()
   call delete('Xcul_screenline')
 endfunc
 
+func Test_cursorline_cursorbind_horizontal_scroll()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, 'aa bb cc dd ee ff gg hh ii jj kk ll mm' ..
+      \ ' nn oo pp qq rr ss tt uu vv ww xx yy zz')
+      set nowrap
+      " The following makes the cursor apparent on the screen dump
+      set sidescroll=1 cursorcolumn
+      " add empty lines, required for cursorcolumn
+      call append(1, ['','','',''])
+      20vsp
+      windo :set cursorbind
+  END
+  call writefile(lines, 'Xhor_scroll')
+
+  let buf = RunVimInTerminal('-S Xhor_scroll', #{rows: 8})
+  call term_sendkeys(buf, "20l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_1', {})
+  call term_sendkeys(buf, "10l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_2', {})
+  call term_sendkeys(buf, ":windo :set cursorline\<cr>")
+  call term_sendkeys(buf, "0")
+  call term_sendkeys(buf, "20l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_3', {})
+  call term_sendkeys(buf, "10l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_4', {})
+  call term_sendkeys(buf, ":windo :set nocursorline nocursorcolumn\<cr>")
+  call term_sendkeys(buf, "0")
+  call term_sendkeys(buf, "40l")
+  call VerifyScreenDump(buf, 'Test_hor_scroll_5', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xhor_scroll')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

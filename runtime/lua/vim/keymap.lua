@@ -40,6 +40,8 @@ local keymap = {}
 --
 ---@param opts table A table of |:map-arguments| such as "silent". In addition to the options
 ---                  listed in |nvim_set_keymap()|, this table also accepts the following keys:
+---                  - buffer: (number or boolean) Add a mapping to the given buffer. When "true"
+---                    or 0, use the current buffer.
 ---                  - replace_keycodes: (boolean, default true) When both this and expr is "true",
 ---                  |nvim_replace_termcodes()| is applied to the result of Lua expr maps.
 ---                  - remap: (boolean) Make the mapping recursive. This is the
@@ -128,7 +130,6 @@ function keymap.del(modes, lhs, opts)
   local buffer = false
   if opts.buffer ~= nil then
     buffer = opts.buffer == true and 0 or opts.buffer
-    opts.buffer = nil
   end
 
   if buffer == false then

@@ -138,16 +138,16 @@ Lua functions can be called in multiple ways. Consider the function: >
     end
 
 
-The first way to call a function is: >
-    
+The first way to call this function is: >
+
     example_func(1, 2)
     -- ==== Result ====
     -- A is: 1
     -- B is: 2
 <
-    This way of calling a function is familiar to most scripting languages.
-    In Lua, it's important to understand that any function arguments that are
-    not supplied are automatically set to `nil`. For example: >
+This way of calling a function is familiar from most scripting languages.
+In Lua, it's important to understand that any function arguments that are
+not supplied are automatically set to `nil`. For example: >
 
     example_func(1)
     -- ==== Result ====
@@ -155,12 +155,13 @@ The first way to call a function is: >
     -- B is: nil
 <
 
-    Additionally, if any extra parameters are passed, they are discarded
-    completely.
+Additionally, if any extra parameters are passed, they are discarded
+completely.
 
-In Lua, it is also possible (when only one argument is passed) to call the
-function without any parentheses. This is most often used to approximate
-"keyword"-style arguments with a single dictionary. For example: >
+In Lua, it is also possible to omit the parentheses (only) if the function
+takes a single string or table literal (`"foo"` or "`{1,2,3}`", respectively).
+The latter is most often used to approximate "keyword-style" arguments with a
+single dictionary, for example: >
 
     local func_with_opts = function(opts)
         local will_do_foo = opts.foo
@@ -172,15 +173,38 @@ function without any parentheses. This is most often used to approximate
     func_with_opts { foo = true, filename = "hello.world" }
 <
 
-    In this style, each "parameter" is passed via keyword. It is still valid
-    to call the function in this style: >
+In this style, each "parameter" is passed via keyword. It is still valid
+to call the function in the standard style: >
 
     func_with_opts({ foo = true, filename = "hello.world" })
 <
 
-    But often in the documentation, you will see the former rather than the
-    latter style, due to its brevity (this is vim after all!).
+But often in the documentation, you will see the former rather than the
+latter style due to its brevity.
 
+==============================================================================
+Lua Patterns                                                  *lua-patterns*
+
+For performance reasons, Lua does not support regular expressions natively.
+Instead, the Lua `string` standard library allows manipulations using a
+restricted set of "patterns", see https://www.lua.org/manual/5.1/manual.html#5.4.1
+
+Examples (`string.match` extracts the first match): >
+
+    print(string.match("foo123bar123", "%d+"))
+    -- -> 123
+
+    print(string.match("foo123bar123", "[^%d]+"))
+    -- -> foo
+
+    print(string.match("foo123bar123", "[abc]+"))
+    -- -> ba
+
+    print(string.match("foo.bar", "%.bar"))
+    -- -> .bar
+
+For more complex matching, Vim regular expressions can be used from Lua
+through |vim.regex()|.
 
 ------------------------------------------------------------------------------
 LUA PLUGIN EXAMPLE                                      *lua-require-example*
@@ -1924,9 +1948,9 @@ add({filetypes})                                          *vim.filetype.add()*
                 filename (either the "tail" or the full file path). The full
                 file path is checked first, followed by the file name. If a
                 match is not found using the filename, then the filename is
-                matched against the list of patterns (sorted by priority)
-                until a match is found. Lastly, if pattern matching does not
-                find a filetype, then the file extension is used.
+                matched against the list of |lua-patterns| (sorted by
+                priority) until a match is found. Lastly, if pattern matching
+                does not find a filetype, then the file extension is used.
 
                 The filetype can be either a string (in which case it is used
                 as the filetype directly) or a function. If a function, it
@@ -2055,6 +2079,9 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                             "silent". In addition to the options listed in
                             |nvim_set_keymap()|, this table also accepts the
                             following keys:
+                            • buffer: (number or boolean) Add a mapping to the
+                              given buffer. When "true" or 0, use the current
+                              buffer.
                             • replace_keycodes: (boolean, default true) When
                               both this and expr is "true",
                               |nvim_replace_termcodes()| is applied to the

@@ -532,6 +532,8 @@ struct file_buffer {
   int b_flags;                  // various BF_ flags
   int b_locked;                 // Buffer is being closed or referenced, don't
                                 // let autocommands wipe it out.
+  int b_locked_split;           // Buffer is being closed, don't allow opening
+                                // a new window with it.
   int b_ro_locked;              // Non-zero when the buffer can't be changed.
                                 // Used for FileChangedRO
 
@@ -1024,6 +1026,7 @@ typedef struct {
   colnr_T startcol;     // in win_line() points to char where HL starts
   colnr_T endcol;       // in win_line() points to char where HL ends
   bool is_addpos;       // position specified directly by matchaddpos()
+  bool has_cursor;      // true if the cursor is inside the match, used for CurSearch
   proftime_T tm;        // for a time limit
 } match_T;
 

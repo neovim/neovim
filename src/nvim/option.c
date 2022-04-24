@@ -262,8 +262,8 @@ typedef struct vimoption {
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText,d:Directory,e:ErrorMsg," \
-  "i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr,a:LineNrAbove,b:LineNrBelow,N:CursorLineNr," \
-  "G:CursorLineSign,O:CursorLineFold" \
+  "i:IncSearch,l:Search,y:CurSearch,m:MoreMsg,M:ModeMsg,n:LineNr,a:LineNrAbove,b:LineNrBelow," \
+  "N:CursorLineNr,G:CursorLineSign,O:CursorLineFold" \
   "r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title,v:Visual,V:VisualNOS,w:WarningMsg," \
   "W:WildMenu,f:Folded,F:FoldColumn,A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn," \
   "-:Conceal,B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel,x:PmenuSbar," \
@@ -4919,6 +4919,23 @@ bool set_tty_option(const char *name, char *value)
   }
 
   return false;
+}
+
+void set_tty_background(const char *value)
+{
+  if (option_was_set("bg") || strequal((char *)p_bg, value)) {
+    // background is already set... ignore
+    return;
+  }
+  if (starting) {
+    // Wait until after startup, so OptionSet is triggered.
+    do_cmdline_cmd((value[0] == 'l')
+                   ? "autocmd VimEnter * ++once ++nested set bg=light"
+                   : "autocmd VimEnter * ++once ++nested set bg=dark");
+  } else {
+    set_option_value("bg", 0L, value, 0);
+    reset_option_was_set("bg");
+  }
 }
 
 /// Find index for an option
