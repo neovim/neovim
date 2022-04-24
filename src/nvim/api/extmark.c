@@ -488,6 +488,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   FUNC_API_SINCE(7)
 {
   Decoration decor = DECORATION_INIT;
+  bool has_decor = false;
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -577,6 +578,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       if (ERROR_SET(err)) {
         goto error;
       }
+      has_decor = true;
     }
   }
 
@@ -586,6 +588,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     if (c.size) {
       decor.conceal_char = utf_ptr2char((const char_u *)c.data);
     }
+    has_decor = true;
   } else if (HAS_KEY(opts->conceal)) {
     api_set_error(err, kErrorTypeValidation, "conceal is not a String");
     goto error;
@@ -594,6 +597,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   if (opts->virt_text.type == kObjectTypeArray) {
     decor.virt_text = parse_virt_text(opts->virt_text.data.array, err,
                                       &decor.virt_text_width);
+    has_decor = true;
     if (ERROR_SET(err)) {
       goto error;
     }
@@ -665,6 +669,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       if (ERROR_SET(err)) {
         goto error;
       }
+      has_decor = true;
     }
   } else if (HAS_KEY(opts->virt_lines)) {
     api_set_error(err, kErrorTypeValidation, "virt_lines is not an Array");
@@ -693,6 +698,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       api_set_error(err, kErrorTypeValidation, "sign_text is not a valid value");
       goto error;
     }
+    has_decor = true;
   } else if (HAS_KEY(opts->sign_text)) {
     api_set_error(err, kErrorTypeValidation, "sign_text is not a String");
     goto error;
@@ -718,6 +724,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
 
   OPTION_TO_BOOL(decor.ui_watched, ui_watched, false);
+  if (decor.ui_watched) {
+    has_decor = true;
+  }
 
   if (line < 0) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
@@ -780,7 +789,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
-                &decor, right_gravity, end_right_gravity, kExtmarkNoUndo);
+                has_decor ? &decor : NULL, right_gravity, end_right_gravity,
+                kExtmarkNoUndo);
   }
 
   return (Integer)id;
