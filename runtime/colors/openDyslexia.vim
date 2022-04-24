@@ -110,7 +110,7 @@ hi link goDeclType		Type
 hi link goBuiltins		Constant
 hi link goDirective		Constant
 
-hi link rustCommentLine		        Comment
+hi link rustCommentLine		  Comment
 hi link rustCommentLineDoc        Comment
 hi link rustCommentLineDocLeader  Comment
 hi link rustCommentLineDocError   Comment
