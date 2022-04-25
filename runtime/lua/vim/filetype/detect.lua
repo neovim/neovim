@@ -6,8 +6,10 @@ local function count_lines(bufnr)
 end
 
 ---@private
-local function getline(bufnr, lnum)
-  return vim.api.nvim_buf_get_lines(bufnr, lnum-1, lnum, false)[1] or ""
+local function getline(bufnr, start_lnum, end_lnum)
+  end_lnum = end_lnum or start_lnum
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  return table.concat(lines) or ""
 end
 
 -- Determine if a *.tf file is TF mud client or terraform
