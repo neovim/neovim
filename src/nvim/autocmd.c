@@ -2449,7 +2449,7 @@ bool autocmd_delete_id(int64_t id)
 
   // Note that since multiple AutoCmd objects can have the same ID, we need to do a full scan.
   FOR_ALL_AUEVENTS(event) {
-    FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+    FOR_ALL_AUPATS_IN_EVENT(event, ap) {  // -V756
       for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
         if (ac->id == id) {
           aucmd_del(ac);

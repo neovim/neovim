@@ -2752,6 +2752,7 @@ static void truncate_fold(win_T *const wp, fold_T *fp, linenr_T end)
 }
 
 #define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
+// -V:VALID_FOLD:V560
 #define VALID_FOLD(fp, gap) \
   ((gap)->ga_len > 0 && (fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
 #define FOLD_INDEX(fp, gap) ((size_t)((fp) - ((fold_T *)(gap)->ga_data)))
