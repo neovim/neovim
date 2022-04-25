@@ -5095,7 +5095,8 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 /// matches for each item.
 static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bool matchseq,
                                 const char_u *const key, Callback *const item_cb,
-                                const bool retmatchpos, list_T *const fmatchlist)
+                                const bool retmatchpos, list_T *const fmatchlist,
+                                const long max_matches)
   FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
   const long len = tv_list_len(items);
@@ -5103,9 +5104,10 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
     return;
   }
 
+  // TODO(vim): when using a limit use that instead of "len"
   fuzzyItem_T *const ptrs = xcalloc(len, sizeof(fuzzyItem_T));
   long i = 0;
-  bool found_match = false;
+  long found_match = 0;
   uint32_t matches[MAX_FUZZY_MATCHES];
 
   // For all the string items in items, get the fuzzy matching score
@@ -5113,6 +5115,14 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
     ptrs[i].idx = i;
     ptrs[i].item = li;
     ptrs[i].score = SCORE_NONE;
+
+    // TODO(vim): instead of putting all items in ptrs[] should only add
+    // matching items there.
+    if (max_matches > 0 && found_match >= max_matches) {
+      i++;
+      continue;
+    }
+
     char_u *itemstr = NULL;
     typval_T rettv;
     rettv.v_type = VAR_UNKNOWN;
@@ -5159,13 +5169,13 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
         }
       }
       ptrs[i].score = score;
-      found_match = true;
+      found_match++;
     }
     i++;
     tv_clear(&rettv);
   });
 
-  if (found_match) {
+  if (found_match > 0) {
     // Sort the list by the descending order of the match score
     qsort(ptrs, len, sizeof(fuzzyItem_T), fuzzy_match_item_compare);
 
@@ -5239,6 +5249,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   Callback cb = CALLBACK_NONE;
   const char_u *key = NULL;
   bool matchseq = false;
+  long max_matches = 0;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
       emsg(_(e_dictreq));
@@ -5248,8 +5259,8 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
     // To search a dict, either a callback function or a key can be
     // specified.
     dict_T *const d = argvars[2].vval.v_dict;
-    const dictitem_T *const di = tv_dict_find(d, "key", -1);
-    if (di != NULL) {
+    const dictitem_T *di;
+    if ((di = tv_dict_find(d, "key", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL
           || *di->di_tv.vval.v_string == NUL) {
         semsg(_(e_invarg2), tv_get_string(&di->di_tv));
@@ -5259,7 +5270,14 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
     } else if (!tv_dict_get_callback(d, "text_cb", -1, &cb)) {
       semsg(_(e_invargval), "text_cb");
       return;
+    } else if ((di = tv_dict_find(d, "limit", -1)) != NULL) {
+      if (di->di_tv.v_type != VAR_NUMBER) {
+        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        return;
+      }
+      max_matches = (long)tv_get_number_chk(&di->di_tv, NULL);
     }
+
     if (tv_dict_find(d, "matchseq", -1) != NULL) {
       matchseq = true;
     }
@@ -5278,7 +5296,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   }
 
   fuzzy_match_in_list(argvars[0].vval.v_list, (char_u *)tv_get_string(&argvars[1]), matchseq, key,
-                      &cb, retmatchpos, rettv->vval.v_list);
+                      &cb, retmatchpos, rettv->vval.v_list, max_matches);
   callback_free(&cb);
 }
 

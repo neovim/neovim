@@ -4975,7 +4975,7 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
-		    key		key of the item which is fuzzy matched against
+		    key		Key of the item which is fuzzy matched against
 				{str}. The value of this item should be a
 				string.
 		    text_cb	|Funcref| that will be called for every item
@@ -4983,6 +4983,8 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 				This should accept a dictionary item as the
 				argument and return the text for that item to
 				use for fuzzy matching.
+		    limit	Maximum number of matches in {list} to be
+				returned.  Zero means no limit.
 
 		{str} is treated as a literal string and regular expression
 		matching is NOT supported.  The maximum supported {str} length
@@ -4994,6 +4996,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		If there are no matching strings or there is an error, then an
 		empty list is returned. If length of {str} is greater than
 		256, then returns an empty list.
+
+		When {limit} is given, matchfuzzy() will find up to this
+		number of matches in {list} and return them in sorted order.
 
 		Refer to |fuzzy-matching| for more information about fuzzy
 		matching strings.
