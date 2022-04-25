@@ -3616,8 +3616,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       // EX_XFILE: file names are handled above.
       if (!(ea.argt & EX_XFILE)) {
         if (context == EXPAND_MENUS) {
-          return (const char *)set_context_in_menu_cmd(xp, cmd,
-                                                       (char_u *)arg, forceit);
+          return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
         } else if (context == EXPAND_COMMANDS) {
           return arg;
         } else if (context == EXPAND_MAPPINGS) {
@@ -3723,7 +3722,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_tunmenu:
   case CMD_popup:
   case CMD_emenu:
-    return (const char *)set_context_in_menu_cmd(xp, cmd, (char_u *)arg, forceit);
+    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
 
   case CMD_colorscheme:
     xp->xp_context = EXPAND_COLORS;
