@@ -287,7 +287,7 @@ and <> are part of what you type, the context should make this clear.
 							*CTRL-{char}*
 CTRL-{char}	{char} typed as a control character; that is, typing {char}
 		while holding the CTRL key down.  The case of {char} is
-		ignored; thus CTRL-A and CTRL-a are equivalent.  However, in
+		ignored; thus CTRL-A and CTRL-a are equivalent.  But in
 		some terminals and environments, using the SHIFT key will
 		produce a distinct code (e.g. CTRL-SHIFT-a); in these
 		environments using the SHIFT key will not trigger commands
