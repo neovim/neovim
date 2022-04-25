@@ -744,6 +744,26 @@ function tests.clientside_commands()
   }
 end
 
+
+function tests.basic_formatting()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          documentFormattingProvider = true,
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/formatting', function()
+        return nil, {}
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 -- Tests will be indexed by TEST_NAME
 
 local kill_timer = vim.loop.new_timer()

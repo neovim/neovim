@@ -143,9 +143,85 @@ local function select_client(method, on_choice)
   end
 end
 
+--- Formats a buffer using the attached (and optionally filtered) language
+--- server clients.
+---
+--- @param options table|nil Optional table which holds the following optional fields:
+---     - formatting_options (table|nil):
+---         Can be used to specify FormattingOptions. Some unspecified options will be
+---         automatically derived from the current Neovim options.
+---         @see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
+---     - timeout_ms (integer|nil, default 1000):
+---         Time in milliseconds to block for formatting requests. Formatting requests are current
+---         synchronous to prevent editing of the buffer.
+---     - bufnr (number|nil):
+---         Restrict formatting to the clients attached to the given buffer, defaults to the current
+---         buffer (0).
+---     - filter (function|nil):
+---         Predicate to filter clients used for formatting. Receives the list of clients attached
+---         to bufnr as the argument and must return the list of clients on which to request
+---         formatting. Example:
+---
+---         <pre>
+---         -- Never request typescript-language-server for formatting
+---         vim.lsp.buf.format {
+---           filter = function(clients)
+---             return vim.tbl_filter(
+---               function(client) return client.name ~= "tsserver" end,
+---               clients
+---             )
+---           end
+---         }
+---         </pre>
+---
+---     - id (number|nil):
+---         Restrict formatting to the client with ID (client.id) matching this field.
+---     - name (string|nil):
+---         Restrict formatting to the client with name (client.name) matching this field.
+
+function M.format(options)
+  options = options or {}
+  local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
+  local clients = vim.lsp.buf_get_clients(bufnr)
+
+  if options.filter then
+    clients = options.filter(clients)
+  elseif options.id then
+    clients = vim.tbl_filter(
+      function(client) return client.id == options.id end,
+      clients
+    )
+  elseif options.name then
+    clients = vim.tbl_filter(
+      function(client) return client.name == options.name end,
+      clients
+    )
+  end
+
+  clients = vim.tbl_filter(
+    function(client) return client.supports_method("textDocument/formatting") end,
+    clients
+  )
+
+  if #clients == 0 then
+    vim.notify("[LSP] Format request failed, no matching language servers.")
+  end
+
+  local timeout_ms =  options.timeout_ms or 1000
+  for _, client in pairs(clients) do
+    local params = util.make_formatting_params(options.formatting_options)
+    local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, bufnr)
+    if result and result.result then
+      util.apply_text_edits(result.result, bufnr, client.offset_encoding)
+    elseif err then
+      vim.notify(string.format("[LSP][%s] %s", client.name, err), vim.log.levels.WARN)
+    end
+  end
+end
+
 --- Formats the current buffer.
 ---
----@param options (optional, table) Can be used to specify FormattingOptions.
+---@param options (table|nil) Can be used to specify FormattingOptions.
 --- Some unspecified options will be automatically derived from the current
 --- Neovim options.
 --
@@ -171,10 +247,11 @@ end
 --- autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()
 --- </pre>
 ---
----@param options Table with valid `FormattingOptions` entries
+---@param options table|nil with valid `FormattingOptions` entries
 ---@param timeout_ms (number) Request timeout
 ---@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
+  vim.notify_once('vim.lsp.buf.formatting_sync is deprecated. Use vim.lsp.buf.format instead', vim.log.levels.WARN)
   local params = util.make_formatting_params(options)
   local bufnr = vim.api.nvim_get_current_buf()
   select_client('textDocument/formatting', function(client)
@@ -202,12 +279,13 @@ end
 --- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
 --- </pre>
 ---
----@param options (optional, table) `FormattingOptions` entries
----@param timeout_ms (optional, number) Request timeout
----@param order (optional, table) List of client names. Formatting is requested from clients
+---@param options (table|nil) `FormattingOptions` entries
+---@param timeout_ms (number|nil) Request timeout
+---@param order (table|nil) List of client names. Formatting is requested from clients
 ---in the following order: first all clients that are not in the `order` list, then
 ---the remaining clients in the order as they occur in the `order` list.
 function M.formatting_seq_sync(options, timeout_ms, order)
+  vim.notify_once('vim.lsp.buf.formatting_seq_sync is deprecated. Use vim.lsp.buf.format instead', vim.log.levels.WARN)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
   local bufnr = vim.api.nvim_get_current_buf()
 
