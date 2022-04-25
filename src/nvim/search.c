@@ -5093,34 +5093,28 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 /// for each item or use 'item_cb' Funcref function to get the string.
 /// If 'retmatchpos' is true, then return a list of positions where 'str'
 /// matches for each item.
-static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bool matchseq,
+static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool matchseq,
                                 const char_u *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
                                 const long max_matches)
   FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
-  const long len = tv_list_len(items);
+  long len = tv_list_len(l);
   if (len == 0) {
     return;
   }
+  if (max_matches > 0 && len > max_matches) {
+    len = max_matches;
+  }
 
-  // TODO(vim): when using a limit use that instead of "len"
-  fuzzyItem_T *const ptrs = xcalloc(len, sizeof(fuzzyItem_T));
-  long i = 0;
-  long found_match = 0;
+  fuzzyItem_T *const items = xcalloc(len, sizeof(fuzzyItem_T));
+  long match_count = 0;
   uint32_t matches[MAX_FUZZY_MATCHES];
 
   // For all the string items in items, get the fuzzy matching score
-  TV_LIST_ITER(items, li, {
-    ptrs[i].idx = i;
-    ptrs[i].item = li;
-    ptrs[i].score = SCORE_NONE;
-
-    // TODO(vim): instead of putting all items in ptrs[] should only add
-    // matching items there.
-    if (max_matches > 0 && found_match >= max_matches) {
-      i++;
-      continue;
+  TV_LIST_ITER(l, li, {
+    if (max_matches > 0 && match_count >= max_matches) {
+      break;
     }
 
     char_u *itemstr = NULL;
@@ -5153,31 +5147,33 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
 
     int score;
     if (itemstr != NULL && fuzzy_match(itemstr, str, matchseq, &score, matches,
-                                       sizeof(matches) / sizeof(matches[0]))) {
+                                       MAX_FUZZY_MATCHES)) {
+      items[match_count].idx = match_count;
+      items[match_count].item = li;
+      items[match_count].score = score;
+
       // Copy the list of matching positions in itemstr to a list, if
       // 'retmatchpos' is set.
       if (retmatchpos) {
-        ptrs[i].lmatchpos = tv_list_alloc(kListLenMayKnow);
+        items[match_count].lmatchpos = tv_list_alloc(kListLenMayKnow);
         int j = 0;
         const char_u *p = str;
         while (*p != NUL) {
           if (!ascii_iswhite(utf_ptr2char(p))) {
-            tv_list_append_number(ptrs[i].lmatchpos, matches[j]);
+            tv_list_append_number(items[match_count].lmatchpos, matches[j]);
             j++;
           }
           MB_PTR_ADV(p);
         }
       }
-      ptrs[i].score = score;
-      found_match++;
+      match_count++;
     }
-    i++;
     tv_clear(&rettv);
   });
 
-  if (found_match > 0) {
+  if (match_count > 0) {
     // Sort the list by the descending order of the match score
-    qsort(ptrs, len, sizeof(fuzzyItem_T), fuzzy_match_item_compare);
+    qsort(items, match_count, sizeof(fuzzyItem_T), fuzzy_match_item_compare);
 
     // For matchfuzzy(), return a list of matched strings.
     //          ['str1', 'str2', 'str3']
@@ -5186,48 +5182,49 @@ static void fuzzy_match_in_list(list_T *const items, char_u *const str, const bo
     // is a list of lists where each list item is a list of matched
     // character positions. The third item is a list of matching scores.
     //      [['str1', 'str2', 'str3'], [[1, 3], [1, 3], [1, 3]]]
-    list_T *l;
+    list_T *retlist;
     if (retmatchpos) {
       const listitem_T *const li = tv_list_find(fmatchlist, 0);
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
-      l = TV_LIST_ITEM_TV(li)->vval.v_list;
+      retlist = TV_LIST_ITEM_TV(li)->vval.v_list;
     } else {
-      l = fmatchlist;
+      retlist = fmatchlist;
     }
 
     // Copy the matching strings with a valid score to the return list
-    for (i = 0; i < len; i++) {
-      if (ptrs[i].score == SCORE_NONE) {
+    for (long i = 0; i < match_count; i++) {
+      if (items[i].score == SCORE_NONE) {
         break;
       }
-      tv_list_append_tv(l, TV_LIST_ITEM_TV(ptrs[i].item));
+      tv_list_append_tv(retlist, TV_LIST_ITEM_TV(items[i].item));
     }
 
     // next copy the list of matching positions
     if (retmatchpos) {
       const listitem_T *li = tv_list_find(fmatchlist, -2);
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
-      l = TV_LIST_ITEM_TV(li)->vval.v_list;
-      for (i = 0; i < len; i++) {
-        if (ptrs[i].score == SCORE_NONE) {
+      retlist = TV_LIST_ITEM_TV(li)->vval.v_list;
+
+      for (long i = 0; i < match_count; i++) {
+        if (items[i].score == SCORE_NONE) {
           break;
         }
-        tv_list_append_list(l, ptrs[i].lmatchpos);
+        tv_list_append_list(retlist, items[i].lmatchpos);
       }
 
       // copy the matching scores
       li = tv_list_find(fmatchlist, -1);
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
-      l = TV_LIST_ITEM_TV(li)->vval.v_list;
-      for (i = 0; i < len; i++) {
-        if (ptrs[i].score == SCORE_NONE) {
+      retlist = TV_LIST_ITEM_TV(li)->vval.v_list;
+      for (long i = 0; i < match_count; i++) {
+        if (items[i].score == SCORE_NONE) {
           break;
         }
-        tv_list_append_number(l, ptrs[i].score);
+        tv_list_append_number(retlist, items[i].score);
       }
     }
   }
-  xfree(ptrs);
+  xfree(items);
 }
 
 /// Do fuzzy matching. Returns the list of matched strings in 'rettv'.
