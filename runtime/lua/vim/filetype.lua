@@ -142,6 +142,7 @@ local extension = {
   cs = "cs",
   csc = "csc",
   csdl = "csdl",
+  cshtml = "html",
   fdr = "csp",
   csp = "csp",
   css = "css",

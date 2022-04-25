@@ -258,6 +258,7 @@ let s:filename_checks = {
     \ 'rnoweb': ['file.rnw', 'file.snw'],
     \ 'rrst': ['file.rrst', 'file.srst'],
     \ 'template': ['file.tmpl'],
+    \ 'html': ['file.html', 'file.htm', 'file.cshtml'],
     \ 'htmlm4': ['file.html.m4'],
     \ 'httest': ['file.htt', 'file.htb'],
     \ 'ibasic': ['file.iba', 'file.ibi'],

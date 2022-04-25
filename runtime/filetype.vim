@@ -817,6 +817,7 @@ au BufNewFile,BufRead *.t.html			setf tilde
 
 " HTML (.shtml and .stm for server side)
 au BufNewFile,BufRead *.html,*.htm,*.shtml,*.stm  call dist#ft#FThtml()
+au BufNewFile,BufRead *.cshtml			setf html
 
 " HTML with Ruby - eRuby
 au BufNewFile,BufRead *.erb,*.rhtml		setf eruby
