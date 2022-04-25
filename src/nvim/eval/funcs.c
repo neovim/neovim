@@ -8799,7 +8799,7 @@ skip_args:
 
   recursive++;
   list_T *const l = list_arg->vval.v_list;
-  if (set_errorlist(wp, l, action, (char_u *)title, what) == OK) {
+  if (set_errorlist(wp, l, action, (char *)title, what) == OK) {
     rettv->vval.v_number = 0;
   }
   recursive--;
