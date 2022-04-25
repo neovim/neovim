@@ -994,7 +994,7 @@ void ml_recover(bool checkext)
    */
   if (curbuf->b_ffname != NULL) {
     orig_file_status = readfile(curbuf->b_ffname, NULL, (linenr_T)0,
-                                (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW);
+                                (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW, false);
   }
 
   // Use the 'fileformat' and 'fileencoding' as stored in the swap file.
@@ -1069,7 +1069,7 @@ void ml_recover(bool checkext)
               line_count = pp->pb_pointer[idx].pe_line_count;
               if (readfile(curbuf->b_ffname, NULL, lnum,
                            pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
-                           NULL, 0) != OK) {
+                           NULL, 0, false) != OK) {
                 cannot_open = true;
               } else {
                 lnum += line_count;
