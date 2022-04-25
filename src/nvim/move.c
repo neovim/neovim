@@ -31,6 +31,7 @@
 #include "nvim/plines.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
+#include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/window.h"
 
@@ -95,30 +96,27 @@ static void comp_botline(win_T *wp)
   win_check_anchored_floats(wp);
 }
 
-/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set
-/// or if the 'CurSearch' highlight is defined.
+/// Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 /// Also when concealing is on and 'concealcursor' is not active.
 void redraw_for_cursorline(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
-      && (wp->w_p_rnu || win_cursorline_standout(wp)
-          || HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC])) {
-    // win_line() will redraw the number column and cursorline only
-    // and also update the CurSearch highlight (if needed).
+      && (wp->w_p_rnu || win_cursorline_standout(wp))) {
+    // win_line() will redraw the number column and cursorline only.
     redraw_later(wp, VALID);
   }
 }
 
 /// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
-/// contains "screenline" or when the 'CurSearch' highlight is defined.
+/// contains "screenline" or when the 'CurSearch' highlight is in use.
 /// Also when concealing is on and 'concealcursor' is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
-    if (wp->w_p_cuc || HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC]) {
-      // When 'cursorcolumn' is set or 'CurSearch' is defined
+    if (wp->w_p_cuc || ((HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC]) && using_hlsearch())) {
+      // When 'cursorcolumn' is set or 'CurSearch' is in use
       // need to redraw with SOME_VALID.
       redraw_later(wp, SOME_VALID);
     } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
