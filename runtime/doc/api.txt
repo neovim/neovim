@@ -929,7 +929,7 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                     • "pty" (optional) Name of pseudoterminal. On a POSIX
                       system this is a device path like "/dev/pts/1". If the
                       name is unknown, the key will still be present if a pty
-                      is used (e.g. for winpty on Windows).
+                      is used (e.g. for conpty on Windows).
                     • "buffer" (optional) Buffer with connected |terminal|
                       instance.
                     • "client" (optional) Info about the peer (client on the

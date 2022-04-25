@@ -1740,7 +1740,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 ///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this
 ///                 is a device path like "/dev/pts/1". If the name is unknown,
 ///                 the key will still be present if a pty is used (e.g. for
-///                 winpty on Windows).
+///                 conpty on Windows).
 ///    -  "buffer"  (optional) Buffer with connected |terminal| instance.
 ///    -  "client"  (optional) Info about the peer (client on the other end of
 ///                 the RPC channel), if provided by it via
