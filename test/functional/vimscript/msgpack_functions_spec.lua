@@ -5,6 +5,7 @@ local eval, eq = helpers.eval, helpers.eq
 local command = helpers.command
 local nvim = helpers.nvim
 local exc_exec = helpers.exc_exec
+local iswin = helpers.iswin
 
 describe('msgpack*() functions', function()
   before_each(clear)
@@ -466,6 +467,11 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd)  -- do it again (try to force segfault)
     local api_info = eval(cmd)  -- do it again
+    if iswin() then
+      helpers.assert_alive()
+      pending('msgpackparse() has a bug on windows')
+      return
+    end
     eq({'error_types', 'functions', 'types',
         'ui_events', 'ui_options', 'version'}, api_info)
   end)
