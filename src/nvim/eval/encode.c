@@ -29,8 +29,6 @@
 #include "nvim/message.h"
 #include "nvim/vim.h"  // For _()
 
-#define utf_char2len(b) ((size_t)utf_char2len(b))
-
 const char *const encode_bool_var_names[] = {
   [kBoolVarTrue] = "true",
   [kBoolVarFalse] = "false",
@@ -653,7 +651,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
     ga_grow(gap, (int)str_len);
     for (size_t i = 0; i < utf_len;) {
       const int ch = utf_ptr2char((char_u *)utf_buf + i);
-      const size_t shift = (ch == 0? 1: utf_char2len(ch));
+      const size_t shift = (ch == 0 ? 1 : ((size_t)utf_char2len(ch)));
       assert(shift > 0);
       // Is false on invalid unicode, but this should already be handled.
       assert(ch == 0 || shift == ((size_t)utf_ptr2len((char_u *)utf_buf + i)));

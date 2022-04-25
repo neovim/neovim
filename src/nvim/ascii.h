@@ -9,11 +9,11 @@
 
 // Definitions of various common control characters.
 
-#define CharOrd(x)      ((uint8_t)(x) < 'a' \
-                         ? (uint8_t)(x) - 'A' \
-                         : (uint8_t)(x) - 'a')
-#define CharOrdLow(x)   ((uint8_t)(x) - 'a')
-#define CharOrdUp(x)    ((uint8_t)(x) - 'A')
+#define CHAR_ORD(x)      ((uint8_t)(x) < 'a' \
+                          ? (uint8_t)(x) - 'A' \
+                          : (uint8_t)(x) - 'a')
+#define CHAR_ORD_LOW(x)   ((uint8_t)(x) - 'a')
+#define CHAR_ORD_UP(x)    ((uint8_t)(x) - 'A')
 #define ROT13(c, a)     (((((c) - (a)) + 13) % 26) + (a))
 
 #define NUL             '\000'
@@ -35,8 +35,8 @@
 
 #define POUND           0xA3
 
-#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
-#define Meta(x)         ((x) | 0x80)
+#define CTRL_CHR(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
+#define META(x)         ((x) | 0x80)
 
 #define CTRL_F_STR      "\006"
 #define CTRL_H_STR      "\010"

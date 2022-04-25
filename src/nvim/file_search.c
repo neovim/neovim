@@ -924,8 +924,8 @@ char_u *vim_findfile(void *search_ctx_arg)
        */
       if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
         for (int i = stackp->ffs_filearray_cur;
-             i < stackp->ffs_filearray_size; ++i) {
-          if (fnamecmp(stackp->ffs_filearray[i],
+             i < stackp->ffs_filearray_size; i++) {
+          if (FNAMECMP(stackp->ffs_filearray[i],
                        stackp->ffs_fix_path) == 0) {
             continue;             // don't repush same directory
           }
@@ -1050,7 +1050,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename,
   if (*list_headp != NULL) {
     retptr = *list_headp;
     while (retptr != NULL) {
-      if (fnamecmp(filename, retptr->ffvl_filename) == 0) {
+      if (FNAMECMP(filename, retptr->ffvl_filename) == 0) {
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
@@ -1151,7 +1151,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
 
   // check against list of already visited files
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
-    if ((url && fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
+    if ((url && FNAMECMP(vp->ffv_fname, ff_expand_buffer) == 0)
         || (!url && vp->file_id_valid
             && os_fileid_equal(&(vp->file_id), &file_id))) {
       // are the wildcard parts equal
@@ -1317,13 +1317,13 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
        * '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
        * '/home/r' would also match '/home/rks'
        */
-      if (fnamencmp(stopdirs_v[i], path, path_len) == 0
+      if (FNAMENCMP(stopdirs_v[i], path, path_len) == 0
           && vim_ispathsep(stopdirs_v[i][path_len])) {
         return TRUE;
       }
     } else {
-      if (fnamecmp(stopdirs_v[i], path) == 0) {
-        return TRUE;
+      if (FNAMECMP(stopdirs_v[i], path) == 0) {
+        return true;
       }
     }
   }

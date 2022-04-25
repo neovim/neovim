@@ -7529,7 +7529,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
     // Does it look like a control character?
     if (*look == '^' && look[1] >= '?' && look[1] <= '_') {
-      if (try_match && keytyped == Ctrl_chr(look[1])) {
+      if (try_match && keytyped == CTRL_CHR(look[1])) {
         return true;
       }
       look += 2;
@@ -7736,7 +7736,7 @@ int hkmap(int c)
     };
 
     if (c == 'N' || c == 'M' || c == 'P' || c == 'C' || c == 'Z') {
-      return (int)(map[CharOrd(c)] - 1 + p_aleph);
+      return (int)(map[CHAR_ORD(c)] - 1 + p_aleph);
     } else if (c == 'x') {  // '-1'='sofit'
       return 'X';
     } else if (c == 'q') {
@@ -7752,7 +7752,7 @@ int hkmap(int c)
       // do this the same was as 5.7 and previous, so it works correctly on
       // all systems.  Specifically, the e.g. Delete and Arrow keys are
       // munged and won't work if e.g. searching for Hebrew text.
-      return (int)(map[CharOrdLow(c)] + p_aleph);
+      return (int)(map[CHAR_ORD_LOW(c)] + p_aleph);
     } else {
       return c;
     }
@@ -7782,12 +7782,12 @@ int hkmap(int c)
       if (c < 'a' || c > 'z') {
         return c;
       }
-      c = str[CharOrdLow(c)];
+      c = str[CHAR_ORD_LOW(c)];
       break;
     }
     }
 
-    return (int)(CharOrdLow(c) + p_aleph);
+    return (int)(CHAR_ORD_LOW(c) + p_aleph);
   }
 }
 

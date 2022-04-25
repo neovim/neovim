@@ -5146,7 +5146,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (do_alpha && ASCII_ISALPHA(firstdigit)) {
     // decrement or increment alphabetic character
     if (op_type == OP_NR_SUB) {
-      if (CharOrd(firstdigit) < Prenum1) {
+      if (CHAR_ORD(firstdigit) < Prenum1) {
         if (isupper(firstdigit)) {
           firstdigit = 'A';
         } else {
@@ -5156,7 +5156,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         firstdigit -= (int)Prenum1;
       }
     } else {
-      if (26 - CharOrd(firstdigit) - 1 < Prenum1) {
+      if (26 - CHAR_ORD(firstdigit) - 1 < Prenum1) {
         if (isupper(firstdigit)) {
           firstdigit = 'Z';
         } else {

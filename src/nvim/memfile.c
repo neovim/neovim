@@ -795,7 +795,7 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
     emsg(_("E300: Swap file already exists (symlink attack?)"));
   } else {
     // try to open the file
-    mfp->mf_fd = mch_open_rw((char *)mfp->mf_fname, flags | O_NOFOLLOW);
+    mfp->mf_fd = MCH_OPEN_RW((char *)mfp->mf_fname, flags | O_NOFOLLOW);
   }
 
   // If the file cannot be opened, use memory only

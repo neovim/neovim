@@ -253,8 +253,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 #define STRLCAT(d, s, n)    xstrlcat((char *)(d), (char *)(s), (size_t)(n))
 
-#define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
-
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
 
@@ -280,8 +278,8 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 /// @param[in]  y  Second file name to compare.
 ///
 /// @return 0 for equal file names, non-zero otherwise.
-#define fnamecmp(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
-#define fnamencmp(x, y, n) path_fnamencmp((const char *)(x), \
+#define FNAMECMP(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
+#define FNAMENCMP(x, y, n) path_fnamencmp((const char *)(x), \
                                           (const char *)(y), \
                                           (size_t)(n))
 

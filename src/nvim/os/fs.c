@@ -1293,7 +1293,7 @@ shortcut_end:
   return rfname;
 }
 
-# define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
+# define IS_PATH_SEP(c) ((c) == L'\\' || (c) == L'/')
 /// Returns true if the path contains a reparse point (junction or symbolic
 /// link). Otherwise false in returned.
 bool os_is_reparse_point_include(const char *path)
@@ -1310,9 +1310,9 @@ bool os_is_reparse_point_include(const char *path)
   }
 
   p = utf16_path;
-  if (isalpha(p[0]) && p[1] == L':' && is_path_sep(p[2])) {
+  if (isalpha(p[0]) && p[1] == L':' && IS_PATH_SEP(p[2])) {
     p += 3;
-  } else if (is_path_sep(p[0]) && is_path_sep(p[1])) {
+  } else if (IS_PATH_SEP(p[0]) && IS_PATH_SEP(p[1])) {
     p += 2;
   }
 

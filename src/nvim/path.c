@@ -71,9 +71,9 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2, const bool 
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
-      vim_FullName((char *)exp1, (char *)full1, MAXPATHL, FALSE);
-      vim_FullName((char *)s2, (char *)full2, MAXPATHL, FALSE);
-      if (fnamecmp(full1, full2) == 0) {
+      vim_FullName((char *)exp1, (char *)full1, MAXPATHL, false);
+      vim_FullName((char *)s2, (char *)full2, MAXPATHL, false);
+      if (FNAMECMP(full1, full2) == 0) {
         return kEqualFileNames;
       }
     }
@@ -728,7 +728,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
                && (name[1] != '.' || name[2] != NUL)))  // -V557
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
-                  && fnamencmp(path + (s - buf), name, e - s) == 0))) {
+                  && FNAMENCMP(path + (s - buf), name, e - s) == 0))) {
         STRCPY(s, name);
         len = STRLEN(buf);
 
@@ -817,7 +817,7 @@ static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
       continue;  // it's different when it's shorter
     }
     char_u *rival = other_paths[j] + other_path_len - candidate_len;
-    if (fnamecmp(maybe_unique, rival) == 0
+    if (FNAMECMP(maybe_unique, rival) == 0
         && (rival == other_paths[j] || vim_ispathsep(*(rival - 1)))) {
       return false;  // match
     }
@@ -976,7 +976,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     char_u *path_cutoff;
 
     len = STRLEN(path);
-    is_in_curdir = fnamencmp(curdir, path, dir_end - path) == 0
+    is_in_curdir = FNAMENCMP(curdir, path, dir_end - path) == 0
                    && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
       in_curdir[i] = vim_strsave(path);
@@ -1473,7 +1473,7 @@ void addfile(garray_T *gap, char_u *f, int flags)
 
 #ifdef FNAME_ILLEGAL
   // if the file/dir contains illegal characters, don't add it
-  if (vim_strpbrk(f, (char_u *)FNAME_ILLEGAL) != NULL) {
+  if (strpbrk((char *)f, FNAME_ILLEGAL) != NULL) {
     return;
   }
 #endif
@@ -2090,7 +2090,7 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 
   // If full_path and dir_name do not match, it's impossible to make one
   // relative to the other.
-  if (fnamencmp(dir_name, full_path, len) != 0) {
+  if (FNAMENCMP(dir_name, full_path, len) != 0) {
     return NULL;
   }
 
@@ -2254,7 +2254,7 @@ int match_suffix(char_u *fname)
       }
     } else {
       if (fnamelen >= setsuflen
-          && fnamencmp(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
+          && FNAMENCMP(suf_buf, fname + fnamelen - setsuflen, setsuflen) == 0) {
         break;
       }
       setsuflen = 0;

@@ -2179,7 +2179,7 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
     bool file_id_equal = file_id_ok && si->file_id_valid
                          && os_fileid_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
-        && (file_id_equal || fnamecmp(si->sn_name, fname) == 0)) {
+        && (file_id_equal || FNAMECMP(si->sn_name, fname) == 0)) {
       break;
     }
   }

@@ -832,8 +832,8 @@ void set_init_3(void)
     // Default for p_sp is "| tee", for p_srr is ">".
     // For known shells it is changed here to include stderr.
     //
-    if (fnamecmp(p, "csh") == 0
-        || fnamecmp(p, "tcsh") == 0) {
+    if (FNAMECMP(p, "csh") == 0
+        || FNAMECMP(p, "tcsh") == 0) {
       if (do_sp) {
         p_sp = (char_u *)"|& tee";
         options[idx_sp].def_val = p_sp;
@@ -842,16 +842,16 @@ void set_init_3(void)
         p_srr = (char_u *)">&";
         options[idx_srr].def_val = p_srr;
       }
-    } else if (fnamecmp(p, "sh") == 0
-               || fnamecmp(p, "ksh") == 0
-               || fnamecmp(p, "mksh") == 0
-               || fnamecmp(p, "pdksh") == 0
-               || fnamecmp(p, "zsh") == 0
-               || fnamecmp(p, "zsh-beta") == 0
-               || fnamecmp(p, "bash") == 0
-               || fnamecmp(p, "fish") == 0
-               || fnamecmp(p, "ash") == 0
-               || fnamecmp(p, "dash") == 0) {
+    } else if (FNAMECMP(p, "sh") == 0
+               || FNAMECMP(p, "ksh") == 0
+               || FNAMECMP(p, "mksh") == 0
+               || FNAMECMP(p, "pdksh") == 0
+               || FNAMECMP(p, "zsh") == 0
+               || FNAMECMP(p, "zsh-beta") == 0
+               || FNAMECMP(p, "bash") == 0
+               || FNAMECMP(p, "fish") == 0
+               || FNAMECMP(p, "ash") == 0
+               || FNAMECMP(p, "dash") == 0) {
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";
@@ -1799,7 +1799,7 @@ static int string_to_key(char_u *arg)
     return find_key_option(arg + 1, true);
   }
   if (*arg == '^') {
-    return Ctrl_chr(arg[1]);
+    return CTRL_CHR(arg[1]);
   }
   return *arg;
 }
@@ -2392,10 +2392,10 @@ static char *did_set_string_option(int opt_idx, char_u **varp, bool new_value_al
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
   } else if (((options[opt_idx].flags & P_NFNAME)
-              && vim_strpbrk(*varp, (char_u *)(secure ? "/\\*?[|;&<>\r\n"
-                                                      : "/\\*?[<>\r\n")) != NULL)
+              && strpbrk((char *)(*varp),
+                         (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
              || ((options[opt_idx].flags & P_NDNAME)
-                 && vim_strpbrk(*varp, (char_u *)"*?[|;&<>\r\n") != NULL)) {
+                 && strpbrk((char *)(*varp), "*?[|;&<>\r\n") != NULL)) {
     // Check for a "normal" directory or file name in some options.  Disallow a
     // path separator (slash and/or backslash), wildcards and characters that
     // are often illegal in a file name. Be more permissive if "secure" is off.
@@ -4799,7 +4799,7 @@ int findoption_len(const char *const arg, const size_t len)
         if (s[0] == 't' && s[1] == '_') {
           quick_tab[26] = i;
         } else {
-          quick_tab[CharOrdLow(s[0])] = i;
+          quick_tab[CHAR_ORD_LOW(s[0])] = i;
         }
       }
       p = s;
@@ -4816,7 +4816,7 @@ int findoption_len(const char *const arg, const size_t len)
   if (is_term_opt) {
     opt_idx = quick_tab[26];
   } else {
-    opt_idx = quick_tab[CharOrdLow(arg[0])];
+    opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
   }
   // Match full name
   for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
@@ -4825,7 +4825,7 @@ int findoption_len(const char *const arg, const size_t len)
     }
   }
   if (s == NULL && !is_term_opt) {
-    opt_idx = quick_tab[CharOrdLow(arg[0])];
+    opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
     // Match short name
     for (; options[opt_idx].fullname != NULL; opt_idx++) {
       s = options[opt_idx].shortname;

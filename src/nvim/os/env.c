@@ -698,7 +698,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
 
       // If "var" contains white space, escape it with a backslash.
       // Required for ":e ~/tt" when $HOME includes a space.
-      if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
+      if (esc && var != NULL && strpbrk((char *)var, " \t") != NULL) {
         char_u *p = vim_strsave_escaped(var, (char_u *)" \t");
 
         if (mustfree) {
@@ -805,7 +805,7 @@ static char *remove_tail(char *path, char *pend, char *dirname)
   char *new_tail = pend - len - 1;
 
   if (new_tail >= path
-      && fnamencmp((char_u *)new_tail, (char_u *)dirname, len) == 0
+      && FNAMENCMP((char_u *)new_tail, (char_u *)dirname, len) == 0
       && (new_tail == path || after_pathsep(path, new_tail))) {
     return new_tail;
   }
@@ -1102,7 +1102,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
     size_t len = dirlen;
     for (;;) {
       if (len
-          && fnamencmp(src, (char_u *)p, len) == 0
+          && FNAMENCMP(src, (char_u *)p, len) == 0
           && (vim_ispathsep(src[len])
               || (!one && (src[len] == ',' || src[len] == ' '))
               || src[len] == NUL)) {
