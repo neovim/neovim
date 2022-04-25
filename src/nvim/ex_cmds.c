@@ -4969,6 +4969,7 @@ char_u *check_help_lang(char_u *arg)
 ///
 /// @return  a heuristic indicating how well the given string matches.
 int help_heuristic(char_u *matched_string, int offset, int wrong_case)
+  FUNC_ATTR_PURE
 {
   int num_letters;
   char_u *p;

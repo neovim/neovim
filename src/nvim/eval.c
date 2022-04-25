@@ -5050,6 +5050,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
 /// @return  the function name of the partial.
 char_u *partial_name(partial_T *pt)
+  FUNC_ATTR_PURE
 {
   if (pt->pt_name != NULL) {
     return pt->pt_name;
@@ -8525,6 +8526,7 @@ static void check_vars(const char *name, size_t len)
 
 /// check if special v:lua value for calling lua functions
 bool is_luafunc(partial_T *partial)
+  FUNC_ATTR_PURE
 {
   return partial == vvlua_partial;
 }
@@ -9922,6 +9924,7 @@ void func_line_end(void *cookie)
 }
 
 static var_flavour_T var_flavour(char_u *varname)
+  FUNC_ATTR_PURE
 {
   char_u *p = varname;
 
