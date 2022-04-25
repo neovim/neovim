@@ -1499,6 +1499,8 @@ int vgetc(void)
     static size_t last_vgetc_recorded_len = 0;
 
     mod_mask = 0;
+    vgetc_mod_mask = 0;
+    vgetc_char = 0;
 
     // last_recorded_len can be larger than last_vgetc_recorded_len
     // if peeking records more
@@ -1624,6 +1626,10 @@ int vgetc(void)
 
       // A modifier was not used for a mapping, apply it to ASCII
       // keys.  Shift would already have been applied.
+      // Remember the character and mod_mask from before, in some
+      // cases they are put back in the typeahead buffer.
+      vgetc_mod_mask = mod_mask;
+      vgetc_char = c;
       c = merge_modifiers(c);
 
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed

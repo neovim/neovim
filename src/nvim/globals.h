@@ -129,6 +129,9 @@ typedef off_t off_T;
 // held down based on the MOD_MASK_* symbols that are read first.
 EXTERN int mod_mask INIT(= 0);  // current key modifiers
 
+// The value of "mod_mask" and the unmodified character before calling merge_modifiers().
+EXTERN int vgetc_mod_mask INIT(= 0);
+EXTERN int vgetc_char INIT(= 0);
 
 // Cmdline_row is the row where the command line starts, just below the
 // last window.

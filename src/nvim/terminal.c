@@ -1348,7 +1348,7 @@ static bool send_mouse_event(Terminal *term, int c)
   }
 
 end:
-  ins_char_typebuf(c, mod_mask);
+  ins_char_typebuf(vgetc_char, vgetc_mod_mask);
   return true;
 }
 

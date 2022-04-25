@@ -995,7 +995,7 @@ static int normal_execute(VimState *state, int key)
     // restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
-    int len = ins_char_typebuf(s->c, mod_mask);
+    int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask);
 
     // When recording and gotchars() was called the character will be
     // recorded again, remove the previous recording.

@@ -216,6 +216,39 @@ it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
   eq('aaa', funcs.bufname())
 end)
 
+it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()
+  local screen = Screen.new(60,8)
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [2] = {bold = true, reverse = true},  -- MsgSeparator
+    [3] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+  })
+  screen:attach()
+  command([[nnoremap <C-6> <Cmd>echo 'hit ctrl-6'<CR>]])
+  feed_command('ls')
+  screen:expect([[
+                                                                |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {2:                                                            }|
+    :ls                                                         |
+      1 %a   "[No Name]"                    line 1              |
+    {3:Press ENTER or type command to continue}^                     |
+  ]])
+  feed('<C-6>')
+  screen:expect([[
+    ^                                                            |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    hit ctrl-6                                                  |
+  ]])
+end)
+
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')
