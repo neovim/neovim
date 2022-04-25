@@ -1387,7 +1387,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   if (do_out) {
     if (otmp != NULL) {
       if (readfile(otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-                   READ_FILTER) != OK) {
+                   READ_FILTER, false) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
           semsg(_(e_notread), otmp);

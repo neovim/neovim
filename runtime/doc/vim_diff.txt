@@ -375,6 +375,7 @@ Normal commands:
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
   |jumpoptions| "stack" behavior
+  'shortmess' the "F" flag does not affect output from autocommands
 
 Shell:
   Shell output (|:!|, |:make|, …) is always routed through the UI, so it

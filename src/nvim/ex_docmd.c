@@ -7703,13 +7703,13 @@ static void ex_read(exarg_T *eap)
         return;
       }
       i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     } else {
       if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
         (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
       }
       i = readfile(eap->arg, NULL,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     }
     if (i != OK) {
       if (!aborting()) {
