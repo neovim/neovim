@@ -177,9 +177,9 @@ func Test_sub_cmd_1()
 	      \ ['I', 's/I/\lII/', ['iI']],
 	      \ ['J', 's/J/\LJ\EJ/', ['jJ']],
 	      \ ['K', 's/K/\Uk\ek/', ['Kk']],
-	      \ ['lLl', "s/L/\<C-V>\r/", ["l\<C-V>", 'l']],
+	      \ ['lLl', "s/L/\<C-V>\<C-M>/", ["l\<C-V>", 'l']],
 	      \ ['mMm', 's/M/\r/', ['m', 'm']],
-	      \ ['nNn', "s/N/\\\<C-V>\r/", ["n\<C-V>", 'n']],
+	      \ ['nNn', "s/N/\\\<C-V>\<C-M>/", ["n\<C-V>", 'n']],
 	      \ ['oOo', 's/O/\n/', ["o\no"]],
 	      \ ['pPp', 's/P/\b/', ["p\<C-H>p"]],
 	      \ ['qQq', 's/Q/\t/', ["q\tq"]],
@@ -208,9 +208,9 @@ func Test_sub_cmd_2()
 	      \ ['I', 's/I/\lII/', ['iI']],
 	      \ ['J', 's/J/\LJ\EJ/', ['jJ']],
 	      \ ['K', 's/K/\Uk\ek/', ['Kk']],
-	      \ ['lLl', "s/L/\<C-V>\r/", ["l\<C-V>", 'l']],
+	      \ ['lLl', "s/L/\<C-V>\<C-M>/", ["l\<C-V>", 'l']],
 	      \ ['mMm', 's/M/\r/', ['m', 'm']],
-	      \ ['nNn', "s/N/\\\<C-V>\r/", ["n\<C-V>", 'n']],
+	      \ ['nNn', "s/N/\\\<C-V>\<C-M>/", ["n\<C-V>", 'n']],
 	      \ ['oOo', 's/O/\n/', ["o\no"]],
 	      \ ['pPp', 's/P/\b/', ["p\<C-H>p"]],
 	      \ ['qQq', 's/Q/\t/', ["q\tq"]],
@@ -230,9 +230,9 @@ func Test_sub_cmd_3()
   " List entry format: [input, cmd, output]
   let tests = [['aAa', "s/A/\\='\\'/", ['a\a']],
 	      \ ['bBb', "s/B/\\='\\\\'/", ['b\\b']],
-	      \ ['cCc', "s/C/\\='\<C-V>\r'/", ["c\<C-V>", 'c']],
-	      \ ['dDd', "s/D/\\='\\\<C-V>\r'/", ["d\\\<C-V>", 'd']],
-	      \ ['eEe', "s/E/\\='\\\\\<C-V>\r'/", ["e\\\\\<C-V>", 'e']],
+	      \ ['cCc', "s/C/\\='\<C-V>\<C-M>'/", ["c\<C-V>", 'c']],
+	      \ ['dDd', "s/D/\\='\\\<C-V>\<C-M>'/", ["d\\\<C-V>", 'd']],
+	      \ ['eEe', "s/E/\\='\\\\\<C-V>\<C-M>'/", ["e\\\\\<C-V>", 'e']],
 	      \ ['fFf', "s/F/\\='\r'/", ['f', 'f']],
 	      \ ['gGg', "s/G/\\='\<C-V>\<C-J>'/", ["g\<C-V>", 'g']],
 	      \ ['hHh', "s/H/\\='\\\<C-V>\<C-J>'/", ["h\\\<C-V>", 'h']],
@@ -254,11 +254,11 @@ func Test_sub_cmd_4()
 	      \				['a\a']],
 	      \ ['bBb', "s/B/\\=substitute(submatch(0), '.', '\\', '')/",
 	      \				['b\b']],
-	      \ ['cCc', "s/C/\\=substitute(submatch(0), '.', '\<C-V>\r', '')/",
+	      \ ['cCc', "s/C/\\=substitute(submatch(0), '.', '\<C-V>\<C-M>', '')/",
 	      \				["c\<C-V>", 'c']],
-	      \ ['dDd', "s/D/\\=substitute(submatch(0), '.', '\\\<C-V>\r', '')/",
+	      \ ['dDd', "s/D/\\=substitute(submatch(0), '.', '\\\<C-V>\<C-M>', '')/",
 	      \				["d\<C-V>", 'd']],
-	      \ ['eEe', "s/E/\\=substitute(submatch(0), '.', '\\\\\<C-V>\r', '')/",
+	      \ ['eEe', "s/E/\\=substitute(submatch(0), '.', '\\\\\<C-V>\<C-M>', '')/",
 	      \				["e\\\<C-V>", 'e']],
 	      \ ['fFf', "s/F/\\=substitute(submatch(0), '.', '\\r', '')/",
 	      \				['f', 'f']],
@@ -316,7 +316,7 @@ func Test_sub_cmd_7()
   set cpo&
 
   " List entry format: [input, cmd, output]
-  let tests = [ ["A\<C-V>\rA", 's/A./\=submatch(0)/', ['A', 'A']],
+  let tests = [ ["A\<C-V>\<C-M>A", 's/A./\=submatch(0)/', ['A', 'A']],
 	      \ ["B\<C-V>\<C-J>B", 's/B./\=submatch(0)/', ['B', 'B']],
 	      \ ["C\<C-V>\<C-J>C", 's/C./\=strtrans(string(submatch(0, 1)))/', [strtrans("['C\<C-J>']C")]],
 	      \ ["D\<C-V>\<C-J>\nD", 's/D.\nD/\=strtrans(string(submatch(0, 1)))/', [strtrans("['D\<C-J>', 'D']")]],
@@ -467,11 +467,11 @@ func Test_sub_replace_1()
   call assert_equal('iI', substitute('I', 'I', '\lII', ''))
   call assert_equal('jJ', substitute('J', 'J', '\LJ\EJ', ''))
   call assert_equal('Kk', substitute('K', 'K', '\Uk\ek', ''))
-  call assert_equal("l\<C-V>\rl",
-			\ substitute('lLl', 'L', "\<C-V>\r", ''))
-  call assert_equal("m\rm", substitute('mMm', 'M', '\r', ''))
-  call assert_equal("n\<C-V>\rn",
-			\ substitute('nNn', 'N', "\\\<C-V>\r", ''))
+  call assert_equal("l\<C-V>\<C-M>l",
+			\ substitute('lLl', 'L', "\<C-V>\<C-M>", ''))
+  call assert_equal("m\<C-M>m", substitute('mMm', 'M', '\r', ''))
+  call assert_equal("n\<C-V>\<C-M>n",
+			\ substitute('nNn', 'N', "\\\<C-V>\<C-M>", ''))
   call assert_equal("o\no", substitute('oOo', 'O', '\n', ''))
   call assert_equal("p\<C-H>p", substitute('pPp', 'P', '\b', ''))
   call assert_equal("q\tq", substitute('qQq', 'Q', '\t', ''))
@@ -480,7 +480,7 @@ func Test_sub_replace_1()
   call assert_equal("u\nu", substitute('uUu', 'U', "\n", ''))
   call assert_equal("v\<C-H>v", substitute('vVv', 'V', "\b", ''))
   call assert_equal("w\\w", substitute('wWw', 'W', "\\", ''))
-  call assert_equal("x\rx", substitute('xXx', 'X', "\r", ''))
+  call assert_equal("x\<C-M>x", substitute('xXx', 'X', "\r", ''))
   call assert_equal("YyyY", substitute('Y', 'Y', '\L\uyYy\l\EY', ''))
   call assert_equal("zZZz", substitute('Z', 'Z', '\U\lZzZ\u\Ez', ''))
 endfunc
@@ -500,17 +500,17 @@ func Test_sub_replace_2()
   call assert_equal('iI', substitute('I', 'I', '\lII', ''))
   call assert_equal('jJ', substitute('J', 'J', '\LJ\EJ', ''))
   call assert_equal('Kk', substitute('K', 'K', '\Uk\ek', ''))
-  call assert_equal("l\<C-V>\rl",
-			\ substitute('lLl', 'L', "\<C-V>\r", ''))
-  call assert_equal("m\rm", substitute('mMm', 'M', '\r', ''))
-  call assert_equal("n\<C-V>\rn",
-			\ substitute('nNn', 'N', "\\\<C-V>\r", ''))
+  call assert_equal("l\<C-V>\<C-M>l",
+			\ substitute('lLl', 'L', "\<C-V>\<C-M>", ''))
+  call assert_equal("m\<C-M>m", substitute('mMm', 'M', '\r', ''))
+  call assert_equal("n\<C-V>\<C-M>n",
+			\ substitute('nNn', 'N', "\\\<C-V>\<C-M>", ''))
   call assert_equal("o\no", substitute('oOo', 'O', '\n', ''))
   call assert_equal("p\<C-H>p", substitute('pPp', 'P', '\b', ''))
   call assert_equal("q\tq", substitute('qQq', 'Q', '\t', ''))
   call assert_equal('r\r', substitute('rRr', 'R', '\\', ''))
   call assert_equal('scs', substitute('sSs', 'S', '\c', ''))
-  call assert_equal("t\rt", substitute('tTt', 'T', "\r", ''))
+  call assert_equal("t\<C-M>t", substitute('tTt', 'T', "\r", ''))
   call assert_equal("u\nu", substitute('uUu', 'U', "\n", ''))
   call assert_equal("v\<C-H>v", substitute('vVv', 'V', "\b", ''))
   call assert_equal('w\w', substitute('wWw', 'W', "\\", ''))
@@ -528,7 +528,7 @@ func Test_sub_replace_3()
   call assert_equal("e\\\\\re", substitute('eEe', 'E', "\\=\"\\\\\\\\\r\"", ''))
   call assert_equal('f\rf', substitute('fFf', 'F', '\="\\r"', ''))
   call assert_equal('j\nj', substitute('jJj', 'J', '\="\\n"', ''))
-  call assert_equal("k\rk", substitute('kKk', 'K', '\="\r"', ''))
+  call assert_equal("k\<C-M>k", substitute('kKk', 'K', '\="\r"', ''))
   call assert_equal("l\nl", substitute('lLl', 'L', '\="\n"', ''))
 endfunc
 
@@ -540,10 +540,10 @@ func Test_sub_replace_4()
 		\ '\=substitute(submatch(0), ".", "\\", "")', ''))
   call assert_equal('b\b', substitute('bBb', 'B',
 		\ '\=substitute(submatch(0), ".", "\\\\", "")', ''))
-  call assert_equal("c\<C-V>\rc", substitute('cCc', 'C', '\=substitute(submatch(0), ".", "\<C-V>\r", "")', ''))
-  call assert_equal("d\<C-V>\rd", substitute('dDd', 'D', '\=substitute(submatch(0), ".", "\\\<C-V>\r", "")', ''))
-  call assert_equal("e\\\<C-V>\re", substitute('eEe', 'E', '\=substitute(submatch(0), ".", "\\\\\<C-V>\r", "")', ''))
-  call assert_equal("f\rf", substitute('fFf', 'F', '\=substitute(submatch(0), ".", "\\r", "")', ''))
+  call assert_equal("c\<C-V>\<C-M>c", substitute('cCc', 'C', '\=substitute(submatch(0), ".", "\<C-V>\<C-M>", "")', ''))
+  call assert_equal("d\<C-V>\<C-M>d", substitute('dDd', 'D', '\=substitute(submatch(0), ".", "\\\<C-V>\<C-M>", "")', ''))
+  call assert_equal("e\\\<C-V>\<C-M>e", substitute('eEe', 'E', '\=substitute(submatch(0), ".", "\\\\\<C-V>\<C-M>", "")', ''))
+  call assert_equal("f\<C-M>f", substitute('fFf', 'F', '\=substitute(submatch(0), ".", "\\r", "")', ''))
   call assert_equal("j\nj", substitute('jJj', 'J', '\=substitute(submatch(0), ".", "\\n", "")', ''))
   call assert_equal("k\rk", substitute('kKk', 'K', '\=substitute(submatch(0), ".", "\r", "")', ''))
   call assert_equal("l\nl", substitute('lLl', 'L', '\=substitute(submatch(0), ".", "\n", "")', ''))
