@@ -430,6 +430,9 @@ func Test_error_in_map_expr()
 endfunc
 
 func Test_list_mappings()
+  " Remove default Mac mapping
+  silent! iunmap <D-v>
+
   inoremap <C-M> CtrlM
   inoremap <A-S> AltS
   inoremap <S-/> ShiftSlash
