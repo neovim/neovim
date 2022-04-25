@@ -201,6 +201,7 @@ static char *pexpand_cmds[] = {
 /// Function given to ExpandGeneric() to obtain the profile command
 /// specific expansion.
 char_u *get_profile_name(expand_T *xp, int idx)
+  FUNC_ATTR_PURE
 {
   switch (pexpand_what) {
   case PEXP_SUBCMD:
@@ -439,6 +440,7 @@ static void script_dump_profile(FILE *fd)
 /// @return  true when a function defined in the current script should be
 ///          profiled.
 bool prof_def_func(void)
+  FUNC_ATTR_PURE
 {
   if (current_sctx.sc_sid > 0) {
     return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
@@ -1732,6 +1734,7 @@ int *source_dbg_tick(void *cookie)
 
 /// @return  the nesting level for a source cookie.
 int source_level(void *cookie)
+  FUNC_ATTR_PURE
 {
   return ((struct source_cookie *)cookie)->level;
 }
@@ -2176,7 +2179,7 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
     bool file_id_equal = file_id_ok && si->file_id_valid
                          && os_fileid_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
-        && (file_id_equal || fnamecmp(si->sn_name, fname) == 0)) {
+        && (file_id_equal || FNAMECMP(si->sn_name, fname) == 0)) {
       break;
     }
   }
@@ -2288,6 +2291,7 @@ void free_scriptnames(void)
 #endif
 
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
+  FUNC_ATTR_PURE
 {
   return fgetline == getsourceline
         ? ((struct source_cookie *)cookie)->sourcing_lnum

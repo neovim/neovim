@@ -5753,7 +5753,7 @@ static buf_T *load_dummy_buffer(char_u *fname, char_u *dirname_start, char_u *re
     newbuf_to_wipe.br_buf = NULL;
     readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
                                (linenr_T)MAXLNUM, NULL,
-                               READ_NEW | READ_DUMMY);
+                               READ_NEW | READ_DUMMY, false);
     newbuf->b_locked--;
     if (readfile_result == OK
         && !got_int

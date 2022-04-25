@@ -846,6 +846,7 @@ static int insert_execute(VimState *state, int key)
 /// Don't do this when still processing a command or a mapping.
 /// Don't do this when inside a ":normal" command.
 bool goto_im(void)
+  FUNC_ATTR_PURE
 {
   return p_im && stuff_empty() && typebuf_typed();
 }
@@ -1654,7 +1655,7 @@ void edit_putchar(int c, bool highlight)
 
 /// Return the effective prompt for the specified buffer.
 char_u *buf_prompt_text(const buf_T *const buf)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (buf->b_prompt_text == NULL) {
     return (char_u *)"% ";
@@ -1663,7 +1664,8 @@ char_u *buf_prompt_text(const buf_T *const buf)
 }
 
 // Return the effective prompt for the current buffer.
-char_u *prompt_text(void) FUNC_ATTR_WARN_UNUSED_RESULT
+char_u *prompt_text(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   return buf_prompt_text(curbuf);
 }
@@ -1711,6 +1713,7 @@ static void init_prompt(int cmdchar_todo)
 
 /// @return  true if the cursor is in the editable position of the prompt line.
 bool prompt_curpos_editable(void)
+  FUNC_ATTR_PURE
 {
   return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
          && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
@@ -2101,6 +2104,7 @@ static void ins_ctrl_x(void)
 
 // Whether other than default completion has been selected.
 bool ctrl_x_mode_not_default(void)
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode != CTRL_X_NORMAL;
 }
@@ -2108,6 +2112,7 @@ bool ctrl_x_mode_not_default(void)
 // Whether CTRL-X was typed without a following character,
 // not including when in CTRL-X CTRL-V mode.
 bool ctrl_x_mode_not_defined_yet(void)
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_NOT_DEFINED_YET;
 }
@@ -3140,6 +3145,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
  * Returns a pointer to the first char of the word.  Also stops at a NUL.
  */
 char_u *find_word_start(char_u *ptr)
+  FUNC_ATTR_PURE
 {
   while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1) {
     ptr += utfc_ptr2len(ptr);
@@ -3152,6 +3158,7 @@ char_u *find_word_start(char_u *ptr)
  * Returns a pointer to just after the word.
  */
 char_u *find_word_end(char_u *ptr)
+  FUNC_ATTR_PURE
 {
   const int start_class = mb_get_class(ptr);
   if (start_class > 1) {
@@ -7144,6 +7151,7 @@ int stuff_inserted(int c, long count, int no_esc)
 }
 
 char_u *get_last_insert(void)
+  FUNC_ATTR_PURE
 {
   if (last_insert == NULL) {
     return NULL;
@@ -7521,7 +7529,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
     // Does it look like a control character?
     if (*look == '^' && look[1] >= '?' && look[1] <= '_') {
-      if (try_match && keytyped == Ctrl_chr(look[1])) {
+      if (try_match && keytyped == CTRL_CHR(look[1])) {
         return true;
       }
       look += 2;
@@ -7690,6 +7698,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
  * Map Hebrew keyboard when in hkmap mode.
  */
 int hkmap(int c)
+  FUNC_ATTR_PURE
 {
   if (p_hkmapp) {   // phonetic mapping, by Ilya Dogolazky
     enum {
@@ -7727,7 +7736,7 @@ int hkmap(int c)
     };
 
     if (c == 'N' || c == 'M' || c == 'P' || c == 'C' || c == 'Z') {
-      return (int)(map[CharOrd(c)] - 1 + p_aleph);
+      return (int)(map[CHAR_ORD(c)] - 1 + p_aleph);
     } else if (c == 'x') {  // '-1'='sofit'
       return 'X';
     } else if (c == 'q') {
@@ -7743,7 +7752,7 @@ int hkmap(int c)
       // do this the same was as 5.7 and previous, so it works correctly on
       // all systems.  Specifically, the e.g. Delete and Arrow keys are
       // munged and won't work if e.g. searching for Hebrew text.
-      return (int)(map[CharOrdLow(c)] + p_aleph);
+      return (int)(map[CHAR_ORD_LOW(c)] + p_aleph);
     } else {
       return c;
     }
@@ -7773,12 +7782,12 @@ int hkmap(int c)
       if (c < 'a' || c > 'z') {
         return c;
       }
-      c = str[CharOrdLow(c)];
+      c = str[CHAR_ORD_LOW(c)];
       break;
     }
     }
 
-    return (int)(CharOrdLow(c) + p_aleph);
+    return (int)(CHAR_ORD_LOW(c) + p_aleph);
   }
 }
 

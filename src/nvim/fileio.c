@@ -176,7 +176,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 ///
 /// @return     FAIL for failure, NOTDONE for directory (failure), or OK
 int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_skip,
-             linenr_T lines_to_read, exarg_T *eap, int flags)
+             linenr_T lines_to_read, exarg_T *eap, int flags, bool silent)
 {
   int fd = 0;
   int newfile = (flags & READ_NEW);
@@ -472,10 +472,12 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
           return FAIL;
         }
       }
-      if (dir_of_file_exists(fname)) {
-        filemess(curbuf, sfname, (char_u *)new_file_message(), 0);
-      } else {
-        filemess(curbuf, sfname, (char_u *)_("[New DIRECTORY]"), 0);
+      if (!silent) {
+        if (dir_of_file_exists(fname)) {
+          filemess(curbuf, sfname, (char_u *)new_file_message(), 0);
+        } else {
+          filemess(curbuf, sfname, (char_u *)_("[New DIRECTORY]"), 0);
+        }
       }
       // Even though this is a new file, it might have been
       // edited before and deleted.  Get the old marks.
@@ -658,7 +660,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   // Autocommands may add lines to the file, need to check if it is empty
   wasempty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
-  if (!recoverymode && !filtering && !(flags & READ_DUMMY)) {
+  if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
     if (!read_stdin && !read_buffer) {
       filemess(curbuf, sfname, (char_u *)"", 0);
     }
@@ -1118,7 +1120,7 @@ retry:
                   && tmpname == NULL
                   && (*fenc == 'u' || *fenc == NUL)))) {
         char_u *ccname;
-        int blen;
+        int blen = 0;
 
         // no BOM detection in a short file or in binary mode
         if (size < 2 || curbuf->b_p_bin) {
@@ -1788,7 +1790,7 @@ failed:
       return OK;                // an interrupt isn't really an error
     }
 
-    if (!filtering && !(flags & READ_DUMMY)) {
+    if (!filtering && !(flags & READ_DUMMY) && !silent) {
       add_quoted_fname((char *)IObuff, IOSIZE, curbuf, (const char *)sfname);
       c = false;
 
@@ -2321,8 +2323,8 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   fname = sfname;
 #endif
 
-  if (buf->b_ffname != NULL && fnamecmp(ffname, buf->b_ffname) == 0) {
-    overwriting = TRUE;
+  if (buf->b_ffname != NULL && FNAMECMP(ffname, buf->b_ffname) == 0) {
+    overwriting = true;
   } else {
     overwriting = FALSE;
   }
@@ -4647,7 +4649,7 @@ int vim_rename(const char_u *from, const char_u *to)
    * to the same file (ignoring case and slash/backslash differences) but
    * the file name differs we need to go through a temp file.
    */
-  if (fnamecmp(from, to) == 0) {
+  if (FNAMECMP(from, to) == 0) {
     if (p_fic && (STRCMP(path_tail((char_u *)from), path_tail((char_u *)to))
                   != 0)) {
       use_tmp_file = true;
@@ -5191,7 +5193,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
-                 (linenr_T)MAXLNUM, &ea, flags) != OK) {
+                 (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }

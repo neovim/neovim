@@ -5532,8 +5532,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		"Pattern not found", "Back at original", etc.
 	  q	use "recording" instead of "recording @a"
 	  F	don't give the file info when editing a file, like `:silent`
-		was used for the command; note that this also affects messages
-		from autocommands
+		was used for the command
 	  S     do not show search count message when searching, e.g.
 	        "[1/5]"
 

@@ -397,6 +397,7 @@ static void start_stuff(void)
  * Return TRUE if the stuff buffer is empty.
  */
 int stuff_empty(void)
+  FUNC_ATTR_PURE
 {
   return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
 }
@@ -406,6 +407,7 @@ int stuff_empty(void)
  * redbuf2.
  */
 int readbuf1_empty(void)
+  FUNC_ATTR_PURE
 {
   return (readbuf1.bh_first.b_next == NULL);
 }
@@ -1025,10 +1027,10 @@ int ins_char_typebuf(int c, int modifier)
 ///
 /// @param tb_change_cnt  old value of typebuf.tb_change_cnt
 bool typebuf_changed(int tb_change_cnt)
+  FUNC_ATTR_PURE
 {
   return tb_change_cnt != 0 && (typebuf.tb_change_cnt != tb_change_cnt
-                                || typebuf_was_filled
-                                );
+                                || typebuf_was_filled);
 }
 
 /*
@@ -1036,6 +1038,7 @@ bool typebuf_changed(int tb_change_cnt)
  * not been typed (result from a mapping or come from ":normal").
  */
 int typebuf_typed(void)
+  FUNC_ATTR_PURE
 {
   return typebuf.tb_maplen == 0;
 }
@@ -1044,6 +1047,7 @@ int typebuf_typed(void)
  * Return the number of characters that are mapped (or not typed).
  */
 int typebuf_maplen(void)
+  FUNC_ATTR_PURE
 {
   return typebuf.tb_maplen;
 }
@@ -1403,6 +1407,7 @@ void close_all_scripts(void)
  * Return TRUE when reading keys from a script file.
  */
 int using_script(void)
+  FUNC_ATTR_PURE
 {
   return scriptin[curscript] != NULL;
 }

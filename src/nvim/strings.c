@@ -67,6 +67,13 @@ char_u *vim_strnsave(const char_u *string, size_t len)
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
 
+/// A clone of vim_strnsave() that uses char* instead of char_u*
+char *xstrnsave(const char *string, size_t len)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+{
+  return strncpy(xmallocz(len), string, len);  // NOLINT(runtime/printf)
+}
+
 /*
  * Same as vim_strsave(), but any characters found in esc_chars are preceded
  * by a backslash.

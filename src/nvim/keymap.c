@@ -775,7 +775,7 @@ static int extract_modifiers(int key, int *modp)
   }
   if ((modifiers & MOD_MASK_CTRL) && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
     key = TOUPPER_ASC(key);
-    int new_key = Ctrl_chr(key);
+    int new_key = CTRL_CHR(key);
     if (new_key != TAB && new_key != CAR && new_key != ESC) {
       key = new_key;
       modifiers &= ~MOD_MASK_CTRL;

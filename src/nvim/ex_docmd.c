@@ -44,8 +44,8 @@
 #include "nvim/keymap.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
-#include "nvim/match.h"
 #include "nvim/mark.h"
+#include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -2663,9 +2663,9 @@ static char_u *find_command(exarg_T *eap, int *full)
 
       // Use a precomputed index for fast look-up in cmdnames[]
       // taking into account the first 2 letters of eap->cmd.
-      eap->cmdidx = cmdidxs1[CharOrdLow(c1)];
+      eap->cmdidx = cmdidxs1[CHAR_ORD_LOW(c1)];
       if (ASCII_ISLOWER(c2)) {
-        eap->cmdidx += cmdidxs2[CharOrdLow(c1)][CharOrdLow(c2)];
+        eap->cmdidx += cmdidxs2[CHAR_ORD_LOW(c1)][CHAR_ORD_LOW(c2)];
       }
     } else {
       eap->cmdidx = CMD_bang;
@@ -3616,8 +3616,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       // EX_XFILE: file names are handled above.
       if (!(ea.argt & EX_XFILE)) {
         if (context == EXPAND_MENUS) {
-          return (const char *)set_context_in_menu_cmd(xp, cmd,
-                                                       (char_u *)arg, forceit);
+          return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
         } else if (context == EXPAND_COMMANDS) {
           return arg;
         } else if (context == EXPAND_MAPPINGS) {
@@ -3723,7 +3722,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_tunmenu:
   case CMD_popup:
   case CMD_emenu:
-    return (const char *)set_context_in_menu_cmd(xp, cmd, (char_u *)arg, forceit);
+    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
 
   case CMD_colorscheme:
     xp->xp_context = EXPAND_COLORS;
@@ -4520,7 +4519,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
     if ((eap->usefilter
          || eap->cmdidx == CMD_bang
          || eap->cmdidx == CMD_terminal)
-        && vim_strpbrk(repl, (char_u *)"!") != NULL) {
+        && strpbrk((char *)repl, "!") != NULL) {
       char_u *l;
 
       l = vim_strsave_escaped(repl, (char_u *)"!");
@@ -7703,13 +7702,13 @@ static void ex_read(exarg_T *eap)
         return;
       }
       i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     } else {
       if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
         (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
       }
       i = readfile(eap->arg, NULL,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     }
     if (i != OK) {
       if (!aborting()) {

@@ -418,7 +418,7 @@ void ml_setname(buf_T *buf)
     }
 
     // if the file name is the same we don't have to do anything
-    if (fnamecmp(fname, mfp->mf_fname) == 0) {
+    if (FNAMECMP(fname, mfp->mf_fname) == 0) {
       xfree(fname);
       success = true;
       break;
@@ -994,7 +994,7 @@ void ml_recover(bool checkext)
    */
   if (curbuf->b_ffname != NULL) {
     orig_file_status = readfile(curbuf->b_ffname, NULL, (linenr_T)0,
-                                (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW);
+                                (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW, false);
   }
 
   // Use the 'fileformat' and 'fileencoding' as stored in the swap file.
@@ -1069,7 +1069,7 @@ void ml_recover(bool checkext)
               line_count = pp->pb_pointer[idx].pe_line_count;
               if (readfile(curbuf->b_ffname, NULL, lnum,
                            pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
-                           NULL, 0) != OK) {
+                           NULL, 0, false) != OK) {
                 cannot_open = true;
               } else {
                 lnum += line_count;
@@ -3459,7 +3459,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
     }
 
     // A file name equal to old_fname is OK to use.
-    if (old_fname != NULL && fnamecmp(fname, old_fname) == 0) {
+    if (old_fname != NULL && FNAMECMP(fname, old_fname) == 0) {
       break;
     }
 
@@ -3484,7 +3484,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // buffer don't compare the directory names, they can
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
-              if (fnamecmp(path_tail(buf->b_ffname),
+              if (FNAMECMP(path_tail(buf->b_ffname),
                            path_tail(b0.b0_fname)) != 0
                   || !same_directory((char_u *)fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even

@@ -334,10 +334,9 @@ enc_alias_table[] =
  * Returns -1 if not found.
  */
 static int enc_canon_search(const char_u *name)
+  FUNC_ATTR_PURE
 {
-  int i;
-
-  for (i = 0; i < IDX_COUNT; ++i) {
+  for (int i = 0; i < IDX_COUNT; i++) {
     if (STRCMP(name, enc_canon_table[i].name) == 0) {
       return i;
     }
@@ -351,10 +350,9 @@ static int enc_canon_search(const char_u *name)
  * Returns 0 if not found.
  */
 int enc_canon_props(const char_u *name)
+  FUNC_ATTR_PURE
 {
-  int i;
-
-  i = enc_canon_search(name);
+  int i = enc_canon_search(name);
   if (i >= 0) {
     return enc_canon_table[i].prop;
   } else if (STRNCMP(name, "2byte-", 6) == 0) {
@@ -373,6 +371,7 @@ int enc_canon_props(const char_u *name)
  * 3 - UTF-8 BOM
  */
 int bomb_size(void)
+  FUNC_ATTR_PURE
 {
   int n = 0;
 
@@ -414,11 +413,13 @@ void remove_bom(char_u *s)
  * >2 for other word characters
  */
 int mb_get_class(const char_u *p)
+  FUNC_ATTR_PURE
 {
   return mb_get_class_tab(p, curbuf->b_chartab);
 }
 
 int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
+  FUNC_ATTR_PURE
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || ascii_iswhite(p[0])) {
@@ -436,6 +437,7 @@ int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
  * Return true if "c" is in "table".
  */
 static bool intable(const struct interval *table, size_t n_items, int c)
+  FUNC_ATTR_PURE
 {
   int mid, bot, top;
 
@@ -1087,6 +1089,7 @@ int utf_class(const int c)
 }
 
 int utf_class_tab(const int c, const uint64_t *const chartab)
+  FUNC_ATTR_PURE
 {
   // sorted list of non-overlapping intervals
   static struct clinterval {

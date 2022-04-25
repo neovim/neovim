@@ -75,7 +75,10 @@
    || (cstack->cs_idx > 0 \
        && !(cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))
 
-#define discard_pending_return(p) tv_free((typval_T *)(p))
+static void discard_pending_return(typval_T *p)
+{
+  tv_free(p);
+}
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until
@@ -129,6 +132,7 @@ int should_abort(int retcode)
 /// to find finally clauses to be executed, and that some errors in skipped
 /// commands are still reported.
 int aborted_in_try(void)
+  FUNC_ATTR_PURE
 {
   // This function is only called after an error.  In this case, "force_abort"
   // determines whether searching for finally clauses is necessary.
@@ -388,12 +392,12 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = STRLEN(cmdname);
-      ret = (char *)vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
+      ret = xstrnsave("Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = (char *)vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
+      ret = xstrnsave("Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 

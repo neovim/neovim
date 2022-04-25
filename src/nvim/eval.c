@@ -2720,7 +2720,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
     xp->xp_context = EXPAND_USER_VARS;
-    if (vim_strpbrk(arg, (char_u *)"\"'+-*/%.=!?~|&$([<>,#") == NULL) {
+    if (strpbrk((char *)arg, "\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
       for (p = arg + STRLEN(arg); p >= arg;) {
         xp->xp_pattern = p;
@@ -2735,8 +2735,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
     xp->xp_context = cmdidx == CMD_call ? EXPAND_FUNCTIONS
                                         : EXPAND_EXPRESSION;
   }
-  while ((xp->xp_pattern = vim_strpbrk(arg,
-                                       (char_u *)"\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
+  while ((xp->xp_pattern = (char_u *)strpbrk((char *)arg, "\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
     c = *xp->xp_pattern;
     if (c == '&') {
       c = xp->xp_pattern[1];
@@ -5050,6 +5049,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
 /// @return  the function name of the partial.
 char_u *partial_name(partial_T *pt)
+  FUNC_ATTR_PURE
 {
   if (pt->pt_name != NULL) {
     return pt->pt_name;
@@ -8525,6 +8525,7 @@ static void check_vars(const char *name, size_t len)
 
 /// check if special v:lua value for calling lua functions
 bool is_luafunc(partial_T *partial)
+  FUNC_ATTR_PURE
 {
   return partial == vvlua_partial;
 }
@@ -9922,6 +9923,7 @@ void func_line_end(void *cookie)
 }
 
 static var_flavour_T var_flavour(char_u *varname)
+  FUNC_ATTR_PURE
 {
   char_u *p = varname;
 
@@ -10199,7 +10201,7 @@ repeat:
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
-        if (fnamencmp(p, dirname, namelen) == 0) {
+        if (FNAMENCMP(p, dirname, namelen) == 0) {
           p += namelen;
           if (vim_ispathsep(*p)) {
             while (*p && vim_ispathsep(*p)) {

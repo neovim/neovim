@@ -1869,8 +1869,6 @@ static void prt_dsc_text(char *comment, char *text)
   prt_write_file(prt_line_buffer);
 }
 
-#define prt_dsc_atend(c)        prt_dsc_text((c), "atend")
-
 static void prt_dsc_ints(char *comment, int count, int *ints)
 {
   int i;
@@ -2534,7 +2532,7 @@ bool mch_print_begin(prt_settings_T *psettings)
   prt_dsc_textline("CreationDate", p_time);
   prt_dsc_textline("DocumentData", "Clean8Bit");
   prt_dsc_textline("Orientation", "Portrait");
-  prt_dsc_atend("Pages");
+  prt_dsc_text(("Pages"), "atend");
   prt_dsc_textline("PageOrder", "Ascend");
   // The bbox does not change with orientation - it is always in the default
   // user coordinate system!  We have to recalculate right and bottom

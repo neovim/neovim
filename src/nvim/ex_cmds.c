@@ -1387,7 +1387,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   if (do_out) {
     if (otmp != NULL) {
       if (readfile(otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-                   READ_FILTER) != OK) {
+                   READ_FILTER, false) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
           semsg(_(e_notread), otmp);
@@ -4969,6 +4969,7 @@ char_u *check_help_lang(char_u *arg)
 ///
 /// @return  a heuristic indicating how well the given string matches.
 int help_heuristic(char_u *matched_string, int offset, int wrong_case)
+  FUNC_ATTR_PURE
 {
   int num_letters;
   char_u *p;
@@ -5342,8 +5343,8 @@ void fix_help_buffer(void)
    * files.  This uses the very first line in the help file.
    */
   char_u *const fname = path_tail(curbuf->b_fname);
-  if (fnamecmp(fname, "help.txt") == 0
-      || (fnamencmp(fname, "help.", 5) == 0
+  if (FNAMECMP(fname, "help.txt") == 0
+      || (FNAMENCMP(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
           && ASCII_ISALPHA(fname[6])
           && TOLOWER_ASC(fname[7]) == 'x'
@@ -5401,18 +5402,18 @@ void fix_help_buffer(void)
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
-                if (fnamecmp(e1, ".txt") != 0
-                    && fnamecmp(e1, fname + 4) != 0) {
+                if (FNAMECMP(e1, ".txt") != 0
+                    && FNAMECMP(e1, fname + 4) != 0) {
                   // Not .txt and not .abx, remove it.
                   XFREE_CLEAR(fnames[i1]);
                   continue;
                 }
                 if (e1 - f1 != e2 - f2
-                    || fnamencmp(f1, f2, e1 - f1) != 0) {
+                    || FNAMENCMP(f1, f2, e1 - f1) != 0) {
                   continue;
                 }
-                if (fnamecmp(e1, ".txt") == 0
-                    && fnamecmp(e2, fname + 4) == 0) {
+                if (FNAMECMP(e1, ".txt") == 0
+                    && FNAMECMP(e2, fname + 4) == 0) {
                   // use .abx instead of .txt
                   XFREE_CLEAR(fnames[i1]);
                 }

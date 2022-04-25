@@ -157,7 +157,6 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
-  diff.c
   edit.c
   eval.c
   eval/funcs.c
@@ -175,7 +174,6 @@ set(CONV_SOURCES
   spell.c
   spellfile.c
   syntax.c
-  tag.c
   window.c)
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")

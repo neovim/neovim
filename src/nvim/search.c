@@ -2324,7 +2324,7 @@ int check_linecomment(const char_u *line)
     if (vim_strchr(p, ';') != NULL) {   // there may be comments
       bool in_str = false;       // inside of string
 
-      while ((p = vim_strpbrk(p, (char_u *)"\";")) != NULL) {
+      while ((p = (char_u *)strpbrk((char *)p, "\";")) != NULL) {
         if (*p == '"') {
           if (in_str) {
             if (*(p - 1) != '\\') {             // skip escaped quote
@@ -6016,4 +6016,10 @@ void set_last_used_pattern(const bool is_substitute_pattern)
 bool search_was_last_used(void)
 {
   return last_idx == 0;
+}
+
+/// @return  true if 'hlsearch' highlight is currently in use.
+bool using_hlsearch(void)
+{
+  return spats[last_idx].pat != NULL && p_hls && !no_hlsearch;
 }

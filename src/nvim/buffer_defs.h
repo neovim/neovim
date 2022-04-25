@@ -178,7 +178,7 @@ typedef struct {
 #define w_p_fdi w_onebuf_opt.wo_fdi    // 'foldignore'
   long wo_fdl;
 #define w_p_fdl w_onebuf_opt.wo_fdl    // 'foldlevel'
-  int wo_fdl_save;
+  long wo_fdl_save;
   // 'foldlevel' state saved for diff mode
 #define w_p_fdl_save w_onebuf_opt.wo_fdl_save
   char_u *wo_fdm;
@@ -1151,15 +1151,15 @@ typedef struct VimMenu vimmenu_T;
 struct VimMenu {
   int modes;                         ///< Which modes is this menu visible for
   int enabled;                       ///< for which modes the menu is enabled
-  char_u *name;                 ///< Name of menu, possibly translated
-  char_u *dname;                ///< Displayed Name ("name" without '&')
-  char_u *en_name;              ///< "name" untranslated, NULL when
+  char *name;                 ///< Name of menu, possibly translated
+  char *dname;                ///< Displayed Name ("name" without '&')
+  char *en_name;              ///< "name" untranslated, NULL when
                                 ///< was not translated
-  char_u *en_dname;             ///< NULL when "dname" untranslated
+  char *en_dname;             ///< NULL when "dname" untranslated
   int mnemonic;                      ///< mnemonic key (after '&')
-  char_u *actext;               ///< accelerator text (after TAB)
+  char *actext;               ///< accelerator text (after TAB)
   long priority;                     ///< Menu order priority
-  char_u *strings[MENU_MODES];  ///< Mapped string for each mode
+  char *strings[MENU_MODES];  ///< Mapped string for each mode
   int noremap[MENU_MODES];           ///< A \ref REMAP_VALUES flag for each mode
   bool silent[MENU_MODES];           ///< A silent flag for each mode
   vimmenu_T *children;             ///< Children of sub-menu

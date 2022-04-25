@@ -4900,7 +4900,7 @@ static int status_match_len(expand_T *xp, char_u *s)
                || xp->xp_context == EXPAND_MENUNAMES);
 
   // Check for menu separators - replace with '|'.
-  if (emenu && menu_is_separator(s)) {
+  if (emenu && menu_is_separator((char *)s)) {
     return 1;
   }
 
@@ -5036,7 +5036,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
     // Check for menu separators - replace with '|'
     emenu = (xp->xp_context == EXPAND_MENUS
              || xp->xp_context == EXPAND_MENUNAMES);
-    if (emenu && menu_is_separator(s)) {
+    if (emenu && menu_is_separator((char *)s)) {
       STRCPY(buf + len, transchar('|'));
       l = (int)STRLEN(buf + len);
       len += l;

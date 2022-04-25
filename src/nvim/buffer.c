@@ -109,6 +109,7 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 {
   int retval = OK;
   linenr_T line_count;
+  bool silent = shortmess(SHM_FILEINFO);
 
   // Read from the buffer which the text is already filled in and append at
   // the end.  This makes it possible to retry when 'fileformat' or
@@ -117,7 +118,7 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   retval = readfile(read_stdin ? NULL : curbuf->b_ffname,
                     read_stdin ? NULL : curbuf->b_fname,
                     line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-                    flags | READ_BUFFER);
+                    flags | READ_BUFFER, silent);
   if (retval == OK) {
     // Delete the binary lines.
     while (--line_count >= 0) {
@@ -162,6 +163,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   bufref_T old_curbuf;
   long old_tw = curbuf->b_p_tw;
   int read_fifo = false;
+  bool silent = shortmess(SHM_FILEINFO);
 
   // The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
   // When re-entering the same buffer, it should not change, because the
@@ -212,7 +214,6 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   curwin->w_valid = 0;
 
   if (curbuf->b_ffname != NULL) {
-    int old_msg_silent = msg_silent;
 #ifdef UNIX
     int save_bin = curbuf->b_p_bin;
     int perm;
@@ -231,13 +232,10 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
       curbuf->b_p_bin = true;
     }
 #endif
-    if (shortmess(SHM_FILEINFO)) {
-      msg_silent = 1;
-    }
 
     retval = readfile(curbuf->b_ffname, curbuf->b_fname,
                       (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
-                      flags | READ_NEW | (read_fifo ? READ_FIFO : 0));
+                      flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
 #ifdef UNIX
     if (read_fifo) {
       curbuf->b_p_bin = save_bin;
@@ -246,7 +244,6 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
       }
     }
 #endif
-    msg_silent = old_msg_silent;
 
     // Help buffer is filtered.
     if (bt_help(curbuf)) {
@@ -262,7 +259,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     curbuf->b_p_bin = true;
     retval = readfile(NULL, NULL, (linenr_T)0,
                       (linenr_T)0, (linenr_T)MAXLNUM, NULL,
-                      flags | (READ_NEW + READ_STDIN));
+                      flags | (READ_NEW + READ_STDIN), silent);
     curbuf->b_p_bin = save_bin;
     if (retval == OK) {
       retval = read_buffer(true, eap, flags);
@@ -357,6 +354,7 @@ void set_bufref(bufref_T *bufref, buf_T *buf)
 ///
 /// @param bufref Buffer reference to check for.
 bool bufref_valid(bufref_T *bufref)
+  FUNC_ATTR_PURE
 {
   return bufref->br_buf_free_count == buf_free_count
     ? true
@@ -902,14 +900,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
       buf = old_curbuf->br_buf;
     }
     if (buf != NULL) {
-      int old_msg_silent = msg_silent;
-
-      if (shortmess(SHM_FILEINFO)) {
-        msg_silent = 1;  // prevent fileinfo message
-      }
       enter_buffer(buf);
-      // restore msg_silent, so that the command line will be shown
-      msg_silent = old_msg_silent;
 
       if (old_tw != curbuf->b_p_tw) {
         check_colorcolumn(curwin);
@@ -2100,6 +2091,7 @@ buf_T *buflist_findname(char_u *ffname)
 ///
 /// @return  buffer or NULL if not found
 static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id, bool file_id_valid)
+  FUNC_ATTR_PURE
 {
   // Start at the last buffer, expect to find a match sooner.
   FOR_ALL_BUFFERS_BACKWARDS(buf) {
@@ -2531,7 +2523,7 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
 ///
 /// @return  NULL when there isn't any info.
 static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   wininfo_T *wip;
 
@@ -2609,6 +2601,7 @@ void get_winopts(buf_T *buf)
 ///
 /// @return  a pointer to no_position if no position is found.
 pos_T *buflist_findfpos(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   static pos_T no_position = { 1, 0, 0 };
 
@@ -2618,6 +2611,7 @@ pos_T *buflist_findfpos(buf_T *buf)
 
 /// Find the lnum for the buffer 'buf' for the current window.
 linenr_T buflist_findlnum(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   return buflist_findfpos(buf)->lnum;
 }
@@ -2951,7 +2945,7 @@ static bool otherfile_buf(buf_T *buf, char_u *ffname, FileID *file_id_p, bool fi
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
     return true;
   }
-  if (fnamecmp(ffname, buf->b_ffname) == 0) {
+  if (FNAMECMP(ffname, buf->b_ffname) == 0) {
     return false;
   }
   {
@@ -4928,6 +4922,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
 
 /// @return  true if "buf" is a prompt buffer.
 bool bt_prompt(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   return buf != NULL && buf->b_p_bt[0] == 'p';
 }
@@ -5339,6 +5334,7 @@ bool bt_dontwrite_msg(const buf_T *const buf)
 /// @return  true if the buffer should be hidden, according to 'hidden', ":hide"
 ///          and 'bufhidden'.
 bool buf_hide(const buf_T *const buf)
+  FUNC_ATTR_PURE
 {
   // 'bufhidden' overrules 'hidden' and ":hide", check it first
   switch (buf->b_p_bh[0]) {
@@ -5605,7 +5601,7 @@ bool buf_contents_changed(buf_T *buf)
   if (ml_open(curbuf) == OK
       && readfile(buf->b_ffname, buf->b_fname,
                   (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
-                  &ea, READ_NEW | READ_DUMMY) == OK) {
+                  &ea, READ_NEW | READ_DUMMY, false) == OK) {
     // compare the two files line by line
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {
       differ = false;

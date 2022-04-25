@@ -551,7 +551,7 @@ static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
 {
   if (fm->fmark.fnum == 0
       && fm->fname != NULL
-      && fnamecmp(name, fm->fname) == 0) {
+      && FNAMECMP(name, fm->fname) == 0) {
     fm->fmark.fnum = buf->b_fnum;
     XFREE_CLEAR(fm->fname);
   }
@@ -923,7 +923,7 @@ void ex_changes(exarg_T *eap)
   }
 }
 
-#define one_adjust(add) \
+#define ONE_ADJUST(add) \
   { \
     lp = add; \
     if (*lp >= line1 && *lp <= line2) \
@@ -938,7 +938,7 @@ void ex_changes(exarg_T *eap)
   }
 
 // don't delete the line, just put at first deleted line
-#define one_adjust_nodel(add) \
+#define ONE_ADJUST_NODEL(add) \
   { \
     lp = add; \
     if (*lp >= line1 && *lp <= line2) \
@@ -994,37 +994,37 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
   if (!cmdmod.lockmarks) {
     // named marks, lower case and upper case
     for (i = 0; i < NMARKS; i++) {
-      one_adjust(&(curbuf->b_namedm[i].mark.lnum));
+      ONE_ADJUST(&(curbuf->b_namedm[i].mark.lnum));
       if (namedfm[i].fmark.fnum == fnum) {
-        one_adjust_nodel(&(namedfm[i].fmark.mark.lnum));
+        ONE_ADJUST_NODEL(&(namedfm[i].fmark.mark.lnum));
       }
     }
     for (i = NMARKS; i < NGLOBALMARKS; i++) {
       if (namedfm[i].fmark.fnum == fnum) {
-        one_adjust_nodel(&(namedfm[i].fmark.mark.lnum));
+        ONE_ADJUST_NODEL(&(namedfm[i].fmark.mark.lnum));
       }
     }
 
     // last Insert position
-    one_adjust(&(curbuf->b_last_insert.mark.lnum));
+    ONE_ADJUST(&(curbuf->b_last_insert.mark.lnum));
 
     // last change position
-    one_adjust(&(curbuf->b_last_change.mark.lnum));
+    ONE_ADJUST(&(curbuf->b_last_change.mark.lnum));
 
     // last cursor position, if it was set
     if (!equalpos(curbuf->b_last_cursor.mark, initpos)) {
-      one_adjust(&(curbuf->b_last_cursor.mark.lnum));
+      ONE_ADJUST(&(curbuf->b_last_cursor.mark.lnum));
     }
 
 
     // list of change positions
-    for (i = 0; i < curbuf->b_changelistlen; ++i) {
-      one_adjust_nodel(&(curbuf->b_changelist[i].mark.lnum));
+    for (i = 0; i < curbuf->b_changelistlen; i++) {
+      ONE_ADJUST_NODEL(&(curbuf->b_changelist[i].mark.lnum));
     }
 
     // Visual area
-    one_adjust_nodel(&(curbuf->b_visual.vi_start.lnum));
-    one_adjust_nodel(&(curbuf->b_visual.vi_end.lnum));
+    ONE_ADJUST_NODEL(&(curbuf->b_visual.vi_start.lnum));
+    ONE_ADJUST_NODEL(&(curbuf->b_visual.vi_end.lnum));
 
     // quickfix marks
     if (!qf_mark_adjust(NULL, line1, line2, amount, amount_after)) {
@@ -1047,14 +1047,14 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
   }
 
   // previous context mark
-  one_adjust(&(curwin->w_pcmark.lnum));
+  ONE_ADJUST(&(curwin->w_pcmark.lnum));
 
   // previous pcmark
-  one_adjust(&(curwin->w_prev_pcmark.lnum));
+  ONE_ADJUST(&(curwin->w_prev_pcmark.lnum));
 
   // saved cursor for formatting
   if (saved_cursor.lnum != 0) {
-    one_adjust_nodel(&(saved_cursor.lnum));
+    ONE_ADJUST_NODEL(&(saved_cursor.lnum));
   }
 
   /*
@@ -1066,7 +1066,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
       // duplicate marks in the jumplist, they will be removed later.
       for (i = 0; i < win->w_jumplistlen; i++) {
         if (win->w_jumplist[i].fmark.fnum == fnum) {
-          one_adjust_nodel(&(win->w_jumplist[i].fmark.mark.lnum));
+          ONE_ADJUST_NODEL(&(win->w_jumplist[i].fmark.mark.lnum));
         }
       }
     }
@@ -1076,15 +1076,15 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
         // marks in the tag stack
         for (i = 0; i < win->w_tagstacklen; i++) {
           if (win->w_tagstack[i].fmark.fnum == fnum) {
-            one_adjust_nodel(&(win->w_tagstack[i].fmark.mark.lnum));
+            ONE_ADJUST_NODEL(&(win->w_tagstack[i].fmark.mark.lnum));
           }
         }
       }
 
       // the displayed Visual area
       if (win->w_old_cursor_lnum != 0) {
-        one_adjust_nodel(&(win->w_old_cursor_lnum));
-        one_adjust_nodel(&(win->w_old_visual_lnum));
+        ONE_ADJUST_NODEL(&(win->w_old_cursor_lnum));
+        ONE_ADJUST_NODEL(&(win->w_old_visual_lnum));
       }
 
       // topline and cursor position for windows with the same buffer
@@ -1132,7 +1132,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
 }
 
 // This code is used often, needs to be fast.
-#define col_adjust(pp) \
+#define COL_ADJUST(pp) \
   { \
     posp = pp; \
     if (posp->lnum == lnum && posp->col >= mincol) \
@@ -1166,40 +1166,40 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
   }
   // named marks, lower case and upper case
   for (i = 0; i < NMARKS; i++) {
-    col_adjust(&(curbuf->b_namedm[i].mark));
+    COL_ADJUST(&(curbuf->b_namedm[i].mark));
     if (namedfm[i].fmark.fnum == fnum) {
-      col_adjust(&(namedfm[i].fmark.mark));
+      COL_ADJUST(&(namedfm[i].fmark.mark));
     }
   }
   for (i = NMARKS; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum == fnum) {
-      col_adjust(&(namedfm[i].fmark.mark));
+      COL_ADJUST(&(namedfm[i].fmark.mark));
     }
   }
 
   // last Insert position
-  col_adjust(&(curbuf->b_last_insert.mark));
+  COL_ADJUST(&(curbuf->b_last_insert.mark));
 
   // last change position
-  col_adjust(&(curbuf->b_last_change.mark));
+  COL_ADJUST(&(curbuf->b_last_change.mark));
 
   // list of change positions
-  for (i = 0; i < curbuf->b_changelistlen; ++i) {
-    col_adjust(&(curbuf->b_changelist[i].mark));
+  for (i = 0; i < curbuf->b_changelistlen; i++) {
+    COL_ADJUST(&(curbuf->b_changelist[i].mark));
   }
 
   // Visual area
-  col_adjust(&(curbuf->b_visual.vi_start));
-  col_adjust(&(curbuf->b_visual.vi_end));
+  COL_ADJUST(&(curbuf->b_visual.vi_start));
+  COL_ADJUST(&(curbuf->b_visual.vi_end));
 
   // previous context mark
-  col_adjust(&(curwin->w_pcmark));
+  COL_ADJUST(&(curwin->w_pcmark));
 
   // previous pcmark
-  col_adjust(&(curwin->w_prev_pcmark));
+  COL_ADJUST(&(curwin->w_prev_pcmark));
 
   // saved cursor for formatting
-  col_adjust(&saved_cursor);
+  COL_ADJUST(&saved_cursor);
 
   /*
    * Adjust items in all windows related to the current buffer.
@@ -1208,7 +1208,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
     // marks in the jumplist
     for (i = 0; i < win->w_jumplistlen; ++i) {
       if (win->w_jumplist[i].fmark.fnum == fnum) {
-        col_adjust(&(win->w_jumplist[i].fmark.mark));
+        COL_ADJUST(&(win->w_jumplist[i].fmark.mark));
       }
     }
 
@@ -1216,13 +1216,13 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
       // marks in the tag stack
       for (i = 0; i < win->w_tagstacklen; i++) {
         if (win->w_tagstack[i].fmark.fnum == fnum) {
-          col_adjust(&(win->w_tagstack[i].fmark.mark));
+          COL_ADJUST(&(win->w_tagstack[i].fmark.mark));
         }
       }
 
       // cursor position for other windows with the same buffer
       if (win != curwin) {
-        col_adjust(&win->w_cursor);
+        COL_ADJUST(&win->w_cursor);
       }
     }
   }

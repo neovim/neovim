@@ -654,6 +654,7 @@ static inline unsigned nr2hex(unsigned n)
 ///
 /// @reeturn Number of display cells.
 int byte2cells(int b)
+  FUNC_ATTR_PURE
 {
   if (b >= 0x80) {
     return 0;
@@ -1176,6 +1177,7 @@ intptr_t getwhitecols_curline(void)
 }
 
 intptr_t getwhitecols(const char_u *p)
+  FUNC_ATTR_PURE
 {
   return skipwhite(p) - p;
 }
@@ -1222,6 +1224,7 @@ const char *skipbin(const char *q)
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
 char_u *skiphex(char_u *q)
+  FUNC_ATTR_PURE
 {
   char_u *p = q;
   while (ascii_isxdigit(*p)) {
@@ -1237,6 +1240,7 @@ char_u *skiphex(char_u *q)
 ///
 /// @return Pointer to the digit or (NUL after the string).
 char_u *skiptodigit(char_u *q)
+  FUNC_ATTR_PURE
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isdigit(*p)) {
@@ -1270,6 +1274,7 @@ const char *skiptobin(const char *q)
 ///
 /// @return Pointer to the hex character or (NUL after the string).
 char_u *skiptohex(char_u *q)
+  FUNC_ATTR_PURE
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isxdigit(*p)) {
@@ -1285,7 +1290,7 @@ char_u *skiptohex(char_u *q)
 ///
 /// @return Pointer to the next whitespace or NUL character.
 char_u *skiptowhite(const char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
@@ -1299,6 +1304,7 @@ char_u *skiptowhite(const char_u *p)
 ///
 /// @return Pointer to the next whitespace character.
 char_u *skiptowhite_esc(char_u *p)
+  FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
@@ -1392,6 +1398,7 @@ long getdigits_long(char_u **pp, bool strict, long def)
 ///
 /// @param  lbuf  line buffer to check
 bool vim_isblankline(char_u *lbuf)
+  FUNC_ATTR_PURE
 {
   char_u *p = skipwhite(lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
@@ -1618,6 +1625,7 @@ vim_str2nr_proceed:
 ///
 /// @return The value of the hex character.
 int hex2nr(int c)
+  FUNC_ATTR_CONST
 {
   if ((c >= 'a') && (c <= 'f')) {
     return c - 'a' + 10;
@@ -1632,6 +1640,7 @@ int hex2nr(int c)
 /// Convert two hex characters to a byte.
 /// Return -1 if one of the characters is not hex.
 int hexhex2nr(char_u *p)
+  FUNC_ATTR_PURE
 {
   if (!ascii_isxdigit(p[0]) || !ascii_isxdigit(p[1])) {
     return -1;

@@ -433,7 +433,7 @@ static int cs_add_common(char *arg1, char *arg2, char *flags)
   if (fname == NULL) {
     goto add_err;
   }
-  fname = (char *)vim_strnsave((char_u *)fname, len);
+  fname = xstrnsave(fname, len);
   xfree(fbuf);
   FileInfo file_info;
   bool file_info_ok  = os_fileinfo(fname, &file_info);
