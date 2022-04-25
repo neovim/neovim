@@ -386,8 +386,7 @@ Note:
 - When a key is pressed using a meta or alt modifier and no mapping exists
   for that keypress, Nvim behaves as though <Esc> was pressed before the key.
 - It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
-  but mapping these combinations is not well-supported across environments,
-  as many terminals do not pass combined modifiers to Nvim in a useful way.
+  but your terminal must encode the input for that to work. |tui-input|
 
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make
