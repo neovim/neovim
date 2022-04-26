@@ -4818,8 +4818,8 @@ static int getargopt(exarg_T *eap)
     eap->force_ff = eap->cmd[eap->force_ff];
   } else if (pp == &eap->force_enc) {
     // Make 'fileencoding' lower case.
-    for (p = eap->cmd + eap->force_enc; *p != NUL; ++p) {
-      *p = TOLOWER_ASC(*p);
+    for (p = eap->cmd + eap->force_enc; *p != NUL; p++) {
+      *p = (char_u)TOLOWER_ASC(*p);
     }
   } else {
     // Check ++bad= argument.  Must be a single-byte character, "keep" or
