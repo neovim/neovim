@@ -159,8 +159,6 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 set(CONV_SOURCES
   edit.c
   eval.c
-  eval/funcs.c
-  eval/userfunc.c
   ex_cmds.c
   ex_docmd.c
   fileio.c
