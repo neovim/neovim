@@ -181,9 +181,14 @@ end
 
 --- Gets the text corresponding to a given node
 ---
----@param node the node
----@param source The buffer or string from which the node is extracted
-function M.get_node_text(node, source)
+---@param node table The node
+---@param source table The buffer or string from which the node is extracted
+---@param opts table Optional parameters.
+---          - concat: (boolean default true) Concatenate result in a string
+function M.get_node_text(node, source, opts)
+  opts = opts or {}
+  local concat = vim.F.if_nil(opts.concat, true)
+
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
 
@@ -210,7 +215,7 @@ function M.get_node_text(node, source)
       end
     end
 
-    return table.concat(lines, '\n')
+    return concat and table.concat(lines, '\n') or lines
   elseif type(source) == 'string' then
     return source:sub(start_byte + 1, end_byte)
   end
