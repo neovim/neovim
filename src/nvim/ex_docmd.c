@@ -184,7 +184,7 @@ void do_exmode(void)
   int save_msg_scroll;
   int prev_msg_row;
   linenr_T prev_line;
-  int changedtick;
+  varnumber_T changedtick;
 
   exmode_active = true;
   State = NORMAL;
@@ -812,7 +812,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     if (current_exception) {
       char *p = NULL;
       char_u *saved_sourcing_name;
-      int saved_sourcing_lnum;
+      linenr_T saved_sourcing_lnum;
       struct msglist *messages = NULL;
       struct msglist *next;
 
@@ -1039,11 +1039,11 @@ void *getline_cookie(LineGetter fgetline, void *cookie)
 /// ":bwipeout", etc.
 ///
 /// @return  the buffer number.
-static int compute_buffer_local_count(int addr_type, int lnum, int offset)
+static int compute_buffer_local_count(cmd_addr_T addr_type, linenr_T lnum, long offset)
 {
   buf_T *buf;
   buf_T *nextbuf;
-  int count = offset;
+  long count = offset;
 
   buf = firstbuf;
   while (buf->b_next != NULL && buf->b_fnum < lnum) {
@@ -1445,7 +1445,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
     while (ASCII_ISALNUM(*p)) {
       ++p;
     }
-    p = vim_strnsave(ea.cmd, p - ea.cmd);
+    p = vim_strnsave(ea.cmd, (size_t)(p - ea.cmd));
     int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
     xfree(p);
     // If the autocommands did something and didn't cause an error, try
@@ -1735,7 +1735,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
       }
       break;
     case ADDR_QUICKFIX_VALID:
-      ea.line2 = qf_get_valid_size(&ea);
+      ea.line2 = (linenr_T)qf_get_valid_size(&ea);
       if (ea.line2 == 0) {
         ea.line2 = 1;
       }
@@ -2259,7 +2259,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
     case 't':
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
-          long tabnr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only, false, 1);
+          int tabnr = (int)get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only, false, 1);
 
           if (tabnr == MAXLNUM) {
             cmdmod.tab = tabpage_index(curtab) + 1;
@@ -2403,7 +2403,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
       eap->line2 = 1;
       break;
     case ADDR_QUICKFIX:
-      eap->line2 = qf_get_cur_idx(eap);
+      eap->line2 = (linenr_T)qf_get_cur_idx(eap);
       break;
     case ADDR_QUICKFIX_VALID:
       eap->line2 = qf_get_cur_valid_idx(eap);
@@ -2473,7 +2473,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
           break;
         case ADDR_QUICKFIX_VALID:
           eap->line1 = 1;
-          eap->line2 = qf_get_valid_size(eap);
+          eap->line2 = (linenr_T)qf_get_valid_size(eap);
           if (eap->line2 == 0) {
             eap->line2 = 1;
           }
@@ -3756,10 +3756,10 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       xp->xp_context = EXPAND_LANGUAGE;
       xp->xp_pattern = (char_u *)arg;
     } else {
-      if (strncmp(arg, "messages", p - arg) == 0
-          || strncmp(arg, "ctype", p - arg) == 0
-          || strncmp(arg, "time", p - arg) == 0
-          || strncmp(arg, "collate", p - arg) == 0) {
+      if (strncmp(arg, "messages", (size_t)(p - arg)) == 0
+          || strncmp(arg, "ctype", (size_t)(p - arg)) == 0
+          || strncmp(arg, "time", (size_t)(p - arg)) == 0
+          || strncmp(arg, "collate", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_LOCALES;
         xp->xp_pattern = skipwhite((const char_u *)p);
       } else {
@@ -3925,7 +3925,7 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
         goto error;
         break;
       case ADDR_QUICKFIX:
-        lnum = qf_get_cur_idx(eap);
+        lnum = (linenr_T)qf_get_cur_idx(eap);
         break;
       case ADDR_QUICKFIX_VALID:
         lnum = qf_get_cur_valid_idx(eap);
@@ -3970,13 +3970,13 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
         goto error;
         break;
       case ADDR_QUICKFIX:
-        lnum = qf_get_size(eap);
+        lnum = (linenr_T)qf_get_size(eap);
         if (lnum == 0) {
           lnum = 1;
         }
         break;
       case ADDR_QUICKFIX_VALID:
-        lnum = qf_get_valid_size(eap);
+        lnum = (linenr_T)qf_get_valid_size(eap);
         if (lnum == 0) {
           lnum = 1;
         }
@@ -4135,7 +4135,7 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
           lnum = 1;
           break;
         case ADDR_QUICKFIX:
-          lnum = qf_get_cur_idx(eap);
+          lnum = (linenr_T)qf_get_cur_idx(eap);
           break;
         case ADDR_QUICKFIX_VALID:
           lnum = qf_get_cur_valid_idx(eap);
@@ -4357,7 +4357,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
   char_u *pos;
   char_u *ptr;
   int len;
-  int i;
+  size_t i;
 
   /*
    * Don't do it when ":vimgrep" is used for ":grep".
@@ -4391,10 +4391,10 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
         ++i;
       }
       len = (int)STRLEN(p);
-      new_cmdline = xmalloc(STRLEN(program) + (size_t)i * (len - 2) + 1);
+      new_cmdline = xmalloc(STRLEN(program) + i * (size_t)(len - 2) + 1);
       ptr = new_cmdline;
       while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
-        i = (int)(pos - program);
+        i = (size_t)(pos - program);
         memcpy(ptr, program, i);
         STRCPY(ptr += i, p);
         ptr += len;
@@ -4856,7 +4856,7 @@ static int get_tabpage_arg(exarg_T *eap)
     }
 
     p_save = p;
-    tab_number = getdigits(&p, false, tab_number);
+    tab_number = (int)getdigits(&p, false, tab_number);
 
     if (relative == 0) {
       if (STRCMP(p, "$") == 0) {
@@ -4896,7 +4896,7 @@ static int get_tabpage_arg(exarg_T *eap)
       eap->errmsg = e_invrange;
       tab_number = 0;
     } else {
-      tab_number = eap->line2;
+      tab_number = (int)eap->line2;
       if (!unaccept_arg0 && *skipwhite(*eap->cmdlinep) == '-') {
         tab_number--;
         if (tab_number < unaccept_arg0) {
@@ -5243,7 +5243,7 @@ int uc_add_command(char_u *name, size_t name_len, char_u *rep, uint32_t argt, lo
     char_u *const p = vim_strnsave(name, name_len);
 
     cmd = USER_CMD_GA(gap, i);
-    memmove(cmd + 1, cmd, (gap->ga_len - i) * sizeof(ucmd_T));
+    memmove(cmd + 1, cmd, (size_t)(gap->ga_len - i) * sizeof(ucmd_T));
 
     ++gap->ga_len;
 
@@ -5543,8 +5543,8 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def, int
     for (i = 0; i < (int)len; i++) {
       if (attr[i] == '=') {
         val = &attr[i + 1];
-        vallen = len - i - 1;
-        attrlen = i;
+        vallen = len - (size_t)i - 1;
+        attrlen = (size_t)i;
         break;
       }
     }
@@ -5666,7 +5666,7 @@ static void ex_command(exarg_T *eap)
   char_u *compl_arg = NULL;
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int has_attr = (eap->arg[0] == '-');
-  int name_len;
+  size_t name_len;
 
   p = eap->arg;
 
@@ -5674,7 +5674,7 @@ static void ex_command(exarg_T *eap)
   while (*p == '-') {
     ++p;
     end = skiptowhite(p);
-    if (uc_scan_attr(p, end - p, &argt, &def, &flags, &compl, &compl_arg,
+    if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &compl, &compl_arg,
                      &addr_type_arg) == FAIL) {
       return;
     }
@@ -5772,7 +5772,7 @@ static void ex_delcommand(exarg_T *eap)
   --gap->ga_len;
 
   if (i < gap->ga_len) {
-    memmove(cmd, cmd + 1, (gap->ga_len - i) * sizeof(ucmd_T));
+    memmove(cmd, cmd + 1, (size_t)(gap->ga_len - i) * sizeof(ucmd_T));
   }
 }
 
@@ -5800,9 +5800,9 @@ bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf
   size_t l = 0;
   for (; pos < arglen - 1; pos++) {
     if (arg[pos] == '\\' && (arg[pos + 1] == '\\' || ascii_iswhite(arg[pos + 1]))) {
-      buf[l++] = arg[++pos];
+      buf[l++] = (char)arg[++pos];
     } else {
-      buf[l++] = arg[pos];
+      buf[l++] = (char)arg[pos];
       if (ascii_iswhite(arg[pos + 1])) {
         *end = pos + 1;
         *len = l;
@@ -5812,7 +5812,7 @@ bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf
   }
 
   if (pos < arglen && !ascii_iswhite(arg[pos])) {
-    buf[l++] = arg[pos];
+    buf[l++] = (char)arg[pos];
   }
 
   *len = l;
@@ -5855,7 +5855,7 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
     }
   }
 
-  buf = xmalloc(len + 1);
+  buf = xmalloc((size_t)len + 1);
 
   p = arg;
   q = buf;
@@ -5886,7 +5886,7 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
   *q++ = '"';
   *q = 0;
 
-  *lenp = len;
+  *lenp = (size_t)len;
   return buf;
 }
 
@@ -6109,7 +6109,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
         *buf++ = '\'';
       }
       if (eap->regname) {
-        *buf++ = eap->regname;
+        *buf++ = (char_u)eap->regname;
       }
       if (quote) {
         *buf = '\'';
@@ -6257,7 +6257,7 @@ static void do_ucmd(exarg_T *eap)
           // K_SPECIAL has been put in the buffer as K_SPECIAL
           // KS_SPECIAL KE_FILLER, like for mappings, but
           // do_cmdline() doesn't handle that, so convert it back.
-          len = ksp - p;
+          len = (size_t)(ksp - p);
           if (len > 0) {
             memmove(q, p, len);
             q += len;
@@ -6277,7 +6277,7 @@ static void do_ucmd(exarg_T *eap)
       ++end;
 
       // Take everything up to the '<'
-      len = start - p;
+      len = (size_t)(start - p);
       if (buf == NULL) {
         totlen += len;
       } else {
@@ -6285,7 +6285,7 @@ static void do_ucmd(exarg_T *eap)
         q += len;
       }
 
-      len = uc_check_code(start, end - start, q, cmd, eap,
+      len = uc_check_code(start, (size_t)(end - start), q, cmd, eap,
                           &split_buf, &split_len);
       if (len == (size_t)-1) {
         // no match, continue after '<'
@@ -6461,7 +6461,7 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp, uint32_t *argt
   for (i = 0; i < vallen; ++i) {
     if (value[i] == ',') {
       arg = &value[i + 1];
-      arglen = vallen - i - 1;
+      arglen = (size_t)(vallen - i - 1);
       valend = i;
       break;
     }
@@ -6605,7 +6605,7 @@ static void ex_quit(exarg_T *eap)
   win_T *wp;
 
   if (eap->addr_count > 0) {
-    int wnr = eap->line2;
+    linenr_T wnr = eap->line2;
 
     for (wp = firstwin; wp->w_next != NULL; wp = wp->w_next) {
       if (--wnr <= 0) {
@@ -6880,7 +6880,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 static void ex_only(exarg_T *eap)
 {
   win_T *wp;
-  int wnr;
+  linenr_T wnr;
 
   if (eap->addr_count > 0) {
     wnr = eap->line2;
@@ -7311,7 +7311,7 @@ static void ex_tabnext(exarg_T *eap)
     if (eap->arg && *eap->arg != NUL) {
       char_u *p = eap->arg;
       char_u *p_save = p;
-      tab_number = getdigits(&p, false, 0);
+      tab_number = (int)getdigits(&p, false, 0);
       if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
           || tab_number == 0) {
         // No numbers as argument.
@@ -7322,7 +7322,7 @@ static void ex_tabnext(exarg_T *eap)
       if (eap->addr_count == 0) {
         tab_number = 1;
       } else {
-        tab_number = eap->line2;
+        tab_number = (int)eap->line2;
         if (tab_number < 1) {
           eap->errmsg = e_invrange;
           return;
@@ -7415,12 +7415,12 @@ static void ex_resize(exarg_T *eap)
   win_T *wp = curwin;
 
   if (eap->addr_count > 0) {
-    n = eap->line2;
+    n = (int)eap->line2;
     for (wp = firstwin; wp->w_next != NULL && --n > 0; wp = wp->w_next) {
     }
   }
 
-  n = atol((char *)eap->arg);
+  n = (int)atol((char *)eap->arg);
   if (cmdmod.split & WSP_VERT) {
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_width;
@@ -7442,7 +7442,7 @@ static void ex_resize(exarg_T *eap)
 static void ex_find(exarg_T *eap)
 {
   char_u *fname;
-  int count;
+  linenr_T count;
 
   fname = find_file_in_path(eap->arg, STRLEN(eap->arg),
                             FNAME_MESS, TRUE, curbuf->b_ffname);
@@ -8181,7 +8181,7 @@ static void ex_join(exarg_T *eap)
     }
     ++eap->line2;
   }
-  do_join(eap->line2 - eap->line1 + 1, !eap->forceit, TRUE, TRUE, true);
+  do_join((size_t)(eap->line2 - eap->line1 + 1), !eap->forceit, true, true, true);
   beginline(BL_WHITE | BL_FIX);
   ex_may_print(eap);
 }
@@ -8661,7 +8661,7 @@ static void ex_normal(exarg_T *eap)
       }
     }
     if (len > 0) {
-      arg = xmalloc(STRLEN(eap->arg) + len + 1);
+      arg = xmalloc(STRLEN(eap->arg) + (size_t)len + 1);
       len = 0;
       for (p = eap->arg; *p != NUL; ++p) {
         arg[len++] = *p;
@@ -8788,7 +8788,7 @@ static void ex_checkpath(exarg_T *eap)
 /// ":psearch"
 static void ex_psearch(exarg_T *eap)
 {
-  g_do_tagpreview = p_pvh;
+  g_do_tagpreview = (int)p_pvh;
   ex_findpat(eap);
   g_do_tagpreview = 0;
 }
@@ -8851,7 +8851,7 @@ static void ex_findpat(exarg_T *eap)
 /// ":ptag", ":ptselect", ":ptjump", ":ptnext", etc.
 static void ex_ptag(exarg_T *eap)
 {
-  g_do_tagpreview = p_pvh;    // will be reset to 0 in ex_tag_cmd()
+  g_do_tagpreview = (int)p_pvh;    // will be reset to 0 in ex_tag_cmd()
   ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name + 1);
 }
 
@@ -8861,7 +8861,7 @@ static void ex_pedit(exarg_T *eap)
   win_T *curwin_save = curwin;
 
   // Open the preview window or popup and make it the current window.
-  g_do_tagpreview = p_pvh;
+  g_do_tagpreview = (int)p_pvh;
   prepare_tagpreview(true);
 
   // Edit the file.
@@ -9326,7 +9326,7 @@ static char_u *arg_all(void)
     }
 
     // allocate memory
-    retval = xmalloc(len + 1);
+    retval = xmalloc((size_t)len + 1);
   }
 
   return retval;
