@@ -521,7 +521,6 @@ enum {
   FSK_KEEP_X_KEY = 0x02,  ///< don’t translate xHome to Home key
   FSK_IN_STRING  = 0x04,  ///< in string, double quote is escaped
   FSK_SIMPLIFY   = 0x08,  ///< simplify <C-H>, etc.
-  FSK_CURLY      = 0x10,  ///< {C-x} instead of <C-x>
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

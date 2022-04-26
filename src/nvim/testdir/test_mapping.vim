@@ -62,7 +62,7 @@ func Test_map_ctrl_c_insert()
   inoremap <c-c> <ctrl-c>
   cnoremap <c-c> dummy
   cunmap <c-c>
-  call feedkeys("GoTEST2: CTRL-C |\{C-C}A|\<Esc>", "xt")
+  call feedkeys("GoTEST2: CTRL-C |\<*C-C>A|\<Esc>", "xt")
   call assert_equal('TEST2: CTRL-C |<ctrl-c>A|', getline('$'))
   unmap! <c-c>
   set nomodified
@@ -71,7 +71,7 @@ endfunc
 func Test_map_ctrl_c_visual()
   " mapping of ctrl-c in Visual mode
   vnoremap <c-c> :<C-u>$put ='vmap works'
-  call feedkeys("GV\{C-C}\<CR>", "xt")
+  call feedkeys("GV\<*C-C>\<CR>", "xt")
   call assert_equal('vmap works', getline('$'))
   vunmap <c-c>
   set nomodified
@@ -221,7 +221,7 @@ endfunc
 
 func Test_map_meta_quotes()
   imap <M-"> foo
-  call feedkeys("Go-\{M-\"}-\<Esc>", "xt")
+  call feedkeys("Go-\<*M-\">-\<Esc>", "xt")
   call assert_equal("-foo-", getline('$'))
   set nomodified
   iunmap <M-">

@@ -4963,15 +4963,12 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         ++name;
         break;
 
-      // Special key, e.g.: "\<C-W>" or "\{C-W}"
-      case '<':
-      case '{': {
+      // Special key, e.g.: "\<C-W>"
+      case '<': {
         int flags = FSK_KEYCODE | FSK_IN_STRING;
 
-        if (*p == '<') {
+        if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
-        } else {
-          flags |= FSK_CURLY;
         }
         extra = trans_special((const char_u **)&p, STRLEN(p), name, flags, NULL);
         if (extra != 0) {

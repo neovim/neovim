@@ -1815,15 +1815,12 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
           *v_p++ = (char)ch;
           break;
         }
-        // Special key, e.g.: "\<C-W>" or "\{C-W}"
-        case '<':
-        case '{': {
+        // Special key, e.g.: "\<C-W>"
+        case '<': {
           int flags = FSK_KEYCODE | FSK_IN_STRING;
 
-          if (*p == '<') {
+          if (p[1] != '*') {
             flags |= FSK_SIMPLIFY;
-          } else {
-            flags |= FSK_CURLY;
           }
           const size_t special_len = trans_special((const char_u **)&p, (size_t)(e - p),
                                                    (char_u *)v_p, flags, NULL);

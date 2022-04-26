@@ -638,7 +638,6 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
   int modifiers;
   int bit;
   int key;
-  const int endchar = (flags & FSK_CURLY) ? '}' : '>';
   uvarnumber_T n;
   int l;
 
@@ -647,8 +646,11 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
   }
 
   src = *srcp;
-  if (src[0] != ((flags & FSK_CURLY) ? '{' : '<')) {
+  if (src[0] != '<') {
     return 0;
+  }
+  if (src[1] == '*') {  // <*xxx>: do not simplify
+    src++;
   }
 
   // Find end of modifier list
@@ -661,16 +663,16 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l + 1] == endchar) {
+        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l + 1] == '>') {
           bp += l;
         } else if (end - bp > 2 && in_string && bp[1] == '\\'
-                   && bp[2] == '"' && bp[3] == endchar) {
+                   && bp[2] == '"' && bp[3] == '>') {
           bp += 2;
         }
       }
     }
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
-      bp += 3;  // skip t_xx, xx may be '-' or '>'/'}'
+      bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
       vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
       if (l == 0) {
@@ -682,7 +684,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
     }
   }
 
-  if (bp <= end && *bp == endchar) {  // found matching '>' or '}'
+  if (bp <= end && *bp == '>') {  // found matching '>'
     end_of_name = bp + 1;
 
     // Which modifiers are given?
@@ -718,7 +720,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         } else {
           l = utfc_ptr2len(last_dash + 1);
         }
-        if (modifiers != 0 && last_dash[l + 1] == endchar) {
+        if (modifiers != 0 && last_dash[l + 1] == '>') {
           key = utf_ptr2char(last_dash + off);
         } else {
           key = get_special_key_code(last_dash + off);
