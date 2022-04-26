@@ -35,7 +35,7 @@ function M.bindzone()
 end
 
 function M.btm(_, bufnr)
-  if vim.g.dosbatch_syntax_for_btm ~= nil and vim.g.dosbatch_syntax_for_btm ~= 0 then
+  if vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0 then
     vim.bo[bufnr].filetype = "dosbatch"
   else
     vim.bo[bufnr].filetype = "btm"
@@ -87,8 +87,8 @@ function M.ent(_, bufnr)
   vim.bo[bufnr].filetype = "dtd"
 end
 
-function M.euphoria_check(_, bufnr)
-  if vim.g.filetype_euphoria ~= nil then
+function M.euphoria(_, bufnr)
+  if vim.g.filetype_euphoria then
     vim.bo[bufnr].filetype = vim.g.filetype_euphoria
   else
     vim.bo[bufnr].filetype = "euphoria3"
@@ -96,7 +96,7 @@ function M.euphoria_check(_, bufnr)
 end
 
 function M.ex(_, bufnr)
-  if vim.g.filetype_euphoria ~= nil then
+  if vim.g.filetype_euphoria then
     vim.bo[bufnr].filetype = vim.g.filetype_euphoria
   else
     for _, line in iter_lines(bufnr, 1, 100) do
@@ -221,7 +221,7 @@ function M.progress_asm()
 end
 
 function M.progress_cweb(_, bufnr)
-  if vim.g.filetype_w ~= nil then
+  if vim.g.filetype_w then
     vim.bo[bufnr].filetype = vim.g.filetype_w
   else
     if get_lines(bufnr, 1) == "&ANALYZE" or get_lines(bufnr, 3) == "&GLOBAL-DEFINE" then
@@ -293,7 +293,7 @@ function M.shell()
 end
 
 function M.sql(_, bufnr)
-  if vim.g.filetype_sql ~= nil then
+  if vim.g.filetype_sql then
     vim.bo[bufnr].filetype = vim.g.filetype_sql
   else
     vim.bo[bufnr].filetype = "sql"
