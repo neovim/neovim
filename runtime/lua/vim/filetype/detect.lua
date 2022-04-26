@@ -18,19 +18,19 @@ local function iter_lines(bufnr, start_lnum, end_lnum)
   return ipairs(vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false))
 end
 
-function M.asm()
+function M.asm(_, bufnr)
 
 end
 
-function M.asm_syntax()
+function M.asm_syntax(_, bufnr)
 
 end
 
-function M.bas()
+function M.bas(_, bufnr)
 
 end
 
-function M.bindzone()
+function M.bindzone(_, bufnr)
 
 end
 
@@ -42,31 +42,37 @@ function M.btm(_, bufnr)
   end
 end
 
-function M.cfg()
+function M.cfg(path, bufnr)
+  if vim.g.filetype_cfg then
+    vim.bo[bufnr].filetype = vim.g.filetype_cfg
+  elseif M.is_rapid(path, bufnr) then
+    vim.bo[bufnr].filetype = "rapid"
+  else
+    vim.bo[bufnr].filetype = "cfg"
+  end
+end
+
+function M.change(_, bufnr)
 
 end
 
-function M.change()
+function M.csh(_, bufnr)
 
 end
 
-function M.csh()
+function M.dat(_, bufnr)
 
 end
 
-function M.dat()
+function M.dep3patch(_, bufnr)
 
 end
 
-function M.dep3patch()
+function M.dtrace(_, bufnr)
 
 end
 
-function M.dtrace()
-
-end
-
-function M.e()
+function M.e(_, bufnr)
 
 end
 
@@ -100,14 +106,14 @@ function M.ex(_, bufnr)
     vim.bo[bufnr].filetype = vim.g.filetype_euphoria
   else
     for _, line in iter_lines(bufnr, 1, 100) do
-    -- TODO: regex
-      if line:find("") then
+    -- TODO: in the Vim regex, \> is used to match the end of the word, can this be omitted?
+      if line:find("^%-%-") or line:find("^ifdef") or line:find("^include")  then
         vim.bo[bufnr].filetype = "euphoria3"
-      else
-        vim.bo[bufnr].filetype = "elixir"
+        return
       end
     end
   end
+  vim.bo[bufnr].filetype = "elixir"
 end
 
 -- This function checks the first 15 lines for appearance of 'FoamFile'
@@ -125,23 +131,58 @@ function M.foam(_, bufnr)
   end
 end
 
-function M.frm()
+function M.frm(_, bufnr)
+  if vim.g.filetype_frm then
+    vim.bo[bufnr].filetype = vim.g.filetype_frm
+  else
+    for _, line in iter_lines(bufnr, 1, 5) do
+      local lower = line:lower()
+      if lower:find("VB_Name") or lower:find("Begin VB%.Form") or lower:find("Begin VB%.MDIForm") or lower:find("Begin VB%.UserControl") then
+        vim.bo[bufnr].filetype = "vb"
+      else
+        vim.bo[bufnr].filetype = "form"
+      end
+    end
+  end
+end
+
+function M.fs(_, bufnr)
 
 end
 
-function M.fs()
-
+function M.header(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 200) do
+    if line:find("^@interface") or line:find("^@end") or line:find("^@class") then
+      if vim.g.c_syntax_for_h then
+        vim.bo[bufnr].filetype = "objc"
+      else
+        vim.bo[bufnr].filetype = "objcpp"
+      end
+      return
+    end
+  end
+  if vim.g.c_syntax_for_h then
+      vim.bo[bufnr].filetype = "c"
+  elseif vim.g.ch_syntax_for_h then
+      vim.bo[bufnr].filetype = "ch"
+  else
+      vim.bo[bufnr].filetype = "cpp"
+  end
 end
 
-function M.header()
-
+function M.idl(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 50) do
+    -- TODO: Vim uses ~= here, of which the behaviour depends on the value of ignorecase,
+    -- what should we do in Lua?
+    if line:find('^%s*import%s+"unknwn"%.idl') or line:find('^%s*import%s+"objidl"%.idl') then
+      vim.bo[bufnr].filetype = "msidl"
+      return
+    end
+  end
+  vim.bo[bufnr].filetype = "idl"
 end
 
-function M.idl()
-
-end
-
-function M.inc()
+function M.inc(_, bufnr)
 
 end
 
@@ -158,35 +199,61 @@ function M.inp_check(_, bufnr)
   end
 end
 
-function M.is_rapid()
+function M.is_rapid(_, bufnr)
 
 end
 
-function M.lpc()
+function M.lpc(_, bufnr)
 
 end
 
-function M.lprolog()
+function M.lprolog(_, bufnr)
 
 end
 
-function M.m()
+function M.m(_, bufnr)
 
 end
 
-function M.mc()
+-- Rely on the file to start with a comment.
+-- MS message text files use ';', Sendmail files use '#' or 'dnl'
+function M.mc(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 20) do
+    -- TODO: Vim uses =~ here
+    if line:find("^%s*#") or line:find("^%s*dnl") then
+      -- Sendmail .mc file
+      vim.bo[bufnr].filetype = "m4"
+      return
+    -- TODO: Vim uses =~ here
+    elseif line:find("^%s*;") then
+      vim.bo[bufnr].filetype = "msmessages"
+      return
+    end
+  end
+  -- Default: Sendmail .mc file
+  vim.bo[bufnr].filetype = "m4"
+end
+
+function M.mm(_, bufnr)
 
 end
 
-function M.mm()
-
+function M.mms(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 20) do
+    -- TODO: Again, the vim version uses =~ which ignores case based on the ignorecase option.
+    -- How should we handle this in lua?
+    if line:find("^%s*%%") or line:find("^%s*//") or line:find("^%*") then
+      vim.bo[bufnr].filetype = "mmix"
+      return
+    elseif line:find("^%s*#") then
+      vim.bo[bufnr].filetype = "make"
+      return
+    end
+  end
+  vim.bo[bufnr].filetype = "mmix"
 end
 
-function M.mms()
-
-end
-
-function M.mod()
+function M.mod(_, bufnr)
 
 end
 
@@ -200,23 +267,23 @@ function M.nroff(_, bufnr)
   end
 end
 
-function M.perl()
+function M.perl(_, bufnr)
 
 end
 
-function M.pl()
+function M.pl(_, bufnr)
 
 end
 
-function M.pp()
+function M.pp(_, bufnr)
 
 end
 
-function M.prg()
+function M.prg(_, bufnr)
 
 end
 
-function M.progress_asm()
+function M.progress_asm(_, bufnr)
 
 end
 
@@ -232,16 +299,46 @@ function M.progress_cweb(_, bufnr)
   end
 end
 
-function M.progress_pascal()
+function M.progress_pascal(_, bufnr)
 
 end
 
-function M.proto()
+function M.proto(_, bufnr)
 
 end
 
-function M.r()
+function M.r(_, bufnr)
+  local lines = iter_lines(bufnr, 1, 50)
+  for _, line in lines do
+    -- TODO: lower case? 
+    -- TODO: \< / \> which match the beginning / end of a word
+    -- Rebol is easy to recognize, check for that first
+    if line:lower():find("REBOL") then
+      vim.bo[bufnr].filetype = "rebol"
+      return
+    end
+  end
 
+  for _, line in lines do
+    -- R has # comments
+    if line:lower():find("REBOL") then
+      vim.bo[bufnr].filetype = "rebol"
+      return
+    end
+    -- Rexx has /* comments */
+    if line:lower():find("^%s*/%*") then
+      vim.bo[bufnr].filetype = "rexx"
+      return
+    end
+  end
+  
+  -- Nothing recognized, use user default or assume R
+  if vim.g.filetype_r then
+    vim.bo[bufnr].filetype = vim.g.filetype_r
+  else
+    -- Rexx used to be the default, but R appears to be much more popular.
+    vim.bo[bufnr].filetype = "r"
+  end
 end
 
 function M.redif(_, bufnr)
@@ -254,7 +351,7 @@ function M.redif(_, bufnr)
   end
 end
 
-function M.rules()
+function M.rules(_, bufnr)
 
 end
 
@@ -284,11 +381,11 @@ function M.scd(_, bufnr)
   end
 end
 
-function M.sh()
+function M.sh(_, bufnr)
 
 end
 
-function M.shell()
+function M.shell(_, bufnr)
 
 end
 
@@ -300,15 +397,15 @@ function M.sql(_, bufnr)
   end
 end
 
-function M.src()
+function M.src(_, bufnr)
 
 end
 
-function M.sys()
+function M.sys(_, bufnr)
 
 end
 
-function M.tex()
+function M.tex(_, bufnr)
 
 end
 
