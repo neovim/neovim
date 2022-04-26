@@ -71,9 +71,35 @@ function M.sql(_, bufnr)
   end
 end
 
+function M.xml(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 100) do
+    -- TODO: the vim version uses =~ which ignores case based on the ignorecase option.
+    -- How should we handle this in lua?
+    local is_docbook4 = line:find("<!DOCTYPE.*DocBook")
+    local is_docbook5 = line:find(' xmlns="http://docbook%.org/ns/docbook"')
+    if is_docbook4 or is_docbook5 then
+      vim.b[bufnr].docbk_type = "xml"
+      if is_docbook4 then
+        vim.b[bufnr].docbk_ver = 4
+      else
+        vim.b[bufnr].docbk_ver = 5
+      end
+      vim.bo[bufnr].filetype = "docbk"
+      return
+    end
+    if line:find('xmlns:xbl="http://www%.mozilla%.org/xbl"') then
+      vim.bo[bufnr].filetype = "xbl"
+      return
+    end
+  end
+  vim.bo[bufnr].filetype = "xml"
+end
+
 function M.redif(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 5) do
-    if line:find("^[tT][eE][mM][pP][lL][aA][tT][eE]%-[tT][yY][pP][eE]:") then
+    -- TODO: maybe this is too expensive because a new string is created, any thoughts?
+    -- However, it seems much more readable too me than "^[tT][eE]..."
+    if line:lower():find("^template%-type:") then
       vim.bo[bufnr].filetype = "redif"
     end
   end
