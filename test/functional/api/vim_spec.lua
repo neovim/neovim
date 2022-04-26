@@ -122,9 +122,9 @@ describe('API', function()
 
       -- Functions
       nvim('exec', 'function Foo()\ncall setline(1,["xxx"])\nendfunction', false)
-      eq(nvim('get_current_line'), '')
+      eq('', nvim('get_current_line'))
       nvim('exec', 'call Foo()', false)
-      eq(nvim('get_current_line'), 'xxx')
+      eq('xxx', nvim('get_current_line'))
 
       -- Autocmds
       nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
@@ -1841,10 +1841,10 @@ describe('API', function()
       -- spin the loop a bit
       helpers.run(nil, nil, on_setup)
 
-      eq(nvim('get_var', 'x1'), '…')
+      eq('…', nvim('get_var', 'x1'))
       -- Because of the double escaping this is neq
-      neq(nvim('get_var', 'x2'), '…')
-      eq(nvim('get_var', 'x3'), '…')
+      neq('…', nvim('get_var', 'x2'))
+      eq('…', nvim('get_var', 'x3'))
     end)
   end)
 

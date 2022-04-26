@@ -727,7 +727,7 @@ describe('autocmd api', function()
       set_ft("txt")
       set_ft("python")
 
-      eq(get_executed_count(), 2)
+      eq(2, get_executed_count())
     end)
 
     it('works getting called multiple times', function()
@@ -736,7 +736,7 @@ describe('autocmd api', function()
       set_ft()
       set_ft()
 
-      eq(get_executed_count(), 3)
+      eq(3, get_executed_count())
     end)
 
     it('handles ++once', function()
@@ -746,7 +746,7 @@ describe('autocmd api', function()
       set_ft('txt')
       set_ft('help')
 
-      eq(get_executed_count(), 1)
+      eq(1, get_executed_count())
     end)
 
     it('errors on unexpected keys', function()
@@ -874,7 +874,7 @@ describe('autocmd api', function()
       set_ft("txt")
       set_ft("python")
 
-      eq(get_executed_count(), 1)
+      eq(1, get_executed_count())
     end)
 
     it('autocmds can be registered multiple times.', function()
@@ -888,7 +888,7 @@ describe('autocmd api', function()
       set_ft("txt")
       set_ft("python")
 
-      eq(get_executed_count(), 3 * 2)
+      eq(3 * 2, get_executed_count())
     end)
 
     it('can be deleted', function()

@@ -154,7 +154,7 @@ describe('env.c', function()
     local value = 'TESTVALUE'
     os_setenv(name, value, 1)
     eq(OK, os_unsetenv(name))
-    neq(os_getenv(name), value)
+    neq(value, os_getenv(name))
     -- Depending on the platform the var might be unset or set as ''
     assert.True(os_getenv(name) == nil or os_getenv(name) == '')
     if os_getenv(name) == nil then

@@ -17,7 +17,7 @@ describe('argument list commands', function()
   end
 
   local function assert_fails(cmd, err)
-    neq(exc_exec(cmd):find(err), nil)
+    neq(nil, exc_exec(cmd):find(err))
   end
 
   it('test that argidx() works', function()
