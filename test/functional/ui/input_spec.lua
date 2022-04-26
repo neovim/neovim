@@ -249,6 +249,14 @@ it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2
   ]])
 end)
 
+it('mixing simplified and unsimplified keys can trigger mapping vim-patch:8.2.0916', function()
+  command('set timeoutlen=10')
+  command([[imap ' <C-W>]])
+  command('imap <C-W><C-A> c-a')
+  feed([[a'<C-A>]])
+  expect('c-a')
+end)
+
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')

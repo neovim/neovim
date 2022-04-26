@@ -1442,12 +1442,12 @@ static void updatescript(int c)
   }
 }
 
-/// Merge "mod_mask" into "c_arg"
-int merge_modifiers(int c_arg)
+/// Merge "modifiers" into "c_arg".
+int merge_modifiers(int c_arg, int *modifiers)
 {
   int c = c_arg;
 
-  if (mod_mask & MOD_MASK_CTRL) {
+  if (*modifiers & MOD_MASK_CTRL) {
     if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
       c &= 0x1f;
       if (c == 0) {
@@ -1458,7 +1458,7 @@ int merge_modifiers(int c_arg)
       c = 0x1e;
     }
     if (c != c_arg) {
-      mod_mask &= ~MOD_MASK_CTRL;
+      *modifiers &= ~MOD_MASK_CTRL;
     }
   }
   return c;
@@ -1636,7 +1636,7 @@ int vgetc(void)
       // cases they are put back in the typeahead buffer.
       vgetc_mod_mask = mod_mask;
       vgetc_char = c;
-      c = merge_modifiers(c);
+      c = merge_modifiers(c, &mod_mask);
 
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
       // something with a meta- or alt- modifier that was not mapped, interpret
@@ -1751,6 +1751,55 @@ typedef enum {
   map_result_retry,   // try to map again
   map_result_nomatch,  // no matching mapping, get char
 } map_result_T;
+
+/// Put "string[new_slen]" in typebuf.
+/// Remove "slen" bytes.
+/// @return  FAIL for error, OK otherwise.
+static int put_string_in_typebuf(int offset, int slen, char_u *string, int new_slen)
+{
+  int extra = new_slen - slen;
+  string[new_slen] = NUL;
+  if (extra < 0) {
+    // remove matched chars, taking care of noremap
+    del_typebuf(-extra, offset);
+  } else if (extra > 0) {
+    // insert the extra space we need
+    ins_typebuf(string + slen, REMAP_YES, offset, false, false);
+  }
+  // Careful: del_typebuf() and ins_typebuf() may have reallocated
+  // typebuf.tb_buf[]!
+  memmove(typebuf.tb_buf + typebuf.tb_off + offset, string, (size_t)new_slen);
+  return OK;
+}
+
+/// Check if typebuf.tb_buf[] contains a modifer plus key that can be changed
+/// into just a key, apply that.
+/// Check from typebuf.tb_buf[typebuf.tb_off] to typebuf.tb_buf[typebuf.tb_off + "max_offset"].
+/// @return  the length of the replaced bytes, zero if nothing changed.
+static int check_simplify_modifier(int max_offset)
+{
+  for (int offset = 0; offset < max_offset; offset++) {
+    if (offset + 3 >= typebuf.tb_len) {
+      break;
+    }
+    char_u *tp = typebuf.tb_buf + typebuf.tb_off + offset;
+    if (tp[0] == K_SPECIAL && tp[1] == KS_MODIFIER) {
+      int modifier = tp[2];
+      int new_c = merge_modifiers(tp[3], &modifier);
+
+      if (new_c != tp[3] && modifier == 0) {
+        char_u new_string[MB_MAXBYTES];
+        int len = utf_char2bytes(new_c, new_string);
+
+        if (put_string_in_typebuf(offset, 4, new_string, len) == FAIL) {
+          return -1;
+        }
+        return len;
+      }
+    }
+  }
+  return 0;
+}
 
 /// Handle mappings in the typeahead buffer.
 /// - When something was mapped, return map_result_retry for recursive mappings.
@@ -1950,16 +1999,51 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   }
 
   if ((mp == NULL || max_mlen >= mp_match_len) && keylen != KEYLEN_PART_MAP) {
-    // No matching mapping found or found a non-matching mapping that
-    // matches at least what the matching mapping matched
-    keylen = 0;
-    (void)keylen;  // suppress clang/dead assignment
-    // If there was no mapping, use the character from the typeahead
-    // buffer right here. Otherwise, use the mapping (loop around).
-    if (mp == NULL) {
-      *keylenp = keylen;
-      return map_result_get;  // get character from typeahead
+    // When no matching mapping found or found a non-matching mapping that
+    // matches at least what the matching mapping matched:
+    // Try to include the modifier into the key, when:
+    // - mapping is allowed,
+    // - keys have not been mapped,
+    // - and when not timed out,
+    if ((no_mapping == 0 || allow_keys != 0)
+        && (typebuf.tb_maplen == 0
+            || (p_remap && typebuf.tb_noremap[typebuf.tb_off] == RM_YES))
+        && !*timedout) {
+      if (tb_c1 == K_SPECIAL
+          && (typebuf.tb_len < 2
+              || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER
+                  && typebuf.tb_len < 4))) {
+        // Incomplete modifier sequence: cannot decide whether to simplify yet.
+        keylen = KEYLEN_PART_KEY;
+        // Don't simplify if 'pastetoggle' matched partially.
+      } else if (keylen != KEYLEN_PART_KEY) {
+        // Try to include the modifier into the key.
+        keylen = check_simplify_modifier(max_mlen + 1);
+        assert(keylen >= 0);
+      }
     } else {
+      keylen = 0;
+    }
+    if (keylen == 0) {  // no simplication has been done
+      // If there was no mapping at all use the character from the
+      // typeahead buffer right here.
+      if (mp == NULL) {
+        *keylenp = keylen;
+        return map_result_get;  // get character from typeahead
+      }
+    }
+
+    if (keylen > 0) {  // keys have been simplified
+      *keylenp = keylen;
+      return map_result_retry;  // try mapping again
+    }
+
+    if (keylen < 0) {
+      // Incomplete key sequence: get some more characters.
+      assert(keylen == KEYLEN_PART_KEY);
+    } else {
+      assert(mp != NULL);
+      // When a matching mapping was found use that one.
       keylen = mp_match_len;
     }
   }

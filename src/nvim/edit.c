@@ -5640,7 +5640,7 @@ int get_literal(bool no_simplify)
   for (;;) {
     nc = plain_vgetc();
     if (!no_simplify) {
-      nc = merge_modifiers(nc);
+      nc = merge_modifiers(nc, &mod_mask);
     }
     if ((mod_mask & ~MOD_MASK_SHIFT) != 0) {
       // A character with non-Shift modifiers should not be a valid
