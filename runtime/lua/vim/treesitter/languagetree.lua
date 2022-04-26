@@ -363,6 +363,10 @@ function LanguageTree:_get_injections()
             table.insert(ranges, node)
           end
         end
+
+        if metadata[id] and metadata[id].range and #ranges == 0 then
+          table.insert(ranges, metadata[id].range)
+        end
       end
 
       -- Each tree index should be isolated from the other nodes.
