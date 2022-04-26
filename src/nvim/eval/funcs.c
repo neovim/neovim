@@ -5648,6 +5648,8 @@ static void f_localtime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 {
   char_u *keys_buf = NULL;
+  char_u *alt_keys_buf = NULL;
+  bool did_simplify = false;
   char_u *rhs;
   LuaRef rhs_lua;
   int mode;
@@ -5655,6 +5657,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   int get_dict = FALSE;
   mapblock_T *mp;
   int buffer_local;
+  int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
 
   // Return empty string for failure.
   rettv->v_type = VAR_STRING;
@@ -5684,10 +5687,16 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 
   mode = get_map_mode((char_u **)&which, 0);
 
-  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
-                           CPO_TO_CPO_FLAGS);
-  rhs = check_map(keys, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
-  xfree(keys_buf);
+  char_u *keys_simplified
+    = replace_termcodes(keys, STRLEN(keys), &keys_buf, flags, &did_simplify, CPO_TO_CPO_FLAGS);
+  rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+  if (did_simplify) {
+    // When the lhs is being simplified the not-simplified keys are
+    // preferred for printing, like in do_map().
+    (void)replace_termcodes(keys, STRLEN(keys), &alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
+                            CPO_TO_CPO_FLAGS);
+    rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+  }
 
   if (!get_dict) {
     // Return a string.
@@ -5710,6 +5719,9 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       mapblock_fill_dict(rettv->vval.v_dict, mp, buffer_local, true);
     }
   }
+
+  xfree(keys_buf);
+  xfree(alt_keys_buf);
 }
 
 /// luaeval() function implementation
