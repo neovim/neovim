@@ -568,25 +568,21 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[in]  src_len  Length of the srcp.
 /// @param[out]  dst  Location where translation result will be kept. It must
 //                    be at least 19 bytes per "<x>" form.
-/// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
-/// @param[in]  in_string  Inside a double quoted string
-/// @param[in]  simplify  simplify <C-H>, etc.
+/// @param[in]  flags  FSK_ values
 /// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
 unsigned int trans_special(const char_u **const srcp, const size_t src_len, char_u *const dst,
-                           const bool keycode, const bool in_string, const bool simplify,
-                           bool *const did_simplify)
+                           const int flags, bool *const did_simplify)
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
-  int key = find_special_key(srcp, src_len, &modifiers, keycode, false, in_string, simplify,
-                             did_simplify);
+  int key = find_special_key(srcp, src_len, &modifiers, flags, did_simplify);
   if (key == 0) {
     return 0;
   }
 
-  return special_to_buf(key, modifiers, keycode, dst);
+  return special_to_buf(key, modifiers, flags & FSK_KEYCODE, dst);
 }
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
@@ -625,16 +621,12 @@ unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
 /// @param[in,out]  srcp  Translated <> name. Is advanced to after the <> name.
 /// @param[in]  src_len  srcp length.
 /// @param[out]  modp  Location where information about modifiers is saved.
-/// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
-/// @param[in]  keep_x_key  Don’t translate xHome to Home key.
-/// @param[in]  in_string  In string, double quote is escaped
-/// @param[in]  simplify  simplify <C-H>, etc.
-/// @param[out]  did_simplify  found <C-H>, etc.
+/// @param[in]  flags  FSK_ values
+/// @param[out]  did_simplify  FSK_SIMPLIFY and found <C-H>, etc.
 ///
 /// @return Key and modifiers or 0 if there is no match.
 int find_special_key(const char_u **const srcp, const size_t src_len, int *const modp,
-                     const bool keycode, const bool keep_x_key, const bool in_string,
-                     const bool simplify, bool *const did_simplify)
+                     const int flags, bool *const did_simplify)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   const char_u *last_dash;
@@ -642,9 +634,11 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
   const char_u *src;
   const char_u *bp;
   const char_u *const end = *srcp + src_len - 1;
+  const bool in_string = flags & FSK_IN_STRING;
   int modifiers;
   int bit;
   int key;
+  const int endchar = (flags & FSK_CURLY) ? '}' : '>';
   uvarnumber_T n;
   int l;
 
@@ -653,7 +647,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
   }
 
   src = *srcp;
-  if (src[0] != '<') {
+  if (src[0] != ((flags & FSK_CURLY) ? '{' : '<')) {
     return 0;
   }
 
@@ -667,16 +661,16 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l+1] == '>') {
+        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l + 1] == endchar) {
           bp += l;
         } else if (end - bp > 2 && in_string && bp[1] == '\\'
-                   && bp[2] == '"' && bp[3] == '>') {
+                   && bp[2] == '"' && bp[3] == endchar) {
           bp += 2;
         }
       }
     }
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
-      bp += 3;  // skip t_xx, xx may be '-' or '>'
+      bp += 3;  // skip t_xx, xx may be '-' or '>'/'}'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
       vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
       if (l == 0) {
@@ -688,7 +682,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
     }
   }
 
-  if (bp <= end && *bp == '>') {  // found matching '>'
+  if (bp <= end && *bp == endchar) {  // found matching '>' or '}'
     end_of_name = bp + 1;
 
     // Which modifiers are given?
@@ -724,11 +718,11 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         } else {
           l = utfc_ptr2len(last_dash + 1);
         }
-        if (modifiers != 0 && last_dash[l + 1] == '>') {
+        if (modifiers != 0 && last_dash[l + 1] == endchar) {
           key = utf_ptr2char(last_dash + off);
         } else {
           key = get_special_key_code(last_dash + off);
-          if (!keep_x_key) {
+          if (!(flags & FSK_KEEP_X_KEY)) {
             key = handle_x_keys(key);
           }
         }
@@ -741,7 +735,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         // includes the modifier.
         key = simplify_key(key, &modifiers);
 
-        if (!keycode) {
+        if (!(flags & FSK_KEYCODE)) {
           // don't want keycode, use single byte code
           if (key == K_BS) {
             key = BS;
@@ -753,7 +747,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
         // Normal Key with modifier:
         // Try to make a single byte code (except for Alt/Meta modifiers).
         if (!IS_SPECIAL(key)) {
-          key = extract_modifiers(key, &modifiers, simplify, did_simplify);
+          key = extract_modifiers(key, &modifiers, flags & FSK_SIMPLIFY, did_simplify);
         }
 
         *modp = modifiers;
@@ -945,8 +939,9 @@ char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_
         }
       }
 
-      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true, false,
-                           (flags & REPTERM_NO_SIMPLIFY) == 0, did_simplify);
+      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
+                           FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
+                           did_simplify);
       if (slen) {
         dlen += slen;
         continue;

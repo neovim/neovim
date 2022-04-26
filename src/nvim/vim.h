@@ -318,10 +318,4 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define REPLACE_CR_NCHAR    (-1)
 #define REPLACE_NL_NCHAR    (-2)
 
-// Flags for replace_termcodes()
-#define REPTERM_FROM_PART       1
-#define REPTERM_DO_LT           2
-#define REPTERM_NO_SPECIAL      4
-#define REPTERM_NO_SIMPLIFY     8
-
 #endif  // NVIM_VIM_H
