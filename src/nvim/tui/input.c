@@ -13,6 +13,7 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/tui/tui.h"
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
 #ifdef WIN32
@@ -41,6 +42,7 @@ void tinput_init(TermInput *input, Loop *loop)
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
   input->waiting_for_bg_response = 0;
+  input->extkeys_type = kExtkeysNone;
   // The main thread is waiting for the UI thread to call CONTINUE, so it can
   // safely access global variables.
   input->ttimeout = (bool)p_ttimeout;
@@ -344,6 +346,39 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+      // There is no specified limit on the number of parameters a CSI sequence can contain, so just
+      // allocate enough space for a large upper bound
+      long args[16];
+      size_t nargs = 16;
+      unsigned long cmd;
+      if (termkey_interpret_csi(input->tk, &key, args, &nargs, &cmd) == TERMKEY_RES_KEY) {
+        uint8_t intermediate = (cmd >> 16) & 0xFF;
+        uint8_t initial = (cmd >> 8) & 0xFF;
+        uint8_t command = cmd & 0xFF;
+
+        // Currently unused
+        (void)intermediate;
+
+        if (input->waiting_for_csiu_response > 0) {
+          if (initial == '?' && command == 'u') {
+            // The first (and only) argument contains the current progressive
+            // enhancement flags. Only enable CSI u mode if the first bit
+            // (disambiguate escape codes) is not already set
+            if (nargs > 0 && (args[0] & 0x1) == 0) {
+              input->extkeys_type = kExtkeysCSIu;
+            } else {
+              input->extkeys_type = kExtkeysNone;
+            }
+          } else if (initial == '?' && command == 'c') {
+            // Received Primary Device Attributes response
+            input->waiting_for_csiu_response = 0;
+            tui_enable_extkeys(input->tui_data);
+          } else {
+            input->waiting_for_csiu_response--;
+          }
+        }
+      }
     }
   }
 
