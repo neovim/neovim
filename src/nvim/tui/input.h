@@ -6,6 +6,13 @@
 
 #include "nvim/event/stream.h"
 #include "nvim/event/time.h"
+#include "nvim/tui/tui.h"
+
+typedef enum {
+  kExtkeysNone,
+  kExtkeysCSIu,
+  kExtkeysXterm,
+} ExtkeysType;
 
 typedef struct term_input {
   int in_fd;
@@ -14,6 +21,8 @@ typedef struct term_input {
   bool waiting;
   bool ttimeout;
   int8_t waiting_for_bg_response;
+  int8_t waiting_for_csiu_response;
+  ExtkeysType extkeys_type;
   long ttimeoutlen;
   TermKey *tk;
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
@@ -25,6 +34,7 @@ typedef struct term_input {
   RBuffer *key_buffer;
   uv_mutex_t key_buffer_mutex;
   uv_cond_t key_buffer_cond;
+  TUIData *tui_data;
 } TermInput;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
