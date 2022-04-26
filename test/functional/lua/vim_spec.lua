@@ -645,17 +645,17 @@ describe('lua stdlib', function()
       return vim.tbl_islist(c) and count == 0
     ]]))
 
-    eq(exec_lua([[
+    eq({a = {b = 1}}, exec_lua([[
       local a = { a = { b = 1 } }
       local b = { a = {} }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = {b = 1}})
+    ]]))
 
-    eq(exec_lua([[
+    eq({a = {b = 1}}, exec_lua([[
       local a = { a = 123 }
       local b = { a = { b = 1} }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = {b = 1}})
+    ]]))
 
     ok(exec_lua([[
       local a = { a = {[2] = 3} }
@@ -664,11 +664,11 @@ describe('lua stdlib', function()
       return vim.deep_equal(c, {a = {[3] = 3}})
     ]]))
 
-    eq(exec_lua([[
+    eq({a = 123}, exec_lua([[
       local a = { a = { b = 1} }
       local b = { a = 123 }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = 123 })
+    ]]))
 
     matches('invalid "behavior": nil',
       pcall_err(exec_lua, [[
