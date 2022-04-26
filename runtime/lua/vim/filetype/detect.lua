@@ -18,17 +18,20 @@ local function iter_lines(bufnr, start_lnum, end_lnum)
   return ipairs(vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false))
 end
 
-function M.inp_check(_, bufnr)
-  if get_lines(bufnr, 1):find("^%*") then
-    vim.bo[bufnr].filetype = "abaqus"
-  else
-    for _, line in iter_lines(bufnr, 1, 500) do
-      if line:find("header surface data") then
-        vim.bo[bufnr].filetype = "trasys"
-        return
-      end
-    end
-  end
+function M.asm()
+
+end
+
+function M.asm_syntax()
+
+end
+
+function M.bas()
+
+end
+
+function M.bindzone()
+
 end
 
 function M.btm(_, bufnr)
@@ -37,6 +40,34 @@ function M.btm(_, bufnr)
   else
     vim.bo[bufnr].filetype = "btm"
   end
+end
+
+function M.cfg()
+
+end
+
+function M.change()
+
+end
+
+function M.csh()
+
+end
+
+function M.dat()
+
+end
+
+function M.dep3patch()
+
+end
+
+function M.dtrace()
+
+end
+
+function M.e()
+
 end
 
 -- This function checks for valid cl syntax in the first five lines.
@@ -56,7 +87,15 @@ function M.ent(_, bufnr)
   vim.bo[bufnr].filetype = "dtd"
 end
 
-function M.ex_check(_, bufnr)
+function M.euphoria_check(_, bufnr)
+  if vim.g.filetype_euphoria ~= nil then
+    vim.bo[bufnr].filetype = vim.g.filetype_euphoria
+  else
+    vim.bo[bufnr].filetype = "euphoria3"
+  end
+end
+
+function M.ex(_, bufnr)
   if vim.g.filetype_euphoria ~= nil then
     vim.bo[bufnr].filetype = vim.g.filetype_euphoria
   else
@@ -71,12 +110,84 @@ function M.ex_check(_, bufnr)
   end
 end
 
-function M.euphoria_check(_, bufnr)
-  if vim.g.filetype_euphoria ~= nil then
-    vim.bo[bufnr].filetype = vim.g.filetype_euphoria
-  else
-    vim.bo[bufnr].filetype = "euphoria3"
+-- This function checks the first 15 lines for appearance of 'FoamFile'
+-- and then 'object' in a following line.
+-- In that case, it's probably an OpenFOAM file
+function M.foam(_, bufnr)
+  local foam_file = false
+  for _, line in iter_lines(bufnr, 1, 15) do
+    if line:find("^FoamFile") then
+      foam_file = true
+    elseif foam_file and line:find("^%s*object") then
+      vim.bo[bufnr].filetype = "foam"
+      return
+    end
   end
+end
+
+function M.frm()
+
+end
+
+function M.fs()
+
+end
+
+function M.header()
+
+end
+
+function M.idl()
+
+end
+
+function M.inc()
+
+end
+
+function M.inp_check(_, bufnr)
+  if get_lines(bufnr, 1):find("^%*") then
+    vim.bo[bufnr].filetype = "abaqus"
+  else
+    for _, line in iter_lines(bufnr, 1, 500) do
+      if line:find("header surface data") then
+        vim.bo[bufnr].filetype = "trasys"
+        return
+      end
+    end
+  end
+end
+
+function M.is_rapid()
+
+end
+
+function M.lpc()
+
+end
+
+function M.lprolog()
+
+end
+
+function M.m()
+
+end
+
+function M.mc()
+
+end
+
+function M.mm()
+
+end
+
+function M.mms()
+
+end
+
+function M.mod()
+
 end
 
 -- This function checks if one of the first five lines start with a dot. In
@@ -87,6 +198,26 @@ function M.nroff(_, bufnr)
       vim.bo[bufnr].filetype = "nroff"
     end
   end
+end
+
+function M.perl()
+
+end
+
+function M.pl()
+
+end
+
+function M.pp()
+
+end
+
+function M.prg()
+
+end
+
+function M.progress_asm()
+
 end
 
 function M.progress_cweb(_, bufnr)
@@ -101,12 +232,30 @@ function M.progress_cweb(_, bufnr)
   end
 end
 
-function M.sql(_, bufnr)
-  if vim.g.filetype_sql ~= nil then
-    vim.bo[bufnr].filetype = vim.g.filetype_sql
-  else
-    vim.bo[bufnr].filetype = "sql"
+function M.progress_pascal()
+
+end
+
+function M.proto()
+
+end
+
+function M.r()
+
+end
+
+function M.redif(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, 5) do
+    -- TODO: maybe this is too expensive because a new string is created, any thoughts?
+    -- However, it seems much more readable too me than "^[tT][eE]..."
+    if line:lower():find("^template%-type:") then
+      vim.bo[bufnr].filetype = "redif"
+    end
   end
+end
+
+function M.rules()
+
 end
 
 -- This function checks the first 25 lines of file extension "sc" to resolve
@@ -135,6 +284,46 @@ function M.scd(_, bufnr)
   end
 end
 
+function M.sh()
+
+end
+
+function M.shell()
+
+end
+
+function M.sql(_, bufnr)
+  if vim.g.filetype_sql ~= nil then
+    vim.bo[bufnr].filetype = vim.g.filetype_sql
+  else
+    vim.bo[bufnr].filetype = "sql"
+  end
+end
+
+function M.src()
+
+end
+
+function M.sys()
+
+end
+
+function M.tex()
+
+end
+
+-- Determine if a *.tf file is TF mud client or terraform
+function M.tf(_, bufnr)
+  for _, line in iter_lines(bufnr, 1, -1) do
+    -- TODO: regex
+    if not line:find("^%s*[;/]") then
+      vim.bo[bufnr].filetype = "terraform"
+    else
+      vim.bo[bufnr].filetype = "tf"
+    end
+  end
+end
+
 function M.xml(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 100) do
     -- TODO: the vim version uses =~ which ignores case based on the ignorecase option.
@@ -143,11 +332,7 @@ function M.xml(_, bufnr)
     local is_docbook5 = line:find(' xmlns="http://docbook%.org/ns/docbook"')
     if is_docbook4 or is_docbook5 then
       vim.b[bufnr].docbk_type = "xml"
-      if is_docbook4 then
-        vim.b[bufnr].docbk_ver = 4
-      else
-        vim.b[bufnr].docbk_ver = 5
-      end
+      vim.b[bufnr].docbk_ver = is_docbook4 and 4 or 5
       vim.bo[bufnr].filetype = "docbk"
       return
     end
@@ -172,43 +357,6 @@ function M.y(_, bufnr)
     end
   end
   vim.bo[bufnr].filetype = "yacc"
-end
-
-function M.redif(_, bufnr)
-  for _, line in iter_lines(bufnr, 1, 5) do
-    -- TODO: maybe this is too expensive because a new string is created, any thoughts?
-    -- However, it seems much more readable too me than "^[tT][eE]..."
-    if line:lower():find("^template%-type:") then
-      vim.bo[bufnr].filetype = "redif"
-    end
-  end
-end
-
--- This function checks the first 15 lines for appearance of 'FoamFile'
--- and then 'object' in a following line.
--- In that case, it's probably an OpenFOAM file
-function M.foam(_, bufnr)
-  local foam_file = false
-  for _, line in iter_lines(bufnr, 1, 15) do
-    if line:find("^FoamFile") then
-      foam_file = true
-    elseif foam_file and line:find("^%s*object") then
-      vim.bo[bufnr].filetype = "foam"
-      return
-    end
-  end
-end
-
--- Determine if a *.tf file is TF mud client or terraform
-function M.tf(_, bufnr)
-  for _, line in iter_lines(bufnr, 1, -1) do
-    -- TODO: regex
-    if not line:find("^%s*[;/]") then
-      vim.bo[bufnr].filetype = "terraform"
-    else
-      vim.bo[bufnr].filetype = "tf"
-    end
-  end
 end
 
 return M
