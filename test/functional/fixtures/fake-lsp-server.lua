@@ -766,8 +766,21 @@ function tests.code_action_filter()
         isPreferred = true,
         command = 'preferred_command',
       }
+      local quickfix_action = {
+        title = 'Action 3',
+        kind = 'quickfix',
+        command = 'quickfix_command',
+      }
+      local quickfix_foo_action = {
+        title = 'Action 4',
+        kind = 'quickfix.foo',
+        command = 'quickfix_foo_command',
+      }
       expect_request('textDocument/codeAction', function()
-        return nil, { action, preferred_action, }
+        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
+      end)
+      expect_request('textDocument/codeAction', function()
+        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
       end)
       notify('shutdown')
     end;
