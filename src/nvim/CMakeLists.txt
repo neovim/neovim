@@ -160,7 +160,6 @@ set(CONV_SOURCES
   edit.c
   eval.c
   ex_cmds.c
-  ex_docmd.c
   fileio.c
   lua/treesitter.c
   mbyte.c
