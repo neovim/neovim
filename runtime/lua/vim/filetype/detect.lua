@@ -136,8 +136,9 @@ function M.frm(_, bufnr)
     vim.bo[bufnr].filetype = vim.g.filetype_frm
   else
     for _, line in iter_lines(bufnr, 1, 5) do
-      local lower = line:lower()
-      if lower:find("VB_Name") or lower:find("Begin VB%.Form") or lower:find("Begin VB%.MDIForm") or lower:find("Begin VB%.UserControl") then
+      -- Always ignore case
+      line = line:lower()
+      if line:find("vb_name") or line:find("begin vb%.form") or line:find("begin vb%.mdiform") or line:find("begin vb%.usercontrol") then
         vim.bo[bufnr].filetype = "vb"
       else
         vim.bo[bufnr].filetype = "form"
@@ -172,8 +173,8 @@ end
 
 function M.idl(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 50) do
-    -- TODO: Vim uses ~= here, of which the behaviour depends on the value of ignorecase,
-    -- what should we do in Lua?
+    -- Always ignore case
+    line = line:lower()
     if line:find('^%s*import%s+"unknwn"%.idl') or line:find('^%s*import%s+"objidl"%.idl') then
       vim.bo[bufnr].filetype = "msidl"
       return
@@ -219,12 +220,10 @@ end
 -- MS message text files use ';', Sendmail files use '#' or 'dnl'
 function M.mc(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 20) do
-    -- TODO: Vim uses =~ here
-    if line:find("^%s*#") or line:find("^%s*dnl") then
+    if line:find("^%s*#") or line:find("^%s*[dD][nN][lL]") then
       -- Sendmail .mc file
       vim.bo[bufnr].filetype = "m4"
       return
-    -- TODO: Vim uses =~ here
     elseif line:find("^%s*;") then
       vim.bo[bufnr].filetype = "msmessages"
       return
@@ -240,8 +239,6 @@ end
 
 function M.mms(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 20) do
-    -- TODO: Again, the vim version uses =~ which ignores case based on the ignorecase option.
-    -- How should we handle this in lua?
     if line:find("^%s*%%") or line:find("^%s*//") or line:find("^%*") then
       vim.bo[bufnr].filetype = "mmix"
       return
@@ -310,10 +307,9 @@ end
 function M.r(_, bufnr)
   local lines = iter_lines(bufnr, 1, 50)
   for _, line in lines do
-    -- TODO: lower case? 
     -- TODO: \< / \> which match the beginning / end of a word
     -- Rebol is easy to recognize, check for that first
-    if line:lower():find("REBOL") then
+    if line:find("[rR][eE][bB][oO][lL]") then
       vim.bo[bufnr].filetype = "rebol"
       return
     end
@@ -321,17 +317,17 @@ function M.r(_, bufnr)
 
   for _, line in lines do
     -- R has # comments
-    if line:lower():find("REBOL") then
-      vim.bo[bufnr].filetype = "rebol"
+    if line:find("^%s*#") then
+      vim.bo[bufnr].filetype = "r"
       return
     end
     -- Rexx has /* comments */
-    if line:lower():find("^%s*/%*") then
+    if line:find("^%s*/%*") then
       vim.bo[bufnr].filetype = "rexx"
       return
     end
   end
-  
+
   -- Nothing recognized, use user default or assume R
   if vim.g.filetype_r then
     vim.bo[bufnr].filetype = vim.g.filetype_r
@@ -344,7 +340,7 @@ end
 function M.redif(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 5) do
     -- TODO: maybe this is too expensive because a new string is created, any thoughts?
-    -- However, it seems much more readable too me than "^[tT][eE]..."
+    -- However, it seems much more readable to me than "^[tT][eE]..."
     if line:lower():find("^template%-type:") then
       vim.bo[bufnr].filetype = "redif"
     end
@@ -412,20 +408,19 @@ end
 -- Determine if a *.tf file is TF mud client or terraform
 function M.tf(_, bufnr)
   for _, line in iter_lines(bufnr, 1, -1) do
-    -- TODO: regex
-    if not line:find("^%s*[;/]") then
+    -- No terraform file on an empty line (whitespace only), or when the first
+    -- non-whitespace character is a ; or /
+    if not line:find("^%s*[;/]?") then
       vim.bo[bufnr].filetype = "terraform"
-    else
-      vim.bo[bufnr].filetype = "tf"
     end
   end
+  vim.bo[bufnr].filetype = "tf"
 end
 
 function M.xml(_, bufnr)
   for _, line in iter_lines(bufnr, 1, 100) do
-    -- TODO: the vim version uses =~ which ignores case based on the ignorecase option.
-    -- How should we handle this in lua?
-    local is_docbook4 = line:find("<!DOCTYPE.*DocBook")
+    line = line:lower()
+    local is_docbook4 = line:find("<!doctype.*docbook")
     local is_docbook5 = line:find(' xmlns="http://docbook%.org/ns/docbook"')
     if is_docbook4 or is_docbook5 then
       vim.b[bufnr].docbk_type = "xml"
