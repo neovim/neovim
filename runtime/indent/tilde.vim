@@ -1,7 +1,8 @@
 "Description: Indent scheme for the tilde weblanguage
-"Author: Tobias Rundström <tobi@tobi.nu>
+"Author: Tobias Rundström <tobi@tobi.nu> (Invalid email address)
 "URL: http://tilde.tildesoftware.net
 "Last Change: May  8 09:15:09 CEST 2002
+"	      2022 April: b:undo_indent added by Doug Kearns
 
 if exists ("b:did_indent")
 	finish
@@ -12,6 +13,8 @@ let b:did_indent = 1
 setlocal autoindent
 setlocal indentexpr=GetTildeIndent(v:lnum)
 setlocal indentkeys=o,O,)
+
+let b:undo_indent = "setl ai< inde< indk<"
 
 if exists("*GetTildeIndent")
 	finish

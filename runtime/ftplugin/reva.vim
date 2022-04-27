@@ -1,7 +1,7 @@
 " Vim ftplugin file
 " Language:	Reva Forth
 " Version:	7.1
-" Last Change:	2008/01/11
+" Last Change:	2022 Apr 27
 " Maintainer:	Ron Aaron <ron@ronware.org>
 " URL:		http://ronware.org/reva/
 " Filetypes:	*.rf *.frt 
@@ -23,3 +23,5 @@ setlocal com=s1:/*,mb:*,ex:*/,:\|,:\\
 setlocal fo=tcrqol
 setlocal matchpairs+=\::;
 setlocal iskeyword=!,@,33-35,%,$,38-64,A-Z,91-96,a-z,123-126,128-255
+
+let b:undo_ftplugin = "setlocal sts< sw< com< fo< mps< isk<"

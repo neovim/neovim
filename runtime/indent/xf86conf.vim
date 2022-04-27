@@ -1,7 +1,8 @@
 " Vim indent file
-" Language:             XFree86 Configuration File
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2006-12-20
+" Language:		XFree86 Configuration File
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		2022 April 25
 
 if exists("b:did_indent")
   finish
@@ -11,6 +12,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetXF86ConfIndent()
 setlocal indentkeys=!^F,o,O,=End
 setlocal nosmartindent
+
+let b:undo_indent = "setl inde< indk< si<"
 
 if exists("*GetXF86ConfIndent")
   finish

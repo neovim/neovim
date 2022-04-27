@@ -2163,6 +2163,15 @@ $VIMRUNTIME/syntax/syntax.vim).
   mv_finance	 mv_logic	mv_powseries
 
 
+MARKDOWN						*ft-markdown-syntax*
+
+If you have long regions there might be wrong highlighting.  At the cost of
+slowing down displaying, you can have the engine look further back to sync on
+the start of a region, for example 500 lines: >
+
+	:let g:markdown_minlines = 500
+
+
 MATHEMATICA		*mma.vim* *ft-mma-syntax* *ft-mathematica-syntax*
 
 Empty *.m files will automatically be presumed to be Matlab files unless you
