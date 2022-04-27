@@ -433,9 +433,12 @@ func Test_list_mappings()
   " Remove default mappings
   imapclear
 
-  inoremap <C-M> CtrlM
+  " reset 'isident' to check it isn't used
+  set isident=
+  inoremap <C-m> CtrlM
   inoremap <A-S> AltS
   inoremap <S-/> ShiftSlash
+  set isident&
   call assert_equal([
 	\ 'i  <S-/>       * ShiftSlash',
 	\ 'i  <M-S>       * AltS',
