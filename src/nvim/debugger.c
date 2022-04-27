@@ -263,8 +263,7 @@ void do_debug(char_u *cmd)
       // don't debug this command
       n = debug_break_level;
       debug_break_level = -1;
-      (void)do_cmdline(cmdline, getexline, NULL,
-                       DOCMD_VERBOSE|DOCMD_EXCRESET);
+      (void)do_cmdline((char *)cmdline, getexline, NULL, DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
     }
     lines_left = Rows - 1;
@@ -406,7 +405,7 @@ void dbg_check_breakpoint(exarg_T *eap)
            debug_breakpoint_name + (*p == NUL ? 0 : 3),
            (int64_t)debug_breakpoint_lnum);
       debug_breakpoint_name = NULL;
-      do_debug(eap->cmd);
+      do_debug((char_u *)eap->cmd);
     } else {
       debug_skipped = true;
       debug_skipped_name = debug_breakpoint_name;
@@ -414,7 +413,7 @@ void dbg_check_breakpoint(exarg_T *eap)
     }
   } else if (ex_nesting_level <= debug_break_level) {
     if (!eap->skip) {
-      do_debug(eap->cmd);
+      do_debug((char_u *)eap->cmd);
     } else {
       debug_skipped = true;
       debug_skipped_name = NULL;

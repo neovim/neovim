@@ -390,13 +390,13 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
-  ea.cmd = ccline.cmdbuff;
+  ea.cmd = (char *)ccline.cmdbuff;
   ea.addr_type = ADDR_LINES;
 
   parse_command_modifiers(&ea, &dummy, true);
   cmdmod = save_cmdmod;
 
-  cmd = skip_range(ea.cmd, NULL);
+  cmd = (char_u *)skip_range(ea.cmd, NULL);
   if (vim_strchr((char_u *)"sgvl", *cmd) == NULL) {
     goto theend;
   }
@@ -2349,7 +2349,7 @@ static int command_line_changed(CommandLineState *s)
       && *p_icm != NUL       // 'inccommand' is set
       && curbuf->b_p_ma      // buffer is modifiable
       && cmdline_star == 0   // not typing a password
-      && cmd_can_preview(ccline.cmdbuff)
+      && cmd_can_preview((char *)ccline.cmdbuff)
       && !vpeekc_any()) {
     // Show 'inccommand' preview. It works like this:
     //    1. Do the command.
@@ -2359,7 +2359,7 @@ static int command_line_changed(CommandLineState *s)
     State |= CMDPREVIEW;
     emsg_silent++;  // Block error reporting as the command may be incomplete
     msg_silent++;   // Block messages, namely ones that prompt
-    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT|DOCMD_PREVIEW);
+    do_cmdline((char *)ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT|DOCMD_PREVIEW);
     msg_silent--;   // Unblock messages
     emsg_silent--;  // Unblock error reporting
 

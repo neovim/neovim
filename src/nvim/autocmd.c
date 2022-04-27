@@ -831,7 +831,7 @@ void do_autocmd(char_u *arg_in, int forceit)
     // Find the start of the commands.
     // Expand <sfile> in it.
     if (*cmd != NUL) {
-      cmd = expand_sfile(cmd);
+      cmd = (char_u *)expand_sfile((char *)cmd);
       if (cmd == NULL) {  // some error
         return;
       }

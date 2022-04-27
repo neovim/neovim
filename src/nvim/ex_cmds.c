@@ -1991,7 +1991,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
       if (p_confirm || cmdmod.confirm) {
         char_u buff[DIALOG_MSG_SIZE];
 
-        dialog_msg(buff, _("Overwrite existing file \"%s\"?"), fname);
+        dialog_msg((char *)buff, _("Overwrite existing file \"%s\"?"), (char *)fname);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES) {
           return FAIL;
         }
@@ -2027,9 +2027,9 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
         if (p_confirm || cmdmod.confirm) {
           char_u buff[DIALOG_MSG_SIZE];
 
-          dialog_msg(buff,
+          dialog_msg((char *)buff,
                      _("Swap file \"%s\" exists, overwrite anyway?"),
-                     swapname);
+                     (char *)swapname);
           if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
               != VIM_YES) {
             xfree(swapname);
@@ -2150,14 +2150,14 @@ static int check_readonly(int *forceit, buf_T *buf)
       char_u buff[DIALOG_MSG_SIZE];
 
       if (buf->b_p_ro) {
-        dialog_msg(buff,
+        dialog_msg((char *)buff,
                    _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
-                   buf->b_fname);
+                   (char *)buf->b_fname);
       } else {
-        dialog_msg(buff,
-                   _(
-                    "File permissions of \"%s\" are read-only.\nIt may still be possible to write it.\nDo you wish to try?"),
-                   buf->b_fname);
+        dialog_msg((char *)buff,
+                   _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
+                     "write it.\nDo you wish to try?"),
+                   (char *)buf->b_fname);
       }
 
       if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) == VIM_YES) {
@@ -2859,7 +2859,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
   curbuf->b_last_used = time(NULL);
 
   if (command != NULL) {
-    do_cmdline(command, NULL, NULL, DOCMD_VERBOSE);
+    do_cmdline((char *)command, NULL, NULL, DOCMD_VERBOSE);
   }
 
   if (curbuf->b_kmap_state & KEYMAP_INIT) {
@@ -4527,9 +4527,9 @@ static void global_exe_one(char_u *const cmd, const linenr_T lnum)
   curwin->w_cursor.lnum = lnum;
   curwin->w_cursor.col = 0;
   if (*cmd == NUL || *cmd == '\n') {
-    do_cmdline((char_u *)"p", NULL, NULL, DOCMD_NOWAIT);
+    do_cmdline("p", NULL, NULL, DOCMD_NOWAIT);
   } else {
-    do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
+    do_cmdline((char *)cmd, NULL, NULL, DOCMD_NOWAIT);
   }
 }
 

@@ -554,7 +554,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     .forceit = false,
   };
 
-  dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
+  dialog_msg((char *)buff, _("Save changes to \"%s\"?"), (char *)buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
@@ -610,8 +610,8 @@ bool dialog_close_terminal(buf_T *buf)
 {
   char_u buff[DIALOG_MSG_SIZE];
 
-  dialog_msg(buff, _("Close \"%s\"?"),
-             (buf->b_fname != NULL) ? buf->b_fname : (char_u *)"?");
+  dialog_msg((char *)buff, _("Close \"%s\"?"),
+             (buf->b_fname != NULL) ? (char *)buf->b_fname : "?");
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 
@@ -972,7 +972,7 @@ static int do_arglist(char_u *str, int what, int after, bool will_edit)
       xfree(exp_files);
     } else {
       assert(what == AL_SET);
-      alist_set(ALIST(curwin), exp_count, exp_files, will_edit, NULL, 0);
+      alist_set(ALIST(curwin), exp_count, (char **)exp_files, will_edit, NULL, 0);
     }
   }
 
@@ -1427,8 +1427,7 @@ void ex_listdo(exarg_T *eap)
       i++;
       // execute the command
       if (execute) {
-        do_cmdline(eap->arg, eap->getline, eap->cookie,
-                   DOCMD_VERBOSE + DOCMD_NOWAIT);
+        do_cmdline((char *)eap->arg, eap->getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
       }
 
       if (eap->cmdidx == CMD_bufdo) {
@@ -2086,7 +2085,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
     sourcing_lnum = sourcing_lnum_backup;
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
-    do_cmdline(firstline, getsourceline, (void *)&cookie,
+    do_cmdline((char *)firstline, getsourceline, (void *)&cookie,
                DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
   }
   retval = OK;

@@ -2045,7 +2045,7 @@ int has_loop_cmd(char_u *p)
     while (*p == ' ' || *p == '\t' || *p == ':') {
       ++p;
     }
-    len = modifier_len(p);
+    len = modifier_len((char *)p);
     if (len == 0) {
       break;
     }

@@ -1526,7 +1526,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   }
 
   if (opts->addr.type == kObjectTypeString) {
-    if (parse_addr_type_arg((char_u *)opts->addr.data.string.data, (int)opts->addr.data.string.size,
+    if (parse_addr_type_arg(opts->addr.data.string.data, (int)opts->addr.data.string.size,
                             &addr_type_arg) != OK) {
       api_set_error(err, kErrorTypeValidation, "Invalid value for 'addr'");
       goto err;
@@ -1574,9 +1574,9 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     compl = EXPAND_USER_LUA;
     compl_luaref = api_new_luaref(opts->complete.data.luaref);
   } else if (opts->complete.type == kObjectTypeString) {
-    if (parse_compl_arg((char_u *)opts->complete.data.string.data,
+    if (parse_compl_arg(opts->complete.data.string.data,
                         (int)opts->complete.data.string.size, &compl, &argt,
-                        (char_u **)&compl_arg) != OK) {
+                        &compl_arg) != OK) {
       api_set_error(err, kErrorTypeValidation, "Invalid value for 'complete'");
       goto err;
     }
@@ -1603,8 +1603,8 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     goto err;
   }
 
-  if (uc_add_command((char_u *)name.data, name.size, (char_u *)rep, argt, def, flags,
-                     compl, (char_u *)compl_arg, compl_luaref, addr_type_arg, luaref,
+  if (uc_add_command(name.data, name.size, rep, argt, def, flags,
+                     compl, compl_arg, compl_luaref, addr_type_arg, luaref,
                      force) != OK) {
     api_set_error(err, kErrorTypeException, "Failed to create user command");
     goto err;
