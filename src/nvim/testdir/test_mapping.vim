@@ -761,7 +761,7 @@ func Test_mouse_drag_insert_map()
   set mouse&
 endfunc
 
-func Test_unmap_simplfied()
+func Test_unmap_simplifiable()
   map <C-I> foo
   map <Tab> bar
   call assert_equal('foo', maparg('<C-I>'))
@@ -770,6 +770,11 @@ func Test_unmap_simplfied()
   call assert_equal('', maparg('<C-I>'))
   call assert_equal('bar', maparg('<Tab>'))
   unmap <Tab>
+
+  map <C-I> foo
+  unmap <Tab>
+  " This should not error
+  unmap <C-I>
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

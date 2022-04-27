@@ -3249,6 +3249,8 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                   mpp = &(mp->m_next);
                   continue;
                 }
+                // In keyround for simplified keys, don't unmap
+                // a mapping without m_simplified flag.
                 if (keyround1_simplified && !mp->m_simplified) {
                   break;
                 }
