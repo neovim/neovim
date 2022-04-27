@@ -3,6 +3,7 @@
 " Maintainer:	Steve Layland <layland@wolfram.com> (Invalid email address)
 " 		Doug Kearns <dougkearns@gmail.com>
 " Last Change:	Sat May  10 18:56:22 CDT 2005
+"		2022 April: b:undo_indent added by Doug Kearns
 " Source:	http://vim.sourceforge.net/scripts/script.php?script_id=1274
 " 		http://members.wolfram.com/layland/vim/indent/mma.vim
 "
@@ -25,6 +26,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetMmaIndent()
 setlocal indentkeys+=0[,0],0(,0)
 setlocal nosi "turn off smart indent so we don't over analyze } blocks
+
+let b:undo_indent = "setl inde< indk< si<"
 
 if exists("*GetMmaIndent")
     finish

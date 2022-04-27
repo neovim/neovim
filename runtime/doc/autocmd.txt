@@ -69,6 +69,7 @@ Or use `:execute`: >
 	:augroup mine | exe "au! BufRead *" | augroup END
 	:augroup mine | exe "au BufRead * set tw=70" | augroup END
 
+<							*autocmd-expand*
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
 expanded when the Event is recognized, and the {cmd} is executed.  The only
@@ -275,14 +276,14 @@ BufRead or BufReadPost		When starting to edit a new buffer, after
 				processing modelines.  See |BufWinEnter| to do
 				something after processing modelines.
 				Also triggered:
-				- when writing an unnamed buffer such that the
-				  buffer gets a name
+				- when writing an unnamed buffer in a way that
+				  the buffer gets a name
 				- after successfully recovering a file
 				- for the "filetypedetect" group when
 				  executing ":filetype detect"
 				Not triggered:
-				- for ":r file"
-				- if the file doesn't exist
+				- for the `:read file` command
+				- when the file doesn't exist
 							*BufReadCmd*
 BufReadCmd			Before starting to edit a new buffer.  Should
 				read the file into the buffer. |Cmd-event|
@@ -499,10 +500,10 @@ CursorMoved			After the cursor was moved in Normal or Visual
 				mode or to another window.  Also when the text
 				of the cursor line has been changed, e.g. with
 				"x", "rx" or "p".
-				Not triggered when there is typeahead, while
-				executing a script file, when an operator is
-				pending, or when moving to another window while
-				remaining at the same cursor position.
+				Not always triggered when there is typeahead,
+				while executing commands in a script file, or
+				when an operator is pending. Always triggered
+				when moving to another window.
 				For an example see |match-parens|.
 				Note: Cannot be skipped with |:noautocmd|.
 				Careful: This is triggered very often, don't
@@ -542,6 +543,15 @@ DirChangedPre			When the |current-directory| is going to be
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
+							*ExitPre*
+ExitPre				When using `:quit`, `:wq` in a way it makes
+				Vim exit, or using `:qall`, just after
+				|QuitPre|.  Can be used to close any
+				non-essential window.  Exiting may still be
+				cancelled if there is a modified buffer that
+				isn't automatically saved, use |VimLeavePre|
+				for really exiting.
+				See also |QuitPre|, |WinClosed|.
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the
 				appending to the file.  Use the '[ and ']
@@ -568,15 +578,6 @@ FileChangedRO			Before making the first change to a read-only
 							*E881*
 				If the number of lines changes saving for undo
 				may fail and the change will be aborted.
-							*ExitPre*
-ExitPre				When using `:quit`, `:wq` in a way it makes
-				Vim exit, or using `:qall`, just after
-				|QuitPre|.  Can be used to close any
-				non-essential window.  Exiting may still be
-				cancelled if there is a modified buffer that
-				isn't automatically saved, use |VimLeavePre|
-				for really exiting.
-				See also |QuitPre|, |WinClosed|.
 							*FileChangedShell*
 FileChangedShell		When Vim notices that the modification time of
 				a file has changed since editing started.
@@ -870,7 +871,7 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 							*Signal*
 Signal				After Nvim receives a signal. The pattern is
 				matched against the signal name. Only
-				"SIGUSR1" is supported.  Example: >
+				"SIGUSR1" and "SIGWINCH" are supported.  Example: >
 				    autocmd Signal SIGUSR1 call some#func()
 <							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
@@ -1084,15 +1085,24 @@ WinLeave			Before leaving a window.  If the window to be
 WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
-							*WinScrolled*
-WinScrolled			After scrolling the viewport of the current
-				window.
 
+							*WinScrolled*
+WinScrolled			After scrolling the content of a window or
+				resizing a window.
+				The pattern is matched against the
+				|window-ID|.  Both <amatch> and <afile> are
+				set to the |window-ID|.
+				Non-recursive (the event cannot trigger
+				itself).  However, if the command causes the
+				window to scroll or change size another
+				WinScrolled event will be triggered later.
+				Does not trigger when the command is added,
+				only after the first scroll or resize.
 
 ==============================================================================
 6. Patterns					*autocmd-pattern* *{aupat}*
 
-The {aupat} argument of `:autocmd` can be a comma separated list.  This works
+The {aupat} argument of `:autocmd` can be a comma-separated list.  This works
 as if the command was given with each pattern separately.  Thus this command: >
 	:autocmd BufRead *.txt,*.info set et
 Is equivalent to: >

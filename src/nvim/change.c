@@ -286,9 +286,11 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         set_topline(wp, wp->w_topline);
       }
 
-      // Relative numbering may require updating more.
-      if (wp->w_p_rnu) {
-        redraw_later(wp, SOME_VALID);
+      // If lines have been added or removed, relative numbering always
+      // requires a redraw.
+      if (wp->w_p_rnu && xtra != 0) {
+        wp->w_last_cursor_lnum_rnu = 0;
+        redraw_later(wp, VALID);
       }
 
       // Cursor line highlighting probably need to be updated with
@@ -1184,7 +1186,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   end_comment_pending = NUL;
   if (flags & OPENLINE_DO_COM) {
     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, true);
-    if (lead_len == 0 && do_cindent && dir == FORWARD) {
+    if (lead_len == 0 && curbuf->b_p_cin && do_cindent && dir == FORWARD) {
       // Check for a line comment after code.
       comment_start = check_linecomment(saved_line);
       if (comment_start != MAXCOL) {

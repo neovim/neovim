@@ -325,4 +325,31 @@ func Test_display_linebreak_breakat()
   let &breakat=_breakat
 endfunc
 
+func Test_display_lastline()
+  CheckScreendump
+
+  let lines =<< trim END
+      call setline(1, ['aaa', 'b'->repeat(100)])
+      set display=truncate
+      vsplit
+      100wincmd <
+  END
+  call writefile(lines, 'XdispLastline')
+  let buf = RunVimInTerminal('-S XdispLastline', #{rows: 10})
+  call VerifyScreenDump(buf, 'Test_display_lastline_1', {})
+
+  call term_sendkeys(buf, ":set display=lastline\<CR>")
+  call VerifyScreenDump(buf, 'Test_display_lastline_2', {})
+
+  call term_sendkeys(buf, ":100wincmd >\<CR>")
+  call VerifyScreenDump(buf, 'Test_display_lastline_3', {})
+
+  call term_sendkeys(buf, ":set display=truncate\<CR>")
+  call VerifyScreenDump(buf, 'Test_display_lastline_4', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XdispLastline')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

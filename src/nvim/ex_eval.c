@@ -75,7 +75,10 @@
    || (cstack->cs_idx > 0 \
        && !(cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))
 
-#define discard_pending_return(p) tv_free((typval_T *)(p))
+static void discard_pending_return(typval_T *p)
+{
+  tv_free(p);
+}
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until
@@ -129,6 +132,7 @@ int should_abort(int retcode)
 /// to find finally clauses to be executed, and that some errors in skipped
 /// commands are still reported.
 int aborted_in_try(void)
+  FUNC_ATTR_PURE
 {
   // This function is only called after an error.  In this case, "force_abort"
   // determines whether searching for finally clauses is necessary.
@@ -388,12 +392,12 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
     mesg = ((struct msglist *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = STRLEN(cmdname);
-      ret = (char *)vim_strnsave((char_u *)"Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
+      ret = xstrnsave("Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = (char *)vim_strnsave((char_u *)"Vim:", 4 + STRLEN(mesg));
+      ret = xstrnsave("Vim:", 4 + STRLEN(mesg));
       val = ret + 4;
     }
 
@@ -1083,7 +1087,7 @@ void ex_endwhile(exarg_T *eap)
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = err;
   } else {
-    fl =  cstack->cs_flags[cstack->cs_idx];
+    fl = cstack->cs_flags[cstack->cs_idx];
     if (!(fl & csf)) {
       // If we are in a ":while" or ":for" but used the wrong endloop
       // command, do not rewind to the next enclosing ":for"/":while".
@@ -1575,6 +1579,7 @@ void ex_endtry(exarg_T *eap)
 
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
+
       // Find the matching ":try" and report what's missing.
       idx = cstack->cs_idx;
       do {
@@ -1594,6 +1599,9 @@ void ex_endtry(exarg_T *eap)
       if (current_exception) {
         discard_current_exception();
       }
+
+      // report eap->errmsg, also when there already was an error
+      did_emsg = false;
     } else {
       idx = cstack->cs_idx;
 
@@ -1664,8 +1672,10 @@ void ex_endtry(exarg_T *eap)
      */
     (void)cleanup_conditionals(cstack, CSF_TRY | CSF_SILENT, TRUE);
 
-    --cstack->cs_idx;
-    --cstack->cs_trylevel;
+    if (cstack->cs_idx >= 0 && (cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
+      cstack->cs_idx--;
+    }
+    cstack->cs_trylevel--;
 
     if (!skip) {
       report_resume_pending(pending,
@@ -1913,7 +1923,7 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 
         default:
           if (cstack->cs_flags[idx] & CSF_FINALLY) {
-            if (cstack->cs_pending[idx] & CSTP_THROW) {
+            if ((cstack->cs_pending[idx] & CSTP_THROW) && cstack->cs_exception[idx] != NULL) {
               // Cancel the pending exception.  This is in the
               // finally clause, so that the stack of the
               // caught exceptions is not involved.
@@ -1934,8 +1944,9 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
        */
       if (!(cstack->cs_flags[idx] & CSF_FINALLY)) {
         if ((cstack->cs_flags[idx] & CSF_ACTIVE)
-            && (cstack->cs_flags[idx] & CSF_CAUGHT)) {
+            && (cstack->cs_flags[idx] & CSF_CAUGHT) && !(cstack->cs_flags[idx] & CSF_FINISHED)) {
           finish_exception((except_T *)cstack->cs_exception[idx]);
+          cstack->cs_flags[idx] |= CSF_FINISHED;
         }
         // Stop at this try conditional - except the try block never
         // got active (because of an inactive surrounding conditional

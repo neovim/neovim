@@ -2,7 +2,7 @@
 " Language:	Lua 4.0, Lua 5.0, Lua 5.1 and Lua 5.2
 " Maintainer:	Marcus Aurelius Farias <masserahguard-lua 'at' yahoo com>
 " First Author:	Carlos Augusto Teixeira Mendes <cmendes 'at' inf puc-rio br>
-" Last Change:	2012 Aug 12
+" Last Change:	2022 Mar 31
 " Options:	lua_version = 4 or 5
 "		lua_subversion = 0 (4.0, 5.0) or 1 (5.1) or 2 (5.2)
 "		default 5.2
@@ -318,6 +318,15 @@ elseif lua_version == 5
     syn match luaFunc /\<debug\.setuservalue\>/
     syn match luaFunc /\<debug\.upvalueid\>/
     syn match luaFunc /\<debug\.upvaluejoin\>/
+  endif
+  if lua_subversion >= 3
+    "https://www.lua.org/manual/5.3/manual.html#6.5
+    syn match luaFunc /\<utf8\.char\>/
+    syn match luaFunc /\<utf8\.charpattern\>/
+    syn match luaFunc /\<utf8\.codes\>/
+    syn match luaFunc /\<utf8\.codepoint\>/
+    syn match luaFunc /\<utf8\.len\>/
+    syn match luaFunc /\<utf8\.offset\>/
   endif
 endif
 

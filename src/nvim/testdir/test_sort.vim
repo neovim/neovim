@@ -59,6 +59,7 @@ endfunc
 func Test_sort_numbers()
   call assert_equal([3, 13, 28], sort([13, 28, 3], 'N'))
   call assert_equal(['3', '13', '28'], sort(['13', '28', '3'], 'N'))
+  call assert_equal([3997, 4996], sort([4996, 3997], 'Compare1'))
 endfunc
 
 func Test_sort_float()
@@ -1355,7 +1356,7 @@ func Test_sort_cmd()
     endif
   endfor
 
-  " Needs atleast two lines for this test
+  " Needs at least two lines for this test
   call setline(1, ['line1', 'line2'])
   call assert_fails('sort no', 'E474:')
   call assert_fails('sort c', 'E475:')

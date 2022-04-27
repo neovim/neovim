@@ -33,7 +33,7 @@ local function progress_handler(_, result, ctx, _)
   local val = result.value    -- unspecified yet
   local token = result.token  -- string or number
 
-
+  if type(val) ~= 'table' then val = { content=val } end
   if val.kind then
     if val.kind == 'begin' then
       client.messages.progress[token] = {
@@ -53,7 +53,8 @@ local function progress_handler(_, result, ctx, _)
       end
     end
   else
-    table.insert(client.messages, {content = val, show_once = true, shown = 0})
+    client.messages.progress[token] = val
+    client.messages.progress[token].done = true
   end
 
   vim.api.nvim_command("doautocmd <nomodeline> User LspProgressUpdate")
@@ -141,7 +142,7 @@ M['workspace/configuration'] = function(_, result, ctx)
   local response = {}
   for _, item in ipairs(result.items) do
     if item.section then
-      local value = util.lookup_section(client.config.settings, item.section) or vim.NIL
+      local value = util.lookup_section(client.config.settings, item.section)
       -- For empty sections with no explicit '' key, return settings as is
       if value == vim.NIL and item.section == '' then
         value = client.config.settings or vim.NIL

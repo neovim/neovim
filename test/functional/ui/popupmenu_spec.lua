@@ -1952,7 +1952,7 @@ describe('builtin popupmenu', function()
     ]])
   end)
 
-  it('wildoptions=pum with scrolled mesages ', function()
+  it('wildoptions=pum with scrolled messages ', function()
     screen:try_resize(40,10)
     command('set wildmenu')
     command('set wildoptions=pum')
@@ -2191,7 +2191,7 @@ describe('builtin popupmenu', function()
       {20:-- Keyword Local completion (^N^P) }{21:match 1 of 65}            |
     ]])
 
-    -- can disable blending for indiviual attribute. For instance current
+    -- can disable blending for individual attribute. For instance current
     -- selected item. (also tests that `hi Pmenu*` take immediate effect)
     command('hi PMenuSel blend=0')
     screen:expect([[
@@ -2319,47 +2319,6 @@ describe('builtin popupmenu', function()
     funcs.complete(col - max_len, items)
     feed('<c-y>')
     assert_alive()
-  end)
-
-  it('is closed by :stopinsert from timer #12976', function()
-    screen:try_resize(32,14)
-    command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
-    feed('Gah<c-x><c-n>')
-    screen:expect([[
-      hello                           |
-      hullo                           |
-      heeee                           |
-      hello^                           |
-      {s:hello          }{1:                 }|
-      {n:hullo          }{1:                 }|
-      {n:heeee          }{1:                 }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {2:-- }{5:match 1 of 3}                 |
-    ]])
-    command([[call timer_start(100, { -> execute('stopinsert') })]])
-    helpers.sleep(200)
-    feed('k')  -- cursor should move up in Normal mode
-    screen:expect([[
-      hello                           |
-      hullo                           |
-      heee^e                           |
-      hello                           |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-                                      |
-    ]])
   end)
 
   it('truncates double-width character correctly when there is no scrollbar', function()

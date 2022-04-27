@@ -6,7 +6,10 @@ scriptencoding latin1
 source check.vim
 
 func s:equivalence_test()
-  let str = "AÃ€ÃÃ‚ÃƒÃ„Ã… B C D EÃˆÃ‰ÃŠÃ‹ F G H IÃŒÃÃÃ J K L M NÃ‘ OÃ’Ã“Ã”Ã•Ã–Ã˜ P Q R S T UÃ™ÃšÃ›Ãœ V W X YÃ Z aÃ Ã¡Ã¢Ã£Ã¤Ã¥ b c d eÃ¨Ã©ÃªÃ« f g h iÃ¬Ã­Ã®Ã¯ j k l m nÃ± oÃ²Ã³Ã´ÃµÃ¶Ã¸ p q r s t uÃ¹ÃºÃ»Ã¼ v w x yÃ½Ã¿ z"
+  let str = 'AÀÁÂÃÄÅ B C D EÈÉÊË F G H IÌÍÎÏ J K L M NÑ OÒÓÔÕÖØ P Q R S T UÙÚÛÜ V W X Yİ Z '
+  \      .. 'aàáâãäå b c d eèéêë f g h iìíîï j k l m nñ oòóôõöø p q r s t uùúûü v w x yıÿ z '
+  \      .. "0 1 2 3 4 5 6 7 8 9 "
+  \      .. "` ~ ! ? ; : . , / \\ ' \" | < > [ ] { } ( ) @ # $ % ^ & * _ - + \b \e \f \n \r \t"
   let groups = split(str)
   for group1 in groups
       for c in split(group1, '\zs')
@@ -337,7 +340,7 @@ func Test_regexp_single_line_pat()
   call add(tl, [2, '\v((ab)|c*)+', 'abcccaba', 'abcccab', '', 'ab'])
   call add(tl, [2, '\v(a(c*)+b)+', 'acbababaaa', 'acbabab', 'ab', ''])
   call add(tl, [2, '\v(a|b*)+', 'aaaa', 'aaaa', ''])
-  call add(tl, [2, '\p*', 'aÃ¡ 	', 'aÃ¡ '])
+  call add(tl, [2, '\p*', 'aá 	', 'aá '])
 
   " Test greedy-ness and lazy-ness
   call add(tl, [2, 'a\{-2,7}','aaaaaaaaaaaaa', 'aa'])
@@ -683,7 +686,7 @@ func Test_matchstr_with_ze()
   bwipe!
 endfunc
 
-" Check a pattern with a look beind crossing a line boundary
+" Check a pattern with a look behind crossing a line boundary
 func Test_lookbehind_across_line()
   new
   call append(0, ['Behind:', 'asdfasd<yyy', 'xxstart1', 'asdfasd<yy',
@@ -787,11 +790,108 @@ func Test_regexp_error()
   set re&
 endfunc
 
+" Check patterns matching cursor position.
+func s:curpos_test2()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  s/\%.c.*//g
+  call setpos('.', [0, 3, 15, 0])
+  s/\%.l.*//g
+  call setpos('.', [0, 5, 3, 0])
+  s/\%.v.*/_/g
+  call assert_equal(['1',
+        \ '2 foobar ',
+        \ '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	_',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  call assert_fails('call search("\\%.1l")', 'E1204:')
+  call assert_fails('call search("\\%.1c")', 'E1204:')
+  call assert_fails('call search("\\%.1v")', 'E1204:')
+  bwipe!
+endfunc
+
+" Check patterns matching before or after cursor position.
+func s:curpos_test3()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.c//
+  call setpos('.', [0, 3, 10, 0])
+  :s/\%>.c.*$//
+  call setpos('.', [0, 5, 4, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.v/_/
+  call setpos('.', [0, 6, 4, 0])
+  :s/\%>.v.*$/_/
+  call assert_equal(['1',
+        \ ' eins zwei drei vier fünf sechse',
+        \ '3 foobar e',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '_foobar eins zwei drei vier fünf sechse',
+        \ '6	fo_',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  sil %d
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 4, 4, 0])
+  %s/\%<.l.*//
+  call setpos('.', [0, 5, 4, 0])
+  %s/\%>.l.*//
+  call assert_equal(['', '', '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '', ''],
+        \ getline(1, '$'))
+  bwipe!
+endfunc
+
+" Test that matching below, at or after the
+" cursor position work
+func Test_matching_pos()
+  for val in range(3)
+    exe "set re=" .. val
+    " Match at cursor position
+    call s:curpos_test2()
+    " Match before or after cursor position
+    call s:curpos_test3()
+  endfor
+  set re&
+endfunc
+
 func Test_using_mark_position()
   " this was using freed memory
+  " new engine
   new
   norm O0
   call assert_fails("s/\\%')", 'E486:')
+  bwipe!
+
+  " old engine
+  new
+  norm O0
+  call assert_fails("s/\\%#=1\\%')", 'E486:')
   bwipe!
 endfunc
 

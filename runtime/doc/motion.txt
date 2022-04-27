@@ -1044,6 +1044,9 @@ The "file/text" column shows the file name, or the text at the jump if it is
 in the current file (an indent is removed and a long line is truncated to fit
 in the window).
 
+The marker ">" indicates the current position in the jumplist.  It may not be
+shown when filtering the |:jumps| command using |:filter|
+
 You are currently in line 1167.  If you then use the CTRL-O command, the
 cursor is put in line 1154.  This results in:
 

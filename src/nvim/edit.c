@@ -387,12 +387,13 @@ static void insert_enter(InsertState *s)
     State = INSERT;
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
   stop_insert_mode = false;
 
-  // Need to recompute the cursor position, it might move when the cursor is
-  // on a TAB or special character.
-  curs_columns(curwin, true);
+  // need to position cursor again when on a TAB
+  if (gchar_cursor() == TAB) {
+    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+  }
 
   // Enable langmap or IME, indicated by 'iminsert'.
   // Note that IME may enabled/disabled without us noticing here, thus the
@@ -845,6 +846,7 @@ static int insert_execute(VimState *state, int key)
 /// Don't do this when still processing a command or a mapping.
 /// Don't do this when inside a ":normal" command.
 bool goto_im(void)
+  FUNC_ATTR_PURE
 {
   return p_im && stuff_empty() && typebuf_typed();
 }
@@ -1392,6 +1394,7 @@ static void insert_do_complete(InsertState *s)
     compl_cont_status = 0;
   }
   compl_busy = false;
+  can_si = true;  // allow smartindenting
 }
 
 static void insert_do_cindent(InsertState *s)
@@ -1480,15 +1483,13 @@ bool edit(int cmdchar, bool startln, long count)
 /// @param ready  not busy with something
 static void ins_redraw(bool ready)
 {
-  bool conceal_cursor_moved = false;
-
   if (char_avail()) {
     return;
   }
 
   // Trigger CursorMoved if the cursor moved.  Not when the popup menu is
   // visible, the command might delete it.
-  if (ready && (has_event(EVENT_CURSORMOVEDI) || curwin->w_p_cole > 0)
+  if (ready && has_event(EVENT_CURSORMOVEDI)
       && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)
       && !pum_visible()) {
     // Need to update the screen first, to make sure syntax
@@ -1498,13 +1499,10 @@ static void ins_redraw(bool ready)
     if (syntax_present(curwin) && must_redraw) {
       update_screen(0);
     }
-    if (has_event(EVENT_CURSORMOVEDI)) {
-      // Make sure curswant is correct, an autocommand may call
-      // getcurpos()
-      update_curswant();
-      ins_apply_autocmds(EVENT_CURSORMOVEDI);
-    }
-    conceal_cursor_moved = true;
+    // Make sure curswant is correct, an autocommand may call
+    // getcurpos()
+    update_curswant();
+    ins_apply_autocmds(EVENT_CURSORMOVEDI);
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
@@ -1546,10 +1544,9 @@ static void ins_redraw(bool ready)
     }
   }
 
-  // Trigger Scroll if viewport changed.
-  if (ready && has_event(EVENT_WINSCROLLED)
-      && win_did_scroll(curwin)) {
-    do_autocmd_winscrolled(curwin);
+  if (ready) {
+    // Trigger Scroll if viewport changed.
+    may_trigger_winscrolled();
   }
 
   // Trigger BufModified if b_changed_invalid is set.
@@ -1558,11 +1555,6 @@ static void ins_redraw(bool ready)
       && !pum_visible()) {
     apply_autocmds(EVENT_BUFMODIFIEDSET, NULL, NULL, false, curbuf);
     curbuf->b_changed_invalid = false;
-  }
-
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
-      && conceal_cursor_moved) {
-    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   pum_check_clear();
@@ -1663,7 +1655,7 @@ void edit_putchar(int c, bool highlight)
 
 /// Return the effective prompt for the specified buffer.
 char_u *buf_prompt_text(const buf_T *const buf)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (buf->b_prompt_text == NULL) {
     return (char_u *)"% ";
@@ -1672,7 +1664,8 @@ char_u *buf_prompt_text(const buf_T *const buf)
 }
 
 // Return the effective prompt for the current buffer.
-char_u *prompt_text(void) FUNC_ATTR_WARN_UNUSED_RESULT
+char_u *prompt_text(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   return buf_prompt_text(curbuf);
 }
@@ -1720,6 +1713,7 @@ static void init_prompt(int cmdchar_todo)
 
 /// @return  true if the cursor is in the editable position of the prompt line.
 bool prompt_curpos_editable(void)
+  FUNC_ATTR_PURE
 {
   return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
          && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
@@ -2105,11 +2099,12 @@ static void ins_ctrl_x(void)
     ctrl_x_mode = CTRL_X_CMDLINE_CTRL_X;
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
 }
 
 // Whether other than default completion has been selected.
 bool ctrl_x_mode_not_default(void)
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode != CTRL_X_NORMAL;
 }
@@ -2117,6 +2112,7 @@ bool ctrl_x_mode_not_default(void)
 // Whether CTRL-X was typed without a following character,
 // not including when in CTRL-X CTRL-V mode.
 bool ctrl_x_mode_not_defined_yet(void)
+  FUNC_ATTR_PURE
 {
   return ctrl_x_mode == CTRL_X_NOT_DEFINED_YET;
 }
@@ -2718,7 +2714,7 @@ void set_completion(colnr_T startcol, list_T *list)
     show_pum(save_w_wrow, save_w_leftcol);
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
   ui_flush();
 }
 
@@ -3149,6 +3145,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
  * Returns a pointer to the first char of the word.  Also stops at a NUL.
  */
 char_u *find_word_start(char_u *ptr)
+  FUNC_ATTR_PURE
 {
   while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1) {
     ptr += utfc_ptr2len(ptr);
@@ -3161,6 +3158,7 @@ char_u *find_word_start(char_u *ptr)
  * Returns a pointer to just after the word.
  */
 char_u *find_word_end(char_u *ptr)
+  FUNC_ATTR_PURE
 {
   const int start_class = mb_get_class(ptr);
   if (start_class > 1) {
@@ -3898,7 +3896,7 @@ static bool ins_compl_prep(int c)
     ins_apply_autocmds(EVENT_COMPLETEDONE);
   }
 
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   /* reset continue_* if we left expansion-mode, if we stay they'll be
    * (re)set properly in ins_complete() */
@@ -4649,7 +4647,7 @@ static int ins_compl_get_exp(pos_T *ini)
       compl_curr_match = compl_old_match;
     }
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   return i;
 }
@@ -7153,6 +7151,7 @@ int stuff_inserted(int c, long count, int no_esc)
 }
 
 char_u *get_last_insert(void)
+  FUNC_ATTR_PURE
 {
   if (last_insert == NULL) {
     return NULL;
@@ -7336,21 +7335,21 @@ static void mb_replace_pop_ins(int cc)
       // Not a multi-byte char, put it back.
       replace_push(c);
       break;
+    }
+
+    buf[0] = c;
+    assert(n > 1);
+    for (i = 1; i < n; i++) {
+      buf[i] = replace_pop();
+    }
+    if (utf_iscomposing(utf_ptr2char(buf))) {
+      ins_bytes_len(buf, n);
     } else {
-      buf[0] = c;
-      assert(n > 1);
-      for (i = 1; i < n; i++) {
-        buf[i] = replace_pop();
+      // Not a composing char, put it back.
+      for (i = n - 1; i >= 0; i--) {
+        replace_push(buf[i]);
       }
-      if (utf_iscomposing(utf_ptr2char(buf))) {
-        ins_bytes_len(buf, n);
-      } else {
-        // Not a composing char, put it back.
-        for (i = n - 1; i >= 0; i--) {
-          replace_push(buf[i]);
-        }
-        break;
-      }
+      break;
     }
   }
 }
@@ -7530,7 +7529,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
     // Does it look like a control character?
     if (*look == '^' && look[1] >= '?' && look[1] <= '_') {
-      if (try_match && keytyped == Ctrl_chr(look[1])) {
+      if (try_match && keytyped == CTRL_CHR(look[1])) {
         return true;
       }
       look += 2;
@@ -7699,6 +7698,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
  * Map Hebrew keyboard when in hkmap mode.
  */
 int hkmap(int c)
+  FUNC_ATTR_PURE
 {
   if (p_hkmapp) {   // phonetic mapping, by Ilya Dogolazky
     enum {
@@ -7736,7 +7736,7 @@ int hkmap(int c)
     };
 
     if (c == 'N' || c == 'M' || c == 'P' || c == 'C' || c == 'Z') {
-      return (int)(map[CharOrd(c)] - 1 + p_aleph);
+      return (int)(map[CHAR_ORD(c)] - 1 + p_aleph);
     } else if (c == 'x') {  // '-1'='sofit'
       return 'X';
     } else if (c == 'q') {
@@ -7752,7 +7752,7 @@ int hkmap(int c)
       // do this the same was as 5.7 and previous, so it works correctly on
       // all systems.  Specifically, the e.g. Delete and Arrow keys are
       // munged and won't work if e.g. searching for Hebrew text.
-      return (int)(map[CharOrdLow(c)] + p_aleph);
+      return (int)(map[CHAR_ORD_LOW(c)] + p_aleph);
     } else {
       return c;
     }
@@ -7782,12 +7782,12 @@ int hkmap(int c)
       if (c < 'a' || c > 'z') {
         return c;
       }
-      c = str[CharOrdLow(c)];
+      c = str[CHAR_ORD_LOW(c)];
       break;
     }
     }
 
-    return (int)(CharOrdLow(c) + p_aleph);
+    return (int)(CHAR_ORD_LOW(c) + p_aleph);
   }
 }
 
@@ -8059,9 +8059,11 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
 
 
   State = NORMAL;
-  trigger_modechanged();
-  // need to position cursor again (e.g. when on a TAB )
-  changed_cline_bef_curs();
+  may_trigger_modechanged();
+  // need to position cursor again when on a TAB
+  if (gchar_cursor() == TAB) {
+    curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
+  }
 
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
@@ -8161,7 +8163,7 @@ static void ins_insert(int replaceState)
   } else {
     State = replaceState | (State & LANGMAP);
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
   AppendCharToRedobuff(K_INS);
   showmode();
   ui_cursor_shape();            // may show different cursor shape
@@ -9267,7 +9269,7 @@ static int ins_digraph(void)
     }
     if (cc != ESC) {
       AppendToRedobuff(CTRL_V_STR);
-      c = getdigraph(c, cc, true);
+      c = digraph_get(c, cc, true);
       clear_showcmd();
       return c;
     }

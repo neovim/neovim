@@ -84,6 +84,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, BufUpdateCallbacks cb
 }
 
 bool buf_updates_active(buf_T *buf)
+  FUNC_ATTR_PURE
 {
   return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
 }

@@ -13,6 +13,7 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/tui/tui.h"
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
 #ifdef WIN32
@@ -41,6 +42,7 @@ void tinput_init(TermInput *input, Loop *loop)
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
   input->waiting_for_bg_response = 0;
+  input->extkeys_type = kExtkeysNone;
   // The main thread is waiting for the UI thread to call CONTINUE, so it can
   // safely access global variables.
   input->ttimeout = (bool)p_ttimeout;
@@ -344,6 +346,39 @@ static void tk_getkeys(TermInput *input, bool force)
       forward_modified_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
+      // There is no specified limit on the number of parameters a CSI sequence can contain, so just
+      // allocate enough space for a large upper bound
+      long args[16];
+      size_t nargs = 16;
+      unsigned long cmd;
+      if (termkey_interpret_csi(input->tk, &key, args, &nargs, &cmd) == TERMKEY_RES_KEY) {
+        uint8_t intermediate = (cmd >> 16) & 0xFF;
+        uint8_t initial = (cmd >> 8) & 0xFF;
+        uint8_t command = cmd & 0xFF;
+
+        // Currently unused
+        (void)intermediate;
+
+        if (input->waiting_for_csiu_response > 0) {
+          if (initial == '?' && command == 'u') {
+            // The first (and only) argument contains the current progressive
+            // enhancement flags. Only enable CSI u mode if the first bit
+            // (disambiguate escape codes) is not already set
+            if (nargs > 0 && (args[0] & 0x1) == 0) {
+              input->extkeys_type = kExtkeysCSIu;
+            } else {
+              input->extkeys_type = kExtkeysNone;
+            }
+          } else if (initial == '?' && command == 'c') {
+            // Received Primary Device Attributes response
+            input->waiting_for_csiu_response = 0;
+            tui_enable_extkeys(input->tui_data);
+          } else {
+            input->waiting_for_csiu_response--;
+          }
+        }
+      }
     }
   }
 
@@ -439,37 +474,10 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
-// ESC NUL => <Esc>
-static bool handle_forced_escape(TermInput *input)
-{
-  if (rbuffer_size(input->read_stream.buffer) > 1
-      && !rbuffer_cmp(input->read_stream.buffer, "\x1b\x00", 2)) {
-    // skip the ESC and NUL and push one <esc> to the input buffer
-    size_t rcnt;
-    termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
-                                                   &rcnt), 1);
-    rbuffer_consumed(input->read_stream.buffer, 2);
-    tk_getkeys(input, true);
-    return true;
-  }
-  return false;
-}
-
 static void set_bg_deferred(void **argv)
 {
   char *bgvalue = argv[0];
-  if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
-    // Value differs, apply it.
-    if (starting) {
-      // Wait until after startup, so OptionSet is triggered.
-      do_cmdline_cmd((bgvalue[0] == 'l')
-                     ? "autocmd VimEnter * ++once ++nested set bg=light"
-                     : "autocmd VimEnter * ++once ++nested set bg=dark");
-    } else {
-      set_option_value("bg", 0L, bgvalue, 0);
-      reset_option_was_set("bg");
-    }
-  }
+  set_tty_background(bgvalue);
 }
 
 // During startup, tui.c requests the background color (see `ext.get_bg`).
@@ -583,7 +591,6 @@ static void handle_raw_buffer(TermInput *input, bool force)
     if (!force
         && (handle_focus_event(input)
             || (is_paste = handle_bracketed_paste(input)) != kNotApplicable
-            || handle_forced_escape(input)
             || (is_bc = handle_background_color(input)) != kNotApplicable)) {
       if (is_paste == kIncomplete || is_bc == kIncomplete) {
         // Wait for the next input, leaving it in the raw buffer due to an

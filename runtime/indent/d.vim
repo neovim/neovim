@@ -2,7 +2,7 @@
 " Language:	D
 " Maintainer:	Jason Mills <jmills@cs.mun.ca> (Invalid email address)
 " 		Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2005 Nov 22
+" Last Change:	2022 Apr 06
 " Version:	0.1
 "
 " Please email me with bugs, comments, and suggestion. Put vim in the subject
@@ -18,5 +18,7 @@ let b:did_indent = 1
 
 " D indenting is a lot like the built-in C indenting.
 setlocal cindent
+
+let b:undo_indent = "setl cin<"
 
 " vim: ts=8 noet

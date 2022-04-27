@@ -109,6 +109,146 @@ describe('search highlighting', function()
     ]])
   end)
 
+  describe('CurSearch highlight', function()
+    before_each(function()
+      screen:set_default_attr_ids({
+        [1] = {background = Screen.colors.Yellow},  -- Search
+        [2] = {foreground = Screen.colors.White, background = Screen.colors.Black},  -- CurSearch
+        [3] = {foreground = Screen.colors.Red},  -- WarningMsg
+      })
+      command('highlight CurSearch guibg=Black guifg=White')
+    end)
+
+    it('works for match under cursor', function()
+      insert([[
+        There is no way that a bee should be
+        able to fly. Its wings are too small
+        to get its fat little body off the
+        ground. The bee, of course, flies
+        anyway because bees don't care what
+        humans think is impossible.]])
+
+      feed('/bee<CR>')
+      screen:expect{grid=[[
+        There is no way that a {2:^bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {1:bee}, of course, flies       |
+        anyway because {1:bee}s don't care what     |
+        humans think is impossible.             |
+        {3:search hit BOTTOM, continuing at TOP}    |
+      ]]}
+
+      feed('nn')
+      screen:expect{grid=[[
+        There is no way that a {1:bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {1:bee}, of course, flies       |
+        anyway because {2:^bee}s don't care what     |
+        humans think is impossible.             |
+        /bee                                    |
+      ]]}
+
+      feed('N')
+      screen:expect{grid=[[
+        There is no way that a {1:bee} should be    |
+        able to fly. Its wings are too small    |
+        to get its fat little body off the      |
+        ground. The {2:^bee}, of course, flies       |
+        anyway because {1:bee}s don't care what     |
+        humans think is impossible.             |
+        ?bee                                    |
+      ]]}
+    end)
+
+    it('works for multiline match', function()
+      command([[call setline(1, ['one', 'foo', 'bar', 'baz', 'foo the foo and foo', 'bar'])]])
+      feed('gg/foo<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo} the {1:foo} and {1:foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {2:^foo} the {1:foo} and {1:foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo} the {2:^foo} and {1:foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      feed('n')
+      screen:expect([[
+        one                                     |
+        {1:foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo} the {1:foo} and {2:^foo}                     |
+        bar                                     |
+        /foo                                    |
+      ]])
+      command([[call setline(5, 'foo')]])
+      feed('0?<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        bar                                     |
+        baz                                     |
+        {1:foo}                                     |
+        bar                                     |
+        ?foo                                    |
+      ]])
+      feed('gg/foo\\nbar<CR>')
+      screen:expect([[
+        one                                     |
+        {2:^foo}                                     |
+        {2:bar}                                     |
+        baz                                     |
+        {1:foo}                                     |
+        {1:bar}                                     |
+        /foo\nbar                               |
+      ]])
+      command([[call setline(1, ['---', 'abcdefg', 'hijkl', '---', 'abcdefg', 'hijkl'])]])
+      feed('gg/efg\\nhij<CR>')
+      screen:expect([[
+        ---                                     |
+        abcd{2:^efg}                                 |
+        {2:hij}kl                                   |
+        ---                                     |
+        abcd{1:efg}                                 |
+        {1:hij}kl                                   |
+        /efg\nhij                               |
+      ]])
+      feed('n')
+      screen:expect([[
+        ---                                     |
+        abcd{1:efg}                                 |
+        {1:hij}kl                                   |
+        ---                                     |
+        abcd{2:^efg}                                 |
+        {2:hij}kl                                   |
+        /efg\nhij                               |
+      ]])
+    end)
+  end)
+
   it('highlights after EOL', function()
     insert("\n\n\n\n\n\n")
 
@@ -471,7 +611,7 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
-    -- check hilights work also in folds
+    -- check highlights work also in folds
     feed("zf4j")
     command("%foldopen")
     screen:expect([[

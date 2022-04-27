@@ -924,7 +924,7 @@ describe('API/extmarks', function()
     eq(3, set_extmark(ns, 3, positions[2][1], positions[2][2]))
     eq(4, set_extmark(ns, 0, positions[1][1], positions[1][2]))
 
-    -- mixing manual and allocated id:s are not recommened, but it should
+    -- mixing manual and allocated id:s are not recommended, but it should
     -- do something reasonable
     eq(6, set_extmark(ns, 6, positions[2][1], positions[2][2]))
     eq(7, set_extmark(ns, 0, positions[1][1], positions[1][2]))

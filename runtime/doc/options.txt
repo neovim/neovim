@@ -69,7 +69,7 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}+={value}				*:set+=*
 			Add the {value} to a number option, or append the
 			{value} to a string option.  When the option is a
-			comma separated list, a comma is added, unless the
+			comma-separated list, a comma is added, unless the
 			value was empty.
 			If the option is a list of flags, superfluous flags
 			are removed.  When adding a flag that was already
@@ -79,7 +79,7 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}^={value}				*:set^=*
 			Multiply the {value} to a number option, or prepend
 			the {value} to a string option.  When the option is a
-			comma separated list, a comma is added, unless the
+			comma-separated list, a comma is added, unless the
 			value was empty.
 			Also see |:set-args| above.
 
@@ -87,7 +87,7 @@ achieve special effects.  These options come in three forms:
 			Subtract the {value} from a number option, or remove
 			the {value} from a string option, if it is there.
 			If the {value} is not found in a string option, there
-			is no error or warning.  When the option is a comma
+			is no error or warning.  When the option is a comma-
 			separated list, a comma is deleted, unless the option
 			becomes empty.
 			When the option is a list of flags, {value} must be
@@ -751,7 +751,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
 		insert.
 
-	When the value is empty, Vi compatible backspacing is used.
+	When the value is empty, Vi compatible backspacing is used, none of
+	the ways mentioned for the items above are possible.
 
 	For backwards compatibility with version 5.4 and earlier:
 	value	effect	~
@@ -778,7 +779,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'backupcopy' 'bkc'	string	(Vi default for Unix: "yes", otherwise: "auto")
 			global or local to buffer |global-local|
 	When writing a file and a backup is made, this option tells how it's
-	done.  This is a comma separated list of words.
+	done.  This is a comma-separated list of words.
 
 	The main values are:
 	"yes"	make a copy of the file and overwrite the original one
@@ -802,10 +803,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  file.
 	- When the file is a link the new file will not be a link.
 
-	The "auto" value is the middle way: When Vim sees that renaming file
-	is possible without side effects (the attributes can be passed on and
-	the file is not a link) that is used.  When problems are expected, a
-	copy will be made.
+	The "auto" value is the middle way: When Vim sees that renaming the
+	file is possible without side effects (the attributes can be passed on
+	and the file is not a link) that is used.  When problems are expected,
+	a copy will be made.
 
 	The "breaksymlink" and "breakhardlink" values can be used in
 	combination with any of "yes", "no" and "auto".  When included, they
@@ -824,13 +825,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	When a copy is made, the original file is truncated and then filled
 	with the new text.  This means that protection bits, owner and
-	symbolic links of the original file are unmodified.  The backup file
+	symbolic links of the original file are unmodified.  The backup file,
 	however, is a new file, owned by the user who edited the file.  The
 	group of the backup is set to the group of the original file.  If this
 	fails, the protection bits for the group are made the same as for
 	others.
 
-	When the file is renamed this is the other way around: The backup has
+	When the file is renamed, this is the other way around: The backup has
 	the same attributes of the original file, and the newly written file
 	is owned by the current user.  When the file was a (hard/symbolic)
 	link, the new file will not!  That's why the "auto" value doesn't
@@ -892,7 +893,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	accidentally overwriting existing files with a backup file.  You might
 	prefer using ".bak", but make sure that you don't have files with
 	".bak" that you want to keep.
-	Only normal file name characters can be used, "/\*?[|<>" are illegal.
+	Only normal file name characters can be used; "/\*?[|<>" are illegal.
 
 	If you like to keep a lot of backups, you could use a BufWritePre
 	autocommand to change 'backupext' just before writing the file to
@@ -920,7 +921,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Note that environment variables are not expanded.  If you want to use
 	$HOME you must expand it explicitly, e.g.: >
-		:let backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
+		:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 
 <	Note that the default also makes sure that "crontab -e" works (when a
 	backup would be made by renaming the original file crontab won't see
@@ -938,7 +939,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "all")
 			global
-	Specifies for which events the bell will not be rung. It is a comma
+	Specifies for which events the bell will not be rung. It is a comma-
 	separated list of items. For each item that is present, the bell
 	will be silenced. This is most useful to specify specific events in
 	insert mode to be silenced.
@@ -1029,7 +1030,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option lets you choose which characters might cause a line
 	break if 'linebreak' is on.  Only works for ASCII characters.
 
-						*'breakindent'* *'bri'*
+			*'breakindent'* *'bri'* *'nobreakindent'* *'nobri'*
 'breakindent' 'bri'	boolean (default off)
 			local to window
 	Every wrapped line will continue visually indented (same amount of
@@ -1076,16 +1077,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies what happens when a buffer is no longer
 	displayed in a window:
 	  <empty>	follow the global 'hidden' option
-	  hide		hide the buffer (don't unload it), also when 'hidden'
-			is not set
-	  unload	unload the buffer, also when 'hidden' is set or using
-			|:hide|
-	  delete	delete the buffer from the buffer list, also when
-			'hidden' is set or using |:hide|, like using
-			|:bdelete|
-	  wipe		wipe out the buffer from the buffer list, also when
-			'hidden' is set or using |:hide|, like using
-			|:bwipeout|
+	  hide		hide the buffer (don't unload it), even if 'hidden' is
+			not set
+	  unload	unload the buffer, even if 'hidden' is set; the
+			|:hide| command will also unload the buffer
+	  delete	delete the buffer from the buffer list, even if
+			'hidden' is set; the |:hide| command will also delete
+			the buffer, making it behave like |:bdelete|
+	  wipe		wipe the buffer from the buffer list, even if
+			'hidden' is set; the |:hide| command will also wipe
+			out the buffer, making it behave like |:bwipeout|
 
 	CAREFUL: when "unload", "delete" or "wipe" is used changes in a buffer
 	are lost without a warning.  Also, these values may break autocommands
@@ -1287,10 +1288,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	matter, include the keyword both the uppercase and lowercase:
 	"if,If,IF".
 
-						*'clipboard'* *'cb'*
+						*'cinscopedecls'* *'cinsd'*
+'cinscopedecls' 'cinsd'	string	(default "public,protected,private")
+			local to buffer
+			{not available when compiled without the |+cindent|
+			feature}
+	Keywords that are interpreted as a C++ scope declaration by |cino-g|.
+	Useful e.g. for working with the Qt framework that defines additional
+	scope declarations "signals", "public slots" and "private slots": >
+		set cinscopedecls+=signals,public\ slots,private\ slots
+
+<						*'clipboard'* *'cb'*
 'clipboard' 'cb'	string	(default "")
 			global
-	This option is a list of comma separated names.
+	This option is a list of comma-separated names.
 	These names are recognized:
 
 						*clipboard-unnamed*
@@ -1329,7 +1340,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'colorcolumn'* *'cc'*
 'colorcolumn' 'cc'	string	(default "")
 			local to window
-	'colorcolumn' is a comma separated list of screen columns that are
+	'colorcolumn' is a comma-separated list of screen columns that are
 	highlighted with ColorColumn |hl-ColorColumn|.  Useful to align
 	text.  Will make screen redrawing slower.
 	The screen column can be an absolute number, or a number preceded with
@@ -1362,7 +1373,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'comments' 'com'	string	(default
 				"s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-")
 			local to buffer
-	A comma separated list of strings that can start a comment line.  See
+	A comma-separated list of strings that can start a comment line.  See
 	|format-comments|.  See |option-backslash| about using backslashes to
 	insert a space.
 
@@ -1379,7 +1390,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies how keyword completion |ins-completion| works
 	when CTRL-P or CTRL-N are used.  It is also used for whole-line
 	completion |i_CTRL-X_CTRL-L|.  It indicates the type of completion
-	and the places to scan.  It is a comma separated list of flags:
+	and the places to scan.  It is a comma-separated list of flags:
 	.	scan the current buffer ('wrapscan' is ignored)
 	w	scan buffers from other windows
 	b	scan other loaded buffers that are in the buffer list
@@ -1436,7 +1447,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	string	(default: "menu,preview")
 			global
-	A comma separated list of options for Insert mode completion
+	A comma-separated list of options for Insert mode completion
 	|ins-completion|.  The supported values are:
 
 	   menu	    Use a popup menu to show the possible completions.  The
@@ -1841,7 +1852,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cursorlineopt'* *'culopt'*
 'cursorlineopt' 'culopt' string (default: "number,line")
 			local to window
-	Comma separated list of settings for how 'cursorline' is displayed.
+	Comma-separated list of settings for how 'cursorline' is displayed.
 	Valid values:
 	"line"		Highlight the text line of the cursor with
 			CursorLine |hl-CursorLine|.
@@ -2106,7 +2117,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'display'* *'dy'*
 'display' 'dy'		string	(default "lastline,msgsep", Vi default: "")
 			global
-	Change the way text is displayed.  This is comma separated list of
+	Change the way text is displayed.  This is comma-separated list of
 	flags:
 	lastline	When included, as much as possible of the last line
 			in a window will be displayed.  "@@@" is put in the
@@ -2132,7 +2143,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		hor	horizontally, height of windows is not affected
 		both	width and height of windows is affected
 
-						*'emoji'* *'emo'*
+					*'emoji'* *'emo'* *'noemoji'* *'noemo'*
 'emoji' 'emo'	boolean (default: on)
 			global
 	When on all Unicode emoji characters are considered to be full width.
@@ -2224,7 +2235,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	A list of autocommand event names, which are to be ignored.
 	When set to "all" or when "all" is one of the items, all autocommand
 	events are ignored, autocommands will not be executed.
-	Otherwise this is a comma separated list of event names.  Example: >
+	Otherwise this is a comma-separated list of event names.  Example: >
 	    :set ei=WinEnter,WinLeave
 <
 				 *'expandtab'* *'et'* *'noexpandtab'* *'noet'*
@@ -2436,7 +2447,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fillchars' 'fcs'	string	(default "")
 			global or local to window |global-local|
 	Characters to fill the statuslines and vertical separators.
-	It is a comma separated list of items:
+	It is a comma-separated list of items:
 
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
@@ -2617,7 +2628,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 							     search,tag,undo")
 			global
 	Specifies for which type of commands folds will be opened, if the
-	command moves the cursor into a closed fold.  It is a comma separated
+	command moves the cursor into a closed fold.  It is a comma-separated
 	list of items.
 	NOTE: When the command is part of a mapping this option is not used.
 	Add the |zv| command to the mapping to get the same effect.
@@ -2732,7 +2743,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
-						*'fsync'* *'fs'*
+					*'fsync'* *'fs'* *'nofsync'* *'nofs'*
 'fsync' 'fs'		boolean	(default off)
 			global
 	When on, the OS function fsync() will be called after saving a file
@@ -2808,7 +2819,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
 		  \,sm:block-blinkwait175-blinkoff150-blinkon175
 
-<	The option is a comma separated list of parts.  Each part consists of a
+<	The option is a comma-separated list of parts.  Each part consists of a
 	mode-list and an argument-list:
 		mode-list:argument-list,mode-list:argument-list,..
 	The mode-list is a dash separated list of these modes:
@@ -3108,7 +3119,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'helplang'* *'hlg'*
 'helplang' 'hlg'	string	(default: messages language or empty)
 			global
-	Comma separated list of languages.  Vim will use the first language
+	Comma-separated list of languages.  Vim will use the first language
 	for which the desired help can be found.  The English help will always
 	be used as a last resort.  You can add "en" to prefer English over
 	another language, but that will only find tags that exist in that
@@ -3128,10 +3139,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when it is |abandon|ed.  When on a buffer becomes hidden when it is
 	|abandon|ed.  A buffer displayed in another window does not become
 	hidden, of course.
+
 	Commands that move through the buffer list sometimes hide a buffer
-	although the 'hidden' option is off: when the buffer is modified,
-	'autowrite' is off or writing is not possible, and the '!' flag was
-	used.  See also |windows|.
+	although the 'hidden' option is off when these three are true:
+	- the buffer is modified
+	- 'autowrite' is off or writing is not possible
+	- the '!' flag was used
+	Also see |windows|.
+
 	To hide a specific buffer use the 'bufhidden' option.
 	'hidden' is set for one command with ":hide {command}" |:hide|.
 
@@ -3161,8 +3176,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'hlsearch' 'hls'	boolean	(default on)
 			global
 	When there is a previous search pattern, highlight all its matches.
-	The |hl-Search| highlight group determines the highlighting. Note that
-	only the matching text is highlighted, any offsets are not applied.
+	The |hl-Search| highlight group determines the highlighting for all
+	matches not under the cursor while the |hl-CurSearch| highlight group
+	(if defined) determines the highlighting for the match under the
+	cursor. If |hl-CurSearch| is not defined, then |hl-Search| is used for
+	both. Note that only the matching text is highlighted, any offsets
+	are not applied.
 	See also: 'incsearch' and |:match|.
 	When you get bored looking at the highlighted matches, you can turn it
 	off with |:nohlsearch|.  This does not change the option value, as
@@ -3562,7 +3581,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'keymodel'* *'km'*
 'keymodel' 'km'		string	(default "")
 			global
-	List of comma separated words, which enable special things that keys
+	List of comma-separated words, which enable special things that keys
 	can do.  These values can be used:
 	   startsel	Using a shifted special key starts selection (either
 			Select mode or Visual mode, depending on "key" being
@@ -3670,8 +3689,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		0: never
 		1: only if there are at least two windows
 		2: always
-		3: have a global statusline at the bottom instead of one for
-		   each window
+		3: always and ONLY the last window
 	The screen looks nicer with a status line if you have several
 	windows, but it takes another screen line. |status-line|
 
@@ -3738,7 +3756,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'lispwords'* *'lw'*
 'lispwords' 'lw'	string	(default is very long)
 			global or local to buffer |global-local|
-	Comma separated list of words that influence the Lisp indenting.
+	Comma-separated list of words that influence the Lisp indenting.
 	|'lisp'|
 
 						*'list'* *'nolist'*
@@ -3763,7 +3781,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 Vi default: "eol:$")
 			global or local to window |global-local|
 	Strings to use in 'list' mode and for the |:list| command.  It is a
-	comma separated list of string settings.
+	comma-separated list of string settings.
 
 							*lcs-eol*
 	  eol:c		Character to show at the end of each line.  When
@@ -4220,7 +4238,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					m:no,ml:up-arrow,v:rightup-arrow")
 			global
 	This option tells Vim what the mouse pointer should look like in
-	different modes.  The option is a comma separated list of parts, much
+	different modes.  The option is a comma-separated list of parts, much
 	like used for 'guicursor'.  Each part consist of a mode/location-list
 	and an argument-list:
 		mode-list:shape,mode-list:shape,..
@@ -5091,7 +5109,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'selectmode'* *'slm'*
 'selectmode' 'slm'	string	(default "")
 			global
-	This is a comma separated list of words, which specifies when to start
+	This is a comma-separated list of words, which specifies when to start
 	Select mode instead of Visual mode, when a selection is started.
 	Possible values:
 	   mouse	when using the mouse
@@ -5106,7 +5124,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 Vi default: "blank,buffers,curdir,folds,
 					       help,options,tabpages,winsize")
 			global
-	Changes the effect of the |:mksession| command.  It is a comma
+	Changes the effect of the |:mksession| command.  It is a comma-
 	separated list of words.  Each word enables saving and restoring
 	something:
 	   word		save and restore ~
@@ -5150,7 +5168,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				 Vi default: "")
 			global
 	When non-empty, the shada file is read upon startup and written
-	when exiting Vim (see |shada-file|).  The string should be a comma
+	when exiting Vim (see |shada-file|).  The string should be a comma-
 	separated list of parameters, each consisting of a single character
 	identifying the particular parameter, followed by a number or string
 	which specifies the value of that parameter.  If a particular
@@ -5514,8 +5532,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		"Pattern not found", "Back at original", etc.
 	  q	use "recording" instead of "recording @a"
 	  F	don't give the file info when editing a file, like `:silent`
-		was used for the command; note that this also affects messages
-		from autocommands
+		was used for the command
 	  S     do not show search count message when searching, e.g.
 	        "[1/5]"
 
@@ -5769,7 +5786,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	commands.  It must end in ".{encoding}.add".  You need to include the
 	path, otherwise the file is placed in the current directory.
 								*E765*
-	It may also be a comma separated list of names.  A count before the
+	It may also be a comma-separated list of names.  A count before the
 	|zg| and |zw| commands can be used to access each.  This allows using
 	a personal word list file and a project word list file.
 	When a word is added while this option is empty Vim will set it for
@@ -5789,7 +5806,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'spelllang'* *'spl'*
 'spelllang' 'spl'	string	(default "en")
 			local to buffer
-	A comma separated list of word list names.  When the 'spell' option is
+	A comma-separated list of word list names.  When the 'spell' option is
 	on spellchecking will be done for these languages.  Example: >
 		set spelllang=en_us,nl,medical
 <	This means US English, Dutch and medical words are recognized.  Words
@@ -5829,7 +5846,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'spelloptions'* *'spo'*
 'spelloptions' 'spo'	string	(default "")
 			local to buffer
-	A comma separated list of options for spell checking:
+	A comma-separated list of options for spell checking:
 	   camel	When a word is CamelCased, assume "Cased" is a
 			separate word: every upper-case character in a word
 			that comes after a lower case character indicates the
@@ -6149,7 +6166,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'suffixesadd'* *'sua'*
 'suffixesadd' 'sua'	string	(default "")
 			local to buffer
-	Comma separated list of suffixes, which are used when searching for a
+	Comma-separated list of suffixes, which are used when searching for a
 	file for the "gf", "[I", etc. commands.  Example: >
 		:set suffixesadd=.java
 <
@@ -6181,7 +6198,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option controls the behavior when switching between buffers.
 	Mostly for |quickfix| commands some values are also used for other
  	commands, as mentioned below.
-	Possible values (comma separated list):
+	Possible values (comma-separated list):
 	   useopen	If included, jump to the first open window that
 			contains the specified buffer (if there is one).
 			Otherwise: Do not examine other windows.
@@ -6429,7 +6446,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
 	For further details see |arabic.txt|.
 
-						*'termguicolors'* *'tgc'*
+			*'termguicolors'* *'tgc'* *'notermguicolors'* *'notgc'*
 'termguicolors' 'tgc'	boolean (default off)
 			global
 	Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|
@@ -6439,7 +6456,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'termpastefilter'* *'tpf'*
 'termpastefilter' 'tpf'	string	(default: "BS,HT,ESC,DEL")
 			global
-	A comma separated list of options for specifying control characters
+	A comma-separated list of options for specifying control characters
 	to be removed from the text pasted into the terminal window. The
 	supported values are:
 
@@ -6779,7 +6796,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'viewoptions'* *'vop'*
 'viewoptions' 'vop'	string	(default: "folds,cursor,curdir")
 			global
-	Changes the effect of the |:mkview| command.  It is a comma separated
+	Changes the effect of the |:mkview| command.  It is a comma-separated
 	list of words.  Each word enables saving and restoring something:
 	   word		save and restore ~
 	   cursor	cursor position in file and in window
@@ -6795,7 +6812,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
 			global or local to window |global-local|
-	A comma separated list of these words:
+	A comma-separated list of these words:
 	    block	Allow virtual editing in Visual block mode.
 	    insert	Allow virtual editing in Insert mode.
 	    all		Allow virtual editing in all modes.
@@ -6952,7 +6969,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'wildmode' 'wim'	string	(default: "full")
 			global
 	Completion mode that is used for the character specified with
-	'wildchar'.  It is a comma separated list of up to four parts.  Each
+	'wildchar'.  It is a comma-separated list of up to four parts.  Each
 	part specifies what to do for each consecutive use of 'wildchar'.  The
 	first part specifies the behavior for the first use of 'wildchar',
 	The second part for the second use, etc.

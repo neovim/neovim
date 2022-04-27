@@ -1416,7 +1416,8 @@ const char *get_default_stl_hl(win_T *wp)
   }
 }
 
-void add_user_command(String name, Object command, Dict(user_command) *opts, int flags, Error *err)
+void create_user_command(String name, Object command, Dict(user_command) *opts, int flags,
+                         Error *err)
 {
   uint32_t argt = 0;
   long def = -1;

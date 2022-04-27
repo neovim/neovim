@@ -45,6 +45,7 @@ func Test_lisp_indent()
 	      \ ])
   call assert_equal(7, lispindent(2))
   call assert_equal(5, 6->lispindent())
+  call assert_equal(-1, lispindent(-1))
 
   set lisp
   set lispwords&
@@ -83,3 +84,5 @@ func Test_lisp_indent()
   let &cpoptions=save_copt
   set nolisp
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

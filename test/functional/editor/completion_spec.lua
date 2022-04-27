@@ -1194,6 +1194,47 @@ describe('completion', function()
     feed('<esc>')
   end)
 
+  it('is stopped by :stopinsert from timer #12976', function()
+    screen:try_resize(32,14)
+    command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
+    feed('Gah<c-x><c-n>')
+    screen:expect([[
+      hello                           |
+      hullo                           |
+      heeee                           |
+      hello^                           |
+      {2:hello          }{0:                 }|
+      {1:hullo          }{0:                 }|
+      {1:heeee          }{0:                 }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {3:-- }{4:match 1 of 3}                 |
+    ]])
+    command([[call timer_start(100, { -> execute('stopinsert') })]])
+    helpers.sleep(200)
+    feed('k')  -- cursor should move up in Normal mode
+    screen:expect([[
+      hello                           |
+      hullo                           |
+      heee^e                           |
+      hello                           |
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+      {0:~                               }|
+                                      |
+    ]])
+  end)
+
   it('does not crash if text is changed by first call to complete function #17489', function()
     source([[
       func Complete(findstart, base) abort

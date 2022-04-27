@@ -347,6 +347,8 @@ describe('LSP', function()
         {NIL, { items = {
               { section = "testSetting1" };
               { section = "testSetting2" };
+              { section = "test.Setting3" };
+              { section = "test.Setting4" };
           }}, { method="workspace/configuration", client_id=1}};
         {NIL, {}, {method="start", client_id=1}};
       }
@@ -368,6 +370,7 @@ describe('LSP', function()
               client.config.settings = {
                 testSetting1 = true;
                 testSetting2 = false;
+                test = {Setting3 = 'nested' };
             }]=])
           end
           if ctx.method == 'workspace/configuration' then

@@ -79,7 +79,6 @@ local extension = {
   cfc = "cf",
   cfm = "cf",
   cfi = "cf",
-  cfg = "cfg",
   hgrc = "cfg",
   chf = "ch",
   chai = "chaiscript",
@@ -96,6 +95,7 @@ local extension = {
   clj = "clojure",
   cljc = "clojure",
   cljs = "clojure",
+  cook = "cook",
   cmake = "cmake",
   cmod = "cmod",
   lib = "cobol",
@@ -103,6 +103,11 @@ local extension = {
   cbl = "cobol",
   atg = "coco",
   recipe = "conaryrecipe",
+  hook = function(path, bufnr)
+    if getline(bufnr, 1) == '[Trigger]' then
+      return "conf"
+    end
+  end,
   mklx = "context",
   mkiv = "context",
   mkii = "context",
@@ -137,6 +142,7 @@ local extension = {
   cs = "cs",
   csc = "csc",
   csdl = "csdl",
+  cshtml = "html",
   fdr = "csp",
   csp = "csp",
   css = "css",
@@ -158,7 +164,6 @@ local extension = {
   diff = "diff",
   rej = "diff",
   Dockerfile = "dockerfile",
-  sys = "dosbatch",
   bat = "dosbatch",
   wrap = "dosini",
   ini = "dosini",
@@ -177,6 +182,7 @@ local extension = {
   leex = "eelixir",
   exs = "elixir",
   elm = "elm",
+  elv = "elvish",
   epp = "epuppet",
   erl = "erlang",
   hrl = "erlang",
@@ -338,6 +344,8 @@ local extension = {
   l = "lex",
   lhs = "lhaskell",
   ll = "lifelines",
+  ly = "lilypond",
+  ily = "lilypond",
   liquid = "liquid",
   cl = "lisp",
   L = "lisp",
@@ -382,6 +390,12 @@ local extension = {
   mason = "mason",
   master = "master",
   mas = "master",
+  demo = "maxima",
+  dm1 = "maxima",
+  dm2 = "maxima",
+  dm3 = "maxima",
+  dmt = "maxima",
+  wxm = "maxima",
   mel = "mel",
   mf = "mf",
   mgl = "mgl",
@@ -394,7 +408,6 @@ local extension = {
   mmp = "mmp",
   DEF = "modula2",
   ["m2"] = "modula2",
-  MOD = "modula2",
   mi = "modula2",
   ssc = "monk",
   monk = "monk",
@@ -437,7 +450,10 @@ local extension = {
   xin = "omnimark",
   opam = "opam",
   ["or"] = "openroad",
+  scad = "openscad",
   ora = "ora",
+  org = "org",
+  org_archive = "org",
   pxsl = "papp",
   papp = "papp",
   pxml = "papp",
@@ -454,6 +470,7 @@ local extension = {
   al = "perl",
   ctp = "php",
   php = "php",
+  phpt = "php",
   phtml = "php",
   pike = "pike",
   pmod = "pike",
@@ -567,8 +584,6 @@ local extension = {
   sa = "sather",
   sbt = "sbt",
   scala = "scala",
-  sc = "scala",
-  scd = "scdoc",
   ss = "scheme",
   scm = "scheme",
   sld = "scheme",
@@ -642,6 +657,7 @@ local extension = {
   mata = "stata",
   ado = "stata",
   stp = "stp",
+  quark = "supercollider",
   sface = "surface",
   svelte = "svelte",
   svg = "svg",
@@ -828,6 +844,8 @@ local extension = {
   r = function() vim.fn["dist#ft#FTr"]() end,
   rdf = function() vim.fn["dist#ft#Redif"]() end,
   rules = function() vim.fn["dist#ft#FTRules"]() end,
+  sc = function() vim.fn["dist#ft#FTsc"]() end,
+  scd = function() vim.fn["dist#ft#FTscd"]() end,
   sh = function() vim.fn["dist#ft#SetFileTypeSH"](vim.fn.getline(1)) end,
   shtml = function() vim.fn["dist#ft#FThtml"]() end,
   sql = function() vim.fn["dist#ft#SQL"]() end,
@@ -899,7 +917,7 @@ local filename = {
   Dockerfile = "dockerfile",
   npmrc = "dosini",
   ["/etc/yum.conf"] = "dosini",
-  ["/etc/pacman.conf"] = "dosini",
+  ["/etc/pacman.conf"] = "conf",
   [".npmrc"] = "dosini",
   [".editorconfig"] = "dosini",
   dune = "dune",
@@ -1002,6 +1020,7 @@ local filename = {
   [".mailcap"] = "mailcap",
   ["/etc/man.conf"] = "manconf",
   ["man.config"] = "manconf",
+  ["maxima-init.mac"] = "maxima",
   ["meson.build"] = "meson",
   ["meson_options.txt"] = "meson",
   ["/etc/conf.modules"] = "modconf",
@@ -1057,6 +1076,7 @@ local filename = {
   Puppetfile = "ruby",
   [".irbrc"] = "ruby",
   irbrc = "ruby",
+  Vagrantfile = "ruby",
   ["smb.conf"] = "samba",
   screenrc = "screen",
   [".screenrc"] = "screen",
@@ -1177,7 +1197,7 @@ local pattern = {
   [".*/etc/DIR_COLORS"] = "dircolors",
   [".*/etc/dnsmasq%.conf"] = "dnsmasq",
   ["php%.ini%-.*"] = "dosini",
-  [".*/etc/pacman%.conf"] = "dosini",
+  [".*/etc/pacman%.conf"] = "conf",
   [".*/etc/yum%.conf"] = "dosini",
   [".*lvs"] = "dracula",
   [".*lpe"] = "dracula",
@@ -1424,6 +1444,15 @@ local pattern = {
       return "git"
     end
   end,
+  [".*%.[Cc][Ff][Gg]"] = function() vim.fn["dist#ft#FTcfg"]() end,
+  [".*%.[Dd][Aa][Tt]"] = function() vim.fn["dist#ft#FTdat"]() end,
+  [".*%.[Mm][Oo][Dd]"] = function() vim.fn["dist#ft#FTmod"]() end,
+  [".*%.[Ss][Rr][Cc]"] = function() vim.fn["dist#ft#FTsrc"]() end,
+  [".*%.[Ss][Uu][Bb]"] = "krl",
+  [".*%.[Pp][Rr][Gg]"] = function() vim.fn["dist#ft#FTprg"]() end,
+  [".*%.[Ss][Yy][Ss]"] = function() vim.fn["dist#ft#FTsys"]() end,
+  -- Neovim only
+  [".*/queries/.*%.scm"] = "query", -- tree-sitter queries
   -- END PATTERN
 }
 -- luacheck: pop
@@ -1459,7 +1488,7 @@ end
 --- Filetype mappings can be added either by extension or by filename (either
 --- the "tail" or the full file path). The full file path is checked first,
 --- followed by the file name. If a match is not found using the filename, then
---- the filename is matched against the list of patterns (sorted by priority)
+--- the filename is matched against the list of |lua-patterns| (sorted by priority)
 --- until a match is found. Lastly, if pattern matching does not find a
 --- filetype, then the file extension is used.
 ---

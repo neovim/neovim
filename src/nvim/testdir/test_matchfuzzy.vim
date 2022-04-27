@@ -245,4 +245,16 @@ func Test_matchfuzzypos_mbyte()
   call assert_equal([['xффйд'], [[2, 3, 4]], [168]], matchfuzzypos(['xффйд'], 'фйд'))
 endfunc
 
+" Test for matchfuzzy() with limit
+func Test_matchfuzzy_limit()
+  let x = ['1', '2', '3', '2']
+  call assert_equal(['2', '2'], x->matchfuzzy('2'))
+  call assert_equal(['2', '2'], x->matchfuzzy('2', #{}))
+  call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 0}))
+  call assert_equal(['2'], x->matchfuzzy('2', #{limit: 1}))
+  call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 2}))
+  call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 3}))
+  call assert_fails("call matchfuzzy(x, '2', #{limit: '2'})", 'E475:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

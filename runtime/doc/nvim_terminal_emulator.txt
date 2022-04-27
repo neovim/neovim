@@ -45,11 +45,10 @@ by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
 ==============================================================================
 Input						*terminal-input*
 
-To send input, enter |Terminal-mode| using any command that would enter "insert
-mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
-except <C-\> are sent to the underlying program. If <C-\> is pressed, the
-next key is sent unless it is <C-N>. Use <C-\><C-N> to return to normal-mode.
-|CTRL-\_CTRL-N|
+To send input, enter |Terminal-mode| with |i|, |I|, |a|, |A| or
+|:startinsert|. In this mode all keys except <C-\> are sent to the underlying
+program. If <C-\> is pressed, the next key is sent unless it is <C-N>. Use
+<C-\><C-N> to return to normal-mode. |CTRL-\_CTRL-N|
 
 Terminal-mode forces these local options:
 
@@ -266,6 +265,8 @@ Put focus on the gdb window to type commands there.  Some common ones are:
 - next		execute the current line and stop at the next line
 - step		execute the current line and stop at the next statement,
 		entering functions
+- until		execute until past the current cursor line or past a specified
+		position or the current stack frame returns
 - finish	execute until leaving the current function
 - where		show the stack
 - frame N	go to the Nth stack frame
@@ -282,6 +283,7 @@ gdb:
 
  *:Step*	execute the gdb "step" command
  *:Over*	execute the gdb "next" command (`:Next` is a Vim command)
+ *:Until*	execute the gdb "until" command
  *:Finish*	execute the gdb "finish" command
  *:Continue*	execute the gdb "continue" command
  *:Stop*	interrupt the program

@@ -123,17 +123,23 @@ return {
     "nocombine";
   };
   -- Autocmds
+  clear_autocmds = {
+    "buffer";
+    "event";
+    "group";
+    "pattern";
+  };
   create_autocmd = {
     "buffer";
     "callback";
     "command";
     "desc";
     "group";
-    "once";
     "nested";
+    "once";
     "pattern";
   };
-  exec_autocmd = {
+  exec_autocmds = {
     "buffer";
     "group";
     "modeline";

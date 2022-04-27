@@ -39,6 +39,7 @@
 
 "documentation":
   - all: ["runtime/doc/*"]
+  - all: ["**/*.md"]
 
 "clipboard":
   - runtime/autoload/provider/clipboard.vim
@@ -49,6 +50,7 @@
 "build":
   - CMakeLists.txt
   - "**/CMakeLists.txt"
+  - "**/Makefile"
   - "**/*.cmake"
 
 "test":

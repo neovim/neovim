@@ -597,6 +597,61 @@ func Test_cursorline_with_visualmode()
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
 
+func Test_cursorcolumn_insert_on_tab()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['123456789', "a\tb"])
+    set cursorcolumn
+    call cursor(2, 2)
+  END
+  call writefile(lines, 'Xcuc_insert_on_tab')
+
+  let buf = RunVimInTerminal('-S Xcuc_insert_on_tab', #{rows: 8})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_1', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
+  call term_sendkeys(buf, "\<C-O>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_3', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_insert_on_tab')
+endfunc
+
+func Test_cursorcolumn_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcuc_timer')
+
+  let buf = RunVimInTerminal('-S Xcuc_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_timer')
+endfunc
+
 func Test_colorcolumn()
   CheckScreendump
 

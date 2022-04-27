@@ -667,15 +667,11 @@ void conceal_check_cursor_line(void)
 
 /// Whether cursorline is drawn in a special way
 ///
-/// If true, both old and new cursorline will need
-/// to be redrawn when moving cursor within windows.
-/// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
-///               caused by scrolling.
+/// If true, both old and new cursorline will need to be redrawn when moving cursor within windows.
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul
-         || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
+  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
 /*
@@ -1577,9 +1573,9 @@ static void win_update(win_T *wp, DecorProviders *providers)
       idx++;
       lnum += foldinfo.fi_lines + 1;
     } else {
-      if (wp->w_p_rnu) {
-        // 'relativenumber' set: The text doesn't need to be drawn, but
-        // the number column nearly always does.
+      if (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum) {
+        // 'relativenumber' set and cursor moved vertically: The
+        // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = fold_info(wp, lnum);
         (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
                        info, &line_providers);
@@ -1606,6 +1602,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
   // Now that the window has been redrawn with the old and new cursor line,
   // update w_last_cursorline.
   wp->w_last_cursorline = cursorline_standout ? wp->w_cursor.lnum : 0;
+
+  wp->w_last_cursor_lnum_rnu = wp->w_p_rnu ? wp->w_cursor.lnum : 0;
 
   if (idx > wp->w_lines_valid) {
     wp->w_lines_valid = idx;
@@ -1641,16 +1639,18 @@ static void win_update(win_T *wp, DecorProviders *providers)
       int scr_row = wp->w_grid.Rows - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, (char_u *)"@@", 2, scr_row, 0, at_attr);
+      grid_puts_len(&wp->w_grid, (char_u *)"@@", MIN(wp->w_grid.Columns, 2), scr_row, 0, at_attr);
 
       grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.Columns,
                 '@', ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
+      int start_col = wp->w_grid.Columns - 3;
+
       // Last line isn't finished: Display "@@@" at the end.
       grid_fill(&wp->w_grid, wp->w_grid.Rows - 1, wp->w_grid.Rows,
-                wp->w_grid.Columns - 3, wp->w_grid.Columns, '@', '@', at_attr);
+                MAX(start_col, 0), wp->w_grid.Columns, '@', '@', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -2121,13 +2121,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   // draw_state: items that are drawn in sequence:
 #define WL_START        0               // nothing done yet
-#define WL_CMDLINE     WL_START + 1    // cmdline window column
-#define WL_FOLD        WL_CMDLINE + 1  // 'foldcolumn'
-#define WL_SIGN        WL_FOLD + 1     // column for signs
-#define WL_NR           WL_SIGN + 1     // line number
-#define WL_BRI         WL_NR + 1       // 'breakindent'
-#define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
-#define WL_LINE         WL_SBR + 1      // text in the line
+#define WL_CMDLINE      (WL_START + 1)    // cmdline window column
+#define WL_FOLD         (WL_CMDLINE + 1)  // 'foldcolumn'
+#define WL_SIGN         (WL_FOLD + 1)     // column for signs
+#define WL_NR           (WL_SIGN + 1)     // line number
+#define WL_BRI          (WL_NR + 1)       // 'breakindent'
+#define WL_SBR          (WL_BRI + 1)      // 'showbreak' or 'diff'
+#define WL_LINE         (WL_SBR + 1)      // text in the line
   int draw_state = WL_START;            // what to draw next
 
   int syntax_flags    = 0;
@@ -4333,6 +4333,9 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
         break;
       }
     }
+    if (!*s.p) {
+      continue;
+    }
     int attr;
     bool through = false;
     if (hl_mode == kHlModeCombine) {
@@ -4837,7 +4840,7 @@ static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
   }
 }
 
-/// Draw seperator connecting characters on the corners of window "wp"
+/// Draw separator connecting characters on the corners of window "wp"
 static void draw_sep_connectors_win(win_T *wp)
 {
   // Don't draw separator connectors unless global statusline is enabled and the window has
@@ -4897,7 +4900,7 @@ static int status_match_len(expand_T *xp, char_u *s)
                || xp->xp_context == EXPAND_MENUNAMES);
 
   // Check for menu separators - replace with '|'.
-  if (emenu && menu_is_separator(s)) {
+  if (emenu && menu_is_separator((char *)s)) {
     return 1;
   }
 
@@ -5033,7 +5036,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
     // Check for menu separators - replace with '|'
     emenu = (xp->xp_context == EXPAND_MENUS
              || xp->xp_context == EXPAND_MENUNAMES);
-    if (emenu && menu_is_separator(s)) {
+    if (emenu && menu_is_separator((char *)s)) {
       STRCPY(buf + len, transchar('|'));
       l = (int)STRLEN(buf + len);
       len += l;
@@ -5170,19 +5173,19 @@ static void win_redr_status(win_T *wp)
       *(p + len++) = ' ';
     }
     if (bt_help(wp->w_buffer)) {
-      STRCPY(p + len, _("[Help]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[Help]"));
       len += (int)STRLEN(p + len);
     }
     if (wp->w_p_pvw) {
-      STRCPY(p + len, _("[Preview]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[Preview]"));
       len += (int)STRLEN(p + len);
     }
     if (bufIsChanged(wp->w_buffer)) {
-      STRCPY(p + len, "[+]");
-      len += 3;
+      snprintf((char *)p + len, MAXPATHL - len, "%s", "[+]");
+      len += (int)STRLEN(p + len);
     }
     if (wp->w_buffer->b_p_ro) {
-      STRCPY(p + len, _("[RO]"));
+      snprintf((char *)p + len, MAXPATHL - len, "%s", _("[RO]"));
       // len += (int)STRLEN(p + len);  // dead assignment
     }
 
@@ -6000,9 +6003,9 @@ static void end_search_hl(void)
 }
 
 
-/// Fill the grid from 'start_row' to 'end_row', from 'start_col' to 'end_col'
-/// with character 'c1' in first column followed by 'c2' in the other columns.
-/// Use attributes 'attr'.
+/// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
+/// to "end_col" (exclusive) with character "c1" in first column followed by
+/// "c2" in the other columns.  Use attributes "attr".
 void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
                int c2, int attr)
 {
@@ -7616,17 +7619,4 @@ win_T *get_win_by_grid_handle(handle_T handle)
     }
   }
   return NULL;
-}
-
-/// Check if the cursor moved and 'cursorline' is set.  Mark for a VALID redraw
-/// if needed.
-void check_redraw_cursorline(void)
-{
-  // When 'cursorlineopt' is "screenline" need to redraw always.
-  if (curwin->w_p_cul
-      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
-          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
-      && !char_avail()) {
-    redraw_later(curwin, VALID);
-  }
 }

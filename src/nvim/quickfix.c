@@ -103,7 +103,7 @@ typedef struct qf_list_S {
   char_u *qf_title;        ///< title derived from the command that created
                            ///< the error list or set by setqflist
   typval_T *qf_ctx;          ///< context set by setqflist/setloclist
-  Callback qftf_cb;            ///< 'quickfixtextfunc' callback function
+  Callback qf_qftf_cb;            ///< 'quickfixtextfunc' callback function
 
   struct dir_stack_T *qf_dir_stack;
   char_u *qf_directory;
@@ -229,28 +229,28 @@ typedef struct vgr_args_S {
 static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 
 // Quickfix window check helper macro
-#define IS_QF_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref == NULL)
+#define IS_QF_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref == NULL)
 // Location list window check helper macro
-#define IS_LL_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
+#define IS_LL_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref != NULL)
 
 // Quickfix and location list stack check helper macros
-#define IS_QF_STACK(qi)       (qi->qfl_type == QFLT_QUICKFIX)
-#define IS_LL_STACK(qi)       (qi->qfl_type == QFLT_LOCATION)
-#define IS_QF_LIST(qfl)       (qfl->qfl_type == QFLT_QUICKFIX)
-#define IS_LL_LIST(qfl)       (qfl->qfl_type == QFLT_LOCATION)
+#define IS_QF_STACK(qi)       ((qi)->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_STACK(qi)       ((qi)->qfl_type == QFLT_LOCATION)
+#define IS_QF_LIST(qfl)       ((qfl)->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_LIST(qfl)       ((qfl)->qfl_type == QFLT_LOCATION)
 
 //
 // Return location list for window 'wp'
 // For location list window, return the referenced location list
 //
-#define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
+#define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? (wp)->w_llist_ref : (wp)->w_llist)
 
 // Macro to loop through all the items in a quickfix list
 // Quickfix item index starts from 1, so i below starts at 1
 #define FOR_ALL_QFL_ITEMS(qfl, qfp, i) \
-  for (i = 1, qfp = qfl->qf_start;  /* NOLINT(readability/braces) */ \
-       !got_int && i <= qfl->qf_count && qfp != NULL; \
-       i++, qfp = qfp->qf_next)
+  for ((i) = 1, (qfp) = (qfl)->qf_start;  /* NOLINT(readability/braces) */ \
+       !got_int && (i) <= (qfl)->qf_count && (qfp) != NULL; \
+       (i)++, (qfp) = (qfp)->qf_next)
 
 
 // Looking up a buffer can be slow if there are many.  Remember the last one
@@ -1721,7 +1721,7 @@ static void wipe_qf_buffer(qf_info_T *qi)
     if (qfbuf != NULL && qfbuf->b_nwindows == 0) {
       // If the quickfix buffer is not loaded in any window, then
       // wipe the buffer.
-      close_buffer(NULL, qfbuf, DOBUF_WIPE, false);
+      close_buffer(NULL, qfbuf, DOBUF_WIPE, false, false);
       qi->qf_bufnr = INVALID_QFBUFNR;
     }
   }
@@ -2040,7 +2040,7 @@ static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl)
   } else {
     to_qfl->qf_ctx = NULL;
   }
-  callback_copy(&to_qfl->qftf_cb, &from_qfl->qftf_cb);
+  callback_copy(&to_qfl->qf_qftf_cb, &from_qfl->qf_qftf_cb);
 
   if (from_qfl->qf_count) {
     if (copy_loclist_entries(from_qfl, to_qfl) == FAIL) {
@@ -2313,7 +2313,10 @@ static bool qflist_valid(win_T *wp, unsigned int qf_id)
   qf_info_T *qi = &ql_info;
 
   if (wp) {
-    qi = GET_LOC_LIST(wp);
+    if (!win_valid(wp)) {
+      return false;
+    }
+    qi = GET_LOC_LIST(wp);  // Location list
     if (!qi) {
       return false;
     }
@@ -2780,6 +2783,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
   // present.
   if (qfl_type == QFLT_LOCATION) {
     win_T *wp = win_id2wp(prev_winid);
+
     if (wp == NULL && curwin->w_llist != qi) {
       emsg(_("E924: Current window was closed"));
       *opened_window = false;
@@ -3447,7 +3451,7 @@ static void qf_free(qf_list_T *qfl)
   XFREE_CLEAR(qfl->qf_title);
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
-  callback_free(&qfl->qftf_cb);
+  callback_free(&qfl->qf_qftf_cb);
   qfl->qf_id = 0;
   qfl->qf_changedtick = 0L;
 }
@@ -4108,10 +4112,10 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get
   // the text to display. Use the local value of 'quickfixtextfunc' if it is
   // set.
-  if (qfl->qftf_cb.type != kCallbackNone) {
-    cb = &qfl->qftf_cb;
+  if (qfl->qf_qftf_cb.type != kCallbackNone) {
+    cb = &qfl->qf_qftf_cb;
   }
-  if (cb != NULL && cb->type != kCallbackNone) {
+  if (cb->type != kCallbackNone) {
     typval_T args[1];
     typval_T rettv;
 
@@ -5749,7 +5753,7 @@ static buf_T *load_dummy_buffer(char_u *fname, char_u *dirname_start, char_u *re
     newbuf_to_wipe.br_buf = NULL;
     readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
                                (linenr_T)MAXLNUM, NULL,
-                               READ_NEW | READ_DUMMY);
+                               READ_NEW | READ_DUMMY, false);
     newbuf->b_locked--;
     if (readfile_result == OK
         && !got_int
@@ -5842,7 +5846,7 @@ static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
 static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 {
   if (curbuf != buf) {          // safety check
-    close_buffer(NULL, buf, DOBUF_UNLOAD, false);
+    close_buffer(NULL, buf, DOBUF_UNLOAD, false, true);
 
     // When autocommands/'autochdir' option changed directory: go back.
     restore_start_dir(dirname_start);
@@ -6257,10 +6261,10 @@ static int qf_getprop_qftf(qf_list_T *qfl, dict_T *retdict)
 {
   int status;
 
-  if (qfl->qftf_cb.type != kCallbackNone) {
+  if (qfl->qf_qftf_cb.type != kCallbackNone) {
     typval_T tv;
 
-    callback_put(&qfl->qftf_cb, &tv);
+    callback_put(&qfl->qf_qftf_cb, &tv);
     status = tv_dict_add_tv(retdict, S_LEN("quickfixtextfunc"), &tv);
     tv_clear(&tv);
   } else {
@@ -6360,9 +6364,9 @@ static int qf_setprop_qftf(qf_list_T *qfl, dictitem_T *di)
 {
   Callback cb;
 
-  callback_free(&qfl->qftf_cb);
+  callback_free(&qfl->qf_qftf_cb);
   if (callback_from_typval(&cb, &di->di_tv)) {
-    qfl->qftf_cb = cb;
+    qfl->qf_qftf_cb = cb;
   }
   return OK;
 }

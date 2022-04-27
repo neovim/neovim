@@ -65,6 +65,7 @@ describe('nvim_get_commands', function()
     local cmd3 = { addr=NIL,         bang=false, bar=true,  complete=NIL,      complete_arg=NIL,         count=NIL,  definition='call \128\253R3_ohyeah()',      name='Cmd3',    nargs='0', range=NIL,  register=false, keepscript=false, script_id=3, }
     local cmd4 = { addr=NIL,         bang=false, bar=false, complete=NIL,      complete_arg=NIL,         count=NIL,  definition='call \128\253R4_just_great()',  name='Cmd4',    nargs='0', range=NIL,  register=true,  keepscript=false, script_id=4, }
     source([[
+      let s:foo = 1
       command -complete=custom,ListUsers -nargs=+ Finger !finger <args>
     ]])
     eq({Finger=cmd1}, meths.get_commands({builtin=false}))
@@ -72,12 +73,18 @@ describe('nvim_get_commands', function()
     eq({Finger=cmd1, TestCmd=cmd0}, meths.get_commands({builtin=false}))
 
     source([[
+      function! s:foo() abort
+      endfunction
       command -bang -nargs=* Cmd2 call <SID>foo(<q-args>)
     ]])
     source([[
+      function! s:ohyeah() abort
+      endfunction
       command -bar -nargs=0 Cmd3 call <SID>ohyeah()
     ]])
     source([[
+      function! s:just_great() abort
+      endfunction
       command -register Cmd4 call <SID>just_great()
     ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
@@ -85,11 +92,11 @@ describe('nvim_get_commands', function()
   end)
 end)
 
-describe('nvim_add_user_command', function()
+describe('nvim_create_user_command', function()
   before_each(clear)
 
   it('works with strings', function()
-    meths.add_user_command('SomeCommand', 'let g:command_fired = <args>', {nargs = 1})
+    meths.create_user_command('SomeCommand', 'let g:command_fired = <args>', {nargs = 1})
     meths.command('SomeCommand 42')
     eq(42, meths.eval('g:command_fired'))
   end)
@@ -97,7 +104,7 @@ describe('nvim_add_user_command', function()
   it('works with Lua functions', function()
     exec_lua [[
       result = {}
-      vim.api.nvim_add_user_command('CommandWithLuaCallback', function(opts)
+      vim.api.nvim_create_user_command('CommandWithLuaCallback', function(opts)
         result = opts
       end, {
         nargs = "*",
@@ -107,8 +114,8 @@ describe('nvim_add_user_command', function()
     ]]
 
     eq({
-      args = [[hello my\ friend how\ are\ you?]],
-      fargs = {[[hello]], [[my\ friend]], [[how\ are\ you?]]},
+      args = [[this is    a\ test]],
+      fargs = {"this", "is", "a test"},
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -117,12 +124,42 @@ describe('nvim_add_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command([[CommandWithLuaCallback hello my\ friend how\ are\ you?]])
+      vim.api.nvim_command([[CommandWithLuaCallback this is    a\ test]])
       return result
     ]=])
 
     eq({
-      args = 'h\tey',
+      args = [[this   includes\ a backslash: \\]],
+      fargs = {"this", "includes a", "backslash:", "\\"},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [=[
+      vim.api.nvim_command([[CommandWithLuaCallback this   includes\ a backslash: \\]])
+      return result
+    ]=])
+
+    eq({
+      args = "a\\b",
+      fargs = {"a\\b"},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [=[
+      vim.api.nvim_command('CommandWithLuaCallback a\\b')
+      return result
+    ]=])
+
+    eq({
+      args = 'h\tey ',
       fargs = {[[h]], [[ey]]},
       bang = true,
       line1 = 10,
@@ -132,7 +169,7 @@ describe('nvim_add_user_command', function()
       count = 10,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey')
+      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey ')
       return result
     ]=])
 
@@ -153,7 +190,7 @@ describe('nvim_add_user_command', function()
 
     eq({
       args = "",
-      fargs = {""},  -- fargs works without args
+      fargs = {},  -- fargs works without args
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -169,7 +206,7 @@ describe('nvim_add_user_command', function()
     -- f-args doesn't split when command nargs is 1 or "?"
     exec_lua [[
       result = {}
-      vim.api.nvim_add_user_command('CommandWithOneArg', function(opts)
+      vim.api.nvim_create_user_command('CommandWithOneArg', function(opts)
         result = opts
       end, {
         nargs = "?",
@@ -179,8 +216,8 @@ describe('nvim_add_user_command', function()
     ]]
 
     eq({
-      args = "hello I'm one argmuent",
-      fargs = {"hello I'm one argmuent"},  -- Doesn't split args
+      args = "hello I'm one argument",
+      fargs = {"hello I'm one argument"},  -- Doesn't split args
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -189,7 +226,7 @@ describe('nvim_add_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [[
-      vim.api.nvim_command('CommandWithOneArg hello I\'m one argmuent')
+      vim.api.nvim_command('CommandWithOneArg hello I\'m one argument')
       return result
     ]])
 
@@ -197,7 +234,7 @@ describe('nvim_add_user_command', function()
 
   it('can define buffer-local commands', function()
     local bufnr = meths.create_buf(false, false)
-    bufmeths.add_user_command(bufnr, "Hello", "", {})
+    bufmeths.create_user_command(bufnr, "Hello", "", {})
     matches("Not an editor command: Hello", pcall_err(meths.command, "Hello"))
     meths.set_current_buf(bufnr)
     meths.command("Hello")
@@ -206,7 +243,7 @@ describe('nvim_add_user_command', function()
 
   it('can use a Lua complete function', function()
     exec_lua [[
-      vim.api.nvim_add_user_command('Test', '', {
+      vim.api.nvim_create_user_command('Test', '', {
         nargs = "*",
         complete = function(arg, cmdline, pos)
           local options = {"aaa", "bbb", "ccc"}
@@ -229,23 +266,23 @@ describe('nvim_add_user_command', function()
 
   it('does not allow invalid command names', function()
     matches("'name' must begin with an uppercase letter", pcall_err(exec_lua, [[
-      vim.api.nvim_add_user_command('test', 'echo "hi"', {})
+      vim.api.nvim_create_user_command('test', 'echo "hi"', {})
     ]]))
 
     matches('Invalid command name', pcall_err(exec_lua, [[
-      vim.api.nvim_add_user_command('t@', 'echo "hi"', {})
+      vim.api.nvim_create_user_command('t@', 'echo "hi"', {})
     ]]))
 
     matches('Invalid command name', pcall_err(exec_lua, [[
-      vim.api.nvim_add_user_command('T@st', 'echo "hi"', {})
+      vim.api.nvim_create_user_command('T@st', 'echo "hi"', {})
     ]]))
 
     matches('Invalid command name', pcall_err(exec_lua, [[
-      vim.api.nvim_add_user_command('Test!', 'echo "hi"', {})
+      vim.api.nvim_create_user_command('Test!', 'echo "hi"', {})
     ]]))
 
     matches('Invalid command name', pcall_err(exec_lua, [[
-      vim.api.nvim_add_user_command('💩', 'echo "hi"', {})
+      vim.api.nvim_create_user_command('💩', 'echo "hi"', {})
     ]]))
   end)
 end)
@@ -254,14 +291,14 @@ describe('nvim_del_user_command', function()
   before_each(clear)
 
   it('can delete global commands', function()
-    meths.add_user_command('Hello', 'echo "Hi"', {})
+    meths.create_user_command('Hello', 'echo "Hi"', {})
     meths.command('Hello')
     meths.del_user_command('Hello')
     matches("Not an editor command: Hello", pcall_err(meths.command, "Hello"))
   end)
 
   it('can delete buffer-local commands', function()
-    bufmeths.add_user_command(0, 'Hello', 'echo "Hi"', {})
+    bufmeths.create_user_command(0, 'Hello', 'echo "Hi"', {})
     meths.command('Hello')
     bufmeths.del_user_command(0, 'Hello')
     matches("Not an editor command: Hello", pcall_err(meths.command, "Hello"))

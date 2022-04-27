@@ -44,8 +44,8 @@
 #include "nvim/keymap.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
-#include "nvim/match.h"
 #include "nvim/mark.h"
+#include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -76,6 +76,7 @@
 #include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
@@ -187,7 +188,7 @@ void do_exmode(void)
 
   exmode_active = true;
   State = NORMAL;
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   // When using ":global /pat/ visual" and then "Q" we return to continue
   // the :global command.
@@ -1248,6 +1249,7 @@ static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGe
   const int save_msg_scroll = msg_scroll;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
+  const bool save_pending_end_reg_executing = pending_end_reg_executing;
   char_u *cmd;
 
   memset(&ea, 0, sizeof(ea));
@@ -2018,6 +2020,7 @@ doend:
   undo_cmdmod(&ea, save_msg_scroll);
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
+  pending_end_reg_executing = save_pending_end_reg_executing;
 
   if (ea.did_sandbox) {
     sandbox--;
@@ -2371,8 +2374,13 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
     switch (eap->addr_type) {
     case ADDR_LINES:
     case ADDR_OTHER:
-      // default is current line number
-      eap->line2 = curwin->w_cursor.lnum;
+      // Default is the cursor line number.  Avoid using an invalid
+      // line number though.
+      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
+        eap->line2 = curbuf->b_ml.ml_line_count;
+      } else {
+        eap->line2 = curwin->w_cursor.lnum;
+      }
       break;
     case ADDR_WINDOWS:
       eap->line2 = CURRENT_WIN_NR;
@@ -2655,9 +2663,9 @@ static char_u *find_command(exarg_T *eap, int *full)
 
       // Use a precomputed index for fast look-up in cmdnames[]
       // taking into account the first 2 letters of eap->cmd.
-      eap->cmdidx = cmdidxs1[CharOrdLow(c1)];
+      eap->cmdidx = cmdidxs1[CHAR_ORD_LOW(c1)];
       if (ASCII_ISLOWER(c2)) {
-        eap->cmdidx += cmdidxs2[CharOrdLow(c1)][CharOrdLow(c2)];
+        eap->cmdidx += cmdidxs2[CHAR_ORD_LOW(c1)][CHAR_ORD_LOW(c2)];
       }
     } else {
       eap->cmdidx = CMD_bang;
@@ -3608,8 +3616,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       // EX_XFILE: file names are handled above.
       if (!(ea.argt & EX_XFILE)) {
         if (context == EXPAND_MENUS) {
-          return (const char *)set_context_in_menu_cmd(xp, cmd,
-                                                       (char_u *)arg, forceit);
+          return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
         } else if (context == EXPAND_COMMANDS) {
           return arg;
         } else if (context == EXPAND_MAPPINGS) {
@@ -3715,7 +3722,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_tunmenu:
   case CMD_popup:
   case CMD_emenu:
-    return (const char *)set_context_in_menu_cmd(xp, cmd, (char_u *)arg, forceit);
+    return (const char *)set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
 
   case CMD_colorscheme:
     xp->xp_context = EXPAND_COLORS;
@@ -4027,8 +4034,9 @@ static linenr_T get_address(exarg_T *eap, char_u **ptr, cmd_addr_T addr_type, in
 
         // When '/' or '?' follows another address, start from
         // there.
-        if (lnum != MAXLNUM) {
-          curwin->w_cursor.lnum = lnum;
+        if (lnum > 0 && lnum != MAXLNUM) {
+          curwin->w_cursor.lnum
+            = lnum > curbuf->b_ml.ml_line_count ? curbuf->b_ml.ml_line_count : lnum;
         }
 
         // Start a forward search at the end of the line (unless
@@ -4511,7 +4519,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
     if ((eap->usefilter
          || eap->cmdidx == CMD_bang
          || eap->cmdidx == CMD_terminal)
-        && vim_strpbrk(repl, (char_u *)"!") != NULL) {
+        && strpbrk((char *)repl, "!") != NULL) {
       char_u *l;
 
       l = vim_strsave_escaped(repl, (char_u *)"!");
@@ -5771,26 +5779,44 @@ static void ex_delcommand(exarg_T *eap)
 /// Split a string by unescaped whitespace (space & tab), used for f-args on Lua commands callback.
 /// Similar to uc_split_args(), but does not allocate, add quotes, add commas and is an iterator.
 ///
-/// @note  If no separator is found start = 0 and end = length - 1
-/// @param[in]  arg  String to split
-/// @param[in]  iter Iteration counter
-/// @param[out]  start Start of the split
-/// @param[out]  end End of the split
-/// @param[in]  length Length of the string
+/// @param[in]  arg String to split
+/// @param[in]  arglen Length of {arg}
+/// @param[inout] end Index of last character of previous iteration
+/// @param[out] buf Buffer to copy string into
+/// @param[out] len Length of string in {buf}
 ///
-/// @return  false if it's the last split (don't call again), true otherwise (call again).
-bool uc_split_args_iter(const char_u *arg, int iter, int *start, int *end, int length)
+/// @return true if iteration is complete, else false
+bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf, size_t *len)
 {
-  int pos;
-  *start = *end + (iter > 1 ? 2 : 0);  // Skip whitespace after the first split
-  for (pos = *start; pos < length - 2; pos++) {
-    if (arg[pos] != '\\' && ascii_iswhite(arg[pos + 1])) {
-      *end = pos;
-      return true;
+  if (!arglen) {
+    return true;
+  }
+
+  size_t pos = *end;
+  while (pos < arglen && ascii_iswhite(arg[pos])) {
+    pos++;
+  }
+
+  size_t l = 0;
+  for (; pos < arglen - 1; pos++) {
+    if (arg[pos] == '\\' && (arg[pos + 1] == '\\' || ascii_iswhite(arg[pos + 1]))) {
+      buf[l++] = arg[++pos];
+    } else {
+      buf[l++] = arg[pos];
+      if (ascii_iswhite(arg[pos + 1])) {
+        *end = pos + 1;
+        *len = l;
+        return false;
+      }
     }
   }
-  *end = length - 1;
-  return false;
+
+  if (pos < arglen && !ascii_iswhite(arg[pos])) {
+    buf[l++] = arg[pos];
+  }
+
+  *len = l;
+  return true;
 }
 
 /// split and quote args for <f-args>
@@ -7676,13 +7702,13 @@ static void ex_read(exarg_T *eap)
         return;
       }
       i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     } else {
       if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
         (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
       }
       i = readfile(eap->arg, NULL,
-                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
+                   eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     }
     if (i != OK) {
       if (!aborting()) {
@@ -8205,10 +8231,39 @@ static void ex_bang(exarg_T *eap)
 /// ":undo".
 static void ex_undo(exarg_T *eap)
 {
-  if (eap->addr_count == 1) {       // :undo 123
-    undo_time(eap->line2, false, false, true);
-  } else {
-    u_undo(1);
+  if (eap->addr_count != 1) {
+    if (eap->forceit) {
+      u_undo_and_forget(1);         // :undo!
+    } else {
+      u_undo(1);                    // :undo
+    }
+    return;
+  }
+
+  long step = eap->line2;
+
+  if (eap->forceit) {             // undo! 123
+    // change number for "undo!" must be lesser than current change number
+    if (step >= curbuf->b_u_seq_cur) {
+      emsg(_(e_undobang_cannot_redo_or_move_branch));
+      return;
+    }
+    // ensure that target change number is in same branch
+    // while also counting the amount of undoes it'd take to reach target
+    u_header_T *uhp;
+    int count = 0;
+
+    for (uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
+         uhp != NULL && uhp->uh_seq > step;
+         uhp = uhp->uh_next.ptr, ++count) {
+    }
+    if (step != 0 && (uhp == NULL || uhp->uh_seq < step)) {
+      emsg(_(e_undobang_cannot_redo_or_move_branch));
+      return;
+    }
+    u_undo_and_forget(count);
+  } else {                        // :undo 123
+    undo_time(step, false, false, true);
   }
 }
 
@@ -8528,6 +8583,7 @@ bool save_current_state(save_state_T *sst)
   sst->save_finish_op = finish_op;
   sst->save_opcount = opcount;
   sst->save_reg_executing = reg_executing;
+  sst->save_pending_end_reg_executing = pending_end_reg_executing;
 
   msg_scroll = false;   // no msg scrolling in Normal mode
   restart_edit = 0;     // don't go to Insert mode
@@ -8558,6 +8614,7 @@ void restore_current_state(save_state_T *sst)
   finish_op = sst->save_finish_op;
   opcount = sst->save_opcount;
   reg_executing = sst->save_reg_executing;
+  pending_end_reg_executing = sst->save_pending_end_reg_executing;
 
   // don't reset msg_didout now
   msg_didout |= sst->save_msg_didout;

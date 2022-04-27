@@ -636,7 +636,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
  */
 void op_reindent(oparg_T *oap, Indenter how)
 {
-  long i;
+  long i = 0;
   char_u *l;
   int amount;
   linenr_T first_changed = 0;
@@ -649,38 +649,41 @@ void op_reindent(oparg_T *oap, Indenter how)
     return;
   }
 
-  for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
-    /* it's a slow thing to do, so give feedback so there's no worry that
-     * the computer's just hung. */
+  // Save for undo.  Do this once for all lines, much faster than doing this
+  // for each line separately, especially when undoing.
+  if (u_savecommon(curbuf, start_lnum - 1, start_lnum + oap->line_count,
+                   start_lnum + oap->line_count, false) == OK) {
+    for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
+      // it's a slow thing to do, so give feedback so there's no worry
+      // that the computer's just hung.
 
-    if (i > 1
-        && (i % 50 == 0 || i == oap->line_count - 1)
-        && oap->line_count > p_report) {
-      smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
-    }
-
-    /*
-     * Be vi-compatible: For lisp indenting the first line is not
-     * indented, unless there is only one line.
-     */
-    if (i != oap->line_count - 1 || oap->line_count == 1
-        || how != get_lisp_indent) {
-      l = skipwhite(get_cursor_line_ptr());
-      if (*l == NUL) {                      // empty or blank line
-        amount = 0;
-      } else {
-        amount = how();                     // get the indent for this line
+      if (i > 1
+          && (i % 50 == 0 || i == oap->line_count - 1)
+          && oap->line_count > p_report) {
+        smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
       }
-      if (amount >= 0 && set_indent(amount, SIN_UNDO)) {
-        // did change the indent, call changed_lines() later
-        if (first_changed == 0) {
-          first_changed = curwin->w_cursor.lnum;
+
+      // Be vi-compatible: For lisp indenting the first line is not
+      // indented, unless there is only one line.
+      if (i != oap->line_count - 1 || oap->line_count == 1
+          || how != get_lisp_indent) {
+        l = skipwhite(get_cursor_line_ptr());
+        if (*l == NUL) {                      // empty or blank line
+          amount = 0;
+        } else {
+          amount = how();                     // get the indent for this line
         }
-        last_changed = curwin->w_cursor.lnum;
+        if (amount >= 0 && set_indent(amount, 0)) {
+          // did change the indent, call changed_lines() later
+          if (first_changed == 0) {
+            first_changed = curwin->w_cursor.lnum;
+          }
+          last_changed = curwin->w_cursor.lnum;
+        }
       }
+      curwin->w_cursor.lnum++;
+      curwin->w_cursor.col = 0;      // make sure it's valid
     }
-    ++curwin->w_cursor.lnum;
-    curwin->w_cursor.col = 0;      // make sure it's valid
   }
 
   // put cursor on first non-blank of indented line
@@ -944,6 +947,7 @@ int do_record(int c)
     buf[0] = (char)regname;
     buf[1] = NUL;
     (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
+    tv_dict_set_keys_readonly(dict);
 
     // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
@@ -3893,7 +3897,7 @@ void ex_display(exarg_T *eap)
             msg_puts_attr("^J", attr);
             n -= 2;
           }
-          for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
+          for (p = yb->y_array[j]; *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len(p);
             msg_outtrans_len(p, clen);
             p += clen - 1;
@@ -5142,7 +5146,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (do_alpha && ASCII_ISALPHA(firstdigit)) {
     // decrement or increment alphabetic character
     if (op_type == OP_NR_SUB) {
-      if (CharOrd(firstdigit) < Prenum1) {
+      if (CHAR_ORD(firstdigit) < Prenum1) {
         if (isupper(firstdigit)) {
           firstdigit = 'A';
         } else {
@@ -5152,7 +5156,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         firstdigit -= (int)Prenum1;
       }
     } else {
-      if (26 - CharOrd(firstdigit) - 1 < Prenum1) {
+      if (26 - CHAR_ORD(firstdigit) - 1 < Prenum1) {
         if (isupper(firstdigit)) {
           firstdigit = 'Z';
         } else {

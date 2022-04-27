@@ -107,8 +107,10 @@ static char_u e_unmatchedpar[] = N_("E55: Unmatched %s)");
 static char_u e_z_not_allowed[] = N_("E66: \\z( not allowed here");
 static char_u e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
 static char_u e_missing_sb[] = N_("E69: Missing ] after %s%%[");
-static char_u e_empty_sb[]  = N_("E70: Empty %s%%[]");
-static char_u e_recursive[]  = N_("E956: Cannot use pattern recursively");
+static char_u e_empty_sb[] = N_("E70: Empty %s%%[]");
+static char_u e_recursive[] = N_("E956: Cannot use pattern recursively");
+static char_u e_regexp_number_after_dot_pos_search[]
+  = N_("E1204: No Number allowed after .: '\\%%%c'");
 
 #define NOT_MULTI       0
 #define MULTI_ONE       1
@@ -277,15 +279,15 @@ static void init_class_tab(void)
   done = true;
 }
 
-# define ri_digit(c)    (c < 0x100 && (class_tab[c] & RI_DIGIT))
-# define ri_hex(c)      (c < 0x100 && (class_tab[c] & RI_HEX))
-# define ri_octal(c)    (c < 0x100 && (class_tab[c] & RI_OCTAL))
-# define ri_word(c)     (c < 0x100 && (class_tab[c] & RI_WORD))
-# define ri_head(c)     (c < 0x100 && (class_tab[c] & RI_HEAD))
-# define ri_alpha(c)    (c < 0x100 && (class_tab[c] & RI_ALPHA))
-# define ri_lower(c)    (c < 0x100 && (class_tab[c] & RI_LOWER))
-# define ri_upper(c)    (c < 0x100 && (class_tab[c] & RI_UPPER))
-# define ri_white(c)    (c < 0x100 && (class_tab[c] & RI_WHITE))
+# define ri_digit(c)    ((c) < 0x100 && (class_tab[c] & RI_DIGIT))
+# define ri_hex(c)      ((c) < 0x100 && (class_tab[c] & RI_HEX))
+# define ri_octal(c)    ((c) < 0x100 && (class_tab[c] & RI_OCTAL))
+# define ri_word(c)     ((c) < 0x100 && (class_tab[c] & RI_WORD))
+# define ri_head(c)     ((c) < 0x100 && (class_tab[c] & RI_HEAD))
+# define ri_alpha(c)    ((c) < 0x100 && (class_tab[c] & RI_ALPHA))
+# define ri_lower(c)    ((c) < 0x100 && (class_tab[c] & RI_LOWER))
+# define ri_upper(c)    ((c) < 0x100 && (class_tab[c] & RI_UPPER))
+# define ri_white(c)    ((c) < 0x100 && (class_tab[c] & RI_WHITE))
 
 // flags for regflags
 #define RF_ICASE    1   // ignore case
@@ -1529,7 +1531,7 @@ static fptr_T do_Lower(int *d, int c)
  *
  * The tildes are parsed once before the first call to vim_regsub().
  */
-char_u *regtilde(char_u *source, int magic)
+char_u *regtilde(char_u *source, int magic, bool preview)
 {
   char_u      *newsub = source;
   char_u      *tmpsub;
@@ -1574,7 +1576,7 @@ char_u *regtilde(char_u *source, int magic)
   }
 
   // Only change reg_prev_sub when not previewing.
-  if (!(State & CMDPREVIEW)) {
+  if (!preview) {
     xfree(reg_prev_sub);
     if (newsub != source) {             // newsub was allocated, just keep it
       reg_prev_sub = newsub;
@@ -2220,7 +2222,6 @@ static regengine_T bt_regengine =
   bt_regfree,
   bt_regexec_nl,
   bt_regexec_multi,
-  (char_u *)""
 };
 
 static regengine_T nfa_regengine =
@@ -2229,7 +2230,6 @@ static regengine_T nfa_regengine =
   nfa_regfree,
   nfa_regexec_nl,
   nfa_regexec_multi,
-  (char_u *)""
 };
 
 // Which regexp engine to use? Needed for vim_regcomp().
@@ -2502,7 +2502,8 @@ long vim_regexec_multi(
     char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
 
     p_re = BACKTRACKING_ENGINE;
-    vim_regfree(rmp->regprog);
+    regprog_T *prev_prog = rmp->regprog;
+
     report_re_switch(pat);
     // checking for \z misuse was already done when compiling for NFA,
     // allow all here
@@ -2510,7 +2511,13 @@ long vim_regexec_multi(
     rmp->regprog = vim_regcomp(pat, re_flags);
     reg_do_extmatch = 0;
 
-    if (rmp->regprog != NULL) {
+    if (rmp->regprog == NULL) {
+      // Somehow compiling the pattern failed now, put back the
+      // previous one to avoid "regprog" becoming NULL.
+      rmp->regprog = prev_prog;
+    } else {
+      vim_regfree(prev_prog);
+
       rmp->regprog->re_in_use = true;
       result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
                                                    tm, timed_out);

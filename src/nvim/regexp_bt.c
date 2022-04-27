@@ -1578,14 +1578,19 @@ static char_u *regatom(int *flagp)
     }
 
     default:
-      if (ascii_isdigit(c) || c == '<' || c == '>'
-          || c == '\'') {
+      if (ascii_isdigit(c) || c == '<' || c == '>' || c == '\'' || c == '.') {
         uint32_t n = 0;
         int cmp;
+        bool cur = false;
 
         cmp = c;
-        if (cmp == '<' || cmp == '>')
+        if (cmp == '<' || cmp == '>') {
           c = getchr();
+        }
+        if (no_Magic(c) == '.') {
+          cur = true;
+          c = getchr();
+        }
         while (ascii_isdigit(c)) {
           n = n * 10 + (uint32_t)(c - '0');
           c = getchr();
@@ -1602,14 +1607,31 @@ static char_u *regatom(int *flagp)
           }
           break;
         } else if (c == 'l' || c == 'c' || c == 'v') {
+          if (cur && n) {
+            semsg(_(e_regexp_number_after_dot_pos_search), no_Magic(c));
+            rc_did_emsg = true;
+            return NULL;
+          }
           if (c == 'l') {
+            if (cur) {
+              n = curwin->w_cursor.lnum;
+            }
             ret = regnode(RE_LNUM);
             if (save_prev_at_start) {
               at_start = true;
             }
           } else if (c == 'c') {
+            if (cur) {
+              n = curwin->w_cursor.col;
+              n++;
+            }
             ret = regnode(RE_COL);
           } else {
+            if (cur) {
+              colnr_T vcol = 0;
+              getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
+              n = ++vcol;
+            }
             ret = regnode(RE_VCOL);
           }
           if (ret == JUST_CALC_SIZE) {
@@ -3130,9 +3152,17 @@ static bool regmatch(
         {
           int mark = OPERAND(scan)[0];
           int cmp = OPERAND(scan)[1];
-          pos_T   *pos;
+          pos_T *pos;
+          size_t col = REG_MULTI ? rex.input - rex.line : 0;
 
           pos = getmark_buf(rex.reg_buf, mark, false);
+
+          // Line may have been freed, get it again.
+          if (REG_MULTI) {
+            rex.line = reg_getline(rex.lnum);
+            rex.input = rex.line + col;
+          }
+
           if (pos == NULL                    // mark doesn't exist
               || pos->lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;

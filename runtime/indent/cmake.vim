@@ -3,7 +3,7 @@
 " Author:       Andy Cedilnik <andy.cedilnik@kitware.com>
 " Maintainer:   Dimitri Merejkowsky <d.merej@gmail.com>
 " Former Maintainer: Karthik Krishnan <karthik.krishnan@kitware.com>
-" Last Change:  2017 Sep 24
+" Last Change:  2022 Apr 06
 "
 " Licence:      The CMake license applies to this file. See
 "               https://cmake.org/licensing
@@ -16,6 +16,8 @@ let b:did_indent = 1
 
 setlocal indentexpr=CMakeGetIndent(v:lnum)
 setlocal indentkeys+==ENDIF(,ENDFOREACH(,ENDMACRO(,ELSE(,ELSEIF(,ENDWHILE(
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 if exists("*CMakeGetIndent")

@@ -192,13 +192,12 @@ typedef struct command_line_state {
 
 typedef struct cmdline_info CmdlineInfo;
 
-/* The current cmdline_info.  It is initialized in getcmdline() and after that
- * used by other functions.  When invoking getcmdline() recursively it needs
- * to be saved with save_cmdline() and restored with restore_cmdline().
- * TODO: make it local to getcmdline() and pass it around. */
+/// The current cmdline_info.  It is initialized in getcmdline() and after that
+/// used by other functions.  When invoking getcmdline() recursively it needs
+/// to be saved with save_cmdline() and restored with restore_cmdline().
 static struct cmdline_info ccline;
 
-static int cmd_showtail;                // Only show path tail in lists ?
+static int cmd_showtail;        // Only show path tail in lists ?
 
 static int new_cmdpos;          // position set by set_cmdline_pos()
 
@@ -732,9 +731,10 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
 
 /// Internal entry point for cmdline mode.
 ///
-/// caller must use save_cmdline and restore_cmdline. Best is to use
-/// getcmdline or getcmdline_prompt, instead of calling this directly.
-static uint8_t *command_line_enter(int firstc, long count, int indent)
+/// @param count  only used for incremental search
+/// @param indent  indent for inside conditionals
+/// @param init_ccline  clear ccline first
+static uint8_t *command_line_enter(int firstc, long count, int indent, bool init_ccline)
 {
   // can be invoked recursively, identify each level
   static int cmdline_level = 0;
@@ -751,6 +751,20 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   CommandLineState *s = &state;
   s->save_p_icm = vim_strsave(p_icm);
   init_incsearch_state(&s->is_state);
+  CmdlineInfo save_ccline;
+  bool did_save_ccline = false;
+
+  if (ccline.cmdbuff != NULL) {
+    // Currently ccline can never be in use if init_ccline is false.
+    // Some changes will be needed if this is no longer the case.
+    assert(init_ccline);
+    // Being called recursively.  Since ccline is global, we need to save
+    // the current buffer and restore it when returning.
+    save_cmdline(&save_ccline);
+    did_save_ccline = true;
+  } else if (init_ccline) {
+    memset(&ccline, 0, sizeof(struct cmdline_info));
+  }
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -907,7 +921,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     }
     tl_ret = true;
   }
-  trigger_modechanged();
+  may_trigger_modechanged();
 
   state_enter(&s->state);
 
@@ -997,6 +1011,13 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   }
 
   cmdline_level--;
+
+  if (did_save_ccline) {
+    restore_cmdline(&save_ccline);
+  } else {
+    ccline.cmdbuff = NULL;
+  }
+
   return p;
 }
 
@@ -1340,15 +1361,9 @@ static int command_line_execute(VimState *state, int key)
 
       s->c = get_expr_register();
       if (s->c == '=') {
-        // Need to save and restore ccline.  And set "textlock"
-        // to avoid nasty things like going to another buffer when
-        // evaluating an expression.
-        CmdlineInfo save_ccline;
-        save_cmdline(&save_ccline);
         textlock++;
         p = get_expr_line();
         textlock--;
-        restore_cmdline(&save_ccline);
 
         if (p != NULL) {
           len = (int)STRLEN(p);
@@ -1591,6 +1606,10 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
 
   if (search_delim == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
+    if (pat == NULL) {
+      restore_last_search_pattern();
+      return FAIL;
+    }
     skiplen = 0;
     patlen = (int)STRLEN(pat);
   } else {
@@ -1889,10 +1908,7 @@ static int command_line_handle_key(CommandLineState *s)
         beep_flush();
         s->c = ESC;
       } else {
-        CmdlineInfo save_ccline;
-        save_cmdline(&save_ccline);
         s->c = get_expr_register();
-        restore_cmdline(&save_ccline);
       }
     }
 
@@ -2120,7 +2136,7 @@ static int command_line_handle_key(CommandLineState *s)
       int len = 0;
       int old_firstc;
 
-      xfree(ccline.cmdbuff);
+      XFREE_CLEAR(ccline.cmdbuff);
       s->xpc.xp_context = EXPAND_NOTHING;
       if (s->hiscnt == hislen) {
         p = s->lookfor;                  // back to the old one
@@ -2403,14 +2419,7 @@ static void abandon_cmdline(void)
 /// @param indent  indent for inside conditionals
 char_u *getcmdline(int firstc, long count, int indent, bool do_concat FUNC_ATTR_UNUSED)
 {
-  // Be prepared for situations where cmdline can be invoked recursively.
-  // That includes cmd mappings, event handlers, as well as update_screen()
-  // (custom status line eval), which all may invoke ":normal :".
-  CmdlineInfo save_ccline;
-  save_cmdline(&save_ccline);
-  char_u *retval = command_line_enter(firstc, count, indent);
-  restore_cmdline(&save_ccline);
-  return retval;
+  return command_line_enter(firstc, count, indent, true);
 }
 
 /// Get a command line with a prompt
@@ -2434,8 +2443,14 @@ char *getcmdline_prompt(const char firstc, const char *const prompt, const int a
   const int msg_col_save = msg_col;
 
   CmdlineInfo save_ccline;
-  save_cmdline(&save_ccline);
-
+  bool did_save_ccline = false;
+  if (ccline.cmdbuff != NULL) {
+    // Save the values of the current cmdline and restore them below.
+    save_cmdline(&save_ccline);
+    did_save_ccline = true;
+  } else {
+    memset(&ccline, 0, sizeof(struct cmdline_info));
+  }
   ccline.prompt_id = last_prompt_id++;
   ccline.cmdprompt = (char_u *)prompt;
   ccline.cmdattr = attr;
@@ -2447,9 +2462,11 @@ char *getcmdline_prompt(const char firstc, const char *const prompt, const int a
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
 
-  char *const ret = (char *)command_line_enter(firstc, 1L, 0);
+  char *const ret = (char *)command_line_enter(firstc, 1L, 0, false);
 
-  restore_cmdline(&save_ccline);
+  if (did_save_ccline) {
+    restore_cmdline(&save_ccline);
+  }
   msg_silent = msg_silent_saved;
   // Restore msg_col, the prompt from input() may have changed it.
   // But only if called recursively and the commandline is therefore being
@@ -2587,6 +2604,7 @@ char_u *getexline(int c, void *cookie, int indent, bool do_concat)
 }
 
 bool cmdline_overstrike(void)
+  FUNC_ATTR_PURE
 {
   return ccline.overstrike;
 }
@@ -2594,6 +2612,7 @@ bool cmdline_overstrike(void)
 
 /// Return true if the cursor is at the end of the cmdline.
 bool cmdline_at_end(void)
+  FUNC_ATTR_PURE
 {
   return (ccline.cmdpos >= ccline.cmdlen);
 }
@@ -2601,7 +2620,6 @@ bool cmdline_at_end(void)
 /*
  * Allocate a new command line buffer.
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
- * Returns the new value of ccline.cmdbuff and ccline.cmdbufflen.
  */
 static void alloc_cmdbuff(int len)
 {
@@ -3367,51 +3385,21 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   }
 }
 
-/*
- * Save ccline, because obtaining the "=" register may execute "normal :cmd"
- * and overwrite it.  But get_cmdline_str() may need it, thus make it
- * available globally in prev_ccline.
- */
+/// Save ccline, because obtaining the "=" register may execute "normal :cmd"
+/// and overwrite it.
 static void save_cmdline(struct cmdline_info *ccp)
 {
   *ccp = ccline;
+  memset(&ccline, 0, sizeof(struct cmdline_info));
   ccline.prev_ccline = ccp;
-  ccline.cmdbuff = NULL;
-  ccline.cmdprompt = NULL;
-  ccline.xpc = NULL;
-  ccline.special_char = NUL;
-  ccline.level = 0;
+  ccline.cmdbuff = NULL;  // signal that ccline is not in use
 }
 
-/*
- * Restore ccline after it has been saved with save_cmdline().
- */
+/// Restore ccline after it has been saved with save_cmdline().
 static void restore_cmdline(struct cmdline_info *ccp)
   FUNC_ATTR_NONNULL_ALL
 {
   ccline = *ccp;
-}
-
-/*
- * Save the command line into allocated memory.  Returns a pointer to be
- * passed to restore_cmdline_alloc() later.
- */
-char_u *save_cmdline_alloc(void)
-  FUNC_ATTR_NONNULL_RET
-{
-  struct cmdline_info *p = xmalloc(sizeof(struct cmdline_info));
-  save_cmdline(p);
-  return (char_u *)p;
-}
-
-/*
- * Restore the command line from the return value of save_cmdline_alloc().
- */
-void restore_cmdline_alloc(char_u *p)
-  FUNC_ATTR_NONNULL_ALL
-{
-  restore_cmdline((struct cmdline_info *)p);
-  xfree(p);
 }
 
 /// Paste a yank register into the command line.
@@ -3429,7 +3417,6 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
   char_u *arg;
   char_u *p;
   bool allocated;
-  struct cmdline_info save_ccline;
 
   // check for valid regname; also accept special characters for CTRL-R in
   // the command line
@@ -3447,13 +3434,11 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
   }
 
 
-  // Need to save and restore ccline.  And set "textlock" to avoid nasty
-  // things like going to another buffer when evaluating an expression.
-  save_cmdline(&save_ccline);
+  // Need to  set "textlock" to avoid nasty things like going to another
+  // buffer when evaluating an expression.
   textlock++;
   const bool i = get_spec_reg(regname, &arg, &allocated, true);
   textlock--;
-  restore_cmdline(&save_ccline);
 
   if (i) {
     // Got the value of a special register in "arg".
@@ -5307,7 +5292,6 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
   typval_T args[4];
   char_u *pat = NULL;
   const sctx_T save_current_sctx = current_sctx;
-  struct cmdline_info save_ccline;
 
   if (xp->xp_arg == NULL || xp->xp_arg[0] == '\0' || xp->xp_line == NULL) {
     return NULL;
@@ -5329,15 +5313,10 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
   args[1].vval.v_string = xp->xp_line;
   args[2].vval.v_number = xp->xp_col;
 
-  // Save the cmdline, we don't know what the function may do.
-  save_ccline = ccline;
-  ccline.cmdbuff = NULL;
-  ccline.cmdprompt = NULL;
   current_sctx = xp->xp_script_ctx;
 
   void *const ret = user_expand_func(xp->xp_arg, 3, args);
 
-  ccline = save_ccline;
   current_sctx = save_current_sctx;
   if (ccline.cmdbuff != NULL) {
     ccline.cmdbuff[ccline.cmdlen] = keep;
@@ -5875,7 +5854,7 @@ HistoryType get_histtype(const char *const name, const size_t len, const bool re
 static int last_maptick = -1;           // last seen maptick
 
 /// Add the given string to the given history.  If the string is already in the
-/// history then it is moved to the front.  "histype" may be one of he HIST_
+/// history then it is moved to the front.  "histype" may be one of the HIST_
 /// values.
 ///
 /// @parma in_map  consider maptick when inside a mapping
@@ -5947,10 +5926,8 @@ int get_history_idx(int histype)
 }
 
 
-/*
- * Get pointer to the command line info to use. cmdline_paste() may clear
- * ccline and put the previous value in prev_ccline.
- */
+/// Get pointer to the command line info to use. save_cmdline() may clear
+/// ccline and put the previous value in ccline.prev_ccline.
 static struct cmdline_info *get_ccline_ptr(void)
 {
   if ((State & CMDLINE) == 0) {
@@ -6350,6 +6327,11 @@ int hist_type2char(int type)
   return NUL;
 }
 
+void cmdline_init(void)
+{
+  memset(&ccline, 0, sizeof(struct cmdline_info));
+}
+
 /// Open a window on the current command line and history.  Allow editing in
 /// the window.  Returns when the window is closed.
 /// Returns:
@@ -6358,7 +6340,6 @@ int hist_type2char(int type)
 ///     K_IGNORE if editing continues
 static int open_cmdwin(void)
 {
-  struct cmdline_info save_ccline;
   bufref_T old_curbuf;
   bufref_T bufref;
   win_T *old_curwin = curwin;
@@ -6395,6 +6376,7 @@ static int open_cmdwin(void)
   // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
+    ga_clear(&winsizes);
     return K_IGNORE;
   }
   cmdwin_type = get_cmdline_type();
@@ -6459,9 +6441,6 @@ static int open_cmdwin(void)
   }
   redraw_later(curwin, SOME_VALID);
 
-  // Save the command line info, can be used recursively.
-  save_cmdline(&save_ccline);
-
   // No Ex mode here!
   exmode_active = false;
 
@@ -6499,8 +6478,6 @@ static int open_cmdwin(void)
   // Restore KeyTyped in case it is modified by autocommands
   KeyTyped = save_KeyTyped;
 
-  // Restore the command line info.
-  restore_cmdline(&save_ccline);
   cmdwin_type = 0;
   cmdwin_level = 0;
 
@@ -6570,7 +6547,7 @@ static int open_cmdwin(void)
     // win_close() may have already wiped the buffer when 'bh' is
     // set to 'wipe', autocommands may have closed other windows
     if (bufref_valid(&bufref) && bufref.br_buf != curbuf) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false);
+      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false, false);
     }
 
     // Restore window sizes.
@@ -6582,7 +6559,7 @@ static int open_cmdwin(void)
   cmdmsg_rl = save_cmdmsg_rl;
 
   State = save_State;
-  trigger_modechanged();
+  may_trigger_modechanged();
   setmouse();
 
   return cmdwin_result;

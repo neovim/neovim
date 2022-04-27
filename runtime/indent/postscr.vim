@@ -2,8 +2,8 @@
 " Language:	PostScript
 " Maintainer:	Mike Williams <mrw@netcomuk.co.uk> (Invalid email address)
 " 		Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2nd July 2001
-"
+" Last Change:	2022 Apr 06
+
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -13,6 +13,8 @@ let b:did_indent = 1
 
 setlocal indentexpr=PostscrIndentGet(v:lnum)
 setlocal indentkeys+=0],0=>>,0=%%,0=end,0=restore,0=grestore indentkeys-=:,0#,e
+
+let b:undo_indent = "setl inde< indk<"
 
 " Catch multiple instantiations
 if exists("*PostscrIndentGet")

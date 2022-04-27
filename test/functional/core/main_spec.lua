@@ -52,11 +52,15 @@ describe('Command-line option', function()
       if helpers.pending_win32(pending) then return end
       local screen = Screen.new(40, 8)
       screen:attach()
-      funcs.termopen({
+      local args = {
         nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE',
-         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-         '-s', '-'
-      })
+        '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+        '-s', '-'
+      }
+
+      -- Need to explicitly pipe to stdin so that the embedded Nvim instance doesn't try to read
+      -- data from the terminal #18181
+      funcs.termopen(string.format([[echo "" | %s]], table.concat(args, " ")))
       screen:expect([[
         ^                                        |
         {1:~                                       }|

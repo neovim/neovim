@@ -72,8 +72,6 @@ enum { NUMBUFLEN = 65, };
 #define TERM_FOCUS      0x2000  // Terminal focus mode
 #define CMDPREVIEW      0x4000  // Showing 'inccommand' command "live" preview.
 
-#define MODE_MAX_LENGTH 4       // max mode length returned in mode()
-
 // all mode bits used for mapping
 #define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)
 
@@ -255,8 +253,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 #define STRLCAT(d, s, n)    xstrlcat((char *)(d), (char *)(s), (size_t)(n))
 
-#define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
-
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
 
@@ -264,7 +260,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.
-#define PERROR(msg) (void)semsg("%s: %s", msg, strerror(errno))
+#define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 
@@ -282,8 +278,8 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 /// @param[in]  y  Second file name to compare.
 ///
 /// @return 0 for equal file names, non-zero otherwise.
-#define fnamecmp(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
-#define fnamencmp(x, y, n) path_fnamencmp((const char *)(x), \
+#define FNAMECMP(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
+#define FNAMENCMP(x, y, n) path_fnamencmp((const char *)(x), \
                                           (const char *)(y), \
                                           (size_t)(n))
 
@@ -319,7 +315,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #endif
 
 // Replacement for nchar used by nv_replace().
-#define REPLACE_CR_NCHAR    -1
-#define REPLACE_NL_NCHAR    -2
+#define REPLACE_CR_NCHAR    (-1)
+#define REPLACE_NL_NCHAR    (-2)
 
 #endif  // NVIM_VIM_H

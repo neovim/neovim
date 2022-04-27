@@ -57,7 +57,7 @@
 #define ENC_DFLT       "utf-8"
 
 // end-of-line style
-#define EOL_UNKNOWN     -1      // not defined yet
+#define EOL_UNKNOWN     (-1)    // not defined yet
 #define EOL_UNIX        0       // NL
 #define EOL_DOS         1       // CR NL
 #define EOL_MAC         2       // CR
@@ -523,11 +523,11 @@ EXTERN long p_mmd;              // 'maxmapdepth'
 EXTERN long p_mmp;              // 'maxmempattern'
 EXTERN long p_mis;              // 'menuitems'
 EXTERN char_u *p_msm;         // 'mkspellmem'
-EXTERN long p_mle;              // 'modelineexpr'
+EXTERN int p_mle;              // 'modelineexpr'
 EXTERN long p_mls;              // 'modelines'
 EXTERN char_u *p_mouse;       // 'mouse'
 EXTERN char_u *p_mousem;      // 'mousemodel'
-EXTERN long p_mousef;           // 'mousefocus'
+EXTERN int p_mousef;           // 'mousefocus'
 EXTERN long p_mouset;           // 'mousetime'
 EXTERN int p_more;              // 'more'
 EXTERN char_u *p_opfunc;      // 'operatorfunc'
@@ -773,6 +773,7 @@ enum {
   BV_CINK,
   BV_CINO,
   BV_CINW,
+  BV_CINSD,
   BV_CM,
   BV_CMS,
   BV_COM,
@@ -899,7 +900,7 @@ enum {
 };
 
 // Value for b_p_ul indicating the global value must be used.
-#define NO_LOCAL_UNDOLEVEL -123456
+#define NO_LOCAL_UNDOLEVEL (-123456)
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
 

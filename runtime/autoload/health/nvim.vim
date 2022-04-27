@@ -144,6 +144,16 @@ function! s:check_performance() abort
           \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
+
+  " check for slow shell invocation
+  let slow_cmd_time = 1.5
+  let start_time = reltime()
+  call system('echo')
+  let elapsed_time = reltimefloat(reltime(start_time))
+  if elapsed_time > slow_cmd_time
+    call health#report_warn(
+          \ 'Slow shell invocation (took '.printf('%.2f', elapsed_time).' seconds).')
+  endif
 endfunction
 
 function! s:get_tmux_option(option) abort

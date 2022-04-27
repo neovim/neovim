@@ -2,25 +2,15 @@
 #define NVIM_OS_PTY_PROCESS_WIN_H
 
 #include <uv.h>
-#include <winpty.h>
 
 #include "nvim/event/process.h"
 #include "nvim/lib/queue.h"
 #include "nvim/os/pty_conpty_win.h"
 
-typedef enum {
-  kWinpty,
-  kConpty,
-} PtyType;
-
 typedef struct pty_process {
   Process process;
   uint16_t width, height;
-  union {
-    winpty_t *winpty;
-    conpty_t *conpty;
-  } object;
-  PtyType type;
+  conpty_t *conpty;
   HANDLE finish_wait;
   HANDLE process_handle;
   uv_timer_t wait_eof_timer;
@@ -38,8 +28,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
   rv.process = process_init(loop, kProcessTypePty, data);
   rv.width = 80;
   rv.height = 24;
-  rv.object.winpty = NULL;
-  rv.type = kWinpty;
+  rv.conpty = NULL;
   rv.finish_wait = NULL;
   rv.process_handle = NULL;
   return rv;

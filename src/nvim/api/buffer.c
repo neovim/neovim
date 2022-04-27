@@ -529,9 +529,9 @@ end:
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_column     First column
+/// @param start_col        First column
 /// @param end_row          Last line index
-/// @param end_column       Last column
+/// @param end_col          Last column
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
@@ -1377,9 +1377,9 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param[out] err Error details, if any.
-/// @see nvim_add_user_command
-void nvim_buf_add_user_command(Buffer buffer, String name, Object command, Dict(user_command) *opts,
-                               Error *err)
+/// @see nvim_create_user_command
+void nvim_buf_create_user_command(Buffer buffer, String name, Object command,
+                                  Dict(user_command) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
   buf_T *target_buf = find_buffer_by_handle(buffer, err);
@@ -1389,14 +1389,14 @@ void nvim_buf_add_user_command(Buffer buffer, String name, Object command, Dict(
 
   buf_T *save_curbuf = curbuf;
   curbuf = target_buf;
-  add_user_command(name, command, opts, UC_BUFFER, err);
+  create_user_command(name, command, opts, UC_BUFFER, err);
   curbuf = save_curbuf;
 }
 
 /// Delete a buffer-local user-defined command.
 ///
 /// Only commands created with |:command-buffer| or
-/// |nvim_buf_add_user_command()| can be deleted with this function.
+/// |nvim_buf_create_user_command()| can be deleted with this function.
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer.
 /// @param  name    Name of the command to delete.

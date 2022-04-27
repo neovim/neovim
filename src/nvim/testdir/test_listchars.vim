@@ -542,6 +542,12 @@ func Test_listchars_foldcolumn()
   call VerifyScreenDump(buf, 'Test_listchars_04', {})
   call term_sendkeys(buf, "\<C-W>>")
   call VerifyScreenDump(buf, 'Test_listchars_05', {})
+  call term_sendkeys(buf, "\<C-W>h")
+  call term_sendkeys(buf, ":set nowrap foldcolumn=4\<CR>")
+  call term_sendkeys(buf, "15\<C-W><")
+  call VerifyScreenDump(buf, 'Test_listchars_06', {})
+  call term_sendkeys(buf, "4\<C-W><")
+  call VerifyScreenDump(buf, 'Test_listchars_07', {})
 
   " clean up
   call StopVimInTerminal(buf)

@@ -3,6 +3,7 @@
 " Maintainer: Steven Oliver <oliver.steven@gmail.com>
 " Website: https://steveno@github.com/steveno/falconpl-vim.git
 " Credits: This is, to a great extent, a copy n' paste of ruby.vim.
+"		2022 April: b:undo_indent added by Doug Kearns
 
 " 1. Setup {{{1
 " ============
@@ -19,6 +20,8 @@ setlocal nosmartindent
 setlocal indentexpr=FalconGetIndent(v:lnum)
 setlocal indentkeys=0{,0},0),0],!^F,o,O,e
 setlocal indentkeys+==~case,=~catch,=~default,=~elif,=~else,=~end,=~\"
+
+let b:undo_indent = "setl inde< indk< si<"
 
 " Define the appropriate indent function but only once
 if exists("*FalconGetIndent")

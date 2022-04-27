@@ -27,7 +27,7 @@ typedef enum {
   WC_BOTTOM_RIGHT
 } WindowCorner;
 
-/// By default, all widows are draw on a single rectangular grid, represented by
+/// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
 /// grid, then this is only used for global screen elements that hasn't been
 /// externalized.
@@ -65,8 +65,8 @@ extern StlClickDefinition *tab_page_click_defs;
 /// Size of the tab_page_click_defs array
 extern long tab_page_click_defs_size;
 
-#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
-#define W_ENDROW(wp)   (wp->w_winrow + wp->w_height)
+#define W_ENDCOL(wp)   ((wp)->w_wincol + (wp)->w_width)
+#define W_ENDROW(wp)   ((wp)->w_winrow + (wp)->w_height)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"

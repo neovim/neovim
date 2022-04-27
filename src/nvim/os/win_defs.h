@@ -36,7 +36,7 @@
 // Windows defines a RGB macro that produces 0x00bbggrr color values for use
 // with GDI. Our macro is different, and we don't use GDI.
 // Duplicated from macros.h to avoid include-order sensitivity.
-#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
+#define RGB_(r, g, b) (((r) << 16) | ((g) << 8) | (b))
 
 #ifdef _MSC_VER
 # ifndef inline

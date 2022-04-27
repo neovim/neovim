@@ -770,7 +770,7 @@ func Test_breakindent20_list()
 	\ "shall make no law   ",
 	\ ]
   call s:compare_lines(expect, lines)
-  " set mininum indent
+  " set minimum indent
   setl briopt=min:5
   redraw!
   let lines = s:screen_lines2(1, 6, 20)

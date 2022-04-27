@@ -87,8 +87,8 @@ typedef struct exarg exarg_T;
 
 // behavior for bad character, "++bad=" argument
 #define BAD_REPLACE     '?'     // replace it with '?' (default)
-#define BAD_KEEP        -1      // leave it
-#define BAD_DROP        -2      // erase it
+#define BAD_KEEP        (-1)    // leave it
+#define BAD_DROP        (-2)    // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
 

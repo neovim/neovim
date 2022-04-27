@@ -123,12 +123,12 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:set_options(pager) abort
-  setlocal filetype=man
   setlocal noswapfile buftype=nofile bufhidden=hide
   setlocal nomodified readonly nomodifiable
   if a:pager
     nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
   endif
+  setlocal filetype=man
 endfunction
 
 function! s:get_page(path) abort
@@ -473,10 +473,6 @@ endfunction
 
 " Called when Nvim is invoked as $MANPAGER.
 function! man#init_pager() abort
-  " https://github.com/neovim/neovim/issues/6828
-  let og_modifiable = &modifiable
-  setlocal modifiable
-
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -496,7 +492,6 @@ function! man#init_pager() abort
   endif
 
   call s:set_options(v:true)
-  let &l:modifiable = og_modifiable
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort

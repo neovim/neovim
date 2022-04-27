@@ -26,7 +26,7 @@ describe("multibyte rendering", function()
       ̊
       x]])
     feed("gg")
-     -- verify the modifier infact is alone
+     -- verify the modifier in fact is alone
     feed_command("ascii")
     screen:expect([[
       ^ ̊                                                           |

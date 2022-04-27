@@ -1869,17 +1869,21 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
   } else {
     // Commands with more than one possible argument we split
     lua_pop(lstate, 1);  // Pop the reference of opts.args
-    int length = (int)STRLEN(eap->arg);
-    int start = 0;
-    int end = 0;
+    size_t length = STRLEN(eap->arg);
+    size_t end = 0;
+    size_t len = 0;
     int i = 1;
-    bool res = true;
-    while (res) {
-      res = uc_split_args_iter(eap->arg, i, &start, &end, length);
-      lua_pushlstring(lstate, (const char *)eap->arg + start, (size_t)(end - start + 1));
-      lua_rawseti(lstate, -2, i);
-      i++;
+    char *buf = xcalloc(length, sizeof(char));
+    bool done = false;
+    while (!done) {
+      done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
+      if (len > 0) {
+        lua_pushlstring(lstate, buf, len);
+        lua_rawseti(lstate, -2, i);
+        i++;
+      }
     }
+    xfree(buf);
   }
   lua_setfield(lstate, -2, "fargs");
 

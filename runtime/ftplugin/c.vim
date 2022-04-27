@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Sep 21
+" Last Change:	2022 Apr 08
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -31,7 +31,8 @@ if exists('&ofu')
 endif
 
 " Set 'comments' to format dashed lists in comments.
-setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+" Also include ///, used for Doxygen.
+ setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,:///,://
 
 " When the matchit plugin is loaded, this makes the % command skip parens and
 " braces in comments properly.

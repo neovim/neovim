@@ -70,7 +70,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
   bool mustend = false;
   char_u *arg = *argp;
   char_u *p = arg;
-  int c;
+  char_u c;
   int i;
 
   if (newargs != NULL) {
@@ -265,7 +265,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   (*arg)++;
 
   if (evaluate) {
-    int len, flags = 0;
+    int flags = 0;
     char_u *p;
     garray_T newlines;
 
@@ -278,7 +278,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     ga_grow(&newlines, 1);
 
     // Add "return " before the expression.
-    len = 7 + e - s + 1;
+    size_t len = (size_t)(7 + e - s + 1);
     p = (char_u *)xmalloc(len);
     ((char_u **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
@@ -522,16 +522,16 @@ static char_u *fname_trans_sid(const char_u *const name, char_u *const fname_buf
       if (current_sctx.sc_sid <= 0) {
         *error = ERROR_SCRIPT;
       } else {
-        snprintf((char *)fname_buf + i, FLEN_FIXED + 1 - i, "%" PRId64 "_",
+        snprintf((char *)fname_buf + i, (size_t)(FLEN_FIXED + 1 - i), "%" PRId64 "_",
                  (int64_t)current_sctx.sc_sid);
         i = (int)STRLEN(fname_buf);
       }
     }
-    if (i + STRLEN(name + llen) < FLEN_FIXED) {
+    if ((size_t)i + STRLEN(name + llen) < FLEN_FIXED) {
       STRCPY(fname_buf + i, name + llen);
       fname = fname_buf;
     } else {
-      fname = xmalloc(i + STRLEN(name + llen) + 1);
+      fname = xmalloc((size_t)i + STRLEN(name + llen) + 1);
       *tofree = fname;
       memmove(fname, fname_buf, (size_t)i);
       STRCPY(fname + i, name + llen);
@@ -1422,7 +1422,7 @@ static void argv_add_base(typval_T *const basetv, typval_T **const argvars, int 
 {
   if (basetv != NULL) {
     // Method call: base->Method()
-    memmove(&new_argvars[1], *argvars, sizeof(typval_T) * (*argcount));
+    memmove(&new_argvars[1], *argvars, sizeof(typval_T) * (size_t)(*argcount));
     new_argvars[0] = *basetv;
     (*argcount)++;
     *argvars = new_argvars;
@@ -1475,7 +1475,7 @@ int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
   if (fp == NULL) {
     // Make a copy of the name, if it comes from a funcref variable it could
     // be changed or deleted in the called function.
-    name = vim_strnsave(funcname, len);
+    name = vim_strnsave(funcname, (size_t)len);
     fname = fname_trans_sid(name, fname_buf, &tofree, &error);
   }
 
@@ -1522,7 +1522,7 @@ int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
       if (len > 0) {
         error = ERROR_NONE;
         argv_add_base(funcexe->basetv, &argvars, &argcount, argv, &argv_base);
-        nlua_typval_call((const char *)funcname, len, argvars, argcount, rettv);
+        nlua_typval_call((const char *)funcname, (size_t)len, argvars, argcount, rettv);
       } else {
         // v:lua was called directly; show its name in the emsg
         XFREE_CLEAR(name);
@@ -1713,7 +1713,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       && (*pp)[2] == KE_SNR) {
     *pp += 3;
     len = get_id_len((const char **)pp) + 3;
-    return (char_u *)xmemdupz(start, len);
+    return (char_u *)xmemdupz(start, (size_t)len);
   }
 
   // A name starting with "<SID>" or "<SNR>" is local to a script.  But
@@ -1766,8 +1766,8 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
           semsg(e_invexpr2, "v:lua");
           goto theend;
         }
-        name = xmallocz(len);
-        memcpy(name, end+1, len);
+        name = xmallocz((size_t)len);
+        memcpy(name, end+1, (size_t)len);
         *pp = (char_u *)end+1+len;
       } else {
         name = vim_strsave(partial_name(lv.ll_tv->vval.v_partial));
@@ -1861,12 +1861,11 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
         emsg(_(e_usingsid));
         goto theend;
       }
-      sid_buf_len = snprintf(sid_buf, sizeof(sid_buf),
-                             "%" PRIdSCID "_", current_sctx.sc_sid);
-      lead += sid_buf_len;
+      sid_buf_len =
+        (size_t)snprintf(sid_buf, sizeof(sid_buf), "%" PRIdSCID "_", current_sctx.sc_sid);
+      lead += (int)sid_buf_len;
     }
-  } else if (!(flags & TFN_INT)
-             && builtin_function(lv.ll_name, lv.ll_name_len)) {
+  } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name, (int)lv.ll_name_len)) {
     semsg(_("E128: Function name must start with a capital or \"s:\": %s"),
           start);
     goto theend;
@@ -1881,7 +1880,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
     }
   }
 
-  name = xmalloc(len + lead + 1);
+  name = xmalloc((size_t)len + (size_t)lead + 1);
   if (!skip && lead > 0) {
     name[0] = K_SPECIAL;
     name[1] = KS_EXTRA;
@@ -1890,7 +1889,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       memcpy(name + 3, sid_buf, sid_buf_len);
     }
   }
-  memmove(name + lead, lv.ll_name, len);
+  memmove(name + lead, lv.ll_name, (size_t)len);
   name[lead + len] = NUL;
   *pp = (char_u *)end;
 
@@ -1904,7 +1903,7 @@ void ex_function(exarg_T *eap)
 {
   char_u *theline;
   char_u *line_to_free = NULL;
-  int c;
+  char_u c;
   int saved_did_emsg;
   bool saved_wait_return = need_wait_return;
   char_u *name = NULL;
@@ -2387,9 +2386,9 @@ void ex_function(exarg_T *eap)
             // Ignore leading white space.
             p = skipwhite(p + 4);
             heredoc_trimmed =
-              vim_strnsave(theline, skipwhite(theline) - theline);
+              vim_strnsave(theline, (size_t)(skipwhite(theline) - theline));
           }
-          skip_until = vim_strnsave(p, skiptowhite(p) - p);
+          skip_until = vim_strnsave(p, (size_t)(skiptowhite(p) - p));
           do_concat = false;
           is_heredoc = true;
         }
@@ -2397,7 +2396,7 @@ void ex_function(exarg_T *eap)
     }
 
     // Add the line to the function.
-    ga_grow(&newlines, 1 + sourcing_lnum_off);
+    ga_grow(&newlines, 1 + (int)sourcing_lnum_off);
 
     // Copy the line to newly allocated memory.  get_one_sourceline()
     // allocates 250 bytes per line, this saves 80% on average.  The cost
@@ -2503,7 +2502,7 @@ void ex_function(exarg_T *eap)
         p = vim_strchr(scriptname, '/');
         plen = (int)STRLEN(p);
         slen = (int)STRLEN(sourcing_name);
-        if (slen > plen && fnamecmp(p,
+        if (slen > plen && FNAMECMP(p,
                                     sourcing_name + slen - plen) == 0) {
           j = OK;
         }
@@ -3017,11 +3016,12 @@ void ex_call(exarg_T *eap)
     }
   }
 
-  // When inside :try we need to check for following "| catch".
-  if (!failed || eap->cstack->cs_trylevel > 0) {
+  // When inside :try we need to check for following "| catch" or "| endtry".
+  // Not when there was an error, but do check if an exception was thrown.
+  if ((!aborting() || current_exception != NULL) && (!failed || eap->cstack->cs_trylevel > 0)) {
     // Check for trailing illegal characters and a following command.
     if (!ends_excmd(*arg)) {
-      if (!failed) {
+      if (!failed && !aborting()) {
         emsg_severe = true;
         emsg(_(e_trailing));
       }
@@ -3253,7 +3253,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
         func_ptr_ref(pt->pt_func);
       }
       if (ret_pt->pt_argc > 0) {
-        size_t arg_size = sizeof(typval_T) * ret_pt->pt_argc;
+        size_t arg_size = sizeof(typval_T) * (size_t)ret_pt->pt_argc;
         pt->pt_argv = (typval_T *)xmalloc(arg_size);
         pt->pt_argc = ret_pt->pt_argc;
         for (i = 0; i < pt->pt_argc; i++) {
@@ -3416,7 +3416,7 @@ hashitem_T *find_hi_in_scoped_ht(const char *name, hashtab_T **pht)
   while (current_funccal != NULL) {
     hashtab_T *ht = find_var_ht(name, namelen, &varname);
     if (ht != NULL && *varname != NUL) {
-      hi = hash_find_len(ht, varname, namelen - (varname - name));
+      hi = hash_find_len(ht, varname, namelen - (size_t)(varname - name));
       if (!HASHITEM_EMPTY(hi)) {
         *pht = ht;
         break;

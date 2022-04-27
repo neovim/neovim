@@ -17,6 +17,7 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local curbufmeths = helpers.curbufmeths
+local retry = helpers.retry
 local source = helpers.source
 
 describe('autocmd', function()
@@ -56,6 +57,23 @@ describe('autocmd', function()
     command('close')
     command('new testfile2')
     command('bdelete 1')
+    eq(expected, eval('g:evs'))
+  end)
+
+  it('first edit causes BufUnload on NoName', function()
+    local expected = {
+      {'BufUnload', ''},
+      {'BufDelete', ''},
+      {'BufWipeout', ''},
+      {'BufEnter', 'testfile1'},
+    }
+    command('let g:evs = []')
+    command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
+    command('autocmd BufDelete * :call add(g:evs, ["BufDelete", expand("<afile>")])')
+    command('autocmd BufLeave * :call add(g:evs, ["BufLeave", expand("<afile>")])')
+    command('autocmd BufUnload * :call add(g:evs, ["BufUnload", expand("<afile>")])')
+    command('autocmd BufWipeout * :call add(g:evs, ["BufWipeout", expand("<afile>")])')
+    command('edit testfile1')
     eq(expected, eval('g:evs'))
   end)
 
@@ -439,6 +457,37 @@ describe('autocmd', function()
     ]]}
   end)
 
+  describe('v:event is readonly #18063', function()
+    it('during ChanOpen event', function()
+      command('autocmd ChanOpen * let v:event.info.id = 0')
+      funcs.jobstart({'cat'})
+      retry(nil, nil, function()
+        eq('E46: Cannot change read-only variable "v:event.info"', meths.get_vvar('errmsg'))
+      end)
+    end)
+
+    it('during ChanOpen event', function()
+      command('autocmd ChanInfo * let v:event.info.id = 0')
+      meths.set_client_info('foo', {}, 'remote', {}, {})
+      retry(nil, nil, function()
+        eq('E46: Cannot change read-only variable "v:event.info"', meths.get_vvar('errmsg'))
+      end)
+    end)
+
+    it('during RecordingLeave event', function()
+      command([[autocmd RecordingLeave * let v:event.regname = '']])
+      eq('Vim(let):E46: Cannot change read-only variable "v:event.regname"',
+         pcall_err(command, 'normal! qqq'))
+    end)
+
+    it('during TermClose event', function()
+      command('autocmd TermClose * let v:event.status = 0')
+      command('terminal')
+      eq('Vim(let):E46: Cannot change read-only variable "v:event.status"',
+         pcall_err(command, 'bdelete!'))
+    end)
+  end)
+
   describe('old_tests', function()
     it('vimscript: WinNew ++once', function()
       source [[
@@ -514,18 +563,6 @@ describe('autocmd', function()
     it('should have autocmds in filetypedetect group', function()
       source [[filetype on]]
       neq({}, meths.get_autocmds { group = "filetypedetect" })
-    end)
-
-    it('should not access freed mem', function()
-      source [[
-        au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
-        arg 0
-        argadd
-        all
-        all
-        au!
-        bwipe xxx
-      ]]
     end)
 
     it('should allow comma-separated patterns', function()

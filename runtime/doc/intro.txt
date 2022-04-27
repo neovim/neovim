@@ -120,7 +120,7 @@ Vim would never have become what it is now, without the help of these people!
 	Daniel Elstner		GTK+ 2 port
 	Eric Fischer		Mac port, 'cindent', and other improvements
 	Benji Fisher		Answering lots of user questions
-	Bill Foster		Athena GUI port
+	Bill Foster		Athena GUI port (later removed)
 	Google			Lets me work on Vim one day a week
 	Loic Grenie		xvim (ideas for multi windows version)
 	Sven Guckes		Vim promoter and previous WWW page maintainer
@@ -286,10 +286,12 @@ and <> are part of what you type, the context should make this clear.
 
 							*CTRL-{char}*
 CTRL-{char}	{char} typed as a control character; that is, typing {char}
-		while holding the CTRL key down.  The case of {char} does not
-		matter; thus CTRL-A and CTRL-a are equivalent.  But on some
-		terminals, using the SHIFT key will produce another code,
-		don't use it then.
+		while holding the CTRL key down.  The case of {char} is
+		ignored; thus CTRL-A and CTRL-a are equivalent.  But in
+		some terminals and environments, using the SHIFT key will
+		produce a distinct code (e.g. CTRL-SHIFT-a); in these
+		environments using the SHIFT key will not trigger commands
+		such as CTRL-A.
 
 							*'option'*
 'option'	An option, or parameter, that can be set to a value, is
@@ -383,6 +385,8 @@ Note:
   combinations actually work depends on the the UI or host terminal.
 - When a key is pressed using a meta or alt modifier and no mapping exists
   for that keypress, Nvim behaves as though <Esc> was pressed before the key.
+- It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
+  but your terminal must encode the input for that to work. |tui-input|
 
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make

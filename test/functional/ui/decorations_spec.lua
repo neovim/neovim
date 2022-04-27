@@ -437,6 +437,7 @@ describe('extmark decorations', function()
       [22] = {foreground = tonumber('0xb20000'), background = tonumber('0xf13f3f')};
       [23] = {foreground = Screen.colors.Magenta1, background = Screen.colors.LightGrey};
       [24] = {bold = true};
+      [25] = {background = Screen.colors.LightRed};
     }
 
     ns = meths.create_namespace 'test'
@@ -456,6 +457,31 @@ for _,item in ipairs(items) do
     end
 end]]
 
+  it('empty virtual text at eol should not break colorcolumn #17860', function()
+    insert(example_text)
+    feed('gg')
+    command('set colorcolumn=40')
+    screen:expect([[
+      ^for _,item in ipairs(items) do         {25: }          |
+          local text, hl_id_cell, count = unp{25:a}ck(item)  |
+          if hl_id_cell ~= nil then          {25: }          |
+              hl_id = hl_id_cell             {25: }          |
+          end                                {25: }          |
+          for _ = 1, (count or 1) do         {25: }          |
+              local cell = line[colpos]      {25: }          |
+              cell.text = text               {25: }          |
+              cell.hl_id = hl_id             {25: }          |
+              colpos = colpos+1              {25: }          |
+          end                                {25: }          |
+      end                                    {25: }          |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    meths.buf_set_extmark(0, ns, 4, 0, { virt_text={{''}}, virt_text_pos='eol'})
+    screen:expect_unchanged()
+  end)
+
   it('can have virtual text of overlay position', function()
     insert(example_text)
     feed 'gg'
@@ -471,7 +497,9 @@ end]]
     -- can "float" beyond end of line
     meths.buf_set_extmark(0, ns, 5, 28, { virt_text={{'loopy', 'ErrorMsg'}}, virt_text_pos='overlay'})
     -- bound check: right edge of window
-    meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork ' }, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork '}, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    -- empty virt_text should not change anything
+    meths.buf_set_extmark(0, ns, 6, 16, { virt_text={{''}}, virt_text_pos='overlay'})
 
     screen:expect{grid=[[
       ^for _,item in ipairs(items) do                    |
@@ -621,6 +649,8 @@ end]]
     meths.buf_set_extmark(0, ns, 2, 10, { virt_text={{'Much', 'ErrorMsg'}},   virt_text_win_col=31, hl_mode='blend'})
     meths.buf_set_extmark(0, ns, 3, 15, { virt_text={{'Error', 'ErrorMsg'}}, virt_text_win_col=31, hl_mode='blend'})
     meths.buf_set_extmark(0, ns, 7, 21, { virt_text={{'-', 'NonText'}}, virt_text_win_col=4, hl_mode='blend'})
+    -- empty virt_text should not change anything
+    meths.buf_set_extmark(0, ns, 8, 0, { virt_text={{''}}, virt_text_win_col=14, hl_mode='blend'})
 
     screen:expect{grid=[[
       ^for _,item in ipairs(items) do                    |
@@ -698,7 +728,7 @@ end]]
     ]]}
   end)
 
-  it('can have virtual text which combines foreground and backround groups', function()
+  it('can have virtual text which combines foreground and background groups', function()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {background = tonumber('0x123456'), foreground = tonumber('0xbbbbbb')};

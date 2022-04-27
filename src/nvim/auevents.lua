@@ -141,6 +141,5 @@ return {
     TermOpen=true,
     UIEnter=true,
     UILeave=true,
-    WinScrolled=true,
   },
 }

@@ -302,7 +302,6 @@ end
 function M.get_progress_messages()
 
   local new_messages = {}
-  local msg_remove = {}
   local progress_remove = {}
 
   for _, client in ipairs(vim.lsp.get_active_clients()) do
@@ -325,29 +324,6 @@ function M.get_progress_messages()
         end
       end
 
-      for i, msg in ipairs(data.messages) do
-        if msg.show_once then
-          msg.shown = msg.shown + 1
-          if msg.shown > 1 then
-            table.insert(msg_remove, {client = client, idx = i})
-          end
-        end
-
-        table.insert(new_messages, {name = data.name, content = msg.content})
-      end
-
-      if next(data.status) ~= nil then
-        table.insert(new_messages, {
-          name = data.name,
-          content = data.status.content,
-          uri = data.status.uri,
-          status = true
-        })
-      end
-    for _, item in ipairs(msg_remove) do
-      table.remove(client.messages, item.idx)
-    end
-
   end
 
   for _, item in ipairs(progress_remove) do
@@ -360,7 +336,7 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits table list of `TextEdit` objects
 ---@param bufnr number Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32 defaults to encoding of first client of `bufnr`
+---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate {
@@ -1138,7 +1114,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     block = {nil, "```+([a-zA-Z0-9_]*)", "```+"},
     pre = {"", "<pre>", "</pre>"},
     code = {"", "<code>", "</code>"},
-    text = {"plaintex", "<text>", "</text>"},
+    text = {"text", "<text>", "</text>"},
   }
 
   local match_begin = function(line)
@@ -1950,8 +1926,8 @@ end
 function M.lookup_section(settings, section)
   for part in vim.gsplit(section, '.', true) do
     settings = settings[part]
-    if not settings then
-      return
+    if settings == nil then
+      return vim.NIL
     end
   end
   return settings

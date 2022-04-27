@@ -37,15 +37,6 @@ func Test_expand_sflnum()
   delcommand Flnum
 endfunc
 
-func Test_expand()
-  new
-  call assert_equal("",  expand('%:S'))
-  call assert_equal('3', '<slnum>'->expand())
-  call assert_equal(['4'], expand('<slnum>', v:false, v:true))
-  " Don't add any line above this, otherwise <slnum> will change.
-  quit
-endfunc
-
 func Test_expand_sfile()
   call assert_match('test_expand_func\.vim$', s:sfile)
   call assert_match('^function .*\.\.Test_expand_sfile$', expand('<sfile>'))
@@ -77,6 +68,15 @@ func Test_expand_slnum()
   delcommand Slnum
 endfunc
 
+func Test_expand()
+  new
+  call assert_equal("",  expand('%:S'))
+  call assert_equal('3', '<slnum>'->expand())
+  call assert_equal(['4'], expand('<slnum>', v:false, v:true))
+  " Don't add any line above this, otherwise <slnum> will change.
+  quit
+endfunc
+
 func s:sid_test()
   return 'works'
 endfunc
@@ -85,6 +85,19 @@ func Test_expand_SID()
   let sid = expand('<SID>')
   execute 'let g:sid_result = ' .. sid .. 'sid_test()'
   call assert_equal('works', g:sid_result)
+endfunc
+
+
+" Test for 'wildignore' with expand()
+func Test_expand_wildignore()
+  set wildignore=*.vim
+  call assert_equal('', expand('test_expand_func.vim'))
+  call assert_equal('', expand('test_expand_func.vim', 0))
+  call assert_equal([], expand('test_expand_func.vim', 0, 1))
+  call assert_equal('test_expand_func.vim', expand('test_expand_func.vim', 1))
+  call assert_equal(['test_expand_func.vim'],
+        \ expand('test_expand_func.vim', 1, 1))
+  set wildignore&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

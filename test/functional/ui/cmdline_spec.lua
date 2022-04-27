@@ -4,6 +4,7 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 local assert_alive = helpers.assert_alive
+local uname = helpers.uname
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -824,7 +825,7 @@ describe('cmdline redraw', function()
   end)
 
   it('with <Cmd>', function()
-    if 'openbsd' == helpers.uname() then
+    if string.find(uname(), 'bsd') then
       pending('FIXME #10804')
     end
     command('cmap a <Cmd>call sin(0)<CR>')  -- no-op

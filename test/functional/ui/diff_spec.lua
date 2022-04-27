@@ -1226,3 +1226,130 @@ it('Align the filler lines when changing text in diff mode', function()
                                             |
   ]]}
 end)
+
+it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', function()
+  clear()
+  local screen = Screen.new(40, 20)
+  screen:set_default_attr_ids({
+    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
+    [2] = {reverse = true};
+    [3] = {background = Screen.colors.LightBlue};
+    [4] = {background = Screen.colors.LightMagenta};
+    [5] = {background = Screen.colors.Red, bold = true};
+    [6] = {foreground = Screen.colors.Blue, bold = true};
+    [7] = {background = Screen.colors.Red, foreground = Screen.colors.Blue, bold = true};
+    [8] = {reverse = true, bold = true};
+  })
+  screen:attach()
+  exec([[
+    call setline(1, ['a', 'b', "c\n", 'd', 'e', 'f', 'g'])
+    vnew
+    call setline(1, ['A', 'b', 'c', 'd', 'E', 'f', 'g'])
+    windo diffthis
+    wincmd p
+    norm! gg0
+    redraw!
+  ]])
+
+  -- Test using internal diff
+  screen:expect([[
+    {1:  }{5:^A}{4:                 }{2:│}{1:  }{5:a}{4:                }|
+    {1:  }b                 {2:│}{1:  }b                |
+    {1:  }{4:c                 }{2:│}{1:  }{4:c}{7:^@}{4:              }|
+    {1:  }d                 {2:│}{1:  }d                |
+    {1:  }{5:E}{4:                 }{2:│}{1:  }{5:e}{4:                }|
+    {1:  }f                 {2:│}{1:  }f                |
+    {1:  }g                 {2:│}{1:  }g                |
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+                                            |
+  ]])
+
+  -- Test using internal diff and case folding
+  command('set diffopt+=icase')
+  feed('<C-L>')
+  screen:expect([[
+    {1:  }^A                 {2:│}{1:  }a                |
+    {1:  }b                 {2:│}{1:  }b                |
+    {1:  }{4:c                 }{2:│}{1:  }{4:c}{7:^@}{4:              }|
+    {1:  }d                 {2:│}{1:  }d                |
+    {1:  }E                 {2:│}{1:  }e                |
+    {1:  }f                 {2:│}{1:  }f                |
+    {1:  }g                 {2:│}{1:  }g                |
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+                                            |
+  ]])
+
+  -- Test using external diff
+  command('set diffopt=filler')
+  feed('<C-L>')
+  screen:expect([[
+    {1:  }{5:^A}{4:                 }{2:│}{1:  }{5:a}{4:                }|
+    {1:  }b                 {2:│}{1:  }b                |
+    {1:  }{4:c                 }{2:│}{1:  }{4:c}{7:^@}{4:              }|
+    {1:  }d                 {2:│}{1:  }d                |
+    {1:  }{5:E}{4:                 }{2:│}{1:  }{5:e}{4:                }|
+    {1:  }f                 {2:│}{1:  }f                |
+    {1:  }g                 {2:│}{1:  }g                |
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+                                            |
+  ]])
+
+  -- Test using external diff and case folding
+  command('set diffopt+=filler,icase')
+  feed('<C-L>')
+  screen:expect([[
+    {1:  }^A                 {2:│}{1:  }a                |
+    {1:  }b                 {2:│}{1:  }b                |
+    {1:  }{4:c                 }{2:│}{1:  }{4:c}{7:^@}{4:              }|
+    {1:  }d                 {2:│}{1:  }d                |
+    {1:  }E                 {2:│}{1:  }e                |
+    {1:  }f                 {2:│}{1:  }f                |
+    {1:  }g                 {2:│}{1:  }g                |
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {6:~                   }{2:│}{6:~                  }|
+    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+                                            |
+  ]])
+end)

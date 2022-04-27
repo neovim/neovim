@@ -327,10 +327,11 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1)
-      * Columns + sc_col) {
+  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg((char *)s, 0);
   }
+
+  need_fileinfo = false;
 
   xfree(buf);
   --entered;
@@ -381,6 +382,13 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   int e;
   int i;
   int n;
+
+  if (*s == NUL) {
+    if (buflen > 0) {
+      *buf = NUL;
+    }
+    return;
+  }
 
   if (room_in < 3) {
     room = 0;
@@ -1348,6 +1356,7 @@ void msg_start(void)
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
+    need_fileinfo = false;
   }
 
   if (need_clr_eos) {
@@ -1486,6 +1495,10 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
   char_u *s;
   int mb_l;
   int c;
+  int save_got_int = got_int;
+
+  // Only quit when got_int was set in here.
+  got_int = false;
 
   // if MSG_HIST flag set, add message to history
   if (attr & MSG_HIST) {
@@ -1503,7 +1516,7 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
    * Go over the string.  Special characters are translated and printed.
    * Normal characters are printed several at a time.
    */
-  while (--len >= 0) {
+  while (--len >= 0 && !got_int) {
     // Don't include composing chars after the end.
     mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
     if (mb_l > 1) {
@@ -1542,10 +1555,12 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
     }
   }
 
-  if (str > plain_start) {
+  if (str > plain_start && !got_int) {
     // Print the printable chars at the end.
     msg_puts_attr_len(plain_start, str - plain_start, attr);
   }
+
+  got_int |= save_got_int;
 
   return retval;
 }
@@ -2013,6 +2028,8 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   if (!msg_use_printf() || (headless_mode && default_grid.chars)) {
     msg_puts_display((const char_u *)str, len, attr, false);
   }
+
+  need_fileinfo = false;
 }
 
 /// Print a formatted message

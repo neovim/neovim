@@ -188,7 +188,7 @@ A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
-an error when using other characters.  The maxium length of a group name is
+an error when using other characters.  The maximum length of a group name is
 about 200 bytes.  *E1249*
 
 To be able to allow each user to pick their favorite set of colors, there must
@@ -4830,6 +4830,7 @@ in their own color.
 :hi[ghlight] {group-name}
 			List one highlight group.
 
+						*highlight-clear* *:hi-clear*
 :hi[ghlight] clear	Reset all highlighting to the defaults.  Removes all
 			highlighting for groups added by the user!
 			Uses the current value of 'background' to decide which
@@ -4889,7 +4890,7 @@ the same syntax file on all UIs.
 					*inverse* *italic* *standout*
 					*nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
-	attr-list is a comma separated list (without spaces) of the
+	attr-list is a comma-separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
@@ -5089,6 +5090,9 @@ ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
+							*hl-CurSearch*
+CurSearch	used for highlighting a search pattern under the cursor
+		(see 'hlsearch')
 							*hl-Cursor*
 Cursor		character under the cursor
 lCursor		the character under the cursor when |language-mapping|
@@ -5226,7 +5230,8 @@ VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-Whitespace*
-Whitespace	"nbsp", "space", "tab" and "trail" in 'listchars'
+Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
+		in 'listchars'
 							*hl-WildMenu*
 WildMenu	current match in 'wildmenu' completion
 

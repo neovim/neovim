@@ -298,6 +298,31 @@ func Test_relativenumber_colors()
   call delete('XTest_relnr')
 endfunc
 
+func Test_relativenumber_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set relativenumber
+      call cursor(4, 1)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xrnu_timer')
+
+  let buf = RunVimInTerminal('-S Xrnu_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_relativenumber_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xrnu_timer')
+endfunc
+
 " Test for displaying line numbers with 'rightleft'
 func Test_number_rightleft()
   CheckFeature rightleft

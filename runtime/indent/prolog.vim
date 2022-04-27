@@ -4,6 +4,7 @@
 " 		Doug Kearns <dougkearns@gmail.com>
 "  Revised on:	2002.02.18. 23:34:05
 "  Last change by: Takuya Fujiwara, 2018 Sep 23
+"		2022 April: b:undo_indent added by Doug Kearns
 
 " TODO:
 "   checking with respect to syntax highlighting
@@ -20,6 +21,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetPrologIndent()
 setlocal indentkeys-=:,0#
 setlocal indentkeys+=0%,-,0;,>,0)
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once.
 "if exists("*GetPrologIndent")

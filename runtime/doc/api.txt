@@ -538,9 +538,9 @@ nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
                     {fast}
 
                 Parameters: ~
-                    {pat}      pattern of files to search for
-                    {all}      whether to return all matches or only the first
-                    {options}  is_lua: only search lua subdirs
+                    {pat}   pattern of files to search for
+                    {all}   whether to return all matches or only the first
+                    {opts}  is_lua: only search lua subdirs
 
                 Return: ~
                     list of absolute paths to the found files
@@ -627,62 +627,6 @@ nvim__stats()                                                  *nvim__stats()*
                 Return: ~
                     Map of various internal stats.
 
-                                                     *nvim_add_user_command()*
-nvim_add_user_command({name}, {command}, {*opts})
-                Create a new user command |user-commands|
-
-                {name} is the name of the new command. The name must begin
-                with an uppercase letter.
-
-                {command} is the replacement text or Lua function to execute.
-
-                Example: >
-                   :call nvim_add_user_command('SayHello', 'echo "Hello world!"', {})
-                   :SayHello
-                   Hello world!
-<
-
-                Parameters: ~
-                    {name}     Name of the new user command. Must begin with
-                               an uppercase letter.
-                    {command}  Replacement command to execute when this user
-                               command is executed. When called from Lua, the
-                               command can also be a Lua function. The
-                               function is called with a single table argument
-                               that contains the following keys:
-                               • args: (string) The args passed to the
-                                 command, if any |<args>|
-                               • fargs: (table) The args split by unescaped
-                                 whitespace (when more than one argument is
-                                 allowed), if any |<f-args>|
-                               • bang: (boolean) "true" if the command was
-                                 executed with a ! modifier |<bang>|
-                               • line1: (number) The starting line of the
-                                 command range |<line1>|
-                               • line2: (number) The final line of the command
-                                 range |<line2>|
-                               • range: (number) The number of items in the
-                                 command range: 0, 1, or 2 |<range>|
-                               • count: (number) Any count supplied |<count>|
-                               • reg: (string) The optional register, if
-                                 specified |<reg>|
-                               • mods: (string) Command modifiers, if any
-                                 |<mods>|
-                    {opts}     Optional command attributes. See
-                               |command-attributes| for more details. To use
-                               boolean attributes (such as |:command-bang| or
-                               |:command-bar|) set the value to "true". In
-                               addition to the string options listed in
-                               |:command-complete|, the "complete" key also
-                               accepts a Lua function which works like the
-                               "customlist" completion mode
-                               |:command-completion-customlist|. Additional
-                               parameters:
-                               • desc: (string) Used for listing the command
-                                 when a Lua function is used for {command}.
-                               • force: (boolean, default true) Override any
-                                 previous definition.
-
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
 
@@ -739,6 +683,62 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
 
                 See also: ~
                     buf_open_scratch
+
+                                                  *nvim_create_user_command()*
+nvim_create_user_command({name}, {command}, {*opts})
+                Create a new user command |user-commands|
+
+                {name} is the name of the new command. The name must begin
+                with an uppercase letter.
+
+                {command} is the replacement text or Lua function to execute.
+
+                Example: >
+                   :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
+                   :SayHello
+                   Hello world!
+<
+
+                Parameters: ~
+                    {name}     Name of the new user command. Must begin with
+                               an uppercase letter.
+                    {command}  Replacement command to execute when this user
+                               command is executed. When called from Lua, the
+                               command can also be a Lua function. The
+                               function is called with a single table argument
+                               that contains the following keys:
+                               • args: (string) The args passed to the
+                                 command, if any |<args>|
+                               • fargs: (table) The args split by unescaped
+                                 whitespace (when more than one argument is
+                                 allowed), if any |<f-args>|
+                               • bang: (boolean) "true" if the command was
+                                 executed with a ! modifier |<bang>|
+                               • line1: (number) The starting line of the
+                                 command range |<line1>|
+                               • line2: (number) The final line of the command
+                                 range |<line2>|
+                               • range: (number) The number of items in the
+                                 command range: 0, 1, or 2 |<range>|
+                               • count: (number) Any count supplied |<count>|
+                               • reg: (string) The optional register, if
+                                 specified |<reg>|
+                               • mods: (string) Command modifiers, if any
+                                 |<mods>|
+                    {opts}     Optional command attributes. See
+                               |command-attributes| for more details. To use
+                               boolean attributes (such as |:command-bang| or
+                               |:command-bar|) set the value to "true". In
+                               addition to the string options listed in
+                               |:command-complete|, the "complete" key also
+                               accepts a Lua function which works like the
+                               "customlist" completion mode
+                               |:command-completion-customlist|. Additional
+                               parameters:
+                               • desc: (string) Used for listing the command
+                                 when a Lua function is used for {command}.
+                               • force: (boolean, default true) Override any
+                                 previous definition.
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
@@ -929,7 +929,7 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                     • "pty" (optional) Name of pseudoterminal. On a POSIX
                       system this is a device path like "/dev/pts/1". If the
                       name is unknown, the key will still be present if a pty
-                      is used (e.g. for winpty on Windows).
+                      is used (e.g. for conpty on Windows).
                     • "buffer" (optional) Buffer with connected |terminal|
                       instance.
                     • "client" (optional) Info about the peer (client on the
@@ -1864,16 +1864,6 @@ nvim__buf_redraw_range({buffer}, {first}, {last})
 nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
-                                                 *nvim_buf_add_user_command()*
-nvim_buf_add_user_command({buffer}, {name}, {command}, {*opts})
-                Create a new user command |user-commands| in the given buffer.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer.
-
-                See also: ~
-                    nvim_add_user_command
-
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activates buffer-update events on a channel, or as Lua
                 callbacks.
@@ -1983,6 +1973,16 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                     Return value of function. NB: will deepcopy lua values
                     currently, use upvalues to send lua references in and out.
 
+                                              *nvim_buf_create_user_command()*
+nvim_buf_create_user_command({buffer}, {name}, {command}, {*opts})
+                Create a new user command |user-commands| in the given buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer.
+
+                See also: ~
+                    nvim_create_user_command
+
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
                 Unmaps a buffer-local |mapping| for the given mode.
 
@@ -2015,7 +2015,7 @@ nvim_buf_del_user_command({buffer}, {name})
                 Delete a buffer-local user-defined command.
 
                 Only commands created with |:command-buffer| or
-                |nvim_buf_add_user_command()| can be deleted with this
+                |nvim_buf_create_user_command()| can be deleted with this
                 function.
 
                 Parameters: ~
@@ -2325,12 +2325,12 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 only.
 
                 Parameters: ~
-                    {buffer}        Buffer handle, or 0 for current buffer
-                    {start_row}     First line index
-                    {start_column}  First column
-                    {end_row}       Last line index
-                    {end_column}    Last column
-                    {replacement}   Array of lines to use as replacement
+                    {buffer}       Buffer handle, or 0 for current buffer
+                    {start_row}    First line index
+                    {start_col}    First column
+                    {end_row}      Last line index
+                    {end_col}      Last column
+                    {replacement}  Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
@@ -2453,9 +2453,9 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
     local pos = a.nvim_win_get_cursor(0)
     local ns  = a.nvim_create_namespace('my-plugin')
     -- Create new extmark at line 1, column 1.
-    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+    local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, {})
     -- Create new extmark at line 3, column 1.
-    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+    local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, {})
     -- Get extmarks only from line 3.
     local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
     -- Get all marks in this buffer + namespace.
@@ -2859,8 +2859,7 @@ nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
                     {pos}     (row, col) tuple representing the new position
 
 nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
-                Sets the window height. This will only succeed if the screen
-                is split horizontally.
+                Sets the window height.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
@@ -3151,6 +3150,34 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 ==============================================================================
 Autocmd Functions                                                *api-autocmd*
 
+nvim_clear_autocmds({*opts})                           *nvim_clear_autocmds()*
+                Clear all autocommands that match the corresponding {opts}. To
+                delete a particular autocmd, see |nvim_del_autocmd|.
+
+                Parameters: ~
+                    {opts}  Parameters
+                            • event: (string|table) Examples:
+                              • event: "pat1"
+                              • event: { "pat1" }
+                              • event: { "pat1", "pat2", "pat3" }
+
+                            • pattern: (string|table)
+                              • pattern or patterns to match exactly.
+                                • For example, if you have `*.py` as that
+                                  pattern for the autocmd, you must pass
+                                  `*.py` exactly to clear it. `test.py` will
+                                  not match the pattern.
+
+                              • defaults to clearing all patterns.
+                              • NOTE: Cannot be used with {buffer}
+
+                            • buffer: (bufnr)
+                              • clear only |autocmd-buflocal| autocommands.
+                              • NOTE: Cannot be used with {pattern}
+
+                            • group: (string|int) The augroup name or id.
+                              • NOTE: If not passed, will only delete autocmds not in any group.
+
 nvim_create_augroup({name}, {*opts})                   *nvim_create_augroup()*
                 Create or get an autocommand group |autocmd-groups|.
 
@@ -3194,6 +3221,22 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                     })
 <
 
+                Lua functions receive a table with information about the
+                autocmd event as an argument. To use a function which itself
+                accepts another (optional) parameter, wrap the function in a
+                lambda:
+>
+    -- Lua function with an optional parameter.
+    -- The autocmd callback would pass a table as argument but this
+    -- function expects number|nil
+    local myluafun = function(bufnr) bufnr = bufnr or vim.api.nvim_get_current_buf() end
+
+    vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+      pattern = {"*.c", "*.h"},
+      callback = function() myluafun() end,
+    })
+<
+
                 Example using command: >
                     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
                       pattern = {"*.c", "*.h"},
@@ -3206,13 +3249,13 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                   pattern = { "*.py", "*.pyi" }
 <
 
-                Examples values for event: >
-                  "BufPreWrite"
-                  {"CursorHold", "BufPreWrite", "BufPostWrite"}
+                Example values for event: >
+                  "BufWritePre"
+                  {"CursorHold", "BufWritePre", "BufWritePost"}
 <
 
                 Parameters: ~
-                    {event}  (String|Array) The event or events to register
+                    {event}  (string|array) The event or events to register
                              this autocommand
                     {opts}   Dictionary of autocommand options:
                              • group (string|integer) optional: the
@@ -3224,9 +3267,26 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                                Cannot be used with {pattern}.
                              • desc (string) optional: description of the
                                autocommand.
-                             • callback (function|string) optional: Lua
-                               function or Vim function (as string) to execute
-                               on event. Cannot be used with {command}
+                             • callback (function|string) optional: if a
+                               string, the name of a Vimscript function to
+                               call when this autocommand is triggered.
+                               Otherwise, a Lua function which is called when
+                               this autocommand is triggered. Cannot be used
+                               with {command}. Lua callbacks can return true
+                               to delete the autocommand; in addition, they
+                               accept a single table argument with the
+                               following keys:
+                               • id: (number) the autocommand id
+                               • event: (string) the name of the event that
+                                 triggered the autocommand |autocmd-events|
+                               • group: (number|nil) the autocommand group id,
+                                 if it exists
+                               • match: (string) the expanded value of
+                                 |<amatch>|
+                               • buf: (number) the expanded value of |<abuf>|
+                               • file: (string) the expanded value of
+                                 |<afile>|
+
                              • command (string) optional: Vim command to
                                execute on event. Cannot be used with
                                {callback}
@@ -3282,8 +3342,9 @@ nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
                 See also: ~
                     |nvim_create_autocmd()|
 
-nvim_exec_autocmd({event}, {*opts})                      *nvim_exec_autocmd()*
-                Execute an autocommand |autocmd-execute|.
+nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
+                Execute all autocommands for {event} that match the
+                corresponding {opts} |autocmd-execute|.
 
                 Parameters: ~
                     {event}  (String|Array) The event or events to execute
@@ -3305,7 +3366,7 @@ nvim_exec_autocmd({event}, {*opts})                      *nvim_exec_autocmd()*
                     |:doautocmd|
 
 nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
-                Get autocommands that match the requirements passed to {opts}.
+                Get all autocommands that match the corresponding {opts}.
 
                 These examples will get autocommands matching ALL the given
                 criteria: >

@@ -11,6 +11,15 @@ describe('cmdline', function()
   it('is cleared when switching tabs', function()
     local screen = Screen.new(30, 10)
     screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {underline = true, background = Screen.colors.LightGrey};
+      [2] = {bold = true};
+      [3] = {reverse = true};
+      [4] = {bold = true, foreground = Screen.colors.Blue1};
+    }
+    -- TODO(bfredl): redraw with tabs is severly broken. fix it
+    feed_command [[ set display-=msgsep ]]
+
     feed_command([[call setline(1, range(30))]])
     screen:expect([[
       ^0                             |
@@ -24,17 +33,60 @@ describe('cmdline', function()
       8                             |
       :call setline(1, range(30))   |
     ]])
-    feed([[:tabnew<cr><C-w>-<C-w>-gtgt]])
-    screen:expect([[
-       + [No Name]  [No Name]      X|
+
+    feed [[:tabnew<cr>]]
+    screen:expect{grid=[[
+      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      :tabnew                       |
+    ]]}
+
+    feed [[<C-w>-<C-w>-]]
+    screen:expect{grid=[[
+      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
+      ^                              |
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+                                    |
+                                    |
+      :tabnew                       |
+    ]]}
+
+    feed [[gt]]
+    screen:expect{grid=[[
+      {2: + [No Name] }{1: [No Name] }{3:     }{1:X}|
+      ^0                             |
+      1                             |
+      2                             |
+      3                             |
+      4                             |
+      5                             |
       6                             |
       7                             |
+                                    |
+    ]]}
+
+    feed [[gt]]
+    screen:expect([[
+      {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
+      ^                              |
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+      {4:~                             }|
+                                    |
+                                    |
                                     |
     ]])
   end)

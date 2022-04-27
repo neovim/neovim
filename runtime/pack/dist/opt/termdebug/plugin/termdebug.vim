@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 Jan 17
+" Last Change: 2022 Apr 16
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -466,7 +466,7 @@ endfunc
 func s:StartDebugCommon(dict)
   " Sign used to highlight the line where the program has stopped.
   " There can be only one.
-  sign define debugPC linehl=debugPC
+  call sign_define('debugPC', #{linehl: 'debugPC'})
 
   " Install debugger commands in the text window.
   call win_gotoid(s:sourcewin)
@@ -700,7 +700,9 @@ func s:EndDebugCommon()
       endif
     endif
   endfor
-  exe was_buf .. "buf"
+  if bufexists(was_buf)
+    exe was_buf .. "buf"
+  endif
 
   call s:DeleteCommands()
 
@@ -759,8 +761,8 @@ func s:HandleDisasmMsg(msg)
 
       let lnum = search('^' . s:asm_addr)
       if lnum != 0
-        exe 'sign unplace ' . s:asm_id
-        exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+        call sign_unplace('TermDebug', #{id: s:asm_id})
+        call sign_place(s:asm_id, 'TermDebug', 'debugPC', '%', #{lnum: lnum})
       endif
 
       call win_gotoid(curwinid)
@@ -846,6 +848,7 @@ func s:InstallCommands()
   command Clear call s:ClearBreakpoint()
   command Step call s:SendResumingCommand('-exec-step')
   command Over call s:SendResumingCommand('-exec-next')
+  command -nargs=? Until call s:Until(<q-args>)
   command Finish call s:SendResumingCommand('-exec-finish')
   command -nargs=* Run call s:Run(<q-args>)
   command -nargs=* Arguments call s:SendResumingCommand('-exec-arguments ' . <q-args>)
@@ -904,6 +907,7 @@ func s:DeleteCommands()
   delcommand Clear
   delcommand Step
   delcommand Over
+  delcommand Until
   delcommand Finish
   delcommand Run
   delcommand Arguments
@@ -933,20 +937,28 @@ func s:DeleteCommands()
     unlet s:k_map_saved
   endif
 
-  exe 'sign unplace ' . s:pc_id
-  for [id, entries] in items(s:breakpoints)
-    for subid in keys(entries)
-      exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-    endfor
-  endfor
+  call sign_unplace('TermDebug')
   unlet s:breakpoints
   unlet s:breakpoint_locations
 
-  sign undefine debugPC
-  for val in s:BreakpointSigns
-    exe "sign undefine debugBreakpoint" . val
-  endfor
+  call sign_undefine('debugPC')
+  call sign_undefine(s:BreakpointSigns->map("'debugBreakpoint' .. v:val"))
   let s:BreakpointSigns = []
+endfunc
+
+" :Until - Execute until past a specified position or current line
+func s:Until(at)
+  if s:stopped
+    " reset s:stopped here, it may take a bit of time before we get a response
+    let s:stopped = 0
+    " call ch_log('assume that program is running after this command')
+    " Use the fname:lnum format
+    let at = empty(a:at) ?
+          \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
+    call s:SendCommand('-exec-until ' . at)
+  " else
+    " call ch_log('dropping command, program is running: exec-until')
+  endif
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
@@ -982,7 +994,8 @@ func s:ClearBreakpoint()
         " Assume this always works, the reply is simply "^done".
         call s:SendCommand('-break-delete ' . id)
         for subid in keys(s:breakpoints[id])
-          exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+          call sign_unplace('TermDebug',
+                \ #{id: s:Breakpoint2SignNumber(id, subid)})
         endfor
         unlet s:breakpoints[id]
         unlet s:breakpoint_locations[bploc][idx]
@@ -1304,8 +1317,8 @@ func s:GotoAsmwinOrCreateIt()
         call s:SendCommand('disassemble $pc')
       endif
     else
-      exe 'sign unplace ' . s:asm_id
-      exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+      call sign_unplace('TermDebug', #{id: s:asm_id})
+      call sign_place(s:asm_id, 'TermDebug', 'debugPC', '%', #{lnum: lnum})
     endif
   endif
 endfunc
@@ -1340,8 +1353,8 @@ func s:HandleCursor(msg)
       if lnum == 0
         call s:SendCommand('disassemble $pc')
       else
-        exe 'sign unplace ' . s:asm_id
-        exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+        call sign_unplace('TermDebug', #{id: s:asm_id})
+        call sign_place(s:asm_id, 'TermDebug', 'debugPC', '%', #{lnum: lnum})
       endif
 
       call win_gotoid(curwinid)
@@ -1378,8 +1391,9 @@ func s:HandleCursor(msg)
       endif
       exe lnum
       normal! zv
-      exe 'sign unplace ' . s:pc_id
-      exe 'sign place ' . s:pc_id . ' line=' . lnum . ' name=debugPC file=' . fname
+      call sign_unplace('TermDebug', #{id: s:pc_id})
+      call sign_place(s:pc_id, 'TermDebug', 'debugPC', fname,
+            \ #{lnum: lnum, priority: 110})
       if !exists('b:save_signcolumn')
         let b:save_signcolumn = &signcolumn
         call add(s:signcolumn_buflist, bufnr())
@@ -1387,7 +1401,7 @@ func s:HandleCursor(msg)
       setlocal signcolumn=yes
     endif
   elseif !s:stopped || fname != ''
-    exe 'sign unplace ' . s:pc_id
+    call sign_unplace('TermDebug', #{id: s:pc_id})
   endif
 
   call win_gotoid(wid)
@@ -1404,7 +1418,9 @@ func s:CreateBreakpoint(id, subid, enabled)
     else
       let hiName = "debugBreakpoint"
     endif
-    exe "sign define debugBreakpoint" . nr . " text=" . substitute(nr, '\..*', '', '') . " texthl=" . hiName
+    call sign_define('debugBreakpoint' .. nr,
+          \ #{text: substitute(nr, '\..*', '', ''),
+          \ texthl: hiName})
   endif
 endfunc
 
@@ -1482,7 +1498,9 @@ endfunc
 
 func s:PlaceSign(id, subid, entry)
   let nr = printf('%d.%d', a:id, a:subid)
-  exe 'sign place ' . s:Breakpoint2SignNumber(a:id, a:subid) . ' line=' . a:entry['lnum'] . ' name=debugBreakpoint' . nr . ' priority=110 file=' . a:entry['fname']
+  call sign_place(s:Breakpoint2SignNumber(a:id, a:subid), 'TermDebug',
+        \ 'debugBreakpoint' .. nr, a:entry['fname'],
+        \ #{lnum: a:entry['lnum'], priority: 110})
   let a:entry['placed'] = 1
 endfunc
 
@@ -1496,7 +1514,8 @@ func s:HandleBreakpointDelete(msg)
   if has_key(s:breakpoints, id)
     for [subid, entry] in items(s:breakpoints[id])
       if has_key(entry, 'placed')
-        exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+        call sign_unplace('TermDebug',
+              \ #{id: s:Breakpoint2SignNumber(id, subid)})
         unlet entry['placed']
       endif
     endfor

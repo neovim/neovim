@@ -122,9 +122,9 @@ describe('API', function()
 
       -- Functions
       nvim('exec', 'function Foo()\ncall setline(1,["xxx"])\nendfunction', false)
-      eq(nvim('get_current_line'), '')
+      eq('', nvim('get_current_line'))
       nvim('exec', 'call Foo()', false)
-      eq(nvim('get_current_line'), 'xxx')
+      eq('xxx', nvim('get_current_line'))
 
       -- Autocmds
       nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
@@ -1085,6 +1085,12 @@ describe('API', function()
       eq('aabbccdd', funcs.getcmdline())
       expect('')
     end)
+    it('mappings are disabled in Cmdline mode', function()
+      command('cnoremap a b')
+      feed(':')
+      nvim('paste', 'a', true, -1)
+      eq('a', funcs.getcmdline())
+    end)
     it('pasting with empty last chunk in Cmdline mode', function()
       local screen = Screen.new(20, 4)
       screen:attach()
@@ -1589,6 +1595,18 @@ describe('API', function()
       feed(':digraphs<cr>')
       eq({mode='rm', blocking=true}, nvim("get_mode"))
     end)
+
+    it('after <Nop> mapping returns blocking=false #17257', function()
+      command('nnoremap <F2> <Nop>')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it('after empty string <expr> mapping returns blocking=false #17257', function()
+      command('nnoremap <expr> <F2> ""')
+      feed('<F2>')
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
   end)
 
   describe('RPC (K_EVENT)', function()
@@ -1823,10 +1841,10 @@ describe('API', function()
       -- spin the loop a bit
       helpers.run(nil, nil, on_setup)
 
-      eq(nvim('get_var', 'x1'), '…')
+      eq('…', nvim('get_var', 'x1'))
       -- Because of the double escaping this is neq
-      neq(nvim('get_var', 'x2'), '…')
-      eq(nvim('get_var', 'x3'), '…')
+      neq('…', nvim('get_var', 'x2'))
+      eq('…', nvim('get_var', 'x3'))
     end)
   end)
 

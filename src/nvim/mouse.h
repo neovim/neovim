@@ -38,8 +38,8 @@
 // Direction for nv_mousescroll() and ins_mousescroll()
 #define MSCR_DOWN       0     // DOWN must be FALSE
 #define MSCR_UP         1
-#define MSCR_LEFT       -1
-#define MSCR_RIGHT      -2
+#define MSCR_LEFT       (-1)
+#define MSCR_RIGHT      (-2)
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

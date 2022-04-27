@@ -157,11 +157,8 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
-  diff.c
   edit.c
   eval.c
-  eval/funcs.c
-  eval/userfunc.c
   ex_cmds.c
   ex_docmd.c
   fileio.c
@@ -175,7 +172,6 @@ set(CONV_SOURCES
   spell.c
   spellfile.c
   syntax.c
-  tag.c
   window.c)
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
@@ -469,7 +465,6 @@ endif()
 
 if(WIN32)
   list(APPEND NVIM_LINK_LIBRARIES netapi32)
-  list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
 # Use "luv" as imported library, to work around CMake using "-lluv" for
@@ -556,8 +551,6 @@ if(WIN32)
                       diff.exe
                       tee.exe
                       win32yank.exe
-                      winpty-agent.exe
-                      winpty.dll
                       xxd.exe
 
                       # Dependencies for neovim-qt

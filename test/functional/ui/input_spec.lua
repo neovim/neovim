@@ -7,6 +7,7 @@ local curbuf_contents = helpers.curbuf_contents
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
+local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -51,6 +52,8 @@ describe('mappings', function()
     add_mapping('<kenter>','<kenter>')
     add_mapping('<kcomma>','<kcomma>')
     add_mapping('<kequal>','<kequal>')
+    add_mapping('<f38>','<f38>')
+    add_mapping('<f63>','<f63>')
   end)
 
   it('ok', function()
@@ -107,6 +110,8 @@ describe('mappings', function()
     check_mapping('<KPComma>','<kcomma>')
     check_mapping('<kequal>','<kequal>')
     check_mapping('<KPEquals>','<kequal>')
+    check_mapping('<f38>','<f38>')
+    check_mapping('<f63>','<f63>')
   end)
 
   it('support meta + multibyte char mapping', function()
@@ -202,6 +207,13 @@ describe('input pairs', function()
       eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
     end)
   end)
+end)
+
+it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
+  command('split aaa')
+  command('edit bbb')
+  feed('<C-6>')
+  eq('aaa', funcs.bufname())
 end)
 
 describe('input non-printable chars', function()
@@ -318,5 +330,49 @@ describe("event processing and input", function()
     eq({'notification', 'start', {}}, next_msg())
     feed '<f2>'
     eq({'notification', 'stop', {}}, next_msg())
+  end)
+end)
+
+describe('display is updated', function()
+  local screen
+  before_each(function()
+    screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+      [2] = {bold = true},  -- ModeMsg
+    })
+    screen:attach()
+  end)
+
+  it('in Insert mode after <Nop> mapping #17911', function()
+    command('imap <Plug>test <Nop>')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it('in Insert mode after empty string <expr> mapping #17911', function()
+    command('imap <expr> <Plug>test ""')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
   end)
 end)

@@ -145,6 +145,13 @@ function Test_get_win_options()
   endif
 endfunc
 
+function Test_getbufinfo_lastused()
+  new Xfoo
+  let info = getbufinfo('Xfoo')[0]
+  call assert_equal(has_key(info, 'lastused'), 1)
+  call assert_equal(type(info.lastused), type(0))
+endfunc
+
 func Test_getbufinfo_lines()
   new Xfoo
   call setline(1, ['a', 'bc', 'd'])
@@ -155,9 +162,26 @@ func Test_getbufinfo_lines()
   bw!
 endfunc
 
-function Test_getbufinfo_lastused()
-  new Xfoo
-  let info = getbufinfo('Xfoo')[0]
-  call assert_equal(has_key(info, 'lastused'), 1)
-  call assert_equal(type(info.lastused), type(0))
+func Test_getwininfo_au()
+  enew
+  call setline(1, range(1, 16))
+
+  let g:info = #{}
+  augroup T1
+    au!
+    au WinEnter * let g:info = getwininfo(win_getid())[0]
+  augroup END
+
+  4split
+  " Check that calling getwininfo() from WinEnter returns fresh values for
+  " topline and botline.
+  call assert_equal(1, g:info.topline)
+  call assert_equal(4, g:info.botline)
+  close
+
+  unlet g:info
+  augroup! T1
+  bwipe!
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

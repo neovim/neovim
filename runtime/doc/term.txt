@@ -108,6 +108,52 @@ and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
 it will make use of this ability to speed up scrolling that is not the full
 width of the terminal.
 
+							*tui-input*
+Nvim uses libtermkey to convert terminal escape sequences to key codes.
+|terminfo| is used first, and CSI sequences not in |terminfo| (including
+extended keys a.k.a. modifyOtherKeys or `CSI u`) can also be parsed.
+For example, when running Nvim in tmux, this makes Nvim leave Insert mode and
+go to the window below: >
+  tmux send-keys 'Escape' [ 2 7 u 'C-W' j
+Where `'Escape' [ 2 7 u` is an unambiguous `CSI u` sequence for the <Esc> key.
+
+						*tui-modifyOtherKeys* *tui-csiu*
+Historically, terminal emulators could not distinguish between certain control
+key modifiers and other keys. For example, <C-I> and <Tab> are represented the
+same way, as are <Esc> and <C-[>, <CR> and <C-M>, and <NL> and <C-J>. This
+meant that Nvim also could not map these keys separately.
+
+Modern terminal emulators are able to distinguish between these pairs of keys
+by encoding control modifiers differently. There are two common but distinct
+ways of doing this, known as "modifyOtherKeys" and "CSI u". Nvim supports both
+encoding methods and at startup will tell the terminal emulator that it
+understands these key encodings. If your terminal emulator supports it then
+this will allow you to map the key pairs listed above separately.
+
+At startup Nvim will query your terminal to see if it supports the CSI u
+encoding by writing the sequence >
+
+	CSI ? u CSI c
+
+If your terminal emulator responds with >
+
+	CSI ? <flags> u
+
+this means your terminal supports the CSI u encoding and Nvim will tell your
+terminal to enable it by writing the sequence >
+
+	CSI > 1 u
+
+If your terminal does not support CSI u then Nvim will instead enable the
+"modifyOtherKeys" encoding by writing the sequence >
+
+	CSI > 4 ; 2 m
+
+When Nvim exits cleanly it will send the corresponding sequence to disable the
+special key encoding. If Nvim does not exit cleanly then your terminal
+emulator could be in a bad state. If this happens, simply run "reset".
+
+
 							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
 including "linux" (whose virtual terminals have had 256-colour support since

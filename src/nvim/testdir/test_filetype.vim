@@ -99,7 +99,7 @@ let s:filename_checks = {
     \ 'cdrtoc': ['file.toc'],
     \ 'cf': ['file.cfm', 'file.cfi', 'file.cfc'],
     \ 'cfengine': ['cfengine.conf'],
-    \ 'cfg': ['file.cfg', 'file.hgrc', 'filehgrc', 'hgrc', 'some-hgrc'],
+    \ 'cfg': ['file.hgrc', 'filehgrc', 'hgrc', 'some-hgrc'],
     \ 'ch': ['file.chf'],
     \ 'chaiscript': ['file.chai'],
     \ 'chaskell': ['file.chs'],
@@ -113,9 +113,10 @@ let s:filename_checks = {
     \ 'cobol': ['file.cbl', 'file.cob', 'file.lib'],
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
-    \ 'conf': ['auto.master'],
+    \ 'conf': ['/etc/pacman.conf', 'any/etc/pacman.conf', 'auto.master'],
     \ 'config': ['configure.in', 'configure.ac', '/etc/hostname.file'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
+    \ 'cook': ['file.cook'],
     \ 'cpp': ['file.cxx', 'file.c++', 'file.hh', 'file.hxx', 'file.hpp', 'file.ipp', 'file.moc', 'file.tcc', 'file.inl', 'file.tlh'],
     \ 'crm': ['file.crm'],
     \ 'crontab': ['crontab', 'crontab.file', '/etc/cron.d/file', 'any/etc/cron.d/file'],
@@ -150,8 +151,8 @@ let s:filename_checks = {
     \ 'dircolors': ['.dir_colors', '.dircolors', '/etc/DIR_COLORS', 'any/etc/DIR_COLORS'],
     \ 'dnsmasq': ['/etc/dnsmasq.conf', '/etc/dnsmasq.d/file', 'any/etc/dnsmasq.conf', 'any/etc/dnsmasq.d/file'],
     \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile', 'Dockerfile.debian', 'Containerfile.something'],
-    \ 'dosbatch': ['file.bat', 'file.sys'],
-    \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/pacman.conf', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
+    \ 'dosbatch': ['file.bat'],
+    \ 'dosini': ['.editorconfig', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
     \ 'dtd': ['file.dtd'],
@@ -168,6 +169,7 @@ let s:filename_checks = {
     \ 'eelixir': ['file.eex', 'file.leex'],
     \ 'elm': ['file.elm'],
     \ 'elmfilt': ['filter-rules'],
+    \ 'elvish': ['file.elv'],
     \ 'epuppet': ['file.epp'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
@@ -256,6 +258,7 @@ let s:filename_checks = {
     \ 'rnoweb': ['file.rnw', 'file.snw'],
     \ 'rrst': ['file.rrst', 'file.srst'],
     \ 'template': ['file.tmpl'],
+    \ 'html': ['file.html', 'file.htm', 'file.cshtml'],
     \ 'htmlm4': ['file.html.m4'],
     \ 'httest': ['file.htt', 'file.htb'],
     \ 'ibasic': ['file.iba', 'file.ibi'],
@@ -289,6 +292,7 @@ let s:filename_checks = {
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
     \ 'kotlin': ['file.kt', 'file.ktm', 'file.kts'],
+    \ 'krl': ['file.sub', 'file.Sub', 'file.SUB'],
     \ 'kscript': ['file.ks'],
     \ 'kwt': ['file.k'],
     \ 'lace': ['file.ace', 'file.ACE'],
@@ -303,6 +307,7 @@ let s:filename_checks = {
     \ 'libao': ['/etc/libao.conf', '/.libao', 'any/.libao', 'any/etc/libao.conf'],
     \ 'lifelines': ['file.ll'],
     \ 'lilo': ['lilo.conf', 'lilo.conf-file'],
+    \ 'lilypond': ['file.ly', 'file.ily'],
     \ 'limits': ['/etc/limits', '/etc/anylimits.conf', '/etc/anylimits.d/file.conf', '/etc/limits.conf', '/etc/limits.d/file.conf', '/etc/some-limits.conf', '/etc/some-limits.d/file.conf', 'any/etc/limits', 'any/etc/limits.conf', 'any/etc/limits.d/file.conf', 'any/etc/some-limits.conf', 'any/etc/some-limits.d/file.conf'],
     \ 'liquid': ['file.liquid'],
     \ 'lisp': ['file.lsp', 'file.lisp', 'file.asd', 'file.el', 'file.cl', '.emacs', '.sawfishrc', 'sbclrc', '.sbclrc'],
@@ -333,6 +338,8 @@ let s:filename_checks = {
     \ 'markdown': ['file.markdown', 'file.mdown', 'file.mkd', 'file.mkdn', 'file.mdwn', 'file.md'],
     \ 'mason': ['file.mason', 'file.mhtml', 'file.comp'],
     \ 'master': ['file.mas', 'file.master'],
+    \ 'maxima': ['file.demo', 'file.dmt', 'file.dm1', 'file.dm2', 'file.dm3',
+    \            'file.wxm', 'maxima-init.mac'],
     \ 'mel': ['file.mel'],
     \ 'meson': ['meson.build', 'meson_options.txt'],
     \ 'messages': ['/log/auth', '/log/cron', '/log/daemon', '/log/debug', '/log/kern', '/log/lpr', '/log/mail', '/log/messages', '/log/news/news', '/log/syslog', '/log/user',
@@ -380,7 +387,9 @@ let s:filename_checks = {
     \ 'omnimark': ['file.xom', 'file.xin'],
     \ 'opam': ['opam', 'file.opam', 'file.opam.template'],
     \ 'openroad': ['file.or'],
+    \ 'openscad': ['file.scad'],
     \ 'ora': ['file.ora'],
+    \ 'org': ['file.org', 'file.org_archive'],
     \ 'pamconf': ['/etc/pam.conf', '/etc/pam.d/file', 'any/etc/pam.conf', 'any/etc/pam.d/file'],
     \ 'pamenv': ['/etc/security/pam_env.conf', '/home/user/.pam_environment', '.pam_environment', 'pam_env.conf'],
     \ 'papp': ['file.papp', 'file.pxml', 'file.pxsl'],
@@ -392,7 +401,7 @@ let s:filename_checks = {
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf'],
-    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp'],
+    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt'],
     \ 'lpc': ['file.lpc', 'file.ulpc'],
     \ 'pike': ['file.pike', 'file.pmod'],
     \ 'cmod': ['file.cmod'],
@@ -452,19 +461,18 @@ let s:filename_checks = {
     \ 'rpl': ['file.rpl'],
     \ 'rst': ['file.rst'],
     \ 'rtf': ['file.rtf'],
-    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake', 'rakefile', 'Rakefile', 'rantfile', 'Rantfile', 'rakefile-file', 'Rakefile-file', 'Puppetfile'],
+    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake', 'rakefile', 'Rakefile', 'rantfile', 'Rantfile', 'rakefile-file', 'Rakefile-file', 'Puppetfile', 'Vagrantfile'],
     \ 'rust': ['file.rs'],
     \ 'samba': ['smb.conf'],
     \ 'sas': ['file.sas'],
     \ 'sass': ['file.sass'],
     \ 'sather': ['file.sa'],
     \ 'sbt': ['file.sbt'],
-    \ 'scala': ['file.scala', 'file.sc'],
+    \ 'scala': ['file.scala'],
     \ 'scheme': ['file.scm', 'file.ss', 'file.sld', 'file.rkt', 'file.rktd', 'file.rktl'],
     \ 'scilab': ['file.sci', 'file.sce'],
     \ 'screen': ['.screenrc', 'screenrc'],
     \ 'sexplib': ['file.sexp'],
-    \ 'scdoc': ['file.scd'],
     \ 'scss': ['file.scss'],
     \ 'sd': ['file.sd'],
     \ 'sdc': ['file.sdc'],
@@ -512,6 +520,7 @@ let s:filename_checks = {
     \ 'stata': ['file.ado', 'file.do', 'file.imata', 'file.mata'],
     \ 'stp': ['file.stp'],
     \ 'sudoers': ['any/etc/sudoers', 'sudoers.tmp', '/etc/sudoers', 'any/etc/sudoers.d/file'],
+    \ 'supercollider': ['file.quark'], 
     \ 'surface': ['file.sface'],
     \ 'svg': ['file.svg'],
     \ 'svn': ['svn-commitfile.tmp', 'svn-commit-file.tmp', 'svn-commit.tmp'],
@@ -612,7 +621,7 @@ let s:filename_checks = {
     \ }
 
 let s:filename_case_checks = {
-    \ 'modula2': ['file.DEF', 'file.MOD'],
+    \ 'modula2': ['file.DEF'],
     \ 'bzl': ['file.BUILD', 'BUILD'],
     \ }
 
@@ -739,7 +748,7 @@ func Test_setfiletype_completion()
 endfunc
 
 """""""""""""""""""""""""""""""""""""""""""""""""
-" Tests for specific extentions and filetypes.
+" Tests for specific extensions and filetypes.
 " Keep sorted.
 """""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -804,6 +813,36 @@ func Test_bas_file()
   filetype off
 endfunc
 
+" Test dist#ft#FTcfg()
+func Test_cfg_file()
+  filetype on
+
+  " *.cfg defaults to cfg
+  call writefile(['looks like cfg'], 'cfgfile.cfg')
+  split cfgfile.cfg
+  call assert_equal('cfg', &filetype)
+
+  let g:filetype_cfg = 'other'
+  edit
+  call assert_equal('other', &filetype)
+  bwipe!
+  unlet g:filetype_cfg
+
+  " RAPID cfg
+  let ext = 'cfg'
+  for i in ['EIO', 'MMC', 'MOC', 'PROC', 'SIO', 'SYS']
+    call writefile([i .. ':CFG'], 'cfgfile.' .. ext)
+    execute "split cfgfile." .. ext
+    call assert_equal('rapid', &filetype)
+    bwipe!
+    call delete('cfgfile.' .. ext)
+    " check different case of file extension
+    let ext = substitute(ext, '\(\l\)', '\u\1', '')
+  endfor
+
+  filetype off
+endfunc
+
 func Test_d_file()
   filetype on
 
@@ -836,6 +875,41 @@ func Test_d_file()
   split Xfile.d
   call assert_equal('d', &filetype)
   bwipe!
+
+  filetype off
+endfunc
+
+func Test_dat_file()
+  filetype on
+
+  " KRL header start with "&WORD", but is not always present.
+  call writefile(['&ACCESS'], 'datfile.dat')
+  split datfile.dat
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('datfile.dat')
+
+  " KRL defdat with leading spaces, for KRL file extension is not case
+  " sensitive.
+  call writefile(['  DEFDAT datfile'], 'datfile.Dat')
+  split datfile.Dat
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('datfile.Dat')
+
+  " KRL defdat with embedded spaces, file starts with empty line(s).
+  call writefile(['', 'defdat  datfile  public'], 'datfile.DAT')
+  split datfile.DAT
+  call assert_equal('krl', &filetype)
+  bwipe!
+
+  " User may overrule file inspection
+  let g:filetype_dat = 'dat'
+  split datfile.DAT
+  call assert_equal('dat', &filetype)
+  bwipe!
+  call delete('datfile.DAT')
+  unlet g:filetype_dat
 
   filetype off
 endfunc
@@ -1102,12 +1176,12 @@ func Test_hook_file()
 
   call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook')
   split Xfile.hook
-  call assert_equal('dosini', &filetype)
+  call assert_equal('conf', &filetype)
   bwipe!
 
   call writefile(['not pacman'], 'Xfile.hook')
   split Xfile.hook
-  call assert_notequal('dosini', &filetype)
+  call assert_notequal('conf', &filetype)
   bwipe!
 
   call delete('Xfile.hook')
@@ -1214,6 +1288,81 @@ func Test_m_file()
   filetype off
 endfunc
 
+func Test_mod_file()
+  filetype on
+
+  " *.mod defaults to Modsim III
+  call writefile(['locks like Modsim III'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('modsim3', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_mod
+  let g:filetype_mod = 'lprolog'
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  unlet g:filetype_mod
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('modfile.mod')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .mod extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'modfile.Mod')
+  split modfile.Mod
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('modfile.Mod')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('rapid', &filetype)
+  bwipe!
+
+  " Modula-2 MODULE not start of line
+  call writefile(['IMPLEMENTATION MODULE Module2Mod;'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('modula2', &filetype)
+  bwipe!
+
+  " Modula-2 with comment and empty lines prior MODULE
+  call writefile(['', '(* with',  ' comment *)', '', 'MODULE Module2Mod;'], 'modfile.MOD')
+  split modfile.MOD
+  call assert_equal('modula2', &filetype)
+  bwipe!
+  call delete('modfile.MOD')
+
+  " LambdaProlog module
+  call writefile(['module lpromod.'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  " LambdaProlog with comment and empty lines prior module
+  call writefile(['', '% with',  '% comment', '', 'module lpromod.'], 'modfile.mod')
+  split modfile.mod
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+  call delete('modfile.mod')
+
+  " go.mod
+  call writefile(['module example.com/M'], 'go.mod')
+  split go.mod
+  call assert_equal('gomod', &filetype)
+  bwipe!
+  call delete('go.mod')
+
+  filetype off
+endfunc
+
 func Test_patch_file()
   filetype on
 
@@ -1279,6 +1428,177 @@ func Test_pp_file()
   bwipe!
 
   call delete('Xfile.pp')
+  filetype off
+endfunc
+
+" Test dist#ft#FTprg()
+func Test_prg_file()
+  filetype on
+
+  " *.prg defaults to clipper
+  call writefile(['looks like clipper'], 'prgfile.prg')
+  split prgfile.prg
+  call assert_equal('clipper', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_prg
+  let g:filetype_prg = 'eviews'
+  split prgfile.prg
+  call assert_equal('eviews', &filetype)
+  unlet g:filetype_prg
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'prgfile.prg')
+  split prgfile.prg
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.prg')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .prg extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'prgfile.Prg')
+  split prgfile.Prg
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.Prg')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'prgfile.PRG')
+  split prgfile.PRG
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('prgfile.PRG')
+
+  filetype off
+endfunc
+
+" Test dist#ft#FTsc()
+func Test_sc_file()
+  filetype on
+
+  " SC file methods are defined 'Class : Method'
+  call writefile(['SCNvimDocRenderer : SCDocHTMLRenderer {'], 'srcfile.sc')
+  split srcfile.sc
+  call assert_equal('supercollider', &filetype)
+  bwipe!
+  call delete('srcfile.sc')
+
+  " SC classes are defined with '+ Class {}'
+  call writefile(['+ SCNvim {', '*methodArgs {|method|'], 'srcfile.sc')
+  split srcfile.sc
+  call assert_equal('supercollider', &filetype)
+  bwipe!
+  call delete('srcfile.sc')
+
+  " Some SC class files start with comment and define methods many lines later
+  call writefile(['// Query', '//Method','^this {'], 'srcfile.sc')
+  split srcfile.sc
+  call assert_equal('supercollider', &filetype)
+  bwipe!
+  call delete('srcfile.sc')
+
+  " Some SC class files put comments between method declaration after class
+  call writefile(['PingPong {', '//comment','*ar { arg'], 'srcfile.sc')
+  split srcfile.sc
+  call assert_equal('supercollider', &filetype)
+  bwipe!
+  call delete('srcfile.sc')
+
+  filetype off
+endfunc
+
+" Test dist#ft#FTscd()
+func Test_scd_file()
+  filetype on
+
+  call writefile(['ijq(1)'], 'srcfile.scd')
+  split srcfile.scd
+  call assert_equal('scdoc', &filetype)
+  bwipe!
+  call delete('srcfile.scd')
+
+  filetype off
+endfunc
+
+func Test_src_file()
+  filetype on
+
+  " KRL header start with "&WORD", but is not always present.
+  call writefile(['&ACCESS'], 'srcfile.src')
+  split srcfile.src
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('srcfile.src')
+
+  " KRL def with leading spaces, for KRL file extension is not case sensitive.
+  call writefile(['  DEF srcfile()'], 'srcfile.Src')
+  split srcfile.Src
+  call assert_equal('krl', &filetype)
+  bwipe!
+  call delete('srcfile.Src')
+
+  " KRL global deffct with embedded spaces, file starts with empty line(s).
+  for text in ['global  def  srcfile()', 'global  deffct  srcfile()']
+    call writefile(['', text], 'srcfile.SRC')
+    split srcfile.SRC
+    call assert_equal('krl', &filetype, text)
+    bwipe!
+  endfor
+
+  " User may overrule file inspection
+  let g:filetype_src = 'src'
+  split srcfile.SRC
+  call assert_equal('src', &filetype)
+  bwipe!
+  call delete('srcfile.SRC')
+  unlet g:filetype_src
+
+  filetype off
+endfunc
+
+func Test_sys_file()
+  filetype on
+
+  " *.sys defaults to Batch file for MSDOS
+  call writefile(['looks like dos batch'], 'sysfile.sys')
+  split sysfile.sys
+  call assert_equal('bat', &filetype)
+  bwipe!
+
+  " Users preference set by g:filetype_sys
+  let g:filetype_sys = 'sys'
+  split sysfile.sys
+  call assert_equal('sys', &filetype)
+  unlet g:filetype_sys
+  bwipe!
+
+  " RAPID header start with a line containing only "%%%", 
+  " but is not always present.
+  call writefile(['%%%'], 'sysfile.sys')
+  split sysfile.sys
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.sys')
+
+  " RAPID supports umlauts in module names, leading spaces,
+  " the .sys extension is not case sensitive.
+  call writefile(['  module ÜmlautModule'], 'sysfile.Sys')
+  split sysfile.Sys
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.Sys')
+
+  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " file starts with empty line(s).
+  call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'sysfile.SYS')
+  split sysfile.SYS
+  call assert_equal('rapid', &filetype)
+  bwipe!
+  call delete('sysfile.SYS')
+
   filetype off
 endfunc
 

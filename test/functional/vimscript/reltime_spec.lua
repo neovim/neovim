@@ -12,7 +12,7 @@ describe('reltimestr(), reltimefloat()', function()
     local later = reltime()
     local elapsed = reltime(now)
 
-    neq(reltimestr(elapsed), '0.0')
+    neq('0.0', reltimestr(elapsed))
     ok(reltimefloat(elapsed) > 0.0)
     -- original vim test for < 0.1, but easily fails on travis
     ok(nil ~= string.match(reltimestr(elapsed), "0%."))
@@ -26,7 +26,7 @@ describe('reltimestr(), reltimefloat()', function()
     eq(0.0, reltimefloat(same))
 
     local differs = reltime(now, later)
-    neq(reltimestr(differs), '0.0')
+    neq('0.0', reltimestr(differs))
     ok(reltimefloat(differs) > 0.0)
     -- original vim test for < 0.1, but easily fails on travis
     ok(nil ~= string.match(reltimestr(differs), "0%."))

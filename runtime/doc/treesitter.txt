@@ -268,7 +268,7 @@ Here is a list of built-in directives:
 			((identifier) @foo (#set! @foo "kind" "parameter"))
 			((node1) @left (node2) @right (#set! "type" "pair"))
 <
-	`offset!`					*ts-predicate-offset!*
+	`offset!`					*ts-directive-offset!*
 		Takes the range of the captured node and applies the offsets
 		to it's range : >
 			((identifier) @constant (#offset! @constant 0 1 0 -1))

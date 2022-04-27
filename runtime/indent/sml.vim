@@ -7,10 +7,11 @@
 "               Mike Leary          <leary@nwlink.com>
 "               Markus Mottl        <markus@oefai.at>
 " OCaml URL:    http://www.oefai.at/~markus/vim/indent/ocaml.vim
-" Last Change:  2003 Jan 04	- Adapted to SML
+" Last Change:  2022 Apr 06
 " 				2002 Nov 06 - Some fixes (JY)
 "               2002 Oct 28 - Fixed bug with indentation of ']' (MM)
 "               2002 Oct 22 - Major rewrite (JY)
+"		2022 April: b:undo_indent added by Doug Kearns
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -25,6 +26,8 @@ setlocal nolisp
 setlocal nosmartindent
 setlocal textwidth=80
 setlocal shiftwidth=2
+
+let b:undo_indent = "setl et< inde< indk< lisp< si< sw< tw<"
 
 " Comment formatting
 if (has("comments"))

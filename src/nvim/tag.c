@@ -585,7 +585,8 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
             && tagp2.user_data) {
           XFREE_CLEAR(tagstack[tagstackidx].user_data);
           tagstack[tagstackidx].user_data = vim_strnsave(tagp2.user_data,
-                                                         tagp2.user_data_end - tagp2.user_data);
+                                                         (size_t)(tagp2.user_data_end -
+                                                                  tagp2.user_data));
         }
 
         tagstackidx++;
@@ -972,7 +973,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char_u **matches)
       if (cmd_len > (CMDBUFFSIZE - 5)) {
         cmd_len = CMDBUFFSIZE - 5;
       }
-      snprintf((char *)cmd + len, CMDBUFFSIZE + 1 - len,
+      snprintf((char *)cmd + len, (size_t)(CMDBUFFSIZE + 1 - len),
                "%.*s", cmd_len, cmd_start);
       len += cmd_len;
 
@@ -1118,7 +1119,7 @@ static void prepare_pats(pat_T *pats, int has_re)
       }
     }
     if (p_tl != 0 && pats->headlen > p_tl) {    // adjust for 'taglength'
-      pats->headlen = p_tl;
+      pats->headlen = (int)p_tl;
     }
   }
 
@@ -1476,7 +1477,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
   /*
    * Allocate memory for the buffers that are used
    */
-  lbuf = xmalloc(lbuf_size);
+  lbuf = xmalloc((size_t)lbuf_size);
   tag_fname = xmalloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; mtt++) {
     ga_init(&ga_match[mtt], sizeof(char_u *), 100);
@@ -1503,14 +1504,14 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
     if (orgpat.len > 3 && pat[orgpat.len - 3] == '@'
         && ASCII_ISALPHA(pat[orgpat.len - 2])
         && ASCII_ISALPHA(pat[orgpat.len - 1])) {
-      saved_pat = vim_strnsave(pat, orgpat.len - 3);
+      saved_pat = vim_strnsave(pat, (size_t)orgpat.len - 3);
       help_lang_find = &pat[orgpat.len - 2];
       orgpat.pat = saved_pat;
       orgpat.len -= 3;
     }
   }
   if (p_tl != 0 && orgpat.len > p_tl) {         // adjust for 'taglength'
-    orgpat.len = p_tl;
+    orgpat.len = (int)p_tl;
   }
 
   save_emsg_off = emsg_off;
@@ -1854,7 +1855,7 @@ parse_line:
         if (lbuf[lbuf_size - 2] != NUL && !use_cscope) {
           lbuf_size *= 2;
           xfree(lbuf);
-          lbuf = xmalloc(lbuf_size);
+          lbuf = xmalloc((size_t)lbuf_size);
           // this will try the same thing again, make sure the offset is
           // different
           search_info.curr_offset = 0;
@@ -1879,7 +1880,7 @@ parse_line:
            */
           cmplen = (int)(tagp.tagname_end - tagp.tagname);
           if (p_tl != 0 && cmplen > p_tl) {         // adjust for 'taglength'
-            cmplen = p_tl;
+            cmplen = (int)p_tl;
           }
           if (has_re && orgpat.headlen < cmplen) {
             cmplen = orgpat.headlen;
@@ -2006,7 +2007,7 @@ parse_line:
          */
         cmplen = (int)(tagp.tagname_end - tagp.tagname);
         if (p_tl != 0 && cmplen > p_tl) {           // adjust for 'taglength'
-          cmplen = p_tl;
+          cmplen = (int)p_tl;
         }
         // if tag length does not match, don't try comparing
         if (orgpat.len != cmplen) {
@@ -2043,13 +2044,13 @@ parse_line:
               orgpat.regmatch.rm_ic = TRUE;
             }
           }
-          *tagp.tagname_end = cc;
-          match_re = TRUE;
+          *tagp.tagname_end = (char_u)cc;
+          match_re = true;
         }
 
         // If a match is found, add it to ht_match[] and ga_match[].
         if (match) {
-          int len = 0;
+          size_t len = 0;
 
           if (use_cscope) {
             // Don't change the ordering, always use the same table.
@@ -2092,7 +2093,7 @@ parse_line:
             // detecting duplicates.
             // The format is {tagname}@{lang}NUL{heuristic}NUL
             *tagp.tagname_end = NUL;
-            len = (int)(tagp.tagname_end - tagp.tagname);
+            len = (size_t)(tagp.tagname_end - tagp.tagname);
             mfp = xmalloc(sizeof(char_u) + len + 10 + ML_EXTRA + 1);
 
             p = mfp;
@@ -2118,7 +2119,7 @@ parse_line:
               }
 
               if (tagp.command + 2 < temp_end) {
-                len = (int)(temp_end - tagp.command - 2);
+                len = (size_t)(temp_end - tagp.command - 2);
                 mfp = xmalloc(len + 2);
                 STRLCPY(mfp, tagp.command + 2, len + 1);
               } else {
@@ -2126,7 +2127,7 @@ parse_line:
               }
               get_it_again = false;
             } else {
-              len = (int)(tagp.tagname_end - tagp.tagname);
+              len = (size_t)(tagp.tagname_end - tagp.tagname);
               mfp = xmalloc(sizeof(char_u) + len + 1);
               STRLCPY(mfp, tagp.tagname, len + 1);
 
@@ -2144,10 +2145,10 @@ parse_line:
             // other tag: <mtt><tag_fname><0x02><0x02><lbuf><NUL>
             // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
             // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
-            len = (int)tag_fname_len + (int)STRLEN(lbuf) + 3;
+            len = tag_fname_len + STRLEN(lbuf) + 3;
             mfp = xmalloc(sizeof(char_u) + len + 1);
             p = mfp;
-            p[0] = mtt + 1;
+            p[0] = (char_u)(mtt + 1);
             STRCPY(p + 1, tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
             // Ignore differences in slashes, avoid adding
@@ -2263,7 +2264,7 @@ findtag_end:
   }
 
   if (match_count > 0) {
-    matches = xmalloc(match_count * sizeof(char_u *));
+    matches = xmalloc((size_t)match_count * sizeof(char_u *));
   } else {
     matches = NULL;
   }
@@ -2276,7 +2277,7 @@ findtag_end:
       } else {
         if (!name_only) {
           // Change mtt back to zero-based.
-          *mfp = *mfp - 1;
+          *mfp = (char_u)(*mfp - 1);
 
           // change the TAG_SEP back to NUL
           for (p = mfp + 1; *p != NUL; p++) {
@@ -2541,7 +2542,7 @@ static size_t matching_line_len(const char_u *const lbuf)
 
   // does the same thing as parse_match()
   p += STRLEN(p) + 1;
-  return (p - lbuf) + STRLEN(p);
+  return (size_t)(p - lbuf) + STRLEN(p);
 }
 
 /// Parse a line from a matching tag.  Does not change the line itself.
@@ -2638,7 +2639,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
   int c = *tagp->fname_end;
   *tagp->fname_end = NUL;
   char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, false);
-  *tagp->fname_end = c;
+  *tagp->fname_end = (char_u)c;
 
   return fullname;
 }
@@ -2878,7 +2879,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
               found = 0;
             }
           }
-          *tagp.tagname_end = cc;
+          *tagp.tagname_end = (char_u)cc;
         }
         if (found == 0) {
           emsg(_("E434: Can't find tag pattern"));
@@ -3040,7 +3041,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     retval = (path_full_compare(fullname, buf_ffname, true, true)
               & kEqualFiles);
     xfree(fullname);
-    *fname_end = c;
+    *fname_end = (char_u)c;
   }
 
   return retval;
@@ -3131,7 +3132,7 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
       size_t len;
 
       parse_match((*file)[i], &t_p);
-      len = t_p.tagname_end - t_p.tagname;
+      len = (size_t)(t_p.tagname_end - t_p.tagname);
       if (len > name_buf_size - 3) {
         char_u *buf;
 
@@ -3145,8 +3146,8 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
       name_buf[len++] = (t_p.tagkind != NULL && *t_p.tagkind)
                                                    ? *t_p.tagkind : 'f';
       name_buf[len++] = 0;
-      memmove((*file)[i] + len, t_p.fname, t_p.fname_end - t_p.fname);
-      (*file)[i][len + (t_p.fname_end - t_p.fname)] = 0;
+      memmove((*file)[i] + len, t_p.fname, (size_t)(t_p.fname_end - t_p.fname));
+      (*file)[i][len + (size_t)(t_p.fname_end - t_p.fname)] = 0;
       memmove((*file)[i], name_buf, len);
     }
   }

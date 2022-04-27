@@ -180,6 +180,7 @@ Commands:
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
   |:match| can be invoked before highlight group is defined
+  |:source| works with Lua and anonymous (no file) scripts
 
 Events:
   |RecordingEnter|
@@ -350,6 +351,8 @@ Functions:
 Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
+  |hl-CurSearch| highlights match under cursor instead of last match found
+  using |n| or |N|
   |hl-CursorLine| is low-priority unless foreground color is set
   *hl-VertSplit* superseded by |hl-WinSeparator|
 
@@ -372,6 +375,7 @@ Normal commands:
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
   |jumpoptions| "stack" behavior
+  'shortmess' the "F" flag does not affect output from autocommands
 
 Shell:
   Shell output (|:!|, |:make|, …) is always routed through the UI, so it

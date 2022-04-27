@@ -645,17 +645,17 @@ describe('lua stdlib', function()
       return vim.tbl_islist(c) and count == 0
     ]]))
 
-    eq(exec_lua([[
+    eq({a = {b = 1}}, exec_lua([[
       local a = { a = { b = 1 } }
       local b = { a = {} }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = {b = 1}})
+    ]]))
 
-    eq(exec_lua([[
+    eq({a = {b = 1}}, exec_lua([[
       local a = { a = 123 }
       local b = { a = { b = 1} }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = {b = 1}})
+    ]]))
 
     ok(exec_lua([[
       local a = { a = {[2] = 3} }
@@ -664,11 +664,11 @@ describe('lua stdlib', function()
       return vim.deep_equal(c, {a = {[3] = 3}})
     ]]))
 
-    eq(exec_lua([[
+    eq({a = 123}, exec_lua([[
       local a = { a = { b = 1} }
       local b = { a = 123 }
       return vim.tbl_deep_extend("force", a, b)
-    ]]), {a = 123 })
+    ]]))
 
     matches('invalid "behavior": nil',
       pcall_err(exec_lua, [[
@@ -2753,6 +2753,39 @@ describe('vim.keymap', function()
 
     eq(1, exec_lua[[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
+  end)
+
+  it('works with buffer-local mappings', function()
+    eq(0, exec_lua [[
+      GlobalCount = 0
+      vim.keymap.set('n', 'asdf', function() GlobalCount = GlobalCount + 1 end, {buffer=true})
+      return GlobalCount
+    ]])
+
+    feed('asdf\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+
+    exec_lua [[
+      vim.keymap.del('n', 'asdf', {buffer=true})
+    ]]
+
+    feed('asdf\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+    eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
+  end)
+
+  it('does not mutate the opts parameter', function()
+    eq(true, exec_lua [[
+      opts = {buffer=true}
+      vim.keymap.set('n', 'asdf', function() end, opts)
+      return opts.buffer
+    ]])
+    eq(true, exec_lua [[
+      vim.keymap.del('n', 'asdf', opts)
+      return opts.buffer
+    ]])
   end)
 
   it('can do <Plug> mappings', function()

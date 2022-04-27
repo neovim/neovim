@@ -1972,6 +1972,121 @@ func Test_builtin_func_error()
   call assert_equal('jlmnpqrtueghivyzACD', g:Xpath)
 endfunc
 
-" Modelines								    {{{1
+func Test_reload_in_try_catch()
+  call writefile(['x'], 'Xreload')
+  set autoread
+  edit Xreload
+  tabnew
+  call writefile(['xx'], 'Xreload')
+  augroup ReLoad
+    au FileReadPost Xreload let x = doesnotexist
+    au BufReadPost Xreload let x = doesnotexist
+  augroup END
+  try
+    edit Xreload
+  catch
+  endtry
+  tabnew
+
+  tabclose
+  tabclose
+  autocmd! ReLoad
+  set noautoread
+  bwipe! Xreload
+  call delete('Xreload')
+endfunc
+
+" Test for using throw in a called function with following error    {{{1
+func Test_user_command_throw_in_function_call()
+  let lines =<< trim END
+      function s:get_dict() abort
+        throw 'my_error'
+      endfunction
+
+      try
+        call s:get_dict().foo()
+      catch /my_error/
+        let caught = 'yes'
+      catch
+        let caught = v:exception
+      endtry
+      call assert_equal('yes', caught)
+  END
+  call writefile(lines, 'XtestThrow')
+  source XtestThrow
+
+  call delete('XtestThrow')
+  unlet g:caught
+endfunc
+
+" Test for using throw in a called function with following endtry    {{{1
+func Test_user_command_function_call_with_endtry()
+  let lines =<< trim END
+      funct s:throw(msg) abort
+        throw a:msg
+      endfunc
+      func s:main() abort
+        try
+          try
+            throw 'err1'
+          catch
+            call s:throw('err2') | endtry
+          catch
+            let s:caught = 'yes'
+        endtry
+      endfunc
+
+      call s:main()
+      call assert_equal('yes', s:caught)
+  END
+  call writefile(lines, 'XtestThrow')
+  source XtestThrow
+
+  call delete('XtestThrow')
+endfunc
+
+func ThisWillFail()
+
+endfunc
+
+" This was crashing prior to the fix in 8.2.3478.
+func Test_error_in_catch_and_finally()
+  let lines =<< trim END
+    try
+      echo x
+    catch
+      for l in []
+    finally
+  END
+  call writefile(lines, 'XtestCatchAndFinally')
+  try
+    source XtestCatchAndFinally
+  catch /E600:/
+  endtry
+
+  call delete('XtestCatchAndFinally')
+endfunc
+
+" This was causing an illegal memory access
+func Test_leave_block_in_endtry_not_called()
+  let lines =<< trim END
+      " vim9script
+      " try #
+      try "
+      for x in []
+      if
+      endwhile
+      if
+      endtry
+  END
+  call writefile(lines, 'XtestEndtry')
+  try
+    source XtestEndtry
+  catch /E171:/
+  endtry
+
+  call delete('XtestEndtry')
+endfunc
+
+" Modeline								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
-"-------------------------------------------------------------------------------

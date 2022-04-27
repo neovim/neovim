@@ -836,6 +836,7 @@ static void set_info_event(void **argv)
   typval_T retval;
   (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
   tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
+  tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(event, NULL, NULL, false, curbuf);
 

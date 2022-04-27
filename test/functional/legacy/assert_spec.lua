@@ -136,19 +136,19 @@ describe('assert function:', function()
     end)
 
     it('should have file names and passed messages', function()
-      local tmpname_one = source([[
+      source([[
         call assert_equal(1, 100, 'equal assertion failed')
         call assert_false('true', 'true  assertion failed')
         call assert_true('false', 'false assertion failed')
       ]])
-      local tmpname_two = source([[
+      source([[
         call assert_true('', 'file two')
       ]])
       expected_errors({
-        tmpname_one .. " line 1: equal assertion failed: Expected 1 but got 100",
-        tmpname_one .. " line 2: true  assertion failed: Expected False but got 'true'",
-        tmpname_one .. " line 3: false assertion failed: Expected True but got 'false'",
-        tmpname_two .. " line 1: file two: Expected True but got ''",
+        "nvim_exec(): equal assertion failed: Expected 1 but got 100",
+        "nvim_exec(): true  assertion failed: Expected False but got 'true'",
+        "nvim_exec(): false assertion failed: Expected True but got 'false'",
+        "nvim_exec(): file two: Expected True but got ''",
       })
     end)
   end)

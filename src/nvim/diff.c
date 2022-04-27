@@ -284,8 +284,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     tp->tp_diff_update = true;
   }
 
-  int inserted;
-  int deleted;
+  long inserted;
+  long deleted;
   if (line2 == MAXLNUM) {
     // mark_adjust(99, MAXLNUM, 9, 0): insert lines
     inserted = amount;
@@ -304,8 +304,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
   diff_T *dp = tp->tp_first_diff;
 
   linenr_T lnum_deleted = line1;  // lnum of remaining deletion
-  int n;
-  int off;
+  linenr_T n;
+  linenr_T off;
   for (;;) {
     // If the change is after the previous diff block and before the next
     // diff block, thus not touching an existing change, create a new diff
@@ -556,8 +556,8 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
   }
 
   // First check lines at the top, then at the bottom.
-  int off_org = 0;
-  int off_new = 0;
+  linenr_T off_org = 0;
+  linenr_T off_new = 0;
   int dir = FORWARD;
   for (;;) {
     // Repeat until a line is found which is different or the number of
@@ -722,7 +722,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     len += (long)STRLEN(ml_get_buf(buf, lnum, false)) + 1;
   }
-  char_u *ptr = try_malloc(len);
+  char_u *ptr = try_malloc((size_t)len);
   if (ptr == NULL) {
     // Allocating memory failed.  This can happen, because we try to read
     // the whole buffer text into memory.  Set the failed flag, the diff
@@ -743,23 +743,29 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     for (char_u *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
       if (diff_flags & DIFF_ICASE) {
+        int c;
         char_u cbuf[MB_MAXBYTES + 1];
 
-        // xdiff doesn't support ignoring case, fold-case the text.
-        int c = utf_ptr2char(s);
-        c = utf_fold(c);
+        if (*s == NL) {
+          c = NUL;
+        } else {
+          // xdiff doesn't support ignoring case, fold-case the text.
+          c = utf_ptr2char(s);
+          c = utf_fold(c);
+        }
         const int orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
-          memmove(ptr + len, s, orig_len);
+          memmove(ptr + len, s, (size_t)orig_len);
         } else {
-          memmove(ptr + len, cbuf, orig_len);
+          memmove(ptr + len, cbuf, (size_t)orig_len);
         }
 
         s += orig_len;
         len += orig_len;
       } else {
-        ptr[len++] = *s++;
+        ptr[len++] = *s == NL ? NUL : *s;
+        s++;
       }
     }
     ptr[len++] = NL;
@@ -877,6 +883,7 @@ theend:
 /// diff will be used anyway.
 ///
 int diff_internal(void)
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
@@ -1065,7 +1072,7 @@ static int diff_file_internal(diffio_T *diffio)
   memset(&emit_cfg, 0, sizeof(emit_cfg));
   memset(&emit_cb, 0, sizeof(emit_cb));
 
-  param.flags = diff_algorithm;
+  param.flags = (unsigned long)diff_algorithm;
 
   if (diff_flags & DIFF_IWHITE) {
     param.flags |= XDF_IGNORE_WHITESPACE_CHANGE;
@@ -1884,13 +1891,13 @@ int diff_check(win_T *wp, linenr_T lnum)
 
   // Insert filler lines above the line just below the change.  Will return
   // 0 when this buf had the max count.
-  int maxcount = 0;
+  linenr_T maxcount = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (dp->df_count[i] > maxcount)) {
       maxcount = dp->df_count[i];
     }
   }
-  return maxcount - dp->df_count[idx];
+  return (int)(maxcount - dp->df_count[idx]);
 }
 
 /// Compare two entries in diff "dp" and return true if they are equal.
@@ -2055,7 +2062,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     if (lnum >= dp->df_lnum[fromidx]) {
       // Inside a change: compute filler lines. With three or more
       // buffers we need to know the largest count.
-      int max_count = 0;
+      linenr_T max_count = 0;
 
       for (int i = 0; i < DB_COUNT; i++) {
         if ((curtab->tp_diffbuf[i] != NULL) && (max_count < dp->df_count[i])) {
@@ -2092,7 +2099,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
             towin->w_topfill = fromwin->w_topfill;
           } else {
             // fromwin has some diff lines
-            towin->w_topfill = dp->df_lnum[fromidx] + max_count - lnum;
+            towin->w_topfill = (int)(dp->df_lnum[fromidx] + max_count - lnum);
           }
         }
       }
@@ -2244,6 +2251,7 @@ bool diffopt_horizontal(void)
 
 // Return true if 'diffopt' contains "hiddenoff".
 bool diffopt_hiddenoff(void)
+  FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_HIDDEN_OFF) != 0;
 }
@@ -2304,7 +2312,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     return false;
   }
 
-  int off = lnum - dp->df_lnum[idx];
+  linenr_T off = lnum - dp->df_lnum[idx];
   int i;
   for (i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
@@ -2485,7 +2493,7 @@ void nv_diffgetput(bool put, size_t count)
 void ex_diffgetput(exarg_T *eap)
 {
   linenr_T lnum;
-  int count;
+  linenr_T count;
   linenr_T off = 0;
   diff_T *dp;
   diff_T *dfree;
@@ -2494,8 +2502,9 @@ void ex_diffgetput(exarg_T *eap)
   char_u *p;
   aco_save_T aco;
   buf_T *buf;
-  int start_skip, end_skip;
-  int new_count;
+  linenr_T start_skip;
+  linenr_T end_skip;
+  linenr_T new_count;
   int buf_empty;
   int found_not_ma = false;
   int idx_other;
@@ -2554,7 +2563,7 @@ void ex_diffgetput(exarg_T *eap)
 
     if (eap->arg + i == p) {
       // digits only
-      i = atol((char *)eap->arg);
+      i = (int)atol((char *)eap->arg);
     } else {
       i = buflist_findpat(eap->arg, p, false, true, false);
 
@@ -2663,7 +2672,7 @@ void ex_diffgetput(exarg_T *eap)
           // range ends above end of current/from diff block
           if (idx_cur == idx_from) {
             // :diffput
-            i = dp->df_count[idx_cur] - start_skip - end_skip;
+            i = (int)(dp->df_count[idx_cur] - start_skip - end_skip);
 
             if (count > i) {
               count = i;
@@ -2906,7 +2915,7 @@ int diff_move_to(int dir, long count)
 /// "buf1" in diff mode.
 static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
 {
-  int baseline = 0;
+  linenr_T baseline = 0;
 
   int idx1 = diff_buf_idx(buf1);
   int idx2 = diff_buf_idx(curbuf);

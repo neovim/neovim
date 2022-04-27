@@ -119,6 +119,10 @@ dictwatcherdel({dict}, {pattern}, {callback})
 did_filetype()			Number	|TRUE| if FileType autocommand event used
 diff_filler({lnum})		Number	diff filler lines about {lnum}
 diff_hlID({lnum}, {col})	Number	diff highlighting at {lnum}/{col}
+digraph_get({chars})		String	get the digraph of {chars}
+digraph_getlist([{listall}])	List	get all |digraph|s
+digraph_set({chars}, {digraph})	Boolean	register |digraph|
+digraph_setlist({digraphlist})	Boolean	register multiple |digraph|s
 empty({expr})			Number	|TRUE| if {expr} is empty
 environ()			Dict	return environment variables
 escape({string}, {chars})	String	escape {chars} in {string} with '\'
@@ -962,8 +966,6 @@ byteidxcomp({expr}, {nr})					*byteidxcomp()*
 <		The first and third echo result in 3 ('e' plus composing
 		character is 3 bytes), the second echo results in 1 ('e' is
 		one byte).
-		Only works differently from byteidx() when 'encoding' is set
-		to a Unicode encoding.
 
 		Can also be used as a |method|: >
 			GetName()->byteidxcomp(idx)
@@ -1319,14 +1321,15 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		or another valid interrupt key, confirm() returns 0.
 
 		An example: >
-   :let choice = confirm("What do you want?", "&Apples\n&Oranges\n&Bananas", 2)
-   :if choice == 0
-   :	echo "make up your mind!"
-   :elseif choice == 3
-   :	echo "tasteful"
-   :else
-   :	echo "I prefer bananas myself."
-   :endif
+		   let choice = confirm("What do you want?",
+		   			\ "&Apples\n&Oranges\n&Bananas", 2)
+		   if choice == 0
+		   	echo "make up your mind!"
+		   elseif choice == 3
+		   	echo "tasteful"
+		   else
+		   	echo "I prefer bananas myself."
+		   endif
 <		In a GUI dialog, buttons are used.  The layout of the buttons
 		depends on the 'v' flag in 'guioptions'.  If it is included,
 		the buttons are always put vertically.  Otherwise,  confirm()
@@ -1516,8 +1519,10 @@ deepcopy({expr} [, {noref}])				*deepcopy()* *E698*
 
 delete({fname} [, {flags}])				*delete()*
 		Without {flags} or with {flags} empty: Deletes the file by the
-		name {fname}.  This also works when {fname} is a symbolic link.
-		A symbolic link itself is deleted, not what it points to.
+		name {fname}.
+
+		This also works when {fname} is a symbolic link.  The symbolic
+		link itself is deleted, not what it points to.
 
 		When {flags} is "d": Deletes the directory by the name
 		{fname}.  This fails when directory {fname} is not empty.
@@ -1633,6 +1638,85 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 
 		Can also be used as a |method|: >
 			GetLnum()->diff_hlID(col)
+<
+
+digraph_get({chars})					*digraph_get()* *E1214*
+		Return the digraph of {chars}.  This should be a string with
+		exactly two characters.  If {chars} are not just two
+		characters, or the digraph of {chars} does not exist, an error
+		is given and an empty string is returned.
+
+		Also see |digraph_getlist()|.
+
+		Examples: >
+		" Get a built-in digraph
+		:echo digraph_get('00')		" Returns '∞'
+
+		" Get a user-defined digraph
+		:call digraph_set('aa', 'あ')
+		:echo digraph_get('aa')		" Returns 'あ'
+<
+		Can also be used as a |method|: >
+			GetChars()->digraph_get()
+<
+
+digraph_getlist([{listall}])				*digraph_getlist()*
+		Return a list of digraphs.  If the {listall} argument is given
+		and it is TRUE, return all digraphs, including the default
+		digraphs.  Otherwise, return only user-defined digraphs.
+
+		Also see |digraph_get()|.
+
+		Examples: >
+		" Get user-defined digraphs
+		:echo digraph_getlist()
+
+		" Get all the digraphs, including default digraphs
+		:echo digraph_getlist(1)
+<
+		Can also be used as a |method|: >
+			GetNumber()->digraph_getlist()
+<
+
+digraph_set({chars}, {digraph})				*digraph_set()*
+		Add digraph {chars} to the list.  {chars} must be a string
+		with two characters.  {digraph} is a string with one UTF-8
+		encoded character.  *E1215*
+		Be careful, composing characters are NOT ignored.  This
+		function is similar to |:digraphs| command, but useful to add
+		digraphs start with a white space.
+
+		The function result is v:true if |digraph| is registered.  If
+		this fails an error message is given and v:false is returned.
+
+		If you want to define multiple digraphs at once, you can use
+		|digraph_setlist()|.
+
+		Example: >
+			call digraph_set('  ', 'あ')
+<
+		Can be used as a |method|: >
+			GetString()->digraph_set('あ')
+<
+
+digraph_setlist({digraphlist})				*digraph_setlist()*
+		Similar to |digraph_set()| but this function can add multiple
+		digraphs at once.  {digraphlist} is a list composed of lists,
+		where each list contains two strings with {chars} and
+		{digraph} as in |digraph_set()|. *E1216*
+		Example: >
+		    call digraph_setlist([['aa', 'あ'], ['ii', 'い']])
+<
+		It is similar to the following: >
+		    for [chars, digraph] in [['aa', 'あ'], ['ii', 'い']]
+			  call digraph_set(chars, digraph)
+		    endfor
+<		Except that the function returns after the first error,
+		following digraphs will not be added.
+
+		Can be used as a |method|: >
+		    GetList()->digraph_setlist()
+<
 
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
@@ -1725,7 +1809,7 @@ execute({command} [, {silent}])				*execute()*
 		`:redir`, error messages are dropped.
 
 		To get a list of lines use |split()| on the result: >
-			split(execute('args'), "\n")
+			execute('args')->split("\n")
 
 <		This function is not available in the |sandbox|.
 		Note: If nested, an outer execute() will not observe output of
@@ -4891,7 +4975,7 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
-		    key		key of the item which is fuzzy matched against
+		    key		Key of the item which is fuzzy matched against
 				{str}. The value of this item should be a
 				string.
 		    text_cb	|Funcref| that will be called for every item
@@ -4899,6 +4983,8 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 				This should accept a dictionary item as the
 				argument and return the text for that item to
 				use for fuzzy matching.
+		    limit	Maximum number of matches in {list} to be
+				returned.  Zero means no limit.
 
 		{str} is treated as a literal string and regular expression
 		matching is NOT supported.  The maximum supported {str} length
@@ -4910,6 +4996,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		If there are no matching strings or there is an error, then an
 		empty list is returned. If length of {str} is greater than
 		256, then returns an empty list.
+
+		When {limit} is given, matchfuzzy() will find up to this
+		number of matches in {list} and return them in sorted order.
 
 		Refer to |fuzzy-matching| for more information about fuzzy
 		matching strings.
@@ -5375,8 +5464,10 @@ printf({fmt}, {expr1} ...)				*printf()*
 		When used as a |method| the base is passed as the second
 		argument: >
 			Compute()->printf("result: %d")
+<
+		You can use `call()` to pass the items as a list.
 
-<		Often used items are:
+		Often used items are:
 		  %s	string
 		  %6S	string right-aligned in 6 display cells
 		  %6s	string right-aligned in 6 bytes

@@ -22,6 +22,7 @@
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -79,7 +80,7 @@
 #define FIO_ENDIAN_L   0x80    // little endian
 #define FIO_NOCONVERT  0x2000  // skip encoding conversion
 #define FIO_UCSBOM     0x4000  // check for BOM at start of file
-#define FIO_ALL        -1      // allow all formats
+#define FIO_ALL        (-1)    // allow all formats
 
 /* When converting, a read() or write() may leave some bytes to be converted
  * for the next call.  The value is guessed... */
@@ -175,7 +176,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 ///
 /// @return     FAIL for failure, NOTDONE for directory (failure), or OK
 int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_skip,
-             linenr_T lines_to_read, exarg_T *eap, int flags)
+             linenr_T lines_to_read, exarg_T *eap, int flags, bool silent)
 {
   int fd = 0;
   int newfile = (flags & READ_NEW);
@@ -471,10 +472,12 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
           return FAIL;
         }
       }
-      if (dir_of_file_exists(fname)) {
-        filemess(curbuf, sfname, (char_u *)new_file_message(), 0);
-      } else {
-        filemess(curbuf, sfname, (char_u *)_("[New DIRECTORY]"), 0);
+      if (!silent) {
+        if (dir_of_file_exists(fname)) {
+          filemess(curbuf, sfname, (char_u *)new_file_message(), 0);
+        } else {
+          filemess(curbuf, sfname, (char_u *)_("[New DIRECTORY]"), 0);
+        }
       }
       // Even though this is a new file, it might have been
       // edited before and deleted.  Get the old marks.
@@ -657,7 +660,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   // Autocommands may add lines to the file, need to check if it is empty
   wasempty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
-  if (!recoverymode && !filtering && !(flags & READ_DUMMY)) {
+  if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
     if (!read_stdin && !read_buffer) {
       filemess(curbuf, sfname, (char_u *)"", 0);
     }
@@ -1014,27 +1017,27 @@ retry:
                 }
                 read_buf_col += n;
                 break;
-              } else {
-                // Append whole line and new-line.  Change NL
-                // to NUL to reverse the effect done below.
-                for (ni = 0; ni < n; ni++) {
-                  if (p[ni] == NL) {
-                    ptr[tlen++] = NUL;
-                  } else {
-                    ptr[tlen++] = p[ni];
-                  }
+              }
+
+              // Append whole line and new-line.  Change NL
+              // to NUL to reverse the effect done below.
+              for (ni = 0; ni < n; ni++) {
+                if (p[ni] == NL) {
+                  ptr[tlen++] = NUL;
+                } else {
+                  ptr[tlen++] = p[ni];
                 }
-                ptr[tlen++] = NL;
-                read_buf_col = 0;
-                if (++read_buf_lnum > from) {
-                  // When the last line didn't have an
-                  // end-of-line don't add it now either.
-                  if (!curbuf->b_p_eol) {
-                    --tlen;
-                  }
-                  size = tlen;
-                  break;
+              }
+              ptr[tlen++] = NL;
+              read_buf_col = 0;
+              if (++read_buf_lnum > from) {
+                // When the last line didn't have an
+                // end-of-line don't add it now either.
+                if (!curbuf->b_p_eol) {
+                  tlen--;
                 }
+                size = tlen;
+                break;
               }
             }
           }
@@ -1117,7 +1120,7 @@ retry:
                   && tmpname == NULL
                   && (*fenc == 'u' || *fenc == NUL)))) {
         char_u *ccname;
-        int blen;
+        int blen = 0;
 
         // no BOM detection in a short file or in binary mode
         if (size < 2 || curbuf->b_p_bin) {
@@ -1787,7 +1790,7 @@ failed:
       return OK;                // an interrupt isn't really an error
     }
 
-    if (!filtering && !(flags & READ_DUMMY)) {
+    if (!filtering && !(flags & READ_DUMMY) && !silent) {
       add_quoted_fname((char *)IObuff, IOSIZE, curbuf, (const char *)sfname);
       c = false;
 
@@ -2320,8 +2323,8 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   fname = sfname;
 #endif
 
-  if (buf->b_ffname != NULL && fnamecmp(ffname, buf->b_ffname) == 0) {
-    overwriting = TRUE;
+  if (buf->b_ffname != NULL && FNAMECMP(ffname, buf->b_ffname) == 0) {
+    overwriting = true;
   } else {
     overwriting = FALSE;
   }
@@ -4646,7 +4649,7 @@ int vim_rename(const char_u *from, const char_u *to)
    * to the same file (ignoring case and slash/backslash differences) but
    * the file name differs we need to go through a temp file.
    */
-  if (fnamecmp(from, to) == 0) {
+  if (FNAMECMP(from, to) == 0) {
     if (p_fic && (STRCMP(path_tail((char_u *)from), path_tail((char_u *)to))
                   != 0)) {
       use_tmp_file = true;
@@ -5190,7 +5193,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
-                 (linenr_T)MAXLNUM, &ea, flags) != OK) {
+                 (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
@@ -5343,37 +5346,85 @@ static void vim_maketempdir(void)
   (void)umask(umask_save);
 }
 
+/// Core part of "readdir()" function.
+/// Retrieve the list of files/directories of "path" into "gap".
+///
+/// @return  OK for success, FAIL for failure.
+int readdir_core(garray_T *gap, const char *path, void *context, CheckItem checkitem)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  ga_init(gap, (int)sizeof(char *), 20);
+
+  Directory dir;
+  if (!os_scandir(&dir, path)) {
+    smsg(_(e_notopen), path);
+    return FAIL;
+  }
+
+  for (;;) {
+    const char *p = os_scandir_next(&dir);
+    if (p == NULL) {
+      break;
+    }
+
+    bool ignore = (p[0] == '.' && (p[1] == NUL || (p[1] == '.' && p[2] == NUL)));
+    if (!ignore && checkitem != NULL) {
+      varnumber_T r = checkitem(context, p);
+      if (r < 0) {
+        break;
+      }
+      if (r == 0) {
+        ignore = true;
+      }
+    }
+
+    if (!ignore) {
+      ga_grow(gap, 1);
+      ((char **)gap->ga_data)[gap->ga_len++] = xstrdup(p);
+    }
+  }
+
+  os_closedir(&dir);
+
+  if (gap->ga_len > 0) {
+    sort_strings((char_u **)gap->ga_data, gap->ga_len);
+  }
+
+  return OK;
+}
+
 /// Delete "name" and everything in it, recursively.
 ///
-/// @param name The path which should be deleted.
+/// @param name  The path which should be deleted.
 ///
 /// @return  0 for success, -1 if some file was not deleted.
 int delete_recursive(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int result = 0;
 
   if (os_isrealdir(name)) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);  // NOLINT
-
-    char_u **files;
-    int file_count;
-    char_u *exp = vim_strsave(NameBuff);
-    if (gen_expand_wildcards(1, &exp, &file_count, &files,
-                             EW_DIR | EW_FILE | EW_SILENT | EW_ALLLINKS
-                             | EW_DODOT | EW_EMPTYOK) == OK) {
-      for (int i = 0; i < file_count; i++) {
-        if (delete_recursive((const char *)files[i]) != 0) {
+    char *exp = xstrdup(name);
+    garray_T ga;
+    if (readdir_core(&ga, exp, NULL, NULL) == OK) {
+      for (int i = 0; i < ga.ga_len; i++) {
+        vim_snprintf((char *)NameBuff, MAXPATHL, "%s/%s", exp, ((char_u **)ga.ga_data)[i]);
+        if (delete_recursive((const char *)NameBuff) != 0) {
+          // Remember the failure but continue deleting any further
+          // entries.
           result = -1;
         }
       }
-      FreeWild(file_count, files);
+      ga_clear_strings(&ga);
+      if (os_rmdir(exp) != 0) {
+        result = -1;
+      }
     } else {
       result = -1;
     }
-
     xfree(exp);
-    os_rmdir(name);
   } else {
+    // Delete symlink only.
     result = os_remove(name) == 0 ? 0 : -1;
   }
 

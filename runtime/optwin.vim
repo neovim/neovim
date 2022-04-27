@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Dec 12
+" Last Change:	2022 Apr 07
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -870,6 +870,9 @@ if has("cindent")
   call append("$", "cinwords\tlist of words that cause more C-indent")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("cinw")
+  call append("$", "cinscopedecls\tlist of scope declaration names used by cino-g")
+  call append("$", "\t(local to buffer)")
+  call <SID>OptionL("cinsd")
   call append("$", "indentexpr\texpression used to obtain the indent of a line")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("inde")

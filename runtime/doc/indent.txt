@@ -38,11 +38,12 @@ is not a C compiler: it does not recognize all syntax.  One requirement is
 that toplevel functions have a '{' in the first column.  Otherwise they are
 easily confused with declarations.
 
-These four options control C program indenting:
+These five options control C program indenting:
 'cindent'	Enables Vim to perform C program indenting automatically.
 'cinkeys'	Specifies which keys trigger reindenting in insert mode.
 'cinoptions'	Sets your preferred indent style.
 'cinwords'	Defines keywords that start an extra indent in the next line.
+'cinscopedecls'	Defines strings that are recognized as a C++ scope declaration.
 
 If 'lisp' is not on and 'equalprg' is empty, the "=" operator indents using
 Vim's built-in algorithm rather than calling an external program.
@@ -289,8 +290,9 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-g*
 	gN    Place C++ scope declarations N characters from the indent of the
-	      block they are in.  (default 'shiftwidth').  A scope declaration
-	      can be "public:", "protected:" or "private:".
+	      block they are in.  (default 'shiftwidth'). By default, a scope 
+	      declaration is "public:", "protected:" or "private:". This can
+	      be adjusted with the 'cinscopedecls' option.
 
 		cino=		    cino=g0 >
 		  {		      {

@@ -1038,21 +1038,20 @@ func s:dir_stack_tests(cchar)
   let save_efm=&efm
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
 
-  let lines =<< trim [DATA]
-  Entering dir 'dir1/a'
-  habits2.txt:1:Nine Healthy Habits
-  Entering dir 'b'
-  habits3.txt:2:0 Hours of television
-  habits2.txt:7:5 Small meals
-  Entering dir 'dir1/c'
-  habits4.txt:3:1 Hour of exercise
-  Leaving dir 'dir1/c'
-  Leaving dir 'dir1/a'
-  habits1.txt:4:2 Liters of water
-  Entering dir 'dir2'
-  habits5.txt:5:3 Cups of hot green tea
-  Leaving dir 'dir2
-  [DATA]
+  let lines = ["Entering dir 'dir1/a'",
+		\ 'habits2.txt:1:Nine Healthy Habits',
+		\ "Entering dir 'b'",
+		\ 'habits3.txt:2:0 Hours of television',
+		\ 'habits2.txt:7:5 Small meals',
+		\ "Entering dir 'dir1/c'",
+		\ 'habits4.txt:3:1 Hour of exercise',
+		\ "Leaving dir 'dir1/c'",
+		\ "Leaving dir 'dir1/a'",
+		\ 'habits1.txt:4:2 Liters of water',
+		\ "Entering dir 'dir2'",
+		\ 'habits5.txt:5:3 Cups of hot green tea',
+		\ "Leaving dir 'dir2'"
+		\]
 
   Xexpr ""
   for l in lines
@@ -1086,19 +1085,18 @@ func Test_efm_dirstack()
   call mkdir('dir1/c')
   call mkdir('dir2')
 
-  let lines =<< trim [DATA]
-  Nine Healthy Habits,
-  0 Hours of television,
-  1 Hour of exercise,
-  2 Liters of water,
-  3 Cups of hot green tea,
-  4 Short mental breaks,
-  5 Small meals,
-  6 AM wake up time,
-  7 Minutes of laughter,
-  8 Hours of sleep (at least),
-  9 PM end of the day and off to bed
-  [DATA]
+  let lines = ["Nine Healthy Habits",
+		\ "0 Hours of television",
+		\ "1 Hour of exercise",
+		\ "2 Liters of water",
+		\ "3 Cups of hot green tea",
+		\ "4 Short mental breaks",
+		\ "5 Small meals",
+		\ "6 AM wake up time",
+		\ "7 Minutes of laughter",
+		\ "8 Hours of sleep (at least)",
+		\ "9 PM end of the day and off to bed"
+		\ ]
 
   call writefile(lines, 'habits1.txt')
   call writefile(lines, 'dir1/a/habits2.txt')
@@ -1220,6 +1218,7 @@ func Test_efm2()
     (67,3)  warning: 's' already defined
     --
   [DATA]
+
   set efm=%+P[%f]%r,(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%+Q--%r
   " To exercise the push/pop file functionality in quickfix, the test files
   " need to be created.
@@ -1280,20 +1279,21 @@ func Test_efm2()
 
   " Test for %A, %C and other formats
   let lines =<< trim [DATA]
-  ==============================================================
-  FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)
-  --------------------------------------------------------------
-  Traceback (most recent call last):
-    File "unittests/dbfacadeTest.py", line 89, in testFoo
-      self.assertEquals(34, dtid)
-    File "/usr/lib/python2.2/unittest.py", line 286, in
-   failUnlessEqual
-      raise self.failureException, \\
-  W:AssertionError: 34 != 33
-
-  --------------------------------------------------------------
-  Ran 27 tests in 0.063s
+    ==============================================================
+    FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)
+    --------------------------------------------------------------
+    Traceback (most recent call last):
+      File "unittests/dbfacadeTest.py", line 89, in testFoo
+        self.assertEquals(34, dtid)
+      File "/usr/lib/python2.2/unittest.py", line 286, in
+     failUnlessEqual
+        raise self.failureException, \\
+    W:AssertionError: 34 != 33
+  
+    --------------------------------------------------------------
+    Ran 27 tests in 0.063s
   [DATA]
+
   set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%t:%m
   cgetexpr lines
   let l = getqflist()
@@ -5049,7 +5049,7 @@ func Test_quickfix_window_fails_to_open()
   call delete('XquickfixFails')
 endfunc
 
-" Test for updating the quickfix buffer whenever the assocaited quickfix list
+" Test for updating the quickfix buffer whenever the associated quickfix list
 " is changed.
 func Xqfbuf_update(cchar)
   call s:setup_commands(a:cchar)

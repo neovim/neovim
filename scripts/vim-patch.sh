@@ -190,8 +190,8 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove *.proto, Make*, INSTALL*, gui_*, beval.*, some if_*, gvim, libvterm, tee, VisVim, xpm, xxd
-  local na_src='auto\|configure.*\|GvimExt\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make*\|INSTALL*\|beval.*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  local na_src='auto\|configure.*\|GvimExt\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make.*\|INSTALL.*\|beval.*\|gui.*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove unwanted Vim doc files.
   local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|vim9\.txt\|sponsor\.txt\|intro\.txt\|tags'
@@ -201,19 +201,18 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
-  local na_src_testdir='gen_opt_test.vim\|gui_.*\|Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump\|setup_gui.vim'
+  local na_src_testdir='gen_opt_test\.vim\|gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove testdir/test_*.vim files
-  local na_src_testdir='balloon.*\|channel.*\|crypt.vim\|gui.*\|job_fails.vim\|json.vim\|mzscheme.vim\|netbeans.*\|paste.vim\|popupwin.*\|restricted.vim\|shortpathname.vim\|tcl.vim\|terminal.*\|xxd.vim'
+  local na_src_testdir='balloon.*\|channel.*\|crypt\.vim\|gui.*\|job_fails\.vim\|json\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|restricted\.vim\|shortpathname\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
-  local na_po='version.c'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%(version\.c\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove some *.po files. #5622
-  local na_po='sjiscorr.c\|ja.sjis.po\|ko.po\|pl.cp1250.po\|pl.po\|ru.cp1251.po\|uk.cp1251.po\|zh_CN.cp936.po\|zh_CN.po\|zh_TW.po'
+  local na_po='sjiscorr\.c\|ja\.sjis\.po\|ko\.po\|pl\.cp1250\.po\|pl\.po\|ru\.cp1251\.po\|uk\.cp1251\.po\|zh_CN\.cp936\.po\|zh_CN\.po\|zh_TW\.po'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove vimrc_example.vim
@@ -241,11 +240,11 @@ preprocess_patch() {
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename test_urls.vim to check_urls.vim
-  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls.vim\)@\1/scripts/check\2@g' \
+  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls\.vim\)@\1/scripts/check\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename path to check_colors.vim
-  LC_ALL=C sed -e 's@\( [ab]/runtime\)/colors/\(tools/check_colors.vim\)@\1/\2@g' \
+  LC_ALL=C sed -e 's@\( [ab]/runtime\)/colors/\(tools/check_colors\.vim\)@\1/\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 

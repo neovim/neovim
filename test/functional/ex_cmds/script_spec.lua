@@ -2,17 +2,29 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local neq = helpers.neq
+local command = helpers.command
+local write_file = helpers.write_file
 local meths = helpers.meths
 local clear = helpers.clear
 local dedent = helpers.dedent
-local source = helpers.source
 local exc_exec = helpers.exc_exec
 local missing_provider = helpers.missing_provider
 
+local tmpfile = 'X_ex_cmds_script'
+
 before_each(clear)
+
+local function source(code)
+  write_file(tmpfile, code)
+  command('source '..tmpfile)
+end
 
 describe('script_get-based command', function()
   local garbage = ')}{+*({}]*[;(+}{&[]}{*])('
+
+  after_each(function()
+    os.remove(tmpfile)
+  end)
 
   local function test_garbage_exec(cmd, check_neq)
     describe(cmd, function()

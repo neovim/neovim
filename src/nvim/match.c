@@ -4,6 +4,7 @@
 // match.c: functions for highlighting matches
 
 #include <stdbool.h>
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"
 #include "nvim/highlight_group.h"
@@ -372,6 +373,7 @@ static int next_search_hl_pos(match_T *shl, linenr_T lnum, posmatch_T *posmatch,
     shl->rm.endpos[0].lnum = 0;
     shl->rm.endpos[0].col = end;
     shl->is_addpos = true;
+    shl->has_cursor = false;
     posmatch->cur = found + 1;
     return 1;
   }
@@ -558,6 +560,22 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
   }
 }
 
+/// Update "shl->has_cursor" based on the match in "shl" and the cursor
+/// position.
+static void check_cur_search_hl(win_T *wp, match_T *shl)
+{
+  linenr_T linecount = shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum;
+
+  if (wp->w_cursor.lnum >= shl->lnum
+      && wp->w_cursor.lnum <= shl->lnum + linecount
+      && (wp->w_cursor.lnum > shl->lnum || wp->w_cursor.col >= shl->rm.startpos[0].col)
+      && (wp->w_cursor.lnum < shl->lnum + linecount || wp->w_cursor.col < shl->rm.endpos[0].col)) {
+    shl->has_cursor = true;
+  } else {
+    shl->has_cursor = false;
+  }
+}
+
 /// Prepare for 'hlsearch' and match highlighting in one window line.
 /// Return true if there is such highlighting and set "search_attr" to the
 /// current highlight attribute.
@@ -583,6 +601,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
     shl->is_addpos = false;
+    shl->has_cursor = false;
     if (cur != NULL) {
       cur->pos.cur = 0;
     }
@@ -605,6 +624,12 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
       } else {
         shl->endcol = MAXCOL;
       }
+
+      // check if the cursor is in the match before changing the columns
+      if (shl == search_hl) {
+        check_cur_search_hl(wp, shl);
+      }
+
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
         if ((*line)[shl->endcol] != NUL) {
@@ -667,7 +692,13 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
         if (shl->endcol < next_col) {
           shl->endcol = next_col;
         }
-        shl->attr_cur = shl->attr;
+        // Highlight the match were the cursor is using the CurSearch
+        // group.
+        if (shl == search_hl && shl->has_cursor && (HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC])) {
+          shl->attr_cur = win_hl_attr(wp, HLF_LC) ? win_hl_attr(wp, HLF_LC) : HL_ATTR(HLF_LC);
+        } else {
+          shl->attr_cur = shl->attr;
+        }
         // Match with the "Conceal" group results in hiding
         // the match.
         if (cur != NULL
@@ -695,6 +726,11 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
             shl->endcol = shl->rm.endpos[0].col;
           } else {
             shl->endcol = MAXCOL;
+          }
+
+          // check if the cursor is in the match
+          if (shl == search_hl) {
+            check_cur_search_hl(wp, shl);
           }
 
           if (shl->startcol == shl->endcol) {
