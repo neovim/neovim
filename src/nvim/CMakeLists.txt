@@ -465,7 +465,6 @@ endif()
 
 if(WIN32)
   list(APPEND NVIM_LINK_LIBRARIES netapi32)
-  list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
 # Use "luv" as imported library, to work around CMake using "-lluv" for
@@ -552,8 +551,6 @@ if(WIN32)
                       diff.exe
                       tee.exe
                       win32yank.exe
-                      winpty-agent.exe
-                      winpty.dll
                       xxd.exe
 
                       # Dependencies for neovim-qt
