@@ -36,8 +36,16 @@ BraceWrapping:
   BeforeElse:      false
   IndentBraces:    false
 PointerAlignment: Right
-SortIncludes: false
+SortIncludes: true
 Cpp11BracedListStyle: false
+IncludeCategories:
+  - Regex:           '<[/[:alnum:].]+>'
+    Priority:        0
+  - Regex:           '^"(nvim|vim)/'
+    Priority:        1
+    SortPriority:    1
+    CaseSensitive:   false
+IndentPPDirectives: AfterHash
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 ForEachMacros:
   - FOR_ALL_AUEVENTS

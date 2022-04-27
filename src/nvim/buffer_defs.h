@@ -102,8 +102,6 @@ typedef uint64_t disptick_T;  // display tick type
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
-// for struct memfile, bhdr_T, blocknr_T... (it needs buf_T)
-#include "nvim/memfile_defs.h"
 
 // for regprog_T. Needs win_T and buf_T.
 #include "nvim/regexp_defs.h"
