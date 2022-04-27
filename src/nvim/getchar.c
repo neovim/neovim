@@ -3279,6 +3279,11 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
               } else if (n != len) {  // new entry is ambiguous
                 mpp = &(mp->m_next);
                 continue;
+              } else if (keyround1_simplified && !mp->m_simplified) {
+                // In keyround for simplified keys, don't replace
+                // a mapping without m_simplified flag.
+                did_it = true;
+                break;
               } else if (args->unique) {
                 if (is_abbrev) {
                   semsg(_("E226: abbreviation already exists for %s"), p);

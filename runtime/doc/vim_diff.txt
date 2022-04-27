@@ -365,6 +365,10 @@ Macro/|recording| behavior
   macros and 'keymap' at the same time. This also means you can use |:imap| on
   the results of keys from 'keymap'.
 
+Mappings:
+  Creating a mapping for a simplifiable key (e.g. <C-I>) doesn't replace an
+  existing mapping for its simplified form (e.g. <Tab>).
+
 Motion:
   The |jumplist| avoids useless/phantom jumps.
 
