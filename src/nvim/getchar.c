@@ -1630,13 +1630,10 @@ int vgetc(void)
         c = utf_ptr2char(buf);
       }
 
-      // A modifier was not used for a mapping, apply it to ASCII
-      // keys.  Shift would already have been applied.
-      // Remember the character and mod_mask from before, in some
-      // cases they are put back in the typeahead buffer.
-      vgetc_mod_mask = mod_mask;
-      vgetc_char = c;
-      c = merge_modifiers(c, &mod_mask);
+      if (vgetc_char == 0) {
+        vgetc_mod_mask = mod_mask;
+        vgetc_char = c;
+      }
 
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
       // something with a meta- or alt- modifier that was not mapped, interpret
@@ -1784,15 +1781,31 @@ static int check_simplify_modifier(int max_offset)
     }
     char_u *tp = typebuf.tb_buf + typebuf.tb_off + offset;
     if (tp[0] == K_SPECIAL && tp[1] == KS_MODIFIER) {
+      // A modifier was not used for a mapping, apply it to ASCII
+      // keys.  Shift would already have been applied.
       int modifier = tp[2];
-      int new_c = merge_modifiers(tp[3], &modifier);
+      int c = tp[3];
+      int new_c = merge_modifiers(c, &modifier);
 
-      if (new_c != tp[3] && modifier == 0) {
+      if (new_c != c) {
+        if (offset == 0) {
+          // At the start: remember the character and mod_mask before
+          // merging, in some cases, e.g. at the hit-return prompt,
+          // they are put back in the typeahead buffer.
+          vgetc_char = c;
+          vgetc_mod_mask = tp[2];
+        }
         char_u new_string[MB_MAXBYTES];
         int len = utf_char2bytes(new_c, new_string);
-
-        if (put_string_in_typebuf(offset, 4, new_string, len) == FAIL) {
-          return -1;
+        if (modifier == 0) {
+          if (put_string_in_typebuf(offset, 4, new_string, len) == FAIL) {
+            return -1;
+          }
+        } else {
+          tp[2] = (char_u)modifier;
+          if (put_string_in_typebuf(offset + 3, 1, new_string, len) == FAIL) {
+            return -1;
+          }
         }
         return len;
       }
