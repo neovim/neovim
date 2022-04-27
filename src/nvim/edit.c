@@ -1587,7 +1587,8 @@ static void ins_ctrl_v(void)
 
   add_to_showcmd_c(Ctrl_V);
 
-  c = get_literal();
+  // Do not include modifiers into the key for CTRL-SHIFT-V.
+  c = get_literal(mod_mask & MOD_MASK_SHIFT);
   if (did_putchar) {
     // when the line fits in 'columns' the '^' is at the start of the next
     // line and will not removed by the redraw
@@ -5612,13 +5613,13 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
   return m;
 }
 
-/*
- * Next character is interpreted literally.
- * A one, two or three digit decimal number is interpreted as its byte value.
- * If one or two digits are entered, the next character is given to vungetc().
- * For Unicode a character > 255 may be returned.
- */
-int get_literal(void)
+/// Next character is interpreted literally.
+/// A one, two or three digit decimal number is interpreted as its byte value.
+/// If one or two digits are entered, the next character is given to vungetc().
+/// For Unicode a character > 255 may be returned.
+///
+/// @param  no_simplify  do not include modifiers into the key
+int get_literal(bool no_simplify)
 {
   int cc;
   int nc;
@@ -5636,6 +5637,9 @@ int get_literal(void)
   i = 0;
   for (;;) {
     nc = plain_vgetc();
+    if (!no_simplify) {
+      nc = merge_modifiers(nc);
+    }
     if ((mod_mask & ~MOD_MASK_SHIFT) != 0) {
       // A character with non-Shift modifiers should not be a valid
       // character for i_CTRL-V_digit.

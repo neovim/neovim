@@ -5154,7 +5154,7 @@ static void nv_replace(cmdarg_T *cap)
   // get another character
   if (cap->nchar == Ctrl_V) {
     had_ctrl_v = Ctrl_V;
-    cap->nchar = get_literal();
+    cap->nchar = get_literal(false);
     // Don't redo a multibyte character with CTRL-V.
     if (cap->nchar > DEL) {
       had_ctrl_v = NUL;
@@ -5369,7 +5369,7 @@ static void nv_vreplace(cmdarg_T *cap)
       emsg(_(e_modifiable));
     } else {
       if (cap->extra_char == Ctrl_V) {          // get another character
-        cap->extra_char = get_literal();
+        cap->extra_char = get_literal(false);
       }
       stuffcharReadbuff(cap->extra_char);
       stuffcharReadbuff(ESC);

@@ -131,6 +131,11 @@ describe('insert-mode', function()
     end)
   end)
 
+  it('Ctrl-Shift-V supports entering unsimplified key notations', function()
+    feed('i<C-S-V><C-J><C-S-V><C-@><C-S-V><C-[><C-S-V><C-S-M><C-S-V><M-C-I><C-S-V><C-D-J><Esc>')
+    expect('<C-J><C-@><C-[><C-S-M><M-C-I><C-D-J>')
+  end)
+
   describe([[With 'insertmode', Insert mode is not re-entered immediately after <C-L>]], function()
     before_each(function()
       command('set insertmode')

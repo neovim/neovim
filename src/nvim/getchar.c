@@ -1442,6 +1442,27 @@ static void updatescript(int c)
   }
 }
 
+/// Merge "mod_mask" into "c_arg"
+int merge_modifiers(int c_arg)
+{
+  int c = c_arg;
+
+  if (mod_mask & MOD_MASK_CTRL) {
+    if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
+      c &= 0x1f;
+      mod_mask &= ~MOD_MASK_CTRL;
+      if (c == 0) {
+        c = K_ZERO;
+      }
+    } else if (c == '6') {
+      // CTRL-6 is equivalent to CTRL-^
+      c = 0x1e;
+      mod_mask &= ~MOD_MASK_CTRL;
+    }
+  }
+  return c;
+}
+
 /// Get the next input character.
 /// Can return a special key or a multi-byte character.
 /// Can return NUL when called recursively, use safe_vgetc() if that's not
@@ -1603,19 +1624,7 @@ int vgetc(void)
 
       // A modifier was not used for a mapping, apply it to ASCII
       // keys.  Shift would already have been applied.
-      if (mod_mask & MOD_MASK_CTRL) {
-        if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
-          c &= 0x1f;
-          mod_mask &= ~MOD_MASK_CTRL;
-          if (c == 0) {
-            c = K_ZERO;
-          }
-        } else if (c == '6') {
-          // CTRL-6 is equivalent to CTRL-^
-          c = 0x1e;
-          mod_mask &= ~MOD_MASK_CTRL;
-        }
-      }
+      c = merge_modifiers(c);
 
       // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
       // something with a meta- or alt- modifier that was not mapped, interpret
