@@ -3074,7 +3074,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   for (int keyround = 1; keyround <= 2; keyround++) {
     bool did_it = false;
     bool did_local = false;
-    bool keyround1_simplfied = keyround == 1 && did_simplify;
+    bool keyround1_simplified = keyround == 1 && did_simplify;
     int len = (int)args->lhs_len;
 
     if (keyround == 2) {
@@ -3249,7 +3249,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                   mpp = &(mp->m_next);
                   continue;
                 }
-                if (keyround1_simplfied && !mp->m_simplified) {
+                if (keyround1_simplified && !mp->m_simplified) {
                   break;
                 }
                 // We reset the indicated mode bits. If nothing
@@ -3288,7 +3288,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                   mp->m_nowait = args->nowait;
                   mp->m_silent = args->silent;
                   mp->m_mode = mode;
-                  mp->m_simplified = keyround1_simplfied;
+                  mp->m_simplified = keyround1_simplified;
                   mp->m_expr = args->expr;
                   mp->m_script_ctx = current_sctx;
                   mp->m_script_ctx.sc_lnum += sourcing_lnum;
@@ -3323,7 +3323,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
     if (maptype == 1) {
       // delete entry
       if (!did_it) {
-        if (!keyround1_simplfied) {
+        if (!keyround1_simplified) {
           retval = 2;  // no match
         }
       } else if (*lhs == Ctrl_C) {
@@ -3374,7 +3374,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
     mp->m_nowait = args->nowait;
     mp->m_silent = args->silent;
     mp->m_mode = mode;
-    mp->m_simplified = keyround1_simplfied;  // Notice this when porting patch 8.2.0807
+    mp->m_simplified = keyround1_simplified;  // Notice this when porting patch 8.2.0807
     mp->m_expr = args->expr;
     mp->m_script_ctx = current_sctx;
     mp->m_script_ctx.sc_lnum += sourcing_lnum;
