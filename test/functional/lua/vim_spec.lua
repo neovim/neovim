@@ -2721,6 +2721,39 @@ describe('lua stdlib', function()
       ]]
     end)
   end)
+
+  describe('vim.iconv', function()
+    it('can convert strings', function()
+      eq('hello', exec_lua[[
+        return vim.iconv('hello', 'latin1', 'utf-8')
+      ]])
+    end)
+
+    it('can validate arguments', function()
+      eq({false, 'Expected at least 3 arguments'}, exec_lua[[
+        return {pcall(vim.iconv, 'hello')}
+      ]])
+
+      eq({false, 'bad argument #3 to \'?\' (expected string)'}, exec_lua[[
+        return {pcall(vim.iconv, 'hello', 'utf-8', true)}
+      ]])
+    end)
+
+    it('can handle bad encodings', function()
+      eq(NIL, exec_lua[[
+        return vim.iconv('hello', 'foo', 'bar')
+      ]])
+    end)
+
+    it('can handle strings with NUL bytes', function()
+      eq(7, exec_lua[[
+        local a = string.char(97, 98, 99, 0, 100, 101, 102) -- abc\0def
+        return string.len(vim.iconv(a, 'latin1', 'utf-8'))
+      ]])
+    end)
+
+  end)
+
 end)
 
 describe('lua: builtin modules', function()

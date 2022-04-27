@@ -881,6 +881,22 @@ vim.str_byteindex({str}, {index} [, {use_utf16}])        *vim.str_byteindex()*
     An {index} in the middle of a UTF-16 sequence is rounded upwards to
     the end of that sequence.
 
+vim.iconv({str}, {from}, {to}[, {opts}])                        *vim.iconv()*
+        The result is a String, which is the text {str} converted from
+        encoding {from} to encoding {to}. When the conversion fails `nil` is
+        returned.  When some characters could not be converted they
+        are replaced with "?".
+        The encoding names are whatever the iconv() library function
+        can accept, see ":Man 3 iconv".
+
+        Parameters: ~
+            {str}   (string) Text to convert
+            {from}  (string) Encoding of {str}
+            {to}    (string) Target encoding
+
+        Returns: ~
+            Converted string if conversion succeeds, `nil` otherwise.
+
 vim.schedule({callback})                                      *vim.schedule()*
     Schedules {callback} to be invoked soon by the main event-loop. Useful
     to avoid |textlock| or other temporary restrictions.
