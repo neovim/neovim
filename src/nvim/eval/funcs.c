@@ -3175,6 +3175,13 @@ static void f_getcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_add_nr(dict, S_LEN("until"), last_csearch_until());
 }
 
+/// "getcmdcompltype()" function
+static void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char *)get_cmdline_completion();
+}
+
 /// "getcmdline()" function
 static void f_getcmdline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -3186,6 +3193,12 @@ static void f_getcmdline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_getcmdpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = get_cmdline_pos() + 1;
+}
+
+/// "getcmdscreenpos()" function
+static void f_getcmdscreenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = get_cmdline_screen_pos() + 1;
 }
 
 /// "getcmdtype()" function
