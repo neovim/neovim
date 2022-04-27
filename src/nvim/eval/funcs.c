@@ -4278,6 +4278,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "nvim",
   };
 
+  // XXX: eval_has_provider() may shell out :(
+  const int save_shell_error = get_vim_var_nr(VV_SHELL_ERROR);
   bool n = false;
   const char *const name = tv_get_string(&argvars[0]);
   for (size_t i = 0; i < ARRAY_SIZE(has_list); i++) {
@@ -4334,6 +4336,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     n = true;
   }
 
+  set_vim_var_nr(VV_SHELL_ERROR, save_shell_error);
   rettv->vval.v_number = n;
 }
 
