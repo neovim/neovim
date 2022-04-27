@@ -3,8 +3,11 @@
 
 #cmakedefine DEBUG
 
-#define SIZEOF_INT @SIZEOF_INT@
-#define SIZEOF_LONG @SIZEOF_LONG@
+#cmakedefine SIZEOF_INT @SIZEOF_INT@
+#cmakedefine SIZEOF_INTMAX_T @SIZEOF_INTMAX_T@
+#cmakedefine SIZEOF_LONG @SIZEOF_LONG@
+#cmakedefine SIZEOF_LONG_LONG @SIZEOF_LONG_LONG@
+#cmakedefine SIZEOF_SIZE_T @SIZEOF_SIZE_T@
 
 #if @SIZEOF_VOID_PTR@ == 8
 #define ARCH_64
@@ -12,7 +15,7 @@
 #define ARCH_32
 #endif
 
-#define PROJECT_NAME "@PROJECT_NAME@"
+#cmakedefine PROJECT_NAME "@PROJECT_NAME@"
 
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_FD_CLOEXEC

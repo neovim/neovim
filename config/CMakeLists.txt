@@ -5,12 +5,12 @@ include(CheckIncludeFiles)
 include(CheckCSourceRuns)
 include(CheckCSourceCompiles)
 
-check_type_size("int" SIZEOF_INT)
-check_type_size("long" SIZEOF_LONG)
-check_type_size("intmax_t" SIZEOF_INTMAX_T)
-check_type_size("size_t" SIZEOF_SIZE_T)
-check_type_size("long long" SIZEOF_LONG_LONG)
-check_type_size("void *" SIZEOF_VOID_PTR)
+check_type_size("int" SIZEOF_INT LANGUAGE C)
+check_type_size("long" SIZEOF_LONG LANGUAGE C)
+check_type_size("intmax_t" SIZEOF_INTMAX_T LANGUAGE C)
+check_type_size("size_t" SIZEOF_SIZE_T LANGUAGE C)
+check_type_size("long long" SIZEOF_LONG_LONG LANGUAGE C)
+check_type_size("void *" SIZEOF_VOID_PTR LANGUAGE C)
 
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
