@@ -1972,7 +1972,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     }
 
     // If no partly match found, use the longest full match.
-    if (keylen != KEYLEN_PART_MAP) {
+    if (keylen != KEYLEN_PART_MAP && mp_match != NULL) {
       mp = mp_match;
       keylen = mp_match_len;
     }
@@ -2011,7 +2011,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     }
   }
 
-  if ((mp == NULL || max_mlen >= mp_match_len) && keylen != KEYLEN_PART_MAP) {
+  if ((mp == NULL || max_mlen > mp_match_len) && keylen != KEYLEN_PART_MAP) {
     // When no matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched:
     // Try to include the modifier into the key, when:

@@ -275,6 +275,17 @@ it('mixing simplified and unsimplified keys can trigger mapping vim-patch:8.2.09
   expect('c-a')
 end)
 
+it('unsimplified mapping works when there was a partial match vim-patch:8.2.4504', function()
+  command('set timeoutlen=10')
+  command('nnoremap <C-J> a')
+  command('nnoremap <NL> x')
+  command('nnoremap <C-J>x <Nop>')
+  funcs.setline(1, 'x')
+  -- CTRL-J b should have trigger the <C-J> mapping and then insert "b"
+  feed('<C-J>b<Esc>')
+  expect('xb')
+end)
+
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')
