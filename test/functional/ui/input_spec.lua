@@ -8,6 +8,7 @@ local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
 local funcs = helpers.funcs
+local eval = helpers.eval
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -214,6 +215,23 @@ it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
   command('edit bbb')
   feed('<C-6>')
   eq('aaa', funcs.bufname())
+end)
+
+it('c_CTRL-R_CTRL-R, i_CTRL-R_CTRL-R, i_CTRL-G_CTRL-K work properly vim-patch:8.1.2346', function()
+  command('set timeoutlen=10')
+
+  command([[let @a = 'aaa']])
+  feed([[:let x = '<C-R><C-R>a'<CR>]])
+  eq([[let x = 'aaa']], eval('@:'))
+
+  feed('a<C-R><C-R>a<Esc>')
+  expect('aaa')
+  command('bwipe!')
+
+  feed('axx<CR>yy<C-G><C-K>a<Esc>')
+  expect([[
+  axx
+  yy]])
 end)
 
 it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()

@@ -7817,11 +7817,10 @@ static void ins_reg(void)
   }
 
 
-  /*
-   * Don't map the register name. This also prevents the mode message to be
-   * deleted when ESC is hit.
-   */
-  ++no_mapping;
+  // Don't map the register name. This also prevents the mode message to be
+  // deleted when ESC is hit.
+  no_mapping++;
+  allow_keys++;
   regname = plain_vgetc();
   LANGMAP_ADJUST(regname, TRUE);
   if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P) {
@@ -7831,7 +7830,8 @@ static void ins_reg(void)
     regname = plain_vgetc();
     LANGMAP_ADJUST(regname, TRUE);
   }
-  --no_mapping;
+  no_mapping--;
+  allow_keys--;
 
   // Don't call u_sync() while typing the expression or giving an error
   // message for it. Only call it explicitly.
@@ -7899,13 +7899,13 @@ static void ins_ctrl_g(void)
   // Right after CTRL-X the cursor will be after the ruler.
   setcursor();
 
-  /*
-   * Don't map the second key. This also prevents the mode message to be
-   * deleted when ESC is hit.
-   */
-  ++no_mapping;
+  // Don't map the second key. This also prevents the mode message to be
+  // deleted when ESC is hit.
+  no_mapping++;
+  allow_keys++;
   c = plain_vgetc();
-  --no_mapping;
+  no_mapping--;
+  allow_keys--;
   switch (c) {
   // CTRL-G k and CTRL-G <Up>: cursor up to Insstart.col
   case K_UP:
