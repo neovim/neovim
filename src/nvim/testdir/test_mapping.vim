@@ -761,4 +761,15 @@ func Test_mouse_drag_insert_map()
   set mouse&
 endfunc
 
+func Test_unmap_simplfied()
+  map <C-I> foo
+  map <Tab> bar
+  call assert_equal('foo', maparg('<C-I>'))
+  call assert_equal('bar', maparg('<Tab>'))
+  unmap <C-I>
+  call assert_equal('', maparg('<C-I>'))
+  call assert_equal('bar', maparg('<Tab>'))
+  unmap <Tab>
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
