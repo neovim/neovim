@@ -3,7 +3,7 @@
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " License: This file can be redistribued and/or modified under the same terms
 "		as Vim itself.
-" Last Change: 2020 Oct 07
+" Last Change: 2022 Apr 25
 " Notes: Last synced with apache-2.2.3, version 1.x is no longer supported
 " TODO: see particular FIXME's scattered through the file
 "		make it really linewise?
@@ -46,6 +46,7 @@ syn keyword apacheMethodOption GET POST PUT DELETE CONNECT OPTIONS TRACE PATCH P
 syn keyword apacheMethodOption BASELINE-CONTROL CHECKIN CHECKOUT LABEL MERGE MKACTIVITY MKWORKSPACE REPORT UNCHECKOUT UPDATE VERSION-CONTROL contained
 syn case ignore
 syn match apacheSection "<\/\=\(Directory\|DirectoryMatch\|Files\|FilesMatch\|IfModule\|IfDefine\|Location\|LocationMatch\|VirtualHost\)[^>]*>" contains=apacheAnything
+syn match apacheSection "<\/\=\(RequireAll\|RequireAny\|RequireNone\)>" contains=apacheAnything
 syn match apacheLimitSection "<\/\=\(Limit\|LimitExcept\)[^>]*>" contains=apacheLimitSectionKeyword,apacheMethodOption,apacheError
 syn keyword apacheLimitSectionKeyword Limit LimitExcept contained
 syn match apacheAuthType "AuthType\s.*$" contains=apacheAuthTypeValue

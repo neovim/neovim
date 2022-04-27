@@ -2,6 +2,7 @@
 " Language: PoV-Ray Scene Description Language
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2017 Jun 13
+"              2022 April: b:undo_indent added by Doug Kearns
 " URI: http://trific.ath.cx/Ftp/vim/indent/pov.vim
 
 " Only load this indent file when no other was loaded.
@@ -15,6 +16,8 @@ setlocal nolisp " Make sure lisp indenting doesn't supersede us.
 
 setlocal indentexpr=GetPoVRayIndent()
 setlocal indentkeys+==else,=end,0]
+
+let b:undo_indent = "setl inde< indk< lisp<"
 
 " Only define the function once.
 if exists("*GetPoVRayIndent")

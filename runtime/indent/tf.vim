@@ -2,7 +2,7 @@
 " Language:     tf (TinyFugue)
 " Maintainer:   Christian J. Robinson <heptite@gmail.com>
 " URL:          http://www.vim.org/scripts/script.php?script_id=174
-" Last Change:  2017 Feb 25 
+" Last Change:  2022 Apr 25
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -13,6 +13,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetTFIndent()
 setlocal indentkeys-=0{,0} indentkeys-=0# indentkeys-=:
 setlocal indentkeys+==/endif,=/then,=/else,=/done,0;
+
+let b:undo_indent = "setlocal indentexpr< indentkeys<"
 
 " Only define the function once:
 if exists("*GetTFIndent")

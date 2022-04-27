@@ -2,7 +2,7 @@
 " Language:	Microsoft Macro Assembler (80x86)
 " Orig Author:	Rob Brady <robb@datatone.com>
 " Maintainer:	Wu Yongwei <wuyongwei@gmail.com>
-" Last Change:	2020-05-09 22:55:38 +0800
+" Last Change:	2022-04-24 20:07:04 +0800
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -68,6 +68,7 @@ syn keyword masmType		STDCALL SYSCALL C BASIC FORTRAN PASCAL
 syn keyword masmType		PTR NEAR FAR NEAR16 FAR16 NEAR32 FAR32
 syn keyword masmType		REAL4 REAL8 REAL10 BYTE SBYTE TBYTE
 syn keyword masmType		WORD DWORD QWORD FWORD SWORD SDWORD
+syn keyword masmType		SQWORD OWORD MMWORD XMMWORD YMMWORD
 syn keyword masmOperator	AND NOT OR SHL SHR XOR MOD DUP
 syn keyword masmOperator	EQ GE GT LE LT NE
 syn keyword masmOperator	LROFFSET SEG LENGTH LENGTHOF SIZE SIZEOF
