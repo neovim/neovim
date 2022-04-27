@@ -872,10 +872,8 @@ void init_default_mappings(void)
 int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent)
 {
   char_u *s1, *s2;
-  int newlen;
   int addlen;
   int i;
-  int newoff;
   int val;
   int nrm;
 
@@ -901,13 +899,15 @@ int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent
     // In typebuf.tb_buf there must always be room for 3 * (MAXMAPLEN + 4)
     // characters.  We add some extra room to avoid having to allocate too
     // often.
-    newoff = MAXMAPLEN + 4;
-    newlen = typebuf.tb_len + addlen + newoff + 4 * (MAXMAPLEN + 4);
-    if (newlen < 0) {               // string is getting too long
+    int newoff = MAXMAPLEN + 4;
+    int extra = addlen + newoff + 4 * (MAXMAPLEN + 4);
+    if (typebuf.tb_len > 2147483674 - extra) {
+      // string is getting too long for 32 bit int
       emsg(_(e_toocompl));          // also calls flush_buffers
       setcursor();
       return FAIL;
     }
+    int newlen = typebuf.tb_len + extra;
     s1 = xmalloc((size_t)newlen);
     s2 = xmalloc((size_t)newlen);
     typebuf.tb_buflen = newlen;
