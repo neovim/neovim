@@ -2975,6 +2975,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   bool error = false;
 
   no_mapping++;
+  allow_keys++;
   for (;;) {
     // Position the cursor.  Needed after a message that ends in a space,
     // or if event processing caused a redraw.
@@ -3012,6 +3013,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
     break;
   }
   no_mapping--;
+  allow_keys--;
 
   set_vim_var_nr(VV_MOUSE_WIN, 0);
   set_vim_var_nr(VV_MOUSE_WINID, 0);

@@ -1513,8 +1513,10 @@ char_u *get_digraph_for_char(int val_arg)
 int get_digraph(bool cmdline)
 {
   no_mapping++;
+  allow_keys++;
   int c = plain_vgetc();
   no_mapping--;
+  allow_keys--;
 
   if (c != ESC) {
     // ESC cancels CTRL-K
@@ -1531,8 +1533,10 @@ int get_digraph(bool cmdline)
       add_to_showcmd(c);
     }
     no_mapping++;
+    allow_keys++;
     int cc = plain_vgetc();
     no_mapping--;
+    allow_keys--;
 
     if (cc != ESC) {
       // ESC cancels CTRL-K
