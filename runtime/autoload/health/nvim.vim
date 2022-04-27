@@ -152,8 +152,7 @@ function! s:check_performance() abort
   let elapsed_time = reltimefloat(reltime(start_time))
   if elapsed_time > slow_cmd_time
     call health#report_warn(
-          \ 'Slow shell invocation (took '.printf('%.2f', elapsed_time).' seconds).',
-          \ ['Optimize your shell configuration.'])
+          \ 'Slow shell invocation (took '.printf('%.2f', elapsed_time).' seconds).')
   endif
 endfunction
 
