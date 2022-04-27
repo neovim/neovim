@@ -1000,7 +1000,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char_u **matches)
   }
 
   vim_snprintf((char *)IObuff, IOSIZE, "ltag %s", tag);
-  set_errorlist(curwin, list, ' ', IObuff, NULL);
+  set_errorlist(curwin, list, ' ', (char *)IObuff, NULL);
 
   tv_list_free(list);
   XFREE_CLEAR(fname);

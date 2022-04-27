@@ -1040,8 +1040,8 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
         wp = curwin;
       }
       // '-' starts a new error list
-      if (qf_init(wp, tmp, (char_u *)"%f%*\\t%l%*\\t%m",
-                  *qfpos == '-', cmdline, NULL) > 0) {
+      if (qf_init(wp, (char *)tmp, "%f%*\\t%l%*\\t%m",
+                  *qfpos == '-', (char *)cmdline, NULL) > 0) {
         if (postponed_split != 0) {
           (void)win_split(postponed_split > 0 ? postponed_split : 0,
                           postponed_split_flags);
