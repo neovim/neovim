@@ -785,7 +785,7 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
       && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
     key = CTRL_CHR(key);
     modifiers &= ~MOD_MASK_CTRL;
-    if (key == 0) {  // <C-@> is <Nul>
+    if (key == NUL) {  // <C-@> is <Nul>
       key = K_ZERO;
     }
     if (did_simplify != NULL) {

@@ -1450,7 +1450,7 @@ int merge_modifiers(int c_arg, int *modifiers)
   if (*modifiers & MOD_MASK_CTRL) {
     if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
       c &= 0x1f;
-      if (c == 0) {
+      if (c == NUL) {
         c = K_ZERO;
       }
     } else if (c == '6') {
@@ -2738,7 +2738,7 @@ int inchar(char_u *buf, int maxlen, long wait_time)
 
       for (;;) {
         len = os_inchar(dum, DUM_LEN, 0L, 0, NULL);
-        if (len == 0 || (len == 1 && dum[0] == 3)) {
+        if (len == 0 || (len == 1 && dum[0] == Ctrl_C)) {
           break;
         }
       }
