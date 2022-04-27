@@ -1761,7 +1761,9 @@ static int put_string_in_typebuf(int offset, int slen, char_u *string, int new_s
     del_typebuf(-extra, offset);
   } else if (extra > 0) {
     // insert the extra space we need
-    ins_typebuf(string + slen, REMAP_YES, offset, false, false);
+    if (ins_typebuf(string + slen, REMAP_YES, offset, false, false) == FAIL) {
+      return FAIL;
+    }
   }
   // Careful: del_typebuf() and ins_typebuf() may have reallocated
   // typebuf.tb_buf[]!
@@ -1772,7 +1774,7 @@ static int put_string_in_typebuf(int offset, int slen, char_u *string, int new_s
 /// Check if typebuf.tb_buf[] contains a modifer plus key that can be changed
 /// into just a key, apply that.
 /// Check from typebuf.tb_buf[typebuf.tb_off] to typebuf.tb_buf[typebuf.tb_off + "max_offset"].
-/// @return  the length of the replaced bytes, zero if nothing changed.
+/// @return  the length of the replaced bytes, 0 if nothing changed, -1 for error.
 static int check_simplify_modifier(int max_offset)
 {
   for (int offset = 0; offset < max_offset; offset++) {
@@ -1796,7 +1798,15 @@ static int check_simplify_modifier(int max_offset)
           vgetc_mod_mask = tp[2];
         }
         char_u new_string[MB_MAXBYTES];
-        int len = utf_char2bytes(new_c, new_string);
+        int len;
+        if (IS_SPECIAL(new_c)) {
+          new_string[0] = K_SPECIAL;
+          new_string[1] = (char_u)K_SECOND(new_c);
+          new_string[2] = (char_u)K_THIRD(new_c);
+          len = 3;
+        } else {
+          len = utf_char2bytes(new_c, new_string);
+        }
         if (modifier == 0) {
           if (put_string_in_typebuf(offset, 4, new_string, len) == FAIL) {
             return -1;
@@ -1819,6 +1829,7 @@ static int check_simplify_modifier(int max_offset)
 /// - When nothing mapped and typeahead has a character: return map_result_get.
 /// - When there is no match yet, return map_result_nomatch, need to get more
 ///   typeahead.
+/// - On failure (out of memory) return map_result_fail.
 static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 {
   mapblock_T *mp = NULL;
@@ -2032,7 +2043,10 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       } else if (keylen != KEYLEN_PART_KEY) {
         // Try to include the modifier into the key.
         keylen = check_simplify_modifier(max_mlen + 1);
-        assert(keylen >= 0);
+        if (keylen < 0) {
+          // ins_typebuf() failed
+          return map_result_fail;
+        }
       }
     } else {
       keylen = 0;

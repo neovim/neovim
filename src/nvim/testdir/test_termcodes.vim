@@ -1,8 +1,9 @@
 
 func Test_simplify_ctrl_at()
   " feeding unsimplified CTRL-@ should still trigger i_CTRL-@
-  call feedkeys("ifoo\<Esc>A\<*C-@>", 'xt')
-  call assert_equal('foofoo', getline(1))
+  call feedkeys("ifoo\<Esc>A\<*C-@>x", 'xt')
+  call assert_equal('foofo', getline(1))
+  bw!
 endfunc
 
 
