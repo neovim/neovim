@@ -146,12 +146,9 @@ function! s:check_performance() abort
   endif
 
   " check for slow shell invocation
-  let shell_cmd = 'echo'
   let slow_cmd_time = 1.5
   let start_time = reltime()
-
-  call system(shell_cmd)
-
+  call system('echo')
   let elapsed_time = reltimefloat(reltime(start_time))
   if elapsed_time > slow_cmd_time
     call health#report_warn(
