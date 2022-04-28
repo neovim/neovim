@@ -16,8 +16,8 @@ if(WIN32)
   # tell MinGW compiler to enable wmain
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreFoundation")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreServices")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreServices")
 endif()
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
