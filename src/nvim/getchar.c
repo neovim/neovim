@@ -2025,22 +2025,21 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   if ((mp == NULL || max_mlen > mp_match_len) && keylen != KEYLEN_PART_MAP) {
     // When no matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched:
-    // Try to include the modifier into the key, when:
-    // - mapping is allowed,
-    // - keys have not been mapped,
-    // - and when not timed out,
-    if ((no_mapping == 0 || allow_keys != 0)
-        && (typebuf.tb_maplen == 0
-            || (p_remap && typebuf.tb_noremap[typebuf.tb_off] == RM_YES))
-        && !*timedout) {
+    // Try to include the modifier into the key when mapping is allowed.
+    if (no_mapping == 0 || allow_keys != 0) {
       if (tb_c1 == K_SPECIAL
           && (typebuf.tb_len < 2
-              || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER
-                  && typebuf.tb_len < 4))) {
+              || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER && typebuf.tb_len < 4))) {
         // Incomplete modifier sequence: cannot decide whether to simplify yet.
         keylen = KEYLEN_PART_KEY;
-        // Don't simplify if 'pastetoggle' matched partially.
-      } else if (keylen != KEYLEN_PART_KEY) {
+      } else if (keylen == KEYLEN_PART_KEY && !*timedout) {
+        // If 'pastetoggle' matched partially, don't simplify.
+        // When the last characters were not typed, don't wait for a typed character to
+        // complete 'pastetoggle'.
+        if (typebuf.tb_len == typebuf.tb_maplen) {
+          keylen = 0;
+        }
+      } else {
         // Try to include the modifier into the key.
         keylen = check_simplify_modifier(max_mlen + 1);
         if (keylen < 0) {
