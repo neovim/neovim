@@ -4,52 +4,52 @@
                             NVIM REFERENCE MANUAL
 
 
-Lua engine                                              *lua* *Lua*
+Lua engine                                                           *lua* *Lua*
 
-                                      Type |gO| to see the table of contents.
+                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-INTRODUCTION                                            *lua-intro*
+INTRODUCTION                                                       *lua-intro*
 
-The Lua 5.1 language is builtin and always available.  Try this command to get
+The Lua 5.1 language is builtin and always available. Try this command to get
 an idea of what lurks beneath: >
 
     :lua print(vim.inspect(package.loaded))
-
-Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
+<
+Nvim includes a "standard library" |lua-stdlib| for Lua. It complements the
 "editor stdlib" (|builtin-functions| and Ex commands) and the |API|, all of
 which can be used from Lua code. A good overview of using Lua in neovim is
 given by https://github.com/nanotee/nvim-lua-guide.
 
 The |:source| and |:runtime| commands can run Lua scripts as well as Vim
-scripts.  Lua modules can be loaded with `require('name')`, which
+scripts. Lua modules can be loaded with `require('name')`, which
 conventionally returns a table but can return any value.
 
 See |lua-require| for details on how Nvim finds and loads Lua modules.
 See |lua-require-example| for an example of how to write and use a module.
 
 ==============================================================================
-IMPORTING LUA MODULES                                   *lua-require*
+IMPORTING LUA MODULES                                            *lua-require*
 
 Modules are searched for under the directories specified in 'runtimepath', in
-the order they appear.  Any `.` in the module name is treated as a directory
-separator when searching.  For a module `foo.bar`, each directory is searched
-for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`.  If no files are found,
+the order they appear. Any `.` in the module name is treated as a directory
+separator when searching. For a module `foo.bar`, each directory is searched
+for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`. If no files are found,
 the directories are searched again for a shared library with a name matching
-`lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`)
-derived from the initial value of `package.cpath`.  If still no files are
-found, Nvim falls back to Lua's default search mechanism.  The first script
-found is run and `require()` returns the value returned by the script if any,
-else `true`.
+`lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`) derived from
+the initial value of `package.cpath`. If still no files are found, Nvim falls
+back to Lua's default search mechanism. The first script found is run and
+`require()` returns the value returned by the script if any, else `true`.
 
-The return value is cached after the first call to `require()` for each
-module, with subsequent calls returning the cached value without searching for
-or executing any script.  For further details on `require()`, see the Lua
+The return value is cached after the first call to `require()` for each module,
+with subsequent calls returning the cached value without searching for, or
+executing any script. For further details on `require()`, see the Lua
 documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
 
 For example, if 'runtimepath' is `foo,bar` and `package.cpath` was
 `./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
 and loads the first module found:
+
     foo/lua/mod.lua
     foo/lua/mod/init.lua
     bar/lua/mod.lua
@@ -59,35 +59,34 @@ and loads the first module found:
     bar/lua/mod.so
     bar/lua/mod.dll
 
-                                                        *lua-package-path*
-Nvim automatically adjusts `package.path` and `package.cpath` according to
-effective 'runtimepath' value.  Adjustment happens whenever 'runtimepath' is
-changed.  `package.path` is adjusted by simply appending `/lua/?.lua` and
+Nvim automatically adjusts `package.path` and `package.cpath` according to the
+effective 'runtimepath' value. Adjustment happens whenever 'runtimepath' is
+changed. `package.path` is adjusted by simply appending `/lua/?.lua` and
 `/lua/?/init.lua` to each directory from 'runtimepath' (`/` is actually the
 first character of `package.config`).
 
 Similarly to `package.path`, modified directories from 'runtimepath' are also
-added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and
+added to `package.cpath`. In this case, instead of appending `/lua/?.lua` and
 `/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of
-the existing `package.cpath` are used.  Example:
+the existing `package.cpath` are used. Example:
 
 1. Given that
    - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial (defined at compile-time or derived from 
-     `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
+   - initial (defined at compile-time or derived from
+     `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains
      `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
-2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
-   order: parts of the path starting from the first path component containing 
+2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in
+   order: parts of the path starting from the first path component containing
    question mark and preceding path separator.
-3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same 
-   as the suffix of the first path from `package.path` (i.e. `./?.so`).  Which 
+3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same
+   as the suffix of the first path from `package.path` (i.e. `./?.so`). Which
    leaves `/?.so` and `/a?d/j/g.elf`, in this order.
-4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`.  The 
-   second one contains semicolon which is a paths separator so it is out, 
+4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`. The
+   second one contains a semicolon which is a paths separator so it is out,
    leaving only `/foo/bar` and `/abc`, in order.
-5. The cartesian product of paths from 4. and suffixes from 3. is taken, 
-   giving four variants. In each variant `/lua` path segment is inserted 
-   between path and suffix, leaving
+5. The cartesian product of paths from 4. and suffixes from 3. is taken,
+   giving four variants. In each variant, a `/lua` path segment is inserted
+   between path and suffix, leaving:
 
    - `/foo/bar/lua/?.so`
    - `/foo/bar/lua/a?d/j/g.elf`
@@ -107,28 +106,28 @@ Note:
 
 - To track 'runtimepath' updates, paths added at previous update are
   remembered and removed at the next update, while all paths derived from the
-  new 'runtimepath' are prepended as described above.  This allows removing
+  new 'runtimepath' are prepended as described above. This allows removing
   paths when path is removed from 'runtimepath', adding paths when they are
   added and reordering `package.path`/`package.cpath` content if 'runtimepath'
   was reordered.
 
 - Although adjustments happen automatically, Nvim does not track current
-  values of `package.path` or `package.cpath`.  If you happen to delete some
+  values of `package.path` or `package.cpath`. If you happen to delete some
   paths from there you can set 'runtimepath' to trigger an update: >
       let &runtimepath = &runtimepath
 
 - Skipping paths from 'runtimepath' which contain semicolons applies both to
-  `package.path` and `package.cpath`.  Given that there are some badly written
-  plugins using shell which will not work with paths containing semicolons it
-  is better to not have them in 'runtimepath' at all.
+  `package.path` and `package.cpath`. Given that there are some badly written
+  plugins using shell, which will not work with paths containing semicolons,
+  it is better to not have them in 'runtimepath' at all.
 
 ==============================================================================
-Lua Syntax Information                                         *lua-syntax-help*
+Lua Syntax Information                                       *lua-syntax-help*
 
 While Lua has a simple syntax, there are a few things to understand,
 particularly when looking at the documentation above.
 
-                                                      *lua-syntax-call-function*
+                                                    *lua-syntax-call-function*
 
 Lua functions can be called in multiple ways. Consider the function: >
 
@@ -136,8 +135,7 @@ Lua functions can be called in multiple ways. Consider the function: >
         print("A is: ", a)
         print("B is: ", b)
     end
-
-
+<
 The first way to call this function is: >
 
     example_func(1, 2)
@@ -154,7 +152,6 @@ not supplied are automatically set to `nil`. For example: >
     -- A is: 1
     -- B is: nil
 <
-
 Additionally, if any extra parameters are passed, they are discarded
 completely.
 
@@ -172,18 +169,16 @@ single dictionary, for example: >
 
     func_with_opts { foo = true, filename = "hello.world" }
 <
-
 In this style, each "parameter" is passed via keyword. It is still valid
 to call the function in the standard style: >
 
     func_with_opts({ foo = true, filename = "hello.world" })
 <
-
 But often in the documentation, you will see the former rather than the
 latter style due to its brevity.
 
 ==============================================================================
-Lua Patterns                                                  *lua-patterns*
+Lua Patterns                                                    *lua-patterns*
 
 For performance reasons, Lua does not support regular expressions natively.
 Instead, the Lua `string` standard library allows manipulations using a
@@ -207,13 +202,13 @@ For more complex matching, Vim regular expressions can be used from Lua
 through |vim.regex()|.
 
 ------------------------------------------------------------------------------
-LUA PLUGIN EXAMPLE                                      *lua-require-example*
+LUA PLUGIN EXAMPLE                                       *lua-require-example*
 
-The following example plugin adds a command `:MakeCharBlob` which transforms 
-current buffer into a long `unsigned char` array.  Lua contains transformation 
-function in a module `lua/charblob.lua` which is imported in 
-`autoload/charblob.vim` (`require("charblob")`).  Example plugin is supposed 
-to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in 
+The following example plugin adds a command `:MakeCharBlob` which transforms
+current buffer into a long `unsigned char` array. Lua contains transformation
+function in a module `lua/charblob.lua` which is imported in
+`autoload/charblob.vim` (`require("charblob")`). Example plugin is supposed
+to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in
 this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
 
 autoload/charblob.vim: >
@@ -223,7 +218,7 @@ autoload/charblob.vim: >
       \    'require("charblob").encode(unpack(_A))',
       \    [getline(1, '$'), &textwidth, '  ']))
     endfunction
-
+<
 plugin/charblob.vim: >
 
     if exists('g:charblob_loaded')
@@ -232,7 +227,7 @@ plugin/charblob.vim: >
     let g:charblob_loaded = 1
 
     command MakeCharBlob :call charblob#encode_buffer()
-
+<
 lua/charblob.lua: >
 
     local function charblob_bytes_iter(lines)
@@ -282,9 +277,9 @@ lua/charblob.lua: >
       bytes_iter = charblob_bytes_iter,
       encode = charblob_encode,
     }
-
+<
 ==============================================================================
-COMMANDS                                                *lua-commands*
+COMMANDS                                                        *lua-commands*
 
 These commands execute a Lua chunk from either the command line (:lua, :luado)
 or a file (:luafile) on the given line [range]. As always in Lua, each chunk
@@ -295,10 +290,10 @@ command calls. The |lua-stdlib| modules, user modules, and anything else on
 The Lua print() function redirects its output to the Nvim message area, with
 arguments separated by " " (space) instead of "\t" (tab).
 
-                                                        *:lua*
+                                                                        *:lua*
 :[range]lua {chunk}
                         Executes Lua chunk {chunk}.
-                        if {chunk} starts with "=" the rest of the chunk is
+                        If {chunk} starts with "=" the rest of the chunk is
                         evaluated as an expression and printed. `:lua =expr`
                         is equivalent to `:lua print(vim.inspect(expr))`
                         Examples: >
@@ -308,7 +303,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 <                        To see the LuaJIT version: >
                             :lua =jit.version
 <
-                                                        *:lua-heredoc*
+                                                                *:lua-heredoc*
 :[range]lua << [endmarker]
 {script}
 {endmarker}
@@ -328,11 +323,11 @@ arguments separated by " " (space) instead of "\t" (tab).
                                     linenr, #curline))
                             EOF
                             endfunction
-
-<                        Note that the `local` variables will disappear when
+<
+                        Note that the `local` variables will disappear when
                         the block finishes. But not globals.
 
-                                                        *:luado*
+                                                                      *:luado*
 :[range]luado {body}    Executes Lua chunk "function(line, linenr) {body} end"
                         for each buffer line in [range], where `line` is the
                         current line text (without <EOL>), and `linenr` is the
@@ -349,8 +344,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                             :lua bp = lpeg.P{ "(" * ((1 - lpeg.S"()") + lpeg.V(1))^0 * ")" }
                             :luado if bp:match(line) then return "-->\t" .. line end
 <
-
-                                                        *:luafile*
+                                                                    *:luafile*
 :[range]luafile {file}
                         Execute Lua script in {file}.
                         The whole argument is used as the filename (like
@@ -363,19 +357,19 @@ arguments separated by " " (space) instead of "\t" (tab).
 <
 
 ==============================================================================
-luaeval()                                               *lua-eval* *luaeval()*
+luaeval()                                                 *lua-eval* *luaeval()*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
-"luaeval". "luaeval" takes an expression string and an optional argument used 
-for _A inside expression and returns the result of the expression. It is 
-semantically equivalent in Lua to:
->
+"luaeval". "luaeval" takes an expression string and an optional argument used
+for _A inside expression and returns the result of the expression. It is
+semantically equivalent in Lua to: >
+
     local chunkheader = "local _A = select(1, ...) return "
     function luaeval (expstr, arg)
         local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
         return chunk(arg) -- return typval
     end
-
+<
 Lua nils, numbers, strings, tables and booleans are converted to their
 respective Vimscript types. If a Lua string contains a NUL byte, it will be
 converted to a |Blob|. Conversion of other Lua types is an error.
@@ -387,22 +381,22 @@ Example: >
     42
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     foo
-
+<
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
 Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
 
 0. Empty table is empty list.
-1. Table with N incrementally growing integral numbers, starting from 1 and 
+1. Table with N incrementally growing integral numbers, starting from 1 and
    ending with N is considered to be a list.
-2. Table with string keys, none of which contains NUL byte, is considered to 
+2. Table with string keys, none of which contains NUL byte, is considered to
    be a dictionary.
-3. Table with string keys, at least one of which contains NUL byte, is also 
-   considered to be a dictionary, but this time it is converted to 
+3. Table with string keys, at least one of which contains NUL byte, is also
+   considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                        *lua-special-tbl*
-4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point 
+                                                             *lua-special-tbl*
+4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to
      a floating-point 1.0. Note that by default integral Lua numbers are
@@ -425,14 +419,14 @@ Examples: >
     :  return luaeval('(_A.y-_A.x)*math.random()+_A.x', {'x':a:x,'y':a:y})
     :  endfunction
     :echo Rand(1,10)
-
-Note: second argument to `luaeval` is converted ("marshalled") from Vimscript
+<
+Note: Second argument to `luaeval` is converted ("marshalled") from Vimscript
 to Lua, so changes to Lua containers do not affect values in Vimscript. Return
 value is also always converted. When converting, |msgpack-special-dict|s are
 treated specially.
 
 ==============================================================================
-Vimscript v:lua interface                               *v:lua-call*
+Vimscript v:lua interface                                         *v:lua-call*
 
 From Vimscript the special `v:lua` prefix can be used to call Lua functions
 which are global or accessible from global tables. The expression >
@@ -447,7 +441,7 @@ is equivalent to the Lua chunk >
 In addition, functions of packages can be accessed like >
     v:lua.require'mypack'.func(arg1, arg2)
     v:lua.require'mypack.submod'.func(arg1, arg2)
-Note: only single quote form without parens is allowed. Using
+Note: Only single quote form without parens is allowed. Using
 `require"mypack"` or `require('mypack')` as prefixes do NOT work (the latter
 is still valid as a function call of itself, in case require returns a useful
 value).
@@ -455,7 +449,7 @@ value).
 The `v:lua` prefix may be used to call Lua functions as |method|s. For
 example: >
     arg1->v:lua.somemod.func(arg2)
-
+<
 You can use `v:lua` in "func" options like 'tagfunc', 'omnifunc', etc.
 For example consider the following Lua omnifunc handler: >
 
@@ -468,7 +462,7 @@ For example consider the following Lua omnifunc handler: >
     end
     vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
 
-Note: the module ("mymod" in the above example) must either be a Lua global,
+Note: The module ("mymod" in the above example) must either be a Lua global,
 or use the require syntax as specified above to access it from a package.
 
 Note: `v:lua` without a call is not allowed in a Vimscript expression:
@@ -478,13 +472,12 @@ Note: `v:lua` without a call is not allowed in a Vimscript expression:
     call SomeFunc(v:lua.mycallback)   " Error
     let g:foo = v:lua                 " Error
     let g:foo = v:['lua']             " Error
-
-
+<
 ==============================================================================
-Lua standard modules                                    *lua-stdlib*
+Lua standard modules                                              *lua-stdlib*
 
 The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes
-various functions and sub-modules.  It is always loaded, thus require("vim")
+various functions and sub-modules. It is always loaded, thus `require("vim")`
 is unnecessary.
 
 You can peek at the module properties: >
@@ -515,34 +508,35 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-VIM.LOOP                                                *lua-loop* *vim.loop*
+VIM.LOOP                                                   *lua-loop* *vim.loop*
 
-`vim.loop` exposes all features of the Nvim event-loop.  This is a low-level
+`vim.loop` exposes all features of the Nvim event-loop. This is a low-level
 API that provides functionality for networking, filesystem, and process
-management.  Try this command to see available functions: >
+management. Try this command to see available functions: >
 
     :lua print(vim.inspect(vim.loop))
-
+<
 Reference: https://github.com/luvit/luv/blob/master/docs.md
 Examples:  https://github.com/luvit/luv/tree/master/examples
 
-                                                *E5560* *lua-loop-callbacks*
+                                                    *E5560* *lua-loop-callbacks*
 It is an error to directly invoke `vim.api` functions (except |api-fast|) in
-`vim.loop` callbacks.  For example, this is an error: >
+`vim.loop` callbacks. For example, this is an error: >
 
     local timer = vim.loop.new_timer()
     timer:start(1000, 0, function()
       vim.api.nvim_command('echomsg "test"')
     end)
-
+<
 To avoid the error use |vim.schedule_wrap()| to defer the callback: >
 
     local timer = vim.loop.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
       vim.api.nvim_command('echomsg "test"')
     end))
-
-(For one-shot timers, see |vim.defer_fn()|, which automatically adds the wrapping.)
+<
+(For one-shot timers, see |vim.defer_fn()|, which automatically adds the
+wrapping.)
 
 Example: repeating timer
     1. Save this code to a file.
@@ -560,9 +554,8 @@ Example: repeating timer
       i = i + 1
     end)
     print('sleeping');
-
-
-Example: File-change detection                          *watch-file*
+<
+Example: File-change detection                                    *watch-file*
     1. Save this code to a file.
     2. Execute it with ":luafile %".
     3. Use ":Watch %" to watch any file.
@@ -586,9 +579,8 @@ Example: File-change detection                          *watch-file*
     end
     vim.api.nvim_command(
       "command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
-
-
-Example: TCP echo-server                                *tcp-server*
+<
+Example: TCP echo-server                                          *tcp-server*
     1. Save this code to a file.
     2. Execute it with ":luafile %".
     3. Note the port number.
@@ -616,9 +608,8 @@ Example: TCP echo-server                                *tcp-server*
       end)
     end)
     print('TCP echo-server listening on port: '..server:getsockname().port)
-
-
-Multithreading						*lua-loop-threading*
+<
+Multithreading                                            *lua-loop-threading*
 
 Plugins can perform work in separate (os-level) threads using the threading
 APIs in luv, for instance `vim.loop.new_thread`. Note that every thread
@@ -638,7 +629,7 @@ A subset of the `vim.*` API is available in threads. This includes:
 - `vim.is_thread()` returns true from a non-main thread.
 
 ------------------------------------------------------------------------------
-VIM.HIGHLIGHT                                           *lua-highlight*
+VIM.HIGHLIGHT                                                  *lua-highlight*
 
 Nvim includes a function for highlighting a selection on yank (see for example
 https://github.com/machakann/vim-highlightedyank). To enable it, add
@@ -654,8 +645,7 @@ If you want to exclude visual selections from highlighting on yank, use
 >
  au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 <
-
-vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
+vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
         Highlights the yanked text. The fields of the optional dict {opts}
         control the highlight:
           - {higroup} highlight group for yanked region (default |hl-IncSearch|)
@@ -678,12 +668,12 @@ vim.highlight.range({bufnr}, {ns}, {hlgroup}, {start}, {finish}, {opts})
                     {opts}    optional parameters:
                               • `regtype`: type of range (characterwise, linewise,
                                 or blockwise, see |setreg|), default `'v'`
-                              • `inclusive`: range includes end position, default
-                                `false`
+                              • `inclusive`: range includes end position,
+                                default `false`
                               • `priority`: priority of highlight, default
                                 `vim.highlight.user` (see below)
 
-vim.highlight.priorities                           *vim.highlight.priorities*
+vim.highlight.priorities                            *vim.highlight.priorities*
 
         Table with default priorities used for highlighting:
             • `syntax`: `50`, used for standard syntax highlighting
@@ -693,19 +683,19 @@ vim.highlight.priorities                           *vim.highlight.priorities*
               document symbols or `on_yank` autocommands
 
 ------------------------------------------------------------------------------
-VIM.REGEX                                                       *lua-regex*
+VIM.REGEX                                                          *lua-regex*
 
 Vim regexes can be used directly from lua. Currently they only allow
 matching within a single line.
 
-vim.regex({re})                                         *vim.regex()*
+vim.regex({re})                                                  *vim.regex()*
         Parse the Vim regex {re} and return a regex object. Regexes are
         "magic" and case-insensitive by default, regardless of 'magic' and
-        'ignorecase'.  The can be controlled with flags, see |/magic|.
+        'ignorecase'. They can be controlled with flags, see |/magic|.
 
 Methods on the regex object:
 
-regex:match_str({str})                                  *regex:match_str()*
+regex:match_str({str})                                     *regex:match_str()*
         Match the string against the regex. If the string should match the
         regex precisely, surround the regex with `^` and `$`.
         If the was a match, the byte indices for the beginning and end of
@@ -713,7 +703,7 @@ regex:match_str({str})                                  *regex:match_str()*
         As any integer is truth-y, `regex:match()` can be directly used
         as a condition in an if-statement.
 
-regex:match_line({bufnr}, {line_idx}[, {start}, {end}]) *regex:match_line()*
+regex:match_line({bufnr}, {line_idx}[, {start}, {end}])   *regex:match_line()*
         Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and
         {end} are supplied, match only this byte index range. Otherwise see
         |regex:match_str()|. If {start} is used, then the returned byte
@@ -728,18 +718,19 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                 1-based.
 
                 Examples: >
-                vim.diff('a\n', 'b\nc\n')
-                -->
-                @@ -1 +1,2 @@
-                -a
-                +b
-                +c
 
-                vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
-                -->
-                {
-                    {1, 1, 1, 2}
-                }
+                    vim.diff('a\n', 'b\nc\n')
+                    -->
+                    @@ -1 +1,2 @@
+                    -a
+                    +b
+                    +c
+
+                    vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
+                    -->
+                    {
+                        {1, 1, 1, 2}
+                    }
 <
                 Parameters: ~
                     {a}      First string to compare
@@ -757,7 +748,7 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                              • `result_type` (string): Form of the returned diff:
                                • "unified": (default) String in unified format.
                                • "indices": Array of hunk locations.
-                               Note this option is ignored if `on_hunk` is
+                               Note: This option is ignored if `on_hunk` is
                                used.
                              • `algorithm` (string):
                                Diff algorithm to use. Values:
@@ -792,31 +783,31 @@ VIM.MPACK                                                          *lua-mpack*
 The *vim.mpack* module provides encoding and decoding of Lua objects to and
 from msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
 
-vim.mpack.encode({obj})                                 *vim.mpack.encode*
+vim.mpack.encode({obj})                                     *vim.mpack.encode*
         Encodes (or "packs") Lua object {obj} as msgpack in a Lua string.
 
-vim.mpack.decode({str})                                 *vim.mpack.decode*
+vim.mpack.decode({str})                                     *vim.mpack.decode*
         Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
 ------------------------------------------------------------------------------
-VIM.SPELL                                                           *lua-spell*
+VIM.SPELL                                                          *lua-spell*
 
-vim.spell.check({str})                                      *vim.spell.check()*
+vim.spell.check({str})                                     *vim.spell.check()*
         Check {str} for spelling errors. Similar to the Vimscript function
         |spellbadword()|.
 
         Note: The behaviour of this function is dependent on: 'spelllang',
-        'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local
-        to the buffer. Consider calling this with |nvim_buf_call()|.
+        'spellfile', 'spellcapcheck' and 'spelloptions' which can all be
+        local to the buffer. Consider calling this with |nvim_buf_call()|.
 
         Example: >
+
             vim.spell.check("the quik brown fox")
             -->
             {
                 {'quik', 'bad', 4}
             }
 <
-
         Parameters: ~
             {str}    String to spell check.
 
@@ -831,24 +822,24 @@ vim.spell.check({str})                                      *vim.spell.check()*
             - The position in {str} where the word begins.
 
 ------------------------------------------------------------------------------
-VIM                                                     *lua-builtin*
+VIM                                                              *lua-builtin*
 
-vim.api.{func}({...})                                   *vim.api*
+vim.api.{func}({...})                                                *vim.api*
         Invokes Nvim |API| function {func} with arguments {...}.
         Example: call the "nvim_get_current_line()" API function: >
             print(tostring(vim.api.nvim_get_current_line()))
 
-vim.version()                                           *vim.version*
+vim.version()                                                    *vim.version*
         Gets the version of the current Nvim build.
 
-vim.in_fast_event()                                     *vim.in_fast_event()*
+vim.in_fast_event()                                      *vim.in_fast_event()*
         Returns true if the code is executing as part of a "fast" event
         handler, where most of the API is disabled. These are low-level events
         (e.g. |lua-loop-callbacks|) which can be invoked whenever Nvim polls
-        for input.  When this is `false` most API functions are callable (but
+        for input. When this is `false` most API functions are callable (but
         may be subject to other restrictions such as |textlock|).
 
-vim.NIL                                                             *vim.NIL*
+vim.NIL                                                              *vim.NIL*
         Special value representing NIL in |RPC| and |v:null| in Vimscript
         conversion, and similar cases. Lua `nil` cannot be used as part of
         a Lua table representing a Dictionary or Array, because it is
@@ -860,10 +851,10 @@ vim.empty_dict()                                            *vim.empty_dict()*
         Vimscript or API types. Nvim by default converts an empty table `{}`
         without this metatable to an list/array.
 
-        Note: if numeric keys are present in the table, Nvim ignores the
+        Note: If numeric keys are present in the table, Nvim ignores the
         metatable marker and converts the dict to a list/array anyway.
 
-vim.rpcnotify({channel}, {method}[, {args}...])             *vim.rpcnotify()*
+vim.rpcnotify({channel}, {method}[, {args}...])              *vim.rpcnotify()*
         Sends {event} to {channel} via |RPC| and returns immediately. If
         {channel} is 0, the event is broadcast to all channels.
 
@@ -876,12 +867,12 @@ vim.rpcrequest({channel}, {method}[, {args}...])            *vim.rpcrequest()*
         Note: NIL values as part of the return value is represented as
         |vim.NIL| special value
 
-vim.stricmp({a}, {b})                                   *vim.stricmp()*
-        Compares strings case-insensitively.  Returns 0, 1 or -1 if strings
+vim.stricmp({a}, {b})                                          *vim.stricmp()*
+        Compares strings case-insensitively. Returns 0, 1 or -1 if strings
         are equal, {a} is greater than {b} or {a} is lesser than {b},
         respectively.
 
-vim.str_utfindex({str}[, {index}])                      *vim.str_utfindex()*
+vim.str_utfindex({str}[, {index}])                        *vim.str_utfindex()*
         Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
         supplied, the length of the string is used. All indices are zero-based.
         Returns two values: the UTF-32 and UTF-16 indices respectively.
@@ -891,21 +882,21 @@ vim.str_utfindex({str}[, {index}])                      *vim.str_utfindex()*
         point each. An {index} in the middle of a UTF-8 sequence is rounded
         upwards to the end of that sequence.
 
-vim.str_byteindex({str}, {index}[, {use_utf16}])	*vim.str_byteindex()*
+vim.str_byteindex({str}, {index}[, {use_utf16}])         *vim.str_byteindex()*
         Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
         supplied, it defaults to false (use UTF-32). Returns the byte index.
 
-        Invalid UTF-8 and NUL is treated like by |vim.str_byteindex()|. An {index}
-        in the middle of a UTF-16 sequence is rounded upwards to the end of that
-        sequence.
+        Invalid UTF-8 and NUL is treated like by |vim.str_byteindex()|.
+        An {index} in the middle of a UTF-16 sequence is rounded upwards to
+        the end of that sequence.
 
-vim.schedule({callback})				*vim.schedule()*
+vim.schedule({callback})                                      *vim.schedule()*
         Schedules {callback} to be invoked soon by the main event-loop. Useful
         to avoid |textlock| or other temporary restrictions.
 
 
-vim.defer_fn({fn}, {timeout})                                    *vim.defer_fn*
-    Defers calling {fn} until {timeout} ms passes.  Use to do a one-shot timer
+vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
+    Defers calling {fn} until {timeout} ms passes. Use to do a one-shot timer
     that calls {fn}.
 
     Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
@@ -969,15 +960,15 @@ vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     end
 <
 
-vim.type_idx                                            *vim.type_idx*
-        Type index for use in |lua-special-tbl|.  Specifying one of the values
+vim.type_idx                                                    *vim.type_idx*
+        Type index for use in |lua-special-tbl|. Specifying one of the values
         from |vim.types| allows typing the empty table (it is unclear whether
         empty Lua table represents empty list or empty array) and forcing
-        integral numbers to be |Float|.  See |lua-special-tbl| for more
+        integral numbers to be |Float|. See |lua-special-tbl| for more
         details.
 
-vim.val_idx                                             *vim.val_idx*
-        Value index for tables representing |Float|s.  A table representing
+vim.val_idx                                                      *vim.val_idx*
+        Value index for tables representing |Float|s. A table representing
         floating-point value 1.0 looks like this: >
             {
               [vim.type_idx] = vim.types.float,
@@ -985,17 +976,17 @@ vim.val_idx                                             *vim.val_idx*
             }
 <       See also |vim.type_idx| and |lua-special-tbl|.
 
-vim.types                                               *vim.types*
-        Table with possible values for |vim.type_idx|.  Contains two sets of
+vim.types                                                          *vim.types*
+        Table with possible values for |vim.type_idx|. Contains two sets of
         key-value pairs: first maps possible values for |vim.type_idx| to
         human-readable strings, second maps human-readable type names to
-        values for |vim.type_idx|.  Currently contains pairs for `float`,
+        values for |vim.type_idx|. Currently contains pairs for `float`,
         `array` and `dictionary` types.
 
-        Note: one must expect that values corresponding to `vim.types.float`,
+        Note: One must expect that values corresponding to `vim.types.float`,
         `vim.types.array` and `vim.types.dictionary` fall under only two
         following assumptions:
-        1. Value may serve both as a key and as a value in a table.  Given the
+        1. Value may serve both as a key and as a value in a table. Given the
            properties of Lua tables this basically means “value is not `nil`”.
         2. For each value in `vim.types` table `vim.types[vim.types[value]]`
            is the same as `value`.
@@ -1015,19 +1006,19 @@ Log levels are one of the values defined in `vim.log.levels`:
         vim.log.levels.OFF
 
 ------------------------------------------------------------------------------
-LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
+LUA-VIMSCRIPT BRIDGE                                           *lua-vimscript*
 
 Nvim Lua provides an interface to Vimscript variables and functions, and
 editor commands and options.
 See also https://github.com/nanotee/nvim-lua-guide.
 
-vim.call({func}, {...})					*vim.call()*
+vim.call({func}, {...})                                           *vim.call()*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
         See also |vim.fn|.
         Equivalent to: >
             vim.fn[func]({...})
-
-vim.cmd({cmd})                                          *vim.cmd()*
+<
+vim.cmd({cmd})                                                     *vim.cmd()*
         Executes multiple lines of Vimscript at once. It is an alias to
         |nvim_exec()|, where `output` is set to false. Thus it works identical
         to |:source|.
@@ -1040,8 +1031,8 @@ vim.cmd({cmd})                                          *vim.cmd()*
                 autocmd FileType c setlocal cindent
               augroup END
             ]])
-
-vim.fn.{func}({...})					*vim.fn*
+<
+vim.fn.{func}({...})                                                  *vim.fn*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
         To call autoload functions, use the syntax: >
             vim.fn['some#function']({...})
@@ -1058,7 +1049,7 @@ vim.fn.{func}({...})					*vim.fn*
         enumerates functions that were called at least once.
 
 
-                                                        *lua-vim-variables*
+                                                           *lua-vim-variables*
 The Vim editor global dictionaries |g:| |w:| |b:| |t:| |v:| can be accessed
 from Lua conveniently and idiomatically by referencing the `vim.*` Lua tables
 described below. In this way you can easily read and modify global Vimscript
@@ -1070,31 +1061,31 @@ Example: >
     print(vim.g.foo)  -- Get and print the g:foo Vimscript variable.
     vim.g.foo = nil   -- Delete (:unlet) the Vimscript variable.
     vim.b[2].foo = 6  -- Set b:foo for buffer 2
-
-vim.g                                                   *vim.g*
+<
+vim.g                                                                  *vim.g*
         Global (|g:|) editor variables.
         Key with no value returns `nil`.
 
-vim.b                                                   *vim.b*
+vim.b                                                                  *vim.b*
         Buffer-scoped (|b:|) variables for the current buffer.
         Invalid or unset key returns `nil`. Can be indexed with
         an integer to access variables for a specific buffer.
 
-vim.w                                                   *vim.w*
+vim.w                                                                  *vim.w*
         Window-scoped (|w:|) variables for the current window.
         Invalid or unset key returns `nil`. Can be indexed with
         an integer to access variables for a specific window.
 
-vim.t                                                   *vim.t*
+vim.t                                                                  *vim.t*
         Tabpage-scoped (|t:|) variables for the current tabpage.
         Invalid or unset key returns `nil`. Can be indexed with
         an integer to access variables for a specific tabpage.
 
-vim.v                                                   *vim.v*
+vim.v                                                                  *vim.v*
         |v:| variables.
         Invalid or unset key returns `nil`.
 
-vim.env                                                 *vim.env*
+vim.env                                                              *vim.env*
         Environment variables defined in the editor session.
         See |expand-env| and |:let-environment| for the Vimscript behavior.
         Invalid or unset key returns `nil`.
@@ -1144,7 +1135,6 @@ from within Lua.
         -- or using the `:append(...)` method
         vim.opt.wildignore:append { "*.pyc", "node_modules" }
 <
-
     To replicate the behavior of |:set^=|, use: >
 
         -- vim.opt supports prepending options via the "^" operator
@@ -1265,14 +1255,13 @@ vim.o           :set                set                set
 vim.bo/vim.wo   :setlocal            -                 set
 vim.go          :setglobal          set                 -
 
-vim.o                                                   *vim.o*
+vim.o                                                                  *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
         Example: >
             vim.o.cmdheight = 4
             print(vim.o.columns)
-
-
-vim.go                                                  *vim.go*
+<
+vim.go                                                                *vim.go*
         Get or set an |option|. Invalid key is an error.
 
         This is a wrapper around |nvim_set_option()| and |nvim_get_option()|.
@@ -1284,8 +1273,7 @@ vim.go                                                  *vim.go*
         Example: >
             vim.go.cmdheight = 4
 <
-
-vim.bo                                                  *vim.bo*
+vim.bo                                                                *vim.bo*
         Get or set buffer-scoped |local-options|. Invalid key is an error.
 
         This is a wrapper around |nvim_buf_set_option()| and
@@ -1294,8 +1282,8 @@ vim.bo                                                  *vim.bo*
         Example: >
             vim.bo.buflisted = true
             print(vim.bo.comments)
-
-vim.wo                                                  *vim.wo*
+<
+vim.wo                                                                *vim.wo*
         Get or set window-scoped |local-options|. Invalid key is an error.
 
         This is a wrapper around |nvim_win_set_option()| and
@@ -1304,8 +1292,7 @@ vim.wo                                                  *vim.wo*
         Example: >
             vim.wo.cursorcolumn = true
             print(vim.wo.foldmarker)
-
-
+<
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
@@ -1476,14 +1463,14 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 deep_equal({a}, {b})                                        *vim.deep_equal()*
                 Deep compare values for equality
 
-                Tables are compared recursively unless they both provide the `eq` methamethod. All other types are compared using the equality `==` operator.
+                Tables are compared recursively unless they both provide the `eq` metamethod. All other types are compared using the equality `==` operator.
 
                 Parameters: ~
-                    {a}  first value
-                    {b}  second value
+                    {a}  any First value
+                    {b}  any Second value
 
                 Return: ~
-                    `true` if values are equals, else `false`.
+                    boolean `true` if values are equals, else `false`
 
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
@@ -1497,29 +1484,29 @@ deepcopy({orig})                                              *vim.deepcopy()*
                     {orig}  table Table to copy
 
                 Return: ~
-                    New table of copied keys and (nested) values.
+                    table Table of copied keys and (nested) values.
 
 endswith({s}, {suffix})                                       *vim.endswith()*
                 Tests if `s` ends with `suffix`.
 
                 Parameters: ~
-                    {s}       (string) a string
-                    {suffix}  (string) a suffix
+                    {s}       string String
+                    {suffix}  string Suffix to match
 
                 Return: ~
-                    (boolean) true if `suffix` is a suffix of s
+                    boolean `true` if `suffix` is a suffix of `s`
 
 gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                 Splits a string at each instance of a separator.
 
                 Parameters: ~
-                    {s}      String to split
-                    {sep}    Separator string or pattern
-                    {plain}  If `true` use `sep` literally (passed to
-                             String.find)
+                    {s}      string String to split
+                    {sep}    string Separator or pattern
+                    {plain}  boolean If `true` use `sep` literally (passed to
+                             string.find)
 
                 Return: ~
-                    Iterator over the split components
+                    function Iterator over the split components
 
                 See also: ~
                     |vim.split()|
@@ -1530,10 +1517,10 @@ is_callable({f})                                           *vim.is_callable()*
                 Returns true if object `f` can be called as a function.
 
                 Parameters: ~
-                    {f}  Any object
+                    {f}  any Any object
 
                 Return: ~
-                    true if `f` is callable, else false
+                    boolean `true` if `f` is callable, else `false`
 
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like
@@ -1542,13 +1529,14 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 NOTE: This mutates dst!
 
                 Parameters: ~
-                    {dst}     list which will be modified and appended to.
-                    {src}     list from which values will be inserted.
-                    {start}   Start index on src. defaults to 1
-                    {finish}  Final index on src. defaults to #src
+                    {dst}     table List which will be modified and appended
+                              to
+                    {src}     table List from which values will be inserted
+                    {start}   number Start index on src. Defaults to 1
+                    {finish}  number Final index on src. Defaults to `#src`
 
                 Return: ~
-                    dst
+                    table dst
 
                 See also: ~
                     |vim.tbl_extend()|
@@ -1558,21 +1546,22 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
                 to end (inclusive)
 
                 Parameters: ~
-                    {list}    table table
-                    {start}   integer Start range of slice
-                    {finish}  integer End range of slice
+                    {list}    table Table
+                    {start}   number Start range of slice
+                    {finish}  number End range of slice
 
                 Return: ~
-                    Copy of table sliced from start to finish (inclusive)
+                    table Copy of table sliced from start to finish
+                    (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.
 
                 Parameters: ~
-                    {s}  String to escape
+                    {s}  string String to escape
 
                 Return: ~
-                    %-escaped pattern string
+                    string %-escaped pattern string
 
                 See also: ~
                     https://github.com/rxi/lume
@@ -1589,16 +1578,16 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 <
 
                 Parameters: ~
-                    {s}       String to split
-                    {sep}     Separator string or pattern
-                    {kwargs}  Keyword arguments:
+                    {s}       string String to split
+                    {sep}     string Separator or pattern
+                    {kwargs}  table Keyword arguments:
                               • plain: (boolean) If `true` use `sep` literally
                                 (passed to string.find)
                               • trimempty: (boolean) If `true` remove empty
                                 items from the front and back of the list
 
                 Return: ~
-                    List-like table of the split components.
+                    table List of split components
 
                 See also: ~
                     |vim.gsplit()|
@@ -1607,28 +1596,34 @@ startswith({s}, {prefix})                                   *vim.startswith()*
                 Tests if `s` starts with `prefix`.
 
                 Parameters: ~
-                    {s}       (string) a string
-                    {prefix}  (string) a prefix
+                    {s}       string String
+                    {prefix}  string Prefix to match
 
                 Return: ~
-                    (boolean) true if `prefix` is a prefix of s
+                    boolean `true` if `prefix` is a prefix of `s`
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
-                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+                example: `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A =
+                1 }`
+
+                Note that this modifies the input.
 
                 Parameters: ~
-                    {o}  table The table to add the reverse to.
+                    {o}  table Table to add the reverse to
+
+                Return: ~
+                    table o
 
 tbl_contains({t}, {value})                                *vim.tbl_contains()*
                 Checks if a list-like (vector) table contains `value`.
 
                 Parameters: ~
-                    {t}      Table to check
-                    {value}  Value to compare
+                    {t}      table Table to check
+                    {value}  any Value to compare
 
                 Return: ~
-                    true if `t` contains `value`
+                    boolean `true` if `t` contains `value`
 
 tbl_count({t})                                               *vim.tbl_count()*
                 Counts the number of non-nil values in table `t`.
@@ -1639,10 +1634,10 @@ tbl_count({t})                                               *vim.tbl_count()*
 <
 
                 Parameters: ~
-                    {t}  Table
+                    {t}  table Table
 
                 Return: ~
-                    Number that is the number of the value in table
+                    number Number of non-nil values in table
 
                 See also: ~
                     https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
@@ -1651,12 +1646,15 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
                 Merges recursively two or more map-like tables.
 
                 Parameters: ~
-                    {behavior}  Decides what to do if a key is found in more
-                                than one map:
+                    {behavior}  string Decides what to do if a key is found in
+                                more than one map:
                                 • "error": raise an error
                                 • "keep": use value from the leftmost map
                                 • "force": use value from the rightmost map
-                    {...}       Two or more map-like tables.
+                    {...}       table Two or more map-like tables
+
+                Return: ~
+                    table Merged table
 
                 See also: ~
                     |tbl_extend()|
@@ -1665,12 +1663,15 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                 Merges two or more map-like tables.
 
                 Parameters: ~
-                    {behavior}  Decides what to do if a key is found in more
-                                than one map:
+                    {behavior}  string Decides what to do if a key is found in
+                                more than one map:
                                 • "error": raise an error
                                 • "keep": use value from the leftmost map
                                 • "force": use value from the rightmost map
-                    {...}       Two or more map-like tables.
+                    {...}       table Two or more map-like tables
+
+                Return: ~
+                    table Merged table
 
                 See also: ~
                     |extend()|
@@ -1679,43 +1680,51 @@ tbl_filter({func}, {t})                                     *vim.tbl_filter()*
                 Filter a table using a predicate function
 
                 Parameters: ~
-                    {func}  function or callable table
-                    {t}     table
+                    {func}  function|table Function or callable table
+                    {t}     table Table
+
+                Return: ~
+                    table Table of filtered values
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
                 Creates a copy of a list-like table such that any nested
                 tables are "unrolled" and appended to the result.
 
                 Parameters: ~
-                    {t}  List-like table
+                    {t}  table List-like table
 
                 Return: ~
-                    Flattened copy of the given list-like table.
+                    table Flattened copy of the given list-like table
 
                 See also: ~
                     From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_get({o}, {...})                                            *vim.tbl_get()*
                 Index into a table (first argument) via string keys passed as
-                subsequent arguments. Return `nil` if the key does not exist. Examples: >
+                subsequent arguments. Return `nil` if the key does not exist.
+
+                Examples: >
 
                   vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
                   vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
 <
 
                 Parameters: ~
-                    {o}    Table to index
-                    {...}  Optional strings (0 or more, variadic) via which to
-                           index the table
+                    {o}    table Table to index
+                    {...}  string Optional strings (0 or more, variadic) via
+                           which to index the table
 
                 Return: ~
-                    nested value indexed by key if it exists, else nil
+                    any Nested value indexed by key (if it exists), else nil
 
 tbl_isempty({t})                                           *vim.tbl_isempty()*
                 Checks if a table is empty.
 
                 Parameters: ~
-                    {t}  Table to check
+                    {t}  table Table to check
+
+                Return: ~
+                    boolean `true` if `t` is empty
 
                 See also: ~
                     https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1729,20 +1738,20 @@ tbl_islist({t})                                             *vim.tbl_islist()*
                 |vim.fn|.
 
                 Parameters: ~
-                    {t}  Table
+                    {t}  table Table
 
                 Return: ~
-                    `true` if array-like table, else `false`.
+                    boolean `true` if array-like table, else `false`
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
                 of the return table of keys is not guaranteed.
 
                 Parameters: ~
-                    {t}  Table
+                    {t}  table Table
 
                 Return: ~
-                    list of keys
+                    table List of keys
 
                 See also: ~
                     From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1751,28 +1760,32 @@ tbl_map({func}, {t})                                           *vim.tbl_map()*
                 Apply a function to all values of a table.
 
                 Parameters: ~
-                    {func}  function or callable table
-                    {t}     table
+                    {func}  function|table Function or callable table
+                    {t}     table Table
+
+                Return: ~
+                    table Table of transformed values
 
 tbl_values({t})                                             *vim.tbl_values()*
                 Return a list of all values used in a table. However, the
                 order of the return table of values is not guaranteed.
 
                 Parameters: ~
-                    {t}  Table
+                    {t}  table Table
 
                 Return: ~
-                    list of values
+                    table List of values
 
 trim({s})                                                         *vim.trim()*
                 Trim whitespace (Lua pattern "%s") from both sides of a
                 string.
 
                 Parameters: ~
-                    {s}  String to trim
+                    {s}  string String to trim
 
                 Return: ~
-                    String with whitespace removed from its beginning and end
+                    string String with whitespace removed from its beginning
+                    and end
 
                 See also: ~
                     https://www.lua.org/pil/20.2.html
@@ -1814,9 +1827,9 @@ validate({opt})                                               *vim.validate()*
 <
 
                 Parameters: ~
-                    {opt}  table of parameter names to validations. Each key
-                           is a parameter name; each value is a tuple in one
-                           of these forms:
+                    {opt}  table Names of parameters to validate. Each key is
+                           a parameter name; each value is a tuple in one of
+                           these forms:
                            1. (arg_value, type_name, optional)
                               • arg_value: argument value
                               • type_name: string|table type name, one of:
