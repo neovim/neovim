@@ -359,7 +359,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     // because reading the file may actually work, but then creating the
     // swap file may destroy it!  Reported on MS-DOS and Win 95.
     if (after_pathsep((const char *)fname, (const char *)(fname + namelen))) {
-      filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
+      if (!silent) {
+        filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
+      }
       msg_end();
       msg_scroll = msg_save;
       return NOTDONE;
@@ -379,7 +381,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
 #endif
         ) {
       if (S_ISDIR(perm)) {
-        filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
+        if (!silent) {
+          filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
+        }
       } else {
         filemess(curbuf, fname, (char_u *)_("is not a file"), 0);
       }
