@@ -187,22 +187,17 @@ void get_mode(char *buf)
     if (State & VREPLACE_FLAG) {
       buf[i++] = 'R';
       buf[i++] = 'v';
-      if (ins_compl_active()) {
-        buf[i++] = 'c';
-      } else if (ctrl_x_mode_not_defined_yet()) {
-        buf[i++] = 'x';
-      }
     } else {
       if (State & REPLACE_FLAG) {
         buf[i++] = 'R';
       } else {
         buf[i++] = 'i';
       }
-      if (ins_compl_active()) {
-        buf[i++] = 'c';
-      } else if (ctrl_x_mode_not_defined_yet()) {
-        buf[i++] = 'x';
-      }
+    }
+    if (ins_compl_active()) {
+      buf[i++] = 'c';
+    } else if (ctrl_x_mode_not_defined_yet()) {
+      buf[i++] = 'x';
     }
   } else if ((State & CMDLINE) || exmode_active) {
     buf[i++] = 'c';

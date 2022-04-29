@@ -136,6 +136,12 @@ describe('mappings with <Cmd>', function()
     ]])
   end)
 
+  it('handles character containing K_SPECIAL (0x80) byte correctly', function()
+    command([[noremap <F3> <Cmd>let g:str = '‥'<CR>]])
+    feed('<F3>')
+    eq('‥', eval('g:str'))
+  end)
+
   it('works in various modes and sees correct `mode()` value', function()
     -- normal mode
     feed('<F3>')
