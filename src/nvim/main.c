@@ -106,6 +106,9 @@ Loop main_loop;
 
 static char *argv0 = NULL;
 
+static Boolean remote_wait = false;
+
+
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
 static const char *err_opt_garbage = N_("Garbage after option argument");
@@ -270,12 +273,27 @@ int main(int argc, char **argv)
     }
   }
 
-  server_init(params.listen_addr);
   if (params.remote) {
     remote_request(&params, params.remote, params.server_addr, argc, argv);
   }
+  if (remote_wait) {
+    // If we're just waiting for the remote server to let us know editing is complete, flip flags
+    // to get us to listen for its response in as lightweight a way as possible
+    params.use_vimrc = "NONE";
+    headless_mode = true;
+    set_option_value("shadafile", 0L, "NONE", 0);
+    p_lpl = false;
+    alist_clear(&global_alist);
+  } else {
+    server_init(params.listen_addr);
+  }
+
 
   if (GARGCOUNT > 0) {
+    int alist_fnum_flag = params.edit_type == EDIT_STDIN
+                          ? 1   // add buffer nr after exp.
+                          : 2;  // add buffer number now and use curbuf
+    alist_set_fnums(&global_alist, alist_fnum_flag);
     fname = get_fname(&params, cwd);
   }
 
@@ -816,6 +834,15 @@ static void init_locale(void)
 #endif
 
 
+static void server_close_cb(Stream *stream, void *data)
+{
+    if (!remote_wait || exiting) {
+      return;
+    }
+    mch_errmsg("Server closed the connection before finishing editing\n");
+    os_exit(2);
+}
+
 static uint64_t server_connect(char *server_addr, const char **errmsg)
 {
   if (server_addr == NULL) {
@@ -831,6 +858,7 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
     *errmsg = error;
     return 0;
   }
+  find_channel(chan)->stream.socket.close_cb = server_close_cb;
   return chan;
 }
 
@@ -865,7 +893,7 @@ static void remote_request(mparm_T *params, int remote_args,
   ADD(a, CSTR_TO_OBJ(server_addr));
   ADD(a, CSTR_TO_OBJ(connect_error));
   ADD(a, ARRAY_OBJ(args));
-  String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
+  String s = STATIC_CSTR_AS_STRING("return vim._remote_invoke_server(...)");
   Object o = nlua_exec(s, a, &err);
   api_free_array(a);
   if (ERROR_SET(&err)) {
@@ -874,49 +902,56 @@ static void remote_request(mparm_T *params, int remote_args,
     os_exit(2);
   }
 
+  Boolean tab = false;
   if (o.type == kObjectTypeDictionary) {
     rvobj.data.dictionary = o.data.dictionary;
-  } else {
-    mch_errmsg("vim._cs_remote returned unexpected value\n");
-    os_exit(2);
-  }
-
-  TriState should_exit = kNone;
-  TriState tabbed = kNone;
-
-  for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
-    if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");
+    for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
+      if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
+          mch_errmsg("vim._remote_invoke_server returned an unexpected type for 'errmsg'\n");
+          os_exit(2);
+        }
+        mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
+        mch_errmsg("\n");
         os_exit(2);
+      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "wait") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+          mch_errmsg("vim._remote_invoke_server returned an unexpected type for 'wait'\n");
+          os_exit(2);
+        }
+        remote_wait = rvobj.data.dictionary.items[i].value.data.boolean;
+      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tab") == 0) {
+        if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+          mch_errmsg("vim._remote_invoke_server returned an unexpected type for 'tab'\n");
+          os_exit(2);
+        }
+        tab = rvobj.data.dictionary.items[i].value.data.boolean;
       }
-      mch_errmsg(rvobj.data.dictionary.items[i].value.data.string.data);
-      mch_errmsg("\n");
-      os_exit(2);
-    } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'tabbed'\n");
-        os_exit(2);
-      }
-      tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
-    } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
-        mch_errmsg("vim._cs_remote returned an unexpected type for 'should_exit'\n");
-        os_exit(2);
-      }
-      should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
     }
-  }
-  if (should_exit == kNone || tabbed == kNone) {
-    mch_errmsg("vim._cs_remote didn't return a value for should_exit or tabbed, bailing\n");
+  } else if (o.type == kObjectTypeArray) {
+    // _remote_invoke_server can return an empty dict, which is treated as an empty array in
+    // conversion
+    if (o.data.array.size > 0) {
+      mch_errmsg("vim._remote_invoke_server returned unexpected value\n");
+      os_exit(2);
+    }
+  } else {
+    mch_errmsg("vim._remote_invoke_server returned unexpected value\n");
     os_exit(2);
   }
+
   api_free_object(o);
 
-  if (should_exit == kTrue) {
+  if (chan != 0) {
+    if (remote_wait) {
+      return;
+    }
+    // If we made a remote connection and aren't waiting, we either took care of the work there or
+    // already exited with an error message
     os_exit(0);
   }
-  if (tabbed == kTrue) {
+
+  if (tab) {
     params->window_count = argc - remote_args - 1;
     params->window_layout = WIN_TABS;
   }
@@ -1373,10 +1408,9 @@ scripterror:
       path_fix_case(p);
 #endif
 
-      int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
-                            ? 1   // add buffer nr after exp.
-                            : 2;  // add buffer number now and use curbuf
-      alist_add(&global_alist, p, alist_fnum_flag);
+      // Add the path to the alist, but don't allocate a buffer yet. We need to wait to see if
+      // we're going to edit the files locally or if we're sending them remote
+      alist_add(&global_alist, p, 0);
     }
 
     // If there are no more letters after the current "-", go to next argument.
@@ -2049,7 +2083,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
   TIME_MSG("sourcing vimrc file(s)");
 }
 
-/// Get an environment variable, and execute it as Ex commands.
+/// Get an environment variable, and execute it as Ex commands
 ///
 /// @param env         environment variable to execute
 ///
