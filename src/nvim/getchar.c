@@ -2885,8 +2885,8 @@ void set_maparg_lhs_rhs(const char_u *const orig_lhs, const size_t orig_lhs_len,
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
-      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
-                                   cpo_flags);
+      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
+                                   REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
       mapargs->rhs_is_noop = false;
       mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
