@@ -1050,6 +1050,27 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("has correct buffer state on join", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      exec_lua [[
+      vim.api.nvim_buf_attach(0, false, {
+        on_bytes = function(...)
+          local line = vim.api.nvim_buf_get_lines(0, 0, 1, true)[1]
+          vim.api.nvim_set_var('line_text', line)
+        end,
+      })
+      ]]
+
+      feed("gg0J")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 0, 1, 0, 1, 1 };
+      }
+
+      eq("AAA BBB", meths.get_var('line_text'))
+    end)
+
     it("sends updates on U", function()
       feed("ggiAAA<cr>BBB")
       feed("<esc>gg$a CCC")
