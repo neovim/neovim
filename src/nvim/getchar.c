@@ -3299,7 +3299,9 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                   XFREE_CLEAR(mp->m_str);
                   XFREE_CLEAR(mp->m_orig_str);
                   XFREE_CLEAR(mp->m_desc);
-                  NLUA_CLEAR_REF(mp->m_luaref);
+                  if (!mp->m_simplified) {
+                    NLUA_CLEAR_REF(mp->m_luaref);
+                  }
 
                   mp->m_str = vim_strsave(rhs);
                   mp->m_orig_str = vim_strsave(orig_rhs);
@@ -3500,7 +3502,9 @@ static void mapblock_free(mapblock_T **mpp)
 
   mp = *mpp;
   xfree(mp->m_keys);
-  NLUA_CLEAR_REF(mp->m_luaref);
+  if (!mp->m_simplified) {
+    NLUA_CLEAR_REF(mp->m_luaref);
+  }
   XFREE_CLEAR(mp->m_str);
   XFREE_CLEAR(mp->m_orig_str);
   XFREE_CLEAR(mp->m_desc);
