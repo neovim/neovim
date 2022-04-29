@@ -61,7 +61,6 @@ module.exports = async ({github, context}) => {
 
   if (labels.includes('lsp')) {
     reviewers.add("mfussenegger")
-    reviewers.add("mjlbach")
   }
 
   if (labels.includes('treesitter')) {
