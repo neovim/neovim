@@ -19,6 +19,7 @@ typedef struct {
   uint8_t min_argc;  ///< Minimal number of arguments.
   uint8_t max_argc;  ///< Maximal number of arguments.
   uint8_t base_arg;  ///< Method base arg # (1-indexed), BASE_NONE or BASE_LAST.
+  bool fast;         ///< Can be run in |api-fast| events
   VimLFunc func;     ///< Function implementation.
   FunPtr data;       ///< Userdata for function implementation.
 } EvalFuncDef;
