@@ -213,11 +213,11 @@ describe("'langmap'", function()
     iii]])
   end)
 
-  local function testrecording(command_string, expect_string, setup_function)
+  local function testrecording(command_string, expect_string, setup_function, expect_macro)
     if setup_function then setup_function() end
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
-    eq(helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
+    eq(expect_macro or helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
       eval('@a'))
     if setup_function then setup_function() end
     -- n.b. may need nvim_replace_termcodes() here.
@@ -273,8 +273,8 @@ describe("'langmap'", function()
   it('treats control modified keys as characters', function()
     command('nnoremap <C-w> iw<esc>')
     command('nnoremap <C-i> ii<esc>')
-    testrecording('<C-w>', 'whello', local_setup)
-    testrecording('<C-i>', 'ihello', local_setup)
+    testrecording('<C-w>', 'whello', local_setup, eval([["\<*C-w>"]]))
+    testrecording('<C-i>', 'ihello', local_setup, eval([["\<*C-i>"]]))
   end)
 
 end)

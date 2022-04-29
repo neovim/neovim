@@ -192,12 +192,14 @@ CTRL-D		Delete one shiftwidth of indent at the start of the current
 		label.
 
 						*i_CTRL-V*
-CTRL-V		Insert next non-digit literally.  For special keys, the
-		terminal code is inserted.  It's also possible to enter the
-		decimal, octal or hexadecimal value of a character
+CTRL-V		Insert next non-digit literally.  It's also possible to enter
+		the decimal, octal or hexadecimal value of a character
 		|i_CTRL-V_digit|.
 		The characters typed right after CTRL-V are not considered for
 		mapping.
+		For special keys, the CTRL modifier may be included into the
+		key to produce a control character.  If there is no control
+		character for the key then its |key-notation| is inserted.
 		Note: When CTRL-V is mapped (e.g., to paste text) you can
 		often use CTRL-Q instead |i_CTRL-Q|.
 
@@ -205,6 +207,10 @@ CTRL-V		Insert next non-digit literally.  For special keys, the
 CTRL-Q		Same as CTRL-V.
 		Note: Some terminal connections may eat CTRL-Q, it doesn't
 		work then.  It does work in the GUI.
+
+CTRL-SHIFT-V				*i_CTRL-SHIFT-V* *i_CTRL-SHIFT-Q*
+CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
+		modifier into the key.
 
 CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See

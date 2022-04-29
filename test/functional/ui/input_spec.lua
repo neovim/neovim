@@ -8,6 +8,7 @@ local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
 local funcs = helpers.funcs
+local eval = helpers.eval
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
@@ -172,11 +173,20 @@ describe('input pairs', function()
       eq('\t\t', curbuf_contents())
     end)
 
-    it('can be mapped', function()
-      command('inoremap <tab> TAB!')
-      command('inoremap <c-i> CTRL-I!')
-      feed('i<tab><c-i><esc>')
-      eq('TAB!CTRL-I!', curbuf_contents())
+    describe('can be mapped separately', function()
+      it('if <tab> is mapped after <c-i>', function()
+        command('inoremap <c-i> CTRL-I!')
+        command('inoremap <tab> TAB!')
+        feed('i<tab><c-i><esc>')
+        eq('TAB!CTRL-I!', curbuf_contents())
+      end)
+
+      it('if <tab> is mapped before <c-i>', function()
+        command('inoremap <tab> TAB!')
+        command('inoremap <c-i> CTRL-I!')
+        feed('i<tab><c-i><esc>')
+        eq('TAB!CTRL-I!', curbuf_contents())
+      end)
     end)
   end)
 
@@ -186,11 +196,20 @@ describe('input pairs', function()
       eq('unos\ndos\ntres', curbuf_contents())
     end)
 
-    it('can be mapped', function()
-      command('inoremap <c-m> SNIPPET!')
-      command('inoremap <cr> , and then<cr>')
-      feed('iunos<c-m>dos<cr>tres<esc>')
-      eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+    describe('can be mapped separately', function()
+      it('if <cr> is mapped after <c-m>', function()
+        command('inoremap <c-m> SNIPPET!')
+        command('inoremap <cr> , and then<cr>')
+        feed('iunos<c-m>dos<cr>tres<esc>')
+        eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+      end)
+
+      it('if <cr> is mapped before <c-m>', function()
+        command('inoremap <cr> , and then<cr>')
+        command('inoremap <c-m> SNIPPET!')
+        feed('iunos<c-m>dos<cr>tres<esc>')
+        eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+      end)
     end)
   end)
 
@@ -200,11 +219,20 @@ describe('input pairs', function()
       eq('doubledoublesingle', curbuf_contents())
     end)
 
-    it('can be mapped', function()
-      command('inoremap <c-[> HALLOJ!')
-      command('inoremap <esc> ,<esc>')
-      feed('2adubbel<c-[>upp<esc>')
-      eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+    describe('can be mapped separately', function()
+      it('if <esc> is mapped after <c-[>', function()
+        command('inoremap <c-[> HALLOJ!')
+        command('inoremap <esc> ,<esc>')
+        feed('2adubbel<c-[>upp<esc>')
+        eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+      end)
+
+      it('if <esc> is mapped before <c-[>', function()
+        command('inoremap <esc> ,<esc>')
+        command('inoremap <c-[> HALLOJ!')
+        feed('2adubbel<c-[>upp<esc>')
+        eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+      end)
     end)
   end)
 end)
@@ -214,6 +242,75 @@ it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
   command('edit bbb')
   feed('<C-6>')
   eq('aaa', funcs.bufname())
+end)
+
+it('c_CTRL-R_CTRL-R, i_CTRL-R_CTRL-R, i_CTRL-G_CTRL-K work properly vim-patch:8.1.2346', function()
+  command('set timeoutlen=10')
+
+  command([[let @a = 'aaa']])
+  feed([[:let x = '<C-R><C-R>a'<CR>]])
+  eq([[let x = 'aaa']], eval('@:'))
+
+  feed('a<C-R><C-R>a<Esc>')
+  expect('aaa')
+  command('bwipe!')
+
+  feed('axx<CR>yy<C-G><C-K>a<Esc>')
+  expect([[
+  axx
+  yy]])
+end)
+
+it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()
+  local screen = Screen.new(60,8)
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [2] = {bold = true, reverse = true},  -- MsgSeparator
+    [3] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+  })
+  screen:attach()
+  command([[nnoremap <C-6> <Cmd>echo 'hit ctrl-6'<CR>]])
+  feed_command('ls')
+  screen:expect([[
+                                                                |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {2:                                                            }|
+    :ls                                                         |
+      1 %a   "[No Name]"                    line 1              |
+    {3:Press ENTER or type command to continue}^                     |
+  ]])
+  feed('<C-6>')
+  screen:expect([[
+    ^                                                            |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    hit ctrl-6                                                  |
+  ]])
+end)
+
+it('mixing simplified and unsimplified keys can trigger mapping vim-patch:8.2.0916', function()
+  command('set timeoutlen=10')
+  command([[imap ' <C-W>]])
+  command('imap <C-W><C-A> c-a')
+  feed([[a'<C-A>]])
+  expect('c-a')
+end)
+
+it('unsimplified mapping works when there was a partial match vim-patch:8.2.4504', function()
+  command('set timeoutlen=10')
+  command('nnoremap <C-J> a')
+  command('nnoremap <NL> x')
+  command('nnoremap <C-J>x <Nop>')
+  funcs.setline(1, 'x')
+  -- CTRL-J b should have trigger the <C-J> mapping and then insert "b"
+  feed('<C-J>b<Esc>')
+  expect('xb')
 end)
 
 describe('input non-printable chars', function()

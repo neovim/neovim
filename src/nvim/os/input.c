@@ -238,9 +238,9 @@ size_t input_enqueue(String keys)
     // but since the keys are UTF-8, so the first byte cannot be
     // K_SPECIAL(0x80).
     uint8_t buf[19] = { 0 };
+    // Do not simplify the keys here. Simplification will be done later.
     unsigned int new_size
-      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
-                      false);
+      = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, FSK_KEYCODE, NULL);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);
@@ -488,7 +488,12 @@ static void process_interrupts(void)
 
   size_t consume_count = 0;
   RBUFFER_EACH_REVERSE(input_buffer, c, i) {
-    if ((uint8_t)c == Ctrl_C) {
+    if ((uint8_t)c == Ctrl_C
+        || ((uint8_t)c == 'C' && i >= 3
+            && (uint8_t)(*rbuffer_get(input_buffer, i - 3)) == K_SPECIAL
+            && (uint8_t)(*rbuffer_get(input_buffer, i - 2)) == KS_MODIFIER
+            && (uint8_t)(*rbuffer_get(input_buffer, i - 1)) == MOD_MASK_CTRL)) {
+      *rbuffer_get(input_buffer, i) = Ctrl_C;
       got_int = true;
       consume_count = i;
       break;

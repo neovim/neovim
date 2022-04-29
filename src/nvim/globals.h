@@ -129,6 +129,9 @@ typedef off_t off_T;
 // held down based on the MOD_MASK_* symbols that are read first.
 EXTERN int mod_mask INIT(= 0);  // current key modifiers
 
+// The value of "mod_mask" and the unmodified character before calling merge_modifiers().
+EXTERN int vgetc_mod_mask INIT(= 0);
+EXTERN int vgetc_char INIT(= 0);
 
 // Cmdline_row is the row where the command line starts, just below the
 // last window.
@@ -649,6 +652,7 @@ EXTERN int reg_recorded INIT(= 0);      // last recorded register or zero
 
 EXTERN int no_mapping INIT(= false);    // currently no mapping allowed
 EXTERN int no_zero_mapping INIT(= 0);   // mapping zero not allowed
+EXTERN int allow_keys INIT(= false);    // allow key codes when no_mapping is set
 EXTERN int no_u_sync INIT(= 0);         // Don't call u_sync()
 EXTERN int u_sync_once INIT(= 0);       // Call u_sync() once when evaluating
                                         // an expression.

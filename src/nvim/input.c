@@ -42,6 +42,7 @@ int ask_yesno(const char *const str, const bool direct)
   State = CONFIRM;  // Mouse behaves like with :confirm.
   setmouse();  // Disable mouse in xterm.
   no_mapping++;
+  allow_keys++;  // no mapping here, but recognize keys
 
   int r = ' ';
   while (r != 'y' && r != 'n') {
@@ -62,6 +63,7 @@ int ask_yesno(const char *const str, const bool direct)
   State = save_State;
   setmouse();
   no_mapping--;
+  allow_keys--;
 
   return r;
 }
@@ -172,6 +174,7 @@ int get_number(int colon, int *mouse_used)
   }
 
   no_mapping++;
+  allow_keys++;  // no mapping here, but recognize keys
   for (;;) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
@@ -205,6 +208,7 @@ int get_number(int colon, int *mouse_used)
     }
   }
   no_mapping--;
+  allow_keys--;
   return n;
 }
 

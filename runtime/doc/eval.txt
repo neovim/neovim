@@ -1325,6 +1325,9 @@ A string constant accepts these special characters:
 	To use the double quote character it must be escaped: "<M-\">".
 	Don't use <Char-xxxx> to get a UTF-8 character, use \uxxxx as
 	mentioned above.
+\<*xxx>	Like \<xxx> but prepends a modifier instead of including it in the
+	character.  E.g. "\<C-w>" is one character 0x17 while "\<*C-w>" is four
+	bytes: 3 for the CTRL modifier and then character "W".
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.

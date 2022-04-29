@@ -112,6 +112,14 @@ func Test_echospace()
   set ruler& showcmd&
 endfunc
 
+func Test_mapping_at_hit_return_prompt()
+  nnoremap <C-B> :echo "hit ctrl-b"<CR>
+  call feedkeys(":ls\<CR>", "xt")
+  call feedkeys("\<*C-B>", "xt")
+  call assert_match('hit ctrl-b', Screenline(&lines - 1))
+  nunmap <C-B>
+endfunc
+
 func Test_quit_long_message()
   CheckScreendump
 

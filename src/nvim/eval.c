@@ -4964,8 +4964,13 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         break;
 
       // Special key, e.g.: "\<C-W>"
-      case '<':
-        extra = trans_special((const char_u **)&p, STRLEN(p), name, true, true);
+      case '<': {
+        int flags = FSK_KEYCODE | FSK_IN_STRING;
+
+        if (p[1] != '*') {
+          flags |= FSK_SIMPLIFY;
+        }
+        extra = trans_special((const char_u **)&p, STRLEN(p), name, flags, NULL);
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {
@@ -4973,6 +4978,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
           }
           break;
         }
+      }
         FALLTHROUGH;
 
       default:

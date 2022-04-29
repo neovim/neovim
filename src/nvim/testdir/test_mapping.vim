@@ -62,7 +62,7 @@ func Test_map_ctrl_c_insert()
   inoremap <c-c> <ctrl-c>
   cnoremap <c-c> dummy
   cunmap <c-c>
-  call feedkeys("GoTEST2: CTRL-C |\<C-C>A|\<Esc>", "xt")
+  call feedkeys("GoTEST2: CTRL-C |\<*C-C>A|\<Esc>", "xt")
   call assert_equal('TEST2: CTRL-C |<ctrl-c>A|', getline('$'))
   unmap! <c-c>
   set nomodified
@@ -71,7 +71,7 @@ endfunc
 func Test_map_ctrl_c_visual()
   " mapping of ctrl-c in Visual mode
   vnoremap <c-c> :<C-u>$put ='vmap works'
-  call feedkeys("GV\<C-C>\<CR>", "xt")
+  call feedkeys("GV\<*C-C>\<CR>", "xt")
   call assert_equal('vmap works', getline('$'))
   vunmap <c-c>
   set nomodified
@@ -221,7 +221,7 @@ endfunc
 
 func Test_map_meta_quotes()
   imap <M-"> foo
-  call feedkeys("Go-\<M-\">-\<Esc>", "xt")
+  call feedkeys("Go-\<*M-\">-\<Esc>", "xt")
   call assert_equal("-foo-", getline('$'))
   set nomodified
   iunmap <M-">
@@ -427,6 +427,28 @@ func Test_error_in_map_expr()
 
   call delete('Xtest.vim')
   exe buf .. 'bwipe!'
+endfunc
+
+func Test_list_mappings()
+  " Remove default mappings
+  imapclear
+
+  " reset 'isident' to check it isn't used
+  set isident=
+  inoremap <C-m> CtrlM
+  inoremap <A-S> AltS
+  inoremap <S-/> ShiftSlash
+  set isident&
+  call assert_equal([
+	\ 'i  <S-/>       * ShiftSlash',
+	\ 'i  <M-S>       * AltS',
+	\ 'i  <C-M>       * CtrlM',
+	\], execute('imap')->trim()->split("\n"))
+  iunmap <C-M>
+  iunmap <A-S>
+  call assert_equal(['i  <S-/>       * ShiftSlash'], execute('imap')->trim()->split("\n"))
+  iunmap <S-/>
+  call assert_equal(['No mapping found'], execute('imap')->trim()->split("\n"))
 endfunc
 
 func Test_expr_map_gets_cursor()
@@ -737,6 +759,22 @@ func Test_mouse_drag_insert_map()
   delfunc ClickExpr
   delfunc DragExpr
   set mouse&
+endfunc
+
+func Test_unmap_simplifiable()
+  map <C-I> foo
+  map <Tab> bar
+  call assert_equal('foo', maparg('<C-I>'))
+  call assert_equal('bar', maparg('<Tab>'))
+  unmap <C-I>
+  call assert_equal('', maparg('<C-I>'))
+  call assert_equal('bar', maparg('<Tab>'))
+  unmap <Tab>
+
+  map <C-I> foo
+  unmap <Tab>
+  " This should not error
+  unmap <C-I>
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

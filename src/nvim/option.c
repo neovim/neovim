@@ -3015,7 +3015,7 @@ ambw_end:
   } else if (varp == &p_pt) {
     // 'pastetoggle': translate key codes like in a mapping
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, true,
+      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced) {
@@ -5222,7 +5222,8 @@ int find_key_option_len(const char_u *arg_arg, size_t len, bool has_lt)
   } else if (has_lt) {
     arg--;  // put arg at the '<'
     modifiers = 0;
-    key = find_special_key(&arg, len + 1, &modifiers, true, true, false);
+    key = find_special_key(&arg, len + 1, &modifiers,
+                           FSK_KEYCODE | FSK_KEEP_X_KEY | FSK_SIMPLIFY, NULL);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }

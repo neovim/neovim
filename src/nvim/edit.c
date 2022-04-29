@@ -762,8 +762,10 @@ static int insert_execute(VimState *state, int key)
     // may need to redraw when no more chars available now
     ins_redraw(false);
     no_mapping++;
+    allow_keys++;
     s->c = plain_vgetc();
     no_mapping--;
+    allow_keys--;
     if (s->c != Ctrl_N && s->c != Ctrl_G && s->c != Ctrl_O) {
       // it's something else
       vungetc(s->c);
@@ -1587,7 +1589,8 @@ static void ins_ctrl_v(void)
 
   add_to_showcmd_c(Ctrl_V);
 
-  c = get_literal();
+  // Do not include modifiers into the key for CTRL-SHIFT-V.
+  c = get_literal(mod_mask & MOD_MASK_SHIFT);
   if (did_putchar) {
     // when the line fits in 'columns' the '^' is at the start of the next
     // line and will not removed by the redraw
@@ -5612,13 +5615,13 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
   return m;
 }
 
-/*
- * Next character is interpreted literally.
- * A one, two or three digit decimal number is interpreted as its byte value.
- * If one or two digits are entered, the next character is given to vungetc().
- * For Unicode a character > 255 may be returned.
- */
-int get_literal(void)
+/// Next character is interpreted literally.
+/// A one, two or three digit decimal number is interpreted as its byte value.
+/// If one or two digits are entered, the next character is given to vungetc().
+/// For Unicode a character > 255 may be returned.
+///
+/// @param  no_simplify  do not include modifiers into the key
+int get_literal(bool no_simplify)
 {
   int cc;
   int nc;
@@ -5636,6 +5639,9 @@ int get_literal(void)
   i = 0;
   for (;;) {
     nc = plain_vgetc();
+    if (!no_simplify) {
+      nc = merge_modifiers(nc, &mod_mask);
+    }
     if ((mod_mask & ~MOD_MASK_SHIFT) != 0) {
       // A character with non-Shift modifiers should not be a valid
       // character for i_CTRL-V_digit.
@@ -7811,11 +7817,10 @@ static void ins_reg(void)
   }
 
 
-  /*
-   * Don't map the register name. This also prevents the mode message to be
-   * deleted when ESC is hit.
-   */
-  ++no_mapping;
+  // Don't map the register name. This also prevents the mode message to be
+  // deleted when ESC is hit.
+  no_mapping++;
+  allow_keys++;
   regname = plain_vgetc();
   LANGMAP_ADJUST(regname, TRUE);
   if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P) {
@@ -7825,7 +7830,8 @@ static void ins_reg(void)
     regname = plain_vgetc();
     LANGMAP_ADJUST(regname, TRUE);
   }
-  --no_mapping;
+  no_mapping--;
+  allow_keys--;
 
   // Don't call u_sync() while typing the expression or giving an error
   // message for it. Only call it explicitly.
@@ -7893,13 +7899,13 @@ static void ins_ctrl_g(void)
   // Right after CTRL-X the cursor will be after the ruler.
   setcursor();
 
-  /*
-   * Don't map the second key. This also prevents the mode message to be
-   * deleted when ESC is hit.
-   */
-  ++no_mapping;
+  // Don't map the second key. This also prevents the mode message to be
+  // deleted when ESC is hit.
+  no_mapping++;
+  allow_keys++;
   c = plain_vgetc();
-  --no_mapping;
+  no_mapping--;
+  allow_keys--;
   switch (c) {
   // CTRL-G k and CTRL-G <Up>: cursor up to Insstart.col
   case K_UP:
@@ -9233,8 +9239,10 @@ static int ins_digraph(void)
   // don't map the digraph chars. This also prevents the
   // mode message to be deleted when ESC is hit
   no_mapping++;
+  allow_keys++;
   c = plain_vgetc();
   no_mapping--;
+  allow_keys--;
   if (did_putchar) {
     // when the line fits in 'columns' the '?' is at the start of the next
     // line and will not be removed by the redraw
@@ -9260,8 +9268,10 @@ static int ins_digraph(void)
       add_to_showcmd_c(c);
     }
     no_mapping++;
+    allow_keys++;
     cc = plain_vgetc();
     no_mapping--;
+    allow_keys--;
     if (did_putchar) {
       // when the line fits in 'columns' the '?' is at the start of the
       // next line and will not be removed by a redraw

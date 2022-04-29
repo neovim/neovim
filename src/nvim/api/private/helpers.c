@@ -632,7 +632,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   } else {
     parsed_args.desc = NULL;
   }
-  if (parsed_args.lhs_len > MAXMAPLEN) {
+  if (parsed_args.lhs_len > MAXMAPLEN || parsed_args.alt_lhs_len > MAXMAPLEN) {
     api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;
   }
@@ -1128,6 +1128,9 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
     for (const mapblock_T *current_maphash = get_maphash(i, buf);
          current_maphash;
          current_maphash = current_maphash->m_next) {
+      if (current_maphash->m_simplified) {
+        continue;
+      }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);

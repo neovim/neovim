@@ -67,11 +67,18 @@ CTRL-V		Insert next non-digit literally.  Up to three digits form the
 		decimal value of a single byte.  The non-digit and the three
 		digits are not considered for mapping.  This works the same
 		way as in Insert mode (see above, |i_CTRL-V|).
+		For special keys, the CTRL modifier may be included into the
+		key to produce a control character.  If there is no control
+		character for the key then its |key-notation| is inserted.
 		Note: Under Windows CTRL-V is often mapped to paste text.
 		Use CTRL-Q instead then.
 							*c_CTRL-Q*
 CTRL-Q		Same as CTRL-V.  But with some terminals it is used for
 		control flow, it doesn't work then.
+
+CTRL-SHIFT-V				*c_CTRL-SHIFT-V* *c_CTRL-SHIFT-Q*
+CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
+		modifier into the key.
 
 							*c_<Left>* *c_Left*
 <Left>		cursor left

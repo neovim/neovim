@@ -1335,8 +1335,10 @@ static int command_line_execute(VimState *state, int key)
   // mode when 'insertmode' is set, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
     no_mapping++;
+    allow_keys++;
     s->c = plain_vgetc();
     no_mapping--;
+    allow_keys--;
     // CTRL-\ e doesn't work when obtaining an expression, unless it
     // is in a mapping.
     if (s->c != Ctrl_N
@@ -1889,6 +1891,7 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_R: {                      // insert register
     putcmdline('"', true);
     no_mapping++;
+    allow_keys++;
     int i = s->c = plain_vgetc();      // CTRL-R <char>
     if (i == Ctrl_O) {
       i = Ctrl_R;                      // CTRL-R CTRL-O == CTRL-R CTRL-R
@@ -1897,7 +1900,8 @@ static int command_line_handle_key(CommandLineState *s)
     if (i == Ctrl_R) {
       s->c = plain_vgetc();              // CTRL-R CTRL-R <char>
     }
-    --no_mapping;
+    no_mapping--;
+    allow_keys--;
     // Insert the result of an expression.
     // Need to save the current command line, to be able to enter
     // a new one...
@@ -2208,7 +2212,11 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_Q:
     s->ignore_drag_release = true;
     putcmdline('^', true);
-    s->c = get_literal();                 // get next (two) character(s)
+
+    // Get next (two) characters.
+    // Do not include modifiers into the key for CTRL-SHIFT-V.
+    s->c = get_literal(mod_mask & MOD_MASK_SHIFT);
+
     s->do_abbr = false;                   // don't do abbreviation now
     ccline.special_char = NUL;
     // may need to remove ^ when composing char was typed

@@ -507,6 +507,22 @@ enum key_extra {
                             ? 0 \
                             : FLAG_CPO_BSLASH)
 
+// Flags for replace_termcodes()
+enum {
+  REPTERM_FROM_PART   = 1,
+  REPTERM_DO_LT       = 2,
+  REPTERM_NO_SPECIAL  = 4,
+  REPTERM_NO_SIMPLIFY = 8,
+};
+
+// Flags for find_special_key()
+enum {
+  FSK_KEYCODE    = 0x01,  ///< prefer key code, e.g. K_DEL in place of DEL
+  FSK_KEEP_X_KEY = 0x02,  ///< don’t translate xHome to Home key
+  FSK_IN_STRING  = 0x04,  ///< in string, double quote is escaped
+  FSK_SIMPLIFY   = 0x08,  ///< simplify <C-H>, etc.
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.h.generated.h"
 #endif

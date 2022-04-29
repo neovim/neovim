@@ -3951,8 +3951,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               RedrawingDisabled = temp;
 
               no_mapping++;                     // don't map this key
+              allow_keys++;                     // allow special keys
               typed = plain_vgetc();
               no_mapping--;
+              allow_keys--;
 
               // clear the question
               msg_didout = false;               // don't scroll up

@@ -638,6 +638,7 @@ static void normal_get_additional_char(NormalState *s)
   int lang;                     // getting a text character
 
   no_mapping++;
+  allow_keys++;                 // no mapping for nchar, but allow key codes
   // Don't generate a CursorHold event here, most commands can't handle
   // it, e.g., nv_replace(), nv_csearch().
   did_cursorhold = true;
@@ -676,6 +677,7 @@ static void normal_get_additional_char(NormalState *s)
     if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
       // Allow mappings defined with ":lmap".
       no_mapping--;
+      allow_keys--;
       if (repl) {
         State = LREPLACE;
       } else {
@@ -689,6 +691,7 @@ static void normal_get_additional_char(NormalState *s)
     if (langmap_active) {
       // Undo the decrement done above
       no_mapping++;
+      allow_keys++;
     }
     State = NORMAL_BUSY;
     s->need_flushbuf |= add_to_showcmd(*cp);
@@ -769,6 +772,7 @@ static void normal_get_additional_char(NormalState *s)
     no_mapping++;
   }
   no_mapping--;
+  allow_keys--;
 }
 
 static void normal_invert_horizontal(NormalState *s)
@@ -826,6 +830,7 @@ static bool normal_get_command_count(NormalState *s)
 
     if (s->ctrl_w) {
       no_mapping++;
+      allow_keys++;                   // no mapping for nchar, but keys
     }
 
     no_zero_mapping++;                // don't map zero here
@@ -834,6 +839,7 @@ static bool normal_get_command_count(NormalState *s)
     no_zero_mapping--;
     if (s->ctrl_w) {
       no_mapping--;
+      allow_keys--;
     }
     s->need_flushbuf |= add_to_showcmd(s->c);
   }
@@ -844,9 +850,11 @@ static bool normal_get_command_count(NormalState *s)
     s->ca.opcount = s->ca.count0;           // remember first count
     s->ca.count0 = 0;
     no_mapping++;
+    allow_keys++;                        // no mapping for nchar, but keys
     s->c = plain_vgetc();                // get next character
     LANGMAP_ADJUST(s->c, true);
     no_mapping--;
+    allow_keys--;
     s->need_flushbuf |= add_to_showcmd(s->c);
     return true;
   }
@@ -995,7 +1003,7 @@ static int normal_execute(VimState *state, int key)
     // restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
-    int len = ins_char_typebuf(s->c, mod_mask);
+    int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask);
 
     // When recording and gotchars() was called the character will be
     // recorded again, remove the previous recording.
@@ -3407,9 +3415,11 @@ static void nv_zet(cmdarg_T *cap)
     n = nchar - '0';
     for (;;) {
       no_mapping++;
+      allow_keys++;         // no mapping for nchar, but allow key codes
       nchar = plain_vgetc();
       LANGMAP_ADJUST(nchar, true);
       no_mapping--;
+      allow_keys--;
       (void)add_to_showcmd(nchar);
       if (nchar == K_DEL || nchar == K_KDEL) {
         n /= 10;
@@ -3785,9 +3795,11 @@ dozet:
 
   case 'u':     // "zug" and "zuw": undo "zg" and "zw"
     no_mapping++;
+    allow_keys++;               // no mapping for nchar, but allow key codes
     nchar = plain_vgetc();
     LANGMAP_ADJUST(nchar, true);
     no_mapping--;
+    allow_keys--;
     (void)add_to_showcmd(nchar);
     if (vim_strchr((char_u *)"gGwW", nchar) == NULL) {
       clearopbeep(cap->oap);
@@ -5154,7 +5166,7 @@ static void nv_replace(cmdarg_T *cap)
   // get another character
   if (cap->nchar == Ctrl_V) {
     had_ctrl_v = Ctrl_V;
-    cap->nchar = get_literal();
+    cap->nchar = get_literal(false);
     // Don't redo a multibyte character with CTRL-V.
     if (cap->nchar > DEL) {
       had_ctrl_v = NUL;
@@ -5369,7 +5381,7 @@ static void nv_vreplace(cmdarg_T *cap)
       emsg(_(e_modifiable));
     } else {
       if (cap->extra_char == Ctrl_V) {          // get another character
-        cap->extra_char = get_literal();
+        cap->extra_char = get_literal(false);
       }
       stuffcharReadbuff(cap->extra_char);
       stuffcharReadbuff(ESC);
