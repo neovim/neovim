@@ -997,8 +997,8 @@ EXTERN char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
 EXTERN char e_autocmd_err[] INIT(= N_("E5500: autocmd has thrown an exception: %s"));
 EXTERN char e_cmdmap_err[] INIT(= N_("E5520: <Cmd> mapping must end with <CR>"));
-EXTERN char e_cmdmap_repeated[] INIT(= N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
-EXTERN char e_cmdmap_key[] INIT(= N_("E5522: <Cmd> mapping must not include %s key"));
+EXTERN char e_cmdmap_repeated[]
+INIT(= N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
 
 EXTERN char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
