@@ -664,7 +664,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
           if (breakpoint != NULL) {
             *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
                                               (char_u *)fname,
-                                              ((wcmd_T *)lines_ga.ga_data)[current_line].lnum-1);
+                                              ((wcmd_T *)lines_ga.ga_data)[current_line].lnum - 1);
             *dbg_tick = debug_tick;
           }
         } else {
@@ -6239,8 +6239,7 @@ static void do_ucmd(exarg_T *eap)
         end = (char *)vim_strchr((char_u *)start + 1, '>');
       }
       if (buf != NULL) {
-        for (ksp = p; *ksp != NUL && (char_u)(*ksp) != K_SPECIAL; ksp++) {
-        }
+        for (ksp = p; *ksp != NUL && (char_u)(*ksp) != K_SPECIAL; ksp++) {}
         if ((char_u)(*ksp) == K_SPECIAL
             && (start == NULL || ksp < start || end == NULL)
             && ((char_u)ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)) {
