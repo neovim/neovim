@@ -85,6 +85,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 >
 	nnoremap Y y$
 	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>
+        vnoremap < <gv^
+        vnoremap > >gv^
 	inoremap <C-U> <C-G>u<C-U>
 	inoremap <C-W> <C-G>u<C-W>
 <

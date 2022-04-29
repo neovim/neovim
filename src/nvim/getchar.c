@@ -845,6 +845,9 @@ void init_default_mappings(void)
 {
   add_map((char_u *)"Y y$", NORMAL, true);
 
+  add_map((char_u *)"> >gv^", VISUAL, true);
+  add_map((char_u *)"< <gv^", VISUAL, true);
+
   // Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>
   // See https://github.com/neovim/neovim/issues/17473
   add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", NORMAL, true);
