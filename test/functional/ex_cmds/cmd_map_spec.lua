@@ -93,19 +93,6 @@ describe('mappings with <Cmd>', function()
       {2:E5521: <Cmd> mapping must end with <CR> before second <Cmd>}      |
     ]])
 
-    command('noremap <F3> <Cmd><F3>let x = 2<cr>')
-    feed('<F3>')
-    screen:expect([[
-      ^some short lines                                                 |
-      of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {2:E5522: <Cmd> mapping must not include <F3> key}                   |
-    ]])
-
     command('noremap <F3> <Cmd>let x = 3')
     feed('<F3>')
     screen:expect([[
@@ -119,6 +106,34 @@ describe('mappings with <Cmd>', function()
       {2:E5520: <Cmd> mapping must end with <CR>}                          |
     ]])
     eq(0, eval('x'))
+  end)
+
+  it('allows special keys and modifiers', function()
+    command('noremap <F3> <Cmd>normal! <Down><CR>')
+    feed('<F3>')
+    screen:expect([[
+      some short lines                                                 |
+      ^of test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]])
+
+    command('noremap <F3> <Cmd>normal! <C-Right><CR>')
+    feed('<F3>')
+    screen:expect([[
+      some short lines                                                 |
+      of ^test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]])
   end)
 
   it('works in various modes and sees correct `mode()` value', function()

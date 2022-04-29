@@ -4861,15 +4861,21 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       // special case to give nicer error message
       emsg(e_cmdmap_repeated);
       aborted = true;
-    } else if (IS_SPECIAL(c1)) {
-      if (c1 == K_SNR) {
-        ga_concat(&line_ga, "<SNR>");
-      } else {
-        semsg(e_cmdmap_key, get_special_key_name(c1, cmod));
-        aborted = true;
-      }
+    } else if (c1 == K_SNR) {
+      ga_concat(&line_ga, "<SNR>");
     } else {
-      ga_append(&line_ga, (char)c1);
+      if (cmod != 0) {
+        ga_append(&line_ga, (char)K_SPECIAL);
+        ga_append(&line_ga, (char)KS_MODIFIER);
+        ga_append(&line_ga, (char)cmod);
+      }
+      if (IS_SPECIAL(c1)) {
+        ga_append(&line_ga, (char)K_SPECIAL);
+        ga_append(&line_ga, (char)K_SECOND(c1));
+        ga_append(&line_ga, (char)K_THIRD(c1));
+      } else {
+        ga_append(&line_ga, (char)c1);
+      }
     }
 
     cmod = 0;
