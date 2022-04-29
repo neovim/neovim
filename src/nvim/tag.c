@@ -813,8 +813,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char_
     } else {
       for (p = tagp.command;
            *p && *p != '\r' && *p != '\n';
-           p++) {
-      }
+           p++) {}
       command_end = p;
     }
 
@@ -933,8 +932,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char_u **matches)
       cmd_end = tagp.command_end;
       if (cmd_end == NULL) {
         for (p = tagp.command;
-             *p && *p != '\r' && *p != '\n'; p++) {
-        }
+             *p && *p != '\r' && *p != '\n'; p++) {}
         cmd_end = p;
       }
 
@@ -1780,8 +1778,7 @@ line_read_in:
             if (STRNCMP(lbuf, "!_TAG_FILE_ENCODING\t", 20) == 0) {
               // Prepare to convert every line from the specified
               // encoding to 'encoding'.
-              for (p = lbuf + 20; *p > ' ' && *p < 127; p++) {
-              }
+              for (p = lbuf + 20; *p > ' ' && *p < 127; p++) {}
               *p = NUL;
               convert_setup(&vimconv, lbuf + 20, p_enc);
             }
@@ -2614,15 +2611,13 @@ static int parse_match(char_u *lbuf, tagptrs_T *tagp)
     if (tagp->tagkind != NULL) {
       for (p = tagp->tagkind;
            *p && *p != '\t' && *p != '\r' && *p != '\n';
-           MB_PTR_ADV(p)) {
-      }
+           MB_PTR_ADV(p)) {}
       tagp->tagkind_end = p;
     }
     if (tagp->user_data != NULL) {
       for (p = tagp->user_data;
            *p && *p != '\t' && *p != '\r' && *p != '\n';
-           MB_PTR_ADV(p)) {
-      }
+           MB_PTR_ADV(p)) {}
       tagp->user_data_end = p;
     }
   }

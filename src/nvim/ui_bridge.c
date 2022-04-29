@@ -166,7 +166,7 @@ static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row, Integer startc
                                Integer clearcol, Integer clearattr, LineFlags flags,
                                const schar_T *chunk, const sattr_T *attrs)
 {
-  size_t ncol = (size_t)(endcol-startcol);
+  size_t ncol = (size_t)(endcol - startcol);
   schar_T *c = xmemdup(chunk, ncol * sizeof(schar_T));
   sattr_T *hl = xmemdup(attrs, ncol * sizeof(sattr_T));
   UI_BRIDGE_CALL(ui, raw_line, 10, ui, INT2PTR(grid), INT2PTR(row),

@@ -3858,10 +3858,10 @@ static bool parse_winhl_opt(win_T *wp)
     if (!colon) {
       return false;
     }
-    size_t nlen = (size_t)(colon-p);
-    char *hi = colon+1;
+    size_t nlen = (size_t)(colon - p);
+    char *hi = colon + 1;
     char *commap = xstrchrnul(hi, ',');
-    size_t len = (size_t)(commap-hi);
+    size_t len = (size_t)(commap - hi);
     int hl_id = len ? syn_check_group(hi, len) : -1;
 
     if (strncmp("Normal", p, nlen) == 0) {
@@ -3879,7 +3879,7 @@ static bool parse_winhl_opt(win_T *wp)
       }
     }
 
-    p = *commap ? commap+1 : "";
+    p = *commap ? commap + 1 : "";
   }
 
   wp->w_hl_id_normal = w_hl_id_normal;

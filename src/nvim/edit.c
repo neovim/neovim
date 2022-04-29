@@ -2003,7 +2003,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     // TODO(bfredl): test for crazy edge cases, like we stand on a TAB or
     // something? does this even do the right text change then?
     int delta = orig_col - new_col;
-    extmark_splice_cols(curbuf, curwin->w_cursor.lnum-1, new_col,
+    extmark_splice_cols(curbuf, curwin->w_cursor.lnum - 1, new_col,
                         delta < 0 ? -delta : 0,
                         delta > 0 ? delta : 0,
                         kExtmarkUndo);
@@ -3962,8 +3962,7 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
     }
     assert(wp);
     while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
-           && wp->w_buffer->b_scanned) {
-    }
+           && wp->w_buffer->b_scanned) {}
     buf = wp->w_buffer;
   } else {
     /* 'b' (just loaded buffers), 'u' (just non-loaded buffers) or 'U'
@@ -3974,8 +3973,7 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
                 ? buf->b_p_bl
                 : (!buf->b_p_bl
                    || (buf->b_ml.ml_mfp == NULL) != (flag == 'u')))
-               || buf->b_scanned)) {
-    }
+               || buf->b_scanned)) {}
   }
   return buf;
 }
@@ -5178,8 +5176,7 @@ static int ins_complete(int c, bool enable_pum)
       if ((compl_cont_status & CONT_SOL)
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (!(compl_cont_status & CONT_ADDING)) {
-          while (--startcol >= 0 && vim_isIDc(line[startcol])) {
-          }
+          while (--startcol >= 0 && vim_isIDc(line[startcol])) {}
           compl_col += ++startcol;
           compl_length = curs_col - startcol;
         }
@@ -5870,8 +5867,7 @@ void insertchar(int c, int flags, int second_indent)
 
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
-      while (--i >= 0 && ascii_iswhite(line[i])) {
-      }
+      while (--i >= 0 && ascii_iswhite(line[i])) {}
       i++;
 
       // Skip to before the middle leader
@@ -5942,7 +5938,7 @@ void insertchar(int c, int flags, int second_indent)
     }
 
     do_digraph(-1);                     // clear digraphs
-    do_digraph(buf[i-1]);               // may be the start of a digraph
+    do_digraph(buf[i - 1]);               // may be the start of a digraph
     buf[i] = NUL;
     ins_str(buf);
     if (flags & INSCHAR_CTRLV) {
@@ -6459,7 +6455,7 @@ void auto_format(bool trailblank, bool prev_line)
    * be adjusted for the text formatting.
    */
   saved_cursor = pos;
-  format_lines((linenr_T)-1, FALSE);
+  format_lines((linenr_T) - 1, false);
   curwin->w_cursor = saved_cursor;
   saved_cursor.lnum = 0;
 
@@ -7717,7 +7713,7 @@ int hkmap(int c)
       (char_u)BET,  // b
       (char_u)hKAF,  // c
       (char_u)DALET,  // d
-      (char_u)-1,  // e
+      (char_u) - 1,  // e
       (char_u)PEIsofit,  // f
       (char_u)GIMEL,  // g
       (char_u)HEI,  // h
@@ -7729,14 +7725,14 @@ int hkmap(int c)
       (char_u)NUN,  // n
       (char_u)SAMEH,  // o
       (char_u)PEI,  // p
-      (char_u)-1,  // q
+      (char_u) - 1,  // q
       (char_u)RESH,  // r
       (char_u)ZAIN,  // s
       (char_u)TAV,  // t
       (char_u)TET,  // u
       (char_u)VAV,  // v
       (char_u)hSHIN,  // w
-      (char_u)-1,  // x
+      (char_u) - 1,  // x
       (char_u)AIN,  // y
       (char_u)ZADI,  // z
     };
@@ -9393,8 +9389,7 @@ static void ins_try_si(int c)
       ptr = ml_get(pos->lnum);
       i = pos->col;
       if (i > 0) {              // skip blanks before '{'
-        while (--i > 0 && ascii_iswhite(ptr[i])) {
-        }
+        while (--i > 0 && ascii_iswhite(ptr[i])) {}
       }
       curwin->w_cursor.lnum = pos->lnum;
       curwin->w_cursor.col = i;

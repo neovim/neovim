@@ -1528,9 +1528,8 @@ void simplify_filename(char_u *filename)
   if (vim_ispathsep(*p)) {
     relative = false;
     do {
-      ++p;
-    }
-    while (vim_ispathsep(*p));
+      p++;
+    } while (vim_ispathsep(*p));
   }
   start = p;        // remember start after "c:/" or "/" or "///"
 
@@ -2325,7 +2324,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
   }
 
   // Combine the path segments, separated by a slash.
-  if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length-1])) {
+  if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length - 1])) {
     current_length += 1;  // Count the trailing slash.
 
     // +1 for the NUL at the end.
@@ -2378,7 +2377,7 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
       } else {
         assert(p >= fname);
         memcpy(relative_directory, fname, (size_t)(p - fname));
-        relative_directory[p-fname] = NUL;
+        relative_directory[p - fname] = NUL;
       }
       end_of_path = (char *)(p + 1);
     } else {

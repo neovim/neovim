@@ -1139,7 +1139,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
     { \
       posp->lnum += lnum_amount; \
       assert(col_amount > INT_MIN && col_amount <= INT_MAX); \
-      if (col_amount < 0 && posp->col <= (colnr_T)-col_amount) { \
+      if (col_amount < 0 && posp->col <= (colnr_T) - col_amount) { \
         posp->col = 0; \
       } else if (posp->col < spaces_removed) { \
         posp->col = (int)col_amount + spaces_removed; \

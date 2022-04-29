@@ -106,7 +106,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
                                    : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
-        snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,
+        snprintf(watcher->addr + len, sizeof(watcher->addr) - len, ":%" PRIu16,
                  ntohs(port));
         break;
       }
@@ -225,7 +225,7 @@ bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address
                                     .ai_socktype = SOCK_STREAM,
                                     .ai_flags  = AI_NUMERICSERV };
     int retval = uv_getaddrinfo(&loop->uv, &addr_req, NULL,
-                                addr, host_end+1, &hints);
+                                addr, host_end + 1, &hints);
     if (retval != 0) {
       *error = _("failed to lookup host or port");
       goto cleanup;

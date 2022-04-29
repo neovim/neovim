@@ -1245,7 +1245,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
           if (ERROR_SET(err)) {
             goto free_exit;
           }
-          if (j < arr.size-1) {
+          if (j < arr.size - 1) {
             kv_push(virt_text, ((VirtTextChunk){ .text = NULL,
                                                  .hl_id = hl_id }));
           }

@@ -10,7 +10,7 @@
 #define MAX_MCO  6  // fixed value for 'maxcombine'
 
 // The characters and attributes drawn on grids.
-typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
+typedef char_u schar_T[(MAX_MCO + 1) * 4 + 1];
 typedef int sattr_T;
 
 enum {

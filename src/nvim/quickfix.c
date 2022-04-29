@@ -78,8 +78,7 @@ struct qfline_S {
 #define INVALID_QFBUFNR (0)
 
 /// Quickfix list type.
-typedef enum
-{
+typedef enum {
   QFLT_QUICKFIX,  ///< Quickfix list - global list
   QFLT_LOCATION,  ///< Location list - per window list
   QFLT_INTERNAL,  ///< Internal - Temporary list used by
@@ -429,8 +428,7 @@ static char *scanf_fmt_to_regpat(const char **pefmp, const char *efm, int len, c
       }
       if (efmp < efm + len) {
         *regpat++ = *++efmp;  // could be ']'
-        while (efmp < efm + len && (*regpat++ = *++efmp) != ']') {
-        }
+        while (efmp < efm + len && (*regpat++ = *++efmp) != ']') {}
         if (efmp == efm + len) {
           emsg(_("E374: Missing ] in format string"));
           return NULL;
@@ -7300,4 +7298,3 @@ void ex_helpgrep(exarg_T *eap)
     }
   }
 }
-

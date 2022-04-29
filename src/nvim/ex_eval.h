@@ -47,8 +47,7 @@ struct msglist {
 };
 
 // The exception types.
-typedef enum
-{
+typedef enum {
   ET_USER,       // exception caused by ":throw" command
   ET_ERROR,      // error exception
   ET_INTERRUPT,  // interrupt exception triggered by Ctrl-C

@@ -161,7 +161,7 @@ static struct vimvar {
   VV(VV_STATUSMSG,        "statusmsg",        VAR_STRING, 0),
   VV(VV_SHELL_ERROR,      "shell_error",      VAR_NUMBER, VV_RO),
   VV(VV_THIS_SESSION,     "this_session",     VAR_STRING, 0),
-  VV(VV_VERSION,          "version",          VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_VERSION,          "version",          VAR_NUMBER, VV_COMPAT + VV_RO),
   VV(VV_LNUM,             "lnum",             VAR_NUMBER, VV_RO_SBX),
   VV(VV_TERMRESPONSE,     "termresponse",     VAR_STRING, VV_RO),
   VV(VV_FNAME,            "fname",            VAR_STRING, VV_RO),
@@ -2095,8 +2095,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv, lval_T *const lp, co
     char_u *key = NULL;
     if (*p == '.') {
       key = p + 1;
-      for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {
-      }
+      for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {}
       if (len == 0) {
         if (!quiet) {
           emsg(_("E713: Cannot use empty key after ."));
@@ -2444,6 +2443,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, co
                             ? lp->ll_tv->v_lock
                             : lp->ll_tv->vval.v_dict->dv_lock,
                             lp->ll_name, TV_CSTRING)) {
+    // Skip
   } else if (lp->ll_range) {
     listitem_T *ll_li = lp->ll_li;
     int ll_n1 = lp->ll_n1;
@@ -2774,8 +2774,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
         xp->xp_context = EXPAND_NOTHING;
       } else if (c == '\'') {     // literal string
         // Trick: '' is like stopping and starting a literal string.
-        while ((c = *++xp->xp_pattern) != NUL && c != '\'') {
-        }
+        while ((c = *++xp->xp_pattern) != NUL && c != '\'') {}
         xp->xp_context = EXPAND_NOTHING;
       } else if (c == '|') {
         if (xp->xp_pattern[1] == '|') {
@@ -2794,8 +2793,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
     }
     arg = xp->xp_pattern;
     if (*arg != NUL) {
-      while ((c = *++arg) != NUL && (c == ' ' || c == '\t')) {
-      }
+      while ((c = *++arg) != NUL && (c == ' ' || c == '\t')) {}
     }
   }
 
@@ -4536,8 +4534,7 @@ static int eval_index(char_u **arg, typval_T *rettv, int evaluate, int verbose)
      * dict.name
      */
     key = *arg + 1;
-    for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {
-    }
+    for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {}
     if (len == 0) {
       return FAIL;
     }
@@ -5710,8 +5707,7 @@ static int get_literal_key(char_u **arg, typval_T *tv)
   if (!ASCII_ISALNUM(**arg) && **arg != '_' && **arg != '-') {
     return FAIL;
   }
-  for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {
-  }
+  for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {}
   tv->v_type = VAR_STRING;
   tv->vval.v_string = vim_strnsave(*arg, p - *arg);
 
@@ -5847,7 +5843,7 @@ size_t string2float(const char *const text, float_T *const ret_value)
     return 3;
   }
   if (STRNICMP(text, "-inf", 3) == 0) {
-    *ret_value = (float_T)-INFINITY;
+    *ret_value = (float_T) - INFINITY;
     return 4;
   }
   if (STRNICMP(text, "nan", 3) == 0) {
@@ -6663,7 +6659,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   if (!ui_has(kUICmdline)) {
     const char *lastnl = strrchr(prompt, '\n');
     if (lastnl != NULL) {
-      p = lastnl+1;
+      p = lastnl + 1;
       msg_start();
       msg_clr_eos();
       msg_puts_attr_len(prompt, p - prompt, echo_attr);
@@ -7948,8 +7944,7 @@ static int get_env_len(const char_u **arg)
   int len;
 
   const char_u *p;
-  for (p = *arg; vim_isIDc(*p); p++) {
-  }
+  for (p = *arg; vim_isIDc(*p); p++) {}
   if (p == *arg) {  // No name found.
     return 0;
   }
@@ -8091,8 +8086,7 @@ const char_u *find_name_end(const char_u *arg, const char_u **expr_start, const 
            || br_nest != 0); MB_PTR_ADV(p)) {
     if (*p == '\'') {
       // skip over 'string' to avoid counting [ and ] inside it.
-      for (p = p + 1; *p != NUL && *p != '\''; MB_PTR_ADV(p)) {
-      }
+      for (p = p + 1; *p != NUL && *p != '\''; MB_PTR_ADV(p)) {}
       if (*p == NUL) {
         break;
       }
@@ -8566,7 +8560,7 @@ int check_luafunc_name(const char *const str, const bool paren)
   if (*p != (paren ? '(' : NUL)) {
     return 0;
   } else {
-    return (int)(p-str);
+    return (int)(p - str);
   }
 }
 

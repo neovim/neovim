@@ -2053,7 +2053,7 @@ static void list_features(void)
   version_msg(_("\n\nFeatures: "));
   for (int i = 0; features[i] != NULL; i++) {
     version_msg(features[i]);
-    if (features[i+1] != NULL) {
+    if (features[i + 1] != NULL) {
       version_msg(" ");
     }
   }
@@ -2329,4 +2329,3 @@ void ex_intro(exarg_T *eap)
   intro_message(TRUE);
   wait_return(TRUE);
 }
-

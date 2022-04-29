@@ -417,7 +417,7 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
           STRCAT(val, mesg);  // 'E123' missing or at beginning
         } else {
           // '"filename" E123: message text'
-          if (mesg[0] != '"' || p-2 < &mesg[1]
+          if (mesg[0] != '"' || p - 2 < &mesg[1]
               || p[-2] != '"' || p[-1] != ' ') {
             // "E123:" is part of the file name.
             continue;

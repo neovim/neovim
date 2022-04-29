@@ -332,8 +332,7 @@ static int nlua_schedule(lua_State *const lstate)
 
 // Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
-{
-}
+{}
 
 // Dummy timer close callback. Used by f_wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
@@ -543,9 +542,9 @@ static int nlua_module_preloader(lua_State *lstate)
   ModuleDef def = builtin_modules[i];
   char name[256];
   name[0] = '@';
-  size_t off = xstrlcpy(name+1, def.name, (sizeof name) - 2);
-  strchrsub(name+1, '.', '/');
-  xstrlcpy(name+1+off, ".lua", (sizeof name)-2-off);
+  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
+  strchrsub(name + 1, '.', '/');
+  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
 
   if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
     return lua_error(lstate);
@@ -769,7 +768,7 @@ static void nlua_common_free_all_mem(lua_State *lstate)
 static void nlua_print_event(void **argv)
 {
   char *str = argv[0];
-  const size_t len = (size_t)(intptr_t)argv[1]-1;  // exclude final NUL
+  const size_t len = (size_t)(intptr_t)argv[1] - 1;  // exclude final NUL
 
   for (size_t i = 0; i < len;) {
     if (got_int) {
@@ -926,7 +925,7 @@ int nlua_call(lua_State *lstate)
     return luaL_error(lstate, e_luv_api_disabled, "vimL function");
   }
 
-  int nargs = lua_gettop(lstate)-1;
+  int nargs = lua_gettop(lstate) - 1;
   if (nargs > MAX_FUNC_ARGS) {
     return luaL_error(lstate, "Function called with too many arguments");
   }
@@ -934,10 +933,10 @@ int nlua_call(lua_State *lstate)
   typval_T vim_args[MAX_FUNC_ARGS + 1];
   int i = 0;  // also used for freeing the variables
   for (; i < nargs; i++) {
-    lua_pushvalue(lstate, i+2);
+    lua_pushvalue(lstate, i + 2);
     if (!nlua_pop_typval(lstate, &vim_args[i])) {
       api_set_error(&err, kErrorTypeException,
-                    "error converting argument %d", i+1);
+                    "error converting argument %d", i + 1);
       goto free_vim_args;
     }
   }
@@ -994,12 +993,12 @@ static int nlua_rpc(lua_State *lstate, bool request)
   size_t name_len;
   uint64_t chan_id = (uint64_t)luaL_checkinteger(lstate, 1);
   const char *name = luaL_checklstring(lstate, 2, &name_len);
-  int nargs = lua_gettop(lstate)-2;
+  int nargs = lua_gettop(lstate) - 2;
   Error err = ERROR_INIT;
   Array args = ARRAY_DICT_INIT;
 
   for (int i = 0; i < nargs; i++) {
-    lua_pushvalue(lstate, i+3);
+    lua_pushvalue(lstate, i + 3);
     ADD(args, nlua_pop_Object(lstate, false, &err));
     if (ERROR_SET(&err)) {
       api_free_array(args);
@@ -1415,7 +1414,7 @@ void ex_lua(exarg_T *const eap)
     // lua nlua_typval_exec doesn't expect null terminated string so len
     // needs to end before null byte.
     char *code_buf = xmallocz(len);
-    vim_snprintf(code_buf, len+1, "vim.pretty_print(%s)", code+1);
+    vim_snprintf(code_buf, len + 1, "vim.pretty_print(%s)", code + 1);
     xfree(code);
     code = code_buf;
   }
@@ -1820,7 +1819,7 @@ void nlua_set_sctx(sctx_T *current)
       is_ignored = true;
     } else {
       for (int i = 0; i < ignorelist_size; i++) {
-        if (strncmp(ignorelist[i], info->source+1, strlen(ignorelist[i])) == 0) {
+        if (strncmp(ignorelist[i], info->source + 1, strlen(ignorelist[i])) == 0) {
           is_ignored = true;
           break;
         }
@@ -1912,4 +1911,3 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
     nlua_error(lstate, _("Error executing Lua callback: %.*s"));
   }
 }
-

@@ -54,7 +54,7 @@
 #include "nvim/marktree.h"
 
 #define T MT_BRANCH_FACTOR
-#define ILEN (sizeof(mtnode_t)+(2 * T) * sizeof(void *))
+#define ILEN (sizeof(mtnode_t) + (2 * T) * sizeof(void *))
 
 #define ID_INCR (((uint64_t)1) << 2)
 
@@ -158,7 +158,7 @@ static inline void split_node(MarkTree *b, mtnode_t *x, const int i)
   z->level = y->level;
   z->n = T - 1;
   memcpy(z->key, &y->key[T], sizeof(mtkey_t) * (T - 1));
-  for (int j = 0; j < T-1; j++) {
+  for (int j = 0; j < T - 1; j++) {
     refkey(b, z, j);
   }
   if (y->level) {
@@ -179,11 +179,11 @@ static inline void split_node(MarkTree *b, mtnode_t *x, const int i)
   refkey(b, x, i);
   x->n++;
 
-  for (int j = 0; j < T-1; j++) {
+  for (int j = 0; j < T - 1; j++) {
     relative(x->key[i].pos, &z->key[j].pos);
   }
   if (i > 0) {
-    unrelative(x->key[i-1].pos, &x->key[i].pos);
+    unrelative(x->key[i - 1].pos, &x->key[i].pos);
   }
 }
 
@@ -198,7 +198,7 @@ static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
               (size_t)(x->n - i - 1) * sizeof(mtkey_t));
     }
     x->key[i + 1] = k;
-    refkey(b, x, i+1);
+    refkey(b, x, i + 1);
     x->n++;
   } else {
     i = marktree_getp_aux(x, k, 0) + 1;
@@ -209,7 +209,7 @@ static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
       }
     }
     if (i > 0) {
-      relative(x->key[i-1].pos, &k.pos);
+      relative(x->key[i - 1].pos, &k.pos);
     }
     marktree_putp_aux(b, x->ptr[i], k);
   }
@@ -247,7 +247,7 @@ void marktree_put_key(MarkTree *b, mtkey_t k)
   if (r->n == 2 * T - 1) {
     b->n_nodes++;
     s = (mtnode_t *)xcalloc(1, ILEN);
-    b->root = s; s->level = r->level+1; s->n = 0;
+    b->root = s; s->level = r->level + 1; s->n = 0;
     s->ptr[0] = r;
     r->parent = s;
     split_node(b, s, 0);
@@ -304,9 +304,9 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   mtnode_t *x = itr->node;
   assert(x->level == 0);
   mtkey_t intkey = x->key[itr->i];
-  if (x->n > itr->i+1) {
-    memmove(&x->key[itr->i], &x->key[itr->i+1],
-            sizeof(mtkey_t) * (size_t)(x->n - itr->i-1));
+  if (x->n > itr->i + 1) {
+    memmove(&x->key[itr->i], &x->key[itr->i + 1],
+            sizeof(mtkey_t) * (size_t)(x->n - itr->i - 1));
   }
   x->n--;
 
@@ -315,7 +315,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   //   abort();
   // }
   if (adjustment == -1) {
-    int ilvl = itr->lvl-1;
+    int ilvl = itr->lvl - 1;
     const mtnode_t *lnode = x;
     do {
       const mtnode_t *const p = lnode->parent;
@@ -325,7 +325,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
       const int i = itr->s[ilvl].i;
       assert(p->ptr[i] == lnode);
       if (i > 0) {
-        unrelative(p->key[i-1].pos, &intkey.pos);
+        unrelative(p->key[i - 1].pos, &intkey.pos);
       }
       lnode = p;
       ilvl--;
@@ -335,7 +335,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
     cur->key[curi] = intkey;
     refkey(b, cur, curi);
     relative(intkey.pos, &deleted.pos);
-    mtnode_t *y = cur->ptr[curi+1];
+    mtnode_t *y = cur->ptr[curi + 1];
     if (deleted.pos.row || deleted.pos.col) {
       while (y) {
         for (int k = 0; k < y->n; k++) {
@@ -352,33 +352,33 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 
   // 5.
   bool itr_dirty = false;
-  int rlvl = itr->lvl-1;
+  int rlvl = itr->lvl - 1;
   int *lasti = &itr->i;
   while (x != b->root) {
     assert(rlvl >= 0);
     mtnode_t *p = x->parent;
-    if (x->n >= T-1) {
+    if (x->n >= T - 1) {
       // we are done, if this node is fine the rest of the tree will be
       break;
     }
     int pi = itr->s[rlvl].i;
     assert(p->ptr[pi] == x);
-    if (pi > 0 && p->ptr[pi-1]->n > T-1) {
+    if (pi > 0 && p->ptr[pi - 1]->n > T - 1) {
       *lasti += 1;
       itr_dirty = true;
       // steal one key from the left neighbour
-      pivot_right(b, p, pi-1);
+      pivot_right(b, p, pi - 1);
       break;
-    } else if (pi < p->n && p->ptr[pi+1]->n > T-1) {
+    } else if (pi < p->n && p->ptr[pi + 1]->n > T - 1) {
       // steal one key from right neighbour
       pivot_left(b, p, pi);
       break;
     } else if (pi > 0) {
       // fprintf(stderr, "LEFT ");
-      assert(p->ptr[pi-1]->n == T-1);
+      assert(p->ptr[pi - 1]->n == T - 1);
       // merge with left neighbour
       *lasti += T;
-      x = merge_node(b, p, pi-1);
+      x = merge_node(b, p, pi - 1);
       if (lasti == &itr->i) {
         // TRICKY: we merged the node the iterator was on
         itr->node = x;
@@ -387,7 +387,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
       itr_dirty = true;
     } else {
       // fprintf(stderr, "RIGHT ");
-      assert(pi < p->n && p->ptr[pi+1]->n == T-1);
+      assert(pi < p->n && p->ptr[pi + 1]->n == T - 1);
       merge_node(b, p, pi);
       // no iter adjustment needed
     }
@@ -399,7 +399,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   // 6.
   if (b->root->n == 0) {
     if (itr->lvl > 0) {
-      memmove(itr->s, itr->s+1, (size_t)(itr->lvl-1) * sizeof(*itr->s));
+      memmove(itr->s, itr->s + 1, (size_t)(itr->lvl - 1) * sizeof(*itr->s));
       itr->lvl--;
     }
     if (b->root->level) {
@@ -441,26 +441,26 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 
 static mtnode_t *merge_node(MarkTree *b, mtnode_t *p, int i)
 {
-  mtnode_t *x = p->ptr[i], *y = p->ptr[i+1];
+  mtnode_t *x = p->ptr[i], *y = p->ptr[i + 1];
 
   x->key[x->n] = p->key[i];
   refkey(b, x, x->n);
   if (i > 0) {
-    relative(p->key[i-1].pos, &x->key[x->n].pos);
+    relative(p->key[i - 1].pos, &x->key[x->n].pos);
   }
 
-  memmove(&x->key[x->n+1], y->key, (size_t)y->n * sizeof(mtkey_t));
+  memmove(&x->key[x->n + 1], y->key, (size_t)y->n * sizeof(mtkey_t));
   for (int k = 0; k < y->n; k++) {
-    refkey(b, x, x->n+1+k);
-    unrelative(x->key[x->n].pos, &x->key[x->n+1+k].pos);
+    refkey(b, x, x->n + 1 + k);
+    unrelative(x->key[x->n].pos, &x->key[x->n + 1 + k].pos);
   }
   if (x->level) {
-    memmove(&x->ptr[x->n+1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
-    for (int k = 0; k < y->n+1; k++) {
-      x->ptr[x->n+k+1]->parent = x;
+    memmove(&x->ptr[x->n + 1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
+    for (int k = 0; k < y->n + 1; k++) {
+      x->ptr[x->n + k + 1]->parent = x;
     }
   }
-  x->n += y->n+1;
+  x->n += y->n + 1;
   memmove(&p->key[i], &p->key[i + 1], (size_t)(p->n - i - 1) * sizeof(mtkey_t));
   memmove(&p->ptr[i + 1], &p->ptr[i + 2],
           (size_t)(p->n - i - 1) * sizeof(mtkey_t *));
@@ -474,7 +474,7 @@ static mtnode_t *merge_node(MarkTree *b, mtnode_t *p, int i)
 // the two nodes instead of stealing just one key
 static void pivot_right(MarkTree *b, mtnode_t *p, int i)
 {
-  mtnode_t *x = p->ptr[i], *y = p->ptr[i+1];
+  mtnode_t *x = p->ptr[i], *y = p->ptr[i + 1];
   memmove(&y->key[1], y->key, (size_t)y->n * sizeof(mtkey_t));
   if (y->level) {
     memmove(&y->ptr[1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
@@ -490,7 +490,7 @@ static void pivot_right(MarkTree *b, mtnode_t *p, int i)
   x->n--;
   y->n++;
   if (i > 0) {
-    unrelative(p->key[i-1].pos, &p->key[i].pos);
+    unrelative(p->key[i - 1].pos, &p->key[i].pos);
   }
   relative(p->key[i].pos, &y->key[0].pos);
   for (int k = 1; k < y->n; k++) {
@@ -500,7 +500,7 @@ static void pivot_right(MarkTree *b, mtnode_t *p, int i)
 
 static void pivot_left(MarkTree *b, mtnode_t *p, int i)
 {
-  mtnode_t *x = p->ptr[i], *y = p->ptr[i+1];
+  mtnode_t *x = p->ptr[i], *y = p->ptr[i + 1];
 
   // reverse from how we "always" do it. but pivot_left
   // is just the inverse of pivot_right, so reverse it literally.
@@ -509,7 +509,7 @@ static void pivot_left(MarkTree *b, mtnode_t *p, int i)
   }
   unrelative(p->key[i].pos, &y->key[0].pos);
   if (i > 0) {
-    relative(p->key[i-1].pos, &p->key[i].pos);
+    relative(p->key[i - 1].pos, &p->key[i].pos);
   }
 
   x->key[x->n] = p->key[i];
@@ -517,10 +517,10 @@ static void pivot_left(MarkTree *b, mtnode_t *p, int i)
   p->key[i] = y->key[0];
   refkey(b, p, i);
   if (x->level) {
-    x->ptr[x->n+1] = y->ptr[0];
-    x->ptr[x->n+1]->parent = x;
+    x->ptr[x->n + 1] = y->ptr[0];
+    x->ptr[x->n + 1]->parent = x;
   }
-  memmove(y->key, &y->key[1], (size_t)(y->n-1) * sizeof(mtkey_t));
+  memmove(y->key, &y->key[1], (size_t)(y->n - 1) * sizeof(mtkey_t));
   if (y->level) {
     memmove(y->ptr, &y->ptr[1], (size_t)y->n * sizeof(mtnode_t *));
   }
@@ -546,7 +546,7 @@ void marktree_clear(MarkTree *b)
 void marktree_free_node(mtnode_t *x)
 {
   if (x->level) {
-    for (int i = 0; i < x->n+1; i++) {
+    for (int i = 0; i < x->n + 1; i++) {
       marktree_free_node(x->ptr[i]);
     }
   }
@@ -608,7 +608,7 @@ bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, 
     oldbase[itr->lvl] = itr->pos;
   }
   while (true) {
-    itr->i = marktree_getp_aux(itr->node, k, 0)+1;
+    itr->i = marktree_getp_aux(itr->node, k, 0) + 1;
 
     if (itr->node->level == 0) {
       break;
@@ -618,8 +618,8 @@ bool marktree_itr_get_ext(MarkTree *b, mtpos_t p, MarkTreeIter *itr, bool last, 
     itr->s[itr->lvl].oldcol = itr->pos.col;
 
     if (itr->i > 0) {
-      compose(&itr->pos, itr->node->key[itr->i-1].pos);
-      relative(itr->node->key[itr->i-1].pos, &k.pos);
+      compose(&itr->pos, itr->node->key[itr->i - 1].pos);
+      relative(itr->node->key[itr->i - 1].pos, &k.pos);
     }
     itr->node = itr->node->ptr[itr->i];
     itr->lvl++;
@@ -676,7 +676,7 @@ int marktree_itr_last(MarkTree *b, MarkTreeIter *itr)
     itr->s[itr->lvl].oldcol = itr->pos.col;
 
     assert(itr->i > 0);
-    compose(&itr->pos, itr->node->key[itr->i-1].pos);
+    compose(&itr->pos, itr->node->key[itr->i - 1].pos);
 
     itr->node = itr->node->ptr[itr->i];
     itr->lvl++;
@@ -712,7 +712,7 @@ static bool marktree_itr_next_skip(MarkTree *b, MarkTreeIter *itr, bool skip, mt
       itr->lvl--;
       itr->i = itr->s[itr->lvl].i;
       if (itr->i > 0) {
-        itr->pos.row -= itr->node->key[itr->i-1].pos.row;
+        itr->pos.row -= itr->node->key[itr->i - 1].pos.row;
         itr->pos.col = itr->s[itr->lvl].oldcol;
       }
     }
@@ -723,10 +723,10 @@ static bool marktree_itr_next_skip(MarkTree *b, MarkTreeIter *itr, bool skip, mt
       // internal key, there is always a child after
       if (itr->i > 0) {
         itr->s[itr->lvl].oldcol = itr->pos.col;
-        compose(&itr->pos, itr->node->key[itr->i-1].pos);
+        compose(&itr->pos, itr->node->key[itr->i - 1].pos);
       }
       if (oldbase && itr->i == 0) {
-        oldbase[itr->lvl+1] = oldbase[itr->lvl];
+        oldbase[itr->lvl + 1] = oldbase[itr->lvl];
       }
       itr->s[itr->lvl].i = itr->i;
       assert(itr->node->ptr[itr->i]->parent == itr->node);
@@ -757,7 +757,7 @@ bool marktree_itr_prev(MarkTree *b, MarkTreeIter *itr)
         return false;
       }
       itr->lvl--;
-      itr->i = itr->s[itr->lvl].i-1;
+      itr->i = itr->s[itr->lvl].i - 1;
       if (itr->i >= 0) {
         itr->pos.row -= itr->node->key[itr->i].pos.row;
         itr->pos.col = itr->s[itr->lvl].oldcol;
@@ -770,7 +770,7 @@ bool marktree_itr_prev(MarkTree *b, MarkTreeIter *itr)
       // internal key, there is always a child before
       if (itr->i > 0) {
         itr->s[itr->lvl].oldcol = itr->pos.col;
-        compose(&itr->pos, itr->node->key[itr->i-1].pos);
+        compose(&itr->pos, itr->node->key[itr->i - 1].pos);
       }
       itr->s[itr->lvl].i = itr->i;
       assert(itr->node->ptr[itr->i]->parent == itr->node);
@@ -796,7 +796,7 @@ void marktree_itr_rewind(MarkTree *b, MarkTreeIter *itr)
 
 bool marktree_itr_node_done(MarkTreeIter *itr)
 {
-  return !itr->node || itr->i == itr->node->n-1;
+  return !itr->node || itr->i == itr->node->n - 1;
 }
 
 
@@ -854,7 +854,7 @@ bool marktree_splice(MarkTree *b, int start_line, int start_col, int old_extent_
     return false;
   }
   mtpos_t delta = { new_extent.row - old_extent.row,
-                    new_extent.col-old_extent.col };
+                    new_extent.col - old_extent.col };
 
   if (may_delete) {
     mtpos_t ipos = marktree_itr_pos(itr);
@@ -913,13 +913,13 @@ continue_same_node:
 
       moved = true;
       if (itr->node->level) {
-        oldbase[itr->lvl+1] = rawkey(itr).pos;
-        unrelative(oldbase[itr->lvl], &oldbase[itr->lvl+1]);
+        oldbase[itr->lvl + 1] = rawkey(itr).pos;
+        unrelative(oldbase[itr->lvl], &oldbase[itr->lvl + 1]);
         rawkey(itr).pos = loc_start;
         marktree_itr_next_skip(b, itr, false, oldbase);
       } else {
         rawkey(itr).pos = loc_start;
-        if (itr->i < itr->node->n-1) {
+        if (itr->i < itr->node->n - 1) {
           itr->i++;
           if (!past_right) {
             goto continue_same_node;
@@ -946,12 +946,12 @@ past_continue_same_node:
       rawkey(itr).pos = loc_new;
       moved = true;
       if (itr->node->level) {
-        oldbase[itr->lvl+1] = oldpos;
-        unrelative(oldbase[itr->lvl], &oldbase[itr->lvl+1]);
+        oldbase[itr->lvl + 1] = oldpos;
+        unrelative(oldbase[itr->lvl], &oldbase[itr->lvl + 1]);
 
         marktree_itr_next_skip(b, itr, false, oldbase);
       } else {
-        if (itr->i < itr->node->n-1) {
+        if (itr->i < itr->node->n - 1) {
           itr->i++;
           goto past_continue_same_node;
         } else {
@@ -1056,7 +1056,7 @@ found: {}
   }
   while (n->parent != NULL) {
     mtnode_t *p = n->parent;
-    for (i = 0; i < p->n+1; i++) {
+    for (i = 0; i < p->n + 1; i++) {
       if (p->ptr[i] == n) {
         goto found_node;
       }
@@ -1064,10 +1064,10 @@ found: {}
     abort();
 found_node:
     if (itr) {
-      itr->s[b->root->level-p->level].i = i;
+      itr->s[b->root->level - p->level].i = i;
     }
     if (i > 0) {
-      unrelative(p->key[i-1].pos, &key.pos);
+      unrelative(p->key[i - 1].pos, &key.pos);
     }
     n = p;
   }
@@ -1099,7 +1099,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
     itr->s[lvl].oldcol = itr->pos.col;
     int i = itr->s[lvl].i;
     if (i > 0) {
-      compose(&itr->pos, x->key[i-1].pos);
+      compose(&itr->pos, x->key[i - 1].pos);
     }
     assert(x->level);
     x = x->ptr[i];
@@ -1147,7 +1147,7 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
 {
   assert(x->n <= 2 * T - 1);
   // TODO(bfredl): too strict if checking "in repair" post-delete tree.
-  assert(x->n >= (x != b->root ? T-1 : 0));
+  assert(x->n >= (x != b->root ? T - 1 : 0));
   size_t n_keys = (size_t)x->n;
 
   for (int i = 0; i < x->n; i++) {
@@ -1157,7 +1157,7 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
       *last = (mtpos_t) { 0, 0 };
     }
     if (i > 0) {
-      unrelative(x->key[i-1].pos, last);
+      unrelative(x->key[i - 1].pos, last);
     }
     assert(pos_leq(*last, x->key[i].pos));
     if (last->row == x->key[i].pos.row && last->col == x->key[i].pos.col) {
@@ -1170,18 +1170,18 @@ static size_t check_node(MarkTree *b, mtnode_t *x, mtpos_t *last, bool *last_rig
 
   if (x->level) {
     n_keys += check_node(b, x->ptr[x->n], last, last_right);
-    unrelative(x->key[x->n-1].pos, last);
+    unrelative(x->key[x->n - 1].pos, last);
 
-    for (int i = 0; i < x->n+1; i++) {
+    for (int i = 0; i < x->n + 1; i++) {
       assert(x->ptr[i]->parent == x);
-      assert(x->ptr[i]->level == x->level-1);
+      assert(x->ptr[i]->level == x->level - 1);
       // PARANOIA: check no double node ref
       for (int j = 0; j < i; j++) {
         assert(x->ptr[i] != x->ptr[j]);
       }
     }
   } else {
-    *last = x->key[x->n-1].pos;
+    *last = x->key[x->n - 1].pos;
   }
   return n_keys;
 }
@@ -1209,11 +1209,10 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
     snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
     ga_concat(ga, buf);
     if (n->level) {
-      mt_inspect_node(b, ga, n->ptr[i+1], p);
+      mt_inspect_node(b, ga, n->ptr[i + 1], p);
     } else {
       ga_concat(ga, ",");
     }
   }
   ga_concat(ga, "]");
 }
-

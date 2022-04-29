@@ -1528,8 +1528,7 @@ rewind_retry:
             // Need to reset the counters when retrying fenc.
             try_mac = 1;
             try_unix = 1;
-            for (; p >= ptr && *p != CAR; p--) {
-            }
+            for (; p >= ptr && *p != CAR; p--) {}
             if (p >= ptr) {
               for (p = ptr; p < ptr + size; ++p) {
                 if (*p == NL) {

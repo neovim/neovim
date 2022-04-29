@@ -1698,8 +1698,7 @@ void free_signs(void)
   }
 }
 
-static enum
-{
+static enum {
   EXP_SUBCMD,   // expand :sign sub-commands
   EXP_DEFINE,   // expand :sign define {name} args
   EXP_PLACE,    // expand :sign place {id} args

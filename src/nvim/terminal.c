@@ -744,8 +744,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
     int vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
     int vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
 
-    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx-1];
-    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx-1];
+    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx - 1];
+    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx - 1];
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                    | (cell.attrs.italic ? HL_ITALIC : 0)

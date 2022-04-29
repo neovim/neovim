@@ -3302,7 +3302,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
     uint64_t buf = 0;
     char *buf_u8 = (char *)&buf;
     ShaDaReadResult fl_ret;
-    if ((fl_ret = fread_len(sd_reader, &(buf_u8[sizeof(buf)-length]), length))
+    if ((fl_ret = fread_len(sd_reader, &(buf_u8[sizeof(buf) - length]), length))
         != kSDReadStatusSuccess) {
       return fl_ret;
     }

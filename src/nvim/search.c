@@ -2543,9 +2543,8 @@ int findsent(Direction dir, long count)
           if ((c = inc(&tpos)) == -1) {
             break;
           }
-        }
-        while (vim_strchr((char_u *)")]\"'", c = gchar_pos(&tpos))
-               != NULL);
+        } while (vim_strchr((char_u *)")]\"'", c = gchar_pos(&tpos))
+                 != NULL);
         if (c == -1 || (!cpo_J && (c == ' ' || c == '\t')) || c == NUL
             || (cpo_J && (c == ' ' && inc(&tpos) >= 0
                           && gchar_pos(&tpos) == ' '))) {
@@ -3673,8 +3672,7 @@ again:
   p = get_cursor_pos_ptr();
   for (cp = p;
        *cp != NUL && *cp != '>' && !ascii_iswhite(*cp);
-       MB_PTR_ADV(cp)) {
-  }
+       MB_PTR_ADV(cp)) {}
   len = (int)(cp - p);
   if (len == 0) {
     curwin->w_cursor = old_pos;
@@ -5497,10 +5495,8 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             } else {
               // find the file name after the end of the match
               for (p = incl_regmatch.endp[0];
-                   *p && !vim_isfilec(*p); p++) {
-              }
-              for (i = 0; vim_isfilec(p[i]); i++) {
-              }
+                   *p && !vim_isfilec(*p); p++) {}
+              for (i = 0; vim_isfilec(p[i]); i++) {}
             }
 
             if (i == 0) {
@@ -5709,15 +5705,15 @@ search_line:
           p = find_word_start(p);
           p = find_word_end(p);
           if (p > aux) {
-            if (*aux != ')' && IObuff[i-1] != TAB) {
-              if (IObuff[i-1] != ' ') {
+            if (*aux != ')' && IObuff[i - 1] != TAB) {
+              if (IObuff[i - 1] != ' ') {
                 IObuff[i++] = ' ';
               }
               // IObuf =~ "\(\k\|\i\).* ", thus i >= 2
               if (p_js
-                  && (IObuff[i-2] == '.'
-                      || IObuff[i-2] == '?'
-                      || IObuff[i-2] == '!')) {
+                  && (IObuff[i - 2] == '.'
+                      || IObuff[i - 2] == '?'
+                      || IObuff[i - 2] == '!')) {
                 IObuff[i++] = ' ';
               }
             }

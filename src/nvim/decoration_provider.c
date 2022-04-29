@@ -100,7 +100,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
       args.items[0] = WINDOW_OBJ(wp->handle);
       args.items[1] = BUFFER_OBJ(wp->w_buffer->handle);
       // TODO(bfredl): we are not using this, but should be first drawn line?
-      args.items[2] = INTEGER_OBJ(wp->w_topline-1);
+      args.items[2] = INTEGER_OBJ(wp->w_topline - 1);
       args.items[3] = INTEGER_OBJ(knownmax);
       if (decor_provider_invoke(p->ns_id, "win", p->redraw_win, args, true, err)) {
         kvi_push(*line_providers, p);
@@ -228,4 +228,3 @@ void decor_free_all_mem(void)
   }
   kv_destroy(decor_providers);
 }
-

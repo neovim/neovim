@@ -51,7 +51,7 @@
   struct kbnode_##name##_s { \
     int32_t n; \
     bool is_internal; \
-    key_t key[2*T-1]; \
+    key_t key[2*T - 1]; \
     kbnode_##name##_t *ptr[]; \
   }; \
   typedef struct { \
@@ -435,7 +435,7 @@
 
 #define KBTREE_INIT(name, key_t, __cmp, T) \
   KBTREE_INIT_IMPL(name, key_t, kbnode_##name##_t, __cmp, T, \
-                   (sizeof(kbnode_##name##_t)+(2*T)*sizeof(void *)))
+                   (sizeof(kbnode_##name##_t) + (2*T)*sizeof(void *)))
 
 #define KBTREE_INIT_IMPL(name, key_t, kbnode_t, __cmp, T, ILEN) \
   __KB_TREE_T(name, key_t, T) \

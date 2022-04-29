@@ -413,7 +413,7 @@ size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int co
   mouse_row = row;
   mouse_col = col;
 
-  size_t written = 3 + (size_t)(p-buf);
+  size_t written = 3 + (size_t)(p - buf);
   rbuffer_write(input_buffer, (char *)buf, written);
   return written;
 }

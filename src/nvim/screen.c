@@ -390,7 +390,7 @@ int update_screen(int type)
       // CLEAR is already handled
       if (type == NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
         ui_comp_set_screen_valid(false);
-        for (int i = valid; i < Rows-p_ch; i++) {
+        for (int i = valid; i < Rows - p_ch; i++) {
           grid_clear_line(&default_grid, default_grid.line_offset[i],
                           Columns, false);
         }
@@ -409,7 +409,7 @@ int update_screen(int type)
           curwin->w_redr_status = true;
         }
       }
-      msg_grid_set_pos(Rows-p_ch, false);
+      msg_grid_set_pos(Rows - p_ch, false);
       msg_grid_invalid = false;
     } else if (msg_scrolled > Rows - 5) {  // clearing is faster
       type = CLEAR;
@@ -473,7 +473,7 @@ int update_screen(int type)
   // After disabling msgsep the grid might not have been deallocated yet,
   // hence we also need to check msg_grid.chars
   if (type == NOT_VALID && (msg_use_grid() || msg_grid.chars)) {
-    grid_fill(&default_grid, Rows-p_ch, Rows, 0, Columns, ' ', ' ', 0);
+    grid_fill(&default_grid, Rows - p_ch, Rows, 0, Columns, ' ', ' ', 0);
   }
 
   ui_comp_set_screen_valid(true);
@@ -1953,7 +1953,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
     char_counter += len;
   }
 
-  return MAX(char_counter + (fdc-i), (size_t)fdc);
+  return MAX(char_counter + (fdc - i), (size_t)fdc);
 }
 
 static inline void provider_err_virt_text(linenr_T lnum, char *err)
@@ -1964,7 +1964,7 @@ static inline void provider_err_virt_text(linenr_T lnum, char *err)
           ((VirtTextChunk){ .text = provider_err,
                             .hl_id = hl_err }));
   err_decor.virt_text_width = mb_string2cells((char_u *)err);
-  decor_add_ephemeral(lnum-1, 0, lnum-1, 0, &err_decor);
+  decor_add_ephemeral(lnum - 1, 0, lnum - 1, 0, &err_decor);
 }
 
 static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len)
@@ -2159,7 +2159,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   row = startrow;
 
   buf_T *buf = wp->w_buffer;
-  bool end_fill = (lnum == buf->b_ml.ml_line_count+1);
+  bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
@@ -2183,9 +2183,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
     }
 
-    has_decor = decor_redraw_line(buf, lnum-1, &decor_state);
+    has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
-    providers_invoke_line(wp, providers, lnum-1, &has_decor, &provider_err);
+    providers_invoke_line(wp, providers, lnum - 1, &has_decor, &provider_err);
 
     if (provider_err) {
       provider_err_virt_text(lnum, provider_err);
@@ -2389,7 +2389,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   memset(sattrs, 0, sizeof(sattrs));
   num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
-  decor_redraw_signs(buf, lnum-1, &num_signs, sattrs);
+  decor_redraw_signs(buf, lnum - 1, &num_signs, sattrs);
 
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
@@ -3340,7 +3340,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (has_decor && v > 0) {
           bool selected = (area_active || (area_highlighting && noinvcur
                                            && (colnr_T)vcol == wp->w_virtcol));
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1, off,
+          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v - 1, off,
                                               selected, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
@@ -4206,7 +4206,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         screen_adjust_grid(&current_grid, &current_row, &dummy_col);
 
         // Force a redraw of the first column of the next line.
-        current_grid->attrs[current_grid->line_offset[current_row+1]] = -1;
+        current_grid->attrs[current_grid->line_offset[current_row + 1]] = -1;
 
         // Remember that the line wraps, used for modeless copy.
         current_grid->line_wraps[current_row] = true;
@@ -4291,7 +4291,7 @@ void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
       } else if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
         item->win_col = state->eol_col;
       } else if (item->decor.virt_text_pos == kVTWinCol) {
-        item->win_col = MAX(item->decor.col+col_off, 0);
+        item->win_col = MAX(item->decor.col + col_off, 0);
       }
     }
     if (item->win_col < 0) {
@@ -4299,10 +4299,10 @@ void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
     }
 
     int col = draw_virt_text_item(buf, item->win_col, item->decor.virt_text,
-                                  item->decor.hl_mode, max_col, item->win_col-col_off);
+                                  item->decor.hl_mode, max_col, item->win_col - col_off);
     item->win_col = -2;  // deactivate
     if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
-      state->eol_col = col+1;
+      state->eol_col = col + 1;
     }
 
     *end_col = MAX(*end_col, col);
@@ -4348,7 +4348,7 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
     }
     schar_T dummy[2];
     int cells = line_putchar(buf, &s, through ? dummy : &linebuf_char[col],
-                             max_col-col, false, vcol);
+                             max_col - col, false, vcol);
     // if we failed to emit a char, we still need to advance
     cells = MAX(cells, 1);
 
@@ -4596,8 +4596,8 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
 
   if (bg_attr) {
     for (int c = col; c < endcol; c++) {
-      linebuf_attr[off_from+c] =
-        hl_combine_attr(bg_attr, linebuf_attr[off_from+c]);
+      linebuf_attr[off_from + c] =
+        hl_combine_attr(bg_attr, linebuf_attr[off_from + c]);
     }
   }
 
@@ -4634,7 +4634,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
 
       schar_copy(grid->chars[off_to], linebuf_char[off_from]);
       if (char_cells == 2) {
-        schar_copy(grid->chars[off_to+1], linebuf_char[off_from+1]);
+        schar_copy(grid->chars[off_to + 1], linebuf_char[off_from + 1]);
       }
 
       grid->attrs[off_to] = linebuf_attr[off_from];
@@ -4674,7 +4674,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
         } else if (clear_end == -1) {
           end_dirty = endcol;
         }
-        clear_end = col+1;
+        clear_end = col + 1;
       }
       col++;
       off_to++;
@@ -4694,7 +4694,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
     start_dirty = end_dirty;
   }
   if (clear_end > start_dirty) {
-    ui_line(grid, row, coloff+start_dirty, coloff+end_dirty, coloff+clear_end,
+    ui_line(grid, row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
             bg_attr, wrap);
   }
 }
@@ -5611,39 +5611,39 @@ static void win_redr_border(win_T *wp)
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
     for (int i = 0; i < icol; i++) {
-      grid_put_schar(grid, 0, i+adj[3], chars[1], attrs[1]);
+      grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
     }
     if (adj[1]) {
-      grid_put_schar(grid, 0, icol+adj[3], chars[2], attrs[2]);
+      grid_put_schar(grid, 0, icol + adj[3], chars[2], attrs[2]);
     }
     grid_puts_line_flush(false);
   }
 
   for (int i = 0; i < irow; i++) {
     if (adj[3]) {
-      grid_puts_line_start(grid, i+adj[0]);
-      grid_put_schar(grid, i+adj[0], 0, chars[7], attrs[7]);
+      grid_puts_line_start(grid, i + adj[0]);
+      grid_put_schar(grid, i + adj[0], 0, chars[7], attrs[7]);
       grid_puts_line_flush(false);
     }
     if (adj[1]) {
       int ic = (i == 0 && !adj[0] && chars[2][0]) ? 2 : 3;
-      grid_puts_line_start(grid, i+adj[0]);
-      grid_put_schar(grid, i+adj[0], icol+adj[3], chars[ic], attrs[ic]);
+      grid_puts_line_start(grid, i + adj[0]);
+      grid_put_schar(grid, i + adj[0], icol + adj[3], chars[ic], attrs[ic]);
       grid_puts_line_flush(false);
     }
   }
 
   if (adj[2]) {
-    grid_puts_line_start(grid, irow+adj[0]);
+    grid_puts_line_start(grid, irow + adj[0]);
     if (adj[3]) {
-      grid_put_schar(grid, irow+adj[0], 0, chars[6], attrs[6]);
+      grid_put_schar(grid, irow + adj[0], 0, chars[6], attrs[6]);
     }
     for (int i = 0; i < icol; i++) {
       int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
-      grid_put_schar(grid, irow+adj[0], i+adj[3], chars[ic], attrs[ic]);
+      grid_put_schar(grid, irow + adj[0], i + adj[3], chars[ic], attrs[ic]);
     }
     if (adj[1]) {
-      grid_put_schar(grid, irow+adj[0], icol+adj[3], chars[4], attrs[4]);
+      grid_put_schar(grid, irow + adj[0], icol + adj[3], chars[4], attrs[4]);
     }
     grid_puts_line_flush(false);
   }
@@ -5795,7 +5795,7 @@ void grid_put_schar(ScreenGrid *grid, int row, int col, char_u *schar, int attr)
 
     put_dirty_first = MIN(put_dirty_first, col);
     // TODO(bfredl): Y U NO DOUBLEWIDTH?
-    put_dirty_last = MAX(put_dirty_last, col+1);
+    put_dirty_last = MAX(put_dirty_last, col + 1);
   }
 }
 
@@ -5931,7 +5931,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
         grid->attrs[off + 1] = attr;
       }
       put_dirty_first = MIN(put_dirty_first, col);
-      put_dirty_last = MAX(put_dirty_last, col+mbyte_cells);
+      put_dirty_last = MAX(put_dirty_last, col + mbyte_cells);
     }
 
     off += mbyte_cells;
@@ -5961,7 +5961,7 @@ void grid_puts_line_flush(bool set_cursor)
   if (put_dirty_first < put_dirty_last) {
     if (set_cursor) {
       ui_grid_cursor_goto(put_dirty_grid->handle, put_dirty_row,
-                          MIN(put_dirty_last, put_dirty_grid->Columns-1));
+                          MIN(put_dirty_last, put_dirty_grid->Columns - 1));
     }
     if (!put_dirty_grid->throttled) {
       ui_line(put_dirty_grid, put_dirty_row, put_dirty_first, put_dirty_last,
@@ -6062,7 +6062,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
         if (dirty_first == INT_MAX) {
           dirty_first = col;
         }
-        dirty_last = col+1;
+        dirty_last = col + 1;
       }
       if (col == start_col) {
         schar_from_char(sc, c2);
@@ -6134,7 +6134,7 @@ void win_grid_alloc(win_T *wp)
   if (grid->Rows != rows) {
     wp->w_lines_valid = 0;
     xfree(wp->w_lines);
-    wp->w_lines = xcalloc(rows+1, sizeof(wline_T));
+    wp->w_lines = xcalloc(rows + 1, sizeof(wline_T));
   }
 
   int was_resized = false;
@@ -6570,7 +6570,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   }
 
   if (!grid->throttled) {
-    ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
+    ui_call_grid_scroll(grid->handle, row, end, col, col + width, -line_count, 0);
   }
 }
 
@@ -6620,7 +6620,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   }
 
   if (!grid->throttled) {
-    ui_call_grid_scroll(grid->handle, row, end, col, col+width, line_count, 0);
+    ui_call_grid_scroll(grid->handle, row, end, col, col + width, line_count, 0);
   }
 }
 

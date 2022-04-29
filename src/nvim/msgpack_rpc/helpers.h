@@ -21,4 +21,3 @@
 #endif
 
 #endif  // NVIM_MSGPACK_RPC_HELPERS_H
-

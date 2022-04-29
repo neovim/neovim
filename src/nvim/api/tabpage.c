@@ -150,4 +150,3 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
   api_clear_error(&stub);
   return ret;
 }
-

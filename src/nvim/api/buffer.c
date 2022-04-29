@@ -247,7 +247,7 @@ void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *e
     return;
   }
 
-  redraw_buf_range_later(buf, (linenr_T)first+1, (linenr_T)last);
+  redraw_buf_range_later(buf, (linenr_T)first + 1, (linenr_T)last);
 }
 
 /// Gets a line-range from the buffer.
@@ -495,7 +495,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
               (long)extra,
               kExtmarkNOOP);
 
-  extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
+  extmark_splice(curbuf, (int)start - 1, 0, (int)(end - start), 0,
                  deleted_bytes, (int)new_len, 0, inserted_bytes,
                  kExtmarkUndo);
 
@@ -602,15 +602,15 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
       int64_t lnum = start_row + i;
 
       const char *bufline = (char *)ml_get_buf(buf, lnum, false);
-      old_byte += (bcount_t)(strlen(bufline))+1;
+      old_byte += (bcount_t)(strlen(bufline)) + 1;
     }
-    old_byte += (bcount_t)end_col+1;
+    old_byte += (bcount_t)end_col + 1;
   }
 
   String first_item = replacement.items[0].data.string;
-  String last_item = replacement.items[replacement.size-1].data.string;
+  String last_item = replacement.items[replacement.size - 1].data.string;
 
-  size_t firstlen = (size_t)start_col+first_item.size;
+  size_t firstlen = (size_t)start_col + first_item.size;
   size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
   if (replacement.size == 1) {
     firstlen += last_part_len;
@@ -618,32 +618,32 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   char *first = xmallocz(firstlen);
   char *last = NULL;
   memcpy(first, str_at_start, (size_t)start_col);
-  memcpy(first+start_col, first_item.data, first_item.size);
-  memchrsub(first+start_col, NUL, NL, first_item.size);
+  memcpy(first + start_col, first_item.data, first_item.size);
+  memchrsub(first + start_col, NUL, NL, first_item.size);
   if (replacement.size == 1) {
-    memcpy(first+start_col+first_item.size, str_at_end+end_col, last_part_len);
+    memcpy(first + start_col + first_item.size, str_at_end + end_col, last_part_len);
   } else {
-    last = xmallocz(last_item.size+last_part_len);
+    last = xmallocz(last_item.size + last_part_len);
     memcpy(last, last_item.data, last_item.size);
     memchrsub(last, NUL, NL, last_item.size);
-    memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
+    memcpy(last + last_item.size, str_at_end + end_col, last_part_len);
   }
 
   char **lines = xcalloc(new_len, sizeof(char *));
   lines[0] = first;
   new_byte += (bcount_t)(first_item.size);
-  for (size_t i = 1; i < new_len-1; i++) {
+  for (size_t i = 1; i < new_len - 1; i++) {
     const String l = replacement.items[i].data.string;
 
     // Fill lines[i] with l's contents. Convert NULs to newlines as required by
     // NL-used-for-NUL.
     lines[i] = xmemdupz(l.data, l.size);
     memchrsub(lines[i], NUL, NL, l.size);
-    new_byte += (bcount_t)(l.size)+1;
+    new_byte += (bcount_t)(l.size) + 1;
   }
   if (replacement.size > 1) {
-    lines[replacement.size-1] = last;
-    new_byte += (bcount_t)(last_item.size)+1;
+    lines[replacement.size - 1] = last;
+    new_byte += (bcount_t)(last_item.size) + 1;
   }
 
   try_start();
@@ -663,7 +663,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   }
 
   ptrdiff_t extra = 0;  // lines added to text, can be negative
-  size_t old_len = (size_t)(end_row-start_row+1);
+  size_t old_len = (size_t)(end_row - start_row + 1);
 
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
@@ -731,9 +731,9 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   colnr_T col_extent = (colnr_T)(end_col
                                  - ((end_row == start_row) ? start_col : 0));
-  extmark_splice(buf, (int)start_row-1, (colnr_T)start_col,
-                 (int)(end_row-start_row), col_extent, old_byte,
-                 (int)new_len-1, (colnr_T)last_item.size, new_byte,
+  extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
+                 (int)(end_row - start_row), col_extent, old_byte,
+                 (int)new_len - 1, (colnr_T)last_item.size, new_byte,
                  kExtmarkUndo);
 
 
@@ -829,7 +829,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
   rv.size = (size_t)(end_row - start_row) + 1;
   rv.items = xcalloc(rv.size, sizeof(Object));
 
-  rv.items[0] = STRING_OBJ(buf_get_text(buf, start_row, start_col, MAXCOL-1, replace_nl, err));
+  rv.items[0] = STRING_OBJ(buf_get_text(buf, start_row, start_col, MAXCOL - 1, replace_nl, err));
   if (ERROR_SET(err)) {
     goto end;
   }
@@ -842,7 +842,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
     }
   }
 
-  rv.items[rv.size-1] = STRING_OBJ(buf_get_text(buf, end_row, 0, end_col, replace_nl, err));
+  rv.items[rv.size - 1] = STRING_OBJ(buf_get_text(buf, end_row, 0, end_col, replace_nl, err));
   if (ERROR_SET(err)) {
     goto end;
   }
@@ -889,7 +889,7 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
     return 0;
   }
 
-  return ml_find_line_or_offset(buf, (int)index+1, NULL, true);
+  return ml_find_line_or_offset(buf, (int)index + 1, NULL, true);
 }
 
 /// Gets a buffer-scoped (b:) variable.

@@ -1215,4 +1215,3 @@ void ex_match(exarg_T *eap)
   }
   eap->nextcmd = find_nextcmd(end);
 }
-

@@ -208,7 +208,7 @@ int tslua_inspect_lang(lua_State *L)
 
   size_t nsymbols = (size_t)ts_language_symbol_count(lang);
 
-  lua_createtable(L, nsymbols-1, 1);  // [retval, symbols]
+  lua_createtable(L, nsymbols - 1, 1);  // [retval, symbols]
   for (size_t i = 0; i < nsymbols; i++) {
     TSSymbolType t = ts_language_symbol_type(lang, i);
     if (t == TSSymbolTypeAuxiliary) {
@@ -298,15 +298,15 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
     *bytes_read = 0;
     return "";
   }
-  char_u *line = ml_get_buf(bp, position.row+1, false);
+  char_u *line = ml_get_buf(bp, position.row + 1, false);
   size_t len = STRLEN(line);
   if (position.column > len) {
     *bytes_read = 0;
     return "";
   }
-  size_t tocopy = MIN(len-position.column, BUFSIZE);
+  size_t tocopy = MIN(len - position.column, BUFSIZE);
 
-  memcpy(buf, line+position.column, tocopy);
+  memcpy(buf, line + position.column, tocopy);
   // Translate embedded \n to NUL
   memchrsub(buf, '\n', '\0', tocopy);
   *bytes_read = (uint32_t)tocopy;
@@ -334,7 +334,7 @@ static void push_ranges(lua_State *L, const TSRange *ranges, const unsigned int 
     lua_pushinteger(L, ranges[i].end_point.column);
     lua_rawseti(L, -2, 4);
 
-    lua_rawseti(L, -2, i+1);
+    lua_rawseti(L, -2, i + 1);
   }
 }
 
@@ -1037,7 +1037,7 @@ static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
 {
   for (int i = 0; i < match->capture_count; i++) {
     push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, match->captures[i].index+1);
+    lua_rawseti(L, -2, match->captures[i].index + 1);
   }
 }
 
@@ -1049,7 +1049,7 @@ static int query_next_match(lua_State *L)
   TSQuery *query = query_check(L, lua_upvalueindex(3));
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
-    lua_pushinteger(L, match.pattern_index+1);  // [index]
+    lua_pushinteger(L, match.pattern_index + 1);  // [index]
     lua_createtable(L, ts_query_capture_count(query), 2);  // [index, match]
     set_match(L, &match, lua_upvalueindex(2));
     return 2;
@@ -1082,7 +1082,7 @@ static int query_next_capture(lua_State *L)
   if (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
     TSQueryCapture capture = match.captures[capture_index];
 
-    lua_pushinteger(L, capture.index+1);  // [index]
+    lua_pushinteger(L, capture.index + 1);  // [index]
     push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
 
     // Now check if we need to run the predicates
@@ -1094,7 +1094,7 @@ static int query_next_capture(lua_State *L)
 
       lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       set_match(L, &match, lua_upvalueindex(2));
-      lua_pushinteger(L, match.pattern_index+1);
+      lua_pushinteger(L, match.pattern_index + 1);
       lua_setfield(L, -2, "pattern");
 
       if (match.capture_count > 1) {
@@ -1273,7 +1273,7 @@ static int query_inspect(lua_State *L)
                                                        &strlen);
         lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
       } else if (step[k].type == TSQueryPredicateStepTypeCapture) {
-        lua_pushnumber(L, step[k].value_id+1);  // [..., pat, pred, item]
+        lua_pushnumber(L, step[k].value_id + 1);  // [..., pat, pred, item]
       } else {
         abort();
       }
@@ -1281,7 +1281,7 @@ static int query_inspect(lua_State *L)
     }
     // last predicate should have ended with TypeDone
     lua_pop(L, 1);  // [retval, patters, pat]
-    lua_rawseti(L, -2, i+1);  // [retval, patterns]
+    lua_rawseti(L, -2, i + 1);  // [retval, patterns]
   }
   lua_setfield(L, -2, "patterns");  // [retval]
 
@@ -1291,7 +1291,7 @@ static int query_inspect(lua_State *L)
     uint32_t strlen;
     const char *str = ts_query_capture_name_for_id(query, i, &strlen);
     lua_pushlstring(L, str, strlen);  // [retval, captures, capture]
-    lua_rawseti(L, -2, i+1);
+    lua_rawseti(L, -2, i + 1);
   }
   lua_setfield(L, -2, "captures");  // [retval]
 

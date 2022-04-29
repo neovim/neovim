@@ -624,8 +624,7 @@ event_T event_name2nr(const char_u *start, char_u **end)
   int i;
 
   // the event name ends with end of line, '|', a blank or a comma
-  for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; p++) {
-  }
+  for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; p++) {}
   for (i = 0; event_names[i].name != NULL; i++) {
     int len = (int)event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0) {
@@ -2608,8 +2607,7 @@ static int arg_augroup_get(char_u **argp)
   char_u *arg = *argp;
   int group = AUGROUP_ALL;
 
-  for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; p++) {
-  }
+  for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; p++) {}
   if (p > arg) {
     char_u *group_name = vim_strnsave(arg, (size_t)(p - arg));
     group = augroup_find((char *)group_name);

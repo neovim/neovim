@@ -2601,7 +2601,7 @@ void clear_showcmd(void)
         sprintf((char *)showcmd_buf, "%d-%d", chars, bytes);
       }
     }
-    int limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+    int limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN - 1 : SHOWCMD_COLS;
     showcmd_buf[limit] = NUL;  // truncate
     showcmd_visual = true;
   } else {
@@ -2659,7 +2659,7 @@ bool add_to_showcmd(int c)
   }
   size_t old_len = STRLEN(showcmd_buf);
   size_t extra_len = STRLEN(p);
-  size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN-1 : SHOWCMD_COLS;
+  size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN - 1 : SHOWCMD_COLS;
   if (old_len + extra_len > limit) {
     size_t overflow = old_len + extra_len - limit;
     memmove(showcmd_buf, showcmd_buf + overflow, old_len - overflow + 1);
@@ -2887,8 +2887,7 @@ static void nv_ignore(cmdarg_T *cap)
 /// Command character that doesn't do anything, but unlike nv_ignore() does
 /// start edit().  Used for "startinsert" executed while starting up.
 static void nv_nop(cmdarg_T *cap)
-{
-}
+{}
 
 /// Command character doesn't exist.
 static void nv_error(cmdarg_T *cap)

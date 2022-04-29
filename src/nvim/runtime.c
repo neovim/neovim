@@ -485,7 +485,7 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle
     STRLCPY(buf, pack_entry, sizeof buf);
     STRLCPY(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
     expand_rtp_entry(search_path, rtp_used, buf, false);
-    size_t after_size = STRLEN(buf)+7;
+    size_t after_size = STRLEN(buf) + 7;
     char *after = xmallocz(after_size);
     xstrlcpy(after, buf, after_size);
     xstrlcat(after, "/after", after_size);
@@ -499,7 +499,7 @@ static bool path_is_after(char_u *buf, size_t buflen)
   // vim8 considers all dirs like "foo/bar_after", "Xafter" etc, as an
   // "after" dir in SOME codepaths not not in ALL codepaths.
   return buflen >= 5
-         && (!(buflen >= 6) || vim_ispathsep(buf[buflen-6]))
+         && (!(buflen >= 6) || vim_ispathsep(buf[buflen - 6]))
          && STRCMP(buf + buflen - 5, "after") == 0;
 }
 

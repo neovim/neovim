@@ -55,7 +55,7 @@ typedef struct {
 
 #define DECOR_LEVELS 4
 #define MT_FLAG_DECOR_OFFSET 4
-#define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS-1)) << MT_FLAG_DECOR_OFFSET)
+#define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS - 1)) << MT_FLAG_DECOR_OFFSET)
 
 // next flag is (((uint16_t)1) << 6)
 

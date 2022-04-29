@@ -192,7 +192,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   String rv = { .size = 0 };
 
   index = convert_index(index);
-  Array slice = nvim_buf_get_lines(0, buffer, index, index+1, true, err);
+  Array slice = nvim_buf_get_lines(0, buffer, index, index + 1, true, err);
 
   if (!ERROR_SET(err) && slice.size) {
     rv = slice.items[0].data.string;
@@ -221,7 +221,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
   Object l = STRING_OBJ(line);
   Array array = { .items = &l, .size = 1 };
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index+1, true,  array, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true,  array, err);
 }
 
 /// Deletes a buffer line
@@ -239,7 +239,7 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   Array array = ARRAY_DICT_INIT;
   index = convert_index(index);
-  nvim_buf_set_lines(0, buffer, index, index+1, true, array, err);
+  nvim_buf_set_lines(0, buffer, index, index + 1, true, array, err);
 }
 
 /// Retrieves a line range from the buffer

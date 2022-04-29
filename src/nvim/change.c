@@ -369,7 +369,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
   if (curbuf_splice_pending == 0) {
-    extmark_splice_cols(curbuf, (int)lnum-1, col, old, new, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum - 1, col, old, new, kExtmarkUndo);
   }
 
   changed_bytes(lnum, col);
@@ -1306,8 +1306,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           p--;
         }
         for (lead_repl = p; lead_repl > curbuf->b_p_com
-             && lead_repl[-1] != ':'; lead_repl--) {
-        }
+             && lead_repl[-1] != ':'; lead_repl--) {}
         lead_repl_len = (int)(p - lead_repl);
 
         // We can probably always add an extra space when doing "O" on
@@ -1379,8 +1378,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         if (c == COM_RIGHT) {  // right adjusted leader
           // find last non-white in the leader to line up with
           for (p = leader + lead_len - 1; p > leader
-               && ascii_iswhite(*p); p--) {
-          }
+               && ascii_iswhite(*p); p--) {}
           p++;
 
           // Compute the length of the replaced characters in
@@ -1728,8 +1726,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
-        int cols_added = mincol-1+less_cols_off-less_cols;
-        extmark_splice(curbuf, (int)lnum-1, mincol-1 - cols_spliced,
+        int cols_added = mincol - 1 + less_cols_off - less_cols;
+        extmark_splice(curbuf, (int)lnum - 1, mincol - 1 - cols_spliced,
                        0, less_cols_off, less_cols_off,
                        1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {
@@ -1745,8 +1743,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
     // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)STRLEN(ml_get(curwin->w_cursor.lnum));
-    extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, 0,
-                   0, 0, 0, 1, 0, 1+extra, kExtmarkUndo);
+    extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, 0,
+                   0, 0, 0, 1, 0, 1 + extra, kExtmarkUndo);
   }
   curbuf_splice_pending--;
 
@@ -1942,8 +1940,7 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
           string++;
         }
       }
-      for (j = 0; string[j] != NUL && string[j] == line[i + j]; j++) {
-      }
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; j++) {}
       if (string[j] != NUL) {
         continue;          // string doesn't match
       }
@@ -2081,8 +2078,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         // whitespace.  Otherwise we would think we are inside a
         // comment if the middle part appears somewhere in the middle
         // of the line.  E.g. for C the "*" appears often.
-        for (j = 0; j <= i && ascii_iswhite(line[j]); j++) {
-        }
+        for (j = 0; j <= i && ascii_iswhite(line[j]); j++) {}
         if (j < i) {
           continue;
         }

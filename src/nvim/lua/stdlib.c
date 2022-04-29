@@ -59,8 +59,8 @@ static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
   *prog = rm.regprog;
 
   if (match) {
-    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0]-str));
-    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0]-str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - str));
     return 2;
   }
   return 0;
@@ -110,7 +110,7 @@ static int regex_match_line(lua_State *lstate)
     return luaL_error(lstate, "invalid row");
   }
 
-  char_u *line = ml_get_buf(buf, rownr+1, false);
+  char_u *line = ml_get_buf(buf, rownr + 1, false);
   size_t len = STRLEN(line);
 
   if (start < 0 || (size_t)start > len) {
@@ -126,7 +126,7 @@ static int regex_match_line(lua_State *lstate)
     line[end] = NUL;
   }
 
-  int nret = regex_match(lstate, prog, line+start);
+  int nret = regex_match(lstate, prog, line + start);
 
   if (end >= 0) {
     line[end] = save;
@@ -208,7 +208,7 @@ static int nlua_str_utf_pos(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   size_t idx = 1;
   size_t clen;
   for (size_t i = 0; i < s1_len && s1[i] != NUL; i += clen) {
-    clen = (size_t)utf_ptr2len_len((const char_u *)(s1)+i, (int)(s1_len-i));
+    clen = (size_t)utf_ptr2len_len((const char_u *)(s1) + i, (int)(s1_len - i));
     lua_pushinteger(lstate, (long)i + 1);
     lua_rawseti(lstate, -2, (int)idx);
     idx++;

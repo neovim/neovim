@@ -453,7 +453,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
   if (p_wd && !(rdb_flags & RDB_COMPOSITOR)) {
     // If 'writedelay' is active, set the cursor to indicate what was drawn.
     ui_call_grid_cursor_goto(grid->handle, row,
-                             MIN(clearcol, (int)grid->Columns-1));
+                             MIN(clearcol, (int)grid->Columns - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
     os_microdelay(wd * 1000u, true);
