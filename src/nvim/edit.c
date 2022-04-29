@@ -1793,7 +1793,6 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   int last_vcol;
   int insstart_less;                    // reduction for Insstart.col
   int new_cursor_col;
-  int i;
   char_u *ptr;
   int save_p_list;
   int start_col;
@@ -1906,10 +1905,10 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
      */
     if (vcol != (int)curwin->w_virtcol) {
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
-      i = (int)curwin->w_virtcol - vcol;
+      size_t i = (size_t)(curwin->w_virtcol - vcol);
       ptr = xmallocz(i);
       memset(ptr, ' ', i);
-      new_cursor_col += i;
+      new_cursor_col += (int)i;
       ins_str(ptr);
       xfree(ptr);
     }
@@ -2289,7 +2288,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
               ? actual_len : actual_compl_length;
 
     // Allocate wide character array for the completion and fill it.
-    int *const wca = xmalloc(actual_len * sizeof(*wca));
+    int *const wca = xmalloc((size_t)actual_len * sizeof(*wca));
     {
       const char_u *p = str;
       for (i = 0; i < actual_len; i++) {
@@ -2449,7 +2448,7 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
   if (flags & CP_ORIGINAL_TEXT) {
     match->cp_number = 0;
   }
-  match->cp_str = vim_strnsave(str, len);
+  match->cp_str = vim_strnsave(str, (size_t)len);
 
   // match-fname is:
   // - compl_curr_match->cp_fname if it is a string equal to fname.
@@ -2682,7 +2681,7 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_length = (int)curwin->w_cursor.col - (int)startcol;
   // compl_pattern doesn't need to be set
   compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
-                                 compl_length);
+                                 (size_t)compl_length);
   if (p_ic) {
     flags |= CP_ICASE;
   }
@@ -2840,7 +2839,7 @@ void ins_compl_show_pum(void)
     do {
       if ((compl->cp_flags & CP_ORIGINAL_TEXT) == 0
           && (compl_leader == NULL
-              || ins_compl_equal(compl, compl_leader, lead_len))) {
+              || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
         compl_match_arraysize++;
       }
       compl = compl->cp_next;
@@ -2850,9 +2849,9 @@ void ins_compl_show_pum(void)
     }
 
     assert(compl_match_arraysize >= 0);
-    compl_match_array = xcalloc(compl_match_arraysize, sizeof(pumitem_T));
-    /* If the current match is the original text don't find the first
-     * match after it, don't highlight anything. */
+    compl_match_array = xcalloc((size_t)compl_match_arraysize, sizeof(pumitem_T));
+    // If the current match is the original text don't find the first
+    // match after it, don't highlight anything.
     if (compl_shown_match->cp_flags & CP_ORIGINAL_TEXT) {
       shown_match_ok = true;
     }
@@ -2862,7 +2861,7 @@ void ins_compl_show_pum(void)
     do {
       if ((compl->cp_flags & CP_ORIGINAL_TEXT) == 0
           && (compl_leader == NULL
-              || ins_compl_equal(compl, compl_leader, lead_len))) {
+              || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
         if (!shown_match_ok) {
           if (compl == compl_shown_match || did_find_shown_match) {
             /* This item is the shown match or this is the
@@ -3429,7 +3428,7 @@ static int ins_compl_bs(void)
   line = get_cursor_line_ptr();
 
   xfree(compl_leader);
-  compl_leader = vim_strnsave(line + compl_col, (int)p_off - compl_col);
+  compl_leader = vim_strnsave(line + compl_col, (size_t)(p_off - (ptrdiff_t)compl_col));
   ins_compl_new_leader();
   if (compl_shown_match != NULL) {
     // Make sure current match is not a hidden item.
@@ -3518,7 +3517,7 @@ static void ins_compl_addleader(int c)
 
     utf_char2bytes(c, buf);
     buf[cc] = NUL;
-    ins_char_bytes(buf, cc);
+    ins_char_bytes(buf, (size_t)cc);
   } else {
     ins_char(c);
   }
@@ -3530,7 +3529,7 @@ static void ins_compl_addleader(int c)
 
   xfree(compl_leader);
   compl_leader = vim_strnsave(get_cursor_line_ptr() + compl_col,
-                              curwin->w_cursor.col - compl_col);
+                              (size_t)(curwin->w_cursor.col - compl_col));
   ins_compl_new_leader();
 }
 
@@ -3590,8 +3589,7 @@ static void ins_compl_addfrommatch(void)
       for (cp = compl_shown_match->cp_next; cp != NULL
            && cp != compl_first_match; cp = cp->cp_next) {
         if (compl_leader == NULL
-            || ins_compl_equal(cp, compl_leader,
-                               (int)STRLEN(compl_leader))) {
+            || ins_compl_equal(cp, compl_leader, STRLEN(compl_leader))) {
           p = cp->cp_str;
           break;
         }
@@ -4753,12 +4751,10 @@ static int ins_compl_next(int allow_get_expansion, int count, int insert_match, 
     /* If we didn't find it searching forward, and compl_shows_dir is
      * backward, find the last match. */
     if (compl_shows_dir == BACKWARD
-        && !ins_compl_equal(compl_shown_match,
-                            compl_leader, (int)STRLEN(compl_leader))
+        && !ins_compl_equal(compl_shown_match, compl_leader, STRLEN(compl_leader))
         && (compl_shown_match->cp_next == NULL
             || compl_shown_match->cp_next == compl_first_match)) {
-      while (!ins_compl_equal(compl_shown_match,
-                              compl_leader, (int)STRLEN(compl_leader))
+      while (!ins_compl_equal(compl_shown_match, compl_leader, STRLEN(compl_leader))
              && compl_shown_match->cp_prev != NULL
              && compl_shown_match->cp_prev != compl_first_match) {
         compl_shown_match = compl_shown_match->cp_prev;
@@ -5183,7 +5179,7 @@ static int ins_complete(int c, bool enable_pum)
         if (p_ic) {
           compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
         } else {
-          compl_pattern = vim_strnsave(line + compl_col, compl_length);
+          compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
         }
       } else if (compl_cont_status & CONT_ADDING) {
         char_u *prefix = (char_u *)"\\<";
@@ -5247,7 +5243,7 @@ static int ins_complete(int c, bool enable_pum)
       if (p_ic) {
         compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
       } else {
-        compl_pattern = vim_strnsave(line + compl_col, compl_length);
+        compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
       }
     } else if (ctrl_x_mode == CTRL_X_FILES) {
       // Go back to just before the first filename character.
@@ -5267,9 +5263,9 @@ static int ins_complete(int c, bool enable_pum)
 
       compl_col += startcol;
       compl_length = (int)curs_col - startcol;
-      compl_pattern = addstar(line + compl_col, compl_length, EXPAND_FILES);
+      compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
     } else if (ctrl_x_mode == CTRL_X_CMDLINE || ctrl_x_mode == CTRL_X_CMDLINE_CTRL_X) {
-      compl_pattern = vim_strnsave(line, curs_col);
+      compl_pattern = vim_strnsave(line, (size_t)curs_col);
       set_cmd_context(&compl_xp, compl_pattern,
                       (int)STRLEN(compl_pattern), curs_col, false);
       if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
@@ -5311,7 +5307,7 @@ static int ins_complete(int c, bool enable_pum)
       pos = curwin->w_cursor;
       curwin_save = curwin;
       curbuf_save = curbuf;
-      int col = call_func_retnr((char *)funcname, 2, args);
+      colnr_T col = (colnr_T)call_func_retnr((char *)funcname, 2, args);
 
       State = save_State;
       if (curwin_save != curwin || curbuf_save != curbuf) {
@@ -5356,7 +5352,7 @@ static int ins_complete(int c, bool enable_pum)
        * it may have become invalid. */
       line = ml_get(curwin->w_cursor.lnum);
       compl_length = curs_col - compl_col;
-      compl_pattern = vim_strnsave(line + compl_col, compl_length);
+      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
     } else if (ctrl_x_mode == CTRL_X_SPELL) {
       if (spell_bad_len > 0) {
         assert(spell_bad_len <= INT_MAX);
@@ -5373,7 +5369,7 @@ static int ins_complete(int c, bool enable_pum)
       }
       // Need to obtain "line" again, it may have become invalid.
       line = ml_get(curwin->w_cursor.lnum);
-      compl_pattern = vim_strnsave(line + compl_col, compl_length);
+      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
     } else {
       internal_error("ins_complete()");
       return FAIL;
@@ -5410,7 +5406,7 @@ static int ins_complete(int c, bool enable_pum)
 
     // Always add completion for the original text.
     xfree(compl_orig_text);
-    compl_orig_text = vim_strnsave(line + compl_col, compl_length);
+    compl_orig_text = vim_strnsave(line + compl_col, (size_t)compl_length);
     if (p_ic) {
       flags |= CP_ICASE;
     }
@@ -5840,7 +5836,6 @@ void insertchar(int c, int flags, int second_indent)
   if (did_ai && c == end_comment_pending) {
     char_u *line;
     char_u lead_end[COM_MAX_LEN];  // end-comment string
-    int middle_len, end_len;
     int i;
 
     /*
@@ -5853,7 +5848,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of middle flags
         p++;
       }
-      middle_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+      int middle_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
       // Don't count trailing white space for middle_len
       while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
         middle_len--;
@@ -5863,7 +5858,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of end flags
         p++;
       }
-      end_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+      int end_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
@@ -5880,7 +5875,7 @@ void insertchar(int c, int flags, int second_indent)
 
         // Insert the end-comment string, except for the last
         // character, which will get inserted as normal later.
-        ins_bytes_len(lead_end, end_len - 1);
+        ins_bytes_len(lead_end, (size_t)(end_len - 1));
       }
     }
   }
@@ -5912,7 +5907,7 @@ void insertchar(int c, int flags, int second_indent)
     int i;
     colnr_T virtcol = 0;
 
-    buf[0] = c;
+    buf[0] = (char_u)c;
     i = 1;
     if (textwidth > 0) {
       virtcol = get_nolist_virtcol();
@@ -5934,7 +5929,7 @@ void insertchar(int c, int flags, int second_indent)
       if (p_hkmap && KeyTyped) {
         c = hkmap(c);                       // Hebrew mode mapping
       }
-      buf[i++] = c;
+      buf[i++] = (char_u)c;
     }
 
     do_digraph(-1);                     // clear digraphs
@@ -5958,7 +5953,7 @@ void insertchar(int c, int flags, int second_indent)
 
       utf_char2bytes(c, buf);
       buf[cc] = NUL;
-      ins_char_bytes(buf, cc);
+      ins_char_bytes(buf, (size_t)cc);
       AppendCharToRedobuff(c);
     } else {
       ins_char(c);
@@ -6372,7 +6367,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
   }
 
   if (save_char != NUL) {               // put back space after cursor
-    pchar_cursor(save_char);
+    pchar_cursor((char_u)save_char);
   }
 
   curwin->w_p_lbr = has_lbr;
@@ -6475,7 +6470,7 @@ void auto_format(bool trailblank, bool prev_line)
     new = get_cursor_line_ptr();
     len = (colnr_T)STRLEN(new);
     if (curwin->w_cursor.col == len) {
-      pnew = vim_strnsave(new, len + 2);
+      pnew = vim_strnsave(new, (size_t)len + 2);
       pnew[len] = ' ';
       pnew[len + 1] = NUL;
       ml_replace(curwin->w_cursor.lnum, (char *)pnew, false);
@@ -6529,11 +6524,11 @@ static void check_auto_format(bool end_insert)
 /// @param ff  force formatting (for "gq" command)
 int comp_textwidth(bool ff)
 {
-  int textwidth = curbuf->b_p_tw;
+  int textwidth = (int)curbuf->b_p_tw;
   if (textwidth == 0 && curbuf->b_p_wm) {
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.
-    textwidth = curwin->w_width_inner - curbuf->b_p_wm;
+    textwidth = curwin->w_width_inner - (int)curbuf->b_p_wm;
     if (cmdwin_type != 0) {
       textwidth -= 1;
     }
@@ -6857,7 +6852,7 @@ char_u *add_char2buf(int c, char_u *s)
       *s++ = KS_SPECIAL;
       *s++ = KE_FILLER;
     } else {
-      *s++ = c;
+      *s++ = (char_u)c;
     }
   }
   return s;
@@ -7237,11 +7232,11 @@ void replace_push(int c)
 
   if (replace_stack_len <= replace_stack_nr) {
     replace_stack_len += 50;
-    replace_stack = xrealloc(replace_stack, replace_stack_len);
+    replace_stack = xrealloc(replace_stack, (size_t)replace_stack_len);
   }
   char_u *p = replace_stack + replace_stack_nr - replace_offset;
   if (replace_offset) {
-    memmove(p + 1, p, replace_offset);
+    memmove(p + 1, p, (size_t)replace_offset);
   }
   *p = (char_u)c;
   ++replace_stack_nr;
@@ -7277,9 +7272,7 @@ static int replace_pop(void)
 /// @param off  offset for which NUL to remove
 static void replace_join(int off)
 {
-  int i;
-
-  for (i = replace_stack_nr; --i >= 0;) {
+  for (ssize_t i = replace_stack_nr; --i >= 0;) {
     if (replace_stack[i] == NUL && off-- <= 0) {
       --replace_stack_nr;
       memmove(replace_stack + i, replace_stack + i + 1,
@@ -7318,11 +7311,11 @@ static void mb_replace_pop_ins(int cc)
   int c;
 
   if ((n = MB_BYTE2LEN(cc)) > 1) {
-    buf[0] = cc;
-    for (i = 1; i < n; ++i) {
-      buf[i] = replace_pop();
+    buf[0] = (char_u)cc;
+    for (i = 1; i < n; i++) {
+      buf[i] = (char_u)replace_pop();
     }
-    ins_bytes_len(buf, n);
+    ins_bytes_len(buf, (size_t)n);
   } else {
     ins_char(cc);
   }
@@ -7339,13 +7332,13 @@ static void mb_replace_pop_ins(int cc)
       break;
     }
 
-    buf[0] = c;
+    buf[0] = (char_u)c;
     assert(n > 1);
     for (i = 1; i < n; i++) {
-      buf[i] = replace_pop();
+      buf[i] = (char_u)replace_pop();
     }
     if (utf_iscomposing(utf_ptr2char(buf))) {
-      ins_bytes_len(buf, n);
+      ins_bytes_len(buf, (size_t)n);
     } else {
       // Not a composing char, put it back.
       for (i = n - 1; i >= 0; i--) {
@@ -9143,8 +9136,7 @@ static bool ins_tab(void)
 
         // Insert each char in saved_line from changed_col to
         // ptr-cursor
-        ins_bytes_len(saved_line + change_col,
-                      cursor->col - change_col);
+        ins_bytes_len(saved_line + change_col, (size_t)(cursor->col - change_col));
       }
     }
 
