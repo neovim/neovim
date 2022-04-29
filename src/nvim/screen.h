@@ -24,7 +24,7 @@ typedef enum {
   WC_TOP_LEFT = 0,
   WC_TOP_RIGHT,
   WC_BOTTOM_LEFT,
-  WC_BOTTOM_RIGHT
+  WC_BOTTOM_RIGHT,
 } WindowCorner;
 
 /// By default, all windows are drawn on a single rectangular grid, represented by

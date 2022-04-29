@@ -538,7 +538,6 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
 }
 
 
-
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
 {
   buf_T *buf = wp->w_buffer;

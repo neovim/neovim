@@ -1261,9 +1261,9 @@ static int old_KeyStuffed;  // whether old_char was stuffed
 
 static bool can_get_old_char(void)
 {
-    // If the old character was not stuffed and characters have been added to
-    // the stuff buffer, need to first get the stuffed characters instead.
-    return old_char != -1 && (old_KeyStuffed || stuff_empty());
+  // If the old character was not stuffed and characters have been added to
+  // the stuff buffer, need to first get the stuffed characters instead.
+  return old_char != -1 && (old_KeyStuffed || stuff_empty());
 }
 
 /*

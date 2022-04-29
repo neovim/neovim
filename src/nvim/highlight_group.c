@@ -4,8 +4,9 @@
 // highlight_group.c: code for managing highlight groups
 
 #include <stdbool.h>
-#include "nvim/autocmd.h"
+
 #include "nvim/api/private/helpers.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/fold.h"
@@ -34,11 +35,11 @@ Map(cstr_t, int) highlight_unames = MAP_INIT;
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-  { "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
-    "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+{ "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
+  "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
-  { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
-    HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
+  HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -1572,8 +1573,7 @@ const char *highlight_color(const int id, const char *const what, const int mode
 /// @param id highlight group id
 /// @param force_newline always start a new line
 /// @return true when started a new line.
-bool syn_list_header(const bool did_header, const int outlen, const int id,
-                     bool force_newline)
+bool syn_list_header(const bool did_header, const int outlen, const int id, bool force_newline)
 {
   int endcol = 19;
   bool newline = true;
