@@ -835,8 +835,8 @@ static uint64_t server_connect(char *server_addr, const char **errmsg)
 }
 
 /// Handle remote subcommands
-static void remote_request(mparm_T *params, int remote_args,
-                           char *server_addr, int argc, char **argv)
+static void remote_request(mparm_T *params, int remote_args, char *server_addr, int argc,
+                           char **argv)
 {
   const char *connect_error = NULL;
   uint64_t chan = server_connect(server_addr, &connect_error);
@@ -884,7 +884,7 @@ static void remote_request(mparm_T *params, int remote_args,
   TriState should_exit = kNone;
   TriState tabbed = kNone;
 
-  for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
+  for (size_t i = 0; i < rvobj.data.dictionary.size; i++) {
     if (strcmp(rvobj.data.dictionary.items[i].key.data, "errmsg") == 0) {
       if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
         mch_errmsg("vim._cs_remote returned an unexpected type for 'errmsg'\n");

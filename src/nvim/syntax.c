@@ -1019,8 +1019,7 @@ static void syn_stack_alloc(void)
       // When shrinking the array, cleanup the existing stack.
       // Make sure that all valid entries fit in the new array.
       while (syn_block->b_sst_len - syn_block->b_sst_freecount + 2 > len
-             && syn_stack_cleanup()) {
-      }
+             && syn_stack_cleanup()) {}
       if (len < syn_block->b_sst_len - syn_block->b_sst_freecount + 2) {
         len = syn_block->b_sst_len - syn_block->b_sst_freecount + 2;
       }
@@ -2699,8 +2698,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
           // Be careful not to jump over the NUL at the end-of-line
           for (matchcol = regmatch.endpos[0].col;
                matchcol < line_len && matchcol < pos.col;
-               matchcol++) {
-          }
+               matchcol++) {}
         }
 
         // if the skip pattern includes end-of-line, break here
@@ -5334,8 +5332,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
     // parse the arguments after "contains"
     int count = 0;
     do {
-      for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {
-      }
+      for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {}
       char_u *const name = xmalloc(end - p + 3);   // leave room for "^$"
       STRLCPY(name + 1, p, end - p + 1);
       if (STRCMP(name + 1, "ALLBUT") == 0
@@ -5470,8 +5467,7 @@ static int16_t *copy_id_list(const int16_t *const list)
   }
 
   int count;
-  for (count = 0; list[count]; count++) {
-  }
+  for (count = 0; list[count]; count++) {}
   const size_t len = (count + 1) * sizeof(int16_t);
   int16_t *const retval = xmalloc(len);
   memmove(retval, list, len);
@@ -5624,8 +5620,7 @@ void ex_syntax(exarg_T *eap)
   syn_cmdlinep = eap->cmdlinep;
 
   // isolate subcommand name
-  for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); subcmd_end++) {
-  }
+  for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); subcmd_end++) {}
   char_u *const subcmd_name = vim_strnsave(arg, subcmd_end - arg);
   if (eap->skip) {  // skip error messages for all subcommands
     emsg_skip++;

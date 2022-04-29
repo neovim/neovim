@@ -541,8 +541,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       ret.data.opt.len = 4;
       ret.len += 4;
     } else {
-      for (; p < e && ASCII_ISALPHA(*p); p++) {
-      }
+      for (; p < e && ASCII_ISALPHA(*p); p++) {}
       ret.data.opt.len = (size_t)(p - ret.data.opt.name);
       if (ret.data.opt.len == 0) {
         OPTNAMEMISS(ret);

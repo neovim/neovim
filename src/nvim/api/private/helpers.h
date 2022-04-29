@@ -140,9 +140,9 @@ typedef struct {
 
 // Useful macro for executing some `code` for each item in an array.
 #define FOREACH_ITEM(a, __foreach_item, code) \
-  for (size_t (__foreach_item ## _index) = 0; (__foreach_item ## _index) < (a).size; \
-       (__foreach_item ## _index)++) { \
-    Object __foreach_item = (a).items[__foreach_item ## _index]; \
+  for (size_t (__foreach_item##_index) = 0; (__foreach_item##_index) < (a).size; \
+       (__foreach_item##_index)++) { \
+    Object __foreach_item = (a).items[__foreach_item##_index]; \
     code; \
   }
 

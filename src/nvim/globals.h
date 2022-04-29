@@ -15,7 +15,7 @@
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
 
-#define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
+#define IOSIZE         (1024 + 1)          // file I/O and sprintf buffer size
 
 #define MSG_BUF_LEN 480                 // length of buffer for small messages
 #define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)  // cell length (worst case: utf-8

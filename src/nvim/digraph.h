@@ -1,8 +1,8 @@
 #ifndef NVIM_DIGRAPH_H
 #define NVIM_DIGRAPH_H
 
-#include "nvim/ex_cmds_defs.h"
 #include "nvim/eval/funcs.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

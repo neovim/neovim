@@ -47,9 +47,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   assert(proc->err.closed);
 
-  if (!os_has_conpty_working()
-      || (conpty_object =
-          os_conpty_init(&in_name, &out_name, ptyproc->width, ptyproc->height)) == NULL) {
+  if (!os_has_conpty_working() || (conpty_object = os_conpty_init(&in_name,
+                                                                  &out_name, ptyproc->width,
+                                                                  ptyproc->height)) == NULL) {
     status = UV_ENOSYS;
     goto cleanup;
   }
@@ -172,13 +172,11 @@ void pty_process_close(PtyProcess *ptyproc)
 
 void pty_process_close_master(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
-{
-}
+{}
 
 void pty_process_teardown(Loop *loop)
   FUNC_ATTR_NONNULL_ALL
-{
-}
+{}
 
 static void pty_process_connect_cb(uv_connect_t *req, int status)
   FUNC_ATTR_NONNULL_ALL

@@ -61,7 +61,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
     int n = diff_check(wp, lnum);
 
     if (n > 0) {
-      return virt_lines+n;
+      return virt_lines + n;
     }
   }
   return virt_lines;
@@ -125,7 +125,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   }
   col -= (unsigned int)width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
+  assert(col <= INT_MAX && (int)col < INT_MAX - (width - 1));
   return ((int)col + (width - 1)) / width + 1;
 }
 
@@ -507,4 +507,3 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   }
   return n;
 }
-

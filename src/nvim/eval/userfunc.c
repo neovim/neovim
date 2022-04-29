@@ -1761,14 +1761,14 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
     } else if (lv.ll_tv->v_type == VAR_PARTIAL
                && lv.ll_tv->vval.v_partial != NULL) {
       if (is_luafunc(lv.ll_tv->vval.v_partial) && *end == '.') {
-        len = check_luafunc_name((const char *)end+1, true);
+        len = check_luafunc_name((const char *)end + 1, true);
         if (len == 0) {
           semsg(e_invexpr2, "v:lua");
           goto theend;
         }
         name = xmallocz((size_t)len);
-        memcpy(name, end+1, (size_t)len);
-        *pp = (char_u *)end+1+len;
+        memcpy(name, end + 1, (size_t)len);
+        *pp = (char_u *)end + 1 + len;
       } else {
         name = vim_strsave(partial_name(lv.ll_tv->vval.v_partial));
         *pp = (char_u *)end;
@@ -2269,8 +2269,7 @@ void ex_function(exarg_T *eap)
       }
     } else {
       // skip ':' and blanks
-      for (p = theline; ascii_iswhite(*p) || *p == ':'; p++) {
-      }
+      for (p = theline; ascii_iswhite(*p) || *p == ':'; p++) {}
 
       // Check for "endfunction".
       if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {

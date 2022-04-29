@@ -475,9 +475,9 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot
   } else {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(top));
-    ADD(args, INTEGER_OBJ(bot-1));
+    ADD(args, INTEGER_OBJ(bot - 1));
     ADD(args, INTEGER_OBJ(left));
-    ADD(args, INTEGER_OBJ(right-1));
+    ADD(args, INTEGER_OBJ(right - 1));
     push_call(ui, "set_scroll_region", args);
 
     args = (Array)ARRAY_DICT_INIT;
@@ -488,9 +488,9 @@ static void remote_ui_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot
     // so reset it.
     args = (Array)ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(0));
-    ADD(args, INTEGER_OBJ(ui->height-1));
+    ADD(args, INTEGER_OBJ(ui->height - 1));
     ADD(args, INTEGER_OBJ(0));
-    ADD(args, INTEGER_OBJ(ui->width-1));
+    ADD(args, INTEGER_OBJ(ui->width - 1));
     push_call(ui, "set_scroll_region", args);
   }
 }
@@ -615,12 +615,12 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startc
     ADD(args, INTEGER_OBJ(startcol));
     Array cells = ARRAY_DICT_INIT;
     int repeat = 0;
-    size_t ncells = (size_t)(endcol-startcol);
+    size_t ncells = (size_t)(endcol - startcol);
     int last_hl = -1;
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
-      if (i == ncells-1 || attrs[i] != attrs[i+1]
-          || STRCMP(chunk[i], chunk[i+1])) {
+      if (i == ncells - 1 || attrs[i] != attrs[i + 1]
+          || STRCMP(chunk[i], chunk[i + 1])) {
         Array cell = ARRAY_DICT_INIT;
         ADD(cell, STRING_OBJ(cstr_to_string((const char *)chunk[i])));
         if (attrs[i] != last_hl || repeat > 1) {
@@ -638,15 +638,15 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startc
       Array cell = ARRAY_DICT_INIT;
       ADD(cell, STRING_OBJ(cstr_to_string(" ")));
       ADD(cell, INTEGER_OBJ(clearattr));
-      ADD(cell, INTEGER_OBJ(clearcol-endcol));
+      ADD(cell, INTEGER_OBJ(clearcol - endcol));
       ADD(cells, ARRAY_OBJ(cell));
     }
     ADD(args, ARRAY_OBJ(cells));
 
     push_call(ui, "grid_line", args);
   } else {
-    for (int i = 0; i < endcol-startcol; i++) {
-      remote_ui_cursor_goto(ui, row, startcol+i);
+    for (int i = 0; i < endcol - startcol; i++) {
+      remote_ui_cursor_goto(ui, row, startcol + i);
       remote_ui_highlight_set(ui, attrs[i]);
       remote_ui_put(ui, (const char *)chunk[i]);
       if (utf_ambiguous_width(utf_ptr2char(chunk[i]))) {

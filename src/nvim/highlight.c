@@ -213,7 +213,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     }
 
     it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
-    it.version = p->hl_valid-tmp;
+    it.version = p->hl_valid - tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
     map_put(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id), it);
   }
@@ -602,7 +602,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
 static int rgb_blend(int ratio, int rgb1, int rgb2)
 {
-  int a = ratio, b = 100-ratio;
+  int a = ratio, b = 100 - ratio;
   int r1 = (rgb1 & 0xFF0000) >> 16;
   int g1 = (rgb1 & 0x00FF00) >> 8;
   int b1 = (rgb1 & 0x0000FF) >> 0;

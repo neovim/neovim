@@ -25,7 +25,7 @@ static bool did_stdio = false;
 /// next free id for a job or rpc channel
 /// 1 is reserved for stdio channel
 /// 2 is reserved for stderr channel
-static uint64_t next_chan_id = CHAN_STDERR+1;
+static uint64_t next_chan_id = CHAN_STDERR + 1;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "channel.c.generated.h"

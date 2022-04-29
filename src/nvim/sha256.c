@@ -86,7 +86,7 @@ static void sha256_process(context_sha256_T *ctx, const char_u data[SHA256_BUFFE
 #define F1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
 
 #define R(t) \
-  (W[t] = S1(W[(t) -  2]) + W[(t) -  7] + S0(W[(t) - 15]) + W[(t) - 16])
+  (W[t] = S1(W[(t) - 2]) + W[(t) - 7] + S0(W[(t) - 15]) + W[(t) - 16])
 
 #define P(a, b, c, d, e, f, g, h, x, K) { \
   temp1 = (h) + S3(e) + F1(e, f, g) + (K) + (x); \
@@ -184,7 +184,7 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     return;
   }
 
-  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE-1);  // left < buf size
+  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE - 1);  // left < buf size
 
   ctx->total[0] += (uint32_t)length;
   ctx->total[0] &= 0xFFFFFFFF;
@@ -335,7 +335,7 @@ bool sha256_self_test(void)
       sha256_finish(&ctx, sha256sum);
 
       for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
-        snprintf(output + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
+        snprintf(output + j * SHA_STEP, SHA_STEP + 1, "%02x", sha256sum[j]);
       }
     }
 

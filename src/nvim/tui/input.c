@@ -13,8 +13,8 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/tui/tui.h"
 #include "nvim/tui/input.h"
+#include "nvim/tui/tui.h"
 #include "nvim/vim.h"
 #ifdef WIN32
 # include "nvim/os/os_win_console.h"

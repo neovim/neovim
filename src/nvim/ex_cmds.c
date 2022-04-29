@@ -343,8 +343,7 @@ static int linelen(int *has_tab)
 
   // find the character after the last non-blank character
   for (last = first + STRLEN(first);
-       last > first && ascii_iswhite(last[-1]); last--) {
-  }
+       last > first && ascii_iswhite(last[-1]); last--) {}
   save = *last;
   *last = NUL;
   // Get line length.
@@ -487,6 +486,7 @@ void ex_sort(exarg_T *eap)
 
   for (p = eap->arg; *p != NUL; ++p) {
     if (ascii_iswhite(*p)) {
+      // Skip
     } else if (*p == 'i') {
       sort_ic = true;
     } else if (*p == 'l') {
@@ -700,7 +700,7 @@ void ex_sort(exarg_T *eap)
   }
 
   if (change_occurred || deleted != 0) {
-    extmark_splice(curbuf, eap->line1-1, 0,
+    extmark_splice(curbuf, eap->line1 - 1, 0,
                    count, 0, old_count,
                    lnum - eap->line2, 0, new_count, kExtmarkUndo);
 
@@ -932,9 +932,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
 
   bcount_t start_byte = ml_find_line_or_offset(curbuf, line1, NULL, true);
-  bcount_t end_byte = ml_find_line_or_offset(curbuf, line2+1, NULL, true);
-  bcount_t extent_byte = end_byte-start_byte;
-  bcount_t dest_byte = ml_find_line_or_offset(curbuf, dest+1, NULL, true);
+  bcount_t end_byte = ml_find_line_or_offset(curbuf, line2 + 1, NULL, true);
+  bcount_t extent_byte = end_byte - start_byte;
+  bcount_t dest_byte = ml_find_line_or_offset(curbuf, dest + 1, NULL, true);
 
   num_lines = line2 - line1 + 1;
 
@@ -1024,9 +1024,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     smsg(NGETTEXT("1 line moved", "%" PRId64 " lines moved", num_lines), (int64_t)num_lines);
   }
 
-  extmark_move_region(curbuf, line1-1, 0, start_byte,
-                      line2-line1+1, 0, extent_byte,
-                      dest+line_off, 0, dest_byte+byte_off,
+  extmark_move_region(curbuf, line1 - 1, 0, start_byte,
+                      line2 - line1 + 1, 0, extent_byte,
+                      dest + line_off, 0, dest_byte + byte_off,
                       kExtmarkUndo);
 
   /*
@@ -3139,8 +3139,7 @@ void ex_z(exarg_T *eap)
 
   // the number of '-' and '+' multiplies the distance
   if (*kind == '-' || *kind == '+') {
-    for (x = kind + 1; *x == *kind; x++) {
-    }
+    for (x = kind + 1; *x == *kind; x++) {}
   }
 
   switch (*kind) {
@@ -4143,8 +4142,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           // TODO(bfredl): this has some robustness issues, look into later.
           bcount_t replaced_bytes = 0;
           lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
-          for (i = 0; i < nmatch-1; i++) {
-            replaced_bytes += STRLEN(ml_get(lnum_start+i)) + 1;
+          for (i = 0; i < nmatch - 1; i++) {
+            replaced_bytes += STRLEN(ml_get(lnum_start + i)) + 1;
           }
           replaced_bytes += end.col - start.col;
 
@@ -4199,9 +4198,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             u_save_cursor();
             did_save = true;
           }
-          extmark_splice(curbuf, lnum_start-1, start_col,
-                         end.lnum-start.lnum, matchcols, replaced_bytes,
-                         lnum-lnum_start, subcols, sublen-1, kExtmarkUndo);
+          extmark_splice(curbuf, lnum_start - 1, start_col,
+                         end.lnum - start.lnum, matchcols, replaced_bytes,
+                         lnum - lnum_start, subcols, sublen - 1, kExtmarkUndo);
         }
 
 
@@ -4317,6 +4316,8 @@ skip:
               lnum -= regmatch.startpos[0].lnum;
             }
 
+            // uncrustify:off
+
 #define PUSH_PREVIEW_LINES() \
   do { \
     if (preview) { \
@@ -4335,6 +4336,8 @@ skip:
       kv_push(preview_lines.subresults, current_match); \
     } \
   } while (0)
+
+            // uncrustify:on
 
             // Push the match to preview_lines.
             PUSH_PREVIEW_LINES();
@@ -4457,8 +4460,8 @@ skip:
       preview_buf = show_sub(eap, old_cursor, &preview_lines,
                              pre_hl_id, pre_src_id, bufnr);
       if (subsize > 0) {
-        extmark_clear(orig_buf, pre_src_id, eap->line1-1, 0,
-                      kv_last(preview_lines.subresults).end.lnum-1, MAXCOL);
+        extmark_clear(orig_buf, pre_src_id, eap->line1 - 1, 0,
+                      kv_last(preview_lines.subresults).end.lnum - 1, MAXCOL);
       }
     }
   }

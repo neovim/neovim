@@ -45,7 +45,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
       // substituted text. But it would be more consistent to highlight
       // a space _after_ the previous line instead (like highlight EOL list
       // char)
-      hl_start = MAX(offset-1, 0);
+      hl_start = MAX(offset - 1, 0);
       end_off = 1;
       hl_end = 0;
     } else if (lnum == pos_start.lnum && lnum < pos_end.lnum) {
@@ -53,14 +53,14 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
       end_off = 1;
       hl_end = 0;
     } else if (pos_start.lnum < lnum && lnum == pos_end.lnum) {
-      hl_start = MAX(offset-1, 0);
+      hl_start = MAX(offset - 1, 0);
       hl_end = pos_end.col + offset;
     } else if (pos_start.lnum == lnum && pos_end.lnum == lnum) {
       hl_start = pos_start.col + offset;
       hl_end = pos_end.col + offset;
     }
     extmark_set(buf, (uint32_t)src_id, NULL,
-                (int)lnum-1, hl_start, (int)lnum-1+end_off, hl_end,
+                (int)lnum - 1, hl_start, (int)lnum - 1 + end_off, hl_end,
                 &decor, true, false, kExtmarkNoUndo);
   }
 }
@@ -69,17 +69,17 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 {
   if (row2 >= row1) {
     if (!decor || decor->hl_id || decor_has_sign(decor)) {
-      redraw_buf_range_later(buf, row1+1, row2+1);
+      redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
   }
 
   if (decor && kv_size(decor->virt_text)) {
-    redraw_buf_line_later(buf, row1+1);
+    redraw_buf_line_later(buf, row1 + 1);
   }
 
   if (decor && kv_size(decor->virt_lines)) {
     redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count,
-                                   row1+1+(decor->virt_lines_above?0:1)));
+                                   row1 + 1 + (decor->virt_lines_above?0:1)));
   }
 }
 
@@ -96,7 +96,7 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
       buf->b_signs--;
     }
     if (row2 >= row && decor->sign_text) {
-      buf_signcols_del_check(buf, row+1, row2+1);
+      buf_signcols_del_check(buf, row + 1, row2 + 1);
     }
   }
   decor_free(decor);
@@ -256,12 +256,12 @@ static void decor_add(DecorState *state, int start_row, int start_col, int end_r
 
   kv_pushp(state->active);
   size_t index;
-  for (index = kv_size(state->active)-1; index > 0; index--) {
-    DecorRange item = kv_A(state->active, index-1);
+  for (index = kv_size(state->active) - 1; index > 0; index--) {
+    DecorRange item = kv_A(state->active, index - 1);
     if (item.decor.priority <= range.decor.priority) {
       break;
     }
-    kv_A(state->active, index) = kv_A(state->active, index-1);
+    kv_A(state->active, index) = kv_A(state->active, index - 1);
   }
   kv_A(state->active, index) = range;
 }
@@ -279,7 +279,7 @@ int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden, DecorState *
     if (mark.pos.row < 0 || mark.pos.row > state->row) {
       break;
     } else if (mark.pos.row == state->row && mark.pos.col > col) {
-      state->col_until = mark.pos.col-1;
+      state->col_until = mark.pos.col - 1;
       break;
     }
 
@@ -329,11 +329,11 @@ next_mark:
           || (item.start_row == state->row && item.start_col <= col)) {
         active = true;
         if (item.end_row == state->row && item.end_col > col) {
-          state->col_until = MIN(state->col_until, item.end_col-1);
+          state->col_until = MIN(state->col_until, item.end_col - 1);
         }
       } else {
         if (item.start_row == state->row) {
-          state->col_until = MIN(state->col_until, item.start_col-1);
+          state->col_until = MIN(state->col_until, item.start_col - 1);
         }
       }
     }
@@ -397,7 +397,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, sign_attrs_T sattrs
       if (sattrs[j].sat_prio <= decor->priority) {
         break;
       }
-      sattrs[j] = sattrs[j-1];
+      sattrs[j] = sattrs[j - 1];
     }
     if (j < SIGN_SHOW_MAX) {
       memset(&sattrs[j], 0, sizeof(sign_attrs_T));
@@ -536,7 +536,6 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
   }
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true);
 }
-
 
 
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)

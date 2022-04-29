@@ -1154,7 +1154,7 @@ struct VimMenu {
   char *name;                 ///< Name of menu, possibly translated
   char *dname;                ///< Displayed Name ("name" without '&')
   char *en_name;              ///< "name" untranslated, NULL when
-                                ///< was not translated
+                              ///< was not translated
   char *en_dname;             ///< NULL when "dname" untranslated
   int mnemonic;                      ///< mnemonic key (after '&')
   char *actext;               ///< accelerator text (after TAB)

@@ -460,9 +460,9 @@ staterr:
   if (S_ISDIR(file_info.stat.st_mode)) {
     fname2 = (char *)xmalloc(strlen(CSCOPE_DBFILE) + strlen(fname) + 2);
 
-    while (fname[strlen(fname)-1] == '/'
+    while (fname[strlen(fname) - 1] == '/'
            ) {
-      fname[strlen(fname)-1] = '\0';
+      fname[strlen(fname) - 1] = '\0';
       if (fname[0] == '\0') {
         break;
       }
@@ -1444,8 +1444,7 @@ retry:
 
   // If the line's too long for the buffer, discard it.
   if ((p = strchr(buf, '\n')) == NULL) {
-    while ((ch = getc(csinfo[cnumber].fr_fp)) != EOF && ch != '\n') {
-    }
+    while ((ch = getc(csinfo[cnumber].fr_fp)) != EOF && ch != '\n') {}
     return NULL;
   }
   *p = '\0';
@@ -1594,8 +1593,7 @@ static char *cs_pathcomponents(char *path)
 
   char *s = path + strlen(path) - 1;
   for (int i = 0; i < p_cspc; i++) {
-    while (s > path && *--s != '/') {
-    }
+    while (s > path && *--s != '/') {}
   }
   if ((s > path && *s == '/')) {
     s++;

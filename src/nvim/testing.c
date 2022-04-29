@@ -3,9 +3,9 @@
 
 // testing.c: Support for tests
 
+#include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/eval.h"
 #include "nvim/os/os.h"
 #include "nvim/testing.h"
 
@@ -559,4 +559,3 @@ void f_test_write_list_log(typval_T *const argvars, typval_T *const rettv, FunPt
   }
   list_write_log(fname);
 }
-

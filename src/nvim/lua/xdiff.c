@@ -74,7 +74,7 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
   lua_pushinteger(lstate, count_b);
   lua_rawseti(lstate, -2, 4);
 
-  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2)+1);
+  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
 
   return 0;
 }

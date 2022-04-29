@@ -374,20 +374,20 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
       walker = vim_strchr(walker, ';');
       if (walker) {
         assert(walker - helper >= 0);
-        search_ctx->ffsc_stopdirs_v[dircount-1] =
+        search_ctx->ffsc_stopdirs_v[dircount - 1] =
           vim_strnsave(helper, (size_t)(walker - helper));
         walker++;
       } else {
         /* this might be "", which means ascent till top
          * of directory tree.
          */
-        search_ctx->ffsc_stopdirs_v[dircount-1] =
+        search_ctx->ffsc_stopdirs_v[dircount - 1] =
           vim_strsave(helper);
       }
 
       dircount++;
     } while (walker != NULL);
-    search_ctx->ffsc_stopdirs_v[dircount-1] = NULL;
+    search_ctx->ffsc_stopdirs_v[dircount - 1] = NULL;
   }
 
   search_ctx->ffsc_level = level;
@@ -1698,4 +1698,3 @@ int vim_chdir(char_u *new_dir)
   xfree(dir_name);
   return r;
 }
-

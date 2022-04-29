@@ -429,7 +429,7 @@ newwindow:
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? (int)Prenum : Rows-1);
+    win_setheight(Prenum ? (int)Prenum : Rows - 1);
     break;
 
   // increase current window width
@@ -881,11 +881,11 @@ void ui_ext_win_position(win_T *wp)
         row += row_off;
         col += col_off;
         if (c.bufpos.lnum >= 0) {
-          pos_T pos = { c.bufpos.lnum+1, c.bufpos.col, 0 };
+          pos_T pos = { c.bufpos.lnum + 1, c.bufpos.col, 0 };
           int trow, tcol, tcolc, tcole;
           textpos2screenpos(win, &pos, &trow, &tcol, &tcolc, &tcole, true);
-          row += trow-1;
-          col += tcol-1;
+          row += trow - 1;
+          col += tcol - 1;
         }
       }
       api_clear_error(&dummy);
@@ -931,13 +931,13 @@ void ui_ext_win_viewport(win_T *wp)
   if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid) {
     int botline = wp->w_botline;
     int line_count = wp->w_buffer->b_ml.ml_line_count;
-    if (botline == line_count+1 && wp->w_empty_rows == 0) {
+    if (botline == line_count + 1 && wp->w_empty_rows == 0) {
       // TODO(bfredl): The might be more cases to consider, like how does this
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
-    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline-1,
-                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col,
+    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline - 1,
+                         botline, wp->w_cursor.lnum - 1, wp->w_cursor.col,
                          line_count);
     wp->w_viewport_invalid = false;
   }
@@ -1877,8 +1877,7 @@ static void win_rotate(bool upwards, int count)
       assert(frp->fr_parent->fr_child);
 
       // find last frame and append removed window/frame after it
-      for (; frp->fr_next != NULL; frp = frp->fr_next) {
-      }
+      for (; frp->fr_next != NULL; frp = frp->fr_next) {}
       win_append(frp->fr_win, wp1);
       frame_append(frp, wp1->w_frame);
 
@@ -1886,8 +1885,7 @@ static void win_rotate(bool upwards, int count)
     } else {                  // last window becomes first window
       // find last window/frame in the list and remove it
       for (frp = curwin->w_frame; frp->fr_next != NULL;
-           frp = frp->fr_next) {
-      }
+           frp = frp->fr_next) {}
       wp1 = frp->fr_win;
       wp2 = wp1->w_prev;                    // will become last window
       win_remove(wp1, NULL);
@@ -2957,8 +2955,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // Careful: Autocommands may have closed the tab page or made it the
   // current tab page.
-  for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {
-  }
+  for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {}
   if (ptp == NULL || tp == curtab) {
     // If the buffer was removed from the window we have to give it any
     // buffer.
@@ -3316,8 +3313,7 @@ static tabpage_T *alt_tabpage(void)
   }
 
   // Find the last but one tab page.
-  for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {
-  }
+  for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {}
   return tp;
 }
 
@@ -3440,13 +3436,11 @@ void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh)
         if (topfirst) {
           do {
             frp = frp->fr_next;
-          }
-          while (wfh && frp != NULL && frame_fixed_height(frp));
+          } while (wfh && frp != NULL && frame_fixed_height(frp));
         } else {
           do {
             frp = frp->fr_prev;
-          }
-          while (wfh && frp != NULL && frame_fixed_height(frp));
+          } while (wfh && frp != NULL && frame_fixed_height(frp));
         }
         // Increase "height" if we could not reduce enough frames.
         if (frp == NULL) {
@@ -3553,8 +3547,7 @@ static void frame_add_statusline(frame_T *frp)
   } else {
     assert(frp->fr_layout == FR_COL);
     // Only need to handle the last frame in the column.
-    for (frp = frp->fr_child; frp->fr_next != NULL; frp = frp->fr_next) {
-    }
+    for (frp = frp->fr_child; frp->fr_next != NULL; frp = frp->fr_next) {}
     frame_add_statusline(frp);
   }
 }
@@ -3640,13 +3633,11 @@ static void frame_new_width(frame_T *topfrp, int width, bool leftfirst, bool wfw
         if (leftfirst) {
           do {
             frp = frp->fr_next;
-          }
-          while (wfw && frp != NULL && frame_fixed_width(frp));
+          } while (wfw && frp != NULL && frame_fixed_width(frp));
         } else {
           do {
             frp = frp->fr_prev;
-          }
-          while (wfw && frp != NULL && frame_fixed_width(frp));
+          } while (wfw && frp != NULL && frame_fixed_width(frp));
         }
         // Increase "width" if we could not reduce enough frames.
         if (frp == NULL) {
@@ -4424,14 +4415,12 @@ void goto_tabpage(int n)
     ttp = curtab;
     for (i = n; i < 0; ++i) {
       for (tp = first_tabpage; tp->tp_next != ttp && tp->tp_next != NULL;
-           tp = tp->tp_next) {
-      }
+           tp = tp->tp_next) {}
       ttp = tp;
     }
   } else if (n == 9999) {
     // Go to last tab page.
-    for (tp = first_tabpage; tp->tp_next != NULL; tp = tp->tp_next) {
-    }
+    for (tp = first_tabpage; tp->tp_next != NULL; tp = tp->tp_next) {}
   } else {
     // Go to tab page "n".
     tp = find_tabpage(n);

@@ -235,8 +235,7 @@ typedef struct {
 } timer_T;
 
 /// Type of assert_* check being performed
-typedef enum
-{
+typedef enum {
   ASSERT_EQUAL,
   ASSERT_NOTEQUAL,
   ASSERT_MATCH,

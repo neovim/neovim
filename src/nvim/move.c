@@ -2300,4 +2300,3 @@ void do_check_cursorbind(void)
   curwin = old_curwin;
   curbuf = old_curbuf;
 }
-

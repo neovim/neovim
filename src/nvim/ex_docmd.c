@@ -668,7 +668,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
           if (breakpoint != NULL) {
             *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
                                               fname,
-                                              ((wcmd_T *)lines_ga.ga_data)[current_line].lnum-1);
+                                              ((wcmd_T *)lines_ga.ga_data)[current_line].lnum - 1);
             *dbg_tick = debug_tick;
           }
         } else {
@@ -2955,8 +2955,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   // 2. skip comment lines and leading space, colons or bars
   const char *cmd;
-  for (cmd = buff; vim_strchr((const char_u *)" \t:|", *cmd) != NULL; cmd++) {
-  }
+  for (cmd = buff; vim_strchr((const char_u *)" \t:|", *cmd) != NULL; cmd++) {}
   xp->xp_pattern = (char_u *)cmd;
 
   if (*cmd == NUL) {
@@ -3268,8 +3267,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     }
     // Check for user names.
     if (*xp->xp_pattern == '~') {
-      for (p = (const char *)xp->xp_pattern + 1; *p != NUL && *p != '/'; p++) {
-      }
+      for (p = (const char *)xp->xp_pattern + 1; *p != NUL && *p != '/'; p++) {}
       // Complete ~user only if it partially matches a user name.
       // A full match ~user<Tab> will be replaced by user's home
       // directory i.e. something like ~user<Tab> -> /home/user/
@@ -6248,8 +6246,7 @@ static void do_ucmd(exarg_T *eap)
         end = vim_strchr(start + 1, '>');
       }
       if (buf != NULL) {
-        for (ksp = p; *ksp != NUL && *ksp != K_SPECIAL; ksp++) {
-        }
+        for (ksp = p; *ksp != NUL && *ksp != K_SPECIAL; ksp++) {}
         if (*ksp == K_SPECIAL
             && (start == NULL || ksp < start || end == NULL)
             && (ksp[1] == KS_SPECIAL && ksp[2] == KE_FILLER)) {
@@ -7415,8 +7412,7 @@ static void ex_resize(exarg_T *eap)
 
   if (eap->addr_count > 0) {
     n = (int)eap->line2;
-    for (wp = firstwin; wp->w_next != NULL && --n > 0; wp = wp->w_next) {
-    }
+    for (wp = firstwin; wp->w_next != NULL && --n > 0; wp = wp->w_next) {}
   }
 
   n = (int)atol((char *)eap->arg);
@@ -7431,7 +7427,7 @@ static void ex_resize(exarg_T *eap)
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_height;
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very high
-      n = Rows-1;
+      n = Rows - 1;
     }
     win_setheight_win(n, wp);
   }
@@ -8254,8 +8250,7 @@ static void ex_undo(exarg_T *eap)
 
     for (uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
          uhp != NULL && uhp->uh_seq > step;
-         uhp = uhp->uh_next.ptr, ++count) {
-    }
+         uhp = uhp->uh_next.ptr, ++count) {}
     if (step != 0 && (uhp == NULL || uhp->uh_seq < step)) {
       emsg(_(e_undobang_cannot_redo_or_move_branch));
       return;

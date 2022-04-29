@@ -2558,8 +2558,7 @@ void ex_diffgetput(exarg_T *eap)
       p--;
     }
 
-    for (i = 0; ascii_isdigit(eap->arg[i]) && eap->arg + i < p; i++) {
-    }
+    for (i = 0; ascii_isdigit(eap->arg[i]) && eap->arg + i < p; i++) {}
 
     if (eap->arg + i == p) {
       // digits only

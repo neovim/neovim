@@ -4,6 +4,7 @@
 // match.c: functions for highlighting matches
 
 #include <stdbool.h>
+
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"
@@ -504,9 +505,9 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
   FUNC_ATTR_NONNULL_ALL
 {
   matchitem_T *cur;       // points to the match list
-  match_T     *shl;       // points to search_hl or a match
-  bool         shl_flag;  // flag to indicate whether search_hl
-                          // has been processed or not
+  match_T *shl;       // points to search_hl or a match
+  bool shl_flag;  // flag to indicate whether search_hl
+                  // has been processed or not
 
   // When using a multi-line pattern, start searching at the top
   // of the window or just after a closed fold.
@@ -583,10 +584,10 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
                             match_T *search_hl, int *search_attr, bool *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
-  match_T     *shl;                     // points to search_hl or a match
-  bool         shl_flag = false;        // flag to indicate whether search_hl
-                                        // has been processed or not
-  bool         area_highlighting = false;
+  match_T *shl;                     // points to search_hl or a match
+  bool shl_flag = false;        // flag to indicate whether search_hl
+                                // has been processed or not
+  bool area_highlighting = false;
 
   // Handle highlighting the last used search pattern and matches.
   // Do this for both search_hl and the match list.
@@ -663,10 +664,10 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
                      bool *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
-  match_T     *shl;                     // points to search_hl or a match
-  bool         shl_flag = false;        // flag to indicate whether search_hl
-                                        // has been processed or not
-  int          search_attr = 0;
+  match_T *shl;                     // points to search_hl or a match
+  bool shl_flag = false;        // flag to indicate whether search_hl
+                                // has been processed or not
+  int search_attr = 0;
 
   // Do this for 'search_hl' and the match list (ordered by priority).
   while (cur != NULL || !shl_flag) {
@@ -781,7 +782,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
 
 bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
 {
-  long         prevcol = curcol;
+  long prevcol = curcol;
   matchitem_T *cur;                      // points to the match list
 
   // we're not really at that column when skipping some text
@@ -808,9 +809,9 @@ bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, long curcol)
 void get_search_match_hl(win_T *wp, match_T *search_hl, long col, int *char_attr)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
-  match_T     *shl;                     // points to search_hl or a match
-  bool         shl_flag = false;        // flag to indicate whether search_hl
-                                        // has been processed or not
+  match_T *shl;                     // points to search_hl or a match
+  bool shl_flag = false;        // flag to indicate whether search_hl
+                                // has been processed or not
 
   *char_attr = search_hl->attr;
   while (cur != NULL || !shl_flag) {
@@ -1214,4 +1215,3 @@ void ex_match(exarg_T *eap)
   }
   eap->nextcmd = find_nextcmd(end);
 }
-

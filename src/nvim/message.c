@@ -1022,8 +1022,7 @@ void ex_messages(void *const eap_p)
     c -= eap->line2;
 
     // Skip without number of messages specified
-    for (p = first_msg_hist; p != NULL && !got_int && c > 0; p = p->next, c--) {
-    }
+    for (p = first_msg_hist; p != NULL && !got_int && c > 0; p = p->next, c--) {}
   }
 
   // Display what was not skipped.
@@ -2314,18 +2313,18 @@ void msg_scroll_up(bool may_throttle)
   msg_did_scroll = true;
   if (msg_use_msgsep()) {
     if (msg_grid_pos > 0) {
-      msg_grid_set_pos(msg_grid_pos-1, true);
+      msg_grid_set_pos(msg_grid_pos - 1, true);
     } else {
       grid_del_lines(&msg_grid, 0, 1, msg_grid.Rows, 0, msg_grid.Columns);
-      memmove(msg_grid.dirty_col, msg_grid.dirty_col+1,
-              (msg_grid.Rows-1) * sizeof(*msg_grid.dirty_col));
-      msg_grid.dirty_col[msg_grid.Rows-1] = 0;
+      memmove(msg_grid.dirty_col, msg_grid.dirty_col + 1,
+              (msg_grid.Rows - 1) * sizeof(*msg_grid.dirty_col));
+      msg_grid.dirty_col[msg_grid.Rows - 1] = 0;
     }
   } else {
     grid_del_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
   }
 
-  grid_fill(&msg_grid_adj, Rows-1, Rows, 0, Columns, ' ', ' ',
+  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
             HL_ATTR(HLF_MSG));
 }
 
@@ -2358,7 +2357,7 @@ void msg_scroll_flush(void)
       ui_ext_msg_set_pos(msg_grid_pos, true);
     }
 
-    int to_scroll = delta-pos_delta-msg_grid_scroll_discount;
+    int to_scroll = delta - pos_delta - msg_grid_scroll_discount;
     assert(to_scroll >= 0);
 
     // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
@@ -2367,8 +2366,8 @@ void msg_scroll_flush(void)
       ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
     }
 
-    for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
-      int row = i-msg_grid_pos;
+    for (int i = MAX(Rows - MAX(delta, 1), 0); i < Rows; i++) {
+      int row = i - msg_grid_pos;
       assert(row >= 0);
       ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
               HL_ATTR(HLF_MSG), false);
@@ -2881,7 +2880,7 @@ static int do_more_prompt(int typed_char)
           // scroll up, display line at bottom
           msg_scroll_up(true);
           inc_msg_scrolled();
-          grid_fill(&msg_grid_adj, Rows-2, Rows-1, 0, Columns, ' ', ' ',
+          grid_fill(&msg_grid_adj, Rows - 2, Rows - 1, 0, Columns, ' ', ' ',
                     HL_ATTR(HLF_MSG));
           mp_last = disp_sb_line(Rows - 2, mp_last);
           toscroll--;
@@ -3044,7 +3043,7 @@ void msg_clr_eos_force(void)
             HL_ATTR(HLF_MSG));
 
   redraw_cmdline = true;  // overwritten the command line
-  if (msg_row < Rows-1 || msg_col == (cmdmsg_rl ? Columns : 0)) {
+  if (msg_row < Rows - 1 || msg_col == (cmdmsg_rl ? Columns : 0)) {
     clear_cmdline = false;  // command line has been cleared
     mode_displayed = false;  // mode cleared or overwritten
   }

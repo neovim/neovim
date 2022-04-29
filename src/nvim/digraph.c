@@ -36,11 +36,11 @@ typedef struct digraph {
 } digr_T;
 
 static char e_digraph_must_be_just_two_characters_str[]
-    = N_("E1214: Digraph must be just two characters: %s");
+  = N_("E1214: Digraph must be just two characters: %s");
 static char e_digraph_argument_must_be_one_character_str[]
-    = N_("E1215: Digraph must be one character: %s");
+  = N_("E1215: Digraph must be one character: %s");
 static char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
-    = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
+  = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "digraph.c.generated.h"

@@ -4,8 +4,9 @@
 // highlight_group.c: code for managing highlight groups
 
 #include <stdbool.h>
-#include "nvim/autocmd.h"
+
 #include "nvim/api/private/helpers.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/fold.h"
@@ -34,11 +35,11 @@ Map(cstr_t, int) highlight_unames = MAP_INIT;
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-  { "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
-    "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+{ "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
+  "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
-  { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
-    HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
+  HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -618,10 +619,10 @@ static int color_numbers_256[28] = { 0, 4, 2, 6,
 static int color_numbers_8[28] = { 0, 4, 2, 6,
                                    1, 5, 3, 3,
                                    7, 7, 7, 7,
-                                   0+8, 0+8,
-                                   4+8, 4+8, 2+8, 2+8,
-                                   6+8, 6+8, 1+8, 1+8, 5+8,
-                                   5+8, 3+8, 3+8, 7+8, -1 };
+                                   0 + 8, 0 + 8,
+                                   4 + 8, 4 + 8, 2 + 8, 2 + 8,
+                                   6 + 8, 6 + 8, 1 + 8, 1 + 8, 5 + 8,
+                                   5 + 8, 3 + 8, 3 + 8, 7 + 8, -1 };
 
 // Lookup the "cterm" value to be used for color with index "idx" in
 // color_names[].
@@ -963,7 +964,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (strcmp(key, "NONE") == 0) {
         if (!init || HL_TABLE()[idx].sg_set == 0) {
           if (!init) {
-            HL_TABLE()[idx].sg_set |= SG_CTERM+SG_GUI;
+            HL_TABLE()[idx].sg_set |= SG_CTERM + SG_GUI;
           }
           highlight_clear(idx);
         }
@@ -1384,7 +1385,7 @@ static void highlight_list_one(const int id)
                             0, sgp->sg_rgb_sp_name, "guisp");
 
   didh = highlight_list_arg(id, didh, LIST_INT,
-                            sgp->sg_blend+1, NULL, "blend");
+                            sgp->sg_blend + 1, NULL, "blend");
 
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 0, id, true);
@@ -1572,8 +1573,7 @@ const char *highlight_color(const int id, const char *const what, const int mode
 /// @param id highlight group id
 /// @param force_newline always start a new line
 /// @return true when started a new line.
-bool syn_list_header(const bool did_header, const int outlen, const int id,
-                     bool force_newline)
+bool syn_list_header(const bool did_header, const int outlen, const int id, bool force_newline)
 {
   int endcol = 19;
   bool newline = true;
@@ -1643,10 +1643,10 @@ static void set_hl_attr(int idx)
   at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
   at_en.hl_blend = sgp->sg_blend;
 
-  sgp->sg_attr = hl_get_syn_attr(0, idx+1, at_en);
+  sgp->sg_attr = hl_get_syn_attr(0, idx + 1, at_en);
 
   // a cursor style uses this syn_id, make sure its attribute is updated.
-  if (cursor_mode_uses_syn_id(idx+1)) {
+  if (cursor_mode_uses_syn_id(idx + 1)) {
     ui_mode_info_set();
   }
 }
@@ -2787,7 +2787,7 @@ int name_to_ctermcolor(const char *name)
   int off = TOUPPER_ASC(*name);
   for (i = ARRAY_SIZE(color_names); --i >= 0;) {
     if (off == color_names[i][0]
-        && STRICMP(name+1, color_names[i]+1) == 0) {
+        && STRICMP(name + 1, color_names[i] + 1) == 0) {
       break;
     }
   }

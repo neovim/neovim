@@ -354,7 +354,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   if (style.type == kObjectTypeArray) {
     Array arr = style.data.array;
     size_t size = arr.size;
-    if (!size || size > 8 || (size & (size-1))) {
+    if (!size || size > 8 || (size & (size - 1))) {
       api_set_error(err, kErrorTypeValidation,
                     "invalid number of border chars");
       return;
@@ -392,7 +392,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
                       "border chars must be one cell");
         return;
       }
-      size_t len = MIN(string.size, sizeof(*chars)-1);
+      size_t len = MIN(string.size, sizeof(*chars) - 1);
       if (len) {
         memcpy(chars[i], string.data, len);
       }
@@ -400,8 +400,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
       hl_ids[i] = hl_id;
     }
     while (size < 8) {
-      memcpy(chars+size, chars, sizeof(*chars) * size);
-      memcpy(hl_ids+size, hl_ids, sizeof(*hl_ids) * size);
+      memcpy(chars + size, chars, sizeof(*chars) * size);
+      memcpy(hl_ids + size, hl_ids, sizeof(*hl_ids) * size);
       size <<= 1;
     }
     if ((chars[7][0] && chars[1][0] && !chars[0][0])

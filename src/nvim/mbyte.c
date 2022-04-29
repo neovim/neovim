@@ -584,8 +584,8 @@ size_t mb_string2cells_len(const char_u *str, size_t size)
 {
   size_t clen = 0;
 
-  for (const char_u *p = str; *p != NUL && p < str+size;
-       p += utfc_ptr2len_len(p, size+(p-str))) {
+  for (const char_u *p = str; *p != NUL && p < str + size;
+       p += utfc_ptr2len_len(p, size + (p - str))) {
     clen += utf_ptr2cells(p);
   }
 
@@ -808,7 +808,7 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
       int len_cc = utf_ptr2len_len(p + len, maxlen - len);
       safe = len_cc > 1 && len_cc <= maxlen - len;
       if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
-          || !(i == 0 ? utf_composinglike(p, p+len) : utf_iscomposing(pcc[i]))) {
+          || !(i == 0 ? utf_composinglike(p, p + len) : utf_iscomposing(pcc[i]))) {
         break;
       }
       len += len_cc;
@@ -1507,10 +1507,10 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunit
   size_t count = 0, extra = 0;
   size_t clen;
   for (size_t i = 0; i < len && s[i] != NUL; i += clen) {
-    clen = utf_ptr2len_len(s+i, len-i);
+    clen = utf_ptr2len_len(s + i, len - i);
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
-    int c = (clen > 1) ? utf_ptr2char(s+i) : s[i];
+    int c = (clen > 1) ? utf_ptr2char(s + i) : s[i];
     count++;
     if (c > 0xFFFF) {
       extra++;
@@ -1529,16 +1529,16 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
     return 0;
   }
   for (i = 0; i < len && s[i] != NUL; i += clen) {
-    clen = utf_ptr2len_len(s+i, len-i);
+    clen = utf_ptr2len_len(s + i, len - i);
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
-    int c = (clen > 1) ? utf_ptr2char(s+i) : s[i];
+    int c = (clen > 1) ? utf_ptr2char(s + i) : s[i];
     count++;
     if (use_utf16_units && c > 0xFFFF) {
       count++;
     }
     if (count >= index) {
-      return i+clen;
+      return i + clen;
     }
   }
   return -1;

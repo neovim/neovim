@@ -1,20 +1,20 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <assert.h>
 
-#include "nvim/vim.h"
+#include "nvim/api/private/dispatch.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/map.h"
-#include "nvim/ui_client.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/api/private/dispatch.h"
-#include "nvim/ui.h"
-#include "nvim/highlight.h"
 #include "nvim/screen.h"
+#include "nvim/ui.h"
+#include "nvim/ui_client.h"
+#include "nvim/vim.h"
 
 static Map(String, UIClientHandler) ui_client_handlers = MAP_INIT;
 
@@ -109,7 +109,7 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "ui_events_client.generated.h"
+# include "ui_events_client.generated.h"
 #endif
 
 void ui_client_event_grid_resize(Array args)
@@ -210,5 +210,5 @@ void ui_client_event_grid_line(Array args)
   return;
 
 error:
-    ELOG("Error handling ui event 'grid_line'");
+  ELOG("Error handling ui event 'grid_line'");
 }

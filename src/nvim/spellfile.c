@@ -5887,4 +5887,3 @@ static void set_map_str(slang_T *lp, char_u *map)
     }
   }
 }
-

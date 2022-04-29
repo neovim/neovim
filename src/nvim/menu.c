@@ -486,8 +486,7 @@ erret:
     } else {
       menup = &parent->parent->children;
     }
-    for (; *menup != NULL && *menup != parent; menup = &((*menup)->next)) {
-    }
+    for (; *menup != NULL && *menup != parent; menup = &((*menup)->next)) {}
     if (*menup == NULL) {   // safety check
       break;
     }
@@ -1656,4 +1655,3 @@ static char *menu_translate_tab_and_shift(char *arg_start)
 
   return arg;
 }
-

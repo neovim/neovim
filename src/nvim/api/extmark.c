@@ -546,6 +546,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
+  // uncrustify:off
+
   struct {
     const char *name;
     Object *opt;
@@ -558,6 +560,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     { "cursorline_hl_group", &opts->cursorline_hl_group, &decor.cursorline_hl_id },
     { NULL, NULL, NULL },
   };
+
+  // uncrustify:on
 
   for (int j = 0; hls[j].name && hls[j].dest; j++) {
     if (HAS_KEY(*hls[j].opt)) {
@@ -716,7 +720,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       line = buf->b_ml.ml_line_count;
     }
   } else if (line < buf->b_ml.ml_line_count) {
-    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
+    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line + 1, false));
   }
 
   if (col == -1) {
@@ -923,7 +927,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
   }
   extmark_clear(buf, (ns_id < 0 ? 0 : (uint32_t)ns_id),
                 (int)line_start, 0,
-                (int)line_end-1, MAXCOL);
+                (int)line_end - 1, MAXCOL);
 }
 
 /// Set or change decoration provider for a namespace

@@ -897,7 +897,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right, int attr
       unibi_out(ui, unibi_clr_eos);
     }
   } else {
-    int width = right-left;
+    int width = right - left;
 
     // iterate through each line and clear
     for (int row = top; row < bot; row++) {
@@ -1186,12 +1186,12 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow,  // -V751
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  int top = (int)startrow, bot = (int)endrow-1;
-  int left = (int)startcol, right = (int)endcol-1;
+  int top = (int)startrow, bot = (int)endrow - 1;
+  int left = (int)startcol, right = (int)endcol - 1;
 
-  bool fullwidth = left == 0 && right == ui->width-1;
+  bool fullwidth = left == 0 && right == ui->width - 1;
   data->scroll_region_is_full_screen = fullwidth
-                                       && top == 0 && bot == ui->height-1;
+                                       && top == 0 && bot == ui->height - 1;
 
   ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
@@ -1294,10 +1294,10 @@ static void tui_flush(UI *ui)
     assert(r.bot <= grid->height && r.right <= grid->width);
 
     for (int row = r.top; row < r.bot; row++) {
-      int clear_attr = grid->cells[row][r.right-1].attr;
+      int clear_attr = grid->cells[row][r.right - 1].attr;
       int clear_col;
       for (clear_col = r.right; clear_col > 0; clear_col--) {
-        UCell *cell = &grid->cells[row][clear_col-1];
+        UCell *cell = &grid->cells[row][clear_col - 1];
         if (!(cell->data[0] == ' ' && cell->data[1] == NUL
               && cell->attr == clear_attr)) {
           break;
@@ -1309,7 +1309,7 @@ static void tui_flush(UI *ui)
         print_cell(ui, cell);
       });
       if (clear_col < r.right) {
-        clear_region(ui, row, row+1, clear_col, r.right, clear_attr);
+        clear_region(ui, row, row + 1, clear_col, r.right, clear_attr);
       }
     }
   }
@@ -1389,8 +1389,7 @@ static void tui_set_title(UI *ui, String title)
 }
 
 static void tui_set_icon(UI *ui, String icon)
-{
-}
+{}
 
 static void tui_screenshot(UI *ui, String path)
 {
@@ -1438,9 +1437,9 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol, I
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   for (Integer c = startcol; c < endcol; c++) {
-    memcpy(grid->cells[linerow][c].data, chunk[c-startcol], sizeof(schar_T));
-    assert((size_t)attrs[c-startcol] < kv_size(data->attrs));
-    grid->cells[linerow][c].attr = attrs[c-startcol];
+    memcpy(grid->cells[linerow][c].data, chunk[c - startcol], sizeof(schar_T));
+    assert((size_t)attrs[c - startcol] < kv_size(data->attrs));
+    grid->cells[linerow][c].attr = attrs[c - startcol];
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
     cursor_goto(ui, (int)linerow, curcol);
@@ -1450,7 +1449,7 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol, I
   if (clearcol > endcol) {
     ugrid_clear_chunk(grid, (int)linerow, (int)endcol, (int)clearcol,
                       (sattr_T)clearattr);
-    clear_region(ui, (int)linerow, (int)linerow+1, (int)endcol, (int)clearcol,
+    clear_region(ui, (int)linerow, (int)linerow + 1, (int)endcol, (int)clearcol,
                  (int)clearattr);
   }
 

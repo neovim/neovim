@@ -224,4 +224,3 @@ int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
 
   return memcmp(str + n, buf->start_ptr, count);
 }
-

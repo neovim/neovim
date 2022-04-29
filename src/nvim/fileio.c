@@ -3,8 +3,6 @@
 
 // fileio.c: read from and write to a file
 
-// uncrustify:off
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -21,8 +19,8 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
-#include "nvim/eval/userfunc.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -1530,8 +1528,7 @@ rewind_retry:
             // Need to reset the counters when retrying fenc.
             try_mac = 1;
             try_unix = 1;
-            for (; p >= ptr && *p != CAR; p--) {
-            }
+            for (; p >= ptr && *p != CAR; p--) {}
             if (p >= ptr) {
               for (p = ptr; p < ptr + size; ++p) {
                 if (*p == NL) {
@@ -4912,11 +4909,15 @@ int buf_check_timestamp(buf_T *buf)
   char *mesg = NULL;
   char *mesg2 = "";
   bool helpmesg = false;
+
+  // uncrustify:off
   enum {
     RELOAD_NONE,
     RELOAD_NORMAL,
     RELOAD_DETECT
   } reload = RELOAD_NONE;
+  // uncrustify:on
+
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
@@ -5068,12 +5069,12 @@ int buf_check_timestamp(buf_T *buf)
       switch (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
                         (char_u *)_("&OK\n&Load File\nLoad File &and Options"),
                         1, NULL, true)) {
-        case 2:
-          reload = RELOAD_NORMAL;
-          break;
-        case 3:
-          reload = RELOAD_DETECT;
-          break;
+      case 2:
+        reload = RELOAD_NORMAL;
+        break;
+      case 3:
+        reload = RELOAD_DETECT;
+        break;
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {

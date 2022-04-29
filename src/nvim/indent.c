@@ -356,7 +356,7 @@ int set_indent(int size, int flags)
     ml_replace(curwin->w_cursor.lnum, newline, false);
     if (!(flags & SIN_NOMARK)) {
       extmark_splice_cols(curbuf,
-                          (int)curwin->w_cursor.lnum-1,
+                          (int)curwin->w_cursor.lnum - 1,
                           skipcols,
                           old_offset - skipcols,
                           new_offset - skipcols,

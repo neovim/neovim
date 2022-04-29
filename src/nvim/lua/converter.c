@@ -1236,7 +1236,7 @@ LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
     type ret; \
     if (lua_type(lstate, -1) != LUA_TNUMBER) { \
       api_set_error(err, kErrorTypeValidation, "Expected Lua number"); \
-      ret = (type)-1; \
+      ret = (type) - 1; \
     } else { \
       ret = (type)lua_tonumber(lstate, -1); \
     } \

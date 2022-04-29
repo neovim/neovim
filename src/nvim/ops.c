@@ -406,14 +406,14 @@ static void shift_block(oparg_T *oap, int amount)
     int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
     bd.textcol -= col_pre;
     const int len = (int)STRLEN(bd.textstart) + 1;
-    int col = bd.textcol + i +j + len;
+    int col = bd.textcol + i + j + len;
     assert(col >= 0);
     newp = (char_u *)xmalloc((size_t)col);
     memset(newp, NUL, (size_t)col);
     memmove(newp, oldp, (size_t)bd.textcol);
     startcol = bd.textcol;
-    oldlen = (int)(bd.textstart-old_textstart) + col_pre;
-    newlen = i+j;
+    oldlen = (int)(bd.textstart - old_textstart) + col_pre;
+    newlen = i + j;
     memset(newp + bd.textcol, TAB, (size_t)i);
     memset(newp + bd.textcol + i, ' ', (size_t)j);
     // the end
@@ -510,7 +510,7 @@ static void shift_block(oparg_T *oap, int amount)
   // replace the line
   ml_replace(curwin->w_cursor.lnum, newp, false);
   changed_bytes(curwin->w_cursor.lnum, bd.textcol);
-  extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, startcol,
+  extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, startcol,
                       oldlen, newlen,
                       kExtmarkUndo);
   State = oldstate;
@@ -615,8 +615,8 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     STRMOVE(newp + offset, oldp);
 
     ml_replace(lnum, newp, false);
-    extmark_splice_cols(curbuf, (int)lnum-1, startcol,
-                        skipped, offset-startcol, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lnum - 1, startcol,
+                        skipped, offset - startcol, kExtmarkUndo);
 
     if (lnum == oap->end.lnum) {
       // Set "']" mark to the end of the block instead of the end of
@@ -943,7 +943,7 @@ int do_record(int c)
     }
 
     // Name of requested register, or empty string for unnamed operation.
-    char buf[NUMBUFLEN+2];
+    char buf[NUMBUFLEN + 2];
     buf[0] = (char)regname;
     buf[1] = NUL;
     (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
@@ -1652,8 +1652,8 @@ int op_delete(oparg_T *oap)
       // replace the line
       ml_replace(lnum, newp, false);
 
-      extmark_splice_cols(curbuf, (int)lnum-1, bd.textcol,
-                          bd.textlen, bd.startspaces+bd.endspaces,
+      extmark_splice_cols(curbuf, (int)lnum - 1, bd.textcol,
+                          bd.textlen, bd.startspaces + bd.endspaces,
                           kExtmarkUndo);
     }
 
@@ -1688,7 +1688,7 @@ int op_delete(oparg_T *oap)
       truncate_line(false);         // delete the rest of the line
 
       extmark_splice_cols(curbuf,
-                          (int)curwin->w_cursor.lnum-1, curwin->w_cursor.col,
+                          (int)curwin->w_cursor.lnum - 1, curwin->w_cursor.col,
                           old_len - curwin->w_cursor.col, 0, kExtmarkUndo);
 
       // leave cursor past last char in line
@@ -1808,8 +1808,8 @@ int op_delete(oparg_T *oap)
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
       curbuf_splice_pending--;
-      extmark_splice(curbuf, (int)startpos.lnum-1, startpos.col,
-                     (int)oap->line_count-1, n, deleted_bytes,
+      extmark_splice(curbuf, (int)startpos.lnum - 1, startpos.col,
+                     (int)oap->line_count - 1, n, deleted_bytes,
                      0, 0, 0, kExtmarkUndo);
     }
     if (oap->op_type == OP_DELETE) {
@@ -1855,7 +1855,7 @@ static inline void pbyte(pos_T lp, int c)
   assert(c <= UCHAR_MAX);
   *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char_u)c;
   if (!curbuf_splice_pending) {
-    extmark_splice_cols(curbuf, (int)lp.lnum-1, lp.col, 1, 1, kExtmarkUndo);
+    extmark_splice_cols(curbuf, (int)lp.lnum - 1, lp.col, 1, 1, kExtmarkUndo);
   }
 }
 
@@ -2011,9 +2011,9 @@ static int op_replace(oparg_T *oap, int c)
         xfree(after_p);
       }
       curbuf_splice_pending--;
-      extmark_splice(curbuf, (int)baselnum-1, bd.textcol,
+      extmark_splice(curbuf, (int)baselnum - 1, bd.textcol,
                      0, bd.textlen, bd.textlen,
-                     newrows, newcols, newrows+newcols, kExtmarkUndo);
+                     newrows, newcols, newrows + newcols, kExtmarkUndo);
     }
   } else {
     // Characterwise or linewise motion replace.
@@ -2598,8 +2598,8 @@ int op_change(oparg_T *oap)
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
           ml_replace(linenr, newp, false);
-          extmark_splice_cols(curbuf, (int)linenr-1, bd.textcol,
-                              0, vpos.coladd+(int)ins_len, kExtmarkUndo);
+          extmark_splice_cols(curbuf, (int)linenr - 1, bd.textcol,
+                              0, vpos.coladd + (int)ins_len, kExtmarkUndo);
         }
       }
       check_cursor();
@@ -2938,7 +2938,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // Register type.
-  char buf[NUMBUFLEN+2];
+  char buf[NUMBUFLEN + 2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
   (void)tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
@@ -3426,7 +3426,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       assert(columns >= 0);
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
-      extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
+      extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, bd.textcol,
                           delcount, addcount, kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
@@ -3555,7 +3555,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
           changed_bytes(lnum, col);
-          extmark_splice_cols(curbuf, (int)lnum-1, col,
+          extmark_splice_cols(curbuf, (int)lnum - 1, col,
                               0, (int)totlen, kExtmarkUndo);
           if (VIsual_active) {
             lnum++;
@@ -3652,20 +3652,20 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         int lastsize = 0;
         if (y_type == kMTCharWise
             || (y_type == kMTLineWise && flags & PUT_LINE_SPLIT)) {
-          for (i = 0; i < y_size-1; i++) {
+          for (i = 0; i < y_size - 1; i++) {
             totsize += (bcount_t)STRLEN(y_array[i]) + 1;
           }
-          lastsize = (int)STRLEN(y_array[y_size-1]);
+          lastsize = (int)STRLEN(y_array[y_size - 1]);
           totsize += lastsize;
         }
         if (y_type == kMTCharWise) {
-          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0, 0,
-                         (int)y_size-1, lastsize, totsize,
+          extmark_splice(curbuf, (int)new_cursor.lnum - 1, col, 0, 0, 0,
+                         (int)y_size - 1, lastsize, totsize,
                          kExtmarkUndo);
         } else if (y_type == kMTLineWise && flags & PUT_LINE_SPLIT) {
           // Account for last pasted NL + last NL
-          extmark_splice(curbuf, (int)new_cursor.lnum-1, col + 1, 0, 0, 0,
-                         (int)y_size+1, 0, totsize+2, kExtmarkUndo);
+          extmark_splice(curbuf, (int)new_cursor.lnum - 1, col + 1, 0, 0, 0,
+                         (int)y_size + 1, 0, totsize + 2, kExtmarkUndo);
         }
 
         if (cnt == 1) {
@@ -4139,8 +4139,8 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     }
 
     if (t > 0 && curbuf_splice_pending == 0) {
-      colnr_T removed = (int)(curr- curr_start);
-      extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
+      colnr_T removed = (int)(curr - curr_start);
+      extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, sumsize,
                      1, removed, removed + 1,
                      0, spaces[t], spaces[t],
                      kExtmarkUndo);
@@ -4313,8 +4313,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * The first line has to be saved, only one line can be locked at a time.
    */
   line1 = vim_strsave(ml_get(lnum));
-  for (idx1 = 0; ascii_iswhite(line1[idx1]); ++idx1) {
-  }
+  for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
   line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; ++idx2) {
     if (!ascii_iswhite(line2[idx2])) {
@@ -5221,13 +5220,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (uvarnumber_T)-1);
+          n = 1 + (n ^ (uvarnumber_T) - 1);
           negative ^= true;
         }
       } else {
         // add
         if (n < oldn) {
-          n = (n ^ (uvarnumber_T)-1);
+          n = (n ^ (uvarnumber_T) - 1);
           negative ^= true;
         }
       }
@@ -7011,9 +7010,9 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
     if (!ascii_isdigit(regtype.data[1])) {
       return false;
     }
-    const char *p = regtype.data+1;
+    const char *p = regtype.data + 1;
     reg->y_width = getdigits_int((char_u **)&p, false, 1) - 1;
-    if (regtype.size > (size_t)(p-regtype.data)) {
+    if (regtype.size > (size_t)(p - regtype.data)) {
       return false;
     }
   }
@@ -7027,12 +7026,12 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
 
 void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
 {
-  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size-1]) == 0) {
+  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size - 1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
       if (reg->y_type == kMTUnknown || clipboard_adjust) {
-        xfree(reg->y_array[reg->y_size-1]);
+        xfree(reg->y_array[reg->y_size - 1]);
         reg->y_size--;
       }
       if (reg->y_type == kMTUnknown) {
@@ -7135,11 +7134,11 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_array[tv_idx++] = (char_u *)xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 
-  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size-1]) == 0) {
+  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size - 1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
-      xfree(reg->y_array[reg->y_size-1]);
+      xfree(reg->y_array[reg->y_size - 1]);
       reg->y_size--;
       if (reg->y_type == kMTUnknown) {
         reg->y_type = kMTLineWise;
@@ -7407,7 +7406,7 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum, linenr_T end_lnum
   const char *first = (const char *)ml_get_buf(buf, start_lnum, false);
   bcount_t deleted_bytes = (bcount_t)STRLEN(first) - start_col + 1;
 
-  for (linenr_T i = 1; i <= end_lnum-start_lnum-1; i++) {
+  for (linenr_T i = 1; i <= end_lnum - start_lnum - 1; i++) {
     if (start_lnum + i > max_lnum) {
       return deleted_bytes;
     }

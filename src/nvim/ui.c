@@ -12,7 +12,6 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/diff.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds2.h"
@@ -25,6 +24,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
@@ -453,7 +453,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
   if (p_wd && !(rdb_flags & RDB_COMPOSITOR)) {
     // If 'writedelay' is active, set the cursor to indicate what was drawn.
     ui_call_grid_cursor_goto(grid->handle, row,
-                             MIN(clearcol, (int)grid->Columns-1));
+                             MIN(clearcol, (int)grid->Columns - 1));
     ui_call_flush();
     uint64_t wd = (uint64_t)labs(p_wd);
     os_microdelay(wd * 1000u, true);

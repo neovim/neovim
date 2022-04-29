@@ -15,8 +15,8 @@
 #include "nvim/charset.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
-#include "nvim/digraph.h"
 #include "nvim/diff.h"
+#include "nvim/digraph.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
@@ -135,8 +135,7 @@ char_u *get_function_name(expand_T *xp, int idx)
     }
   }
   while ((size_t)++intidx < ARRAY_SIZE(functions)
-         && functions[intidx].name[0] == '\0') {
-  }
+         && functions[intidx].name[0] == '\0') {}
 
   if ((size_t)intidx >= ARRAY_SIZE(functions)) {
     return NULL;
@@ -2445,7 +2444,7 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T f;
 
   if (tv_get_float_chk(argvars, &f)) {
-    if (f <= (float_T)-VARNUMBER_MAX + DBL_EPSILON) {
+    if (f <= (float_T) - VARNUMBER_MAX + DBL_EPSILON) {
       rettv->vval.v_number = -VARNUMBER_MAX;
     } else if (f >= (float_T)VARNUMBER_MAX - DBL_EPSILON) {
       rettv->vval.v_number = VARNUMBER_MAX;
@@ -2631,8 +2630,7 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 /// "foreground()" function
 static void f_foreground(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-}
+{}
 
 static void f_funcref(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -3857,8 +3855,7 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 /// Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
-{
-}
+{}
 
 /// Dummy timer close callback. Used by f_wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
