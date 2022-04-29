@@ -874,6 +874,27 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
   end)
 
+  it('no double-free when unmapping simplifiable lua mappings', function()
+    eq(0, exec_lua [[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      return GlobalCount
+    ]])
+
+    feed('<C-I>\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+
+    exec_lua [[
+      vim.api.nvim_del_keymap('n', '<C-I>')
+    ]]
+
+    feed('<C-I>\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+    eq('\nNo mapping found', helpers.exec_capture('nmap <C-I>'))
+  end)
+
   it('can set descriptions on keymaps', function()
     meths.set_keymap('n', 'lhs', 'rhs', {desc="map description"})
     eq(generate_mapargs('n', 'lhs', 'rhs', {desc="map description"}), get_mapargs('n', 'lhs'))
@@ -1039,5 +1060,26 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     eq(1, exec_lua[[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
+  end)
+
+  it('no double-free when unmapping simplifiable lua mappings', function()
+    eq(0, exec_lua [[
+      GlobalCount = 0
+      vim.api.nvim_buf_set_keymap(0, 'n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      return GlobalCount
+    ]])
+
+    feed('<C-I>\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+
+    exec_lua [[
+      vim.api.nvim_buf_del_keymap(0, 'n', '<C-I>')
+    ]]
+
+    feed('<C-I>\n')
+
+    eq(1, exec_lua[[return GlobalCount]])
+    eq('\nNo mapping found', helpers.exec_capture('nmap <C-I>'))
   end)
 end)
