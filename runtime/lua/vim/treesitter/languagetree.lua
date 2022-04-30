@@ -549,6 +549,44 @@ function LanguageTree:contains(range)
   return false
 end
 
+--- Gets the tree that contains {range}
+---
+---@param range table A text range
+---@param opts table Options table
+---@param opts.ignore_injections boolean (default true) Ignore injected languages.
+function LanguageTree:tree_for_range(range, opts)
+  opts = opts or {}
+  local ignore = vim.F.if_nil(opts.ignore_injections, true)
+
+  if not ignore then
+    for _, child in pairs(self._children) do
+      for _, tree in pairs(child:trees()) do
+        if tree_contains(tree, range) then
+          return tree
+        end
+      end
+    end
+  end
+
+  for _, tree in pairs(self._trees) do
+    if tree_contains(tree, range) then
+      return tree
+    end
+  end
+
+  return nil
+end
+
+--- Gets the smallest named node that contains {range}
+---
+---@param range table A text range
+---@param opts table Options table
+---@param opts.ignore_injections boolean (default true) Ignore injected languages.
+function LanguageTree:named_node_for_range(range, opts)
+  local tree = self:tree_for_range(range, opts)
+  return tree:root():named_descendant_for_range(unpack(range))
+end
+
 --- Gets the appropriate language that contains {range}
 ---
 ---@param range A text range, see |LanguageTree:contains|

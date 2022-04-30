@@ -7,6 +7,7 @@ local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
 local pending_c_parser = helpers.pending_c_parser
+local insert = helpers.insert
 
 before_each(clear)
 
@@ -83,6 +84,34 @@ describe('treesitter language API', function()
     -- Should throw an error when filetype changes to borklang
     eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0)"))
+  end)
+
+  it('retrieve the tree given a range', function ()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      langtree = vim.treesitter.get_parser(0, "c")
+      tree = langtree:tree_for_range({1, 3, 1, 3})
+    ]])
+
+    eq('<node translation_unit>', exec_lua('return tostring(tree:root())'))
+  end)
+
+  it('retrieve the node given a range', function ()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      langtree = vim.treesitter.get_parser(0, "c")
+      node = langtree:named_node_for_range({1, 3, 1, 3})
+    ]])
+
+    eq('<node primitive_type>', exec_lua('return tostring(node)'))
   end)
 end)
 
