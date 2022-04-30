@@ -55,6 +55,10 @@ Functions ~
 			without stopping the job. Use chanclose(id) to close
 			any socket.
 
+Highlights ~
+
+*hl-VertSplit*		Use |hl-WinSeparator| instead.
+
 LSP Diagnostics ~
 
 For each of the functions below, use the corresponding function in
