@@ -224,7 +224,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
 
   -- loop through the clients and make synchronous formatting requests
   for _, client in pairs(clients) do
-    if client.resolved_capabilities.document_formatting then
+    if vim.tbl_get(client.server_capabilities, "documentFormattingProvider") then
       local params = util.make_formatting_params(options)
       local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
@@ -545,8 +545,7 @@ local function on_code_action_results(results, ctx, options)
     local action = action_tuple[2]
     if not action.edit
         and client
-        and type(client.resolved_capabilities.code_action) == 'table'
-        and client.resolved_capabilities.code_action.resolveProvider then
+        and vim.tbl_get(client.server_capabilities, "codeActionProvider", "resolveProvider") then
 
       client.request('codeAction/resolve', action, function(err, resolved_action)
         if err then

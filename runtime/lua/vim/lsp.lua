@@ -31,28 +31,28 @@ local lsp = {
   rpc_response_error = lsp_rpc.rpc_response_error;
 }
 
--- maps request name to the required resolved_capability in the client.
+-- maps request name to the required server_capability in the client.
 lsp._request_name_to_capability = {
-  ['textDocument/hover'] = 'hover';
-  ['textDocument/signatureHelp'] = 'signature_help';
-  ['textDocument/definition'] = 'goto_definition';
-  ['textDocument/implementation'] = 'implementation';
-  ['textDocument/declaration'] = 'declaration';
-  ['textDocument/typeDefinition'] = 'type_definition';
-  ['textDocument/documentSymbol'] = 'document_symbol';
-  ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
-  ['textDocument/rename'] = 'rename';
-  ['textDocument/prepareRename'] = 'rename';
-  ['textDocument/codeAction'] = 'code_action';
-  ['textDocument/codeLens'] = 'code_lens';
-  ['codeLens/resolve'] = 'code_lens_resolve';
-  ['workspace/executeCommand'] = 'execute_command';
-  ['workspace/symbol'] = 'workspace_symbol';
-  ['textDocument/references'] = 'find_references';
-  ['textDocument/rangeFormatting'] = 'document_range_formatting';
-  ['textDocument/formatting'] = 'document_formatting';
-  ['textDocument/completion'] = 'completion';
-  ['textDocument/documentHighlight'] = 'document_highlight';
+  ['textDocument/hover'] = { 'hoverProvider' };
+  ['textDocument/signatureHelp'] = { 'signatureHelpProvider' };
+  ['textDocument/definition'] = { 'definitionProvider' };
+  ['textDocument/implementation'] = { 'implementationProvider' };
+  ['textDocument/declaration'] = { 'declarationProvider' };
+  ['textDocument/typeDefinition'] = { 'typeDefinitionProvider' };
+  ['textDocument/documentSymbol'] = { 'documentSymbolProvider' };
+  ['textDocument/prepareCallHierarchy'] = { 'callHierarchyProvider' };
+  ['textDocument/rename'] = { 'renameProvider' };
+  ['textDocument/prepareRename'] = { 'renameProvider', 'prepareProvider'} ;
+  ['textDocument/codeAction'] = { 'codeActionProvider' };
+  ['textDocument/codeLens'] = { 'codeLensProvider' };
+  ['codeLens/resolve'] = { 'codeLensProvider', 'resolveProvider' };
+  ['workspace/executeCommand'] = { 'executeCommandProvider' };
+  ['workspace/symbol'] = { 'workspaceSymbolProvider' };
+  ['textDocument/references'] = { 'referencesProvider' };
+  ['textDocument/rangeFormatting'] = { 'documentRangeFormattingProvider' };
+  ['textDocument/formatting'] = { 'documentFormattingProvider' };
+  ['textDocument/completion'] = { 'completionProvider' };
+  ['textDocument/documentHighlight'] = { 'documentHighlightProvider' };
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -328,7 +328,7 @@ do
   function changetracking.init(client, bufnr)
     local use_incremental_sync = (
       if_nil(client.config.flags.allow_incremental_sync, true)
-      and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
+      and vim.tbl_get(client.server_capabilities, "textDocumentSync", "change") == protocol.TextDocumentSyncKind.Incremental
     )
     local state = state_by_client[client.id]
     if not state then
@@ -447,7 +447,7 @@ do
     end)
     local uri = vim.uri_from_bufnr(bufnr)
     return function(client)
-      if client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.None then
+      if vim.tbl_get(client.server_capabilities, "textDocumentSync", "change")  == protocol.TextDocumentSyncKind.None then
         return
       end
       local state = state_by_client[client.id]
@@ -526,7 +526,7 @@ end
 ---@param client Client object
 local function text_document_did_open_handler(bufnr, client)
   changetracking.init(client, bufnr)
-  if not client.resolved_capabilities.text_document_open_close then
+  if not vim.tbl_get(client.server_capabilities, "textDocumentSync", "openClose") then
     return
   end
   if not vim.api.nvim_buf_is_loaded(bufnr) then
@@ -632,10 +632,6 @@ end
 ---
 ---  - {server_capabilities} (table): Response from the server sent on
 ---    `initialize` describing the server's capabilities.
----
----  - {resolved_capabilities} (table): Normalized table of
----    capabilities that we have detected based on the initialize
----    response from the server in `server_capabilities`.
 function lsp.client()
   error()
 end
@@ -884,6 +880,7 @@ function lsp.start_client(config)
     messages = { name = name, messages = {}, progress = {}, status = {} };
   }
 
+
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
   uninitialized_clients[client_id] = client;
 
@@ -960,27 +957,48 @@ function lsp.start_client(config)
       client.workspace_folders = workspace_folders
       -- TODO(mjlbach): Backwards compatibility, to be removed in 0.7
       client.workspaceFolders = client.workspace_folders
-      client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
+
       -- These are the cleaned up capabilities we use for dynamically deciding
       -- when to send certain events to clients.
-      client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+      client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
+      client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+
+      -- Deprecation wrapper: this will be removed in 0.8
+      local mt = {}
+      mt.__index = function(table, key)
+        if key == 'resolved_capabilities' then
+          vim.notify_once("[LSP] Accessing client.resolved_capabilities is deprecated, " ..
+          "update your plugins or configuration to access client.server_capabilities instead." ..
+          "The new key/value pairs in server_capabilities directly match those " ..
+          "defined in the language server protocol", vim.log.levels.WARN)
+          table[key] = protocol._resolve_capabilities_compat(client.server_capabilities)
+          return table[key]
+        else
+          return table[key]
+        end
+      end
+      setmetatable(client, mt)
+
       client.supports_method = function(method)
         local required_capability = lsp._request_name_to_capability[method]
         -- if we don't know about the method, assume that the client supports it.
         if not required_capability then
           return true
         end
-
-        return client.resolved_capabilities[required_capability]
+        if vim.tbl_get(client.server_capabilities, unpack(required_capability)) then
+          return true
+        else
+          return false
+        end
       end
+
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
         if not status then
           pcall(handlers.on_error, lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
         end
       end
-      local _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
-      local _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
+      local _ = log.info() and log.info(log_prefix, "server_capabilities", { server_capabilities = client.server_capabilities })
 
       -- Only assign after initialized.
       active_clients[client_id] = client
@@ -1191,9 +1209,9 @@ function lsp._text_document_did_save_handler(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client, _client_id)
-    if client.resolved_capabilities.text_document_save then
+    if vim.tbl_get(client.server_capabilities, "textDocumentSync", "save") then
       local included_text
-      if client.resolved_capabilities.text_document_save_include_text then
+      if vim.tbl_get(client.server_capabilities, "textDocumentSync", "save", "includeText") then
         included_text = text(bufnr)
       end
       client.notify('textDocument/didSave', {
@@ -1246,7 +1264,7 @@ function lsp.buf_attach_client(bufnr, client_id)
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
           changetracking.reset_buf(client, bufnr)
-          if client.resolved_capabilities.text_document_open_close then
+          if vim.tbl_get(client.server_capabilities, "textDocumentSync", "openClose") then
             client.notify('textDocument/didClose', params)
           end
           text_document_did_open_handler(bufnr, client)
@@ -1256,7 +1274,7 @@ function lsp.buf_attach_client(bufnr, client_id)
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
           changetracking.reset_buf(client, bufnr)
-          if client.resolved_capabilities.text_document_open_close then
+          if vim.tbl_get(client.server_capabilities, "textDocumentSync", "openClose") then
             client.notify('textDocument/didClose', params)
           end
         end)
@@ -1306,7 +1324,7 @@ function lsp.buf_detach_client(bufnr, client_id)
 
   changetracking.reset_buf(client, bufnr)
 
-  if client.resolved_capabilities.text_document_open_close then
+  if vim.tbl_get(client.server_capabilities, "textDocumentSync", "openClose") then
     local uri = vim.uri_from_bufnr(bufnr)
     local params = { textDocument = { uri = uri; } }
     client.notify('textDocument/didClose', params)

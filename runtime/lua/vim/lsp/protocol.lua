@@ -1,7 +1,5 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
-local if_nil = vim.F.if_nil
-
 local protocol = {}
 
 --[=[
@@ -777,10 +775,50 @@ function protocol.make_client_capabilities()
   }
 end
 
+local if_nil = vim.F.if_nil
 --- Creates a normalized object describing LSP server capabilities.
 ---@param server_capabilities table Table of capabilities supported by the server
 ---@return table Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
+  local TextDocumentSyncKind = protocol.TextDocumentSyncKind
+  local textDocumentSync = server_capabilities.textDocumentSync
+  if textDocumentSync == nil then
+    -- Defaults if omitted.
+    server_capabilities.textDocumentSync = {
+      openClose = false,
+      change = TextDocumentSyncKind.None,
+      willSave = false,
+      willSaveWaitUntil = false,
+      save = {
+        includeText = false,
+      }
+    }
+  elseif type(textDocumentSync) == 'number' then
+    -- Backwards compatibility
+    if not TextDocumentSyncKind[textDocumentSync] then
+      return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+    end
+    server_capabilities.textDocumentSync = {
+      openClose = true,
+      change = textDocumentSync,
+      willSave = false,
+      willSaveWaitUntil = false,
+      save = {
+        includeText = false,
+      }
+    }
+  elseif type(textDocumentSync) ~= 'table' then
+    return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+  end
+  return server_capabilities
+end
+
+---@private
+--- Creates a normalized object describing LSP server capabilities.
+-- @deprecated access resolved_capabilities instead
+---@param server_capabilities table Table of capabilities supported by the server
+---@return table Normalized table of capabilities
+function protocol._resolve_capabilities_compat(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties
   do
@@ -931,12 +969,14 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid signatureHelpProvider")
   end
 
-  return vim.tbl_extend("error"
+  local capabilities = vim.tbl_extend("error"
       , text_document_sync_properties
       , signature_help_properties
       , workspace_properties
       , general_properties
       )
+
+  return capabilities
 end
 
 return protocol
