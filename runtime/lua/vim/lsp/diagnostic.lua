@@ -250,12 +250,8 @@ end
 ---                          will be removed.
 local function deprecate(name, alternative, version)
     local message = name .. ' is deprecated'
-    if alternative then
-      message = message.. ', use ' .. alternative .. ' instead.'
-    else
-      message = message .. '.'
-    end
-    message = message .. ' See :h deprecated.\nThis function will be removed in version ' .. version .. '.'
+    message = alternative and (message..', use '..alternative..' instead.') or message
+    message = message .. ' See :h deprecated\nThis function will be removed in version ' .. version
     vim.notify_once(message, vim.log.levels.WARN)
 end
 
