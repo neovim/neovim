@@ -57,7 +57,7 @@ Functions ~
 
 Highlights ~
 
-*hl-VertSplit*		superseded by |hl-WinSeparator|
+*hl-VertSplit*		Use |hl-WinSeparator| instead.
 
 LSP Diagnostics ~
 
