@@ -241,4 +241,25 @@ function M.get_captures_at_position(bufnr, row, col)
   return matches
 end
 
+--- Gets the smallest named node under the cursor
+---
+---@param winnr number Window handle or 0 for current window
+---@param opts table Options table
+---@param opts.ignore_injections boolean (default true) Ignore injected languages.
+---
+---@returns (table) The named node under the cursor
+function M.get_node_at_cursor(winnr, opts)
+  winnr = winnr or 0
+  local cursor = a.nvim_win_get_cursor(winnr)
+  local ts_cursor_range = { cursor[1] - 1, cursor[2], cursor[1] - 1, cursor[2] }
+
+  local buf = a.nvim_win_get_buf(winnr)
+  local root_lang_tree = M.get_parser(buf)
+  if not root_lang_tree then
+    return
+  end
+
+  return root_lang_tree:named_node_for_range(ts_cursor_range, opts)
+end
+
 return M
