@@ -15,6 +15,15 @@ LanguageTree.__index = LanguageTree
 ---@param opts.injections A table of language to injection query strings.
 ---                      This is useful for overriding the built-in runtime file
 ---                      searching for the injection language query per language.
+---@param opts.injection_resolver(lang, context)
+--                        A function to determine the final injection language (or nil).
+--                        This can be used for instance to map `cxx` to `cpp` or `py` to `python`
+--                        when such abbreviation is captured by a `@language` that does not fully agree with the
+--                        language of the actual parser
+--                        {lang} the language or identifier as suggested by a capture (e.g. `@html`, `@pythondoc`) or
+--                        by a `@language` capture
+--                        {context} table providing additional context for
+--                        {context.source} The current buffer or string being parsed
 function LanguageTree.new(source, lang, opts)
   language.require_language(lang)
   opts = opts or {}
@@ -132,30 +141,23 @@ function LanguageTree:parse()
   local seen_langs = {}
 
   for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = language.require_language(lang, nil, true)
+    local child = self._children[lang]
 
-    -- Child language trees should just be ignored if not found, since
-    -- they can depend on the text of a node. Intermediate strings
-    -- would cause errors for unknown parsers.
-    if has_lang then
-      local child = self._children[lang]
-
-      if not child then
-        child = self:add_child(lang)
-      end
-
-      child:set_included_regions(injection_ranges)
-
-      local _, child_changes = child:parse()
-
-      -- Propagate any child changes so they are included in the
-      -- the change list for the callback.
-      if child_changes then
-        vim.list_extend(changes, child_changes)
-      end
-
-      seen_langs[lang] = true
+    if not child then
+      child = self:add_child(lang)
     end
+
+    child:set_included_regions(injection_ranges)
+
+    local _, child_changes = child:parse()
+
+    -- Propagate any child changes so they are included in the
+    -- the change list for the callback.
+    if child_changes then
+      vim.list_extend(changes, child_changes)
+    end
+
+    seen_langs[lang] = true
   end
 
   for lang, _ in pairs(self._children) do
@@ -361,23 +363,33 @@ function LanguageTree:_get_injections()
         end
       end
 
-      -- Each tree index should be isolated from the other nodes.
-      if not injections[tree_index] then
-        injections[tree_index] = {}
-      end
+      -- Allow more flexible resolving of injection language
+      -- We might have captured `c++?` with `@language` that needs to be translated to `cpp`
+      lang = self._opt.injection_resolver(lang, { source = self._source, ranges = ranges })
 
-      if not injections[tree_index][lang] then
-        injections[tree_index][lang] = {}
-      end
+      -- Child language trees should just be ignored if not found, since
+      -- they can depend on the text of a node. Intermediate strings
+      -- would cause errors for unknown parsers.
+      local has_lang = lang and language.require_language(lang, nil, true)
+      if has_lang then
+        -- Each tree index should be isolated from the other nodes.
+        if not injections[tree_index] then
+          injections[tree_index] = {}
+        end
 
-      -- Key this by pattern. If combined is set to true all captures of this pattern
-      -- will be parsed by treesitter as the same "source".
-      -- If combined is false, each "region" will be parsed as a single source.
-      if not injections[tree_index][lang][pattern] then
-        injections[tree_index][lang][pattern] = { combined = combined, regions = {} }
-      end
+        if not injections[tree_index][lang] then
+          injections[tree_index][lang] = {}
+        end
 
-      table.insert(injections[tree_index][lang][pattern].regions, ranges)
+        -- Key this by pattern. If combined is set to true all captures of this pattern
+        -- will be parsed by treesitter as the same "source".
+        -- If combined is false, each "region" will be parsed as a single source.
+        if not injections[tree_index][lang][pattern] then
+          injections[tree_index][lang][pattern] = { combined = combined, regions = {} }
+        end
+
+        table.insert(injections[tree_index][lang][pattern].regions, ranges)
+      end
     end
   end
 
