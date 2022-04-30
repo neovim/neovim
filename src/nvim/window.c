@@ -5489,7 +5489,7 @@ void win_setheight_win(int height, win_T *win)
       }
     }
     cmdline_row = row;
-    p_ch = MAX(Rows - cmdline_row, 1);
+    p_ch = MAX(Rows - cmdline_row, ui_has(kUIMessages) ? 0 : 1);
     curtab->tp_ch_used = p_ch;
     msg_row = row;
     msg_col = 0;
@@ -5997,10 +5997,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     clear_cmdline = true;
   }
   cmdline_row = row;
-  p_ch = Rows - cmdline_row;
-  if (p_ch < 1) {
-    p_ch = 1;
-  }
+  p_ch = MAX(Rows - cmdline_row, ui_has(kUIMessages) ? 0 : 1);
   curtab->tp_ch_used = p_ch;
   redraw_all_later(SOME_VALID);
   showmode();
