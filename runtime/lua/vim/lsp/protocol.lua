@@ -813,11 +813,12 @@ function protocol.resolve_capabilities(server_capabilities)
   return server_capabilities
 end
 
+---@private
 --- Creates a normalized object describing LSP server capabilities.
 -- @deprecated access resolved_capabilities instead
 ---@param server_capabilities table Table of capabilities supported by the server
 ---@return table Normalized table of capabilities
-function protocol.resolve_capabilities_compat(server_capabilities)
+function protocol._resolve_capabilities_compat(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties
   do

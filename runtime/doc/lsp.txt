@@ -1872,8 +1872,8 @@ request({method}, {params}, {callback}, {notify_reply_callback})
                     {params}                 (table) Parameters for the
                                              invoked LSP method
                     {callback}               (function) Callback to invoke
-                    {notify_reply_callback}  (function) Callback to invoke as
-                                             soon as a request is no longer
+                    {notify_reply_callback}  (function|nil) Callback to invoke
+                                             as soon as a request is no longer
                                              pending
 
                 Return: ~
@@ -1967,15 +1967,6 @@ resolve_capabilities({server_capabilities})
                 Creates a normalized object describing LSP server
                 capabilities.
 
-                Parameters: ~
-                    {server_capabilities}  table Table of capabilities
-                                           supported by the server
-
-                Return: ~
-                    table Normalized table of capabilities
-
-                              *vim.lsp.protocol.resolve_capabilities_compat()*
-resolve_capabilities_compat({server_capabilities})
                 Parameters: ~
                     {server_capabilities}  table Table of capabilities
                                            supported by the server
