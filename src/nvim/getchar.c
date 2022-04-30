@@ -1768,6 +1768,20 @@ static int put_string_in_typebuf(int offset, int slen, char_u *string, int new_s
   return OK;
 }
 
+/// Check if the bytes at the start of the typeahead buffer are a character used
+/// in Insert mode completion.  This includes the form with a CTRL modifier.
+static bool at_ins_compl_key(void)
+{
+  char_u *p = typebuf.tb_buf + typebuf.tb_off;
+  int c = *p;
+
+  if (typebuf.tb_len > 3 && c == K_SPECIAL && p[1] == KS_MODIFIER && (p[2] & MOD_MASK_CTRL)) {
+    c = p[3] & 0x1f;
+  }
+  return (ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
+         || ((compl_cont_status & CONT_LOCAL) && (c == Ctrl_N || c == Ctrl_P));
+}
+
 /// Check if typebuf.tb_buf[] contains a modifer plus key that can be changed
 /// into just a key, apply that.
 /// Check from typebuf.tb_buf[typebuf.tb_off] to typebuf.tb_buf[typebuf.tb_off + "max_offset"].
@@ -1870,9 +1884,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       && !(State == HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != ASKMORE
       && State != CONFIRM
-      && !((ctrl_x_mode_not_default() && vim_is_ctrl_x_key(tb_c1))
-           || ((compl_cont_status & CONT_LOCAL)
-               && (tb_c1 == Ctrl_N || tb_c1 == Ctrl_P)))) {
+      && !at_ins_compl_key()) {
     if (tb_c1 == K_SPECIAL) {
       nolmaplen = 2;
     } else {

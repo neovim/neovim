@@ -325,6 +325,21 @@ func Test_compl_vim_cmds_after_register_expr()
   bwipe!
 endfunc
 
+func Test_compl_ignore_mappings()
+  call setline(1, ['foo', 'bar', 'baz', 'foobar'])
+  inoremap <C-P> (C-P)
+  inoremap <C-N> (C-N)
+  normal! G
+  call feedkeys("o\<C-X>\<C-N>\<C-N>\<C-N>\<C-P>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('baz', getline('.'))
+  " Also test with unsimplified keys
+  call feedkeys("o\<C-X>\<*C-N>\<*C-N>\<*C-N>\<*C-P>\<*C-N>\<C-Y>", 'tx')
+  call assert_equal('baz', getline('.'))
+  iunmap <C-P>
+  iunmap <C-N>
+  bwipe!
+endfunc
+
 func DummyCompleteOne(findstart, base)
   if a:findstart
     return 0
