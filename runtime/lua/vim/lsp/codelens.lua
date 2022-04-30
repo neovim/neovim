@@ -223,7 +223,6 @@ function M.on_codelens(err, result, ctx, _)
   M.display(result, ctx.bufnr, ctx.client_id)
   resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
     M.display(result, ctx.bufnr, ctx.client_id)
-    active_refreshes[ctx.bufnr] = nil
   end)
 end
 
@@ -245,7 +244,10 @@ function M.refresh()
     return
   end
   active_refreshes[bufnr] = true
-  vim.lsp.buf_request(0, 'textDocument/codeLens', params)
+  vim.lsp.buf_request(0, 'textDocument/codeLens', params, function (...)
+    active_refreshes[bufnr] = nil
+    vim.lsp.handlers['textDocument/codeLens'](...)
+  end)
 end
 
 
