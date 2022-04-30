@@ -971,10 +971,10 @@ function lsp.start_client(config)
           "update your plugins or configuration to access client.server_capabilities instead." ..
           "The new key/value pairs in server_capabilities directly match those " ..
           "defined in the language server protocol", vim.log.levels.WARN)
-          table[key] = protocol._resolve_capabilities_compat(client.server_capabilities)
-          return table[key]
+          rawset(table, key, protocol._resolve_capabilities_compat(client.server_capabilities))
+          return rawget(table, key)
         else
-          return table[key]
+          return rawget(table, key)
         end
       end
       setmetatable(client, mt)
