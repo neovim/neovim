@@ -354,7 +354,7 @@ Highlight groups:
   |hl-CurSearch| highlights match under cursor instead of last match found
   using |n| or |N|
   |hl-CursorLine| is low-priority unless foreground color is set
-  *hl-VertSplit* superseded by |hl-WinSeparator|
+  |hl-VertSplit| superseded by |hl-WinSeparator|
 
 Macro/|recording| behavior
   Replay of a macro recorded during :lmap produces the same actions as when it
