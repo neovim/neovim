@@ -449,6 +449,22 @@ func Test_list_mappings()
   call assert_equal(['i  <S-/>       * ShiftSlash'], execute('imap')->trim()->split("\n"))
   iunmap <S-/>
   call assert_equal(['No mapping found'], execute('imap')->trim()->split("\n"))
+
+  " List global, buffer local and script local mappings
+  nmap ,f /^\k\+ (<CR>
+  nmap <buffer> ,f /^\k\+ (<CR>
+  nmap <script> ,fs /^\k\+ (<CR>
+  call assert_equal(['n  ,f           @/^\k\+ (<CR>',
+        \ 'n  ,fs         & /^\k\+ (<CR>',
+        \ 'n  ,f            /^\k\+ (<CR>'],
+        \ execute('nmap ,f')->trim()->split("\n"))
+
+  " List <Nop> mapping
+  nmap ,n <Nop>
+  call assert_equal(['n  ,n            <Nop>'],
+        \ execute('nmap ,n')->trim()->split("\n"))
+
+  nmapclear
 endfunc
 
 func Test_expr_map_gets_cursor()
@@ -576,6 +592,15 @@ func Test_map_error()
 
   call assert_fails('mapclear abc', 'E474:')
   call assert_fails('abclear abc', 'E474:')
+  call assert_fails('abbr $xyz abc', 'E474:')
+
+  " space character in an abbreviation
+  call assert_fails('abbr ab<space> ABC', 'E474:')
+
+  " invalid <expr> map
+  map <expr> ,f abc
+  call assert_fails('normal ,f', 'E121:')
+  unmap <expr> ,f
 endfunc
 
 " Test for <special> key mapping
@@ -603,11 +628,66 @@ endfunc
 " Test for hasmapto()
 func Test_hasmapto()
   call assert_equal(0, hasmapto('/^\k\+ ('))
+  map ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ ('))
+  unmap ,f
+
+  " Insert mode mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 'i'))
+  imap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'i'))
+  iunmap ,f
+
+  " Normal mode mapping
   call assert_equal(0, hasmapto('/^\k\+ (', 'n'))
   nmap ,f /^\k\+ (<CR>
   call assert_equal(1, hasmapto('/^\k\+ ('))
   call assert_equal(1, hasmapto('/^\k\+ (', 'n'))
+  nunmap ,f
+
+  " Visual and Select mode mapping
   call assert_equal(0, hasmapto('/^\k\+ (', 'v'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'x'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 's'))
+  vmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'v'))
+  call assert_equal(1, hasmapto('/^\k\+ (', 'x'))
+  call assert_equal(1, hasmapto('/^\k\+ (', 's'))
+  vunmap ,f
+
+  " Visual mode mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 'x'))
+  xmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'v'))
+  call assert_equal(1, hasmapto('/^\k\+ (', 'x'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 's'))
+  xunmap ,f
+
+  " Select mode mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 's'))
+  smap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'v'))
+  call assert_equal(0, hasmapto('/^\k\+ (', 'x'))
+  call assert_equal(1, hasmapto('/^\k\+ (', 's'))
+  sunmap ,f
+
+  " Operator-pending mode mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 'o'))
+  omap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'o'))
+  ounmap ,f
+
+  " Language mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 'l'))
+  lmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'l'))
+  lunmap ,f
+
+  " Cmdline mode mapping
+  call assert_equal(0, hasmapto('/^\k\+ (', 'c'))
+  cmap ,f /^\k\+ (<CR>
+  call assert_equal(1, hasmapto('/^\k\+ (', 'c'))
+  cunmap ,f
 
   call assert_equal(0, hasmapto('/^\k\+ (', 'n', 1))
 endfunc
@@ -619,8 +699,176 @@ func Test_mapcomplete()
 	      \ getcompletion('', 'mapping'))
   call assert_equal([], getcompletion(',d', 'mapping'))
 
+  call feedkeys(":unmap <buf\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"unmap <buffer>', @:)
+
+  call feedkeys(":unabbr <buf\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"unabbr <buffer>', @:)
+
   call feedkeys(":abbr! \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match("abbr! \x01", @:)
+  call assert_equal("\"abbr! \x01", @:)
+
+  " Multiple matches for a map
+  nmap ,f /H<CR>
+  omap ,f /H<CR>
+  call feedkeys(":map ,\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"map ,f', @:)
+  mapclear
+endfunc
+
+" Test for <expr> in abbreviation
+func Test_expr_abbr()
+  new
+  iabbr <expr> teh "the"
+  call feedkeys("iteh ", "tx")
+  call assert_equal('the ', getline(1))
+  iabclear
+  call setline(1, '')
+
+  " invalid <expr> abbreviation
+  abbr <expr> hte GetAbbr()
+  call assert_fails('normal ihte ', 'E117:')
+  call assert_equal(' ', getline(1))
+  unabbr <expr> hte
+
+  close!
+endfunc
+
+" Test for storing mappings in different modes in a vimrc file
+func Test_mkvimrc_mapmodes()
+  map a1 /a1
+  nmap a2 /a2
+  vmap a3 /a3
+  smap a4 /a4
+  xmap a5 /a5
+  omap a6 /a6
+  map! a7 /a7
+  imap a8 /a8
+  lmap a9 /a9
+  cmap a10 /a10
+  tmap a11 /a11
+  " Normal + Visual map
+  map a12 /a12
+  sunmap a12
+  ounmap a12
+  " Normal + Selectmode map
+  map a13 /a13
+  xunmap a13
+  ounmap a13
+  " Normal + OpPending map
+  map a14 /a14
+  vunmap a14
+  " Visual + Selectmode map
+  map a15 /a15
+  nunmap a15
+  ounmap a15
+  " Visual + OpPending map
+  map a16 /a16
+  nunmap a16
+  sunmap a16
+  " Selectmode + OpPending map
+  map a17 /a17
+  nunmap a17
+  xunmap a17
+  " Normal + Visual + Selectmode map
+  map a18 /a18
+  ounmap a18
+  " Normal + Visual + OpPending map
+  map a19 /a19
+  sunmap a19
+  " Normal + Selectmode + OpPending map
+  map a20 /a20
+  xunmap a20
+  " Visual + Selectmode + OpPending map
+  map a21 /a21
+  nunmap a21
+  " Mapping to Nop
+  map a22 <Nop>
+  " Script local mapping
+  map <script> a23 /a23
+
+  " Newline in {lhs} and {rhs} of a map
+  exe "map a24\<C-V>\<C-J> ia24\<C-V>\<C-J><Esc>"
+
+  " Abbreviation
+  abbr a25 A25
+  cabbr a26 A26
+  iabbr a27 A27
+
+  mkvimrc! Xvimrc
+  let l = readfile('Xvimrc')
+  call assert_equal(['map a1 /a1'], filter(copy(l), 'v:val =~ " a1 "'))
+  call assert_equal(['nmap a2 /a2'], filter(copy(l), 'v:val =~ " a2 "'))
+  call assert_equal(['vmap a3 /a3'], filter(copy(l), 'v:val =~ " a3 "'))
+  call assert_equal(['smap a4 /a4'], filter(copy(l), 'v:val =~ " a4 "'))
+  call assert_equal(['xmap a5 /a5'], filter(copy(l), 'v:val =~ " a5 "'))
+  call assert_equal(['omap a6 /a6'], filter(copy(l), 'v:val =~ " a6 "'))
+  call assert_equal(['map! a7 /a7'], filter(copy(l), 'v:val =~ " a7 "'))
+  call assert_equal(['imap a8 /a8'], filter(copy(l), 'v:val =~ " a8 "'))
+  call assert_equal(['lmap a9 /a9'], filter(copy(l), 'v:val =~ " a9 "'))
+  call assert_equal(['cmap a10 /a10'], filter(copy(l), 'v:val =~ " a10 "'))
+  call assert_equal(['tmap a11 /a11'], filter(copy(l), 'v:val =~ " a11 "'))
+  call assert_equal(['nmap a12 /a12', 'xmap a12 /a12'],
+        \ filter(copy(l), 'v:val =~ " a12 "'))
+  call assert_equal(['nmap a13 /a13', 'smap a13 /a13'],
+        \ filter(copy(l), 'v:val =~ " a13 "'))
+  call assert_equal(['nmap a14 /a14', 'omap a14 /a14'],
+        \ filter(copy(l), 'v:val =~ " a14 "'))
+  call assert_equal(['vmap a15 /a15'], filter(copy(l), 'v:val =~ " a15 "'))
+  call assert_equal(['xmap a16 /a16', 'omap a16 /a16'],
+        \ filter(copy(l), 'v:val =~ " a16 "'))
+  call assert_equal(['smap a17 /a17', 'omap a17 /a17'],
+        \ filter(copy(l), 'v:val =~ " a17 "'))
+  call assert_equal(['nmap a18 /a18', 'vmap a18 /a18'],
+        \ filter(copy(l), 'v:val =~ " a18 "'))
+  call assert_equal(['nmap a19 /a19', 'xmap a19 /a19', 'omap a19 /a19'],
+        \ filter(copy(l), 'v:val =~ " a19 "'))
+  call assert_equal(['nmap a20 /a20', 'smap a20 /a20', 'omap a20 /a20'],
+        \ filter(copy(l), 'v:val =~ " a20 "'))
+  call assert_equal(['vmap a21 /a21', 'omap a21 /a21'],
+        \ filter(copy(l), 'v:val =~ " a21 "'))
+  call assert_equal(['map a22 <Nop>'], filter(copy(l), 'v:val =~ " a22 "'))
+  call assert_equal([], filter(copy(l), 'v:val =~ " a23 "'))
+  call assert_equal(["map a24<NL> ia24<NL>\x16\e"],
+        \ filter(copy(l), 'v:val =~ " a24"'))
+
+  call assert_equal(['abbr a25 A25'], filter(copy(l), 'v:val =~ " a25 "'))
+  call assert_equal(['cabbr a26 A26'], filter(copy(l), 'v:val =~ " a26 "'))
+  call assert_equal(['iabbr a27 A27'], filter(copy(l), 'v:val =~ " a27 "'))
+  call delete('Xvimrc')
+
+  mapclear
+  nmapclear
+  vmapclear
+  xmapclear
+  smapclear
+  omapclear
+  imapclear
+  lmapclear
+  cmapclear
+  tmapclear
+endfunc
+
+" Test for recursive mapping ('maxmapdepth')
+func Test_map_recursive()
+  map x y
+  map y x
+  call assert_fails('normal x', 'E223:')
+  unmap x
+  unmap y
+endfunc
+
+" Test for removing an abbreviation using {rhs} and with space after {lhs}
+func Test_abbr_remove()
+  abbr foo bar
+  let d = maparg('foo', 'i', 1, 1)
+  call assert_equal(['foo', 'bar', '!'], [d.lhs, d.rhs, d.mode])
+  unabbr bar
+  call assert_equal({}, maparg('foo', 'i', 1, 1))
+
+  abbr foo bar
+  unabbr foo<space><tab>
+  call assert_equal({}, maparg('foo', 'i', 1, 1))
 endfunc
 
 func Test_map_cmdkey_redo()
