@@ -2317,6 +2317,10 @@ static int vgetorpeek(bool advance)
       // try re-mapping.
       for (;;) {
         check_end_reg_executing(advance);
+        // os_breakcheck() can call input_enqueue()
+        if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
+          ctrl_c_interrupts = false;
+        }
         // os_breakcheck() is slow, don't use it too often when
         // inside a mapping.  But call it each time for typed
         // characters.
@@ -2325,6 +2329,7 @@ static int vgetorpeek(bool advance)
         } else {
           os_breakcheck();  // check for CTRL-C
         }
+        ctrl_c_interrupts = true;
         int keylen = 0;
         if (got_int) {
           // flush all input

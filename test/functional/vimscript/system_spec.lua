@@ -268,7 +268,7 @@ describe('system()', function()
         :call system("for /L %I in (1,0,2) do @echo y")      |]]
         or  [[
         :call system("yes")                                  |]]))
-      feed('<c-c>')
+      feed('foo<c-c>')
       screen:expect([[
         ^                                                     |
         ~                                                    |
@@ -284,6 +284,49 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         Type  :qa  and press <Enter> to exit Nvim            |
+      ]])
+    end)
+
+    it('`yes` interrupted with mapped CTRL-C', function()
+      command('nnoremap <C-C> i')
+      feed(':call system("' .. (iswin()
+        and 'for /L %I in (1,0,2) do @echo y'
+        or  'yes') .. '")<cr>')
+      screen:expect([[
+                                                             |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+]] .. (iswin()
+        and [[
+        :call system("for /L %I in (1,0,2) do @echo y")      |]]
+        or  [[
+        :call system("yes")                                  |]]))
+      feed('foo<c-c>')
+      screen:expect([[
+        ^                                                     |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        ~                                                    |
+        -- INSERT --                                         |
       ]])
     end)
   end)

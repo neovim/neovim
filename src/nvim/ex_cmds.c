@@ -4661,7 +4661,6 @@ void global_exe(char_u *cmd)
   linenr_T old_lcount;      // b_ml.ml_line_count before the command
   buf_T *old_buf = curbuf;  // remember what buffer we started in
   linenr_T lnum;            // line number according to old situation
-  int save_mapped_ctrl_c = mapped_ctrl_c;
 
   // Set current position only once for a global command.
   // If global_busy is set, setpcmark() will not do anything.
@@ -4670,8 +4669,6 @@ void global_exe(char_u *cmd)
 
   // When the command writes a message, don't overwrite the command.
   msg_didout = true;
-  // Disable CTRL-C mapping, let it interrupt (potentially long output).
-  mapped_ctrl_c = 0;
 
   sub_nsubs = 0;
   sub_nlines = 0;
@@ -4684,7 +4681,6 @@ void global_exe(char_u *cmd)
     os_breakcheck();
   }
 
-  mapped_ctrl_c = save_mapped_ctrl_c;
   global_busy = 0;
   if (global_need_beginline) {
     beginline(BL_WHITE | BL_FIX);
