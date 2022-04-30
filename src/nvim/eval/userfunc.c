@@ -2272,7 +2272,7 @@ void ex_function(exarg_T *eap)
       for (p = theline; ascii_iswhite(*p) || *p == ':'; p++) {}
 
       // Check for "endfunction".
-      if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {
+      if (checkforcmd((char **)&p, "endfunction", 4) && nesting-- == 0) {
         if (*p == '!') {
           p++;
         }
@@ -2311,7 +2311,7 @@ void ex_function(exarg_T *eap)
       }
 
       // Check for defining a function inside this function.
-      if (checkforcmd(&p, "function", 2)) {
+      if (checkforcmd((char **)&p, "function", 2)) {
         if (*p == '!') {
           p = skipwhite(p + 1);
         }
@@ -2324,7 +2324,7 @@ void ex_function(exarg_T *eap)
       }
 
       // Check for ":append", ":change", ":insert".
-      p = skip_range(p, NULL);
+      p = (char_u *)skip_range((char *)p, NULL);
       if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
           || (p[0] == 'c'
               && (!ASCII_ISALPHA(p[1])

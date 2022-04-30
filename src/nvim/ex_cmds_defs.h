@@ -176,7 +176,7 @@ enum {
 struct exarg {
   char_u *arg;             ///< argument of the command
   char_u *nextcmd;         ///< next command (NULL if none)
-  char_u *cmd;             ///< the name of the command (except for :make)
+  char *cmd;               ///< the name of the command (except for :make)
   char_u **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command

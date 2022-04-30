@@ -1376,7 +1376,7 @@ scripterror:
       int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
-      alist_add(&global_alist, p, alist_fnum_flag);
+      alist_add(&global_alist, (char *)p, alist_fnum_flag);
     }
 
     // If there are no more letters after the current "-", go to next argument.

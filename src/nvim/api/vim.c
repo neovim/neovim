@@ -568,7 +568,7 @@ void nvim_set_current_dir(String dir, Error *err)
 
   try_start();
 
-  if (!changedir_func(string, kCdScopeGlobal)) {
+  if (!changedir_func((char *)string, kCdScopeGlobal)) {
     if (!try_end(err)) {
       api_set_error(err, kErrorTypeException, "Failed to change directory");
     }

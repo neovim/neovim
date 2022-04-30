@@ -690,7 +690,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
    * Decide which 'encoding' to use or use first.
    */
   if (eap != NULL && eap->force_enc != 0) {
-    fenc = enc_canonize(eap->cmd + eap->force_enc);
+    fenc = enc_canonize((char_u *)eap->cmd + eap->force_enc);
     fenc_alloced = true;
     keep_dest_enc = true;
   } else if (curbuf->b_p_bin) {
@@ -2027,7 +2027,7 @@ void prep_exarg(exarg_T *eap, const buf_T *buf)
   const size_t cmd_len = 15 + STRLEN(buf->b_p_fenc);
   eap->cmd = xmalloc(cmd_len);
 
-  snprintf((char *)eap->cmd, cmd_len, "e ++enc=%s", buf->b_p_fenc);
+  snprintf(eap->cmd, cmd_len, "e ++enc=%s", buf->b_p_fenc);
   eap->force_enc = 8;
   eap->bad_char = buf->b_bad_char;
   eap->force_ff = *buf->b_p_ff;
@@ -2062,7 +2062,7 @@ void set_file_options(int set_options, exarg_T *eap)
 void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
-    char_u *fenc = enc_canonize(eap->cmd + eap->force_enc);
+    char_u *fenc = enc_canonize((char_u *)eap->cmd + eap->force_enc);
     set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
     xfree(fenc);
   }
@@ -3066,7 +3066,7 @@ nobackup:
 
   // Check for forced 'fileencoding' from "++opt=val" argument.
   if (eap != NULL && eap->force_enc != 0) {
-    fenc = eap->cmd + eap->force_enc;
+    fenc = (char_u *)eap->cmd + eap->force_enc;
     fenc = enc_canonize(fenc);
     fenc_tofree = fenc;
   } else {

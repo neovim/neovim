@@ -1018,7 +1018,7 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     scope = kCdScopeTabpage;
   }
 
-  if (!changedir_func(argvars[0].vval.v_string, scope)) {
+  if (!changedir_func((char *)argvars[0].vval.v_string, scope)) {
     // Directory change failed
     XFREE_CLEAR(rettv->vval.v_string);
   }
@@ -2193,7 +2193,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
 
   exarg_T eap = {
-    .cmd = cmdstr,
+    .cmd = (char *)cmdstr,
     .arg = cmdstr,
     .usefilter = false,
     .nextcmd = NULL,
