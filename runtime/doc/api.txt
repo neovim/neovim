@@ -148,9 +148,9 @@ indices, end-inclusive):
 Most API functions are "deferred": they are queued on the main loop and
 processed sequentially with normal input.  So if the editor is waiting for
 user input in a "modal" fashion (e.g. the |hit-enter-prompt|), the request
-will block.  Non-deferred ({fast}) functions such as |nvim_get_mode()| and
+will block.  Non-deferred (fast) functions such as |nvim_get_mode()| and
 |nvim_input()| are served immediately (i.e. without waiting in the input
-queue).  Lua code can use |vim.in_fast_event()| to detect a {fast} context.
+queue).  Lua code can use |vim.in_fast_event()| to detect a fast context.
 
 ==============================================================================
 API metadata						*api-metadata*
@@ -535,7 +535,7 @@ nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
                 Find files in runtime directories
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {pat}   pattern of files to search for
@@ -604,7 +604,7 @@ nvim__screenshot({path})                                  *nvim__screenshot()*
                 TODO: Documentation
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
 nvim__set_hl_ns({ns_id})                                   *nvim__set_hl_ns()*
                 Set active namespace for highlights.
@@ -616,7 +616,7 @@ nvim__set_hl_ns({ns_id})                                   *nvim__set_hl_ns()*
                 cycle.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {ns_id}  the namespace to activate
@@ -638,6 +638,9 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                    have such side effects, e.g. |:sleep| may wake timers).
                 2. To minimize RPC overhead (roundtrips) of a sequence of many
                    requests.
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {calls}  an array of calls, where each call is described
@@ -664,6 +667,10 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
                 channel was created with `rpc=true` then the channel expects
                 RPC messages, use |vim.rpcnotify()| and |vim.rpcrequest()|
                 instead.
+
+                Attributes: ~
+                    |RPC| only
+                    |vim.api| only
 
                 Parameters: ~
                     {chan}  id of the channel
@@ -816,7 +823,7 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                 Evaluates statusline string.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {str}   Statusline string (see 'statusline').
@@ -852,6 +859,9 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
 
                 Only statements are executed. To evaluate an expression,
                 prefix it with `return`: return my_function(...)
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {code}  Lua code to execute
@@ -905,7 +915,8 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
                     2-tuple [{channel-id}, {api-metadata}]
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
+                    |RPC| only
 
 nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                 Gets information about a channel.
@@ -1081,7 +1092,7 @@ nvim_get_mode()                                              *nvim_get_mode()*
                     Dictionary { "mode": String, "blocking": Boolean }
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
 nvim_get_option({name})                                    *nvim_get_option()*
                 Gets the global value of an option.
@@ -1157,7 +1168,7 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
                 returned then.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {name}  pattern of files to search for
@@ -1201,7 +1212,7 @@ nvim_input({keys})                                              *nvim_input()*
                     |api-level| 6.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {keys}  to be typed
@@ -1226,7 +1237,7 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
                     |nvim_input()| has the same limitation.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {button}    Mouse button: one of "left", "right",
@@ -1356,7 +1367,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
                 Doesn't check the validity of command arguments.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {str}   Command line string to parse. Cannot contain "\n".
@@ -1517,6 +1528,9 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                 Note:
                     "Something is better than nothing". You don't need to
                     include all the fields.
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {name}        Short name for the connected client
@@ -1712,11 +1726,17 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
 nvim_subscribe({event})                                     *nvim_subscribe()*
                 Subscribes to event broadcasts.
 
+                Attributes: ~
+                    |RPC| only
+
                 Parameters: ~
                     {event}  Event type string
 
 nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
                 Unsubscribes to event broadcasts.
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {event}  Event type string
@@ -1807,7 +1827,7 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                 Parse a VimL expression.
 
                 Attributes: ~
-                    {fast}
+                    |api-fast|
 
                 Parameters: ~
                     {expr}       Expression to parse. Always treated as a
@@ -2027,6 +2047,9 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                 This is useful e.g. to call vimL functions that only work with
                 the current buffer/window currently, like |termopen()|.
 
+                Attributes: ~
+                    |vim.api| only
+
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {fun}     Function to call inside the buffer (currently
@@ -2108,6 +2131,9 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 Deactivates buffer-update events on the channel.
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -2737,6 +2763,9 @@ nvim_set_decoration_provider({ns_id}, {opts})
                 `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite
                 dubious for the moment.
 
+                Attributes: ~
+                    |vim.api| only
+
                 Parameters: ~
                     {ns_id}  Namespace id from |nvim_create_namespace()|
                     {opts}   Callbacks invoked during redraw:
@@ -2759,6 +2788,9 @@ Window Functions                                                  *api-window*
 
 nvim_win_call({window}, {fun})                               *nvim_win_call()*
                 Calls a function with window as temporary current window.
+
+                Attributes: ~
+                    |vim.api| only
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
@@ -3492,6 +3524,9 @@ nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
                     A requests 80x40 but client B requests 200x100, the global
                     screen has size 80x40.
 
+                Attributes: ~
+                    |RPC| only
+
                 Parameters: ~
                     {width}    Requested screen columns
                     {height}   Requested screen rows
@@ -3501,6 +3536,9 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
                 Deactivates UI events on the channel.
 
                 Removes the client from the list of UIs. |nvim_list_uis()|
+
+                Attributes: ~
+                    |RPC| only
 
                                                     *nvim_ui_pum_set_bounds()*
 nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
@@ -3515,6 +3553,9 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
                 nor be anchored to exact grid corners, so one can set
                 floating-point numbers to the popup menu geometry.
 
+                Attributes: ~
+                    |RPC| only
+
                 Parameters: ~
                     {width}   Popupmenu width.
                     {height}  Popupmenu height.
@@ -3525,14 +3566,23 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
                 Tells Nvim the number of elements displaying in the popumenu,
                 to decide <PageUp> and <PageDown> movement.
 
+                Attributes: ~
+                    |RPC| only
+
                 Parameters: ~
                     {height}  Popupmenu height, must be greater than zero.
 
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation
 
+                Attributes: ~
+                    |RPC| only
+
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
                 TODO: Documentation
+
+                Attributes: ~
+                    |RPC| only
 
                                                    *nvim_ui_try_resize_grid()*
 nvim_ui_try_resize_grid({grid}, {width}, {height})
@@ -3541,6 +3591,9 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
                 limits.
 
                 On invalid grid handle, fails with error.
+
+                Attributes: ~
+                    |RPC| only
 
                 Parameters: ~
                     {grid}    The handle of the grid to be changed.
