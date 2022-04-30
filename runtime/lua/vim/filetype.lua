@@ -91,6 +91,7 @@ local extension = {
   eni = "cl",
   dcl = "clean",
   icl = "clean",
+  gleam = "gleam",
   cljx = "clojure",
   clj = "clojure",
   cljc = "clojure",
