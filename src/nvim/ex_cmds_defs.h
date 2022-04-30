@@ -261,4 +261,18 @@ typedef struct {
   bool filter_force;           ///< set for :filter!
 } cmdmod_T;
 
+/// Stores command modifier info used by `nvim_parse_cmd`
+typedef struct {
+  bool silent;
+  bool emsg_silent;
+  bool sandbox;
+  bool noautocmd;
+  long verbose;
+  cmdmod_T cmdmod;
+  struct {
+    bool file;
+    bool bar;
+  } magic;
+} CmdParseInfo;
+
 #endif  // NVIM_EX_CMDS_DEFS_H

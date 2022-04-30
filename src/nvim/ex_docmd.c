@@ -1216,6 +1216,226 @@ static char *skip_colon_white(const char *p, bool skipleadingwhite)
   return (char *)p;
 }
 
+/// Set the addr type for command
+///
+/// @param p pointer to character after command name in cmdline
+static void set_cmd_addr_type(exarg_T *eap, char_u *p)
+{
+  // ea.addr_type for user commands is set by find_ucmd
+  if (IS_USER_CMDIDX(eap->cmdidx)) {
+    return;
+  }
+  if (eap->cmdidx != CMD_SIZE) {
+    eap->addr_type = cmdnames[(int)eap->cmdidx].cmd_addr_type;
+  } else {
+    eap->addr_type = ADDR_LINES;
+  }
+  // :wincmd range depends on the argument
+  if (eap->cmdidx == CMD_wincmd && p != NULL) {
+    get_wincmd_addr_type((char *)skipwhite((char_u *)p), eap);
+  }
+  // :.cc in quickfix window uses line number
+  if ((eap->cmdidx == CMD_cc || eap->cmdidx == CMD_ll) && bt_quickfix(curbuf)) {
+    eap->addr_type = ADDR_OTHER;
+  }
+}
+
+/// Set default command range based on the addr type of the command
+static void set_cmd_default_range(exarg_T *eap)
+{
+  buf_T *buf;
+
+  eap->line1 = 1;
+  switch (eap->addr_type) {
+  case ADDR_LINES:
+  case ADDR_OTHER:
+    eap->line2 = curbuf->b_ml.ml_line_count;
+    break;
+  case ADDR_LOADED_BUFFERS:
+    buf = firstbuf;
+    while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+      buf = buf->b_next;
+    }
+    eap->line1 = buf->b_fnum;
+    buf = lastbuf;
+    while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+      buf = buf->b_prev;
+    }
+    eap->line2 = buf->b_fnum;
+    break;
+  case ADDR_BUFFERS:
+    eap->line1 = firstbuf->b_fnum;
+    eap->line2 = lastbuf->b_fnum;
+    break;
+  case ADDR_WINDOWS:
+    eap->line2 = LAST_WIN_NR;
+    break;
+  case ADDR_TABS:
+    eap->line2 = LAST_TAB_NR;
+    break;
+  case ADDR_TABS_RELATIVE:
+    eap->line2 = 1;
+    break;
+  case ADDR_ARGUMENTS:
+    if (ARGCOUNT == 0) {
+      eap->line1 = eap->line2 = 0;
+    } else {
+      eap->line2 = ARGCOUNT;
+    }
+    break;
+  case ADDR_QUICKFIX_VALID:
+    eap->line2 = (linenr_T)qf_get_valid_size(eap);
+    if (eap->line2 == 0) {
+      eap->line2 = 1;
+    }
+    break;
+  case ADDR_NONE:
+  case ADDR_UNSIGNED:
+  case ADDR_QUICKFIX:
+    iemsg(_("INTERNAL: Cannot use EX_DFLALL "
+            "with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"));
+    break;
+  }
+}
+
+/// Parse command line and return information about the first command.
+///
+/// @return Success or failure
+bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
+{
+  char *errormsg = NULL;
+  char *cmd;
+  char *p;
+
+  // Initialize cmdinfo
+  memset(cmdinfo, 0, sizeof(*cmdinfo));
+
+  // Initialize eap
+  memset(eap, 0, sizeof(*eap));
+  eap->line1 = 1;
+  eap->line2 = 1;
+  eap->cmd = (char *)cmdline;
+  eap->cmdlinep = &cmdline;
+  eap->getline = NULL;
+  eap->cookie = NULL;
+
+  // Parse command modifiers
+  if (parse_command_modifiers(eap, &errormsg, false) == FAIL) {
+    return false;
+  }
+  // Revert the side-effects of `parse_command_modifiers`
+  if (eap->save_msg_silent != -1) {
+    cmdinfo->silent = !!msg_silent;
+    msg_silent = eap->save_msg_silent;
+  }
+  if (eap->did_esilent) {
+    cmdinfo->emsg_silent = true;
+    emsg_silent--;
+  }
+  if (eap->did_sandbox) {
+    cmdinfo->sandbox = true;
+    sandbox--;
+  }
+  if (cmdmod.save_ei != NULL) {
+    cmdinfo->noautocmd = true;
+    set_string_option_direct("ei", -1, cmdmod.save_ei, OPT_FREE, SID_NONE);
+    free_string_option(cmdmod.save_ei);
+  }
+  if (eap->verbose_save != -1) {
+    cmdinfo->verbose = p_verbose;
+    p_verbose = eap->verbose_save;
+  }
+  cmdinfo->cmdmod = cmdmod;
+
+  // Save location after command modifiers
+  cmd = eap->cmd;
+  // Skip ranges to find command name since we need the command to know what kind of range it uses
+  eap->cmd = skip_range(eap->cmd, NULL);
+  if (*eap->cmd == '*') {
+    eap->cmd = (char *)skipwhite((char_u *)eap->cmd + 1);
+  }
+  p = find_command(eap, NULL);
+
+  // Set command attribute type and parse command range
+  set_cmd_addr_type(eap, (char_u *)p);
+  eap->cmd = cmd;
+  if (parse_cmd_address(eap, &errormsg, false) == FAIL) {
+    return false;
+  }
+
+  // Skip colon and whitespace
+  eap->cmd = skip_colon_white(eap->cmd, true);
+  // Fail if command is a comment or if command doesn't exist
+  if (*eap->cmd == NUL || *eap->cmd == '"') {
+    return false;
+  }
+  // Fail if command is invalid
+  if (eap->cmdidx == CMD_SIZE) {
+    return false;
+  }
+
+  // Correctly set 'forceit' for commands
+  if (*p == '!' && eap->cmdidx != CMD_substitute
+      && eap->cmdidx != CMD_smagic && eap->cmdidx != CMD_snomagic) {
+    p++;
+    eap->forceit = true;
+  } else {
+    eap->forceit = false;
+  }
+
+  // Parse arguments.
+  if (!IS_USER_CMDIDX(eap->cmdidx)) {
+    eap->argt = cmdnames[(int)eap->cmdidx].cmd_argt;
+  }
+  // Skip to start of argument.
+  // Don't do this for the ":!" command, because ":!! -l" needs the space.
+  if (eap->cmdidx == CMD_bang) {
+    eap->arg = (char_u *)p;
+  } else {
+    eap->arg = skipwhite((char_u *)p);
+  }
+
+  // Don't treat ":r! filter" like a bang
+  if (eap->cmdidx == CMD_read) {
+    if (eap->forceit) {
+      eap->forceit = false;                     // :r! filter
+    }
+  }
+
+  // Check for '|' to separate commands and '"' to start comments.
+  // Don't do this for ":read !cmd" and ":write !cmd".
+  if ((eap->argt & EX_TRLBAR)) {
+    separate_nextcmd(eap);
+  }
+  // Fail if command doesn't support bang but is used with a bang
+  if (!(eap->argt & EX_BANG) && eap->forceit) {
+    return false;
+  }
+  // Fail if command doesn't support a range but it is given a range
+  if (!(eap->argt & EX_RANGE) && eap->addr_count > 0) {
+    return false;
+  }
+  // Set default range for command if required
+  if ((eap->argt & EX_DFLALL) && eap->addr_count == 0) {
+    set_cmd_default_range(eap);
+  }
+
+  // Remove leading whitespace and colon from next command
+  if (eap->nextcmd) {
+    eap->nextcmd = (char_u *)skip_colon_white((char *)eap->nextcmd, true);
+  }
+
+  // Set the "magic" values (characters that get treated specially)
+  if (eap->argt & EX_XFILE) {
+    cmdinfo->magic.file = true;
+  }
+  if (eap->argt & EX_TRLBAR) {
+    cmdinfo->magic.bar = true;
+  }
+
+  return true;
+}
+
 /// Execute one Ex command.
 ///
 /// If 'sourcing' is TRUE, the command will be included in the error message.
@@ -1361,23 +1581,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // The ea.cmd pointer is updated to point to the first character following the
   // range spec. If an initial address is found, but no second, the upper bound
   // is equal to the lower.
-
-  // ea.addr_type for user commands is set by find_ucmd
-  if (!IS_USER_CMDIDX(ea.cmdidx)) {
-    if (ea.cmdidx != CMD_SIZE) {
-      ea.addr_type = cmdnames[(int)ea.cmdidx].cmd_addr_type;
-    } else {
-      ea.addr_type = ADDR_LINES;
-    }
-    // :wincmd range depends on the argument
-    if (ea.cmdidx == CMD_wincmd && p != NULL) {
-      get_wincmd_addr_type((char *)skipwhite((char_u *)p), &ea);
-    }
-    // :.cc in quickfix window uses line number
-    if ((ea.cmdidx == CMD_cc || ea.cmdidx == CMD_ll) && bt_quickfix(curbuf)) {
-      ea.addr_type = ADDR_OTHER;
-    }
-  }
+  set_cmd_addr_type(&ea, (char_u *)p);
 
   ea.cmd = cmd;
   if (parse_cmd_address(&ea, &errormsg, false) == FAIL) {
@@ -1690,59 +1894,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
 
   if ((ea.argt & EX_DFLALL) && ea.addr_count == 0) {
-    buf_T *buf;
-
-    ea.line1 = 1;
-    switch (ea.addr_type) {
-    case ADDR_LINES:
-    case ADDR_OTHER:
-      ea.line2 = curbuf->b_ml.ml_line_count;
-      break;
-    case ADDR_LOADED_BUFFERS:
-      buf = firstbuf;
-      while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
-        buf = buf->b_next;
-      }
-      ea.line1 = buf->b_fnum;
-      buf = lastbuf;
-      while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
-        buf = buf->b_prev;
-      }
-      ea.line2 = buf->b_fnum;
-      break;
-    case ADDR_BUFFERS:
-      ea.line1 = firstbuf->b_fnum;
-      ea.line2 = lastbuf->b_fnum;
-      break;
-    case ADDR_WINDOWS:
-      ea.line2 = LAST_WIN_NR;
-      break;
-    case ADDR_TABS:
-      ea.line2 = LAST_TAB_NR;
-      break;
-    case ADDR_TABS_RELATIVE:
-      ea.line2 = 1;
-      break;
-    case ADDR_ARGUMENTS:
-      if (ARGCOUNT == 0) {
-        ea.line1 = ea.line2 = 0;
-      } else {
-        ea.line2 = ARGCOUNT;
-      }
-      break;
-    case ADDR_QUICKFIX_VALID:
-      ea.line2 = (linenr_T)qf_get_valid_size(&ea);
-      if (ea.line2 == 0) {
-        ea.line2 = 1;
-      }
-      break;
-    case ADDR_NONE:
-    case ADDR_UNSIGNED:
-    case ADDR_QUICKFIX:
-      iemsg(_("INTERNAL: Cannot use EX_DFLALL "
-              "with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"));
-      break;
-    }
+    set_cmd_default_range(&ea);
   }
 
   // accept numbered register only when no count allowed (:put)
