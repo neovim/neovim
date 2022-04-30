@@ -2833,5 +2833,49 @@ describe('LSP', function()
         end,
       }
     end)
+    it('Can format async', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_formatting",
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function(_, _, ctx)
+          table.remove(expected_handlers)
+          if ctx.method == "start" then
+            local result = exec_lua([[
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+
+              local notify_msg
+              local notify = vim.notify
+              vim.notify = function(msg, log_level)
+                notify_msg = msg
+              end
+
+              local handler = vim.lsp.handlers['textDocument/formatting']
+              local handler_called = false
+              vim.lsp.handlers['textDocument/formatting'] = function(...)
+                handler_called = true
+              end
+
+              vim.lsp.buf.format({ bufnr = bufnr, async = true })
+              vim.wait(1000, function() return handler_called end)
+
+              vim.notify = notify
+              vim.lsp.handlers['textDocument/formatting'] = handler
+              return {notify = notify_msg, handler_called = handler_called}
+            ]])
+            eq({handler_called=true}, result)
+          elseif ctx.method == "shutdown" then
+            client.stop()
+          end
+        end,
+      }
+    end)
   end)
 end)
