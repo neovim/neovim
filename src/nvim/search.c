@@ -5808,7 +5808,7 @@ search_line:
             curwin->w_cursor.lnum = lnum;
             check_cursor();
           } else {
-            if (!GETFILE_SUCCESS(getfile(0, files[depth].name, NULL, true,
+            if (!GETFILE_SUCCESS(getfile(0, (char *)files[depth].name, NULL, true,
                                          files[depth].lnum, false))) {
               break;    // failed to jump to file
             }

@@ -4932,8 +4932,8 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
   if (xp->xp_context == EXPAND_HELP) {
     /* With an empty argument we would get all the help tags, which is
      * very slow.  Get matches for "help" instead. */
-    if (find_help_tags(*pat == NUL ? (char_u *)"help" : pat,
-                       num_file, file, false) == OK) {
+    if (find_help_tags(*pat == NUL ? "help" : (char *)pat,
+                       num_file, (char ***)file, false) == OK) {
       cleanup_help_tags(*num_file, *file);
       return OK;
     }

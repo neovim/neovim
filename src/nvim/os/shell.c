@@ -746,7 +746,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   }
 
   // Add the redirection stuff
-  char_u *command = make_filter_cmd(cmd, infile, tempname);
+  char_u *command = (char_u *)make_filter_cmd((char *)cmd, (char *)infile, (char *)tempname);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.

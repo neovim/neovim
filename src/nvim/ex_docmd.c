@@ -1232,7 +1232,7 @@ static void set_cmd_addr_type(exarg_T *eap, char_u *p)
   }
   // :wincmd range depends on the argument
   if (eap->cmdidx == CMD_wincmd && p != NULL) {
-    get_wincmd_addr_type((char *)skipwhite((char_u *)p), eap);
+    get_wincmd_addr_type((char *)skipwhite(p), eap);
   }
   // :.cc in quickfix window uses line number
   if ((eap->cmdidx == CMD_cc || eap->cmdidx == CMD_ll) && bt_quickfix(curbuf)) {
@@ -2311,10 +2311,10 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
         }
       }
       if (skip_only) {
-        p = (char *)skip_vimgrep_pat((char_u *)p, NULL, NULL);
+        p = skip_vimgrep_pat(p, NULL, NULL);
       } else {
         // NOTE: This puts a NUL after the pattern.
-        p = (char *)skip_vimgrep_pat((char_u *)p, (char_u **)&reg_pat, NULL);
+        p = skip_vimgrep_pat(p, &reg_pat, NULL);
       }
       if (p == NULL || *p == NUL) {
         break;
@@ -3492,7 +3492,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   case CMD_filter:
     if (*arg != NUL) {
-      arg = (const char *)skip_vimgrep_pat((char_u *)arg, NULL, NULL);
+      arg = (const char *)skip_vimgrep_pat((char *)arg, NULL, NULL);
     }
     if (arg == NULL || *arg == NUL) {
       xp->xp_context = EXPAND_NOTHING;
@@ -4487,7 +4487,7 @@ static char *skip_grep_pat(exarg_T *eap)
                     || eap->cmdidx == CMD_vimgrepadd
                     || eap->cmdidx == CMD_lvimgrepadd
                     || grep_internal(eap->cmdidx))) {
-    p = (char *)skip_vimgrep_pat((char_u *)p, NULL, NULL);
+    p = skip_vimgrep_pat(p, NULL, NULL);
     if (p == NULL) {
       p = (char *)eap->arg;
     }
@@ -7676,7 +7676,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
     if (eap->cmdidx != CMD_balt && eap->cmdidx != CMD_badd) {
       setpcmark();
     }
-    if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
+    if (do_ecmd(0, eap->cmdidx == CMD_enew ? NULL : (char *)eap->arg,
                 NULL, eap, eap->do_ecmd_lnum,
                 (buf_hide(curbuf) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0)
@@ -9758,7 +9758,7 @@ static void ex_folddo(exarg_T *eap)
     }
   }
 
-  global_exe(eap->arg);  // Execute the command on the marked lines.
+  global_exe((char *)eap->arg);  // Execute the command on the marked lines.
   ml_clearmarked();      // clear rest of the marks
 }
 

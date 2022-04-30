@@ -565,8 +565,8 @@ void dialog_changed(buf_T *buf, bool checkall)
     if (buf->b_fname != NULL
         && check_overwrite(&ea,
                            buf,
-                           buf->b_fname,
-                           buf->b_ffname,
+                           (char *)buf->b_fname,
+                           (char *)buf->b_ffname,
                            false) == OK) {
       // didn't hit Cancel
       (void)buf_write_all(buf, false);
@@ -583,8 +583,8 @@ void dialog_changed(buf_T *buf, bool checkall)
         set_bufref(&bufref, buf2);
 
         if (buf2->b_fname != NULL
-            && check_overwrite(&ea, buf2, buf2->b_fname,
-                               buf2->b_ffname, false) == OK) {
+            && check_overwrite(&ea, buf2, (char *)buf2->b_fname,
+                               (char *)buf2->b_ffname, false) == OK) {
           // didn't hit Cancel
           (void)buf_write_all(buf2, false);
         }
@@ -1166,7 +1166,7 @@ void do_argfile(exarg_T *eap, int argn)
     // Edit the file; always use the last known line number.
     // When it fails (e.g. Abort for already edited file) restore the
     // argument index.
-    if (do_ecmd(0, alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
+    if (do_ecmd(0, (char *)alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
                 eap, ECMD_LAST,
                 (buf_hide(curwin->w_buffer) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0), curwin) == FAIL) {
