@@ -2,10 +2,15 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
 local command = helpers.command
+local sleep = helpers.sleep
 
 describe("CTRL-C (mapped)", function()
+  local screen
+
   before_each(function()
     clear()
+    screen = Screen.new(52, 6)
+    screen:attach()
   end)
 
   it("interrupts :global", function()
@@ -20,14 +25,6 @@ describe("CTRL-C (mapped)", function()
     ]])
 
     command("silent edit! test/functional/fixtures/bigfile.txt")
-    local screen = Screen.new(52, 6)
-    screen:attach()
-    screen:set_default_attr_ids({
-      [0] = {foreground = Screen.colors.White,
-             background = Screen.colors.Red},
-      [1] = {bold = true,
-             foreground = Screen.colors.SeaGreen}
-    })
 
     screen:expect([[
       ^0000;<control>;Cc;0;BN;;;;;N;NULL;;;;               |
@@ -55,5 +52,24 @@ describe("CTRL-C (mapped)", function()
         test_ctrl_c(ms)
       end
     end
+  end)
+
+  it('interrupts :sleep', function()
+    command('nnoremap <C-C> <Nop>')
+    feed(':sleep 100<CR>')
+    -- wait for :sleep to start
+    sleep(10)
+    feed('foo<C-C>')
+    -- wait for input buffer to be flushed
+    sleep(10)
+    feed('i')
+    screen:expect([[
+      ^                                                    |
+      ~                                                   |
+      ~                                                   |
+      ~                                                   |
+      ~                                                   |
+      -- INSERT --                                        |
+    ]])
   end)
 end)

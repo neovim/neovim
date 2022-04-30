@@ -98,12 +98,17 @@ static void create_cursorhold_event(bool events_enabled)
 
 /// Low level input function
 ///
-/// wait until either the input buffer is non-empty or , if `events` is not NULL
+/// wait until either the input buffer is non-empty or, if `events` is not NULL
 /// until `events` is non-empty.
 int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
   if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
+  }
+
+  // No risk of a UI flood, so disable CTRL-C "interrupt" behavior if it's mapped.
+  if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
+    ctrl_c_interrupts = false;
   }
 
   InbufPollResult result;
@@ -126,6 +131,8 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
       }
     }
   }
+
+  ctrl_c_interrupts = true;
 
   // If input was put directly in typeahead buffer bail out here.
   if (typebuf_changed(tb_change_cnt)) {
@@ -275,7 +282,7 @@ size_t input_enqueue(String keys)
   }
 
   size_t rv = (size_t)(ptr - keys.data);
-  process_interrupts();
+  process_ctrl_c();
   return rv;
 }
 
@@ -480,9 +487,9 @@ static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data, bo
   }
 }
 
-static void process_interrupts(void)
+static void process_ctrl_c(void)
 {
-  if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
+  if (!ctrl_c_interrupts) {
     return;
   }
 
