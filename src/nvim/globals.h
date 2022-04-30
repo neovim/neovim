@@ -666,6 +666,7 @@ EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
 EXTERN bool no_abbr INIT(= true);       // true when no abbreviations loaded
 
 EXTERN int mapped_ctrl_c INIT(= 0);  // Modes where CTRL-C is mapped.
+EXTERN bool ctrl_c_interrupts INIT(= true);  // CTRL-C sets got_int
 
 EXTERN cmdmod_T cmdmod;                 // Ex command modifiers
 
