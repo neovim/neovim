@@ -421,6 +421,67 @@ describe('LSP', function()
       }
     end)
 
+    it('_text_document_did_save_handler sends didSave with bool textDocumentSync.save', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "text_document_sync_save_bool";
+        on_init = function(c)
+          client = c
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == "start" then
+            exec_lua([=[
+              BUFFER = vim.api.nvim_get_current_buf()
+              lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
+              lsp._text_document_did_save_handler(BUFFER)
+            ]=])
+          else
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('_text_document_did_save_handler sends didSave including text if server capability is set', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "text_document_sync_save_includeText";
+        on_init = function(c)
+          client = c
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == "start" then
+            exec_lua([=[
+              BUFFER = vim.api.nvim_get_current_buf()
+              vim.api.nvim_buf_set_lines(BUFFER, 0, -1, true, {"help me"})
+              lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
+              lsp._text_document_did_save_handler(BUFFER)
+            ]=])
+          else
+            client.stop()
+          end
+        end;
+      }
+    end)
+
     it('client.supports_methods() should validate capabilities', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
