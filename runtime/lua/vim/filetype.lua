@@ -241,6 +241,7 @@ local extension = {
   gmi = "gemtext",
   gemini = "gemtext",
   gift = "gift",
+  gleam = "gleam",
   glsl = "glsl",
   gpi = "gnuplot",
   gnuplot = "gnuplot",
