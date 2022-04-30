@@ -88,6 +88,7 @@ static struct luaL_Reg node_meta[] = {
   { "prev_sibling", node_prev_sibling },
   { "next_named_sibling", node_next_named_sibling },
   { "prev_named_sibling", node_prev_named_sibling },
+  { "named_children", node_named_children },
   { NULL, NULL }
 };
 
@@ -1059,6 +1060,31 @@ static int node_prev_named_sibling(lua_State *L)
   }
   TSNode sibling = ts_node_prev_named_sibling(node);
   push_node(L, sibling, 1);
+  return 1;
+}
+
+static int node_named_children(lua_State *L)
+{
+  TSNode source;
+  if (!node_check(L, 1, &source)) {
+    return 0;
+  }
+  TSTreeCursor cursor = ts_tree_cursor_new(source);
+
+  lua_newtable(L);
+  int curr_index = 0;
+
+  if (ts_tree_cursor_goto_first_child(&cursor)) {
+    do {
+      TSNode node = ts_tree_cursor_current_node(&cursor);
+      if (ts_node_is_named(node)) {
+        push_node(L, node, 1);
+        lua_rawseti(L, -2, ++curr_index);
+      }
+    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  }
+
+  ts_tree_cursor_delete(&cursor);
   return 1;
 }
 

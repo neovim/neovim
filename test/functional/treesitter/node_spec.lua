@@ -59,4 +59,22 @@ describe('treesitter node API', function()
     exec_lua 'node = node:prev_named_sibling()'
     eq('int x', lua_eval('node_text(node)'))
   end)
+
+  it('can retrieve the children of a node', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    local len = exec_lua([[
+      tree = vim.treesitter.get_parser(0, "c"):parse()[1]
+      node = tree:root():child(0)
+      children = node:named_children()
+
+      return #children
+    ]])
+
+    eq(3, len)
+    eq('<node compound_statement>', lua_eval('tostring(children[3])'))
+  end)
 end)
