@@ -1060,9 +1060,8 @@ format({options})                                       *vim.lsp.buf.format()*
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
                     • timeout_ms (integer|nil, default 1000): Time in
-                      milliseconds to block for formatting requests.
-                      Formatting requests are current synchronous to prevent
-                      editing of the buffer.
+                      milliseconds to block for formatting requests. No effect
+                      if async=true
                     • bufnr (number|nil): Restrict formatting to the clients
                       attached to the given buffer, defaults to the current
                       buffer (0).
@@ -1081,6 +1080,9 @@ format({options})                                       *vim.lsp.buf.format()*
                           end
                         }
 <
+                    • async boolean|nil If true the method won't block.
+                      Defaults to false. Editing the buffer while formatting
+                      asynchronous can lead to unexpected changes.
                     • id (number|nil): Restrict formatting to the client with
                       ID (client.id) matching this field.
                     • name (string|nil): Restrict formatting to the client

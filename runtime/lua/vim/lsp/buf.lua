@@ -152,8 +152,7 @@ end
 ---         automatically derived from the current Neovim options.
 ---         @see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 ---     - timeout_ms (integer|nil, default 1000):
----         Time in milliseconds to block for formatting requests. Formatting requests are current
----         synchronous to prevent editing of the buffer.
+---         Time in milliseconds to block for formatting requests. No effect if async=true
 ---     - bufnr (number|nil):
 ---         Restrict formatting to the clients attached to the given buffer, defaults to the current
 ---         buffer (0).
@@ -173,6 +172,11 @@ end
 ---           end
 ---         }
 ---         </pre>
+---
+---     - async boolean|nil
+---         If true the method won't block. Defaults to false.
+---         Editing the buffer while formatting asynchronous can lead to unexpected
+---         changes.
 ---
 ---     - id (number|nil):
 ---         Restrict formatting to the client with ID (client.id) matching this field.
@@ -207,14 +211,30 @@ function M.format(options)
     vim.notify("[LSP] Format request failed, no matching language servers.")
   end
 
-  local timeout_ms =  options.timeout_ms or 1000
-  for _, client in pairs(clients) do
-    local params = util.make_formatting_params(options.formatting_options)
-    local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, bufnr)
-    if result and result.result then
-      util.apply_text_edits(result.result, bufnr, client.offset_encoding)
-    elseif err then
-      vim.notify(string.format("[LSP][%s] %s", client.name, err), vim.log.levels.WARN)
+  if options.async then
+    local do_format
+    do_format = function(idx, client)
+      if not client then
+        return
+      end
+      local params = util.make_formatting_params(options.formatting_options)
+      client.request("textDocument/formatting", params, function(...)
+        local handler = client.handlers['textDocument/formatting'] or vim.lsp.handlers['textDocument/formatting']
+        handler(...)
+        do_format(next(clients, idx))
+      end, bufnr)
+    end
+    do_format(next(clients))
+  else
+    local timeout_ms = options.timeout_ms or 1000
+    for _, client in pairs(clients) do
+      local params = util.make_formatting_params(options.formatting_options)
+      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, bufnr)
+      if result and result.result then
+        util.apply_text_edits(result.result, bufnr, client.offset_encoding)
+      elseif err then
+        vim.notify(string.format("[LSP][%s] %s", client.name, err), vim.log.levels.WARN)
+      end
     end
   end
 end
@@ -227,6 +247,10 @@ end
 --
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
+  vim.notify_once(
+    'vim.lsp.buf.formatting is deprecated. Use vim.lsp.buf.format { async = true } instead',
+    vim.log.levels.WARN
+  )
   local params = util.make_formatting_params(options)
   local bufnr = vim.api.nvim_get_current_buf()
   select_client('textDocument/formatting', function(client)
