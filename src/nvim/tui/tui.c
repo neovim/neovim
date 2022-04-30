@@ -391,6 +391,8 @@ static void terminfo_stop(UI *ui)
   // Reset cursor to normal before exiting alternate screen.
   unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_keypad_local);
+  // Disable extended keys before exiting alternate screen.
+  unibi_out_ext(ui, data->unibi_ext.disable_extended_keys);
   unibi_out(ui, unibi_exit_ca_mode);
   // Restore title/icon from the "stack". #4063
   unibi_out_ext(ui, data->unibi_ext.restore_title);
@@ -401,8 +403,6 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
-  // Disable extended keys
-  unibi_out_ext(ui, data->unibi_ext.disable_extended_keys);
   flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
