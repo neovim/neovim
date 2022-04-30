@@ -491,11 +491,14 @@ end
 --- from multiple clients to have 1 single UI prompt for the user, yet we still
 --- need to be able to link a `CodeAction|Command` to the right client for
 --- `codeAction/resolve`
-local function on_code_action_results(results, ctx)
+local function on_code_action_results(results, ctx, options)
   local action_tuples = {}
+  local filter = options and options.filter
   for client_id, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
-      table.insert(action_tuples, { client_id, action })
+      if not filter or filter(action) then
+        table.insert(action_tuples, { client_id, action })
+      end
     end
   end
   if #action_tuples == 0 then
@@ -557,6 +560,13 @@ local function on_code_action_results(results, ctx)
     end
   end
 
+  -- If options.apply is given, and there are just one remaining code action,
+  -- apply it directly without querying the user.
+  if options and options.apply and #action_tuples == 1 then
+    on_user_choice(action_tuples[1])
+    return
+  end
+
   vim.ui.select(action_tuples, {
     prompt = 'Code actions:',
     kind = 'codeaction',
@@ -571,35 +581,49 @@ end
 --- Requests code actions from all clients and calls the handler exactly once
 --- with all aggregated results
 ---@private
-local function code_action_request(params)
+local function code_action_request(params, options)
   local bufnr = vim.api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
   vim.lsp.buf_request_all(bufnr, method, params, function(results)
-    on_code_action_results(results, { bufnr = bufnr, method = method, params = params })
+    local ctx = { bufnr = bufnr, method = method, params = params}
+    on_code_action_results(results, ctx, options)
   end)
 end
 
 --- Selects a code action available at the current
 --- cursor position.
 ---
----@param context table|nil `CodeActionContext` of the LSP specification:
----               - diagnostics: (table|nil)
----                             LSP `Diagnostic[]`. Inferred from the current
----                             position if not provided.
----               - only: (string|nil)
----                      LSP `CodeActionKind` used to filter the code actions.
----                      Most language servers support values like `refactor`
----                      or `quickfix`.
+---@param options table|nil Optional table which holds the following optional fields:
+---    - context (table|nil):
+---        Corresponds to `CodeActionContext` of the LSP specification:
+---          - diagnostics (table|nil):
+---                        LSP `Diagnostic[]`. Inferred from the current
+---                        position if not provided.
+---          - only (string|nil):
+---                 LSP `CodeActionKind` used to filter the code actions.
+---                 Most language servers support values like `refactor`
+---                 or `quickfix`.
+---    - filter (function|nil):
+---             Predicate function taking an `CodeAction` and returning a boolean.
+---    - apply (boolean|nil):
+---             When set to `true`, and there is just one remaining action
+---            (after filtering), the action is applied without user query.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-function M.code_action(context)
-  validate { context = { context, 't', true } }
-  context = context or {}
+function M.code_action(options)
+  validate { options = { options, 't', true } }
+  options = options or {}
+  -- Detect old API call code_action(context) which should now be
+  -- code_action({ context = context} )
+  if options.diagnostics or options.only then
+    options = { options = options }
+  end
+  local context = options.context or {}
   if not context.diagnostics then
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
   end
   local params = util.make_range_params()
   params.context = context
-  code_action_request(params)
+  code_action_request(params, options)
 end
 
 --- Performs |vim.lsp.buf.code_action()| for a given range.
