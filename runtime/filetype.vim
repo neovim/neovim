@@ -715,6 +715,9 @@ au BufNewFile,BufRead *.git/*
 " Gkrellmrc
 au BufNewFile,BufRead gkrellmrc,gkrellmrc_?	setf gkrellmrc
 
+" Gleam
+au BufNewFile,BufRead *.gleam			setf gleam
+
 " GLSL
 au BufNewFile,BufRead *.glsl			setf glsl
 
