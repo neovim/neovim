@@ -2294,6 +2294,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
   do { \
     xfree(buf); \
     tv->vval.v_string = NULL; \
+    tv->v_size = -1; \
     tv->v_lock = VAR_UNLOCKED; \
   } while (0)
 

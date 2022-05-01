@@ -259,6 +259,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;
   tv->v_lock = VAR_UNLOCKED;
+  tv->v_size = -1;
 
   switch (obj.type) {
   case kObjectTypeNil:
@@ -288,12 +289,12 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
   case kObjectTypeString:
     tv->v_type = VAR_STRING;
-    tv->v_size = -1;
     if (obj.data.string.data == NULL) {
       tv->vval.v_string = NULL;
     } else {
       tv->vval.v_string = xmemdupz(obj.data.string.data,
                                    obj.data.string.size);
+      tv->v_size = (int)obj.data.string.size;
     }
     break;
 
@@ -303,6 +304,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     for (uint32_t i = 0; i < obj.data.array.size; i++) {
       Object item = obj.data.array.items[i];
       typval_T li_tv;
+      tv_init(&li_tv);
 
       if (!object_to_vim(item, &li_tv, err)) {
         tv_list_free(list);

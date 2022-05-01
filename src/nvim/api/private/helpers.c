@@ -234,6 +234,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
   } else {
     // Update the key
     typval_T tv;
+    tv_init(&tv);
 
     // Convert the object to a vimscript type in the temporary variable
     if (!object_to_vim(value, &tv, err)) {
@@ -1132,6 +1133,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
         Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
+                                                         .v_size = -1,
                                                          .vval.v_dict = dict } });
         if (from_lua) {
           Dictionary d = api_dict.data.dictionary;

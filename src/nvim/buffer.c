@@ -1663,6 +1663,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
+      .v_size = -1,
       .v_lock = VAR_FIXED,
       .vval.v_number = buf_get_changedtick(buf),
     },
@@ -3436,6 +3437,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
   if (fmt[0] == '%' && fmt[1] == '!') {
     typval_T tv = {
       .v_type = VAR_NUMBER,
+      .v_size = -1,
       .vval.v_number = wp->handle,
     };
     set_var(S_LEN("g:statusline_winid"), &tv, false);

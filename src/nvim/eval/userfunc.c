@@ -1462,6 +1462,7 @@ int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
   int argv_base = 0;
   partial_T *partial = funcexe->partial;
 
+  tv_init(rettv);
   // Initialize rettv so that it is safe for caller to invoke clear_tv(rettv)
   // even when call_func() returns FAIL.
   rettv->v_type = VAR_UNKNOWN;
