@@ -741,10 +741,13 @@ end
 ---@param alternative string|nil Preferred alternative function.
 ---@param version     string     Version in which the deprecated function will
 ---                              be removed.
-function vim.deprecate(name, alternative, version)
+---@param plugin      string|nil Plugin name that the function will be removed
+---                              from. Defaults to "Neovim".
+function vim.deprecate(name, alternative, version, plugin)
     local message = name .. ' is deprecated'
+    plugin = plugin or "Neovim"
     message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
-    message = message .. ' See :h deprecated\nThis function will be removed in version ' .. version
+    message = message .. ' See :h deprecated\nThis function will be removed in ' .. plugin .. ' version ' .. version
     vim.notify_once(message, vim.log.levels.WARN)
 end
 
