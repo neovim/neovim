@@ -40,7 +40,7 @@ func Test_help_tagjump()
 
   help ??
   call assert_equal("help", &filetype)
-  call assert_true(getline('.') =~ '\*??\*')
+  call assert_true(getline('.') =~ '\*g??\*')
   helpclose
 
   help ch?ckhealth
