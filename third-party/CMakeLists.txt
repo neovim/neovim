@@ -222,7 +222,8 @@ if(USE_BUNDLED_LIBUV)
   include(BuildLibuv)
 endif()
 
-if(USE_BUNDLED_MSGPACK)
+find_package(msgpack)
+if(USE_BUNDLED_MSGPACK AND NOT MSGPACK_FOUND)
   include(BuildMsgpack)
 endif()
 
