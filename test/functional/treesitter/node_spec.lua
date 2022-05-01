@@ -77,4 +77,19 @@ describe('treesitter node API', function()
     eq(3, len)
     eq('<node compound_statement>', lua_eval('tostring(children[3])'))
   end)
+
+  it('can retrieve the tree root given a node', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      tree = vim.treesitter.get_parser(0, "c"):parse()[1]
+      root = tree:root()
+      node = root:child(0):child(2)
+    ]])
+
+    eq(lua_eval('tostring(root)'), lua_eval('tostring(node:root())'))
+  end)
 end)
