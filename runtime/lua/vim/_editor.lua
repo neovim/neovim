@@ -743,7 +743,7 @@ end
 ---                              function will be removed.
 function vim.deprecate(name, alternative, version)
     local message = name .. ' is deprecated'
-    message = alternative and (message..', use '..alternative..' instead.') or message
+    message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
     message = message .. ' See :h deprecated\nThis function will be removed in version ' .. version
     vim.notify_once(message, vim.log.levels.WARN)
 end
