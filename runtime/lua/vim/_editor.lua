@@ -739,8 +739,8 @@ end
 ---
 ---@param name        string     Deprecated function.
 ---@param alternative string|nil Preferred alternative function.
----@param version     string     Neovim version in which the deprecated
----                              function will be removed.
+---@param version     string     Version in which the deprecated function will
+---                              be removed.
 function vim.deprecate(name, alternative, version)
     local message = name .. ' is deprecated'
     message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
