@@ -1748,8 +1748,8 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
       // at the ATTENTION prompt close the window.
       swap_exists_did_quit = false;
       (void)do_ecmd(0, arg_idx < GARGCOUNT
-          ? alist_name(&GARGLIST[arg_idx]) : NULL,
-                    NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
+                    ? (char *)alist_name(&GARGLIST[arg_idx])
+                    : NULL, NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
       if (swap_exists_did_quit) {
         // abort or quit selected
         if (got_int || only_one_window()) {

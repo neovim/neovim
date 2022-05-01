@@ -2097,8 +2097,8 @@ parse_line:
             STRCPY(p, tagp.tagname);
             p[len] = '@';
             STRCPY(p + len + 1, help_lang);
-            snprintf((char *)p + len + 1 + ML_EXTRA, 10, "%06d",
-                     help_heuristic(tagp.tagname,
+            snprintf((char *)p + len + 1 + ML_EXTRA, STRLEN(p) + len + 1 + ML_EXTRA, "%06d",
+                     help_heuristic((char *)tagp.tagname,
                                     match_re ? matchoff : 0, !match_no_ic)
                      + help_pri);
 
@@ -2795,7 +2795,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   if (getfile_result == GETFILE_UNUSED) {
     // Careful: getfile() may trigger autocommands and call jumpto_tag()
     // recursively.
-    getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
+    getfile_result = getfile(0, (char *)fname, NULL, true, (linenr_T)0, forceit);
   }
   keep_help_flag = false;
 
