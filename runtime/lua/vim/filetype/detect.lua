@@ -187,7 +187,7 @@ function M.inc(_, bufnr)
 
 end
 
-function M.inp_check(_, bufnr)
+function M.inp(_, bufnr)
   if get_lines(bufnr, 1):find("^%*") then
     vim.bo[bufnr].filetype = "abaqus"
   else
