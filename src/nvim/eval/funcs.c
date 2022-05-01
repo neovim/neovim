@@ -129,7 +129,7 @@ char_u *get_function_name(expand_T *xp, int idx)
     if (name != NULL) {
       if (*name != NUL && *name != '<'
           && STRNCMP("g:", xp->xp_pattern, 2) == 0) {
-        return cat_prefix_varname('g', name);
+        return (char_u *)cat_prefix_varname('g', (char *)name);
       }
       return name;
     }
@@ -772,7 +772,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     func = argvars[0].vval.v_string;
   } else if (argvars[0].v_type == VAR_PARTIAL) {
     partial = argvars[0].vval.v_partial;
-    func = partial_name(partial);
+    func = (char_u *)partial_name(partial);
   } else if (nlua_is_table_from_lua(&argvars[0])) {
     // TODO(tjdevries): UnifiedCallback
     func = nlua_register_table_as_callable(&argvars[0]);
@@ -1896,7 +1896,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *const expr_start = s;
-  if (s == NULL || eval1((char_u **)&s, rettv, true) == FAIL) {
+  if (s == NULL || eval1((char **)&s, rettv, true) == FAIL) {
     if (expr_start != NULL && !aborting()) {
       semsg(_(e_invexpr2), expr_start);
     }
@@ -2489,8 +2489,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
-      (void)modify_fname((char_u *)mods, false, &usedlen,
-                         (char_u **)&fname, &fbuf, &len);
+      (void)modify_fname((char *)mods, false, &usedlen,
+                         (char **)&fname, (char **)&fbuf, &len);
     }
   }
 
@@ -4886,11 +4886,11 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T *di;
 
   rettv->vval.v_number = -1;
-  const char_u *const end = get_lval((char_u *)tv_get_string(&argvars[0]),
-                                     NULL,
-                                     &lv, false, false,
-                                     GLV_NO_AUTOLOAD|GLV_READ_ONLY,
-                                     FNE_CHECK_START);
+  const char_u *const end = (char_u *)get_lval((char *)tv_get_string(&argvars[0]),
+                                               NULL,
+                                               &lv, false, false,
+                                               GLV_NO_AUTOLOAD|GLV_READ_ONLY,
+                                               FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL) {
       emsg(_(e_trailing));
@@ -7506,7 +7506,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     func_name = argvars[1].vval.v_string;
   } else if (argvars[1].v_type == VAR_PARTIAL) {
     partial = argvars[1].vval.v_partial;
-    func_name = partial_name(partial);
+    func_name = (char_u *)partial_name(partial);
   } else {
     func_name = (const char_u *)tv_get_string(&argvars[1]);
   }
@@ -10303,8 +10303,8 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       || flg == NULL) {
     rettv->vval.v_string = NULL;
   } else {
-    rettv->vval.v_string = do_string_sub((char_u *)str, (char_u *)pat,
-                                         (char_u *)sub, expr, (char_u *)flg);
+    rettv->vval.v_string = (char_u *)do_string_sub((char *)str, (char *)pat,
+                                                   (char *)sub, expr, (char *)flg);
   }
 }
 

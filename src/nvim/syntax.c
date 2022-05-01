@@ -5674,14 +5674,14 @@ void ex_ownsyntax(exarg_T *eap)
   // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
   if (new_value != NULL) {
-    set_internal_string_var("w:current_syntax", new_value);
+    set_internal_string_var("w:current_syntax", (char *)new_value);
   }
 
   // Restore value of b:current_syntax.
   if (old_value == NULL) {
     do_unlet(S_LEN("b:current_syntax"), true);
   } else {
-    set_internal_string_var("b:current_syntax", old_value);
+    set_internal_string_var("b:current_syntax", (char *)old_value);
     xfree(old_value);
   }
 }

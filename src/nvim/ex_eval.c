@@ -801,7 +801,7 @@ void ex_eval(exarg_T *eap)
 {
   typval_T tv;
 
-  if (eval0(eap->arg, &tv, &eap->nextcmd, !eap->skip) == OK) {
+  if (eval0((char *)eap->arg, &tv, (char **)&eap->nextcmd, !eap->skip) == OK) {
     tv_clear(&tv);
   }
 }
@@ -822,7 +822,7 @@ void ex_if(exarg_T *eap)
     skip = CHECK_SKIP;
 
     bool error;
-    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
 
     if (!skip && !error) {
       if (result) {
@@ -911,7 +911,7 @@ void ex_else(exarg_T *eap)
 
   if (eap->cmdidx == CMD_elseif) {
     bool error;
-    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+    result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
     // When throwing error exceptions, we want to throw always the first
     // of several errors in a row.  This is what actually happens when
     // a conditional error was detected above and there is another failure
@@ -962,7 +962,7 @@ void ex_while(exarg_T *eap)
       /*
        * ":while bool-expr"
        */
-      result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
+      result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
     } else {
       void *fi;
 
@@ -976,13 +976,13 @@ void ex_while(exarg_T *eap)
         error = FALSE;
       } else {
         // Evaluate the argument and get the info in a structure.
-        fi = eval_for_line(eap->arg, &error, &eap->nextcmd, skip);
+        fi = eval_for_line((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
         cstack->cs_forinfo[cstack->cs_idx] = fi;
       }
 
       // use the element at the start of the list and advance
       if (!error && fi != NULL && !skip) {
-        result = next_for_item(fi, eap->arg);
+        result = next_for_item(fi, (char *)eap->arg);
       } else {
         result = FALSE;
       }

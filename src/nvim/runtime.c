@@ -826,7 +826,7 @@ static int load_pack_plugin(bool opt, char_u *fname)
 
   // If runtime/filetype.vim wasn't loaded yet, the scripts will be
   // found when it loads.
-  if (opt && eval_to_number(cmd) > 0) {
+  if (opt && eval_to_number((char *)cmd) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf((char *)pat, len, ftpat, ffname);
     source_all_matches(pat);

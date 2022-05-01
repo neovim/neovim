@@ -5392,7 +5392,7 @@ bool get_keymap_str(win_T *wp, char_u *fmt, char_u *buf, int len)
     curwin = wp;
     STRCPY(buf, "b:keymap_name");       // must be writable
     emsg_skip++;
-    s = p = eval_to_string(buf, NULL, false);
+    s = p = (char_u *)eval_to_string((char *)buf, NULL, false);
     emsg_skip--;
     curbuf = old_curbuf;
     curwin = old_curwin;

@@ -3726,7 +3726,7 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
 static void qf_set_title_var(qf_list_T *qfl)
 {
   if (qfl->qf_title != NULL) {
-    set_internal_string_var("w:quickfix_title", (char_u *)qfl->qf_title);
+    set_internal_string_var("w:quickfix_title", qfl->qf_title);
   }
 }
 
@@ -3929,7 +3929,7 @@ bool qf_process_qftf_option(void)
 
   if (*p_qftf == '{') {
     // Lambda expression
-    tv = eval_expr(p_qftf);
+    tv = eval_expr((char *)p_qftf);
     if (tv == NULL) {
       return false;
     }
@@ -7035,7 +7035,7 @@ void ex_cexpr(exarg_T *eap)
   // Evaluate the expression.  When the result is a string or a list we can
   // use it to fill the errorlist.
   typval_T tv;
-  if (eval0(eap->arg, &tv, &eap->nextcmd, true) != FAIL) {
+  if (eval0((char *)eap->arg, &tv, (char **)&eap->nextcmd, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
         || tv.v_type == VAR_LIST) {
       incr_quickfix_busy();

@@ -1774,7 +1774,9 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
       curbuf = wp->w_buffer;
 
       emsg_silent++;       // handle exceptions, but don't display errors
-      text = eval_to_string_safe(wp->w_p_fdt, NULL, was_set_insecurely(wp, "foldtext", OPT_LOCAL));
+      text =
+        (char_u *)eval_to_string_safe((char *)wp->w_p_fdt, NULL,
+                                      was_set_insecurely(wp, "foldtext", OPT_LOCAL));
       emsg_silent--;
 
       if (text == NULL || did_emsg) {
@@ -2962,7 +2964,7 @@ static void foldlevelExpr(fline_T *flp)
   // KeyTyped may be reset to 0 when calling a function which invokes
   // do_cmdline().  To make 'foldopen' work correctly restore KeyTyped.
   const bool save_keytyped = KeyTyped;
-  const int n = eval_foldexpr(flp->wp->w_p_fde, &c);
+  const int n = eval_foldexpr((char *)flp->wp->w_p_fde, &c);
   KeyTyped = save_keytyped;
 
   switch (c) {

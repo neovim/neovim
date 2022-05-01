@@ -152,8 +152,8 @@ static void save_dbg_stuff(struct dbg_stuff *dsp)
   dsp->trylevel       = trylevel;             trylevel = 0;
   dsp->force_abort    = force_abort;          force_abort = FALSE;
   dsp->caught_stack   = caught_stack;         caught_stack = NULL;
-  dsp->vv_exception   = (char *)v_exception(NULL);
-  dsp->vv_throwpoint  = (char *)v_throwpoint(NULL);
+  dsp->vv_exception   = v_exception(NULL);
+  dsp->vv_throwpoint  = v_throwpoint(NULL);
 
   // Necessary for debugging an inactive ":catch", ":finally", ":endtry".
   dsp->did_emsg       = did_emsg;             did_emsg     = false;
@@ -169,8 +169,8 @@ static void restore_dbg_stuff(struct dbg_stuff *dsp)
   trylevel = dsp->trylevel;
   force_abort = dsp->force_abort;
   caught_stack = dsp->caught_stack;
-  (void)v_exception((char_u *)dsp->vv_exception);
-  (void)v_throwpoint((char_u *)dsp->vv_throwpoint);
+  (void)v_exception(dsp->vv_exception);
+  (void)v_throwpoint(dsp->vv_throwpoint);
   did_emsg = dsp->did_emsg;
   got_int = dsp->got_int;
   need_rethrow = dsp->need_rethrow;
@@ -3701,7 +3701,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_lexpr:
   case CMD_laddexpr:
   case CMD_lgetexpr:
-    set_context_for_expression(xp, (char_u *)arg, ea.cmdidx);
+    set_context_for_expression(xp, (char *)arg, ea.cmdidx);
     break;
 
   case CMD_unlet:
@@ -4591,7 +4591,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
       p += 2;
-      (void)skip_expr((char_u **)&p);
+      (void)skip_expr(&p);
       if (*p == '`') {
         ++p;
       }
@@ -4806,7 +4806,7 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      (void)skip_expr((char_u **)&p);
+      (void)skip_expr(&p);
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }
@@ -6669,7 +6669,7 @@ static void ex_colorscheme(exarg_T *eap)
     char *p = NULL;
 
     emsg_off++;
-    p = (char *)eval_to_string((char_u *)expr, NULL, false);
+    p = eval_to_string(expr, NULL, false);
     emsg_off--;
     xfree(expr);
 
@@ -8527,7 +8527,7 @@ static void ex_redir(exarg_T *eap)
         append = FALSE;
       }
 
-      if (var_redir_start(skipwhite((char_u *)arg), append) == OK) {
+      if (var_redir_start((char *)skipwhite((char_u *)arg), append) == OK) {
         redir_vname = 1;
       }
     } else {  // TODO(vim): redirect to a buffer
@@ -9383,8 +9383,8 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         resultlen = (size_t)(s - result);
       }
     } else if (!skip_mod) {
-      valid |= modify_fname(src, tilde_file, usedlen, (char_u **)&result,
-                            (char_u **)&resultbuf, &resultlen);
+      valid |= modify_fname((char *)src, tilde_file, usedlen, &result,
+                            &resultbuf, &resultlen);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

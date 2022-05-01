@@ -3195,7 +3195,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
         if (redir_reg) {
           write_reg_contents(redir_reg, (char_u *)" ", 1, true);
         } else if (redir_vname) {
-          var_redir_str((char_u *)" ", -1);
+          var_redir_str(" ", -1);
         } else if (redir_fd != NULL) {
           fputs(" ", redir_fd);
         }
@@ -3214,7 +3214,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
       write_reg_contents(redir_reg, s, len, true);
     }
     if (redir_vname) {
-      var_redir_str((char_u *)s, maxlen);
+      var_redir_str((char *)s, maxlen);
     }
 
     // Write and adjust the current column.

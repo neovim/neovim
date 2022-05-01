@@ -1790,7 +1790,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         } else if (expr->v_type == VAR_PARTIAL) {
           partial_T *partial = expr->vval.v_partial;
 
-          s = partial_name(partial);
+          s = (char_u *)partial_name(partial);
           funcexe.partial = partial;
           call_func(s, -1, &rettv, 1, argv, &funcexe);
         }
@@ -1810,7 +1810,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         }
         tv_clear(&rettv);
       } else {
-        eval_result = eval_to_string(source + 2, NULL, true);
+        eval_result = (char_u *)eval_to_string((char *)source + 2, NULL, true);
       }
 
       if (eval_result != NULL) {

@@ -587,7 +587,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
     if (src[0] == '`' && src[1] == '=') {
       var = src;
       src += 2;
-      (void)skip_expr(&src);
+      (void)skip_expr((char **)&src);
       if (*src == '`') {
         src++;
       }
@@ -1072,8 +1072,8 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
     char_u *fbuf = NULL;
-    (void)modify_fname((char_u *)":p", false, &usedlen,
-                       (char_u **)&homedir_env_mod, &fbuf, &flen);
+    (void)modify_fname(":p", false, &usedlen,
+                       &homedir_env_mod, (char **)&fbuf, &flen);
     flen = strlen(homedir_env_mod);
     assert(homedir_env_mod != homedir_env);
     if (vim_ispathsep(homedir_env_mod[flen - 1])) {

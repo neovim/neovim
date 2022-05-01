@@ -335,10 +335,10 @@ static void get_healthcheck_cb(char_u *path, void *cookie)
       pattern = ".*[\\/]\\([^\\/]*\\)\\.vim$";
     }
 
-    res = do_string_sub(path, (char_u *)pattern, (char_u *)sub, NULL, (char_u *)"g");
+    res = (char_u *)do_string_sub((char *)path, pattern, sub, NULL, "g");
     if (hcookie->is_lua && res != NULL) {
       // Replace slashes with dots as represented by the healthcheck plugin.
-      char_u *ares = do_string_sub(res, (char_u *)"[\\/]", (char_u *)".", NULL, (char_u *)"g");
+      char_u *ares = (char_u *)do_string_sub((char *)res, "[\\/]", ".", NULL, "g");
       xfree(res);
       res = ares;
     }
@@ -4715,7 +4715,7 @@ void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline
 
   if (use_ccline && ccline.cmdfirstc == '=') {
     // pass CMD_SIZE because there is no real command
-    set_context_for_expression(xp, str, CMD_SIZE);
+    set_context_for_expression(xp, (char *)str, CMD_SIZE);
   } else if (use_ccline && ccline.input_fn) {
     xp->xp_context = ccline.xp_context;
     xp->xp_pattern = ccline.cmdbuff;
