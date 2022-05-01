@@ -92,4 +92,20 @@ describe('treesitter node API', function()
 
     eq(lua_eval('tostring(root)'), lua_eval('tostring(node:root())'))
   end)
+
+  it('can compute the byte length of a node', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      tree = vim.treesitter.get_parser(0, "c"):parse()[1]
+      root = tree:root()
+      child = root:child(0):child(0)
+    ]])
+
+    eq(28, lua_eval('root:byte_length()'))
+    eq(3, lua_eval('child:byte_length()'))
+  end)
 end)

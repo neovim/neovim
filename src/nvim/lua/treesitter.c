@@ -90,6 +90,7 @@ static struct luaL_Reg node_meta[] = {
   { "prev_named_sibling", node_prev_named_sibling },
   { "named_children", node_named_children },
   { "root", node_root },
+  { "byte_length", node_byte_length },
 
   { NULL, NULL }
 };
@@ -1108,6 +1109,20 @@ static int node_root(lua_State *L)
   }
 
   push_node(L, result, 1);
+  return 1;
+}
+
+static int node_byte_length(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  uint32_t start_byte = ts_node_start_byte(node);
+  uint32_t end_byte = ts_node_end_byte(node);
+
+  lua_pushnumber(L, end_byte - start_byte);
   return 1;
 }
 
