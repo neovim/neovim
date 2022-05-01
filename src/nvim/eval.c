@@ -976,6 +976,7 @@ typval_T *eval_expr(char_u *arg)
 void prepare_vimvar(int idx, typval_T *save_tv)
 {
   *save_tv = vimvars[idx].vv_tv;
+  vimvars[idx].vv_size = -1;
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
     hash_add(&vimvarht, vimvars[idx].vv_di.di_key);
   }
