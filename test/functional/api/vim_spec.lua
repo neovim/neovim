@@ -3042,6 +3042,10 @@ describe('API', function()
       eq('fillchar must be a single character',
          pcall_err(meths.eval_statusline, '', { fillchar = 1 }))
     end)
+    it('rejects invalid string', function()
+      eq('E539: Illegal character <}>',
+         pcall_err(meths.eval_statusline, '%{%}', {}))
+    end)
     describe('highlight parsing', function()
       it('works', function()
         eq({
