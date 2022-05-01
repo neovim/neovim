@@ -291,7 +291,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
     case LUA_TSTRING: {
       size_t len;
       const char *s = lua_tolstring(lstate, -1, &len);
-      *cur.tv = decode_string(s, len, kNone, true, false);
+      *cur.tv = decode_string(s, len, kFalse, true, false);
       if (cur.tv->v_type == VAR_UNKNOWN) {
         ret = false;
       }

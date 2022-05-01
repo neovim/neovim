@@ -882,6 +882,7 @@ static int nlua_debug(lua_State *lstate)
     {
       .v_lock = VAR_FIXED,
       .v_type = VAR_STRING,
+      .v_size = -1,
       .vval.v_string = (char_u *)"lua_debug> ",
     },
     {
@@ -951,6 +952,7 @@ int nlua_call(lua_State *lstate)
 
     try_start();
     typval_T rettv;
+    tv_init(&rettv);
     funcexe_T funcexe = FUNCEXE_INIT;
     funcexe.firstline = curwin->w_cursor.lnum;
     funcexe.lastline = curwin->w_cursor.lnum;

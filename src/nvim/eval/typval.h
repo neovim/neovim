@@ -146,6 +146,8 @@ typedef struct {
     partial_T *v_partial;  ///< Closure: function with args.
     blob_T *v_blob;  ///< Blob for VAR_BLOB, can be NULL.
   } vval;  ///< Actual value.
+  int v_size;      ///< Size of variable, dependent on v_type. Occasionally used.
+                   ///< Negative if unused.
 } typval_T;
 
 /// Values for (struct dictvar_S).dv_scope
@@ -789,6 +791,7 @@ static inline void tv_init(typval_T *const tv)
 {
   if (tv != NULL) {
     memset(tv, 0, sizeof(*tv));
+    tv->v_size = -1;
   }
 }
 
@@ -796,6 +799,7 @@ static inline void tv_init(typval_T *const tv)
   ((typval_T) { \
     .v_type = VAR_UNKNOWN, \
     .v_lock = VAR_UNLOCKED, \
+    .v_size = -1, \
   })
 
 /// Empty string

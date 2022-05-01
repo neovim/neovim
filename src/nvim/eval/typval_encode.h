@@ -85,9 +85,18 @@ static inline size_t tv_strlen(const typval_T *const tv)
 static inline size_t tv_strlen(const typval_T *const tv)
 {
   assert(tv->v_type == VAR_STRING);
-  return (tv->vval.v_string == NULL
-          ? 0
-          : strlen((char *)tv->vval.v_string));
+  // return (tv->vval.v_string == NULL
+  //         ? 0
+  //         : strlen((char *)tv->vval.v_string));
+  if (tv->vval.v_string == NULL) {
+    return 0;
+  }
+  if (tv->v_size > 0) {
+    // Causes Nvim to crash.
+    // tv->v_size isn't being correctly initialized somewhere.
+    return (size_t)tv->v_size;
+  }
+  return strlen((char *)tv->vval.v_string);
 }
 
 /// Code for checking whether container references itself

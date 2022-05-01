@@ -132,6 +132,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
     case kMPConvDict: {
       typval_T key_tv = {
         .v_type = VAR_STRING,
+        .v_size = -1,
         .vval = { .v_string = (v.data.d.hi == NULL
                                    ? v.data.d.dict->dv_hashtab.ht_array
                                    : (v.data.d.hi - 1))->hi_key },

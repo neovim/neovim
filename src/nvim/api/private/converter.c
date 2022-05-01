@@ -288,6 +288,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
   case kObjectTypeString:
     tv->v_type = VAR_STRING;
+    tv->v_size = -1;
     if (obj.data.string.data == NULL) {
       tv->vval.v_string = NULL;
     } else {

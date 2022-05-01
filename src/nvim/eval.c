@@ -128,7 +128,7 @@ typedef struct {
   [idx] = { \
     .vv_name = name, \
     .vv_di = { \
-      .di_tv = { .v_type = type }, \
+      .di_tv = { .v_type = type, .v_size = -1 }, \
       .di_flags = 0, \
       .di_key = { 0 }, \
     }, \
@@ -255,6 +255,7 @@ static struct vimvar {
 
 // shorthand
 #define vv_type         vv_di.di_tv.v_type
+#define vv_size         vv_di.di_tv.v_size
 #define vv_nr           vv_di.di_tv.vval.v_number
 #define vv_bool         vv_di.di_tv.vval.v_bool
 #define vv_special      vv_di.di_tv.vval.v_special
@@ -505,6 +506,7 @@ void set_internal_string_var(const char *name, char_u *value)
 {
   typval_T tv = {
     .v_type = VAR_STRING,
+    .v_size = -1,
     .vval.v_string = value,
   };
 
@@ -563,6 +565,7 @@ int var_redir_start(char_u *name, int append)
   save_emsg = did_emsg;
   did_emsg = FALSE;
   tv.v_type = VAR_STRING;
+  tv.v_size = -1;
   tv.vval.v_string = (char_u *)"";
   if (append) {
     set_var_lval(redir_lval, redir_endp, &tv, true, false, ".");
@@ -618,6 +621,7 @@ void var_redir_stop(void)
     if (redir_endp != NULL) {
       ga_append(&redir_ga, NUL);        // Append the trailing NUL.
       tv.v_type = VAR_STRING;
+      tv.v_size = -1;
       tv.vval.v_string = redir_ga.ga_data;
       // Call get_lval() again, if it's inside a Dict or List it may
       // have changed.
@@ -1019,6 +1023,7 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
   vimvars[VV_VAL].vv_type = VAR_STRING;
+  vimvars[VV_VAL].vv_size = -1;
   vimvars[VV_VAL].vv_str = badword;
   if (p_verbose == 0) {
     ++emsg_off;
@@ -2670,6 +2675,7 @@ bool next_for_item(void *fi_void, char_u *arg)
     }
     typval_T tv;
     tv.v_type = VAR_STRING;
+    tv.v_size = -1;
     tv.v_lock = VAR_FIXED;
     tv.vval.v_string = vim_strnsave(fi->fi_string + fi->fi_byte_idx, len);
     fi->fi_byte_idx += len;
@@ -3792,6 +3798,7 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
         p = concat_str((const char_u *)s1, (const char_u *)s2);
         tv_clear(rettv);
         rettv->v_type = VAR_STRING;
+        rettv->v_size = -1;
         rettv->vval.v_string = p;
       } else if (op == '+' && rettv->v_type == VAR_BLOB
                  && var2.v_type == VAR_BLOB) {
@@ -4193,6 +4200,7 @@ static int eval7(char_u **arg, typval_T *rettv, int evaluate, int want_string)
     ++*arg;
     if (evaluate) {
       rettv->v_type = VAR_STRING;
+      rettv->v_size = -1;
       rettv->vval.v_string = get_reg_contents(**arg, kGRegExprSrc);
     }
     if (**arg != NUL) {
@@ -4645,6 +4653,7 @@ static int eval_index(char_u **arg, typval_T *rettv, int evaluate, int verbose)
       }
       tv_clear(rettv);
       rettv->v_type = VAR_STRING;
+      rettv->v_size = -1;
       rettv->vval.v_string = (char_u *)v;
       break;
     }
@@ -4833,6 +4842,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   } else if (rettv != NULL) {
     if (opt_type == -2) {               // hidden string option
       rettv->v_type = VAR_STRING;
+      rettv->v_size = -1;
       rettv->vval.v_string = NULL;
     } else if (opt_type == -1) {      // hidden number option
       rettv->v_type = VAR_NUMBER;
@@ -4842,6 +4852,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
       rettv->vval.v_number = numval;
     } else {                          // string option
       rettv->v_type = VAR_STRING;
+      rettv->v_size = -1;
       rettv->vval.v_string = stringval;
     }
   } else if (working && (opt_type == -2 || opt_type == -1)) {
@@ -4896,6 +4907,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   const int len = (int)(p - *arg + extra);
   char_u *name = xmalloc(len);
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = name;
 
   for (p = *arg + 1; *p != NUL && *p != '"';) {
@@ -5031,6 +5043,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    */
   str = xmalloc((p - *arg) - reduce);
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = str;
 
   for (p = *arg + 1; *p != NUL;) {
@@ -5703,6 +5716,7 @@ static int get_literal_key(char_u **arg, typval_T *tv)
   for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {
   }
   tv->v_type = VAR_STRING;
+  tv->v_size = -1;
   tv->vval.v_string = vim_strnsave(*arg, p - *arg);
 
   *arg = skipwhite(p);
@@ -5885,6 +5899,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
     }
     name[len] = cc;
     rettv->v_type = VAR_STRING;
+    rettv->v_size = -1;
     rettv->vval.v_string = string;
   }
 
@@ -5988,6 +6003,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
     prepare_vimvar(VV_KEY, &save_key);
     if (argvars[0].v_type == VAR_DICT) {
       vimvars[VV_KEY].vv_type = VAR_STRING;
+      vimvars[VV_KEY].vv_size = -1;
 
       const VarLockStatus prev_lock = d->dv_lock;
       if (map && d->dv_lock == VAR_UNLOCKED) {
@@ -6501,6 +6517,7 @@ void getwinvar(typval_T *argvars, typval_T *rettv, int off)
   const char *varname = tv_get_string_chk(&argvars[off + 1]);
 
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = NULL;
 
   emsg_off++;
@@ -6558,6 +6575,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   FUNC_ATTR_NONNULL_ALL
 {
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = NULL;
 
   const char *prompt = "";
@@ -6706,6 +6724,7 @@ void dict_list(typval_T *const tv, typval_T *const rettv, const DictListType wha
     switch (what) {
       case kDictListKeys:
         tv_item.v_type = VAR_STRING;
+        tv_item.v_size = -1;
         tv_item.vval.v_string = vim_strsave(di->di_key);
         break;
       case kDictListValues:
@@ -6720,6 +6739,7 @@ void dict_list(typval_T *const tv, typval_T *const rettv, const DictListType wha
 
         tv_list_append_owned_tv(sub_l, (typval_T) {
           .v_type = VAR_STRING,
+          .v_size = -1,
           .v_lock = VAR_UNLOCKED,
           .vval.v_string = (char_u *)xstrdup((const char *)di->di_key),
         });
@@ -6858,6 +6878,7 @@ void return_register(int regname, typval_T *rettv)
   char_u buf[2] = { regname, 0 };
 
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = vim_strsave(buf);
 }
 
@@ -7087,6 +7108,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
   bool profiling = do_profiling == PROF_YES;
 
   rettv->v_type = VAR_STRING;
+  rettv->v_size = -1;
   rettv->vval.v_string = NULL;
 
   if (check_secure()) {
@@ -8298,6 +8320,7 @@ void set_vim_var_string(const VimVarIndex idx, const char *const val, const ptrd
 {
   tv_clear(&vimvars[idx].vv_di.di_tv);
   vimvars[idx].vv_type = VAR_STRING;
+  vimvars[idx].vv_size = -1;
   if (val == NULL) {
     vimvars[idx].vv_str = NULL;
   } else if (len == -1) {
@@ -9370,6 +9393,7 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
       tv_copy(from, to);
     } else {
       to->v_type = VAR_STRING;
+      to->v_size = -1;
       to->v_lock = VAR_UNLOCKED;
       if ((to->vval.v_string = string_convert((vimconv_T *)conv,
                                               from->vval.v_string,
@@ -10565,7 +10589,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   provider_call_nesting++;
 
   typval_T argvars[3] = {
-    { .v_type = VAR_STRING, .vval.v_string = (char_u *)method,
+    { .v_type = VAR_STRING, .v_size = -1, .vval.v_string = (char_u *)method,
       .v_lock = VAR_UNLOCKED },
     { .v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = VAR_UNLOCKED },
     { .v_type = VAR_UNKNOWN }
@@ -10715,6 +10739,7 @@ void invoke_prompt_callback(void)
     text += STRLEN(prompt);
   }
   argv[0].v_type = VAR_STRING;
+  argv[0].v_size = -1;
   argv[0].vval.v_string = vim_strsave(text);
   argv[1].v_type = VAR_UNKNOWN;
 

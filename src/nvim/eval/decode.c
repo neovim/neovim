@@ -289,9 +289,9 @@ typval_T decode_string(const char *const s, const size_t len, const TriState has
   } else {
     return (typval_T) {
       .v_type = VAR_STRING,
+      .v_size = (int)len,
       .v_lock = VAR_UNLOCKED,
-      .vval = { .v_string = (char_u *)(
-                                       (s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
+      .vval = { .v_string = (char_u *)((s == NULL || s_allocated) ? (char *)s : xmemdupz(s, len)) },
     };
   }
 }
@@ -405,6 +405,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   if (len == 0) {
     POP(((typval_T) {
       .v_type = VAR_STRING,
+      .v_size = -1,
       .vval = { .v_string = NULL },
     }), false);
     goto parse_json_string_ret;

@@ -3266,6 +3266,16 @@ const char *tv_get_string(const typval_T *const tv)
   return tv_get_string_buf((typval_T *)tv, mybuf);
 }
 
+const char *tv_get_stringl(const typval_T *const tv, size_t *len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char mybuf[NUMBUFLEN];
+  if (tv->v_size >= 0) {
+    *len = (size_t)tv->v_size;
+  }
+  return tv_get_string_buf((typval_T *)tv, mybuf);
+}
+
 /// Get the string value of a "stringish" VimL object.
 ///
 /// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but

@@ -4011,6 +4011,7 @@ static void expand_by_function(int type, char_u *base)
   typval_T args[3];
   args[0].v_type = VAR_NUMBER;
   args[1].v_type = VAR_STRING;
+  args[1].v_size = -1;
   args[2].v_type = VAR_UNKNOWN;
   args[0].vval.v_number = 0;
   args[1].vval.v_string = base != NULL ? base : (char_u *)"";
@@ -5297,6 +5298,7 @@ static int ins_complete(int c, bool enable_pum)
       typval_T args[3];
       args[0].v_type = VAR_NUMBER;
       args[1].v_type = VAR_STRING;
+      args[1].v_size = -1;
       args[2].v_type = VAR_UNKNOWN;
       args[0].vval.v_number = 1;
       args[1].vval.v_string = (char_u *)"";
