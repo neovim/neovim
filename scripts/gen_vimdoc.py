@@ -53,9 +53,17 @@ import logging
 from xml.dom import minidom
 
 MIN_PYTHON_VERSION = (3, 6)
+MIN_DOXYGEN_VERSION = (1, 9, 0)
 
 if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
+    sys.exit(1)
+
+doxygen_version = tuple([int(i) for i in subprocess.check_output(["doxygen", "-v"],
+                        universal_newlines=True).split('.')])
+
+if doxygen_version < MIN_DOXYGEN_VERSION:
+    print("requires Doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
     sys.exit(1)
 
 # DEBUG = ('DEBUG' in os.environ)
