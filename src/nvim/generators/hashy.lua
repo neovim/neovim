@@ -77,7 +77,7 @@ function M.switcher(put, tab, maxlen, worst_buck_size)
           put "break;\n"
         end
         put "      default: break;\n"
-        put "    }\n  "
+        put "    }\n    "
       else
           local startidx = #neworder
           table.insert(neworder, posbuck[keys[1]][1])
@@ -85,7 +85,7 @@ function M.switcher(put, tab, maxlen, worst_buck_size)
           put("low = "..startidx.."; ")
           if bucky then put("high = "..endidx.."; ") end
       end
-      put "  break;\n"
+      put "break;\n"
     end
   end
   put "    default: break;\n"
@@ -105,17 +105,23 @@ function M.hashy_hash(name, strings, access)
   end
   local neworder = M.switcher(put, len_pos_buckets, maxlen, worst_buck_size)
   if worst_buck_size > 1 then
-    error [[ not implemented yet ]] -- TODO(bfredl)
+    put ([[
+  for (int i = low; i < high; i++) {
+    if (!memcmp(str, ]]..access("i")..[[, len)) {
+      return i;
+    }
+  }
+  return -1;
+]])
   else
-    put [[
-  if (low < 0) {
+    put ([[
+  if (low < 0 || memcmp(str, ]]..access("low")..[[, len)) {
     return -1;
   }
-  ]]
-    put("if(memcmp(str, "..access("low")..", len)) {\n    return -1;\n  }\n")
-    put "  return low;\n"
-    put "}\n\n"
+  return low;
+]])
   end
+  put "}\n\n"
   return neworder, table.concat(stats)
 end
 
