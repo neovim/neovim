@@ -5097,7 +5097,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     }
   } else {
     // Recognize a few exceptions to the rule.  Some strings that contain
-    // '*' with "star".  Otherwise '*' is recognized as a wildcard.
+    // '*'are changed to "star", otherwise '*' is recognized as a wildcard.
     for (i = 0; except_tbl[i][0] != NULL; i++) {
       if (STRCMP(arg, except_tbl[i][0]) == 0) {
         STRCPY(d, except_tbl[i][1]);
