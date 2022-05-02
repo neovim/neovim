@@ -139,13 +139,11 @@ quite complicated things.  Still, it is just a sequence of commands that are
 executed like you typed them.
 
 >
-	syntax on
 	set hlsearch
 
-This switches on syntax highlighting.  And the 'hlsearch' option tells Vim to
-highlight matches with the last used search pattern.  The "if" command is very
-useful to set options only when some condition is met.  More about that in
-|usr_41.txt|.
+This option tells Vim to highlight matches with the last used search pattern.
+The "if" command is very useful to set options only when some condition is
+met.  More about that in |usr_41.txt|.
 
 							*vimrc-filetype*  >
 	filetype plugin indent on

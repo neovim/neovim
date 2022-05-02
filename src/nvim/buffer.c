@@ -4870,7 +4870,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
         new_curwin = curwin;
         new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
+      (void)do_ecmd(0, (char *)alist_name(&AARGLIST(alist)[i]), NULL, NULL, ECMD_ONE,
                     ((buf_hide(curwin->w_buffer)
                       || bufIsChanged(curwin->w_buffer))
                      ? ECMD_HIDE : 0) + ECMD_OLDBUF,

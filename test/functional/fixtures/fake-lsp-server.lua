@@ -28,7 +28,10 @@ local function assert_eq(a, b, ...)
   if not vim.deep_equal(a, b) then
     error(message_parts(": ",
       ..., "assert_eq failed",
-      string.format("left == %q, right == %q", vim.inspect(a), vim.inspect(b))
+      string.format("left == %q, right == %q",
+        table.concat(vim.split(vim.inspect(a), "\n"), ""),
+        table.concat(vim.split(vim.inspect(b), "\n"), "")
+      )
     ))
   end
 end
@@ -241,6 +244,51 @@ function tests.basic_check_capabilities()
       }
     end;
     body = function()
+    end;
+  }
+end
+
+function tests.text_document_sync_save_bool()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didSave', {textDocument = { uri = "file://" }})
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.text_document_sync_save_includeText()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = {
+              includeText = true
+            }
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didSave', {
+        textDocument = {
+          uri = "file://"
+        },
+        text = "help me\n"
+      })
+      notify('shutdown')
     end;
   }
 end

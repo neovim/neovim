@@ -24,28 +24,8 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *06.1*	Switching it on
 
-It all starts with one simple command: >
-
-	:syntax enable
-
-That should work in most situations to get color in your files.  Vim will
-automagically detect the type of file and load the right syntax highlighting.
-Suddenly comments are blue, keywords brown and strings red.  This makes it
-easy to overview the file.  After a while you will find that black&white text
-slows you down!
-
-If you always want to use syntax highlighting, put the ":syntax enable"
-command in your |init.vim| file.
-
-If you want syntax highlighting only when the terminal supports colors, you
-can put this in your |init.vim| file: >
-
-	if &t_Co > 1
-	   syntax enable
-	endif
-
-If you want syntax highlighting only in the GUI version, put the ":syntax
-enable" command in your |ginit.vim| file.
+Syntax highlighting is enabled by default.  Nvim will automagically detect the
+type of file and load the right syntax highlighting.
 
 ==============================================================================
 *06.2*	No or wrong colors?

@@ -53,9 +53,17 @@ import logging
 from xml.dom import minidom
 
 MIN_PYTHON_VERSION = (3, 6)
+MIN_DOXYGEN_VERSION = (1, 9, 0)
 
 if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
+    sys.exit(1)
+
+doxygen_version = tuple([int(i) for i in subprocess.check_output(["doxygen", "-v"],
+                        universal_newlines=True).split('.')])
+
+if doxygen_version < MIN_DOXYGEN_VERSION:
+    print("requires Doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
     sys.exit(1)
 
 # DEBUG = ('DEBUG' in os.environ)
@@ -271,8 +279,10 @@ param_exclude = (
 
 # Annotations are displayed as line items after API function descriptions.
 annotation_map = {
-    'FUNC_API_FAST': '{fast}',
+    'FUNC_API_FAST': '|api-fast|',
     'FUNC_API_CHECK_TEXTLOCK': 'not allowed when |textlock| is active',
+    'FUNC_API_REMOTE_ONLY': '|RPC| only',
+    'FUNC_API_LUA_ONLY': '|vim.api| only',
 }
 
 

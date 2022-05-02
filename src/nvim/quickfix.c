@@ -4394,7 +4394,7 @@ void ex_make(exarg_T *eap)
 
   char *const cmd = make_get_fullcmd((char *)eap->arg, fname);
 
-  do_shell((char_u *)cmd, 0);
+  do_shell(cmd, 0);
 
   incr_quickfix_busy();
 
@@ -5423,7 +5423,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
   }
 
   // Get the search pattern: either white-separated or enclosed in //
-  char *p = (char *)skip_vimgrep_pat(eap->arg, (char_u **)&args->spat, &args->flags);
+  char *p = skip_vimgrep_pat((char *)eap->arg, &args->spat, &args->flags);
   if (p == NULL) {
     emsg(_(e_invalpat));
     return FAIL;
@@ -7238,7 +7238,7 @@ void ex_helpgrep(exarg_T *eap)
   incr_quickfix_busy();
 
   // Check for a specified language
-  char *const lang = (char *)check_help_lang(eap->arg);
+  char *const lang = check_help_lang((char *)eap->arg);
   regmatch_T regmatch = {
     .regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING),
     .rm_ic = false,

@@ -971,10 +971,10 @@ function lsp.start_client(config)
           "update your plugins or configuration to access client.server_capabilities instead." ..
           "The new key/value pairs in server_capabilities directly match those " ..
           "defined in the language server protocol", vim.log.levels.WARN)
-          table[key] = protocol._resolve_capabilities_compat(client.server_capabilities)
-          return table[key]
+          rawset(table, key, protocol._resolve_capabilities_compat(client.server_capabilities))
+          return rawget(table, key)
         else
-          return table[key]
+          return rawget(table, key)
         end
       end
       setmetatable(client, mt)
@@ -1208,10 +1208,11 @@ function lsp._text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
-  for_each_buffer_client(bufnr, function(client, _client_id)
-    if vim.tbl_get(client.server_capabilities, "textDocumentSync", "save") then
+  for_each_buffer_client(bufnr, function(client)
+    local save_capability = vim.tbl_get(client.server_capabilities, "textDocumentSync", "save")
+    if save_capability then
       local included_text
-      if vim.tbl_get(client.server_capabilities, "textDocumentSync", "save", "includeText") then
+      if type(save_capability) == "table" and save_capability.includeText then
         included_text = text(bufnr)
       end
       client.notify('textDocument/didSave', {

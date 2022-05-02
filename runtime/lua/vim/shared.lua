@@ -365,7 +365,10 @@ function vim.tbl_get(o, ...)
   if #keys == 0 then
     return
   end
-  for _, k in ipairs(keys) do
+  for i, k in ipairs(keys) do
+    if type(o[k]) ~= 'table' and next(keys, i) then
+      return nil
+    end
     o = o[k]
     if o == nil then
       return

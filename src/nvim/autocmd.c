@@ -1191,8 +1191,9 @@ char_u *aucmd_next_pattern(char_u *pat, size_t patlen)
 /// Return OK for success, FAIL for failure;
 ///
 /// @param do_msg  give message for no matching autocmds?
-int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
+int do_doautocmd(char_u *arg_start, bool do_msg, bool *did_something)
 {
+  char_u *arg = arg_start;
   int nothing_done = true;
 
   if (did_something != NULL) {
@@ -1224,8 +1225,8 @@ int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
     }
   }
 
-  if (nothing_done && do_msg) {
-    msg(_("No matching autocommands"));
+  if (nothing_done && do_msg && !aborting()) {
+    smsg(_("No matching autocommands: %s"), arg_start);
   }
   if (did_something != NULL) {
     *did_something = !nothing_done;

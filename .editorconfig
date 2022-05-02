@@ -11,6 +11,9 @@ charset = utf-8
 [*.{c,h,in,lua}]
 max_line_length = 100
 
+[*.{vim,po}]
+charset = unset
+
 [{Makefile,**/Makefile,runtime/doc/*.txt}]
 indent_style = tab
 indent_size = 8

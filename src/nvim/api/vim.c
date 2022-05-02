@@ -2624,27 +2624,27 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.emsg_silent));
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.sandbox));
   PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.noautocmd));
-  PUT(mods, "tab", INTEGER_OBJ(cmdmod.tab));
+  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.tab));
   PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.verbose));
-  PUT(mods, "browse", BOOLEAN_OBJ(cmdmod.browse));
-  PUT(mods, "confirm", BOOLEAN_OBJ(cmdmod.confirm));
-  PUT(mods, "hide", BOOLEAN_OBJ(cmdmod.hide));
-  PUT(mods, "keepalt", BOOLEAN_OBJ(cmdmod.keepalt));
-  PUT(mods, "keepjumps", BOOLEAN_OBJ(cmdmod.keepjumps));
-  PUT(mods, "keepmarks", BOOLEAN_OBJ(cmdmod.keepmarks));
-  PUT(mods, "keeppatterns", BOOLEAN_OBJ(cmdmod.keeppatterns));
-  PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdmod.lockmarks));
-  PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdmod.noswapfile));
-  PUT(mods, "vertical", BOOLEAN_OBJ(cmdmod.split & WSP_VERT));
+  PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.browse));
+  PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.confirm));
+  PUT(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.hide));
+  PUT(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.keepalt));
+  PUT(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.keepjumps));
+  PUT(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.keepmarks));
+  PUT(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.keeppatterns));
+  PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.lockmarks));
+  PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.noswapfile));
+  PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.split & WSP_VERT));
 
   const char *split;
-  if (cmdmod.split & WSP_BOT) {
+  if (cmdinfo.cmdmod.split & WSP_BOT) {
     split = "botright";
-  } else if (cmdmod.split & WSP_TOP) {
+  } else if (cmdinfo.cmdmod.split & WSP_TOP) {
     split = "topleft";
-  } else if (cmdmod.split & WSP_BELOW) {
+  } else if (cmdinfo.cmdmod.split & WSP_BELOW) {
     split = "belowright";
-  } else if (cmdmod.split & WSP_ABOVE) {
+  } else if (cmdinfo.cmdmod.split & WSP_ABOVE) {
     split = "aboveleft";
   } else {
     split = "";

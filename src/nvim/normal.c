@@ -4614,7 +4614,7 @@ static void nv_gotofile(cmdarg_T *cap)
       (void)autowrite(curbuf, false);
     }
     setpcmark();
-    if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
+    if (do_ecmd(0, (char *)ptr, NULL, NULL, ECMD_LAST,
                 buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
         && cap->nchar == 'F' && lnum >= 0) {
       curwin->w_cursor.lnum = lnum;

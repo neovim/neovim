@@ -1113,7 +1113,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
-  int ren_ret = rename_buffer((char_u *)name.data);
+  int ren_ret = rename_buffer(name.data);
   aucmd_restbuf(&aco);
 
   if (try_end(err)) {
