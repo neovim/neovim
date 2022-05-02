@@ -28,9 +28,23 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*quote\*')
   helpclose
 
+  help *
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*star\*')
+  helpclose
+
   help "*
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*quotestar\*')
+  helpclose
+
+  " The test result is different in vim. There ":help ??" will jump to the
+  " falsy operator ??, which hasn't been ported to neovim yet. Instead, neovim
+  " jumps to the tag "g??". This test result needs to be changed if neovim
+  " ports the falsy operator.
+  help ??
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*g??\*')
   helpclose
 
   help ch?ckhealth

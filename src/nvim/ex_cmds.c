@@ -5023,37 +5023,59 @@ static int help_compare(const void *s1, const void *s2)
 int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep_lang)
 {
   int i;
-  static const char *(mtable[]) = {
-    "*", "g*", "[*", "]*",
-    "/*", "/\\*", "\"*", "**",
-    "/\\(\\)", "/\\%(\\)",
-    "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-    "-?", "q?", "v_g?",
-    "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-    "[count]", "[quotex]",
-    "[range]", ":[range]",
-    "[pattern]", "\\|", "\\%$",
-    "s/\\~", "s/\\U", "s/\\L",
-    "s/\\1", "s/\\2", "s/\\3", "s/\\9"
+
+  // Specific tags that either have a specific replacement or won't go
+  // throught the generic rules.
+  static char *(except_tbl[][2]) = {
+    { "*",           "star" },
+    { "g*",          "gstar" },
+    { "[*",          "[star" },
+    { "]*",          "]star" },
+    { ":*",          ":star" },
+    { "/*",          "/star" },  // NOLINT
+    { "/\\*",        "/\\\\star" },
+    { "\"*",         "quotestar" },
+    { "**",          "starstar" },
+    { "cpo-*",       "cpo-star" },
+    { "/\\(\\)",     "/\\\\(\\\\)" },
+    { "/\\%(\\)",    "/\\\\%(\\\\)" },
+    { "?",           "?" },
+    { "??",          "??" },
+    { ":?",          ":?" },
+    { "?<CR>",       "?<CR>" },
+    { "g?",          "g?" },
+    { "g?g?",        "g?g?" },
+    { "g??",         "g??" },
+    { "-?",          "-?" },
+    { "q?",          "q?" },
+    { "v_g?",        "v_g?" },
+    { "/\\?",        "/\\\\?" },
+    { "/\\z(\\)",    "/\\\\z(\\\\)" },
+    { "\\=",         "\\\\=" },
+    { ":s\\=",       ":s\\\\=" },
+    { "[count]",     "\\[count]" },
+    { "[quotex]",    "\\[quotex]" },
+    { "[range]",     "\\[range]" },
+    { ":[range]",    ":\\[range]" },
+    { "[pattern]",   "\\[pattern]" },
+    { "\\|",         "\\\\bar" },
+    { "\\%$",        "/\\\\%\\$" },
+    { "s/\\~",       "s/\\\\\\~" },
+    { "s/\\U",       "s/\\\\U" },
+    { "s/\\L",       "s/\\\\L" },
+    { "s/\\1",       "s/\\\\1" },
+    { "s/\\2",       "s/\\\\2" },
+    { "s/\\3",       "s/\\\\3" },
+    { "s/\\9",       "s/\\\\9" },
+    { NULL, NULL }
   };
-  static const char *(rtable[]) = {
-    "star", "gstar", "[star", "]star",
-    "/star", "/\\\\star", "quotestar", "starstar",
-    "/\\\\(\\\\)", "/\\\\%(\\\\)",
-    "?", ":?", "?<CR>", "g?", "g?g?", "g??",
-    "-?", "q?", "v_g?",
-    "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-    "\\[count]", "\\[quotex]",
-    "\\[range]", ":\\[range]",
-    "\\[pattern]", "\\\\bar", "/\\\\%\\$",
-    "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
-    "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"
-  };
+
   static const char *(expr_table[]) = {
     "!=?", "!~?", "<=?", "<?", "==?", "=~?",
     ">=?", ">?", "is?", "isnot?"
   };
   char *d = (char *)IObuff;       // assume IObuff is long enough!
+  d[0] = NUL;
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
     // When the string starting with "expr-" and containing '?' and matches
@@ -5075,16 +5097,16 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     }
   } else {
     // Recognize a few exceptions to the rule.  Some strings that contain
-    // '*' with "star".  Otherwise '*' is recognized as a wildcard.
-    for (i = (int)ARRAY_SIZE(mtable); --i >= 0;) {
-      if (STRCMP(arg, mtable[i]) == 0) {
-        STRCPY(d, rtable[i]);
+    // '*'are changed to "star", otherwise '*' is recognized as a wildcard.
+    for (i = 0; except_tbl[i][0] != NULL; i++) {
+      if (STRCMP(arg, except_tbl[i][0]) == 0) {
+        STRCPY(d, except_tbl[i][1]);
         break;
       }
     }
   }
 
-  if (i < 0) {  // no match in table
+  if (d[0] == NUL) {  // no match in table
     // Replace "\S" with "/\\S", etc.  Otherwise every tag is matched.
     // Also replace "\%^" and "\%(", they match every tag too.
     // Also "\zs", "\z1", etc.
