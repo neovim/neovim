@@ -217,7 +217,7 @@ end
 function M.on_codelens(err, result, ctx, _)
   if err then
     active_refreshes[ctx.bufnr] = nil
-    local _ = log.error() and log.error("codelens", ctx.client_id, err)
+    local _ = log.error() and log.error("codelens", err)
     return
   end
 
