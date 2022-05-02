@@ -1306,6 +1306,7 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   char *errormsg = NULL;
   char *cmd;
   char *p;
+  cmdmod_T save_cmdmod = cmdmod;
 
   // Initialize cmdinfo
   memset(cmdinfo, 0, sizeof(*cmdinfo));
@@ -1346,6 +1347,7 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
     p_verbose = eap->verbose_save;
   }
   cmdinfo->cmdmod = cmdmod;
+  cmdmod = save_cmdmod;
 
   // Save location after command modifiers
   cmd = eap->cmd;
