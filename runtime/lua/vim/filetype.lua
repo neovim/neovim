@@ -1482,8 +1482,18 @@ end
 local pattern_sorted = sort_by_priority(pattern)
 
 ---@private
-local function normalize_path(path)
-  return (path:gsub("\\", "/"):gsub("^~", vim.env.HOME))
+local function normalize_path(path, as_pattern)
+  local normal = path:gsub("\\", '/')
+  if normal:find('^~') then
+    if as_pattern then
+      -- Escape Lua's metacharacters when $HOME is used in a pattern.
+      -- The rest of path should already be properly escaped.
+      normal = vim.env.HOME:gsub('[-^$()%%.%[%]+?]', '%%%0') .. normal:sub(2)
+    else
+      normal = vim.env.HOME .. normal:sub(2)
+    end
+  end
+  return normal
 end
 
 --- Add new filetype mappings.
@@ -1552,7 +1562,7 @@ function M.add(filetypes)
   end
 
   for k, v in pairs(filetypes.pattern or {}) do
-    pattern[normalize_path(k)] = v
+    pattern[normalize_path(k, true)] = v
   end
 
   if filetypes.pattern then
