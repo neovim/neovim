@@ -72,7 +72,7 @@ do
     -- This way you can avoid string allocations if the log level isn't high enough.
     log[level:lower()] = function(...)
       local argc = select("#", ...)
-      if current_log_level == -1 or levelnr < current_log_level then return false end
+      if levelnr < current_log_level then return false end
       if argc == 0 then return true end
       open_logfile()
       local info = debug.getinfo(2, "Sl")
@@ -94,7 +94,7 @@ end
 
 -- This is put here on purpose after the loop above so that it doesn't
 -- interfere with iterating the levels
-log.levels.OFF, log.OFF = -1, -1
+log.levels.OFF, log.OFF = 99, 99
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.
@@ -126,7 +126,7 @@ end
 ---@param level number log level
 ---@returns (bool) true if would log, false if not
 function log.should_log(level)
-  return current_log_level ~= -1 and level >= current_log_level
+  return level >= current_log_level
 end
 
 return log
