@@ -104,6 +104,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - last line in the updated range
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
+///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
 ///             - on_bytes: lua callback invoked on change.
 ///               This callback receives more granular information about the
