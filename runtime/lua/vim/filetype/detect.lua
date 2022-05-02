@@ -304,17 +304,15 @@ function M.proto(path, bufnr)
 end
 
 function M.r(bufnr)
-  local lines = ipairs(get_lines(bufnr, 1, 50))
-  for _, line in lines do
-    -- TODO: \< / \> which match the beginning / end of a word
-    -- Rebol is easy to recognize, check for that first
-    if line:find("[rR][eE][bB][oO][lL]") then
-      vim.bo[bufnr].filetype = "rebol"
-      return
-    end
+  local lines = get_lines(bufnr, 1, 50)
+  -- TODO: \< / \> which match the beginning / end of a word
+  -- Rebol is easy to recognize, check for that first
+  if table.concat(lines):find("[rR][eE][bB][oO][lL]") then
+    vim.bo[bufnr].filetype = "rebol"
+    return
   end
 
-  for _, line in lines do
+  for _, line in ipairs(lines) do
     -- R has # comments
     if line:find("^%s*#") then
       vim.bo[bufnr].filetype = "r"
