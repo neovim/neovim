@@ -69,6 +69,7 @@ static char *e_nowhitespace
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 static char *e_write2 = N_("E80: Error while writing: %s");
 static char *e_string_list_or_blob_required = N_("E1098: String, List or Blob required");
+static char *e_expression_too_recursive_str = N_("E1169: Expression too recursive: %s");
 
 // TODO(ZyX-I): move to eval/executor
 static char *e_letwrong = N_("E734: Wrong variable type for %s=");
@@ -4042,6 +4043,7 @@ static int eval7(char_u **arg, typval_T *rettv, int evaluate, int want_string)
   const char_u *start_leader, *end_leader;
   int ret = OK;
   char_u *alias;
+  static int recurse = 0;
 
   // Initialise variable so that tv_clear() can't mistake this for a
   // string and free a string that isn't there.
@@ -4053,6 +4055,14 @@ static int eval7(char_u **arg, typval_T *rettv, int evaluate, int want_string)
     *arg = skipwhite(*arg + 1);
   }
   end_leader = *arg;
+
+  // Limit recursion to 1000 levels.  At least at 10000 we run out of stack
+  // and crash.
+  if (recurse == 1000) {
+    semsg(_(e_expression_too_recursive_str), *arg);
+    return FAIL;
+  }
+  recurse++;
 
   switch (**arg) {
   // Number constant.
@@ -4256,6 +4266,8 @@ static int eval7(char_u **arg, typval_T *rettv, int evaluate, int want_string)
   if (ret == OK && evaluate && end_leader > start_leader) {
     ret = eval7_leader(rettv, start_leader, &end_leader);
   }
+
+  recurse--;
   return ret;
 }
 
