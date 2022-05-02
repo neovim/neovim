@@ -1378,6 +1378,16 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_get_register, nvim_set_register', function()
+    it('works', function()
+      local reg = 'x'
+      local value = 'this is a test\nnew line here'
+      eq('', nvim('get_register', reg))
+      nvim('set_register', reg, value)
+      eq(value, nvim('get_register', reg))
+    end)
+  end)
+
   describe('nvim_get_option_value, nvim_set_option_value', function()
     it('works', function()
       ok(nvim('get_option_value', 'equalalways', {}))

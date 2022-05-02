@@ -859,6 +859,16 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
 
+/// Set vim register |registers|
+///
+/// @param reg    Register name.
+/// @param value  Value to assign register.
+void nvim_set_register(String reg, String value)
+  FUNC_API_SINCE(10)
+{
+  write_reg_contents(reg.data[0], (const char_u*) value.data, (ssize_t) value.size, false);
+}
+
 /// Echo a message.
 ///
 /// @param chunks  A list of [text, hl_group] arrays, each representing a
@@ -2066,6 +2076,25 @@ Object nvim_get_proc(Integer pid, Error *err)
   }
 #endif
   return rvobj;
+}
+
+/// Get vim register |registers|
+///
+/// @param reg  Register name.
+/// @return Content of register.
+String nvim_get_register(String reg)
+  FUNC_API_SINCE(10)
+{
+  String rv = STRING_INIT;
+
+  void* contents = get_reg_contents(reg.data[0], kGRegExprSrc);
+  if (contents == NULL) {
+    return rv;
+  }
+
+  rv.data = contents;
+  rv.size = STRLEN(rv.data);
+  return rv;
 }
 
 /// Selects an item in the completion popupmenu.

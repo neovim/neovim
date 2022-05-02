@@ -1156,6 +1156,17 @@ nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
                 Return: ~
                     Array of child process ids, empty if process not found.
 
+                                         *nvim_get_register()*
+nvim_get_register({reg})
+                Get vim register. |registers|
+
+		Parameters:~
+		    {reg}  Register name.
+
+                Return:~
+		    Content of register.
+
+
 nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
                 Find files in runtime directories
 
@@ -1698,6 +1709,14 @@ nvim_set_option_value({name}, {value}, {*opts})
                     {opts}   Optional parameters
                              • scope: One of 'global' or 'local'. Analogous to
                                |:setglobal| and |:setlocal|, respectively.
+                                                         *nvim_set_register()*
+nvim_set_register({reg}, {value})
+                Set vim register. |registers|
+
+		Parameters:~
+                    {reg}    Register name.
+		    {value}  Value to assign register.
+
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.
