@@ -1335,7 +1335,7 @@ deprecate({name}, {alternative}, {version}, {plugin})        *vim.deprecate()*
                     {version}      string Version in which the deprecated
                                    function will be removed.
                     {plugin}       string|nil Plugin name that the function
-                                   will be removed from. Defaults to "Neovim".
+                                   will be removed from. Defaults to "Nvim".
 
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
