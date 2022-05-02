@@ -58,7 +58,7 @@ end
 --- window. Calling the function twice will jump into the floating window.
 function M.hover()
   local params = util.make_position_params()
-  request('textDocument/hover', params)
+  return request('textDocument/hover', params)
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
@@ -66,35 +66,35 @@ end
 ---
 function M.declaration()
   local params = util.make_position_params()
-  request('textDocument/declaration', params)
+  return request('textDocument/declaration', params)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 ---
 function M.definition()
   local params = util.make_position_params()
-  request('textDocument/definition', params)
+  return request('textDocument/definition', params)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 ---
 function M.type_definition()
   local params = util.make_position_params()
-  request('textDocument/typeDefinition', params)
+  return request('textDocument/typeDefinition', params)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 function M.implementation()
   local params = util.make_position_params()
-  request('textDocument/implementation', params)
+  return request('textDocument/implementation', params)
 end
 
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 function M.signature_help()
   local params = util.make_position_params()
-  request('textDocument/signatureHelp', params)
+  return request('textDocument/signatureHelp', params)
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -402,7 +402,7 @@ function M.rename(new_name)
     end
     if new_name then on_confirm(new_name) end
   end
-  request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
+  return request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
@@ -415,14 +415,14 @@ function M.references(context)
   params.context = context or {
     includeDeclaration = true;
   }
-  request('textDocument/references', params)
+  return request('textDocument/references', params)
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
 ---
 function M.document_symbol()
   local params = { textDocument = util.make_text_document_params() }
-  request('textDocument/documentSymbol', params)
+  return request('textDocument/documentSymbol', params)
 end
 
 ---@private
@@ -446,7 +446,7 @@ end
 ---@private
 local function call_hierarchy(method)
   local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(err, result, ctx)
+  return request('textDocument/prepareCallHierarchy', params, function(err, result, ctx)
     if err then
       vim.notify(err.message, vim.log.levels.WARN)
       return
@@ -468,7 +468,7 @@ end
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist|.
 function M.incoming_calls()
-  call_hierarchy('callHierarchy/incomingCalls')
+  return call_hierarchy('callHierarchy/incomingCalls')
 end
 
 --- Lists all the items that are called by the symbol under the
@@ -553,7 +553,7 @@ function M.workspace_symbol(query)
     return
   end
   local params = {query = query}
-  request('workspace/symbol', params)
+  return request('workspace/symbol', params)
 end
 
 --- Send request to the server to resolve document highlights for the current
@@ -573,7 +573,7 @@ end
 ---         |LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
-  request('textDocument/documentHighlight', params)
+  return request('textDocument/documentHighlight', params)
 end
 
 --- Removes document highlights from current buffer.
@@ -767,7 +767,7 @@ function M.execute_command(command_params)
     arguments=command_params.arguments,
     workDoneToken=command_params.workDoneToken,
   }
-  request('workspace/executeCommand', command_params )
+  return request('workspace/executeCommand', command_params )
 end
 
 return M
