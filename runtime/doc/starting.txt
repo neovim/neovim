@@ -384,10 +384,6 @@ argument.
 		Start |RPC| server on pipe or TCP address {addr}. Sets the
 		primary listen address |v:servername| to {addr}. |serverstart()|
 
---connect {addr}					 *--connect*
-		Connect to the remote nvim server instance which is listening to 
-		{addr}. {addr} can be either a pipe or a TCP address.
-
 ==============================================================================
 Initialization					*initialization* *startup*
 

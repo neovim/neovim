@@ -363,7 +363,7 @@ for i = 1, #functions do
           -- if the function recieves the array args, pass it the second argument
           output:write('args, ')
         end
-        output:write(call_args)  
+        output:write(call_args)
       else
         output:write('channel_id')
         if fn.receives_array_args then

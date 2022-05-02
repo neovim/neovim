@@ -283,9 +283,9 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enabl
   api_free_dictionary(opts);
 }
 
-/// Tells the nvim server if focus was gained by the GUI or not
+/// Tells the nvim server if focus was gained or lost by the GUI
 void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(11) FUNC_API_REMOTE_ONLY
 {
   if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
     api_set_error(error, kErrorTypeException,
@@ -293,7 +293,7 @@ void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
     return;
   }
 
-  autocmd_schedule_focusgained((bool)gained);
+  do_autocmd_focusgained((bool)gained);
 }
 
 /// Deactivates UI events on the channel.
@@ -415,21 +415,21 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     return;
   }
 
-  if (strequal(name.data, "term_ttyin")) {
-    if (value.type != kObjectTypeInteger) {
-      api_set_error(error, kErrorTypeValidation, "term_ttyin must be a Integer");
+  if (strequal(name.data, "stdin_tty")) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, kErrorTypeValidation, "stdin_tty must be a Boolean");
       return;
     }
-    stdin_isatty = (int)value.data.integer;
+    stdin_isatty = value.data.boolean;
     return;
   }
 
-  if (strequal(name.data, "term_ttyout")) {
-    if (value.type != kObjectTypeInteger) {
-      api_set_error(error, kErrorTypeValidation, "term_ttyout must be a Integer");
+  if (strequal(name.data, "stdout_tty")) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, kErrorTypeValidation, "stdout_tty must be a Boolean");
       return;
     }
-    stdout_isatty = (int)value.data.integer;
+    stdout_isatty = value.data.boolean;
     return;
   }
 

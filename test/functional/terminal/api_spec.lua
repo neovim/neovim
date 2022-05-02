@@ -19,6 +19,16 @@ describe('api', function()
   end)
 
   it("qa! RPC request during insert-mode", function()
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
     -- Start the socket from the child nvim.
     child_session.feed_data(":echo serverstart('"..socket_name.."')\n")
 

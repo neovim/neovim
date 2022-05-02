@@ -101,6 +101,11 @@ The following new APIs or features were added.
 
   See https://github.com/neovim/neovim/pull/14537.
 
+• |--remote-ui| option was added to connect to a remote instance and display
+  in it in a |TUI| in the local terminal. This can be used run a headless nvim
+  instance in the background and display its UI on demand, which previously
+  only was possible usiing a external UI implementation.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
@@ -108,6 +113,10 @@ The following changes to existing APIs or features add new behavior.
 
 • 'exrc' now supports `.nvim.lua` file.
 • 'exrc' is no longer marked deprecated.
+
+• The |TUI| is changed to run in a separate process (previously, a separate
+  thread was used). This is not supposed to be a visible change to the user,
+  but might be the cause of subtle changes of behavior and bugs.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

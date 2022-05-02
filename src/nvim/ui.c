@@ -10,6 +10,7 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -31,17 +32,11 @@
 #include "nvim/option.h"
 #include "nvim/os/time.h"
 #include "nvim/strings.h"
+#include "nvim/tui/tui.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
-#include "nvim/msgpack_rpc/channel.h"
-#ifdef FEAT_TUI
-# include "nvim/tui/tui.h"
-#else
-# include "nvim/msgpack_rpc/server.h"
-#endif
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -127,15 +122,25 @@ void ui_init(void)
   kv_ensure_space(call_buf, 16);
 }
 
+static UI *builtin_ui = NULL;
+
+#ifdef EXITFREE
 void ui_free_all_mem(void)
 {
   kv_destroy(call_buf);
+# ifdef FEAT_TUI
+  if (builtin_ui) {
+    tui_free_all_mem(builtin_ui);
+    builtin_ui = NULL;
+  }
+# endif
 }
+#endif
 
 void ui_builtin_start(void)
 {
 #ifdef FEAT_TUI
-  tui_start();
+  builtin_ui = tui_start();
 #else
   fprintf(stderr, "Nvim headless-mode started.\n");
   size_t len;
@@ -151,14 +156,7 @@ void ui_builtin_start(void)
 #endif
 }
 
-uint64_t ui_client_start(int argc, char **argv, bool pass_stdin)
-{
-  ui_comp_detach(uis[1]);  // Bypassing compositor in client
-  uint64_t rv = ui_client_start_server(argc, argv, pass_stdin);
-  return rv;
-}
-
-UI* ui_get_by_index(int idx)
+UI *ui_get_by_index(int idx)
 {
   assert(idx < 16);
   return uis[idx];
@@ -200,7 +198,7 @@ void ui_refresh(void)
   }
 
   if (updating_screen) {
-    deferred_refresh_event(NULL);
+    ui_schedule_refresh();
     return;
   }
 
@@ -242,11 +240,20 @@ void ui_refresh(void)
     screen_resize(width, height);
     p_lz = save_p_lz;
   } else {
-    // TODO: not like this
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, INTEGER_OBJ((int)width));
-    ADD(args, INTEGER_OBJ((int)height));
-    rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
+    if (ui_client_attached) {
+      // TODO(bfredl): ui_refresh() should only be used on the server
+      // we are in the client process. forward the resize
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, INTEGER_OBJ((int)width));
+      ADD(args, INTEGER_OBJ((int)height));
+      rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
+    } else {
+      /// TODO(bfredl): Messy! The screen does not yet exist, but we need to
+      /// communicate its size from the TUI to the client. Clean this up
+      /// in The UI Devirtualization Project.
+      Rows = height;
+      Columns = width;
+    }
   }
 
   if (ext_widgets[kUIMessages]) {
@@ -293,10 +300,6 @@ static void ui_refresh_event(void **argv)
 }
 
 void ui_schedule_refresh(void)
-{
-  loop_schedule_fast(&main_loop, event_create(deferred_refresh_event, 0));
-}
-static void deferred_refresh_event(void **argv)
 {
   multiqueue_put(resize_events, ui_refresh_event, 0);
 }
