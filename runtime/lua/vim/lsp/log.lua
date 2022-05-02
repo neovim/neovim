@@ -31,21 +31,28 @@ do
     return logfilename
   end
 
-  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
-  local logfile = assert(io.open(logfilename, "a+"))
+  local logfile
+  ---@private
+  --- Opens log file.
+  local function open_logfile()
+    if logfile then return end
+    vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
+    logfile = assert(io.open(logfilename, "a+"))
 
-  local log_info = vim.loop.fs_stat(logfilename)
-  if log_info and log_info.size > 1e9 then
-    local warn_msg = string.format(
-      "LSP client log is large (%d MB): %s",
-      log_info.size / (1000 * 1000),
-      logfilename
-    )
-    vim.notify(warn_msg)
+    local log_info = vim.loop.fs_stat(logfilename)
+    if log_info and log_info.size > 1e9 then
+      local warn_msg = string.format(
+        "LSP client log is large (%d MB): %s",
+        log_info.size / (1000 * 1000),
+        logfilename
+      )
+      vim.notify(warn_msg)
+    end
+
+    -- Start message for logging
+    logfile:write(string.format("[START][%s] LSP logging initiated\n", os.date(log_date_format)))
   end
 
-  -- Start message for logging
-  logfile:write(string.format("[START][%s] LSP logging initiated\n", os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
@@ -65,8 +72,9 @@ do
     -- This way you can avoid string allocations if the log level isn't high enough.
     log[level:lower()] = function(...)
       local argc = select("#", ...)
-      if levelnr < current_log_level then return false end
+      if current_log_level == -1 or levelnr < current_log_level then return false end
       if argc == 0 then return true end
+      open_logfile()
       local info = debug.getinfo(2, "Sl")
       local header = string.format("[%s][%s] ...%s:%s", level, os.date(log_date_format), string.sub(info.short_src, #info.short_src - 15), info.currentline)
       local parts = { header }
@@ -86,6 +94,7 @@ end
 
 -- This is put here on purpose after the loop above so that it doesn't
 -- interfere with iterating the levels
+log.levels.OFF, log.OFF = -1, -1
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.
@@ -117,7 +126,7 @@ end
 ---@param level number log level
 ---@returns (bool) true if would log, false if not
 function log.should_log(level)
-  return level >= current_log_level
+  return current_log_level ~= -1 and level >= current_log_level
 end
 
 return log

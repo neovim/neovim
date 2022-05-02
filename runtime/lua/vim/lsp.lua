@@ -1799,6 +1799,8 @@ lsp.log_levels = log.levels
 --- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
 --- Level numbers begin with "TRACE" at 0
 ---
+--- Set to -1 or "OFF" to disable logging
+---
 --- Use `lsp.log_levels` for reverse lookup.
 ---
 ---@see |vim.lsp.log_levels|
