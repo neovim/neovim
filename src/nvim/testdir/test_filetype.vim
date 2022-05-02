@@ -456,6 +456,7 @@ let s:filename_checks = {
     \ 'rib': ['file.rib'],
     \ 'rnc': ['file.rnc'],
     \ 'rng': ['file.rng'],
+    \ 'robot': ['file.robot', 'file.resource'],
     \ 'robots': ['robots.txt'],
     \ 'routeros': ['file.rsc'],
     \ 'rpcgen': ['file.x'],
