@@ -5074,6 +5074,16 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
     tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
   }
 
+  // Unset Vim/Nvim-owned env vars. #6764
+  // User can override this via `env` in jobstart().
+  const char *unwanted[] = { "VIM", "VIMRUNTIME" };
+  for (size_t i = 0; i < ARRAY_SIZE(unwanted); i++) {
+    dictitem_T *dv = tv_dict_find(env, unwanted[i], -1);
+    if (dv) {
+      tv_dict_item_remove(env, dv);
+    }
+  }
+
   if (job_env) {
 #ifdef WIN32
     TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {

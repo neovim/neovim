@@ -23,7 +23,7 @@ function Main()
   set lines=25
   set columns=80
   enew
-  let job = termopen(args, s:logger)
+  let job = termopen(args, s:logger, {'env': { 'NVIM_LOG_FILE': $NVIM_LOG_FILE, 'VIM': $VIM, 'VIMRUNTIME': $VIMRUNTIME })
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')

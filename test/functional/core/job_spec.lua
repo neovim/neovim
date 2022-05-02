@@ -21,6 +21,7 @@ local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
+local matches = helpers.matches
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -648,6 +649,8 @@ describe('jobs', function()
   end)
 
   it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
+    local tmpfile = 'Xtest_jobstart_env'
+
     local function get_env_in_child_job(envname, env)
       return exec_lua([[
         local envname, env = ...
@@ -674,15 +677,15 @@ describe('jobs', function()
     -- $NVIM is _not_ defined in the top-level Nvim process.
     eq('', eval('$NVIM'))
     -- jobstart() shares its v:servername with the child via $NVIM.
-    eq('NVIM='..addr, get_env_in_child_job('NVIM'))
+    eq('NVIM='..addr, get_env_in_child_job('NVIM', { VIM=eval('$VIM'), VIMRUNTIME=eval('$VIMRUNTIME') }))
     -- $NVIM_LISTEN_ADDRESS is unset by server_init in the child.
     eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
-    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
-      { NVIM_LISTEN_ADDRESS='Xtest_jobstart_env' }))
-    -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
-    eq('NVIM_LOG_FILE=Xtest_jobstart_env',
-      get_env_in_child_job('NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
-    os.remove('Xtest_jobstart_env')
+    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS', { NVIM_LISTEN_ADDRESS=tmpfile }))
+
+    -- jobstart() unsets $VIM, $VIMRUNTIME. #6764
+    -- But user can explicitly set them.
+    matches("^E484%: Can't open file "..tmpfile.."/syntax/syntax.vim", get_env_in_child_job('VIMRUNTIME', { VIMRUNTIME=tmpfile }))
+    os.remove(tmpfile)
   end)
 
   describe('jobwait', function()
