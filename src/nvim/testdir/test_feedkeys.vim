@@ -23,4 +23,15 @@ func Test_feedkeys_with_abbreviation()
   iunabbrev trigger
 endfunc
 
+func Test_feedkeys_escape_special()
+  nnoremap … <Cmd>let g:got_ellipsis += 1<CR>
+  call feedkeys('…', 't')
+  call assert_equal('…', getcharstr())
+  let g:got_ellipsis = 0
+  call feedkeys('…', 'xt')
+  call assert_equal(1, g:got_ellipsis)
+  unlet g:got_ellipsis
+  nunmap …
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1025,4 +1025,19 @@ func Test_unmap_simplifiable()
   unmap <C-I>
 endfunc
 
+func Test_expr_map_escape_special()
+  nnoremap … <Cmd>let g:got_ellipsis += 1<CR>
+  func Func()
+    return '…'
+  endfunc
+  nmap <expr> <F2> Func()
+  let g:got_ellipsis = 0
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(1, g:got_ellipsis)
+  delfunc Func
+  nunmap <F2>
+  unlet g:got_ellipsis
+  nunmap …
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

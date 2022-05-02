@@ -1651,10 +1651,11 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
         }
         switch (*p) {
         // A "\<x>" form occupies at least 4 characters, and produces up to
-        // 6 characters: reserve space for 2 extra, but do not compute actual
-        // length just now, it would be costy.
+        // to 9 characters (6 for the char and 3 for a modifier):
+        // reserve space for 5 extra, but do not compute actual length
+        // just now, it would be costly.
         case '<':
-          size += 2;
+          size += 5;
           break;
         // Hexadecimal, always single byte, but at least three bytes each.
         case 'x':
@@ -1822,7 +1823,7 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
             flags |= FSK_SIMPLIFY;
           }
           const size_t special_len = trans_special((const char_u **)&p, (size_t)(e - p),
-                                                   (char_u *)v_p, flags, NULL);
+                                                   (char_u *)v_p, flags, false, NULL);
           if (special_len != 0) {
             v_p += special_len;
           } else {

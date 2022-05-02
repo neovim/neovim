@@ -320,4 +320,26 @@ func Test_curly_assignment()
   unlet g:gvar
 endfunc
 
+" K_SPECIAL in the modified character used be escaped, which causes
+" double-escaping with feedkeys() or as the return value of an <expr> mapping,
+" and doesn't match what getchar() returns,
+func Test_modified_char_no_escape_special()
+  nnoremap <M-…> <Cmd>let g:got_m_ellipsis += 1<CR>
+  call feedkeys("\<M-…>", 't')
+  call assert_equal("\<M-…>", getchar())
+  let g:got_m_ellipsis = 0
+  call feedkeys("\<M-…>", 'xt')
+  call assert_equal(1, g:got_m_ellipsis)
+  func Func()
+    return "\<M-…>"
+  endfunc
+  nmap <expr> <F2> Func()
+  call feedkeys("\<F2>", 'xt')
+  call assert_equal(2, g:got_m_ellipsis)
+  delfunc Func
+  nunmap <F2>
+  unlet g:got_m_ellipsis
+  nunmap <M-…>
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
