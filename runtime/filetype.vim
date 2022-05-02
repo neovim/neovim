@@ -1588,6 +1588,9 @@ au BufNewFile,BufRead *.rng			setf rng
 " RPL/2
 au BufNewFile,BufRead *.rpl			setf rpl
 
+" Robot Framework
+au BufNewFile,BufRead *.robot,*.resource	setf robot
+
 " Robots.txt
 au BufNewFile,BufRead robots.txt		setf robots
 
