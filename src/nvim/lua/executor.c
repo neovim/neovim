@@ -92,22 +92,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
-  const char *str = NULL;
-
-  if (luaL_getmetafield(lstate, -1, "__tostring")) {
-    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
-      // call __tostring, convert the result and pop result.
-      str = lua_tolstring(lstate, -1, &len);
-      lua_pop(lstate, 1);
-    }
-    // pop __tostring.
-    lua_pop(lstate, 1);
-  }
-
-  if (!str) {
-    // defer to lua default conversion, this will render tables as [NULL].
-    str = lua_tolstring(lstate, -1, &len);
-  }
+  const char *str = luaL_tolstring(lstate, -1, &len);
 
   msg_ext_set_kind("lua_error");
   semsg_multiline(msg, (int)len, str);
@@ -187,7 +172,8 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
       mch_errmsg("\n");
       preserve_exit();
     }
-    const char *error = lua_tostring(lstate, -1);
+    size_t len;
+    const char *error = luaL_tolstring(lstate, -1, &len);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    2, xstrdup(error), (intptr_t)kCallback);
@@ -245,7 +231,8 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
       pthread_exit(0);
 #endif
     }
-    const char *error = lua_tostring(lstate, -1);
+    size_t len;
+    const char *error = luaL_tolstring(lstate, -1, &len);
 
     loop_schedule_deferred(&main_loop,
                            event_create(nlua_luv_error_event, 2,
@@ -910,6 +897,27 @@ static int nlua_debug(lua_State *lstate)
   return 0;
 }
 
+const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
+  if (!luaL_callmeta(L, idx, "__tostring")) {  /* no metafield? */
+    switch (lua_type(L, idx)) {
+      case LUA_TNUMBER:
+      case LUA_TSTRING:
+        lua_pushvalue(L, idx);
+        break;
+      case LUA_TBOOLEAN:
+        lua_pushstring(L, (lua_toboolean(L, idx) ? "true" : "false"));
+        break;
+      case LUA_TNIL:
+        lua_pushliteral(L, "nil");
+        break;
+      default:
+        lua_pushfstring(L, "%s: %p", luaL_typename(L, idx), lua_topointer(L, idx));
+        break;
+    }
+  }
+  return lua_tolstring(L, -1, len);
+}
+
 int nlua_in_fast_event(lua_State *lstate)
 {
   lua_pushboolean(lstate, in_fast_callback > 0);
@@ -1366,7 +1374,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
-      const char *errstr = lua_tolstring(lstate, -1, &len);
+      const char *errstr = luaL_tolstring(lstate, -1, &len);
       api_set_error(err, kErrorTypeException,
                     "Error executing lua: %.*s", (int)len, errstr);
     } else {
