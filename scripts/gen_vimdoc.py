@@ -63,7 +63,8 @@ doxygen_version = tuple([int(i) for i in subprocess.check_output(["doxygen", "-v
                         universal_newlines=True).split()[0].split('.')])
 
 if doxygen_version < MIN_DOXYGEN_VERSION:
-    print("requires Doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
+    print("\nRequires doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
+    print("Your doxygen version is {}.{}.{}\n".format(*doxygen_version))
     sys.exit(1)
 
 # DEBUG = ('DEBUG' in os.environ)
