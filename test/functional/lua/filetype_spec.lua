@@ -70,6 +70,7 @@ describe('vim.filetype', function()
   it('works with patterns', function()
     eq('markdown', exec_lua([[
       local root = ...
+      vim.env.HOME = '/a-funky+home%dir'
       vim.filetype.add({
         pattern = {
           ['~/blog/.*%.txt'] = 'markdown',
