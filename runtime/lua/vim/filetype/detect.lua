@@ -7,7 +7,7 @@ end
 
 ---@private
 local function get_lines(bufnr, start_lnum, end_lnum, opts)
-  if not end_lnum and not opts then
+  if not end_lnum then
     -- Return a single line as a string
     return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
   end
