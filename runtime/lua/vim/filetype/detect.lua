@@ -13,6 +13,7 @@ local function get_lines(bufnr, start_lnum, end_lnum, opts)
   end
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  opts = opts or {}
   return opts.concat and (table.concat(lines) or "") or lines
 end
 
@@ -133,15 +134,13 @@ function M.frm(bufnr)
   if vim.g.filetype_frm then
     vim.bo[bufnr].filetype = vim.g.filetype_frm
   else
-    for _, line in ipairs(get_lines(bufnr, 1, 5)) do
-      -- Always ignore case
-      line = line:lower()
-      if line:find("vb_name") or line:find("begin vb%.form") or line:find("begin vb%.mdiform") or line:find("begin vb%.usercontrol") then
+    -- Always ignore case
+    local lines = get_lines(bufnr, 1, 5, { concat = true }):lower()
+    if lines:find("vb_name") or lines:find("begin vb%.form") or lines:find("begin vb%.mdiform") or lines:find("begin vb%.usercontrol") then
         vim.bo[bufnr].filetype = "vb"
       else
         vim.bo[bufnr].filetype = "form"
       end
-    end
   end
 end
 
@@ -190,7 +189,7 @@ function M.inp(bufnr)
     vim.bo[bufnr].filetype = "abaqus"
   else
     for _, line in ipairs(get_lines(bufnr, 1, 500)) do
-      if line:find("header surface data") then
+      if line:find("^header surface data") then
         vim.bo[bufnr].filetype = "trasys"
         return
       end
@@ -253,7 +252,7 @@ function M.mod(path, bufnr)
 end
 
 -- This function checks if one of the first five lines start with a dot. In
--- that case it is probably an nroff file.
+-- that case it is probably an nroff file: 'filetype' is set and 1 is returned.
 function M.nroff(bufnr)
   for _, line in ipairs(get_lines(bufnr, 1, 5)) do
     if line:find("^%.") then
