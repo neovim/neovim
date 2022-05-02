@@ -261,7 +261,7 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
       api_set_error(error, kErrorTypeValidation, "term_name must be a String");
       return;
     }
-    set_tty_option("term", xstrdup(value.data.string.data));
+    set_tty_option("term", string_to_cstr(value.data.string));
     return;
   }
 

@@ -2522,7 +2522,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   // Parse command line
   exarg_T ea;
   CmdParseInfo cmdinfo;
-  char_u *cmdline = vim_strsave((char_u *)str.data);
+  char_u *cmdline = (char_u *)string_to_cstr(str);
 
   if (!parse_cmdline(cmdline, &ea, &cmdinfo)) {
     api_set_error(err, kErrorTypeException, "Error while parsing command line");
