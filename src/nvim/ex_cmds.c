@@ -5106,7 +5106,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     }
   }
 
-  if (d[0] == NUL) {    // no match in table
+  if (d[0] == NUL) {  // no match in table
     // Replace "\S" with "/\\S", etc.  Otherwise every tag is matched.
     // Also replace "\%^" and "\%(", they match every tag too.
     // Also "\zs", "\z1", etc.
