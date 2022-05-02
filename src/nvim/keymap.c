@@ -569,11 +569,12 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[out]  dst  Location where translation result will be kept. It must
 //                    be at least 19 bytes per "<x>" form.
 /// @param[in]  flags  FSK_ values
+/// @param[in]  escape_ks  escape K_SPECIAL bytes in the character
 /// @param[out]  did_simplify  found <C-H>, etc.
 ///
 /// @return Number of characters added to dst, zero for no match.
 unsigned int trans_special(const char_u **const srcp, const size_t src_len, char_u *const dst,
-                           const int flags, bool *const did_simplify)
+                           const int flags, const bool escape_ks, bool *const did_simplify)
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
@@ -582,15 +583,15 @@ unsigned int trans_special(const char_u **const srcp, const size_t src_len, char
     return 0;
   }
 
-  return special_to_buf(key, modifiers, flags & FSK_KEYCODE, dst);
+  return special_to_buf(key, modifiers, escape_ks, dst);
 }
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
 /// the resulting length.
-/// When "keycode" is true prefer key code, e.g. K_DEL instead of DEL.
+/// When "escape_ks" is true escape K_SPECIAL bytes in the character.
 /// The sequence is not NUL terminated.
 /// This is how characters in a string are encoded.
-unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
+unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char_u *dst)
 {
   unsigned int dlen = 0;
 
@@ -605,12 +606,12 @@ unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
-  } else if (!keycode) {
-    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
-  } else {
+  } else if (escape_ks) {
     char_u *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
+  } else {
+    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
   }
 
   return dlen;
@@ -943,7 +944,7 @@ char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_
 
       slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
                            FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
-                           did_simplify);
+                           true, did_simplify);
       if (slen) {
         dlen += slen;
         continue;
