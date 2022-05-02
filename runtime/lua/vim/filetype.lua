@@ -1443,7 +1443,7 @@ local pattern = {
       return "git"
     end
   end,
-  [".*%.[Cc][Ff][Gg]"] = function(path, bufnr) return require("vim.filetype.detect").cfg(path, bufnr) end,
+  [".*%.[Cc][Ff][Gg]"] = function() vim.fn["dist#ft#FTcfg"]() end,
   [".*%.[Dd][Aa][Tt]"] = function() vim.fn["dist#ft#FTdat"]() end,
   [".*%.[Mm][Oo][Dd]"] = function() vim.fn["dist#ft#FTmod"]() end,
   [".*%.[Ss][Rr][Cc]"] = function() vim.fn["dist#ft#FTsrc"]() end,

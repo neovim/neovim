@@ -8,14 +8,13 @@ end
 ---@private
 local function get_lines(bufnr, start_lnum, end_lnum)
   end_lnum = end_lnum or start_lnum
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
-  return table.concat(lines) or ""
+  return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
 end
 
 ---@private
-local function iter_lines(bufnr, start_lnum, end_lnum)
-  end_lnum = end_lnum or start_lnum
-  return ipairs(vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false))
+local function concat_lines(bufnr, start_lnum, end_lnum)
+  local lines = get_lines(bufnr, start_lnum, end_lnum)
+  return table.concat(lines) or ""
 end
 
 function M.asm(path, bufnr)
@@ -80,7 +79,7 @@ end
 -- Look for either an opening comment, '#', or a block start, '{'.
 -- If not found, assume SGML.
 function M.ent(bufnr)
-  for _, line in iter_lines(bufnr, 1, 5) do
+  for _, line in ipairs(get_lines(bufnr, 1, 5)) do
     if line:find("^%s*[#{]") then
       vim.bo[bufnr].filetype = "cl"
       return
@@ -105,15 +104,15 @@ function M.ex(bufnr)
   if vim.g.filetype_euphoria then
     vim.bo[bufnr].filetype = vim.g.filetype_euphoria
   else
-    for _, line in iter_lines(bufnr, 1, 100) do
+    for _, line in ipairs(get_lines(bufnr, 1, 100)) do
     -- TODO: in the Vim regex, \> is used to match the end of the word, can this be omitted?
       if line:find("^%-%-") or line:find("^ifdef") or line:find("^include")  then
         vim.bo[bufnr].filetype = "euphoria3"
         return
       end
     end
+    vim.bo[bufnr].filetype = "elixir"
   end
-  vim.bo[bufnr].filetype = "elixir"
 end
 
 -- This function checks the first 15 lines for appearance of 'FoamFile'
@@ -121,7 +120,7 @@ end
 -- In that case, it's probably an OpenFOAM file
 function M.foam(bufnr)
   local foam_file = false
-  for _, line in iter_lines(bufnr, 1, 15) do
+  for _, line in ipairs(get_lines(bufnr, 1, 15)) do
     if line:find("^FoamFile") then
       foam_file = true
     elseif foam_file and line:find("^%s*object") then
@@ -135,7 +134,7 @@ function M.frm(bufnr)
   if vim.g.filetype_frm then
     vim.bo[bufnr].filetype = vim.g.filetype_frm
   else
-    for _, line in iter_lines(bufnr, 1, 5) do
+    for _, line in ipairs(get_lines(bufnr, 1, 5)) do
       -- Always ignore case
       line = line:lower()
       if line:find("vb_name") or line:find("begin vb%.form") or line:find("begin vb%.mdiform") or line:find("begin vb%.usercontrol") then
@@ -152,7 +151,7 @@ function M.fs(path, bufnr)
 end
 
 function M.header(bufnr)
-  for _, line in iter_lines(bufnr, 1, 200) do
+  for _, line in ipairs(get_lines(bufnr, 1, 200)) do
     if line:find("^@interface") or line:find("^@end") or line:find("^@class") then
       if vim.g.c_syntax_for_h then
         vim.bo[bufnr].filetype = "objc"
@@ -172,7 +171,7 @@ function M.header(bufnr)
 end
 
 function M.idl(bufnr)
-  for _, line in iter_lines(bufnr, 1, 50) do
+  for _, line in ipairs(get_lines(bufnr, 1, 50)) do
     -- Always ignore case
     line = line:lower()
     if line:find('^%s*import%s+"unknwn"%.idl') or line:find('^%s*import%s+"objidl"%.idl') then
@@ -188,10 +187,10 @@ function M.inc(path, bufnr)
 end
 
 function M.inp(bufnr)
-  if get_lines(bufnr, 1):find("^%*") then
+  if concat_lines(bufnr, 1):find("^%*") then
     vim.bo[bufnr].filetype = "abaqus"
   else
-    for _, line in iter_lines(bufnr, 1, 500) do
+    for _, line in ipairs(get_lines(bufnr, 1, 500)) do
       if line:find("header surface data") then
         vim.bo[bufnr].filetype = "trasys"
         return
@@ -219,7 +218,7 @@ end
 -- Rely on the file to start with a comment.
 -- MS message text files use ';', Sendmail files use '#' or 'dnl'
 function M.mc(bufnr)
-  for _, line in iter_lines(bufnr, 1, 20) do
+  for _, line in ipairs(get_lines(bufnr, 1, 20)) do
     if line:find("^%s*#") or line:find("^%s*[dD][nN][lL]") then
       -- Sendmail .mc file
       vim.bo[bufnr].filetype = "m4"
@@ -238,7 +237,7 @@ function M.mm(path, bufnr)
 end
 
 function M.mms(bufnr)
-  for _, line in iter_lines(bufnr, 1, 20) do
+  for _, line in ipairs(get_lines(bufnr, 1, 20)) do
     if line:find("^%s*%%") or line:find("^%s*//") or line:find("^%*") then
       vim.bo[bufnr].filetype = "mmix"
       return
@@ -257,11 +256,13 @@ end
 -- This function checks if one of the first five lines start with a dot. In
 -- that case it is probably an nroff file.
 function M.nroff(bufnr)
-  for _, line in iter_lines(bufnr, 1, 5) do
+  for _, line in ipairs(get_lines(bufnr, 1, 5)) do
     if line:find("^%.") then
       vim.bo[bufnr].filetype = "nroff"
+      return 1
     end
   end
+  return 0
 end
 
 function M.perl(path, bufnr)
@@ -288,7 +289,7 @@ function M.progress_cweb(bufnr)
   if vim.g.filetype_w then
     vim.bo[bufnr].filetype = vim.g.filetype_w
   else
-    if get_lines(bufnr, 1) == "&ANALYZE" or get_lines(bufnr, 3) == "&GLOBAL-DEFINE" then
+    if concat_lines(bufnr, 1) == "&ANALYZE" or concat_lines(bufnr, 3) == "&GLOBAL-DEFINE" then
       vim.bo[bufnr].filetype = "progress"
     else
       vim.bo[bufnr].filetype = "cweb"
@@ -305,7 +306,7 @@ function M.proto(path, bufnr)
 end
 
 function M.r(bufnr)
-  local lines = iter_lines(bufnr, 1, 50)
+  local lines = ipairs(get_lines(bufnr, 1, 50))
   for _, line in lines do
     -- TODO: \< / \> which match the beginning / end of a word
     -- Rebol is easy to recognize, check for that first
@@ -338,7 +339,7 @@ function M.r(bufnr)
 end
 
 function M.redif(bufnr)
-  for _, line in iter_lines(bufnr, 1, 5) do
+  for _, line in ipairs(get_lines(bufnr, 1, 5)) do
     -- TODO: maybe this is too expensive because a new string is created, any thoughts?
     -- However, it seems much more readable to me than "^[tT][eE]..."
     if line:lower():find("^template%-type:") then
@@ -356,7 +357,7 @@ end
 function M.sc(bufnr)
   -- TODO: it still needs to be discussed if it's ok to use vim.regex in some cases
   local regex = vim.regex([[[A-Za-z0-9]*\s:\s[A-Za-z0-9]\|var\s<\|classvar\s<\|\^this.*\||\w*|\|+\s\w*\s{\|\*ar\s]])
-  for _, line in iter_lines(bufnr, 1, 25) do
+  for _, line in ipairs(get_lines(bufnr, 1, 25)) do
     if regex:match_str(line) then
       vim.bo[bufnr].filetype = "supercollider"
       return
@@ -370,7 +371,7 @@ end
 function M.scd(bufnr)
   -- TODO: it still needs to be discussed if it's ok to use vim.regex in some cases
   local regex = vim.regex([[\%^\S\+(\d[0-9A-Za-z]*)\%(\s\+\"[^"]*\"\%(\s\+\"[^"]*\"\)\=\)\=$]])
-  if regex:match_str(get_lines(bufnr, 1)) then
+  if regex:match_str(concat_lines(bufnr, 1)) then
     vim.bo[bufnr].filetype = "scdoc"
   else
     vim.bo[bufnr].filetype = "supercollider"
@@ -407,18 +408,19 @@ end
 
 -- Determine if a *.tf file is TF mud client or terraform
 function M.tf(bufnr)
-  for _, line in iter_lines(bufnr, 1, -1) do
+  for _, line in ipairs(get_lines(bufnr, 1, -1)) do
     -- No terraform file on an empty line (whitespace only), or when the first
     -- non-whitespace character is a ; or /
     if not line:find("^%s*[;/]?") then
       vim.bo[bufnr].filetype = "terraform"
+      return
     end
   end
   vim.bo[bufnr].filetype = "tf"
 end
 
 function M.xml(bufnr)
-  for _, line in iter_lines(bufnr, 1, 100) do
+  for _, line in ipairs(get_lines(bufnr, 1, 100)) do
     line = line:lower()
     local is_docbook4 = line:find("<!doctype.*docbook")
     local is_docbook5 = line:find(' xmlns="http://docbook%.org/ns/docbook"')
@@ -437,7 +439,7 @@ function M.xml(bufnr)
 end
 
 function M.y(bufnr)
-  for _, line in iter_lines(bufnr, 1, 100) do
+  for _, line in ipairs(get_lines(bufnr, 1, 100)) do
     if line:find("^%s*%%") then
       vim.bo[bufnr].filetype = "yacc"
       return
