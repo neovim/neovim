@@ -52,6 +52,11 @@ with these (optional) keys:
 	`term_name`		Sets the name of the terminal 'term'.
 	`term_colors`		Sets the number of supported colors 't_Co'.
 	`term_background`	Sets the default value of 'background'.
+	`stdin_fd`		Read buffer from `fd` as if it was a stdin pipe
+				This option can only used by |--embed| ui,
+				see |ui-startup-stdin|.
+
+
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.
@@ -139,6 +144,19 @@ procedure:
 5. If step 3 was used, Nvim will send a blocking "vimenter" request to the UI.
    Inside this request handler, the UI can safely do any initialization before
    entering normal mode, for example reading variables set by init.vim.
+
+							   *ui-startup-stdin*
+An UI can support the native read from stdin feature as invoked with
+`command | nvim -` for the builtin TUI. |--|
+The embedding process can detect that its stdin is open to a file which
+not is a terminal, just like nvim does. It then needs to forward this fd
+to Nvim. As fd=0 is already is used to send rpc data from the embedder to
+Nvim, it needs to use some other file descriptor, like fd=3 or higher.
+
+Then, `stdin_fd` option should be passed to `nvim_ui_attach` and nvim will
+implicitly read it as a buffer. This option can only be used when Nvim is
+launched with `--embed` option, as described above.
+
 
 ==============================================================================
 Global Events							    *ui-global*

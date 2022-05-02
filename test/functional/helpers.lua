@@ -361,14 +361,15 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function module.spawn(argv, merge, env, keep)
+--- @param io_extra used for stdin_fd, see :help ui-option
+function module.spawn(argv, merge, env, keep, io_extra)
   if session and not keep then
     session:close()
   end
 
   local child_stream = ChildProcessStream.spawn(
       merge and module.merge_args(prepend_argv, argv) or argv,
-      env)
+      env, io_extra)
   return Session.new(child_stream)
 end
 
@@ -415,8 +416,8 @@ end
 --    clear('-e')
 --    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
 function module.clear(...)
-  local argv, env = module.new_argv(...)
-  module.set_session(module.spawn(argv, nil, env))
+  local argv, env, io_extra = module.new_argv(...)
+  module.set_session(module.spawn(argv, nil, env, nil, io_extra))
 end
 
 -- Builds an argument list for use in clear().
@@ -426,6 +427,7 @@ function module.new_argv(...)
   local args = {unpack(module.nvim_argv)}
   table.insert(args, '--headless')
   local new_args
+  local io_extra
   local env = nil
   local opts = select(1, ...)
   if type(opts) == 'table' then
@@ -461,13 +463,14 @@ function module.new_argv(...)
       end
     end
     new_args = opts.args or {}
+    io_extra = opts.io_extra
   else
     new_args = {...}
   end
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
-  return args, env
+  return args, env, io_extra
 end
 
 function module.insert(...)

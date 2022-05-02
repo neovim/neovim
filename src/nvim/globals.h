@@ -507,6 +507,9 @@ EXTERN int v_dying INIT(= 0);
 EXTERN int stdin_isatty INIT(= true);
 // is stdout a terminal?
 EXTERN int stdout_isatty INIT(= true);
+/// filedesc set by embedder for reading first buffer like `cmd | nvim -`
+EXTERN int stdin_fd INIT(= -1);
+
 // true when doing full-screen output, otherwise only writing some messages.
 // volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
@@ -846,7 +849,6 @@ EXTERN linenr_T printer_page_num;
 
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
-
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character

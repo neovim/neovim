@@ -454,7 +454,7 @@ int main(int argc, char **argv)
   // writing end of the pipe doesn't like, e.g., in case stdin and stderr
   // are the same terminal: "cat | vim -".
   // Using autocommands here may cause trouble...
-  if (params.edit_type == EDIT_STDIN && !recoverymode) {
+  if ((params.edit_type == EDIT_STDIN || stdin_fd >= 0) && !recoverymode) {
     read_stdin();
   }
 
