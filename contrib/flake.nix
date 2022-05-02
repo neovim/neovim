@@ -16,6 +16,10 @@
           neovim = pkgs.neovim-unwrapped.overrideAttrs (oa: {
             version = "master";
             src = ../.;
+
+            buildInputs = oa.buildInputs ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [
+              CoreServices
+            ]);
           });
 
           # a development binary to help debug issues
