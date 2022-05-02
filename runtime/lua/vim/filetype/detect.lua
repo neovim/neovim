@@ -6,15 +6,14 @@ local function count_lines(bufnr)
 end
 
 ---@private
-local function get_lines(bufnr, start_lnum, end_lnum)
-  end_lnum = end_lnum or start_lnum
-  return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
-end
+local function get_lines(bufnr, start_lnum, end_lnum, opts)
+  if not end_lnum and not opts then
+    -- Return a single line as a string
+    return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
+  end
 
----@private
-local function concat_lines(bufnr, start_lnum, end_lnum)
-  local lines = get_lines(bufnr, start_lnum, end_lnum)
-  return table.concat(lines) or ""
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  return opts.concat and (table.concat(lines) or "") or lines
 end
 
 function M.asm(path, bufnr)
@@ -187,7 +186,7 @@ function M.inc(path, bufnr)
 end
 
 function M.inp(bufnr)
-  if concat_lines(bufnr, 1):find("^%*") then
+  if get_lines(bufnr, 1):find("^%*") then
     vim.bo[bufnr].filetype = "abaqus"
   else
     for _, line in ipairs(get_lines(bufnr, 1, 500)) do
@@ -289,7 +288,7 @@ function M.progress_cweb(bufnr)
   if vim.g.filetype_w then
     vim.bo[bufnr].filetype = vim.g.filetype_w
   else
-    if concat_lines(bufnr, 1) == "&ANALYZE" or concat_lines(bufnr, 3) == "&GLOBAL-DEFINE" then
+    if get_lines(bufnr, 1) == "&ANALYZE" or get_lines(bufnr, 3) == "&GLOBAL-DEFINE" then
       vim.bo[bufnr].filetype = "progress"
     else
       vim.bo[bufnr].filetype = "cweb"
@@ -371,7 +370,7 @@ end
 function M.scd(bufnr)
   -- TODO: it still needs to be discussed if it's ok to use vim.regex in some cases
   local regex = vim.regex([[\%^\S\+(\d[0-9A-Za-z]*)\%(\s\+\"[^"]*\"\%(\s\+\"[^"]*\"\)\=\)\=$]])
-  if regex:match_str(concat_lines(bufnr, 1)) then
+  if regex:match_str(get_lines(bufnr, 1)) then
     vim.bo[bufnr].filetype = "scdoc"
   else
     vim.bo[bufnr].filetype = "supercollider"
@@ -409,9 +408,9 @@ end
 -- Determine if a *.tf file is TF mud client or terraform
 function M.tf(bufnr)
   for _, line in ipairs(get_lines(bufnr, 1, -1)) do
-    -- No terraform file on an empty line (whitespace only), or when the first
-    -- non-whitespace character is a ; or /
-    if not line:find("^%s*[;/]?") then
+    -- Assume terraform file on a non-empty line (not whitespace-only)
+    -- and when the first non-whitespace character is not a ; or /
+    if not line:find("^%s*$") and not line:find("^%s*[;/]") then
       vim.bo[bufnr].filetype = "terraform"
       return
     end
