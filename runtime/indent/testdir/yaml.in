@@ -17,3 +17,9 @@ map: val
 map: multiline
 value
 # END_INDENT
+
+# START_INDENT
+map: |
+line1
+line2
+# END_INDENT
