@@ -60,7 +60,7 @@ if sys.version_info < MIN_PYTHON_VERSION:
     sys.exit(1)
 
 doxygen_version = tuple([int(i) for i in subprocess.check_output(["doxygen", "-v"],
-                        universal_newlines=True).split('.')])
+                        universal_newlines=True).split()[0].split('.')])
 
 if doxygen_version < MIN_DOXYGEN_VERSION:
     print("requires Doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
