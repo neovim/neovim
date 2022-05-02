@@ -30,4 +30,20 @@ describe('treesitter utils', function()
     eq(true, exec_lua('return vim.treesitter.is_ancestor(ancestor, child)'))
     eq(false, exec_lua('return vim.treesitter.is_ancestor(child, ancestor)'))
   end)
+
+  it('can convert a ts range to a vim range', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c")
+      tree = parser:parse()[1]
+      node = tree:root():child(0)
+    ]])
+
+    eq({0, 0, 2, 1}, exec_lua('return {node:range()}'))
+    eq({1, 1, 3, 1}, exec_lua('return {vim.treesitter.get_vim_range(0, {node:range()})}'))
+  end)
 end)

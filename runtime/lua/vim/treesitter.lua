@@ -262,4 +262,32 @@ function M.get_node_at_cursor(winnr, opts)
   return root_lang_tree:named_node_for_range(ts_cursor_range, opts)
 end
 
+---Gets a compatible vim range (1 index based) from a TS node range.
+---
+---TS nodes start with 0 and the end col is ending exclusive.
+---They also treat a EOF/EOL char as a char ending in the first
+---col of the next row.
+---
+---@param bufnr number The buffer handle from which the range is from
+---@param range table The treesitter range to transform
+---
+---@returns start_row, starcol, end_row, end_col
+function M.get_vim_range(bufnr, range)
+  local srow, scol, erow, ecol = unpack(range)
+  srow = srow + 1
+  scol = scol + 1
+  erow = erow + 1
+
+  if ecol == 0 then
+    -- Use the value of the last col of the previous row instead.
+    erow = erow - 1
+    if not bufnr or bufnr == 0 then
+      ecol = vim.fn.col({ erow, '$' }) - 1
+    else
+      ecol = #a.nvim_buf_get_lines(bufnr, erow - 1, erow, false)[1]
+    end
+  end
+  return srow, scol, erow, ecol
+end
+
 return M
