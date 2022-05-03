@@ -1326,6 +1326,17 @@ defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
                 Return: ~
                     timer luv timer object
 
+deprecate({name}, {alternative}, {version}, {plugin})        *vim.deprecate()*
+                Display a deprecation notification to the user.
+
+                Parameters: ~
+                    {name}         string Deprecated function.
+                    {alternative}  string|nil Preferred alternative function.
+                    {version}      string Version in which the deprecated
+                                   function will be removed.
+                    {plugin}       string|nil Plugin name that the function
+                                   will be removed from. Defaults to "Nvim".
+
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 

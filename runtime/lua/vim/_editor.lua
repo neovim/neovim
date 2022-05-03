@@ -735,6 +735,22 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   }
 end
 
+--- Display a deprecation notification to the user.
+---
+---@param name        string     Deprecated function.
+---@param alternative string|nil Preferred alternative function.
+---@param version     string     Version in which the deprecated function will
+---                              be removed.
+---@param plugin      string|nil Plugin name that the function will be removed
+---                              from. Defaults to "Nvim".
+function vim.deprecate(name, alternative, version, plugin)
+    local message = name .. ' is deprecated'
+    plugin = plugin or "Nvim"
+    message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
+    message = message .. ' See :h deprecated\nThis function will be removed in ' .. plugin .. ' version ' .. version
+    vim.notify_once(message, vim.log.levels.WARN)
+end
+
 require('vim._meta')
 
 return vim
