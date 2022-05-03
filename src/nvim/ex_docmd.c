@@ -1240,7 +1240,7 @@ static void set_cmd_addr_type(exarg_T *eap, char_u *p)
   }
 }
 
-/// Set default command range based on the addr type of the command
+/// Set default command range for -range=% based on the addr type of the command
 static void set_cmd_default_range(exarg_T *eap)
 {
   buf_T *buf;
@@ -1296,6 +1296,66 @@ static void set_cmd_default_range(exarg_T *eap)
             "with ADDR_NONE, ADDR_UNSIGNED or ADDR_QUICKFIX"));
     break;
   }
+}
+
+static void parse_register(exarg_T *eap)
+{
+  // Accept numbered register only when no count allowed (:put)
+  if ((eap->argt & EX_REGSTR)
+      && *eap->arg != NUL
+      // Do not allow register = for user commands
+      && (!IS_USER_CMDIDX(eap->cmdidx) || *eap->arg != '=')
+      && !((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg))) {
+    if (valid_yank_reg(*eap->arg, (eap->cmdidx != CMD_put
+                                   && !IS_USER_CMDIDX(eap->cmdidx)))) {
+      eap->regname = *eap->arg++;
+      // for '=' register: accept the rest of the line as an expression
+      if (eap->arg[-1] == '=' && eap->arg[0] != NUL) {
+        if (!eap->skip) {
+          set_expr_line(vim_strsave(eap->arg));
+        }
+        eap->arg += STRLEN(eap->arg);
+      }
+      eap->arg = skipwhite(eap->arg);
+    }
+  }
+}
+
+static int parse_count(exarg_T *eap, char **errormsg)
+{
+  // Check for a count.  When accepting a EX_BUFNAME, don't use "123foo" as a
+  // count, it's a buffer name.
+  char *p;
+  long n;
+
+  if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
+      && (!(eap->argt & EX_BUFNAME) || *(p = (char *)skipdigits(eap->arg + 1)) == NUL
+          || ascii_iswhite(*p))) {
+    n = getdigits_long(&eap->arg, false, -1);
+    eap->arg = skipwhite(eap->arg);
+    if (n <= 0 && (eap->argt & EX_ZEROR) == 0) {
+      if (errormsg != NULL) {
+        *errormsg = _(e_zerocount);
+      }
+      return FAIL;
+    }
+    if (eap->addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
+      eap->line2 = n;
+      if (eap->addr_count == 0) {
+        eap->addr_count = 1;
+      }
+    } else {
+      eap->line1 = eap->line2;
+      eap->line2 += n - 1;
+      eap->addr_count++;
+      // Be vi compatible: no error message for out of range.
+      if (eap->line2 > curbuf->b_ml.ml_line_count) {
+        eap->line2 = curbuf->b_ml.ml_line_count;
+      }
+    }
+  }
+
+  return OK;
 }
 
 /// Parse command line and return information about the first command.
@@ -1422,6 +1482,12 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
     set_cmd_default_range(eap);
   }
 
+  // Parse register and count
+  parse_register(eap);
+  if (parse_count(eap, NULL) == FAIL) {
+    return false;
+  }
+
   // Remove leading whitespace and colon from next command
   if (eap->nextcmd) {
     eap->nextcmd = (char_u *)skip_colon_white((char *)eap->nextcmd, true);
@@ -1460,7 +1526,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 {
   char *p;
   linenr_T lnum;
-  long n;
   char *errormsg = NULL;  // error message
   char *after_modifier = NULL;
   exarg_T ea;
@@ -1899,53 +1964,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     set_cmd_default_range(&ea);
   }
 
-  // accept numbered register only when no count allowed (:put)
-  if ((ea.argt & EX_REGSTR)
-      && *ea.arg != NUL
-      // Do not allow register = for user commands
-      && (!IS_USER_CMDIDX(ea.cmdidx) || *ea.arg != '=')
-      && !((ea.argt & EX_COUNT) && ascii_isdigit(*ea.arg))) {
-    if (valid_yank_reg(*ea.arg, (ea.cmdidx != CMD_put
-                                 && !IS_USER_CMDIDX(ea.cmdidx)))) {
-      ea.regname = *ea.arg++;
-      // for '=' register: accept the rest of the line as an expression
-      if (ea.arg[-1] == '=' && ea.arg[0] != NUL) {
-        if (!ea.skip) {
-          set_expr_line(vim_strsave(ea.arg));
-        }
-        ea.arg += STRLEN(ea.arg);
-      }
-      ea.arg = skipwhite(ea.arg);
-    }
-  }
-
-  //
-  // Check for a count.  When accepting a EX_BUFNAME, don't use "123foo" as a
-  // count, it's a buffer name.
-  ///
-  if ((ea.argt & EX_COUNT) && ascii_isdigit(*ea.arg)
-      && (!(ea.argt & EX_BUFNAME) || *(p = (char *)skipdigits(ea.arg + 1)) == NUL
-          || ascii_iswhite(*p))) {
-    n = getdigits_long(&ea.arg, false, -1);
-    ea.arg = skipwhite(ea.arg);
-    if (n <= 0 && !ni && (ea.argt & EX_ZEROR) == 0) {
-      errormsg = _(e_zerocount);
-      goto doend;
-    }
-    if (ea.addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
-      ea.line2 = n;
-      if (ea.addr_count == 0) {
-        ea.addr_count = 1;
-      }
-    } else {
-      ea.line1 = ea.line2;
-      ea.line2 += n - 1;
-      ++ea.addr_count;
-      // Be vi compatible: no error message for out of range.
-      if (ea.line2 > curbuf->b_ml.ml_line_count) {
-        ea.line2 = curbuf->b_ml.ml_line_count;
-      }
-    }
+  // Parse register and count
+  parse_register(&ea);
+  if (parse_count(&ea, &errormsg) == FAIL) {
+    goto doend;
   }
 
   /*

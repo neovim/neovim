@@ -1361,69 +1361,6 @@ nvim_out_write({str})                                       *nvim_out_write()*
                 Parameters: ~
                     {str}  Message
 
-nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
-                Parse command line.
-
-                Doesn't check the validity of command arguments.
-
-                Attributes: ~
-                    |api-fast|
-
-                Parameters: ~
-                    {str}   Command line string to parse. Cannot contain "\n".
-                    {opts}  Optional parameters. Reserved for future use.
-
-                Return: ~
-                    Dictionary containing command information, with these
-                    keys:
-                    • cmd: (string) Command name.
-                    • line1: (number) Starting line of command range. Only
-                      applicable if command can take a range.
-                    • line2: (number) Final line of command range. Only
-                      applicable if command can take a range.
-                    • bang: (boolean) Whether command contains a bang (!)
-                      modifier.
-                    • args: (array) Command arguments.
-                    • addr: (string) Value of |:command-addr|. Uses short
-                      name.
-                    • nargs: (string) Value of |:command-nargs|.
-                    • nextcmd: (string) Next command if there are multiple
-                      commands separated by a |:bar|. Empty if there isn't a
-                      next command.
-                    • magic: (dictionary) Which characters have special
-                      meaning in the command arguments.
-                      • file: (boolean) The command expands filenames. Which
-                        means characters such as "%", "#" and wildcards are
-                        expanded.
-                      • bar: (boolean) The "|" character is treated as a
-                        command separator and the double quote character (")
-                        is treated as the start of a comment.
-
-                    • mods: (dictionary) |:command-modifiers|.
-                      • silent: (boolean) |:silent|.
-                      • emsg_silent: (boolean) |:silent!|.
-                      • sandbox: (boolean) |:sandbox|.
-                      • noautocmd: (boolean) |:noautocmd|.
-                      • browse: (boolean) |:browse|.
-                      • confirm: (boolean) |:confirm|.
-                      • hide: (boolean) |:hide|.
-                      • keepalt: (boolean) |:keepalt|.
-                      • keepjumps: (boolean) |:keepjumps|.
-                      • keepmarks: (boolean) |:keepmarks|.
-                      • keeppatterns: (boolean) |:keeppatterns|.
-                      • lockmarks: (boolean) |:lockmarks|.
-                      • noswapfile: (boolean) |:noswapfile|.
-                      • tab: (integer) |:tab|.
-                      • verbose: (integer) |:verbose|.
-                      • vertical: (boolean) |:vertical|.
-                      • split: (string) Split modifier string, is an empty
-                        string when there's no split modifier. If there is a
-                        split modifier it can be one of:
-                        • "aboveleft": |:aboveleft|.
-                        • "belowright": |:belowright|.
-                        • "topleft": |:topleft|.
-                        • "botright": |:botright|.
-
 nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
                 Pastes at cursor, in any mode.
 
@@ -1821,6 +1758,76 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                 See also: ~
                     |execute()|
                     |nvim_command()|
+
+nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
+                Parse command line.
+
+                Doesn't check the validity of command arguments.
+
+                Attributes: ~
+                    |api-fast|
+
+                Parameters: ~
+                    {str}   Command line string to parse. Cannot contain "\n".
+                    {opts}  Optional parameters. Reserved for future use.
+
+                Return: ~
+                    Dictionary containing command information, with these
+                    keys:
+                    • cmd: (string) Command name.
+                    • range: (number) Number of items in the command
+                      |<range>|. Can be 0, 1 or 2.
+                    • line1: (number) Starting line of command |<range>|. -1
+                      if command cannot take a range. |<line1>|
+                    • line2: (number) Final line of command |<range>|. -1 if
+                      command cannot take a range. |<line2>|
+                    • count: (number) Any |<count>| that was supplied to the
+                      command. -1 if command cannot take a count.
+                    • reg: (number) The optional command |<register>|, if
+                      specified. Empty string if not specified or if command
+                      cannot take a register.
+                    • bang: (boolean) Whether command contains a |<bang>| (!)
+                      modifier.
+                    • args: (array) Command arguments.
+                    • addr: (string) Value of |:command-addr|. Uses short
+                      name.
+                    • nargs: (string) Value of |:command-nargs|.
+                    • nextcmd: (string) Next command if there are multiple
+                      commands separated by a |:bar|. Empty if there isn't a
+                      next command.
+                    • magic: (dictionary) Which characters have special
+                      meaning in the command arguments.
+                      • file: (boolean) The command expands filenames. Which
+                        means characters such as "%", "#" and wildcards are
+                        expanded.
+                      • bar: (boolean) The "|" character is treated as a
+                        command separator and the double quote character (")
+                        is treated as the start of a comment.
+
+                    • mods: (dictionary) |:command-modifiers|.
+                      • silent: (boolean) |:silent|.
+                      • emsg_silent: (boolean) |:silent!|.
+                      • sandbox: (boolean) |:sandbox|.
+                      • noautocmd: (boolean) |:noautocmd|.
+                      • browse: (boolean) |:browse|.
+                      • confirm: (boolean) |:confirm|.
+                      • hide: (boolean) |:hide|.
+                      • keepalt: (boolean) |:keepalt|.
+                      • keepjumps: (boolean) |:keepjumps|.
+                      • keepmarks: (boolean) |:keepmarks|.
+                      • keeppatterns: (boolean) |:keeppatterns|.
+                      • lockmarks: (boolean) |:lockmarks|.
+                      • noswapfile: (boolean) |:noswapfile|.
+                      • tab: (integer) |:tab|.
+                      • verbose: (integer) |:verbose|.
+                      • vertical: (boolean) |:vertical|.
+                      • split: (string) Split modifier string, is an empty
+                        string when there's no split modifier. If there is a
+                        split modifier it can be one of:
+                        • "aboveleft": |:aboveleft|.
+                        • "belowright": |:belowright|.
+                        • "topleft": |:topleft|.
+                        • "botright": |:botright|.
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
