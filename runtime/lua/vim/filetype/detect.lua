@@ -335,7 +335,7 @@ function M.scd(bufnr)
   local first = "^%S+%(%d[0-9A-Za-z]*%)"
   local opt = [[%s+"[^"]*"]]
   local line = getlines(bufnr, 1)
-  if findany(line, { "$", first .. opt .. "$", first .. opt .. opt .. "$" }) then
+  if findany(line, { first .. "$", first .. opt .. "$", first .. opt .. opt .. "$" }) then
     vim.bo[bufnr].filetype = "scdoc"
   else
     vim.bo[bufnr].filetype = "supercollider"
