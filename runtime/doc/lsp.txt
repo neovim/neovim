@@ -750,7 +750,9 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
 set_log_level({level})                               *vim.lsp.set_log_level()*
                 Sets the global log level for LSP logging.
 
-                Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+                Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR",
+                "OFF"
+
                 Level numbers begin with "TRACE" at 0
 
                 Use `lsp.log_levels` for reverse lookup.
