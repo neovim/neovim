@@ -591,6 +591,7 @@ let s:filename_checks = {
     \ 'wast': ['file.wast', 'file.wat'],
     \ 'webmacro': ['file.wm'],
     \ 'wget': ['.wgetrc', 'wgetrc'],
+    \ 'wget2': ['.wget2rc', 'wget2rc'],
     \ 'winbatch': ['file.wbt'],
     \ 'wml': ['file.wml'],
     \ 'wsh': ['file.wsf', 'file.wsc'],
