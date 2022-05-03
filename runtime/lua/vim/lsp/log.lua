@@ -25,6 +25,11 @@ do
   end
   local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
 
+  -- TODO: Ideally the directory should be created in open_logfile(), right
+  -- before opening the log file, but open_logfile() can be called from libuv
+  -- callbacks, where using fn.mkdir() is not allowed.
+  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
+
   --- Returns the log filename.
   ---@returns (string) log filename
   function log.get_filename()
@@ -39,7 +44,6 @@ do
     if logfile then return true end
     if openerr then return false end
 
-    vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
     logfile, openerr = io.open(logfilename, "a+")
     if not logfile then
       local err_msg = string.format("Failed to open LSP client log file: %s", openerr)
