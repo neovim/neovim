@@ -43,10 +43,27 @@ function M.btm(bufnr)
   end
 end
 
-function M.cfg(path, bufnr)
+-- Returns true if file content looks like RAPID
+local function is_rapid(bufnr, extension)
+  if extension == "cfg" then
+    local line = getlines(bufnr, 1):lower()
+    return findany(line, { "eio:cfg", "mmc:cfg", "moc:cfg", "proc:cfg", "sio:cfg", "sys:cfg" })
+  end
+  local first = "^%s*module%s+%S+%s*"
+  -- Called from mod, prg or sys functions
+  for _, line in ipairs(getlines(bufnr, 1, -1)) do
+    if not line:find("^%s*$") then
+      return findany(line:lower(), { "^%s*%%%%%%", first .. "(", first .. "$" })
+    end
+  end
+  -- Only found blank lines
+  return false
+end
+
+function M.cfg(bufnr)
   if vim.g.filetype_cfg then
     vim.bo[bufnr].filetype = vim.g.filetype_cfg
-  elseif is_rapid(path, bufnr) then
+  elseif is_rapid(bufnr, "cfg") then
     vim.bo[bufnr].filetype = "rapid"
   else
     vim.bo[bufnr].filetype = "cfg"
@@ -183,8 +200,6 @@ function M.inp(bufnr)
   end
 end
 
-local function is_rapid(path, bufnr) end
-
 function M.lpc(path, bufnr) end
 
 function M.lprolog(path, bufnr) end
@@ -308,7 +323,12 @@ function M.rules(path, bufnr) end
 -- detection between scala and SuperCollider
 function M.sc(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 25)) do
-    if findany(line, { "[A-Za-z0-9]*%s:%s[A-Za-z0-9]", "var%s<", "classvar%s<", "^this.*", "|%w*|", "%+%s%w*%s{", "%*ar%s" }) then
+    if
+      findany(
+        line,
+        { "[A-Za-z0-9]*%s:%s[A-Za-z0-9]", "var%s<", "classvar%s<", "^this.*", "|%w*|", "%+%s%w*%s{", "%*ar%s" }
+      )
+    then
       vim.bo[bufnr].filetype = "supercollider"
       return
     end
