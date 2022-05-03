@@ -2125,6 +2125,9 @@ au BufNewFile,BufRead *.wm			setf webmacro
 " Wget config
 au BufNewFile,BufRead .wgetrc,wgetrc		setf wget
 
+" Wget2 config
+au BufNewFile,BufRead .wget2rc,wget2rc		setf wget2
+
 " Website MetaLanguage
 au BufNewFile,BufRead *.wml			setf wml
 
