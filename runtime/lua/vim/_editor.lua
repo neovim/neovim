@@ -58,6 +58,7 @@ vim.log = {
     INFO  = 2;
     WARN  = 3;
     ERROR = 4;
+    OFF   = 5;
   }
 }
 

@@ -8,7 +8,7 @@ local log = {}
 -- Log level dictionary with reverse lookup as well.
 --
 -- Can be used to lookup the number from the name or the name from the number.
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+-- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
 -- Level numbers begin with "TRACE" at 0
 log.levels = vim.deepcopy(vim.log.levels)
 
@@ -70,31 +70,32 @@ do
     -- ```
     --
     -- This way you can avoid string allocations if the log level isn't high enough.
-    log[level:lower()] = function(...)
-      local argc = select("#", ...)
-      if levelnr < current_log_level then return false end
-      if argc == 0 then return true end
-      open_logfile()
-      local info = debug.getinfo(2, "Sl")
-      local header = string.format("[%s][%s] ...%s:%s", level, os.date(log_date_format), string.sub(info.short_src, #info.short_src - 15), info.currentline)
-      local parts = { header }
-      for i = 1, argc do
-        local arg = select(i, ...)
-        if arg == nil then
-          table.insert(parts, "nil")
-        else
-          table.insert(parts, format_func(arg))
+    if level ~= "OFF" then
+      log[level:lower()] = function(...)
+        local argc = select("#", ...)
+        if levelnr < current_log_level then return false end
+        if argc == 0 then return true end
+        open_logfile()
+        local info = debug.getinfo(2, "Sl")
+        local header = string.format("[%s][%s] ...%s:%s", level, os.date(log_date_format), string.sub(info.short_src, #info.short_src - 15), info.currentline)
+        local parts = { header }
+        for i = 1, argc do
+          local arg = select(i, ...)
+          if arg == nil then
+            table.insert(parts, "nil")
+          else
+            table.insert(parts, format_func(arg))
+          end
         end
+        logfile:write(table.concat(parts, '\t'), "\n")
+        logfile:flush()
       end
-      logfile:write(table.concat(parts, '\t'), "\n")
-      logfile:flush()
     end
   end
 end
 
 -- This is put here on purpose after the loop above so that it doesn't
 -- interfere with iterating the levels
-log.levels.OFF, log.OFF = 99, 99
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.

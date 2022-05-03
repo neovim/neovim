@@ -1012,6 +1012,7 @@ Log levels are one of the values defined in `vim.log.levels`:
         vim.log.levels.INFO
         vim.log.levels.TRACE
         vim.log.levels.WARN
+        vim.log.levels.OFF
 
 ------------------------------------------------------------------------------
 LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
