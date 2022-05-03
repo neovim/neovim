@@ -31,13 +31,21 @@ do
     return logfilename
   end
 
-  local logfile
+  local logfile, openerr
   ---@private
-  --- Opens log file.
+  --- Opens log file. Returns true if file is open, false on error
   local function open_logfile()
-    if logfile then return end
+    -- Try to open file only once
+    if logfile then return true end
+    if openerr then return false end
+
     vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
-    logfile = assert(io.open(logfilename, "a+"))
+    logfile, openerr = io.open(logfilename, "a+")
+    if not logfile then
+      local err_msg = string.format("Failed to open LSP client log file: %s", openerr)
+      vim.notify(err_msg, vim.log.levels.ERROR)
+      return false
+    end
 
     local log_info = vim.loop.fs_stat(logfilename)
     if log_info and log_info.size > 1e9 then
@@ -51,6 +59,7 @@ do
 
     -- Start message for logging
     logfile:write(string.format("[START][%s] LSP logging initiated\n", os.date(log_date_format)))
+    return true
   end
 
   for level, levelnr in pairs(log.levels) do
@@ -75,7 +84,7 @@ do
         local argc = select("#", ...)
         if levelnr < current_log_level then return false end
         if argc == 0 then return true end
-        open_logfile()
+        if not open_logfile() then return false end
         local info = debug.getinfo(2, "Sl")
         local header = string.format("[%s][%s] ...%s:%s", level, os.date(log_date_format), string.sub(info.short_src, #info.short_src - 15), info.currentline)
         local parts = { header }
